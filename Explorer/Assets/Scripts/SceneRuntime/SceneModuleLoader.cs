@@ -7,35 +7,23 @@ using UnityEngine;
 
 public class SceneModuleLoader
 {
-    private readonly Dictionary<string, ISceneApi> loadedModules = new();
-    
     private readonly Dictionary<string, V8Script> jsNodulesCompiledScripts = new();
-
-    private readonly SceneRuntime runtime;
     
-    public SceneModuleLoader(SceneRuntime runtime)
-    {
-        this.runtime = runtime;
-    }
-
-    public void LoadAndCompileJsModules()
+    public void LoadAndCompileJsModules(V8ScriptEngine engine)
     {
         // Get an array of file paths for all JavaScript module files in the project
-        var files = Helpers.GetModulesFiles();
+        var sources = Helpers.GetModulesSources();
         
-        foreach (var moduleName in files)
+        foreach (var source in sources)
         {
-            // Load the source code for the module
-            var sourceCode = Helpers.LoadModuleSourceCode(moduleName);
-
             // Wrap the source code in a CommonJS module wrapper
-            var commonJsModule = Helpers.ModuleWrapperCommonJs(sourceCode);
+            var commonJsModule = Helpers.ModuleWrapperCommonJs(source.text);
 
             // Compile the module using the V8ScriptEngine
-            V8Script script = runtime.Engine.Compile(commonJsModule);
+            V8Script script = engine.Compile(commonJsModule);
 
             // Add the compiled script to a dictionary with the module name as the key
-            jsNodulesCompiledScripts.Add(moduleName, script);
+            jsNodulesCompiledScripts.Add("system/" + source.name, script);
         }
     }
 
@@ -61,17 +49,5 @@ public class SceneModuleLoader
 
         // If we don't find a match, throw an exception
         throw new ArgumentException($"Module '{moduleName}' not found.");
-    }
-
-
-    public void LoadUnityImplementationModule(string moduleName)
-    {
-        // We could create a pattern to custom implementation of Unity
-        if (!loadedModules.ContainsKey(moduleName))
-        {
-            loadedModules.Add(moduleName, SceneApiFactory.Load(moduleName, runtime));
-        }
-        
-        // the scene can try to load a module two times, but we ignore the second time
     }
 }
