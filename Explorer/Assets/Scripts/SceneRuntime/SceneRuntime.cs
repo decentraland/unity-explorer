@@ -1,44 +1,51 @@
-using System.Collections;
-using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
-using UnityEngine;
 
 public class SceneRuntime
 {
-    public readonly V8ScriptEngine Engine;
+    internal readonly V8ScriptEngine engine;
     
-    public readonly SceneModuleLoader SceneModuleLoader;
+    private readonly SceneModuleLoader moduleLoader;
 
     private readonly UnityOpsApi api; // TODO: This is only needed for the LifeCycle
 
+    private readonly ScriptObject sceneScriptObject;
+
     public SceneRuntime(string sourceCode)
     {
-        SceneModuleLoader = new SceneModuleLoader(this);
-        Engine = V8EngineFactory.Create();
+        moduleLoader = new SceneModuleLoader();
+        engine = V8EngineFactory.Create();
 
         // Compile Scene Code
         var commonJsModule = Helpers.ModuleWrapperCommonJs(sourceCode);
-        var sceneCode = Engine.Compile(commonJsModule);
+        var sceneScript = engine.Compile(commonJsModule);
         
         // Initialize init API
-        api = new UnityOpsApi(this, sceneCode);
+        api = new UnityOpsApi(engine, moduleLoader, sceneScript);
+        engine.AddHostObject("UnityOpsApi", api);
+        engine.Execute(Helpers.LoadJavaScriptSourceCode("Js/Init.js"));
 
         // Load and Compile Js Modules
-        SceneModuleLoader.LoadAndCompileJsModules();
+        moduleLoader.LoadAndCompileJsModules(engine);
 
         // Load the Scene Code
-        Engine.Execute("globalUnity = require(\"~scene.js\")"); // TODO: We can avoid using `globalUnity` with a Evaluate, and calling the onStart/onUpdate on the evaluated code from C#
+        sceneScriptObject = engine.Evaluate("require(\"~scene.js\")") as ScriptObject; // TODO: We can avoid using `globalUnity` with a Evaluate, and calling the onStart/onUpdate on the evaluated code from C#
     }
 
-    public void StartScene()
+    public void RegisterEngineApi(IEngineApi api)
     {
-        Engine.Execute("globalUnity.onStart()"); // this can be awaited
+        engine.AddHostObject("UnityEngineApi", new EngineApiWrapper(api));
     }
 
-    public void Update()
+    public UniTask StartScene()
     {
-        Engine.Execute($"globalUnity.onUpdate({Time.deltaTime})"); // this can be awaited
+        return sceneScriptObject.InvokeMethod("onStart").ToTask().AsUniTask();
+    }
+
+    public UniTask Update(float dt)
+    {
+        return sceneScriptObject.InvokeMethod("onUpdate", dt).ToTask().AsUniTask();
     }
 }

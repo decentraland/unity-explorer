@@ -2,7 +2,7 @@
     "name": "SceneRuntime",
     "rootNamespace": "",
     "references": [
-        ""
+        "UniTask"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

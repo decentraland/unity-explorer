@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.cysharp.unitask": {
+      "version": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "73d86259ce31ce7f4dfe1d028ea1c3edf96c23e4"
+    },
     "com.unity.collab-proxy": {
       "version": "2.0.1",
       "depth": 0,
@@ -134,6 +141,13 @@
         "com.unity.modules.jsonserialize": "1.0.0"
       },
       "url": "https://packages.unity.com"
+    },
+    "net.tnrd.nsubstitute": {
+      "version": "https://github.com/decentraland/Unity3D-NSubstitute.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "cdd11bb74398afae73e71b6fe01114f597a6ce08"
     },
     "com.unity.modules.ai": {
       "version": "1.0.0",

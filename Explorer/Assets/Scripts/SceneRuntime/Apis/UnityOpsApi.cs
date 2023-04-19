@@ -5,18 +5,15 @@ using UnityEngine;
 
 public class UnityOpsApi
 {
-    private readonly SceneRuntime runtime;
+    private readonly V8ScriptEngine engine;
+    private readonly SceneModuleLoader moduleLoader;
     private readonly V8Script sceneScript;
 
-    public UnityOpsApi(SceneRuntime runtime, V8Script sceneScript)
+    public UnityOpsApi(V8ScriptEngine engine, SceneModuleLoader moduleLoader, V8Script sceneScript)
     {
-        this.runtime = runtime;
+        this.engine = engine;
+        this.moduleLoader = moduleLoader;
         this.sceneScript = sceneScript;
-        
-        runtime.Engine.AddHostObject("UnityOpsApi", this);
-
-        var sourceCode = Helpers.LoadJavaScriptSourceCode("Init.js");
-        runtime.Engine.Execute(sourceCode);
     }
 
     [UsedImplicitly]
@@ -35,24 +32,21 @@ public class UnityOpsApi
     public void Error(object message)
     {
         Debug.LogError(message);
-        Debug.LogError(runtime.Engine.GetStackTrace());
+        Debug.LogError(engine.GetStackTrace());
     }
 
     [UsedImplicitly]
-    public object LoadAndEvaluateCode(string moduleName)
+    public object LoadAndEvaluateCode(string moduleName) // "~system/EngineApi"
     {
         // Load just Scene Code
         if (moduleName == "~scene.js")
-            return runtime.Engine.Evaluate(sceneScript);
+            return engine.Evaluate(sceneScript);
 
         var dirname = moduleName.Substring(0, 1);
         var filename = moduleName.Substring(1);
-        
-        // Load Unity-side implementation of the module
-        runtime.SceneModuleLoader.LoadUnityImplementationModule(filename);
-        
+
         // Load JavaScript wrapper in the Runtime
-        var moduleScript = runtime.SceneModuleLoader.GetModuleScript(filename);
-        return runtime.Engine.Evaluate(moduleScript);
+        var moduleScript = moduleLoader.GetModuleScript(filename);
+        return engine.Evaluate(moduleScript);
     }
 }
