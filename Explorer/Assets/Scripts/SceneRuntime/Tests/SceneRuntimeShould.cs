@@ -43,7 +43,7 @@ public class SceneRuntimeShould
 
         await sceneRuntime.StartScene();
 
-        engineApi.Received().CrdtGetState();
+        await engineApi.Received().CrdtGetState();
     });
     
     [UnityTest]
@@ -75,6 +75,6 @@ public class SceneRuntimeShould
         
         Assert.IsTrue(testOk.IsOk());
         
-        engineApi.Received().CrdtSendToRenderer(Arg.Is<ITypedArray<byte>>(array => array.Length == 10 && array.GetBytes()[0] == 123 ));
+        await engineApi.Received().CrdtSendToRenderer(Arg.Is<ITypedArray<byte>>(array => array.Length == 10 && array.GetBytes()[0] == 123 ));
     });
 }

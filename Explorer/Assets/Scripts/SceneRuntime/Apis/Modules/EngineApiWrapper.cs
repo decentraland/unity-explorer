@@ -16,12 +16,12 @@ public class EngineApiWrapper
     [UsedImplicitly]
     public object CrdtSendToRenderer(ITypedArray<byte> data)
     {
-        return api.CrdtSendToRenderer(data);
+        return api.CrdtSendToRenderer(data).ToTask().ToPromise();
     }
     
     [UsedImplicitly]
     public object CrdtGetState()
     {
-        return api.CrdtGetState();
+        return api.CrdtGetState().ToTask().ToPromise();
     }
 }
