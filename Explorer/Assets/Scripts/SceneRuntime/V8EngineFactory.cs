@@ -1,15 +1,14 @@
-﻿using Microsoft.ClearScript.V8;
-using UnityEngine;
+﻿using System;
+using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
+using Microsoft.ClearScript;
+using Microsoft.ClearScript.V8;
 
 public class V8EngineFactory
 {
     public static V8ScriptEngine Create()
     {
-        //V8Settings.GlobalFlags |= V8GlobalFlags.DisableBackgroundWork;
-        
-        var engine = new V8ScriptEngine(V8ScriptEngineFlags.EnableTaskPromiseConversion);
-        //engine.DisableDynamicBinding = true;
-        //engine.UseReflectionBindFallback = true;
+        var engine = new V8ScriptEngine();
 
         return engine;
     }

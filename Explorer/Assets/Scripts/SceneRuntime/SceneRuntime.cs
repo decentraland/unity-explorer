@@ -1,17 +1,20 @@
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
+using UnityEngine;
+using UnityEngine.Profiling;
 
 public class SceneRuntime
 {
     internal readonly V8ScriptEngine engine;
-    
+
     private readonly SceneModuleLoader moduleLoader;
 
-    private readonly UnityOpsApi api; // TODO: This is only needed for the LifeCycle
+    private readonly UnityOpsApi unityOpsApi; // TODO: This is only needed for the LifeCycle
 
-    private readonly ScriptObject sceneScriptObject;
+    private readonly ScriptObject sceneCode;
 
     public SceneRuntime(string sourceCode)
     {
@@ -21,17 +24,17 @@ public class SceneRuntime
         // Compile Scene Code
         var commonJsModule = Helpers.ModuleWrapperCommonJs(sourceCode);
         var sceneScript = engine.Compile(commonJsModule);
-        
+
         // Initialize init API
-        api = new UnityOpsApi(engine, moduleLoader, sceneScript);
-        engine.AddHostObject("UnityOpsApi", api);
+        unityOpsApi = new UnityOpsApi(engine, moduleLoader, sceneScript);
+        engine.AddHostObject("UnityOpsApi", unityOpsApi);
         engine.Execute(Helpers.LoadJavaScriptSourceCode("Js/Init.js"));
 
         // Load and Compile Js Modules
         moduleLoader.LoadAndCompileJsModules(engine);
 
         // Load the Scene Code
-        sceneScriptObject = engine.Evaluate("require(\"~scene.js\")") as ScriptObject; // TODO: We can avoid using `globalUnity` with a Evaluate, and calling the onStart/onUpdate on the evaluated code from C#
+        sceneCode = engine.Evaluate(@"require('~scene.js')") as ScriptObject;
     }
 
     public void RegisterEngineApi(IEngineApi api)
@@ -41,11 +44,12 @@ public class SceneRuntime
 
     public UniTask StartScene()
     {
-        return sceneScriptObject.InvokeMethod("onStart").ToTask().AsUniTask();
+        return sceneCode.InvokeMethod("onStart").ToTask().AsUniTask();
     }
 
-    public UniTask Update(float dt)
+    public UniTask UpdateScene(float dt)
     {
-        return sceneScriptObject.InvokeMethod("onUpdate", dt).ToTask().AsUniTask();
+        // TODO: Improve performance .ToTask() (alloc 11kb each call)
+        return sceneCode.InvokeMethod("onUpdate", dt).ToTask().AsUniTask();
     }
 }

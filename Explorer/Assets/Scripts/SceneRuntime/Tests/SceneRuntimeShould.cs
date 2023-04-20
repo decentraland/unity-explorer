@@ -3,8 +3,8 @@ using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
 using NSubstitute;
-using NSubstitute.ClearExtensions;
 using NUnit.Framework;
+using UnityEngine;
 using UnityEngine.TestTools;
 
 public class SceneRuntimeShould
@@ -43,9 +43,9 @@ public class SceneRuntimeShould
 
         await sceneRuntime.StartScene();
 
-        engineApi.Received().CrdtGetState();
+        await engineApi.Received().CrdtGetState();
     });
-    
+
     [UnityTest]
     public IEnumerator EngineApi_CrdtSendToRenderer() => UniTask.ToCoroutine(async () =>
     {
@@ -68,13 +68,45 @@ public class SceneRuntimeShould
 
         var testOk = new TestUtilCheckOk();
         sceneRuntime.engine.AddHostObject("test", testOk);
-        
+
         Assert.IsFalse(testOk.IsOk());
 
+        // hot
         await sceneRuntime.StartScene();
-        
+
+        // already hot
+        for (int i = 0; i < 10; ++i)
+        {
+            await UniTask.Yield();
+            await sceneRuntime.StartScene();
+        }
+
         Assert.IsTrue(testOk.IsOk());
-        
-        engineApi.Received().CrdtSendToRenderer(Arg.Is<ITypedArray<byte>>(array => array.Length == 10 && array.GetBytes()[0] == 123 ));
+
+        await engineApi.Received().CrdtSendToRenderer(Arg.Is<ITypedArray<byte>>(array => array.Length == 10 && array.GetBytes()[0] == 123 ));
+    });
+
+    [UnityTest]
+    public IEnumerator EngineApi_TestRealScene() => UniTask.ToCoroutine(async () =>
+    {
+        var engineApi = Substitute.For<IEngineApi>();
+
+        var code = Resources.Load<TextAsset>("Scenes/Cube/cube.js").text;
+        var sceneRuntime = new SceneRuntime(code);
+
+        sceneRuntime.RegisterEngineApi(engineApi);
+
+        await sceneRuntime.StartScene();
+
+        // hot
+        await UniTask.Yield();
+        await sceneRuntime.UpdateScene(0.01f);
+
+        // already hot
+        for (int i = 0; i < 10; ++i)
+        {
+            await UniTask.Yield();
+            await sceneRuntime.UpdateScene(0.01f);
+        }
     });
 }
