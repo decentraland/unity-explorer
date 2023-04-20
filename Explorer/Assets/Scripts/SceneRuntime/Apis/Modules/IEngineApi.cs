@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
 
 public interface IEngineApi
