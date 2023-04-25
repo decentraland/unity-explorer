@@ -49,7 +49,7 @@ public class SceneRuntime
 
     public UniTask UpdateScene(float dt)
     {
-        // TODO: Improve performance .ToTask() (alloc 11kb each call)
+        // TODO: Improve performance .ToTask() (overhead alloc 11kb each call)
         return sceneCode.InvokeMethod("onUpdate", dt).ToTask().AsUniTask();
     }
 }
