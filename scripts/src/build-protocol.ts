@@ -4,8 +4,6 @@ import {
   camelToSnakeCase,
   cleanGeneratedCode,
   execute,
-  isWin,
-  nodeModulesPath,
   normalizePath,
   protocolOutputPath,
   protocolPath,
@@ -132,13 +130,14 @@ async function buildProtocol() {
     ...getProtofiles('decentraland/bff/**/*.proto')
   ].join(' ')
 
-  const ext = isWin ? 'cmd' : 'js'
-
   let command = `${protocPath}`
   command += ` --csharp_out "${protocolOutputPath}"`
   command += ` --csharp_opt=file_extension=.gen.cs`
-  command += ` --plugin=protoc-gen-dclunity=${nodeModulesPath}/protoc-gen-dclunity/dist/index.${ext}`
-  command += ` --dclunity_out "${protocolOutputPath}"`
+
+  // Uncomment this line to use the protoc-gen-dclunity plugin and generate the services (rpc dependency)
+  //command += ` --plugin=protoc-gen-dclunity=${nodeModulesPath}/protoc-gen-dclunity/dist/index.${isWin ? 'cmd' : 'js'}`
+  //command += ` --dclunity_out "${protocolOutputPath}"`
+
   command += ` --proto_path "${protocolInputPath}"`
   command += ` ${protoFiles}`
 
