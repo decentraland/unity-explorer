@@ -1,0 +1,92 @@
+name: Unity Build and Test
+
+on:
+  pull_request: {}
+  push: { branches: [main] }
+
+env:
+  UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Create LFS file list
+        run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+
+      - name: Restore LFS cache
+        uses: actions/cache@v2
+        id: lfs-cache
+        with:
+          path: .git/lfs
+          key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}
+
+      - name: Git LFS Pull
+        run: |
+          git lfs pull
+          git add .
+          git reset --hard
+
+      - name: Restore Library cache
+        uses: actions/cache@v2
+        with:
+          path: Explorer/Library
+          key: Library-Explorer-Windows
+
+      # Build
+      - name: Build project
+        uses: game-ci/unity-builder@v2
+        with:
+          projectPath: Explorer
+          targetPlatform: StandaloneWindows
+
+      # Output
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Build
+          path: build
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Create LFS file list
+        run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+
+      - name: Restore LFS cache
+        uses: actions/cache@v2
+        id: lfs-cache
+        with:
+          path: .git/lfs
+          key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}
+
+      - name: Git LFS Pull
+        run: |
+          git lfs pull
+          git add .
+          git reset --hard
+
+      - name: Restore Library cache
+        uses: actions/cache@v2
+        with:
+          path: Explorer/Library
+          key: Library-Explorer-Windows
+
+      # Configure test runner
+      - uses: game-ci/unity-test-runner@v2
+        id: testRunner
+        with:
+          projectPath: Explorer
+          testMode: playmode
+
+      # Upload artifact
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Test results (play mode)
+          path: ${{ steps.testRunner.outputs.artifactsPath }}
