@@ -99,6 +99,30 @@ public class V8Tests
         }
     }
 
+    public class UniTaskResolverResetable
+    {
+        private AutoResetUniTaskCompletionSource _source;
+
+        public void Reset()
+        {
+            _source = AutoResetUniTaskCompletionSource.Create();
+        }
+
+        public UniTask Task => _source.Task;
+
+        [UsedImplicitly]
+        public void Completed()
+        {
+            _source.TrySetResult();
+        }
+
+        [UsedImplicitly]
+        public void Reject(string message)
+        {
+            _source.TrySetException(new Exception(message));
+        }
+    }
+
     [UnityTest]
     public IEnumerator InvokeJSPromiseMethod2() => UniTask.ToCoroutine(async () =>
     {
@@ -135,6 +159,55 @@ public class V8Tests
         {
             await UniTask.Yield();
             await AwaitJSPromiseMethod2(0.01f);
+        }
+    });
+
+    [UnityTest]
+    public IEnumerator InvokeJSPromiseResetable() => UniTask.ToCoroutine(async () =>
+    {
+        var updateCode = @"
+            const onUpdate = async function(dt) {};
+
+            const wrapperOnUpdate = async function(dt) {{
+                await onUpdate(dt)
+                UniTaskResolver.Completed()
+            }};
+";
+
+        var wrapperCall = "wrapperOnUpdate({0})";
+
+        var engine = V8EngineFactory.Create();
+
+        // Create resetable source only once, it is crucial
+        var resetableSource = new UniTaskResolverResetable();
+        engine.AddHostObject("UniTaskResolver", resetableSource);
+
+        engine.Execute(updateCode);
+
+        // Compile the wrapper call for every dt, not the code of the update itself
+        Profiler.BeginSample("InvokeJSPromiseResetable.Compile");
+        var updateSource = string.Format(wrapperCall, "0.01");
+        var compiledUpdate = engine.Compile(updateSource);
+        Profiler.EndSample();
+
+        UniTask AwaitJSPromiseMethodResetable()
+        {
+            resetableSource.Reset();
+
+            Profiler.BeginSample("AwaitJSPromiseMethodResetable");
+            engine.Execute(compiledUpdate);
+            Profiler.EndSample();
+
+            return resetableSource.Task;
+        }
+
+        // hot
+        await AwaitJSPromiseMethodResetable();
+
+        for (var i = 0; i < 10; ++i)
+        {
+            await UniTask.Yield();
+            await AwaitJSPromiseMethodResetable();
         }
     });
 
