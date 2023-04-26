@@ -1,29 +1,24 @@
-﻿using System;
+﻿using Cysharp.Threading.Tasks;
+using System;
 using System.Collections.Generic;
-using System.IO;
 using Microsoft.ClearScript.V8;
-using Unity.VisualScripting;
-using UnityEngine;
 
 public class SceneModuleLoader
 {
     private readonly Dictionary<string, V8Script> jsNodulesCompiledScripts = new();
-    
-    public void LoadAndCompileJsModules(V8ScriptEngine engine)
+
+    public void LoadAndCompileJsModules(V8ScriptEngine engine, Dictionary<string,string> sources)
     {
-        // Get an array of file paths for all JavaScript module files in the project
-        var sources = Helpers.GetModulesSources();
-        
-        foreach (var source in sources)
+        foreach (string filename in sources.Keys)
         {
             // Wrap the source code in a CommonJS module wrapper
-            var commonJsModule = Helpers.ModuleWrapperCommonJs(source.text);
+            var commonJsModule = Helpers.ModuleWrapperCommonJs(sources[filename]);
 
             // Compile the module using the V8ScriptEngine
             V8Script script = engine.Compile(commonJsModule);
 
             // Add the compiled script to a dictionary with the module name as the key
-            jsNodulesCompiledScripts.Add("system/" + source.name, script);
+            jsNodulesCompiledScripts.Add($"system/{filename}", script);
         }
     }
 
@@ -39,7 +34,7 @@ public class SceneModuleLoader
         {
             return code;
         }
-    
+
         // If not, try appending ".js" to the module name
         var moduleNameWithJs = moduleName + ".js";
         if (jsNodulesCompiledScripts.TryGetValue(moduleNameWithJs, out code))

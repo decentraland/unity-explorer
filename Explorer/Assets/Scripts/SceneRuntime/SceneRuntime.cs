@@ -1,10 +1,8 @@
-using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
-using UnityEngine;
-using UnityEngine.Profiling;
+using System.Collections.Generic;
 
 public class SceneRuntime
 {
@@ -16,7 +14,7 @@ public class SceneRuntime
 
     private readonly ScriptObject sceneCode;
 
-    public SceneRuntime(string sourceCode)
+    public SceneRuntime(string sourceCode, string jsInitCode, Dictionary<string,string> jsModules)
     {
         moduleLoader = new SceneModuleLoader();
         engine = V8EngineFactory.Create();
@@ -28,10 +26,10 @@ public class SceneRuntime
         // Initialize init API
         unityOpsApi = new UnityOpsApi(engine, moduleLoader, sceneScript);
         engine.AddHostObject("UnityOpsApi", unityOpsApi);
-        engine.Execute(Helpers.LoadJavaScriptSourceCode("Js/Init.js"));
+        engine.Execute(jsInitCode);
 
         // Load and Compile Js Modules
-        moduleLoader.LoadAndCompileJsModules(engine);
+        moduleLoader.LoadAndCompileJsModules(engine, jsModules);
 
         // Load the Scene Code
         sceneCode = engine.Evaluate(@"require('~scene.js')") as ScriptObject;
@@ -52,4 +50,7 @@ public class SceneRuntime
         // TODO: Improve performance .ToTask() (alloc 11kb each call)
         return sceneCode.InvokeMethod("onUpdate", dt).ToTask().AsUniTask();
     }
+
 }
+
+
