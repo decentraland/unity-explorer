@@ -3,7 +3,7 @@ using Microsoft.ClearScript.JavaScript;
 
 public interface IEngineApi
 {
-    public UniTask<ITypedArray<byte>> CrdtSendToRenderer(ITypedArray<byte> data);
-    
-    public UniTask<ITypedArray<byte>> CrdtGetState();
+    public UniTask<byte[]> CrdtSendToRenderer(byte[] data);
+
+    public UniTask<byte[]> CrdtGetState();
 }
