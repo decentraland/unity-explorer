@@ -24,4 +24,30 @@ public class V8Tests
 
         sceneScriptObject!.InvokeAsFunction();
     }
+
+        [Test]
+        public void ConvertCSharpByteArrayToUint8Array()
+        {
+            var engine = V8EngineFactory.Create();
+
+            engine.AddHostType("Assert", typeof(Assert));
+
+            engine.Execute(@"
+                function func(data) {
+                    var array = new Uint8Array(data)
+                    for (let i = 0; i < array.length; ++i) {
+                        Assert.IsTrue(data[i] === i)
+                    }
+                }");
+
+            var sceneScriptObject = engine.Evaluate("func") as ScriptObject;
+
+            var data = new byte[10];
+
+            for (byte i = 0; i < 10; ++i)
+            {
+                data[i] = i;
+            }
+            sceneScriptObject!.InvokeAsFunction(data);
+        }
 }

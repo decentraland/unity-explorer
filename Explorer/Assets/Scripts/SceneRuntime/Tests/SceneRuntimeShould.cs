@@ -85,7 +85,7 @@ public class SceneRuntimeShould
 
         Assert.IsTrue(testOk.IsOk());
 
-        await engineApi.Received().CrdtSendToRenderer(Arg.Is<ITypedArray<byte>>(array => array.Length == 10 && array.GetBytes()[0] == 123 ));
+        await engineApi.Received().CrdtSendToRenderer(Arg.Is<byte[]>(array => array.Length == 10 && array[0] == 123 ));
     });
 
     [UnityTest]
