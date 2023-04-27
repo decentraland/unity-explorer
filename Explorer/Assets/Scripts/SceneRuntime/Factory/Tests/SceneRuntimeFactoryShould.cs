@@ -43,7 +43,7 @@ public class SceneRuntimeFactoryShould
         {
             // Arrange
             var factory = new SceneRuntimeFactory();
-            var path = $"{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
+            var path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
 
 
             // Act

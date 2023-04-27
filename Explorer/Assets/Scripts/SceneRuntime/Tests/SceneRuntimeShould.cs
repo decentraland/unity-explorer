@@ -123,8 +123,7 @@ public class SceneRuntimeShould
         var engineApi = Substitute.For<IEngineApi>();
 
         SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
-        var path = $"{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
-        Debug.Log(path);
+        var path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
         var sceneRuntime = await sceneRuntimeFactory.CreateByPath(path);
 
         sceneRuntime.RegisterEngineApi(engineApi);

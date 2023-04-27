@@ -25,7 +25,7 @@ public class SceneRuntimeFactory
     }
 
     private UniTask<string> GetJsInitSourceCode() =>
-        LoadJavaScriptSourceCode($"{Application.streamingAssetsPath}/Js/Init.js");
+        LoadJavaScriptSourceCode($"file://{Application.streamingAssetsPath}/Js/Init.js");
 
     private async UniTask<Dictionary<string, string>> GetJsModuleDictionary()
     {
@@ -33,7 +33,7 @@ public class SceneRuntimeFactory
         {
             {
                 "EngineApi.js",
-                WrapInModuleCommonJs(await LoadJavaScriptSourceCode($"{Application.streamingAssetsPath}/Js/Modules/EngineAPI.js"))
+                WrapInModuleCommonJs(await LoadJavaScriptSourceCode($"file://{Application.streamingAssetsPath}/Js/Modules/EngineAPI.js"))
             },
         };
         return moduleDictionary;
