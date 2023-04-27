@@ -2,6 +2,7 @@ using AssetManagement.CodeResolver;
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using UnityEngine;
 
 public class SceneRuntimeFactory
 {
@@ -10,37 +11,32 @@ public class SceneRuntimeFactory
 
     public SceneRuntimeFactory()
     {
-        this.codeContentResolver = new CodeContentResolver();
+        codeContentResolver = new CodeContentResolver();
         sourceCodeCache = new Dictionary<string, string>();
     }
 
-    public async UniTask<SceneRuntime> CreateBySourceCode(string sourceCode)
-    {
-        string jsInitSourceCode = await LoadJavaScriptSourceCode("Js/Init.js");
-        var moduleDictionary = new Dictionary<string, string>
-        {
-            {
-                "EngineApi.js",
-                WrapInModuleCommonJs(await LoadJavaScriptSourceCode("Js/Modules/EngineAPI.js"))
-            },
-        };
-
-        return new SceneRuntime(WrapInModuleCommonJs(sourceCode), jsInitSourceCode, moduleDictionary);
-    }
+    public async UniTask<SceneRuntime> CreateBySourceCode(string sourceCode) =>
+        new SceneRuntime(WrapInModuleCommonJs(sourceCode), await GetJsInitSourceCode(), await GetJsModuleDictionary());
 
     public async UniTask<SceneRuntime> CreateByPath(string path)
     {
         string sourceCode = await LoadJavaScriptSourceCode(path);
-        string javascriptSourceCode = await LoadJavaScriptSourceCode("Js/Init.js");
+        return new SceneRuntime(WrapInModuleCommonJs(sourceCode), await GetJsInitSourceCode(), await GetJsModuleDictionary());
+    }
+
+    private UniTask<string> GetJsInitSourceCode() =>
+        LoadJavaScriptSourceCode($"{Application.streamingAssetsPath}/Js/Init.js");
+
+    private async UniTask<Dictionary<string, string>> GetJsModuleDictionary()
+    {
         var moduleDictionary = new Dictionary<string, string>
         {
             {
                 "EngineApi.js",
-                WrapInModuleCommonJs(await LoadJavaScriptSourceCode("Js/Modules/EngineAPI.js"))
+                WrapInModuleCommonJs(await LoadJavaScriptSourceCode($"{Application.streamingAssetsPath}/Js/Modules/EngineAPI.js"))
             },
         };
-
-        return new SceneRuntime(WrapInModuleCommonJs(sourceCode), javascriptSourceCode, moduleDictionary);
+        return moduleDictionary;
     }
 
     private async UniTask<string> LoadJavaScriptSourceCode(string path)

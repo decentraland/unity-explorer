@@ -97,7 +97,8 @@ public class SceneRuntimeShould
             exports.onUpdate = async function(dt) {};
         ";
 
-        var sceneRuntime = new SceneRuntime(code);
+        SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
+        var sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code);
 
         await sceneRuntime.StartScene();
 
@@ -122,7 +123,9 @@ public class SceneRuntimeShould
         var engineApi = Substitute.For<IEngineApi>();
 
         SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
-        var sceneRuntime = await sceneRuntimeFactory.CreateByPath("Scenes/Cube/cube.js");
+        var path = $"{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
+        Debug.Log(path);
+        var sceneRuntime = await sceneRuntimeFactory.CreateByPath(path);
 
         sceneRuntime.RegisterEngineApi(engineApi);
 

@@ -11,12 +11,11 @@ namespace AssetManagement.CodeResolver
         {
             providers = new Dictionary<AssetSource, ICodeContentProvider>
             {
-                { AssetSource.EMBEDDED, new EmbeddedCodeContentProvider() },
                 { AssetSource.WEB, new WebCodeContentProvider() },
             };
         }
 
         public UniTask<string> GetCodeContent(string contentUrl) =>
-            contentUrl.Contains("http") ? providers[AssetSource.WEB].GetCodeAsync(contentUrl) : providers[AssetSource.EMBEDDED].GetCodeAsync(contentUrl);
+            providers[AssetSource.WEB].GetCodeAsync(contentUrl);
     }
 }

@@ -3,6 +3,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Collections;
+using UnityEngine;
 using UnityEngine.TestTools;
 
 public class SceneRuntimeFactoryShould
@@ -42,7 +43,8 @@ public class SceneRuntimeFactoryShould
         {
             // Arrange
             var factory = new SceneRuntimeFactory();
-            var path = "Scenes/Cube/cube.js";
+            var path = $"{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
+
 
             // Act
             var engineApi = Substitute.For<IEngineApi>();
