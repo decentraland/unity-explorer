@@ -43,11 +43,13 @@ jobs:
         with:
           projectPath: Explorer
           testMode: playmode
-
+      - name: Test
+        run: |
+          echo ${{ steps.testRunner.outputs.artifactsPath }}
       - name: Test Report
         uses: dorny/test-reporter@v1
         if: success() || failure()
         with:
           name: NUnit Tests
-          path: ${{ steps.testRunner.outputs.artifactsPath }}
+          path: ${{ steps.testRunner.outputs.artifactsPath }}/*.xml
           reporter: dotnet-trx
