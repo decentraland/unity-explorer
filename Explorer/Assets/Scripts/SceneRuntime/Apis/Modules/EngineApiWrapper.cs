@@ -13,17 +13,12 @@ public class EngineApiWrapper
     {
         this.api = api;
     }
-    
+
     [UsedImplicitly]
-    public object CrdtSendToRenderer(ITypedArray<byte> data)
-    {
-        // TODO: Implement ToPromise to UniTask
-        return api.CrdtSendToRenderer(data).AsTask().ToPromise();
-    }
-    
+    public object CrdtSendToRenderer(ITypedArray<byte> data) =>
+        api.CrdtSendToRenderer(data.GetBytes()).AsTask().ToPromise();
+
     [UsedImplicitly]
-    public object CrdtGetState()
-    {
-        return api.CrdtGetState().AsTask().ToPromise();
-    }
+    public object CrdtGetState() =>
+        api.CrdtGetState().AsTask().ToPromise();
 }
