@@ -38,7 +38,7 @@ public class SceneRuntimeFactoryShould
         });
 
     [UnityTest]
-    public IEnumerator CreateByStreamingAssetsPath() =>
+    public IEnumerator CreateByPath() =>
         UniTask.ToCoroutine(async () =>
         {
             // Arrange
