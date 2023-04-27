@@ -5,6 +5,7 @@ using Microsoft.ClearScript.JavaScript;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Profiling;
 using UnityEngine.TestTools;
 
 public class SceneRuntimeShould
@@ -53,13 +54,13 @@ public class SceneRuntimeShould
 
         var code = @"
             const engineApi = require('~system/EngineApi')
-            exports.onStart = async function() {
+            exports.onStart = async function() {};
+            exports.onUpdate = async function(dt) {
                 data = new Uint8Array(10)
                 data[0] = 123
                 await engineApi.crdtSendToRenderer({ data })
                 test.Ok()
             };
-            exports.onUpdate = async function(dt) {};
         ";
 
         var sceneRuntime = new SceneRuntime(code);
@@ -71,19 +72,47 @@ public class SceneRuntimeShould
 
         Assert.IsFalse(testOk.IsOk());
 
-        // hot
         await sceneRuntime.StartScene();
 
-        // already hot
+        // hot
+        await sceneRuntime.UpdateScene(0.0f);
+
         for (int i = 0; i < 10; ++i)
         {
             await UniTask.Yield();
-            await sceneRuntime.StartScene();
+            await sceneRuntime.UpdateScene(0.01f);
         }
 
         Assert.IsTrue(testOk.IsOk());
 
-        await engineApi.Received().CrdtSendToRenderer(Arg.Is<ITypedArray<byte>>(array => array.Length == 10 && array.GetBytes()[0] == 123 ));
+        await engineApi.Received().CrdtSendToRenderer(Arg.Is<byte[]>(array => array.Length == 10 && array[0] == 123 ));
+    });
+
+    [UnityTest]
+    public IEnumerator ProfileOnUpdate() => UniTask.ToCoroutine(async () =>
+    {
+        var code = @"
+            exports.onStart = async function() {};
+            exports.onUpdate = async function(dt) {};
+        ";
+
+        var sceneRuntime = new SceneRuntime(code);
+
+        await sceneRuntime.StartScene();
+
+        // hot
+        await sceneRuntime.UpdateScene(0.0f);
+
+        for (int i = 0; i < 10; ++i)
+        {
+            await UniTask.Yield();
+
+            Profiler.BeginSample("UpdateScene");
+            var ut = sceneRuntime.UpdateScene(0.01f);
+            Profiler.EndSample();
+
+            await ut;
+        }
     });
 
     [UnityTest]
@@ -102,7 +131,6 @@ public class SceneRuntimeShould
         await UniTask.Yield();
         await sceneRuntime.UpdateScene(0.01f);
 
-        // already hot
         for (int i = 0; i < 10; ++i)
         {
             await UniTask.Yield();
