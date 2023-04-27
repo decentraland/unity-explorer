@@ -43,6 +43,7 @@ jobs:
         with:
           projectPath: Explorer
           testMode: playmode
+
       - name: Test
         run: |
           echo ${{ steps.testRunner.outputs.artifactsPath }}
@@ -52,5 +53,12 @@ jobs:
         if: success() || failure()
         with:
           name: NUnit Tests
-          path: "${{ steps.testRunner.outputs.artifactsPath }}/*.xml"
+          path: "${{ steps.testRunner.outputs.artifactsPath }}/playmode-results.xml"
           reporter: dotnet-trx
+
+      # Upload artifact
+      - uses: actions/upload-artifact@v2
+        if: success() || failure()
+        with:
+          name: Test results (play mode)
+          path: ${{ steps.testRunner.outputs.artifactsPath }}
