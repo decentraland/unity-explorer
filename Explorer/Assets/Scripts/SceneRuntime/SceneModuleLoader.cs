@@ -11,11 +11,8 @@ public class SceneModuleLoader
     {
         foreach (string filename in sources.Keys)
         {
-            // Wrap the source code in a CommonJS module wrapper
-            var commonJsModule = Helpers.ModuleWrapperCommonJs(sources[filename]);
-
             // Compile the module using the V8ScriptEngine
-            V8Script script = engine.Compile(commonJsModule);
+            V8Script script = engine.Compile(sources[filename]);
 
             // Add the compiled script to a dictionary with the module name as the key
             jsNodulesCompiledScripts.Add($"system/{filename}", script);

@@ -20,8 +20,7 @@ public class SceneRuntime
         engine = V8EngineFactory.Create();
 
         // Compile Scene Code
-        var commonJsModule = Helpers.ModuleWrapperCommonJs(sourceCode);
-        var sceneScript = engine.Compile(commonJsModule);
+        var sceneScript = engine.Compile(sourceCode);
 
         // Initialize init API
         unityOpsApi = new UnityOpsApi(engine, moduleLoader, sceneScript);
