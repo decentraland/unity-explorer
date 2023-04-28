@@ -1,6 +1,10 @@
 ﻿namespace CRDT.Protocol
 {
-    public enum ProcessMessageResult
+    /// <summary>
+    /// This result exists to comply with the ADR
+    /// and have an extended info for debugging
+    /// </summary>
+    public enum CRDTStateReconciliationResult : byte
     {
         /**
            * Typical message and new state set.

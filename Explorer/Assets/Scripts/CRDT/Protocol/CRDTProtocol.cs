@@ -95,7 +95,7 @@ namespace CRDT.Protocol
         public int GetMessagesCount() =>
             crdtState.messagesCount;
 
-        public ProcessMessageResult ProcessMessage(in CRDTMessage message)
+        public CRDTReconciliationResult ProcessMessage(in CRDTMessage message)
         {
             var entityId = message.EntityId;
             int entityNumber = entityId.EntityNumber;
@@ -107,18 +107,20 @@ namespace CRDT.Protocol
             if (entityNumberWasDeleted && deletedVersion >= entityVersion)
 
                 // Entity was already deleted so no actions are required
-                return ProcessMessageResult.EntityWasDeleted;
+                return new (CRDTStateReconciliationResult.EntityWasDeleted, CRDTReconciliationEffect.NoChanges);
 
             switch (message.Type)
             {
                 case CRDTMessageType.DELETE_ENTITY:
                     DeleteEntity(entityId, entityNumber, entityVersion, entityNumberWasDeleted);
-                    return ProcessMessageResult.EntityDeleted;
+                    return new (CRDTStateReconciliationResult.EntityDeleted, CRDTReconciliationEffect.EntityDeleted);
                 case CRDTMessageType.APPEND_COMPONENT:
                     // The results of his branch is ignored as there are probably no SDK components with "APPEND" type
                     // but the state should be stored as these components are produced by the client
                     // and in theory they still must be reconciled
-                    return TryAppendComponent(in message) ? ProcessMessageResult.StateAppendedData : ProcessMessageResult.NoChanges;
+                    return TryAppendComponent(in message)
+                        ? new (CRDTStateReconciliationResult.StateAppendedData, CRDTReconciliationEffect.ComponentAdded)
+                        : new (CRDTStateReconciliationResult.NoChanges, CRDTReconciliationEffect.NoChanges);
 
                 // Effectively it is the same logic that updates the LWW set, the only difference is in Data presence
                 // For DELETE_COMPONENT it is "Empty"
@@ -142,7 +144,7 @@ namespace CRDT.Protocol
         public ProcessedCRDTMessage CreateDeleteMessage(CRDTEntity entity, int componentId) =>
             crdtState.CreateDeleteMessage(entity, componentId);
 
-        private ProcessMessageResult UpdateLWWState(in CRDTMessage message)
+        private CRDTReconciliationResult UpdateLWWState(in CRDTMessage message)
         {
             bool innerSetExists = crdtState.TryGetLWWComponentState(message, out PooledDictionary<CRDTEntity, EntityComponentData> inner,
                 out var componentExists, out var storedData);
@@ -151,13 +153,15 @@ namespace CRDT.Protocol
             if (!componentExists || storedData.Timestamp < message.Timestamp)
             {
                 UpdateLWWState(innerSetExists, componentExists, inner, in message, ref storedData);
-                return ProcessMessageResult.StateUpdatedTimestamp;
+
+                return new (CRDTStateReconciliationResult.StateUpdatedTimestamp,
+                    componentExists ? CRDTReconciliationEffect.ComponentModified : CRDTReconciliationEffect.ComponentAdded);
             }
 
             // Outdated Message. The client state will be resent
             // Nothing to change in the client CRDT state
             if (storedData.Timestamp > message.Timestamp)
-                return ProcessMessageResult.StateOutdatedTimestamp;
+                return new (CRDTStateReconciliationResult.StateOutdatedTimestamp, CRDTReconciliationEffect.NoChanges);
 
             var compareDataResult = CRDTMessageComparer.CompareData(in storedData.Data, message.Data);
 
@@ -165,15 +169,15 @@ namespace CRDT.Protocol
             {
                 case 0:
                     // Right the same message, nothing to do
-                    return ProcessMessageResult.NoChanges;
+                    return new (CRDTStateReconciliationResult.NoChanges, CRDTReconciliationEffect.NoChanges);
                 case > 0:
                     // Nothing to do
-                    return ProcessMessageResult.StateOutdatedData;
+                    return new (CRDTStateReconciliationResult.StateOutdatedData, CRDTReconciliationEffect.NoChanges);
                 default:
                     UpdateLWWState(true, true, inner, in message, ref storedData);
 
                     // The local state is updated
-                    return ProcessMessageResult.StateUpdatedData;
+                    return new (CRDTStateReconciliationResult.StateUpdatedData, CRDTReconciliationEffect.ComponentModified);
             }
         }
 

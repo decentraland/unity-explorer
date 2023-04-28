@@ -14,7 +14,7 @@ namespace CRDT.Protocol
         /// </summary>
         int GetMessagesCount();
 
-        ProcessMessageResult ProcessMessage(in CRDTMessage message);
+        CRDTReconciliationResult ProcessMessage(in CRDTMessage message);
 
         /// <summary>
         /// <inheritdoc cref="CRDTMessagesFactory.CreateMessagesFromTheCurrentState"/>
