@@ -44,17 +44,25 @@ jobs:
           projectPath: Explorer
           testMode: playmode
 
+      - name: Convert NUnit to JUnit
+        if: success() || failure()
+        run: |
+          apt-get update
+          apt-get install -y xsltproc
+          xsltproc --output ${{ steps.testRunner.outputs.artifactsPath }}/playmode-results-junit.xml .github/workflows/nunit-to-junit.xsl ${{ steps.testRunner.outputs.artifactsPath }}/playmode-results.xml
+
       - name: Test
         run: |
           echo ${{ steps.testRunner.outputs.artifactsPath }}
           ls -la ${{ steps.testRunner.outputs.artifactsPath }}
+
       - name: Test Report
         uses: dorny/test-reporter@v1
         if: success() || failure()
         with:
-          name: NUnit Tests
-          path: "${{ steps.testRunner.outputs.artifactsPath }}/playmode-results.xml"
-          reporter: dotnet-trx
+          name: JUnit Tests
+          path: ${{ steps.testRunner.outputs.artifactsPath }}/playmode-results-junit.xml
+          reporter: jest-junit
 
       # Upload artifact
       - uses: actions/upload-artifact@v2
