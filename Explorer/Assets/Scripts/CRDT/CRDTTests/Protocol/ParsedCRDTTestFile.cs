@@ -1,0 +1,108 @@
+using Collections.Pooled;
+using CRDT.Protocol;
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace CRDT.CRDTTests.Protocol
+{
+    public class ParsedCRDTTestFile
+    {
+        public enum InstructionType
+        {
+            MESSAGE = 0,
+            FINAL_STATE = 1
+        }
+
+        [Serializable]
+        public class TestFileInstruction
+        {
+            public InstructionType instructionType;
+            public string instructionValue;
+            public int lineNumber;
+            public string fileName;
+            public string testSpect;
+        }
+
+        public string fileName;
+        public List<TestFileInstruction> fileInstructions = new List<TestFileInstruction>();
+
+        public static CRDTMessage InstructionToMessage(TestFileInstruction instruction)
+        {
+            CRDTTestMessage msg = null;
+
+            try { msg = JsonUtility.FromJson<CRDTTestMessage>(instruction.instructionValue); }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error parsing line for msg (ln: {instruction.lineNumber}) " +
+                               $"{instruction.instructionValue} for file {instruction.fileName}, {e}");
+            }
+
+            // move from crdt message type from crdt library to crdt protocol
+            int crdtLibType = (int)msg.type;
+
+            if (crdtLibType == 1) { msg.type = CRDTMessageType.PUT_COMPONENT; }
+            else if (crdtLibType == 2) { msg.type = CRDTMessageType.DELETE_ENTITY; }
+
+            return msg.ToCRDTMessage();
+        }
+
+        internal static IEnumerable<CRDTMessage> InstructionToFinalStateMessages(TestFileInstruction instruction)
+        {
+            CrdtJsonState finalState = null;
+
+            try { finalState = JsonUtility.FromJson<CrdtJsonState>(instruction.instructionValue); }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error parsing line for state (ln: {instruction.lineNumber}) " +
+                               $"{instruction.instructionValue} for file {instruction.fileName}, {e}");
+            }
+
+            foreach (var entityComponentData in finalState.components)
+            {
+                var entityId = entityComponentData.entityId;
+                int componentId = entityComponentData.componentId;
+
+                yield return new CRDTMessage(CRDTMessageType.PUT_COMPONENT, entityId, componentId, entityComponentData.timestamp, entityComponentData.GetBytes());
+            }
+
+            foreach (var entity in finalState.deletedEntities)
+                yield return new CRDTMessage(CRDTMessageType.DELETE_ENTITY, CRDTEntity.Create(entity.entityNumber, entity.entityVersion), 0, 0, ReadOnlyMemory<byte>.Empty);
+        }
+
+        internal static CRDTProtocol.State InstructionToFinalState(TestFileInstruction instruction)
+        {
+            CrdtJsonState finalState = null;
+
+            try { finalState = JsonUtility.FromJson<CrdtJsonState>(instruction.instructionValue); }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error parsing line for state (ln: {instruction.lineNumber}) " +
+                               $"{instruction.instructionValue} for file {instruction.fileName}, {e}");
+            }
+
+            CRDTProtocol.State state = new CRDTProtocol.State(
+                new PooledDictionary<int, int>(),
+                new PooledDictionary<int, PooledDictionary<CRDTEntity, CRDTProtocol.EntityComponentData>>(),
+                new PooledDictionary<int, PooledDictionary<CRDTEntity, PooledList<CRDTProtocol.EntityComponentData>>>());
+
+            foreach (var entityComponentData in finalState.components)
+            {
+                var entityId = entityComponentData.entityId;
+                int componentId = entityComponentData.componentId;
+
+                var realData = entityComponentData.ToEntityComponentData();
+
+                if (!state.lwwComponents.ContainsKey(componentId))
+                    state.lwwComponents.Add(componentId, new PooledDictionary<CRDTEntity, CRDTProtocol.EntityComponentData>());
+
+                state.lwwComponents[componentId].Add(new CRDTEntity(entityId), realData);
+            }
+
+            foreach (var entity in finalState.deletedEntities)
+                state.deletedEntities.Add(entity.entityNumber, entity.entityVersion);
+
+            return state;
+        }
+    }
+}

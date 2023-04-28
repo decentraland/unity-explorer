@@ -1,13 +1,12 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using Microsoft.ClearScript.V8;
 using System;
 using System.Collections.Generic;
-using Microsoft.ClearScript.V8;
 
 public class SceneModuleLoader
 {
-    private readonly Dictionary<string, V8Script> jsNodulesCompiledScripts = new();
+    private readonly Dictionary<string, V8Script> jsNodulesCompiledScripts = new ();
 
-    public void LoadAndCompileJsModules(V8ScriptEngine engine, Dictionary<string,string> sources)
+    public void LoadAndCompileJsModules(V8ScriptEngine engine, Dictionary<string, string> sources)
     {
         foreach (string filename in sources.Keys)
         {
@@ -20,24 +19,19 @@ public class SceneModuleLoader
     }
 
     /// <summary>
-    /// Gets the compiled V8Script for the specified module name.
+    ///     Gets the compiled V8Script for the specified module name.
     /// </summary>
     /// <param name="moduleName">The name of the module to get the V8Script for.</param>
     /// <returns>The compiled V8Script for the specified module name.</returns>
     public V8Script GetModuleScript(string moduleName)
     {
         // Check if the module name is in the dictionary of compiled scripts
-        if (jsNodulesCompiledScripts.TryGetValue(moduleName, out var code))
-        {
-            return code;
-        }
+        if (jsNodulesCompiledScripts.TryGetValue(moduleName, out V8Script code)) { return code; }
 
         // If not, try appending ".js" to the module name
-        var moduleNameWithJs = moduleName + ".js";
-        if (jsNodulesCompiledScripts.TryGetValue(moduleNameWithJs, out code))
-        {
-            return code;
-        }
+        string moduleNameWithJs = moduleName + ".js";
+
+        if (jsNodulesCompiledScripts.TryGetValue(moduleNameWithJs, out code)) { return code; }
 
         // If we don't find a match, throw an exception
         throw new ArgumentException($"Module '{moduleName}' not found.");

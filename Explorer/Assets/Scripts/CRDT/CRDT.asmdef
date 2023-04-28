@@ -1,13 +1,12 @@
 {
-    "name": "EntryPoint",
+    "name": "CRDT",
     "rootNamespace": "",
     "references": [
-        "GUID:0b3eab7834a09c24ca4e84fe0d8a43ce",
         "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
-    "allowUnsafeCode": false,
+    "allowUnsafeCode": true,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
