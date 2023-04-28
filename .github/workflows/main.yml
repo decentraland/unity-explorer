@@ -42,11 +42,12 @@ jobs:
         id: testRunner
         with:
           projectPath: Explorer
-          testMode: playmode
+          testMode: all
 
       - name: Convert NUnit to JUnit
         if: success() || failure()
         run: |
+          ls -la ${{ steps.testRunner.outputs.artifactsPath }}
           sudo apt-get update
           sudo apt-get install -y xsltproc
           sudo xsltproc --output ${{ steps.testRunner.outputs.artifactsPath }}/playmode-results-junit.xml .github/workflows/nunit-to-junit.xsl ${{ steps.testRunner.outputs.artifactsPath }}/playmode-results.xml
@@ -63,5 +64,5 @@ jobs:
       - uses: actions/upload-artifact@v2
         if: success() || failure()
         with:
-          name: Test results (play mode)
+          name: Test results (play mode & edit mode)
           path: ${{ steps.testRunner.outputs.artifactsPath }}
