@@ -51,11 +51,6 @@ jobs:
           sudo apt-get install -y xsltproc
           sudo xsltproc --output ${{ steps.testRunner.outputs.artifactsPath }}/playmode-results-junit.xml .github/workflows/nunit-to-junit.xsl ${{ steps.testRunner.outputs.artifactsPath }}/playmode-results.xml
 
-      - name: Test
-        run: |
-          echo ${{ steps.testRunner.outputs.artifactsPath }}
-          ls -la ${{ steps.testRunner.outputs.artifactsPath }}
-
       - name: Test Report
         uses: dorny/test-reporter@v1
         if: success() || failure()
