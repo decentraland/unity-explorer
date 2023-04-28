@@ -49,7 +49,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y xsltproc
-          xsltproc --output ${{ steps.testRunner.outputs.artifactsPath }}/playmode-results-junit.xml .github/workflows/nunit-to-junit.xsl ${{ steps.testRunner.outputs.artifactsPath }}/playmode-results.xml
+          sudo xsltproc --output ${{ steps.testRunner.outputs.artifactsPath }}/playmode-results-junit.xml .github/workflows/nunit-to-junit.xsl ${{ steps.testRunner.outputs.artifactsPath }}/playmode-results.xml
 
       - name: Test
         run: |
