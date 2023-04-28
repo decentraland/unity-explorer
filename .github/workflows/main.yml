@@ -42,10 +42,35 @@ jobs:
         id: testRunner
         with:
           projectPath: Explorer
-          testMode: playmode
+          testMode: all
+
+      - name: Convert NUnit to JUnit
+        if: always()
+        run: |
+          mkdir -p ${{ steps.testRunner.outputs.artifactsPath }}-junit
+          sudo apt-get update
+          sudo apt-get install -y xsltproc
+          sudo xsltproc \
+            --output ${{ steps.testRunner.outputs.artifactsPath }}-junit/playmode-results-junit.xml \
+            .github/workflows/nunit-to-junit.xsl \
+            ${{ steps.testRunner.outputs.artifactsPath }}/playmode-results.xml \
+
+          sudo xsltproc \
+            --output ${{ steps.testRunner.outputs.artifactsPath }}-junit/editmode-results-junit.xml \
+            .github/workflows/nunit-to-junit.xsl \
+            ${{ steps.testRunner.outputs.artifactsPath }}/editmode-results.xml
+
+      - name: Report test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Report test results
+          path: ${{ steps.testRunner.outputs.artifactsPath }}-junit/*.xml
+          reporter: jest-junit
 
       # Upload artifact
       - uses: actions/upload-artifact@v2
+        if: always()
         with:
-          name: Test results (play mode)
+          name: Test results (play mode & edit mode)
           path: ${{ steps.testRunner.outputs.artifactsPath }}
