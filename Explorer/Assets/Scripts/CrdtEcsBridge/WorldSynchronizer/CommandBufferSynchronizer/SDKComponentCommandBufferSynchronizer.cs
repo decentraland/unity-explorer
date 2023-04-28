@@ -30,15 +30,16 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
             switch (reconciliationEffect)
             {
                 case CRDTReconciliationEffect.ComponentModified:
-                    // if component is modified then return to the pool existing one
-                    var old = world.Get<T>(entity);
-                    componentPool.Release(old);
+                    // if component is modified then return to the pool the existing one
+                    componentPool.Release(world.Get<T>(entity));
                     commandBuffer.Set(entity, c);
                     break;
                 case CRDTReconciliationEffect.ComponentAdded:
                     commandBuffer.Add(entity, c);
                     break;
                 case CRDTReconciliationEffect.ComponentDeleted:
+                    // if component is deleted return to the pool the existing one
+                    componentPool.Release(world.Get<T>(entity));
                     commandBuffer.Remove<T>(entity);
                     break;
             }
