@@ -7,13 +7,13 @@ using UnityEngine;
 
 public class SceneModuleLoader
 {
-    private readonly Dictionary<string, V8Script> jsNodulesCompiledScripts = new();
-    
+    private readonly Dictionary<string, V8Script> jsNodulesCompiledScripts = new ();
+
     public void LoadAndCompileJsModules(V8ScriptEngine engine)
     {
         // Get an array of file paths for all JavaScript module files in the project
         var sources = Helpers.GetModulesSources();
-        
+
         foreach (var source in sources)
         {
             // Wrap the source code in a CommonJS module wrapper
@@ -35,17 +35,12 @@ public class SceneModuleLoader
     public V8Script GetModuleScript(string moduleName)
     {
         // Check if the module name is in the dictionary of compiled scripts
-        if (jsNodulesCompiledScripts.TryGetValue(moduleName, out var code))
-        {
-            return code;
-        }
-    
+        if (jsNodulesCompiledScripts.TryGetValue(moduleName, out var code)) { return code; }
+
         // If not, try appending ".js" to the module name
         var moduleNameWithJs = moduleName + ".js";
-        if (jsNodulesCompiledScripts.TryGetValue(moduleNameWithJs, out code))
-        {
-            return code;
-        }
+
+        if (jsNodulesCompiledScripts.TryGetValue(moduleNameWithJs, out code)) { return code; }
 
         // If we don't find a match, throw an exception
         throw new ArgumentException($"Module '{moduleName}' not found.");
