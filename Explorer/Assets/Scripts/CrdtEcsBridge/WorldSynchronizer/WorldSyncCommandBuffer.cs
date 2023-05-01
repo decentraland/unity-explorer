@@ -7,6 +7,7 @@ using ECS.LifeCycle.Components;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility.ThreadSafePool;
 
 namespace CrdtEcsBridge.WorldSynchronizer
 {
@@ -31,15 +32,15 @@ namespace CrdtEcsBridge.WorldSynchronizer
                 { (CRDTReconciliationEffect.ComponentAdded, CRDTReconciliationEffect.ComponentDeleted), CRDTReconciliationEffect.NoChanges },
 
                 // if component already existed then if the component still exists it should be modified
-                { (CRDTReconciliationEffect.ComponentModified, CRDTReconciliationEffect.ComponentAdded), CRDTReconciliationEffect.NoChanges },
-                { (CRDTReconciliationEffect.ComponentModified, CRDTReconciliationEffect.ComponentModified), CRDTReconciliationEffect.NoChanges },
+                { (CRDTReconciliationEffect.ComponentModified, CRDTReconciliationEffect.ComponentAdded), CRDTReconciliationEffect.ComponentModified },
+                { (CRDTReconciliationEffect.ComponentModified, CRDTReconciliationEffect.ComponentModified), CRDTReconciliationEffect.ComponentModified },
 
                 // if it was deleted then delete from World
                 { (CRDTReconciliationEffect.ComponentModified, CRDTReconciliationEffect.ComponentDeleted), CRDTReconciliationEffect.ComponentDeleted },
 
                 // if component already existed then if the component still exists it should be modified
-                { (CRDTReconciliationEffect.ComponentDeleted, CRDTReconciliationEffect.ComponentModified), CRDTReconciliationEffect.NoChanges },
-                { (CRDTReconciliationEffect.ComponentDeleted, CRDTReconciliationEffect.ComponentModified), CRDTReconciliationEffect.NoChanges },
+                { (CRDTReconciliationEffect.ComponentDeleted, CRDTReconciliationEffect.ComponentModified), CRDTReconciliationEffect.ComponentModified },
+                { (CRDTReconciliationEffect.ComponentDeleted, CRDTReconciliationEffect.ComponentAdded), CRDTReconciliationEffect.ComponentModified },
 
                 // if it was deleted then delete from World
                 { (CRDTReconciliationEffect.ComponentDeleted, CRDTReconciliationEffect.ComponentDeleted), CRDTReconciliationEffect.ComponentDeleted },
@@ -72,27 +73,26 @@ namespace CrdtEcsBridge.WorldSynchronizer
             public override int GetHashCode() =>
                 HashCode.Combine((int)First, (int)Last);
 
+            public override string ToString() =>
+                $"First: {First}, Last: {Last}";
+
             public static implicit operator ReconciliationState((CRDTReconciliationEffect, CRDTReconciliationEffect) tuple) =>
                 new (tuple.Item1, tuple.Item2);
         }
 
-        // TODO pooling
         private class BatchState
         {
+            internal static readonly ThreadSafeObjectPool<BatchState> POOL = new (
+                () => new BatchState(),
+                actionOnRelease: state => state.deserializationTarget = null);
+
             internal CRDTMessage crdtMessage;
             internal ReconciliationState reconciliationState;
             internal SDKComponentBridge sdkComponentBridge;
 
             internal object deserializationTarget;
 
-            public BatchState(CRDTMessage crdtMessage, ReconciliationState reconciliationState, SDKComponentBridge sdkComponentBridge,
-                object deserializationTarget)
-            {
-                this.crdtMessage = crdtMessage;
-                this.reconciliationState = reconciliationState;
-                this.sdkComponentBridge = sdkComponentBridge;
-                this.deserializationTarget = deserializationTarget;
-            }
+            private BatchState() { }
         }
 
         private readonly PooledDictionary<CRDTEntity, PooledDictionary<int, BatchState>> batchStates;
@@ -101,6 +101,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
 
         private bool finalized;
+        private bool deserialized;
 
         /// <summary>
         /// Can't contain a public ctor as should be instantiated within the assembly
@@ -114,10 +115,20 @@ namespace CrdtEcsBridge.WorldSynchronizer
         }
 
         /// <summary>
+        /// For tests only
+        /// </summary>
+        internal CRDTReconciliationEffect GetLastState(CRDTEntity entity, int componentId) =>
+            batchStates.TryGetValue(entity, out var componentsBatch) &&
+            componentsBatch.TryGetValue(componentId, out var batchState)
+                ? batchState.reconciliationState.Last
+                : CRDTReconciliationEffect.NoChanges;
+
+        /// <summary>
         /// Add messages in the order they are processed by CRDT
         /// This sync function is for ECS syncing and it heavily relies on the proper result from the CRDT Protocol
         /// </summary>
-        public void SyncCRDTMessage(in CRDTMessage message, CRDTReconciliationEffect reconciliationEffect)
+        /// <returns>The last status corresponding to the (<see cref="CRDTMessage.EntityId"/>, <see cref="CRDTMessage.ComponentId"/>)</returns>
+        public CRDTReconciliationEffect SyncCRDTMessage(in CRDTMessage message, CRDTReconciliationEffect reconciliationEffect)
         {
             if (finalized)
                 throw new InvalidOperationException($"{nameof(WorldSyncCommandBuffer)} is already finalized and can't be modified anymore");
@@ -136,7 +147,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
                         batchStates.Remove(message.EntityId);
                     }
 
-                    break;
+                    return CRDTReconciliationEffect.EntityDeleted;
                 case CRDTReconciliationEffect.ComponentAdded:
                 case CRDTReconciliationEffect.ComponentDeleted:
                 case CRDTReconciliationEffect.ComponentModified:
@@ -144,7 +155,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
                     if (!sdkComponentsRegistry.TryGet(message.ComponentId, out var sdkComponentBridge))
                     {
                         Debug.LogWarning($"SDK Component {message.ComponentId} is not registered");
-                        return;
+                        return CRDTReconciliationEffect.NoChanges;
                     }
 
                     // Store the first and the last result
@@ -155,19 +166,26 @@ namespace CrdtEcsBridge.WorldSynchronizer
                     {
                         // take the first one, override the last one
                         state.reconciliationState = new ReconciliationState(state.reconciliationState.First, reconciliationEffect);
-                    }
-                    else
-                    {
-                        if (!componentBatchExists)
-                            componentsBatch = batchStates[message.EntityId] = new PooledDictionary<int, BatchState>();
 
-                        // the first and the last are the same
-                        // take the component from the pool
-                        componentsBatch[message.ComponentId] = new BatchState(message, new ReconciliationState(reconciliationEffect, reconciliationEffect), sdkComponentBridge, sdkComponentBridge.Pool.Rent());
+                        // The data must be taken from the last message
+                        state.crdtMessage = message;
+                        return reconciliationEffect;
                     }
 
-                    break;
+                    if (!componentBatchExists)
+                        componentsBatch = batchStates[message.EntityId] = new PooledDictionary<int, BatchState>();
+
+                    // the first and the last are the same
+                    // take the component from the pool
+                    var batchState = BatchState.POOL.Get();
+                    batchState.crdtMessage = message;
+                    batchState.reconciliationState = new (reconciliationEffect, reconciliationEffect);
+                    batchState.sdkComponentBridge = sdkComponentBridge;
+                    componentsBatch[message.ComponentId] = batchState;
+                    return reconciliationEffect;
             }
+
+            return reconciliationEffect;
         }
 
         /// <summary>
@@ -194,10 +212,13 @@ namespace CrdtEcsBridge.WorldSynchronizer
                     if (finalState != CRDTReconciliationEffect.ComponentDeleted)
                     {
                         var bridge = batchState.sdkComponentBridge;
-                        bridge.Serializer.DeserializeInto(batchState.deserializationTarget, batchState.crdtMessage.Data.Span);
+                        var deserializationTarget = batchState.sdkComponentBridge.Pool.Rent();
+                        bridge.Serializer.DeserializeInto(deserializationTarget, batchState.crdtMessage.Data.Span);
                     }
                 }
             }
+
+            deserialized = true;
         }
 
         /// <summary>
@@ -206,7 +227,10 @@ namespace CrdtEcsBridge.WorldSynchronizer
         /// </summary>
         internal void Apply(World world, Arch.Core.CommandBuffer.CommandBuffer commandBuffer, Dictionary<CRDTEntity, Entity> entitiesMap)
         {
-            // TODO consider adding "static" satellites such as "ComponentXDirty", it will be addressed later
+            if (!deserialized)
+                throw new InvalidOperationException($"{nameof(FinalizeAndDeserialize)} must be called before {nameof(Apply)}");
+
+            // TODO consider adding something like "isDirty" to the component (via State or Tag?), resolve it with the first implemented systems
             // For now it just adds the protobuf component as is
 
             try
@@ -255,7 +279,12 @@ namespace CrdtEcsBridge.WorldSynchronizer
         public void Dispose()
         {
             foreach (var componentsBatch in batchStates.Values)
+            {
+                foreach (var batchState in componentsBatch.Values)
+                    BatchState.POOL.Release(batchState);
+
                 componentsBatch.Dispose();
+            }
 
             batchStates.Dispose();
             deletedEntities.Dispose();

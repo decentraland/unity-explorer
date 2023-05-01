@@ -1,4 +1,6 @@
 using Arch.Core;
+using Arch.System;
+using ECS.Abstract;
 using ECS.LifeCycle.Components;
 
 namespace ECS.ComponentsPooling
@@ -17,7 +19,7 @@ namespace ECS.ComponentsPooling
             this.componentPoolsRegistry = componentPoolsRegistry;
         }
 
-        protected override void Update(float t)
+        protected override void Update(float _)
         {
             var query = World.Query(in queryDescription);
 
@@ -31,14 +33,11 @@ namespace ECS.ComponentsPooling
                 {
                     for (var i = 0; i < array2D.Length; i++)
                     {
-                        for (var j = 0; j < array2D.Length; j++)
-                        {
-                            var component = array2D[j].GetValue(entityIndex);
-                            var type = component.GetType();
+                        var component = array2D[i].GetValue(entityIndex);
+                        var type = component.GetType();
 
-                            if (componentPoolsRegistry.TryGetPool(type, out var pool))
-                                pool.Release(component);
-                        }
+                        if (componentPoolsRegistry.TryGetPool(type, out var pool))
+                            pool.Release(component);
                     }
                 }
             }

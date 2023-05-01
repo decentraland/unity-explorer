@@ -6,7 +6,7 @@ namespace CrdtEcsBridge.Components
     {
         private readonly Dictionary<int, SDKComponentBridge> bridges = new (30);
 
-        public ISDKComponentsRegistry Add(SDKComponentBridge bridge)
+        public SDKComponentsRegistry Add(SDKComponentBridge bridge)
         {
             bridges.Add(bridge.Id, bridge);
             return this;

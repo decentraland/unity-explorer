@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Cysharp.Threading.Tasks;
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using UnityEngine.Networking;
 
 namespace Utility
 {
@@ -14,7 +16,7 @@ namespace Utility
         /// <typeparam name="T">Unmanaged type</typeparam>
         /// <returns>The value read</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe T Read<T>(this ref ReadOnlySpan<byte> span, ref int bytesCounter) where T : unmanaged
+        public static unsafe T Read<T>(this ref ReadOnlySpan<byte> span, ref int bytesCounter) where T: unmanaged
         {
             var result = MemoryMarshal.Read<T>(span);
             span = span.Slice(sizeof(T));
@@ -29,7 +31,7 @@ namespace Utility
         /// <typeparam name="T">Unmanaged type</typeparam>
         /// <returns>The value read</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe T Read<T>(this ref ReadOnlyMemory<byte> memory) where T : unmanaged
+        public static unsafe T Read<T>(this ref ReadOnlyMemory<byte> memory) where T: unmanaged
         {
             var result = MemoryMarshal.Read<T>(memory.Span);
             memory = memory.Slice(sizeof(T));
@@ -52,6 +54,7 @@ namespace Utility
             // Read the required number of bytes from the memory
             var stream = MemoryMarshal.Read<T>(memory.Span);
             memory = memory.Slice(sizeof(T));
+
             // Then reinterpret them accordingly to the `TEnum` size
             return Unsafe.As<T, TEnum>(ref stream);
         }
@@ -63,7 +66,7 @@ namespace Utility
         /// <param name="value">The value to write</param>
         /// <typeparam name="T">Unmanaged Type</typeparam>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void Write<T>(this ref Span<byte> span, T value) where T : unmanaged
+        public static unsafe void Write<T>(this ref Span<byte> span, T value) where T: unmanaged
         {
             MemoryMarshal.Write(span, ref value);
             span = span.Slice(sizeof(T));

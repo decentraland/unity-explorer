@@ -2,6 +2,7 @@
   "name": "SDKComponentCommandBufferSyncronizer",
   "references": [
     "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
-    "GUID:0f4c0f120707fb74497f5d581b9858f8"
+    "GUID:0f4c0f120707fb74497f5d581b9858f8",
+    "GUID:6e2b4bed29ad1c549ab19b744f36f388"
   ]
 }

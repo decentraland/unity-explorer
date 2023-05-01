@@ -17,7 +17,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
         /// <summary>
         /// Should be called from the main thread to apply the changes to the ECS World
-        /// Finalizes the command buffer and allows to rent it again
+        /// Finalizes the command buffer and allows to rent it again.
         /// </summary>
         /// <param name="syncCommandBuffer"></param>
         void ApplySyncCommandBuffer(WorldSyncCommandBuffer syncCommandBuffer);

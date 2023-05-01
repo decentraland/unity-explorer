@@ -13,5 +13,8 @@ namespace CRDT.Protocol
             State = state;
             Effect = effect;
         }
+
+        public override string ToString() =>
+            $"({State}, {Effect})";
     }
 }

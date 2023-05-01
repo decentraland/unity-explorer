@@ -2,7 +2,7 @@
 using Arch.System;
 using UnityEngine.Profiling;
 
-namespace ECS
+namespace ECS.Abstract
 {
     /// <summary>
     /// Provides additional functionality to `BaseSystem`

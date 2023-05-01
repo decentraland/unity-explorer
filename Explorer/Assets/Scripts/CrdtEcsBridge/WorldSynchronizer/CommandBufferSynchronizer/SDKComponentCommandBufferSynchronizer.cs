@@ -1,6 +1,7 @@
 using Arch.Core;
 using CRDT.Protocol;
 using ECS.ComponentsPooling;
+using JetBrains.Annotations;
 
 namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
 {
@@ -50,6 +51,6 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
     {
         public abstract void Apply(World world, Arch.Core.CommandBuffer.CommandBuffer commandBuffer,
             Entity entity,
-            CRDTReconciliationEffect reconciliationEffect, object component);
+            CRDTReconciliationEffect reconciliationEffect, [CanBeNull] object component);
     }
 }
