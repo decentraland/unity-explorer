@@ -38,10 +38,10 @@ public class SceneRuntimeShould
             exports.onUpdate = async function(dt) {};
         ";
 
-        var sceneRuntime = new SceneRuntime(code);
+        SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
+        var sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code);
 
         sceneRuntime.RegisterEngineApi(engineApi);
-
         await sceneRuntime.StartScene();
 
         await engineApi.Received().CrdtGetState();
@@ -63,7 +63,8 @@ public class SceneRuntimeShould
             };
         ";
 
-        var sceneRuntime = new SceneRuntime(code);
+        SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
+        var sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code);
 
         sceneRuntime.RegisterEngineApi(engineApi);
 
@@ -96,7 +97,8 @@ public class SceneRuntimeShould
             exports.onUpdate = async function(dt) {};
         ";
 
-        var sceneRuntime = new SceneRuntime(code);
+        SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
+        var sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code);
 
         await sceneRuntime.StartScene();
 
@@ -120,8 +122,9 @@ public class SceneRuntimeShould
     {
         var engineApi = Substitute.For<IEngineApi>();
 
-        var code = Resources.Load<TextAsset>("Scenes/Cube/cube.js").text;
-        var sceneRuntime = new SceneRuntime(code);
+        SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
+        var path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
+        var sceneRuntime = await sceneRuntimeFactory.CreateByPath(path);
 
         sceneRuntime.RegisterEngineApi(engineApi);
 
