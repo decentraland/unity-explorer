@@ -13,6 +13,12 @@ using UnityEngine.TestTools;
 public class V8Tests
 {
     [Test]
+    public void FailTest()
+    {
+        Assert.Fail();
+    }
+
+    [Test]
     public void CallInvokeAsFunction()
     {
         var engine = V8EngineFactory.Create();
