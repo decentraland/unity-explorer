@@ -1,0 +1,18 @@
+{
+    "name": "SceneRuntimeFactory",
+    "rootNamespace": "",
+    "references": [
+        "GUID:bfcb7f4c56e9fe947a7bdce7523884ff",
+        "GUID:0b3eab7834a09c24ca4e84fe0d8a43ce",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
