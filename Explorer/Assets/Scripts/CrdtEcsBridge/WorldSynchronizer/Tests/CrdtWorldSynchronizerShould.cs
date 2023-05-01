@@ -27,6 +27,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         public void ReleaseSyncBuffer()
         {
             var worldSyncCommandBuffer = crdtWorldSynchronizer.GetSyncCommandBuffer();
+            worldSyncCommandBuffer.FinalizeAndDeserialize();
             crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncCommandBuffer);
 
             Assert.DoesNotThrow(() => crdtWorldSynchronizer.GetSyncCommandBuffer());
