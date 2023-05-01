@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using System;
 using System.Threading;
 using UnityEngine.Networking;
 
@@ -13,10 +12,7 @@ namespace AssetManagement.JsCodeResolver
 
             await request.SendWebRequest().WithCancellation(cancellationToken);
 
-            if (request.result == UnityWebRequest.Result.Success)
-                return request.downloadHandler.text;
-            else
-                throw new Exception($"Asset request failed with error {request.error}");
+            return request.downloadHandler.text;
         }
     }
 }

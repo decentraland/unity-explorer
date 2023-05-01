@@ -1,4 +1,4 @@
-using AssetManagement.CodeResolver;
+using AssetManagement.JsCodeResolver;
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -6,12 +6,12 @@ using UnityEngine;
 
 public class SceneRuntimeFactory
 {
-    private readonly CodeContentResolver codeContentResolver;
+    private readonly JsCodeResolver codeContentResolver;
     private readonly Dictionary<string, string> sourceCodeCache;
 
     public SceneRuntimeFactory()
     {
-        codeContentResolver = new CodeContentResolver();
+        codeContentResolver = new JsCodeResolver();
         sourceCodeCache = new Dictionary<string, string>();
     }
 
