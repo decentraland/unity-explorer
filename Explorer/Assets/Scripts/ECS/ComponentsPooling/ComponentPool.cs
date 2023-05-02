@@ -11,15 +11,9 @@ namespace ECS.ComponentsPooling
         /// </summary>
         private readonly ThreadSafeObjectPool<T> objectPool;
 
-        public ComponentPool(Action<T> onRelease = null)
+        public ComponentPool(Action<T> onGet = null, Action<T> onRelease = null)
         {
-            objectPool = new ThreadSafeObjectPool<T>(() => new T(), actionOnRelease: onRelease);
-        }
-
-        public T Rent()
-        {
-            // A very basic synchronization is the fastest one
-            lock (objectPool) { return objectPool.Get(); }
+            objectPool = new ThreadSafeObjectPool<T>(() => new T(), actionOnGet: onGet, actionOnRelease: onRelease);
         }
 
         public T Get() =>

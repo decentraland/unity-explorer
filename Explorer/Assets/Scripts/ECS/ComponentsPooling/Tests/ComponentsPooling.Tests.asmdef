@@ -5,7 +5,9 @@
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner",
     "ComponentsPooling",
-    "ECS"
+    "ECS",
+    "UniTask",
+    "UniTask.Editor"
   ],
   "includePlatforms": [
     "Editor"
