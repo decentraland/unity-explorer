@@ -61,7 +61,7 @@ jobs:
             ${{ steps.testRunner.outputs.artifactsPath }}/editmode-results.xml
 
       - name: Report test results
-        uses: dorny/test-reporter@v1
+        uses: kuruk-mm/test-reporting@0.2
         if: always()
         with:
           name: Report test results
