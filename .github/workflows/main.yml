@@ -61,7 +61,7 @@ jobs:
             ${{ steps.testRunner.outputs.artifactsPath }}/editmode-results.xml
 
       - name: Report test results
-        uses: dorny/test-reporter@v1
+        uses: phoenix-actions/test-reporting@v12
         if: always()
         with:
           name: Report test results
