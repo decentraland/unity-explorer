@@ -61,7 +61,7 @@ jobs:
             ${{ steps.testRunner.outputs.artifactsPath }}/editmode-results.xml
 
       - name: Report test results
-        uses: phoenix-actions/test-reporting@v12
+        uses: kuruk-mm/test-reporting@0.1
         if: always()
         with:
           name: Report test results
