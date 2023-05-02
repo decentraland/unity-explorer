@@ -1,0 +1,10 @@
+{
+  "name": "SDKComponentsRegistry",
+  "references": [
+    "GUID:71b0de8ae1751544fbbc53c22865b4c8",
+    "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+    "GUID:34936d3bba0aaec4588ec487fda270bc",
+    "GUID:83cc766db25f4a84b0fdfaf8a091122d",
+    "GUID:6e2b4bed29ad1c549ab19b744f36f388"
+  ]
+}

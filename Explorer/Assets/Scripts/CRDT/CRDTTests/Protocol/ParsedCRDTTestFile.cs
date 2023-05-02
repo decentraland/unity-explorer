@@ -1,5 +1,6 @@
 using Collections.Pooled;
 using CRDT.Protocol;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -27,11 +28,22 @@ namespace CRDT.CRDTTests.Protocol
         public string fileName;
         public List<TestFileInstruction> fileInstructions = new List<TestFileInstruction>();
 
-        public static CRDTMessage InstructionToMessage(TestFileInstruction instruction)
+        public static (CRDTMessage, CRDTReconciliationResult?) InstructionToMessage(TestFileInstruction instruction)
         {
             CRDTTestMessage msg = null;
+            CRDTReconciliationResult? reconciliationResult = null;
 
-            try { msg = JsonUtility.FromJson<CRDTTestMessage>(instruction.instructionValue); }
+            try
+            {
+                var parts = instruction.instructionValue.Split("=>");
+
+                if (parts.Length == 2)
+                {
+                    msg = JsonUtility.FromJson<CRDTTestMessage>(parts[0]);
+                    reconciliationResult = JsonUtility.FromJson<CRDTTestMessageResult>(parts[1]).ToCRDTReconciliationResult();
+                }
+                else { msg = JsonUtility.FromJson<CRDTTestMessage>(instruction.instructionValue); }
+            }
             catch (Exception e)
             {
                 Debug.LogError($"Error parsing line for msg (ln: {instruction.lineNumber}) " +
@@ -44,7 +56,7 @@ namespace CRDT.CRDTTests.Protocol
             if (crdtLibType == 1) { msg.type = CRDTMessageType.PUT_COMPONENT; }
             else if (crdtLibType == 2) { msg.type = CRDTMessageType.DELETE_ENTITY; }
 
-            return msg.ToCRDTMessage();
+            return (msg.ToCRDTMessage(), reconciliationResult);
         }
 
         internal static IEnumerable<CRDTMessage> InstructionToFinalStateMessages(TestFileInstruction instruction)

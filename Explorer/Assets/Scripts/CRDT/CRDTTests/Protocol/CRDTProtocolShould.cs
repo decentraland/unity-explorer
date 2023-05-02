@@ -35,8 +35,14 @@ namespace CRDT.CRDTTests.Protocol
 
                 if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.MESSAGE)
                 {
-                    CRDTMessage msg = ParsedCRDTTestFile.InstructionToMessage(instruction);
-                    crdt.ProcessMessage(msg);
+                    var (msg, expectedResult) = ParsedCRDTTestFile.InstructionToMessage(instruction);
+                    var result = crdt.ProcessMessage(msg);
+
+                    if (expectedResult != null)
+                    {
+                        Assert.AreEqual(expectedResult.Value, result, $"Message reconciliation result mismatch {instruction.instructionValue} "
+                                                                      + $"in line:{instruction.lineNumber} for file {instruction.fileName}. Expected: {expectedResult}, actual: {result}");
+                    }
                 }
                 else if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.FINAL_STATE)
                 {
@@ -61,7 +67,7 @@ namespace CRDT.CRDTTests.Protocol
 
                 if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.MESSAGE)
                 {
-                    CRDTMessage msg = ParsedCRDTTestFile.InstructionToMessage(instruction);
+                    var (msg, _) = ParsedCRDTTestFile.InstructionToMessage(instruction);
                     crdt.ProcessMessage(msg);
                 }
                 else if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.FINAL_STATE)

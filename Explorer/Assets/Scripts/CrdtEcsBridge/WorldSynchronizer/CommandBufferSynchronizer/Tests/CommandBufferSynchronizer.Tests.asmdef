@@ -1,0 +1,29 @@
+{
+  "name": "CommandBufferSynchronizer.Tests",
+  "rootNamespace": "",
+  "references": [
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner",
+    "ECS",
+    "SDKComponentCommandBufferSyncronizer",
+    "CRDT",
+    "ComponentsPooling"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll",
+    "NSubstitute.dll",
+    "Arch.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

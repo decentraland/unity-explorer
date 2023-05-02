@@ -1,39 +1,39 @@
 # CRDT protocol should store the message A in all the clients
 # Messages sent over the wire
-{"type":1,"componentId":7,"entityId":11,"data":"casla","timestamp":1}
+{"type":1,"componentId":7,"entityId":11,"data":"casla","timestamp":1} => {"state":1,"effect":2}
 # End of messages
 # Final CRDT State
 {"components":[{"componentId":7,"entityId":11,"timestamp":1,"data":"casla"}],"deletedEntities":[]}
 #
 # CRDT protocol one message with more clients (N > 2)
 # Messages sent over the wire
-{"type":1,"componentId":7,"entityId":11,"data":"casla","timestamp":1}
+{"type":1,"componentId":7,"entityId":11,"data":"casla","timestamp":1} => {"state":1,"effect":2}
 # End of messages
 # Final CRDT State
 {"components":[{"componentId":7,"entityId":11,"timestamp":1,"data":"casla"}],"deletedEntities":[]}
 #
 # CRDT protocol should decline message A if both messages are sent at the same time and data B > data A
 # Messages sent over the wire
-{"type":1,"componentId":7,"entityId":11,"data":"a","timestamp":1}
-{"type":1,"componentId":7,"entityId":11,"data":"z","timestamp":1}
+{"type":1,"componentId":7,"entityId":11,"data":"a","timestamp":1} => {"state":1,"effect":2}
+{"type":1,"componentId":7,"entityId":11,"data":"z","timestamp":1} => {"state":5,"effect":3}
 # End of messages
 # Final CRDT State
 {"components":[{"componentId":7,"entityId":11,"timestamp":1,"data":"z"}],"deletedEntities":[]}
 #
 # CRDT protocol B > A but with more clients (N > 2)
 # Messages sent over the wire
-{"type":1,"componentId":7,"entityId":11,"data":"a","timestamp":1}
-{"type":1,"componentId":7,"entityId":11,"data":"b","timestamp":1}
+{"type":1,"componentId":7,"entityId":11,"data":"a","timestamp":1} => {"state":1,"effect":2}
+{"type":1,"componentId":7,"entityId":11,"data":"b","timestamp":1} => {"state":5,"effect":3}
 # End of messages
 # Final CRDT State
 {"components":[{"componentId":7,"entityId":11,"timestamp":1,"data":"b"}],"deletedEntities":[]}
 #
 # CRDT protocol should store both keys
 # Messages sent over the wire
-{"type":1,"componentId":7,"entityId":11,"data":"boedo","timestamp":1}
-{"type":1,"componentId":13,"entityId":17,"data":"casla","timestamp":1}
-{"type":1,"componentId":13,"entityId":17,"data":"a","timestamp":2}
-{"type":1,"componentId":13,"entityId":17,"data":"z","timestamp":2}
+{"type":1,"componentId":7,"entityId":11,"data":"boedo","timestamp":1} => {"state":1,"effect":2}
+{"type":1,"componentId":13,"entityId":17,"data":"casla","timestamp":1} => {"state":1,"effect":2}
+{"type":1,"componentId":13,"entityId":17,"data":"a","timestamp":2} => {"state":1,"effect":3}
+{"type":1,"componentId":13,"entityId":17,"data":"z","timestamp":2} => {"state":5,"effect":3}
 # End of messages
 # Final CRDT State
 {"components":[{"componentId":7,"entityId":11,"timestamp":1,"data":"boedo"},{"componentId":13,"entityId":17,"timestamp":2,"data":"z"}],"deletedEntities":[]}
