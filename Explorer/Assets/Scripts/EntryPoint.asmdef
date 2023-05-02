@@ -2,8 +2,11 @@
     "name": "EntryPoint",
     "rootNamespace": "",
     "references": [
-        "GUID:0b3eab7834a09c24ca4e84fe0d8a43ce",
-        "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
+      "GUID:0b3eab7834a09c24ca4e84fe0d8a43ce",
+      "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+      "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+      "GUID:0f4c0f120707fb74497f5d581b9858f8",
+      "GUID:34936d3bba0aaec4588ec487fda270bc"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -1,0 +1,31 @@
+{
+  "name": "WorldSynchronizer.Tests",
+  "rootNamespace": "",
+  "references": [
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner",
+    "WorldSynchronizer",
+    "SDKComponentsRegistry",
+    "CRDT",
+    "ECS",
+    "ComponentSerialization",
+    "ComponentsPooling"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll",
+    "Arch.dll",
+    "NSubstitute.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
