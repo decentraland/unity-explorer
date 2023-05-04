@@ -1,10 +1,10 @@
 using CRDT;
 using CRDT.Protocol;
 using CRDT.Protocol.Factory;
+using CrdtEcsBridge.Components;
 using CrdtEcsBridge.OutgoingMessages;
-using CrdtEcsBridge.Serialization;
+using Google.Protobuf;
 using System;
-using System.Collections.Generic;
 
 namespace CrdtEcsBridge.ECSToCRDTWriter
 {
@@ -12,27 +12,28 @@ namespace CrdtEcsBridge.ECSToCRDTWriter
     {
         private readonly ICRDTProtocol crdtProtocol;
         private readonly IOutgoingCRTDMessagesProvider outgoingCRDTMessageProvider;
-        private readonly Dictionary<int, IComponentSerializer> serializers;
+        private readonly ISDKComponentsRegistry componentsRegistry;
 
-        public ECSToCRDTWriter(ICRDTProtocol crdtProtocol, IOutgoingCRTDMessagesProvider outgoingCRDTMessageProvider)
+        public ECSToCRDTWriter(ICRDTProtocol crdtProtocol, IOutgoingCRTDMessagesProvider outgoingCRDTMessageProvider,
+            ISDKComponentsRegistry componentsRegistry)
         {
             this.crdtProtocol = crdtProtocol;
             this.outgoingCRDTMessageProvider = outgoingCRDTMessageProvider;
-            serializers = new Dictionary<int, IComponentSerializer>();
+            this.componentsRegistry = componentsRegistry;
         }
 
-        public void PutMessage<T>(CRDTEntity crdtID, int componentId, T model)
+        public void PutMessage<T>(CRDTEntity crdtID, int componentId, T model) where T: IMessage<T>
         {
-            if (serializers.TryGetValue(componentId, out IComponentSerializer serializer))
-                ProcessMessage(crdtProtocol.CreatePutMessage(crdtID, componentId, serializer.Serialize(model)));
+            if (componentsRegistry.TryGet(componentId, out SDKComponentBridge componentBridge))
+                ProcessMessage(crdtProtocol.CreatePutMessage(crdtID, componentId, componentBridge.Serializer.Serialize(model)));
             else
                 throw new Exception($"Serializer not present for type {typeof(T).Name}");
         }
 
-        public void AppendMessage<T>(CRDTEntity crdtID, int componentId, T model)
+        public void AppendMessage<T>(CRDTEntity crdtID, int componentId, T model) where T: IMessage<T>
         {
-            if (serializers.TryGetValue(componentId, out IComponentSerializer serializer))
-                ProcessMessage(crdtProtocol.CreateAppendMessage(crdtID, componentId, serializer.Serialize(model)));
+            if (componentsRegistry.TryGet(componentId, out SDKComponentBridge componentBridge))
+                ProcessMessage(crdtProtocol.CreateAppendMessage(crdtID, componentId, componentBridge.Serializer.Serialize(model)));
             else
                 throw new Exception($"Serializer not present for type {typeof(T).Name}");
         }
@@ -42,17 +43,12 @@ namespace CrdtEcsBridge.ECSToCRDTWriter
             ProcessMessage(crdtProtocol.CreateDeleteMessage(crdtID, componentId));
         }
 
-        public void RegisterSerializer(int componentId, IComponentSerializer serializer)
-        {
-            serializers.Add(componentId, serializer);
-        }
-
         private void ProcessMessage(ProcessedCRDTMessage processedCrdtMessage)
         {
             //We process the message in the CRDTState.
             CRDTReconciliationResult result = crdtProtocol.ProcessMessage(processedCrdtMessage.message);
 
-            //We send the message to the other CRDT if the result was successful in out CRDT
+            //We prepare an outgoing message if necessary
             switch (result.Effect)
             {
                 case CRDTReconciliationEffect.ComponentAdded:

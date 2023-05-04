@@ -1,8 +1,8 @@
 using CRDT;
 using CRDT.Protocol;
 using CRDT.Protocol.Factory;
+using CrdtEcsBridge.Components;
 using CrdtEcsBridge.OutgoingMessages;
-using CrdtEcsBridge.Serialization;
 using DCL.ECS7;
 using DCL.ECSComponents;
 using NSubstitute;
@@ -15,13 +15,16 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
     public class ECSToCRDTWriterShould
     {
         [Test]
-        public void AppendMessageShould()
+        public void AppendMessage()
         {
             //Arrange
             ICRDTProtocol crdtProtocol = Substitute.For<ICRDTProtocol>();
             IOutgoingCRTDMessagesProvider outgoingCRDTMessageProvider = Substitute.For<IOutgoingCRTDMessagesProvider>();
-            var ecsToCRDTWriter = new ECSToCRDTWriter(crdtProtocol, outgoingCRDTMessageProvider);
-            ecsToCRDTWriter.RegisterSerializer(ComponentID.POINTER_EVENTS_RESULT, new ProtobufSerializer<PBPointerEventsResult>());
+
+            var sdkComponentRegistry = new SDKComponentsRegistry();
+            sdkComponentRegistry.Add(SDKComponentBuilder<PBPointerEventsResult>.Create(ComponentID.POINTER_EVENTS_RESULT).AsProtobufComponent());
+
+            var ecsToCRDTWriter = new ECSToCRDTWriter(crdtProtocol, outgoingCRDTMessageProvider, sdkComponentRegistry);
             crdtProtocol.ProcessMessage(Arg.Any<CRDTMessage>()).Returns(_ => new CRDTReconciliationResult(CRDTStateReconciliationResult.StateAppendedData, CRDTReconciliationEffect.ComponentAdded));
             var crdtEntity = new CRDTEntity(1);
 
@@ -34,27 +37,32 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
         }
 
         [Test]
-        public void MessageWasAppendedCorrectly()
+        public void AddMessageToProtocol()
         {
             //Arrange
             ICRDTProtocol crdtProtocol = new CRDTProtocol();
             IOutgoingCRTDMessagesProvider outgoingCRDTMessageProvider = Substitute.For<IOutgoingCRTDMessagesProvider>();
-            var ecsToCRDTWriter = new ECSToCRDTWriter(crdtProtocol, outgoingCRDTMessageProvider);
-            ecsToCRDTWriter.RegisterSerializer(ComponentID.POINTER_EVENTS_RESULT, new ProtobufSerializer<PBPointerEventsResult>());
+
+            var sdkComponentRegistry = new SDKComponentsRegistry();
+            sdkComponentRegistry.Add(SDKComponentBuilder<PBPointerEventsResult>.Create(ComponentID.POINTER_EVENTS_RESULT).AsProtobufComponent());
+
+            var ecsToCRDTWriter = new ECSToCRDTWriter(crdtProtocol, outgoingCRDTMessageProvider, sdkComponentRegistry);
 
             //Act
             ecsToCRDTWriter.PutMessage(new CRDTEntity(), ComponentID.POINTER_EVENTS_RESULT, new PBPointerEventsResult());
 
+            //Assert
             Assert.AreEqual(crdtProtocol.GetMessagesCount(), 1);
         }
 
         [Test]
-        public void ExceptionThrownIfSerializerNotPresent()
+        public void ThrowExceptionIfSerializerNotPresent()
         {
             //Arrange
             ICRDTProtocol crdtProtocol = new CRDTProtocol();
             IOutgoingCRTDMessagesProvider outgoingCRDTMessageProvider = Substitute.For<IOutgoingCRTDMessagesProvider>();
-            var ecsToCRDTWriter = new ECSToCRDTWriter(crdtProtocol, outgoingCRDTMessageProvider);
+            var sdkComponentRegistry = new SDKComponentsRegistry();
+            var ecsToCRDTWriter = new ECSToCRDTWriter(crdtProtocol, outgoingCRDTMessageProvider, sdkComponentRegistry);
             var crdtEntity = new CRDTEntity();
 
             //Assert
