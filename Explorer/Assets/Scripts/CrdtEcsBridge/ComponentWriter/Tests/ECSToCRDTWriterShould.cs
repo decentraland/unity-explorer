@@ -34,6 +34,21 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
         }
 
         [Test]
+        public void MessageWasAppendedCorrectly()
+        {
+            //Arrange
+            ICRDTProtocol crdtProtocol = new CRDTProtocol();
+            IOutgoingCRTDMessagesProvider outgoingCRDTMessageProvider = Substitute.For<IOutgoingCRTDMessagesProvider>();
+            var ecsToCRDTWriter = new ECSToCRDTWriter(crdtProtocol, outgoingCRDTMessageProvider);
+            ecsToCRDTWriter.RegisterSerializer(ComponentID.POINTER_EVENTS_RESULT, new ProtobufSerializer<PBPointerEventsResult>());
+
+            //Act
+            ecsToCRDTWriter.PutMessage(new CRDTEntity(), ComponentID.POINTER_EVENTS_RESULT, new PBPointerEventsResult());
+
+            Assert.AreEqual(crdtProtocol.GetMessagesCount(), 1);
+        }
+
+        [Test]
         public void ExceptionThrownIfSerializerNotPresent()
         {
             //Arrange
