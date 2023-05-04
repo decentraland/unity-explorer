@@ -3,6 +3,10 @@ using UnityEngine.Pool;
 
 namespace Utility.ThreadSafePool
 {
+    /// <summary>
+    /// Represents a pool that can be shared between multiple threads
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class ThreadSafeObjectPool<T> : IObjectPool<T> where T: class
     {
         private IObjectPool<T> objectPoolImplementation;
