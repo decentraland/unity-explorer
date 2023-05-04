@@ -97,39 +97,42 @@ namespace CRDT.Protocol
 
         public CRDTReconciliationResult ProcessMessage(in CRDTMessage message)
         {
-            var entityId = message.EntityId;
-            int entityNumber = entityId.EntityNumber;
-            int entityVersion = entityId.EntityVersion;
-
-            // Instead of storing by "entityId", store by "entityNumber" as SDK will reuse them and the set will be smaller
-            var entityNumberWasDeleted = crdtState.deletedEntities.TryGetValue(entityNumber, out int deletedVersion);
-
-            if (entityNumberWasDeleted && deletedVersion >= entityVersion)
-
-                // Entity was already deleted so no actions are required
-                return new (CRDTStateReconciliationResult.EntityWasDeleted, CRDTReconciliationEffect.NoChanges);
-
-            switch (message.Type)
+            lock (this)
             {
-                case CRDTMessageType.DELETE_ENTITY:
-                    DeleteEntity(entityId, entityNumber, entityVersion, entityNumberWasDeleted);
-                    return new (CRDTStateReconciliationResult.EntityDeleted, CRDTReconciliationEffect.EntityDeleted);
-                case CRDTMessageType.APPEND_COMPONENT:
-                    // The results of his branch is ignored as there are probably no SDK components with "APPEND" type
-                    // but the state should be stored as these components are produced by the client
-                    // and in theory they still must be reconciled
-                    return TryAppendComponent(in message)
-                        ? new (CRDTStateReconciliationResult.StateAppendedData, CRDTReconciliationEffect.ComponentAdded)
-                        : new (CRDTStateReconciliationResult.NoChanges, CRDTReconciliationEffect.NoChanges);
+                CRDTEntity entityId = message.EntityId;
+                int entityNumber = entityId.EntityNumber;
+                int entityVersion = entityId.EntityVersion;
 
-                // Effectively it is the same logic that updates the LWW set, the only difference is in Data presence
-                // For DELETE_COMPONENT it is "Empty"
-                case CRDTMessageType.PUT_COMPONENT:
-                case CRDTMessageType.DELETE_COMPONENT:
-                    return UpdateLWWState(in message);
+                // Instead of storing by "entityId", store by "entityNumber" as SDK will reuse them and the set will be smaller
+                bool entityNumberWasDeleted = crdtState.deletedEntities.TryGetValue(entityNumber, out int deletedVersion);
+
+                if (entityNumberWasDeleted && deletedVersion >= entityVersion)
+
+                    // Entity was already deleted so no actions are required
+                    return new CRDTReconciliationResult(CRDTStateReconciliationResult.EntityWasDeleted, CRDTReconciliationEffect.NoChanges);
+
+                switch (message.Type)
+                {
+                    case CRDTMessageType.DELETE_ENTITY:
+                        DeleteEntity(entityId, entityNumber, entityVersion, entityNumberWasDeleted);
+                        return new CRDTReconciliationResult(CRDTStateReconciliationResult.EntityDeleted, CRDTReconciliationEffect.EntityDeleted);
+                    case CRDTMessageType.APPEND_COMPONENT:
+                        // The results of his branch is ignored as there are probably no SDK components with "APPEND" type
+                        // but the state should be stored as these components are produced by the client
+                        // and in theory they still must be reconciled
+                        return TryAppendComponent(in message)
+                            ? new CRDTReconciliationResult(CRDTStateReconciliationResult.StateAppendedData, CRDTReconciliationEffect.ComponentAdded)
+                            : new CRDTReconciliationResult(CRDTStateReconciliationResult.NoChanges, CRDTReconciliationEffect.NoChanges);
+
+                    // Effectively it is the same logic that updates the LWW set, the only difference is in Data presence
+                    // For DELETE_COMPONENT it is "Empty"
+                    case CRDTMessageType.PUT_COMPONENT:
+                    case CRDTMessageType.DELETE_COMPONENT:
+                        return UpdateLWWState(in message);
+                }
+
+                throw new NotSupportedException($"Message type {message.Type} is not supported");
             }
-
-            throw new NotSupportedException($"Message type {message.Type} is not supported");
         }
 
         public int CreateMessagesFromTheCurrentState(ProcessedCRDTMessage[] preallocatedArray) =>

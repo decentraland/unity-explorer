@@ -254,7 +254,10 @@ namespace CrdtEcsBridge.WorldSynchronizer
                     // it is sub-optimal but I don't see the way to do it better
 
                     if (!entitiesMap.TryGetValue(entity, out var realEntity))
+                    {
                         entitiesMap[entity] = realEntity = world.Create();
+                        commandBuffer.Add(realEntity, entity);
+                    }
 
                     foreach (var batchState in componentsBatch.Values)
                     {

@@ -8,7 +8,7 @@ namespace CRDT.Protocol.Factory
     [StructLayout(LayoutKind.Sequential)]
     public readonly struct ProcessedCRDTMessage
     {
-        internal readonly CRDTMessage message;
+        public readonly CRDTMessage message { get; }
         internal readonly int CRDTMessageDataLength;
 
         public ProcessedCRDTMessage(CRDTMessage message, int crdtMessageDataLength)
@@ -16,5 +16,6 @@ namespace CRDT.Protocol.Factory
             this.message = message;
             this.CRDTMessageDataLength = crdtMessageDataLength;
         }
+
     }
 }

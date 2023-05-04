@@ -9,5 +9,19 @@ namespace CrdtEcsBridge.Serialization
         {
             instance.MergeFrom(data);
         }
+
+        public ReadOnlyMemory<byte> Serialize(T model)
+        {
+            //Is it the same as doing model.ToByteArray()?
+            /*Span<byte> buffer = new byte[model.CalculateSize()].AsSpan();
+            model.WriteTo(buffer);
+            return buffer;*/
+
+            var buffer = new byte[model.CalculateSize()];
+            var output = new CodedOutputStream(buffer);
+            model.WriteTo(output);
+
+            return buffer.AsMemory();
+        }
     }
 }

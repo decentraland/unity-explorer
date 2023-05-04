@@ -32,6 +32,9 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             {
                 instance.Value = data.ToArray();
             }
+
+            public ReadOnlyMemory<byte> Serialize(TestComponent model) =>
+                throw new NotImplementedException();
         }
 
         public class TestComponentSerializer2 : IComponentSerializer<TestComponent2>
@@ -40,6 +43,9 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             {
                 instance.Value = data.ToArray();
             }
+
+            public ReadOnlyMemory<byte> Serialize(TestComponent2 model) =>
+                throw new NotImplementedException();
         }
 
         private const int COMPONENT_ID_1 = 100;
