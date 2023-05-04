@@ -3,6 +3,7 @@ using CRDT.Protocol;
 using CRDT.Protocol.Factory;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.Serialization;
+using System;
 using System.Collections.Generic;
 
 namespace CrdtEcsBridge.ECSToCRDTWriter
@@ -22,19 +23,22 @@ namespace CrdtEcsBridge.ECSToCRDTWriter
 
         public void PutMessage<T>(CRDTEntity crdtID, int componentId, T model)
         {
-            //We create the message from the input data
-            ProcessMessage(crdtProtocol.CreatePutMessage(crdtID, componentId, serializers[componentId].Serialize(model)));
+            if (serializers.TryGetValue(componentId, out IComponentSerializer serializer))
+                ProcessMessage(crdtProtocol.CreatePutMessage(crdtID, componentId, serializer.Serialize(model)));
+            else
+                throw new Exception($"Serializer not present for type {typeof(T).Name}");
         }
 
         public void AppendMessage<T>(CRDTEntity crdtID, int componentId, T model)
         {
-            //We create the message from the input data
-            ProcessMessage(crdtProtocol.CreateAppendMessage(crdtID, componentId, serializers[componentId].Serialize(model)));
+            if (serializers.TryGetValue(componentId, out IComponentSerializer serializer))
+                ProcessMessage(crdtProtocol.CreateAppendMessage(crdtID, componentId, serializer.Serialize(model)));
+            else
+                throw new Exception($"Serializer not present for type {typeof(T).Name}");
         }
 
         public void DeleteMessage(CRDTEntity crdtID, int componentId)
         {
-            //We create the message from the input data
             ProcessMessage(crdtProtocol.CreateDeleteMessage(crdtID, componentId));
         }
 
