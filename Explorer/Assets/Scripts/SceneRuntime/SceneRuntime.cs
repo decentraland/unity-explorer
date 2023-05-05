@@ -2,9 +2,10 @@ using Cysharp.Threading.Tasks;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
+using System;
 using System.Collections.Generic;
 
-public class SceneRuntime
+public class SceneRuntime : IDisposable
 {
     internal readonly V8ScriptEngine engine;
 
@@ -17,9 +18,11 @@ public class SceneRuntime
     // ResetableSource is an optimization to reduce 11kb of memory allocation per Update (reduces 15kb to 4kb per update)
     private readonly UniTaskResolverResetable resetableSource;
 
-    public SceneRuntime(string sourceCode, string jsInitCode, Dictionary<string,string> jsModules)
+    private IEngineApi engineApi;
+
+    public SceneRuntime(string sourceCode, string jsInitCode, Dictionary<string, string> jsModules)
     {
-        resetableSource  = new UniTaskResolverResetable();
+        resetableSource = new UniTaskResolverResetable();
         moduleLoader = new SceneModuleLoader();
         engine = V8EngineFactory.Create();
 
@@ -70,6 +73,8 @@ public class SceneRuntime
         return resetableSource.Task;
     }
 
+    public void Dispose()
+    {
+        engineApi?.Dispose();
+    }
 }
-
-

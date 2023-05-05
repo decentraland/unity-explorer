@@ -9,6 +9,7 @@ using Microsoft.ClearScript.V8;
 public class EngineApiWrapper
 {
     private readonly IEngineApi api;
+
     public EngineApiWrapper(IEngineApi api)
     {
         this.api = api;
