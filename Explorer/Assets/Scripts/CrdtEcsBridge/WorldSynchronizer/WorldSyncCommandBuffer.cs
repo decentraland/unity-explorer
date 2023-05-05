@@ -16,7 +16,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
     /// to execute deserialize and execute them only once in the ECS World.
     /// Can't be executed concurrently
     /// </summary>
-    public class WorldSyncCommandBuffer : IDisposable
+    public class WorldSyncCommandBuffer : IWorldSyncCommandBuffer
     {
         /// <summary>
         /// Represents the final state of the operation on (entity, component)
@@ -221,10 +221,6 @@ namespace CrdtEcsBridge.WorldSynchronizer
             deserialized = true;
         }
 
-        /// <summary>
-        /// Applies deserialized changes to the world.
-        /// Must be called on the thread where World is running
-        /// </summary>
         internal void Apply(World world, Arch.Core.CommandBuffer.CommandBuffer commandBuffer, Dictionary<CRDTEntity, Entity> entitiesMap)
         {
             if (!deserialized)
@@ -268,16 +264,24 @@ namespace CrdtEcsBridge.WorldSynchronizer
             }
             finally
             {
-                finalized = true;
-
                 // it is a must to Playback to clear internals
                 commandBuffer.Playback();
                 Dispose();
             }
         }
 
+        /// <summary>
+        /// <inheritdoc cref="IWorldSyncCommandBuffer.Apply"/>
+        /// </summary>
+        void IWorldSyncCommandBuffer.Apply(World world, Arch.Core.CommandBuffer.CommandBuffer commandBuffer, Dictionary<CRDTEntity, Entity> entitiesMap)
+        {
+            Apply(world, commandBuffer, entitiesMap);
+        }
+
         public void Dispose()
         {
+            if (finalized) return;
+
             foreach (var componentsBatch in batchStates.Values)
             {
                 foreach (var batchState in componentsBatch.Values)
@@ -288,6 +292,8 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
             batchStates.Dispose();
             deletedEntities.Dispose();
+
+            finalized = true;
         }
     }
 }

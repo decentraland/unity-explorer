@@ -30,7 +30,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
         public IReadOnlyDictionary<CRDTEntity, Entity> EntitiesMap => entitiesMap;
 
-        public WorldSyncCommandBuffer GetSyncCommandBuffer()
+        public IWorldSyncCommandBuffer GetSyncCommandBuffer()
         {
             if (commandBufferRented)
                 throw new InvalidOperationException("Command buffer is already rented");
@@ -39,7 +39,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
             return new WorldSyncCommandBuffer(sdkComponentsRegistry);
         }
 
-        public void ApplySyncCommandBuffer(WorldSyncCommandBuffer syncCommandBuffer)
+        public void ApplySyncCommandBuffer(IWorldSyncCommandBuffer syncCommandBuffer)
         {
             syncCommandBuffer.Apply(world, reusableCommandBuffer, entitiesMap);
             commandBufferRented = false;
