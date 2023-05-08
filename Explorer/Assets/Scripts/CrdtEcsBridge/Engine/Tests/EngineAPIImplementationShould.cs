@@ -31,6 +31,7 @@ namespace CrdtEcsBridge.Engine.Tests
         private ICRDTSerializer crdtSerializer;
         private ICrdtWorldSynchronizer crdtWorldSynchronizer;
         private IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider;
+        private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
 
         private EngineAPIImplementation engineAPIImplementation;
 
@@ -46,24 +47,26 @@ namespace CrdtEcsBridge.Engine.Tests
         {
             mutex = new Mutex();
 
+            crdtPooledMemoryAllocator = new CRDTPooledMemoryAllocator();
+
             crdtMessages = new List<CRDTMessage>
             {
-                new (CRDTMessageType.PUT_COMPONENT, 10, 100, 1, CRDTPooledMemoryAllocator.Empty),
-                new (CRDTMessageType.APPEND_COMPONENT, 10, 123, 1, CRDTPooledMemoryAllocator.Empty),
-                new (CRDTMessageType.DELETE_ENTITY, 12, 0, 0, CRDTPooledMemoryAllocator.Empty),
+                new (CRDTMessageType.PUT_COMPONENT, 10, 100, 1, EmptyMemoryOwner<byte>.EMPTY),
+                new (CRDTMessageType.APPEND_COMPONENT, 10, 123, 1, EmptyMemoryOwner<byte>.EMPTY),
+                new (CRDTMessageType.DELETE_ENTITY, 12, 0, 0, EmptyMemoryOwner<byte>.EMPTY),
             };
 
             outgoingMessages = new List<ProcessedCRDTMessage>
             {
-                new (new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, 122, 100, 1, CRDTPooledMemoryAllocator.GetMemoryBuffer(new byte[100])), 120),
+                new (new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, 122, 100, 1, crdtPooledMemoryAllocator.GetMemoryBuffer(new byte[100])), 120),
             };
 
             crdtStateMessages = new List<ProcessedCRDTMessage>
             {
-                new (new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, 33, 33, 1, CRDTPooledMemoryAllocator.GetMemoryBuffer(new byte[100])), 120),
-                new (new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, 44, 33, 1, CRDTPooledMemoryAllocator.GetMemoryBuffer(new byte[23])), 130),
-                new (new CRDTMessage(CRDTMessageType.PUT_COMPONENT, 122, 33, 1, CRDTPooledMemoryAllocator.GetMemoryBuffer(new byte[33])), 140),
-                new (new CRDTMessage(CRDTMessageType.PUT_COMPONENT, 122, 1000, 1, CRDTPooledMemoryAllocator.GetMemoryBuffer(new byte[44])), 10),
+                new (new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, 33, 33, 1, crdtPooledMemoryAllocator.GetMemoryBuffer(new byte[100])), 120),
+                new (new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, 44, 33, 1, crdtPooledMemoryAllocator.GetMemoryBuffer(new byte[23])), 130),
+                new (new CRDTMessage(CRDTMessageType.PUT_COMPONENT, 122, 33, 1, crdtPooledMemoryAllocator.GetMemoryBuffer(new byte[33])), 140),
+                new (new CRDTMessage(CRDTMessageType.PUT_COMPONENT, 122, 1000, 1, crdtPooledMemoryAllocator.GetMemoryBuffer(new byte[44])), 10),
             };
 
             engineAPIImplementation = new EngineAPIImplementation(

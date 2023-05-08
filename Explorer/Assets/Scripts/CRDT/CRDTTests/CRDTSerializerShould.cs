@@ -12,11 +12,13 @@ namespace CRDT.CRDTTests
     public class CRDTSerializerShould
     {
         private CRDTSerializer crdtSerializer;
+        private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
 
         [SetUp]
         public void SetUp()
         {
             crdtSerializer = new CRDTSerializer();
+            crdtPooledMemoryAllocator = new CRDTPooledMemoryAllocator();
         }
 
         [Test]
@@ -46,7 +48,7 @@ namespace CRDT.CRDTTests
         public byte[] SerializeCorrectlyPutComponent(int entityId, int componentId, int timestamp, byte[] data)
         {
             ReadOnlyMemory<byte> dataMemory = data ?? ReadOnlyMemory<byte>.Empty;
-            IMemoryOwner<byte> memoryOwner = CRDTPooledMemoryAllocator.GetMemoryBuffer(dataMemory);
+            IMemoryOwner<byte> memoryOwner = crdtPooledMemoryAllocator.GetMemoryBuffer(dataMemory);
             var entity = new CRDTEntity(entityId);
             int messageDataLength = CRDTMessageSerializationUtils.GetMessageDataLength(CRDTMessageType.PUT_COMPONENT, in memoryOwner);
 
@@ -94,14 +96,14 @@ namespace CRDT.CRDTTests
         public byte[] SerializeCorrectlyDeleteComponent(int entityId, int componentId, int timestamp)
         {
             var entity = new CRDTEntity(entityId);
-            int messageDataLength = CRDTMessageSerializationUtils.GetMessageDataLength(CRDTMessageType.DELETE_COMPONENT, CRDTPooledMemoryAllocator.Empty);
+            int messageDataLength = CRDTMessageSerializationUtils.GetMessageDataLength(CRDTMessageType.DELETE_COMPONENT, EmptyMemoryOwner<byte>.EMPTY);
 
             var message = new CRDTMessage(
                 CRDTMessageType.DELETE_COMPONENT,
                 entity,
                 componentId,
                 timestamp,
-                CRDTPooledMemoryAllocator.Empty
+                EmptyMemoryOwner<byte>.EMPTY
             );
 
             var processedMessage = new ProcessedCRDTMessage(message, messageDataLength);

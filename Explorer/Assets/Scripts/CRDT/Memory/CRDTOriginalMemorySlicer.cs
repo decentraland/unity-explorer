@@ -37,5 +37,11 @@ namespace CRDT.Memory
             return new SliceOwner(byteArray);
         }
 
+        public IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream)
+        {
+            byte[] byteArray = ArrayPool<byte>.Shared.Rent(originalStream.Length);
+            originalStream.Span.Slice(0, originalStream.Length).CopyTo(byteArray.AsSpan());
+            return new SliceOwner(byteArray);
+        }
     }
 }

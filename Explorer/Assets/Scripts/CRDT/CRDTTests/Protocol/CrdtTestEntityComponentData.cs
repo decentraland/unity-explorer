@@ -13,10 +13,17 @@ namespace CRDT.CRDTTests.Protocol
         public int timestamp;
         public string data;
 
+        private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
+
+        public CrdtTestEntityComponentData()
+        {
+            crdtPooledMemoryAllocator = new CRDTPooledMemoryAllocator();
+        }
+
         internal ReadOnlyMemory<byte> GetBytes() =>
             Encoding.UTF8.GetBytes(data);
 
         internal CRDTProtocol.EntityComponentData ToEntityComponentData() =>
-            new (timestamp, CRDTPooledMemoryAllocator.GetMemoryBuffer(GetBytes()));
+            new (timestamp, crdtPooledMemoryAllocator.GetMemoryBuffer(GetBytes()));
     }
 }

@@ -21,8 +21,8 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
             syncBlock = new OutgoingCRDTMessagesSyncBlock(
                 messages = new List<ProcessedCRDTMessage>
                 {
-                    new (new CRDTMessage(CRDTMessageType.PUT_COMPONENT, 100, 100, 0, CRDTPooledMemoryAllocator.Empty), 30),
-                    new (new CRDTMessage(CRDTMessageType.DELETE_ENTITY, 123, 0, 0, CRDTPooledMemoryAllocator.Empty), 60),
+                    new (new CRDTMessage(CRDTMessageType.PUT_COMPONENT, 100, 100, 0, EmptyMemoryOwner<byte>.EMPTY), 30),
+                    new (new CRDTMessage(CRDTMessageType.DELETE_ENTITY, 123, 0, 0, EmptyMemoryOwner<byte>.EMPTY), 60),
                 },
                 mutex = new Mutex()
             );

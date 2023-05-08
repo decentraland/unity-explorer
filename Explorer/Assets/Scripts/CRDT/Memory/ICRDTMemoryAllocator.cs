@@ -14,5 +14,7 @@ namespace CRDT.Memory
 
         IMemoryOwner<byte> GetMemoryBuffer(int length);
 
+        IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream);
+
     }
 }

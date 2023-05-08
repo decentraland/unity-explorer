@@ -14,7 +14,7 @@ namespace CRDT.Protocol
             EntityId = entityId;
             ComponentId = componentId;
             Timestamp = timestamp;
-            Data = data ?? CRDTPooledMemoryAllocator.Empty;
+            Data = data ?? EmptyMemoryOwner<byte>.EMPTY;
         }
 
         public readonly CRDTMessageType Type;

@@ -78,7 +78,7 @@ namespace CRDT.Deserializer
             var entityId = memorySpan.Read<CRDTEntity>(ref shift);
             memory = memory.Slice(shift);
 
-            crdtMessage = new CRDTMessage(CRDTMessageType.DELETE_ENTITY, entityId, 0, 0, CRDTPooledMemoryAllocator.Empty);
+            crdtMessage = new CRDTMessage(CRDTMessageType.DELETE_ENTITY, entityId, 0, 0, EmptyMemoryOwner<byte>.EMPTY);
             return true;
         }
 
@@ -97,7 +97,7 @@ namespace CRDT.Deserializer
 
             memory = memory.Slice(shift);
 
-            crdtMessage = new CRDTMessage(CRDTMessageType.DELETE_COMPONENT, entityId, componentId, timestamp, CRDTPooledMemoryAllocator.Empty);
+            crdtMessage = new CRDTMessage(CRDTMessageType.DELETE_COMPONENT, entityId, componentId, timestamp, EmptyMemoryOwner<byte>.EMPTY);
             return true;
         }
 

@@ -59,7 +59,7 @@ namespace CRDT.CRDTTests.Protocol
             return (msg.ToCRDTMessage(), reconciliationResult);
         }
 
-        internal static IEnumerable<CRDTMessage> InstructionToFinalStateMessages(TestFileInstruction instruction)
+        internal static IEnumerable<CRDTMessage> InstructionToFinalStateMessages(TestFileInstruction instruction, CRDTPooledMemoryAllocator crdtPooledMemoryAllocator)
         {
             CrdtJsonState finalState = null;
 
@@ -75,11 +75,11 @@ namespace CRDT.CRDTTests.Protocol
                 var entityId = entityComponentData.entityId;
                 int componentId = entityComponentData.componentId;
 
-                yield return new CRDTMessage(CRDTMessageType.PUT_COMPONENT, entityId, componentId, entityComponentData.timestamp, CRDTPooledMemoryAllocator.GetMemoryBuffer(entityComponentData.GetBytes()));
+                yield return new CRDTMessage(CRDTMessageType.PUT_COMPONENT, entityId, componentId, entityComponentData.timestamp, crdtPooledMemoryAllocator.GetMemoryBuffer(entityComponentData.GetBytes()));
             }
 
             foreach (var entity in finalState.deletedEntities)
-                yield return new CRDTMessage(CRDTMessageType.DELETE_ENTITY, CRDTEntity.Create(entity.entityNumber, entity.entityVersion), 0, 0, CRDTPooledMemoryAllocator.Empty);
+                yield return new CRDTMessage(CRDTMessageType.DELETE_ENTITY, CRDTEntity.Create(entity.entityNumber, entity.entityVersion), 0, 0, EmptyMemoryOwner<byte>.EMPTY);
         }
 
         internal static CRDTProtocol.State InstructionToFinalState(TestFileInstruction instruction)

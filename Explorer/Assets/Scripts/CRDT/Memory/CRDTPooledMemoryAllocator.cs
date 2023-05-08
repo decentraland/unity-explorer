@@ -46,15 +46,11 @@ namespace CRDT.Memory
             return new MemoryOwner(byteArray, length);
         }
 
-        //TODO (question): Can we make this class static and use this calls?
-        public static IMemoryOwner<byte> Empty => new MemoryOwner(ArrayPool<byte>.Shared.Rent(0), 0);
-
-        public static IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream)
+        public IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream)
         {
-            int streamLength = originalStream.Length;
-            byte[] byteArray = ArrayPool<byte>.Shared.Rent(streamLength);
-            originalStream.Span.Slice(0, streamLength).CopyTo(byteArray.AsSpan());
-            return new MemoryOwner(byteArray, streamLength);
+            byte[] byteArray = ArrayPool<byte>.Shared.Rent(originalStream.Length);
+            originalStream.Span.Slice(0, originalStream.Length).CopyTo(byteArray.AsSpan());
+            return new MemoryOwner(byteArray, originalStream.Length);
         }
 
     }

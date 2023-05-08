@@ -18,7 +18,7 @@ namespace CRDT.Protocol.Factory
             CreateMessage(in state, CRDTMessageType.PUT_COMPONENT, entity, componentId, data);
 
         public static ProcessedCRDTMessage CreateDeleteMessage(this in CRDTProtocol.State state, CRDTEntity entity, int componentId) =>
-            CreateMessage(in state, CRDTMessageType.DELETE_COMPONENT, entity, componentId, CRDTPooledMemoryAllocator.Empty);
+            CreateMessage(in state, CRDTMessageType.DELETE_COMPONENT, entity, componentId, EmptyMemoryOwner<byte>.EMPTY);
 
         /// <summary>
         /// Fills the array with messages corresponding to the current CRDT state
@@ -59,7 +59,7 @@ namespace CRDT.Protocol.Factory
             foreach (var (number, version) in state.deletedEntities)
             {
                 numberOfBytesToSerialize +=
-                    AddCRDTMessage(preallocatedArray, CRDTEntity.Create(number, version), 0, CRDTMessageType.DELETE_ENTITY, 0, CRDTPooledMemoryAllocator.Empty, ref index);
+                    AddCRDTMessage(preallocatedArray, CRDTEntity.Create(number, version), 0, CRDTMessageType.DELETE_ENTITY, 0, EmptyMemoryOwner<byte>.EMPTY, ref index);
             }
 
             return numberOfBytesToSerialize;

@@ -8,6 +8,8 @@ using System.Linq;
 
 namespace CRDT.CRDTTests
 {
+
+
     [TestFixture]
     public class CRDTDeserializerShould
     {
@@ -18,6 +20,14 @@ namespace CRDT.CRDTTests
             64, 73, 15, 219, 64, 73, 15, 219, 64, 73, 15, 219,
             64, 73, 15, 219, 64, 73, 15, 219
         };
+
+        private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
+
+        [SetUp]
+        public void SetUp()
+        {
+            crdtPooledMemoryAllocator = new CRDTPooledMemoryAllocator();
+        }
 
         [Test]
         public void ParsePutComponent()
@@ -39,7 +49,7 @@ namespace CRDT.CRDTTests
                 new CRDTEntity(666),
                 1,
                 7666,
-                CRDTPooledMemoryAllocator.GetMemoryBuffer(componentDataBytes)
+                crdtPooledMemoryAllocator.GetMemoryBuffer(componentDataBytes)
             );
 
             TestInput(bytes, new[] { expectedMessage });
@@ -65,7 +75,7 @@ namespace CRDT.CRDTTests
                 new CRDTEntity(666),
                 1,
                 7666,
-                CRDTPooledMemoryAllocator.GetMemoryBuffer(componentDataBytes)
+                crdtPooledMemoryAllocator.GetMemoryBuffer(componentDataBytes)
             );
 
             TestInput(bytes, new[] { expectedMessage });
@@ -81,7 +91,7 @@ namespace CRDT.CRDTTests
                 154, 2, 0, 0,
             };
 
-            TestInput(bytes, new[] { new CRDTMessage(CRDTMessageType.DELETE_ENTITY, new CRDTEntity(666), 0, 0, CRDTPooledMemoryAllocator.Empty) });
+            TestInput(bytes, new[] { new CRDTMessage(CRDTMessageType.DELETE_ENTITY, new CRDTEntity(666), 0, 0, EmptyMemoryOwner<byte>.EMPTY) });
         }
 
         [Test]
@@ -96,7 +106,7 @@ namespace CRDT.CRDTTests
                 100, 0, 0, 0
             };
 
-            TestInput(bytes, new[] { new CRDTMessage(CRDTMessageType.DELETE_COMPONENT, new CRDTEntity(666), 100, 100, CRDTPooledMemoryAllocator.Empty) });
+            TestInput(bytes, new[] { new CRDTMessage(CRDTMessageType.DELETE_COMPONENT, new CRDTEntity(666), 100, 100, EmptyMemoryOwner<byte>.EMPTY) });
         }
 
         [Test]
@@ -122,7 +132,7 @@ namespace CRDT.CRDTTests
 
             byte[] bytes = bytesMsgA.Concat(bytesMsgB).ToArray();
 
-            var expectedComponentHeader = new CRDTMessage(CRDTMessageType.PUT_COMPONENT, new CRDTEntity(666), 1, 7666, CRDTPooledMemoryAllocator.GetMemoryBuffer(componentDataBytes));
+            var expectedComponentHeader = new CRDTMessage(CRDTMessageType.PUT_COMPONENT, new CRDTEntity(666), 1, 7666, crdtPooledMemoryAllocator.GetMemoryBuffer(componentDataBytes));
 
             TestInput(bytes, new[] { expectedComponentHeader, expectedComponentHeader });
         }
@@ -169,7 +179,7 @@ namespace CRDT.CRDTTests
 
             var list = new List<CRDTMessage>();
 
-            var expected = new CRDTMessage[] { new (CRDTMessageType.PUT_COMPONENT, new CRDTEntity(127), 1, 1, CRDTPooledMemoryAllocator.Empty) };
+            var expected = new CRDTMessage[] { new (CRDTMessageType.PUT_COMPONENT, new CRDTEntity(127), 1, 1, EmptyMemoryOwner<byte>.EMPTY) };
             CRDTDeserializer.DeserializeBatch(ref memory, list);
 
             CollectionAssert.AreEqual(expected, list);
@@ -241,28 +251,28 @@ namespace CRDT.CRDTTests
                     new CRDTEntity(666),
                     1,
                     7666,
-                    CRDTPooledMemoryAllocator.GetMemoryBuffer(componentDataBytes)
+                    crdtPooledMemoryAllocator.GetMemoryBuffer(componentDataBytes)
                 ),
                 new CRDTMessage(
                     CRDTMessageType.PUT_COMPONENT,
                     new CRDTEntity(666),
                     1,
                     7666,
-                    CRDTPooledMemoryAllocator.GetMemoryBuffer(componentDataBytes)
+                    crdtPooledMemoryAllocator.GetMemoryBuffer(componentDataBytes)
                 ),
                 new CRDTMessage(
                     CRDTMessageType.DELETE_COMPONENT,
                     new CRDTEntity(666),
                     100,
                     100,
-                    CRDTPooledMemoryAllocator.Empty
+                    EmptyMemoryOwner<byte>.EMPTY
                 ),
                 new CRDTMessage(
                     CRDTMessageType.DELETE_ENTITY,
                     new CRDTEntity(666),
                     0,
                     0,
-                    CRDTPooledMemoryAllocator.Empty
+                    EmptyMemoryOwner<byte>.EMPTY
                 )
             });
         }

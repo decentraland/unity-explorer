@@ -59,8 +59,9 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         private const int ENTITY_ID = 200;
 
         // random byte array
+        private static readonly CRDTPooledMemoryAllocator crdtPooledMemoryAllocator = new ();
         private static readonly byte[] DATA_CONTENT = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
-        private static readonly IMemoryOwner<byte> DATA = CRDTPooledMemoryAllocator.GetMemoryBuffer(DATA_CONTENT);
+        private static readonly IMemoryOwner<byte> DATA = crdtPooledMemoryAllocator.GetMemoryBuffer(DATA_CONTENT);
 
         private ISDKComponentsRegistry sdkComponentsRegistry;
         private WorldSyncCommandBuffer worldSyncCommandBuffer;
@@ -186,7 +187,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                 {
                     // special case for deleted entity
                     (CreateTestMessage(), CRDTReconciliationEffect.EntityDeleted, CRDTReconciliationEffect.NoChanges), // no changes to the component = no component
-                    (new CRDTMessage(CRDTMessageType.DELETE_ENTITY, 123, 0, 123, CRDTPooledMemoryAllocator.Empty), CRDTReconciliationEffect.EntityDeleted, CRDTReconciliationEffect.NoChanges),
+                    (new CRDTMessage(CRDTMessageType.DELETE_ENTITY, 123, 0, 123, EmptyMemoryOwner<byte>.EMPTY), CRDTReconciliationEffect.EntityDeleted, CRDTReconciliationEffect.NoChanges),
                 }
             };
         }
@@ -194,15 +195,15 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         private static CRDTMessage CreateTestMessage(int componentId = COMPONENT_ID_1, byte[] data = null) =>
 
             // type and timestamp do not matter
-            new (CRDTMessageType.NONE, ENTITY_ID, COMPONENT_ID_1, 0, CRDTPooledMemoryAllocator.GetMemoryBuffer(data) ?? DATA);
+            new (CRDTMessageType.NONE, ENTITY_ID, COMPONENT_ID_1, 0, crdtPooledMemoryAllocator.GetMemoryBuffer(data) ?? DATA);
 
         private static CRDTMessage CreateTestMessage2(byte[] data = null) =>
 
             // type and timestamp do not matter
-            new (CRDTMessageType.NONE, ENTITY_ID, COMPONENT_ID_2, 0, CRDTPooledMemoryAllocator.GetMemoryBuffer(data) ?? DATA);
+            new (CRDTMessageType.NONE, ENTITY_ID, COMPONENT_ID_2, 0, crdtPooledMemoryAllocator.GetMemoryBuffer(data) ?? DATA);
 
         private static CRDTMessage CreateDeleteEntityMessage(int entity) =>
-            new (CRDTMessageType.DELETE_ENTITY, entity, 0, 0, CRDTPooledMemoryAllocator.Empty);
+            new (CRDTMessageType.DELETE_ENTITY, entity, 0, 0, EmptyMemoryOwner<byte>.EMPTY);
 
         [Test]
         [TestCaseSource(nameof(ApplyChangesMessagesSource))]

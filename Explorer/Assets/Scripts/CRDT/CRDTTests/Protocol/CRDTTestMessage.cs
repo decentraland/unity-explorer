@@ -17,7 +17,14 @@ namespace CRDT.CRDTTests.Protocol
         public int timestamp;
         public string data;
 
+        private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
+
+        public CRDTTestMessage()
+        {
+            crdtPooledMemoryAllocator = new CRDTPooledMemoryAllocator();
+        }
+
         public CRDTMessage ToCRDTMessage() =>
-            new (type, new CRDTEntity(entityId), componentId, timestamp, data != null ? CRDTPooledMemoryAllocator.GetMemoryBuffer(Encoding.UTF8.GetBytes(data)) : CRDTPooledMemoryAllocator.Empty);
+            new (type, new CRDTEntity(entityId), componentId, timestamp, data != null ? crdtPooledMemoryAllocator.GetMemoryBuffer(Encoding.UTF8.GetBytes(data)) : EmptyMemoryOwner<byte>.EMPTY);
     }
 }
