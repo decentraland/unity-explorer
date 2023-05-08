@@ -1,36 +1,46 @@
-using System.Collections;
 using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
-using Microsoft.ClearScript.JavaScript;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRuntime.Apis.Modules;
+using SceneRuntime.Factory;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.TestTools;
 
-public class SceneRuntimeShould
+namespace SceneRuntime.Tests
 {
-    public class TestUtilCheckOk
+    public class SceneRuntimeShould
     {
-        private bool value;
-
-        [UsedImplicitly]
-        public void Ok()
+        public class TestUtilCheckOk
         {
-            value = true;
+            private bool value;
+
+            [UsedImplicitly]
+            public void Ok()
+            {
+                value = true;
+            }
+
+            public bool IsOk()
+            {
+                return value;
+            }
         }
 
-        public bool IsOk()
-        {
-            return value;
-        }
-    }
-    [UnityTest]
-    public IEnumerator EngineApi_GetState() => UniTask.ToCoroutine(async () =>
-    {
-        var engineApi = Substitute.For<IEngineApi>();
+        [UnityTest]
+        public IEnumerator EngineApi_GetState() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                var engineApi = Substitute.For<IEngineApi>();
 
-        var code = @"
+                var code = @"
             const engineApi = require('~system/EngineApi')
             exports.onStart = async function() {
                 await engineApi.crdtGetState()
@@ -38,21 +48,22 @@ public class SceneRuntimeShould
             exports.onUpdate = async function(dt) {};
         ";
 
-        SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
-        var sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code);
+                SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
+                var sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code, CancellationToken.None);
 
-        sceneRuntime.RegisterEngineApi(engineApi);
-        await sceneRuntime.StartScene();
+                sceneRuntime.RegisterEngineApi(engineApi);
+                await sceneRuntime.StartScene();
 
-        await engineApi.Received().CrdtGetState();
-    });
+                await engineApi.Received().CrdtGetState();
+            });
 
-    [UnityTest]
-    public IEnumerator EngineApi_CrdtSendToRenderer() => UniTask.ToCoroutine(async () =>
-    {
-        var engineApi = Substitute.For<IEngineApi>();
+        [UnityTest]
+        public IEnumerator EngineApi_CrdtSendToRenderer() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                var engineApi = Substitute.For<IEngineApi>();
 
-        var code = @"
+                var code = @"
             const engineApi = require('~system/EngineApi')
             exports.onStart = async function() {};
             exports.onUpdate = async function(dt) {
@@ -63,81 +74,84 @@ public class SceneRuntimeShould
             };
         ";
 
-        SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
-        var sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code);
+                SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
+                var sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code, CancellationToken.None);
 
-        sceneRuntime.RegisterEngineApi(engineApi);
+                sceneRuntime.RegisterEngineApi(engineApi);
 
-        var testOk = new TestUtilCheckOk();
-        sceneRuntime.engine.AddHostObject("test", testOk);
+                var testOk = new TestUtilCheckOk();
+                sceneRuntime.engine.AddHostObject("test", testOk);
 
-        Assert.IsFalse(testOk.IsOk());
+                Assert.IsFalse(testOk.IsOk());
 
-        await sceneRuntime.StartScene();
+                await sceneRuntime.StartScene();
 
-        // hot
-        await sceneRuntime.UpdateScene(0.0f);
+                // hot
+                await sceneRuntime.UpdateScene(0.0f);
 
-        for (int i = 0; i < 10; ++i)
-        {
-            await UniTask.Yield();
-            await sceneRuntime.UpdateScene(0.01f);
-        }
+                for (int i = 0; i < 10; ++i)
+                {
+                    await UniTask.Yield();
+                    await sceneRuntime.UpdateScene(0.01f);
+                }
 
-        Assert.IsTrue(testOk.IsOk());
+                Assert.IsTrue(testOk.IsOk());
 
-        await engineApi.Received().CrdtSendToRenderer(Arg.Is<byte[]>(array => array.Length == 10 && array[0] == 123 ));
-    });
+                await engineApi.Received().CrdtSendToRenderer(Arg.Is<byte[]>(array => array.Length == 10 && array[0] == 123));
+            });
 
-    [UnityTest]
-    public IEnumerator ProfileOnUpdate() => UniTask.ToCoroutine(async () =>
-    {
-        var code = @"
+        [UnityTest]
+        public IEnumerator ProfileOnUpdate() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                var code = @"
             exports.onStart = async function() {};
             exports.onUpdate = async function(dt) {};
         ";
 
-        SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
-        var sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code);
+                SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
+                var sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code, CancellationToken.None);
 
-        await sceneRuntime.StartScene();
+                await sceneRuntime.StartScene();
 
-        // hot
-        await sceneRuntime.UpdateScene(0.0f);
+                // hot
+                await sceneRuntime.UpdateScene(0.0f);
 
-        for (int i = 0; i < 10; ++i)
-        {
-            await UniTask.Yield();
+                for (int i = 0; i < 10; ++i)
+                {
+                    await UniTask.Yield();
 
-            Profiler.BeginSample("UpdateScene");
-            var ut = sceneRuntime.UpdateScene(0.01f);
-            Profiler.EndSample();
+                    Profiler.BeginSample("UpdateScene");
+                    var ut = sceneRuntime.UpdateScene(0.01f);
+                    Profiler.EndSample();
 
-            await ut;
-        }
-    });
+                    await ut;
+                }
+            });
 
-    [UnityTest]
-    public IEnumerator EngineApi_TestRealScene() => UniTask.ToCoroutine(async () =>
-    {
-        var engineApi = Substitute.For<IEngineApi>();
+        [UnityTest]
+        public IEnumerator EngineApi_TestRealScene() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                var engineApi = Substitute.For<IEngineApi>();
 
-        SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
-        var path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
-        var sceneRuntime = await sceneRuntimeFactory.CreateByPath(path);
+                SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
+                var path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
+                var sceneRuntime = await sceneRuntimeFactory.CreateByPath(path, CancellationToken.None);
 
-        sceneRuntime.RegisterEngineApi(engineApi);
+                sceneRuntime.RegisterEngineApi(engineApi);
 
-        await sceneRuntime.StartScene();
+                await sceneRuntime.StartScene();
 
-        // hot
-        await UniTask.Yield();
-        await sceneRuntime.UpdateScene(0.01f);
+                // hot
+                await UniTask.Yield();
+                await sceneRuntime.UpdateScene(0.01f);
 
-        for (int i = 0; i < 10; ++i)
-        {
-            await UniTask.Yield();
-            await sceneRuntime.UpdateScene(0.01f);
-        }
-    });
+                for (int i = 0; i < 10; ++i)
+                {
+                    await UniTask.Yield();
+                    await sceneRuntime.UpdateScene(0.01f);
+                }
+            });
+    }
 }

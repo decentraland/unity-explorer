@@ -6,7 +6,7 @@ using Utility.ThreadSafePool;
 
 namespace CrdtEcsBridge.OutgoingMessages
 {
-    public class OutgoingCRTDMessagesProvider : IOutgoingCRTDMessagesProvider, IDisposable
+    public class OutgoingCRTDMessagesProvider : IOutgoingCRTDMessagesProvider
     {
         internal const int START_POOL_CAPACITY = 8;
 

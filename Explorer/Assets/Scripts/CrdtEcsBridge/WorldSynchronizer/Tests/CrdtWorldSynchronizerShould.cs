@@ -8,19 +8,19 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
 {
     public class CrdtWorldSynchronizerShould
     {
-        private CrdtWorldSynchronizer crdtWorldSynchronizer;
+        private CRDTWorldSynchronizer crdtWorldSynchronizer;
 
         [SetUp]
         public void SetUp()
         {
-            crdtWorldSynchronizer = new CrdtWorldSynchronizer(World.Create(), Substitute.For<ISDKComponentsRegistry>());
+            crdtWorldSynchronizer = new CRDTWorldSynchronizer(World.Create(), Substitute.For<ISDKComponentsRegistry>());
         }
 
         [Test]
         public void ThrowIfSyncBufferIsAlreadyRented()
         {
             var cb = crdtWorldSynchronizer.GetSyncCommandBuffer();
-            Assert.Throws<InvalidOperationException>(() => crdtWorldSynchronizer.GetSyncCommandBuffer());
+            Assert.Throws<TimeoutException>(() => crdtWorldSynchronizer.GetSyncCommandBuffer());
         }
 
         [Test]

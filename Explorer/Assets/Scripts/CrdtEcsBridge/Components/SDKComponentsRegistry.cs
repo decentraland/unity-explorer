@@ -12,6 +12,8 @@ namespace CrdtEcsBridge.Components
             return this;
         }
 
+        public IReadOnlyCollection<SDKComponentBridge> SdkComponents => bridges.Values;
+
         public bool TryGet(int id, out SDKComponentBridge sdkComponentBridge) =>
             bridges.TryGetValue(id, out sdkComponentBridge);
     }

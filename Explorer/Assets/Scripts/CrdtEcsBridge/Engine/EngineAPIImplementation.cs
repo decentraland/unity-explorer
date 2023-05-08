@@ -5,6 +5,7 @@ using CRDT.Serializer;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using SceneRuntime.Apis.Modules;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -21,12 +22,12 @@ namespace CrdtEcsBridge.Engine
         private readonly ICRDTProtocol crdtProtocol;
         private readonly ICRDTDeserializer crdtDeserializer;
         private readonly ICRDTSerializer crdtSerializer;
-        private readonly ICrdtWorldSynchronizer crdtWorldSynchronizer;
+        private readonly ICRDTWorldSynchronizer crdtWorldSynchronizer;
         private readonly IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider;
 
         private byte[] lastSerializationBuffer;
 
-        public EngineAPIImplementation(IEngineAPIPoolsProvider poolsProvider, ICRDTProtocol crdtProtocol, ICRDTDeserializer crdtDeserializer, ICRDTSerializer crdtSerializer, ICrdtWorldSynchronizer crdtWorldSynchronizer,
+        public EngineAPIImplementation(IEngineAPIPoolsProvider poolsProvider, ICRDTProtocol crdtProtocol, ICRDTDeserializer crdtDeserializer, ICRDTSerializer crdtSerializer, ICRDTWorldSynchronizer crdtWorldSynchronizer,
             IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider)
         {
             this.poolsProvider = poolsProvider;
@@ -51,6 +52,7 @@ namespace CrdtEcsBridge.Engine
             // TODO add metrics to understand bottlenecks better
             crdtDeserializer.DeserializeBatch(ref dataMemory, messages);
 
+            // as we no longer wait for a buffer to apply the thread should be frozen
             var worldSyncBuffer = crdtWorldSynchronizer.GetSyncCommandBuffer();
 
             // Reconcile CRDT state
@@ -82,11 +84,19 @@ namespace CrdtEcsBridge.Engine
             // Now (unless we make ECS run on the background thread) we need to switch to the main thread
             // before all systems start to update - in the beginning of the Player Loop
             // TODO Validate if we can just launch and forget() without waiting
+
+            // don't use `UniTask` as it will switch us to the main thread and the continuation will keep running on the main thread
+            ApplySyncCommandBuffer(worldSyncBuffer).Forget();
+
+            return lastSerializationBuffer;
+        }
+
+        private async UniTaskVoid ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer)
+        {
             await UniTask.Yield(PlayerLoopTiming.Initialization);
 
             // Apply changes to the ECS World on the main thread
             crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncBuffer);
-            return lastSerializationBuffer;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

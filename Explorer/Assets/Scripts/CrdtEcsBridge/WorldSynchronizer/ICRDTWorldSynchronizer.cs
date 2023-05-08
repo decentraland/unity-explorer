@@ -5,7 +5,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
     /// <summary>
     /// Synchronizes the state of the world accordingly to the given instructions
     /// </summary>
-    public interface ICrdtWorldSynchronizer
+    public interface ICRDTWorldSynchronizer : IDisposable
     {
         /// <summary>
         /// Get the command buffer to fill it with the CRDT messages

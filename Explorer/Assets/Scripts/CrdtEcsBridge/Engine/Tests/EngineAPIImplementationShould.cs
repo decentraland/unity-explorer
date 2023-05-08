@@ -28,7 +28,7 @@ namespace CrdtEcsBridge.Engine.Tests
         private ICRDTProtocol crdtProtocol;
         private ICRDTDeserializer crdtDeserializer;
         private ICRDTSerializer crdtSerializer;
-        private ICrdtWorldSynchronizer crdtWorldSynchronizer;
+        private ICRDTWorldSynchronizer crdtWorldSynchronizer;
         private IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider;
 
         private EngineAPIImplementation engineAPIImplementation;
@@ -70,7 +70,7 @@ namespace CrdtEcsBridge.Engine.Tests
                 crdtProtocol = Substitute.For<ICRDTProtocol>(),
                 crdtDeserializer = Substitute.For<ICRDTDeserializer>(),
                 crdtSerializer = new CRDTSerializer(),
-                crdtWorldSynchronizer = Substitute.For<ICrdtWorldSynchronizer>(),
+                crdtWorldSynchronizer = Substitute.For<ICRDTWorldSynchronizer>(),
                 outgoingCrtdMessagesProvider = Substitute.For<IOutgoingCRTDMessagesProvider>()
             );
 
