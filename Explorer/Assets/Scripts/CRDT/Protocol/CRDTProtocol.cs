@@ -261,7 +261,6 @@ namespace CRDT.Protocol
                     if (existingSet.Count >= MAX_APPEND_COMPONENTS_COUNT)
                     {
                         // instead of removing range, just clean -> it is much cheaper
-                        //TODO (question): What happens when length is 0 for deleted components? Does it make sense to dispose?
                         foreach (EntityComponentData entityComponentData in existingSet)
                             entityComponentData.Data?.Dispose();
                         existingSet.Clear();
