@@ -1,3 +1,4 @@
+using CRDT.Memory;
 using CRDT.Protocol;
 using System;
 using System.Text;
@@ -17,6 +18,6 @@ namespace CRDT.CRDTTests.Protocol
         public string data;
 
         public CRDTMessage ToCRDTMessage() =>
-            new (type, new CRDTEntity(entityId), componentId, timestamp, data != null ? Encoding.UTF8.GetBytes(data) : ReadOnlyMemory<byte>.Empty);
+            new (type, new CRDTEntity(entityId), componentId, timestamp, data != null ? CRDTPooledMemoryAllocator.GetMemoryBuffer(Encoding.UTF8.GetBytes(data)) : CRDTPooledMemoryAllocator.Empty);
     }
 }

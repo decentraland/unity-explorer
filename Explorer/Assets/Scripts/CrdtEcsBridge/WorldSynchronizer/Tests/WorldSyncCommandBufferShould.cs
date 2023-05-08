@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.Core.CommandBuffer;
 using CRDT;
+using CRDT.Memory;
 using CRDT.Protocol;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Serialization;
@@ -9,6 +10,7 @@ using ECS.LifeCycle.Components;
 using NSubstitute;
 using NUnit.Framework;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -33,8 +35,10 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                 instance.Value = data.ToArray();
             }
 
-            public ReadOnlyMemory<byte> Serialize(TestComponent model) =>
+            public void SerializeInto(TestComponent model, in Span<byte> span)
+            {
                 throw new NotImplementedException();
+            }
         }
 
         public class TestComponentSerializer2 : IComponentSerializer<TestComponent2>
@@ -44,8 +48,10 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                 instance.Value = data.ToArray();
             }
 
-            public ReadOnlyMemory<byte> Serialize(TestComponent2 model) =>
+            public void SerializeInto(TestComponent2 model, in Span<byte> span)
+            {
                 throw new NotImplementedException();
+            }
         }
 
         private const int COMPONENT_ID_1 = 100;
@@ -53,7 +59,8 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         private const int ENTITY_ID = 200;
 
         // random byte array
-        private static readonly byte[] DATA = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
+        private static readonly byte[] DATA_CONTENT = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
+        private static readonly IMemoryOwner<byte> DATA = CRDTPooledMemoryAllocator.GetMemoryBuffer(DATA_CONTENT);
 
         private ISDKComponentsRegistry sdkComponentsRegistry;
         private WorldSyncCommandBuffer worldSyncCommandBuffer;
@@ -179,7 +186,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                 {
                     // special case for deleted entity
                     (CreateTestMessage(), CRDTReconciliationEffect.EntityDeleted, CRDTReconciliationEffect.NoChanges), // no changes to the component = no component
-                    (new CRDTMessage(CRDTMessageType.DELETE_ENTITY, 123, 0, 123, ReadOnlyMemory<byte>.Empty), CRDTReconciliationEffect.EntityDeleted, CRDTReconciliationEffect.NoChanges),
+                    (new CRDTMessage(CRDTMessageType.DELETE_ENTITY, 123, 0, 123, CRDTPooledMemoryAllocator.Empty), CRDTReconciliationEffect.EntityDeleted, CRDTReconciliationEffect.NoChanges),
                 }
             };
         }
@@ -187,15 +194,15 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         private static CRDTMessage CreateTestMessage(int componentId = COMPONENT_ID_1, byte[] data = null) =>
 
             // type and timestamp do not matter
-            new (CRDTMessageType.NONE, ENTITY_ID, COMPONENT_ID_1, 0, data ?? DATA);
+            new (CRDTMessageType.NONE, ENTITY_ID, COMPONENT_ID_1, 0, CRDTPooledMemoryAllocator.GetMemoryBuffer(data) ?? DATA);
 
         private static CRDTMessage CreateTestMessage2(byte[] data = null) =>
 
             // type and timestamp do not matter
-            new (CRDTMessageType.NONE, ENTITY_ID, COMPONENT_ID_2, 0, data ?? DATA);
+            new (CRDTMessageType.NONE, ENTITY_ID, COMPONENT_ID_2, 0, CRDTPooledMemoryAllocator.GetMemoryBuffer(data) ?? DATA);
 
         private static CRDTMessage CreateDeleteEntityMessage(int entity) =>
-            new (CRDTMessageType.DELETE_ENTITY, entity, 0, 0, ReadOnlyMemory<byte>.Empty);
+            new (CRDTMessageType.DELETE_ENTITY, entity, 0, 0, CRDTPooledMemoryAllocator.Empty);
 
         [Test]
         [TestCaseSource(nameof(ApplyChangesMessagesSource))]
@@ -267,7 +274,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                     }),
                     new (CRDTMessage, CRDTReconciliationEffect)[]
                     {
-                        (CreateTestMessage(data: DATA), CRDTReconciliationEffect.ComponentModified),
+                        (CreateTestMessage(data: DATA_CONTENT), CRDTReconciliationEffect.ComponentModified),
                     },
                     new Action<World, Dictionary<CRDTEntity, Entity>>((world, map) =>
                     {

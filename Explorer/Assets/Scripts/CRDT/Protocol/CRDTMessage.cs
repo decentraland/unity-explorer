@@ -1,4 +1,6 @@
-﻿using System;
+﻿using CRDT.Memory;
+using System;
+using System.Buffers;
 using System.Runtime.InteropServices;
 
 namespace CRDT.Protocol
@@ -6,13 +8,13 @@ namespace CRDT.Protocol
     [StructLayout(LayoutKind.Sequential)]
     public readonly struct CRDTMessage : IEquatable<CRDTMessage>
     {
-        public CRDTMessage(CRDTMessageType type, CRDTEntity entityId, int componentId, int timestamp, ReadOnlyMemory<byte> data)
+        public CRDTMessage(CRDTMessageType type, CRDTEntity entityId, int componentId, int timestamp, IMemoryOwner<byte> data)
         {
             Type = type;
             EntityId = entityId;
             ComponentId = componentId;
             Timestamp = timestamp;
-            Data = data;
+            Data = data ?? CRDTPooledMemoryAllocator.Empty;
         }
 
         public readonly CRDTMessageType Type;
@@ -36,10 +38,10 @@ namespace CRDT.Protocol
         /// </summary>
 
         // The layout of this structure is not clear
-        public readonly ReadOnlyMemory<byte> Data;
+        public readonly IMemoryOwner<byte> Data;
 
         public bool Equals(CRDTMessage other) =>
-            Type == other.Type && EntityId.Equals(other.EntityId) && ComponentId == other.ComponentId && Timestamp == other.Timestamp && CRDTMessageComparer.CompareData(in Data, in other.Data) == 0;
+            Type == other.Type && EntityId.Equals(other.EntityId) && ComponentId == other.ComponentId && Timestamp == other.Timestamp && CRDTMessageComparer.CompareData(Data, other.Data) == 0;
 
         public override bool Equals(object obj) =>
             obj is CRDTMessage other && Equals(other);
@@ -47,6 +49,7 @@ namespace CRDT.Protocol
         public override int GetHashCode() =>
             HashCode.Combine((int)Type, EntityId, ComponentId, Timestamp, Data);
 
-        public override string ToString() => $"Type {Type}, Entity {EntityId}, Component {ComponentId}, Timestamp {Timestamp}, Data {Data.Length} Bytes";
+        public override string ToString() =>
+            $"Type {Type}, Entity {EntityId}, Component {ComponentId}, Timestamp {Timestamp}, Data {Data.Memory.Length} Bytes";
     }
 }

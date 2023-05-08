@@ -1,6 +1,6 @@
 using Collections.Pooled;
+using CRDT.Memory;
 using CRDT.Protocol;
-using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -75,11 +75,11 @@ namespace CRDT.CRDTTests.Protocol
                 var entityId = entityComponentData.entityId;
                 int componentId = entityComponentData.componentId;
 
-                yield return new CRDTMessage(CRDTMessageType.PUT_COMPONENT, entityId, componentId, entityComponentData.timestamp, entityComponentData.GetBytes());
+                yield return new CRDTMessage(CRDTMessageType.PUT_COMPONENT, entityId, componentId, entityComponentData.timestamp, CRDTPooledMemoryAllocator.GetMemoryBuffer(entityComponentData.GetBytes()));
             }
 
             foreach (var entity in finalState.deletedEntities)
-                yield return new CRDTMessage(CRDTMessageType.DELETE_ENTITY, CRDTEntity.Create(entity.entityNumber, entity.entityVersion), 0, 0, ReadOnlyMemory<byte>.Empty);
+                yield return new CRDTMessage(CRDTMessageType.DELETE_ENTITY, CRDTEntity.Create(entity.entityNumber, entity.entityVersion), 0, 0, CRDTPooledMemoryAllocator.Empty);
         }
 
         internal static CRDTProtocol.State InstructionToFinalState(TestFileInstruction instruction)

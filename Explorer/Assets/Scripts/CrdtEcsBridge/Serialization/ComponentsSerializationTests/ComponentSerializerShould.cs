@@ -2,6 +2,7 @@
 using Google.Protobuf;
 using NUnit.Framework;
 using System;
+using System.Buffers;
 
 namespace CrdtEcsBridge.Serialization.ComponentsSerializationTests
 {
@@ -27,7 +28,29 @@ namespace CrdtEcsBridge.Serialization.ComponentsSerializationTests
         }
 
         [Test]
-        public void SerializeProtobufInstance()
+        public void SerializeIntoProtobufSpan()
+        {
+            //Arrange
+            var serializer = new ProtobufSerializer<PBMeshCollider>();
+
+            var message = new PBMeshCollider
+            {
+                Sphere = new PBMeshCollider.Types.SphereMesh(),
+                CollisionMask = 0b10100,
+            };
+            Span<byte> byteArray = message.ToByteArray().AsSpan();
+
+            //Act
+            byte[] rentedArray = ArrayPool<byte>.Shared.Rent(message.CalculateSize());
+            var memoryBuffer = new Memory<byte>(rentedArray, 0, message.CalculateSize());
+            serializer.SerializeInto(message, memoryBuffer.Span);
+
+            //Asert
+            Assert.AreEqual(byteArray.Length, memoryBuffer.Span.Length);
+        }
+
+        [Test]
+        public void SerializeAndDeserialize()
         {
             //Arrange
             var serializer = new ProtobufSerializer<PBMeshCollider>();
@@ -38,24 +61,18 @@ namespace CrdtEcsBridge.Serialization.ComponentsSerializationTests
                 CollisionMask = 0b10100,
             };
 
-            Span<byte> byteArray = message.ToByteArray().AsSpan();
-
             //Act
-            ReadOnlyMemory<byte> serializedSpanArray = serializer.Serialize(message);
+            byte[] rentedArray = ArrayPool<byte>.Shared.Rent(message.CalculateSize());
+            var memoryBuffer = new Memory<byte>(rentedArray, 0, message.CalculateSize());
+            serializer.SerializeInto(message, memoryBuffer.Span);
 
-            //Asert
-            Assert.AreEqual(byteArray.Length, serializedSpanArray.Length);
-
-            //Arrange
-            var newMessage1 = new PBMeshCollider();
-            var newMessage2 = new PBMeshCollider();
-
-            //Act
-            serializer.DeserializeInto(newMessage1, serializedSpanArray.Span);
-            serializer.DeserializeInto(newMessage2, byteArray);
+            var deserializedMessage = new PBMeshCollider();
+            serializer.DeserializeInto(deserializedMessage, memoryBuffer.Span);
 
             //Assert
-            Assert.AreEqual(newMessage1, newMessage2);
+            Assert.AreEqual(message, deserializedMessage);
         }
+
+
     }
 }

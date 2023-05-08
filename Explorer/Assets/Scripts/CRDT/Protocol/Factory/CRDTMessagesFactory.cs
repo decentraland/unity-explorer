@@ -1,5 +1,6 @@
+using CRDT.Memory;
 using CRDT.Serializer;
-using System;
+using System.Buffers;
 using System.Runtime.CompilerServices;
 
 namespace CRDT.Protocol.Factory
@@ -10,14 +11,14 @@ namespace CRDT.Protocol.Factory
     /// </summary>
     internal static class CRDTMessagesFactory
     {
-        public static ProcessedCRDTMessage CreateAppendMessage(this in CRDTProtocol.State state, CRDTEntity entity, int componentId, in ReadOnlyMemory<byte> data) =>
+        public static ProcessedCRDTMessage CreateAppendMessage(this in CRDTProtocol.State state, CRDTEntity entity, int componentId, in IMemoryOwner<byte> data) =>
             CreateMessage(in state, CRDTMessageType.APPEND_COMPONENT, entity, componentId, data);
 
-        public static ProcessedCRDTMessage CreatePutMessage(this in CRDTProtocol.State state, CRDTEntity entity, int componentId, in ReadOnlyMemory<byte> data) =>
+        public static ProcessedCRDTMessage CreatePutMessage(this in CRDTProtocol.State state, CRDTEntity entity, int componentId, in IMemoryOwner<byte> data) =>
             CreateMessage(in state, CRDTMessageType.PUT_COMPONENT, entity, componentId, data);
 
         public static ProcessedCRDTMessage CreateDeleteMessage(this in CRDTProtocol.State state, CRDTEntity entity, int componentId) =>
-            CreateMessage(in state, CRDTMessageType.DELETE_COMPONENT, entity, componentId, ReadOnlyMemory<byte>.Empty);
+            CreateMessage(in state, CRDTMessageType.DELETE_COMPONENT, entity, componentId, CRDTPooledMemoryAllocator.Empty);
 
         /// <summary>
         /// Fills the array with messages corresponding to the current CRDT state
@@ -58,7 +59,7 @@ namespace CRDT.Protocol.Factory
             foreach (var (number, version) in state.deletedEntities)
             {
                 numberOfBytesToSerialize +=
-                    AddCRDTMessage(preallocatedArray, CRDTEntity.Create(number, version), 0, CRDTMessageType.DELETE_ENTITY, 0, ReadOnlyMemory<byte>.Empty, ref index);
+                    AddCRDTMessage(preallocatedArray, CRDTEntity.Create(number, version), 0, CRDTMessageType.DELETE_ENTITY, 0, CRDTPooledMemoryAllocator.Empty, ref index);
             }
 
             return numberOfBytesToSerialize;
@@ -67,7 +68,7 @@ namespace CRDT.Protocol.Factory
         private static int AddCRDTMessage(ProcessedCRDTMessage[] preallocatedArray, CRDTEntity entity, int componentId,
             CRDTMessageType messageType,
             int timestamp,
-            in ReadOnlyMemory<byte> data,
+            in IMemoryOwner<byte> data,
             ref int index)
         {
             var numberOfBytes = CRDTMessageSerializationUtils.GetMessageDataLength(messageType, in data);
@@ -85,7 +86,7 @@ namespace CRDT.Protocol.Factory
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ProcessedCRDTMessage CreateMessage(in CRDTProtocol.State state, CRDTMessageType messageType, CRDTEntity entity, int componentId, in ReadOnlyMemory<byte> data)
+        private static ProcessedCRDTMessage CreateMessage(in CRDTProtocol.State state, CRDTMessageType messageType, CRDTEntity entity, int componentId, in IMemoryOwner<byte> data)
         {
             var timestamp = 0;
             if (state.TryGetLWWComponentState(entity, componentId, out _, out _, out var storedData)) timestamp = storedData.Timestamp + 1;

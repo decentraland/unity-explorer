@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 
 namespace CRDT.Memory
 {
@@ -7,7 +8,7 @@ namespace CRDT.Memory
     /// </summary>
     public class CRDTOriginalMemorySlicer : ICRDTMemoryAllocator
     {
-        private class SliceOwner : IReadOnlyMemoryOwner<byte>
+        private class SliceOwner : IMemoryOwner<byte>
         {
             public SliceOwner(ReadOnlyMemory<byte> memory)
             {
@@ -20,12 +21,21 @@ namespace CRDT.Memory
             }
 
             public ReadOnlyMemory<byte> ReadOnlyMemory { get; }
+
+            public Memory<byte> Memory { get; }
         }
 
-        public IReadOnlyMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream, int shift, int length)
+        public IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream, int shift, int length)
         {
             var slice = originalStream.Slice(shift, length);
             return new SliceOwner(slice);
         }
+
+        public IMemoryOwner<byte> GetMemoryBuffer(int length)
+        {
+            byte[] byteArray = ArrayPool<byte>.Shared.Rent(length);
+            return new SliceOwner(byteArray);
+        }
+
     }
 }

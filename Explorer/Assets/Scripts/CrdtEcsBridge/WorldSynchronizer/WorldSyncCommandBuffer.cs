@@ -213,7 +213,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
                     {
                         var bridge = batchState.sdkComponentBridge;
                         var deserializationTarget = batchState.sdkComponentBridge.Pool.Rent();
-                        bridge.Serializer.DeserializeInto(deserializationTarget, batchState.crdtMessage.Data.Span);
+                        bridge.Serializer.DeserializeInto(deserializationTarget, batchState.crdtMessage.Data.Memory.Span);
                     }
                 }
             }

@@ -6,7 +6,7 @@ namespace CrdtEcsBridge.Serialization
     {
         void DeserializeInto(object instance, in ReadOnlySpan<byte> data);
 
-        ReadOnlyMemory<byte> Serialize(object instance);
+        void SerializeInto(object model, in Span<byte> span);
 
     }
 
@@ -15,11 +15,11 @@ namespace CrdtEcsBridge.Serialization
         void IComponentSerializer.DeserializeInto(object instance, in ReadOnlySpan<byte> data) =>
             DeserializeInto((T)instance, in data);
 
-        ReadOnlyMemory<byte> IComponentSerializer.Serialize(object instance) =>
-            Serialize((T)instance);
+        void IComponentSerializer.SerializeInto(object instance, in Span<byte> span) =>
+            SerializeInto((T)instance, span);
 
         void DeserializeInto(T instance, in ReadOnlySpan<byte> data);
 
-        public ReadOnlyMemory<byte> Serialize(T model);
+        public void SerializeInto(T model, in Span<byte> span);
     }
 }

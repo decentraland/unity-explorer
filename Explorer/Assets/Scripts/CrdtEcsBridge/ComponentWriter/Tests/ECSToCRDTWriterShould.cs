@@ -8,12 +8,14 @@ using DCL.ECSComponents;
 using NSubstitute;
 using NUnit.Framework;
 using System;
+using System.Buffers;
 
 namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
 {
     [TestFixture]
     public class ECSToCRDTWriterShould
     {
+
         [Test]
         public void AppendMessage()
         {
@@ -32,7 +34,7 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
             ecsToCRDTWriter.AppendMessage(crdtEntity, ComponentID.POINTER_EVENTS_RESULT, new PBPointerEventsResult());
 
             //Assert
-            crdtProtocol.Received().CreateAppendMessage(crdtEntity, Arg.Any<int>(), Arg.Any<ReadOnlyMemory<byte>>());
+            crdtProtocol.Received().CreateAppendMessage(crdtEntity, Arg.Any<int>(), Arg.Any<IMemoryOwner<byte>>());
             outgoingCRDTMessageProvider.Received().AddMessage(Arg.Any<ProcessedCRDTMessage>());
         }
 

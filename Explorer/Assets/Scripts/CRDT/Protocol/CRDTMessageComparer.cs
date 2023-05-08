@@ -1,22 +1,29 @@
-﻿using CRDT.Memory;
-using System;
+﻿using System;
+using System.Buffers;
 
 namespace CRDT.Protocol
 {
     public static class CRDTMessageComparer
     {
-        public static int CompareData(IReadOnlyMemoryOwner<byte> x, IReadOnlyMemoryOwner<byte> y) =>
-            CompareData(x.ReadOnlyMemory, y.ReadOnlyMemory);
+        public static int CompareData(IMemoryOwner<byte> x, IMemoryOwner<byte> y) =>
+            CompareData(in x, in y);
 
         /// <summary>
         /// The meaning of this function is to have the same reconciliation mechanism between SDK and the client
         /// </summary>
-        public static int CompareData(in ReadOnlyMemory<byte> x, in ReadOnlyMemory<byte> y)
+        public static int CompareData(in IMemoryOwner<byte> x, in IMemoryOwner<byte> y)
         {
+            //TODO (question): Checking nullability for default values of CRDTMessage.
+            // The test framework does a validation will default values, so if we dont have this checl, we will get a NRE
+            // Do we need it beyond the test framework?
+            if (x == null && y == null) return 0;
+            if (x == null) return -1;
+            if (y == null) return 1;
+
             if (x.Equals(y)) return 0;
 
-            if (x.IsEmpty && !y.IsEmpty) return -1;
-            if (!x.IsEmpty && y.IsEmpty) return 1;
+            if (x.Memory.IsEmpty && !y.Memory.IsEmpty) return -1;
+            if (!x.Memory.IsEmpty && y.Memory.IsEmpty) return 1;
 
             // The comparison performed by Spanhelper.SequenceCompareTo is similar to a lexicographical order,
             // but it does not strictly follow the lexicographic order.
@@ -25,7 +32,7 @@ namespace CRDT.Protocol
             // int result = Unsafe.AddByteOffset(ref first, offset).CompareTo(Unsafe.AddByteOffset(ref second, offset));
             // if (result != 0)
             //    return result;
-            return x.Span.SequenceCompareTo(y.Span);
+            return x.Memory.Span.SequenceCompareTo(y.Memory.Span);
         }
     }
 }

@@ -1,10 +1,12 @@
 using CRDT;
+using CRDT.Memory;
 using CRDT.Protocol;
 using CRDT.Protocol.Factory;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.OutgoingMessages;
 using Google.Protobuf;
 using System;
+using System.Buffers;
 
 namespace CrdtEcsBridge.ECSToCRDTWriter
 {
@@ -13,6 +15,7 @@ namespace CrdtEcsBridge.ECSToCRDTWriter
         private readonly ICRDTProtocol crdtProtocol;
         private readonly IOutgoingCRTDMessagesProvider outgoingCRDTMessageProvider;
         private readonly ISDKComponentsRegistry componentsRegistry;
+        private readonly ICRDTMemoryAllocator pooledMemoryAllocator;
 
         public ECSToCRDTWriter(ICRDTProtocol crdtProtocol, IOutgoingCRTDMessagesProvider outgoingCRDTMessageProvider,
             ISDKComponentsRegistry componentsRegistry)
@@ -20,12 +23,17 @@ namespace CrdtEcsBridge.ECSToCRDTWriter
             this.crdtProtocol = crdtProtocol;
             this.outgoingCRDTMessageProvider = outgoingCRDTMessageProvider;
             this.componentsRegistry = componentsRegistry;
+            pooledMemoryAllocator = new CRDTPooledMemoryAllocator();
         }
 
         public void PutMessage<T>(CRDTEntity crdtID, int componentId, T model) where T: IMessage<T>
         {
             if (componentsRegistry.TryGet(componentId, out SDKComponentBridge componentBridge))
-                ProcessMessage(crdtProtocol.CreatePutMessage(crdtID, componentId, componentBridge.Serializer.Serialize(model)));
+            {
+                IMemoryOwner<byte> memory = pooledMemoryAllocator.GetMemoryBuffer(model.CalculateSize());
+                componentBridge.Serializer.SerializeInto(model, pooledMemoryAllocator.GetMemoryBuffer(model.CalculateSize()).Memory.Span);
+                ProcessMessage(crdtProtocol.CreatePutMessage(crdtID, componentId, memory));
+            }
             else
                 throw new Exception($"Serializer not present for type {typeof(T).Name}");
         }
@@ -33,7 +41,11 @@ namespace CrdtEcsBridge.ECSToCRDTWriter
         public void AppendMessage<T>(CRDTEntity crdtID, int componentId, T model) where T: IMessage<T>
         {
             if (componentsRegistry.TryGet(componentId, out SDKComponentBridge componentBridge))
-                ProcessMessage(crdtProtocol.CreateAppendMessage(crdtID, componentId, componentBridge.Serializer.Serialize(model)));
+            {
+                IMemoryOwner<byte> memory = pooledMemoryAllocator.GetMemoryBuffer(model.CalculateSize());
+                componentBridge.Serializer.SerializeInto(model, pooledMemoryAllocator.GetMemoryBuffer(model.CalculateSize()).Memory.Span);
+                ProcessMessage(crdtProtocol.CreateAppendMessage(crdtID, componentId, memory));
+            }
             else
                 throw new Exception($"Serializer not present for type {typeof(T).Name}");
         }
@@ -61,6 +73,8 @@ namespace CrdtEcsBridge.ECSToCRDTWriter
                 case CRDTReconciliationEffect.EntityDeleted:
                     break;
             }
+
+
         }
     }
 }

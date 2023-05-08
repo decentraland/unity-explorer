@@ -1,13 +1,11 @@
-﻿using CRDT.Protocol;
+﻿using CRDT.Memory;
+using CRDT.Protocol;
 using CRDT.Protocol.Factory;
-using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
-using Debug = UnityEngine.Debug;
 
 namespace CrdtEcsBridge.OutgoingMessages.Tests
 {
@@ -26,10 +24,10 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
         {
             var messages = new List<ProcessedCRDTMessage>
             {
-                new (new (CRDTMessageType.PUT_COMPONENT, 10, 20, 20, ReadOnlyMemory<byte>.Empty), 50),
-                new (new (CRDTMessageType.DELETE_ENTITY, 10, 20, 20, ReadOnlyMemory<byte>.Empty), 12),
-                new (new (CRDTMessageType.APPEND_COMPONENT, 10, 20, 20, ReadOnlyMemory<byte>.Empty), 34),
-                new (new (CRDTMessageType.DELETE_COMPONENT, 10, 20, 20, ReadOnlyMemory<byte>.Empty), 77),
+                new (new CRDTMessage(CRDTMessageType.PUT_COMPONENT, 10, 20, 20, CRDTPooledMemoryAllocator.Empty), 50),
+                new (new CRDTMessage(CRDTMessageType.DELETE_ENTITY, 10, 20, 20, CRDTPooledMemoryAllocator.Empty), 12),
+                new (new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, 10, 20, 20, CRDTPooledMemoryAllocator.Empty), 34),
+                new (new CRDTMessage(CRDTMessageType.DELETE_COMPONENT, 10, 20, 20, CRDTPooledMemoryAllocator.Empty), 77),
             };
 
             for (var i = 0; i < messages.Count; i++) { provider.AddMessage(messages[i]); }
@@ -42,10 +40,10 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
         {
             var messages = new List<ProcessedCRDTMessage>
             {
-                new (new (CRDTMessageType.PUT_COMPONENT, 10, 20, 20, ReadOnlyMemory<byte>.Empty), 50),
-                new (new (CRDTMessageType.DELETE_ENTITY, 10, 20, 20, ReadOnlyMemory<byte>.Empty), 12),
-                new (new (CRDTMessageType.APPEND_COMPONENT, 10, 20, 20, ReadOnlyMemory<byte>.Empty), 34),
-                new (new (CRDTMessageType.DELETE_COMPONENT, 10, 20, 20, ReadOnlyMemory<byte>.Empty), 77),
+                new (new CRDTMessage(CRDTMessageType.PUT_COMPONENT, 10, 20, 20, CRDTPooledMemoryAllocator.Empty), 50),
+                new (new CRDTMessage(CRDTMessageType.DELETE_ENTITY, 10, 20, 20, CRDTPooledMemoryAllocator.Empty), 12),
+                new (new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, 10, 20, 20, CRDTPooledMemoryAllocator.Empty), 34),
+                new (new CRDTMessage(CRDTMessageType.DELETE_COMPONENT, 10, 20, 20, CRDTPooledMemoryAllocator.Empty), 77),
             };
 
             void ThrottleInBackgroundThread()
@@ -73,10 +71,10 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
         {
             var messages = new List<ProcessedCRDTMessage>
             {
-                new (new (CRDTMessageType.PUT_COMPONENT, 10, 20, 20, ReadOnlyMemory<byte>.Empty), 50),
-                new (new (CRDTMessageType.DELETE_ENTITY, 10, 20, 20, ReadOnlyMemory<byte>.Empty), 12),
-                new (new (CRDTMessageType.APPEND_COMPONENT, 10, 20, 20, ReadOnlyMemory<byte>.Empty), 34),
-                new (new (CRDTMessageType.DELETE_COMPONENT, 10, 20, 20, ReadOnlyMemory<byte>.Empty), 77),
+                new (new CRDTMessage(CRDTMessageType.PUT_COMPONENT, 10, 20, 20, CRDTPooledMemoryAllocator.Empty), 50),
+                new (new CRDTMessage(CRDTMessageType.DELETE_ENTITY, 10, 20, 20, CRDTPooledMemoryAllocator.Empty), 12),
+                new (new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, 10, 20, 20, CRDTPooledMemoryAllocator.Empty), 34),
+                new (new CRDTMessage(CRDTMessageType.DELETE_COMPONENT, 10, 20, 20, CRDTPooledMemoryAllocator.Empty), 77),
             };
 
             for (var i = 0; i < messages.Count; i++) { provider.AddMessage(messages[i]); }

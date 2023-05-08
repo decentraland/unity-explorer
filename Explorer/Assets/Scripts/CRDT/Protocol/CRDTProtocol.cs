@@ -1,6 +1,7 @@
 ﻿using Collections.Pooled;
 using CRDT.Protocol.Factory;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
@@ -11,9 +12,9 @@ namespace CRDT.Protocol
         internal struct EntityComponentData
         {
             internal int Timestamp;
-            internal ReadOnlyMemory<byte> Data;
+            internal IMemoryOwner<byte> Data;
 
-            internal EntityComponentData(int timestamp, ReadOnlyMemory<byte> data)
+            internal EntityComponentData(int timestamp, IMemoryOwner<byte> data)
             {
                 Timestamp = timestamp;
                 Data = data;
@@ -22,7 +23,7 @@ namespace CRDT.Protocol
             /// <summary>
             /// To save memory instead of storing a separate flag checks if Data is empty
             /// </summary>
-            internal bool isDeleted => Data.IsEmpty;
+            internal bool isDeleted => Data.Memory.IsEmpty;
         }
 
         /// <summary>
@@ -138,10 +139,10 @@ namespace CRDT.Protocol
         public int CreateMessagesFromTheCurrentState(ProcessedCRDTMessage[] preallocatedArray) =>
             crdtState.CreateMessagesFromTheCurrentState(preallocatedArray);
 
-        public ProcessedCRDTMessage CreateAppendMessage(CRDTEntity entity, int componentId, in ReadOnlyMemory<byte> data) =>
+        public ProcessedCRDTMessage CreateAppendMessage(CRDTEntity entity, int componentId, in IMemoryOwner<byte> data) =>
             crdtState.CreateAppendMessage(entity, componentId, data);
 
-        public ProcessedCRDTMessage CreatePutMessage(CRDTEntity entity, int componentId, in ReadOnlyMemory<byte> data) =>
+        public ProcessedCRDTMessage CreatePutMessage(CRDTEntity entity, int componentId, in IMemoryOwner<byte> data) =>
             crdtState.CreatePutMessage(entity, componentId, data);
 
         public ProcessedCRDTMessage CreateDeleteMessage(CRDTEntity entity, int componentId) =>
@@ -201,8 +202,11 @@ namespace CRDT.Protocol
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void UpdateLWWState(int timestamp, ReadOnlyMemory<byte> data, ref EntityComponentData componentData)
+        private static void UpdateLWWState(int timestamp, IMemoryOwner<byte> data, ref EntityComponentData componentData)
         {
+            //TODO (question): When the component is created for the first time, it does not have data. We could Dispose it here with a nullcheck,
+            // or do it in the method above when asking if the componentExist. Here is clearear for reading, but the other method avoid the nullcheck
+            componentData.Data?.Dispose();
             componentData.Timestamp = timestamp;
             componentData.Data = data;
         }
@@ -216,8 +220,12 @@ namespace CRDT.Protocol
 
             foreach (var componentsStorage in crdtState.lwwComponents.Values)
             {
-                if (componentsStorage.Remove(entityId))
-                    crdtState.messagesCount--;
+                if (componentsStorage.TryGetValue(entityId, out EntityComponentData componentData))
+                {
+                    componentData.Data?.Dispose();
+
+                    if (componentsStorage.Remove(entityId)) { crdtState.messagesCount--; }
+                }
             }
 
             foreach (var componentsSet in crdtState.appendComponents)
@@ -225,6 +233,9 @@ namespace CRDT.Protocol
                 if (componentsSet.Value.TryGetValue(entityId, out var list))
                 {
                     crdtState.messagesCount -= list.Count;
+
+                    foreach (EntityComponentData entityComponentData in list)
+                        entityComponentData.Data?.Dispose();
                     list.Dispose();
                     componentsSet.Value.Remove(entityId);
                 }
@@ -248,10 +259,13 @@ namespace CRDT.Protocol
                 {
                     // it should never be "greater", always equal
                     if (existingSet.Count >= MAX_APPEND_COMPONENTS_COUNT)
-
+                    {
                         // instead of removing range, just clean -> it is much cheaper
+                        //TODO (question): What happens when length is 0 for deleted components? Does it make sense to dispose?
+                        foreach (EntityComponentData entityComponentData in existingSet)
+                            entityComponentData.Data?.Dispose();
                         existingSet.Clear();
-
+                    }
                     existingSet.Add(newData);
                     crdtState.messagesCount++;
                     return true;
@@ -287,15 +301,21 @@ namespace CRDT.Protocol
             foreach (var outer in crdtState.appendComponents.Values)
             {
                 foreach (var inner in outer.Values)
+                {
+                    foreach (EntityComponentData entityComponentData in inner)
+                        entityComponentData.Data?.Dispose();
                     inner.Dispose();
-
+                }
                 outer.Dispose();
             }
-
             crdtState.appendComponents.Dispose();
 
             foreach (var outer in crdtState.lwwComponents.Values)
+            {
+                foreach (EntityComponentData inner in outer.Values)
+                    inner.Data?.Dispose();
                 outer.Dispose();
+            }
 
             crdtState.lwwComponents.Dispose();
             crdtState.messagesCount = 0;
