@@ -18,7 +18,7 @@ namespace CRDT.Memory
             {
                 this.array = array;
                 Memory = this.array;
-                Memory = Memory.Slice(size);
+                Memory = Memory.Slice(0, size);
             }
 
             public void Dispose()
