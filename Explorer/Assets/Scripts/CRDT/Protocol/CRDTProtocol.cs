@@ -194,6 +194,8 @@ namespace CRDT.Protocol
 
             if (!componentExists)
                 crdtState.messagesCount++;
+            else
+                componentData.Data.Dispose();
 
             UpdateLWWState(crdtMessage.Timestamp, crdtMessage.Data, ref componentData);
 
@@ -204,9 +206,6 @@ namespace CRDT.Protocol
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void UpdateLWWState(int timestamp, IMemoryOwner<byte> data, ref EntityComponentData componentData)
         {
-            //TODO (question): When the component is created for the first time, it does not have data. We could Dispose it here with a nullcheck,
-            // or do it in the method above when asking if the componentExist. Here is clearear for reading, but the other method avoid the nullcheck
-            componentData.Data?.Dispose();
             componentData.Timestamp = timestamp;
             componentData.Data = data;
         }
@@ -222,7 +221,7 @@ namespace CRDT.Protocol
             {
                 if (componentsStorage.TryGetValue(entityId, out EntityComponentData componentData))
                 {
-                    componentData.Data?.Dispose();
+                    componentData.Data.Dispose();
 
                     if (componentsStorage.Remove(entityId)) { crdtState.messagesCount--; }
                 }
@@ -235,7 +234,7 @@ namespace CRDT.Protocol
                     crdtState.messagesCount -= list.Count;
 
                     foreach (EntityComponentData entityComponentData in list)
-                        entityComponentData.Data?.Dispose();
+                        entityComponentData.Data.Dispose();
                     list.Dispose();
                     componentsSet.Value.Remove(entityId);
                 }
@@ -262,7 +261,7 @@ namespace CRDT.Protocol
                     {
                         // instead of removing range, just clean -> it is much cheaper
                         foreach (EntityComponentData entityComponentData in existingSet)
-                            entityComponentData.Data?.Dispose();
+                            entityComponentData.Data.Dispose();
                         existingSet.Clear();
                     }
                     existingSet.Add(newData);
@@ -302,7 +301,7 @@ namespace CRDT.Protocol
                 foreach (var inner in outer.Values)
                 {
                     foreach (EntityComponentData entityComponentData in inner)
-                        entityComponentData.Data?.Dispose();
+                        entityComponentData.Data.Dispose();
                     inner.Dispose();
                 }
                 outer.Dispose();
@@ -312,7 +311,7 @@ namespace CRDT.Protocol
             foreach (var outer in crdtState.lwwComponents.Values)
             {
                 foreach (EntityComponentData inner in outer.Values)
-                    inner.Data?.Dispose();
+                    inner.Data.Dispose();
                 outer.Dispose();
             }
 
