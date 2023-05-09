@@ -27,8 +27,6 @@ namespace SceneRunner.Tests
         private ISDKComponentsRegistry componentsRegistry;
         private SceneFactory sceneFactory;
 
-        private World world;
-
         private ISceneFacade sceneFacade;
 
         private string path;
@@ -73,7 +71,7 @@ namespace SceneRunner.Tests
             Assert.IsNotNull(sceneFacadeImpl.outgoingCrtdMessagesProvider);
             Assert.IsNotNull(sceneFacadeImpl.crdtWorldSynchronizer);
 
-            Assert.AreEqual(world, sceneFacadeImpl.ecsWorldFacade.EcsWorld);
+            Assert.AreNotEqual(default(World), sceneFacadeImpl.ecsWorldFacade.EcsWorld);
         }
 
         [Test]
