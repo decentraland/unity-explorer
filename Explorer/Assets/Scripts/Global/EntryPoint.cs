@@ -12,12 +12,18 @@ namespace Global
 
         private void Awake()
         {
+            SceneSharedContainer = Install();
+        }
+
+        public static SceneSharedContainer Install()
+        {
             Profiler.BeginSample($"{nameof(EntryPoint)}.Install");
 
             var componentsContainer = ComponentsContainer.Create();
-            SceneSharedContainer = SceneSharedContainer.Create(componentsContainer);
+            var sceneSharedContainer = SceneSharedContainer.Create(componentsContainer);
 
             Profiler.EndSample();
+            return sceneSharedContainer;
         }
     }
 }

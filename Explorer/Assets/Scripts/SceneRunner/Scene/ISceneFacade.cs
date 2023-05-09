@@ -11,6 +11,15 @@ namespace SceneRunner.Scene
         /// </summary>
         UniTask StartUpdateLoop(int targetFPS, CancellationToken ct);
 
+        /// <summary>
+        /// Change the target fps while the scene is running.
+        /// It will take effect right after the next update
+        /// </summary>
+        /// <param name="fps">Target FPS</param>
         void SetTargetFPS(int fps);
+
+        internal UniTask StartScene();
+
+        internal UniTask Tick(float dt);
     }
 }

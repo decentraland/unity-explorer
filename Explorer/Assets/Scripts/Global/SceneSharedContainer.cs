@@ -1,5 +1,6 @@
 using CRDT.Deserializer;
 using CRDT.Serializer;
+using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Engine;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
@@ -18,20 +19,17 @@ namespace Global
         public static SceneSharedContainer Create(in ComponentsContainer componentsContainer)
         {
             var ecsWorldFactory = new ECSWorldFactory(componentsContainer.ComponentPoolsRegistry);
-            var sceneRuntimeFactory = new SceneRuntimeFactory();
-            var engineAPIPoolsProvider = new EngineAPIPoolsProvider();
-            var crdtSerializer = new CRDTSerializer();
-            var crdtDeserializer = new CRDTDeserializer();
 
             return new SceneSharedContainer
             {
                 SceneFactory = new SceneFactory(
                     ecsWorldFactory,
-                    sceneRuntimeFactory,
-                    engineAPIPoolsProvider,
-                    crdtDeserializer,
-                    crdtSerializer,
-                    componentsContainer.SDKComponentsRegistry
+                    new SceneRuntimeFactory(),
+                    new EngineAPIPoolsProvider(),
+                    new CRDTDeserializer(),
+                    new CRDTSerializer(),
+                    componentsContainer.SDKComponentsRegistry,
+                    new EntityFactory()
                 )
             };
         }

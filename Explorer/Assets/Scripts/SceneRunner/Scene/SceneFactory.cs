@@ -20,6 +20,7 @@ namespace SceneRunner.Scene
         private readonly ICRDTDeserializer crdtDeserializer;
         private readonly ICRDTSerializer crdtSerializer;
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
+        private readonly IEntityFactory entityFactory;
 
         public SceneFactory(
             IECSWorldFactory ecsWorldFactory,
@@ -27,7 +28,8 @@ namespace SceneRunner.Scene
             IEngineAPIPoolsProvider engineAPIPoolsProvider,
             ICRDTDeserializer crdtDeserializer,
             ICRDTSerializer crdtSerializer,
-            ISDKComponentsRegistry sdkComponentsRegistry)
+            ISDKComponentsRegistry sdkComponentsRegistry,
+            IEntityFactory entityFactory)
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -35,6 +37,7 @@ namespace SceneRunner.Scene
             this.crdtDeserializer = crdtDeserializer;
             this.crdtSerializer = crdtSerializer;
             this.sdkComponentsRegistry = sdkComponentsRegistry;
+            this.entityFactory = entityFactory;
         }
 
         public async UniTask<ISceneFacade> CreateScene(string jsCodeUrl, CancellationToken ct)
@@ -49,7 +52,7 @@ namespace SceneRunner.Scene
             // Create an instance of Scene Runtime on the thread pool
             var sceneRuntime = await sceneRuntimeFactory.CreateByPath(jsCodeUrl, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool);
 
-            var crdtWorldSynchronizer = new CRDTWorldSynchronizer(ecsWorldFacade.EcsWorld, sdkComponentsRegistry);
+            var crdtWorldSynchronizer = new CRDTWorldSynchronizer(ecsWorldFacade.EcsWorld, sdkComponentsRegistry, entityFactory);
 
             var engineAPI = new EngineAPIImplementation(
                 engineAPIPoolsProvider,

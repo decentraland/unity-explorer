@@ -23,7 +23,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
         /// Applies deserialized component to the world.
         /// Must be called on the thread where World is running
         /// </summary>
-        public override void Apply(World world, Arch.Core.CommandBuffer.CommandBuffer commandBuffer, Entity entity, CRDTReconciliationEffect reconciliationEffect, object component)
+        public override void Apply(World world, Arch.CommandBuffer.CommandBuffer commandBuffer, Entity entity, CRDTReconciliationEffect reconciliationEffect, object component)
         {
             // this is the cast we need
             var c = (T)component;
@@ -49,7 +49,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
 
     public abstract class SDKComponentCommandBufferSynchronizer
     {
-        public abstract void Apply(World world, Arch.Core.CommandBuffer.CommandBuffer commandBuffer,
+        public abstract void Apply(World world, Arch.CommandBuffer.CommandBuffer commandBuffer,
             Entity entity,
             CRDTReconciliationEffect reconciliationEffect, [CanBeNull] object component);
     }

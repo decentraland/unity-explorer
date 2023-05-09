@@ -1,5 +1,5 @@
-﻿using Arch.Core;
-using Arch.Core.CommandBuffer;
+﻿using Arch.CommandBuffer;
+using Arch.Core;
 using CRDT;
 using CRDT.Protocol;
 using CrdtEcsBridge.Components;
@@ -51,6 +51,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
 
         private ISDKComponentsRegistry sdkComponentsRegistry;
         private WorldSyncCommandBuffer worldSyncCommandBuffer;
+        private IEntityFactory entityFactory;
 
         [SetUp]
         public void SetUp()
@@ -91,7 +92,10 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                                       return true;
                                   });
 
-            worldSyncCommandBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry);
+            entityFactory = Substitute.For<IEntityFactory>();
+            entityFactory.Create(Arg.Any<CRDTEntity>(), Arg.Any<World>()).Returns(c => c.Arg<World>().Create());
+
+            worldSyncCommandBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory);
         }
 
         [Test]
@@ -100,7 +104,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         {
             void FillDeserializeLoop(int lastIndex)
             {
-                var localBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry);
+                var localBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory);
                 var finalExpectation = CRDTReconciliationEffect.NoChanges;
 
                 for (var i = 0; i <= lastIndex; i++)

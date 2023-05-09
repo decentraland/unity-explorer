@@ -18,20 +18,22 @@ namespace CrdtEcsBridge.WorldSynchronizer
         private readonly World world;
         private readonly Dictionary<CRDTEntity, Entity> entitiesMap;
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
+        private readonly IEntityFactory entityFactory;
 
-        private readonly Arch.Core.CommandBuffer.CommandBuffer reusableCommandBuffer;
+        private readonly Arch.CommandBuffer.CommandBuffer reusableCommandBuffer;
 
         // We can't use a mutex as it must be acquired and released by the same thread
         // and it is not guaranteed as we use thread pools (in the most cases different threads are used for getting and applying command buffers)
         private readonly SemaphoreSlim semaphore = new (1, 1);
 
-        public CRDTWorldSynchronizer(World world, ISDKComponentsRegistry sdkComponentsRegistry)
+        public CRDTWorldSynchronizer(World world, ISDKComponentsRegistry sdkComponentsRegistry, IEntityFactory entityFactory)
         {
             this.world = world;
             entitiesMap = new Dictionary<CRDTEntity, Entity>();
 
-            reusableCommandBuffer = new Arch.Core.CommandBuffer.CommandBuffer(world, BUFFER_POOLS_CAPACITY);
+            reusableCommandBuffer = new Arch.CommandBuffer.CommandBuffer(world, BUFFER_POOLS_CAPACITY);
             this.sdkComponentsRegistry = sdkComponentsRegistry;
+            this.entityFactory = entityFactory;
         }
 
         public IReadOnlyDictionary<CRDTEntity, Entity> EntitiesMap => entitiesMap;
@@ -41,7 +43,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
             if (!semaphore.Wait(RENT_WAIT_TIMEOUT))
                 throw new TimeoutException("Rent Wait Timeout: Couldn't rent command buffer");
 
-            return new WorldSyncCommandBuffer(sdkComponentsRegistry);
+            return new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory);
         }
 
         public void ApplySyncCommandBuffer(IWorldSyncCommandBuffer syncCommandBuffer)

@@ -62,7 +62,7 @@ namespace SceneRunner.Tests
             crdtSerializer = Substitute.For<ICRDTSerializer>();
             componentsRegistry = Substitute.For<ISDKComponentsRegistry>();
 
-            sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, engineAPIPoolsProvider, crdtDeserializer, crdtSerializer, componentsRegistry);
+            sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, engineAPIPoolsProvider, crdtDeserializer, crdtSerializer, componentsRegistry, new EntityFactory());
         }
 
         [TearDown]

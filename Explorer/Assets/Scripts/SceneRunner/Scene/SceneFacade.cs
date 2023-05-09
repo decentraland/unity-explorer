@@ -41,6 +41,12 @@ namespace SceneRunner.Scene
             intervalMS = (int)(1000f / fps);
         }
 
+        UniTask ISceneFacade.StartScene() =>
+            runtimeInstance.StartScene();
+
+        UniTask ISceneFacade.Tick(float dt) =>
+            runtimeInstance.UpdateScene(dt);
+
         public async UniTask StartUpdateLoop(int targetFPS, CancellationToken ct)
         {
             AssertIsNotMainThread(nameof(StartUpdateLoop));

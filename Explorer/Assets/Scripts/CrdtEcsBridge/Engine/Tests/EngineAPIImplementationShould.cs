@@ -141,7 +141,8 @@ namespace CrdtEcsBridge.Engine.Tests
                 engineAPIPoolsProvider.GetSerializedStateBytesPool(Arg.Any<int>());
 
                 // can't check Serialize, can't mock `Span<byte>`
-                crdtWorldSynchronizer.Received(1).ApplySyncCommandBuffer(worldSyncCommandBuffer);
+                // Apply will be called asynchronously
+                // crdtWorldSynchronizer.Received(1).ApplySyncCommandBuffer(worldSyncCommandBuffer);
             });
         }
 

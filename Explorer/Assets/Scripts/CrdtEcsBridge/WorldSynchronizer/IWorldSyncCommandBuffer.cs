@@ -31,6 +31,6 @@ namespace CrdtEcsBridge.WorldSynchronizer
         /// Applies deserialized changes to the world.
         /// Must be called on the thread where World is running
         /// </summary>
-        void Apply(World world, Arch.Core.CommandBuffer.CommandBuffer commandBuffer, Dictionary<CRDTEntity, Entity> entitiesMap);
+        void Apply(World world, Arch.CommandBuffer.CommandBuffer commandBuffer, Dictionary<CRDTEntity, Entity> entitiesMap);
     }
 }
