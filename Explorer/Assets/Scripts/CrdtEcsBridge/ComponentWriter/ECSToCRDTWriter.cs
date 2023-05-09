@@ -57,10 +57,8 @@ namespace CrdtEcsBridge.ECSToCRDTWriter
 
         private void ProcessMessage(ProcessedCRDTMessage processedCrdtMessage)
         {
-            //We process the message in the CRDTState.
             CRDTReconciliationResult result = crdtProtocol.ProcessMessage(processedCrdtMessage.message);
 
-            //We prepare an outgoing message if necessary
             switch (result.Effect)
             {
                 case CRDTReconciliationEffect.ComponentAdded:
@@ -73,8 +71,6 @@ namespace CrdtEcsBridge.ECSToCRDTWriter
                 case CRDTReconciliationEffect.EntityDeleted:
                     break;
             }
-
-
         }
     }
 }
