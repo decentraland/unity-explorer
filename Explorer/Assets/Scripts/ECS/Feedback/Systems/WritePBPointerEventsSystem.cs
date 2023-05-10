@@ -2,12 +2,13 @@ using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECS7;
+using DCL.ECSComponents;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 
 public class WritePBPointerEventsSystem : BaseUnityLoopSystem
 {
-    private readonly QueryDescription queryDescription = new QueryDescription().WithAll<CRDTEntity, PointerEventsResult>();
+    private readonly QueryDescription queryDescription = new QueryDescription().WithAll<CRDTEntity, PBPointerEventsResult>();
     private WriteFeedbackToCrdt writeFeedbackToCrdt;
 
     public WritePBPointerEventsSystem(World world, IECSToCRDTWriter componentWriter) : base(world)
@@ -17,10 +18,10 @@ public class WritePBPointerEventsSystem : BaseUnityLoopSystem
 
     protected override void Update(float _)
     {
-        World.InlineEntityQuery<WriteFeedbackToCrdt, CRDTEntity, PointerEventsResult>(in queryDescription, ref writeFeedbackToCrdt);
+        World.InlineEntityQuery<WriteFeedbackToCrdt, CRDTEntity, PBPointerEventsResult>(in queryDescription, ref writeFeedbackToCrdt);
     }
 
-    private readonly struct WriteFeedbackToCrdt : IForEachWithEntity<CRDTEntity, PointerEventsResult>
+    private readonly struct WriteFeedbackToCrdt : IForEachWithEntity<CRDTEntity, PBPointerEventsResult>
     {
         private readonly IECSToCRDTWriter writer;
         private readonly World world;
@@ -32,10 +33,10 @@ public class WritePBPointerEventsSystem : BaseUnityLoopSystem
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Update(in Entity entity, ref CRDTEntity crdtEntity, ref PointerEventsResult feedback)
+        public void Update(in Entity entity, ref CRDTEntity crdtEntity, ref PBPointerEventsResult pbResult)
         {
-            writer.AppendMessage(crdtEntity, ComponentID.POINTER_EVENTS_RESULT, feedback.pbResult);
-            world.Remove(entity, typeof(PointerEventsResult));
+            writer.AppendMessage(crdtEntity, ComponentID.POINTER_EVENTS_RESULT, pbResult);
+            world.Remove(entity, typeof(PBPointerEventsResult));
         }
     }
 }
