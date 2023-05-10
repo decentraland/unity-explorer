@@ -186,7 +186,7 @@ namespace CRDT.Protocol
             in CRDTMessage crdtMessage, ref EntityComponentData componentData)
         {
             if (!innerSetExists)
-                crdtState.lwwComponents[crdtMessage.ComponentId] = inner = new PooledDictionary<CRDTEntity, EntityComponentData>();
+                crdtState.lwwComponents[crdtMessage.ComponentId] = inner = new PooledDictionary<CRDTEntity, EntityComponentData>(CRDTEntityComparer.INSTANCE);
 
             if (!componentExists)
                 crdtState.messagesCount++;
@@ -270,7 +270,7 @@ namespace CRDT.Protocol
 
                 // Pooled collection will take care of pooling an internal state, there will be a small garbage related to the class itself
                 // We can tolerate it
-                crdtState.appendComponents[message.ComponentId] = outer = new PooledDictionary<CRDTEntity, PooledList<EntityComponentData>>();
+                crdtState.appendComponents[message.ComponentId] = outer = new PooledDictionary<CRDTEntity, PooledList<EntityComponentData>>(CRDTEntityComparer.INSTANCE);
 
             outer[message.EntityId] = existingSet;
             return true;

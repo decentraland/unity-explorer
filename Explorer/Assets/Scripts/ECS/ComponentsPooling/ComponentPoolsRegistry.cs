@@ -7,7 +7,7 @@ namespace ECS.ComponentsPooling
     {
         private readonly Dictionary<Type, IComponentPool> pools;
 
-        private ComponentPoolsRegistry(Dictionary<Type, IComponentPool> pools)
+        public ComponentPoolsRegistry(Dictionary<Type, IComponentPool> pools)
         {
             this.pools = pools;
         }

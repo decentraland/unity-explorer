@@ -10,6 +10,7 @@ namespace Utility.ThreadSafePool
         /// </summary>
         public static readonly ThreadSafeObjectPool<TCollection> Shared = new (() => new TCollection(), actionOnRelease: c => c.Clear());
 
-        public ThreadSafeCollectionPool(int initialCapacity, int poolCapacity, Func<int, TCollection> createFunc) : base(() => createFunc(initialCapacity), actionOnRelease: c => c.Clear(), defaultCapacity: poolCapacity) { }
+        public ThreadSafeCollectionPool(int initialCapacity, int poolCapacity, Func<int, TCollection> createFunc)
+            : base(() => createFunc(initialCapacity), actionOnRelease: c => c.Clear(), defaultCapacity: poolCapacity, collectionCheck: false) { }
     }
 }

@@ -1,0 +1,61 @@
+﻿using Arch.Core;
+using Arch.SystemGroups;
+using ECS.LifeCycle;
+using NSubstitute;
+using NUnit.Framework;
+using SceneRunner.ECSWorld;
+using InitializationTestSystem1 = SceneRunner.SceneRunner.Tests.TestUtils.InitializationTestSystem1;
+using SimulationTestSystem1 = SceneRunner.SceneRunner.Tests.TestUtils.SimulationTestSystem1;
+
+namespace SceneRunner.Tests
+{
+    [TestFixture]
+    public class ECSWorldFacadeShould
+    {
+        private ECSWorldFacade ecsWorldFacade;
+        private World world;
+
+        private InitializationTestSystem1 initializationTestSystem1;
+        private SimulationTestSystem1 simulationTestSystem1;
+        private IFinalizeWorldSystem finalizeWorldSystem;
+
+        [SetUp]
+        public void SetUp()
+        {
+            world = World.Create();
+
+            var builder = new ArchSystemsWorldBuilder<World>(world);
+
+            initializationTestSystem1 = InitializationTestSystem1.InjectToWorld(ref builder);
+            simulationTestSystem1 = SimulationTestSystem1.InjectToWorld(ref builder);
+
+            ecsWorldFacade = new ECSWorldFacade(builder.Finish(), world, finalizeWorldSystem = Substitute.For<IFinalizeWorldSystem>());
+        }
+
+        [Test]
+        public void CallInitializeOnSystems()
+        {
+            ecsWorldFacade.Initialize();
+
+            try
+            {
+                Assert.IsTrue(initializationTestSystem1.Internal.InitializeCalled);
+                Assert.IsTrue(simulationTestSystem1.Internal.InitializeCalled);
+            }
+            finally { world.Dispose(); }
+        }
+
+        [Test]
+        public void DisposeProperly()
+        {
+            ecsWorldFacade.Dispose();
+
+            finalizeWorldSystem.Received(1).FinalizeSDKComponents(Arg.Any<Query>());
+
+            Assert.IsTrue(initializationTestSystem1.Internal.DisposeCalled);
+            Assert.IsTrue(simulationTestSystem1.Internal.DisposeCalled);
+
+            Assert.IsFalse(World.Worlds.Contains(world));
+        }
+    }
+}

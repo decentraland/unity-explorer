@@ -1,5 +1,5 @@
-﻿using Arch.Core;
-using Arch.Core.CommandBuffer;
+﻿using Arch.CommandBuffer;
+using Arch.Core;
 using CRDT;
 using CRDT.Protocol;
 using CrdtEcsBridge.Components;
@@ -51,6 +51,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
 
         private ISDKComponentsRegistry sdkComponentsRegistry;
         private WorldSyncCommandBuffer worldSyncCommandBuffer;
+        private IEntityFactory entityFactory;
 
         [SetUp]
         public void SetUp()
@@ -91,7 +92,10 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                                       return true;
                                   });
 
-            worldSyncCommandBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry);
+            entityFactory = Substitute.For<IEntityFactory>();
+            entityFactory.Create(Arg.Any<CRDTEntity>(), Arg.Any<World>()).Returns(c => c.Arg<World>().Create());
+
+            worldSyncCommandBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory);
         }
 
         [Test]
@@ -100,7 +104,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         {
             void FillDeserializeLoop(int lastIndex)
             {
-                var localBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry);
+                var localBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory);
                 var finalExpectation = CRDTReconciliationEffect.NoChanges;
 
                 for (var i = 0; i <= lastIndex; i++)
@@ -196,7 +200,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         public void ApplyChangesCorrectly(Action<World, Dictionary<CRDTEntity, Entity>> prewarmWorld, (CRDTMessage, CRDTReconciliationEffect)[] messages, Action<World, Dictionary<CRDTEntity, Entity>> assertWorld)
         {
             var world = World.Create();
-            var commandBuffer = new CommandBuffer(world);
+            var commandBuffer = new PersistentCommandBuffer(world);
 
             var entitiesMap = new Dictionary<CRDTEntity, Entity>();
             prewarmWorld(world, entitiesMap);
@@ -316,7 +320,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             worldSyncCommandBuffer.FinalizeAndDeserialize();
 
             var world = World.Create();
-            var commandBuffer = new CommandBuffer(world);
+            var commandBuffer = new PersistentCommandBuffer(world);
 
             var entitiesMap = new Dictionary<CRDTEntity, Entity>();
 
@@ -331,7 +335,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             worldSyncCommandBuffer.SyncCRDTMessage(CreateTestMessage(), CRDTReconciliationEffect.ComponentAdded);
 
             var world = World.Create();
-            var commandBuffer = new CommandBuffer(world);
+            var commandBuffer = new PersistentCommandBuffer(world);
 
             var entitiesMap = new Dictionary<CRDTEntity, Entity>();
 

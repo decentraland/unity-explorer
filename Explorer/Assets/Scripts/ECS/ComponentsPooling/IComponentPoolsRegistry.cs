@@ -4,8 +4,9 @@ using System;
 namespace ECS.ComponentsPooling
 {
     /// <summary>
+    /// The registry of the pools of components including both SDK ones and non-SDK ones. <br/>
     /// The set of the pools of components should be provided
-    /// as a shared instance across the worlds and CRDT Deserialization
+    /// as a shared instance across the worlds and CRDT Deserialization <br/>
     /// Thread-safe
     /// </summary>
     public interface IComponentPoolsRegistry : IDisposable
