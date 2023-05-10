@@ -5,8 +5,8 @@ using CRDT.Protocol.Factory;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.OutgoingMessages;
 using Google.Protobuf;
-using System;
 using System.Buffers;
+using UnityEngine;
 
 namespace CrdtEcsBridge.ECSToCRDTWriter
 {
@@ -28,26 +28,28 @@ namespace CrdtEcsBridge.ECSToCRDTWriter
 
         public void PutMessage<T>(CRDTEntity crdtID, int componentId, T model) where T: IMessage<T>
         {
-            if (componentsRegistry.TryGet(componentId, out SDKComponentBridge componentBridge))
+            if (!componentsRegistry.TryGet(componentId, out SDKComponentBridge componentBridge))
             {
-                IMemoryOwner<byte> memory = pooledMemoryAllocator.GetMemoryBuffer(model.CalculateSize());
-                componentBridge.Serializer.SerializeInto(model, pooledMemoryAllocator.GetMemoryBuffer(model.CalculateSize()).Memory.Span);
-                ProcessMessage(crdtProtocol.CreatePutMessage(crdtID, componentId, memory));
+                Debug.LogWarning($"SDK Component {componentId} is not registered");
+                return;
             }
-            else
-                throw new Exception($"Serializer not present for type {typeof(T).Name}");
+
+            IMemoryOwner<byte> memory = pooledMemoryAllocator.GetMemoryBuffer(model.CalculateSize());
+            componentBridge.Serializer.SerializeInto(model, pooledMemoryAllocator.GetMemoryBuffer(model.CalculateSize()).Memory.Span);
+            ProcessMessage(crdtProtocol.CreatePutMessage(crdtID, componentId, memory));
         }
 
         public void AppendMessage<T>(CRDTEntity crdtID, int componentId, T model) where T: IMessage<T>
         {
-            if (componentsRegistry.TryGet(componentId, out SDKComponentBridge componentBridge))
+            if (!componentsRegistry.TryGet(componentId, out SDKComponentBridge componentBridge))
             {
-                IMemoryOwner<byte> memory = pooledMemoryAllocator.GetMemoryBuffer(model.CalculateSize());
-                componentBridge.Serializer.SerializeInto(model, pooledMemoryAllocator.GetMemoryBuffer(model.CalculateSize()).Memory.Span);
-                ProcessMessage(crdtProtocol.CreateAppendMessage(crdtID, componentId, memory));
+                Debug.LogWarning($"SDK Component {componentId} is not registered");
+                return;
             }
-            else
-                throw new Exception($"Serializer not present for type {typeof(T).Name}");
+
+            IMemoryOwner<byte> memory = pooledMemoryAllocator.GetMemoryBuffer(model.CalculateSize());
+            componentBridge.Serializer.SerializeInto(model, pooledMemoryAllocator.GetMemoryBuffer(model.CalculateSize()).Memory.Span);
+            ProcessMessage(crdtProtocol.CreateAppendMessage(crdtID, componentId, memory));
         }
 
         public void DeleteMessage(CRDTEntity crdtID, int componentId)
