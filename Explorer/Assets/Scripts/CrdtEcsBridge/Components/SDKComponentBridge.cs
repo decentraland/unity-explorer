@@ -21,5 +21,6 @@ namespace CrdtEcsBridge.Components
             Pool = pool;
             CommandBufferSynchronizer = commandBufferSynchronizer;
         }
+
     }
 }
