@@ -8,6 +8,7 @@ using NUnit.Framework;
 [TestFixture]
 public class FeedbackComponentShould
 {
+
     [Test]
     public void CallPutMessageOnNewResult()
     {
@@ -20,14 +21,10 @@ public class FeedbackComponentShould
 
         for (var i = 0; i < 100; i++)
         {
-            world.Add(baseEntity, new PointerEventsResult
-            {
-                pbResult = new PBPointerEventsResult(),
-            });
-
+            world.Add(baseEntity, new PBPointerEventsResult());
             system.Update(0);
         }
-
         writer.Received(100).AppendMessage(Arg.Any<CRDTEntity>(), Arg.Any<int>(), Arg.Any<PBPointerEventsResult>());
     }
 }
+

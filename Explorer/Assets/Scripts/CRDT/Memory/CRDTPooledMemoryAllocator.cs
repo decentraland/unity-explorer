@@ -40,18 +40,11 @@ namespace CRDT.Memory
             return new MemoryOwner(byteArray, length);
         }
 
-        public IMemoryOwner<byte> GetMemoryBuffer(int length)
-        {
-            byte[] byteArray = ArrayPool<byte>.Shared.Rent(length);
-            return new MemoryOwner(byteArray, length);
-        }
+        public IMemoryOwner<byte> GetMemoryBuffer(int length) =>
+            new MemoryOwner(ArrayPool<byte>.Shared.Rent(length), length);
 
-        public IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream)
-        {
-            byte[] byteArray = ArrayPool<byte>.Shared.Rent(originalStream.Length);
-            originalStream.Span.Slice(0, originalStream.Length).CopyTo(byteArray.AsSpan());
-            return new MemoryOwner(byteArray, originalStream.Length);
-        }
+        public IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream) =>
+            GetMemoryBuffer(originalStream, 0, originalStream.Length);
 
     }
 }

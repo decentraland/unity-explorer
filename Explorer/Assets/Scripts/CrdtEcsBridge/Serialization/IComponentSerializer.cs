@@ -20,6 +20,6 @@ namespace CrdtEcsBridge.Serialization
 
         void DeserializeInto(T instance, in ReadOnlySpan<byte> data);
 
-        public void SerializeInto(T model, in Span<byte> span);
+        void SerializeInto(T model, in Span<byte> span);
     }
 }

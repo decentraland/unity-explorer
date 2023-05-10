@@ -67,6 +67,7 @@ namespace CrdtEcsBridge.ECSToCRDTWriter
                     outgoingCRDTMessageProvider.AddMessage(processedCrdtMessage);
                     break;
                 case CRDTReconciliationEffect.NoChanges:
+                    processedCrdtMessage.message.Data.Dispose();
                     break;
                 case CRDTReconciliationEffect.EntityDeleted:
                     break;
