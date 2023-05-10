@@ -1,29 +1,23 @@
-﻿using System.Collections;
-using Cysharp.Threading.Tasks;
-using JetBrains.Annotations;
-using Microsoft.ClearScript;
-using Microsoft.ClearScript.JavaScript;
-using Microsoft.ClearScript.V8;
-using NSubstitute;
-using NSubstitute.ClearExtensions;
+﻿using Microsoft.ClearScript;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.TestTools;
 
-public class V8Tests
+namespace SceneRuntime.Tests
 {
-    [Test]
-    public void CallInvokeAsFunction()
+    public class V8Tests
     {
-        var engine = V8EngineFactory.Create();
+        [Test]
+        public void CallInvokeAsFunction()
+        {
+            var engine = V8EngineFactory.Create();
 
-        engine.AddHostType("Debug", typeof(Debug));
+            engine.AddHostType("Debug", typeof(Debug));
 
-        engine.Execute("function func() { Debug.Log(\"test func\") }");
-        var sceneScriptObject = engine.Evaluate("func") as ScriptObject;
+            engine.Execute("function func() { Debug.Log(\"test func\") }");
+            var sceneScriptObject = engine.Evaluate("func") as ScriptObject;
 
-        sceneScriptObject!.InvokeAsFunction();
-    }
+            sceneScriptObject!.InvokeAsFunction();
+        }
 
         [Test]
         public void ConvertCSharpByteArrayToUint8Array()
@@ -44,10 +38,9 @@ public class V8Tests
 
             var data = new byte[10];
 
-            for (byte i = 0; i < 10; ++i)
-            {
-                data[i] = i;
-            }
+            for (byte i = 0; i < 10; ++i) { data[i] = i; }
+
             sceneScriptObject!.InvokeAsFunction(data);
         }
+    }
 }

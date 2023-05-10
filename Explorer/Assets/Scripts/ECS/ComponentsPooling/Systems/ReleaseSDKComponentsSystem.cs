@@ -1,14 +1,18 @@
 using Arch.Core;
-using Arch.System;
+using Arch.SystemGroups;
 using ECS.Abstract;
+using ECS.Groups;
+using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
+using System;
 
 namespace ECS.ComponentsPooling
 {
     /// <summary>
     /// Called as a last step before entity destruction to return components to the pool
     /// </summary>
-    public class ReleaseSDKComponentsSystem : BaseUnityLoopSystem
+    [UpdateInGroup(typeof(CleanUpGroup))]
+    public partial class ReleaseSDKComponentsSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly QueryDescription queryDescription = new QueryDescription().WithAll<DeleteEntityIntention>();
 
@@ -22,7 +26,16 @@ namespace ECS.ComponentsPooling
         protected override void Update(float _)
         {
             var query = World.Query(in queryDescription);
+            ReleaseComponentsToPool(in query);
+        }
 
+        public void FinalizeSDKComponents(in Query query)
+        {
+            ReleaseComponentsToPool(in query);
+        }
+
+        private void ReleaseComponentsToPool(in Query query)
+        {
             // Profiling required, O(N^4)
             foreach (ref var chunk in query.GetChunkIterator())
             {

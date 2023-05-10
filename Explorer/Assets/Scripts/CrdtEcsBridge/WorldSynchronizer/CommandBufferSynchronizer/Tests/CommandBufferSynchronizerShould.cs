@@ -1,4 +1,5 @@
-﻿using Arch.Core;
+﻿using Arch.CommandBuffer;
+using Arch.Core;
 using CRDT.Protocol;
 using CrdtEcsBridge.WorldSynchronizer.CommandBuffer;
 using ECS.ComponentsPooling;
@@ -16,7 +17,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer.Tests
         }
 
         private World world;
-        private Arch.Core.CommandBuffer.CommandBuffer commandBuffer;
+        private PersistentCommandBuffer commandBuffer;
         private IComponentPool<TestComponent> componentPool;
         private Entity entity;
 
@@ -26,7 +27,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer.Tests
         public void SetUp()
         {
             world = World.Create();
-            commandBuffer = new Arch.Core.CommandBuffer.CommandBuffer(world);
+            commandBuffer = new PersistentCommandBuffer(world);
             componentPool = Substitute.For<IComponentPool<TestComponent>>();
 
             commandBufferSynchronizer = new SDKComponentCommandBufferSynchronizer<TestComponent>(componentPool);

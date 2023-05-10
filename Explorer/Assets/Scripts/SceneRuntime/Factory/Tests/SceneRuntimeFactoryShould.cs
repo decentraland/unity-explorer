@@ -1,21 +1,25 @@
+using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
 using NSubstitute;
 using NUnit.Framework;
-using System;
+using SceneRuntime.Apis.Modules;
 using System.Collections;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-public class SceneRuntimeFactoryShould
+namespace SceneRuntime.Factory.Tests
 {
-    [UnityTest]
-    public IEnumerator CreateBySourceCode() =>
-        UniTask.ToCoroutine(async () =>
-        {
-            // Arrange
-            var factory = new SceneRuntimeFactory();
+    public class SceneRuntimeFactoryShould
+    {
+        [UnityTest]
+        public IEnumerator CreateBySourceCode() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                // Arrange
+                var factory = new SceneRuntimeFactory();
 
-            var sourceCode = @"
+                var sourceCode = @"
                 const engineApi = require('~system/EngineApi')
                 exports.onStart = async function() {
                     data = new Uint8Array(10)
@@ -26,50 +30,54 @@ public class SceneRuntimeFactoryShould
                 exports.onUpdate = async function(dt) {};
             ";
 
-            // Act
-            SceneRuntime sceneRuntime = await factory.CreateBySourceCode(sourceCode);
+                // Act
+                IInstancePoolsProvider instancePoolsProvider = Substitute.For<IInstancePoolsProvider>();
+                instancePoolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new byte[c.Arg<int>()]);
 
-            // Assert
-            Assert.NotNull(sceneRuntime);
-            Assert.IsInstanceOf<SceneRuntime>(sceneRuntime);
+                SceneRuntimeImpl sceneRuntime = await factory.CreateBySourceCode(sourceCode, instancePoolsProvider, CancellationToken.None);
 
-            //Assert: Run an update
-            await sceneRuntime.UpdateScene(0.01f);
-        });
+                // Assert
+                Assert.NotNull(sceneRuntime);
 
-    [UnityTest]
-    public IEnumerator CreateByPath() =>
-        UniTask.ToCoroutine(async () =>
+                //Assert: Run an update
+                await sceneRuntime.UpdateScene(0.01f);
+            });
+
+        [UnityTest]
+        public IEnumerator CreateByPath() =>
+            UniTask.ToCoroutine(async () =>
+            {
+                // Arrange
+                var factory = new SceneRuntimeFactory();
+                var path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
+
+                // Act
+                var engineApi = Substitute.For<IEngineApi>();
+                IInstancePoolsProvider instancePoolsProvider = Substitute.For<IInstancePoolsProvider>();
+                instancePoolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new byte[c.Arg<int>()]);
+
+                SceneRuntimeImpl sceneRuntime = await factory.CreateByPath(path, instancePoolsProvider, CancellationToken.None);
+                sceneRuntime.RegisterEngineApi(engineApi);
+
+                // Assert
+                Assert.NotNull(sceneRuntime);
+
+                await UniTask.Yield();
+                await sceneRuntime.UpdateScene(0.01f);
+            });
+
+        [Test]
+        public void WrapInModuleCommonJs()
         {
             // Arrange
             var factory = new SceneRuntimeFactory();
-            var path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
-
+            var sourceCode = "console.log('Hello, world!');";
 
             // Act
-            var engineApi = Substitute.For<IEngineApi>();
-            SceneRuntime sceneRuntime = await factory.CreateByPath(path);
-            sceneRuntime.RegisterEngineApi(engineApi);
+            string moduleWrapper = factory.WrapInModuleCommonJs(sourceCode);
 
-            // Assert
-            Assert.NotNull(sceneRuntime);
-            Assert.IsInstanceOf<SceneRuntime>(sceneRuntime);
-
-            await UniTask.Yield();
-            await sceneRuntime.UpdateScene(0.01f);
-        });
-
-    [Test]
-    public void WrapInModuleCommonJs()
-    {
-        // Arrange
-        var factory = new SceneRuntimeFactory();
-        var sourceCode = "console.log('Hello, world!');";
-
-        // Act
-        string moduleWrapper = factory.WrapInModuleCommonJs(sourceCode);
-
-        // Assert: Check that the module compiles
-        V8EngineFactory.Create().Compile(moduleWrapper);
+            // Assert: Check that the module compiles
+            V8EngineFactory.Create().Compile(moduleWrapper);
+        }
     }
 }

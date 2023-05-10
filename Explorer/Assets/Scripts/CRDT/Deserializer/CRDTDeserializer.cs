@@ -1,5 +1,6 @@
 ﻿using CRDT.Protocol;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Utility;
@@ -112,6 +113,7 @@ namespace CRDT.Deserializer
                 return false;
 
             // Slice from memory
+
             var dataSlice = memory.Slice(shift, dataLength);
 
             memory = memory.Slice(shift + dataLength);
