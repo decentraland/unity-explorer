@@ -25,7 +25,7 @@ namespace Global
                 SceneFactory = new SceneFactory(
                     ecsWorldFactory,
                     new SceneRuntimeFactory(),
-                    new EngineAPIPoolsProvider(),
+                    new SharedPoolsProvider(),
                     new CRDTDeserializer(),
                     new CRDTSerializer(),
                     componentsContainer.SDKComponentsRegistry,

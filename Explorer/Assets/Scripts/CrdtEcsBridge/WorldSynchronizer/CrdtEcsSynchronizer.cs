@@ -1,9 +1,11 @@
-﻿using Arch.Core;
+﻿using Arch.CommandBuffer;
+using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Utility.Multithreading;
 
 namespace CrdtEcsBridge.WorldSynchronizer
 {
@@ -13,25 +15,27 @@ namespace CrdtEcsBridge.WorldSynchronizer
     public class CRDTWorldSynchronizer : ICRDTWorldSynchronizer
     {
         private const int BUFFER_POOLS_CAPACITY = 64;
-        private const int RENT_WAIT_TIMEOUT = 5000;
 
         private readonly World world;
         private readonly Dictionary<CRDTEntity, Entity> entitiesMap;
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
         private readonly IEntityFactory entityFactory;
 
-        private readonly Arch.CommandBuffer.CommandBuffer reusableCommandBuffer;
+        private readonly PersistentCommandBuffer reusableCommandBuffer;
+
+        private bool disposed;
 
         // We can't use a mutex as it must be acquired and released by the same thread
         // and it is not guaranteed as we use thread pools (in the most cases different threads are used for getting and applying command buffers)
         private readonly SemaphoreSlim semaphore = new (1, 1);
 
-        public CRDTWorldSynchronizer(World world, ISDKComponentsRegistry sdkComponentsRegistry, IEntityFactory entityFactory)
+        public CRDTWorldSynchronizer(World world, ISDKComponentsRegistry sdkComponentsRegistry, IEntityFactory entityFactory,
+            int initialEntitiesCapacity = 1000)
         {
             this.world = world;
-            entitiesMap = new Dictionary<CRDTEntity, Entity>();
+            entitiesMap = new Dictionary<CRDTEntity, Entity>(initialEntitiesCapacity, CRDTEntityComparer.INSTANCE);
 
-            reusableCommandBuffer = new Arch.CommandBuffer.CommandBuffer(world, BUFFER_POOLS_CAPACITY);
+            reusableCommandBuffer = new PersistentCommandBuffer(world, BUFFER_POOLS_CAPACITY);
             this.sdkComponentsRegistry = sdkComponentsRegistry;
             this.entityFactory = entityFactory;
         }
@@ -40,6 +44,12 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
         public IWorldSyncCommandBuffer GetSyncCommandBuffer()
         {
+            // Timeout in Editor will fire up if the pause is enabled
+            // So just wait while on pause
+            MultithreadingUtility.WaitWhileOnPause();
+
+            const int RENT_WAIT_TIMEOUT = 5000;
+
             if (!semaphore.Wait(RENT_WAIT_TIMEOUT))
                 throw new TimeoutException("Rent Wait Timeout: Couldn't rent command buffer");
 
@@ -48,6 +58,8 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
         public void ApplySyncCommandBuffer(IWorldSyncCommandBuffer syncCommandBuffer)
         {
+            if (disposed) return;
+
             syncCommandBuffer.Apply(world, reusableCommandBuffer, entitiesMap);
             semaphore.Release();
         }
@@ -56,6 +68,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
         {
             reusableCommandBuffer.Dispose();
             semaphore.Dispose();
+            disposed = true;
         }
     }
 }

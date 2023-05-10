@@ -1,3 +1,4 @@
+using Arch.CommandBuffer;
 using Arch.Core;
 using Collections.Pooled;
 using CRDT;
@@ -84,7 +85,10 @@ namespace CrdtEcsBridge.WorldSynchronizer
         {
             internal static readonly ThreadSafeObjectPool<BatchState> POOL = new (
                 () => new BatchState(),
-                actionOnRelease: state => state.deserializationTarget = null);
+                actionOnRelease: state => state.deserializationTarget = null,
+
+                // Omit checking collections, it is a hot path on the main thread
+                collectionCheck: false);
 
             internal CRDTMessage crdtMessage;
             internal ReconciliationState reconciliationState;
@@ -224,7 +228,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
             deserialized = true;
         }
 
-        internal void Apply(World world, Arch.CommandBuffer.CommandBuffer commandBuffer, Dictionary<CRDTEntity, Entity> entitiesMap)
+        internal void Apply(World world, PersistentCommandBuffer commandBuffer, Dictionary<CRDTEntity, Entity> entitiesMap)
         {
             if (!deserialized)
                 throw new InvalidOperationException($"{nameof(FinalizeAndDeserialize)} must be called before {nameof(Apply)}");
@@ -279,7 +283,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
         /// <summary>
         /// <inheritdoc cref="IWorldSyncCommandBuffer.Apply"/>
         /// </summary>
-        void IWorldSyncCommandBuffer.Apply(World world, Arch.CommandBuffer.CommandBuffer commandBuffer, Dictionary<CRDTEntity, Entity> entitiesMap)
+        void IWorldSyncCommandBuffer.Apply(World world, PersistentCommandBuffer commandBuffer, Dictionary<CRDTEntity, Entity> entitiesMap)
         {
             Apply(world, commandBuffer, entitiesMap);
         }

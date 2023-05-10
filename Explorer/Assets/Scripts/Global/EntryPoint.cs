@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using Cysharp.Threading.Tasks;
+using SceneRunner.Scene;
+using UnityEngine;
 using UnityEngine.Profiling;
 
 namespace Global
@@ -10,9 +12,29 @@ namespace Global
     {
         public SceneSharedContainer SceneSharedContainer { get; private set; }
 
+        private ISceneFacade sceneFacade;
+
         private void Awake()
         {
             SceneSharedContainer = Install();
+        }
+
+        private void Start()
+        {
+            async UniTask CreateScene()
+            {
+                sceneFacade = await SceneSharedContainer.SceneFactory.CreateScene
+                    ($"file://{Application.dataPath + "/../TestResources/Scenes/CubeWave/cube_waves.js"}", destroyCancellationToken);
+
+                sceneFacade.StartUpdateLoop(2, destroyCancellationToken);
+            }
+
+            CreateScene().Forget();
+        }
+
+        private void OnDestroy()
+        {
+            sceneFacade?.Dispose();
         }
 
         public static SceneSharedContainer Install()

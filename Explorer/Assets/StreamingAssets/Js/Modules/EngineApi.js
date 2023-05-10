@@ -1,6 +1,6 @@
 ﻿// engine module
 module.exports.crdtSendToRenderer = async function(messages) {
-    const data = new Uint8Array(await UnityEngineApi.CrdtSendToRenderer(messages.data))
+    const data = new Uint8Array(UnityEngineApi.CrdtSendToRenderer(messages.data))
     return {
         data
     };
@@ -11,7 +11,7 @@ module.exports.sendBatch = async function() {
 }
 
 module.exports.crdtGetState = async function() {
-    const data = new Uint8Array(await UnityEngineApi.CrdtGetState())
+    const data = new Uint8Array(UnityEngineApi.CrdtGetState())
     return {
         data
     };

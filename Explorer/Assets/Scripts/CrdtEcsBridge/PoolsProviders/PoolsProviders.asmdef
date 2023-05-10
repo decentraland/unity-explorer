@@ -1,0 +1,7 @@
+﻿{
+  "name": "PoolsProviders",
+  "references": [
+    "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+    "GUID:0f4c0f120707fb74497f5d581b9858f8"
+  ]
+}

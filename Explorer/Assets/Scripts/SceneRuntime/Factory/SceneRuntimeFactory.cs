@@ -1,4 +1,5 @@
 using AssetManagement.JsCodeResolver;
+using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -28,6 +29,7 @@ namespace SceneRuntime.Factory
         /// Must be called on the main thread
         /// </summary>
         public async UniTask<SceneRuntimeImpl> CreateBySourceCode(string sourceCode,
+            IInstancePoolsProvider instancePoolsProvider,
             CancellationToken ct,
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
         {
@@ -42,20 +44,21 @@ namespace SceneRuntime.Factory
             // Provide basic Thread Pool synchronization context
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
 
-            return new SceneRuntimeImpl(WrapInModuleCommonJs(sourceCode), initSourceCode, moduleDictionary);
+            return new SceneRuntimeImpl(WrapInModuleCommonJs(sourceCode), initSourceCode, moduleDictionary, instancePoolsProvider);
         }
 
         /// <summary>
         /// Must be called on the main thread
         /// </summary>
         public async UniTask<SceneRuntimeImpl> CreateByPath(string path,
+            IInstancePoolsProvider instancePoolsProvider,
             CancellationToken ct,
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
         {
             AssertCalledOnTheMainThread();
 
             string sourceCode = await LoadJavaScriptSourceCode(path, ct);
-            return await CreateBySourceCode(sourceCode, ct, instantiationBehavior);
+            return await CreateBySourceCode(sourceCode, instancePoolsProvider, ct, instantiationBehavior);
         }
 
         private void AssertCalledOnTheMainThread()

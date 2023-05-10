@@ -90,8 +90,6 @@ namespace Global.Editor
             // after the tick we should wait for the next frame for the CommandBuffer to apply
             await UniTask.Yield(PlayerLoopTiming.Update);
 
-            // 256 cubes
-
             var sceneFacadeImpl = (SceneFacade)sceneFacade;
 
             // Check ECS world
