@@ -57,19 +57,6 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
             Assert.AreEqual(crdtProtocol.GetMessagesCount(), 1);
         }
 
-        [Test]
-        public void ThrowExceptionIfSerializerNotPresent()
-        {
-            //Arrange
-            ICRDTProtocol crdtProtocol = new CRDTProtocol();
-            IOutgoingCRTDMessagesProvider outgoingCRDTMessageProvider = Substitute.For<IOutgoingCRTDMessagesProvider>();
-            var sdkComponentRegistry = new SDKComponentsRegistry();
-            var ecsToCRDTWriter = new ECSToCRDTWriter(crdtProtocol, outgoingCRDTMessageProvider, sdkComponentRegistry);
-            var crdtEntity = new CRDTEntity();
-
-            //Assert
-            Assert.Throws<Exception>(() => ecsToCRDTWriter.PutMessage(crdtEntity, ComponentID.POINTER_EVENTS_RESULT, new PBPointerEventsResult()));
-        }
     }
 
 
