@@ -1,4 +1,5 @@
 ﻿using CRDT.Protocol;
+using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
@@ -18,6 +19,7 @@ namespace SceneRunner.Scene
         internal readonly ICRDTProtocol crdtProtocol;
         internal readonly IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider;
         internal readonly ICRDTWorldSynchronizer crdtWorldSynchronizer;
+        internal readonly IInstancePoolsProvider instancePoolsProvider;
 
         private int intervalMS;
         private bool started;
@@ -27,13 +29,15 @@ namespace SceneRunner.Scene
             ECSWorldFacade ecsWorldFacade,
             ICRDTProtocol crdtProtocol,
             IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider,
-            ICRDTWorldSynchronizer crdtWorldSynchronizer)
+            ICRDTWorldSynchronizer crdtWorldSynchronizer,
+            IInstancePoolsProvider instancePoolsProvider)
         {
             this.runtimeInstance = runtimeInstance;
             this.ecsWorldFacade = ecsWorldFacade;
             this.crdtProtocol = crdtProtocol;
             this.outgoingCrtdMessagesProvider = outgoingCrtdMessagesProvider;
             this.crdtWorldSynchronizer = crdtWorldSynchronizer;
+            this.instancePoolsProvider = instancePoolsProvider;
         }
 
         public void SetTargetFPS(int fps)
@@ -103,6 +107,7 @@ namespace SceneRunner.Scene
             crdtProtocol.Dispose();
             outgoingCrtdMessagesProvider.Dispose();
             crdtWorldSynchronizer.Dispose();
+            instancePoolsProvider.Dispose();
         }
     }
 }

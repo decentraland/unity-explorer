@@ -7,6 +7,7 @@ using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using SceneRunner.ECSWorld;
+using SceneRuntime;
 using SceneRuntime.Factory;
 using System.Threading;
 
@@ -16,7 +17,7 @@ namespace SceneRunner.Scene
     {
         private readonly IECSWorldFactory ecsWorldFactory;
         private readonly SceneRuntimeFactory sceneRuntimeFactory;
-        private readonly IEngineAPIPoolsProvider engineAPIPoolsProvider;
+        private readonly ISharedPoolsProvider sharedPoolsProvider;
         private readonly ICRDTDeserializer crdtDeserializer;
         private readonly ICRDTSerializer crdtSerializer;
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
@@ -25,7 +26,7 @@ namespace SceneRunner.Scene
         public SceneFactory(
             IECSWorldFactory ecsWorldFactory,
             SceneRuntimeFactory sceneRuntimeFactory,
-            IEngineAPIPoolsProvider engineAPIPoolsProvider,
+            ISharedPoolsProvider sharedPoolsProvider,
             ICRDTDeserializer crdtDeserializer,
             ICRDTSerializer crdtSerializer,
             ISDKComponentsRegistry sdkComponentsRegistry,
@@ -33,7 +34,7 @@ namespace SceneRunner.Scene
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
-            this.engineAPIPoolsProvider = engineAPIPoolsProvider;
+            this.sharedPoolsProvider = sharedPoolsProvider;
             this.crdtDeserializer = crdtDeserializer;
             this.crdtSerializer = crdtSerializer;
             this.sdkComponentsRegistry = sdkComponentsRegistry;
@@ -45,17 +46,18 @@ namespace SceneRunner.Scene
             // Per scene instance dependencies
             var crdtProtocol = new CRDTProtocol();
             var outgoingCrtdMessagesProvider = new OutgoingCRTDMessagesProvider();
+            var instancePoolsProvider = InstancePoolsProvider.Create();
 
             var ecsWorldFacade = ecsWorldFactory.CreateWorld( /* Pass dependencies here if they are needed by the systems */);
             ecsWorldFacade.Initialize();
 
             // Create an instance of Scene Runtime on the thread pool
-            var sceneRuntime = await sceneRuntimeFactory.CreateByPath(jsCodeUrl, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool);
+            SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPath(jsCodeUrl, instancePoolsProvider, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool);
 
             var crdtWorldSynchronizer = new CRDTWorldSynchronizer(ecsWorldFacade.EcsWorld, sdkComponentsRegistry, entityFactory);
 
             var engineAPI = new EngineAPIImplementation(
-                engineAPIPoolsProvider,
+                sharedPoolsProvider, instancePoolsProvider,
                 crdtProtocol,
                 crdtDeserializer,
                 crdtSerializer,
@@ -69,7 +71,8 @@ namespace SceneRunner.Scene
                 ecsWorldFacade,
                 crdtProtocol,
                 outgoingCrtdMessagesProvider,
-                crdtWorldSynchronizer);
+                crdtWorldSynchronizer,
+                instancePoolsProvider);
         }
     }
 }

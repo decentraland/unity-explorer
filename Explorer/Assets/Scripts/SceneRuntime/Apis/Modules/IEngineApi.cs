@@ -1,5 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
-using System;
+﻿using System;
 
 namespace SceneRuntime.Apis.Modules
 {
@@ -9,11 +8,11 @@ namespace SceneRuntime.Apis.Modules
     /// </summary>
     public interface IEngineApi : IDisposable
     {
-        /// <param name="data">A contiguous byte array of the CRDT Message</param>
+        /// <param name="dataMemory"></param>
         /// <returns>A contiguous byte array of the CRDT Message representing the outgoing messages</returns>
-        public UniTask<byte[]> CrdtSendToRenderer(byte[] data);
+        public byte[] CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory);
 
         /// <returns>The full serialized CRDT State, A contiguous byte array of the CRDT Message</returns>
-        public UniTask<byte[]> CrdtGetState();
+        public byte[] CrdtGetState();
     }
 }

@@ -9,13 +9,18 @@ namespace ECS.Abstract
     /// </summary>
     public abstract class BaseUnityLoopSystem : BaseSystem<World, float>
     {
-        protected BaseUnityLoopSystem(World world) : base(world) { }
+        private readonly CustomSampler updateSampler;
+
+        protected BaseUnityLoopSystem(World world) : base(world)
+        {
+            updateSampler = CustomSampler.Create($"{GetType()}.Update");
+        }
 
         public sealed override void Update(in float t)
         {
-            Profiler.BeginSample($"{GetType()}.Update");
+            updateSampler.Begin();
             Update(t);
-            Profiler.EndSample();
+            updateSampler.End();
         }
 
         protected abstract void Update(float t);

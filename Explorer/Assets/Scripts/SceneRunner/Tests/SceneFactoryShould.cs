@@ -1,5 +1,4 @@
 using Arch.Core;
-using Arch.SystemGroups;
 using CRDT.Deserializer;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
@@ -21,7 +20,7 @@ namespace SceneRunner.Tests
     {
         private SceneRuntimeFactory sceneRuntimeFactory;
         private IECSWorldFactory ecsWorldFactory;
-        private IEngineAPIPoolsProvider engineAPIPoolsProvider;
+        private ISharedPoolsProvider sharedPoolsProvider;
         private ICRDTDeserializer crdtDeserializer;
         private ICRDTSerializer crdtSerializer;
         private ISDKComponentsRegistry componentsRegistry;
@@ -43,12 +42,12 @@ namespace SceneRunner.Tests
             ecsWorldFactory = Substitute.For<IECSWorldFactory>();
             ecsWorldFactory.CreateWorld().Returns(ecsWorldFacade);
 
-            engineAPIPoolsProvider = Substitute.For<IEngineAPIPoolsProvider>();
+            sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>();
             crdtDeserializer = Substitute.For<ICRDTDeserializer>();
             crdtSerializer = Substitute.For<ICRDTSerializer>();
             componentsRegistry = Substitute.For<ISDKComponentsRegistry>();
 
-            sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, engineAPIPoolsProvider, crdtDeserializer, crdtSerializer, componentsRegistry, new EntityFactory());
+            sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtDeserializer, crdtSerializer, componentsRegistry, new EntityFactory());
         }
 
         [TearDown]

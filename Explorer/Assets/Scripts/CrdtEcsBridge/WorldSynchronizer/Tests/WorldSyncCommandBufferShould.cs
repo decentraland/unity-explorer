@@ -200,7 +200,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         public void ApplyChangesCorrectly(Action<World, Dictionary<CRDTEntity, Entity>> prewarmWorld, (CRDTMessage, CRDTReconciliationEffect)[] messages, Action<World, Dictionary<CRDTEntity, Entity>> assertWorld)
         {
             var world = World.Create();
-            var commandBuffer = new CommandBuffer(world);
+            var commandBuffer = new PersistentCommandBuffer(world);
 
             var entitiesMap = new Dictionary<CRDTEntity, Entity>();
             prewarmWorld(world, entitiesMap);
@@ -320,7 +320,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             worldSyncCommandBuffer.FinalizeAndDeserialize();
 
             var world = World.Create();
-            var commandBuffer = new CommandBuffer(world);
+            var commandBuffer = new PersistentCommandBuffer(world);
 
             var entitiesMap = new Dictionary<CRDTEntity, Entity>();
 
@@ -335,7 +335,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             worldSyncCommandBuffer.SyncCRDTMessage(CreateTestMessage(), CRDTReconciliationEffect.ComponentAdded);
 
             var world = World.Create();
-            var commandBuffer = new CommandBuffer(world);
+            var commandBuffer = new PersistentCommandBuffer(world);
 
             var entitiesMap = new Dictionary<CRDTEntity, Entity>();
 

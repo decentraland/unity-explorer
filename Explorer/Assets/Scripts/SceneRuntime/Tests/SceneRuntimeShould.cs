@@ -1,3 +1,4 @@
+using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
 using NSubstitute;
@@ -6,10 +7,7 @@ using SceneRuntime.Apis.Modules;
 using SceneRuntime.Factory;
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.TestTools;
@@ -34,6 +32,15 @@ namespace SceneRuntime.Tests
             }
         }
 
+        private IInstancePoolsProvider poolsProvider;
+
+        [SetUp]
+        public void SetUp()
+        {
+            poolsProvider = Substitute.For<IInstancePoolsProvider>();
+            poolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new byte[c.Arg<int>()]);
+        }
+
         [UnityTest]
         public IEnumerator EngineApi_GetState() =>
             UniTask.ToCoroutine(async () =>
@@ -43,18 +50,18 @@ namespace SceneRuntime.Tests
                 var code = @"
             const engineApi = require('~system/EngineApi')
             exports.onStart = async function() {
-                await engineApi.crdtGetState()
+                return engineApi.crdtGetState()
             };
             exports.onUpdate = async function(dt) {};
         ";
 
                 SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
-                var sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code, CancellationToken.None);
+                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code, poolsProvider, CancellationToken.None);
 
                 sceneRuntime.RegisterEngineApi(engineApi);
                 await sceneRuntime.StartScene();
 
-                await engineApi.Received().CrdtGetState();
+                engineApi.Received().CrdtGetState();
             });
 
         [UnityTest]
@@ -75,7 +82,7 @@ namespace SceneRuntime.Tests
         ";
 
                 SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
-                var sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code, CancellationToken.None);
+                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code, poolsProvider, CancellationToken.None);
 
                 sceneRuntime.RegisterEngineApi(engineApi);
 
@@ -97,8 +104,11 @@ namespace SceneRuntime.Tests
 
                 Assert.IsTrue(testOk.IsOk());
 
-                await engineApi.Received().CrdtSendToRenderer(Arg.Is<byte[]>(array => array.Length == 10 && array[0] == 123));
+                engineApi.Received().CrdtSendToRenderer(Arg.Is<ReadOnlyMemory<byte>>(r => CheckMemory(r)));
             });
+
+        private static bool CheckMemory(ReadOnlyMemory<byte> r) =>
+            r.Length == 10 && r.Span[0] == 123;
 
         [UnityTest]
         public IEnumerator ProfileOnUpdate() =>
@@ -110,7 +120,7 @@ namespace SceneRuntime.Tests
         ";
 
                 SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
-                var sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code, CancellationToken.None);
+                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code, poolsProvider, CancellationToken.None);
 
                 await sceneRuntime.StartScene();
 
@@ -137,7 +147,7 @@ namespace SceneRuntime.Tests
 
                 SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
                 var path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
-                var sceneRuntime = await sceneRuntimeFactory.CreateByPath(path, CancellationToken.None);
+                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPath(path, poolsProvider, CancellationToken.None);
 
                 sceneRuntime.RegisterEngineApi(engineApi);
 

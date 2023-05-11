@@ -9,13 +9,13 @@ using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using NSubstitute;
-using NSubstitute.Core;
 using NUnit.Framework;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.SceneRunner.Tests.TestUtils;
 using SceneRuntime;
 using SceneRuntime.Factory;
+using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
@@ -29,15 +29,13 @@ namespace SceneRunner.Tests
     {
         private SceneRuntimeFactory sceneRuntimeFactory;
         private IECSWorldFactory ecsWorldFactory;
-        private IEngineAPIPoolsProvider engineAPIPoolsProvider;
+        private ISharedPoolsProvider sharedPoolsProvider;
         private ICRDTDeserializer crdtDeserializer;
         private ICRDTSerializer crdtSerializer;
         private ISDKComponentsRegistry componentsRegistry;
         private SceneFactory sceneFactory;
 
-        private World world;
-
-        private SceneFacade sceneFacade;
+        private readonly ConcurrentBag<SceneFacade> sceneFacades = new ();
 
         private string path;
 
@@ -46,29 +44,39 @@ namespace SceneRunner.Tests
         {
             path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
 
-            world = World.Create();
-            var builder = new ArchSystemsWorldBuilder<World>(world);
-
-            InitializationTestSystem1.InjectToWorld(ref builder);
-            SimulationTestSystem1.InjectToWorld(ref builder);
-
             sceneRuntimeFactory = new SceneRuntimeFactory();
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>();
-            ecsWorldFactory.CreateWorld().Returns(new ECSWorldFacade(builder.Finish(), world));
 
-            engineAPIPoolsProvider = Substitute.For<IEngineAPIPoolsProvider>();
+            ecsWorldFactory.CreateWorld()
+                           .Returns(_ =>
+                            {
+                                var world = World.Create();
+                                var builder = new ArchSystemsWorldBuilder<World>(world);
+
+                                InitializationTestSystem1.InjectToWorld(ref builder);
+                                SimulationTestSystem1.InjectToWorld(ref builder);
+                                return new ECSWorldFacade(builder.Finish(), world);
+                            });
+
+            sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>();
             crdtDeserializer = Substitute.For<ICRDTDeserializer>();
             crdtSerializer = Substitute.For<ICRDTSerializer>();
             componentsRegistry = Substitute.For<ISDKComponentsRegistry>();
 
-            sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, engineAPIPoolsProvider, crdtDeserializer, crdtSerializer, componentsRegistry, new EntityFactory());
+            sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtDeserializer, crdtSerializer, componentsRegistry, new EntityFactory());
         }
 
-        [TearDown]
+        [OneTimeTearDown]
         public void TearDown()
         {
-            sceneFacade?.Dispose();
+            foreach (SceneFacade sceneFacade in sceneFacades)
+            {
+                try { sceneFacade.Dispose(); }
+                catch (Exception e) { Debug.LogException(e); }
+            }
+
+            sceneFacades.Clear();
         }
 
         [Test]
@@ -76,7 +84,8 @@ namespace SceneRunner.Tests
         {
             var mainThread = Thread.CurrentThread.ManagedThreadId;
 
-            sceneFacade = (SceneFacade)await sceneFactory.CreateScene(path, CancellationToken.None);
+            var sceneFacade = (SceneFacade)await sceneFactory.CreateScene(path, CancellationToken.None);
+            sceneFacades.Add(sceneFacade);
 
             var cancellationTokenSource = new CancellationTokenSource();
 
@@ -95,13 +104,16 @@ namespace SceneRunner.Tests
 
             var sceneRuntime = Substitute.For<ISceneRuntime>();
 
-            sceneFacade = new SceneFacade(
+            var sceneFacade = new SceneFacade(
                 sceneRuntime,
                 TestSystemsWorld.Create(),
                 Substitute.For<ICRDTProtocol>(),
                 Substitute.For<IOutgoingCRTDMessagesProvider>(),
-                Substitute.For<ICRDTWorldSynchronizer>()
+                Substitute.For<ICRDTWorldSynchronizer>(),
+                Substitute.For<IInstancePoolsProvider>()
             );
+
+            sceneFacades.Add(sceneFacade);
 
             await UniTask.SwitchToThreadPool();
 
@@ -147,6 +159,7 @@ namespace SceneRunner.Tests
             async UniTask CreateAndLaunch(int fps, int lifeTime)
             {
                 var sceneFacade = (SceneFacade)await sceneFactory.CreateScene(path, CancellationToken.None);
+                sceneFacades.Add(sceneFacade);
 
                 var cancellationTokenSource = new CancellationTokenSource();
 
@@ -164,6 +177,48 @@ namespace SceneRunner.Tests
 
             // It is not reliable to count the threads exactly as the agent can have a limited capacity
             Assert.GreaterOrEqual(list.Distinct().Count(), Mathf.Min(2, fps.Length - 2));
+        }
+
+        [Test]
+        public async Task DisposeInProperOrder()
+        {
+            const int DURATION = 1000;
+
+            ISceneRuntime sceneRuntime = Substitute.For<ISceneRuntime>();
+
+            var sceneFacade = new SceneFacade(
+                sceneRuntime,
+                TestSystemsWorld.Create(),
+                Substitute.For<ICRDTProtocol>(),
+                Substitute.For<IOutgoingCRTDMessagesProvider>(),
+                Substitute.For<ICRDTWorldSynchronizer>(),
+                Substitute.For<IInstancePoolsProvider>()
+            );
+
+            await UniTask.SwitchToThreadPool();
+
+            // Provide basic Thread Pool synchronization context
+            SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+
+            var cancellationTokenSource = new CancellationTokenSource();
+            cancellationTokenSource.CancelAfter(DURATION);
+
+            await sceneFacade.StartUpdateLoop(10, cancellationTokenSource.Token);
+
+            await UniTask.SwitchToMainThread();
+
+            sceneFacade.Dispose();
+
+            Received.InOrder(() =>
+            {
+                sceneRuntime.Dispose();
+
+                // World facade is not mockable
+                sceneFacade.crdtProtocol.Dispose();
+                sceneFacade.outgoingCrtdMessagesProvider.Dispose();
+                sceneFacade.crdtWorldSynchronizer.Dispose();
+                sceneFacade.instancePoolsProvider.Dispose();
+            });
         }
     }
 }

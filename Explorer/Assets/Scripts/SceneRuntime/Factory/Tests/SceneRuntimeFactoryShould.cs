@@ -1,3 +1,4 @@
+using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
 using NSubstitute;
 using NUnit.Framework;
@@ -30,11 +31,13 @@ namespace SceneRuntime.Factory.Tests
             ";
 
                 // Act
-                SceneRuntime.SceneRuntimeImpl sceneRuntime = await factory.CreateBySourceCode(sourceCode, CancellationToken.None);
+                IInstancePoolsProvider instancePoolsProvider = Substitute.For<IInstancePoolsProvider>();
+                instancePoolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new byte[c.Arg<int>()]);
+
+                SceneRuntimeImpl sceneRuntime = await factory.CreateBySourceCode(sourceCode, instancePoolsProvider, CancellationToken.None);
 
                 // Assert
                 Assert.NotNull(sceneRuntime);
-                Assert.IsInstanceOf<SceneRuntime.SceneRuntimeImpl>(sceneRuntime);
 
                 //Assert: Run an update
                 await sceneRuntime.UpdateScene(0.01f);
@@ -50,12 +53,14 @@ namespace SceneRuntime.Factory.Tests
 
                 // Act
                 var engineApi = Substitute.For<IEngineApi>();
-                SceneRuntime.SceneRuntimeImpl sceneRuntime = await factory.CreateByPath(path, CancellationToken.None);
+                IInstancePoolsProvider instancePoolsProvider = Substitute.For<IInstancePoolsProvider>();
+                instancePoolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new byte[c.Arg<int>()]);
+
+                SceneRuntimeImpl sceneRuntime = await factory.CreateByPath(path, instancePoolsProvider, CancellationToken.None);
                 sceneRuntime.RegisterEngineApi(engineApi);
 
                 // Assert
                 Assert.NotNull(sceneRuntime);
-                Assert.IsInstanceOf<SceneRuntime.SceneRuntimeImpl>(sceneRuntime);
 
                 await UniTask.Yield();
                 await sceneRuntime.UpdateScene(0.01f);
