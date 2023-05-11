@@ -22,7 +22,7 @@ namespace Global
 
             // Add all SDK components here
             sdkComponentsRegistry
-               .Add(SDKComponentBuilder<SDKTransform>.Create(ComponentID.TRANSFORM).WithPool().WithCustomSerializer(new SDKTransformSerializer()).Build())
+               .Add(SDKComponentBuilder<SDKTransform>.Create(ComponentID.TRANSFORM).WithPool(SetAsDirty).WithCustomSerializer(new SDKTransformSerializer()).Build())
                .Add(SDKComponentBuilder<PBGltfContainer>.Create(ComponentID.GLTF_CONTAINER).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBMeshCollider>.Create(ComponentID.MESH_COLLIDER).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBMeshRenderer>.Create(ComponentID.MESH_RENDERER).AsProtobufComponent())
@@ -39,6 +39,11 @@ namespace Global
                 sdkComponentsRegistry.SdkComponents.ToDictionary(bridge => bridge.ComponentType, bridge => bridge.Pool));
 
             return new ComponentsContainer { SDKComponentsRegistry = sdkComponentsRegistry, ComponentPoolsRegistry = componentPoolsRegistry };
+        }
+
+        private static void SetAsDirty(IDirtyMarker dirtyMarker)
+        {
+            dirtyMarker.IsDirty = true;
         }
     }
 }
