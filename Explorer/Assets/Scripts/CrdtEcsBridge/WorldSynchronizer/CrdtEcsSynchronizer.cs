@@ -22,6 +22,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
         private readonly IEntityFactory entityFactory;
 
         private readonly PersistentCommandBuffer reusableCommandBuffer;
+        private readonly WorldSyncCommandBufferCollectionsPool collectionsPool;
 
         private bool disposed;
 
@@ -34,6 +35,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
         {
             this.world = world;
             entitiesMap = new Dictionary<CRDTEntity, Entity>(initialEntitiesCapacity, CRDTEntityComparer.INSTANCE);
+            collectionsPool = WorldSyncCommandBufferCollectionsPool.Create();
 
             reusableCommandBuffer = new PersistentCommandBuffer(world, BUFFER_POOLS_CAPACITY);
             this.sdkComponentsRegistry = sdkComponentsRegistry;
@@ -53,12 +55,17 @@ namespace CrdtEcsBridge.WorldSynchronizer
             if (!semaphore.Wait(RENT_WAIT_TIMEOUT))
                 throw new TimeoutException("Rent Wait Timeout: Couldn't rent command buffer");
 
-            return new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory);
+            return new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory, collectionsPool);
         }
 
         public void ApplySyncCommandBuffer(IWorldSyncCommandBuffer syncCommandBuffer)
         {
-            if (disposed) return;
+            if (disposed)
+            {
+                // If the scene was disposed before just dispose the sync buffer
+                syncCommandBuffer.Dispose();
+                return;
+            }
 
             syncCommandBuffer.Apply(world, reusableCommandBuffer, entitiesMap);
             semaphore.Release();
@@ -68,6 +75,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
         {
             reusableCommandBuffer.Dispose();
             semaphore.Dispose();
+            collectionsPool.Dispose();
             disposed = true;
         }
     }
