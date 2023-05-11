@@ -34,8 +34,9 @@ namespace SceneRuntime.Apis.Modules
 
                 // Rent a new one
                 lastInput = instancePoolsProvider.GetCrdtRawDataPool(intLength);
-                data.Read(0, data.Length, lastInput, 0);
             }
+
+            data.Read(0, data.Length, lastInput, 0);
 
             // otherwise use the existing one
             byte[] result = api.CrdtSendToRenderer(lastInput.AsMemory().Slice(0, intLength));
