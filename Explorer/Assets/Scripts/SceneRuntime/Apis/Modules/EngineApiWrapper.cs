@@ -20,7 +20,7 @@ namespace SceneRuntime.Apis.Modules
         }
 
         [UsedImplicitly]
-        public byte[] CrdtSendToRenderer(ITypedArray<byte> data)
+        public ScriptableByteArray CrdtSendToRenderer(ITypedArray<byte> data)
         {
             Profiler.BeginThreadProfiling("SceneRuntime", "CrdtSendToRenderer");
 
@@ -43,7 +43,7 @@ namespace SceneRuntime.Apis.Modules
 
             Profiler.EndThreadProfiling();
 
-            return result;
+            return result.Length > 0 ? new ScriptableByteArray(result) : ScriptableByteArray.EMPTY;
         }
 
         [UsedImplicitly]
