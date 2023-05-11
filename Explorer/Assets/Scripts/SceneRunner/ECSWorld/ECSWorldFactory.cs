@@ -20,11 +20,11 @@ namespace SceneRunner.ECSWorld
 
             // Create all systems and add them to the world
             var builder = new ArchSystemsWorldBuilder<World>(world);
-
+            UpdateTransformSystem.InjectToWorld(ref builder);
+            InstantiateUnityTransforms.InjectToWorld(ref builder);
             var releaseSDKComponentsSystem = ReleaseSDKComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry);
 
             // Add other systems here
-
             var systemsWorld = builder.Finish();
 
             return new ECSWorldFacade(systemsWorld, world, releaseSDKComponentsSystem);

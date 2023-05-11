@@ -34,7 +34,6 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
                     // if component is modified then return to the pool the existing one
                     componentPool.Release(world.Get<T>(entity));
                     commandBuffer.Set(entity, c);
-                    commandBuffer.Set(entity, new IsDirtyState());
                     break;
                 case CRDTReconciliationEffect.ComponentAdded:
                     commandBuffer.Add(entity, c);
@@ -47,7 +46,6 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
             }
         }
     }
-
     public abstract class SDKComponentCommandBufferSynchronizer
     {
         public abstract void Apply(World world, Arch.CommandBuffer.CommandBuffer commandBuffer,

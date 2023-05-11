@@ -1,5 +1,4 @@
 using Arch.Core;
-using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
@@ -97,12 +96,22 @@ namespace Global.Editor
             // Check ECS world
 
             var world = sceneFacadeImpl.ecsWorldFacade.EcsWorld;
+            var updateTransformSystem = new UpdateTransformSystem(world);
 
             var cubes = new QueryDescription().WithAll<SDKTransform, PBMeshRenderer>(); // 256 cubes
             Assert.AreEqual(256, world.CountEntities(in cubes));
 
             var textShape = new QueryDescription().WithAll<SDKTransform, PBTextShape, PBBillboard>(); // Billboard
             Assert.AreEqual(1, world.CountEntities(in textShape));
+
+            for (var i = 0; i < 1; i++)
+            {
+                await sceneFacade.Tick(0);
+                await UniTask.Yield(PlayerLoopTiming.Update);
+                world.Query(in new QueryDescription().WithAll<SDKTransform>(), (ref SDKTransform sdkTransform) => { Debug.Log("Before Update" + sdkTransform.IsDirty); });
+                updateTransformSystem.Update(0);
+                world.Query(in new QueryDescription().WithAll<SDKTransform>(), (ref SDKTransform sdkTransform) => { Debug.Log("After Update " + sdkTransform.IsDirty); });
+            }
         }
 
         [TearDown]
