@@ -4,6 +4,7 @@
     "com.unity.collab-proxy": "2.0.3",
     "com.unity.feature.development": "1.0.1",
     "com.unity.memoryprofiler": "1.0.0",
+    "com.unity.render-pipelines.universal": "14.0.7",
     "com.unity.test-framework": "2.0.1-pre.18",
     "com.unity.test-framework.performance": "3.0.0-pre.2",
     "com.unity.textmeshpro": "3.0.6",
