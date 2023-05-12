@@ -46,15 +46,6 @@ namespace CrdtEcsBridge.Components
         }
 
         /// <summary>
-        ///     Add the reference to the ECSComponentType
-        /// </summary>
-        public static SDKComponentBuilder<T> WithECSComponentType<T>(this SDKComponentBuilder<T> sdkComponentBuilder, Type ecsComponentType) where T: class, new()
-        {
-            sdkComponentBuilder.ecsComponentType = ecsComponentType;
-            return sdkComponentBuilder;
-        }
-
-        /// <summary>
         /// A shortcut to create a standard suite for Protobuf components
         /// </summary>
         /// <returns></returns>

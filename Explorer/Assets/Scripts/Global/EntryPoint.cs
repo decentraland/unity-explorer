@@ -26,7 +26,7 @@ namespace Global
                 sceneFacade = await SceneSharedContainer.SceneFactory.CreateScene
                     ($"file://{Application.dataPath + "/../TestResources/Scenes/CubeWave/cube_waves.js"}", destroyCancellationToken);
 
-                sceneFacade.StartUpdateLoop(2, destroyCancellationToken);
+                sceneFacade.StartUpdateLoop(30, destroyCancellationToken);
             }
 
             CreateScene().Forget();
