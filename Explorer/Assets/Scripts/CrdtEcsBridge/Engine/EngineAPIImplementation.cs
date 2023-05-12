@@ -5,9 +5,11 @@ using CRDT.Serializer;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using SceneRuntime.Apis.Modules;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using UnityEngine.Profiling;
 
 namespace CrdtEcsBridge.Engine
 {
@@ -16,41 +18,62 @@ namespace CrdtEcsBridge.Engine
     /// </summary>
     public class EngineAPIImplementation : IEngineApi
     {
-        private readonly IEngineAPIPoolsProvider poolsProvider;
+        private readonly ISharedPoolsProvider sharedPoolsProvider;
+        private readonly IInstancePoolsProvider instancePoolsProvider;
 
         private readonly ICRDTProtocol crdtProtocol;
         private readonly ICRDTDeserializer crdtDeserializer;
         private readonly ICRDTSerializer crdtSerializer;
-        private readonly ICrdtWorldSynchronizer crdtWorldSynchronizer;
+        private readonly ICRDTWorldSynchronizer crdtWorldSynchronizer;
         private readonly IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider;
 
         private byte[] lastSerializationBuffer;
 
-        public EngineAPIImplementation(IEngineAPIPoolsProvider poolsProvider, ICRDTProtocol crdtProtocol, ICRDTDeserializer crdtDeserializer, ICRDTSerializer crdtSerializer, ICrdtWorldSynchronizer crdtWorldSynchronizer,
+        private readonly CustomSampler deserializeBatchSampler;
+        private readonly CustomSampler worldSyncBufferSampler;
+        private readonly CustomSampler outgoingMessagesSampler;
+
+        public EngineAPIImplementation(
+            ISharedPoolsProvider poolsProvider,
+            IInstancePoolsProvider instancePoolsProvider,
+            ICRDTProtocol crdtProtocol,
+            ICRDTDeserializer crdtDeserializer,
+            ICRDTSerializer crdtSerializer,
+            ICRDTWorldSynchronizer crdtWorldSynchronizer,
             IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider)
         {
-            this.poolsProvider = poolsProvider;
+            sharedPoolsProvider = poolsProvider;
+            this.instancePoolsProvider = instancePoolsProvider;
             this.crdtProtocol = crdtProtocol;
             this.crdtDeserializer = crdtDeserializer;
             this.crdtSerializer = crdtSerializer;
             this.crdtWorldSynchronizer = crdtWorldSynchronizer;
             this.outgoingCrtdMessagesProvider = outgoingCrtdMessagesProvider;
+
+            deserializeBatchSampler = CustomSampler.Create("DeserializeBatch");
+            worldSyncBufferSampler = CustomSampler.Create("WorldSyncBuffer");
+            outgoingMessagesSampler = CustomSampler.Create("OutgoingMessages");
         }
 
-        public async UniTask<byte[]> CrdtSendToRenderer(byte[] data)
+        public byte[] CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory)
         {
             // Called on the thread where the Scene Runtime is running (background thread)
 
             ReleaseSerializationBuffer();
 
             // Deserialize messages from the byte array
-            var messages = poolsProvider.GetDeserializationMessagesPool();
+            IList<CRDTMessage> messages = instancePoolsProvider.GetDeserializationMessagesPool();
 
-            ReadOnlyMemory<byte> dataMemory = data;
+            deserializeBatchSampler.Begin();
 
             // TODO add metrics to understand bottlenecks better
             crdtDeserializer.DeserializeBatch(ref dataMemory, messages);
 
+            deserializeBatchSampler.End();
+
+            worldSyncBufferSampler.Begin();
+
+            // as we no longer wait for a buffer to apply the thread should be frozen
             var worldSyncBuffer = crdtWorldSynchronizer.GetSyncCommandBuffer();
 
             // Reconcile CRDT state
@@ -68,25 +91,39 @@ namespace CrdtEcsBridge.Engine
             // Deserialize messages on the main thread
             worldSyncBuffer.FinalizeAndDeserialize();
 
+            worldSyncBufferSampler.End();
+
             // Return messages to the pool before switching to the main thread,
             // it is a must because CRDT_MESSAGES_POOL is ThreadLocal
-            poolsProvider.ReleaseDeserializationMessagesPool(messages);
+            instancePoolsProvider.ReleaseDeserializationMessagesPool(messages);
+
+            outgoingMessagesSampler.Begin();
 
             // before returning to the main thread serialize outgoing CRDT Messages
             using (var outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock())
             {
-                lastSerializationBuffer = poolsProvider.GetSerializedStateBytesPool(outgoingMessagesSyncBlock.GetPayloadLength());
+                lastSerializationBuffer = sharedPoolsProvider.GetSerializedStateBytesPool(outgoingMessagesSyncBlock.GetPayloadLength());
                 SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, lastSerializationBuffer.AsSpan());
             }
+
+            outgoingMessagesSampler.End();
 
             // Now (unless we make ECS run on the background thread) we need to switch to the main thread
             // before all systems start to update - in the beginning of the Player Loop
             // TODO Validate if we can just launch and forget() without waiting
+
+            // don't use `UniTask` as it will switch us to the main thread and the continuation will keep running on the main thread
+            ApplySyncCommandBuffer(worldSyncBuffer).Forget();
+
+            return lastSerializationBuffer;
+        }
+
+        private async UniTaskVoid ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer)
+        {
             await UniTask.Yield(PlayerLoopTiming.Initialization);
 
             // Apply changes to the ECS World on the main thread
             crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncBuffer);
-            return lastSerializationBuffer;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -99,8 +136,10 @@ namespace CrdtEcsBridge.Engine
             }
         }
 
-        public UniTask<byte[]> CrdtGetState()
+        public byte[] CrdtGetState()
         {
+            Profiler.BeginThreadProfiling("SceneRuntime", "CrtdGetState");
+
             // Invoked on the background thread
             // this method is called rarely but the memory impact is significant
 
@@ -108,7 +147,7 @@ namespace CrdtEcsBridge.Engine
 
             // Create CRDT Messages from the current state
             // we know exactly how big the array should be
-            ProcessedCRDTMessage[] processedMessages = poolsProvider.GetSerializationCrdtMessagesPool(crdtProtocol.GetMessagesCount());
+            ProcessedCRDTMessage[] processedMessages = sharedPoolsProvider.GetSerializationCrdtMessagesPool(crdtProtocol.GetMessagesCount());
 
             var currentStatePayloadLength = crdtProtocol.CreateMessagesFromTheCurrentState(processedMessages);
 
@@ -121,7 +160,7 @@ namespace CrdtEcsBridge.Engine
             var totalPayloadLength = currentStatePayloadLength + outgoingCRDTMessagesPayloadLength;
 
             // We know exactly how many bytes we need to serialize
-            lastSerializationBuffer = poolsProvider.GetSerializedStateBytesPool(totalPayloadLength);
+            lastSerializationBuffer = sharedPoolsProvider.GetSerializedStateBytesPool(totalPayloadLength);
 
             // Serialize the current state
             var currentStateSpan = lastSerializationBuffer.AsSpan().Slice(currentStatePayloadLength);
@@ -130,13 +169,15 @@ namespace CrdtEcsBridge.Engine
                 crdtSerializer.Serialize(ref currentStateSpan, in processedMessages[i]);
 
             // Messages are serialized, we no longer need them in the managed form
-            poolsProvider.ReleaseSerializationCrdtMessagesPool(processedMessages);
+            sharedPoolsProvider.ReleaseSerializationCrdtMessagesPool(processedMessages);
 
             // Serialize outgoing messages
             SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, lastSerializationBuffer.AsSpan().Slice(currentStatePayloadLength, outgoingCRDTMessagesPayloadLength));
 
+            Profiler.EndThreadProfiling();
+
             // Return the buffer to the caller
-            return UniTask.FromResult(lastSerializationBuffer);
+            return lastSerializationBuffer;
         }
 
         /// <summary>
@@ -147,7 +188,7 @@ namespace CrdtEcsBridge.Engine
         {
             if (lastSerializationBuffer != null)
             {
-                poolsProvider.ReleaseSerializedStateBytesPool(lastSerializationBuffer);
+                sharedPoolsProvider.ReleaseSerializedStateBytesPool(lastSerializationBuffer);
                 lastSerializationBuffer = null;
             }
         }

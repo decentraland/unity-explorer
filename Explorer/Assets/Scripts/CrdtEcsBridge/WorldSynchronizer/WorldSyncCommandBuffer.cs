@@ -84,7 +84,10 @@ namespace CrdtEcsBridge.WorldSynchronizer
         {
             internal static readonly ThreadSafeObjectPool<BatchState> POOL = new (
                 () => new BatchState(),
-                actionOnRelease: state => state.deserializationTarget = null);
+                actionOnRelease: state => state.deserializationTarget = null,
+
+                // Omit checking collections, it is a hot path on the main thread
+                collectionCheck: false);
 
             internal CRDTMessage crdtMessage;
             internal ReconciliationState reconciliationState;
@@ -99,6 +102,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
         private readonly PooledList<CRDTEntity> deletedEntities;
 
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
+        private readonly IEntityFactory entityFactory;
 
         private bool finalized;
         private bool deserialized;
@@ -106,12 +110,13 @@ namespace CrdtEcsBridge.WorldSynchronizer
         /// <summary>
         /// Can't contain a public ctor as should be instantiated within the assembly
         /// </summary>
-        internal WorldSyncCommandBuffer(ISDKComponentsRegistry componentsRegistry)
+        internal WorldSyncCommandBuffer(ISDKComponentsRegistry componentsRegistry, IEntityFactory entityFactory)
         {
             batchStates = new PooledDictionary<CRDTEntity, PooledDictionary<int, BatchState>>();
             deletedEntities = new PooledList<CRDTEntity>();
 
             this.sdkComponentsRegistry = componentsRegistry;
+            this.entityFactory = entityFactory;
         }
 
         /// <summary>
@@ -214,6 +219,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
                         var bridge = batchState.sdkComponentBridge;
                         var deserializationTarget = batchState.sdkComponentBridge.Pool.Rent();
                         bridge.Serializer.DeserializeInto(deserializationTarget, batchState.crdtMessage.Data.Memory.Span);
+                        batchState.deserializationTarget = deserializationTarget;
                     }
                 }
             }
@@ -221,7 +227,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
             deserialized = true;
         }
 
-        internal void Apply(World world, Arch.Core.CommandBuffer.CommandBuffer commandBuffer, Dictionary<CRDTEntity, Entity> entitiesMap)
+        internal void Apply(World world, PersistentCommandBuffer commandBuffer, Dictionary<CRDTEntity, Entity> entitiesMap)
         {
             if (!deserialized)
                 throw new InvalidOperationException($"{nameof(FinalizeAndDeserialize)} must be called before {nameof(Apply)}");
@@ -250,15 +256,15 @@ namespace CrdtEcsBridge.WorldSynchronizer
                     // it is sub-optimal but I don't see the way to do it better
 
                     if (!entitiesMap.TryGetValue(entity, out var realEntity))
-                    {
-                        entitiesMap[entity] = realEntity = world.Create();
-                        commandBuffer.Add(realEntity, entity);
-                    }
+                        entitiesMap[entity] = realEntity = entityFactory.Create(entity, world);
 
                     foreach (var batchState in componentsBatch.Values)
                     {
                         if (batchState.reconciliationState.Last == CRDTReconciliationEffect.NoChanges)
                             continue;
+
+                        // TODO add proper logging with Levels
+                        // Debug.Log($"{entity} -> {realEntity}: Apply {batchState.sdkComponentBridge.ComponentType.Name} {batchState.reconciliationState.Last}");
 
                         batchState.sdkComponentBridge.CommandBufferSynchronizer.Apply(world, commandBuffer, realEntity,
                             batchState.reconciliationState.Last, batchState.deserializationTarget);
@@ -276,7 +282,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
         /// <summary>
         /// <inheritdoc cref="IWorldSyncCommandBuffer.Apply"/>
         /// </summary>
-        void IWorldSyncCommandBuffer.Apply(World world, Arch.Core.CommandBuffer.CommandBuffer commandBuffer, Dictionary<CRDTEntity, Entity> entitiesMap)
+        void IWorldSyncCommandBuffer.Apply(World world, PersistentCommandBuffer commandBuffer, Dictionary<CRDTEntity, Entity> entitiesMap)
         {
             Apply(world, commandBuffer, entitiesMap);
         }

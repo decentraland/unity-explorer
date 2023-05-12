@@ -5,7 +5,7 @@ using Utility;
 
 namespace CRDT.Serializer
 {
-    internal class CRDTSerializer : ICRDTSerializer
+    public class CRDTSerializer : ICRDTSerializer
     {
         public void Serialize(ref Span<byte> destination, in ProcessedCRDTMessage processedMessage)
         {

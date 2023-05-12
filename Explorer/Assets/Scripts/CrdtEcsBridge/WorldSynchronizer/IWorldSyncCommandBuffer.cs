@@ -1,3 +1,4 @@
+using Arch.CommandBuffer;
 using Arch.Core;
 using CRDT;
 using CRDT.Protocol;
@@ -31,6 +32,6 @@ namespace CrdtEcsBridge.WorldSynchronizer
         /// Applies deserialized changes to the world.
         /// Must be called on the thread where World is running
         /// </summary>
-        void Apply(World world, Arch.Core.CommandBuffer.CommandBuffer commandBuffer, Dictionary<CRDTEntity, Entity> entitiesMap);
+        void Apply(World world, PersistentCommandBuffer commandBuffer, Dictionary<CRDTEntity, Entity> entitiesMap);
     }
 }

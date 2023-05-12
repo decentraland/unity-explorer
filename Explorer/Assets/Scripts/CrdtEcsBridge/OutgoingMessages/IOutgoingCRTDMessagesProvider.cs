@@ -1,11 +1,12 @@
 using CRDT.Protocol.Factory;
+using System;
 
 namespace CrdtEcsBridge.OutgoingMessages
 {
     /// <summary>
     /// Provider of outgoing CRDT messages for the instance of Scene Runtime
     /// </summary>
-    public interface IOutgoingCRTDMessagesProvider
+    public interface IOutgoingCRTDMessagesProvider : IDisposable
     {
         /// <summary>
         /// Add the message to the outgoing CRDT messages.

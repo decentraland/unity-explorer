@@ -25,6 +25,20 @@ namespace Utility
         }
 
         /// <summary>
+        /// Read an unmanaged type from the span and advances its pointer accordingly
+        /// </summary>
+        /// <param name="span"></param>
+        /// <typeparam name="T">Unmanaged type</typeparam>
+        /// <returns>The value read</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe T Read<T>(this ref ReadOnlySpan<byte> span) where T: unmanaged
+        {
+            var result = MemoryMarshal.Read<T>(span);
+            span = span.Slice(sizeof(T));
+            return result;
+        }
+
+        /// <summary>
         /// Read an unmanaged type from the memory and advances its pointer accordingly
         /// </summary>
         /// <param name="memory"></param>

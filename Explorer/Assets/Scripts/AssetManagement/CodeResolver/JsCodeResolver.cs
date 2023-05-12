@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace AssetManagement.JsCodeResolver
 {
@@ -15,7 +16,7 @@ namespace AssetManagement.JsCodeResolver
             };
         }
 
-        public UniTask<string> GetCodeContent(string contentUrl) =>
-            providers[AssetSource.WEB].GetJsCodeAsync(contentUrl);
+        public UniTask<string> GetCodeContent(string contentUrl, CancellationToken ct) =>
+            providers[AssetSource.WEB].GetJsCodeAsync(contentUrl, ct);
     }
 }

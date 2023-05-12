@@ -1,0 +1,53 @@
+﻿using CRDT.Protocol;
+using System.Buffers;
+using System.Collections.Generic;
+using UnityEngine.Pool;
+using Utility.ThreadSafePool;
+
+namespace CrdtEcsBridge.Engine
+{
+    public class InstancePoolsProvider : IInstancePoolsProvider
+    {
+        /// <summary>
+        ///     Reuse pools when the scene is disposed
+        /// </summary>
+        private static readonly ThreadSafeObjectPool<InstancePoolsProvider> POOL =
+            new (() => new InstancePoolsProvider());
+
+        private readonly IObjectPool<IList<CRDTMessage>> crdtMessagesPool = new ObjectPool<IList<CRDTMessage>>(
+
+            // just preallocate an array big enough
+            createFunc: () => new List<CRDTMessage>(256),
+            actionOnRelease: list => list.Clear()
+        );
+
+        private readonly ArrayPool<byte> crdtRawDataPool = ArrayPool<byte>.Create(16_777_216, 8); // 16 MB, 8 buckets, if the requested array is more than 16 mb than a new instance is simply returned
+
+        // Forbid creating instances of this class outside of the pool
+        private InstancePoolsProvider() { }
+
+        public static InstancePoolsProvider Create() =>
+            POOL.Get();
+
+        public void Dispose()
+        {
+            POOL.Release(this);
+        }
+
+        public byte[] GetCrdtRawDataPool(int size) =>
+            crdtRawDataPool.Rent(size);
+
+        public void ReleaseCrdtRawDataPool(byte[] bytes)
+        {
+            crdtRawDataPool.Return(bytes);
+        }
+
+        public IList<CRDTMessage> GetDeserializationMessagesPool() =>
+            crdtMessagesPool.Get();
+
+        public void ReleaseDeserializationMessagesPool(IList<CRDTMessage> messages)
+        {
+            crdtMessagesPool.Release(messages);
+        }
+    }
+}

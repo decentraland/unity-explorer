@@ -13,7 +13,7 @@ namespace ECS.ComponentsPooling
 
         public ComponentPool(Action<T> onGet = null, Action<T> onRelease = null)
         {
-            objectPool = new ThreadSafeObjectPool<T>(() => new T(), actionOnGet: onGet, actionOnRelease: onRelease);
+            objectPool = new ThreadSafeObjectPool<T>(() => new T(), actionOnGet: onGet, actionOnRelease: onRelease, collectionCheck: false);
         }
 
         public T Get() =>

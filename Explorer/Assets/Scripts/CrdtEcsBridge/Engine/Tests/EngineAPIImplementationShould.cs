@@ -11,7 +11,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace CrdtEcsBridge.Engine.Tests
 {
@@ -25,11 +24,12 @@ namespace CrdtEcsBridge.Engine.Tests
         private static readonly byte[] OUTPUT = { 10, 20, 30, 20, 10, 0 };
         private static readonly byte[] INPUT = { 0, 3, 5, 7, 10, 19, 20, 40, 76 };
 
-        private IEngineAPIPoolsProvider engineAPIPoolsProvider;
+        private ISharedPoolsProvider sharedPoolsProvider;
+        private IInstancePoolsProvider instancePoolsProvider;
         private ICRDTProtocol crdtProtocol;
         private ICRDTDeserializer crdtDeserializer;
         private ICRDTSerializer crdtSerializer;
-        private ICrdtWorldSynchronizer crdtWorldSynchronizer;
+        private ICRDTWorldSynchronizer crdtWorldSynchronizer;
         private IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider;
         private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
 
@@ -70,11 +70,11 @@ namespace CrdtEcsBridge.Engine.Tests
             };
 
             engineAPIImplementation = new EngineAPIImplementation(
-                engineAPIPoolsProvider = Substitute.For<IEngineAPIPoolsProvider>(),
+                sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>(), instancePoolsProvider = Substitute.For<IInstancePoolsProvider>(),
                 crdtProtocol = Substitute.For<ICRDTProtocol>(),
                 crdtDeserializer = Substitute.For<ICRDTDeserializer>(),
                 crdtSerializer = new CRDTSerializer(),
-                crdtWorldSynchronizer = Substitute.For<ICrdtWorldSynchronizer>(),
+                crdtWorldSynchronizer = Substitute.For<ICRDTWorldSynchronizer>(),
                 outgoingCrtdMessagesProvider = Substitute.For<IOutgoingCRTDMessagesProvider>()
             );
 
@@ -100,9 +100,9 @@ namespace CrdtEcsBridge.Engine.Tests
 
             crdtWorldSynchronizer.GetSyncCommandBuffer().Returns(_ => worldSyncCommandBuffer = Substitute.For<IWorldSyncCommandBuffer>());
 
-            engineAPIPoolsProvider.GetDeserializationMessagesPool().Returns(_ => new List<CRDTMessage>());
-            engineAPIPoolsProvider.GetSerializedStateBytesPool(Arg.Any<int>()).Returns(c => new byte[c.Arg<int>()]);
-            engineAPIPoolsProvider.GetSerializationCrdtMessagesPool(Arg.Any<int>()).Returns(c => new ProcessedCRDTMessage[c.Arg<int>()]);
+            instancePoolsProvider.GetDeserializationMessagesPool().Returns(_ => new List<CRDTMessage>());
+            sharedPoolsProvider.GetSerializedStateBytesPool(Arg.Any<int>()).Returns(c => new byte[c.Arg<int>()]);
+            sharedPoolsProvider.GetSerializationCrdtMessagesPool(Arg.Any<int>()).Returns(c => new ProcessedCRDTMessage[c.Arg<int>()]);
 
             outgoingCrtdMessagesProvider.GetSerializationSyncBlock()
                                         .Returns(_ =>
@@ -113,21 +113,21 @@ namespace CrdtEcsBridge.Engine.Tests
         }
 
         [Test]
-        public async Task CallDeserializeBatch()
+        public void CallDeserializeBatch()
         {
-            await engineAPIImplementation.CrdtSendToRenderer(INPUT);
+            engineAPIImplementation.CrdtSendToRenderer(INPUT);
 
             crdtDeserializer.Received(1).DeserializeBatch(ref Arg.Any<ReadOnlyMemory<byte>>(), Arg.Any<IList<CRDTMessage>>());
         }
 
         [Test]
-        public async Task MakeCallsInProperOrderCrdtSendToRenderer()
+        public void MakeCallsInProperOrderCrdtSendToRenderer()
         {
-            await engineAPIImplementation.CrdtSendToRenderer(INPUT);
+            engineAPIImplementation.CrdtSendToRenderer(INPUT);
 
             Received.InOrder(() =>
             {
-                engineAPIPoolsProvider.GetDeserializationMessagesPool();
+                instancePoolsProvider.GetDeserializationMessagesPool();
                 crdtDeserializer.DeserializeBatch(ref Arg.Any<ReadOnlyMemory<byte>>(), Arg.Any<IList<CRDTMessage>>());
                 crdtWorldSynchronizer.GetSyncCommandBuffer();
 
@@ -139,50 +139,51 @@ namespace CrdtEcsBridge.Engine.Tests
                 }
 
                 worldSyncCommandBuffer.FinalizeAndDeserialize();
-                engineAPIPoolsProvider.ReleaseDeserializationMessagesPool(Arg.Any<IList<CRDTMessage>>());
+                instancePoolsProvider.ReleaseDeserializationMessagesPool(Arg.Any<IList<CRDTMessage>>());
 
                 outgoingCrtdMessagesProvider.GetSerializationSyncBlock();
-                engineAPIPoolsProvider.GetSerializedStateBytesPool(Arg.Any<int>());
+                sharedPoolsProvider.GetSerializedStateBytesPool(Arg.Any<int>());
 
                 // can't check Serialize, can't mock `Span<byte>`
-                crdtWorldSynchronizer.Received(1).ApplySyncCommandBuffer(worldSyncCommandBuffer);
+                // Apply will be called asynchronously
+                // crdtWorldSynchronizer.Received(1).ApplySyncCommandBuffer(worldSyncCommandBuffer);
             });
         }
 
         [Test]
-        public async Task MakeCallsInProperOrderCrdtGetState()
+        public void MakeCallsInProperOrderCrdtGetState()
         {
-            var state = await engineAPIImplementation.CrdtGetState();
+            byte[] state = engineAPIImplementation.CrdtGetState();
 
             Received.InOrder(() =>
             {
                 crdtProtocol.GetMessagesCount();
-                engineAPIPoolsProvider.GetSerializationCrdtMessagesPool(crdtStateMessages.Count);
+                sharedPoolsProvider.GetSerializationCrdtMessagesPool(crdtStateMessages.Count);
                 crdtProtocol.CreateMessagesFromTheCurrentState(Arg.Any<ProcessedCRDTMessage[]>());
                 outgoingCrtdMessagesProvider.GetSerializationSyncBlock();
-                engineAPIPoolsProvider.GetSerializedStateBytesPool(400 + 120);
-                engineAPIPoolsProvider.ReleaseSerializationCrdtMessagesPool(Arg.Is<ProcessedCRDTMessage[]>(p => p.Length == crdtStateMessages.Count));
+                sharedPoolsProvider.GetSerializedStateBytesPool(400 + 120);
+                sharedPoolsProvider.ReleaseSerializationCrdtMessagesPool(Arg.Is<ProcessedCRDTMessage[]>(p => p.Length == crdtStateMessages.Count));
             });
 
             Assert.AreEqual(400 + 120, state.Length);
         }
 
         [Test]
-        public async Task ReleasePreviousBufferOnSend()
+        public void ReleasePreviousBufferOnSend()
         {
-            await engineAPIImplementation.CrdtSendToRenderer(INPUT);
-            await engineAPIImplementation.CrdtSendToRenderer(INPUT);
+            engineAPIImplementation.CrdtSendToRenderer(INPUT);
+            engineAPIImplementation.CrdtSendToRenderer(INPUT);
 
-            engineAPIPoolsProvider.Received(1).ReleaseSerializedStateBytesPool(Arg.Any<byte[]>());
+            sharedPoolsProvider.Received(1).ReleaseSerializedStateBytesPool(Arg.Any<byte[]>());
         }
 
         [Test]
-        public async Task ReleasePreviousBufferOnGet()
+        public void ReleasePreviousBufferOnGet()
         {
-            await engineAPIImplementation.CrdtSendToRenderer(INPUT);
-            await engineAPIImplementation.CrdtGetState();
+            engineAPIImplementation.CrdtSendToRenderer(INPUT);
+            engineAPIImplementation.CrdtGetState();
 
-            engineAPIPoolsProvider.Received(1).ReleaseSerializedStateBytesPool(Arg.Any<byte[]>());
+            sharedPoolsProvider.Received(1).ReleaseSerializedStateBytesPool(Arg.Any<byte[]>());
         }
     }
 }
