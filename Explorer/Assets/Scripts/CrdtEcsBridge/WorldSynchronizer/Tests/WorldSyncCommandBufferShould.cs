@@ -311,7 +311,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                         var c = world.Get<TestComponent>(map[ENTITY_ID]);
 
                         // last data should be written
-                        Assert.AreEqual(DATA.Memory, c.Value.ToArray());
+                        Assert.AreEqual(DATA.Memory.ToArray(), c.Value.ToArray());
                     }),
                 },
                 new object[]
