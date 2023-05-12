@@ -1,10 +1,10 @@
 using Arch.Core;
-using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -99,8 +99,25 @@ namespace Global.Editor
             var cubes = new QueryDescription().WithAll<SDKTransform, PBMeshRenderer>(); // 256 cubes
             Assert.AreEqual(256, world.CountEntities(in cubes));
 
+            // save positions
+            var positions = new Dictionary<Entity, Vector3>(256);
+
+            world.Query(in cubes, (in Entity e, ref SDKTransform transform) => { positions[e] = transform.Position; });
+
             var textShape = new QueryDescription().WithAll<SDKTransform, PBTextShape, PBBillboard>(); // Billboard
             Assert.AreEqual(1, world.CountEntities(in textShape));
+
+            await UniTask.SwitchToThreadPool();
+
+            await sceneFacade.Tick(0.2f);
+
+            // after the tick we should wait for the next frame for the CommandBuffer to apply
+            await UniTask.Yield(PlayerLoopTiming.Update);
+
+            // all positions must change
+
+            Assert.AreEqual(256, world.CountEntities(in cubes));
+            world.Query(in cubes, (in Entity e, ref SDKTransform transform) => { Assert.AreNotEqual(positions[e], transform.Position); });
         }
 
         [TearDown]

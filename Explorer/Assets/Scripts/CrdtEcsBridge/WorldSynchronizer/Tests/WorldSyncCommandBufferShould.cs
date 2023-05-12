@@ -66,6 +66,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         private ISDKComponentsRegistry sdkComponentsRegistry;
         private WorldSyncCommandBuffer worldSyncCommandBuffer;
         private IEntityFactory entityFactory;
+        private WorldSyncCommandBufferCollectionsPool collectionsPool;
 
         [SetUp]
         public void SetUp()
@@ -109,7 +110,14 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             entityFactory = Substitute.For<IEntityFactory>();
             entityFactory.Create(Arg.Any<CRDTEntity>(), Arg.Any<World>()).Returns(c => c.Arg<World>().Create());
 
-            worldSyncCommandBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory);
+            worldSyncCommandBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory, collectionsPool = WorldSyncCommandBufferCollectionsPool.Create());
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            worldSyncCommandBuffer?.Dispose();
+            collectionsPool?.Dispose();
         }
 
         [Test]
@@ -118,20 +126,30 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         {
             void FillDeserializeLoop(int lastIndex)
             {
-                var localBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory);
-                var finalExpectation = CRDTReconciliationEffect.NoChanges;
+                var pool = WorldSyncCommandBufferCollectionsPool.Create();
+                var localBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory, pool);
 
-                for (var i = 0; i <= lastIndex; i++)
+                try
                 {
-                    (CRDTMessage crdtMessage, CRDTReconciliationEffect effect, CRDTReconciliationEffect expected) = series[i];
-                    finalExpectation = expected;
-                    localBuffer.SyncCRDTMessage(crdtMessage, effect);
+                    CRDTReconciliationEffect finalExpectation = CRDTReconciliationEffect.NoChanges;
+
+                    for (var i = 0; i <= lastIndex; i++)
+                    {
+                        (CRDTMessage crdtMessage, CRDTReconciliationEffect effect, CRDTReconciliationEffect expected) = series[i];
+                        finalExpectation = expected;
+                        localBuffer.SyncCRDTMessage(crdtMessage, effect);
+                    }
+
+                    localBuffer.FinalizeAndDeserialize();
+
+                    // Check the final status
+                    Assert.AreEqual(finalExpectation, localBuffer.GetLastState(ENTITY_ID, COMPONENT_ID_1), $"The final state mismatch at index {lastIndex}");
                 }
-
-                localBuffer.FinalizeAndDeserialize();
-
-                // Check the final status
-                Assert.AreEqual(finalExpectation, localBuffer.GetLastState(ENTITY_ID, COMPONENT_ID_1), $"The final state mismatch at index {lastIndex}");
+                finally
+                {
+                    localBuffer.Dispose();
+                    pool.Dispose();
+                }
             }
 
             for (var i = 0; i < series.Length; i++)
@@ -215,17 +233,29 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         {
             var world = World.Create();
             var commandBuffer = new PersistentCommandBuffer(world);
+            var collectionPool = WorldSyncCommandBufferCollectionsPool.Create();
+            var localBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory, collectionPool);
 
-            var entitiesMap = new Dictionary<CRDTEntity, Entity>();
-            prewarmWorld(world, entitiesMap);
+            try
+            {
+                var entitiesMap = new Dictionary<CRDTEntity, Entity>();
+                prewarmWorld(world, entitiesMap);
 
-            foreach (var (message, effect) in messages)
-                worldSyncCommandBuffer.SyncCRDTMessage(message, effect);
+                foreach ((CRDTMessage message, CRDTReconciliationEffect effect) in messages)
+                    localBuffer.SyncCRDTMessage(message, effect);
 
-            // deserialize first
-            worldSyncCommandBuffer.FinalizeAndDeserialize();
+                // deserialize first
+                localBuffer.FinalizeAndDeserialize();
 
-            worldSyncCommandBuffer.Apply(world, commandBuffer, entitiesMap);
+                localBuffer.Apply(world, commandBuffer, entitiesMap);
+
+                assertWorld(world, entitiesMap);
+            }
+            finally
+            {
+                localBuffer.Dispose();
+                collectionPool.Dispose();
+            }
         }
 
         private static object[][] ApplyChangesMessagesSource()
