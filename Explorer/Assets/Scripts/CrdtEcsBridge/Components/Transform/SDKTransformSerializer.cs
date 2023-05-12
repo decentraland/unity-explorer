@@ -10,11 +10,20 @@ namespace CrdtEcsBridge.Components.Transform
     {
         public void DeserializeInto(SDKTransform instance, in ReadOnlySpan<byte> data)
         {
-            var pointer = data;
+            ReadOnlySpan<byte> pointer = data;
             instance.Position = pointer.Read<Vector3>();
             instance.Rotation = pointer.Read<Quaternion>();
             instance.Scale = pointer.Read<Vector3>();
             instance.ParentId = pointer.Read<CRDTEntity>();
+        }
+
+        public void SerializeInto(SDKTransform instance, in Span<byte> span)
+        {
+            Span<byte> pointer = span;
+            pointer.Write(instance.Position);
+            pointer.Write(instance.Rotation);
+            pointer.Write(instance.Scale);
+            pointer.Write(instance.ParentId);
         }
     }
 }
