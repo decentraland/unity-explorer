@@ -222,8 +222,8 @@ namespace CRDT.Protocol
                 if (componentsStorage.TryGetValue(entityId, out EntityComponentData componentData))
                 {
                     componentData.Data.Dispose();
-
-                    if (componentsStorage.Remove(entityId)) { crdtState.messagesCount--; }
+                    componentsStorage.Remove(entityId);
+                    crdtState.messagesCount--;
                 }
             }
 
