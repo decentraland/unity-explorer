@@ -11,7 +11,7 @@ public class MemoryAllocatorShould
     [TestCase(100000)]
     public void PoolNotAllocating(int arraySize)
     {
-        var crdtPooledMemoryAllocator = new CRDTPooledMemoryAllocator();
+        var crdtPooledMemoryAllocator = CRDTPooledMemoryAllocator.Create();
 
         var data = new byte[arraySize];
         var random = new Random();
@@ -32,7 +32,7 @@ public class MemoryAllocatorShould
     [TestCase(100000)]
     public void OriginalMemorySlicerAllocating(int arraySize)
     {
-        var originalMemorySlicer = new CRDTOriginalMemorySlicer();
+        var originalMemorySlicer = CRDTOriginalMemorySlicer.Create();
         var data = new byte[arraySize];
         var random = new Random();
         random.NextBytes(data);

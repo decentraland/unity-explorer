@@ -14,7 +14,7 @@ namespace CRDT.CRDTTests.Protocol
         [SetUp]
         public void SetUp()
         {
-            crdtPooledMemoryAllocator = new CRDTPooledMemoryAllocator();
+            crdtPooledMemoryAllocator = CRDTPooledMemoryAllocator.Create();
         }
 
         [Test]
@@ -43,7 +43,7 @@ namespace CRDT.CRDTTests.Protocol
 
                 if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.MESSAGE)
                 {
-                    var (msg, expectedResult) = ParsedCRDTTestFile.InstructionToMessage(instruction);
+                    (CRDTMessage msg, CRDTReconciliationResult? expectedResult) = ParsedCRDTTestFile.InstructionToMessage(instruction, crdtPooledMemoryAllocator);
                     var result = crdt.ProcessMessage(msg);
 
                     if (expectedResult != null)
@@ -75,7 +75,7 @@ namespace CRDT.CRDTTests.Protocol
 
                 if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.MESSAGE)
                 {
-                    var (msg, _) = ParsedCRDTTestFile.InstructionToMessage(instruction);
+                    (CRDTMessage msg, _) = ParsedCRDTTestFile.InstructionToMessage(instruction, crdtPooledMemoryAllocator);
                     crdt.ProcessMessage(msg);
                 }
                 else if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.FINAL_STATE)

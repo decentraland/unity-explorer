@@ -8,8 +8,6 @@ using System.Linq;
 
 namespace CRDT.CRDTTests
 {
-
-
     [TestFixture]
     public class CRDTDeserializerShould
     {
@@ -22,11 +20,13 @@ namespace CRDT.CRDTTests
         };
 
         private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
+        private CRDTDeserializer deserializer;
 
         [SetUp]
         public void SetUp()
         {
-            crdtPooledMemoryAllocator = new CRDTPooledMemoryAllocator();
+            crdtPooledMemoryAllocator = CRDTPooledMemoryAllocator.Create();
+            deserializer = new CRDTDeserializer(crdtPooledMemoryAllocator);
         }
 
         [Test]
@@ -156,7 +156,7 @@ namespace CRDT.CRDTTests
 
             var list = new List<CRDTMessage>();
             ReadOnlyMemory<byte> binaryMessageMemory = binaryMessage;
-            CRDTDeserializer.DeserializeBatch(ref binaryMessageMemory, list);
+            deserializer.DeserializeBatch(ref binaryMessageMemory, list);
 
             foreach (var crdtMessage in list)
                 Assert.IsTrue(data.AsSpan().SequenceEqual(crdtMessage.Data.Memory.Span), "Messages are not equal");
@@ -180,7 +180,7 @@ namespace CRDT.CRDTTests
             var list = new List<CRDTMessage>();
 
             var expected = new CRDTMessage[] { new (CRDTMessageType.PUT_COMPONENT, new CRDTEntity(127), 1, 1, EmptyMemoryOwner<byte>.EMPTY) };
-            CRDTDeserializer.DeserializeBatch(ref memory, list);
+            deserializer.DeserializeBatch(ref memory, list);
 
             CollectionAssert.AreEqual(expected, list);
         }
@@ -198,7 +198,7 @@ namespace CRDT.CRDTTests
 
             var list = new List<CRDTMessage>();
             ReadOnlyMemory<byte> memory = message;
-            CRDTDeserializer.DeserializeBatch(ref memory, list);
+            deserializer.DeserializeBatch(ref memory, list);
 
             CollectionAssert.IsEmpty(list);
         }
@@ -244,7 +244,7 @@ namespace CRDT.CRDTTests
 
             var all = append.Concat(componentDataBytes).Concat(put).Concat(componentDataBytes).Concat(deleteComponent).Concat(deleteEntity).ToArray();
 
-            TestInput(all, new []
+            TestInput(all, new[]
             {
                 new CRDTMessage(
                     CRDTMessageType.APPEND_COMPONENT,
@@ -277,10 +277,10 @@ namespace CRDT.CRDTTests
             });
         }
 
-        private static void TestInput(ReadOnlyMemory<byte> memory, CRDTMessage[] crdtMessages)
+        private void TestInput(ReadOnlyMemory<byte> memory, CRDTMessage[] crdtMessages)
         {
             var list = new List<CRDTMessage>();
-            CRDTDeserializer.DeserializeBatch(ref memory, list);
+            deserializer.DeserializeBatch(ref memory, list);
 
             CollectionAssert.AreEqual(crdtMessages, list);
         }

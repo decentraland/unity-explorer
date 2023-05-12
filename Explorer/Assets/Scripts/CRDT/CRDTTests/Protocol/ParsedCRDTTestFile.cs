@@ -28,7 +28,7 @@ namespace CRDT.CRDTTests.Protocol
         public string fileName;
         public List<TestFileInstruction> fileInstructions = new List<TestFileInstruction>();
 
-        public static (CRDTMessage, CRDTReconciliationResult?) InstructionToMessage(TestFileInstruction instruction)
+        public static (CRDTMessage, CRDTReconciliationResult?) InstructionToMessage(TestFileInstruction instruction, ICRDTMemoryAllocator memoryAllocator)
         {
             CRDTTestMessage msg = null;
             CRDTReconciliationResult? reconciliationResult = null;
@@ -56,7 +56,7 @@ namespace CRDT.CRDTTests.Protocol
             if (crdtLibType == 1) { msg.type = CRDTMessageType.PUT_COMPONENT; }
             else if (crdtLibType == 2) { msg.type = CRDTMessageType.DELETE_ENTITY; }
 
-            return (msg.ToCRDTMessage(), reconciliationResult);
+            return (msg.ToCRDTMessage(memoryAllocator), reconciliationResult);
         }
 
         internal static IEnumerable<CRDTMessage> InstructionToFinalStateMessages(TestFileInstruction instruction, CRDTPooledMemoryAllocator crdtPooledMemoryAllocator)

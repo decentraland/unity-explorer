@@ -3,27 +3,28 @@ using CRDT.Memory;
 using CRDT.Protocol;
 using CRDT.Protocol.Factory;
 using CrdtEcsBridge.Components;
+using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.OutgoingMessages;
 using Google.Protobuf;
 using System.Buffers;
 using UnityEngine;
 
-namespace CrdtEcsBridge.ECSToCRDTWriter
+namespace CrdtEcsBridge.ComponentWriter
 {
     public class ECSToCRDTWriter : IECSToCRDTWriter
     {
         private readonly ICRDTProtocol crdtProtocol;
         private readonly IOutgoingCRTDMessagesProvider outgoingCRDTMessageProvider;
         private readonly ISDKComponentsRegistry componentsRegistry;
-        private readonly ICRDTMemoryAllocator pooledMemoryAllocator;
+        private readonly ICRDTMemoryAllocator memoryAllocator;
 
         public ECSToCRDTWriter(ICRDTProtocol crdtProtocol, IOutgoingCRTDMessagesProvider outgoingCRDTMessageProvider,
-            ISDKComponentsRegistry componentsRegistry)
+            ISDKComponentsRegistry componentsRegistry, ICRDTMemoryAllocator memoryAllocator)
         {
             this.crdtProtocol = crdtProtocol;
             this.outgoingCRDTMessageProvider = outgoingCRDTMessageProvider;
             this.componentsRegistry = componentsRegistry;
-            pooledMemoryAllocator = new CRDTPooledMemoryAllocator();
+            this.memoryAllocator = memoryAllocator;
         }
 
         public void PutMessage<T>(CRDTEntity crdtID, int componentId, T model) where T: IMessage<T>
@@ -34,8 +35,8 @@ namespace CrdtEcsBridge.ECSToCRDTWriter
                 return;
             }
 
-            IMemoryOwner<byte> memory = pooledMemoryAllocator.GetMemoryBuffer(model.CalculateSize());
-            componentBridge.Serializer.SerializeInto(model, pooledMemoryAllocator.GetMemoryBuffer(model.CalculateSize()).Memory.Span);
+            IMemoryOwner<byte> memory = memoryAllocator.GetMemoryBuffer(model.CalculateSize());
+            componentBridge.Serializer.SerializeInto(model, memoryAllocator.GetMemoryBuffer(model.CalculateSize()).Memory.Span);
             ProcessMessage(crdtProtocol.CreatePutMessage(crdtID, componentId, memory));
         }
 
@@ -47,8 +48,8 @@ namespace CrdtEcsBridge.ECSToCRDTWriter
                 return;
             }
 
-            IMemoryOwner<byte> memory = pooledMemoryAllocator.GetMemoryBuffer(model.CalculateSize());
-            componentBridge.Serializer.SerializeInto(model, pooledMemoryAllocator.GetMemoryBuffer(model.CalculateSize()).Memory.Span);
+            IMemoryOwner<byte> memory = memoryAllocator.GetMemoryBuffer(model.CalculateSize());
+            componentBridge.Serializer.SerializeInto(model, memoryAllocator.GetMemoryBuffer(model.CalculateSize()).Memory.Span);
             ProcessMessage(crdtProtocol.CreateAppendMessage(crdtID, componentId, memory));
         }
 
