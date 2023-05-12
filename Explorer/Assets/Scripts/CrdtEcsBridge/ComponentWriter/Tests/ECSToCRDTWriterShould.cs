@@ -1,4 +1,5 @@
 using CRDT;
+using CRDT.Memory;
 using CRDT.Protocol;
 using CRDT.Protocol.Factory;
 using CrdtEcsBridge.Components;
@@ -7,7 +8,6 @@ using DCL.ECS7;
 using DCL.ECSComponents;
 using NSubstitute;
 using NUnit.Framework;
-using System;
 using System.Buffers;
 
 namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
@@ -15,7 +15,6 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
     [TestFixture]
     public class ECSToCRDTWriterShould
     {
-
         [Test]
         public void AppendMessage()
         {
@@ -26,7 +25,7 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
             var sdkComponentRegistry = new SDKComponentsRegistry();
             sdkComponentRegistry.Add(SDKComponentBuilder<PBPointerEventsResult>.Create(ComponentID.POINTER_EVENTS_RESULT).AsProtobufComponent());
 
-            var ecsToCRDTWriter = new ECSToCRDTWriter(crdtProtocol, outgoingCRDTMessageProvider, sdkComponentRegistry);
+            var ecsToCRDTWriter = new ComponentWriter.ECSToCRDTWriter(crdtProtocol, outgoingCRDTMessageProvider, sdkComponentRegistry, CRDTPooledMemoryAllocator.Create());
             crdtProtocol.ProcessMessage(Arg.Any<CRDTMessage>()).Returns(_ => new CRDTReconciliationResult(CRDTStateReconciliationResult.StateAppendedData, CRDTReconciliationEffect.ComponentAdded));
             var crdtEntity = new CRDTEntity(1);
 
@@ -48,7 +47,7 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
             var sdkComponentRegistry = new SDKComponentsRegistry();
             sdkComponentRegistry.Add(SDKComponentBuilder<PBPointerEventsResult>.Create(ComponentID.POINTER_EVENTS_RESULT).AsProtobufComponent());
 
-            var ecsToCRDTWriter = new ECSToCRDTWriter(crdtProtocol, outgoingCRDTMessageProvider, sdkComponentRegistry);
+            var ecsToCRDTWriter = new ComponentWriter.ECSToCRDTWriter(crdtProtocol, outgoingCRDTMessageProvider, sdkComponentRegistry, CRDTPooledMemoryAllocator.Create());
 
             //Act
             ecsToCRDTWriter.PutMessage(new CRDTEntity(), ComponentID.POINTER_EVENTS_RESULT, new PBPointerEventsResult());
@@ -56,8 +55,5 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
             //Assert
             Assert.AreEqual(crdtProtocol.GetMessagesCount(), 1);
         }
-
     }
-
-
 }

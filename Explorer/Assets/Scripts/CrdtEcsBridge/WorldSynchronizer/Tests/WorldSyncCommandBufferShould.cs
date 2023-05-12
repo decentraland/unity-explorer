@@ -53,9 +53,10 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         private const int ENTITY_ID = 200;
 
         // random byte array
-        private static readonly CRDTPooledMemoryAllocator crdtPooledMemoryAllocator = new ();
+        private static readonly CRDTPooledMemoryAllocator CRDT_POOLED_MEMORY_ALLOCATOR = CRDTPooledMemoryAllocator.Create();
         private static readonly byte[] DATA_CONTENT = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
-        private static readonly IMemoryOwner<byte> DATA = crdtPooledMemoryAllocator.GetMemoryBuffer(DATA_CONTENT);
+
+        private static readonly IMemoryOwner<byte> DATA = CRDT_POOLED_MEMORY_ALLOCATOR.GetMemoryBuffer(DATA_CONTENT);
 
         private ISDKComponentsRegistry sdkComponentsRegistry;
         private WorldSyncCommandBuffer worldSyncCommandBuffer;
@@ -211,12 +212,12 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         private static CRDTMessage CreateTestMessage(int componentId = COMPONENT_ID_1, byte[] data = null) =>
 
             // type and timestamp do not matter
-            new (CRDTMessageType.NONE, ENTITY_ID, COMPONENT_ID_1, 0, crdtPooledMemoryAllocator.GetMemoryBuffer(data) ?? DATA);
+            new (CRDTMessageType.NONE, ENTITY_ID, COMPONENT_ID_1, 0, CRDT_POOLED_MEMORY_ALLOCATOR.GetMemoryBuffer(data) ?? DATA);
 
         private static CRDTMessage CreateTestMessage2(byte[] data = null) =>
 
             // type and timestamp do not matter
-            new (CRDTMessageType.NONE, ENTITY_ID, COMPONENT_ID_2, 0, crdtPooledMemoryAllocator.GetMemoryBuffer(data) ?? DATA);
+            new (CRDTMessageType.NONE, ENTITY_ID, COMPONENT_ID_2, 0, CRDT_POOLED_MEMORY_ALLOCATOR.GetMemoryBuffer(data) ?? DATA);
 
         private static CRDTMessage CreateDeleteEntityMessage(int entity) =>
             new (CRDTMessageType.DELETE_ENTITY, entity, 0, 0, EmptyMemoryOwner<byte>.EMPTY);

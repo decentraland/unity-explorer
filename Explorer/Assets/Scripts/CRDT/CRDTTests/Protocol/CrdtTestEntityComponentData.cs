@@ -17,7 +17,7 @@ namespace CRDT.CRDTTests.Protocol
 
         public CrdtTestEntityComponentData()
         {
-            crdtPooledMemoryAllocator = new CRDTPooledMemoryAllocator();
+            crdtPooledMemoryAllocator = CRDTPooledMemoryAllocator.Create();
         }
 
         internal ReadOnlyMemory<byte> GetBytes() =>

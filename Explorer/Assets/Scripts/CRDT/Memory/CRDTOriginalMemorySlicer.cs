@@ -1,5 +1,7 @@
 using System;
 using System.Buffers;
+using UnityEngine.Pool;
+using Utility.ThreadSafePool;
 
 namespace CRDT.Memory
 {
@@ -10,7 +12,14 @@ namespace CRDT.Memory
     {
         private class SliceOwner : IMemoryOwner<byte>
         {
-            public SliceOwner(byte[] array)
+            private readonly CRDTOriginalMemorySlicer memorySlicer;
+
+            internal SliceOwner(CRDTOriginalMemorySlicer memorySlicer)
+            {
+                this.memorySlicer = memorySlicer;
+            }
+
+            internal void Set(byte[] array)
             {
                 Memory = array;
             }
@@ -18,22 +27,52 @@ namespace CRDT.Memory
             public void Dispose()
             {
                 // Can't dispose the slice from the original array
+                memorySlicer.memoryOwnerPool.Release(this);
             }
 
-            public Memory<byte> Memory { get; }
+            public Memory<byte> Memory { get; private set; }
         }
+
+        private static readonly ThreadSafeObjectPool<CRDTOriginalMemorySlicer> POOL = new (
+            () => new CRDTOriginalMemorySlicer());
+
+        // Introduce a pool of memory owners to prevent allocations per message
+        private readonly ObjectPool<SliceOwner> memoryOwnerPool;
+
+        private CRDTOriginalMemorySlicer()
+        {
+            memoryOwnerPool = new ObjectPool<SliceOwner>(
+                () => new SliceOwner(this),
+                defaultCapacity: 1024,
+                maxSize: 1024 * 1024
+            );
+        }
+
+        public static CRDTOriginalMemorySlicer Create() =>
+            POOL.Get();
 
         public IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream, int shift, int length)
         {
             var byteArray = new byte[length];
             originalStream.Span.Slice(shift, length).CopyTo(byteArray.AsSpan());
-            return new SliceOwner(byteArray);
+            SliceOwner sliceOwner = memoryOwnerPool.Get();
+            sliceOwner.Set(byteArray);
+            return sliceOwner;
         }
 
-        public IMemoryOwner<byte> GetMemoryBuffer(int length) =>
-            new SliceOwner(new byte[length]);
+        public IMemoryOwner<byte> GetMemoryBuffer(int length)
+        {
+            SliceOwner sliceOwner = memoryOwnerPool.Get();
+            sliceOwner.Set(new byte[length]);
+            return sliceOwner;
+        }
 
         public IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream) =>
             GetMemoryBuffer(originalStream, 0, originalStream.Length);
+
+        public void Dispose()
+        {
+            POOL.Release(this);
+        }
     }
 }

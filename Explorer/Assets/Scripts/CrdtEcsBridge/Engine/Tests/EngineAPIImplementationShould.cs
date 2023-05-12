@@ -47,7 +47,7 @@ namespace CrdtEcsBridge.Engine.Tests
         {
             mutex = new Mutex();
 
-            crdtPooledMemoryAllocator = new CRDTPooledMemoryAllocator();
+            crdtPooledMemoryAllocator = CRDTPooledMemoryAllocator.Create();
 
             crdtMessages = new List<CRDTMessage>
             {

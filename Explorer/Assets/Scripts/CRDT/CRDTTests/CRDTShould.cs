@@ -16,13 +16,13 @@ namespace CRDT.CRDTTests
     {
         private ICRDTSerializer serializer;
         private ICRDTDeserializer deserializer;
-        private static readonly CRDTPooledMemoryAllocator crdtPooledMemoryAllocator = new ();
+        private static readonly CRDTPooledMemoryAllocator CRDT_POOLED_MEMORY_ALLOCATOR = CRDTPooledMemoryAllocator.Create();
 
         [SetUp]
         public void SetUp()
         {
             serializer = new CRDTSerializer();
-            deserializer = new CRDTDeserializer();
+            deserializer = new CRDTDeserializer(CRDT_POOLED_MEMORY_ALLOCATOR);
         }
 
         [Test]
@@ -70,8 +70,8 @@ namespace CRDT.CRDTTests
         {
             return new object[]
             {
-                new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, 125, 89233, 922, crdtPooledMemoryAllocator.GetMemoryBuffer(Encoding.UTF8.GetBytes("TEST_BYTES_1"))),
-                new CRDTMessage(CRDTMessageType.PUT_COMPONENT, 233, 4534232, 222, crdtPooledMemoryAllocator.GetMemoryBuffer(Encoding.UTF8.GetBytes("TEST_BYTES_2"))),
+                new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, 125, 89233, 922, CRDT_POOLED_MEMORY_ALLOCATOR.GetMemoryBuffer(Encoding.UTF8.GetBytes("TEST_BYTES_1"))),
+                new CRDTMessage(CRDTMessageType.PUT_COMPONENT, 233, 4534232, 222, CRDT_POOLED_MEMORY_ALLOCATOR.GetMemoryBuffer(Encoding.UTF8.GetBytes("TEST_BYTES_2"))),
                 new CRDTMessage(CRDTMessageType.DELETE_COMPONENT, 210, 32332, 1, EmptyMemoryOwner<byte>.EMPTY),
                 new CRDTMessage(CRDTMessageType.DELETE_ENTITY, 123, 0, 0, EmptyMemoryOwner<byte>.EMPTY),
             };
@@ -83,13 +83,13 @@ namespace CRDT.CRDTTests
             {
                 new CRDTMessage[]
                 {
-                    new (CRDTMessageType.APPEND_COMPONENT, 100, 100, 232, crdtPooledMemoryAllocator.GetMemoryBuffer(Encoding.UTF8.GetBytes("TEST_BYTES_1"))),
-                    new (CRDTMessageType.PUT_COMPONENT, 4343, 121303, 24343335, crdtPooledMemoryAllocator.GetMemoryBuffer(Encoding.UTF8.GetBytes("TEST_BYTES_41"))),
+                    new (CRDTMessageType.APPEND_COMPONENT, 100, 100, 232, CRDT_POOLED_MEMORY_ALLOCATOR.GetMemoryBuffer(Encoding.UTF8.GetBytes("TEST_BYTES_1"))),
+                    new (CRDTMessageType.PUT_COMPONENT, 4343, 121303, 24343335, CRDT_POOLED_MEMORY_ALLOCATOR.GetMemoryBuffer(Encoding.UTF8.GetBytes("TEST_BYTES_41"))),
                 },
                 new CRDTMessage[]
                 {
-                    new (CRDTMessageType.APPEND_COMPONENT, 100, 100, 232, crdtPooledMemoryAllocator.GetMemoryBuffer(Encoding.UTF8.GetBytes("TEST_BYTES_1"))),
-                    new (CRDTMessageType.PUT_COMPONENT, 4343, 121303, 24343335, crdtPooledMemoryAllocator.GetMemoryBuffer(Encoding.UTF8.GetBytes("TEST_BYTES_41"))),
+                    new (CRDTMessageType.APPEND_COMPONENT, 100, 100, 232, CRDT_POOLED_MEMORY_ALLOCATOR.GetMemoryBuffer(Encoding.UTF8.GetBytes("TEST_BYTES_1"))),
+                    new (CRDTMessageType.PUT_COMPONENT, 4343, 121303, 24343335, CRDT_POOLED_MEMORY_ALLOCATOR.GetMemoryBuffer(Encoding.UTF8.GetBytes("TEST_BYTES_41"))),
                     new (CRDTMessageType.DELETE_COMPONENT, 210, 32332, 1, EmptyMemoryOwner<byte>.EMPTY),
                     new (CRDTMessageType.DELETE_ENTITY, 123, 0, 0, EmptyMemoryOwner<byte>.EMPTY),
                 },

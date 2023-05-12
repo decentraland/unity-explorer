@@ -10,12 +10,17 @@ namespace CRDT.Deserializer
 {
     public class CRDTDeserializer : ICRDTDeserializer
     {
-        private static readonly ICRDTMemoryAllocator crdtPooledMemoryAllocator = new CRDTPooledMemoryAllocator();
+        private readonly ICRDTMemoryAllocator crdtPooledMemoryAllocator;
+
+        public CRDTDeserializer(ICRDTMemoryAllocator crdtPooledMemoryAllocator)
+        {
+            this.crdtPooledMemoryAllocator = crdtPooledMemoryAllocator;
+        }
 
         void ICRDTDeserializer.DeserializeBatch(ref ReadOnlyMemory<byte> memory, IList<CRDTMessage> messages) =>
             DeserializeBatch(ref memory, messages);
 
-        public static void DeserializeBatch(ref ReadOnlyMemory<byte> memory, IList<CRDTMessage> messages)
+        public void DeserializeBatch(ref ReadOnlyMemory<byte> memory, IList<CRDTMessage> messages)
         {
             // While we have a header to read
             while (memory.Length > CRDTConstants.MESSAGE_HEADER_LENGTH)
@@ -101,7 +106,7 @@ namespace CRDT.Deserializer
             return true;
         }
 
-        public static bool TryDeserializeAppendComponent(ref ReadOnlyMemory<byte> memory, out CRDTMessage crdtMessage)
+        public bool TryDeserializeAppendComponent(ref ReadOnlyMemory<byte> memory, out CRDTMessage crdtMessage)
         {
             var shift = 0;
             var memorySpan = memory.Span;
@@ -123,7 +128,7 @@ namespace CRDT.Deserializer
             return true;
         }
 
-        public static bool TryDeserializePutComponent(ref ReadOnlyMemory<byte> memory, out CRDTMessage crdtMessage)
+        public bool TryDeserializePutComponent(ref ReadOnlyMemory<byte> memory, out CRDTMessage crdtMessage)
         {
             var shift = 0;
             var memorySpan = memory.Span;
