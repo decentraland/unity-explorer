@@ -35,10 +35,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                 instance.Value = data.ToArray();
             }
 
-            public void SerializeInto(TestComponent model, in Span<byte> span)
-            {
-                throw new NotImplementedException();
-            }
+            public void SerializeInto(TestComponent model, in Span<byte> span) { }
         }
 
         public class TestComponentSerializer2 : IComponentSerializer<TestComponent2>
@@ -48,10 +45,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                 instance.Value = data.ToArray();
             }
 
-            public void SerializeInto(TestComponent2 model, in Span<byte> span)
-            {
-                throw new NotImplementedException();
-            }
+            public void SerializeInto(TestComponent2 model, in Span<byte> span) { }
         }
 
         private const int COMPONENT_ID_1 = 100;
@@ -317,7 +311,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                         var c = world.Get<TestComponent>(map[ENTITY_ID]);
 
                         // last data should be written
-                        Assert.AreEqual(DATA, c.Value.ToArray());
+                        Assert.AreEqual(DATA.Memory, c.Value.ToArray());
                     }),
                 },
                 new object[]
