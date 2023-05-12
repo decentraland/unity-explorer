@@ -21,8 +21,8 @@ namespace CRDT.Serializer
                 case CRDTMessageType.APPEND_COMPONENT:
                     destination.Write(crdtMessage.ComponentId);
                     destination.Write(crdtMessage.Timestamp);
-                    destination.Write(crdtMessage.Data.Length);
-                    destination.Write(crdtMessage.Data.Span);
+                    destination.Write(crdtMessage.Data.Memory.Length);
+                    destination.Write(crdtMessage.Data.Memory.Span);
                     break;
                 case CRDTMessageType.DELETE_COMPONENT:
                     destination.Write(crdtMessage.ComponentId);

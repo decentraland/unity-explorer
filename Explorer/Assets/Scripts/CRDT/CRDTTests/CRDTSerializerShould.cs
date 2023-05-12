@@ -1,8 +1,10 @@
-﻿using CRDT.Protocol;
+﻿using CRDT.Memory;
+using CRDT.Protocol;
 using CRDT.Protocol.Factory;
 using CRDT.Serializer;
 using NUnit.Framework;
 using System;
+using System.Buffers;
 
 namespace CRDT.CRDTTests
 {
@@ -10,11 +12,13 @@ namespace CRDT.CRDTTests
     public class CRDTSerializerShould
     {
         private CRDTSerializer crdtSerializer;
+        private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
 
         [SetUp]
         public void SetUp()
         {
             crdtSerializer = new CRDTSerializer();
+            crdtPooledMemoryAllocator = new CRDTPooledMemoryAllocator();
         }
 
         [Test]
@@ -44,15 +48,16 @@ namespace CRDT.CRDTTests
         public byte[] SerializeCorrectlyPutComponent(int entityId, int componentId, int timestamp, byte[] data)
         {
             ReadOnlyMemory<byte> dataMemory = data ?? ReadOnlyMemory<byte>.Empty;
+            IMemoryOwner<byte> memoryOwner = crdtPooledMemoryAllocator.GetMemoryBuffer(dataMemory);
             var entity = new CRDTEntity(entityId);
-            var messageDataLength = CRDTMessageSerializationUtils.GetMessageDataLength(CRDTMessageType.PUT_COMPONENT, in dataMemory);
+            int messageDataLength = CRDTMessageSerializationUtils.GetMessageDataLength(CRDTMessageType.PUT_COMPONENT, in memoryOwner);
 
             var message = new CRDTMessage(
                 CRDTMessageType.PUT_COMPONENT,
                 entity,
                 componentId,
                 timestamp,
-                dataMemory
+                memoryOwner
             );
 
             var processedMessage = new ProcessedCRDTMessage(message, messageDataLength);
@@ -91,14 +96,14 @@ namespace CRDT.CRDTTests
         public byte[] SerializeCorrectlyDeleteComponent(int entityId, int componentId, int timestamp)
         {
             var entity = new CRDTEntity(entityId);
-            var messageDataLength = CRDTMessageSerializationUtils.GetMessageDataLength(CRDTMessageType.DELETE_COMPONENT, ReadOnlyMemory<byte>.Empty);
+            int messageDataLength = CRDTMessageSerializationUtils.GetMessageDataLength(CRDTMessageType.DELETE_COMPONENT, EmptyMemoryOwner<byte>.EMPTY);
 
             var message = new CRDTMessage(
                 CRDTMessageType.DELETE_COMPONENT,
                 entity,
                 componentId,
                 timestamp,
-                ReadOnlyMemory<byte>.Empty
+                EmptyMemoryOwner<byte>.EMPTY
             );
 
             var processedMessage = new ProcessedCRDTMessage(message, messageDataLength);

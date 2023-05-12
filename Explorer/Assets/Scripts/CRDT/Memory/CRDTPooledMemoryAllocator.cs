@@ -8,7 +8,7 @@ namespace CRDT.Memory
     /// </summary>
     public class CRDTPooledMemoryAllocator : ICRDTMemoryAllocator
     {
-        private class MemoryOwner : IReadOnlyMemoryOwner<byte>
+        private class MemoryOwner : IMemoryOwner<byte>
         {
             private readonly byte[] array;
 
@@ -17,8 +17,8 @@ namespace CRDT.Memory
             internal MemoryOwner(byte[] array, int size)
             {
                 this.array = array;
-                ReadOnlyMemory = this.array;
-                ReadOnlyMemory = ReadOnlyMemory.Slice(size);
+                Memory = this.array;
+                Memory = Memory.Slice(0, size);
             }
 
             public void Dispose()
@@ -30,16 +30,21 @@ namespace CRDT.Memory
                 }
             }
 
-            public ReadOnlyMemory<byte> ReadOnlyMemory { get; }
+            public Memory<byte> Memory { get; }
         }
 
-        public IReadOnlyMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream, int shift, int length)
+        public IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream, int shift, int length)
         {
-            var memoryOwner = MemoryPool<byte>.Shared.Rent(length);
-            var slice = originalStream.Slice(shift, length);
-            slice.CopyTo(memoryOwner.Memory);
-
-            return new MemoryOwner(ArrayPool<byte>.Shared.Rent(length), length);
+            byte[] byteArray = ArrayPool<byte>.Shared.Rent(length);
+            originalStream.Span.Slice(shift, length).CopyTo(byteArray.AsSpan());
+            return new MemoryOwner(byteArray, length);
         }
+
+        public IMemoryOwner<byte> GetMemoryBuffer(int length) =>
+            new MemoryOwner(ArrayPool<byte>.Shared.Rent(length), length);
+
+        public IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream) =>
+            GetMemoryBuffer(originalStream, 0, originalStream.Length);
+
     }
 }

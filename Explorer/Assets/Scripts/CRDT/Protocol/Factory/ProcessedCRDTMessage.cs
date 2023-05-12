@@ -16,5 +16,6 @@ namespace CRDT.Protocol.Factory
             this.message = message;
             this.CRDTMessageDataLength = crdtMessageDataLength;
         }
+
     }
 }

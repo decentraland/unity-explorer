@@ -1,7 +1,7 @@
+using CRDT.Memory;
 using CRDT.Protocol;
 using CRDT.Protocol.Factory;
 using NUnit.Framework;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace CRDT.CRDTTests.Protocol
@@ -9,6 +9,14 @@ namespace CRDT.CRDTTests.Protocol
     [TestFixture]
     public class CRDTProtocolShould
     {
+        private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
+
+        [SetUp]
+        public void SetUp()
+        {
+            crdtPooledMemoryAllocator = new CRDTPooledMemoryAllocator();
+        }
+
         [Test]
         [TestCaseSource(typeof(CRDTTestsUtils), nameof(CRDTTestsUtils.GetTestFilesPath))]
         public void ProcessMessagesCorrectly(string testPath)
@@ -77,7 +85,7 @@ namespace CRDT.CRDTTests.Protocol
                     var preallocatedArray = new ProcessedCRDTMessage[crdt.GetMessagesCount()];
                     crdt.CreateMessagesFromTheCurrentState(preallocatedArray);
 
-                    var finalStateMessages = ParsedCRDTTestFile.InstructionToFinalStateMessages(instruction).ToArray();
+                    CRDTMessage[] finalStateMessages = ParsedCRDTTestFile.InstructionToFinalStateMessages(instruction, crdtPooledMemoryAllocator).ToArray();
 
                     CollectionAssert.AreEqual(finalStateMessages, preallocatedArray.Select(x => x.message).ToArray());
 
