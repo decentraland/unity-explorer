@@ -1,5 +1,5 @@
 using CRDT.Protocol;
-using System;
+using System.Buffers;
 
 namespace CRDT.Serializer
 {
@@ -10,30 +10,30 @@ namespace CRDT.Serializer
             switch (message.Type)
             {
                 case CRDTMessageType.PUT_COMPONENT:
-                    return CRDTConstants.CRDT_PUT_COMPONENT_BASE_LENGTH + message.Data.Length;
+                    return CRDTConstants.CRDT_PUT_COMPONENT_BASE_LENGTH + message.Data.Memory.Length;
                 case CRDTMessageType.DELETE_ENTITY:
                     return CRDTConstants.CRDT_DELETE_ENTITY_BASE_LENGTH;
                 case CRDTMessageType.DELETE_COMPONENT:
                     return CRDTConstants.CRDT_DELETE_COMPONENT_BASE_LENGTH;
                 case CRDTMessageType.APPEND_COMPONENT:
-                    return CRDTConstants.CRDT_APPEND_COMPONENT_BASE_LENGTH + message.Data.Length;
+                    return CRDTConstants.CRDT_APPEND_COMPONENT_BASE_LENGTH + message.Data.Memory.Length;
             }
 
             return 0;
         }
 
-        internal static int GetMessageDataLength(CRDTMessageType messageType, in ReadOnlyMemory<byte> data)
+        internal static int GetMessageDataLength(CRDTMessageType messageType, in IMemoryOwner<byte> data)
         {
             switch (messageType)
             {
                 case CRDTMessageType.PUT_COMPONENT:
-                    return CRDTConstants.CRDT_PUT_COMPONENT_BASE_LENGTH + data.Length;
+                    return CRDTConstants.CRDT_PUT_COMPONENT_BASE_LENGTH + data.Memory.Length;
                 case CRDTMessageType.DELETE_ENTITY:
                     return CRDTConstants.CRDT_DELETE_ENTITY_BASE_LENGTH;
                 case CRDTMessageType.DELETE_COMPONENT:
                     return CRDTConstants.CRDT_DELETE_COMPONENT_BASE_LENGTH;
                 case CRDTMessageType.APPEND_COMPONENT:
-                    return CRDTConstants.CRDT_APPEND_COMPONENT_BASE_LENGTH + data.Length;
+                    return CRDTConstants.CRDT_APPEND_COMPONENT_BASE_LENGTH + data.Memory.Length;
             }
 
             return 0;

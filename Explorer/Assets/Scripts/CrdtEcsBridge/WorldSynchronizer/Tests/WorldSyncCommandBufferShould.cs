@@ -1,6 +1,7 @@
 ﻿using Arch.CommandBuffer;
 using Arch.Core;
 using CRDT;
+using CRDT.Memory;
 using CRDT.Protocol;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Serialization;
@@ -9,6 +10,7 @@ using ECS.LifeCycle.Components;
 using NSubstitute;
 using NUnit.Framework;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -32,6 +34,8 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             {
                 instance.Value = data.ToArray();
             }
+
+            public void SerializeInto(TestComponent model, in Span<byte> span) { }
         }
 
         public class TestComponentSerializer2 : IComponentSerializer<TestComponent2>
@@ -40,6 +44,8 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             {
                 instance.Value = data.ToArray();
             }
+
+            public void SerializeInto(TestComponent2 model, in Span<byte> span) { }
         }
 
         private const int COMPONENT_ID_1 = 100;
@@ -47,7 +53,9 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         private const int ENTITY_ID = 200;
 
         // random byte array
-        private static readonly byte[] DATA = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
+        private static readonly CRDTPooledMemoryAllocator crdtPooledMemoryAllocator = new ();
+        private static readonly byte[] DATA_CONTENT = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
+        private static readonly IMemoryOwner<byte> DATA = crdtPooledMemoryAllocator.GetMemoryBuffer(DATA_CONTENT);
 
         private ISDKComponentsRegistry sdkComponentsRegistry;
         private WorldSyncCommandBuffer worldSyncCommandBuffer;
@@ -195,7 +203,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                 {
                     // special case for deleted entity
                     (CreateTestMessage(), CRDTReconciliationEffect.EntityDeleted, CRDTReconciliationEffect.NoChanges), // no changes to the component = no component
-                    (new CRDTMessage(CRDTMessageType.DELETE_ENTITY, 123, 0, 123, ReadOnlyMemory<byte>.Empty), CRDTReconciliationEffect.EntityDeleted, CRDTReconciliationEffect.NoChanges),
+                    (new CRDTMessage(CRDTMessageType.DELETE_ENTITY, 123, 0, 123, EmptyMemoryOwner<byte>.EMPTY), CRDTReconciliationEffect.EntityDeleted, CRDTReconciliationEffect.NoChanges),
                 }
             };
         }
@@ -203,15 +211,15 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         private static CRDTMessage CreateTestMessage(int componentId = COMPONENT_ID_1, byte[] data = null) =>
 
             // type and timestamp do not matter
-            new (CRDTMessageType.NONE, ENTITY_ID, COMPONENT_ID_1, 0, data ?? DATA);
+            new (CRDTMessageType.NONE, ENTITY_ID, COMPONENT_ID_1, 0, crdtPooledMemoryAllocator.GetMemoryBuffer(data) ?? DATA);
 
         private static CRDTMessage CreateTestMessage2(byte[] data = null) =>
 
             // type and timestamp do not matter
-            new (CRDTMessageType.NONE, ENTITY_ID, COMPONENT_ID_2, 0, data ?? DATA);
+            new (CRDTMessageType.NONE, ENTITY_ID, COMPONENT_ID_2, 0, crdtPooledMemoryAllocator.GetMemoryBuffer(data) ?? DATA);
 
         private static CRDTMessage CreateDeleteEntityMessage(int entity) =>
-            new (CRDTMessageType.DELETE_ENTITY, entity, 0, 0, ReadOnlyMemory<byte>.Empty);
+            new (CRDTMessageType.DELETE_ENTITY, entity, 0, 0, EmptyMemoryOwner<byte>.EMPTY);
 
         [Test]
         [TestCaseSource(nameof(ApplyChangesMessagesSource))]
@@ -295,7 +303,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                     }),
                     new (CRDTMessage, CRDTReconciliationEffect)[]
                     {
-                        (CreateTestMessage(data: DATA), CRDTReconciliationEffect.ComponentModified),
+                        (CreateTestMessage(data: DATA_CONTENT), CRDTReconciliationEffect.ComponentModified),
                     },
                     new Action<World, Dictionary<CRDTEntity, Entity>>((world, map) =>
                     {
@@ -303,7 +311,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                         var c = world.Get<TestComponent>(map[ENTITY_ID]);
 
                         // last data should be written
-                        Assert.AreEqual(DATA, c.Value.ToArray());
+                        Assert.AreEqual(DATA.Memory.ToArray(), c.Value.ToArray());
                     }),
                 },
                 new object[]
