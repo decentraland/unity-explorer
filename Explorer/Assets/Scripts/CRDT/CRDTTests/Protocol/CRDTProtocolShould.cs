@@ -1,7 +1,7 @@
+using CRDT.Memory;
 using CRDT.Protocol;
 using CRDT.Protocol.Factory;
 using NUnit.Framework;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace CRDT.CRDTTests.Protocol
@@ -9,6 +9,14 @@ namespace CRDT.CRDTTests.Protocol
     [TestFixture]
     public class CRDTProtocolShould
     {
+        private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
+
+        [SetUp]
+        public void SetUp()
+        {
+            crdtPooledMemoryAllocator = CRDTPooledMemoryAllocator.Create();
+        }
+
         [Test]
         [TestCaseSource(typeof(CRDTTestsUtils), nameof(CRDTTestsUtils.GetTestFilesPath))]
         public void ProcessMessagesCorrectly(string testPath)
@@ -35,7 +43,7 @@ namespace CRDT.CRDTTests.Protocol
 
                 if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.MESSAGE)
                 {
-                    var (msg, expectedResult) = ParsedCRDTTestFile.InstructionToMessage(instruction);
+                    (CRDTMessage msg, CRDTReconciliationResult? expectedResult) = ParsedCRDTTestFile.InstructionToMessage(instruction, crdtPooledMemoryAllocator);
                     var result = crdt.ProcessMessage(msg);
 
                     if (expectedResult != null)
@@ -67,7 +75,7 @@ namespace CRDT.CRDTTests.Protocol
 
                 if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.MESSAGE)
                 {
-                    var (msg, _) = ParsedCRDTTestFile.InstructionToMessage(instruction);
+                    (CRDTMessage msg, _) = ParsedCRDTTestFile.InstructionToMessage(instruction, crdtPooledMemoryAllocator);
                     crdt.ProcessMessage(msg);
                 }
                 else if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.FINAL_STATE)
@@ -77,7 +85,7 @@ namespace CRDT.CRDTTests.Protocol
                     var preallocatedArray = new ProcessedCRDTMessage[crdt.GetMessagesCount()];
                     crdt.CreateMessagesFromTheCurrentState(preallocatedArray);
 
-                    var finalStateMessages = ParsedCRDTTestFile.InstructionToFinalStateMessages(instruction).ToArray();
+                    CRDTMessage[] finalStateMessages = ParsedCRDTTestFile.InstructionToFinalStateMessages(instruction, crdtPooledMemoryAllocator).ToArray();
 
                     CollectionAssert.AreEqual(finalStateMessages, preallocatedArray.Select(x => x.message).ToArray());
 

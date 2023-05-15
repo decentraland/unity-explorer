@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using CRDT.Deserializer;
+using CRDT.Memory;
 using CRDT.Protocol;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
@@ -60,11 +61,10 @@ namespace SceneRunner.Tests
                             });
 
             sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>();
-            crdtDeserializer = Substitute.For<ICRDTDeserializer>();
             crdtSerializer = Substitute.For<ICRDTSerializer>();
             componentsRegistry = Substitute.For<ISDKComponentsRegistry>();
 
-            sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtDeserializer, crdtSerializer, componentsRegistry, new EntityFactory());
+            sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry, new EntityFactory());
         }
 
         [OneTimeTearDown]
@@ -110,7 +110,8 @@ namespace SceneRunner.Tests
                 Substitute.For<ICRDTProtocol>(),
                 Substitute.For<IOutgoingCRTDMessagesProvider>(),
                 Substitute.For<ICRDTWorldSynchronizer>(),
-                Substitute.For<IInstancePoolsProvider>()
+                Substitute.For<IInstancePoolsProvider>(),
+                Substitute.For<ICRDTMemoryAllocator>()
             );
 
             sceneFacades.Add(sceneFacade);
@@ -192,7 +193,8 @@ namespace SceneRunner.Tests
                 Substitute.For<ICRDTProtocol>(),
                 Substitute.For<IOutgoingCRTDMessagesProvider>(),
                 Substitute.For<ICRDTWorldSynchronizer>(),
-                Substitute.For<IInstancePoolsProvider>()
+                Substitute.For<IInstancePoolsProvider>(),
+                Substitute.For<ICRDTMemoryAllocator>()
             );
 
             await UniTask.SwitchToThreadPool();
@@ -218,6 +220,7 @@ namespace SceneRunner.Tests
                 sceneFacade.outgoingCrtdMessagesProvider.Dispose();
                 sceneFacade.crdtWorldSynchronizer.Dispose();
                 sceneFacade.instancePoolsProvider.Dispose();
+                sceneFacade.crdtMemoryAllocator.Dispose();
             });
         }
     }

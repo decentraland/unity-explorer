@@ -1,5 +1,6 @@
 ﻿using CRDT.Protocol.Factory;
 using System;
+using System.Buffers;
 
 namespace CRDT.Protocol
 {
@@ -25,12 +26,12 @@ namespace CRDT.Protocol
         /// <summary>
         /// Creates an Append Message but does not process it
         /// </summary>
-        ProcessedCRDTMessage CreateAppendMessage(CRDTEntity entity, int componentId, in ReadOnlyMemory<byte> data);
+        ProcessedCRDTMessage CreateAppendMessage(CRDTEntity entity, int componentId, in IMemoryOwner<byte> data);
 
         /// <summary>
         /// Creates an LWW PUT Message but does not process it
         /// </summary>
-        ProcessedCRDTMessage CreatePutMessage(CRDTEntity entity, int componentId, in ReadOnlyMemory<byte> data);
+        ProcessedCRDTMessage CreatePutMessage(CRDTEntity entity, int componentId, in IMemoryOwner<byte> data);
 
         /// <summary>
         /// Creates an LWW DELETE Message but does not process it

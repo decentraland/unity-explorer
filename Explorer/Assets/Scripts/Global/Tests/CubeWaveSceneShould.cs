@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -89,29 +90,34 @@ namespace Global.Editor
             // after the tick we should wait for the next frame for the CommandBuffer to apply
             await UniTask.Yield(PlayerLoopTiming.Update);
 
-            // 256 cubes
-
             var sceneFacadeImpl = (SceneFacade)sceneFacade;
 
             // Check ECS world
 
             var world = sceneFacadeImpl.ecsWorldFacade.EcsWorld;
-            var updateTransformSystem = new UpdateTransformSystem(world);
 
             var cubes = new QueryDescription().WithAll<SDKTransform, PBMeshRenderer>(); // 256 cubes
             Assert.AreEqual(256, world.CountEntities(in cubes));
 
+            // save positions
+            var positions = new Dictionary<Entity, Vector3>(256);
+
+            world.Query(in cubes, (in Entity e, ref SDKTransform transform) => { positions[e] = transform.Position; });
+
             var textShape = new QueryDescription().WithAll<SDKTransform, PBTextShape, PBBillboard>(); // Billboard
             Assert.AreEqual(1, world.CountEntities(in textShape));
 
-            for (var i = 0; i < 1; i++)
-            {
-                await sceneFacade.Tick(0);
-                await UniTask.Yield(PlayerLoopTiming.Update);
-                world.Query(in new QueryDescription().WithAll<SDKTransform>(), (ref SDKTransform sdkTransform) => { Debug.Log("Before Update" + sdkTransform.IsDirty); });
-                updateTransformSystem.Update(0);
-                world.Query(in new QueryDescription().WithAll<SDKTransform>(), (ref SDKTransform sdkTransform) => { Debug.Log("After Update " + sdkTransform.IsDirty); });
-            }
+            await UniTask.SwitchToThreadPool();
+
+            await sceneFacade.Tick(0.2f);
+
+            // after the tick we should wait for the next frame for the CommandBuffer to apply
+            await UniTask.Yield(PlayerLoopTiming.Update);
+
+            // all positions must change
+
+            Assert.AreEqual(256, world.CountEntities(in cubes));
+            world.Query(in cubes, (in Entity e, ref SDKTransform transform) => { Assert.AreNotEqual(positions[e], transform.Position); });
         }
 
         [TearDown]

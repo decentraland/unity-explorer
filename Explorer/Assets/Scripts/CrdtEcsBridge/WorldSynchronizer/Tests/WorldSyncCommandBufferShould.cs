@@ -1,6 +1,7 @@
 ﻿using Arch.CommandBuffer;
 using Arch.Core;
 using CRDT;
+using CRDT.Memory;
 using CRDT.Protocol;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Serialization;
@@ -9,6 +10,7 @@ using ECS.LifeCycle.Components;
 using NSubstitute;
 using NUnit.Framework;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -32,6 +34,8 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             {
                 instance.Value = data.ToArray();
             }
+
+            public void SerializeInto(TestComponent model, in Span<byte> span) { }
         }
 
         public class TestComponentSerializer2 : IComponentSerializer<TestComponent2>
@@ -40,6 +44,8 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             {
                 instance.Value = data.ToArray();
             }
+
+            public void SerializeInto(TestComponent2 model, in Span<byte> span) { }
         }
 
         private const int COMPONENT_ID_1 = 100;
@@ -47,11 +53,15 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         private const int ENTITY_ID = 200;
 
         // random byte array
-        private static readonly byte[] DATA = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
+        private static readonly CRDTPooledMemoryAllocator CRDT_POOLED_MEMORY_ALLOCATOR = CRDTPooledMemoryAllocator.Create();
+        private static readonly byte[] DATA_CONTENT = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
+
+        private static readonly IMemoryOwner<byte> DATA = CRDT_POOLED_MEMORY_ALLOCATOR.GetMemoryBuffer(DATA_CONTENT);
 
         private ISDKComponentsRegistry sdkComponentsRegistry;
         private WorldSyncCommandBuffer worldSyncCommandBuffer;
         private IEntityFactory entityFactory;
+        private WorldSyncCommandBufferCollectionsPool collectionsPool;
 
         [SetUp]
         public void SetUp()
@@ -95,7 +105,14 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             entityFactory = Substitute.For<IEntityFactory>();
             entityFactory.Create(Arg.Any<CRDTEntity>(), Arg.Any<World>()).Returns(c => c.Arg<World>().Create());
 
-            worldSyncCommandBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory);
+            worldSyncCommandBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory, collectionsPool = WorldSyncCommandBufferCollectionsPool.Create());
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            worldSyncCommandBuffer?.Dispose();
+            collectionsPool?.Dispose();
         }
 
         [Test]
@@ -104,20 +121,30 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         {
             void FillDeserializeLoop(int lastIndex)
             {
-                var localBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory);
-                var finalExpectation = CRDTReconciliationEffect.NoChanges;
+                var pool = WorldSyncCommandBufferCollectionsPool.Create();
+                var localBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory, pool);
 
-                for (var i = 0; i <= lastIndex; i++)
+                try
                 {
-                    (CRDTMessage crdtMessage, CRDTReconciliationEffect effect, CRDTReconciliationEffect expected) = series[i];
-                    finalExpectation = expected;
-                    localBuffer.SyncCRDTMessage(crdtMessage, effect);
+                    CRDTReconciliationEffect finalExpectation = CRDTReconciliationEffect.NoChanges;
+
+                    for (var i = 0; i <= lastIndex; i++)
+                    {
+                        (CRDTMessage crdtMessage, CRDTReconciliationEffect effect, CRDTReconciliationEffect expected) = series[i];
+                        finalExpectation = expected;
+                        localBuffer.SyncCRDTMessage(crdtMessage, effect);
+                    }
+
+                    localBuffer.FinalizeAndDeserialize();
+
+                    // Check the final status
+                    Assert.AreEqual(finalExpectation, localBuffer.GetLastState(ENTITY_ID, COMPONENT_ID_1), $"The final state mismatch at index {lastIndex}");
                 }
-
-                localBuffer.FinalizeAndDeserialize();
-
-                // Check the final status
-                Assert.AreEqual(finalExpectation, localBuffer.GetLastState(ENTITY_ID, COMPONENT_ID_1), $"The final state mismatch at index {lastIndex}");
+                finally
+                {
+                    localBuffer.Dispose();
+                    pool.Dispose();
+                }
             }
 
             for (var i = 0; i < series.Length; i++)
@@ -177,7 +204,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                 {
                     // special case for deleted entity
                     (CreateTestMessage(), CRDTReconciliationEffect.EntityDeleted, CRDTReconciliationEffect.NoChanges), // no changes to the component = no component
-                    (new CRDTMessage(CRDTMessageType.DELETE_ENTITY, 123, 0, 123, ReadOnlyMemory<byte>.Empty), CRDTReconciliationEffect.EntityDeleted, CRDTReconciliationEffect.NoChanges),
+                    (new CRDTMessage(CRDTMessageType.DELETE_ENTITY, 123, 0, 123, EmptyMemoryOwner<byte>.EMPTY), CRDTReconciliationEffect.EntityDeleted, CRDTReconciliationEffect.NoChanges),
                 }
             };
         }
@@ -185,15 +212,15 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         private static CRDTMessage CreateTestMessage(int componentId = COMPONENT_ID_1, byte[] data = null) =>
 
             // type and timestamp do not matter
-            new (CRDTMessageType.NONE, ENTITY_ID, COMPONENT_ID_1, 0, data ?? DATA);
+            new (CRDTMessageType.NONE, ENTITY_ID, COMPONENT_ID_1, 0, CRDT_POOLED_MEMORY_ALLOCATOR.GetMemoryBuffer(data) ?? DATA);
 
         private static CRDTMessage CreateTestMessage2(byte[] data = null) =>
 
             // type and timestamp do not matter
-            new (CRDTMessageType.NONE, ENTITY_ID, COMPONENT_ID_2, 0, data ?? DATA);
+            new (CRDTMessageType.NONE, ENTITY_ID, COMPONENT_ID_2, 0, CRDT_POOLED_MEMORY_ALLOCATOR.GetMemoryBuffer(data) ?? DATA);
 
         private static CRDTMessage CreateDeleteEntityMessage(int entity) =>
-            new (CRDTMessageType.DELETE_ENTITY, entity, 0, 0, ReadOnlyMemory<byte>.Empty);
+            new (CRDTMessageType.DELETE_ENTITY, entity, 0, 0, EmptyMemoryOwner<byte>.EMPTY);
 
         [Test]
         [TestCaseSource(nameof(ApplyChangesMessagesSource))]
@@ -201,17 +228,29 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         {
             var world = World.Create();
             var commandBuffer = new PersistentCommandBuffer(world);
+            var collectionPool = WorldSyncCommandBufferCollectionsPool.Create();
+            var localBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory, collectionPool);
 
-            var entitiesMap = new Dictionary<CRDTEntity, Entity>();
-            prewarmWorld(world, entitiesMap);
+            try
+            {
+                var entitiesMap = new Dictionary<CRDTEntity, Entity>();
+                prewarmWorld(world, entitiesMap);
 
-            foreach (var (message, effect) in messages)
-                worldSyncCommandBuffer.SyncCRDTMessage(message, effect);
+                foreach ((CRDTMessage message, CRDTReconciliationEffect effect) in messages)
+                    localBuffer.SyncCRDTMessage(message, effect);
 
-            // deserialize first
-            worldSyncCommandBuffer.FinalizeAndDeserialize();
+                // deserialize first
+                localBuffer.FinalizeAndDeserialize();
 
-            worldSyncCommandBuffer.Apply(world, commandBuffer, entitiesMap);
+                localBuffer.Apply(world, commandBuffer, entitiesMap);
+
+                assertWorld(world, entitiesMap);
+            }
+            finally
+            {
+                localBuffer.Dispose();
+                collectionPool.Dispose();
+            }
         }
 
         private static object[][] ApplyChangesMessagesSource()
@@ -265,7 +304,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                     }),
                     new (CRDTMessage, CRDTReconciliationEffect)[]
                     {
-                        (CreateTestMessage(data: DATA), CRDTReconciliationEffect.ComponentModified),
+                        (CreateTestMessage(data: DATA_CONTENT), CRDTReconciliationEffect.ComponentModified),
                     },
                     new Action<World, Dictionary<CRDTEntity, Entity>>((world, map) =>
                     {
@@ -273,7 +312,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                         var c = world.Get<TestComponent>(map[ENTITY_ID]);
 
                         // last data should be written
-                        Assert.AreEqual(DATA, c.Value.ToArray());
+                        Assert.AreEqual(DATA.Memory.ToArray(), c.Value.ToArray());
                     }),
                 },
                 new object[]

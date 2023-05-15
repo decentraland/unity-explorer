@@ -1,10 +1,11 @@
 ﻿using CRDT.Protocol;
+using CrdtEcsBridge.Engine;
 using System.Buffers;
 using System.Collections.Generic;
 using UnityEngine.Pool;
 using Utility.ThreadSafePool;
 
-namespace CrdtEcsBridge.Engine
+namespace CrdtEcsBridge.PoolsProviders
 {
     public class InstancePoolsProvider : IInstancePoolsProvider
     {

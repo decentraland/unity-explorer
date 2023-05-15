@@ -26,7 +26,6 @@ namespace Global
                     ecsWorldFactory,
                     new SceneRuntimeFactory(),
                     new SharedPoolsProvider(),
-                    new CRDTDeserializer(),
                     new CRDTSerializer(),
                     componentsContainer.SDKComponentsRegistry,
                     new EntityFactory()

@@ -1,45 +1,104 @@
 using System;
 using System.Buffers;
+using UnityEngine.Pool;
+using Utility.ThreadSafePool;
 
 namespace CRDT.Memory
 {
     /// <summary>
-    /// Uses ArrayPool under the hood
+    /// Allocates chunks for CRDT Messages from the Array Pool unique for each scene (thread)
     /// </summary>
     public class CRDTPooledMemoryAllocator : ICRDTMemoryAllocator
     {
-        private class MemoryOwner : IReadOnlyMemoryOwner<byte>
+        private class MemoryOwner : IMemoryOwner<byte>
         {
-            private readonly byte[] array;
+            private readonly CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
+            private byte[] array;
 
             private bool disposed;
 
-            internal MemoryOwner(byte[] array, int size)
+            internal MemoryOwner(CRDTPooledMemoryAllocator crdtPooledMemoryAllocator)
+            {
+                this.crdtPooledMemoryAllocator = crdtPooledMemoryAllocator;
+            }
+
+            internal void Set(byte[] array, int size)
             {
                 this.array = array;
-                ReadOnlyMemory = this.array;
-                ReadOnlyMemory = ReadOnlyMemory.Slice(size);
+                Memory = this.array.AsMemory().Slice(0, size);
+                disposed = false;
             }
 
             public void Dispose()
             {
                 if (!disposed)
                 {
-                    ArrayPool<byte>.Shared.Return(array);
+                    // it is mandatory to have two-level pool as the size of the array
+                    // on every rent can be absolutely different
+                    crdtPooledMemoryAllocator.arrayPool.Return(array);
+                    crdtPooledMemoryAllocator.memoryOwnerPool.Release(this);
+                    array = null;
                     disposed = true;
                 }
             }
 
-            public ReadOnlyMemory<byte> ReadOnlyMemory { get; }
+            public Memory<byte> Memory { get; private set; }
         }
 
-        public IReadOnlyMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream, int shift, int length)
-        {
-            var memoryOwner = MemoryPool<byte>.Shared.Rent(length);
-            var slice = originalStream.Slice(shift, length);
-            slice.CopyTo(memoryOwner.Memory);
+        private static readonly ThreadSafeObjectPool<CRDTPooledMemoryAllocator> POOL = new (
+            () => new CRDTPooledMemoryAllocator());
 
-            return new MemoryOwner(ArrayPool<byte>.Shared.Rent(length), length);
+        // Introduce a pool of memory owners to prevent allocations per message
+        private readonly ObjectPool<MemoryOwner> memoryOwnerPool;
+
+        public static CRDTPooledMemoryAllocator Create() =>
+            POOL.Get();
+
+        private readonly ArrayPool<byte> arrayPool;
+
+        private CRDTPooledMemoryAllocator()
+        {
+            // <summary>The default maximum length of each array in the pool (2^20).</summary>
+            // private const int DefaultMaxArrayLength = 1024 * 1024;
+            // <summary>The default maximum number of arrays per bucket that are available for rent.</summary>
+            // private const int DefaultMaxNumberOfArraysPerBucket = 50;
+
+            // 50 will not work for us as we have much more than 50 similar sized components (e.g. for every SDKTransform)
+            // cap at 1MB as it's highly unlikely that components will be bigger than that
+
+            // 1024 similar sized components (probably the same components)
+            // TODO add analytics that will signal if our assumptions are wrong
+            arrayPool = ArrayPool<byte>.Create(1024 * 1024, 1024);
+
+            memoryOwnerPool = new ObjectPool<MemoryOwner>(
+                () => new MemoryOwner(this),
+                defaultCapacity: 1024,
+                maxSize: 1024 * 1024
+            );
+        }
+
+        public IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream, int shift, int length)
+        {
+            byte[] byteArray = arrayPool.Rent(length);
+            originalStream.Span.Slice(shift, length).CopyTo(byteArray.AsSpan());
+            MemoryOwner memoryOwner = memoryOwnerPool.Get();
+            memoryOwner.Set(byteArray, length);
+            return memoryOwner;
+        }
+
+        public IMemoryOwner<byte> GetMemoryBuffer(int length)
+        {
+            MemoryOwner memoryOwner = memoryOwnerPool.Get();
+            memoryOwner.Set(arrayPool.Rent(length), length);
+            return memoryOwner;
+        }
+
+        public IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream) =>
+            GetMemoryBuffer(originalStream, 0, originalStream.Length);
+
+        public void Dispose()
+        {
+            POOL.Release(this);
         }
     }
 }

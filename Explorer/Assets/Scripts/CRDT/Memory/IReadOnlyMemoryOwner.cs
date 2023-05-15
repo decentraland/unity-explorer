@@ -1,18 +1,14 @@
 using System;
+using System.Buffers;
 
 namespace CRDT.Memory
 {
-    public interface IReadOnlyMemoryOwner<T> : IDisposable
+    public class EmptyMemoryOwner<T> : IMemoryOwner<T>
     {
-        public static readonly IReadOnlyMemoryOwner<T> EMPTY = new EmptyReadOnlyMemoryOwner<T>();
+        public static readonly IMemoryOwner<T> EMPTY = new EmptyMemoryOwner<T>();
 
-        ReadOnlyMemory<T> ReadOnlyMemory { get; }
-    }
-
-    internal class EmptyReadOnlyMemoryOwner<T> : IReadOnlyMemoryOwner<T>
-    {
         public void Dispose() { }
 
-        public ReadOnlyMemory<T> ReadOnlyMemory => ReadOnlyMemory<T>.Empty;
+        public Memory<T> Memory => Memory<T>.Empty;
     }
 }

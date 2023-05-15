@@ -9,5 +9,8 @@ namespace CrdtEcsBridge.Serialization
         {
             instance.MergeFrom(data);
         }
+
+        public void SerializeInto(T model, in Span<byte> span) =>
+            model.WriteTo(span);
     }
 }

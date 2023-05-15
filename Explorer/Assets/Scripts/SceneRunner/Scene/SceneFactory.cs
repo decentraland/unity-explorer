@@ -1,9 +1,11 @@
 ﻿using CRDT.Deserializer;
+using CRDT.Memory;
 using CRDT.Protocol;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.OutgoingMessages;
+using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using SceneRunner.ECSWorld;
@@ -18,7 +20,6 @@ namespace SceneRunner.Scene
         private readonly IECSWorldFactory ecsWorldFactory;
         private readonly SceneRuntimeFactory sceneRuntimeFactory;
         private readonly ISharedPoolsProvider sharedPoolsProvider;
-        private readonly ICRDTDeserializer crdtDeserializer;
         private readonly ICRDTSerializer crdtSerializer;
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
         private readonly IEntityFactory entityFactory;
@@ -27,7 +28,6 @@ namespace SceneRunner.Scene
             IECSWorldFactory ecsWorldFactory,
             SceneRuntimeFactory sceneRuntimeFactory,
             ISharedPoolsProvider sharedPoolsProvider,
-            ICRDTDeserializer crdtDeserializer,
             ICRDTSerializer crdtSerializer,
             ISDKComponentsRegistry sdkComponentsRegistry,
             IEntityFactory entityFactory)
@@ -35,7 +35,6 @@ namespace SceneRunner.Scene
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
             this.sharedPoolsProvider = sharedPoolsProvider;
-            this.crdtDeserializer = crdtDeserializer;
             this.crdtSerializer = crdtSerializer;
             this.sdkComponentsRegistry = sdkComponentsRegistry;
             this.entityFactory = entityFactory;
@@ -47,6 +46,8 @@ namespace SceneRunner.Scene
             var crdtProtocol = new CRDTProtocol();
             var outgoingCrtdMessagesProvider = new OutgoingCRTDMessagesProvider();
             var instancePoolsProvider = InstancePoolsProvider.Create();
+            var crdtMemoryAllocator = CRDTPooledMemoryAllocator.Create();
+            var crdtDeserializer = new CRDTDeserializer(crdtMemoryAllocator);
 
             var ecsWorldFacade = ecsWorldFactory.CreateWorld( /* Pass dependencies here if they are needed by the systems */);
             ecsWorldFacade.Initialize();
@@ -72,7 +73,8 @@ namespace SceneRunner.Scene
                 crdtProtocol,
                 outgoingCrtdMessagesProvider,
                 crdtWorldSynchronizer,
-                instancePoolsProvider);
+                instancePoolsProvider,
+                crdtMemoryAllocator);
         }
     }
 }

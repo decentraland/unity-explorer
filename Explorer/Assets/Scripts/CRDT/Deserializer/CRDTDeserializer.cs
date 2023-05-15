@@ -1,4 +1,5 @@
-﻿using CRDT.Protocol;
+﻿using CRDT.Memory;
+using CRDT.Protocol;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -9,10 +10,17 @@ namespace CRDT.Deserializer
 {
     public class CRDTDeserializer : ICRDTDeserializer
     {
+        private readonly ICRDTMemoryAllocator crdtPooledMemoryAllocator;
+
+        public CRDTDeserializer(ICRDTMemoryAllocator crdtPooledMemoryAllocator)
+        {
+            this.crdtPooledMemoryAllocator = crdtPooledMemoryAllocator;
+        }
+
         void ICRDTDeserializer.DeserializeBatch(ref ReadOnlyMemory<byte> memory, IList<CRDTMessage> messages) =>
             DeserializeBatch(ref memory, messages);
 
-        public static void DeserializeBatch(ref ReadOnlyMemory<byte> memory, IList<CRDTMessage> messages)
+        public void DeserializeBatch(ref ReadOnlyMemory<byte> memory, IList<CRDTMessage> messages)
         {
             // While we have a header to read
             while (memory.Length > CRDTConstants.MESSAGE_HEADER_LENGTH)
@@ -75,7 +83,7 @@ namespace CRDT.Deserializer
             var entityId = memorySpan.Read<CRDTEntity>(ref shift);
             memory = memory.Slice(shift);
 
-            crdtMessage = new CRDTMessage(CRDTMessageType.DELETE_ENTITY, entityId, 0, 0, ReadOnlyMemory<byte>.Empty);
+            crdtMessage = new CRDTMessage(CRDTMessageType.DELETE_ENTITY, entityId, 0, 0, EmptyMemoryOwner<byte>.EMPTY);
             return true;
         }
 
@@ -94,11 +102,11 @@ namespace CRDT.Deserializer
 
             memory = memory.Slice(shift);
 
-            crdtMessage = new CRDTMessage(CRDTMessageType.DELETE_COMPONENT, entityId, componentId, timestamp, ReadOnlyMemory<byte>.Empty);
+            crdtMessage = new CRDTMessage(CRDTMessageType.DELETE_COMPONENT, entityId, componentId, timestamp, EmptyMemoryOwner<byte>.EMPTY);
             return true;
         }
 
-        public static bool TryDeserializeAppendComponent(ref ReadOnlyMemory<byte> memory, out CRDTMessage crdtMessage)
+        public bool TryDeserializeAppendComponent(ref ReadOnlyMemory<byte> memory, out CRDTMessage crdtMessage)
         {
             var shift = 0;
             var memorySpan = memory.Span;
@@ -113,16 +121,14 @@ namespace CRDT.Deserializer
                 return false;
 
             // Slice from memory
-
-            var dataSlice = memory.Slice(shift, dataLength);
-
+            IMemoryOwner<byte> memoryOwner = crdtPooledMemoryAllocator.GetMemoryBuffer(memory, shift, dataLength);
             memory = memory.Slice(shift + dataLength);
 
-            crdtMessage = new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, entityId, componentId, timestamp, dataSlice);
+            crdtMessage = new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, entityId, componentId, timestamp, memoryOwner);
             return true;
         }
 
-        public static bool TryDeserializePutComponent(ref ReadOnlyMemory<byte> memory, out CRDTMessage crdtMessage)
+        public bool TryDeserializePutComponent(ref ReadOnlyMemory<byte> memory, out CRDTMessage crdtMessage)
         {
             var shift = 0;
             var memorySpan = memory.Span;
@@ -136,12 +142,12 @@ namespace CRDT.Deserializer
             if (TryReturnInvalidDataLength(ref memory, dataLength, memorySpan, shift))
                 return false;
 
-            // Slice from memory
-            var dataSlice = memory.Slice(shift, dataLength);
+            IMemoryOwner<byte> memoryOwner = crdtPooledMemoryAllocator.GetMemoryBuffer(memory, shift, dataLength);
 
+            //Forwarding the memory to the next message
             memory = memory.Slice(shift + dataLength);
 
-            crdtMessage = new CRDTMessage(CRDTMessageType.PUT_COMPONENT, entityId, componentId, timestamp, dataSlice);
+            crdtMessage = new CRDTMessage(CRDTMessageType.PUT_COMPONENT, entityId, componentId, timestamp, memoryOwner);
             return true;
         }
 

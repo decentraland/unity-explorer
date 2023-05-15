@@ -43,11 +43,10 @@ namespace SceneRunner.Tests
             ecsWorldFactory.CreateWorld().Returns(ecsWorldFacade);
 
             sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>();
-            crdtDeserializer = Substitute.For<ICRDTDeserializer>();
             crdtSerializer = Substitute.For<ICRDTSerializer>();
             componentsRegistry = Substitute.For<ISDKComponentsRegistry>();
 
-            sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtDeserializer, crdtSerializer, componentsRegistry, new EntityFactory());
+            sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry, new EntityFactory());
         }
 
         [TearDown]
@@ -69,6 +68,8 @@ namespace SceneRunner.Tests
             Assert.IsNotNull(sceneFacadeImpl.runtimeInstance);
             Assert.IsNotNull(sceneFacadeImpl.outgoingCrtdMessagesProvider);
             Assert.IsNotNull(sceneFacadeImpl.crdtWorldSynchronizer);
+            Assert.IsNotNull(sceneFacadeImpl.instancePoolsProvider);
+            Assert.IsNotNull(sceneFacadeImpl.crdtMemoryAllocator);
 
             Assert.AreNotEqual(default(World), sceneFacadeImpl.ecsWorldFacade.EcsWorld);
         }
