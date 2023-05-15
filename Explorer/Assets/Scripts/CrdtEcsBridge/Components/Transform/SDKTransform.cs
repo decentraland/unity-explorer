@@ -1,4 +1,5 @@
 ﻿using CRDT;
+using DCL.ECSComponents;
 using UnityEngine;
 
 namespace CrdtEcsBridge.Components.Transform

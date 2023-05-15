@@ -39,4 +39,9 @@ namespace DCL.ECSComponents
     {
         bool IsDirty { get; set; }
     }
+
+    public partial class PBPointerEventsResult : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
 }

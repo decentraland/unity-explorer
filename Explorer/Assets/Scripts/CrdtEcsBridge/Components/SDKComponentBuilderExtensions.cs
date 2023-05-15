@@ -1,4 +1,5 @@
 using CrdtEcsBridge.Serialization;
+using DCL.ECSComponents;
 using ECS.ComponentsPooling;
 using Google.Protobuf;
 using System;
@@ -41,15 +42,6 @@ namespace CrdtEcsBridge.Components
         public static SDKComponentBuilder<T> WithPool<T>(this SDKComponentBuilder<T> sdkComponentBuilder, IComponentPool<T> componentPool) where T: class, new()
         {
             sdkComponentBuilder.pool = componentPool;
-            return sdkComponentBuilder;
-        }
-
-        /// <summary>
-        ///     Add the reference to the ECSComponentType
-        /// </summary>
-        public static SDKComponentBuilder<T> WithECSComponentType<T>(this SDKComponentBuilder<T> sdkComponentBuilder, Type ecsComponentType) where T: class, new()
-        {
-            sdkComponentBuilder.ecsComponentType = ecsComponentType;
             return sdkComponentBuilder;
         }
 
