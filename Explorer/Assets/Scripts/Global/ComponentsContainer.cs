@@ -32,11 +32,13 @@ namespace Global
                .Add(SDKComponentBuilder<PBBillboard>.Create(ComponentID.BILLBOARD).AsProtobufComponent());
 
             // add others as required
+            var unityComponentsRegistry = new UnityComponentsRegistry();
 
             var componentPoolsRegistry = new ComponentPoolsRegistry(
-
                 // merge SDK components with Non-SDK, currently there are SDK only
-                sdkComponentsRegistry.SdkComponents.ToDictionary(bridge => bridge.ComponentType, bridge => bridge.Pool));
+                sdkComponentsRegistry.SdkComponents.ToDictionary(bridge => bridge.ComponentType, bridge => bridge.Pool)
+                                     .Concat(unityComponentsRegistry.unityComponentsPool)
+                                     .ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
 
             return new ComponentsContainer { SDKComponentsRegistry = sdkComponentsRegistry, ComponentPoolsRegistry = componentPoolsRegistry };
         }

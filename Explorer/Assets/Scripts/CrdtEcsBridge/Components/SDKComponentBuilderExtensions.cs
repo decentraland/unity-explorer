@@ -30,9 +30,9 @@ namespace CrdtEcsBridge.Components
         /// <summary>
         /// Provide a default pool behavior for SDK components, it is a must
         /// </summary>
-        public static SDKComponentBuilder<T> WithPool<T>(this SDKComponentBuilder<T> sdkComponentBuilder, Action<T> onRelease = null) where T: class, new()
+        public static SDKComponentBuilder<T> WithPool<T>(this SDKComponentBuilder<T> sdkComponentBuilder, Action<T> onGet = null, Action<T> onRelease = null) where T: class, new()
         {
-            sdkComponentBuilder.pool = new ComponentPool<T>(onGet: onRelease);
+            sdkComponentBuilder.pool = new ComponentPool<T>(onGet: onGet, onRelease: onRelease);
             return sdkComponentBuilder;
         }
 
@@ -52,7 +52,7 @@ namespace CrdtEcsBridge.Components
         public static SDKComponentBridge AsProtobufComponent<T>(this SDKComponentBuilder<T> sdkComponentBuilder)
             where T: class, IMessage<T>, IDirtyMarker, new() =>
             sdkComponentBuilder.WithProtobufSerializer()
-                               .WithPool(SetAsDirty)
+                               .WithPool(onGet: SetAsDirty)
                                .Build();
 
         private static void SetAsDirty(IDirtyMarker dirtyMarker) =>
