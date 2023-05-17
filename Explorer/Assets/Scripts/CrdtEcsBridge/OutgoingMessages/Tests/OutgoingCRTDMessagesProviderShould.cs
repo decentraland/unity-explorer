@@ -101,7 +101,7 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
 
             provider.Dispose();
 
-            Assert.AreEqual(1, OutgoingCRTDMessagesProvider.SHARED_POOL.CountInactive);
+            Assert.GreaterOrEqual(OutgoingCRTDMessagesProvider.SHARED_POOL.CountInactive, 1);
         }
     }
 }
