@@ -29,9 +29,9 @@ namespace CrdtEcsBridge.Engine
 
         private byte[] lastSerializationBuffer;
 
-        //private readonly CustomSampler deserializeBatchSampler;
-        //private readonly CustomSampler worldSyncBufferSampler;
-        //private readonly CustomSampler outgoingMessagesSampler;
+        private readonly CustomSampler deserializeBatchSampler;
+        private readonly CustomSampler worldSyncBufferSampler;
+        private readonly CustomSampler outgoingMessagesSampler;
 
         public EngineAPIImplementation(
             ISharedPoolsProvider poolsProvider,
@@ -50,9 +50,9 @@ namespace CrdtEcsBridge.Engine
             this.crdtWorldSynchronizer = crdtWorldSynchronizer;
             this.outgoingCrtdMessagesProvider = outgoingCrtdMessagesProvider;
 
-            //deserializeBatchSampler = CustomSampler.Create("DeserializeBatch");
-            //worldSyncBufferSampler = CustomSampler.Create("WorldSyncBuffer");
-            //outgoingMessagesSampler = CustomSampler.Create("OutgoingMessages");
+            deserializeBatchSampler = CustomSampler.Create("DeserializeBatch");
+            worldSyncBufferSampler = CustomSampler.Create("WorldSyncBuffer");
+            outgoingMessagesSampler = CustomSampler.Create("OutgoingMessages");
         }
 
         public byte[] CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory)
@@ -64,14 +64,14 @@ namespace CrdtEcsBridge.Engine
             // Deserialize messages from the byte array
             IList<CRDTMessage> messages = instancePoolsProvider.GetDeserializationMessagesPool();
 
-            //deserializeBatchSampler.Begin();
+            deserializeBatchSampler.Begin();
 
             // TODO add metrics to understand bottlenecks better
             crdtDeserializer.DeserializeBatch(ref dataMemory, messages);
 
-            //deserializeBatchSampler.End();
+            deserializeBatchSampler.End();
 
-            //worldSyncBufferSampler.Begin();
+            worldSyncBufferSampler.Begin();
 
             // as we no longer wait for a buffer to apply the thread should be frozen
             var worldSyncBuffer = crdtWorldSynchronizer.GetSyncCommandBuffer();
@@ -91,13 +91,13 @@ namespace CrdtEcsBridge.Engine
             // Deserialize messages on the main thread
             worldSyncBuffer.FinalizeAndDeserialize();
 
-            //worldSyncBufferSampler.End();
+            worldSyncBufferSampler.End();
 
             // Return messages to the pool before switching to the main thread,
             // it is a must because CRDT_MESSAGES_POOL is ThreadLocal
             instancePoolsProvider.ReleaseDeserializationMessagesPool(messages);
 
-            //outgoingMessagesSampler.Begin();
+            outgoingMessagesSampler.Begin();
 
             // before returning to the main thread serialize outgoing CRDT Messages
             using (var outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock())
@@ -106,7 +106,7 @@ namespace CrdtEcsBridge.Engine
                 SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, lastSerializationBuffer.AsSpan());
             }
 
-            //outgoingMessagesSampler.End();
+            outgoingMessagesSampler.End();
 
             // Now (unless we make ECS run on the background thread) we need to switch to the main thread
             // before all systems start to update - in the beginning of the Player Loop
