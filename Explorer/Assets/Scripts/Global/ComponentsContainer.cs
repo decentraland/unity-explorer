@@ -3,8 +3,10 @@ using CrdtEcsBridge.Components.Transform;
 using DCL.ECS7;
 using DCL.ECSComponents;
 using ECS.ComponentsPooling;
-using ECS.Unity.Components;
+using System;
+using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace Global
 {
@@ -20,7 +22,6 @@ namespace Global
         public static ComponentsContainer Create()
         {
             var sdkComponentsRegistry = new SDKComponentsRegistry();
-            var unityComponentsRegistry = new UnityComponentsRegistry();
 
             // Add all SDK components here
             sdkComponentsRegistry
@@ -33,18 +34,22 @@ namespace Global
                .Add(SDKComponentBuilder<PBPointerEvents>.Create(ComponentID.POINTER_EVENTS).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBBillboard>.Create(ComponentID.BILLBOARD).AsProtobufComponent());
 
-            unityComponentsRegistry
-               .Add(new UnityTransformHandler());
-
             // add others as required
 
             var componentPoolsRegistry = new ComponentPoolsRegistry(
                 // merge SDK components with Non-SDK, currently there are SDK only
                 sdkComponentsRegistry.SdkComponents.ToDictionary(bridge => bridge.ComponentType, bridge => bridge.Pool)
-                                     .Concat(unityComponentsRegistry.unityComponents)
-                                     .ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+                                     .Concat(GetUnityComponentDictionary())
+                                     .ToDictionary(x => x.Key, x => x.Value));
 
             return new ComponentsContainer { SDKComponentsRegistry = sdkComponentsRegistry, ComponentPoolsRegistry = componentPoolsRegistry };
+        }
+
+        private static Dictionary<Type, IComponentPool> GetUnityComponentDictionary()
+        {
+            Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
+
+            return new Dictionary<Type, IComponentPool> { { typeof(GameObject), new UnityGameObjectPool(rootContainer) } };
         }
 
     }

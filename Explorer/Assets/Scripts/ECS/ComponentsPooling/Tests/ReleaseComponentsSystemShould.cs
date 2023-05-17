@@ -8,7 +8,7 @@ using Random = UnityEngine.Random;
 namespace ECS.ComponentsPooling.Tests
 {
     [TestFixture]
-    public class ReleaseSDKComponentsSystemShould
+    public class ReleaseComponentsSystemShould
     {
         public class TestComponent1
         {
@@ -30,7 +30,7 @@ namespace ECS.ComponentsPooling.Tests
             for (var i = 0; i < 100; i++)
                 world.Create(new TestComponent1(), new TestComponent2(), new DeleteEntityIntention());
 
-            var system = new ReleaseSDKComponentsSystem(world, componentsPoolRegistry);
+            var system = new ReleaseComponentsSystem(world, componentsPoolRegistry);
 
             system.Update(0);
 

@@ -23,21 +23,23 @@ namespace ECS.Unity.Systems
 
         public InstantiateTransformUnitySystem(World world, IComponentPoolsRegistry componentPools) : base(world)
         {
-            instantiateTransform = new TransformInstantiator(componentPools.GetReferenceTypePool(typeof(Transform)));
+            instantiateTransform = new TransformInstantiator(componentPools.GetReferenceTypePool<GameObject>());
         }
 
         private readonly struct TransformInstantiator : IForEachWithEntity<SDKTransform>
         {
-            private readonly IComponentPool transformPool;
+            private readonly IComponentPool gameObjectPool;
 
-            public TransformInstantiator(IComponentPool transformPool)
+            public TransformInstantiator(IComponentPool gameObjectPool)
             {
-                this.transformPool = transformPool;
+                this.gameObjectPool = gameObjectPool;
             }
 
             public void Update(in Entity entity, ref SDKTransform sdkTransform)
             {
-                var newTransform = (Transform)transformPool.Rent();
+                Transform newTransform = ((GameObject)gameObjectPool.Rent()).transform;
+
+                //TODO: Parent to the scene root
                 newTransform.SetParent(null);
                 newTransform.name = "Entity " + entity.Id;
                 newTransform.position = sdkTransform.Position;

@@ -23,7 +23,7 @@ namespace SceneRunner.ECSWorld
             var builder = new ArchSystemsWorldBuilder<World>(world);
             UpdateTransformUnitySystem.InjectToWorld(ref builder);
             InstantiateTransformUnitySystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            var releaseSDKComponentsSystem = ReleaseSDKComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            var releaseSDKComponentsSystem = ReleaseComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry);
 
             // Add other systems here
             var systemsWorld = builder.Finish();
