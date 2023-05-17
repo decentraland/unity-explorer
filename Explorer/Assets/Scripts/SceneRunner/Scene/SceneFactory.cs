@@ -43,9 +43,9 @@ namespace SceneRunner.Scene
         public async UniTask<ISceneFacade> CreateScene(string jsCodeUrl, CancellationToken ct)
         {
             // Per scene instance dependencies
-            var crdtProtocol = new CRDTProtocol();
             var outgoingCrtdMessagesProvider = new OutgoingCRTDMessagesProvider();
             var instancePoolsProvider = InstancePoolsProvider.Create();
+            var crdtProtocol = new CRDTProtocol(instancePoolsProvider);
             var crdtMemoryAllocator = CRDTPooledMemoryAllocator.Create();
             var crdtDeserializer = new CRDTDeserializer(crdtMemoryAllocator);
 

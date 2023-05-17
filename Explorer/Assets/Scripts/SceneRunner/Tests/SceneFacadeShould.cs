@@ -5,8 +5,8 @@ using CRDT.Memory;
 using CRDT.Protocol;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
-using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.OutgoingMessages;
+using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using NSubstitute;
@@ -160,18 +160,25 @@ namespace SceneRunner.Tests
             async UniTask CreateAndLaunch(int fps, int lifeTime)
             {
                 var sceneFacade = (SceneFacade)await sceneFactory.CreateScene(path, CancellationToken.None);
-                sceneFacades.Add(sceneFacade);
 
-                var cancellationTokenSource = new CancellationTokenSource();
+                try
+                {
+                    var cancellationTokenSource = new CancellationTokenSource();
 
-                cancellationTokenSource.CancelAfter(lifeTime);
+                    cancellationTokenSource.CancelAfter(lifeTime);
 
-                // will end gracefully
-                await sceneFacade.StartUpdateLoop(fps, cancellationTokenSource.Token);
+                    // will end gracefully
+                    await sceneFacade.StartUpdateLoop(fps, cancellationTokenSource.Token);
 
-                list.Add(Thread.CurrentThread.ManagedThreadId);
+                    list.Add(Thread.CurrentThread.ManagedThreadId);
 
-                await Task.Delay(waitTime - lifeTime);
+                    await Task.Delay(waitTime - lifeTime);
+                }
+                finally
+                {
+                    await UniTask.SwitchToMainThread();
+                    sceneFacade.Dispose();
+                }
             }
 
             await UniTask.WhenAll(fps.Select((fps, i) => CreateAndLaunch(fps, lifeTimeMs[i])));

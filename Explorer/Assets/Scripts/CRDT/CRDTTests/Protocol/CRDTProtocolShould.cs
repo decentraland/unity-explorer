@@ -1,7 +1,10 @@
 using CRDT.Memory;
 using CRDT.Protocol;
 using CRDT.Protocol.Factory;
+using CrdtEcsBridge.PoolsProviders;
+using Instrumentation;
 using NUnit.Framework;
+using System;
 using System.Linq;
 
 namespace CRDT.CRDTTests.Protocol
@@ -9,12 +12,12 @@ namespace CRDT.CRDTTests.Protocol
     [TestFixture]
     public class CRDTProtocolShould
     {
-        private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
+        private ICRDTMemoryAllocator memoryAllocator;
 
         [SetUp]
         public void SetUp()
         {
-            crdtPooledMemoryAllocator = CRDTPooledMemoryAllocator.Create();
+            memoryAllocator = CRDTOriginalMemorySlicer.Create();
         }
 
         [Test]
@@ -33,9 +36,86 @@ namespace CRDT.CRDTTests.Protocol
             AssertGetCurrentState(parsedFile);
         }
 
+        [Test]
+        public void NotAllocateIfPutMessageIsDropped()
+        {
+            var bytes = new byte[30];
+            var r = new Random();
+            r.NextBytes(bytes);
+
+            var m1 = new CRDTMessage(CRDTMessageType.PUT_COMPONENT, 100, 20, 10, memoryAllocator.GetMemoryBuffer(bytes.AsMemory()));
+
+            var crdt = new CRDTProtocol(InstancePoolsProvider.Create());
+
+            // this message will allocate an internal storage
+            MemoryStat.Debug.GC_ALLOCATED_IN_FRAME.Check(() => crdt.ProcessMessage(m1), value => Assert.GreaterOrEqual(value, 0));
+
+            // This message is with older timestamp so no memory internally must be allocated
+            var m2 = new CRDTMessage(CRDTMessageType.PUT_COMPONENT, 100, 20, 0, memoryAllocator.GetMemoryBuffer(bytes.AsMemory()));
+
+            MemoryStat.Debug.GC_ALLOCATED_IN_FRAME.Check(() => crdt.ProcessMessage(m2), value => Assert.AreEqual(0, value));
+        }
+
+        [Test]
+        public void AmortizeAllocationsForAppendMessage()
+        {
+            var bytes = new byte[45];
+            var r = new Random();
+            r.NextBytes(bytes);
+
+            var m1 = new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, 100, 20, 10, memoryAllocator.GetMemoryBuffer(bytes.AsMemory()));
+            var m2 = new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, 100, 20, 30, memoryAllocator.GetMemoryBuffer(bytes.AsMemory()));
+
+            var crdt = new CRDTProtocol(InstancePoolsProvider.Create());
+            MemoryStat.Debug.GC_ALLOCATED_IN_FRAME.Check(() => crdt.ProcessMessage(m1), value => Assert.GreaterOrEqual(value, 0));
+
+            for (var i = 0; i < 50; i++)
+            {
+                int index = i;
+
+                MemoryStat.Debug.GC_ALLOCATED_IN_FRAME.Check(() => crdt.ProcessMessage(m2), value =>
+                {
+                    if (index > 1) Assert.AreEqual(0, value);
+                });
+            }
+        }
+
+        [Test]
+        public void ReuseBuffers([Values(4, 8, 16, 64, 256, 1024, 4096, 8192)] int componentsCount, [Range(0f, 1f, 0.1f)] float entitiesVariety)
+        {
+            int uniqueComponents = InstancePoolsProvider.CRDT_LWW_COMPONENTS_OUTER_CAPACITY;
+
+            var messages = Enumerable.Range(0, componentsCount)
+                                     .Select(i => new CRDTMessage(CRDTMessageType.PUT_COMPONENT, (int)((i + 1) * entitiesVariety), i % uniqueComponents, 10, EmptyMemoryOwner<byte>.EMPTY))
+                                     .ToList();
+
+            var poolsProvider = InstancePoolsProvider.Create();
+
+            var crdt = new CRDTProtocol(poolsProvider);
+            var firstPass = 0L;
+
+            MemoryStat.Debug.GC_ALLOCATED_IN_FRAME.Check(() =>
+            {
+                foreach (CRDTMessage message in messages)
+                    crdt.ProcessMessage(message);
+            }, value => firstPass = value);
+
+            crdt.Dispose();
+
+            const int TOLERANCE = 512;
+
+            crdt = new CRDTProtocol(poolsProvider);
+
+            MemoryStat.Debug.GC_ALLOCATED_IN_FRAME.Check(() =>
+            {
+                foreach (CRDTMessage message in messages)
+                    crdt.ProcessMessage(message);
+            }, value => Assert.That(value, Is.LessThan(firstPass / 20f) & Is.LessThan(TOLERANCE)));
+        }
+
         private void AssertTestFile(ParsedCRDTTestFile parsedFile)
         {
-            CRDTProtocol crdt = new CRDTProtocol();
+            var crdt = new CRDTProtocol(InstancePoolsProvider.Create());
 
             for (int i = 0; i < parsedFile.fileInstructions.Count; i++)
             {
@@ -43,7 +123,7 @@ namespace CRDT.CRDTTests.Protocol
 
                 if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.MESSAGE)
                 {
-                    (CRDTMessage msg, CRDTReconciliationResult? expectedResult) = ParsedCRDTTestFile.InstructionToMessage(instruction, crdtPooledMemoryAllocator);
+                    (CRDTMessage msg, CRDTReconciliationResult? expectedResult) = ParsedCRDTTestFile.InstructionToMessage(instruction, memoryAllocator);
                     var result = crdt.ProcessMessage(msg);
 
                     if (expectedResult != null)
@@ -60,14 +140,14 @@ namespace CRDT.CRDTTests.Protocol
                     Assert.IsTrue(sameState, $"Final state mismatch {instruction.testSpect} " +
                                              $"in line:{instruction.lineNumber} for file {instruction.fileName}. Reason: {reason}");
 
-                    crdt = new CRDTProtocol();
+                    crdt = new CRDTProtocol(InstancePoolsProvider.Create());
                 }
             }
         }
 
         private void AssertGetCurrentState(ParsedCRDTTestFile parsedFile)
         {
-            CRDTProtocol crdt = new CRDTProtocol();
+            var crdt = new CRDTProtocol(InstancePoolsProvider.Create());
 
             for (int i = 0; i < parsedFile.fileInstructions.Count; i++)
             {
@@ -75,7 +155,7 @@ namespace CRDT.CRDTTests.Protocol
 
                 if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.MESSAGE)
                 {
-                    (CRDTMessage msg, _) = ParsedCRDTTestFile.InstructionToMessage(instruction, crdtPooledMemoryAllocator);
+                    (CRDTMessage msg, _) = ParsedCRDTTestFile.InstructionToMessage(instruction, memoryAllocator);
                     crdt.ProcessMessage(msg);
                 }
                 else if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.FINAL_STATE)
@@ -85,11 +165,11 @@ namespace CRDT.CRDTTests.Protocol
                     var preallocatedArray = new ProcessedCRDTMessage[crdt.GetMessagesCount()];
                     crdt.CreateMessagesFromTheCurrentState(preallocatedArray);
 
-                    CRDTMessage[] finalStateMessages = ParsedCRDTTestFile.InstructionToFinalStateMessages(instruction, crdtPooledMemoryAllocator).ToArray();
+                    CRDTMessage[] finalStateMessages = ParsedCRDTTestFile.InstructionToFinalStateMessages(instruction, memoryAllocator).ToArray();
 
                     CollectionAssert.AreEqual(finalStateMessages, preallocatedArray.Select(x => x.message).ToArray());
 
-                    crdt = new CRDTProtocol();
+                    crdt = new CRDTProtocol(InstancePoolsProvider.Create());
                 }
             }
         }

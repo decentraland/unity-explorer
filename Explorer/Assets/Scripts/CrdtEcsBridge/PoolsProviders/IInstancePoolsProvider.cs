@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace CrdtEcsBridge.Engine
+namespace CrdtEcsBridge.PoolsProviders
 {
     /// <summary>
     ///     Provides single threaded pools dedicated to a single scene instance

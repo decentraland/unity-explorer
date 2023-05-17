@@ -14,19 +14,43 @@ namespace CrdtEcsBridge.WorldSynchronizer
     /// </summary>
     internal class WorldSyncCommandBufferCollectionsPool : IDisposable
     {
+        /// <summary>
+        ///     Denotes the number of entities that can be stored without allocations after warming up
+        /// </summary>
+        internal const int INNER_DICTIONARIES_POOL_CAPACITY = 1024;
+
+        /// <summary>
+        ///     Denotes the initial capacity of components that can be stored per entity
+        /// </summary>
+        internal const int INNER_DICTIONARY_INITIAL_CAPACITY = 256;
+
+        /// <summary>
+        ///     Denotes the maximum number of components per entity that can be stored without allocations after warming up
+        /// </summary>
+        internal const int INNER_DICTIONARY_MAX_CAPACITY = INNER_DICTIONARY_INITIAL_CAPACITY * INNER_DICTIONARIES_POOL_CAPACITY;
+
         private static readonly ThreadSafeObjectPool<WorldSyncCommandBufferCollectionsPool> POOL = new (
             () => new WorldSyncCommandBufferCollectionsPool());
 
-        private Dictionary<CRDTEntity, Dictionary<int, BatchState>> mainDictionary = new (1024, CRDTEntityComparer.INSTANCE);
+        private static readonly ThreadSafeObjectPool<BatchState> BATCH_STATE_POOL = new (
+            () => new BatchState(),
+            actionOnRelease: state => state.deserializationTarget = null,
+            defaultCapacity: INNER_DICTIONARY_INITIAL_CAPACITY,
+            maxSize: INNER_DICTIONARY_MAX_CAPACITY,
+
+            // Omit checking collections, it is a hot path on the main thread
+            collectionCheck: false);
+
+        private Dictionary<CRDTEntity, Dictionary<int, BatchState>> mainDictionary = new (INNER_DICTIONARIES_POOL_CAPACITY, CRDTEntityComparer.INSTANCE);
         private List<CRDTEntity> deletedEntities = new (256);
 
         private readonly IObjectPool<Dictionary<int, BatchState>> innerDictionariesPool = new ObjectPool<Dictionary<int, BatchState>>(
 
             // just preallocate an array big enough
-            createFunc: () => new Dictionary<int, BatchState>(256),
+            createFunc: () => new Dictionary<int, BatchState>(INNER_DICTIONARY_INITIAL_CAPACITY),
             actionOnRelease: dictionary => dictionary.Clear(),
-            defaultCapacity: 8,
-            maxSize: 512
+            defaultCapacity: INNER_DICTIONARY_INITIAL_CAPACITY,
+            maxSize: INNER_DICTIONARIES_POOL_CAPACITY
         );
 
         public static WorldSyncCommandBufferCollectionsPool Create() =>
@@ -73,6 +97,12 @@ namespace CrdtEcsBridge.WorldSynchronizer
         {
             innerDictionariesPool.Release(inner);
         }
+
+        public BatchState GetBatchState() =>
+            BATCH_STATE_POOL.Get();
+
+        public void ReleaseBatchState(BatchState batchState) =>
+            BATCH_STATE_POOL.Release(batchState);
 
         public void Dispose()
         {

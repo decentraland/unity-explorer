@@ -1,7 +1,7 @@
 using CRDT.Protocol.Factory;
 using System.Buffers;
 
-namespace CrdtEcsBridge.Engine
+namespace CrdtEcsBridge.PoolsProviders
 {
     public class SharedPoolsProvider : ISharedPoolsProvider
     {

@@ -19,14 +19,14 @@ namespace CRDT.CRDTTests
             64, 73, 15, 219, 64, 73, 15, 219
         };
 
-        private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
+        private ICRDTMemoryAllocator memoryAllocator;
         private CRDTDeserializer deserializer;
 
         [SetUp]
         public void SetUp()
         {
-            crdtPooledMemoryAllocator = CRDTPooledMemoryAllocator.Create();
-            deserializer = new CRDTDeserializer(crdtPooledMemoryAllocator);
+            memoryAllocator = CRDTOriginalMemorySlicer.Create();
+            deserializer = new CRDTDeserializer(memoryAllocator);
         }
 
         [Test]
@@ -49,7 +49,7 @@ namespace CRDT.CRDTTests
                 new CRDTEntity(666),
                 1,
                 7666,
-                crdtPooledMemoryAllocator.GetMemoryBuffer(componentDataBytes)
+                memoryAllocator.GetMemoryBuffer(componentDataBytes)
             );
 
             TestInput(bytes, new[] { expectedMessage });
@@ -75,7 +75,7 @@ namespace CRDT.CRDTTests
                 new CRDTEntity(666),
                 1,
                 7666,
-                crdtPooledMemoryAllocator.GetMemoryBuffer(componentDataBytes)
+                memoryAllocator.GetMemoryBuffer(componentDataBytes)
             );
 
             TestInput(bytes, new[] { expectedMessage });
@@ -132,7 +132,7 @@ namespace CRDT.CRDTTests
 
             byte[] bytes = bytesMsgA.Concat(bytesMsgB).ToArray();
 
-            var expectedComponentHeader = new CRDTMessage(CRDTMessageType.PUT_COMPONENT, new CRDTEntity(666), 1, 7666, crdtPooledMemoryAllocator.GetMemoryBuffer(componentDataBytes));
+            var expectedComponentHeader = new CRDTMessage(CRDTMessageType.PUT_COMPONENT, new CRDTEntity(666), 1, 7666, memoryAllocator.GetMemoryBuffer(componentDataBytes));
 
             TestInput(bytes, new[] { expectedComponentHeader, expectedComponentHeader });
         }
@@ -251,14 +251,14 @@ namespace CRDT.CRDTTests
                     new CRDTEntity(666),
                     1,
                     7666,
-                    crdtPooledMemoryAllocator.GetMemoryBuffer(componentDataBytes)
+                    memoryAllocator.GetMemoryBuffer(componentDataBytes)
                 ),
                 new CRDTMessage(
                     CRDTMessageType.PUT_COMPONENT,
                     new CRDTEntity(666),
                     1,
                     7666,
-                    crdtPooledMemoryAllocator.GetMemoryBuffer(componentDataBytes)
+                    memoryAllocator.GetMemoryBuffer(componentDataBytes)
                 ),
                 new CRDTMessage(
                     CRDTMessageType.DELETE_COMPONENT,

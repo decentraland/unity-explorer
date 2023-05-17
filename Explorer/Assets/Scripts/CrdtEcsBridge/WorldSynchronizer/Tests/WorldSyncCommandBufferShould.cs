@@ -7,6 +7,7 @@ using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Serialization;
 using ECS.ComponentsPooling;
 using ECS.LifeCycle.Components;
+using Instrumentation;
 using NSubstitute;
 using NUnit.Framework;
 using System;
@@ -165,6 +166,86 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             var message = new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, ENTITY_ID, 999, 0, DATA);
             var result = worldSyncCommandBuffer.SyncCRDTMessage(message, CRDTReconciliationEffect.ComponentAdded);
             Assert.AreEqual(CRDTReconciliationEffect.NoChanges, result);
+        }
+
+        [Test]
+        public void ReuseBufferForDeletedEntities([Values(1, 10, 100, 1000, 10000)] int entitiesCount)
+        {
+            var messages = Enumerable.Range(0, entitiesCount)
+                                     .Select(i => new CRDTMessage(CRDTMessageType.DELETE_ENTITY, i, 0, 0, EmptyMemoryOwner<byte>.EMPTY))
+                                     .ToList();
+
+            // warm up
+            MemoryStat.Debug.GC_ALLOCATED_IN_FRAME.Check(() =>
+            {
+                foreach (CRDTMessage message in messages)
+                    worldSyncCommandBuffer.SyncCRDTMessage(message, CRDTReconciliationEffect.EntityDeleted);
+            }, _ => { });
+
+            worldSyncCommandBuffer.Dispose();
+
+            worldSyncCommandBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory, collectionsPool);
+
+            MemoryStat.Debug.GC_ALLOCATED_IN_FRAME.Check(() =>
+            {
+                foreach (CRDTMessage message in messages)
+                    worldSyncCommandBuffer.SyncCRDTMessage(message, CRDTReconciliationEffect.EntityDeleted);
+            }, Assert.Zero);
+        }
+
+        [Test]
+        public void ReuseBuffersForModifiedComponents([Values(4, 8, 16, 32)] int componentsCount, [Range(
+                1,
+                WorldSyncCommandBufferCollectionsPool.INNER_DICTIONARIES_POOL_CAPACITY,
+                WorldSyncCommandBufferCollectionsPool.INNER_DICTIONARIES_POOL_CAPACITY / 10)]
+            int entitiesCount)
+        {
+            var messages = new List<CRDTMessage>(componentsCount * entitiesCount);
+
+            var registry = new SDKComponentsRegistry();
+
+            for (var component = 0; component < componentsCount; component++)
+            {
+                int componentId = component + 20;
+
+                IComponentPool<TestComponent> pool = Substitute.For<IComponentPool<TestComponent>>();
+                pool.Get().Returns(_ => new TestComponent());
+                pool.Rent().Returns(_ => new TestComponent());
+
+                var serializer = new TestComponentSerializer();
+
+                SDKComponentBridge bridge = SDKComponentBuilder<TestComponent>.Create(componentId)
+                                                                              .WithPool(pool)
+                                                                              .WithCustomSerializer(serializer)
+                                                                              .Build();
+
+                registry.Add(bridge);
+
+                for (var entity = 0; entity < entitiesCount; entity++)
+                    messages.Add(new CRDTMessage(CRDTMessageType.PUT_COMPONENT, entity, componentId, entity + component, EmptyMemoryOwner<byte>.EMPTY));
+            }
+
+            long firstPass = 0;
+
+            worldSyncCommandBuffer = new WorldSyncCommandBuffer(registry, entityFactory, collectionsPool = WorldSyncCommandBufferCollectionsPool.Create());
+
+            MemoryStat.Debug.GC_ALLOCATED_IN_FRAME.Check(() =>
+            {
+                foreach (CRDTMessage message in messages)
+                    worldSyncCommandBuffer.SyncCRDTMessage(message, CRDTReconciliationEffect.ComponentModified);
+            }, value => firstPass = value);
+
+            worldSyncCommandBuffer.Dispose();
+
+            const int TOLERANCE = 256;
+
+            worldSyncCommandBuffer = new WorldSyncCommandBuffer(registry, entityFactory, collectionsPool);
+
+            MemoryStat.Debug.GC_ALLOCATED_IN_FRAME.Check(() =>
+            {
+                foreach (CRDTMessage message in messages)
+                    worldSyncCommandBuffer.SyncCRDTMessage(message, CRDTReconciliationEffect.ComponentModified);
+            }, value => Assert.That(value, Is.LessThan(firstPass / 20f) & Is.LessThan(TOLERANCE)));
         }
 
         private static (CRDTMessage, CRDTReconciliationEffect effect, CRDTReconciliationEffect expected)[][] MessagesSource()

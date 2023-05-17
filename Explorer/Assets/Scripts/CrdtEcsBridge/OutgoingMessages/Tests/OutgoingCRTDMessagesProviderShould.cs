@@ -1,6 +1,7 @@
 ﻿using CRDT.Memory;
 using CRDT.Protocol;
 using CRDT.Protocol.Factory;
+using Instrumentation;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -30,9 +31,28 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
                 new (new CRDTMessage(CRDTMessageType.DELETE_COMPONENT, 10, 20, 20, EmptyMemoryOwner<byte>.EMPTY), 77),
             };
 
-            for (var i = 0; i < messages.Count; i++) { provider.AddMessage(messages[i]); }
+            for (var i = 0; i < messages.Count; i++) provider.AddMessage(messages[i]);
 
             CollectionAssert.AreEqual(messages, provider.ProcessedCRDTMessages);
+        }
+
+        [Test]
+        public void NotAllocateOnGetSerializationSyncBlock()
+        {
+            var messages = new List<ProcessedCRDTMessage>
+            {
+                new (new CRDTMessage(CRDTMessageType.PUT_COMPONENT, 10, 20, 20, EmptyMemoryOwner<byte>.EMPTY), 50),
+                new (new CRDTMessage(CRDTMessageType.DELETE_ENTITY, 10, 20, 20, EmptyMemoryOwner<byte>.EMPTY), 12),
+                new (new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, 10, 20, 20, EmptyMemoryOwner<byte>.EMPTY), 34),
+                new (new CRDTMessage(CRDTMessageType.DELETE_COMPONENT, 10, 20, 20, EmptyMemoryOwner<byte>.EMPTY), 77),
+            };
+
+            for (var i = 0; i < messages.Count; i++) provider.AddMessage(messages[i]);
+
+            OutgoingCRDTMessagesSyncBlock syncBlock;
+
+            try { MemoryStat.Debug.GC_ALLOCATED_IN_FRAME_COUNT.Check(() => syncBlock = provider.GetSerializationSyncBlock(), Assert.Zero); }
+            finally { syncBlock.Dispose(); }
         }
 
         [Test]

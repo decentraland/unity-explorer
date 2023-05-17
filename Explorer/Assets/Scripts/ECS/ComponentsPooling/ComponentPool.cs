@@ -6,9 +6,6 @@ namespace ECS.ComponentsPooling
 {
     public class ComponentPool<T> : IComponentPool<T> where T: class, new()
     {
-        /// <summary>
-        /// It is not thread-safe
-        /// </summary>
         private readonly ThreadSafeObjectPool<T> objectPool;
 
         public ComponentPool(Action<T> onGet = null, Action<T> onRelease = null)

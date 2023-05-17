@@ -1,5 +1,5 @@
 using AssetManagement.JsCodeResolver;
-using CrdtEcsBridge.Engine;
+using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;

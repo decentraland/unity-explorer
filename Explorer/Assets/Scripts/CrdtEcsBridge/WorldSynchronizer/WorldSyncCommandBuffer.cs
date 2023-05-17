@@ -131,7 +131,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
                     // the first and the last are the same
                     // take the component from the pool
-                    var batchState = BatchState.POOL.Get();
+                    BatchState batchState = collectionsPool.GetBatchState();
                     batchState.crdtMessage = message;
                     batchState.reconciliationState = new (reconciliationEffect, reconciliationEffect);
                     batchState.sdkComponentBridge = sdkComponentBridge;
@@ -182,7 +182,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
                 if (!containsAnyChanges)
                 {
                     foreach (BatchState batchState in componentsBatch.Values)
-                        BatchState.POOL.Release(batchState);
+                        collectionsPool.ReleaseBatchState(batchState);
 
                     componentsBatch.Clear();
                 }
@@ -256,7 +256,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
         private void ReleaseBatchStateDictionary(Dictionary<int, BatchState> inner)
         {
             foreach (BatchState batchState in inner.Values)
-                BatchState.POOL.Release(batchState);
+                collectionsPool.ReleaseBatchState(batchState);
 
             collectionsPool.ReleaseInnerDictionary(inner);
         }

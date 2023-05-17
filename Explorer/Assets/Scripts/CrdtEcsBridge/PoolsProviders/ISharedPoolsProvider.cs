@@ -1,6 +1,6 @@
 using CRDT.Protocol.Factory;
 
-namespace CrdtEcsBridge.Engine
+namespace CrdtEcsBridge.PoolsProviders
 {
     /// <summary>
     /// Provides threads-synchronized pools for heavily-loaded bulk serialization and deserialization
