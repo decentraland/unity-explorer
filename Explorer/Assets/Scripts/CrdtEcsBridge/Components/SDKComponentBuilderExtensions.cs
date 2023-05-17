@@ -30,9 +30,6 @@ namespace CrdtEcsBridge.Components
         /// <summary>
         /// Provide a default pool behavior for SDK components, it is a must
         /// </summary>
-        /// <summary>
-        /// Provide a default pool behavior for SDK components, it is a must
-        /// </summary>
         public static SDKComponentBuilder<T> WithPool<T>(this SDKComponentBuilder<T> sdkComponentBuilder, Action<T> onRelease = null) where T: class, new()
         {
             sdkComponentBuilder.pool = new ComponentPool<T>(onRelease: onRelease);
