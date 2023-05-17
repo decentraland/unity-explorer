@@ -14,16 +14,16 @@ namespace ECS.Unity.Systems
     public partial class InstantiateTransformUnitySystem : BaseUnityLoopSystem
     {
         private readonly QueryDescription queryDescription = new QueryDescription().WithAll<SDKTransform>().WithNone<Transform>();
-        private TransformInstantiator cleanTransform;
+        private TransformInstantiator instantiateTransform;
 
         protected override void Update(float _)
         {
-            World.InlineEntityQuery<TransformInstantiator, SDKTransform>(in queryDescription, ref cleanTransform);
+            World.InlineEntityQuery<TransformInstantiator, SDKTransform>(in queryDescription, ref instantiateTransform);
         }
 
         public InstantiateTransformUnitySystem(World world, IComponentPoolsRegistry componentPools) : base(world)
         {
-            cleanTransform = new TransformInstantiator(componentPools.GetReferenceTypePool(typeof(Transform)));
+            instantiateTransform = new TransformInstantiator(componentPools.GetReferenceTypePool(typeof(Transform)));
         }
 
         private readonly struct TransformInstantiator : IForEachWithEntity<SDKTransform>
