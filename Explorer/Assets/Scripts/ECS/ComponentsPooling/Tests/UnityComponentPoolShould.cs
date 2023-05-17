@@ -4,39 +4,38 @@ using UnityEngine;
 namespace ECS.ComponentsPooling.Tests
 {
     [TestFixture]
-    public class UnityGameObjectPoolShould
+    public class UnityComponentPoolShould
     {
-        private UnityGameObjectPool unityComponentPool;
+        private UnityComponentPool<Transform> unityComponentPool;
 
 
         [SetUp]
         public void SetUp()
         {
-            unityComponentPool = new UnityGameObjectPool();
+            unityComponentPool = new UnityComponentPool<Transform>();
         }
 
         [Test]
         public void GetGameObject()
         {
             //Act
-            unityComponentPool.Get(out GameObject gameObject);
+            unityComponentPool.Get(out Transform component);
 
             //Assert
-            Assert.NotNull(gameObject);
-            Assert.IsTrue(gameObject.activeSelf);
-            Assert.AreEqual(1, unityComponentPool.CountActive);
+            Assert.NotNull(component);
+            Assert.IsTrue(component.gameObject.activeSelf);
         }
 
         [Test]
         public void ReleaseGameObject()
         {
             //Act
-            unityComponentPool.Get(out GameObject gameObject);
-            unityComponentPool.Release(gameObject);
+            unityComponentPool.Get(out Transform component);
+            unityComponentPool.Release(component);
 
             //Assert
-            Assert.NotNull(gameObject);
-            Assert.IsFalse(gameObject.activeSelf);
+            Assert.NotNull(component);
+            Assert.IsFalse(component.gameObject.activeSelf);
             Assert.AreEqual(1, unityComponentPool.CountInactive);
         }
 
@@ -44,12 +43,12 @@ namespace ECS.ComponentsPooling.Tests
         public void ClearPool()
         {
             //Act
-            unityComponentPool.Get(out GameObject gameObject);
-            unityComponentPool.Release(gameObject);
+            unityComponentPool.Get(out Transform component);
+            unityComponentPool.Release(component);
             unityComponentPool.Clear();
 
             //Assert
-            Assert.IsTrue(gameObject == null);
+            Assert.IsTrue(component == null);
             Assert.AreEqual(0, unityComponentPool.CountInactive);
         }
 

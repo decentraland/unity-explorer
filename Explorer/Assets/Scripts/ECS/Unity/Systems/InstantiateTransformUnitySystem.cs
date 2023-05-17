@@ -23,7 +23,7 @@ namespace ECS.Unity.Systems
 
         public InstantiateTransformUnitySystem(World world, IComponentPoolsRegistry componentPools) : base(world)
         {
-            instantiateTransform = new TransformInstantiator(componentPools.GetReferenceTypePool<GameObject>());
+            instantiateTransform = new TransformInstantiator(componentPools.GetReferenceTypePool(typeof(Transform)));
         }
 
         private readonly struct TransformInstantiator : IForEachWithEntity<SDKTransform>
@@ -37,7 +37,7 @@ namespace ECS.Unity.Systems
 
             public void Update(in Entity entity, ref SDKTransform sdkTransform)
             {
-                Transform newTransform = ((GameObject)gameObjectPool.Rent()).transform;
+                var newTransform = (Transform)gameObjectPool.Rent();
 
                 //TODO: Parent to the scene root
                 newTransform.SetParent(null);

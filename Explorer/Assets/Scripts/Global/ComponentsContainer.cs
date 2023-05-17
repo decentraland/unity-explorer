@@ -48,8 +48,7 @@ namespace Global
         private static Dictionary<Type, IComponentPool> GetUnityComponentDictionary()
         {
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
-
-            return new Dictionary<Type, IComponentPool> { { typeof(GameObject), new UnityGameObjectPool(rootContainer) } };
+            return new Dictionary<Type, IComponentPool> { { typeof(Transform), new UnityComponentPool<Transform>(rootContainer) } };
         }
 
     }
