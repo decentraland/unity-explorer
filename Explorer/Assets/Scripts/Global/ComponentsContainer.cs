@@ -24,7 +24,7 @@ namespace Global
 
             // Add all SDK components here
             sdkComponentsRegistry
-               .Add(SDKComponentBuilder<SDKTransform>.Create(ComponentID.TRANSFORM).WithDirtyablePool().WithCustomSerializer(new SDKTransformSerializer()).Build())
+               .Add(SDKComponentBuilder<SDKTransform>.Create(ComponentID.TRANSFORM).WithPool(SDKComponentBuilderExtensions.SetAsDirty).WithCustomSerializer(new SDKTransformSerializer()).Build())
                .Add(SDKComponentBuilder<PBGltfContainer>.Create(ComponentID.GLTF_CONTAINER).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBMeshCollider>.Create(ComponentID.MESH_COLLIDER).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBMeshRenderer>.Create(ComponentID.MESH_RENDERER).AsProtobufComponent())

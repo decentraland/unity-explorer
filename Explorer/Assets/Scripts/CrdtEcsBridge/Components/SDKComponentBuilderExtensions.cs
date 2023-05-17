@@ -30,9 +30,12 @@ namespace CrdtEcsBridge.Components
         /// <summary>
         /// Provide a default pool behavior for SDK components, it is a must
         /// </summary>
-        public static SDKComponentBuilder<T> WithPool<T>(this SDKComponentBuilder<T> sdkComponentBuilder, Action<T> onGet = null, Action<T> onRelease = null) where T: class, new()
+        /// <summary>
+        /// Provide a default pool behavior for SDK components, it is a must
+        /// </summary>
+        public static SDKComponentBuilder<T> WithPool<T>(this SDKComponentBuilder<T> sdkComponentBuilder, Action<T> onRelease = null) where T: class, new()
         {
-            sdkComponentBuilder.pool = new ComponentPool<T>(onGet: onGet, onRelease: onRelease);
+            sdkComponentBuilder.pool = new ComponentPool<T>(onRelease: onRelease);
             return sdkComponentBuilder;
         }
 
@@ -46,25 +49,16 @@ namespace CrdtEcsBridge.Components
         }
 
         /// <summary>
-        ///     Provide a behavior for dirty SDK components
-        /// </summary>
-        public static SDKComponentBuilder<T> WithDirtyablePool<T>(this SDKComponentBuilder<T> sdkComponentBuilder) where T: class, IDirtyMarker, new()
-        {
-            sdkComponentBuilder.pool = new ComponentPool<T>(onRelease: SetAsDirty);
-            return sdkComponentBuilder;
-        }
-
-        /// <summary>
         /// A shortcut to create a standard suite for Protobuf components
         /// </summary>
         /// <returns></returns>
         public static SDKComponentBridge AsProtobufComponent<T>(this SDKComponentBuilder<T> sdkComponentBuilder)
             where T: class, IMessage<T>, IDirtyMarker, new() =>
             sdkComponentBuilder.WithProtobufSerializer()
-                               .WithDirtyablePool()
+                               .WithPool(SetAsDirty)
                                .Build();
 
-        private static void SetAsDirty(IDirtyMarker dirtyMarker) =>
+        public static void SetAsDirty(IDirtyMarker dirtyMarker) =>
             dirtyMarker.IsDirty = true;
     }
 }
