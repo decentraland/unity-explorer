@@ -35,12 +35,15 @@ namespace ECS.Unity.Systems
                 this.transformPool = transformPool;
             }
 
-            public void Update(in Entity entity, ref SDKTransform t0)
+            public void Update(in Entity entity, ref SDKTransform sdkTransform)
             {
-                var emptyGameObject = (Transform)transformPool.Rent();
-                emptyGameObject.transform.SetParent(null);
-                emptyGameObject.name = "Entity " + entity.Id;
-                entity.Add(emptyGameObject);
+                var newTransform = (Transform)transformPool.Rent();
+                newTransform.SetParent(null);
+                newTransform.name = "Entity " + entity.Id;
+                newTransform.position = sdkTransform.Position;
+                newTransform.rotation = sdkTransform.Rotation;
+                newTransform.localScale = sdkTransform.Scale;
+                entity.Add(newTransform);
             }
         }
     }
