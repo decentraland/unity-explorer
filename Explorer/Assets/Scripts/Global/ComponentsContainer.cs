@@ -3,6 +3,7 @@ using CrdtEcsBridge.Components.Transform;
 using DCL.ECS7;
 using DCL.ECSComponents;
 using ECS.ComponentsPooling;
+using ECS.Unity.Components;
 using System.Linq;
 
 namespace Global
@@ -19,10 +20,11 @@ namespace Global
         public static ComponentsContainer Create()
         {
             var sdkComponentsRegistry = new SDKComponentsRegistry();
+            var unityComponentsRegistry = new UnityComponentsRegistry();
 
             // Add all SDK components here
             sdkComponentsRegistry
-               .Add(SDKComponentBuilder<SDKTransform>.Create(ComponentID.TRANSFORM).WithPool(SetAsDirty).WithCustomSerializer(new SDKTransformSerializer()).Build())
+               .Add(SDKComponentBuilder<SDKTransform>.Create(ComponentID.TRANSFORM).WithDirtyablePool().WithCustomSerializer(new SDKTransformSerializer()).Build())
                .Add(SDKComponentBuilder<PBGltfContainer>.Create(ComponentID.GLTF_CONTAINER).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBMeshCollider>.Create(ComponentID.MESH_COLLIDER).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBMeshRenderer>.Create(ComponentID.MESH_RENDERER).AsProtobufComponent())
@@ -31,21 +33,19 @@ namespace Global
                .Add(SDKComponentBuilder<PBPointerEvents>.Create(ComponentID.POINTER_EVENTS).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBBillboard>.Create(ComponentID.BILLBOARD).AsProtobufComponent());
 
+            unityComponentsRegistry
+               .Add(new UnityTransformHandler());
+
             // add others as required
-            var unityComponentsRegistry = new UnityComponentsRegistry();
 
             var componentPoolsRegistry = new ComponentPoolsRegistry(
                 // merge SDK components with Non-SDK, currently there are SDK only
                 sdkComponentsRegistry.SdkComponents.ToDictionary(bridge => bridge.ComponentType, bridge => bridge.Pool)
-                                     .Concat(unityComponentsRegistry.unityComponentsPool)
+                                     .Concat(unityComponentsRegistry.unityComponents)
                                      .ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
 
             return new ComponentsContainer { SDKComponentsRegistry = sdkComponentsRegistry, ComponentPoolsRegistry = componentPoolsRegistry };
         }
 
-        private static void SetAsDirty(IDirtyMarker dirtyMarker)
-        {
-            dirtyMarker.IsDirty = true;
-        }
     }
 }

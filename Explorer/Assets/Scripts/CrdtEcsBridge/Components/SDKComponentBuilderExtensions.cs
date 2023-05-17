@@ -46,13 +46,22 @@ namespace CrdtEcsBridge.Components
         }
 
         /// <summary>
+        ///     Provide a behavior for dirty SDK components
+        /// </summary>
+        public static SDKComponentBuilder<T> WithDirtyablePool<T>(this SDKComponentBuilder<T> sdkComponentBuilder) where T: class, IDirtyMarker, new()
+        {
+            sdkComponentBuilder.pool = new ComponentPool<T>(onRelease: SetAsDirty);
+            return sdkComponentBuilder;
+        }
+
+        /// <summary>
         /// A shortcut to create a standard suite for Protobuf components
         /// </summary>
         /// <returns></returns>
         public static SDKComponentBridge AsProtobufComponent<T>(this SDKComponentBuilder<T> sdkComponentBuilder)
             where T: class, IMessage<T>, IDirtyMarker, new() =>
             sdkComponentBuilder.WithProtobufSerializer()
-                               .WithPool(onGet: SetAsDirty)
+                               .WithDirtyablePool()
                                .Build();
 
         private static void SetAsDirty(IDirtyMarker dirtyMarker) =>

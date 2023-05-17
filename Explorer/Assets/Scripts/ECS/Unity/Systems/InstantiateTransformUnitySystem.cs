@@ -7,7 +7,7 @@ using ECS.Abstract;
 using ECS.ComponentsPooling;
 using UnityEngine;
 
-namespace ECS.UnitySystems
+namespace ECS.Unity.Systems
 {
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     [UpdateBefore(typeof(UpdateTransformUnitySystem))]
