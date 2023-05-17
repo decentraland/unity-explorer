@@ -23,24 +23,28 @@ namespace ECS.Unity.Systems
 
         public InstantiateTransformUnitySystem(World world, IComponentPoolsRegistry componentPools) : base(world)
         {
-            instantiateTransform = new TransformInstantiator(componentPools.GetReferenceTypePool(typeof(Transform)));
+            instantiateTransform = new TransformInstantiator(componentPools.GetReferenceTypePool(typeof(Transform)), new GameObject().transform);
+
+            /*World.Query(new QueryDescription().WithAny<Transform, SceneRootComponent>(), (ref Transform rootScene) => {
+            });*/
         }
 
         private readonly struct TransformInstantiator : IForEachWithEntity<SDKTransform>
         {
             private readonly IComponentPool gameObjectPool;
+            private readonly Transform sceneRoot;
 
-            public TransformInstantiator(IComponentPool gameObjectPool)
+            public TransformInstantiator(IComponentPool gameObjectPool, Transform sceneRoot)
             {
                 this.gameObjectPool = gameObjectPool;
+                this.sceneRoot = sceneRoot;
             }
 
             public void Update(in Entity entity, ref SDKTransform sdkTransform)
             {
                 var newTransform = (Transform)gameObjectPool.Rent();
-
                 //TODO: Parent to the scene root
-                newTransform.SetParent(null);
+                newTransform.SetParent(sceneRoot.transform);
                 newTransform.name = "Entity " + entity.Id;
                 newTransform.position = sdkTransform.Position;
                 newTransform.rotation = sdkTransform.Rotation;
@@ -48,5 +52,7 @@ namespace ECS.Unity.Systems
                 entity.Add(newTransform);
             }
         }
+
+
     }
 }
