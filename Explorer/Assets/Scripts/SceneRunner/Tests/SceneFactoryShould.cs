@@ -2,7 +2,8 @@ using Arch.Core;
 using CRDT.Deserializer;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
-using CrdtEcsBridge.Engine;
+using CrdtEcsBridge.PoolsProviders;
+using Cysharp.Threading.Tasks;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.ECSWorld;
@@ -26,7 +27,7 @@ namespace SceneRunner.Tests
         private ISDKComponentsRegistry componentsRegistry;
         private SceneFactory sceneFactory;
 
-        private ISceneFacade sceneFacade;
+        //private ISceneFacade sceneFacade;
 
         private string path;
 
@@ -49,39 +50,44 @@ namespace SceneRunner.Tests
             sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry, new EntityFactory());
         }
 
-        [TearDown]
-        public void TearDown()
-        {
-            sceneFacade?.Dispose();
-        }
-
         [Test]
         public async Task CreateSceneFacadeForTestScene()
         {
-            sceneFacade = await sceneFactory.CreateScene(path, CancellationToken.None);
-
+            ISceneFacade sceneFacade = await sceneFactory.CreateScene(path, CancellationToken.None);
             var sceneFacadeImpl = (SceneFacade)sceneFacade;
 
-            Assert.IsNotNull(sceneFacade);
+            try
+            {
+                Assert.IsNotNull(sceneFacade);
 
-            Assert.IsNotNull(sceneFacadeImpl.crdtProtocol);
-            Assert.IsNotNull(sceneFacadeImpl.runtimeInstance);
-            Assert.IsNotNull(sceneFacadeImpl.outgoingCrtdMessagesProvider);
-            Assert.IsNotNull(sceneFacadeImpl.crdtWorldSynchronizer);
-            Assert.IsNotNull(sceneFacadeImpl.instancePoolsProvider);
-            Assert.IsNotNull(sceneFacadeImpl.crdtMemoryAllocator);
+                Assert.IsNotNull(sceneFacadeImpl.crdtProtocol);
+                Assert.IsNotNull(sceneFacadeImpl.runtimeInstance);
+                Assert.IsNotNull(sceneFacadeImpl.outgoingCrtdMessagesProvider);
+                Assert.IsNotNull(sceneFacadeImpl.crdtWorldSynchronizer);
+                Assert.IsNotNull(sceneFacadeImpl.instancePoolsProvider);
+                Assert.IsNotNull(sceneFacadeImpl.crdtMemoryAllocator);
 
-            Assert.AreNotEqual(default(World), sceneFacadeImpl.ecsWorldFacade.EcsWorld);
+                Assert.AreNotEqual(default(World), sceneFacadeImpl.ecsWorldFacade.EcsWorld);
+            }
+            finally
+            {
+                await UniTask.SwitchToMainThread();
+                sceneFacade.Dispose();
+            }
         }
 
         [Test]
         public async Task ReturnToTheThreadPool()
         {
             var threadId = Thread.CurrentThread.ManagedThreadId;
+            ISceneFacade sceneFacade = await sceneFactory.CreateScene(path, CancellationToken.None);
 
-            sceneFacade = await sceneFactory.CreateScene(path, CancellationToken.None);
-
-            Assert.AreNotEqual(threadId, Thread.CurrentThread.ManagedThreadId);
+            try { Assert.AreNotEqual(threadId, Thread.CurrentThread.ManagedThreadId); }
+            finally
+            {
+                await UniTask.SwitchToMainThread();
+                sceneFacade.Dispose();
+            }
         }
     }
 }

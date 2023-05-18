@@ -4,6 +4,7 @@ using CRDT.Protocol;
 using CRDT.Protocol.Factory;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.OutgoingMessages;
+using CrdtEcsBridge.PoolsProviders;
 using DCL.ECS7;
 using DCL.ECSComponents;
 using NSubstitute;
@@ -41,7 +42,7 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
         public void AddMessageToProtocol()
         {
             //Arrange
-            ICRDTProtocol crdtProtocol = new CRDTProtocol();
+            ICRDTProtocol crdtProtocol = new CRDTProtocol(InstancePoolsProvider.Create());
             IOutgoingCRTDMessagesProvider outgoingCRDTMessageProvider = Substitute.For<IOutgoingCRTDMessagesProvider>();
 
             var sdkComponentRegistry = new SDKComponentsRegistry();

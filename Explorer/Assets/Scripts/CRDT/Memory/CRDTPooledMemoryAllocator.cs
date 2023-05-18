@@ -1,7 +1,10 @@
 using System;
 using System.Buffers;
+using System.Runtime.CompilerServices;
 using UnityEngine.Pool;
 using Utility.ThreadSafePool;
+
+[assembly: InternalsVisibleTo("MemoryAllocatorTests")]
 
 namespace CRDT.Memory
 {
@@ -25,7 +28,7 @@ namespace CRDT.Memory
             internal void Set(byte[] array, int size)
             {
                 this.array = array;
-                Memory = this.array.AsMemory().Slice(0, size);
+                Memory = this.array.AsMemory()[..size];
                 disposed = false;
             }
 
@@ -44,6 +47,9 @@ namespace CRDT.Memory
 
             public Memory<byte> Memory { get; private set; }
         }
+
+        internal const int POOL_MAX_ARRAY_LENGTH = 1024 * 1024;
+        internal const int MAX_ARRAYS_PER_BUCKET = 1024;
 
         private static readonly ThreadSafeObjectPool<CRDTPooledMemoryAllocator> POOL = new (
             () => new CRDTPooledMemoryAllocator());
@@ -68,7 +74,7 @@ namespace CRDT.Memory
 
             // 1024 similar sized components (probably the same components)
             // TODO add analytics that will signal if our assumptions are wrong
-            arrayPool = ArrayPool<byte>.Create(1024 * 1024, 1024);
+            arrayPool = ArrayPool<byte>.Create(POOL_MAX_ARRAY_LENGTH, MAX_ARRAYS_PER_BUCKET);
 
             memoryOwnerPool = new ObjectPool<MemoryOwner>(
                 () => new MemoryOwner(this),

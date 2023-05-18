@@ -42,7 +42,7 @@ namespace CRDT.Protocol
             /// Inner key is Entity id
             /// LWW components contain the most recent representation of the operations
             /// </summary>s
-            internal readonly PooledDictionary<int, PooledDictionary<CRDTEntity, EntityComponentData>> lwwComponents;
+            internal readonly Dictionary<int, Dictionary<CRDTEntity, EntityComponentData>> lwwComponents;
 
             /// <summary>
             /// Outer key is Component Id
@@ -57,7 +57,7 @@ namespace CRDT.Protocol
             /// </summary>
             internal int messagesCount;
 
-            public State(PooledDictionary<int, int> deletedEntities, PooledDictionary<int, PooledDictionary<CRDTEntity, EntityComponentData>> lwwComponents, PooledDictionary<int, PooledDictionary<CRDTEntity, PooledList<EntityComponentData>>> appendComponents)
+            public State(PooledDictionary<int, int> deletedEntities, Dictionary<int, Dictionary<CRDTEntity, EntityComponentData>> lwwComponents, PooledDictionary<int, PooledDictionary<CRDTEntity, PooledList<EntityComponentData>>> appendComponents)
             {
                 this.deletedEntities = deletedEntities;
                 this.lwwComponents = lwwComponents;
@@ -65,11 +65,11 @@ namespace CRDT.Protocol
                 messagesCount = 0;
             }
 
-            internal readonly bool TryGetLWWComponentState(CRDTMessage message, out PooledDictionary<CRDTEntity, EntityComponentData> inner, out bool componentExists,
+            internal readonly bool TryGetLWWComponentState(CRDTMessage message, out Dictionary<CRDTEntity, EntityComponentData> inner, out bool componentExists,
                 out EntityComponentData storedData) =>
                 TryGetLWWComponentState(message.EntityId, message.ComponentId, out inner, out componentExists, out storedData);
 
-            internal readonly bool TryGetLWWComponentState(CRDTEntity entity, int componentId, out PooledDictionary<CRDTEntity, EntityComponentData> inner, out bool componentExists,
+            internal readonly bool TryGetLWWComponentState(CRDTEntity entity, int componentId, out Dictionary<CRDTEntity, EntityComponentData> inner, out bool componentExists,
                 out EntityComponentData storedData)
             {
                 bool innerSetExists = lwwComponents.TryGetValue(componentId, out inner);
@@ -83,11 +83,15 @@ namespace CRDT.Protocol
 
         private State crdtState;
 
-        public CRDTProtocol()
+        private readonly ICRDTProtocolPoolsProvider poolsProvider;
+
+        public CRDTProtocol(ICRDTProtocolPoolsProvider poolsProvider)
         {
+            this.poolsProvider = poolsProvider;
+
             this.crdtState = new State(
                 new PooledDictionary<int, int>(),
-                new PooledDictionary<int, PooledDictionary<CRDTEntity, EntityComponentData>>(),
+                poolsProvider.GetCrdtLWWComponentsOuter(),
                 new PooledDictionary<int, PooledDictionary<CRDTEntity, PooledList<EntityComponentData>>>());
         }
 
@@ -150,8 +154,7 @@ namespace CRDT.Protocol
 
         private CRDTReconciliationResult UpdateLWWState(in CRDTMessage message)
         {
-            bool innerSetExists = crdtState.TryGetLWWComponentState(message, out PooledDictionary<CRDTEntity, EntityComponentData> inner,
-                out var componentExists, out var storedData);
+            bool innerSetExists = crdtState.TryGetLWWComponentState(message, out Dictionary<CRDTEntity, EntityComponentData> inner, out bool componentExists, out EntityComponentData storedData);
 
             // The received message is > than our current value, update our state
             if (!componentExists || storedData.Timestamp < message.Timestamp)
@@ -186,11 +189,11 @@ namespace CRDT.Protocol
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateLWWState(bool innerSetExists, bool componentExists, PooledDictionary<CRDTEntity, EntityComponentData> inner,
+        private void UpdateLWWState(bool innerSetExists, bool componentExists, Dictionary<CRDTEntity, EntityComponentData> inner,
             in CRDTMessage crdtMessage, ref EntityComponentData componentData)
         {
             if (!innerSetExists)
-                crdtState.lwwComponents[crdtMessage.ComponentId] = inner = new PooledDictionary<CRDTEntity, EntityComponentData>(CRDTEntityComparer.INSTANCE);
+                crdtState.lwwComponents[crdtMessage.ComponentId] = inner = poolsProvider.GetCrdtLWWComponentsInner();
 
             if (!componentExists)
                 crdtState.messagesCount++;
@@ -235,6 +238,7 @@ namespace CRDT.Protocol
 
                     foreach (EntityComponentData entityComponentData in list)
                         entityComponentData.Data.Dispose();
+
                     list.Dispose();
                     componentsSet.Value.Remove(entityId);
                 }
@@ -262,8 +266,10 @@ namespace CRDT.Protocol
                         // instead of removing range, just clean -> it is much cheaper
                         foreach (EntityComponentData entityComponentData in existingSet)
                             entityComponentData.Data.Dispose();
+
                         existingSet.Clear();
                     }
+
                     existingSet.Add(newData);
                     crdtState.messagesCount++;
                     return true;
@@ -302,20 +308,25 @@ namespace CRDT.Protocol
                 {
                     foreach (EntityComponentData entityComponentData in inner)
                         entityComponentData.Data.Dispose();
+
                     inner.Dispose();
                 }
+
                 outer.Dispose();
             }
+
             crdtState.appendComponents.Dispose();
 
             foreach (var outer in crdtState.lwwComponents.Values)
             {
                 foreach (EntityComponentData inner in outer.Values)
                     inner.Data.Dispose();
-                outer.Dispose();
+
+                poolsProvider.ReleaseCrdtLWWComponentsInner(outer);
             }
 
-            crdtState.lwwComponents.Dispose();
+            poolsProvider.ReleaseCrdtLWWComponentsOuter(crdtState.lwwComponents);
+
             crdtState.messagesCount = 0;
         }
 

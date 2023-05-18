@@ -1,4 +1,4 @@
-using CrdtEcsBridge.Engine;
+using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using NSubstitute;
 using NUnit.Framework;

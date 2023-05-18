@@ -59,7 +59,7 @@ namespace CRDT.CRDTTests.Protocol
             return (msg.ToCRDTMessage(memoryAllocator), reconciliationResult);
         }
 
-        internal static IEnumerable<CRDTMessage> InstructionToFinalStateMessages(TestFileInstruction instruction, CRDTPooledMemoryAllocator crdtPooledMemoryAllocator)
+        internal static IEnumerable<CRDTMessage> InstructionToFinalStateMessages(TestFileInstruction instruction, ICRDTMemoryAllocator crdtPooledMemoryAllocator)
         {
             CrdtJsonState finalState = null;
 
@@ -95,7 +95,7 @@ namespace CRDT.CRDTTests.Protocol
 
             CRDTProtocol.State state = new CRDTProtocol.State(
                 new PooledDictionary<int, int>(),
-                new PooledDictionary<int, PooledDictionary<CRDTEntity, CRDTProtocol.EntityComponentData>>(),
+                new Dictionary<int, Dictionary<CRDTEntity, CRDTProtocol.EntityComponentData>>(),
                 new PooledDictionary<int, PooledDictionary<CRDTEntity, PooledList<CRDTProtocol.EntityComponentData>>>());
 
             foreach (var entityComponentData in finalState.components)
@@ -106,7 +106,7 @@ namespace CRDT.CRDTTests.Protocol
                 var realData = entityComponentData.ToEntityComponentData();
 
                 if (!state.lwwComponents.ContainsKey(componentId))
-                    state.lwwComponents.Add(componentId, new PooledDictionary<CRDTEntity, CRDTProtocol.EntityComponentData>());
+                    state.lwwComponents.Add(componentId, new Dictionary<CRDTEntity, CRDTProtocol.EntityComponentData>());
 
                 state.lwwComponents[componentId].Add(new CRDTEntity(entityId), realData);
             }

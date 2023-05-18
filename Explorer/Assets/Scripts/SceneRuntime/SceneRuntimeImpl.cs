@@ -1,4 +1,4 @@
-using CrdtEcsBridge.Engine;
+using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;

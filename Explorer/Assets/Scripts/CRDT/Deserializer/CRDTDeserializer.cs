@@ -17,9 +17,6 @@ namespace CRDT.Deserializer
             this.crdtPooledMemoryAllocator = crdtPooledMemoryAllocator;
         }
 
-        void ICRDTDeserializer.DeserializeBatch(ref ReadOnlyMemory<byte> memory, IList<CRDTMessage> messages) =>
-            DeserializeBatch(ref memory, messages);
-
         public void DeserializeBatch(ref ReadOnlyMemory<byte> memory, IList<CRDTMessage> messages)
         {
             // While we have a header to read

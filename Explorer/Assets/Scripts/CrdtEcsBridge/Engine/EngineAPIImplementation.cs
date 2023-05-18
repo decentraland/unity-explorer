@@ -3,6 +3,7 @@ using CRDT.Protocol;
 using CRDT.Protocol.Factory;
 using CRDT.Serializer;
 using CrdtEcsBridge.OutgoingMessages;
+using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using SceneRuntime.Apis.Modules;
@@ -66,7 +67,6 @@ namespace CrdtEcsBridge.Engine
 
             deserializeBatchSampler.Begin();
 
-            // TODO add metrics to understand bottlenecks better
             crdtDeserializer.DeserializeBatch(ref dataMemory, messages);
 
             deserializeBatchSampler.End();

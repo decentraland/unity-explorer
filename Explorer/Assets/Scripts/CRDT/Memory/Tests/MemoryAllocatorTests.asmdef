@@ -4,7 +4,8 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "CRDT"
+        "CRDT",
+        "Instrumentation"
     ],
     "includePlatforms": [
         "Editor"
@@ -14,7 +15,8 @@
     "overrideReferences": true,
     "precompiledReferences": [
         "nunit.framework.dll",
-        "Collections.Pooled.dll"
+        "Collections.Pooled.dll",
+        "System.Runtime.CompilerServices.Unsafe.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [
