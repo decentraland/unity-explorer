@@ -4,7 +4,6 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
-using System;
 
 namespace ECS.ComponentsPooling
 {
@@ -12,13 +11,13 @@ namespace ECS.ComponentsPooling
     /// Called as a last step before entity destruction to return components to the pool
     /// </summary>
     [UpdateInGroup(typeof(CleanUpGroup))]
-    public partial class ReleaseSDKComponentsSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
+    public partial class ReleaseComponentsSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly QueryDescription queryDescription = new QueryDescription().WithAll<DeleteEntityIntention>();
 
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
 
-        public ReleaseSDKComponentsSystem(World world, IComponentPoolsRegistry componentPoolsRegistry) : base(world)
+        public ReleaseComponentsSystem(World world, IComponentPoolsRegistry componentPoolsRegistry) : base(world)
         {
             this.componentPoolsRegistry = componentPoolsRegistry;
         }
