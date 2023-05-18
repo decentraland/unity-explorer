@@ -17,16 +17,12 @@ namespace SceneRunner.ECSWorld
         private readonly IReadOnlyList<IFinalizeWorldSystem> finalizeWorldSystems;
 
         private readonly SystemGroupWorld systemGroupWorld;
-        private readonly Transform sceneRootTransform;
 
         public ECSWorldFacade(SystemGroupWorld systemGroupWorld, World ecsWorld, params IFinalizeWorldSystem[] finalizeWorldSystems)
         {
             this.systemGroupWorld = systemGroupWorld;
             this.EcsWorld = ecsWorld;
             this.finalizeWorldSystems = finalizeWorldSystems;
-
-            sceneRootTransform = new GameObject("SCENE_ROOT").transform;
-            EcsWorld.Create(sceneRootTransform, new SceneRootComponent());
         }
 
         public void Initialize()
@@ -47,7 +43,6 @@ namespace SceneRunner.ECSWorld
 
             systemGroupWorld.Dispose();
             EcsWorld.Dispose();
-            Object.DestroyImmediate(sceneRootTransform.gameObject);
         }
     }
 }

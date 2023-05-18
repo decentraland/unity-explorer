@@ -10,7 +10,7 @@ namespace ECS.Unity.Systems.Tests
     [TestFixture]
     public class InstantiateTransformUnitySystemShould
     {
-        private InstantiateTransformUnitySystem system;
+        private InstantiateTransformSystem system;
         private SDKTransform sdkTransform;
         private World world;
         private IComponentPoolsRegistry componentRegistry;
@@ -28,7 +28,7 @@ namespace ECS.Unity.Systems.Tests
 
             sdkTransform = new SDKTransform();
             world = World.Create();
-            system = new InstantiateTransformUnitySystem(world, componentRegistry);
+            system = new InstantiateTransformSystem(world, componentRegistry);
         }
 
         [Test]

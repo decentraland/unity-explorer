@@ -8,12 +8,12 @@ using UnityEngine;
 namespace ECS.Unity.Systems
 {
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    public partial class UpdateTransformUnitySystem : BaseUnityLoopSystem
+    public partial class UpdateTransformSystem : BaseUnityLoopSystem
     {
         private readonly QueryDescription queryDescription = new QueryDescription().WithAll<SDKTransform, Transform>();
         private UpdateTransform updateTransform;
 
-        public UpdateTransformUnitySystem(World world) : base(world)
+        public UpdateTransformSystem(World world) : base(world)
         {
             updateTransform = new UpdateTransform();
         }

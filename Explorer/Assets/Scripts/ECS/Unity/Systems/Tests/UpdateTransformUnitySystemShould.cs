@@ -8,7 +8,7 @@ namespace ECS.Unity.Systems.Tests
     [TestFixture]
     public class UpdateTransformUnitySystemShould
     {
-        private UpdateTransformUnitySystem system;
+        private UpdateTransformSystem system;
         private SDKTransform sdkTransform;
         private Transform testTransform;
         private World world;
@@ -29,7 +29,7 @@ namespace ECS.Unity.Systems.Tests
             world = World.Create();
             world.Create(sdkTransform, testTransform);
 
-            system = new UpdateTransformUnitySystem(world);
+            system = new UpdateTransformSystem(world);
         }
 
         [Test]

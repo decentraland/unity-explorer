@@ -1,8 +1,10 @@
 ﻿using Arch.Core;
+using CRDT;
 using CrdtEcsBridge.Components;
 using NSubstitute;
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 
 namespace CrdtEcsBridge.WorldSynchronizer.Tests
 {
@@ -13,7 +15,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         [SetUp]
         public void SetUp()
         {
-            crdtWorldSynchronizer = new CRDTWorldSynchronizer(World.Create(), Substitute.For<ISDKComponentsRegistry>(), Substitute.For<IEntityFactory>());
+            crdtWorldSynchronizer = new CRDTWorldSynchronizer(World.Create(), Substitute.For<ISDKComponentsRegistry>(), Substitute.For<IEntityFactory>(), new Dictionary<CRDTEntity, Entity>());
         }
 
         [Test]

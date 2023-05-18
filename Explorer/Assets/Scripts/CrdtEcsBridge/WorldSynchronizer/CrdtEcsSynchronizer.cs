@@ -31,10 +31,10 @@ namespace CrdtEcsBridge.WorldSynchronizer
         private readonly SemaphoreSlim semaphore = new (1, 1);
 
         public CRDTWorldSynchronizer(World world, ISDKComponentsRegistry sdkComponentsRegistry, IEntityFactory entityFactory,
-            int initialEntitiesCapacity = 1000)
+            Dictionary<CRDTEntity, Entity> entitiesMap)
         {
             this.world = world;
-            entitiesMap = new Dictionary<CRDTEntity, Entity>(initialEntitiesCapacity, CRDTEntityComparer.INSTANCE);
+            this.entitiesMap = entitiesMap;
             collectionsPool = WorldSyncCommandBufferCollectionsPool.Create();
 
             reusableCommandBuffer = new PersistentCommandBuffer(world, BUFFER_POOLS_CAPACITY);
