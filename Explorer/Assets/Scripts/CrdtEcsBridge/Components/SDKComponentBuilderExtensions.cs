@@ -1,4 +1,5 @@
 using CrdtEcsBridge.Serialization;
+using DCL.ECSComponents;
 using ECS.ComponentsPooling;
 using Google.Protobuf;
 using System;
@@ -31,7 +32,7 @@ namespace CrdtEcsBridge.Components
         /// </summary>
         public static SDKComponentBuilder<T> WithPool<T>(this SDKComponentBuilder<T> sdkComponentBuilder, Action<T> onRelease = null) where T: class, new()
         {
-            sdkComponentBuilder.pool = new ComponentPool<T>(onRelease);
+            sdkComponentBuilder.pool = new ComponentPool<T>(onRelease: onRelease);
             return sdkComponentBuilder;
         }
 
@@ -49,9 +50,14 @@ namespace CrdtEcsBridge.Components
         /// </summary>
         /// <returns></returns>
         public static SDKComponentBridge AsProtobufComponent<T>(this SDKComponentBuilder<T> sdkComponentBuilder)
-            where T: class, IMessage<T>, new() =>
+            where T: class, IMessage<T>, IDirtyMarker, new() =>
             sdkComponentBuilder.WithProtobufSerializer()
-                               .WithPool()
+                               .WithPool(SetAsDirty)
                                .Build();
+
+        public static void SetAsDirty(IDirtyMarker dirtyMarker) =>
+            dirtyMarker.IsDirty = true;
     }
 }
+
+

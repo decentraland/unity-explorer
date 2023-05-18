@@ -47,7 +47,6 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
             }
         }
     }
-
     public abstract class SDKComponentCommandBufferSynchronizer
     {
         public abstract void Apply(World world, PersistentCommandBuffer commandBuffer,

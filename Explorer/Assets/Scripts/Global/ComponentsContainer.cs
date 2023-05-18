@@ -3,7 +3,10 @@ using CrdtEcsBridge.Components.Transform;
 using DCL.ECS7;
 using DCL.ECSComponents;
 using ECS.ComponentsPooling;
+using System;
+using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace Global
 {
@@ -22,7 +25,7 @@ namespace Global
 
             // Add all SDK components here
             sdkComponentsRegistry
-               .Add(SDKComponentBuilder<SDKTransform>.Create(ComponentID.TRANSFORM).WithPool().WithCustomSerializer(new SDKTransformSerializer()).Build())
+               .Add(SDKComponentBuilder<SDKTransform>.Create(ComponentID.TRANSFORM).WithPool(SDKComponentBuilderExtensions.SetAsDirty).WithCustomSerializer(new SDKTransformSerializer()).Build())
                .Add(SDKComponentBuilder<PBGltfContainer>.Create(ComponentID.GLTF_CONTAINER).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBMeshCollider>.Create(ComponentID.MESH_COLLIDER).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBMeshRenderer>.Create(ComponentID.MESH_RENDERER).AsProtobufComponent())
@@ -34,11 +37,19 @@ namespace Global
             // add others as required
 
             var componentPoolsRegistry = new ComponentPoolsRegistry(
-
                 // merge SDK components with Non-SDK, currently there are SDK only
-                sdkComponentsRegistry.SdkComponents.ToDictionary(bridge => bridge.ComponentType, bridge => bridge.Pool));
+                sdkComponentsRegistry.SdkComponents.ToDictionary(bridge => bridge.ComponentType, bridge => bridge.Pool)
+                                     .Concat(GetUnityComponentDictionary())
+                                     .ToDictionary(x => x.Key, x => x.Value));
 
             return new ComponentsContainer { SDKComponentsRegistry = sdkComponentsRegistry, ComponentPoolsRegistry = componentPoolsRegistry };
         }
+
+        private static Dictionary<Type, IComponentPool> GetUnityComponentDictionary()
+        {
+            Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
+            return new Dictionary<Type, IComponentPool> { { typeof(Transform), new UnityComponentPool<Transform>(rootContainer) } };
+        }
+
     }
 }
