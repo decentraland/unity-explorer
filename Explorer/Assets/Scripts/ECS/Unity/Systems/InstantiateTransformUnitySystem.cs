@@ -23,7 +23,7 @@ namespace ECS.Unity.Systems
 
         public InstantiateTransformUnitySystem(World world, IComponentPoolsRegistry componentPools) : base(world)
         {
-            instantiateTransform = new TransformInstantiator(componentPools.GetReferenceTypePool(typeof(Transform)));
+            instantiateTransform = new TransformInstantiator(componentPools.GetReferenceTypePool<Transform>());
         }
 
         private readonly struct TransformInstantiator : IForEachWithEntity<SDKTransform>

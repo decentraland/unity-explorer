@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 
 namespace ECS.ComponentsPooling
 {
@@ -10,11 +11,11 @@ namespace ECS.ComponentsPooling
         private readonly Transform parentContainer;
         private readonly Transform rootContainer;
 
-        public UnityComponentPool(Transform rootContainer = null)
+        public UnityComponentPool(Transform rootContainer, int maxSize = 2048)
         {
             parentContainer = new GameObject($"POOL_CONTAINER_{typeof(T).Name}").transform;
             parentContainer.SetParent(rootContainer);
-            gameObjectPool = new ObjectPool<T>(HandleCreation, actionOnGet: HandleGet, actionOnRelease: HandleRelease, actionOnDestroy: HandleDestroy, defaultCapacity: 1000);
+            gameObjectPool = new ObjectPool<T>(HandleCreation, actionOnGet: HandleGet, actionOnRelease: HandleRelease, actionOnDestroy: HandleDestroy, defaultCapacity: maxSize / 4, maxSize: maxSize);
         }
 
         public PooledObject<T> Get(out T v) =>
@@ -62,10 +63,4 @@ namespace ECS.ComponentsPooling
 #endif
         }
     }
-}
-
-public static class GameObjectExtensions
-{
-    public static T TryAddComponent<T>(this GameObject gameObject) where T: Component =>
-        gameObject.GetComponent<T>() ?? gameObject.AddComponent<T>();
 }

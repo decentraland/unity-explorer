@@ -8,11 +8,10 @@ namespace ECS.ComponentsPooling.Tests
     {
         private UnityComponentPool<Transform> unityComponentPool;
 
-
         [SetUp]
         public void SetUp()
         {
-            unityComponentPool = new UnityComponentPool<Transform>();
+            unityComponentPool = new UnityComponentPool<Transform>(null, 1000);
         }
 
         [Test]
