@@ -23,7 +23,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
 
         private readonly IComponentPoolsRegistry poolsRegistry;
 
-        public static readonly Dictionary<PBMeshCollider.MeshOneofCase, ISetupCollider> SETUP_COLLIDER_LOGIC = new ()
+        private static readonly Dictionary<PBMeshCollider.MeshOneofCase, ISetupCollider> SETUP_COLLIDER_LOGIC = new ()
         {
             { PBMeshCollider.MeshOneofCase.Box, new SetupBoxCollider() },
             { PBMeshCollider.MeshOneofCase.Sphere, new SetupSphereCollider() },

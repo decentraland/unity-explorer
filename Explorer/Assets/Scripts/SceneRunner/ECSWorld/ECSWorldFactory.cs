@@ -27,7 +27,7 @@ namespace SceneRunner.ECSWorld
             InstantiateTransformUnitySystem.InjectToWorld(ref builder, componentPoolsRegistry);
             AssertDisconnectedTransformsSystem.InjectToWorld(ref builder);
 
-            InstantiatePrimitiveColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry, InstantiatePrimitiveColliderSystem.SETUP_COLLIDER_LOGIC);
+            InstantiatePrimitiveColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             ReleaseOutdatedColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry);
 
             var releaseSDKComponentsSystem = ReleaseComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry);
