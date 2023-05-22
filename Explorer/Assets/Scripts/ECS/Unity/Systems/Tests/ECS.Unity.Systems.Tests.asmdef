@@ -1,31 +1,32 @@
 {
-    "name": "ECS.Unity.Systems.Tests",
-    "rootNamespace": "",
-    "references": [
-        "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner",
-        "ECS.Unity",
-        "ECS",
-        "SDKComponentsRegistry",
-        "ComponentsPooling",
-        "ECS.Unity.Systems"
-    ],
-    "includePlatforms": [
-        "Editor"
-    ],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": true,
-    "precompiledReferences": [
-        "nunit.framework.dll",
-        "NSubstitute.dll",
-        "Arch.dll",
-        "Arch.System.dll"
-    ],
-    "autoReferenced": false,
-    "defineConstraints": [
-        "UNITY_INCLUDE_TESTS"
-    ],
-    "versionDefines": [],
-    "noEngineReferences": false
+  "name": "ECS.Unity.Systems.Tests",
+  "rootNamespace": "",
+  "references": [
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner",
+    "ECS.Unity",
+    "ECS",
+    "SDKComponentsRegistry",
+    "ComponentsPooling",
+    "ECS.Unity.Systems",
+    "ECS.TestSuite"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll",
+    "NSubstitute.dll",
+    "Arch.dll",
+    "Arch.System.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

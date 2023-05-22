@@ -11,6 +11,6 @@ namespace ECS.LifeCycle
         /// Executes certain clean-up logic on SDK Components
         /// </summary>
         /// <param name="query">All = typeof(CRDTEntity)</param>
-        void FinalizeSDKComponents(in Query query);
+        void FinalizeComponents(in Query query);
     }
 }
