@@ -101,6 +101,20 @@ namespace ECS.Unity.Systems.Tests
             Assert.AreEqual(0, parentTransform.childCount);
         }
 
+        [Test]
+        public void ParentChildToSceneRootIfParentIsDeleted()
+        {
+            // Arrange
+            crdtToEntityDict.Remove(parentCRDTEntity);
+
+            // Act
+            system.Update(0f);
+
+            // Assert
+            Assert.AreEqual(0, parentTransform.childCount);
+            Assert.IsTrue(childTransform.IsChildOf(sceneRoot));
+        }
+
         [TearDown]
         public void TearDown()
         {

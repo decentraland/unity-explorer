@@ -24,7 +24,7 @@ public partial class ParentingTransformSystem : BaseUnityLoopSystem
     public ParentingTransformSystem(World world, Dictionary<CRDTEntity, Entity> entitiesMap, Transform sceneRootTransform) : base(world)
     {
         orphanTransform = new OrphanTransform(sceneRootTransform);
-        parentTransform = new ParentTransform(entitiesMap);
+        parentTransform = new ParentTransform(entitiesMap, sceneRootTransform);
     }
 
     protected override void Update(float t)
@@ -45,28 +45,36 @@ public partial class ParentingTransformSystem : BaseUnityLoopSystem
         public void Update(in Entity entity, ref SDKTransform sdkTransform, ref Transform entityTransform)
         {
             if (sdkTransform.IsDirty && sdkTransform.ParentId.Id == SpecialEntityId.SCENE_ROOT_ENTITY && entityTransform.parent != sceneRootTransform)
-                entityTransform.SetParent(sceneRootTransform);
+                entityTransform.SetParent(sceneRootTransform, true);
         }
     }
 
 
     private readonly struct ParentTransform : IForEachWithEntity<SDKTransform, Transform>
     {
+        private readonly Transform sceneRootTransform;
         private readonly Dictionary<CRDTEntity, Entity> entitiesMap;
 
-        public ParentTransform(Dictionary<CRDTEntity, Entity> entitiesMap)
+        public ParentTransform(Dictionary<CRDTEntity, Entity> entitiesMap, Transform sceneRootTransform)
         {
             this.entitiesMap = entitiesMap;
+            this.sceneRootTransform = sceneRootTransform;
         }
 
         public void Update(in Entity entity, ref SDKTransform sdkTransform, ref Transform entityTransform)
         {
             if (sdkTransform.IsDirty && sdkTransform.ParentId.Id != SpecialEntityId.SCENE_ROOT_ENTITY)
             {
-                Transform parentTransform = entitiesMap[sdkTransform.ParentId].Get<Transform>();
+                if (entitiesMap.TryGetValue(sdkTransform.ParentId, out Entity parentEntity))
+                {
+                    Transform parentTransform = parentEntity.Get<Transform>();
 
-                if (entityTransform.parent != parentTransform)
-                    entityTransform.SetParent(parentTransform, true);
+                    if (entityTransform.parent != parentTransform)
+                        entityTransform.SetParent(parentTransform, true);
+                }
+                else { entityTransform.SetParent(sceneRootTransform, true); }
+
+
             }
         }
     }
