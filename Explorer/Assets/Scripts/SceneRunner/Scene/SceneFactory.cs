@@ -47,7 +47,6 @@ namespace SceneRunner.Scene
         {
             var entitiesMap = new Dictionary<CRDTEntity, Entity>(1000, CRDTEntityComparer.INSTANCE);
 
-
             // Per scene instance dependencies
             var crdtProtocol = new CRDTProtocol();
             var outgoingCrtdMessagesProvider = new OutgoingCRTDMessagesProvider();

@@ -1,4 +1,5 @@
 using Arch.Core;
+using CRDT;
 using CRDT.Deserializer;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
@@ -9,6 +10,7 @@ using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.SceneRunner.Tests.TestUtils;
 using SceneRuntime.Factory;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -40,7 +42,7 @@ namespace SceneRunner.Tests
             sceneRuntimeFactory = new SceneRuntimeFactory();
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>();
-            ecsWorldFactory.CreateWorld().Returns(ecsWorldFacade);
+            ecsWorldFactory.CreateWorld(Arg.Any<Dictionary<CRDTEntity, Entity>>()).Returns(ecsWorldFacade);
 
             sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>();
             crdtSerializer = Substitute.For<ICRDTSerializer>();
