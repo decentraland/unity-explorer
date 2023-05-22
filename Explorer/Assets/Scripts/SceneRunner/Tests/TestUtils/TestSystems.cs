@@ -106,7 +106,7 @@ namespace SceneRunner.SceneRunner.Tests.TestUtils
             Internal.AfterUpdate(in t);
         }
 
-        public void FinalizeSDKComponents(in Query query)
+        public void FinalizeComponents(in Query query)
         {
             FinalizeCalled = true;
         }

@@ -4,8 +4,7 @@ using ECS.LifeCycle;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.ECSWorld;
-using InitializationTestSystem1 = SceneRunner.SceneRunner.Tests.TestUtils.InitializationTestSystem1;
-using SimulationTestSystem1 = SceneRunner.SceneRunner.Tests.TestUtils.SimulationTestSystem1;
+using SceneRunner.SceneRunner.Tests.TestUtils;
 
 namespace SceneRunner.Tests
 {
@@ -50,12 +49,13 @@ namespace SceneRunner.Tests
         {
             ecsWorldFacade.Dispose();
 
-            finalizeWorldSystem.Received(1).FinalizeSDKComponents(Arg.Any<Query>());
+            finalizeWorldSystem.Received(1).FinalizeComponents(Arg.Any<Query>());
 
             Assert.IsTrue(initializationTestSystem1.Internal.DisposeCalled);
             Assert.IsTrue(simulationTestSystem1.Internal.DisposeCalled);
 
-            Assert.IsFalse(World.Worlds.Contains(world));
+            // In PURE_ECS the world is not removed from the list
+            //Assert.IsFalse(World.Worlds.Contains(world));
         }
     }
 }

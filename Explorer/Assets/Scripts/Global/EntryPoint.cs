@@ -1,5 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
-using SceneRunner.Scene;
+﻿using SceneRunner.Scene;
 using UnityEngine;
 using UnityEngine.Profiling;
 
@@ -10,6 +9,8 @@ namespace Global
     /// </summary>
     public class EntryPoint : MonoBehaviour
     {
+        [SerializeField] private SceneLauncher sceneLauncher;
+
         public SceneSharedContainer SceneSharedContainer { get; private set; }
 
         private ISceneFacade sceneFacade;
@@ -21,20 +22,7 @@ namespace Global
 
         private void Start()
         {
-            async UniTask CreateScene()
-            {
-                sceneFacade = await SceneSharedContainer.SceneFactory.CreateScene
-                    ($"file://{Application.dataPath + "/../TestResources/Scenes/CubeWave/cube_waves.js"}", destroyCancellationToken);
-
-                sceneFacade.StartUpdateLoop(30, destroyCancellationToken);
-            }
-
-            CreateScene().Forget();
-        }
-
-        private void OnDestroy()
-        {
-            sceneFacade?.Dispose();
+            sceneLauncher.Initialize(SceneSharedContainer, destroyCancellationToken);
         }
 
         public static SceneSharedContainer Install()

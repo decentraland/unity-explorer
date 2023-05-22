@@ -1,6 +1,9 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using ECS.ComponentsPooling;
+using ECS.ComponentsPooling.Systems;
+using ECS.Unity.PrimitiveColliders.Components;
+using ECS.Unity.PrimitiveColliders.Systems;
 using ECS.Unity.Systems;
 
 namespace SceneRunner.ECSWorld
@@ -21,14 +24,21 @@ namespace SceneRunner.ECSWorld
 
             // Create all systems and add them to the world
             var builder = new ArchSystemsWorldBuilder<World>(world);
+
             UpdateTransformUnitySystem.InjectToWorld(ref builder);
             InstantiateTransformUnitySystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            var releaseSDKComponentsSystem = ReleaseComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            AssertDisconnectedTransformsSystem.InjectToWorld(ref builder);
+
+            InstantiatePrimitiveColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            ReleaseOutdatedColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+
+            var releaseSDKComponentsSystem = ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            var releaseColliderSystem = ReleasePoolableComponentSystem<PrimitiveColliderComponent>.InjectToWorld(ref builder, componentPoolsRegistry);
 
             // Add other systems here
             var systemsWorld = builder.Finish();
 
-            return new ECSWorldFacade(systemsWorld, world, releaseSDKComponentsSystem);
+            return new ECSWorldFacade(systemsWorld, world, releaseSDKComponentsSystem, releaseColliderSystem);
         }
     }
 }

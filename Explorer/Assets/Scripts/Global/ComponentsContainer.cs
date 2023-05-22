@@ -37,19 +37,29 @@ namespace Global
             // add others as required
 
             var componentPoolsRegistry = new ComponentPoolsRegistry(
-                // merge SDK components with Non-SDK, currently there are SDK only
-                sdkComponentsRegistry.SdkComponents.ToDictionary(bridge => bridge.ComponentType, bridge => bridge.Pool)
+
+                // merge SDK components with Non-SDK
+                sdkComponentsRegistry.SdkComponents
+                                     .Select(c => (c.ComponentType, c.Pool))
                                      .Concat(GetUnityComponentDictionary())
-                                     .ToDictionary(x => x.Key, x => x.Value));
+                                     .ToDictionary(x => x.Item1, x => x.Item2));
 
             return new ComponentsContainer { SDKComponentsRegistry = sdkComponentsRegistry, ComponentPoolsRegistry = componentPoolsRegistry };
         }
 
-        private static Dictionary<Type, IComponentPool> GetUnityComponentDictionary()
+        private static IEnumerable<(Type type, IComponentPool pool)> GetUnityComponentDictionary()
         {
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
-            return new Dictionary<Type, IComponentPool> { { typeof(Transform), new UnityComponentPool<Transform>(rootContainer) } };
-        }
 
+            (Type type, IComponentPool pool) CreateComponentPool<T>(int maxSize = 1024) where T: Component =>
+                (typeof(T), new UnityComponentPool<T>(rootContainer, maxSize));
+
+            yield return CreateComponentPool<Transform>();
+
+            // Primitive Colliders
+            yield return CreateComponentPool<MeshCollider>();
+            yield return CreateComponentPool<BoxCollider>();
+            yield return CreateComponentPool<SphereCollider>();
+        }
     }
 }

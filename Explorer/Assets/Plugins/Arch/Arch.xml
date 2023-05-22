@@ -102,6 +102,16 @@
             <param name="entity">The <see cref="T:Arch.Core.Entity"/> to register.</param>
             <param name="info">Its <see cref="P:Arch.CommandBuffer.CommandBuffer.BufferedEntityInfo"/> which stores indexes used for <see cref="T:Arch.CommandBuffer.CommandBuffer"/> operations.</param>
         </member>
+        <member name="M:Arch.CommandBuffer.CommandBuffer.Resolve(Arch.Core.Entity)">
+            TODO : Probably just run this if the wrapped entity is negative? To save some overhead? 
+            <summary>
+                Resolves an <see cref="T:Arch.Core.Entity"/> originally either from a <see cref="T:Arch.CommandBuffer.StructuralSparseArray"/> or <see cref="T:Arch.CommandBuffer.SparseArray"/> to its real <see cref="T:Arch.Core.Entity"/>.
+                This is required since we can also create new entities via this buffer and buffer operations for it. So sometimes there negative entities stored in the arrays and those must then be resolved to its newly created real entity. 
+                <remarks>Probably hard to understand, blame genaray for this.</remarks>
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/> with a negative or positive id to resolve.</param>
+            <returns>Its real <see cref="T:Arch.Core.Entity"/>.</returns>
+        </member>
         <member name="M:Arch.CommandBuffer.CommandBuffer.Create(Arch.Core.Utils.ComponentType[])">
             <summary>
                 Records a Create operation for an <see cref="T:Arch.Core.Entity"/> based on its component structure.
@@ -968,6 +978,43 @@
             <param name="fromSlot">The <see cref="T:Arch.Core.Slot"/> that targets the <see cref="T:Arch.Core.Entity"/> that should move.</param>
             <param name="toSlot">The <see cref="T:Arch.Core.Slot"/> to which the <see cref="T:Arch.Core.Entity"/> should move.</param>
         </member>
+        <member name="F:Arch.Core.Archetype.EdgesArrayMaxSize">
+            <summary>
+                The max <see cref="F:Arch.Core.Utils.ComponentType.Id"/> that <see cref="F:Arch.Core.Archetype._addEdges"/>
+                will use for its array storage before using a dictionary.
+            </summary>
+        </member>
+        <member name="F:Arch.Core.Archetype._addEdges">
+            <summary>
+                Caches other <see cref="T:Arch.Core.Archetype"/>s indexed by the
+                <see cref="F:Arch.Core.Utils.ComponentType.Id"/> that needs to be added in order to reach them.
+                Those with a <see cref="F:Arch.Core.Utils.ComponentType.Id"/> equal to or lower than
+                <see cref="F:Arch.Core.Archetype.EdgesArrayMaxSize"/> are accessed through an array lookup,
+                otherwise a dictionary is used.
+            </summary>
+            <remarks>The index used is <see cref="F:Arch.Core.Utils.ComponentType.Id"/> minus one.</remarks>
+        </member>
+        <member name="M:Arch.Core.Archetype.CreateAddEdge(System.Int32,Arch.Core.Archetype)">
+            <summary>
+                Tries to get a cached archetype that is reached through adding a component
+                type to this archetype.
+            </summary>
+            <param name="index">
+                The index of the archetype in the cache, <see cref="F:Arch.Core.Utils.ComponentType.Id"/> - 1
+            </param>
+            <param name="archetype">The archetype to cache.</param>
+        </member>
+        <member name="M:Arch.Core.Archetype.TryGetAddEdge(System.Int32,Arch.Core.Archetype@)">
+            <summary>
+                Tries to get a cached archetype that is reached through adding a component
+                type to this archetype.
+            </summary>
+            <param name="index">
+                The index of the archetype in the cache, <see cref="F:Arch.Core.Utils.ComponentType.Id"/> - 1
+            </param>
+            <param name="archetype">The cached archetype if it exists, null otherwise.</param>
+            <returns>True if the archetype exists, false otherwise.</returns>
+        </member>
         <member name="T:Arch.Core.Chunk">
             <summary>
                 The <see cref="T:Arch.Core.Chunk"/> struct represents a contiguous block of memory in which various components are stored in Structure of Arrays.
@@ -1194,6 +1241,691 @@
             <param name="chunk">The <see cref="T:Arch.Core.Chunk"/> we want transfer the last <see cref="T:Arch.Core.Entity"/> from.</param>
             <returns></returns>
         </member>
+        <member name="T:Arch.Core.World">
+            <summary>
+                The <see cref="T:Arch.Core.World"/> class
+                stores <see cref="T:Arch.Core.Entity"/>'s in <see cref="T:Arch.Core.Archetype"/>'s and <see cref="T:Arch.Core.Chunk"/>'s, manages them and provides methods to query for specific <see cref="T:Arch.Core.Entity"/>'s.
+            </summary>
+        </member>
+        <member name="M:Arch.Core.World.GetOrCreateArchetypeByEdge(Arch.Core.Utils.ComponentType@,Arch.Core.Archetype)">
+            <summary>
+                Creates or returns an <see cref="T:Arch.Core.Archetype"/> based on the old one with one additional component.
+                Automatically creates a link between them for quick access. 
+            </summary>
+            <param name="type">The new <see cref="T:Arch.Core.Utils.ComponentType"/> that additionally forms a new <see cref="T:Arch.Core.Archetype"/> with the old components of the old archetype.</param>
+            <param name="oldArchetype">The old <see cref="T:Arch.Core.Archetype"/>.</param>
+            <returns>The cached or newly created <see cref="T:Arch.Core.Archetype"/> with that additional component.</returns>
+        </member>
+        <member name="F:Arch.Core.World.InitialCapacity">
+            <summary>
+                The initial capacity for the <see cref="F:Arch.Core.World._compEvents"/> array. 
+            </summary>
+        </member>
+        <member name="F:Arch.Core.World._entityCreatedHandlers">
+            <summary>
+                All <see cref="T:Arch.Core.Events.EntityCreatedHandler"/>s in a <see cref="T:System.Collections.Generic.List`1"/> which will be called upon entity creation.
+            </summary>
+        </member>
+        <member name="F:Arch.Core.World._entityDestroyedHandlers">
+            <summary>
+                All <see cref="T:Arch.Core.Events.EntityDestroyedHandler"/>s in a <see cref="T:System.Collections.Generic.List`1"/> which will be called upon entity destruction.
+            </summary>
+        </member>
+        <member name="F:Arch.Core.World._compEvents">
+            <summary>
+                All <see cref="N:Arch.Core.Events"/> in an array which will be acessed for add, remove or set operations. 
+            </summary>
+        </member>
+        <member name="M:Arch.Core.World.SubscribeEntityCreated(Arch.Core.Events.EntityCreatedHandler)">
+            <summary>
+                Adds a delegate to be called when an entity is created.
+            </summary>
+            <param name="handler">The delegate to call.</param>
+        </member>
+        <member name="M:Arch.Core.World.SubscribeEntityDestroyed(Arch.Core.Events.EntityDestroyedHandler)">
+            <summary>
+                Adds a delegate to be called when an entity is destroyed.
+            </summary>
+            <param name="handler">The delegate to call.</param>
+        </member>
+        <member name="M:Arch.Core.World.SubscribeComponentAdded``1(Arch.Core.Events.ComponentAddedHandler{``0})">
+            <summary>
+                Adds a delegate to be called when a component of type <see cref="!:T"/> is added to an entity.
+                <see cref="M:Arch.Core.World.Add(Arch.Core.Entity,System.Object@)"/>
+            </summary>
+            <param name="handler">The delegate to call.</param>
+            <typeparam name="T">The component type.</typeparam>
+        </member>
+        <member name="M:Arch.Core.World.SubscribeComponentSet``1(Arch.Core.Events.ComponentSetHandler{``0})">
+            <summary>
+                Adds a delegate to be called when a component of type <see cref="!:T"/> is set on an entity.
+                <see cref="M:Arch.Core.World.Set(Arch.Core.Entity,System.Object)"/>
+            </summary>
+            <param name="handler">The delegate to call.</param>
+            <typeparam name="T">The component type.</typeparam>
+        </member>
+        <member name="M:Arch.Core.World.SubscribeComponentRemoved``1(Arch.Core.Events.ComponentRemovedHandler{``0})">
+            <summary>
+                Adds a delegate to be called when a component of type <see cref="!:T"/> is removed from an entity.
+                <see cref="M:Arch.Core.World.Remove(Arch.Core.Entity,Arch.Core.Utils.ComponentType)"/>
+            </summary>
+            <param name="handler">The delegate to call.</param>
+            <typeparam name="T">The component type.</typeparam>
+        </member>
+        <member name="M:Arch.Core.World.OnEntityCreated(Arch.Core.Entity)">
+            <summary>
+                Calls all handlers subscribed to entity creation.
+            </summary>
+            <param name="entity">The entity that got created.</param>
+        </member>
+        <member name="M:Arch.Core.World.OnEntityDestroyed(Arch.Core.Entity)">
+            <summary>
+                Calls all handlers subscribed to entity deletion.
+            </summary>
+            <param name="entity">The entity that got destroyed.</param>
+        </member>
+        <member name="M:Arch.Core.World.OnComponentAdded``1(Arch.Core.Entity)">
+            <summary>
+                Calls all generic handlers subscribed to component addition of this type.
+            </summary>
+            <param name="entity">The entity that the component was added to.</param>
+            <typeparam name="T">The type of component that got added.</typeparam>
+        </member>
+        <member name="M:Arch.Core.World.OnComponentSet``1(Arch.Core.Entity)">
+            <summary>
+                Calls all generic handlers subscribed to component setting of this type.
+            </summary>
+            <param name="entity">The entity that the component was set on.</param>
+            <typeparam name="T">The type of component that got set.</typeparam>
+        </member>
+        <member name="M:Arch.Core.World.OnComponentRemoved``1(Arch.Core.Entity)">
+            <summary>
+                Calls all generic handlers subscribed to component removal.
+            </summary>
+            <param name="entity">The entity that the component was removed from.</param>
+            <typeparam name="T">The type of component that got removed.</typeparam>
+        </member>
+        <member name="M:Arch.Core.World.OnComponentAdded(Arch.Core.Entity,Arch.Core.Utils.ComponentType)">
+            <summary>
+                Calls all handlers subscribed to component addition of this type.
+            </summary>
+            <param name="entity">The entity that the component was added to.</param>
+            <param name="compType">The type of component that got added.</param>
+        </member>
+        <member name="M:Arch.Core.World.OnComponentSet(Arch.Core.Entity,System.Object)">
+            <summary>
+                Calls all handlers subscribed to component setting of this type.
+            </summary>
+            <param name="entity">The entity that the component was set on.</param>
+            <param name="comp">The component instance that got set.</param>
+        </member>
+        <member name="M:Arch.Core.World.OnComponentRemoved(Arch.Core.Entity,Arch.Core.Utils.ComponentType)">
+            <summary>
+                Calls all handlers subscribed to component removal.
+            </summary>
+            <param name="entity">The entity that the component was removed from.</param>
+            <param name="compType">The type of component that got removed.</param>
+        </member>
+        <member name="M:Arch.Core.World.OnComponentAdded``1(Arch.Core.Archetype)">
+            <summary>
+                Calls all handlers subscribed to component addition of this type for entities in a archetype range.
+            </summary>
+            <param name="archetype">The <see cref="T:Arch.Core.Archetype"/>.</param>
+            <typeparam name="T">The component type.</typeparam>
+        </member>
+        <member name="M:Arch.Core.World.OnComponentRemoved``1(Arch.Core.Archetype)">
+            <summary>
+                Calls all handlers subscribed to component removal of this type for entities in a archetype range.
+            </summary>
+            <param name="archetype">The <see cref="T:Arch.Core.Archetype"/>.</param>
+            <typeparam name="T">The component type.</typeparam>
+        </member>
+        <member name="M:Arch.Core.World.GetEvents``1">
+            <summary>
+                Gets all generic event handlers for a certain component type.
+            </summary>
+            <typeparam name="T">The type of component to get handlers for.</typeparam>
+            <returns>All handlers for the given component type.</returns>
+        </member>
+        <member name="M:Arch.Core.World.GetEvents(Arch.Core.Utils.ComponentType)">
+            TODO : Remove creating by activator. Instead we should probably keep two lists. One for object based calls, one for generics.
+            <summary>
+                Gets all event handlers for a certain component type.
+            </summary>
+            <param name="compType">The type of component to get handlers for.</param>
+            <returns>All handlers for the given component type.</returns>
+        </member>
+        <member name="P:Arch.Core.World.JobHandles">
+            <summary>
+                A list of <see cref="T:JobScheduler.JobHandle"/> which are pooled to avoid allocs.
+            </summary>
+        </member>
+        <member name="P:Arch.Core.World.JobsCache">
+            <summary>
+                A cache used for the parallel queries to prevent list allocations.
+            </summary>
+        </member>
+        <member name="M:Arch.Core.World.ParallelQuery(Arch.Core.QueryDescription@,Arch.Core.ForEach)">
+            <summary>
+                Searches all matching <see cref="T:Arch.Core.Entity"/>'s by a <see cref="T:Arch.Core.QueryDescription"/> and calls the passed <see cref="T:Arch.Core.ForEach"/> delegate.
+                Runs multithreaded and will process the matching <see cref="T:Arch.Core.Entity"/>'s in parallel.
+            </summary>
+            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Entity"/>'s are searched for.</param>
+            <param name="forEntity">The <see cref="T:Arch.Core.ForEach"/> delegate.</param>
+        </member>
+        <member name="M:Arch.Core.World.InlineParallelQuery``1(Arch.Core.QueryDescription@)">
+            <summary>
+                Searches all matching <see cref="T:Arch.Core.Entity"/>'s by a <see cref="T:Arch.Core.QueryDescription"/> and calls the <see cref="T:Arch.Core.IForEach"/> struct.
+                Runs multithreaded and will process the matching <see cref="T:Arch.Core.Entity"/>'s in parallel.
+            </summary>
+            <typeparam name="T">A struct implementation of the <see cref="T:Arch.Core.IForEach"/> interface which is called on each <see cref="T:Arch.Core.Entity"/> found.</typeparam>
+            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Entity"/>'s are searched for.</param>
+        </member>
+        <member name="M:Arch.Core.World.InlineParallelQuery``1(Arch.Core.QueryDescription@,Arch.Core.IForEachJob{``0}@)">
+            <summary>
+                Searches all matching <see cref="T:Arch.Core.Entity"/>'s by a <see cref="T:Arch.Core.QueryDescription"/> and calls the passed <see cref="T:Arch.Core.IForEach"/> struct.
+                Runs multithreaded and will process the matching <see cref="T:Arch.Core.Entity"/>'s in parallel.
+            </summary>
+            <typeparam name="T">A struct implementation of the <see cref="T:Arch.Core.IForEach"/> interface which is called on each <see cref="T:Arch.Core.Entity"/> found.</typeparam>
+            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Entity"/>'s are searched for.</param>
+            <param name="iForEach">The struct instance of the generic type being invoked.</param>
+        </member>
+        <member name="M:Arch.Core.World.InlineParallelChunkQuery``1(Arch.Core.QueryDescription@,``0@)">
+            <summary>
+                Finds all matching <see cref="T:Arch.Core.Chunk"/>'s by a <see cref="T:Arch.Core.QueryDescription"/> and calls an <see cref="T:Arch.Core.IChunkJob"/> on them.
+            </summary>
+            <typeparam name="T">A struct implementation of the <see cref="T:Arch.Core.IChunkJob"/> interface which is called on each <see cref="T:Arch.Core.Chunk"/> found.</typeparam>
+            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Chunk"/>'s are searched for.</param>
+            <param name="innerJob">The struct instance of the generic type being invoked.</param>
+            <exception cref="T:System.Exception">An <see cref="T:System.Exception"/> if the <see cref="N:JobScheduler"/> was not initialized before.</exception>
+        </member>
+        <member name="M:Arch.Core.World.#ctor(System.Int32)">
+            <summary>
+                Initializes a new instance of the <see cref="T:Arch.Core.World"/> class
+            </summary>
+            <param name="id">Its unique id.</param>
+        </member>
+        <member name="P:Arch.Core.World.Worlds">
+            <summary>
+                A list of all existing <see cref="P:Arch.Core.World.Worlds"/>.
+                Should not be modified by the user.
+            </summary>
+        </member>
+        <member name="P:Arch.Core.World.Id">
+            <summary>
+                The unique <see cref="T:Arch.Core.World"/> id.
+            </summary>
+        </member>
+        <member name="P:Arch.Core.World.Size">
+            <summary>
+                The amount of <see cref="T:Arch.Core.Entity"/>'s stored by this instance.
+            </summary>
+        </member>
+        <member name="P:Arch.Core.World.Capacity">
+            <summary>
+                The available capacity for <see cref="T:Arch.Core.Entity"/>'s by this instance.
+            </summary>
+        </member>
+        <member name="P:Arch.Core.World.Archetypes">
+            <summary>
+                All <see cref="T:Arch.Core.Archetype"/>'s that exist in this <see cref="T:Arch.Core.World"/>.
+            </summary>
+        </member>
+        <member name="P:Arch.Core.World.EntityInfo">
+            <summary>
+                Mapt an <see cref="T:Arch.Core.Entity"/> to its <see cref="P:Arch.Core.World.EntityInfo"/> for quick lookups.
+            </summary>
+        </member>
+        <member name="P:Arch.Core.World.RecycledIds">
+            <summary>
+                Stores recycled <see cref="T:Arch.Core.Entity"/> ids and their last version.
+            </summary>
+        </member>
+        <member name="P:Arch.Core.World.QueryCache">
+            <summary>
+                A cache to map <see cref="T:Arch.Core.QueryDescription"/> to their <see cref="T:Arch.Core.Query"/> to avoid allocs.
+            </summary>
+        </member>
+        <member name="M:Arch.Core.World.Create">
+            <summary>
+                Creates a <see cref="T:Arch.Core.World"/> instance.
+            </summary>
+            <returns>The created <see cref="T:Arch.Core.World"/> instance.</returns>
+        </member>
+        <member name="M:Arch.Core.World.Destroy(Arch.Core.World)">
+            <summary>
+                Destroys an existing <see cref="T:Arch.Core.World"/>.
+            </summary>
+            <param name="world">The <see cref="T:Arch.Core.World"/>.</param>
+        </member>
+        <member name="M:Arch.Core.World.Reserve(System.Span{Arch.Core.Utils.ComponentType},System.Int32)">
+            <summary>
+                Reserves space for a certain number of <see cref="T:Arch.Core.Entity"/>'s of a given component structure/<see cref="T:Arch.Core.Archetype"/>.
+            </summary>
+            <param name="types">The component structure/<see cref="T:Arch.Core.Archetype"/>.</param>
+            <param name="amount">The amount.</param>
+        </member>
+        <member name="M:Arch.Core.World.Create(Arch.Core.Utils.ComponentType[])">
+            <summary>
+                Creates a new <see cref="T:Arch.Core.Entity"/> using its given component structure/<see cref="T:Arch.Core.Archetype"/>.
+                Might resize its target <see cref="T:Arch.Core.Archetype"/> and allocate new space if its full.
+            </summary>
+            <param name="types">Its component structure/<see cref="T:Arch.Core.Archetype"/>.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.Core.World.Create(System.Span{Arch.Core.Utils.ComponentType})">
+            <summary>
+                Creates a new <see cref="T:Arch.Core.Entity"/> using its given component structure/<see cref="T:Arch.Core.Archetype"/>.
+                Might resize its target <see cref="T:Arch.Core.Archetype"/> and allocate new space if its full.
+            </summary>
+            <param name="types">Its component structure/<see cref="T:Arch.Core.Archetype"/>.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.Core.World.Move(Arch.Core.Entity,Arch.Core.Archetype,Arch.Core.Archetype,Arch.Core.Slot@)">
+            <summary>
+                Moves an <see cref="T:Arch.Core.Entity"/> from one <see cref="T:Arch.Core.Archetype"/> <see cref="T:Arch.Core.Slot"/> to another.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <param name="source">Its <see cref="T:Arch.Core.Archetype"/>.</param>
+            <param name="destination">The new <see cref="T:Arch.Core.Archetype"/>.</param>
+            <param name="destinationSlot">The new <see cref="T:Arch.Core.Slot"/> where moved <see cref="T:Arch.Core.Entity"/> landed in.</param>
+        </member>
+        <member name="M:Arch.Core.World.Destroy(Arch.Core.Entity)">
+            <summary>
+                Destroys an <see cref="T:Arch.Core.Entity"/>.
+                Might resize its target <see cref="T:Arch.Core.Archetype"/> and release memory.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+        </member>
+        <member name="M:Arch.Core.World.TrimExcess">
+            <summary>
+                Trims this <see cref="T:Arch.Core.World"/> instance and releases unused memory.
+                Should not be called every single update or frame.
+                One single <see cref="T:Arch.Core.Chunk"/> from each <see cref="T:Arch.Core.Archetype"/> is spared.
+            </summary>
+        </member>
+        <member name="M:Arch.Core.World.Clear">
+            <summary>
+                Clears or resets this <see cref="T:Arch.Core.World"/> instance, will drop used <see cref="P:Arch.Core.World.Archetypes"/> and therefore release some memory sooner or later.
+            </summary>
+        </member>
+        <member name="M:Arch.Core.World.Query(Arch.Core.QueryDescription@)">
+            <summary>
+                Creates a <see cref="T:Arch.Core.Query"/> using a <see cref="T:Arch.Core.QueryDescription"/>
+                which can be used to iterate over the matching <see cref="T:Arch.Core.Entity"/>'s, <see cref="T:Arch.Core.Archetype"/>'s and <see cref="T:Arch.Core.Chunk"/>'s.
+            </summary>
+            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which components are searched for.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.Core.World.CountEntities(Arch.Core.QueryDescription@)">
+            <summary>
+                Counts all <see cref="T:Arch.Core.Entity"/>'s that match a <see cref="T:Arch.Core.QueryDescription"/> and returns the number.
+            </summary>
+            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which components or <see cref="T:Arch.Core.Entity"/>'s are searched for.</param>
+        </member>
+        <member name="M:Arch.Core.World.GetEntities(Arch.Core.QueryDescription@,System.Span{Arch.Core.Entity},System.Int32)">
+            <summary>
+                Search all matching <see cref="T:Arch.Core.Entity"/>'s and put them into the given <see cref="T:System.Span`1"/>.
+            </summary>
+            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which components or <see cref="T:Arch.Core.Entity"/>'s are searched for.</param>
+            <param name="list">The <see cref="T:System.Span`1"/> receiving the found <see cref="T:Arch.Core.Entity"/>'s.</param>
+            <param name="start">The start index inside the <see cref="T:System.Span`1"/>. Default is 0.</param>
+        </member>
+        <member name="M:Arch.Core.World.GetArchetypes(Arch.Core.QueryDescription@,System.Span{Arch.Core.Archetype},System.Int32)">
+            <summary>
+                Search all matching <see cref="T:Arch.Core.Archetype"/>'s and put them into the given <see cref="T:System.Collections.Generic.IList`1"/>.
+            </summary>
+            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which components are searched for.</param>
+            <param name="archetypes">The <see cref="T:System.Span`1"/> receiving <see cref="T:Arch.Core.Archetype"/>'s containing <see cref="T:Arch.Core.Entity"/>'s with the matching components.</param>
+            <param name="start">The start index inside the <see cref="T:System.Span`1"/>. Default is 0.</param>
+        </member>
+        <member name="M:Arch.Core.World.GetChunks(Arch.Core.QueryDescription@,System.Span{Arch.Core.Chunk},System.Int32)">
+            <summary>
+                Search all matching <see cref="T:Arch.Core.Chunk"/>'s and put them into the given <see cref="T:System.Collections.Generic.IList`1"/>.
+            </summary>
+            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which components are searched for.</param>
+            <param name="chunks">The <see cref="T:System.Span`1"/> receiving <see cref="T:Arch.Core.Chunk"/>'s containing <see cref="T:Arch.Core.Entity"/>'s with the matching components.</param>
+            <param name="start">The start index inside the <see cref="T:System.Span`1"/>. Default is 0.</param>
+        </member>
+        <member name="M:Arch.Core.World.GetEnumerator">
+            <summary>
+                Creates and returns a new <see cref="T:Arch.Core.Enumerator`1"/> instance to iterate over all <see cref="P:Arch.Core.World.Archetypes"/>.
+            </summary>
+            <returns>A new <see cref="T:Arch.Core.Enumerator`1"/> instance.</returns>
+        </member>
+        <member name="M:Arch.Core.World.Dispose">
+            <summary>
+                Disposes this <see cref="T:Arch.Core.World"/> instance and destroys it from the <see cref="P:Arch.Core.World.Worlds"/>.
+            </summary>
+        </member>
+        <member name="M:Arch.Core.World.ToString">
+            <summary>
+                Converts this <see cref="T:Arch.Core.World"/> to a human readable string.
+            </summary>
+            <returns>A string.</returns>
+        </member>
+        <member name="P:Arch.Core.World.GroupToArchetype">
+            <summary>
+                Maps an <see cref="T:Arch.Core.Utils.Group"/> hash to its <see cref="T:Arch.Core.Archetype"/>.
+            </summary>
+        </member>
+        <member name="M:Arch.Core.World.TryGetArchetype(System.Int32,Arch.Core.Archetype@)">
+            <summary>
+                Trys to find an <see cref="T:Arch.Core.Archetype"/> by the hash of its components.
+            </summary>
+            <param name="hash">Its hash..</param>
+            <param name="archetype">The found <see cref="T:Arch.Core.Archetype"/>.</param>
+            <returns>True if found, otherwhise false.</returns>
+        </member>
+        <member name="M:Arch.Core.World.TryGetArchetype(Arch.Core.Utils.BitSet,Arch.Core.Archetype@)">
+            <summary>
+                Trys to find an <see cref="T:Arch.Core.Archetype"/> by a <see cref="T:Arch.Core.Utils.BitSet"/>.
+            </summary>
+            <param name="bitset">A <see cref="T:Arch.Core.Utils.BitSet"/> indicating the <see cref="T:Arch.Core.Archetype"/> structure.</param>
+            <param name="archetype">The found <see cref="T:Arch.Core.Archetype"/>.</param>
+            <returns>True if found, otherwhise false.</returns>
+        </member>
+        <member name="M:Arch.Core.World.TryGetArchetype(Arch.Core.Utils.SpanBitSet,Arch.Core.Archetype@)">
+            <summary>
+                Trys to find an <see cref="T:Arch.Core.Archetype"/> by a <see cref="T:Arch.Core.Utils.BitSet"/>.
+            </summary>
+            <param name="bitset">A <see cref="T:Arch.Core.Utils.SpanBitSet"/> indicating the <see cref="T:Arch.Core.Archetype"/> structure.</param>
+            <param name="archetype">The found <see cref="T:Arch.Core.Archetype"/>.</param>
+            <returns>True if found, otherwhise false.</returns>
+        </member>
+        <member name="M:Arch.Core.World.TryGetArchetype(System.Span{Arch.Core.Utils.ComponentType},Arch.Core.Archetype@)">
+            <summary>
+                Trys to find an <see cref="T:Arch.Core.Archetype"/> by the hash of its components.
+            </summary>
+            <param name="types">Its <see cref="T:Arch.Core.Utils.ComponentType"/>'s.</param>
+            <param name="archetype">The found <see cref="T:Arch.Core.Archetype"/>.</param>
+            <returns>True if found, otherwhise false.</returns>
+        </member>
+        <member name="M:Arch.Core.World.GetOrCreate(System.Span{Arch.Core.Utils.ComponentType})">
+            <summary>
+                Returned an <see cref="T:Arch.Core.Archetype"/> based on its components. If it does not exist, it will be created.
+            </summary>
+            <param name="types">Its <see cref="T:Arch.Core.Utils.ComponentType"/>'s.</param>
+            <returns>An existing or new <see cref="T:Arch.Core.Archetype"/>.</returns>
+        </member>
+        <member name="M:Arch.Core.World.Query(Arch.Core.QueryDescription@,Arch.Core.ForEach)">
+            <summary>
+                Searches all matching <see cref="T:Arch.Core.Entity"/>'s by a <see cref="T:Arch.Core.QueryDescription"/> and calls the passed <see cref="T:Arch.Core.ForEach"/>.
+            </summary>
+            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Entity"/>'s are searched for.</param>
+            <param name="forEntity">The <see cref="T:Arch.Core.ForEach"/> delegate.</param>
+        </member>
+        <member name="M:Arch.Core.World.InlineQuery``1(Arch.Core.QueryDescription@)">
+            <summary>
+                Searches all matching <see cref="T:Arch.Core.Entity"/>'s by a <see cref="T:Arch.Core.QueryDescription"/> and calls the <see cref="T:Arch.Core.IForEach"/> struct.
+                Inlines the call and is therefore faster than normal queries.
+            </summary>
+            <typeparam name="T">A struct implementation of the <see cref="T:Arch.Core.IForEach"/> interface which is called on each <see cref="T:Arch.Core.Entity"/> found.</typeparam>
+            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Entity"/>'s are searched for.</param>
+        </member>
+        <member name="M:Arch.Core.World.InlineQuery``1(Arch.Core.QueryDescription@,``0@)">
+            <summary>
+                Searches all matching <see cref="T:Arch.Core.Entity"/>'s by a <see cref="T:Arch.Core.QueryDescription"/> and calls the passed <see cref="T:Arch.Core.IForEach"/> struct.
+                Inlines the call and is therefore faster than normal queries.
+            </summary>
+            <typeparam name="T">A struct implementation of the <see cref="T:Arch.Core.IForEach"/> interface which is called on each <see cref="T:Arch.Core.Entity"/> found.</typeparam>
+            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Entity"/>'s are searched for.</param>
+            <param name="iForEach">The struct instance of the generic type being invoked.</param>
+        </member>
+        <member name="M:Arch.Core.World.Destroy(Arch.Core.QueryDescription@)">
+            <summary>
+                An efficient method to destroy all <see cref="T:Arch.Core.Entity"/>s matching a <see cref="T:Arch.Core.QueryDescription"/>.
+                No <see cref="T:Arch.Core.Entity"/>s are recopied which is much faster.
+            </summary>
+            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Entity"/>'s will be destroyed.</param>
+        </member>
+        <member name="M:Arch.Core.World.Set``1(Arch.Core.QueryDescription@,``0@)">
+            <summary>
+                An efficient method to set one component for all <see cref="T:Arch.Core.Entity"/>s matching a <see cref="T:Arch.Core.QueryDescription"/>.
+                No <see cref="T:Arch.Core.Entity"/> lookups which makes it as fast as a inlin query.
+            </summary>
+            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Entity"/>s will be targeted.</param>
+        </member>
+        <member name="M:Arch.Core.World.Add``1(Arch.Core.QueryDescription@,``0@)">
+            <summary>
+                An efficient method to add one component to all <see cref="T:Arch.Core.Entity"/>s matching a <see cref="T:Arch.Core.QueryDescription"/>.
+                No <see cref="T:Arch.Core.Entity"/>s are recopied which is much faster.
+            </summary>
+            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Entity"/>s will be targeted.</param>
+        </member>
+        <member name="M:Arch.Core.World.Remove``1(Arch.Core.QueryDescription@)">
+            <summary>
+                An efficient method to remove one component from <see cref="T:Arch.Core.Entity"/>s matching a <see cref="T:Arch.Core.QueryDescription"/>.
+                No <see cref="T:Arch.Core.Entity"/>s are recopied which is much faster.
+            </summary>
+            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Entity"/>s will be targeted.</param>
+        </member>
+        <member name="M:Arch.Core.World.Set``1(Arch.Core.Entity,``0@)">
+            <summary>
+                Sets or replaces a component for an <see cref="T:Arch.Core.Entity"/>.
+            </summary>
+            <typeparam name="T">The component type.</typeparam>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <param name="cmp">The instance, optional.</param>
+        </member>
+        <member name="M:Arch.Core.World.Has``1(Arch.Core.Entity)">
+            <summary>
+                Checks if an <see cref="T:Arch.Core.Entity"/> has a certain component.
+            </summary>
+            <typeparam name="T">The component type.</typeparam>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <returns>True if it has the desired component, otherwhise false.</returns>
+        </member>
+        <member name="M:Arch.Core.World.Get``1(Arch.Core.Entity)">
+            <summary>
+                Returns a reference to the component of an <see cref="T:Arch.Core.Entity"/>.
+            </summary>
+            <typeparam name="T">The component type.</typeparam>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <returns>A reference to the component.</returns>
+        </member>
+        <member name="M:Arch.Core.World.TryGet``1(Arch.Core.Entity,``0@)">
+            <summary>
+                Trys to return a reference to the component of an <see cref="T:Arch.Core.Entity"/>.
+                Will copy the component if its a struct.
+            </summary>
+            <typeparam name="T">The component type.</typeparam>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <param name="component">The found component.</param>
+            <returns>True if it exists, otherwhise false.</returns>
+        </member>
+        <member name="M:Arch.Core.World.TryGetRef``1(Arch.Core.Entity,System.Boolean@)">
+            <summary>
+                Trys to return a reference to the component of an <see cref="T:Arch.Core.Entity"/>.
+            </summary>
+            <typeparam name="T">The component type.</typeparam>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <param name="exists">True if it exists, oterhwhise false.</param>
+            <returns>A reference to the component.</returns>
+        </member>
+        <member name="M:Arch.Core.World.AddOrGet``1(Arch.Core.Entity,``0)">
+            <summary>
+                Ensures the existence of an component on an <see cref="T:Arch.Core.Entity"/>.
+            </summary>
+            <typeparam name="T">The component type.</typeparam>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <param name="cmp">The component value used if its being added.</param>
+            <returns>A reference to the component.</returns>
+        </member>
+        <member name="M:Arch.Core.World.Add``1(Arch.Core.Entity,Arch.Core.Archetype@,Arch.Core.Slot@)">
+            <summary>
+                Adds an new component to the <see cref="T:Arch.Core.Entity"/> and moves it to the new <see cref="T:Arch.Core.Archetype"/>.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <param name="newArchetype">The entity's new <see cref="T:Arch.Core.Archetype"/>.</param>
+            <param name="slot">The new <see cref="T:Arch.Core.Slot"/> where the moved <see cref="T:Arch.Core.Entity"/> landed in.</param>
+            <typeparam name="T">The component type.</typeparam>
+        </member>
+        <member name="M:Arch.Core.World.Add``1(Arch.Core.Entity)">
+            <summary>
+                Adds an new component to the <see cref="T:Arch.Core.Entity"/> and moves it to the new <see cref="T:Arch.Core.Archetype"/>.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <typeparam name="T">The component type.</typeparam>
+        </member>
+        <member name="M:Arch.Core.World.Add``1(Arch.Core.Entity,``0@)">
+            <summary>
+                Adds an new component to the <see cref="T:Arch.Core.Entity"/> and moves it to the new <see cref="T:Arch.Core.Archetype"/>.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <typeparam name="T">The component type.</typeparam>
+            <param name="cmp">The component instance.</param>
+        </member>
+        <member name="M:Arch.Core.World.Remove``1(Arch.Core.Entity)">
+            <summary>
+                Removes an component from an <see cref="T:Arch.Core.Entity"/> and moves it to a different <see cref="T:Arch.Core.Archetype"/>.
+            </summary>
+            <typeparam name="T">The component type.</typeparam>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+        </member>
+        <member name="M:Arch.Core.World.Set(Arch.Core.Entity,System.Object)">
+            <summary>
+                Sets or replaces a component for an <see cref="T:Arch.Core.Entity"/>.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <param name="cmp">The component.</param>
+        </member>
+        <member name="M:Arch.Core.World.SetRange(Arch.Core.Entity,System.Span{System.Object})">
+            <summary>
+                Sets or replaces a <see cref="T:System.Span`1"/> of components for an <see cref="T:Arch.Core.Entity"/>.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <param name="components">The components <see cref="T:System.Span`1"/>.</param>
+        </member>
+        <member name="M:Arch.Core.World.Has(Arch.Core.Entity,Arch.Core.Utils.ComponentType)">
+            <summary>
+                Checks if an <see cref="T:Arch.Core.Entity"/> has a certain component.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <param name="type">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
+            <returns>True if it has the desired component, otherwhise false.</returns>
+        </member>
+        <member name="M:Arch.Core.World.HasRange(Arch.Core.Entity,System.Span{Arch.Core.Utils.ComponentType})">
+            <summary>
+                Checks if an <see cref="T:Arch.Core.Entity"/> has a certain component.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <param name="types">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
+            <returns>True if it has the desired component, otherwhise false.</returns>
+        </member>
+        <member name="M:Arch.Core.World.Get(Arch.Core.Entity,Arch.Core.Utils.ComponentType)">
+            <summary>
+                Returns a reference to the component of an <see cref="T:Arch.Core.Entity"/>.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <param name="type">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
+            <returns>A reference to the component.</returns>
+        </member>
+        <member name="M:Arch.Core.World.GetRange(Arch.Core.Entity,System.Span{Arch.Core.Utils.ComponentType})">
+            <summary>
+                Returns an array of components of an <see cref="T:Arch.Core.Entity"/>.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <param name="types">The component <see cref="T:Arch.Core.Utils.ComponentType"/> as a <see cref="T:System.Span`1"/>.</param>
+            <returns>A reference to the component.</returns>
+        </member>
+        <member name="M:Arch.Core.World.GetRange(Arch.Core.Entity,System.Span{Arch.Core.Utils.ComponentType},System.Span{System.Object})">
+            <summary>
+                Returns an array of components of an <see cref="T:Arch.Core.Entity"/>.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <param name="types">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
+            <param name="components">A <see cref="T:System.Span`1"/> where the components are put it.</param>
+        </member>
+        <member name="M:Arch.Core.World.TryGet(Arch.Core.Entity,Arch.Core.Utils.ComponentType,System.Object@)">
+            <summary>
+                Trys to return a reference to the component of an <see cref="T:Arch.Core.Entity"/>.
+                Will copy the component if its a struct.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <param name="type">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
+            <param name="component">The found component.</param>
+            <returns>True if it exists, otherwhise false.</returns>
+        </member>
+        <member name="M:Arch.Core.World.Add(Arch.Core.Entity,System.Object@)">
+            <summary>
+                Adds an new component to the <see cref="T:Arch.Core.Entity"/> and moves it to the new <see cref="T:Arch.Core.Archetype"/>.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <param name="cmp">The component.</param>
+        </member>
+        <member name="M:Arch.Core.World.AddRange(Arch.Core.Entity,System.Span{System.Object})">
+            <summary>
+                Adds a <see cref="T:System.Collections.Generic.IList`1"/> of new components to the <see cref="T:Arch.Core.Entity"/> and moves it to the new <see cref="T:Arch.Core.Archetype"/>.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <param name="components">The component <see cref="T:System.Span`1"/>.</param>
+        </member>
+        <member name="M:Arch.Core.World.Remove(Arch.Core.Entity,Arch.Core.Utils.ComponentType)">
+            <summary>
+                Removes one single of <see cref="T:Arch.Core.Utils.ComponentType"/>'s from the <see cref="T:Arch.Core.Entity"/> and moves it to a different <see cref="T:Arch.Core.Archetype"/>.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <param name="type">The <see cref="T:Arch.Core.Utils.ComponentType"/> to remove from the the <see cref="T:Arch.Core.Entity"/>.</param>
+        </member>
+        <member name="M:Arch.Core.World.RemoveRange(Arch.Core.Entity,System.Span{Arch.Core.Utils.ComponentType})">
+            <summary>
+                Removes a list of <see cref="T:Arch.Core.Utils.ComponentType"/>'s from the <see cref="T:Arch.Core.Entity"/> and moves it to a different <see cref="T:Arch.Core.Archetype"/>.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <param name="types">A <see cref="T:System.Span`1"/> of <see cref="T:Arch.Core.Utils.ComponentType"/>'s, those are removed from the <see cref="T:Arch.Core.Entity"/>.</param>
+        </member>
+        <member name="M:Arch.Core.World.IsAlive(Arch.Core.Entity)">
+            <summary>
+                Checks if the <see cref="T:Arch.Core.Entity"/> is alive in this <see cref="T:Arch.Core.World"/>.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <returns>True if it exists and is alive, otherwhise false.</returns>
+        </member>
+        <member name="M:Arch.Core.World.Version(Arch.Core.Entity)">
+            <summary>
+                Returns the version of an <see cref="T:Arch.Core.Entity"/>.
+                Indicating how often it was recycled.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <returns>Its version.</returns>
+        </member>
+        <member name="M:Arch.Core.World.Reference(Arch.Core.Entity)">
+            <summary>
+                Returns a <see cref="T:Arch.Core.EntityReference"/> to an <see cref="T:Arch.Core.Entity"/>.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <returns>Its <see cref="T:Arch.Core.EntityReference"/>.</returns>
+        </member>
+        <member name="M:Arch.Core.World.GetArchetype(Arch.Core.Entity)">
+            <summary>
+                Returns the <see cref="T:Arch.Core.Archetype"/> of an <see cref="T:Arch.Core.Entity"/>.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <returns>Its <see cref="T:Arch.Core.Archetype"/>.</returns>
+        </member>
+        <member name="M:Arch.Core.World.GetChunk(Arch.Core.Entity)">
+            <summary>
+                Returns the <see cref="T:Arch.Core.Chunk"/> of an <see cref="T:Arch.Core.Entity"/>.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <returns>A reference to its <see cref="T:Arch.Core.Chunk"/>.</returns>
+        </member>
+        <member name="M:Arch.Core.World.GetComponentTypes(Arch.Core.Entity)">
+            <summary>
+                Returns all <see cref="T:Arch.Core.Utils.ComponentType"/>'s of an <see cref="T:Arch.Core.Entity"/>.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <returns>Its <see cref="T:Arch.Core.Utils.ComponentType"/>'s array.</returns>
+        </member>
+        <member name="M:Arch.Core.World.GetAllComponents(Arch.Core.Entity)">
+            <summary>
+                Returns all components of an <see cref="T:Arch.Core.Entity"/> as an array.
+                Will allocate memory.
+            </summary>
+            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
+            <returns>A newly allocated array containing the entities components.</returns>
+        </member>
         <member name="T:Arch.Core.Entity">
             <summary>
                 The <see cref="T:Arch.Core.Entity"/> struct
@@ -1202,22 +1934,12 @@
         </member>
         <member name="F:Arch.Core.Entity.Id">
             <summary>
-                 Its Id, unique in its <see cref="T:Arch.Core.World"/>.
-            </summary>
-        </member>
-        <member name="F:Arch.Core.Entity.WorldId">
-            <summary>
-            Its <see cref="T:Arch.Core.World"/> id.
+                Its Id, unique in its <see cref="T:Arch.Core.World"/>.
             </summary>
         </member>
         <member name="F:Arch.Core.Entity.Null">
             <summary>
-                A null <see cref="T:Arch.Core.Entity"/> used for comparison.
-            </summary>
-        </member>
-        <member name="M:Arch.Core.Entity.#ctor">
-            <summary>
-                Initializes a new instance of the <see cref="T:Arch.Core.Entity"/> struct with default values.
+                A null entity, used for comparison.
             </summary>
         </member>
         <member name="M:Arch.Core.Entity.#ctor(System.Int32,System.Int32)">
@@ -1225,7 +1947,7 @@
                 Initializes a new instance of the <see cref="T:Arch.Core.Entity"/> struct.
             </summary>
             <param name="id">Its unique id.</param>
-            <param name="worldId">Its <see cref="T:Arch.Core.World"/> id.</param>
+            <param name="worldId">Its world id, not used for this entity since its pure ecs.</param>
         </member>
         <member name="M:Arch.Core.Entity.Equals(Arch.Core.Entity)">
             <summary>
@@ -1236,7 +1958,7 @@
         </member>
         <member name="M:Arch.Core.Entity.Equals(System.Object)">
             <summary>
-                Checks the <see cref="T:Arch.Core.Entity"/> for equality with another <see cref="T:System.Object"/>.
+                Checks the <see cref="T:Arch.Core.Entity"/> for equality with another object..
             </summary>
             <param name="obj">The other <see cref="T:Arch.Core.Entity"/> object.</param>
             <returns>True if equal, false if not.</returns>
@@ -1249,25 +1971,25 @@
         </member>
         <member name="M:Arch.Core.Entity.op_Equality(Arch.Core.Entity,Arch.Core.Entity)">
             <summary>
-                 Checks the <see cref="T:Arch.Core.Entity"/> for equality with another one.
+                Checks the left <see cref="T:Arch.Core.Entity"/> for equality with the right one.
             </summary>
             <param name="left">The left <see cref="T:Arch.Core.Entity"/>.</param>
             <param name="right">The right <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>True if equal, otherwhise false.</returns>
+            <returns>True if both are equal, otherwhise false.</returns>
         </member>
         <member name="M:Arch.Core.Entity.op_Inequality(Arch.Core.Entity,Arch.Core.Entity)">
             <summary>
-                 Checks the <see cref="T:Arch.Core.Entity"/> for unequality with another one.
+                Checks the left <see cref="T:Arch.Core.Entity"/> for unequality with the right one.
             </summary>
             <param name="left">The left <see cref="T:Arch.Core.Entity"/>.</param>
             <param name="right">The right <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>True if unequal, otherwhise false.</returns>
+            <returns>True if both are unequal, otherwhise false.</returns>
         </member>
         <member name="M:Arch.Core.Entity.ToString">
             <summary>
-                Converts this <see cref="T:Arch.Core.Entity"/> to a string.
+                Converts this entity to a string.
             </summary>
-            <returns>Its string.</returns>
+            <returns>A string.</returns>
         </member>
         <member name="T:Arch.Core.EntityReference">
             <summary>
@@ -1302,10 +2024,11 @@
                 Initializes a new null instance of the <see cref="T:Arch.Core.EntityReference"/> struct.
             </summary>
         </member>
-        <member name="M:Arch.Core.EntityReference.IsAlive">
+        <member name="M:Arch.Core.EntityReference.IsAlive(Arch.Core.World)">
             <summary>
                 Checks if the referenced <see cref="F:Arch.Core.EntityReference.Entity"/> is still valid and alife.
             </summary>
+            <param name="world">The <see cref="F:Arch.Core.EntityReference.Entity"/> <see cref="T:Arch.Core.World"/>..</param>
             <returns>True if its alive, otherwhise false.</returns>
         </member>
         <member name="M:Arch.Core.EntityReference.Equals(Arch.Core.EntityReference)">
@@ -1515,6 +2238,7 @@
             TODO : Find a cleaner way to break? One that does NOT require a branching?
             <summary>
                 Updates the <see cref="T:Arch.Core.EntityInfo"/> and all entities that moved/shifted between the archetypes.
+                <remarks>Use and modify with caution, one small logical issue and the whole framework stops working.</remarks>
             </summary>
             <param name="archetype">The old <see cref="T:Arch.Core.Archetype"/>.</param>
             <param name="archetypeSlot">The old <see cref="T:Arch.Core.Slot"/> where the shift operation started.</param>
@@ -1955,16 +2679,28 @@
                 A delegate called once a <see cref="T:Arch.Core.Entity"/> was destroyed.
             </summary>
         </member>
-        <member name="T:Arch.Core.Events.ComponentAddedHandler">
+        <member name="T:Arch.Core.Events.ComponentAddedHandler`1">
             <summary>
                 A delegate called once a componnet was added for a specific <see cref="T:Arch.Core.Entity"/>.
+            <typeparam name="T">The generic component.</typeparam>
             </summary>
         </member>
         <member name="T:Arch.Core.Events.ComponentSetHandler`1">
             <summary>
                 A delegate called once a component was set for a specific <see cref="T:Arch.Core.Entity"/>.
             </summary>
-            <typeparam name="T"></typeparam>
+            <typeparam name="T">The generic component.</typeparam>
+        </member>
+        <member name="T:Arch.Core.Events.ComponentRemovedHandler`1">
+            <summary>
+                A delegate called once a component was removed from a specific <see cref="T:Arch.Core.Entity"/>.
+            <typeparam name="T">The generic component.</typeparam>
+            </summary>
+        </member>
+        <member name="T:Arch.Core.Events.ComponentAddedHandler">
+            <summary>
+                A delegate called once a componnet was added for a specific <see cref="T:Arch.Core.Entity"/>.
+            </summary>
         </member>
         <member name="T:Arch.Core.Events.ComponentSetHandler">
             <summary>
@@ -1973,7 +2709,7 @@
         </member>
         <member name="T:Arch.Core.Events.ComponentRemovedHandler">
             <summary>
-                A delegate called once a component was removed from a specific <see cref="T:Arch.Core.Entity"/>.
+                A delegate called once a component was set for a specific <see cref="T:Arch.Core.Entity"/>.
             </summary>
         </member>
         <member name="T:Arch.Core.Events.Events">
@@ -2022,639 +2758,6 @@
                 Creates a new instance of the <see cref="T:Arch.Core.Events.EventType`1"/> class.
             </summary>
         </member>
-        <member name="T:Arch.Core.World">
-            <summary>
-                The <see cref="T:Arch.Core.World"/> class
-                stores <see cref="T:Arch.Core.Entity"/>'s in <see cref="T:Arch.Core.Archetype"/>'s and <see cref="T:Arch.Core.Chunk"/>'s, manages them and provides methods to query for specific <see cref="T:Arch.Core.Entity"/>'s.
-            </summary>
-        </member>
-        <member name="M:Arch.Core.World.SubscribeEntityCreated(Arch.Core.Events.EntityCreatedHandler)">
-            <summary>
-                Adds a delegate to be called when an entity is created.
-            </summary>
-            <param name="handler">The delegate to call.</param>
-        </member>
-        <member name="M:Arch.Core.World.SubscribeEntityDestroyed(Arch.Core.Events.EntityDestroyedHandler)">
-            <summary>
-                Adds a delegate to be called when an entity is destroyed.
-            </summary>
-            <param name="handler">The delegate to call.</param>
-        </member>
-        <member name="M:Arch.Core.World.SubscribeComponentAdded``1(Arch.Core.Events.ComponentAddedHandler)">
-            <summary>
-                Adds a delegate to be called when a component of type <see cref="!:T"/> is added to an entity.
-                <see cref="M:Arch.Core.World.Add(Arch.Core.Entity,System.Object@)"/>
-            </summary>
-            <param name="handler">The delegate to call.</param>
-            <typeparam name="T">The component type.</typeparam>
-        </member>
-        <member name="M:Arch.Core.World.SubscribeComponentSet``1(Arch.Core.Events.ComponentSetHandler{``0})">
-            <summary>
-                Adds a delegate to be called when a component of type <see cref="!:T"/> is set on an entity.
-                <see cref="M:Arch.Core.World.Set(Arch.Core.Entity,System.Object)"/>
-            </summary>
-            <param name="handler">The delegate to call.</param>
-            <typeparam name="T">The component type.</typeparam>
-        </member>
-        <member name="M:Arch.Core.World.SubscribeComponentRemoved``1(Arch.Core.Events.ComponentRemovedHandler)">
-            <summary>
-                Adds a delegate to be called when a component of type <see cref="!:T"/> is removed from an entity.
-                <see cref="M:Arch.Core.World.Remove(Arch.Core.Entity,Arch.Core.Utils.ComponentType)"/>
-            </summary>
-            <param name="handler">The delegate to call.</param>
-            <typeparam name="T">The component type.</typeparam>
-        </member>
-        <member name="M:Arch.Core.World.OnEntityCreated(Arch.Core.Entity@)">
-            <summary>
-                Calls all handlers subscribed to entity creation.
-            </summary>
-            <param name="entity">The entity that got created.</param>
-        </member>
-        <member name="M:Arch.Core.World.OnEntityDestroyed(Arch.Core.Entity@)">
-            <summary>
-                Calls all handlers subscribed to entity deletion.
-            </summary>
-            <param name="entity">The entity that got destroyed.</param>
-        </member>
-        <member name="M:Arch.Core.World.OnComponentAdded``1(Arch.Core.Entity@)">
-            <summary>
-                Calls all handlers subscribed to component addition of this type.
-            </summary>
-            <param name="entity">The entity that the component was added to.</param>
-            <typeparam name="T">The type of component that got added.</typeparam>
-        </member>
-        <member name="M:Arch.Core.World.OnComponentAdded(Arch.Core.Entity@,System.Type)">
-            <summary>
-                Calls all handlers subscribed to component addition of this type.
-            </summary>
-            <param name="entity">The entity that the component was added to.</param>
-            <param name="compType">The type of component that got added.</param>
-        </member>
-        <member name="M:Arch.Core.World.OnComponentSet``1(Arch.Core.Entity@,``0@)">
-            <summary>
-                Calls all handlers subscribed to component setting of this type.
-            </summary>
-            <param name="entity">The entity that the component was set on.</param>
-            <param name="comp">The component instance that got set.</param>
-            <typeparam name="T">The type of component that got set.</typeparam>
-        </member>
-        <member name="M:Arch.Core.World.OnComponentSet(Arch.Core.Entity@,System.Object@)">
-            <summary>
-                Calls all handlers subscribed to component setting of this type.
-            </summary>
-            <param name="entity">The entity that the component was set on.</param>
-            <param name="comp">The component instance that got set.</param>
-        </member>
-        <member name="M:Arch.Core.World.OnComponentRemoved``1(Arch.Core.Entity@)">
-            <summary>
-                Calls all handlers subscribed to component removal.
-            </summary>
-            <param name="entity">The entity that the component was removed from.</param>
-            <typeparam name="T">The type of component that got removed.</typeparam>
-        </member>
-        <member name="M:Arch.Core.World.OnComponentRemoved(Arch.Core.Entity@,System.Type)">
-            <summary>
-                Calls all handlers subscribed to component removal.
-            </summary>
-            <param name="entity">The entity that the component was removed from.</param>
-            <param name="compType">The type of component that got removed.</param>
-        </member>
-        <member name="M:Arch.Core.World.GetEvents``1">
-            <summary>
-                Gets all event handlers for a certain component type.
-            </summary>
-            <typeparam name="T">The type of component to get handlers for.</typeparam>
-            <returns>All handlers for the given component type.</returns>
-        </member>
-        <member name="M:Arch.Core.World.GetEvents(System.Type)">
-            <summary>
-                Gets all event handlers for a certain component type.
-            </summary>
-            <param name="compType">The type of component to get handlers for.</param>
-            <returns>All handlers for the given component type.</returns>
-        </member>
-        <member name="P:Arch.Core.World.JobHandles">
-            <summary>
-                A list of <see cref="T:JobScheduler.JobHandle"/> which are pooled to avoid allocs.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.World.JobsCache">
-            <summary>
-                A cache used for the parallel queries to prevent list allocations.
-            </summary>
-        </member>
-        <member name="M:Arch.Core.World.ParallelQuery(Arch.Core.QueryDescription@,Arch.Core.ForEach)">
-            <summary>
-                Searches all matching <see cref="T:Arch.Core.Entity"/>'s by a <see cref="T:Arch.Core.QueryDescription"/> and calls the passed <see cref="T:Arch.Core.ForEach"/> delegate.
-                Runs multithreaded and will process the matching <see cref="T:Arch.Core.Entity"/>'s in parallel.
-            </summary>
-            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Entity"/>'s are searched for.</param>
-            <param name="forEntity">The <see cref="T:Arch.Core.ForEach"/> delegate.</param>
-        </member>
-        <member name="M:Arch.Core.World.InlineParallelQuery``1(Arch.Core.QueryDescription@)">
-            <summary>
-                Searches all matching <see cref="T:Arch.Core.Entity"/>'s by a <see cref="T:Arch.Core.QueryDescription"/> and calls the <see cref="T:Arch.Core.IForEach"/> struct.
-                Runs multithreaded and will process the matching <see cref="T:Arch.Core.Entity"/>'s in parallel.
-            </summary>
-            <typeparam name="T">A struct implementation of the <see cref="T:Arch.Core.IForEach"/> interface which is called on each <see cref="T:Arch.Core.Entity"/> found.</typeparam>
-            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Entity"/>'s are searched for.</param>
-        </member>
-        <member name="M:Arch.Core.World.InlineParallelQuery``1(Arch.Core.QueryDescription@,Arch.Core.IForEachJob{``0}@)">
-            <summary>
-                Searches all matching <see cref="T:Arch.Core.Entity"/>'s by a <see cref="T:Arch.Core.QueryDescription"/> and calls the passed <see cref="T:Arch.Core.IForEach"/> struct.
-                Runs multithreaded and will process the matching <see cref="T:Arch.Core.Entity"/>'s in parallel.
-            </summary>
-            <typeparam name="T">A struct implementation of the <see cref="T:Arch.Core.IForEach"/> interface which is called on each <see cref="T:Arch.Core.Entity"/> found.</typeparam>
-            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Entity"/>'s are searched for.</param>
-            <param name="iForEach">The struct instance of the generic type being invoked.</param>
-        </member>
-        <member name="M:Arch.Core.World.InlineParallelChunkQuery``1(Arch.Core.QueryDescription@,``0@)">
-            <summary>
-                Finds all matching <see cref="T:Arch.Core.Chunk"/>'s by a <see cref="T:Arch.Core.QueryDescription"/> and calls an <see cref="T:Arch.Core.IChunkJob"/> on them.
-            </summary>
-            <typeparam name="T">A struct implementation of the <see cref="T:Arch.Core.IChunkJob"/> interface which is called on each <see cref="T:Arch.Core.Chunk"/> found.</typeparam>
-            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Chunk"/>'s are searched for.</param>
-            <param name="innerJob">The struct instance of the generic type being invoked.</param>
-            <exception cref="T:System.Exception">An <see cref="T:System.Exception"/> if the <see cref="N:JobScheduler"/> was not initialized before.</exception>
-        </member>
-        <member name="M:Arch.Core.World.#ctor(System.Int32)">
-            <summary>
-                Initializes a new instance of the <see cref="T:Arch.Core.World"/> class
-            </summary>
-            <param name="id">Its unique id.</param>
-        </member>
-        <member name="P:Arch.Core.World.Worlds">
-            <summary>
-                A list of all existing <see cref="P:Arch.Core.World.Worlds"/>.
-                Should not be modified by the user.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.World.Id">
-            <summary>
-                The unique <see cref="T:Arch.Core.World"/> id.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.World.Size">
-            <summary>
-                The amount of <see cref="T:Arch.Core.Entity"/>'s stored by this instance.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.World.Capacity">
-            <summary>
-                The available capacity for <see cref="T:Arch.Core.Entity"/>'s by this instance.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.World.Archetypes">
-            <summary>
-                All <see cref="T:Arch.Core.Archetype"/>'s that exist in this <see cref="T:Arch.Core.World"/>.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.World.EntityInfo">
-            <summary>
-                Mapt an <see cref="T:Arch.Core.Entity"/> to its <see cref="P:Arch.Core.World.EntityInfo"/> for quick lookups.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.World.RecycledIds">
-            <summary>
-                Stores recycled <see cref="T:Arch.Core.Entity"/> ids and their last version.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.World.QueryCache">
-            <summary>
-                A cache to map <see cref="T:Arch.Core.QueryDescription"/> to their <see cref="T:Arch.Core.Query"/> to avoid allocs.
-            </summary>
-        </member>
-        <member name="M:Arch.Core.World.Create">
-            <summary>
-                Creates a <see cref="T:Arch.Core.World"/> instance.
-            </summary>
-            <returns>The created <see cref="T:Arch.Core.World"/> instance.</returns>
-        </member>
-        <member name="M:Arch.Core.World.Destroy(Arch.Core.World)">
-            <summary>
-                Destroys an existing <see cref="T:Arch.Core.World"/>.
-            </summary>
-            <param name="world">The <see cref="T:Arch.Core.World"/>.</param>
-        </member>
-        <member name="M:Arch.Core.World.Reserve(System.Span{Arch.Core.Utils.ComponentType},System.Int32)">
-            <summary>
-                Reserves space for a certain number of <see cref="T:Arch.Core.Entity"/>'s of a given component structure/<see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <param name="types">The component structure/<see cref="T:Arch.Core.Archetype"/>.</param>
-            <param name="amount">The amount.</param>
-        </member>
-        <member name="M:Arch.Core.World.Create(Arch.Core.Utils.ComponentType[])">
-            <summary>
-                Creates a new <see cref="T:Arch.Core.Entity"/> using its given component structure/<see cref="T:Arch.Core.Archetype"/>.
-                Might resize its target <see cref="T:Arch.Core.Archetype"/> and allocate new space if its full.
-            </summary>
-            <param name="types">Its component structure/<see cref="T:Arch.Core.Archetype"/>.</param>
-            <returns></returns>
-        </member>
-        <member name="M:Arch.Core.World.Create(System.Span{Arch.Core.Utils.ComponentType})">
-            <summary>
-                Creates a new <see cref="T:Arch.Core.Entity"/> using its given component structure/<see cref="T:Arch.Core.Archetype"/>.
-                Might resize its target <see cref="T:Arch.Core.Archetype"/> and allocate new space if its full.
-            </summary>
-            <param name="types">Its component structure/<see cref="T:Arch.Core.Archetype"/>.</param>
-            <returns></returns>
-        </member>
-        <member name="M:Arch.Core.World.Move(Arch.Core.Entity,Arch.Core.Archetype,Arch.Core.Archetype,Arch.Core.Slot@)">
-            <summary>
-                Moves an <see cref="T:Arch.Core.Entity"/> from one <see cref="T:Arch.Core.Archetype"/> <see cref="T:Arch.Core.Slot"/> to another.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="source">Its <see cref="T:Arch.Core.Archetype"/>.</param>
-            <param name="destination">The new <see cref="T:Arch.Core.Archetype"/>.</param>
-            <param name="destinationSlot">The new <see cref="T:Arch.Core.Slot"/> where moved <see cref="T:Arch.Core.Entity"/> landed in.</param>
-        </member>
-        <member name="M:Arch.Core.World.Destroy(Arch.Core.Entity)">
-            <summary>
-                Destroys an <see cref="T:Arch.Core.Entity"/>.
-                Might resize its target <see cref="T:Arch.Core.Archetype"/> and release memory.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-        </member>
-        <member name="M:Arch.Core.World.TrimExcess">
-            <summary>
-                Trims this <see cref="T:Arch.Core.World"/> instance and releases unused memory.
-                Should not be called every single update or frame.
-                One single <see cref="T:Arch.Core.Chunk"/> from each <see cref="T:Arch.Core.Archetype"/> is spared.
-            </summary>
-        </member>
-        <member name="M:Arch.Core.World.Clear">
-            <summary>
-                Clears or resets this <see cref="T:Arch.Core.World"/> instance, will drop used <see cref="P:Arch.Core.World.Archetypes"/> and therefore release some memory sooner or later.
-            </summary>
-        </member>
-        <member name="M:Arch.Core.World.Query(Arch.Core.QueryDescription@)">
-            <summary>
-                Creates a <see cref="T:Arch.Core.Query"/> using a <see cref="T:Arch.Core.QueryDescription"/>
-                which can be used to iterate over the matching <see cref="T:Arch.Core.Entity"/>'s, <see cref="T:Arch.Core.Archetype"/>'s and <see cref="T:Arch.Core.Chunk"/>'s.
-            </summary>
-            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which components are searched for.</param>
-            <returns></returns>
-        </member>
-        <member name="M:Arch.Core.World.CountEntities(Arch.Core.QueryDescription@)">
-            <summary>
-                Counts all <see cref="T:Arch.Core.Entity"/>'s that match a <see cref="T:Arch.Core.QueryDescription"/> and returns the number.
-            </summary>
-            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which components or <see cref="T:Arch.Core.Entity"/>'s are searched for.</param>
-        </member>
-        <member name="M:Arch.Core.World.GetEntities(Arch.Core.QueryDescription@,System.Span{Arch.Core.Entity},System.Int32)">
-            <summary>
-                Search all matching <see cref="T:Arch.Core.Entity"/>'s and put them into the given <see cref="T:System.Span`1"/>.
-            </summary>
-            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which components or <see cref="T:Arch.Core.Entity"/>'s are searched for.</param>
-            <param name="list">The <see cref="T:System.Span`1"/> receiving the found <see cref="T:Arch.Core.Entity"/>'s.</param>
-            <param name="start">The start index inside the <see cref="T:System.Span`1"/>. Default is 0.</param>
-        </member>
-        <member name="M:Arch.Core.World.GetArchetypes(Arch.Core.QueryDescription@,System.Span{Arch.Core.Archetype},System.Int32)">
-            <summary>
-                Search all matching <see cref="T:Arch.Core.Archetype"/>'s and put them into the given <see cref="T:System.Collections.Generic.IList`1"/>.
-            </summary>
-            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which components are searched for.</param>
-            <param name="archetypes">The <see cref="T:System.Span`1"/> receiving <see cref="T:Arch.Core.Archetype"/>'s containing <see cref="T:Arch.Core.Entity"/>'s with the matching components.</param>
-            <param name="start">The start index inside the <see cref="T:System.Span`1"/>. Default is 0.</param>
-        </member>
-        <member name="M:Arch.Core.World.GetChunks(Arch.Core.QueryDescription@,System.Span{Arch.Core.Chunk},System.Int32)">
-            <summary>
-                Search all matching <see cref="T:Arch.Core.Chunk"/>'s and put them into the given <see cref="T:System.Collections.Generic.IList`1"/>.
-            </summary>
-            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which components are searched for.</param>
-            <param name="chunks">The <see cref="T:System.Span`1"/> receiving <see cref="T:Arch.Core.Chunk"/>'s containing <see cref="T:Arch.Core.Entity"/>'s with the matching components.</param>
-            <param name="start">The start index inside the <see cref="T:System.Span`1"/>. Default is 0.</param>
-        </member>
-        <member name="M:Arch.Core.World.GetEnumerator">
-            <summary>
-                Creates and returns a new <see cref="T:Arch.Core.Enumerator`1"/> instance to iterate over all <see cref="P:Arch.Core.World.Archetypes"/>.
-            </summary>
-            <returns>A new <see cref="T:Arch.Core.Enumerator`1"/> instance.</returns>
-        </member>
-        <member name="M:Arch.Core.World.Dispose">
-            <summary>
-                Disposes this <see cref="T:Arch.Core.World"/> instance and destroys it from the <see cref="P:Arch.Core.World.Worlds"/>.
-            </summary>
-        </member>
-        <member name="M:Arch.Core.World.ToString">
-            <summary>
-                Converts this <see cref="T:Arch.Core.World"/> to a human readable string.
-            </summary>
-            <returns>A string.</returns>
-        </member>
-        <member name="P:Arch.Core.World.GroupToArchetype">
-            <summary>
-                Maps an <see cref="T:Arch.Core.Utils.Group"/> hash to its <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-        </member>
-        <member name="M:Arch.Core.World.TryGetArchetype(System.Int32,Arch.Core.Archetype@)">
-            <summary>
-                Trys to find an <see cref="T:Arch.Core.Archetype"/> by the hash of its components.
-            </summary>
-            <param name="hash">Its hash..</param>
-            <param name="archetype">The found <see cref="T:Arch.Core.Archetype"/>.</param>
-            <returns>True if found, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.World.TryGetArchetype(Arch.Core.Utils.BitSet,Arch.Core.Archetype@)">
-            <summary>
-                Trys to find an <see cref="T:Arch.Core.Archetype"/> by a <see cref="T:Arch.Core.Utils.BitSet"/>.
-            </summary>
-            <param name="bitset">A <see cref="T:Arch.Core.Utils.BitSet"/> indicating the <see cref="T:Arch.Core.Archetype"/> structure.</param>
-            <param name="archetype">The found <see cref="T:Arch.Core.Archetype"/>.</param>
-            <returns>True if found, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.World.TryGetArchetype(Arch.Core.Utils.SpanBitSet,Arch.Core.Archetype@)">
-            <summary>
-                Trys to find an <see cref="T:Arch.Core.Archetype"/> by a <see cref="T:Arch.Core.Utils.BitSet"/>.
-            </summary>
-            <param name="bitset">A <see cref="T:Arch.Core.Utils.SpanBitSet"/> indicating the <see cref="T:Arch.Core.Archetype"/> structure.</param>
-            <param name="archetype">The found <see cref="T:Arch.Core.Archetype"/>.</param>
-            <returns>True if found, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.World.TryGetArchetype(System.Span{Arch.Core.Utils.ComponentType},Arch.Core.Archetype@)">
-            <summary>
-                Trys to find an <see cref="T:Arch.Core.Archetype"/> by the hash of its components.
-            </summary>
-            <param name="types">Its <see cref="T:Arch.Core.Utils.ComponentType"/>'s.</param>
-            <param name="archetype">The found <see cref="T:Arch.Core.Archetype"/>.</param>
-            <returns>True if found, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.World.GetOrCreate(System.Span{Arch.Core.Utils.ComponentType})">
-            <summary>
-                Returned an <see cref="T:Arch.Core.Archetype"/> based on its components. If it does not exist, it will be created.
-            </summary>
-            <param name="types">Its <see cref="T:Arch.Core.Utils.ComponentType"/>'s.</param>
-            <returns>An existing or new <see cref="T:Arch.Core.Archetype"/>.</returns>
-        </member>
-        <member name="M:Arch.Core.World.Query(Arch.Core.QueryDescription@,Arch.Core.ForEach)">
-            <summary>
-                Searches all matching <see cref="T:Arch.Core.Entity"/>'s by a <see cref="T:Arch.Core.QueryDescription"/> and calls the passed <see cref="T:Arch.Core.ForEach"/>.
-            </summary>
-            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Entity"/>'s are searched for.</param>
-            <param name="forEntity">The <see cref="T:Arch.Core.ForEach"/> delegate.</param>
-        </member>
-        <member name="M:Arch.Core.World.InlineQuery``1(Arch.Core.QueryDescription@)">
-            <summary>
-                Searches all matching <see cref="T:Arch.Core.Entity"/>'s by a <see cref="T:Arch.Core.QueryDescription"/> and calls the <see cref="T:Arch.Core.IForEach"/> struct.
-                Inlines the call and is therefore faster than normal queries.
-            </summary>
-            <typeparam name="T">A struct implementation of the <see cref="T:Arch.Core.IForEach"/> interface which is called on each <see cref="T:Arch.Core.Entity"/> found.</typeparam>
-            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Entity"/>'s are searched for.</param>
-        </member>
-        <member name="M:Arch.Core.World.InlineQuery``1(Arch.Core.QueryDescription@,``0@)">
-            <summary>
-                Searches all matching <see cref="T:Arch.Core.Entity"/>'s by a <see cref="T:Arch.Core.QueryDescription"/> and calls the passed <see cref="T:Arch.Core.IForEach"/> struct.
-                Inlines the call and is therefore faster than normal queries.
-            </summary>
-            <typeparam name="T">A struct implementation of the <see cref="T:Arch.Core.IForEach"/> interface which is called on each <see cref="T:Arch.Core.Entity"/> found.</typeparam>
-            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Entity"/>'s are searched for.</param>
-            <param name="iForEach">The struct instance of the generic type being invoked.</param>
-        </member>
-        <member name="M:Arch.Core.World.Destroy(Arch.Core.QueryDescription@)">
-            <summary>
-                An efficient method to destroy all <see cref="T:Arch.Core.Entity"/>s matching a <see cref="T:Arch.Core.QueryDescription"/>.
-                No <see cref="T:Arch.Core.Entity"/>s are recopied which is much faster.
-            </summary>
-            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Entity"/>'s will be destroyed.</param>
-        </member>
-        <member name="M:Arch.Core.World.Set``1(Arch.Core.QueryDescription@,``0@)">
-            <summary>
-                An efficient method to set one component for all <see cref="T:Arch.Core.Entity"/>s matching a <see cref="T:Arch.Core.QueryDescription"/>.
-                No <see cref="T:Arch.Core.Entity"/> lookups which makes it as fast as a inlin query.
-            </summary>
-            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Entity"/>s will be targeted.</param>
-        </member>
-        <member name="M:Arch.Core.World.Add``1(Arch.Core.QueryDescription@,``0@)">
-            <summary>
-                An efficient method to add one component to all <see cref="T:Arch.Core.Entity"/>s matching a <see cref="T:Arch.Core.QueryDescription"/>.
-                No <see cref="T:Arch.Core.Entity"/>s are recopied which is much faster.
-            </summary>
-            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Entity"/>s will be targeted.</param>
-        </member>
-        <member name="M:Arch.Core.World.Remove``1(Arch.Core.QueryDescription@)">
-            <summary>
-                An efficient method to remove one component from <see cref="T:Arch.Core.Entity"/>s matching a <see cref="T:Arch.Core.QueryDescription"/>.
-                No <see cref="T:Arch.Core.Entity"/>s are recopied which is much faster.
-            </summary>
-            <param name="queryDescription">The <see cref="T:Arch.Core.QueryDescription"/> which specifies which <see cref="T:Arch.Core.Entity"/>s will be targeted.</param>
-        </member>
-        <member name="M:Arch.Core.World.Set``1(Arch.Core.Entity,``0@)">
-            <summary>
-                Sets or replaces a component for an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="cmp">The instance, optional.</param>
-        </member>
-        <member name="M:Arch.Core.World.Has``1(Arch.Core.Entity)">
-            <summary>
-                Checks if an <see cref="T:Arch.Core.Entity"/> has a certain component.
-            </summary>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>True if it has the desired component, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.World.Get``1(Arch.Core.Entity)">
-            <summary>
-                Returns a reference to the component of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>A reference to the component.</returns>
-        </member>
-        <member name="M:Arch.Core.World.TryGet``1(Arch.Core.Entity,``0@)">
-            <summary>
-                Trys to return a reference to the component of an <see cref="T:Arch.Core.Entity"/>.
-                Will copy the component if its a struct.
-            </summary>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="component">The found component.</param>
-            <returns>True if it exists, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.World.TryGetRef``1(Arch.Core.Entity,System.Boolean@)">
-            <summary>
-                Trys to return a reference to the component of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="exists">True if it exists, oterhwhise false.</param>
-            <returns>A reference to the component.</returns>
-        </member>
-        <member name="M:Arch.Core.World.AddOrGet``1(Arch.Core.Entity,``0)">
-            <summary>
-                Ensures the existence of an component on an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="cmp">The component value used if its being added.</param>
-            <returns>A reference to the component.</returns>
-        </member>
-        <member name="M:Arch.Core.World.Add``1(Arch.Core.Entity)">
-            <summary>
-                Adds an new component to the <see cref="T:Arch.Core.Entity"/> and moves it to the new <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <typeparam name="T">The component type.</typeparam>
-        </member>
-        <member name="M:Arch.Core.World.Add``1(Arch.Core.Entity,``0@)">
-            <summary>
-                Adds an new component to the <see cref="T:Arch.Core.Entity"/> and moves it to the new <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="cmp">The component instance.</param>
-        </member>
-        <member name="M:Arch.Core.World.Remove``1(Arch.Core.Entity)">
-            <summary>
-                Removes an component from an <see cref="T:Arch.Core.Entity"/> and moves it to a different <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-        </member>
-        <member name="M:Arch.Core.World.Set(Arch.Core.Entity,System.Object)">
-            <summary>
-                Sets or replaces a component for an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="cmp">The component.</param>
-        </member>
-        <member name="M:Arch.Core.World.SetRange(Arch.Core.Entity,System.Span{System.Object})">
-            <summary>
-                Sets or replaces a <see cref="T:System.Span`1"/> of components for an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="components">The components <see cref="T:System.Span`1"/>.</param>
-        </member>
-        <member name="M:Arch.Core.World.Has(Arch.Core.Entity,Arch.Core.Utils.ComponentType)">
-            <summary>
-                Checks if an <see cref="T:Arch.Core.Entity"/> has a certain component.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="type">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
-            <returns>True if it has the desired component, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.World.HasRange(Arch.Core.Entity,System.Span{Arch.Core.Utils.ComponentType})">
-            <summary>
-                Checks if an <see cref="T:Arch.Core.Entity"/> has a certain component.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="types">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
-            <returns>True if it has the desired component, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.World.Get(Arch.Core.Entity,Arch.Core.Utils.ComponentType)">
-            <summary>
-                Returns a reference to the component of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="type">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
-            <returns>A reference to the component.</returns>
-        </member>
-        <member name="M:Arch.Core.World.GetRange(Arch.Core.Entity,System.Span{Arch.Core.Utils.ComponentType})">
-            <summary>
-                Returns an array of components of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="types">The component <see cref="T:Arch.Core.Utils.ComponentType"/> as a <see cref="T:System.Span`1"/>.</param>
-            <returns>A reference to the component.</returns>
-        </member>
-        <member name="M:Arch.Core.World.GetRange(Arch.Core.Entity,System.Span{Arch.Core.Utils.ComponentType},System.Span{System.Object})">
-            <summary>
-                Returns an array of components of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="types">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
-            <param name="components">A <see cref="T:System.Span`1"/> where the components are put it.</param>
-        </member>
-        <member name="M:Arch.Core.World.TryGet(Arch.Core.Entity,Arch.Core.Utils.ComponentType,System.Object@)">
-            <summary>
-                Trys to return a reference to the component of an <see cref="T:Arch.Core.Entity"/>.
-                Will copy the component if its a struct.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="type">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
-            <param name="component">The found component.</param>
-            <returns>True if it exists, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.World.Add(Arch.Core.Entity,System.Object@)">
-            <summary>
-                Adds an new component to the <see cref="T:Arch.Core.Entity"/> and moves it to the new <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="cmp">The component.</param>
-        </member>
-        <member name="M:Arch.Core.World.AddRange(Arch.Core.Entity,System.Span{System.Object})">
-            <summary>
-                Adds a <see cref="T:System.Collections.Generic.IList`1"/> of new components to the <see cref="T:Arch.Core.Entity"/> and moves it to the new <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="components">The component <see cref="T:System.Span`1"/>.</param>
-        </member>
-        <member name="M:Arch.Core.World.Remove(Arch.Core.Entity,Arch.Core.Utils.ComponentType)">
-            <summary>
-                Removes one single of <see cref="T:Arch.Core.Utils.ComponentType"/>'s from the <see cref="T:Arch.Core.Entity"/> and moves it to a different <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="type">The <see cref="T:Arch.Core.Utils.ComponentType"/> to remove from the the <see cref="T:Arch.Core.Entity"/>.</param>
-        </member>
-        <member name="M:Arch.Core.World.RemoveRange(Arch.Core.Entity,System.Span{Arch.Core.Utils.ComponentType})">
-            <summary>
-                Removes a list of <see cref="T:Arch.Core.Utils.ComponentType"/>'s from the <see cref="T:Arch.Core.Entity"/> and moves it to a different <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="types">A <see cref="T:System.Span`1"/> of <see cref="T:Arch.Core.Utils.ComponentType"/>'s, those are removed from the <see cref="T:Arch.Core.Entity"/>.</param>
-        </member>
-        <member name="M:Arch.Core.World.IsAlive(Arch.Core.Entity)">
-            <summary>
-                Checks if the <see cref="T:Arch.Core.Entity"/> is alive in this <see cref="T:Arch.Core.World"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>True if it exists and is alive, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.World.Version(Arch.Core.Entity)">
-            <summary>
-                Returns the version of an <see cref="T:Arch.Core.Entity"/>.
-                Indicating how often it was recycled.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>Its version.</returns>
-        </member>
-        <member name="M:Arch.Core.World.Reference(Arch.Core.Entity)">
-            <summary>
-                Returns a <see cref="T:Arch.Core.EntityReference"/> to an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>Its <see cref="T:Arch.Core.EntityReference"/>.</returns>
-        </member>
-        <member name="M:Arch.Core.World.GetArchetype(Arch.Core.Entity)">
-            <summary>
-                Returns the <see cref="T:Arch.Core.Archetype"/> of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>Its <see cref="T:Arch.Core.Archetype"/>.</returns>
-        </member>
-        <member name="M:Arch.Core.World.GetChunk(Arch.Core.Entity)">
-            <summary>
-                Returns the <see cref="T:Arch.Core.Chunk"/> of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>A reference to its <see cref="T:Arch.Core.Chunk"/>.</returns>
-        </member>
-        <member name="M:Arch.Core.World.GetComponentTypes(Arch.Core.Entity)">
-            <summary>
-                Returns all <see cref="T:Arch.Core.Utils.ComponentType"/>'s of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>Its <see cref="T:Arch.Core.Utils.ComponentType"/>'s array.</returns>
-        </member>
-        <member name="M:Arch.Core.World.GetAllComponents(Arch.Core.Entity)">
-            <summary>
-                Returns all components of an <see cref="T:Arch.Core.Entity"/> as an array.
-                Will allocate memory.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>A newly allocated array containing the entities components.</returns>
-        </member>
         <member name="T:Arch.Core.Extensions.Dangerous.DangerousWorldExtensions">
             <summary>
                 The <see cref="T:Arch.Core.Extensions.Dangerous.DangerousWorldExtensions"/> class
@@ -2673,224 +2776,6 @@
                 The <see cref="T:Arch.Core.Extensions.EntityExtensions"/> class
                 adds several extension methods for <see cref="T:Arch.Core.Entity"/>.
             </summary>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.GetArchetype(Arch.Core.Entity@)">
-            <summary>
-                Returns the <see cref="T:Arch.Core.Archetype"/> of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>Its <see cref="T:Arch.Core.Archetype"/>.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.GetChunk(Arch.Core.Entity@)">
-            <summary>
-                Returns the <see cref="T:Arch.Core.Chunk"/> of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>A reference to its <see cref="T:Arch.Core.Chunk"/>.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.GetComponentTypes(Arch.Core.Entity@)">
-            <summary>
-                Returns all <see cref="T:Arch.Core.Utils.ComponentType"/>'s of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>Its <see cref="T:Arch.Core.Utils.ComponentType"/>'s array.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.GetAllComponents(Arch.Core.Entity@)">
-            <summary>
-                Returns all components of an <see cref="T:Arch.Core.Entity"/> as an array.
-                Will allocate memory.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>A newly allocated array containing the entities components.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.IsAlive(Arch.Core.Entity@)">
-            <summary>
-                Checks if the <see cref="T:Arch.Core.Entity"/> is alive in this <see cref="T:Arch.Core.World"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>True if it exists and is alive, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Version(Arch.Core.Entity@)">
-            <summary>
-                Returns the version of an <see cref="T:Arch.Core.Entity"/>.
-                Indicating how often it was recycled.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>Its version.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Reference(Arch.Core.Entity@)">
-            <summary>
-                Returns a <see cref="T:Arch.Core.EntityReference"/> to an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>Its <see cref="T:Arch.Core.EntityReference"/>.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Set``1(Arch.Core.Entity@,``0@)">
-            <summary>
-                Sets or replaces a component for an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="cmp">The instance, optional.</param>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Has``1(Arch.Core.Entity@)">
-            <summary>
-                Checks if an <see cref="T:Arch.Core.Entity"/> has a certain component.
-            </summary>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>True if it has the desired component, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Get``1(Arch.Core.Entity@)">
-            <summary>
-                Returns a reference to the component of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>A reference to the component.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.TryGet``1(Arch.Core.Entity@,``0@)">
-            <summary>
-                Trys to return a reference to the component of an <see cref="T:Arch.Core.Entity"/>.
-                Will copy the component if its a struct.
-            </summary>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="component">The found component.</param>
-            <returns>True if it exists, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.TryGetRef``1(Arch.Core.Entity@,System.Boolean@)">
-            <summary>
-                Trys to return a reference to the component of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="exists">True if it exists, oterhwhise false.</param>
-            <returns>A reference to the component.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.AddOrGet``1(Arch.Core.Entity@,``0)">
-            <summary>
-               Ensures the existance of an component on an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="cmp">The component value used if its being added.</param>
-            <returns>A reference to the component.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Add``1(Arch.Core.Entity@,``0@)">
-            <summary>
-                Adds an new component to the <see cref="T:Arch.Core.Entity"/> and moves it to the new <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="cmp">The component instance, optional.</param>
-            <typeparam name="T">The component type.</typeparam>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Remove``1(Arch.Core.Entity@)">
-            <summary>
-                Removes an component from an <see cref="T:Arch.Core.Entity"/> and moves it to a different <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Set(Arch.Core.Entity@,System.Object)">
-            <summary>
-                Sets or replaces a component for an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="cmp">The component.</param>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.SetRange(Arch.Core.Entity@,System.Object[])">
-            <summary>
-                Sets or replaces a <see cref="T:System.Collections.Generic.IList`1"/> of components for an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="components">The components <see cref="T:System.Collections.Generic.IList`1"/>.</param>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Has(Arch.Core.Entity@,Arch.Core.Utils.ComponentType)">
-            <summary>
-                Checks if an <see cref="T:Arch.Core.Entity"/> has a certain component.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="type">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
-            <returns>True if it has the desired component, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.HasRange(Arch.Core.Entity@,Arch.Core.Utils.ComponentType[])">
-            <summary>
-                Checks if an <see cref="T:Arch.Core.Entity"/> has a certain component.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="types">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
-            <returns>True if it has the desired component, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Get(Arch.Core.Entity@,Arch.Core.Utils.ComponentType)">
-            <summary>
-                Returns a reference to the component of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="type">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
-            <returns>A reference to the component.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.GetRange(Arch.Core.Entity@,Arch.Core.Utils.ComponentType[])">
-            <summary>
-                Returns an array of components of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="types">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
-            <returns>A reference to the component.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.GetRange(Arch.Core.Entity@,Arch.Core.Utils.ComponentType[],System.Collections.Generic.IList{System.Object})">
-            <summary>
-                Returns an array of components of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="types">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
-            <param name="components">A <see cref="T:System.Collections.Generic.IList`1"/> where the components are put it.</param>
-            <returns>A reference to the component.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.TryGet(Arch.Core.Entity@,Arch.Core.Utils.ComponentType,System.Object@)">
-            <summary>
-                Trys to return a reference to the component of an <see cref="T:Arch.Core.Entity"/>.
-                Will copy the component if its a struct.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="type">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
-            <param name="component">The found component.</param>
-            <returns>True if it exists, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Add(Arch.Core.Entity@,System.Object@)">
-            <summary>
-                Adds an new component to the <see cref="T:Arch.Core.Entity"/> and moves it to the new <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="cmp">The component.</param>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.AddRange(Arch.Core.Entity@,System.Object[])">
-            <summary>
-                Adds a <see cref="T:System.Collections.Generic.IList`1"/> of new components to the <see cref="T:Arch.Core.Entity"/> and moves it to the new <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="components">The component <see cref="T:System.Collections.Generic.IList`1"/>.</param>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.AddRange(Arch.Core.Entity@,System.Collections.Generic.IList{Arch.Core.Utils.ComponentType})">
-            <summary>
-                Adds an list of new components to the <see cref="T:Arch.Core.Entity"/> and moves it to the new <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="components">A <see cref="T:System.Collections.Generic.IList`1"/> of <see cref="T:Arch.Core.Utils.ComponentType"/>'s, those are added to the <see cref="T:Arch.Core.Entity"/>.</param>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.RemoveRange(Arch.Core.Entity@,Arch.Core.Utils.ComponentType[])">
-            <summary>
-                Removes a list of <see cref="T:Arch.Core.Utils.ComponentType"/>'s from the <see cref="T:Arch.Core.Entity"/> and moves it to a different <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="types">A <see cref="T:System.Collections.Generic.IList`1"/> of <see cref="T:Arch.Core.Utils.ComponentType"/>'s, those are removed from the <see cref="T:Arch.Core.Entity"/>.</param>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.RemoveRange(Arch.Core.Entity@,System.Collections.Generic.IList{Arch.Core.Utils.ComponentType})">
-            <summary>
-                Removes a list of <see cref="T:Arch.Core.Utils.ComponentType"/>'s from the <see cref="T:Arch.Core.Entity"/> and moves it to a different <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="types">A <see cref="T:System.Collections.Generic.IList`1"/> of <see cref="T:Arch.Core.Utils.ComponentType"/>'s, those are removed from the <see cref="T:Arch.Core.Entity"/>.</param>
         </member>
         <member name="T:Arch.Core.Extensions.Internal.ArrayExtensions">
             <summary>
@@ -2924,6 +2809,21 @@
             <param name="array">The target array.</param>
             <param name="toRemove">The <see cref="T:System.Collections.IList"/> of items which will be removed.</param>
             <returns>The new array.</returns>
+        </member>
+        <member name="M:Arch.Core.Extensions.Internal.ArrayExtensions.GetOrResize``1(``0[]@,System.Int32,System.Nullable{System.Int32})">
+            <summary>
+                Gets the element at an index in the array, or resizes it to fit an element
+                at that index.
+            </summary>
+            <param name="array">The array to get the element from.</param>
+            <param name="index">The index of the element.</param>
+            <param name="exists">
+                Whether or not the index was within the bounds of the array.
+                When false, the array has been resized.
+            </param>
+            <param name="maxSize">The max size to grow the array to.</param>
+            <typeparam name="T">The element type of the array.</typeparam>
+            <returns>The element at that index. May be null.</returns>
         </member>
         <member name="M:Arch.Core.Extensions.Internal.ArrayExtensions.Remove``1(``0[],System.Collections.Generic.IList{``0})">
             <summary>
@@ -3400,6 +3300,45 @@
             <param name="right">The right <see cref="T:Arch.Core.Query"/>.</param>
             <returns>True if they are unequal, false if not.</returns>
         </member>
+        <member name="F:Arch.Core.Utils.ArrayDictionary`1._array">
+            <summary>
+                Stores <see cref="!:TValue"/>s with an index smaller than
+                <see cref="F:Arch.Core.Utils.ArrayDictionary`1._maxArraySize"/>.
+                When the index used to access one is equal to or bigger than
+                <see cref="F:Arch.Core.Utils.ArrayDictionary`1._maxArraySize"/>, <see cref="F:Arch.Core.Utils.ArrayDictionary`1._dictionary"/> is used instead.
+            </summary>
+        </member>
+        <member name="F:Arch.Core.Utils.ArrayDictionary`1._dictionary">
+            <summary>
+                Stores <see cref="!:TValue"/>s with an index equal to or bigger than
+                <see cref="F:Arch.Core.Utils.ArrayDictionary`1._maxArraySize"/>.
+                When the index used to access one is smaller than <see cref="F:Arch.Core.Utils.ArrayDictionary`1._maxArraySize"/>,
+                <see cref="F:Arch.Core.Utils.ArrayDictionary`1._dictionary"/> is used instead.
+            </summary>
+        </member>
+        <member name="F:Arch.Core.Utils.ArrayDictionary`1._maxArraySize">
+            <summary>
+                The maximum size that <see cref="F:Arch.Core.Utils.ArrayDictionary`1._array"/> will grow to.
+                Any elements outside this range are indexed by <see cref="F:Arch.Core.Utils.ArrayDictionary`1._dictionary"/>.
+            </summary>
+        </member>
+        <member name="M:Arch.Core.Utils.ArrayDictionary`1.AddOrGet(System.Int32,System.Boolean@)">
+            <summary>
+                Gets an element in this collection by its index.
+                If the index is smaller than <see cref="F:Arch.Core.Utils.ArrayDictionary`1._maxArraySize"/>
+                <see cref="F:Arch.Core.Utils.ArrayDictionary`1._array"/> is used, otherwise <see cref="F:Arch.Core.Utils.ArrayDictionary`1._dictionary"/> is used.
+            </summary>
+            <param name="index">The index of the value to get.</param>
+            <param name="exists">Whether or not the value existed in this collection.</param>
+            <returns>The value, with a default value if it did not exist.</returns>
+        </member>
+        <member name="M:Arch.Core.Utils.ArrayDictionary`1.Set(System.Int32,`0@)">
+            <summary>
+                Sets an element in this collection by <see cref="!:index"/>.
+            </summary>
+            <param name="index">The index of the <see cref="!:value"/> to set.</param>
+            <param name="value">The value to set at <see cref="!:index"/></param>
+        </member>
         <member name="T:Arch.Core.Utils.BitSet">
             <summary>
                 The <see cref="T:Arch.Core.Utils.BitSet"/> class
@@ -3653,6 +3592,15 @@
                 Gets or sets the total number of registered components in the project.
             </summary>
         </member>
+        <member name="M:Arch.Core.Utils.ComponentRegistry.Add(System.Type,System.Int32)">
+            <summary>
+                Adds a new <see cref="T:Arch.Core.Utils.ComponentType"/> manually and registers it.
+                <remarks>You should only be using this when you exactly know what you are doing.</remarks>
+            </summary>
+            <param name="type">Its <see cref="T:System.Type"/>.</param>
+            <param name="typeSize">The size in bytes of <see cref="!:type"/>.</param>
+            <returns>Its <see cref="T:Arch.Core.Utils.ComponentType"/>.</returns>
+        </member>
         <member name="M:Arch.Core.Utils.ComponentRegistry.Add(Arch.Core.Utils.ComponentType)">
             <summary>
                 Adds a new <see cref="T:Arch.Core.Utils.ComponentType"/> manually and registers it.
@@ -3680,28 +3628,46 @@
                 Checks if a component is registered.
             </summary>
             <typeparam name="T">Its generic type.</typeparam>
-            <returns>True if it is, otherwhise false.</returns>
+            <returns>True if it is, otherwise false.</returns>
         </member>
         <member name="M:Arch.Core.Utils.ComponentRegistry.Has(System.Type)">
             <summary>
                  Checks if a component is registered.
             </summary>
             <param name="type">Its <see cref="T:System.Type"/>.</param>
-            <returns>True if it is, otherwhise false.</returns>
+            <returns>True if it is, otherwise false.</returns>
         </member>
         <member name="M:Arch.Core.Utils.ComponentRegistry.Remove``1">
             <summary>
                 Removes a registered component by its <see cref="T:System.Type"/> from the <see cref="T:Arch.Core.Utils.ComponentRegistry"/>.
             </summary>
             <typeparam name="T">The component to remove.</typeparam>
-            <returns>True if it was sucessfull, false if not.</returns>
+            <returns>True if it was successful, false if not.</returns>
         </member>
         <member name="M:Arch.Core.Utils.ComponentRegistry.Remove(System.Type)">
             <summary>
                 Removes a registered component by its <see cref="T:System.Type"/> from the <see cref="T:Arch.Core.Utils.ComponentRegistry"/>.
             </summary>
             <param name="type">The component <see cref="T:System.Type"/> to remove.</param>
-            <returns>True if it was sucessfull, false if not.</returns>
+            <returns>True if it was successful, false if not.</returns>
+        </member>
+        <member name="M:Arch.Core.Utils.ComponentRegistry.Remove(System.Type,Arch.Core.Utils.ComponentType@)">
+            <summary>
+                Removes a registered component by its <see cref="T:System.Type"/> from the <see cref="T:Arch.Core.Utils.ComponentRegistry"/>.
+            </summary>
+            <param name="type">The component <see cref="T:System.Type"/> to remove.</param>
+            <param name="compType">The removed <see cref="T:Arch.Core.Utils.ComponentType"/>, if it existed.</param>
+            <returns>True if it was successful, false if not.</returns>
+        </member>
+        <member name="M:Arch.Core.Utils.ComponentRegistry.Replace(System.Type,System.Type,System.Int32)">
+            <summary>
+                Replaces a registered component by its <see cref="T:System.Type"/> with another one.
+                The new <see cref="T:System.Type"/> will receive the id from the old one.
+                <remarks>Use with caution, might cause undefined behaviour if you do not know what exactly you are doing.</remarks>
+            </summary>
+            <param name="oldType">The old component <see cref="T:System.Type"/> to be replaced.</param>
+            <param name="newType">The new component <see cref="T:System.Type"/> that replaced the old one.</param>
+            <param name="newTypeSize">The size in bytes of <see cref="!:newType"/>.</param>
         </member>
         <member name="M:Arch.Core.Utils.ComponentRegistry.Replace``2">
             <summary>
@@ -3727,7 +3693,7 @@
             </summary>
             <typeparam name="T">Its generic type.</typeparam>
             <param name="componentType">Its <see cref="T:Arch.Core.Utils.ComponentType"/>, if it is registered.</param>
-            <returns>True if it registered, otherwhise false.</returns>
+            <returns>True if it registered, otherwise false.</returns>
         </member>
         <member name="M:Arch.Core.Utils.ComponentRegistry.TryGet(System.Type,Arch.Core.Utils.ComponentType@)">
             <summary>
@@ -3735,7 +3701,22 @@
             </summary>
             <param name="type">Its <see cref="T:System.Type"/>.</param>
             <param name="componentType">Its <see cref="T:Arch.Core.Utils.ComponentType"/>, if it is registered.</param>
-            <returns>True if it registered, otherwhise false.</returns>
+            <returns>True if it registered, otherwise false.</returns>
+        </member>
+        <member name="M:Arch.Core.Utils.ComponentRegistry.SizeOf``1">
+            <summary>
+                Returns the size in bytes of the passed generic.
+            </summary>
+            <typeparam name="T">The generic.</typeparam>
+            <returns>Its size.</returns>
+        </member>
+        <member name="M:Arch.Core.Utils.ComponentRegistry.SizeOf(System.Type)">
+            TODO: Check if this still AOT compatible?
+            <summary>
+                Returns the size in bytes of the passed type.
+            </summary>
+            <param name="type">The type.</param>
+            <returns>Its size in bytes.</returns>
         </member>
         <member name="T:Arch.Core.Utils.Component`1">
             <summary>
@@ -3831,63 +3812,6 @@
         <member name="T:Arch.Core.Utils.Group">
             <summary>
                 The <see cref="T:Arch.Core.Utils.Group"/> class counts the Ids of registered groups in an compiletime static way.
-            </summary>
-        </member>
-        <member name="T:Arch.Core.Utils.EntityDebugView">
-            <summary>
-                A debug view exclusive for the <see cref="T:Arch.Core.Entity"/> to ease the debugging.
-                <remarks>Not available for #define pure_ecs.</remarks>
-            </summary>
-        </member>
-        <member name="F:Arch.Core.Utils.EntityDebugView._entity">
-            <summary>
-                The <see cref="T:Arch.Core.Entity"/> to debug.
-            </summary>
-        </member>
-        <member name="M:Arch.Core.Utils.EntityDebugView.#ctor(Arch.Core.Entity)">
-            <summary>
-                Constructs an <see cref="T:Arch.Core.Utils.EntityDebugView"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/> to debug.</param>
-        </member>
-        <member name="P:Arch.Core.Utils.EntityDebugView.Id">
-            <summary>
-                The id of this <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.Utils.EntityDebugView.IsAlive">
-            <summary>
-                The status of this <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.Utils.EntityDebugView.Version">
-            <summary>
-                The version of this <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.Utils.EntityDebugView.Components">
-            <summary>
-                The <see cref="T:Arch.Core.Entity"/>s components.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.Utils.EntityDebugView.World">
-            <summary>
-                The <see cref="P:Arch.Core.Utils.EntityDebugView.World"/> this <see cref="T:Arch.Core.Entity"/> lives in.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.Utils.EntityDebugView.Archetype">
-            <summary>
-                The <see cref="P:Arch.Core.Utils.EntityDebugView.Archetype"/> this <see cref="T:Arch.Core.Entity"/> lives in.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.Utils.EntityDebugView.Chunk">
-            <summary>
-                The <see cref="P:Arch.Core.Utils.EntityDebugView.Archetype"/> this <see cref="T:Arch.Core.Entity"/> lives in.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.Utils.EntityDebugView.EntityInfo">
-            <summary>
-                The stored <see cref="P:Arch.Core.Utils.EntityDebugView.EntityInfo"/> for this <see cref="T:Arch.Core.Entity"/>.
             </summary>
         </member>
         <member name="T:Arch.Core.Utils.MurmurHash3">

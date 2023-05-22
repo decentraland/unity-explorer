@@ -1,6 +1,7 @@
 using Arch.Core;
 using CrdtEcsBridge.Components.Transform;
 using ECS.ComponentsPooling;
+using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
@@ -8,11 +9,9 @@ using UnityEngine;
 namespace ECS.Unity.Systems.Tests
 {
     [TestFixture]
-    public class InstantiateTransformUnitySystemShould
+    public class InstantiateTransformUnitySystemShould : UnitySystemTestBase<InstantiateTransformUnitySystem>
     {
-        private InstantiateTransformUnitySystem system;
         private SDKTransform sdkTransform;
-        private World world;
         private IComponentPoolsRegistry componentRegistry;
         private IComponentPool transformPool;
         private Transform testTransform;
@@ -20,14 +19,13 @@ namespace ECS.Unity.Systems.Tests
         [SetUp]
         public void SetUp()
         {
-            transformPool = Substitute.For<IComponentPool>();
+            transformPool = Substitute.For<IComponentPool<Transform>>();
             transformPool.Rent().Returns(testTransform = new GameObject().transform);
 
             componentRegistry = Substitute.For<IComponentPoolsRegistry>();
-            componentRegistry.GetReferenceTypePool(typeof(Transform)).Returns(transformPool);
+            componentRegistry.GetReferenceTypePool<Transform>().Returns(transformPool);
 
             sdkTransform = new SDKTransform();
-            world = World.Create();
             system = new InstantiateTransformUnitySystem(world, componentRegistry);
         }
 
@@ -52,7 +50,6 @@ namespace ECS.Unity.Systems.Tests
         public void TearDown()
         {
             Object.DestroyImmediate(testTransform.gameObject);
-            world.Dispose();
         }
     }
 }

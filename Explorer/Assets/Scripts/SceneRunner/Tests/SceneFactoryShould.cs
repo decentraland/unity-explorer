@@ -3,6 +3,7 @@ using CRDT.Deserializer;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Engine;
+using Cysharp.Threading.Tasks;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.ECSWorld;
@@ -52,7 +53,7 @@ namespace SceneRunner.Tests
         [TearDown]
         public void TearDown()
         {
-            sceneFacade?.Dispose();
+            sceneFacade?.DisposeAsync().Forget();
         }
 
         [Test]
