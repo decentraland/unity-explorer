@@ -70,11 +70,11 @@ namespace SceneRunner.Tests
         }
 
         [OneTimeTearDown]
-        public void TearDown()
+        public async Task TearDown()
         {
             foreach (SceneFacade sceneFacade in sceneFacades)
             {
-                try { sceneFacade.Dispose(); }
+                try { await sceneFacade.DisposeAsync(); }
                 catch (Exception e) { Debug.LogException(e); }
             }
 
@@ -84,8 +84,6 @@ namespace SceneRunner.Tests
         [Test]
         public async Task ContinueUpdateLoopOnBackgroundThread([Values(5, 10, 20, 30, 60, 90, 180)] int fps, [Values(100, 500, 1000, 2000, 4000)] int lifeTimeMs)
         {
-            var mainThread = Thread.CurrentThread.ManagedThreadId;
-
             var sceneFacade = (SceneFacade)await sceneFactory.CreateScene(path, CancellationToken.None);
             sceneFacades.Add(sceneFacade);
 
@@ -96,7 +94,7 @@ namespace SceneRunner.Tests
             // will end gracefully
             await sceneFacade.StartUpdateLoop(fps, cancellationTokenSource.Token);
 
-            Assert.AreNotEqual(mainThread, Thread.CurrentThread.ManagedThreadId);
+            // Asserts are inside the method
         }
 
         [Test]
@@ -211,7 +209,7 @@ namespace SceneRunner.Tests
 
             await UniTask.SwitchToMainThread();
 
-            sceneFacade.Dispose();
+            await sceneFacade.DisposeAsync();
 
             Received.InOrder(() =>
             {

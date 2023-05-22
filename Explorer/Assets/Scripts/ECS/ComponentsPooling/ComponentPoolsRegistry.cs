@@ -17,25 +17,21 @@ namespace ECS.ComponentsPooling
             lock (pools) { return pools.TryGetValue(type, out componentPool); }
         }
 
-        public IComponentPool<T> GetReferenceTypePool<T>() where T: class, new()
+        public IComponentPool<T> GetReferenceTypePool<T>() where T: class
         {
-            lock (pools) { return (IComponentPool<T>)(pools.TryGetValue(typeof(T), out var pool) ? pool : pools[typeof(T)] = new ComponentPool<T>()); }
+            lock (pools) { return (IComponentPool<T>)pools[typeof(T)]; }
         }
 
-        public IComponentPool GetReferenceTypePool(Type type)
+        public IComponentPool GetPool(Type type)
         {
-            lock (pools)
-            {
-                // TODO avoid Activator.CreateInstance
-                return pools.TryGetValue(type, out var pool) ? pool : pools[type] = (IComponentPool)Activator.CreateInstance(typeof(ComponentPool<>).MakeGenericType(type));
-            }
+            lock (pools) { return pools[type]; }
         }
 
         public void Dispose()
         {
             lock (pools)
             {
-                foreach (var pool in pools.Values)
+                foreach (IComponentPool pool in pools.Values)
                     pool.Dispose();
 
                 pools.Clear();

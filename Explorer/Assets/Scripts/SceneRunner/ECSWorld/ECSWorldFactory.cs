@@ -1,10 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using CRDT;
 using ECS.ComponentsPooling;
 using ECS.Unity.Systems;
-using System.Collections.Generic;
-using UnityEngine;
 
 namespace SceneRunner.ECSWorld
 {
@@ -32,12 +29,18 @@ namespace SceneRunner.ECSWorld
             UpdateTransformSystem.InjectToWorld(ref builder);
             InstantiateTransformSystem.InjectToWorld(ref builder, componentPoolsRegistry, sceneRootTransform);
             ParentingTransformSystem.InjectToWorld(ref builder, entitiesMap, sceneRootTransform);
+            AssertDisconnectedTransformsSystem.InjectToWorld(ref builder);
+            InstantiatePrimitiveColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            ReleaseOutdatedColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+
             var releaseSDKComponentsSystem = ReleaseComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            var releaseColliderSystem = ReleasePoolableComponentSystem<PrimitiveColliderComponent>.InjectToWorld(ref builder, componentPoolsRegistry);
+
 
             // Add other systems here
             var systemsWorld = builder.Finish();
 
-            return new ECSWorldFacade(systemsWorld, world, releaseSDKComponentsSystem);
+            return new ECSWorldFacade(systemsWorld, world, releaseSDKComponentsSystem, releaseColliderSystem);
         }
     }
 }

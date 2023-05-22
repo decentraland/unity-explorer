@@ -64,21 +64,19 @@ namespace Global.Editor
     {
         private SceneSharedContainer sceneSharedContainer;
         private ISceneFacade sceneFacade;
-        private string path;
+        private const string PATH = "cube_waves";
 
         [SetUp]
         public void SetUp()
         {
             sceneSharedContainer = EntryPoint.Install();
-
-            path = $"file://{Application.dataPath + "/../TestResources/Scenes/CubeWave/cube_waves.js"}";
         }
 
         [Test]
         public async Task EmitECSComponents()
         {
             // It will switch to the background thread and assign SynchronizationContext
-            sceneFacade = await sceneSharedContainer.SceneFactory.CreateScene(path, CancellationToken.None);
+            sceneFacade = await sceneSharedContainer.SceneFactory.CreateSceneFromStreamingAssets(PATH, CancellationToken.None);
 
             // It will call `IEngineAPI.GetState()`
             await sceneFacade.StartScene();
@@ -121,9 +119,10 @@ namespace Global.Editor
         }
 
         [TearDown]
-        public void Dispose()
+        public async Task Dispose()
         {
-            sceneFacade?.Dispose();
+            if (sceneFacade != null)
+                await sceneFacade.DisposeAsync();
         }
     }
 }

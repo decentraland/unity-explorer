@@ -8,11 +8,9 @@ using UnityEngine;
 namespace ECS.Unity.Systems.Tests
 {
     [TestFixture]
-    public class InstantiateTransformSystemShould
+    public class InstantiateTransformUnitySystemShould : UnitySystemTestBase<InstantiateTransformUnitySystem>
     {
-        private InstantiateTransformSystem system;
         private SDKTransform sdkTransform;
-        private World world;
         private IComponentPoolsRegistry componentRegistry;
         private IComponentPool transformPool;
         private Transform testTransform;
@@ -20,15 +18,14 @@ namespace ECS.Unity.Systems.Tests
         [SetUp]
         public void SetUp()
         {
-            transformPool = Substitute.For<IComponentPool>();
+            transformPool = Substitute.For<IComponentPool<Transform>>();
             transformPool.Rent().Returns(testTransform = new GameObject().transform);
 
             componentRegistry = Substitute.For<IComponentPoolsRegistry>();
-            componentRegistry.GetReferenceTypePool(typeof(Transform)).Returns(transformPool);
+            componentRegistry.GetReferenceTypePool<Transform>().Returns(transformPool);
 
             sdkTransform = new SDKTransform();
-            world = World.Create();
-            system = new InstantiateTransformSystem(world, componentRegistry, new GameObject().transform);
+            system = new InstantiateTransformUnitySystem(world, componentRegistry);
         }
 
         [Test]
@@ -52,7 +49,6 @@ namespace ECS.Unity.Systems.Tests
         public void TearDown()
         {
             Object.DestroyImmediate(testTransform.gameObject);
-            world.Dispose();
         }
     }
 }
