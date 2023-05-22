@@ -35,8 +35,6 @@ namespace ECS.ComponentsPooling.Systems
 
         private void ReleaseComponentsToPool(in Query query)
         {
-            // TODO Wrappers over components are not released
-
             // Profiling required, O(N^4)
             foreach (ref var chunk in query.GetChunkIterator())
             {
