@@ -32,11 +32,11 @@ To be able to select the scene at runtime
 - Place it to the "StreamingAssets\Scenes" directory.
 - Add its name without an extension to the "Scenes" list on the `EntryPoint` component.
 
-![img.png](D:\Decentraland\unity-explorer\ReadmeResources\img.png)
+![img.png](ReadmeResources/img.png)
 
 ## Control scene lifecycle
 
-![img_1.png](D:\Decentraland\unity-explorer\ReadmeResources\img_1.png)
+![img_1.png](ReadmeResources/img_1.png)
 
 At the moment one scene can be active at a time. By default at startup no scene is launched.
 
