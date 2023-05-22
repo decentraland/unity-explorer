@@ -54,7 +54,8 @@ namespace SceneRunner.Scene
             var crdtMemoryAllocator = CRDTPooledMemoryAllocator.Create();
             var crdtDeserializer = new CRDTDeserializer(crdtMemoryAllocator);
 
-            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(entitiesMap /* Pass dependencies here if they are needed by the systems */);
+            /* Pass dependencies here if they are needed by the systems */
+            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(entitiesMap);
             ecsWorldFacade.Initialize();
 
             // Create an instance of Scene Runtime on the thread pool

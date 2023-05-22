@@ -1,13 +1,10 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using CRDT;
-using CrdtEcsBridge.Components.Special;
 using ECS.LifeCycle;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.Profiling;
-using Object = UnityEngine.Object;
 
 namespace SceneRunner.ECSWorld
 {
