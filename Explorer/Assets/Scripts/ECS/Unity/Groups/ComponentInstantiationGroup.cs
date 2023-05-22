@@ -8,6 +8,6 @@ namespace ECS.Unity.Groups
     ///     Denotes the group that instantiates specific components right after the entity transform is handled
     /// </summary>
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    [UpdateAfter(typeof(InstantiateTransformUnitySystem))]
+    [UpdateAfter(typeof(InstantiateTransformSystem))]
     public partial class ComponentInstantiationGroup { }
 }

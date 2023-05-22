@@ -1,6 +1,7 @@
 using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components.Transform;
+using ECS.TestSuite;
 using NUnit.Framework;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,7 +9,7 @@ using UnityEngine;
 namespace ECS.Unity.Systems.Tests
 {
     [TestFixture]
-    public class ParentingTransformSystemShould
+    public class ParentingTransformSystemShould : UnitySystemTestBase<ParentingTransformSystem>
     {
         private SDKTransform parentSDKTransform;
         private SDKTransform childSDKTransform;
@@ -25,8 +26,6 @@ namespace ECS.Unity.Systems.Tests
         private Entity parentEntity;
         private Entity childEntity;
 
-        private World world;
-        private ParentingTransformSystem system;
         private Dictionary<CRDTEntity, Entity> crdtToEntityDict;
 
         [SetUp]
@@ -52,7 +51,6 @@ namespace ECS.Unity.Systems.Tests
                 ParentId = parentCRDTEntity,
             };
 
-            world = World.Create();
             rootEntity = world.Create(sceneRoot);
             parentEntity = world.Create(parentSDKTransform, parentTransform);
             childEntity = world.Create(childSDKTransform, childTransform);

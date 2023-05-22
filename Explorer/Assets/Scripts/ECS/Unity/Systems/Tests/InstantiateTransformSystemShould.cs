@@ -1,6 +1,7 @@
 using Arch.Core;
 using CrdtEcsBridge.Components.Transform;
 using ECS.ComponentsPooling;
+using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
@@ -8,7 +9,7 @@ using UnityEngine;
 namespace ECS.Unity.Systems.Tests
 {
     [TestFixture]
-    public class InstantiateTransformUnitySystemShould : UnitySystemTestBase<InstantiateTransformUnitySystem>
+    public class InstantiateTransformUnitySystemShould : UnitySystemTestBase<InstantiateTransformSystem>
     {
         private SDKTransform sdkTransform;
         private IComponentPoolsRegistry componentRegistry;
@@ -25,7 +26,7 @@ namespace ECS.Unity.Systems.Tests
             componentRegistry.GetReferenceTypePool<Transform>().Returns(transformPool);
 
             sdkTransform = new SDKTransform();
-            system = new InstantiateTransformUnitySystem(world, componentRegistry);
+            system = new InstantiateTransformSystem(world, componentRegistry);
         }
 
         [Test]

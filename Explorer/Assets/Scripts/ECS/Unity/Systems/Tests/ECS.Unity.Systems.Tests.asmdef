@@ -10,7 +10,9 @@
         "ECS.Unity.Systems",
         "Containers",
         "SceneRunner",
-        "CRDT"
+        "CRDT",
+        "ECS.TestSuite",
+        "ECS.Unity"
     ],
     "includePlatforms": [
         "Editor"

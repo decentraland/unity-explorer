@@ -11,29 +11,29 @@ namespace ECS.Unity.Systems.Tests
 {
     /*
      Using this scene to test parenting. It instantiates 50 cubes, then starts switches the parent on each frame.
-    
+
     export * from '@dcl/sdk'
     import { engine, Transform } from '@dcl/sdk/ecs'
-    
+
     let currentParent = 0;
     let totalCubes = 50
-    
+
     function createCube(x: number, y: number, z: number) {
       const myEntity = engine.addEntity(true)
-    
+
       Transform.create(myEntity, {
         position: { x, y, z },
       })
-    
+
       return myEntity
     }
-    
+
     function DoParenting(dt: number) {
       let entitiesWithTransform = engine.getEntitiesWith(Transform)
       const entityArray = Array.from(entitiesWithTransform, ([entity]) => entity);
-    
+
       Transform.getMutable(entityArray[currentParent]).parent = undefined
-    
+
       var counter = 0
       entitiesWithTransform = engine.getEntitiesWith(Transform)
       for (const [entity] of entitiesWithTransform) {
@@ -44,14 +44,14 @@ namespace ECS.Unity.Systems.Tests
       }
       currentParent = (currentParent + 1) % totalCubes
     }
-    
+
     for (let x = 0; x < totalCubes; x += 1) {
         createCube(x, 0, 0)
     }
-    
+
     engine.addSystem(DoParenting)
-    
-    
+
+
     */
 
     [TestFixture]
@@ -110,7 +110,7 @@ namespace ECS.Unity.Systems.Tests
         [TearDown]
         public void Dispose()
         {
-            sceneFacade?.Dispose();
+            sceneFacade?.DisposeAsync();
         }
     }
 }

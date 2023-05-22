@@ -16,7 +16,7 @@ namespace ECS.Unity.Systems
     ///     <para>It's important to validate it as Unity Components systems rely on the existence of the parent transform</para>
     /// </summary>
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    [UpdateAfter(typeof(InstantiateTransformUnitySystem))]
+    [UpdateAfter(typeof(InstantiateTransformSystem))]
     [UpdateBefore(typeof(ComponentInstantiationGroup))]
     public partial class AssertDisconnectedTransformsSystem : BaseUnityLoopSystem
     {
