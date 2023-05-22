@@ -8,7 +8,7 @@ using UnityEngine;
 namespace ECS.Unity.Systems.Tests
 {
     [TestFixture]
-    public class InstantiateTransformUnitySystemShould
+    public class InstantiateTransformSystemShould
     {
         private InstantiateTransformSystem system;
         private SDKTransform sdkTransform;
@@ -28,7 +28,7 @@ namespace ECS.Unity.Systems.Tests
 
             sdkTransform = new SDKTransform();
             world = World.Create();
-            system = new InstantiateTransformSystem(world, componentRegistry);
+            system = new InstantiateTransformSystem(world, componentRegistry, new GameObject().transform);
         }
 
         [Test]

@@ -6,7 +6,7 @@ using UnityEngine;
 namespace ECS.Unity.Systems.Tests
 {
     [TestFixture]
-    public class UpdateTransformUnitySystemShould
+    public class UpdateTransformSystemShould
     {
         private UpdateTransformSystem system;
         private SDKTransform sdkTransform;

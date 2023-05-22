@@ -15,44 +15,33 @@ namespace ECS.Unity.Systems
     {
         private readonly QueryDescription queryDescription = new QueryDescription().WithAll<SDKTransform>().WithNone<Transform>();
         private TransformInstantiator instantiateTransform;
-        private readonly Transform sceneRootTransform;
 
         protected override void Update(float _)
         {
             World.InlineEntityQuery<TransformInstantiator, SDKTransform>(in queryDescription, ref instantiateTransform);
         }
 
-        public InstantiateTransformSystem(World world, IComponentPoolsRegistry componentPools) : base(world)
+        public InstantiateTransformSystem(World world, IComponentPoolsRegistry componentPools, Transform sceneRootTransform) : base(world)
         {
             IComponentPool transformPool = componentPools.GetReferenceTypePool(typeof(Transform));
-            sceneRootTransform = (Transform)transformPool.Rent();
-            sceneRootTransform.name = "SCENE_ROOT";
-            world.Create(sceneRootTransform);
-
-            instantiateTransform = new TransformInstantiator(transformPool, sceneRootTransform);
+            instantiateTransform = new TransformInstantiator(componentPools.GetReferenceTypePool(typeof(Transform)), sceneRootTransform);
         }
 
         private readonly struct TransformInstantiator : IForEachWithEntity<SDKTransform>
         {
-            private readonly IComponentPool gameObjectPool;
+            private readonly IComponentPool transformPool;
             private readonly Transform sceneRoot;
 
-            public TransformInstantiator(IComponentPool gameObjectPool, Transform sceneRoot)
+            public TransformInstantiator(IComponentPool transformPool, Transform sceneRoot)
             {
-                this.gameObjectPool = gameObjectPool;
+                this.transformPool = transformPool;
                 this.sceneRoot = sceneRoot;
             }
 
             public void Update(in Entity entity, ref SDKTransform sdkTransform)
             {
-                var newTransform = (Transform)gameObjectPool.Rent();
-
-                newTransform.SetParent(sceneRoot.transform);
+                var newTransform = (Transform)transformPool.Rent();
                 newTransform.name = "Entity " + entity.Id;
-
-                newTransform.position = sdkTransform.Position;
-                newTransform.rotation = sdkTransform.Rotation;
-                newTransform.localScale = sdkTransform.Scale;
                 entity.Add(newTransform);
             }
         }

@@ -7,6 +7,7 @@ using CrdtEcsBridge.Components.Transform;
 using ECS.Abstract;
 using ECS.Unity.Systems;
 using System.Collections.Generic;
+using Unity.ECS.Components;
 using UnityEngine;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
@@ -15,17 +16,39 @@ using UnityEngine;
 public partial class ParentingTransformSystem : BaseUnityLoopSystem
 {
     private readonly QueryDescription queryDescription = new QueryDescription().WithAll<SDKTransform, Transform>();
+    private Transform sceneRootTransform;
+
+    private OrphanTransform orphanTransform;
     private ParentTransform parentTransform;
 
-    public ParentingTransformSystem(World world, Dictionary<CRDTEntity, Entity> entitiesMap) : base(world)
+    public ParentingTransformSystem(World world, Dictionary<CRDTEntity, Entity> entitiesMap, Transform sceneRootTransform) : base(world)
     {
+        orphanTransform = new OrphanTransform(sceneRootTransform);
         parentTransform = new ParentTransform(entitiesMap);
     }
 
     protected override void Update(float t)
     {
+        World.InlineEntityQuery<OrphanTransform, SDKTransform, Transform>(in queryDescription, ref orphanTransform);
         World.InlineEntityQuery<ParentTransform, SDKTransform, Transform>(in queryDescription, ref parentTransform);
     }
+
+    private readonly struct OrphanTransform : IForEachWithEntity<SDKTransform, Transform>
+    {
+        private readonly Transform sceneRootTransform;
+
+        public OrphanTransform(Transform sceneRootTransform)
+        {
+            this.sceneRootTransform = sceneRootTransform;
+        }
+
+        public void Update(in Entity entity, ref SDKTransform sdkTransform, ref Transform entityTransform)
+        {
+            if (sdkTransform.IsDirty && sdkTransform.ParentId.Id == SpecialEntityId.SCENE_ROOT_ENTITY && entityTransform.parent != sceneRootTransform)
+                entityTransform.SetParent(sceneRootTransform);
+        }
+    }
+
 
     private readonly struct ParentTransform : IForEachWithEntity<SDKTransform, Transform>
     {
@@ -38,13 +61,14 @@ public partial class ParentingTransformSystem : BaseUnityLoopSystem
 
         public void Update(in Entity entity, ref SDKTransform sdkTransform, ref Transform entityTransform)
         {
-            if (sdkTransform.ParentId.Id != 0 && sdkTransform.IsDirty)
+            if (sdkTransform.IsDirty && sdkTransform.ParentId.Id != SpecialEntityId.SCENE_ROOT_ENTITY)
             {
-                Transform transformParent = entitiesMap[sdkTransform.ParentId].Get<Transform>();
+                Transform parentTransform = entitiesMap[sdkTransform.ParentId].Get<Transform>();
 
-                if (!entityTransform.IsChildOf(transformParent))
-                    entityTransform.SetParent(transformParent);
+                if (entityTransform.parent != parentTransform)
+                    entityTransform.SetParent(parentTransform, true);
             }
         }
     }
+
 }

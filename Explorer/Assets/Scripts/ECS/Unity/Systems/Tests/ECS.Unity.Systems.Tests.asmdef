@@ -8,7 +8,10 @@
         "ECS",
         "SDKComponentsRegistry",
         "ComponentsPooling",
-        "ECS.Unity.Systems"
+        "ECS.Unity.Systems",
+        "Containers",
+        "SceneRunner",
+        "CRDT"
     ],
     "includePlatforms": [
         "Editor"
