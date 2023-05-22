@@ -101,7 +101,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
                 colliderGameObject.layer = PhysicsLayers.ON_POINTER_EVENT_LAYER;
             else if (PhysicsLayers.LayerMaskHasAnySDKCustomLayer(colliderLayer))
                 colliderGameObject.layer = PhysicsLayers.SDK_CUSTOM_LAYER;
-            else if (collider != null)
+            else
                 enabled = false;
 
             collider.enabled = enabled;
