@@ -49,8 +49,12 @@ namespace ECS.ComponentsPooling
 
         private void HandleRelease(T component)
         {
-            component.gameObject.SetActive(false);
-            component.gameObject.name = DEFAULT_COMPONENT_NAME;
+            if (component == null)
+                return;
+
+            GameObject gameObject;
+            (gameObject = component.gameObject).SetActive(false);
+            gameObject.name = DEFAULT_COMPONENT_NAME;
             component.gameObject.transform.SetParent(parentContainer);
         }
 

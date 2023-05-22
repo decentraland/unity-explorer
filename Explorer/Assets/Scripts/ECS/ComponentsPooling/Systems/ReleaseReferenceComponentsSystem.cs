@@ -5,19 +5,19 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 
-namespace ECS.ComponentsPooling
+namespace ECS.ComponentsPooling.Systems
 {
     /// <summary>
-    /// Called as a last step before entity destruction to return components to the pool
+    /// Called as a last step before entity destruction to return reference components to the pool
     /// </summary>
     [UpdateInGroup(typeof(CleanUpGroup))]
-    public partial class ReleaseComponentsSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
+    public partial class ReleaseReferenceComponentsSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly QueryDescription queryDescription = new QueryDescription().WithAll<DeleteEntityIntention>();
 
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
 
-        public ReleaseComponentsSystem(World world, IComponentPoolsRegistry componentPoolsRegistry) : base(world)
+        public ReleaseReferenceComponentsSystem(World world, IComponentPoolsRegistry componentPoolsRegistry) : base(world)
         {
             this.componentPoolsRegistry = componentPoolsRegistry;
         }
@@ -28,13 +28,15 @@ namespace ECS.ComponentsPooling
             ReleaseComponentsToPool(in query);
         }
 
-        public void FinalizeSDKComponents(in Query query)
+        public void FinalizeComponents(in Query query)
         {
             ReleaseComponentsToPool(in query);
         }
 
         private void ReleaseComponentsToPool(in Query query)
         {
+            // TODO Wrappers over components are not released
+
             // Profiling required, O(N^4)
             foreach (ref var chunk in query.GetChunkIterator())
             {
@@ -45,6 +47,9 @@ namespace ECS.ComponentsPooling
                 {
                     for (var i = 0; i < array2D.Length; i++)
                     {
+                        // if it is called on a value type it will cause an allocation
+                        if (array2D[i].GetType().GetElementType().IsValueType) continue;
+
                         var component = array2D[i].GetValue(entityIndex);
                         var type = component.GetType();
 

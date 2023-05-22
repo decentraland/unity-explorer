@@ -26,6 +26,10 @@ namespace SceneRunner.Scene
         private int intervalMS;
         private bool started;
 
+        private bool disposed;
+
+        private readonly UniTaskCompletionSource completionSource;
+
         public SceneFacade(
             ISceneRuntime runtimeInstance,
             ECSWorldFacade ecsWorldFacade,
@@ -42,6 +46,8 @@ namespace SceneRunner.Scene
             this.crdtWorldSynchronizer = crdtWorldSynchronizer;
             this.instancePoolsProvider = instancePoolsProvider;
             this.crdtMemoryAllocator = crdtMemoryAllocator;
+
+            completionSource = new UniTaskCompletionSource();
         }
 
         public void SetTargetFPS(int fps)
@@ -74,8 +80,20 @@ namespace SceneRunner.Scene
             var stopWatch = new Stopwatch();
             var deltaTime = 0f;
 
-            while (!ct.IsCancellationRequested)
+            while (true)
             {
+                if (ct.IsCancellationRequested)
+                {
+                    completionSource.TrySetCanceled();
+                    break;
+                }
+
+                if (Volatile.Read(ref disposed))
+                {
+                    completionSource.TrySetResult();
+                    break;
+                }
+
                 stopWatch.Restart();
 
                 // We can't guarantee that the thread is preserved between updates
@@ -104,8 +122,15 @@ namespace SceneRunner.Scene
                 throw new ThreadStateException($"Execution after calling {funcName} must be off the main thread");
         }
 
-        public void Dispose()
+        public async UniTask DisposeAsync()
         {
+            // Because of multithreading Disposing is not synced with the update loop
+            // so just mark it as disposed and let the update loop handle the disposal
+            Volatile.Write(ref disposed, true);
+
+            await completionSource.Task.SuppressCancellationThrow();
+            await UniTask.SwitchToMainThread();
+
             runtimeInstance.Dispose();
             ecsWorldFacade.Dispose();
             crdtProtocol.Dispose();

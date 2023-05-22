@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using Arch.Core.Extensions;
 using DCL.ECSComponents;
 using ECS.ComponentsPooling;
 using ECS.TestSuite;
@@ -56,11 +55,11 @@ namespace ECS.Unity.PrimitiveColliders.Tests
         [TestCaseSource(nameof(TestCases))]
         public void InstantiateNonExistingCollider(PBMeshCollider input, Type expectedType)
         {
-            entity.Add(input);
+            world.Add(entity, input);
 
             system.Update(0);
 
-            ref PrimitiveColliderComponent colliderComp = ref entity.Get<PrimitiveColliderComponent>();
+            ref PrimitiveColliderComponent colliderComp = ref world.Get<PrimitiveColliderComponent>(entity);
 
             Assert.AreEqual(expectedType, colliderComp.Collider.GetType());
             Assert.AreEqual(expectedType, colliderComp.ColliderType);
@@ -75,14 +74,14 @@ namespace ECS.Unity.PrimitiveColliders.Tests
         {
             input.IsDirty = true;
 
-            entity.Add(input);
+            world.Add(entity, input);
 
             var previousComponent = new PrimitiveColliderComponent { Collider = null, ColliderType = typeof(SphereCollider), SDKType = PBMeshCollider.MeshOneofCase.None };
-            entity.Add(previousComponent);
+            world.Add(entity, previousComponent);
 
             system.Update(0);
 
-            ref PrimitiveColliderComponent colliderComp = ref entity.Get<PrimitiveColliderComponent>();
+            ref PrimitiveColliderComponent colliderComp = ref world.Get<PrimitiveColliderComponent>(entity);
 
             Assert.AreEqual(expectedType, colliderComp.Collider.GetType());
             Assert.AreEqual(expectedType, colliderComp.ColliderType);
@@ -95,7 +94,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
         [TestCaseSource(nameof(TestCases))]
         public void UpdateChangedCollider(PBMeshCollider input, Type expectedType)
         {
-            entity.Add(input);
+            world.Add(entity, input);
 
             system.Update(0);
 
@@ -105,7 +104,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             input.IsDirty = true;
             system.Update(0);
 
-            ref PrimitiveColliderComponent colliderComp = ref entity.Get<PrimitiveColliderComponent>();
+            ref PrimitiveColliderComponent colliderComp = ref world.Get<PrimitiveColliderComponent>(entity);
 
             Assert.AreEqual(expectedType, colliderComp.Collider.GetType());
             Assert.AreEqual(expectedType, colliderComp.ColliderType);

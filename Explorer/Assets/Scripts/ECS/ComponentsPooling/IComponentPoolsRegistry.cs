@@ -13,9 +13,9 @@ namespace ECS.ComponentsPooling
         bool TryGetPool(Type type, out IComponentPool componentPool);
 
         /// <summary>
-        /// Get or the message pool of the protobuf message. Pool must be registered in advance
+        /// Get the message pool of the reference type. Pool must be registered in advance
         /// </summary>
-        /// <typeparam name="T">Protobuf Message</typeparam>
+        /// <typeparam name="T">Any reference type</typeparam>
         /// <returns></returns>
         IComponentPool<T> GetReferenceTypePool<T>() where T: class;
 

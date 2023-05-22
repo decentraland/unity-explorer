@@ -1934,22 +1934,12 @@
         </member>
         <member name="F:Arch.Core.Entity.Id">
             <summary>
-                 Its Id, unique in its <see cref="T:Arch.Core.World"/>.
-            </summary>
-        </member>
-        <member name="F:Arch.Core.Entity.WorldId">
-            <summary>
-            Its <see cref="T:Arch.Core.World"/> id.
+                Its Id, unique in its <see cref="T:Arch.Core.World"/>.
             </summary>
         </member>
         <member name="F:Arch.Core.Entity.Null">
             <summary>
-                A null <see cref="T:Arch.Core.Entity"/> used for comparison.
-            </summary>
-        </member>
-        <member name="M:Arch.Core.Entity.#ctor">
-            <summary>
-                Initializes a new instance of the <see cref="T:Arch.Core.Entity"/> struct with default values.
+                A null entity, used for comparison.
             </summary>
         </member>
         <member name="M:Arch.Core.Entity.#ctor(System.Int32,System.Int32)">
@@ -1957,7 +1947,7 @@
                 Initializes a new instance of the <see cref="T:Arch.Core.Entity"/> struct.
             </summary>
             <param name="id">Its unique id.</param>
-            <param name="worldId">Its <see cref="T:Arch.Core.World"/> id.</param>
+            <param name="worldId">Its world id, not used for this entity since its pure ecs.</param>
         </member>
         <member name="M:Arch.Core.Entity.Equals(Arch.Core.Entity)">
             <summary>
@@ -1968,7 +1958,7 @@
         </member>
         <member name="M:Arch.Core.Entity.Equals(System.Object)">
             <summary>
-                Checks the <see cref="T:Arch.Core.Entity"/> for equality with another <see cref="T:System.Object"/>.
+                Checks the <see cref="T:Arch.Core.Entity"/> for equality with another object..
             </summary>
             <param name="obj">The other <see cref="T:Arch.Core.Entity"/> object.</param>
             <returns>True if equal, false if not.</returns>
@@ -1981,25 +1971,25 @@
         </member>
         <member name="M:Arch.Core.Entity.op_Equality(Arch.Core.Entity,Arch.Core.Entity)">
             <summary>
-                 Checks the <see cref="T:Arch.Core.Entity"/> for equality with another one.
+                Checks the left <see cref="T:Arch.Core.Entity"/> for equality with the right one.
             </summary>
             <param name="left">The left <see cref="T:Arch.Core.Entity"/>.</param>
             <param name="right">The right <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>True if equal, otherwhise false.</returns>
+            <returns>True if both are equal, otherwhise false.</returns>
         </member>
         <member name="M:Arch.Core.Entity.op_Inequality(Arch.Core.Entity,Arch.Core.Entity)">
             <summary>
-                 Checks the <see cref="T:Arch.Core.Entity"/> for unequality with another one.
+                Checks the left <see cref="T:Arch.Core.Entity"/> for unequality with the right one.
             </summary>
             <param name="left">The left <see cref="T:Arch.Core.Entity"/>.</param>
             <param name="right">The right <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>True if unequal, otherwhise false.</returns>
+            <returns>True if both are unequal, otherwhise false.</returns>
         </member>
         <member name="M:Arch.Core.Entity.ToString">
             <summary>
-                Converts this <see cref="T:Arch.Core.Entity"/> to a string.
+                Converts this entity to a string.
             </summary>
-            <returns>Its string.</returns>
+            <returns>A string.</returns>
         </member>
         <member name="T:Arch.Core.EntityReference">
             <summary>
@@ -2034,10 +2024,11 @@
                 Initializes a new null instance of the <see cref="T:Arch.Core.EntityReference"/> struct.
             </summary>
         </member>
-        <member name="M:Arch.Core.EntityReference.IsAlive">
+        <member name="M:Arch.Core.EntityReference.IsAlive(Arch.Core.World)">
             <summary>
                 Checks if the referenced <see cref="F:Arch.Core.EntityReference.Entity"/> is still valid and alife.
             </summary>
+            <param name="world">The <see cref="F:Arch.Core.EntityReference.Entity"/> <see cref="T:Arch.Core.World"/>..</param>
             <returns>True if its alive, otherwhise false.</returns>
         </member>
         <member name="M:Arch.Core.EntityReference.Equals(Arch.Core.EntityReference)">
@@ -2785,224 +2776,6 @@
                 The <see cref="T:Arch.Core.Extensions.EntityExtensions"/> class
                 adds several extension methods for <see cref="T:Arch.Core.Entity"/>.
             </summary>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.GetArchetype(Arch.Core.Entity@)">
-            <summary>
-                Returns the <see cref="T:Arch.Core.Archetype"/> of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>Its <see cref="T:Arch.Core.Archetype"/>.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.GetChunk(Arch.Core.Entity@)">
-            <summary>
-                Returns the <see cref="T:Arch.Core.Chunk"/> of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>A reference to its <see cref="T:Arch.Core.Chunk"/>.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.GetComponentTypes(Arch.Core.Entity@)">
-            <summary>
-                Returns all <see cref="T:Arch.Core.Utils.ComponentType"/>'s of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>Its <see cref="T:Arch.Core.Utils.ComponentType"/>'s array.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.GetAllComponents(Arch.Core.Entity@)">
-            <summary>
-                Returns all components of an <see cref="T:Arch.Core.Entity"/> as an array.
-                Will allocate memory.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>A newly allocated array containing the entities components.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.IsAlive(Arch.Core.Entity@)">
-            <summary>
-                Checks if the <see cref="T:Arch.Core.Entity"/> is alive in this <see cref="T:Arch.Core.World"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>True if it exists and is alive, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Version(Arch.Core.Entity@)">
-            <summary>
-                Returns the version of an <see cref="T:Arch.Core.Entity"/>.
-                Indicating how often it was recycled.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>Its version.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Reference(Arch.Core.Entity@)">
-            <summary>
-                Returns a <see cref="T:Arch.Core.EntityReference"/> to an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>Its <see cref="T:Arch.Core.EntityReference"/>.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Set``1(Arch.Core.Entity@,``0@)">
-            <summary>
-                Sets or replaces a component for an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="cmp">The instance, optional.</param>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Has``1(Arch.Core.Entity@)">
-            <summary>
-                Checks if an <see cref="T:Arch.Core.Entity"/> has a certain component.
-            </summary>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>True if it has the desired component, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Get``1(Arch.Core.Entity@)">
-            <summary>
-                Returns a reference to the component of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <returns>A reference to the component.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.TryGet``1(Arch.Core.Entity@,``0@)">
-            <summary>
-                Trys to return a reference to the component of an <see cref="T:Arch.Core.Entity"/>.
-                Will copy the component if its a struct.
-            </summary>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="component">The found component.</param>
-            <returns>True if it exists, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.TryGetRef``1(Arch.Core.Entity@,System.Boolean@)">
-            <summary>
-                Trys to return a reference to the component of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="exists">True if it exists, oterhwhise false.</param>
-            <returns>A reference to the component.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.AddOrGet``1(Arch.Core.Entity@,``0)">
-            <summary>
-               Ensures the existance of an component on an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="cmp">The component value used if its being added.</param>
-            <returns>A reference to the component.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Add``1(Arch.Core.Entity@,``0@)">
-            <summary>
-                Adds an new component to the <see cref="T:Arch.Core.Entity"/> and moves it to the new <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="cmp">The component instance, optional.</param>
-            <typeparam name="T">The component type.</typeparam>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Remove``1(Arch.Core.Entity@)">
-            <summary>
-                Removes an component from an <see cref="T:Arch.Core.Entity"/> and moves it to a different <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <typeparam name="T">The component type.</typeparam>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Set(Arch.Core.Entity@,System.Object)">
-            <summary>
-                Sets or replaces a component for an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="cmp">The component.</param>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.SetRange(Arch.Core.Entity@,System.Object[])">
-            <summary>
-                Sets or replaces a <see cref="T:System.Collections.Generic.IList`1"/> of components for an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="components">The components <see cref="T:System.Collections.Generic.IList`1"/>.</param>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Has(Arch.Core.Entity@,Arch.Core.Utils.ComponentType)">
-            <summary>
-                Checks if an <see cref="T:Arch.Core.Entity"/> has a certain component.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="type">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
-            <returns>True if it has the desired component, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.HasRange(Arch.Core.Entity@,Arch.Core.Utils.ComponentType[])">
-            <summary>
-                Checks if an <see cref="T:Arch.Core.Entity"/> has a certain component.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="types">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
-            <returns>True if it has the desired component, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Get(Arch.Core.Entity@,Arch.Core.Utils.ComponentType)">
-            <summary>
-                Returns a reference to the component of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="type">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
-            <returns>A reference to the component.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.GetRange(Arch.Core.Entity@,Arch.Core.Utils.ComponentType[])">
-            <summary>
-                Returns an array of components of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="types">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
-            <returns>A reference to the component.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.GetRange(Arch.Core.Entity@,Arch.Core.Utils.ComponentType[],System.Collections.Generic.IList{System.Object})">
-            <summary>
-                Returns an array of components of an <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="types">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
-            <param name="components">A <see cref="T:System.Collections.Generic.IList`1"/> where the components are put it.</param>
-            <returns>A reference to the component.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.TryGet(Arch.Core.Entity@,Arch.Core.Utils.ComponentType,System.Object@)">
-            <summary>
-                Trys to return a reference to the component of an <see cref="T:Arch.Core.Entity"/>.
-                Will copy the component if its a struct.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="type">The component <see cref="T:Arch.Core.Utils.ComponentType"/>.</param>
-            <param name="component">The found component.</param>
-            <returns>True if it exists, otherwhise false.</returns>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.Add(Arch.Core.Entity@,System.Object@)">
-            <summary>
-                Adds an new component to the <see cref="T:Arch.Core.Entity"/> and moves it to the new <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="cmp">The component.</param>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.AddRange(Arch.Core.Entity@,System.Object[])">
-            <summary>
-                Adds a <see cref="T:System.Collections.Generic.IList`1"/> of new components to the <see cref="T:Arch.Core.Entity"/> and moves it to the new <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="components">The component <see cref="T:System.Collections.Generic.IList`1"/>.</param>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.AddRange(Arch.Core.Entity@,System.Collections.Generic.IList{Arch.Core.Utils.ComponentType})">
-            <summary>
-                Adds an list of new components to the <see cref="T:Arch.Core.Entity"/> and moves it to the new <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="components">A <see cref="T:System.Collections.Generic.IList`1"/> of <see cref="T:Arch.Core.Utils.ComponentType"/>'s, those are added to the <see cref="T:Arch.Core.Entity"/>.</param>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.RemoveRange(Arch.Core.Entity@,Arch.Core.Utils.ComponentType[])">
-            <summary>
-                Removes a list of <see cref="T:Arch.Core.Utils.ComponentType"/>'s from the <see cref="T:Arch.Core.Entity"/> and moves it to a different <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="types">A <see cref="T:System.Collections.Generic.IList`1"/> of <see cref="T:Arch.Core.Utils.ComponentType"/>'s, those are removed from the <see cref="T:Arch.Core.Entity"/>.</param>
-        </member>
-        <member name="M:Arch.Core.Extensions.EntityExtensions.RemoveRange(Arch.Core.Entity@,System.Collections.Generic.IList{Arch.Core.Utils.ComponentType})">
-            <summary>
-                Removes a list of <see cref="T:Arch.Core.Utils.ComponentType"/>'s from the <see cref="T:Arch.Core.Entity"/> and moves it to a different <see cref="T:Arch.Core.Archetype"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/>.</param>
-            <param name="types">A <see cref="T:System.Collections.Generic.IList`1"/> of <see cref="T:Arch.Core.Utils.ComponentType"/>'s, those are removed from the <see cref="T:Arch.Core.Entity"/>.</param>
         </member>
         <member name="T:Arch.Core.Extensions.Internal.ArrayExtensions">
             <summary>
@@ -4039,63 +3812,6 @@
         <member name="T:Arch.Core.Utils.Group">
             <summary>
                 The <see cref="T:Arch.Core.Utils.Group"/> class counts the Ids of registered groups in an compiletime static way.
-            </summary>
-        </member>
-        <member name="T:Arch.Core.Utils.EntityDebugView">
-            <summary>
-                A debug view exclusive for the <see cref="T:Arch.Core.Entity"/> to ease the debugging.
-                <remarks>Not available for #define pure_ecs.</remarks>
-            </summary>
-        </member>
-        <member name="F:Arch.Core.Utils.EntityDebugView._entity">
-            <summary>
-                The <see cref="T:Arch.Core.Entity"/> to debug.
-            </summary>
-        </member>
-        <member name="M:Arch.Core.Utils.EntityDebugView.#ctor(Arch.Core.Entity)">
-            <summary>
-                Constructs an <see cref="T:Arch.Core.Utils.EntityDebugView"/>.
-            </summary>
-            <param name="entity">The <see cref="T:Arch.Core.Entity"/> to debug.</param>
-        </member>
-        <member name="P:Arch.Core.Utils.EntityDebugView.Id">
-            <summary>
-                The id of this <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.Utils.EntityDebugView.IsAlive">
-            <summary>
-                The status of this <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.Utils.EntityDebugView.Version">
-            <summary>
-                The version of this <see cref="T:Arch.Core.Entity"/>.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.Utils.EntityDebugView.Components">
-            <summary>
-                The <see cref="T:Arch.Core.Entity"/>s components.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.Utils.EntityDebugView.World">
-            <summary>
-                The <see cref="P:Arch.Core.Utils.EntityDebugView.World"/> this <see cref="T:Arch.Core.Entity"/> lives in.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.Utils.EntityDebugView.Archetype">
-            <summary>
-                The <see cref="P:Arch.Core.Utils.EntityDebugView.Archetype"/> this <see cref="T:Arch.Core.Entity"/> lives in.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.Utils.EntityDebugView.Chunk">
-            <summary>
-                The <see cref="P:Arch.Core.Utils.EntityDebugView.Archetype"/> this <see cref="T:Arch.Core.Entity"/> lives in.
-            </summary>
-        </member>
-        <member name="P:Arch.Core.Utils.EntityDebugView.EntityInfo">
-            <summary>
-                The stored <see cref="P:Arch.Core.Utils.EntityDebugView.EntityInfo"/> for this <see cref="T:Arch.Core.Entity"/>.
             </summary>
         </member>
         <member name="T:Arch.Core.Utils.MurmurHash3">

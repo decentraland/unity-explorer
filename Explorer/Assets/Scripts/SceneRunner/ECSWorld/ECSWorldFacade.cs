@@ -34,7 +34,7 @@ namespace SceneRunner.ECSWorld
             Profiler.BeginSample("FinalizeSDKComponents");
 
             for (var i = 0; i < finalizeWorldSystems.Count; i++)
-                finalizeWorldSystems[i].FinalizeSDKComponents(in finalizeSDKComponentsQuery);
+                finalizeWorldSystems[i].FinalizeComponents(in finalizeSDKComponentsQuery);
 
             Profiler.EndSample();
 

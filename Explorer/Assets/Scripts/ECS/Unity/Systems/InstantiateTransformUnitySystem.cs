@@ -1,5 +1,4 @@
 using Arch.Core;
-using Arch.Core.Extensions;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CrdtEcsBridge.Components.Transform;
@@ -23,16 +22,18 @@ namespace ECS.Unity.Systems
 
         public InstantiateTransformUnitySystem(World world, IComponentPoolsRegistry componentPools) : base(world)
         {
-            instantiateTransform = new TransformInstantiator(componentPools.GetReferenceTypePool<Transform>());
+            instantiateTransform = new TransformInstantiator(componentPools.GetReferenceTypePool<Transform>(), world);
         }
 
         private readonly struct TransformInstantiator : IForEachWithEntity<SDKTransform>
         {
             private readonly IComponentPool gameObjectPool;
+            private readonly World world;
 
-            public TransformInstantiator(IComponentPool gameObjectPool)
+            public TransformInstantiator(IComponentPool gameObjectPool, World world)
             {
                 this.gameObjectPool = gameObjectPool;
+                this.world = world;
             }
 
             public void Update(in Entity entity, ref SDKTransform sdkTransform)
@@ -45,7 +46,7 @@ namespace ECS.Unity.Systems
                 newTransform.position = sdkTransform.Position;
                 newTransform.rotation = sdkTransform.Rotation;
                 newTransform.localScale = sdkTransform.Scale;
-                entity.Add(newTransform);
+                world.Add(entity, newTransform);
             }
         }
     }
