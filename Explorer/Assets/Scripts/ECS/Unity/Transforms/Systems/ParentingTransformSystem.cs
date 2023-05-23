@@ -65,9 +65,6 @@ namespace ECS.Unity.Transforms.Systems
             if (childComponent.Parent == parentComponent)
                 return;
 
-            if (parentComponent.Transform.IsChildOf(childComponent.Transform))
-                SetNewChild(parentComponent.Parent, childComponent);
-
             childComponent.Transform.SetParent(parentComponent.Transform, true);
             childComponent.Parent = parentComponent;
             parentComponent.Children.Add(childComponent);
