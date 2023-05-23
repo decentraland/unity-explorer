@@ -29,8 +29,9 @@ namespace SceneRunner.ECSWorld
 
             // We create the scene root transform
             Transform sceneRootTransform = componentPoolsRegistry.GetReferenceTypePool<Transform>().Get();
+            sceneRootTransform.transform.SetParent(null);
             sceneRootTransform.name = $"SCENE_ROOT_{sceneName}";
-            Entity rootTransformEntity = world.Create(new TransformComponent(sceneRootTransform));
+            Entity rootTransformEntity = world.Create(new TransformComponent(sceneRootTransform), CRDTEntity.Create(0, 0));
 
             // Create all systems and add them to the world
             var builder = new ArchSystemsWorldBuilder<World>(world);
@@ -43,11 +44,12 @@ namespace SceneRunner.ECSWorld
 
             var releaseSDKComponentsSystem = ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             var releaseColliderSystem = ReleasePoolableComponentSystem<PrimitiveColliderComponent>.InjectToWorld(ref builder, componentPoolsRegistry);
+            var releaseTransformSystem = ReleasePoolableComponentSystem<TransformComponent>.InjectToWorld(ref builder, componentPoolsRegistry);
 
             // Add other systems here
             var systemsWorld = builder.Finish();
 
-            return new ECSWorldFacade(systemsWorld, world, releaseSDKComponentsSystem, releaseColliderSystem);
+            return new ECSWorldFacade(systemsWorld, world, releaseSDKComponentsSystem, releaseColliderSystem, releaseTransformSystem);
         }
     }
 }
