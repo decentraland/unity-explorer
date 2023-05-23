@@ -8,6 +8,7 @@ namespace ECS.Unity.Transforms.Components
 {
     /// <summary>
     ///     A wrapper over the transform unity component that is created from the SDKTransform component.
+    ///     It's the Unity base representation of an Entity.
     /// </summary>
     public struct TransformComponent : IPoolableComponentProvider
     {
