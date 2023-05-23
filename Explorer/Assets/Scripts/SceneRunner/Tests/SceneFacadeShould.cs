@@ -51,7 +51,7 @@ namespace SceneRunner.Tests
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>();
 
-            ecsWorldFactory.CreateWorld(Arg.Any<Dictionary<CRDTEntity, Entity>>())
+            ecsWorldFactory.CreateWorld(Arg.Any<Dictionary<CRDTEntity, Entity>>(), Arg.Any<string>())
                            .Returns(_ =>
                             {
                                 var world = World.Create();

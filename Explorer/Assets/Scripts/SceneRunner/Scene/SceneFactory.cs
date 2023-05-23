@@ -55,7 +55,7 @@ namespace SceneRunner.Scene
             var crdtDeserializer = new CRDTDeserializer(crdtMemoryAllocator);
 
             /* Pass dependencies here if they are needed by the systems */
-            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(entitiesMap);
+            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(entitiesMap, jsCodeUrl.Substring(jsCodeUrl.LastIndexOf("/") + 1));
             ecsWorldFacade.Initialize();
 
             // Create an instance of Scene Runtime on the thread pool

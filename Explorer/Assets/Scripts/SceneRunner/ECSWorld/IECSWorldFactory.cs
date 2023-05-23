@@ -10,7 +10,7 @@ namespace SceneRunner.ECSWorld
         /// Create a new instance of the ECS world, all its systems and attach them to the player loop
         /// </summary>
         /// add per world dependencies here
-        ECSWorldFacade CreateWorld(in Dictionary<CRDTEntity, Entity> entitiesMap);
+        ECSWorldFacade CreateWorld(IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, string sceneName = null);
 
     }
 }

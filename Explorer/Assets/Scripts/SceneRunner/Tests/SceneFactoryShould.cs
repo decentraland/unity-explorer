@@ -43,7 +43,7 @@ namespace SceneRunner.Tests
             sceneRuntimeFactory = new SceneRuntimeFactory();
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>();
-            ecsWorldFactory.CreateWorld(Arg.Any<Dictionary<CRDTEntity, Entity>>()).Returns(ecsWorldFacade);
+            ecsWorldFactory.CreateWorld(Arg.Any<Dictionary<CRDTEntity, Entity>>(), Arg.Any<string>()).Returns(ecsWorldFacade);
 
             sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>();
             crdtSerializer = Substitute.For<ICRDTSerializer>();

@@ -1,17 +1,18 @@
-using Arch.Core;
 using CrdtEcsBridge.Components.Transform;
+using ECS.TestSuite;
+using ECS.Unity.Transforms.Components;
+using ECS.Unity.Transforms.Systems;
 using NUnit.Framework;
 using UnityEngine;
 
 namespace ECS.Unity.Systems.Tests
 {
     [TestFixture]
-    public class UpdateTransformSystemShould
+    public class UpdateTransformSystemShould : UnitySystemTestBase<ParentingTransformSystem>
     {
         private UpdateTransformSystem system;
         private SDKTransform sdkTransform;
-        private Transform testTransform;
-        private World world;
+        private TransformComponent testTransformComponent;
 
         private readonly Vector3 TEST_VECTOR = new (1, 2, 3);
 
@@ -24,10 +25,9 @@ namespace ECS.Unity.Systems.Tests
                 Position = TEST_VECTOR,
             };
 
-            testTransform = new GameObject().transform;
+            testTransformComponent = new TransformComponent(new GameObject().transform);
 
-            world = World.Create();
-            world.Create(sdkTransform, testTransform);
+            world.Create(sdkTransform, testTransformComponent);
 
             system = new UpdateTransformSystem(world);
         }
@@ -40,14 +40,13 @@ namespace ECS.Unity.Systems.Tests
 
             // Assert
             Assert.IsFalse(sdkTransform.IsDirty);
-            Assert.AreEqual(testTransform.position, TEST_VECTOR);
+            Assert.AreEqual(testTransformComponent.Transform.position, TEST_VECTOR);
         }
 
         [TearDown]
         public void TearDown()
         {
-            Object.DestroyImmediate(testTransform.gameObject);
-            world.Dispose();
+            Object.DestroyImmediate(testTransformComponent.Transform.gameObject);
         }
     }
 }

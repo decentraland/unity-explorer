@@ -1,7 +1,10 @@
 using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components.Transform;
+using ECS.LifeCycle.Components;
 using ECS.TestSuite;
+using ECS.Unity.Transforms.Components;
+using ECS.Unity.Transforms.Systems;
 using NUnit.Framework;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,9 +17,9 @@ namespace ECS.Unity.Systems.Tests
         private SDKTransform parentSDKTransform;
         private SDKTransform childSDKTransform;
 
-        private Transform parentTransform;
-        private Transform childTransform;
-        private Transform sceneRoot;
+        private TransformComponent parentTransformComponent;
+        private TransformComponent childTransformComponent;
+        private TransformComponent sceneRoot;
 
         private CRDTEntity sceneRootCRDT;
         private CRDTEntity parentCRDTEntity;
@@ -35,9 +38,9 @@ namespace ECS.Unity.Systems.Tests
             parentCRDTEntity = new CRDTEntity(512);
             childCRDTEntity = new CRDTEntity(513);
 
-            sceneRoot = new GameObject().transform;
-            parentTransform = new GameObject().transform;
-            childTransform = new GameObject().transform;
+            sceneRoot = new TransformComponent(new GameObject("SCENE_ROOT").transform);
+            parentTransformComponent = new TransformComponent(new GameObject("PARENT").transform);
+            childTransformComponent = new TransformComponent(new GameObject("CHILD").transform);
 
             parentSDKTransform = new SDKTransform
             {
@@ -52,8 +55,8 @@ namespace ECS.Unity.Systems.Tests
             };
 
             rootEntity = world.Create(sceneRoot);
-            parentEntity = world.Create(parentSDKTransform, parentTransform);
-            childEntity = world.Create(childSDKTransform, childTransform);
+            parentEntity = world.Create(parentSDKTransform, parentTransformComponent);
+            childEntity = world.Create(childSDKTransform, childTransformComponent);
 
             crdtToEntityDict = new Dictionary<CRDTEntity, Entity>
             {
@@ -72,9 +75,11 @@ namespace ECS.Unity.Systems.Tests
             system.Update(0f);
 
             // Assert
-            Assert.AreEqual(1, sceneRoot.childCount);
-            Assert.AreEqual(1, parentTransform.childCount);
-            Assert.AreEqual(parentTransform.GetChild(0), childTransform);
+            Assert.AreEqual(1, sceneRoot.Transform.childCount);
+            Assert.AreEqual(1, sceneRoot.Children.Count);
+            Assert.AreEqual(1, parentTransformComponent.Transform.childCount);
+            Assert.AreEqual(1, parentTransformComponent.Children.Count);
+            Assert.AreEqual(parentTransformComponent.Transform.GetChild(0), childTransformComponent.Transform);
         }
 
         [Test]
@@ -95,28 +100,27 @@ namespace ECS.Unity.Systems.Tests
             system.Update(0f);
 
             // Assert
-            Assert.AreEqual(2, sceneRoot.childCount);
-            Assert.AreEqual(0, parentTransform.childCount);
+            Assert.AreEqual(2, sceneRoot.Transform.childCount);
+            Assert.AreEqual(2, sceneRoot.Children.Count);
+            Assert.AreEqual(0, parentTransformComponent.Transform.childCount);
+            Assert.AreEqual(0, parentTransformComponent.Children.Count);
         }
 
         [Test]
         public void ParentChildToSceneRootIfParentIsDeleted()
         {
             // Arrange
+            //One tick to do the parenting
+            system.Update(0f);
+            world.Add(parentEntity, new DeleteEntityIntention());
             crdtToEntityDict.Remove(parentCRDTEntity);
 
             // Act
             system.Update(0f);
 
             // Assert
-            Assert.AreEqual(0, parentTransform.childCount);
-            Assert.IsTrue(childTransform.IsChildOf(sceneRoot));
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            world.Dispose();
+            Assert.AreEqual(0, parentTransformComponent.Children.Count);
+            Assert.IsTrue(childTransformComponent.Transform.IsChildOf(sceneRoot.Transform));
         }
     }
 }

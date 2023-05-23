@@ -1,5 +1,5 @@
 {
-    "name": "ECS.Unity.Systems.Tests",
+    "name": "ECS.Unity.Transforms.Tests",
     "rootNamespace": "",
     "references": [
         "UnityEngine.TestRunner",
@@ -7,7 +7,6 @@
         "ECS",
         "SDKComponentsRegistry",
         "ComponentsPooling",
-        "ECS.Unity.Systems",
         "Containers",
         "SceneRunner",
         "CRDT",
