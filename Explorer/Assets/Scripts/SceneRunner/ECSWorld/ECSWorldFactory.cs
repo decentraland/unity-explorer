@@ -30,14 +30,13 @@ namespace SceneRunner.ECSWorld
             // We create the scene root transform
             Transform sceneRootTransform = componentPoolsRegistry.GetReferenceTypePool<Transform>().Get();
             sceneRootTransform.name = $"SCENE_ROOT_{sceneName}";
-            var sceneRootTransformComponent = new TransformComponent(sceneRootTransform);
-            world.Create(sceneRootTransformComponent);
+            Entity rootTransformEntity = world.Create(new TransformComponent(sceneRootTransform));
 
             // Create all systems and add them to the world
             var builder = new ArchSystemsWorldBuilder<World>(world);
             UpdateTransformSystem.InjectToWorld(ref builder);
             InstantiateTransformSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            ParentingTransformSystem.InjectToWorld(ref builder, entitiesMap, sceneRootTransformComponent);
+            ParentingTransformSystem.InjectToWorld(ref builder, entitiesMap, world.Reference(rootTransformEntity));
             AssertDisconnectedTransformsSystem.InjectToWorld(ref builder);
             InstantiatePrimitiveColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             ReleaseOutdatedColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry);

@@ -65,7 +65,7 @@ namespace ECS.Unity.Systems.Tests
                 { childCRDTEntity, childEntity },
             };
 
-            system = new ParentingTransformSystem(world, crdtToEntityDict, sceneRoot);
+            system = new ParentingTransformSystem(world, crdtToEntityDict, world.Reference(rootEntity));
         }
 
         [Test]

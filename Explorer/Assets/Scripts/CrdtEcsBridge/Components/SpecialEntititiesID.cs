@@ -1,6 +1,6 @@
 namespace CrdtEcsBridge.Components
 {
-    public static class SpecialComponentsID
+    public static class SpecialEntititiesID
     {
         public const int SCENE_ROOT_ENTITY = 0;
         public const int PLAYER_ENTITY = 1;
