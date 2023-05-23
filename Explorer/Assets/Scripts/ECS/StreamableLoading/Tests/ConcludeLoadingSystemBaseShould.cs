@@ -5,6 +5,7 @@ using ECS.StreamableLoading.Systems;
 using ECS.TestSuite;
 using NUnit.Framework;
 using System.Threading.Tasks;
+using UnityEngine.Networking;
 
 namespace ECS.StreamableLoading.Tests
 {
@@ -12,6 +13,8 @@ namespace ECS.StreamableLoading.Tests
         where TSystem: ConcludeLoadingSystemBase<TAsset, TIntention>
         where TIntention: struct, ILoadingIntention
     {
+        private UnityWebRequest webRequest;
+
         protected abstract TSystem CreateSystem();
 
         protected abstract Entity CreateSuccessIntention();
@@ -26,12 +29,31 @@ namespace ECS.StreamableLoading.Tests
             system = CreateSystem();
         }
 
+        [TearDown]
+        public void TearDown()
+        {
+            webRequest?.Dispose();
+            webRequest = null;
+        }
+
+        private void StoreWebRequest(LoadingRequest loadingRequest)
+        {
+            webRequest = loadingRequest.WebRequest;
+
+            if (webRequest != null)
+            {
+                webRequest.disposeDownloadHandlerOnDispose = true;
+                webRequest.disposeUploadHandlerOnDispose = true;
+            }
+        }
+
         [Test]
         public async Task ConcludeSuccess()
         {
             Entity e = CreateSuccessIntention();
 
             LoadingRequest request = world.Get<LoadingRequest>(e);
+            StoreWebRequest(request);
 
             while (!request.WebRequest.isDone)
             {
@@ -52,6 +74,8 @@ namespace ECS.StreamableLoading.Tests
             Entity e = CreateWrongTypeIntention();
 
             LoadingRequest request = world.Get<LoadingRequest>(e);
+
+            StoreWebRequest(request);
 
             while (!request.WebRequest.isDone)
             {
@@ -83,6 +107,8 @@ namespace ECS.StreamableLoading.Tests
             FixIntention();
 
             LoadingRequest request = world.Get<LoadingRequest>(e);
+
+            StoreWebRequest(request);
 
             while (!request.WebRequest.isDone)
             {

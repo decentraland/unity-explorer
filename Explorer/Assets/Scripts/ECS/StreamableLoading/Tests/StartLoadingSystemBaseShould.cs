@@ -3,6 +3,7 @@ using ECS.StreamableLoading.Components.Common;
 using ECS.StreamableLoading.Systems;
 using ECS.TestSuite;
 using NUnit.Framework;
+using UnityEngine.Networking;
 
 namespace ECS.StreamableLoading.Tests
 {
@@ -14,10 +15,30 @@ namespace ECS.StreamableLoading.Tests
 
         protected abstract TSystem CreateSystem();
 
+        private UnityWebRequest webRequest;
+
         [SetUp]
         public void BaseSetUp()
         {
             system = CreateSystem();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            webRequest?.Dispose();
+            webRequest = null;
+        }
+
+        private void StoreWebRequest(LoadingRequest loadingRequest)
+        {
+            webRequest = loadingRequest.WebRequest;
+
+            if (webRequest != null)
+            {
+                webRequest.disposeDownloadHandlerOnDispose = true;
+                webRequest.disposeUploadHandlerOnDispose = true;
+            }
         }
 
         [Test]
@@ -29,6 +50,9 @@ namespace ECS.StreamableLoading.Tests
             system.Update(0f);
 
             Assert.IsTrue(world.TryGet(e, out LoadingRequest loadingRequest));
+
+            StoreWebRequest(loadingRequest);
+
             Assert.IsNotNull(loadingRequest.WebRequest);
         }
 
@@ -41,6 +65,9 @@ namespace ECS.StreamableLoading.Tests
             system.Update(0f);
 
             Assert.IsTrue(world.TryGet(e, out LoadingRequest loadingRequest));
+
+            StoreWebRequest(loadingRequest);
+
             Assert.IsNotNull(loadingRequest.WebRequest);
         }
 
@@ -53,6 +80,9 @@ namespace ECS.StreamableLoading.Tests
             system.Update(0f);
 
             Assert.IsTrue(world.TryGet(e, out LoadingRequest loadingRequest));
+
+            StoreWebRequest(loadingRequest);
+
             Assert.IsNull(loadingRequest.WebRequest);
         }
     }
