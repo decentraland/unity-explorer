@@ -11,7 +11,7 @@ namespace ECS.Unity.Transforms.Systems
 {
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     [UpdateAfter(typeof(ParentingTransformSystem))]
-    public class UpdateTransformSystem : BaseUnityLoopSystem
+    public partial class UpdateTransformSystem : BaseUnityLoopSystem
     {
         public UpdateTransformSystem(World world) : base(world) { }
 

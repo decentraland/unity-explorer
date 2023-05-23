@@ -11,7 +11,7 @@ using UnityEngine;
 namespace ECS.Unity.Transforms.Systems
 {
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    public class InstantiateTransformSystem : BaseUnityLoopSystem
+    public partial class InstantiateTransformSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPool<Transform> transformPool;
 

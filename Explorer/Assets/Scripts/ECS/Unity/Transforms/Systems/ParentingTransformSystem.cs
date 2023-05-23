@@ -13,7 +13,7 @@ namespace ECS.Unity.Transforms.Systems
 {
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     [UpdateAfter(typeof(InstantiateTransformSystem))]
-    public class ParentingTransformSystem : BaseUnityLoopSystem
+    public partial class ParentingTransformSystem : BaseUnityLoopSystem
     {
         private readonly TransformComponent sceneRootTransformComponent;
         private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
