@@ -8,6 +8,7 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace ECS.Unity.Transforms.Systems
 {
@@ -68,8 +69,13 @@ namespace ECS.Unity.Transforms.Systems
             if (childComponent.Parent == parentEntityReference)
                 return;
 
-            TransformComponent parentComponent = World.Get<TransformComponent>(parentEntityReference.Entity);
+            if (!parentEntityReference.IsAlive(World))
+            {
+                Debug.LogError($"Trying to parent entity {childEntityReference.Entity} to a dead entity parent");
+                return;
+            }
 
+            TransformComponent parentComponent = World.Get<TransformComponent>(parentEntityReference.Entity);
             childComponent.Transform.SetParent(parentComponent.Transform, true);
             childComponent.Parent = parentEntityReference;
             parentComponent.Children.Add(childEntityReference);
@@ -77,7 +83,7 @@ namespace ECS.Unity.Transforms.Systems
 
         private void RemoveFromParent(TransformComponent childComponent, EntityReference childEntityReference)
         {
-            if (childComponent.Parent != EntityReference.Null)
+            if (childComponent.Parent.IsAlive(World))
                 World.Get<TransformComponent>(childComponent.Parent.Entity).Children.Remove(childEntityReference);
         }
     }
