@@ -3,6 +3,7 @@ using ECS.ComponentsPooling;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace ECS.Unity.Transforms.Components
 {
@@ -19,11 +20,16 @@ namespace ECS.Unity.Transforms.Components
         public TransformComponent(Transform transform)
         {
             Transform = transform;
-            Children = new HashSet<TransformComponent>();
+            Children = HashSetPool<TransformComponent>.Get();
             Parent = EntityReference.Null;
         }
 
         object IPoolableComponentProvider.PoolableComponent => Transform;
         Type IPoolableComponentProvider.PoolableComponentType => typeof(Transform);
+
+        public void Dispose()
+        {
+            HashSetPool<TransformComponent>.Release(Children);
+        }
     }
 }
