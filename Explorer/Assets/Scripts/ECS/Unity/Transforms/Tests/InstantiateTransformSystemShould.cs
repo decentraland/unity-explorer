@@ -2,6 +2,8 @@ using Arch.Core;
 using CrdtEcsBridge.Components.Transform;
 using ECS.ComponentsPooling;
 using ECS.TestSuite;
+using ECS.Unity.Transforms.Components;
+using ECS.Unity.Transforms.Systems;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
@@ -9,24 +11,24 @@ using UnityEngine;
 namespace ECS.Unity.Systems.Tests
 {
     [TestFixture]
-    public class InstantiateTransformUnitySystemShould : UnitySystemTestBase<InstantiateTransformUnitySystem>
+    public class InstantiateTransformUnitySystemShould : UnitySystemTestBase<InstantiateTransformSystem>
     {
         private SDKTransform sdkTransform;
         private IComponentPoolsRegistry componentRegistry;
-        private IComponentPool transformPool;
+        private IComponentPool<Transform> transformPool;
         private Transform testTransform;
 
         [SetUp]
         public void SetUp()
         {
             transformPool = Substitute.For<IComponentPool<Transform>>();
-            transformPool.Rent().Returns(testTransform = new GameObject().transform);
+            transformPool.Get().Returns(testTransform = new GameObject().transform);
 
             componentRegistry = Substitute.For<IComponentPoolsRegistry>();
             componentRegistry.GetReferenceTypePool<Transform>().Returns(transformPool);
 
             sdkTransform = new SDKTransform();
-            system = new InstantiateTransformUnitySystem(world, componentRegistry);
+            system = new InstantiateTransformSystem(world, componentRegistry);
         }
 
         [Test]
@@ -41,7 +43,7 @@ namespace ECS.Unity.Systems.Tests
             system.Update(0f);
 
             // Assert
-            QueryDescription entityWithUnityTransform = new QueryDescription().WithAll<SDKTransform, Transform>();
+            QueryDescription entityWithUnityTransform = new QueryDescription().WithAll<SDKTransform, TransformComponent>();
             Assert.AreEqual(1, world.CountEntities(in entityWithUnityTransform));
             Assert.AreEqual(0, world.CountEntities(in entityWithoutUnityTransform));
         }

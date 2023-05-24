@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using CrdtEcsBridge.Components.Transform;
 using ECS.Abstract;
+using ECS.Unity.Transforms.Components;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -24,7 +25,7 @@ namespace ECS.TestSuite
         /// <summary>
         ///     Adds SDKTransform and creates a new GO with the entity Id as name
         /// </summary>
-        protected Transform AddTransformToEntity(in Entity entity, bool isDirty = false)
+        protected TransformComponent AddTransformToEntity(in Entity entity, bool isDirty = false)
         {
             var go = new GameObject($"{entity.Id}");
             Transform t = go.transform;
@@ -33,8 +34,10 @@ namespace ECS.TestSuite
             t.localRotation = Quaternion.identity;
             t.localScale = Vector3.one;
 
-            world.Add(entity, t, new SDKTransform { IsDirty = isDirty, Position = Vector3.zero, Rotation = Quaternion.identity, Scale = Vector3.one });
-            return t;
+            var transformComponent = new TransformComponent(t);
+
+            world.Add(entity, transformComponent, new SDKTransform { IsDirty = isDirty, Position = Vector3.zero, Rotation = Quaternion.identity, Scale = Vector3.one });
+            return transformComponent;
         }
     }
 }

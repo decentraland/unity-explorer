@@ -2,10 +2,11 @@
 
 namespace ECS.ComponentsPooling
 {
-    public interface IPoolableComponentProvider
+    public interface IPoolableComponentProvider : IDisposable
     {
         object PoolableComponent { get; }
 
         Type PoolableComponentType { get; }
+
     }
 }

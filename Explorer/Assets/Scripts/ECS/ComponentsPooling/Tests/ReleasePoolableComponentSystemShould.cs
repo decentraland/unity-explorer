@@ -25,6 +25,8 @@ namespace ECS.ComponentsPooling.Tests
 
             public object PoolableComponent { get; }
             public Type PoolableComponentType => typeof(TestComponent1);
+
+            public void Dispose() { }
         }
 
         [Test]

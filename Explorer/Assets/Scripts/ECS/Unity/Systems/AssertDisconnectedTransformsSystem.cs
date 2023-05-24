@@ -7,6 +7,8 @@ using CrdtEcsBridge.Components.Transform;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;
+using ECS.Unity.Transforms.Components;
+using ECS.Unity.Transforms.Systems;
 using UnityEngine;
 
 namespace ECS.Unity.Systems
@@ -16,7 +18,7 @@ namespace ECS.Unity.Systems
     ///     <para>It's important to validate it as Unity Components systems rely on the existence of the parent transform</para>
     /// </summary>
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    [UpdateAfter(typeof(InstantiateTransformUnitySystem))]
+    [UpdateAfter(typeof(InstantiateTransformSystem))]
     [UpdateBefore(typeof(ComponentInstantiationGroup))]
     public partial class AssertDisconnectedTransformsSystem : BaseUnityLoopSystem
     {
@@ -29,7 +31,7 @@ namespace ECS.Unity.Systems
 
         [Query]
         [All(typeof(CRDTEntity), typeof(SDKTransform))]
-        [None(typeof(Transform), typeof(DeleteEntityIntention))]
+        [None(typeof(TransformComponent), typeof(DeleteEntityIntention))]
         private void FindDisconnectedTransform(ref CRDTEntity entity)
         {
             Debug.LogError($"Transform does not exist for the alive entity \"{entity}\"");

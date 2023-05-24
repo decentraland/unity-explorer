@@ -1,4 +1,6 @@
-﻿using CRDT.Deserializer;
+﻿using Arch.Core;
+using CRDT;
+using CRDT.Deserializer;
 using CRDT.Memory;
 using CRDT.Protocol;
 using CRDT.Serializer;
@@ -11,6 +13,7 @@ using Cysharp.Threading.Tasks;
 using SceneRunner.ECSWorld;
 using SceneRuntime;
 using SceneRuntime.Factory;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace SceneRunner.Scene
@@ -42,6 +45,8 @@ namespace SceneRunner.Scene
 
         public async UniTask<ISceneFacade> CreateScene(string jsCodeUrl, CancellationToken ct)
         {
+            var entitiesMap = new Dictionary<CRDTEntity, Entity>(1000, CRDTEntityComparer.INSTANCE);
+
             // Per scene instance dependencies
             var crdtProtocol = new CRDTProtocol();
             var outgoingCrtdMessagesProvider = new OutgoingCRTDMessagesProvider();
@@ -49,13 +54,14 @@ namespace SceneRunner.Scene
             var crdtMemoryAllocator = CRDTPooledMemoryAllocator.Create();
             var crdtDeserializer = new CRDTDeserializer(crdtMemoryAllocator);
 
-            var ecsWorldFacade = ecsWorldFactory.CreateWorld( /* Pass dependencies here if they are needed by the systems */);
+            /* Pass dependencies here if they are needed by the systems */
+            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(entitiesMap, jsCodeUrl.Substring(jsCodeUrl.LastIndexOf("/") + 1));
             ecsWorldFacade.Initialize();
 
             // Create an instance of Scene Runtime on the thread pool
             SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPath(jsCodeUrl, instancePoolsProvider, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool);
 
-            var crdtWorldSynchronizer = new CRDTWorldSynchronizer(ecsWorldFacade.EcsWorld, sdkComponentsRegistry, entityFactory);
+            var crdtWorldSynchronizer = new CRDTWorldSynchronizer(ecsWorldFacade.EcsWorld, sdkComponentsRegistry, entityFactory, entitiesMap);
 
             var engineAPI = new EngineAPIImplementation(
                 sharedPoolsProvider, instancePoolsProvider,

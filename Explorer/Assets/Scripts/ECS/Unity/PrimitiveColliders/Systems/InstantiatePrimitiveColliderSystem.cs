@@ -9,6 +9,7 @@ using ECS.Abstract;
 using ECS.ComponentsPooling;
 using ECS.Unity.Groups;
 using ECS.Unity.PrimitiveColliders.Components;
+using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -47,9 +48,9 @@ namespace ECS.Unity.PrimitiveColliders.Systems
         }
 
         [Query]
-        [All(typeof(PBMeshCollider), typeof(SDKTransform), typeof(Transform))]
+        [All(typeof(PBMeshCollider), typeof(SDKTransform), typeof(TransformComponent))]
         [None(typeof(PrimitiveColliderComponent))]
-        private void InstantiateNonExistingCollider(in Entity entity, ref PBMeshCollider sdkComponent, ref Transform transform)
+        private void InstantiateNonExistingCollider(in Entity entity, ref PBMeshCollider sdkComponent, ref TransformComponent transform)
         {
             var component = new PrimitiveColliderComponent();
             Instantiate(setupColliderCases[sdkComponent.MeshCase], ref component, ref sdkComponent, ref transform);
@@ -57,11 +58,11 @@ namespace ECS.Unity.PrimitiveColliders.Systems
         }
 
         [Query]
-        [All(typeof(PBMeshCollider), typeof(SDKTransform), typeof(Transform), typeof(PrimitiveColliderComponent))]
+        [All(typeof(PBMeshCollider), typeof(SDKTransform), typeof(TransformComponent), typeof(PrimitiveColliderComponent))]
         private void TrySetupExistingCollider(
             ref PrimitiveColliderComponent primitiveColliderComponent,
             ref PBMeshCollider sdkComponent,
-            ref Transform transform)
+            ref TransformComponent transformComponent)
         {
             if (!sdkComponent.IsDirty) return;
 
@@ -69,7 +70,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
 
             // Prevent calling an overloaded comparison from UnityEngine.Object
             if (ReferenceEquals(primitiveColliderComponent.Collider, null))
-                Instantiate(setupCollider, ref primitiveColliderComponent, ref sdkComponent, ref transform);
+                Instantiate(setupCollider, ref primitiveColliderComponent, ref sdkComponent, ref transformComponent);
             else
 
                 // Just a change of parameters
@@ -111,7 +112,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
         /// <summary>
         ///     It is either called when there is no collider or collider was invalidated before (set to null)
         /// </summary>
-        private void Instantiate(ISetupCollider setupCollider, ref PrimitiveColliderComponent component, ref PBMeshCollider sdkComponent, ref Transform transform)
+        private void Instantiate(ISetupCollider setupCollider, ref PrimitiveColliderComponent component, ref PBMeshCollider sdkComponent, ref TransformComponent transformComponent)
         {
             component.ColliderType = setupCollider.ColliderType;
             component.SDKType = sdkComponent.MeshCase;
@@ -124,7 +125,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
 
             Transform colliderTransform = collider.transform;
 
-            colliderTransform.SetParent(transform, false);
+            colliderTransform.SetParent(transformComponent.Transform, false);
             colliderTransform.localPosition = Vector3.zero;
             colliderTransform.localRotation = Quaternion.identity;
             colliderTransform.localScale = Vector3.one;

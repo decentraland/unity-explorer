@@ -1,14 +1,17 @@
 {
-    "name": "MeshCollider.Tests",
+    "name": "ECS.Unity.Transforms.Tests",
     "rootNamespace": "",
     "references": [
-        "GUID:27619889b8ba8c24980f49ee34dbb44a",
-        "GUID:0acc523941302664db1f4e527237feb3",
-        "GUID:6e2b4bed29ad1c549ab19b744f36f388",
-        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
-        "GUID:3c7b57a14671040bd8c549056adc04f5",
-        "GUID:a3c61f15599a43ae9de508c9c4dd5530",
-        "GUID:4794e238ed0f65142a4aea5848b513e5"
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "ECS",
+        "SDKComponentsRegistry",
+        "ComponentsPooling",
+        "Containers",
+        "SceneRunner",
+        "CRDT",
+        "ECS.TestSuite",
+        "ECS.Unity"
     ],
     "includePlatforms": [
         "Editor"
