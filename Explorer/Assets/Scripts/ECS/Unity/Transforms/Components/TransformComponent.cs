@@ -14,13 +14,13 @@ namespace ECS.Unity.Transforms.Components
     public struct TransformComponent : IPoolableComponentProvider
     {
         public Transform Transform;
-        public HashSet<TransformComponent> Children;
+        public HashSet<EntityReference> Children;
         public EntityReference Parent;
 
         public TransformComponent(Transform transform)
         {
             Transform = transform;
-            Children = HashSetPool<TransformComponent>.Get();
+            Children = HashSetPool<EntityReference>.Get();
             Parent = EntityReference.Null;
         }
 
@@ -29,7 +29,7 @@ namespace ECS.Unity.Transforms.Components
 
         public void Dispose()
         {
-            HashSetPool<TransformComponent>.Release(Children);
+            HashSetPool<EntityReference>.Release(Children);
         }
     }
 }

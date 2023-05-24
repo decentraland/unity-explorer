@@ -34,18 +34,17 @@ namespace ECS.Unity.Transforms.Systems
         [All(typeof(SDKTransform), typeof(TransformComponent), typeof(DeleteEntityIntention))]
         private void OrphanChildrenOfDeletedEntity(ref TransformComponent transformComponentToBeDeleted)
         {
-            foreach (TransformComponent childEntity in transformComponentToBeDeleted.Children)
+            foreach (EntityReference childEntity in transformComponentToBeDeleted.Children)
             {
-                TransformComponent transformComponent = childEntity;
-                SetNewChild(ref transformComponent, sceneRootEntityReference);
+                SetNewChild(ref World.Get<TransformComponent>(childEntity.Entity),
+                    childEntity, sceneRootEntityReference);
             }
-
             transformComponentToBeDeleted.Children.Clear();
         }
 
         [Query]
         [All(typeof(SDKTransform), typeof(TransformComponent))]
-        private void DoParenting(ref SDKTransform sdkTransform, ref TransformComponent transformComponent)
+        private void DoParenting(in Entity entity, ref SDKTransform sdkTransform, ref TransformComponent transformComponent)
         {
             if (!sdkTransform.IsDirty) return;
 
@@ -57,13 +56,14 @@ namespace ECS.Unity.Transforms.Systems
 
                 //We have to remove the child from the old parent
                 if (transformComponent.Parent != parentReference)
-                    RemoveFromParent(transformComponent);
+                    RemoveFromParent(transformComponent, World.Reference(entity));
             }
 
-            SetNewChild(ref transformComponent, parentReference);
+            SetNewChild(ref transformComponent, World.Reference(entity), parentReference);
         }
 
-        private void SetNewChild(ref TransformComponent childComponent, EntityReference parentEntityReference)
+        private void SetNewChild(ref TransformComponent childComponent, EntityReference childEntityReference,
+            EntityReference parentEntityReference)
         {
             if (childComponent.Parent == parentEntityReference)
                 return;
@@ -72,13 +72,13 @@ namespace ECS.Unity.Transforms.Systems
 
             childComponent.Transform.SetParent(parentComponent.Transform, true);
             childComponent.Parent = parentEntityReference;
-            parentComponent.Children.Add(childComponent);
+            parentComponent.Children.Add(childEntityReference);
         }
 
-        private void RemoveFromParent(TransformComponent childToRemove)
+        private void RemoveFromParent(TransformComponent childComponent, EntityReference childEntityReference)
         {
-            if (childToRemove.Parent != EntityReference.Null)
-                World.Get<TransformComponent>(childToRemove.Parent.Entity).Children.Remove(childToRemove);
+            if (childComponent.Parent != EntityReference.Null)
+                World.Get<TransformComponent>(childComponent.Parent.Entity).Children.Remove(childEntityReference);
         }
     }
 }

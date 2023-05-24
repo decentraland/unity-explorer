@@ -8,9 +8,8 @@ using UnityEngine;
 namespace ECS.Unity.Systems.Tests
 {
     [TestFixture]
-    public class UpdateTransformSystemShould : UnitySystemTestBase<ParentingTransformSystem>
+    public class UpdateTransformSystemShould : UnitySystemTestBase<UpdateTransformSystem>
     {
-        private UpdateTransformSystem system;
         private SDKTransform sdkTransform;
         private TransformComponent testTransformComponent;
 
