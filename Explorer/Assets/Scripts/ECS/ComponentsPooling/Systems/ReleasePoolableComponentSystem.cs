@@ -1,6 +1,5 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
-using CRDT;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -19,7 +18,7 @@ namespace ECS.ComponentsPooling.Systems
            .WithAll<DeleteEntityIntention, TProvider>();
 
         private readonly QueryDescription finalizeQuery = new QueryDescription()
-           .WithAll<CRDTEntity, TProvider>();
+           .WithAll<TProvider>();
 
         private ReleaseOnEntityDestroy releaseOnEntityDestroy;
 
