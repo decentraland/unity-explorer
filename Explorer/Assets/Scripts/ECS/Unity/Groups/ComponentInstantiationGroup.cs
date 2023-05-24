@@ -1,6 +1,6 @@
 ﻿using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using ECS.Unity.Systems;
+using ECS.Unity.Transforms.Systems;
 
 namespace ECS.Unity.Groups
 {
@@ -8,6 +8,6 @@ namespace ECS.Unity.Groups
     ///     Denotes the group that instantiates specific components right after the entity transform is handled
     /// </summary>
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    [UpdateAfter(typeof(InstantiateTransformUnitySystem))]
+    [UpdateAfter(typeof(InstantiateTransformSystem))]
     public partial class ComponentInstantiationGroup { }
 }

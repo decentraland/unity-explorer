@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using CRDT;
 using CRDT.Deserializer;
 using CRDT.Memory;
 using CRDT.Protocol;
@@ -18,6 +19,7 @@ using SceneRuntime;
 using SceneRuntime.Factory;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -49,7 +51,7 @@ namespace SceneRunner.Tests
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>();
 
-            ecsWorldFactory.CreateWorld()
+            ecsWorldFactory.CreateWorld(Arg.Any<Dictionary<CRDTEntity, Entity>>(), Arg.Any<string>())
                            .Returns(_ =>
                             {
                                 var world = World.Create();

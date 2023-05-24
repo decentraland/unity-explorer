@@ -13,9 +13,9 @@ namespace CrdtEcsBridge.Components
     {
         private static readonly Dictionary<CRDTEntity, ComponentType> SPECIAL_ENTITIES_ARCHETYPES = new ()
         {
-            { 0, typeof(SceneRootComponent) },
-            { 1, typeof(PlayerComponent) },
-            { 2, typeof(CameraComponent) },
+            { new CRDTEntity(SpecialEntititiesID.SCENE_ROOT_ENTITY), typeof(SceneRootComponent) },
+            { new CRDTEntity(SpecialEntititiesID.PLAYER_ENTITY), typeof(PlayerComponent) },
+            { new CRDTEntity(SpecialEntititiesID.CAMERA_ENTITY), typeof(CameraComponent) },
         };
 
         public Entity Create(CRDTEntity crdtEntity, World world)
