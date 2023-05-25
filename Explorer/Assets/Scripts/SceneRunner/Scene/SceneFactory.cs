@@ -11,10 +11,13 @@ using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using SceneRunner.ECSWorld;
+using SceneRunner.PublicAPI;
 using SceneRuntime;
 using SceneRuntime.Factory;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
+using UnityEngine.Networking;
 
 namespace SceneRunner.Scene
 {
@@ -43,7 +46,29 @@ namespace SceneRunner.Scene
             this.entityFactory = entityFactory;
         }
 
-        public async UniTask<ISceneFacade> CreateScene(string jsCodeUrl, CancellationToken ct)
+        public UniTask<ISceneFacade> CreateScene(string jsCodeUrl, CancellationToken ct) =>
+            CreateScene(new SceneContentProvider(new SceneData(jsCodeUrl), false), jsCodeUrl, ct);
+
+        public async UniTask<ISceneFacade> CreateSceneFromStreamableDirectory(string directoryName, CancellationToken ct)
+        {
+            const string SCENE_JSON_FILE_NAME = "scene.json";
+
+            var fullPath = $"file://{Application.streamingAssetsPath}/Scenes/{directoryName}";
+
+            string rawSceneJsonPath = fullPath + "/" + SCENE_JSON_FILE_NAME;
+
+            var request = UnityWebRequest.Get(rawSceneJsonPath);
+            await request.SendWebRequest().WithCancellation(ct);
+
+            RawSceneJson rawScene = JsonUtility.FromJson<RawSceneJson>(request.downloadHandler.text);
+
+            var contentProvider = new SceneContentProvider(new SceneData(fullPath, in rawScene), false);
+            string jsCodeUrl = fullPath + "/" + rawScene.main;
+
+            return await CreateScene(contentProvider, jsCodeUrl, ct);
+        }
+
+        private async UniTask<ISceneFacade> CreateScene(ISceneContentProvider contentProvider, string jsCodeUrl, CancellationToken ct)
         {
             var entitiesMap = new Dictionary<CRDTEntity, Entity>(1000, CRDTEntityComparer.INSTANCE);
 
@@ -55,7 +80,9 @@ namespace SceneRunner.Scene
             var crdtDeserializer = new CRDTDeserializer(crdtMemoryAllocator);
 
             /* Pass dependencies here if they are needed by the systems */
-            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(entitiesMap, jsCodeUrl.Substring(jsCodeUrl.LastIndexOf("/") + 1));
+            var instanceDependencies = new ECSWorldInstanceSharedDependencies(contentProvider, entitiesMap);
+
+            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(in instanceDependencies);
             ecsWorldFacade.Initialize();
 
             // Create an instance of Scene Runtime on the thread pool

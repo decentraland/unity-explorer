@@ -1,46 +1,37 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using CRDT;
 using ECS.ComponentsPooling;
 using ECS.ComponentsPooling.Systems;
 using ECS.Unity.PrimitiveColliders.Components;
-using ECS.Unity.PrimitiveColliders.Systems;
-using ECS.Unity.Systems;
 using ECS.Unity.Transforms.Components;
-using ECS.Unity.Transforms.Systems;
+using SceneRunner.ECSWorld.Plugins;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace SceneRunner.ECSWorld
 {
     public class ECSWorldFactory : IECSWorldFactory
     {
-        private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly ECSWorldSingletonSharedDependencies singletonDependencies;
+        private readonly IReadOnlyList<IECSWorldPlugin> plugins;
 
-        public ECSWorldFactory(IComponentPoolsRegistry componentPoolsRegistry /* Add here all singleton dependencies */)
+        public ECSWorldFactory(ECSWorldSingletonSharedDependencies sharedDependencies, params IECSWorldPlugin[] plugins)
         {
-            this.componentPoolsRegistry = componentPoolsRegistry;
+            this.plugins = plugins;
+            singletonDependencies = sharedDependencies;
         }
 
-        public ECSWorldFacade CreateWorld(IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, string sceneName = null)
+        public ECSWorldFacade CreateWorld(in ECSWorldInstanceSharedDependencies sharedDependencies)
         {
             // Worlds uses Pooled Collections under the hood so the memory impact is minimized
             var world = World.Create();
 
-            // We create the scene root transform
-            Transform sceneRootTransform = componentPoolsRegistry.GetReferenceTypePool<Transform>().Get();
-            sceneRootTransform.transform.SetParent(null);
-            sceneRootTransform.name = $"SCENE_ROOT_{sceneName}";
-            Entity rootTransformEntity = world.Create(new TransformComponent(sceneRootTransform), CRDTEntity.Create(0, 0));
+            IComponentPoolsRegistry componentPoolsRegistry = singletonDependencies.ComponentPoolsRegistry;
 
             // Create all systems and add them to the world
             var builder = new ArchSystemsWorldBuilder<World>(world);
-            UpdateTransformSystem.InjectToWorld(ref builder);
-            InstantiateTransformSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            ParentingTransformSystem.InjectToWorld(ref builder, entitiesMap, world.Reference(rootTransformEntity));
-            AssertDisconnectedTransformsSystem.InjectToWorld(ref builder);
-            InstantiatePrimitiveColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            ReleaseOutdatedColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+
+            foreach (IECSWorldPlugin worldPlugin in plugins)
+                worldPlugin.InjectToWorld(ref builder, in sharedDependencies);
 
             var releaseSDKComponentsSystem = ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             var releaseColliderSystem = ReleasePoolableComponentSystem<PrimitiveColliderComponent>.InjectToWorld(ref builder, componentPoolsRegistry);

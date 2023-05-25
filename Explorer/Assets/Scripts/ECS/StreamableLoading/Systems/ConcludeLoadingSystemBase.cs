@@ -7,6 +7,11 @@ using UnityEngine.Networking;
 
 namespace ECS.StreamableLoading.Systems
 {
+    /// <summary>
+    ///     Decides how the texture loading finishes
+    /// </summary>
+    /// <typeparam name="TAsset"></typeparam>
+    /// <typeparam name="TIntention"></typeparam>
     public abstract class ConcludeLoadingSystemBase<TAsset, TIntention> : BaseUnityLoopSystem where TIntention: struct, ILoadingIntention
     {
         private readonly QueryDescription query = new QueryDescription()
@@ -44,11 +49,9 @@ namespace ECS.StreamableLoading.Systems
                 {
                     case UnityWebRequest.Result.Success:
                     {
-                        TAsset asset;
-
                         try
                         {
-                            asset = getAsset(r.WebRequest);
+                            TAsset asset = getAsset(r.WebRequest);
                             world.Add(entity, new StreamableLoadingResult<TAsset>(asset));
                         }
                         catch (Exception e)

@@ -3,6 +3,6 @@ using Arch.SystemGroups.DefaultSystemGroups;
 
 namespace ECS.StreamableLoading
 {
-    [UpdateInGroup(typeof(PostRenderingSystemGroup))]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class StreamableLoadingGroup { }
 }

@@ -2,7 +2,9 @@
     "name": "ECS",
     "rootNamespace": "",
     "references": [
-        "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:e0cd26848372d4e5c891c569017e11f1",
+        "GUID:08b2edf8f14cdd3408988fd7746b749c"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

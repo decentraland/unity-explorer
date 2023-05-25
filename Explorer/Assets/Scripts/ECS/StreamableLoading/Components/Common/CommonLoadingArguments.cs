@@ -8,10 +8,11 @@
         public int Attempts;
         public int Timeout;
 
-        public CommonLoadingArguments(string url, int timeout = TIMEOUT) : this()
+        public CommonLoadingArguments(string url, int timeout = TIMEOUT, int attempts = 1)
         {
             URL = url;
             Timeout = timeout;
+            Attempts = attempts;
         }
     }
 }

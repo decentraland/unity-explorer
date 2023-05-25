@@ -19,6 +19,6 @@ namespace ECS.StreamableLoading
             request is { error: "Request timeout" };
 
         public static bool IsAborted(this UnityWebRequest request) =>
-            request is { result: UnityWebRequest.Result.ConnectionError or UnityWebRequest.Result.ProtocolError, error: "Request aborted" };
+            request is { result: UnityWebRequest.Result.ConnectionError or UnityWebRequest.Result.ProtocolError, error: "Request aborted" or "User Aborted" };
     }
 }
