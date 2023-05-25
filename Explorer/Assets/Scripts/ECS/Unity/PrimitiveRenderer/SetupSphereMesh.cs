@@ -3,10 +3,8 @@ using UnityEngine;
 
 namespace ECS.Unity.PrimitiveRenderer
 {
-    public class SetupSphere : ISetupMesh
+    public class SetupSphereMesh : ISetupMesh
     {
-        //private readonly Mesh reusableSphere;
-
         public void Execute(PBMeshRenderer pbRenderer, Mesh mesh)
         {
             SphereFactory.Create(ref mesh);

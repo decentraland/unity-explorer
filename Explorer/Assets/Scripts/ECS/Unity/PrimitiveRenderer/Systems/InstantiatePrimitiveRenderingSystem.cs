@@ -19,19 +19,20 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         private readonly IComponentPool<MeshRenderer> rendererPoolRegistry;
         private readonly IComponentPool<Mesh> meshPoolRegistry;
 
+        private readonly Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> SETUP_MESH_LOGIC = new ()
+        {
+            { PBMeshRenderer.MeshOneofCase.Box, new SetupBoxMesh() },
+            { PBMeshRenderer.MeshOneofCase.Sphere, new SetupSphereMesh() },
+            { PBMeshRenderer.MeshOneofCase.Cylinder, new SetupCylinder() },
+            { PBMeshRenderer.MeshOneofCase.Plane, new SetupPlaneMesh() },
+        };
 
         private readonly Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases;
 
         internal InstantiatePrimitiveRenderingSystem(World world, IComponentPoolsRegistry poolsRegistry,
             Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases = null) : base(world)
         {
-            this.setupMeshCases = new Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh>
-            {
-                { PBMeshRenderer.MeshOneofCase.Box, new SetupBox() },
-                { PBMeshRenderer.MeshOneofCase.Cylinder, new SetupCylinder() },
-                { PBMeshRenderer.MeshOneofCase.Plane, new SetupPlane() },
-                { PBMeshRenderer.MeshOneofCase.Sphere, new SetupSphere() },
-            };
+            this.setupMeshCases = setupMeshCases ?? SETUP_MESH_LOGIC;
 
             rendererPoolRegistry = poolsRegistry.GetReferenceTypePool<MeshRenderer>();
             meshPoolRegistry = poolsRegistry.GetReferenceTypePool<Mesh>();
@@ -93,7 +94,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
 
             rendererComponent.MeshRenderer = meshRendererGo;
             rendererComponent.MeshFilter = meshRendererGo.GetComponent<MeshFilter>();
-            rendererComponent.MeshFilter.mesh = mesh;
+            rendererComponent.MeshFilter.sharedMesh = mesh;
 
             Transform rendererTransform = meshRendererGo.transform;
             rendererTransform.SetParent(transformComponent.Transform, false);

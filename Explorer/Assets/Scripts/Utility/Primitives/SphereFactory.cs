@@ -43,13 +43,13 @@ public class SphereFactory : MonoBehaviour
             }
         }
 
-        vertices[vertices.Length - 1] = Vector3.up * -RADIUS;
+        vertices[verticesLength - 1] = Vector3.up * -RADIUS;
 #endregion
 
 #region Normales
         Vector3[] normales = PrimitivesBuffersPool.EQUAL_TO_VERTICES.Rent(verticesLength);
 
-        for (var n = 0; n < vertices.Length; n++) { normales[n] = vertices[n].normalized; }
+        for (var n = 0; n < verticesLength; n++) { normales[n] = vertices[n].normalized; }
 #endregion
 
 #region UVs
@@ -100,17 +100,23 @@ public class SphereFactory : MonoBehaviour
                 triangles[i++] = current;
                 triangles[i++] = next + 1;
                 triangles[i++] = next;
+
+                if (current >= 402) { Debug.Log("AQUI HAY ERROR"); }
+
+                if (next >= 402) { Debug.Log("AQUI HAY ERROR"); }
+
             }
         }
 
         //Bottom Cap
         for (var lon = 0; lon < nbLong; lon++)
         {
-            triangles[i++] = vertices.Length - 1;
-            triangles[i++] = vertices.Length - (lon + 2) - 1;
-            triangles[i++] = vertices.Length - (lon + 1) - 1;
+            triangles[i++] = verticesLength - 1;
+            triangles[i++] = verticesLength - (lon + 2) - 1;
+            triangles[i++] = verticesLength - (lon + 1) - 1;
         }
 #endregion
+
 
         mesh.SetVertices(vertices, 0, verticesLength);
         mesh.SetNormals(normales, 0, verticesLength);
@@ -123,4 +129,5 @@ public class SphereFactory : MonoBehaviour
         PrimitivesBuffersPool.UVS.Return(uvs);
         PrimitivesBuffersPool.TRIANGLES.Return(triangles);
     }
+
 }

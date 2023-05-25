@@ -1,7 +1,7 @@
 using UnityEngine;
 using Utility.Primitives;
 
-public static class CubeFactory
+public static class BoxFactory
 {
     public const int VERTICES_NUM = 24;
     public const int TRIS_NUM = 36;

@@ -13,7 +13,6 @@ public static class PlaneFactory
         mesh.name = "DCL Plane";
 
         Vector3[] vertices = PrimitivesBuffersPool.EQUAL_TO_VERTICES.Rent(VERTICES_NUM);
-        ;
         vertices[0] = new Vector3(-HALF_SIZE.x, -HALF_SIZE.y, 0);
         vertices[1] = new Vector3(-HALF_SIZE.x, HALF_SIZE.y, 0);
         vertices[2] = new Vector3(HALF_SIZE.x, HALF_SIZE.y, 0);
@@ -50,6 +49,7 @@ public static class PlaneFactory
         tris[10] = 7;
         tris[11] = 4;
 
+
         Vector3[] normals = PrimitivesBuffersPool.EQUAL_TO_VERTICES.Rent(VERTICES_NUM);
         normals[0] = Vector3.back;
         normals[1] = Vector3.back;
@@ -73,7 +73,6 @@ public static class PlaneFactory
         mesh.colors = colors;
 
         PrimitivesBuffersPool.EQUAL_TO_VERTICES.Return(vertices);
-        ;
         PrimitivesBuffersPool.UVS.Return(uvs);
         PrimitivesBuffersPool.TRIANGLES.Return(tris);
         PrimitivesBuffersPool.EQUAL_TO_VERTICES.Return(normals);
