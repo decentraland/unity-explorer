@@ -1,0 +1,26 @@
+{
+    "name": "StreamableLoading.Tests",
+    "rootNamespace": "",
+    "references": [
+        "GUID:a3c61f15599a43ae9de508c9c4dd5530",
+        "GUID:c2b7e3e0e95f4eb588516c8ae12e919b",
+        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "NSubstitute.dll",
+        "Arch.dll",
+        "Arch.System.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
