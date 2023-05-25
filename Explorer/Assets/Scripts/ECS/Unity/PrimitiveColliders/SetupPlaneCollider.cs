@@ -1,5 +1,6 @@
 using DCL.ECSComponents;
 using UnityEngine;
+using Utility.Primitives;
 
 namespace ECS.Unity.PrimitiveColliders
 {

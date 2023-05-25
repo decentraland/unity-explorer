@@ -1,6 +1,7 @@
 ﻿using DCL.ECSComponents;
 using NUnit.Framework;
 using UnityEngine;
+using Utility.Primitives;
 
 namespace ECS.Unity.PrimitiveColliders.Tests
 {
