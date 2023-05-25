@@ -3,6 +3,7 @@ using NUnit.Framework;
 using System.Threading.Tasks;
 using UnityEngine;
 using Utility;
+using Utility.Primitives;
 
 namespace ECS.ComponentsPooling.Tests
 {

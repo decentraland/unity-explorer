@@ -8,6 +8,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System;
 using UnityEngine;
+using Utility.Primitives;
 
 namespace ECS.Unity.PrimitiveRenderer.Tests
 {
