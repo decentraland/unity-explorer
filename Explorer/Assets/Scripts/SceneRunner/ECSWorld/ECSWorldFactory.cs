@@ -5,6 +5,8 @@ using ECS.ComponentsPooling;
 using ECS.ComponentsPooling.Systems;
 using ECS.Unity.PrimitiveColliders.Components;
 using ECS.Unity.PrimitiveColliders.Systems;
+using ECS.Unity.PrimitiveRenderer.Components;
+using ECS.Unity.PrimitiveRenderer.Systems;
 using ECS.Unity.Systems;
 using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
@@ -41,15 +43,19 @@ namespace SceneRunner.ECSWorld
             AssertDisconnectedTransformsSystem.InjectToWorld(ref builder);
             InstantiatePrimitiveColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             ReleaseOutdatedColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            InstantiatePrimitiveRenderingSystem.InjectToWorld(ref builder, componentPoolsRegistry);
 
             var releaseSDKComponentsSystem = ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             var releaseColliderSystem = ReleasePoolableComponentSystem<PrimitiveColliderComponent>.InjectToWorld(ref builder, componentPoolsRegistry);
             var releaseTransformSystem = ReleasePoolableComponentSystem<TransformComponent>.InjectToWorld(ref builder, componentPoolsRegistry);
+            var releaseRendererSystem = ReleasePoolableComponentSystem<PrimitiveRendererComponent>.InjectToWorld(ref builder, componentPoolsRegistry);
+            var releaseMeshSystem = ReleasePoolableComponentSystem<PrimitiveMeshComponent>.InjectToWorld(ref builder, componentPoolsRegistry);
+
 
             // Add other systems here
             var systemsWorld = builder.Finish();
 
-            return new ECSWorldFacade(systemsWorld, world, releaseSDKComponentsSystem, releaseColliderSystem, releaseTransformSystem);
+            return new ECSWorldFacade(systemsWorld, world, releaseSDKComponentsSystem, releaseColliderSystem, releaseTransformSystem, releaseRendererSystem, releaseMeshSystem);
         }
     }
 }

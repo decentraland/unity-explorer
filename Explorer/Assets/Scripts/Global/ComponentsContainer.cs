@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Utility;
 
 namespace Global
 {
@@ -42,17 +43,26 @@ namespace Global
                 sdkComponentsRegistry.SdkComponents
                                      .Select(c => (c.ComponentType, c.Pool))
                                      .Concat(GetUnityComponentDictionary())
+                                     .Concat(GetExtraComponentsDictionary())
                                      .ToDictionary(x => x.Item1, x => x.Item2));
 
             return new ComponentsContainer { SDKComponentsRegistry = sdkComponentsRegistry, ComponentPoolsRegistry = componentPoolsRegistry };
+        }
+
+        private static IEnumerable<(Type type, IComponentPool pool)> GetExtraComponentsDictionary()
+        {
+            (Type type, IComponentPool pool) CreateExtraComponentPool<T>(Action<T> onGet = null, Action<T> onRelease = null) where T: class, new() =>
+                (typeof(T), new ComponentPool<T>(onGet, onRelease));
+
+            yield return CreateExtraComponentPool<Mesh>(null, mesh => mesh.Clear());
         }
 
         private static IEnumerable<(Type type, IComponentPool pool)> GetUnityComponentDictionary()
         {
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
 
-            (Type type, IComponentPool pool) CreateComponentPool<T>(int maxSize = 1024) where T: Component =>
-                (typeof(T), new UnityComponentPool<T>(rootContainer, maxSize));
+            (Type type, IComponentPool pool) CreateComponentPool<T>(Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 1024) where T: Component =>
+                (typeof(T), new UnityComponentPool<T>(rootContainer, creationHandler, onRelease, maxSize: maxSize));
 
             yield return CreateComponentPool<Transform>();
 
@@ -60,6 +70,10 @@ namespace Global
             yield return CreateComponentPool<MeshCollider>();
             yield return CreateComponentPool<BoxCollider>();
             yield return CreateComponentPool<SphereCollider>();
+            yield return CreateComponentPool(MeshRendererPoolUtils.CreateMeshRendererComponent, MeshRendererPoolUtils.ReleaseMeshRendererComponent);
         }
     }
 }
+
+
+

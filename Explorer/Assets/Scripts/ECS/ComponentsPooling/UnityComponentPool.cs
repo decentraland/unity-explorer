@@ -1,6 +1,8 @@
+using System;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
+using Object = UnityEngine.Object;
 
 namespace ECS.ComponentsPooling
 {
@@ -11,11 +13,14 @@ namespace ECS.ComponentsPooling
         private readonly Transform parentContainer;
         private readonly Transform rootContainer;
 
-        public UnityComponentPool(Transform rootContainer, int maxSize = 2048)
+        private Action<T> OnRelease;
+
+        public UnityComponentPool(Transform rootContainer, Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 2048)
         {
             parentContainer = new GameObject($"POOL_CONTAINER_{typeof(T).Name}").transform;
             parentContainer.SetParent(rootContainer);
-            gameObjectPool = new ObjectPool<T>(HandleCreation, actionOnGet: HandleGet, actionOnRelease: HandleRelease, actionOnDestroy: HandleDestroy, defaultCapacity: maxSize / 4, maxSize: maxSize);
+            OnRelease += onRelease;
+            gameObjectPool = new ObjectPool<T>(creationHandler ?? HandleCreation, actionOnGet: HandleGet, actionOnRelease: HandleRelease, actionOnDestroy: HandleDestroy, defaultCapacity: maxSize / 4, maxSize: maxSize);
         }
 
         public PooledObject<T> Get(out T v) =>
@@ -52,6 +57,8 @@ namespace ECS.ComponentsPooling
             if (component == null)
                 return;
 
+            OnRelease?.Invoke(component);
+
             GameObject gameObject;
             (gameObject = component.gameObject).SetActive(false);
             gameObject.name = DEFAULT_COMPONENT_NAME;
@@ -60,6 +67,7 @@ namespace ECS.ComponentsPooling
 
         private void HandleDestroy(T component)
         {
+            OnRelease = null;
 #if UNITY_EDITOR
             Object.DestroyImmediate(component.gameObject);
 #else
