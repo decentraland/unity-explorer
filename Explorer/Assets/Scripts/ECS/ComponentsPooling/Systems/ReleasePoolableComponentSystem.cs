@@ -48,7 +48,6 @@ namespace ECS.ComponentsPooling.Systems
 
             public void Update(ref TProvider provider)
             {
-                provider.Dispose();
                 poolsRegistry.GetPool(provider.PoolableComponentType).Release(provider.PoolableComponent);
                 provider.Dispose();
             }

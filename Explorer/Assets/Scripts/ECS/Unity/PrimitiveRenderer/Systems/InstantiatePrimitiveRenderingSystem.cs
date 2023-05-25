@@ -7,6 +7,7 @@ using ECS.Abstract;
 using ECS.ComponentsPooling;
 using ECS.Unity.Groups;
 using ECS.Unity.PrimitiveRenderer.Components;
+using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -43,9 +44,9 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         }
 
         [Query]
-        [All(typeof(PBMeshRenderer), typeof(SDKTransform), typeof(Transform))]
+        [All(typeof(PBMeshRenderer), typeof(SDKTransform), typeof(TransformComponent))]
         [None(typeof(PrimitiveRendererComponent))]
-        private void InstantiateNonExistingRenderer(in Entity entity, ref PBMeshRenderer sdkComponent, ref Transform transform)
+        private void InstantiateNonExistingRenderer(in Entity entity, ref PBMeshRenderer sdkComponent, ref TransformComponent transform)
         {
             var rendererComponent = new PrimitiveRendererComponent();
             var meshComponent = new PrimitiveMeshComponent();
@@ -54,13 +55,13 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         }
 
         [Query]
-        [All(typeof(PBMeshRenderer), typeof(SDKTransform), typeof(Transform),
+        [All(typeof(PBMeshRenderer), typeof(SDKTransform), typeof(TransformComponent),
             typeof(PrimitiveRendererComponent), typeof(PrimitiveMeshComponent))]
         private void TrySetupExistingRenderer(
             ref PrimitiveRendererComponent primitiveRendererComponent,
             ref PrimitiveMeshComponent meshComponent,
             ref PBMeshRenderer sdkComponent,
-            ref Transform transform)
+            ref TransformComponent transform)
         {
             if (!sdkComponent.IsDirty) return;
 
@@ -78,7 +79,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         ///     It is either called when there is no collider or collider was invalidated before (set to null)
         /// </summary>
         private void Instantiate(ISetupMesh meshSetup, ref PrimitiveRendererComponent rendererComponent, ref PrimitiveMeshComponent meshComponent,
-            PBMeshRenderer sdkComponent, ref Transform transform)
+            PBMeshRenderer sdkComponent, ref TransformComponent transformComponent)
         {
             MeshRenderer meshRendererGo = rendererPoolRegistry.Get();
             meshRendererGo.material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
@@ -95,7 +96,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             rendererComponent.MeshFilter.mesh = mesh;
 
             Transform rendererTransform = meshRendererGo.transform;
-            rendererTransform.SetParent(transform, false);
+            rendererTransform.SetParent(transformComponent.Transform, false);
             rendererTransform.localPosition = Vector3.zero;
             rendererTransform.localRotation = Quaternion.identity;
             rendererTransform.localScale = Vector3.one;
