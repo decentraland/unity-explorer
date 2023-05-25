@@ -1,15 +1,18 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PrimitivesUtility
+namespace Utility.Primitives
 {
-    public static Vector2[] FloatArrayToV2List(IList<float> uvs)
+    public class PrimitivesUtility
     {
-        var uvsResult = new Vector2[uvs.Count / 2];
-        var uvsResultIndex = 0;
+        public static Vector2[] FloatArrayToV2List(IList<float> uvs)
+        {
+            var uvsResult = new Vector2[uvs.Count / 2];
+            var uvsResultIndex = 0;
 
-        for (var i = 0; i < uvs.Count;) { uvsResult[uvsResultIndex++] = new Vector2(uvs[i++], uvs[i++]); }
+            for (var i = 0; i < uvs.Count;) { uvsResult[uvsResultIndex++] = new Vector2(uvs[i++], uvs[i++]); }
 
-        return uvsResult;
+            return uvsResult;
+        }
     }
 }
