@@ -5,23 +5,25 @@ public static class PlaneFactory
 {
     public const int VERTICES_NUM = 8;
     public const int TRIS_NUM = 12;
-    public static readonly Vector3 HALF_SIZE = new (0.5f, 0.5f, 0);
+    public static readonly Vector3 SIZE = PrimitivesSize.PLANE_SIZE;
 
     // Creates a two-sided quad (clockwise)
     public static void Create(ref Mesh mesh)
     {
         mesh.name = "DCL Plane";
 
-        Vector3[] vertices = PrimitivesBuffersPool.EQUAL_TO_VERTICES.Rent(VERTICES_NUM);
-        vertices[0] = new Vector3(-HALF_SIZE.x, -HALF_SIZE.y, 0);
-        vertices[1] = new Vector3(-HALF_SIZE.x, HALF_SIZE.y, 0);
-        vertices[2] = new Vector3(HALF_SIZE.x, HALF_SIZE.y, 0);
-        vertices[3] = new Vector3(HALF_SIZE.x, -HALF_SIZE.y, 0);
+        Vector3 halfSize = SIZE / 2;
 
-        vertices[4] = new Vector3(HALF_SIZE.x, -HALF_SIZE.y, 0);
-        vertices[5] = new Vector3(HALF_SIZE.x, HALF_SIZE.y, 0);
-        vertices[6] = new Vector3(-HALF_SIZE.x, HALF_SIZE.y, 0);
-        vertices[7] = new Vector3(-HALF_SIZE.x, -HALF_SIZE.y, 0);
+        Vector3[] vertices = PrimitivesBuffersPool.EQUAL_TO_VERTICES.Rent(VERTICES_NUM);
+        vertices[0] = new Vector3(-halfSize.x, -halfSize.y, 0);
+        vertices[1] = new Vector3(-halfSize.x, halfSize.y, 0);
+        vertices[2] = new Vector3(halfSize.x, halfSize.y, 0);
+        vertices[3] = new Vector3(halfSize.x, -halfSize.y, 0);
+
+        vertices[4] = new Vector3(halfSize.x, -halfSize.y, 0);
+        vertices[5] = new Vector3(halfSize.x, halfSize.y, 0);
+        vertices[6] = new Vector3(-halfSize.x, halfSize.y, 0);
+        vertices[7] = new Vector3(-halfSize.x, -halfSize.y, 0);
 
         Vector2[] uvs = PrimitivesBuffersPool.UVS.Rent(VERTICES_NUM);
         uvs[0] = new Vector2(0f, 0f);

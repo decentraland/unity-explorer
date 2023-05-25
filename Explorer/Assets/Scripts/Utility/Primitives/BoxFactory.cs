@@ -5,7 +5,7 @@ public static class BoxFactory
 {
     public const int VERTICES_NUM = 24;
     public const int TRIS_NUM = 36;
-    public const float SIZE = 1;
+    public static readonly float SIZE = PrimitivesSize.CUBE_SIZE;
 
     public static void Create(ref Mesh mesh)
     {
