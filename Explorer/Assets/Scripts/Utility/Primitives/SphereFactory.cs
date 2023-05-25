@@ -3,7 +3,7 @@ using Utility.Primitives;
 
 public class SphereFactory : MonoBehaviour
 {
-    public const float RADIUS = 0.5f;
+    public static readonly float RADIUS = PrimitivesSize.SPHERE_RADIUS;
     public const int LONGITUDE = 24;
     public const int LATITUDE = 16;
 
