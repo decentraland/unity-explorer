@@ -87,7 +87,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
 
 
         /// <summary>
-        ///     It is either called when there is no collider or collider was invalidated before (set to null)
+        ///     It is either called when there is no mesh or mesh was invalidated before (set to null)
         /// </summary>
         private void Instantiate(ISetupMesh meshSetup, ref MeshRenderer meshRendererGo,
             ref PrimitiveMeshRendererComponent rendererComponent,
