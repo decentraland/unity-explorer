@@ -79,7 +79,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
                     ref transform);
             else
                 // This means that the UVs have changed during runtime of a scene (should be an unusual case), so we update the mesh accordingly
-                setupMesh.Execute(sdkComponent, meshRendererComponent.PrimitiveMesh.PrimitiveMesh);
+                setupMesh.Execute(sdkComponent, meshRendererComponent.PrimitiveMesh.Mesh);
   
 
             sdkComponent.IsDirty = false;
@@ -94,13 +94,13 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             PBMeshRenderer sdkComponent, ref TransformComponent transformComponent)
         {
             var primitiveMesh = (IPrimitiveMesh)poolRegistry.GetPool(meshSetup.MeshType).Rent();
-            meshSetup.Execute(sdkComponent, primitiveMesh.PrimitiveMesh);
+            meshSetup.Execute(sdkComponent, primitiveMesh.Mesh);
 
             rendererComponent.PrimitiveMesh = primitiveMesh;
             rendererComponent.MeshRenderer = meshRendererGo;
             rendererComponent.SDKType = sdkComponent.MeshCase;
 
-            meshRendererGo.GetComponent<MeshFilter>().mesh = primitiveMesh.PrimitiveMesh;
+            meshRendererGo.GetComponent<MeshFilter>().mesh = primitiveMesh.Mesh;
 
             Transform rendererTransform = meshRendererGo.transform;
             rendererTransform.SetParent(transformComponent.Transform, false);

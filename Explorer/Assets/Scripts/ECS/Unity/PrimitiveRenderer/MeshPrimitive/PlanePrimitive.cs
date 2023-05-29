@@ -5,13 +5,13 @@ namespace ECS.Unity.PrimitiveRenderer.MeshPrimitive
 {
     public class PlanePrimitive : IPrimitiveMesh
     {
-        public Mesh PrimitiveMesh { get; }
+        public Mesh Mesh { get; }
 
         public PlanePrimitive()
         {
             var newMesh = new Mesh();
             PlaneFactory.Create(ref newMesh);
-            PrimitiveMesh = newMesh;
+            Mesh = newMesh;
         }
     }
 }

@@ -69,10 +69,10 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
 
             //Assert
             Assert.AreEqual(expectedType, meshRendererComponent.SDKType);
-            setupMeshes[input.MeshCase].Received(1).Execute(input, meshRendererComponent.PrimitiveMesh.PrimitiveMesh);
+            setupMeshes[input.MeshCase].Received(1).Execute(input, meshRendererComponent.PrimitiveMesh.Mesh);
 
             Assert.AreEqual(meshRendererComponent.MeshRenderer.GetComponent<MeshFilter>().sharedMesh,
-                meshRendererComponent.PrimitiveMesh.PrimitiveMesh);
+                meshRendererComponent.PrimitiveMesh.Mesh);
         }
 
         [Test]
@@ -92,10 +92,10 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
             ref var meshRendererComponent = ref world.Get<PrimitiveMeshRendererComponent>(entity);
 
             Assert.AreEqual(expectedType, meshRendererComponent.SDKType);
-            setupMeshes[input.MeshCase].Received(1).Execute(input, meshRendererComponent.PrimitiveMesh.PrimitiveMesh);
+            setupMeshes[input.MeshCase].Received(1).Execute(input, meshRendererComponent.PrimitiveMesh.Mesh);
 
             Assert.AreEqual(meshRendererComponent.MeshRenderer.GetComponent<MeshFilter>().sharedMesh,
-                meshRendererComponent.PrimitiveMesh.PrimitiveMesh);
+                meshRendererComponent.PrimitiveMesh.Mesh);
         }
 
         public static object[][] TestCases()

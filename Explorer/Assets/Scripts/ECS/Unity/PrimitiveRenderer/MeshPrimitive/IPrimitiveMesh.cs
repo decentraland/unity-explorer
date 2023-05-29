@@ -4,6 +4,6 @@ namespace ECS.Unity.PrimitiveRenderer.MeshPrimitive
 {
     public interface IPrimitiveMesh
     {
-        Mesh PrimitiveMesh { get; }
+        Mesh Mesh { get; }
     }
 }

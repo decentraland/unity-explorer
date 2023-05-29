@@ -5,13 +5,13 @@ namespace ECS.Unity.PrimitiveRenderer.MeshPrimitive
 {
     public class SpherePrimitive : IPrimitiveMesh
     {
-        public Mesh PrimitiveMesh { get; }
+        public Mesh Mesh { get; }
 
         public SpherePrimitive()
         {
             var newMesh = new Mesh();
             SphereFactory.Create(ref newMesh);
-            PrimitiveMesh = newMesh;
+            Mesh = newMesh;
         }
     }
 }

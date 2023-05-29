@@ -4,12 +4,12 @@ namespace ECS.Unity.PrimitiveRenderer.MeshPrimitive
 {
     public class CylinderPrimitive : IPrimitiveMesh
     {
-        public Mesh PrimitiveMesh { get; }
+        public Mesh Mesh { get; }
 
         public CylinderPrimitive()
         {
             var newMesh = new Mesh();
-            PrimitiveMesh = newMesh;
+            Mesh = newMesh;
         }
     }
 }
