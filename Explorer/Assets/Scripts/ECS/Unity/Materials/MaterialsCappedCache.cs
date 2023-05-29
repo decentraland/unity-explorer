@@ -9,6 +9,8 @@ namespace ECS.Unity.Materials
     /// </summary>
     public class MaterialsCappedCache : IMaterialsCache
     {
+        internal const int MIN_SIZE = 16;
+
         public delegate void DestroyMaterial(Material material);
 
         private readonly Dictionary<MaterialData, CacheEntry> cachedMaterials;
@@ -20,7 +22,7 @@ namespace ECS.Unity.Materials
 
         public MaterialsCappedCache(int maxSize, DestroyMaterial destroyMaterial)
         {
-            maxSize = Mathf.Min(16, maxSize);
+            maxSize = Mathf.Min(MIN_SIZE, maxSize);
 
             this.maxSize = maxSize;
             this.destroyMaterial = destroyMaterial;
@@ -33,6 +35,20 @@ namespace ECS.Unity.Materials
 
             for (var i = 0; i < maxSize; i++)
                 nodePool.Push(new LinkedListNode<MaterialData>(default(MaterialData)));
+        }
+
+        internal int Count => cachedMaterials.Count;
+
+        internal bool TryGetCacheEntry(in MaterialData materialData, out (Material material, int refCount) entry)
+        {
+            if (cachedMaterials.TryGetValue(materialData, out CacheEntry cacheEntry))
+            {
+                entry = (cacheEntry.Material, cacheEntry.RefCount);
+                return true;
+            }
+
+            entry = default((Material material, int refCount));
+            return false;
         }
 
         public bool TryReferenceMaterial(in MaterialData materialData, out Material material)
@@ -91,6 +107,7 @@ namespace ECS.Unity.Materials
                 // Add the node as not referenced
                 entry.NotReferencedNode = nodePool.Pop();
                 entry.NotReferencedNode.Value = materialData;
+                notReferencedMaterials.AddLast(entry.NotReferencedNode);
             }
 
             // Apply the changes (it's a struct)

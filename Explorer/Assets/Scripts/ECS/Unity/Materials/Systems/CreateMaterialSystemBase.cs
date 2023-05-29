@@ -12,7 +12,8 @@ namespace ECS.Unity.Materials.Systems
     {
         private readonly int attemptsCount;
         protected readonly IMaterialsCache materialsCache;
-        private Material sharedMaterial;
+
+        internal Material sharedMaterial { get; private set; }
 
         protected CreateMaterialSystemBase(World world, IMaterialsCache materialsCache, int attemptsCount) : base(world)
         {
@@ -20,7 +21,7 @@ namespace ECS.Unity.Materials.Systems
             this.attemptsCount = attemptsCount;
         }
 
-        protected abstract string materialPath { get; }
+        internal abstract string materialPath { get; }
 
         public override void Initialize()
         {
@@ -38,6 +39,8 @@ namespace ECS.Unity.Materials.Systems
             Entity entity = World.Create(new GetTextureIntention
             {
                 CommonArguments = new CommonLoadingArguments(textureComponent.Value.Src, attempts: attemptsCount),
+                WrapMode = textureComponent.Value.WrapMode,
+                FilterMode = textureComponent.Value.FilterMode,
             });
 
             entityReference = World.Reference(entity);

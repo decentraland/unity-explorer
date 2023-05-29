@@ -14,6 +14,8 @@ namespace ECS.StreamableLoading.Systems
     /// <typeparam name="TIntention"></typeparam>
     public abstract class ConcludeLoadingSystemBase<TAsset, TIntention> : BaseUnityLoopSystem where TIntention: struct, ILoadingIntention
     {
+        protected delegate TAsset GetAssetDelegate(UnityWebRequest webRequest, in TIntention intention);
+
         private readonly QueryDescription query = new QueryDescription()
                                                  .WithAll<LoadingRequest, TIntention>()
                                                  .WithNone<StreamableLoadingResult<TAsset>>();
@@ -30,14 +32,14 @@ namespace ECS.StreamableLoading.Systems
             World.InlineEntityQuery<TryConclude, LoadingRequest, TIntention>(in query, ref tryConclude);
         }
 
-        protected abstract TAsset GetAsset(UnityWebRequest webRequest);
+        protected abstract TAsset GetAsset(UnityWebRequest webRequest, in TIntention intention);
 
         private readonly struct TryConclude : IForEachWithEntity<LoadingRequest, TIntention>
         {
             private readonly World world;
-            private readonly Func<UnityWebRequest, TAsset> getAsset;
+            private readonly GetAssetDelegate getAsset;
 
-            public TryConclude(World world, Func<UnityWebRequest, TAsset> getAsset)
+            public TryConclude(World world, GetAssetDelegate getAsset)
             {
                 this.world = world;
                 this.getAsset = getAsset;
@@ -51,7 +53,7 @@ namespace ECS.StreamableLoading.Systems
                     {
                         try
                         {
-                            TAsset asset = getAsset(r.WebRequest);
+                            TAsset asset = getAsset(r.WebRequest, in intention);
                             world.Add(entity, new StreamableLoadingResult<TAsset>(asset));
                         }
                         catch (Exception e)

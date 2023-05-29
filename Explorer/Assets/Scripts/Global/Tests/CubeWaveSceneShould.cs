@@ -3,6 +3,7 @@ using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using NUnit.Framework;
+using SceneRunner;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;

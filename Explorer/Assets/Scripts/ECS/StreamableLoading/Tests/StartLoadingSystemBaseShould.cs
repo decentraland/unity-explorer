@@ -72,6 +72,17 @@ namespace ECS.StreamableLoading.Tests
         }
 
         [Test]
+        public void NotCreateRequestIfAborted()
+        {
+            TIntention intention = CreateIntention();
+            Entity e = world.Create(intention, new ForgetLoading());
+
+            system.Update(0);
+
+            Assert.IsFalse(world.Has<LoadingRequest>(e));
+        }
+
+        [Test]
         public void NotRepeatRequestIfResultIsSet()
         {
             TIntention intention = CreateIntention();

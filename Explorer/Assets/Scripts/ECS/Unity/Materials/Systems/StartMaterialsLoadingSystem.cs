@@ -7,7 +7,7 @@ using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Defaults;
-using SceneRunner.PublicAPI;
+using SceneRunner.Scene;
 
 namespace ECS.Unity.Materials.Systems
 {
@@ -38,6 +38,8 @@ namespace ECS.Unity.Materials.Systems
         {
             if (!material.IsDirty)
                 return;
+
+            material.IsDirty = false;
 
             MaterialData materialData = CreateMaterialData(ref material);
 
@@ -104,6 +106,6 @@ namespace ECS.Unity.Materials.Systems
         }
 
         private static MaterialData CreateBasicMaterialData(in PBMaterial pbMaterial, in TextureComponent? albedoTexture) =>
-            MaterialData.CreateBasicMaterial(albedoTexture, pbMaterial.GetAlphaTest(), pbMaterial.GetDiffuseColor());
+            MaterialData.CreateBasicMaterial(albedoTexture, pbMaterial.GetAlphaTest(), pbMaterial.GetDiffuseColor(), pbMaterial.GetCastShadows());
     }
 }

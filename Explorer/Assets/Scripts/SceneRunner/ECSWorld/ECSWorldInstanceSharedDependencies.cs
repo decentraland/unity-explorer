@@ -1,6 +1,6 @@
 ﻿using Arch.Core;
 using CRDT;
-using SceneRunner.PublicAPI;
+using SceneRunner.Scene;
 using System.Collections.Generic;
 
 namespace SceneRunner.ECSWorld

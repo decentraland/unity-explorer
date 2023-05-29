@@ -13,11 +13,11 @@ namespace ECS.Unity.Materials.Systems
     [UpdateInGroup(typeof(MaterialLoadingGroup))]
     public partial class CreateBasicMaterialSystem : CreateMaterialSystemBase
     {
-        private const string MATERIAL_PATH = "Materials/BasicShapeMaterial";
+        private const string MATERIAL_PATH = "BasicShapeMaterial";
 
         internal CreateBasicMaterialSystem(World world, IMaterialsCache materialsCache, int attemptsCount) : base(world, materialsCache, attemptsCount) { }
 
-        protected override string materialPath => MATERIAL_PATH;
+        internal override string materialPath => MATERIAL_PATH;
 
         protected override void Update(float t)
         {

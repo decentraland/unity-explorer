@@ -4,7 +4,8 @@
   "references": [
     "UniTask",
     "Utility",
-    "PoolsProviders"
+    "PoolsProviders",
+    "CRDT.ECS.Bridge"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

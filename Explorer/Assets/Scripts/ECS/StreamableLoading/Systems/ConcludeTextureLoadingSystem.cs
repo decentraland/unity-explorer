@@ -12,7 +12,12 @@ namespace ECS.StreamableLoading.Systems
     {
         internal ConcludeTextureLoadingSystem(World world) : base(world) { }
 
-        protected override Texture2D GetAsset(UnityWebRequest webRequest) =>
-            DownloadHandlerTexture.GetContent(webRequest);
+        protected override Texture2D GetAsset(UnityWebRequest webRequest, in GetTextureIntention getTextureIntention)
+        {
+            Texture2D tex = DownloadHandlerTexture.GetContent(webRequest);
+            tex.wrapMode = getTextureIntention.WrapMode;
+            tex.filterMode = getTextureIntention.FilterMode;
+            return tex;
+        }
     }
 }

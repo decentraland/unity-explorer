@@ -8,7 +8,7 @@ using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace ECS.Unity.Systems.Tests
+namespace ECS.Unity.Transforms.Tests
 {
     [TestFixture]
     public class InstantiateTransformUnitySystemShould : UnitySystemTestBase<InstantiateTransformSystem>

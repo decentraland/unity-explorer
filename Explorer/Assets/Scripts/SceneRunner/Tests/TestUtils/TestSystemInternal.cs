@@ -1,4 +1,4 @@
-﻿namespace SceneRunner.SceneRunner.Tests.TestUtils
+﻿namespace SceneRunner.Tests.TestUtils
 {
     public struct TestSystemInternal
     {

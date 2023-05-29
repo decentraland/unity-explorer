@@ -1,0 +1,10 @@
+{
+  "name": "CRDT.ECS.Bridge",
+  "references": [
+    "GUID:0f4c0f120707fb74497f5d581b9858f8",
+    "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+    "GUID:6e2b4bed29ad1c549ab19b744f36f388",
+    "GUID:83cc766db25f4a84b0fdfaf8a091122d",
+    "GUID:3c7b57a14671040bd8c549056adc04f5"
+  ]
+}

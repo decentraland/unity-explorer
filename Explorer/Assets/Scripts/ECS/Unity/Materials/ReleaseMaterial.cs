@@ -14,7 +14,7 @@ namespace ECS.Unity.Materials
             switch (materialComponent.Status)
             {
                 // Dereference the loaded material
-                case MaterialComponent.LifeCycle.LoadingFinished when materialComponent.Result:
+                case MaterialComponent.LifeCycle.LoadingFinished or MaterialComponent.LifeCycle.MaterialApplied when materialComponent.Result:
                     materialsCache.Dereference(in materialComponent.Data);
                     materialComponent.Result = null;
                     break;

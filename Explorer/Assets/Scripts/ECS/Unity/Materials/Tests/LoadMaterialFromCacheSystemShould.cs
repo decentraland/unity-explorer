@@ -1,0 +1,129 @@
+﻿using Arch.Core;
+using ECS.TestSuite;
+using ECS.Unity.Materials.Components;
+using ECS.Unity.Materials.Systems;
+using ECS.Unity.Textures.Components;
+using NSubstitute;
+using NUnit.Framework;
+using UnityEngine;
+
+namespace ECS.Unity.Materials.Tests
+{
+    public class LoadMaterialFromCacheSystemShould : UnitySystemTestBase<LoadMaterialFromCacheSystem>
+    {
+        private IMaterialsCache materialsCache;
+
+        [SetUp]
+        public void SetUp()
+        {
+            system = new LoadMaterialFromCacheSystem(world, materialsCache = Substitute.For<IMaterialsCache>());
+        }
+
+        [Test]
+        public void FinishLoadingIfPresentInCache()
+        {
+            var materialComponent = new MaterialComponent(MaterialData.CreateBasicMaterial(
+                new TextureComponent("test-texture", TextureWrapMode.Mirror, FilterMode.Bilinear),
+                0.5f,
+                Color.red,
+                true));
+
+            materialComponent.Status = MaterialComponent.LifeCycle.LoadingNotStarted;
+
+            materialsCache.TryReferenceMaterial(in materialComponent.Data, out Arg.Any<Material>())
+                          .Returns(c =>
+                           {
+                               c[1] = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                               return true;
+                           });
+
+            Entity e = world.Create(in materialComponent);
+
+            system.Update(0);
+
+            materialsCache.Received(1).TryReferenceMaterial(in materialComponent.Data, out Arg.Any<Material>());
+
+            materialComponent = world.Get<MaterialComponent>(e);
+
+            Assert.That(materialComponent.Status, Is.EqualTo(MaterialComponent.LifeCycle.LoadingFinished));
+            Assert.That(materialComponent.Result, Is.Not.Null);
+        }
+
+        [Test]
+        public void DoNothingIfLoadingStarted([Values(
+                MaterialComponent.LifeCycle.LoadingInProgress,
+                MaterialComponent.LifeCycle.LoadingFinished,
+                MaterialComponent.LifeCycle.MaterialApplied)]
+            MaterialComponent.LifeCycle status)
+        {
+            var materialComponent = new MaterialComponent(MaterialData.CreateBasicMaterial(
+                new TextureComponent("test-texture", TextureWrapMode.Mirror, FilterMode.Bilinear),
+                0.5f,
+                Color.red,
+                true));
+
+            materialComponent.Status = status;
+
+            materialsCache.TryReferenceMaterial(in materialComponent.Data, out Arg.Any<Material>())
+                          .Returns(c =>
+                           {
+                               c[1] = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                               return true;
+                           });
+
+            Entity e = world.Create(in materialComponent);
+
+            system.Update(0);
+
+            materialsCache.DidNotReceive().TryReferenceMaterial(in materialComponent.Data, out Arg.Any<Material>());
+
+            materialComponent = world.Get<MaterialComponent>(e);
+
+            Assert.That(materialComponent.Status, Is.EqualTo(status));
+            Assert.That(materialComponent.Result, Is.Null);
+        }
+
+        [Test]
+        public void NotFinishLoadingIfNotPresentInCache()
+        {
+            var materialComponent = new MaterialComponent(MaterialData.CreatePBRMaterial(
+                new TextureComponent("1", TextureWrapMode.Mirror, FilterMode.Bilinear),
+                new TextureComponent("2", TextureWrapMode.MirrorOnce, FilterMode.Trilinear),
+                new TextureComponent("3", TextureWrapMode.Repeat, FilterMode.Point),
+                new TextureComponent("4", TextureWrapMode.Clamp, FilterMode.Point),
+                0.5f,
+                true,
+                Color.red,
+                Color.blue,
+                Color.green,
+                MaterialTransparencyMode.AlphaBlend,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0
+            ));
+
+            materialComponent.Status = MaterialComponent.LifeCycle.LoadingNotStarted;
+
+            materialsCache.TryReferenceMaterial(in materialComponent.Data, out Arg.Any<Material>())
+                          .Returns(c =>
+                           {
+                               c[1] = null;
+                               return false;
+                           });
+
+            Entity e = world.Create(in materialComponent);
+
+            system.Update(0);
+
+            materialsCache.Received(1).TryReferenceMaterial(in materialComponent.Data, out Arg.Any<Material>());
+
+            materialComponent = world.Get<MaterialComponent>(e);
+
+            Assert.That(materialComponent.Status, Is.EqualTo(MaterialComponent.LifeCycle.LoadingNotStarted));
+            Assert.That(materialComponent.Result, Is.Null);
+        }
+    }
+}

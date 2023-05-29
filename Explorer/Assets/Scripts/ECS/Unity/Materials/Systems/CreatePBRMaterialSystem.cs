@@ -17,7 +17,7 @@ namespace ECS.Unity.Materials.Systems
         /// <summary>
         ///     The path from the shared package
         /// </summary>
-        private const string MATERIAL_PATH = "Materials/ShapeMaterial";
+        private const string MATERIAL_PATH = "ShapeMaterial";
 
         internal CreatePBRMaterialSystem(World world, IMaterialsCache materialsCache, int attemptsCount)
             : base(world, materialsCache, attemptsCount) { }
@@ -90,7 +90,7 @@ namespace ECS.Unity.Materials.Systems
             }
         }
 
-        protected override string materialPath => MATERIAL_PATH;
+        internal override string materialPath => MATERIAL_PATH;
 
         public static void SetUpColors(Material material, Color albedo, Color emissive, Color reflectivity, float emissiveIntensity)
         {

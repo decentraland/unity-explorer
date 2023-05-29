@@ -1,9 +1,9 @@
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Engine;
+using SceneRunner;
 using SceneRunner.ECSWorld;
 using SceneRunner.ECSWorld.Plugins;
-using SceneRunner.Scene;
 using SceneRuntime.Factory;
 
 namespace Global

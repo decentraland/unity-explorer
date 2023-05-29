@@ -8,7 +8,7 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
-using SceneRunner.SceneRunner.Tests.TestUtils;
+using SceneRunner.Tests.TestUtils;
 using SceneRuntime.Factory;
 using System.Threading;
 using System.Threading.Tasks;

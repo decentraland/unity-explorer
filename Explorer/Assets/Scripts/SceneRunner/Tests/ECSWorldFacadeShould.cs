@@ -4,7 +4,7 @@ using ECS.LifeCycle;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.ECSWorld;
-using SceneRunner.SceneRunner.Tests.TestUtils;
+using SceneRunner.Tests.TestUtils;
 
 namespace SceneRunner.Tests
 {

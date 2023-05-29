@@ -2,7 +2,7 @@
 using Arch.SystemGroups;
 using SceneRunner.ECSWorld;
 
-namespace SceneRunner.SceneRunner.Tests.TestUtils
+namespace SceneRunner.Tests.TestUtils
 {
     public static class TestSystemsWorld
     {

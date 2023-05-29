@@ -1,6 +1,6 @@
 ﻿using Decentraland.Common;
 using JetBrains.Annotations;
-using SceneRunner.PublicAPI;
+using SceneRunner.Scene;
 using System;
 using UnityEngine;
 using Texture = Decentraland.Common.Texture;
@@ -84,21 +84,27 @@ namespace ECS.Unity.Textures.Components.Defaults
             throw new NotImplementedException(nameof(AvatarTexture));
 
         public static TextureWrapMode GetWrapMode(this Texture self) =>
-            self.HasWrapMode ? (TextureWrapMode)self.WrapMode : TextureWrapMode.Clamp;
+            self.HasWrapMode ? self.WrapMode.ToUnityWrapMode() : TextureWrapMode.Clamp;
 
         public static TextureWrapMode GetWrapMode(this AvatarTexture self) =>
-            self.HasWrapMode ? (TextureWrapMode)self.WrapMode : TextureWrapMode.Clamp;
+            self.HasWrapMode ? self.WrapMode.ToUnityWrapMode() : TextureWrapMode.Clamp;
 
         public static TextureWrapMode GetWrapMode(this VideoTexture self) =>
-            self.HasWrapMode ? (TextureWrapMode)self.WrapMode : TextureWrapMode.Clamp;
+            self.HasWrapMode ? self.WrapMode.ToUnityWrapMode() : TextureWrapMode.Clamp;
 
         public static FilterMode GetFilterMode(this Texture self) =>
-            (FilterMode)(self.HasFilterMode ? self.FilterMode : TextureFilterMode.TfmBilinear);
+            (self.HasFilterMode ? self.FilterMode : TextureFilterMode.TfmBilinear).ToUnityFilterMode();
 
         public static FilterMode GetFilterMode(this AvatarTexture self) =>
-            (FilterMode)(self.HasFilterMode ? self.FilterMode : TextureFilterMode.TfmBilinear);
+            (self.HasFilterMode ? self.FilterMode : TextureFilterMode.TfmBilinear).ToUnityFilterMode();
 
         public static FilterMode GetFilterMode(this VideoTexture self) =>
-            (FilterMode)(self.HasFilterMode ? self.FilterMode : TextureFilterMode.TfmBilinear);
+            (self.HasFilterMode ? self.FilterMode : TextureFilterMode.TfmBilinear).ToUnityFilterMode();
+
+        public static FilterMode ToUnityFilterMode(this TextureFilterMode self) =>
+            (FilterMode)self;
+
+        public static TextureWrapMode ToUnityWrapMode(this Decentraland.Common.TextureWrapMode self) =>
+            (TextureWrapMode)self;
     }
 }
