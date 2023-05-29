@@ -1,12 +1,15 @@
+using Google.Protobuf.Collections;
 using UnityEngine;
 
 namespace Utility.Primitives
 {
     public static class BoxFactory
     {
-        public const int VERTICES_NUM = 24;
-        public const int TRIS_NUM = 36;
+        internal const int VERTICES_NUM = 24;
+        internal const int TRIS_NUM = 36;
         public static readonly float SIZE = PrimitivesSize.CUBE_SIZE;
+
+        private static Vector2[] defaultUVs;
 
         public static void Create(ref Mesh mesh)
         {
@@ -14,7 +17,7 @@ namespace Utility.Primitives
 
             Vector3[] vertices = PrimitivesBuffersPool.EQUAL_TO_VERTICES.Rent(VERTICES_NUM); //top bottom left right front back
             Vector3[] normals = PrimitivesBuffersPool.EQUAL_TO_VERTICES.Rent(VERTICES_NUM);
-            Vector2[] uvs = PrimitivesBuffersPool.UVS.Rent(VERTICES_NUM);
+            defaultUVs = new Vector2[VERTICES_NUM];
             Vector2[] uvs2 = PrimitivesBuffersPool.UVS.Rent(VERTICES_NUM);
             int[] tris = PrimitivesBuffersPool.TRIANGLES.Rent(TRIS_NUM);
 
@@ -60,40 +63,42 @@ namespace Utility.Primitives
             vertices[vIndex++] = start + (Vector3.down * SIZE);
 
             //uv
-            vIndex = 0;
+            var uvIndex = 0;
 
             //top and bottom
-            uvs[vIndex++] = new Vector2(1f, 1f);
-            uvs[vIndex++] = new Vector2(1f, 0f);
-            uvs[vIndex++] = new Vector2(0f, 0f);
-            uvs[vIndex++] = new Vector2(0f, 1f);
+            defaultUVs[uvIndex++] = new Vector2(1f, 1f);
+            defaultUVs[uvIndex++] = new Vector2(1f, 0f);
+            defaultUVs[uvIndex++] = new Vector2(0f, 0f);
+            defaultUVs[uvIndex++] = new Vector2(0f, 1f);
 
-            uvs[vIndex++] = new Vector2(1f, 0f);
-            uvs[vIndex++] = new Vector2(1f, 1f);
-            uvs[vIndex++] = new Vector2(0f, 1f);
-            uvs[vIndex++] = new Vector2(0f, 0f);
+            defaultUVs[uvIndex++] = new Vector2(1f, 0f);
+            defaultUVs[uvIndex++] = new Vector2(1f, 1f);
+            defaultUVs[uvIndex++] = new Vector2(0f, 1f);
+            defaultUVs[uvIndex++] = new Vector2(0f, 0f);
 
             //left and right
-            uvs[vIndex++] = new Vector2(1f, 1f);
-            uvs[vIndex++] = new Vector2(1f, 0f);
-            uvs[vIndex++] = new Vector2(0f, 0f);
-            uvs[vIndex++] = new Vector2(0f, 1f);
+            defaultUVs[uvIndex++] = new Vector2(1f, 1f);
+            defaultUVs[uvIndex++] = new Vector2(1f, 0f);
+            defaultUVs[uvIndex++] = new Vector2(0f, 0f);
+            defaultUVs[uvIndex++] = new Vector2(0f, 1f);
 
-            uvs[vIndex++] = new Vector2(1f, 0f);
-            uvs[vIndex++] = new Vector2(1f, 1f);
-            uvs[vIndex++] = new Vector2(0f, 1f);
-            uvs[vIndex++] = new Vector2(0f, 0f);
+            defaultUVs[uvIndex++] = new Vector2(1f, 0f);
+            defaultUVs[uvIndex++] = new Vector2(1f, 1f);
+            defaultUVs[uvIndex++] = new Vector2(0f, 1f);
+            defaultUVs[uvIndex++] = new Vector2(0f, 0f);
 
             //front and back
-            uvs[vIndex++] = new Vector2(0f, 0f);
-            uvs[vIndex++] = new Vector2(1f, 0f);
-            uvs[vIndex++] = new Vector2(1f, 1f);
-            uvs[vIndex++] = new Vector2(0f, 1f);
+            defaultUVs[uvIndex++] = new Vector2(0f, 0f);
+            defaultUVs[uvIndex++] = new Vector2(1f, 0f);
+            defaultUVs[uvIndex++] = new Vector2(1f, 1f);
+            defaultUVs[uvIndex++] = new Vector2(0f, 1f);
 
-            uvs[vIndex++] = new Vector2(0f, 1f);
-            uvs[vIndex++] = new Vector2(1f, 1f);
-            uvs[vIndex++] = new Vector2(1f, 0f);
-            uvs[vIndex++] = new Vector2(0f, 0f);
+            defaultUVs[uvIndex++] = new Vector2(0f, 1f);
+            defaultUVs[uvIndex++] = new Vector2(1f, 1f);
+            defaultUVs[uvIndex++] = new Vector2(1f, 0f);
+            defaultUVs[uvIndex++] = new Vector2(0f, 0f);
+
+
 
             //uv2
             vIndex = 0;
@@ -216,15 +221,23 @@ namespace Utility.Primitives
 
             mesh.SetVertices(vertices, 0, VERTICES_NUM);
             mesh.SetNormals(normals, 0, VERTICES_NUM);
-            mesh.SetUVs(0, uvs, 0, VERTICES_NUM);
+            mesh.SetUVs(0, defaultUVs, 0, VERTICES_NUM);
             mesh.SetUVs(1, uvs2, 0, VERTICES_NUM);
             mesh.SetTriangles(tris, 0, TRIS_NUM, 0);
 
             PrimitivesBuffersPool.EQUAL_TO_VERTICES.Return(vertices);
             PrimitivesBuffersPool.EQUAL_TO_VERTICES.Return(normals);
-            PrimitivesBuffersPool.UVS.Return(uvs);
             PrimitivesBuffersPool.UVS.Return(uvs2);
             PrimitivesBuffersPool.TRIANGLES.Return(tris);
         }
+
+        public static void UpdateMesh(ref Mesh mesh, RepeatedField<float> boxUVs = null)
+        {
+            if (boxUVs is { Count: > 0 })
+                mesh.SetUVs(0, PrimitivesUtility.FloatArrayToV2List(boxUVs, mesh.uv), 0, VERTICES_NUM);
+            else
+                mesh.SetUVs(0, defaultUVs, 0, VERTICES_NUM);
+        }
     }
 }
+

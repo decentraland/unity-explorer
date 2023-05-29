@@ -1,11 +1,12 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Transform;
 using DCL.ECS7;
 using DCL.ECSComponents;
 using ECS.ComponentsPooling;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
 using UnityEngine;
 using Utility;
 
@@ -43,18 +44,22 @@ namespace Global
                 sdkComponentsRegistry.SdkComponents
                                      .Select(c => (c.ComponentType, c.Pool))
                                      .Concat(GetUnityComponentDictionary())
-                                     .Concat(GetExtraComponentsDictionary())
+                                     .Concat(GetPrimitivesMeshesDictionary())
                                      .ToDictionary(x => x.Item1, x => x.Item2));
 
             return new ComponentsContainer { SDKComponentsRegistry = sdkComponentsRegistry, ComponentPoolsRegistry = componentPoolsRegistry };
         }
 
-        private static IEnumerable<(Type type, IComponentPool pool)> GetExtraComponentsDictionary()
+        private static IEnumerable<(Type type, IComponentPool pool)> GetPrimitivesMeshesDictionary()
         {
             (Type type, IComponentPool pool) CreateExtraComponentPool<T>(Action<T> onGet = null, Action<T> onRelease = null) where T: class, new() =>
                 (typeof(T), new ComponentPool<T>(onGet, onRelease));
 
-            yield return CreateExtraComponentPool<Mesh>(null, mesh => mesh.Clear());
+            yield return CreateExtraComponentPool<BoxPrimitive>();
+            yield return CreateExtraComponentPool<SpherePrimitive>();
+            yield return CreateExtraComponentPool<PlanePrimitive>();
+            yield return CreateExtraComponentPool<CylinderPrimitive>();
+
         }
 
         private static IEnumerable<(Type type, IComponentPool pool)> GetUnityComponentDictionary()

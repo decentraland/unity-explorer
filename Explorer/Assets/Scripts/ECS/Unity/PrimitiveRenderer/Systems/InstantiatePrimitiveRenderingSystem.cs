@@ -1,4 +1,5 @@
-﻿using Arch.Core;
+﻿using System.Collections.Generic;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Transform;
@@ -7,8 +8,9 @@ using ECS.Abstract;
 using ECS.ComponentsPooling;
 using ECS.Unity.Groups;
 using ECS.Unity.PrimitiveRenderer.Components;
+using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
+using ECS.Unity.PrimitiveRenderer.MeshSetup;
 using ECS.Unity.Transforms.Components;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace ECS.Unity.PrimitiveRenderer.Systems
@@ -17,14 +19,15 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
     public partial class InstantiatePrimitiveRenderingSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPool<MeshRenderer> rendererPoolRegistry;
-        private readonly IComponentPool<Mesh> meshPoolRegistry;
+        private readonly IComponentPoolsRegistry poolRegistry;
+        private readonly Material urpLitMaterial;
 
         private readonly Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> SETUP_MESH_LOGIC = new ()
         {
-            { PBMeshRenderer.MeshOneofCase.Box, new SetupBoxMesh() },
-            { PBMeshRenderer.MeshOneofCase.Sphere, new SetupSphereMesh() },
-            { PBMeshRenderer.MeshOneofCase.Cylinder, new SetupCylinder() },
-            { PBMeshRenderer.MeshOneofCase.Plane, new SetupPlaneMesh() },
+            { PBMeshRenderer.MeshOneofCase.Box, new MeshSetupBox() },
+            { PBMeshRenderer.MeshOneofCase.Sphere, new MeshSetupSphere() },
+            { PBMeshRenderer.MeshOneofCase.Cylinder, new MeshSetupCylinder() },
+            { PBMeshRenderer.MeshOneofCase.Plane, new MeshSetupPlane() }
         };
 
         private readonly Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases;
@@ -33,9 +36,11 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases = null) : base(world)
         {
             this.setupMeshCases = setupMeshCases ?? SETUP_MESH_LOGIC;
+            poolRegistry = poolsRegistry;
+
 
             rendererPoolRegistry = poolsRegistry.GetReferenceTypePool<MeshRenderer>();
-            meshPoolRegistry = poolsRegistry.GetReferenceTypePool<Mesh>();
+            urpLitMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
         }
 
         protected override void Update(float t)
@@ -46,31 +51,33 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
 
         [Query]
         [All(typeof(PBMeshRenderer), typeof(SDKTransform), typeof(TransformComponent))]
-        [None(typeof(PrimitiveRendererComponent))]
+        [None(typeof(PrimitiveMeshRendererComponent))]
         private void InstantiateNonExistingRenderer(in Entity entity, ref PBMeshRenderer sdkComponent, ref TransformComponent transform)
         {
-            var rendererComponent = new PrimitiveRendererComponent();
-            var meshComponent = new PrimitiveMeshComponent();
-            Instantiate(setupMeshCases[sdkComponent.MeshCase], ref rendererComponent, ref meshComponent, sdkComponent, ref transform);
-            World.Add(entity, rendererComponent, meshComponent);
+            var meshRendererComponent = new PrimitiveMeshRendererComponent();
+            var setupMesh = setupMeshCases[sdkComponent.MeshCase];
+            var meshRendererGo = rendererPoolRegistry.Get();
+            meshRendererGo.sharedMaterial = urpLitMaterial;
+            Instantiate(setupMesh, ref meshRendererGo, ref meshRendererComponent, sdkComponent, ref transform);
+            World.Add(entity, meshRendererComponent);
         }
 
         [Query]
         [All(typeof(PBMeshRenderer), typeof(SDKTransform), typeof(TransformComponent),
-            typeof(PrimitiveRendererComponent), typeof(PrimitiveMeshComponent))]
+            typeof(PrimitiveMeshRendererComponent))]
         private void TrySetupExistingRenderer(
-            ref PrimitiveRendererComponent primitiveRendererComponent,
-            ref PrimitiveMeshComponent meshComponent,
+            ref PrimitiveMeshRendererComponent meshRendererComponent,
             ref PBMeshRenderer sdkComponent,
             ref TransformComponent transform)
         {
             if (!sdkComponent.IsDirty) return;
 
-            ISetupMesh setupCollider = setupMeshCases[sdkComponent.MeshCase];
+            var setupMesh = setupMeshCases[sdkComponent.MeshCase];
 
             // The model has changed entirely, so we need to reinstall the renderer
-            if (ReferenceEquals(meshComponent.Mesh, null))
-                Instantiate(setupCollider, ref primitiveRendererComponent, ref meshComponent, sdkComponent, ref transform);
+            if (ReferenceEquals(meshRendererComponent.PrimitiveMesh, null))
+                Instantiate(setupMesh, ref meshRendererComponent.MeshRenderer, ref meshRendererComponent, sdkComponent,
+                    ref transform);
 
             sdkComponent.IsDirty = false;
         }
@@ -79,22 +86,18 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         /// <summary>
         ///     It is either called when there is no collider or collider was invalidated before (set to null)
         /// </summary>
-        private void Instantiate(ISetupMesh meshSetup, ref PrimitiveRendererComponent rendererComponent, ref PrimitiveMeshComponent meshComponent,
+        private void Instantiate(ISetupMesh meshSetup, ref MeshRenderer meshRendererGo,
+            ref PrimitiveMeshRendererComponent rendererComponent,
             PBMeshRenderer sdkComponent, ref TransformComponent transformComponent)
         {
-            MeshRenderer meshRendererGo = rendererPoolRegistry.Get();
-            meshRendererGo.material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            var primitiveMesh = (IPrimitiveMesh)poolRegistry.GetPool(meshSetup.MeshType).Rent();
+            meshSetup.Execute(sdkComponent, primitiveMesh.PrimitiveMesh);
 
-            Mesh mesh = meshPoolRegistry.Get();
-
-            meshSetup.Execute(sdkComponent, mesh);
-
-            meshComponent.Mesh = mesh;
-            meshComponent.SDKType = sdkComponent.MeshCase;
-
+            rendererComponent.PrimitiveMesh = primitiveMesh;
             rendererComponent.MeshRenderer = meshRendererGo;
-            rendererComponent.MeshFilter = meshRendererGo.GetComponent<MeshFilter>();
-            rendererComponent.MeshFilter.sharedMesh = mesh;
+            rendererComponent.SDKType = sdkComponent.MeshCase;
+
+            meshRendererGo.GetComponent<MeshFilter>().mesh = primitiveMesh.PrimitiveMesh;
 
             Transform rendererTransform = meshRendererGo.transform;
             rendererTransform.SetParent(transformComponent.Transform, false);

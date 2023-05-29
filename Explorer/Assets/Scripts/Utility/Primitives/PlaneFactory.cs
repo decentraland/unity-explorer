@@ -1,3 +1,4 @@
+using Google.Protobuf.Collections;
 using UnityEngine;
 
 namespace Utility.Primitives
@@ -6,14 +7,15 @@ namespace Utility.Primitives
     {
         public const int VERTICES_NUM = 8;
         public const int TRIS_NUM = 12;
-        public static readonly Vector3 SIZE = PrimitivesSize.PLANE_SIZE;
+
+        private static Vector2[] defaultUVs;
 
         // Creates a two-sided quad (clockwise)
         public static void Create(ref Mesh mesh)
         {
             mesh.name = "DCL Plane";
 
-            Vector3 halfSize = SIZE / 2;
+            var halfSize = PrimitivesSize.PLANE_SIZE / 2;
 
             Vector3[] vertices = PrimitivesBuffersPool.EQUAL_TO_VERTICES.Rent(VERTICES_NUM);
             vertices[0] = new Vector3(-halfSize.x, -halfSize.y, 0);
@@ -27,15 +29,18 @@ namespace Utility.Primitives
             vertices[7] = new Vector3(-halfSize.x, -halfSize.y, 0);
 
             Vector2[] uvs = PrimitivesBuffersPool.UVS.Rent(VERTICES_NUM);
-            uvs[0] = new Vector2(0f, 0f);
-            uvs[1] = new Vector2(0f, 1f);
-            uvs[2] = new Vector2(1f, 1f);
-            uvs[3] = new Vector2(1f, 0f);
+            defaultUVs = new Vector2[VERTICES_NUM];
 
-            uvs[4] = new Vector2(1f, 0f);
-            uvs[5] = new Vector2(1f, 1f);
-            uvs[6] = new Vector2(0f, 1f);
-            uvs[7] = new Vector2(0f, 0f);
+            defaultUVs[0] = new Vector2(0f, 0f);
+            defaultUVs[1] = new Vector2(0f, 1f);
+            defaultUVs[2] = new Vector2(1f, 1f);
+            defaultUVs[3] = new Vector2(1f, 0f);
+
+            defaultUVs[4] = new Vector2(1f, 0f);
+            defaultUVs[5] = new Vector2(1f, 1f);
+            defaultUVs[6] = new Vector2(0f, 1f);
+            defaultUVs[7] = new Vector2(0f, 0f);
+
 
             int[] tris = PrimitivesBuffersPool.TRIANGLES.Rent(TRIS_NUM);
             tris[0] = 0;
@@ -69,15 +74,22 @@ namespace Utility.Primitives
 
             mesh.SetVertices(vertices, 0, VERTICES_NUM);
             mesh.SetNormals(normals, 0, VERTICES_NUM);
-            mesh.SetUVs(0, uvs, 0, VERTICES_NUM);
+            mesh.SetUVs(0, defaultUVs, 0, VERTICES_NUM);
             mesh.SetTriangles(tris, 0, TRIS_NUM, 0);
 
             mesh.colors = colors;
 
             PrimitivesBuffersPool.EQUAL_TO_VERTICES.Return(vertices);
-            PrimitivesBuffersPool.UVS.Return(uvs);
             PrimitivesBuffersPool.TRIANGLES.Return(tris);
             PrimitivesBuffersPool.EQUAL_TO_VERTICES.Return(normals);
+        }
+
+        public static void UpdateMesh(ref Mesh mesh, RepeatedField<float> planeUvs)
+        {
+            if (planeUvs is { Count: > 0 })
+                mesh.SetUVs(0, PrimitivesUtility.FloatArrayToV2List(planeUvs, mesh.uv), 0, VERTICES_NUM);
+            else
+                mesh.SetUVs(0, defaultUVs, 0, VERTICES_NUM);
         }
     }
 }

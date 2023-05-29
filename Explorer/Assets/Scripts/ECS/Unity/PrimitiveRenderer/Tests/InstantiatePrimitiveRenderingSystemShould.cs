@@ -1,13 +1,15 @@
-﻿using Arch.Core;
+﻿using System;
+using System.Collections.Generic;
+using Arch.Core;
 using DCL.ECSComponents;
 using ECS.ComponentsPooling;
 using ECS.TestSuite;
 using ECS.Unity.PrimitiveRenderer.Components;
+using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
+using ECS.Unity.PrimitiveRenderer.MeshSetup;
 using ECS.Unity.PrimitiveRenderer.Systems;
 using NSubstitute;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 
@@ -20,11 +22,18 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
         private readonly Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshes
             = new ()
             {
-                { PBMeshRenderer.MeshOneofCase.Box, Substitute.For<ISetupMesh>() },
-                { PBMeshRenderer.MeshOneofCase.Sphere, Substitute.For<ISetupMesh>() },
-                { PBMeshRenderer.MeshOneofCase.Cylinder, Substitute.For<ISetupMesh>() },
-                { PBMeshRenderer.MeshOneofCase.Plane, Substitute.For<ISetupMesh>() },
+                { PBMeshRenderer.MeshOneofCase.Box, CreateSubstitute<BoxPrimitive>() },
+                { PBMeshRenderer.MeshOneofCase.Sphere, CreateSubstitute<SpherePrimitive>() },
+                { PBMeshRenderer.MeshOneofCase.Cylinder, CreateSubstitute<CylinderPrimitive>() },
+                { PBMeshRenderer.MeshOneofCase.Plane, CreateSubstitute<PlanePrimitive>() }
             };
+
+        private static ISetupMesh CreateSubstitute<T>() where T : IPrimitiveMesh
+        {
+            var s = Substitute.For<ISetupMesh>();
+            s.MeshType.Returns(typeof(T));
+            return s;
+        }
 
         private Entity entity;
 
@@ -35,7 +44,10 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
                 new Dictionary<Type, IComponentPool>
                 {
                     { typeof(MeshRenderer), new UnityComponentPool<MeshRenderer>(null, MeshRendererPoolUtils.CreateMeshRendererComponent, MeshRendererPoolUtils.ReleaseMeshRendererComponent) },
-                    { typeof(Mesh), new ComponentPool<Mesh>(null, mesh => mesh.Clear()) },
+                    { typeof(BoxPrimitive), new ComponentPool<BoxPrimitive>() },
+                    { typeof(SpherePrimitive), new ComponentPool<SpherePrimitive>() },
+                    { typeof(CylinderPrimitive), new ComponentPool<CylinderPrimitive>() },
+                    { typeof(PlanePrimitive), new ComponentPool<PlanePrimitive>() }
                 });
 
             system = new InstantiatePrimitiveRenderingSystem(world, poolsRegistry, setupMeshes);
@@ -48,39 +60,42 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
         [TestCaseSource(nameof(TestCases))]
         public void InstantiateNonExistingRenderer(PBMeshRenderer input, PBMeshRenderer.MeshOneofCase expectedType)
         {
+            //Arrange
             world.Add(entity, input);
-
             system.Update(0);
 
-            ref PrimitiveRendererComponent meshRenderer = ref world.Get<PrimitiveRendererComponent>(entity);
-            ref PrimitiveMeshComponent meshComponent = ref world.Get<PrimitiveMeshComponent>(entity);
+            //Act
+            ref var meshRendererComponent = ref world.Get<PrimitiveMeshRendererComponent>(entity);
 
-            Assert.AreEqual(expectedType, meshComponent.SDKType);
-            setupMeshes[input.MeshCase].Received(1).Execute(input, meshComponent.Mesh);
+            //Assert
+            Assert.AreEqual(expectedType, meshRendererComponent.SDKType);
+            setupMeshes[input.MeshCase].Received(1).Execute(input, meshRendererComponent.PrimitiveMesh.PrimitiveMesh);
 
-            Assert.AreEqual(meshRenderer.MeshRenderer.GetComponent<MeshFilter>().sharedMesh, meshComponent.Mesh);
+            Assert.AreEqual(meshRendererComponent.MeshRenderer.GetComponent<MeshFilter>().sharedMesh,
+                meshRendererComponent.PrimitiveMesh.PrimitiveMesh);
         }
 
         [Test]
         [TestCaseSource(nameof(TestCases))]
         public void UpdateInvalidatedRenderer(PBMeshRenderer input, PBMeshRenderer.MeshOneofCase expectedType)
         {
-            input.IsDirty = true;
-
+            //Arrange
             world.Add(entity, input);
-
-            var previousComponent = new PrimitiveMeshComponent { Mesh = null, SDKType = PBMeshRenderer.MeshOneofCase.None };
-            world.Add(entity, previousComponent);
-
             system.Update(0);
 
-            ref PrimitiveRendererComponent meshRenderer = ref world.Get<PrimitiveRendererComponent>(entity);
-            ref PrimitiveMeshComponent meshComponent = ref world.Get<PrimitiveMeshComponent>(entity);
+            //Act
+            input.IsDirty = true;
+            world.Get<PrimitiveMeshRendererComponent>(entity).PrimitiveMesh = null;
+            system.Update(0);
 
-            Assert.AreEqual(expectedType, meshComponent.SDKType);
-            setupMeshes[input.MeshCase].Received(1).Execute(input, meshComponent.Mesh);
+            //Assert
+            ref var meshRendererComponent = ref world.Get<PrimitiveMeshRendererComponent>(entity);
 
-            Assert.AreEqual(meshRenderer.MeshRenderer.GetComponent<MeshFilter>().sharedMesh, meshComponent.Mesh);
+            Assert.AreEqual(expectedType, meshRendererComponent.SDKType);
+            setupMeshes[input.MeshCase].Received(1).Execute(input, meshRendererComponent.PrimitiveMesh.PrimitiveMesh);
+
+            Assert.AreEqual(meshRendererComponent.MeshRenderer.GetComponent<MeshFilter>().sharedMesh,
+                meshRendererComponent.PrimitiveMesh.PrimitiveMesh);
         }
 
         public static object[][] TestCases()

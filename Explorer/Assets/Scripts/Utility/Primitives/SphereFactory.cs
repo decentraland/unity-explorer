@@ -5,8 +5,8 @@ namespace Utility.Primitives
     public class SphereFactory : MonoBehaviour
     {
         public static readonly float RADIUS = PrimitivesSize.SPHERE_RADIUS;
-        public const int LONGITUDE = 24;
-        public const int LATITUDE = 16;
+        internal const int LONGITUDE = 24;
+        internal const int LATITUDE = 16;
 
         public static void Create(ref Mesh mesh)
         {
@@ -67,7 +67,6 @@ namespace Utility.Primitives
                 }
             }
 
-            //uvs[lon + lat * (nbLong + 1) + 1] = new Vector2( (float)lon / nbLong, 1f - (float)(lat+1) / (nbLat+1) );
 #endregion
 
 #region Triangles
@@ -76,6 +75,10 @@ namespace Utility.Primitives
             int nbIndexes = nbTriangles * 3;
             int[] triangles = PrimitivesBuffersPool.TRIANGLES.Rent(nbIndexes);
 
+            for (var j = 0; j < nbIndexes; j++)
+            {
+                triangles[j] = 0;
+            }
             //Top Cap
             var i = 0;
 
@@ -101,10 +104,6 @@ namespace Utility.Primitives
                     triangles[i++] = current;
                     triangles[i++] = next + 1;
                     triangles[i++] = next;
-
-                    if (current >= 402) { Debug.Log("AQUI HAY ERROR"); }
-
-                    if (next >= 402) { Debug.Log("AQUI HAY ERROR"); }
                 }
             }
 

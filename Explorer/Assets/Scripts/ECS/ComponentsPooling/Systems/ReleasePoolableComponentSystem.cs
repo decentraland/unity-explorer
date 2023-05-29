@@ -11,8 +11,8 @@ namespace ECS.ComponentsPooling.Systems
     ///     Releases components with poolable fields in a generic non-allocating manner
     /// </summary>
     [UpdateInGroup(typeof(CleanUpGroup))]
-    public partial class ReleasePoolableComponentSystem<TProvider> : BaseUnityLoopSystem, IFinalizeWorldSystem
-        where TProvider: IPoolableComponentProvider
+    public partial class ReleasePoolableComponentSystem<T, TProvider> : BaseUnityLoopSystem, IFinalizeWorldSystem
+        where TProvider : IPoolableComponentProvider<T> where T : class
     {
         private readonly QueryDescription entityDestroyQuery = new QueryDescription()
            .WithAll<DeleteEntityIntention, TProvider>();
@@ -49,8 +49,8 @@ namespace ECS.ComponentsPooling.Systems
             public void Update(ref TProvider provider)
             {
                 poolsRegistry.GetPool(provider.PoolableComponentType).Release(provider.PoolableComponent);
-                provider.Dispose();
             }
+
         }
     }
 }

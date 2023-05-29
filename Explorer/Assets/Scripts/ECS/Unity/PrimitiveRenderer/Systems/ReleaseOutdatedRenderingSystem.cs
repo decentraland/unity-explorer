@@ -7,7 +7,7 @@ using ECS.Abstract;
 using ECS.ComponentsPooling;
 using ECS.Unity.Groups;
 using ECS.Unity.PrimitiveRenderer.Components;
-using UnityEngine;
+using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
 
 namespace ECS.Unity.PrimitiveRenderer.Systems
 {
@@ -31,16 +31,20 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         }
 
         [Query]
-        [All(typeof(PBMeshRenderer), typeof(PrimitiveMeshComponent))]
-        private void ValidateRendering(ref PBMeshRenderer meshRenderer, ref PrimitiveMeshComponent component)
+        [All(typeof(PBMeshRenderer), typeof(PrimitiveMeshRendererComponent))]
+        private void ValidateRendering(ref PBMeshRenderer meshRenderer,
+            ref PrimitiveMeshRendererComponent rendererComponent)
         {
-            if (meshRenderer.IsDirty && meshRenderer.MeshCase != component.SDKType)
+            if (meshRenderer.IsDirty && meshRenderer.MeshCase != rendererComponent.SDKType)
             {
-                if (poolsRegistry.TryGetPool(typeof(Mesh), out IComponentPool componentPool))
-                    componentPool.Release(component.PoolableComponent);
+                if (poolsRegistry.TryGetPool(
+                        ((IPoolableComponentProvider<IPrimitiveMesh>)rendererComponent).PoolableComponentType,
+                        out var componentPool))
+                    componentPool.Release(((IPoolableComponentProvider<IPrimitiveMesh>)rendererComponent)
+                        .PoolableComponent);
 
                 // it will be a signal to instantiate a new collider
-                component.Mesh = null;
+                rendererComponent.PrimitiveMesh = null;
             }
         }
     }

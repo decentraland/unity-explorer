@@ -1,12 +1,13 @@
-﻿using Arch.Core;
+﻿using System;
+using Arch.Core;
 using DCL.ECSComponents;
 using ECS.ComponentsPooling;
 using ECS.TestSuite;
 using ECS.Unity.PrimitiveRenderer.Components;
+using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
 using ECS.Unity.PrimitiveRenderer.Systems;
 using NSubstitute;
 using NUnit.Framework;
-using System;
 using UnityEngine;
 using Utility.Primitives;
 
@@ -16,6 +17,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
     {
         private IComponentPoolsRegistry poolsRegistry;
 
+
         [SetUp]
         public void SetUp()
         {
@@ -24,14 +26,11 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
         }
 
         [Test]
-        public void InvalidateColliderIfTypeChanged()
+        public void InvalidateRenderingIfTypeChanged()
         {
-            var oldRenderer = new Mesh();
-            BoxFactory.Create(ref oldRenderer);
-
-            var comp = new PrimitiveMeshComponent
+            var comp = new PrimitiveMeshRendererComponent
             {
-                Mesh = oldRenderer,
+                PrimitiveMesh = new BoxPrimitive(),
                 SDKType = PBMeshRenderer.MeshOneofCase.Box,
             };
 
@@ -41,9 +40,9 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
 
             system.Update(0);
 
-            poolsRegistry.Received(1).TryGetPool(typeof(Mesh), out Arg.Any<IComponentPool>());
+            poolsRegistry.Received(1).TryGetPool(typeof(BoxPrimitive), out Arg.Any<IComponentPool>());
 
-            Assert.AreEqual(null, world.Get<PrimitiveMeshComponent>(entity).Mesh);
+            Assert.AreEqual(null, world.Get<PrimitiveMeshRendererComponent>(entity).PrimitiveMesh);
         }
 
         [Test]
@@ -52,9 +51,9 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
             var oldRenderer = new Mesh();
             BoxFactory.Create(ref oldRenderer);
 
-            var comp = new PrimitiveMeshComponent
+            var comp = new PrimitiveMeshRendererComponent
             {
-                Mesh = oldRenderer,
+                PrimitiveMesh = new BoxPrimitive(),
                 SDKType = PBMeshRenderer.MeshOneofCase.Box,
             };
 
@@ -66,7 +65,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
 
             poolsRegistry.DidNotReceive().TryGetPool(Arg.Any<Type>(), out Arg.Any<IComponentPool>());
 
-            Assert.AreEqual(comp.Mesh, world.Get<PrimitiveMeshComponent>(entity).Mesh);
+            Assert.AreEqual(comp.PrimitiveMesh, world.Get<PrimitiveMeshRendererComponent>(entity).PrimitiveMesh);
         }
     }
 }

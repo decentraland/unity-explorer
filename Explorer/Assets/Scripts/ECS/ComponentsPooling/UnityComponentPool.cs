@@ -13,13 +13,13 @@ namespace ECS.ComponentsPooling
         private readonly Transform parentContainer;
         private readonly Transform rootContainer;
 
-        private Action<T> OnRelease;
+        private readonly Action<T> onRelease;
 
         public UnityComponentPool(Transform rootContainer, Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 2048)
         {
             parentContainer = new GameObject($"POOL_CONTAINER_{typeof(T).Name}").transform;
             parentContainer.SetParent(rootContainer);
-            OnRelease += onRelease;
+            this.onRelease += onRelease;
             gameObjectPool = new ObjectPool<T>(creationHandler ?? HandleCreation, actionOnGet: HandleGet, actionOnRelease: HandleRelease, actionOnDestroy: HandleDestroy, defaultCapacity: maxSize / 4, maxSize: maxSize);
         }
 
@@ -57,7 +57,7 @@ namespace ECS.ComponentsPooling
             if (component == null)
                 return;
 
-            OnRelease?.Invoke(component);
+            onRelease?.Invoke(component);
 
             GameObject gameObject;
             (gameObject = component.gameObject).SetActive(false);
@@ -67,7 +67,8 @@ namespace ECS.ComponentsPooling
 
         private void HandleDestroy(T component)
         {
-            OnRelease = null;
+            //TODO: Check if this is necessary
+            //onRelease = null;
 #if UNITY_EDITOR
             Object.DestroyImmediate(component.gameObject);
 #else

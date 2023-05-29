@@ -3,11 +3,10 @@ using UnityEngine;
 
 namespace Utility.Primitives
 {
-    public class PrimitivesUtility
+    public static class PrimitivesUtility
     {
-        public static Vector2[] FloatArrayToV2List(IList<float> uvs)
+        public static Vector2[] FloatArrayToV2List(IList<float> uvs, Vector2[] uvsResult)
         {
-            var uvsResult = new Vector2[uvs.Count / 2];
             var uvsResultIndex = 0;
 
             for (var i = 0; i < uvs.Count;) { uvsResult[uvsResultIndex++] = new Vector2(uvs[i++], uvs[i++]); }
