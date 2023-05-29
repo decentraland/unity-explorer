@@ -65,7 +65,7 @@ namespace Global.Editor
     {
         private SceneSharedContainer sceneSharedContainer;
         private ISceneFacade sceneFacade;
-        private const string PATH = "cube_waves";
+        private const string PATH = "cube-wave-16x16";
 
         [SetUp]
         public void SetUp()
@@ -77,7 +77,7 @@ namespace Global.Editor
         public async Task EmitECSComponents()
         {
             // It will switch to the background thread and assign SynchronizationContext
-            sceneFacade = await sceneSharedContainer.SceneFactory.CreateSceneFromStreamingAssets(PATH, CancellationToken.None);
+            sceneFacade = await sceneSharedContainer.SceneFactory.CreateSceneFromStreamableDirectory(PATH, CancellationToken.None);
 
             // It will call `IEngineAPI.GetState()`
             await sceneFacade.StartScene();
