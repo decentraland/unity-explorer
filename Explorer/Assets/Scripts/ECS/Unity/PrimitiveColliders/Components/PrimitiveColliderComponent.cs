@@ -15,5 +15,7 @@ namespace ECS.Unity.PrimitiveColliders.Components
         public PBMeshCollider.MeshOneofCase SDKType;
 
         Collider IPoolableComponentProvider<Collider>.PoolableComponent => Collider;
+
+        Type IPoolableComponentProvider<Collider>.PoolableComponentType => Collider.GetType();
     }
 }

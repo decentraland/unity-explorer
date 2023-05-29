@@ -22,7 +22,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         private readonly IComponentPoolsRegistry poolRegistry;
         private readonly Material urpLitMaterial;
 
-        private readonly Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> SETUP_MESH_LOGIC = new ()
+        private static readonly Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> SETUP_MESH_LOGIC = new()
         {
             { PBMeshRenderer.MeshOneofCase.Box, new MeshSetupBox() },
             { PBMeshRenderer.MeshOneofCase.Sphere, new MeshSetupSphere() },
@@ -37,7 +37,6 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         {
             this.setupMeshCases = setupMeshCases ?? SETUP_MESH_LOGIC;
             poolRegistry = poolsRegistry;
-
 
             rendererPoolRegistry = poolsRegistry.GetReferenceTypePool<MeshRenderer>();
             urpLitMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
