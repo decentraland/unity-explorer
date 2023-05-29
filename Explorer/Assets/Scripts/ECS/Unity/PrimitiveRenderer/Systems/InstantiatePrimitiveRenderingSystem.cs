@@ -77,6 +77,10 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             if (ReferenceEquals(meshRendererComponent.PrimitiveMesh, null))
                 Instantiate(setupMesh, ref meshRendererComponent.MeshRenderer, ref meshRendererComponent, sdkComponent,
                     ref transform);
+            else
+                // This means that the UVs have changed during runtime of a scene (should be an unusual case), so we update the mesh accordingly
+                setupMesh.Execute(sdkComponent, meshRendererComponent.PrimitiveMesh.PrimitiveMesh);
+  
 
             sdkComponent.IsDirty = false;
         }
