@@ -7,7 +7,6 @@ namespace Utility.Primitives
     {
         internal const int VERTICES_NUM = 24;
         internal const int TRIS_NUM = 36;
-        public static readonly float SIZE = PrimitivesSize.CUBE_SIZE;
 
         private static Vector2[] defaultUVs;
 
@@ -23,44 +22,45 @@ namespace Utility.Primitives
 
             var vIndex = 0;
 
+            float size = PrimitivesSize.CUBE_SIZE;
             //top and bottom
-            var start = new Vector3(-SIZE / 2, SIZE / 2, SIZE / 2);
+            var start = new Vector3(-size / 2, size / 2, size / 2);
             vertices[vIndex++] = start;
-            vertices[vIndex++] = start + (Vector3.right * SIZE);
-            vertices[vIndex++] = start + (Vector3.right * SIZE) + (Vector3.back * SIZE);
-            vertices[vIndex++] = start + (Vector3.back * SIZE);
+            vertices[vIndex++] = start + Vector3.right * size;
+            vertices[vIndex++] = start + Vector3.right * size + Vector3.back * size;
+            vertices[vIndex++] = start + Vector3.back * size;
 
-            start = new Vector3(-SIZE / 2, -SIZE / 2, SIZE / 2);
+            start = new Vector3(-size / 2, -size / 2, size / 2);
             vertices[vIndex++] = start;
-            vertices[vIndex++] = start + (Vector3.right * SIZE);
-            vertices[vIndex++] = start + (Vector3.right * SIZE) + (Vector3.back * SIZE);
-            vertices[vIndex++] = start + (Vector3.back * SIZE);
+            vertices[vIndex++] = start + Vector3.right * size;
+            vertices[vIndex++] = start + Vector3.right * size + Vector3.back * size;
+            vertices[vIndex++] = start + Vector3.back * size;
 
             //left and right
-            start = new Vector3(-SIZE / 2, SIZE / 2, SIZE / 2);
+            start = new Vector3(-size / 2, size / 2, size / 2);
             vertices[vIndex++] = start;
-            vertices[vIndex++] = start + (Vector3.back * SIZE);
-            vertices[vIndex++] = start + (Vector3.back * SIZE) + (Vector3.down * SIZE);
-            vertices[vIndex++] = start + (Vector3.down * SIZE);
+            vertices[vIndex++] = start + Vector3.back * size;
+            vertices[vIndex++] = start + Vector3.back * size + Vector3.down * size;
+            vertices[vIndex++] = start + Vector3.down * size;
 
-            start = new Vector3(SIZE / 2, SIZE / 2, SIZE / 2);
+            start = new Vector3(size / 2, size / 2, size / 2);
             vertices[vIndex++] = start;
-            vertices[vIndex++] = start + (Vector3.back * SIZE);
-            vertices[vIndex++] = start + (Vector3.back * SIZE) + (Vector3.down * SIZE);
-            vertices[vIndex++] = start + (Vector3.down * SIZE);
+            vertices[vIndex++] = start + Vector3.back * size;
+            vertices[vIndex++] = start + Vector3.back * size + Vector3.down * size;
+            vertices[vIndex++] = start + Vector3.down * size;
 
             //front and back
-            start = new Vector3(-SIZE / 2, SIZE / 2, SIZE / 2);
+            start = new Vector3(-size / 2, size / 2, size / 2);
             vertices[vIndex++] = start;
-            vertices[vIndex++] = start + (Vector3.right * SIZE);
-            vertices[vIndex++] = start + (Vector3.right * SIZE) + (Vector3.down * SIZE);
-            vertices[vIndex++] = start + (Vector3.down * SIZE);
+            vertices[vIndex++] = start + Vector3.right * size;
+            vertices[vIndex++] = start + Vector3.right * size + Vector3.down * size;
+            vertices[vIndex++] = start + Vector3.down * size;
 
-            start = new Vector3(-SIZE / 2, SIZE / 2, -SIZE / 2);
+            start = new Vector3(-size / 2, size / 2, -size / 2);
             vertices[vIndex++] = start;
-            vertices[vIndex++] = start + (Vector3.right * SIZE);
-            vertices[vIndex++] = start + (Vector3.right * SIZE) + (Vector3.down * SIZE);
-            vertices[vIndex++] = start + (Vector3.down * SIZE);
+            vertices[vIndex++] = start + Vector3.right * size;
+            vertices[vIndex++] = start + Vector3.right * size + Vector3.down * size;
+            vertices[vIndex++] = start + Vector3.down * size;
 
             //uv
             var uvIndex = 0;

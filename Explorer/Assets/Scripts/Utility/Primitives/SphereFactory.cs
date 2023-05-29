@@ -4,13 +4,13 @@ namespace Utility.Primitives
 {
     public class SphereFactory : MonoBehaviour
     {
-        public static readonly float RADIUS = PrimitivesSize.SPHERE_RADIUS;
         internal const int LONGITUDE = 24;
         internal const int LATITUDE = 16;
 
         public static void Create(ref Mesh mesh)
         {
             mesh.name = "DCL Sphere";
+            var radius = PrimitivesSize.SPHERE_RADIUS;
 
             //float radius = 1f;
             // Longitude |||
@@ -26,7 +26,7 @@ namespace Utility.Primitives
             float _pi = Mathf.PI;
             float _2pi = _pi * 2f;
 
-            vertices[0] = Vector3.up * RADIUS;
+            vertices[0] = Vector3.up * radius;
 
             for (var lat = 0; lat < nbLat; lat++)
             {
@@ -40,11 +40,11 @@ namespace Utility.Primitives
                     float sin2 = Mathf.Sin(a2);
                     float cos2 = Mathf.Cos(a2);
 
-                    vertices[lon + (lat * (nbLong + 1)) + 1] = new Vector3(sin1 * cos2, cos1, sin1 * sin2) * RADIUS;
+                    vertices[lon + lat * (nbLong + 1) + 1] = new Vector3(sin1 * cos2, cos1, sin1 * sin2) * radius;
                 }
             }
 
-            vertices[verticesLength - 1] = Vector3.up * -RADIUS;
+            vertices[verticesLength - 1] = Vector3.up * -radius;
 #endregion
 
 #region Normales
