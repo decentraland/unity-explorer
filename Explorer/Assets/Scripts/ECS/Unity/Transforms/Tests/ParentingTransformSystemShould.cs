@@ -9,7 +9,7 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace ECS.Unity.Systems.Tests
+namespace ECS.Unity.Transforms.Tests
 {
     [TestFixture]
     public class ParentingTransformSystemShould : UnitySystemTestBase<ParentingTransformSystem>

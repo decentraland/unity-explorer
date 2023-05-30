@@ -66,7 +66,15 @@ namespace ECS.StreamableLoading.Tests
             Assert.IsTrue(world.TryGet(e, out StreamableLoadingResult<TAsset> result));
             Assert.IsNotNull(result.Asset);
             Assert.IsTrue(result.Succeeded);
+
+            AssertSuccess(result.Asset);
         }
+
+        /// <summary>
+        ///     Additional assertion for successful promise
+        /// </summary>
+        /// <param name="asset"></param>
+        protected virtual void AssertSuccess(TAsset asset) { }
 
         [Test]
         public async Task ConcludeExceptionOnParseFail()

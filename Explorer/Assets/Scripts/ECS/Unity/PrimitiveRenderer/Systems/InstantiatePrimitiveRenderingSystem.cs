@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Arch.Core;
+﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Transform;
@@ -11,7 +10,9 @@ using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
 using ECS.Unity.PrimitiveRenderer.MeshSetup;
 using ECS.Unity.Transforms.Components;
+using System.Collections.Generic;
 using UnityEngine;
+using Utility.Primitives;
 
 namespace ECS.Unity.PrimitiveRenderer.Systems
 {
@@ -20,9 +21,8 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
     {
         private readonly IComponentPool<MeshRenderer> rendererPoolRegistry;
         private readonly IComponentPoolsRegistry poolRegistry;
-        private readonly Material urpLitMaterial;
 
-        private static readonly Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> SETUP_MESH_LOGIC = new()
+        private static readonly Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> SETUP_MESH_LOGIC = new ()
         {
             { PBMeshRenderer.MeshOneofCase.Box, new MeshSetupBox() },
             { PBMeshRenderer.MeshOneofCase.Sphere, new MeshSetupSphere() },
@@ -39,7 +39,6 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             poolRegistry = poolsRegistry;
 
             rendererPoolRegistry = poolsRegistry.GetReferenceTypePool<MeshRenderer>();
-            urpLitMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
         }
 
         protected override void Update(float t)
@@ -56,7 +55,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             var meshRendererComponent = new PrimitiveMeshRendererComponent();
             var setupMesh = setupMeshCases[sdkComponent.MeshCase];
             var meshRendererGo = rendererPoolRegistry.Get();
-            meshRendererGo.sharedMaterial = urpLitMaterial;
+            meshRendererGo.sharedMaterial = DefaultMaterial.Shared;
             Instantiate(setupMesh, ref meshRendererGo, ref meshRendererComponent, sdkComponent, ref transform);
             World.Add(entity, meshRendererComponent);
         }
@@ -78,13 +77,10 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
                 Instantiate(setupMesh, ref meshRendererComponent.MeshRenderer, ref meshRendererComponent, sdkComponent,
                     ref transform);
             else
+
                 // This means that the UVs have changed during runtime of a scene (should be an unusual case), so we update the mesh accordingly
                 setupMesh.Execute(sdkComponent, meshRendererComponent.PrimitiveMesh.Mesh);
-  
-
-            sdkComponent.IsDirty = false;
         }
-
 
         /// <summary>
         ///     It is either called when there is no mesh or mesh was invalidated before (set to null)
@@ -109,5 +105,4 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             rendererTransform.localScale = Vector3.one;
         }
     }
-
 }

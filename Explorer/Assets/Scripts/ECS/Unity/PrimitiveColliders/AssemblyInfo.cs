@@ -1,3 +1,3 @@
 ﻿using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("MeshCollider.Tests")]
+[assembly: InternalsVisibleTo("ECS.Unity.Tests")]

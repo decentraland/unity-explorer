@@ -28,10 +28,10 @@ namespace Global
             {
                 async UniTaskVoid LaunchScene()
                 {
-                    string sceneName = evt.newValue;
-                    if (dropdown.choices.IndexOf(sceneName) < 0) return;
+                    string directory = evt.newValue;
+                    if (dropdown.choices.IndexOf(directory) < 0) return;
 
-                    currentScene = await sceneSharedContainer.SceneFactory.CreateSceneFromStreamingAssets(sceneName, destroyCancellationToken);
+                    currentScene = await sceneSharedContainer.SceneFactory.CreateSceneFromStreamableDirectory(directory, destroyCancellationToken);
                     await currentScene.StartUpdateLoop(fps.value, destroyCancellationToken);
                 }
 

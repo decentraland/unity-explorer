@@ -7,7 +7,6 @@ using ECS.Abstract;
 using ECS.ComponentsPooling;
 using ECS.Unity.Groups;
 using ECS.Unity.PrimitiveRenderer.Components;
-using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
 
 namespace ECS.Unity.PrimitiveRenderer.Systems
 {
@@ -28,20 +27,26 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         protected override void Update(float t)
         {
             ValidateRenderingQuery(World);
+            HandleComponentRemovalQuery(World);
+            World.Remove<PrimitiveMeshRendererComponent>(in HandleComponentRemoval_QueryDescription);
         }
 
         [Query]
-        [All(typeof(PBMeshRenderer), typeof(PrimitiveMeshRendererComponent))]
+        [None(typeof(PBMeshRenderer))]
+        private void HandleComponentRemoval(ref PrimitiveMeshRendererComponent rendererComponent)
+        {
+            if (poolsRegistry.TryGetPool(rendererComponent.PrimitiveMesh.GetType(), out IComponentPool componentPool))
+                componentPool.Release(rendererComponent.PrimitiveMesh);
+        }
+
+        [Query]
         private void ValidateRendering(ref PBMeshRenderer meshRenderer,
             ref PrimitiveMeshRendererComponent rendererComponent)
         {
             if (meshRenderer.IsDirty && meshRenderer.MeshCase != rendererComponent.SDKType)
             {
                 if (poolsRegistry.TryGetPool(rendererComponent.PrimitiveMesh.GetType(), out IComponentPool componentPool))
-
-                    // TODO boxing allocation! change to the generic version
-                    componentPool.Release(((IPoolableComponentProvider<IPrimitiveMesh>)rendererComponent)
-                       .PoolableComponent);
+                    componentPool.Release(rendererComponent.PrimitiveMesh);
 
                 // it will be a signal to instantiate a new collider
                 rendererComponent.PrimitiveMesh = null;

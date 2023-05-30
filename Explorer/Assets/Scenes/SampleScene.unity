@@ -170,9 +170,11 @@ MonoBehaviour:
   sceneLauncher:
     ui: {fileID: 2137356831}
     scenes:
-    - cube_waves
-    - cube_wave_v2
-    - cube_waves_primitives
+    - cube-wave-16x16
+    - cube-wave-v2
+    - Smoke
+    - primitives-wave
+    - cube-wave-32x32-colored
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
