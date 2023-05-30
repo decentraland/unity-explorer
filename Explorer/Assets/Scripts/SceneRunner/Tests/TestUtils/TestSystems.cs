@@ -4,7 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using ECS.LifeCycle;
 
-namespace SceneRunner.SceneRunner.Tests.TestUtils
+namespace SceneRunner.Tests.TestUtils
 {
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial class InitializationTestSystem1 : BaseSystem<World, float>

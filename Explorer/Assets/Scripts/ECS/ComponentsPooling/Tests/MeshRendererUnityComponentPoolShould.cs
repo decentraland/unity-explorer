@@ -42,7 +42,7 @@ namespace ECS.ComponentsPooling.Tests
 
             //Act
             unityComponentPool.Get(out MeshRenderer component);
-            component.material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            component.material = DefaultMaterial.New();
             unityComponentPool.Release(component);
 
             await UniTask.Yield(PlayerLoopTiming.Update);

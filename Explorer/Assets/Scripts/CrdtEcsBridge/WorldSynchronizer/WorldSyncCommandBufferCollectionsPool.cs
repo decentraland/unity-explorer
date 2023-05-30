@@ -26,7 +26,10 @@ namespace CrdtEcsBridge.WorldSynchronizer
             createFunc: () => new Dictionary<int, BatchState>(256),
             actionOnRelease: dictionary => dictionary.Clear(),
             defaultCapacity: 8,
-            maxSize: 512
+            maxSize: 512,
+
+            // hot path
+            collectionCheck: false
         );
 
         public static WorldSyncCommandBufferCollectionsPool Create() =>

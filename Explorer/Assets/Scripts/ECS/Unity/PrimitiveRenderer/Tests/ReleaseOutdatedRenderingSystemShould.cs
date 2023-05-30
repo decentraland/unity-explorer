@@ -1,5 +1,4 @@
-﻿using System;
-using Arch.Core;
+﻿using Arch.Core;
 using DCL.ECSComponents;
 using ECS.ComponentsPooling;
 using ECS.TestSuite;
@@ -8,6 +7,7 @@ using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
 using ECS.Unity.PrimitiveRenderer.Systems;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using UnityEngine;
 using Utility.Primitives;
 
@@ -16,7 +16,6 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
     public class ReleaseOutdatedRenderingSystemShould : UnitySystemTestBase<ReleaseOutdatedRenderingSystem>
     {
         private IComponentPoolsRegistry poolsRegistry;
-
 
         [SetUp]
         public void SetUp()
@@ -43,6 +42,23 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
             poolsRegistry.Received(1).TryGetPool(typeof(BoxPrimitive), out Arg.Any<IComponentPool>());
 
             Assert.AreEqual(null, world.Get<PrimitiveMeshRendererComponent>(entity).PrimitiveMesh);
+        }
+
+        [Test]
+        public void ReleaseRendererIfComponentRemoved()
+        {
+            var comp = new PrimitiveMeshRendererComponent
+            {
+                PrimitiveMesh = new BoxPrimitive(),
+                SDKType = PBMeshRenderer.MeshOneofCase.Box,
+            };
+
+            Entity entity = world.Create(comp);
+
+            system.Update(0);
+
+            poolsRegistry.Received(1).TryGetPool(typeof(BoxPrimitive), out Arg.Any<IComponentPool>());
+            Assert.That(world.Has<PrimitiveMeshRendererComponent>(entity), Is.False);
         }
 
         [Test]

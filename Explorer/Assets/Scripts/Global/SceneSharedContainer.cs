@@ -1,16 +1,16 @@
-using CRDT.Deserializer;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Engine;
+using SceneRunner;
 using SceneRunner.ECSWorld;
-using SceneRunner.Scene;
+using SceneRunner.ECSWorld.Plugins;
 using SceneRuntime.Factory;
 
 namespace Global
 {
     /// <summary>
-    /// Holds dependencies shared between all scene instances. <br/>
-    /// Consider breaking down this class as much as needed if the number of dependencies grows
+    ///     Holds dependencies shared between all scene instances. <br />
+    ///     Consider breaking down this class as much as needed if the number of dependencies grows
     /// </summary>
     public class SceneSharedContainer
     {
@@ -18,7 +18,14 @@ namespace Global
 
         public static SceneSharedContainer Create(in ComponentsContainer componentsContainer)
         {
-            var ecsWorldFactory = new ECSWorldFactory(componentsContainer.ComponentPoolsRegistry);
+            var sharedDependencies = new ECSWorldSingletonSharedDependencies(componentsContainer.ComponentPoolsRegistry);
+
+            var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
+                new TransformsPlugin(sharedDependencies),
+                new MaterialsPlugin(),
+                new PrimitiveCollidersPlugin(sharedDependencies),
+                new StreamableLoadingPlugin(),
+                new PrimitivesRenderingPlugin(sharedDependencies));
 
             return new SceneSharedContainer
             {
@@ -29,7 +36,7 @@ namespace Global
                     new CRDTSerializer(),
                     componentsContainer.SDKComponentsRegistry,
                     new EntityFactory()
-                )
+                ),
             };
         }
     }

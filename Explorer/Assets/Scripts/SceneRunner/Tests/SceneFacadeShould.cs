@@ -1,6 +1,5 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
-using CRDT;
 using CRDT.Deserializer;
 using CRDT.Memory;
 using CRDT.Protocol;
@@ -10,16 +9,15 @@ using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using ECS.LifeCycle;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.ECSWorld;
-using SceneRunner.Scene;
-using SceneRunner.SceneRunner.Tests.TestUtils;
+using SceneRunner.Tests.TestUtils;
 using SceneRuntime;
 using SceneRuntime.Factory;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -51,7 +49,7 @@ namespace SceneRunner.Tests
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>();
 
-            ecsWorldFactory.CreateWorld(Arg.Any<Dictionary<CRDTEntity, Entity>>(), Arg.Any<string>())
+            ecsWorldFactory.CreateWorld(in Arg.Any<ECSWorldInstanceSharedDependencies>())
                            .Returns(_ =>
                             {
                                 var world = World.Create();
@@ -59,7 +57,7 @@ namespace SceneRunner.Tests
 
                                 InitializationTestSystem1.InjectToWorld(ref builder);
                                 SimulationTestSystem1.InjectToWorld(ref builder);
-                                return new ECSWorldFacade(builder.Finish(), world);
+                                return new ECSWorldFacade(builder.Finish(), world, Array.Empty<IFinalizeWorldSystem>());
                             });
 
             sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>();

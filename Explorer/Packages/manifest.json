@@ -1,7 +1,11 @@
 {
   "dependencies": {
+    "com.atteneder.draco": "4.0.2",
+    "com.atteneder.gltfast": "https://github.com/decentraland/glTFast.git",
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
+    "com.decentraland.unity-shared-dependencies": "https://github.com/decentraland/unity-shared-dependencies.git",
     "com.unity.collab-proxy": "2.0.3",
+    "com.unity.collections": "1.2.4",
     "com.unity.feature.development": "1.0.1",
     "com.unity.memoryprofiler": "1.0.0",
     "com.unity.render-pipelines.universal": "14.0.7",
@@ -43,5 +47,17 @@
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
     "com.unity.modules.xr": "1.0.0"
-  }
+  },
+  "scopedRegistries": [
+    {
+      "name": "OpenUPM",
+      "url": "https://package.openupm.com",
+      "scopes": [
+        "com.demigiant",
+        "com.coffee.ui-particle",
+        "com.atteneder.draco",
+        "com.madsbangh.easybuttons"
+      ]
+    }
+  ]
 }

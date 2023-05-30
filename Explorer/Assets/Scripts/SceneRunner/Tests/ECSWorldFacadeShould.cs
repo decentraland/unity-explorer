@@ -4,7 +4,7 @@ using ECS.LifeCycle;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.ECSWorld;
-using SceneRunner.SceneRunner.Tests.TestUtils;
+using SceneRunner.Tests.TestUtils;
 
 namespace SceneRunner.Tests
 {
@@ -28,7 +28,7 @@ namespace SceneRunner.Tests
             initializationTestSystem1 = InitializationTestSystem1.InjectToWorld(ref builder);
             simulationTestSystem1 = SimulationTestSystem1.InjectToWorld(ref builder);
 
-            ecsWorldFacade = new ECSWorldFacade(builder.Finish(), world, finalizeWorldSystem = Substitute.For<IFinalizeWorldSystem>());
+            ecsWorldFacade = new ECSWorldFacade(builder.Finish(), world, new[] { finalizeWorldSystem = Substitute.For<IFinalizeWorldSystem>() });
         }
 
         [Test]

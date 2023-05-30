@@ -1,4 +1,4 @@
 ﻿using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("OutgoingMessages.Tests")]
+[assembly: InternalsVisibleTo("CRDT.ECS.Bridge.Tests")]
 [assembly: InternalsVisibleTo("Engine.Tests")]

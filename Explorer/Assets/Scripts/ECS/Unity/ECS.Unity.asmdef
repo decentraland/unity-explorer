@@ -1,12 +1,24 @@
 {
   "name": "ECS.Unity",
+  "rootNamespace": "",
   "references": [
     "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
-    "GUID:f95f5feadbbe2f9448969f3a23470e3d",
     "GUID:6e2b4bed29ad1c549ab19b744f36f388",
     "GUID:3c7b57a14671040bd8c549056adc04f5",
     "GUID:0f4c0f120707fb74497f5d581b9858f8",
     "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
-    "GUID:08ce3db7403b4a3995f3a3f3968f89fc"
-  ]
+    "GUID:c2b7e3e0e95f4eb588516c8ae12e919b",
+    "GUID:08b2edf8f14cdd3408988fd7746b749c",
+    "GUID:d414ef88f3b15f746a4b97636b50dfb4",
+    "GUID:286980af24684da6acc1caa413039811"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

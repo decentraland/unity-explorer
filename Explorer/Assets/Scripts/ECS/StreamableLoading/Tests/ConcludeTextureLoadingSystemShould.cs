@@ -22,7 +22,19 @@ namespace ECS.StreamableLoading.Tests
         {
             var lr = new LoadingRequest { WebRequest = UnityWebRequestTexture.GetTexture(successPath) };
             lr.WebRequest.SendWebRequest();
-            return world.Create(new GetTextureIntention { CommonArguments = new CommonLoadingArguments(successPath) }, lr);
+
+            return world.Create(new GetTextureIntention
+            {
+                CommonArguments = new CommonLoadingArguments(successPath),
+                WrapMode = TextureWrapMode.MirrorOnce,
+                FilterMode = FilterMode.Trilinear,
+            }, lr);
+        }
+
+        protected override void AssertSuccess(Texture2D asset)
+        {
+            Assert.AreEqual(TextureWrapMode.MirrorOnce, asset.wrapMode);
+            Assert.AreEqual(FilterMode.Trilinear, asset.filterMode);
         }
 
         protected override Entity CreateNotFoundIntention()

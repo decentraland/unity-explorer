@@ -3,6 +3,6 @@ using Arch.SystemGroups.DefaultSystemGroups;
 
 namespace ECS.Groups
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(PostRenderingSystemGroup))]
     public partial class CleanUpGroup { }
 }

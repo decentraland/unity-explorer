@@ -11,7 +11,7 @@ using ECS.Unity.PrimitiveColliders.Components;
 namespace ECS.Unity.PrimitiveColliders.Systems
 {
     /// <summary>
-    ///     Releases the previous collider if its type was changed at runtime
+    ///     Releases the previous collider if its type was changed at runtime or the SDK component is removed
     /// </summary>
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     [UpdateBefore(typeof(ComponentInstantiationGroup))]
@@ -27,6 +27,18 @@ namespace ECS.Unity.PrimitiveColliders.Systems
         protected override void Update(float t)
         {
             ValidateColliderQuery(World);
+            HandleComponentRemovalQuery(World);
+
+            // Batch remove
+            World.Remove<PrimitiveColliderComponent>(in HandleComponentRemoval_QueryDescription);
+        }
+
+        [Query]
+        [None(typeof(PBMeshCollider))]
+        private void HandleComponentRemoval(ref PrimitiveColliderComponent component)
+        {
+            if (poolsRegistry.TryGetPool(component.ColliderType, out IComponentPool componentPool))
+                componentPool.Release(component.Collider);
         }
 
         [Query]
