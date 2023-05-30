@@ -6,7 +6,7 @@ namespace Utility.Primitives
     {
         private static Material cached;
 
-        private static readonly Shader CACHED_SHADER = Shader.Find("Universal Render Pipeline/Lit");
+        private static readonly Shader CACHED_SHADER = Shader.Find("DCL/Universal Render Pipeline/Lit");
 
         public static Material Shared => cached == null ? cached = New() : cached;
 
