@@ -12,7 +12,7 @@ namespace ECS.StreamableLoading.Systems
     public partial class AbortLoadingSystem : BaseUnityLoopSystem
     {
         private readonly QueryDescription abortQuery = new QueryDescription()
-           .WithAll<LoadingRequest, ForgetLoading>();
+           .WithAll<LoadingRequest, ForgetLoadingIntent>();
 
         private Abort abort;
 

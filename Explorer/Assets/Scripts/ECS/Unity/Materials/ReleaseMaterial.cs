@@ -33,7 +33,7 @@ namespace ECS.Unity.Materials
         {
             if (!entityReference.IsAlive(world)) return;
 
-            world.Add(entityReference.Entity, new ForgetLoading());
+            world.Add(entityReference.Entity, new ForgetLoadingIntent());
 
             // Nullify the entity reference
             entityReference = EntityReference.Null;

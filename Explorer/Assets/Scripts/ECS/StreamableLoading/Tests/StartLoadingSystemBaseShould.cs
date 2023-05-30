@@ -75,7 +75,7 @@ namespace ECS.StreamableLoading.Tests
         public void NotCreateRequestIfAborted()
         {
             TIntention intention = CreateIntention();
-            Entity e = world.Create(intention, new ForgetLoading());
+            Entity e = world.Create(intention, new ForgetLoadingIntent());
 
             system.Update(0);
 

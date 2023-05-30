@@ -184,7 +184,7 @@ namespace ECS.Unity.Materials.Tests
             Assert.IsTrue(world.TryGet(e, out MaterialComponent materialComponent));
             AssertBasicMaterial(material2, materialComponent);
 
-            Assert.IsTrue(world.Has<ForgetLoading>(texPromise.Entity));
+            Assert.IsTrue(world.Has<ForgetLoadingIntent>(texPromise.Entity));
             Assert.AreEqual(EntityReference.Null, materialComponent.AlphaTexPromise);
         }
 

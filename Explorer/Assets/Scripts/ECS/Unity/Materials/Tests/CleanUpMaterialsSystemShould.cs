@@ -33,7 +33,7 @@ namespace ECS.Unity.Materials.Tests
 
             system.Update(0);
 
-            Assert.That(world.Has<ForgetLoading>(texPromise), Is.True);
+            Assert.That(world.Has<ForgetLoadingIntent>(texPromise), Is.True);
             Assert.That(world.Get<MaterialComponent>(e).AlbedoTexPromise, Is.EqualTo(EntityReference.Null));
         }
 

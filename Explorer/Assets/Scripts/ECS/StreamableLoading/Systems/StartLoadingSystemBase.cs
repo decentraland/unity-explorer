@@ -11,11 +11,11 @@ namespace ECS.StreamableLoading.Systems
 
         private readonly QueryDescription createWebRequest = new QueryDescription()
                                                             .WithAll<TIntention>()
-                                                            .WithNone<LoadingRequest, ForgetLoading>();
+                                                            .WithNone<LoadingRequest, ForgetLoadingIntent>();
 
         private readonly QueryDescription repeatWebRequest = new QueryDescription()
                                                             .WithAll<TIntention, LoadingRequest>()
-                                                            .WithNone<StreamableLoadingResult<TAsset>, ForgetLoading>();
+                                                            .WithNone<StreamableLoadingResult<TAsset>, ForgetLoadingIntent>();
 
         private CreateQuery createQuery;
         private RepeatQuery repeatQuery;
