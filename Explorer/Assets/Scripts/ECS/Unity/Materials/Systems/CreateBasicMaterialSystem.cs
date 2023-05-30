@@ -6,6 +6,7 @@ using DCL.Shaders;
 using ECS.StreamableLoading.Components.Common;
 using ECS.Unity.Materials.Components;
 using UnityEngine;
+using UnityEngine.Pool;
 using UnityEngine.Rendering;
 
 namespace ECS.Unity.Materials.Systems
@@ -13,11 +14,9 @@ namespace ECS.Unity.Materials.Systems
     [UpdateInGroup(typeof(MaterialLoadingGroup))]
     public partial class CreateBasicMaterialSystem : CreateMaterialSystemBase
     {
-        private const string MATERIAL_PATH = "BasicShapeMaterial";
+        public const string MATERIAL_PATH = "BasicShapeMaterial";
 
-        internal CreateBasicMaterialSystem(World world, IMaterialsCache materialsCache, int attemptsCount) : base(world, materialsCache, attemptsCount) { }
-
-        internal override string materialPath => MATERIAL_PATH;
+        internal CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool, int attemptsCount) : base(world, materialsPool, attemptsCount) { }
 
         protected override void Update(float t)
         {
@@ -67,8 +66,6 @@ namespace ECS.Unity.Materials.Systems
                 SRPBatchingHelper.OptimizeMaterial(mat);
 
                 materialComponent.Result = mat;
-
-                materialsCache.Add(in materialComponent.Data, mat);
             }
         }
 

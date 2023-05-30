@@ -29,22 +29,17 @@ namespace ECS.Unity.Materials.Systems
         private void TryApplyMaterial(ref PBMeshRenderer pbMeshRenderer,
             ref PrimitiveMeshRendererComponent meshRendererComponent, ref MaterialComponent materialComponent)
         {
-            if (
-
-                // If Material is loaded but not applied
-                materialComponent.Status == MaterialComponent.LifeCycle.LoadingFinished
-
-                // or if MeshRenderer is dirty
-                || pbMeshRenderer.IsDirty)
+            switch (materialComponent.Status)
             {
-                // apply it
+                // If Material is loaded but not applied
+                case MaterialComponent.LifeCycle.LoadingFinished:
+                // If Material was applied once but renderer is dirty
+                case MaterialComponent.LifeCycle.MaterialApplied when pbMeshRenderer.IsDirty:
+                    materialComponent.Status = MaterialComponent.LifeCycle.MaterialApplied;
 
-                materialComponent.Status = MaterialComponent.LifeCycle.MaterialApplied;
-
-                meshRendererComponent.MeshRenderer.sharedMaterial = materialComponent.Result;
-                meshRendererComponent.MeshRenderer.shadowCastingMode = materialComponent.Data.CastShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
-
-                pbMeshRenderer.IsDirty = false;
+                    meshRendererComponent.MeshRenderer.sharedMaterial = materialComponent.Result;
+                    meshRendererComponent.MeshRenderer.shadowCastingMode = materialComponent.Data.CastShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
+                    break;
             }
         }
     }

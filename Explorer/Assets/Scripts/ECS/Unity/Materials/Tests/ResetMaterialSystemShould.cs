@@ -13,7 +13,7 @@ namespace ECS.Unity.Materials.Tests
 {
     public class ResetMaterialSystemShould : UnitySystemTestBase<ResetMaterialSystem>
     {
-        private IMaterialsCache materialsCache;
+        private DestroyMaterial destroyMaterial;
 
         private Entity entity;
         private MeshRenderer renderer;
@@ -21,8 +21,7 @@ namespace ECS.Unity.Materials.Tests
         [SetUp]
         public void SetUp()
         {
-            materialsCache = Substitute.For<IMaterialsCache>();
-            system = new ResetMaterialSystem(world, materialsCache);
+            system = new ResetMaterialSystem(world, destroyMaterial = Substitute.For<DestroyMaterial>());
 
             renderer = new GameObject(nameof(ResetMaterialSystemShould)).AddComponent<MeshRenderer>();
             renderer.shadowCastingMode = ShadowCastingMode.On;
@@ -47,7 +46,7 @@ namespace ECS.Unity.Materials.Tests
         {
             system.Update(0);
 
-            materialsCache.Received(1).Dereference(Arg.Any<MaterialData>());
+            destroyMaterial.Received(1)(in Arg.Any<MaterialData>(), Arg.Any<Material>());
         }
 
         [Test]

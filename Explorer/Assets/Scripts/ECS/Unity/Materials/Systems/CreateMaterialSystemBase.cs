@@ -4,33 +4,23 @@ using ECS.StreamableLoading.Components;
 using ECS.StreamableLoading.Components.Common;
 using ECS.Unity.Textures.Components;
 using UnityEngine;
-using UnityEngine.Assertions;
+using UnityEngine.Pool;
 
 namespace ECS.Unity.Materials.Systems
 {
     public abstract class CreateMaterialSystemBase : BaseUnityLoopSystem
     {
         private readonly int attemptsCount;
-        protected readonly IMaterialsCache materialsCache;
+        private readonly IObjectPool<Material> materialsPool;
 
-        internal Material sharedMaterial { get; private set; }
-
-        protected CreateMaterialSystemBase(World world, IMaterialsCache materialsCache, int attemptsCount) : base(world)
+        protected CreateMaterialSystemBase(World world, IObjectPool<Material> materialsPool, int attemptsCount) : base(world)
         {
-            this.materialsCache = materialsCache;
             this.attemptsCount = attemptsCount;
-        }
-
-        internal abstract string materialPath { get; }
-
-        public override void Initialize()
-        {
-            sharedMaterial = Resources.Load<Material>(materialPath);
-            Assert.IsNotNull(sharedMaterial);
+            this.materialsPool = materialsPool;
         }
 
         protected Material CreateNewMaterialInstance() =>
-            new (sharedMaterial);
+            materialsPool.Get();
 
         protected bool TryCreateGetTextureIntention(in TextureComponent? textureComponent, ref EntityReference entityReference)
         {
@@ -49,7 +39,7 @@ namespace ECS.Unity.Materials.Systems
 
         protected void DestroyEntityReference(in EntityReference entityReference)
         {
-            if (!entityReference.IsAlive(World))
+            if (entityReference == EntityReference.Null || !entityReference.IsAlive(World))
                 return;
 
             World.Destroy(entityReference);
@@ -57,19 +47,15 @@ namespace ECS.Unity.Materials.Systems
 
         protected bool TryGetTextureResult(in EntityReference entityReference, out StreamableLoadingResult<Texture2D> textureResult)
         {
+            textureResult = default(StreamableLoadingResult<Texture2D>);
+
+            if (entityReference == EntityReference.Null)
+                return true;
+
             if (!entityReference.IsAlive(World))
-            {
-                textureResult = default(StreamableLoadingResult<Texture2D>);
                 return false;
-            }
 
-            if (!World.TryGet(entityReference, out textureResult))
-            {
-                textureResult = default(StreamableLoadingResult<Texture2D>);
-                return false;
-            }
-
-            return true;
+            return World.TryGet(entityReference, out textureResult);
         }
 
         protected static void TrySetTexture(Material material, ref StreamableLoadingResult<Texture2D> textureResult, int propId)

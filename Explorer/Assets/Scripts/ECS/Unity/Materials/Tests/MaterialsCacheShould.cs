@@ -13,12 +13,12 @@ namespace ECS.Unity.Materials.Tests
         private const int SIZE = MaterialsCappedCache.MIN_SIZE;
 
         private MaterialsCappedCache cache;
-        private MaterialsCappedCache.DestroyMaterial destroy;
+        private DestroyMaterial destroy;
 
         [SetUp]
         public void SetUp()
         {
-            cache = new MaterialsCappedCache(SIZE, destroy = Substitute.For<MaterialsCappedCache.DestroyMaterial>());
+            cache = new MaterialsCappedCache(SIZE, destroy = Substitute.For<DestroyMaterial>());
         }
 
         [Test]

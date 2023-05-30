@@ -18,12 +18,12 @@ namespace ECS.Unity.Materials.Systems
     [UpdateInGroup(typeof(MaterialLoadingGroup))]
     public partial class StartMaterialsLoadingSystem : BaseUnityLoopSystem
     {
-        private readonly IMaterialsCache materialsCache;
+        private readonly DestroyMaterial destroyMaterial;
         private readonly ISceneContentProvider sceneContentProvider;
 
-        public StartMaterialsLoadingSystem(World world, IMaterialsCache materialsCache, ISceneContentProvider sceneContentProvider) : base(world)
+        public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneContentProvider sceneContentProvider) : base(world)
         {
-            this.materialsCache = materialsCache;
+            this.destroyMaterial = destroyMaterial;
             this.sceneContentProvider = sceneContentProvider;
         }
 
@@ -46,8 +46,14 @@ namespace ECS.Unity.Materials.Systems
             if (MaterialDataEqualityComparer.INSTANCE.Equals(materialComponent.Data, materialData))
                 return;
 
-            ReleaseMaterial.Execute(World, ref materialComponent, materialsCache);
+            // If isPbr is the same right the same material is reused
+            if (materialComponent.Data.IsPbrMaterial != materialData.IsPbrMaterial)
+            {
+                ReleaseMaterial.Execute(World, ref materialComponent, destroyMaterial);
+                materialComponent.Result = null;
+            }
 
+            materialComponent.Status = MaterialComponent.LifeCycle.LoadingNotStarted;
             materialComponent.Data = materialData;
         }
 

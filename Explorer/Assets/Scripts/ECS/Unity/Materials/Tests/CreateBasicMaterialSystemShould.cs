@@ -8,6 +8,7 @@ using ECS.Unity.Textures.Components;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace ECS.Unity.Materials.Tests
 {
@@ -15,12 +16,16 @@ namespace ECS.Unity.Materials.Tests
     {
         private const int ATTEMPTS_COUNT = 5;
 
-        private IMaterialsCache materialsCache;
+        private Material basicMat;
 
         [SetUp]
         public void SetUp()
         {
-            system = new CreateBasicMaterialSystem(world, materialsCache = Substitute.For<IMaterialsCache>(), ATTEMPTS_COUNT);
+            basicMat = Resources.Load<Material>(CreateBasicMaterialSystem.MATERIAL_PATH);
+            IObjectPool<Material> pool = Substitute.For<IObjectPool<Material>>();
+            pool.Get().Returns(_ => new Material(basicMat));
+
+            system = new CreateBasicMaterialSystem(world, pool, ATTEMPTS_COUNT);
             system.Initialize();
         }
 
@@ -58,9 +63,7 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(afterUpdate.Status, Is.EqualTo(MaterialComponent.LifeCycle.LoadingFinished));
 
             Assert.That(afterUpdate.Result, Is.Not.Null);
-            Assert.That(afterUpdate.Result.shader, Is.EqualTo(system.sharedMaterial.shader));
-
-            materialsCache.Received(1).Add(in afterUpdate.Data, afterUpdate.Result);
+            Assert.That(afterUpdate.Result.shader, Is.EqualTo(basicMat.shader));
         }
 
         [Test]
@@ -69,6 +72,8 @@ namespace ECS.Unity.Materials.Tests
             MaterialComponent component = CreateMaterialComponent();
 
             component.Status = MaterialComponent.LifeCycle.LoadingInProgress;
+
+            component.AlbedoTexPromise = world.Reference(world.Create());
 
             Entity e = world.Create(component);
 

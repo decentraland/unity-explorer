@@ -4,14 +4,14 @@ using UnityEngine;
 
 namespace ECS.Unity.Materials
 {
+    public delegate void DestroyMaterial(in MaterialData materialData, Material material);
+
     /// <summary>
     ///     Holds no more than maxSize not-used materials, releases exceeding materials
     /// </summary>
     public class MaterialsCappedCache : IMaterialsCache
     {
         internal const int MIN_SIZE = 16;
-
-        public delegate void DestroyMaterial(Material material);
 
         private readonly Dictionary<MaterialData, CacheEntry> cachedMaterials;
         private readonly DestroyMaterial destroyMaterial;
@@ -96,7 +96,7 @@ namespace ECS.Unity.Materials
                         CacheEntry cached = cachedMaterials[currentNode.Value];
 
                         // Destroy the cached Material
-                        destroyMaterial(cached.Material);
+                        destroyMaterial(currentNode.Value, cached.Material);
 
                         cachedMaterials.Remove(currentNode.Value);
                         notReferencedMaterials.Remove(currentNode);

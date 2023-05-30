@@ -14,11 +14,11 @@ namespace ECS.Unity.Materials.Systems
     [UpdateInGroup(typeof(CleanUpGroup))]
     public partial class CleanUpMaterialsSystem : BaseUnityLoopSystem
     {
-        private readonly IMaterialsCache materialsCache;
+        private readonly DestroyMaterial destroyMaterial;
 
-        internal CleanUpMaterialsSystem(World world, IMaterialsCache materialsCache) : base(world)
+        internal CleanUpMaterialsSystem(World world, DestroyMaterial destroyMaterial) : base(world)
         {
-            this.materialsCache = materialsCache;
+            this.destroyMaterial = destroyMaterial;
         }
 
         protected override void Update(float t)
@@ -30,7 +30,7 @@ namespace ECS.Unity.Materials.Systems
         [All(typeof(DeleteEntityIntention))]
         private void TryRelease(ref MaterialComponent materialComponent)
         {
-            ReleaseMaterial.Execute(World, ref materialComponent, materialsCache);
+            ReleaseMaterial.Execute(World, ref materialComponent, destroyMaterial);
         }
     }
 }

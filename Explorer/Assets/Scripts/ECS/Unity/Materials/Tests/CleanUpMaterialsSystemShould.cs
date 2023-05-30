@@ -12,7 +12,7 @@ namespace ECS.Unity.Materials.Tests
 {
     public class CleanUpMaterialsSystemShould : UnitySystemTestBase<CleanUpMaterialsSystem>
     {
-        private IMaterialsCache materialsCache;
+        private DestroyMaterial destroyMaterial;
 
         private Entity e;
         private Entity texPromise;
@@ -20,7 +20,7 @@ namespace ECS.Unity.Materials.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new CleanUpMaterialsSystem(world, materialsCache = Substitute.For<IMaterialsCache>());
+            system = new CleanUpMaterialsSystem(world, destroyMaterial = Substitute.For<DestroyMaterial>());
 
             e = world.Create(new MaterialComponent { AlbedoTexPromise = world.Reference(texPromise = world.Create()) }, new DeleteEntityIntention());
         }
@@ -46,8 +46,7 @@ namespace ECS.Unity.Materials.Tests
 
             system.Update(0);
 
-            materialsCache.Received(1).Dereference(in component.Data);
-            Assert.That(world.Get<MaterialComponent>(e).Result, Is.Null);
+            destroyMaterial.Received(1)(in component.Data, component.Result);
         }
     }
 }

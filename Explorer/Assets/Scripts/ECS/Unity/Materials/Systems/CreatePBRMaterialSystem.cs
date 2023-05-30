@@ -1,12 +1,12 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.Helpers;
 using DCL.Shaders;
 using ECS.StreamableLoading.Components.Common;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Textures.Components;
 using UnityEngine;
+using UnityEngine.Pool;
 using UnityEngine.Rendering;
 
 namespace ECS.Unity.Materials.Systems
@@ -17,10 +17,10 @@ namespace ECS.Unity.Materials.Systems
         /// <summary>
         ///     The path from the shared package
         /// </summary>
-        private const string MATERIAL_PATH = "ShapeMaterial";
+        public const string MATERIAL_PATH = "ShapeMaterial";
 
-        internal CreatePBRMaterialSystem(World world, IMaterialsCache materialsCache, int attemptsCount)
-            : base(world, materialsCache, attemptsCount) { }
+        internal CreatePBRMaterialSystem(World world, IObjectPool<Material> materialsPool, int attemptsCount)
+            : base(world, materialsPool, attemptsCount) { }
 
         protected override void Update(float t)
         {
@@ -33,15 +33,12 @@ namespace ECS.Unity.Materials.Systems
             if (!materialComponent.Data.IsPbrMaterial)
                 return;
 
-            switch (materialComponent.Status)
-            {
-                case MaterialComponent.LifeCycle.LoadingNotStarted:
-                    StartTexturesLoading(ref materialComponent);
-                    break;
-                case MaterialComponent.LifeCycle.LoadingInProgress:
-                    ConstructMaterial(ref materialComponent);
-                    break;
-            }
+            if (materialComponent.Status == MaterialComponent.LifeCycle.LoadingNotStarted)
+                StartTexturesLoading(ref materialComponent);
+
+            // if there are no textures to load we can construct a material right away
+            if (materialComponent.Status == MaterialComponent.LifeCycle.LoadingInProgress)
+                ConstructMaterial(ref materialComponent);
         }
 
         private void StartTexturesLoading(ref MaterialComponent materialComponent)
@@ -66,37 +63,32 @@ namespace ECS.Unity.Materials.Systems
             {
                 materialComponent.Status = MaterialComponent.LifeCycle.LoadingFinished;
 
-                Material mat = CreateNewMaterialInstance();
+                materialComponent.Result ??= CreateNewMaterialInstance();
 
-                SetUpColors(mat, materialComponent.Data.AlbedoColor, materialComponent.Data.EmissiveColor, materialComponent.Data.ReflectivityColor, materialComponent.Data.EmissiveIntensity);
-                SetUpProps(mat, materialComponent.Data.Metallic, materialComponent.Data.Roughness, materialComponent.Data.Glossiness, materialComponent.Data.SpecularIntensity, materialComponent.Data.DirectIntensity);
-                SetUpTransparency(mat, materialComponent.Data.TransparencyMode, materialComponent.Data.AlphaTexture, materialComponent.Data.AlbedoColor, materialComponent.Data.AlphaTest);
+                SetUpColors(materialComponent.Result, materialComponent.Data.AlbedoColor, materialComponent.Data.EmissiveColor, materialComponent.Data.ReflectivityColor, materialComponent.Data.EmissiveIntensity);
+                SetUpProps(materialComponent.Result, materialComponent.Data.Metallic, materialComponent.Data.Roughness, materialComponent.Data.Glossiness, materialComponent.Data.SpecularIntensity, materialComponent.Data.DirectIntensity);
+                SetUpTransparency(materialComponent.Result, materialComponent.Data.TransparencyMode, materialComponent.Data.AlphaTexture, materialComponent.Data.AlbedoColor, materialComponent.Data.AlphaTest);
 
-                TrySetTexture(mat, ref albedoResult, ShaderUtils.BaseMap);
-                TrySetTexture(mat, ref emissiveResult, ShaderUtils.EmissionMap);
-                TrySetTexture(mat, ref alphaResult, ShaderUtils.AlphaTexture);
-                TrySetTexture(mat, ref bumpResult, ShaderUtils.BumpMap);
+                TrySetTexture(materialComponent.Result, ref albedoResult, ShaderUtils.BaseMap);
+                TrySetTexture(materialComponent.Result, ref emissiveResult, ShaderUtils.EmissionMap);
+                TrySetTexture(materialComponent.Result, ref alphaResult, ShaderUtils.AlphaTexture);
+                TrySetTexture(materialComponent.Result, ref bumpResult, ShaderUtils.BumpMap);
 
                 DestroyEntityReference(in materialComponent.AlbedoTexPromise);
                 DestroyEntityReference(in materialComponent.EmissiveTexPromise);
                 DestroyEntityReference(in materialComponent.AlphaTexPromise);
                 DestroyEntityReference(in materialComponent.BumpTexPromise);
 
-                SRPBatchingHelper.OptimizeMaterial(mat);
-
-                materialComponent.Result = mat;
-
-                materialsCache.Add(in materialComponent.Data, mat);
+                // TODO It is super expensive and allocates 500 KB every call, the changes must be made in the common library
+                // SRPBatchingHelper.OptimizeMaterial(materialComponent.Result);
             }
         }
-
-        internal override string materialPath => MATERIAL_PATH;
 
         public static void SetUpColors(Material material, Color albedo, Color emissive, Color reflectivity, float emissiveIntensity)
         {
             material.SetColor(ShaderUtils.BaseColor, albedo);
 
-            if (emissive != Color.clear && emissive != Color.black) { material.EnableKeyword("_EMISSION"); }
+            if (emissive != Color.clear && emissive != Color.black) material.EnableKeyword("_EMISSION");
 
             material.SetColor(ShaderUtils.EmissionColor, emissive * emissiveIntensity);
             material.SetColor(ShaderUtils.SpecColor, reflectivity);
@@ -114,11 +106,6 @@ namespace ECS.Unity.Materials.Systems
         public static void SetUpTransparency(Material material, MaterialTransparencyMode transparencyMode,
             TextureComponent? alphaTexture, Color albedoColor, float alphaTest)
         {
-            // Reset shader keywords
-            material.DisableKeyword("_ALPHATEST_ON"); // Cut Out Transparency
-            material.DisableKeyword("_ALPHABLEND_ON"); // Fade Transparency
-            material.DisableKeyword("_ALPHAPREMULTIPLY_ON"); // Transparent
-
             if (transparencyMode == MaterialTransparencyMode.Auto)
             {
                 if (alphaTexture != null || albedoColor.a < 1f) //AlphaBlend
@@ -134,11 +121,17 @@ namespace ECS.Unity.Materials.Systems
             switch (transparencyMode)
             {
                 case MaterialTransparencyMode.Opaque:
+                    material.DisableKeyword("_ALPHATEST_ON"); // Cut Out Transparency
+                    material.DisableKeyword("_ALPHABLEND_ON"); // Fade Transparency
+                    material.DisableKeyword("_ALPHAPREMULTIPLY_ON"); // Transparent
+
                     material.renderQueue = (int)RenderQueue.Geometry;
                     material.SetFloat(ShaderUtils.AlphaClip, 0);
                     break;
                 case MaterialTransparencyMode.AlphaTest: // ALPHATEST
                     material.EnableKeyword("_ALPHATEST_ON");
+                    material.DisableKeyword("_ALPHABLEND_ON"); // Fade Transparency
+                    material.DisableKeyword("_ALPHAPREMULTIPLY_ON"); // Transparent
 
                     material.SetInt(ShaderUtils.SrcBlend, (int)BlendMode.One);
                     material.SetInt(ShaderUtils.DstBlend, (int)BlendMode.Zero);
@@ -149,6 +142,8 @@ namespace ECS.Unity.Materials.Systems
                     material.renderQueue = (int)RenderQueue.AlphaTest;
                     break;
                 case MaterialTransparencyMode.AlphaBlend: // ALPHABLEND
+                    material.DisableKeyword("_ALPHATEST_ON");
+                    material.DisableKeyword("_ALPHAPREMULTIPLY_ON"); // Transparent
                     material.EnableKeyword("_ALPHABLEND_ON");
 
                     material.SetInt(ShaderUtils.SrcBlend, (int)BlendMode.SrcAlpha);
@@ -159,7 +154,9 @@ namespace ECS.Unity.Materials.Systems
                     material.SetInt(ShaderUtils.Surface, 1);
                     break;
                 case MaterialTransparencyMode.AlphaTestAndAlphaBlend:
-                    material.EnableKeyword("_ALPHAPREMULTIPLY_ON");
+                    material.DisableKeyword("_ALPHATEST_ON"); // Cut Out Transparency
+                    material.DisableKeyword("_ALPHABLEND_ON"); // Fade Transparency
+                    material.EnableKeyword("_ALPHAPREMULTIPLY_ON"); // Transparent
 
                     material.SetInt(ShaderUtils.SrcBlend, (int)BlendMode.One);
                     material.SetInt(ShaderUtils.DstBlend, (int)BlendMode.OneMinusSrcAlpha);

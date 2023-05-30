@@ -28,13 +28,13 @@ namespace ECS.Unity.Materials.Tests
         private static string tex3 => $"file://{Application.dataPath + "/../TestResources/Images/Gradient A4.png"}";
 
         private ISceneContentProvider sceneContentProvider;
-        private IMaterialsCache materialsCache;
+        private DestroyMaterial destroyMaterial;
 
         [SetUp]
         public void SetUp()
         {
             system = new StartMaterialsLoadingSystem(world,
-                materialsCache = Substitute.For<IMaterialsCache>(),
+                destroyMaterial = Substitute.For<DestroyMaterial>(),
                 sceneContentProvider = Substitute.For<ISceneContentProvider>());
 
             sceneContentProvider.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<string>())
@@ -121,7 +121,7 @@ namespace ECS.Unity.Materials.Tests
             AssertPBRMaterial(material2, materialComponent);
             AssertPBRMaterial(material1, materialComponent);
 
-            materialsCache.DidNotReceive().Dereference(Arg.Any<MaterialData>());
+            destroyMaterial.DidNotReceive()(Arg.Any<MaterialData>(), Arg.Any<Material>());
         }
 
         [Test]
@@ -152,7 +152,7 @@ namespace ECS.Unity.Materials.Tests
             Assert.IsTrue(world.TryGet(e, out MaterialComponent materialComponent));
             AssertBasicMaterial(material2, materialComponent);
 
-            materialsCache.Received(1).Dereference(dataCopy);
+            destroyMaterial.Received(1)(dataCopy, Arg.Any<Material>());
         }
 
         [Test]

@@ -16,11 +16,11 @@ namespace ECS.Unity.Materials.Systems
     [UpdateBefore(typeof(ApplyMaterialSystem))]
     public partial class ResetMaterialSystem : BaseUnityLoopSystem
     {
-        private readonly IMaterialsCache materialsCache;
+        private readonly DestroyMaterial destroyMaterial;
 
-        internal ResetMaterialSystem(World world, IMaterialsCache materialsCache) : base(world)
+        internal ResetMaterialSystem(World world, DestroyMaterial destroyMaterial) : base(world)
         {
-            this.materialsCache = materialsCache;
+            this.destroyMaterial = destroyMaterial;
         }
 
         protected override void Update(float t)
@@ -34,7 +34,7 @@ namespace ECS.Unity.Materials.Systems
         private void Reset(ref PrimitiveMeshRendererComponent meshRendererComponent, ref MaterialComponent materialComponent)
         {
             meshRendererComponent.MeshRenderer.sharedMaterial = DefaultMaterial.Shared;
-            ReleaseMaterial.Execute(World, ref materialComponent, materialsCache);
+            ReleaseMaterial.Execute(World, ref materialComponent, destroyMaterial);
         }
     }
 }
