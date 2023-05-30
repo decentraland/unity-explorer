@@ -21,7 +21,11 @@ namespace Global
             var sharedDependencies = new ECSWorldSingletonSharedDependencies(componentsContainer.ComponentPoolsRegistry);
 
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
-                new TransformsPlugin(sharedDependencies), new MaterialsPlugin(), new PrimitiveCollidersPlugin(sharedDependencies), new StreamableLoadingPlugin());
+                new TransformsPlugin(sharedDependencies),
+                new MaterialsPlugin(),
+                new PrimitiveCollidersPlugin(sharedDependencies),
+                new StreamableLoadingPlugin(),
+                new PrimitivesRenderingPlugin(sharedDependencies));
 
             return new SceneSharedContainer
             {

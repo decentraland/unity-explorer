@@ -173,7 +173,7 @@ MonoBehaviour:
     - cube-wave-16x16
     - cube-wave-v2
     - Smoke
-    - cube_waves_primitives
+    - primitives-wave
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -459,8 +459,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_PanelSettings: {fileID: 11400000, guid: f3ea0c73e451c2242893bb09c040fcc4, type: 2}
   m_ParentUI: {fileID: 0}
-  sourceAsset: {fileID: 9197481963319205126, guid: 571ad9ad0d239da4fa723f05d421bf25,
-    type: 3}
+  sourceAsset: {fileID: 9197481963319205126, guid: 571ad9ad0d239da4fa723f05d421bf25, type: 3}
   m_SortingOrder: 0
 --- !u!4 &2137356832
 Transform:

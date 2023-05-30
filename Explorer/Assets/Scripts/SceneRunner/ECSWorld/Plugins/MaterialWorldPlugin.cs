@@ -1,7 +1,9 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using ECS.LifeCycle;
 using ECS.Unity.Materials;
 using ECS.Unity.Materials.Systems;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SceneRunner.ECSWorld.Plugins
@@ -18,7 +20,7 @@ namespace SceneRunner.ECSWorld.Plugins
             materialsCache = new MaterialsCappedCache(CACHE_CAPACITY, Object.Destroy);
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
             StartMaterialsLoadingSystem.InjectToWorld(ref builder, materialsCache, sharedDependencies.ContentProvider);
             LoadMaterialFromCacheSystem.InjectToWorld(ref builder, materialsCache);

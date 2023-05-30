@@ -9,6 +9,7 @@ using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using ECS.LifeCycle;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.ECSWorld;
@@ -56,7 +57,7 @@ namespace SceneRunner.Tests
 
                                 InitializationTestSystem1.InjectToWorld(ref builder);
                                 SimulationTestSystem1.InjectToWorld(ref builder);
-                                return new ECSWorldFacade(builder.Finish(), world);
+                                return new ECSWorldFacade(builder.Finish(), world, Array.Empty<IFinalizeWorldSystem>());
                             });
 
             sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>();

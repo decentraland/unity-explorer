@@ -1,6 +1,8 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using ECS.LifeCycle;
 using SceneRunner.ECSWorld;
+using System.Collections.Generic;
 
 namespace SceneRunner.Tests.TestUtils
 {
@@ -13,7 +15,7 @@ namespace SceneRunner.Tests.TestUtils
 
             InitializationTestSystem1.InjectToWorld(ref builder);
             SimulationTestSystem1.InjectToWorld(ref builder);
-            return new ECSWorldFacade(builder.Finish(), world);
+            return new ECSWorldFacade(builder.Finish(), world, new List<IFinalizeWorldSystem>());
         }
     }
 }
