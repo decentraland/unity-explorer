@@ -13,6 +13,7 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using UnityEngine;
+using Utility.Primitives;
 using Entity = Arch.Core.Entity;
 using MaterialTransparencyMode = DCL.ECSComponents.MaterialTransparencyMode;
 using Texture = Decentraland.Common.Texture;
@@ -107,7 +108,7 @@ namespace ECS.Unity.Materials.Tests
             world.Set(e, material2);
 
             ref MaterialComponent c = ref world.Get<MaterialComponent>(e);
-            c.Result = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            c.Result = DefaultMaterial.New();
             c.Status = MaterialComponent.LifeCycle.LoadingFinished;
 
             // Second run -> keep material component
@@ -139,7 +140,7 @@ namespace ECS.Unity.Materials.Tests
             world.Set(e, material2);
 
             ref MaterialComponent c = ref world.Get<MaterialComponent>(e);
-            c.Result = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            c.Result = DefaultMaterial.New();
             c.Status = MaterialComponent.LifeCycle.LoadingFinished;
 
             MaterialData dataCopy = c.Data;

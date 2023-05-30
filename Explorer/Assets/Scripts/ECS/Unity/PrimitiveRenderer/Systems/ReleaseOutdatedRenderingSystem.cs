@@ -27,10 +27,19 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         protected override void Update(float t)
         {
             ValidateRenderingQuery(World);
+            HandleComponentRemovalQuery(World);
+            World.Remove<PrimitiveMeshRendererComponent>(in HandleComponentRemoval_QueryDescription);
         }
 
         [Query]
-        [All(typeof(PBMeshRenderer), typeof(PrimitiveMeshRendererComponent))]
+        [None(typeof(PBMeshRenderer))]
+        private void HandleComponentRemoval(ref PrimitiveMeshRendererComponent rendererComponent)
+        {
+            if (poolsRegistry.TryGetPool(rendererComponent.PrimitiveMesh.GetType(), out IComponentPool componentPool))
+                componentPool.Release(rendererComponent.PrimitiveMesh);
+        }
+
+        [Query]
         private void ValidateRendering(ref PBMeshRenderer meshRenderer,
             ref PrimitiveMeshRendererComponent rendererComponent)
         {

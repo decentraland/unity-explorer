@@ -6,7 +6,7 @@ using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Systems;
 using NSubstitute;
 using NUnit.Framework;
-using UnityEngine;
+using Utility.Primitives;
 
 namespace ECS.Unity.Materials.Tests
 {
@@ -42,7 +42,7 @@ namespace ECS.Unity.Materials.Tests
         {
             ref MaterialComponent component = ref world.Get<MaterialComponent>(e);
             component.Status = MaterialComponent.LifeCycle.LoadingFinished;
-            component.Result = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            component.Result = DefaultMaterial.New();
 
             system.Update(0);
 

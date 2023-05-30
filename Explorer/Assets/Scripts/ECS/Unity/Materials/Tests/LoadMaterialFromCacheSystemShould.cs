@@ -6,6 +6,7 @@ using ECS.Unity.Textures.Components;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
+using Utility.Primitives;
 
 namespace ECS.Unity.Materials.Tests
 {
@@ -33,7 +34,7 @@ namespace ECS.Unity.Materials.Tests
             materialsCache.TryReferenceMaterial(in materialComponent.Data, out Arg.Any<Material>())
                           .Returns(c =>
                            {
-                               c[1] = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                               c[1] = DefaultMaterial.New();
                                return true;
                            });
 
@@ -67,7 +68,7 @@ namespace ECS.Unity.Materials.Tests
             materialsCache.TryReferenceMaterial(in materialComponent.Data, out Arg.Any<Material>())
                           .Returns(c =>
                            {
-                               c[1] = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                               c[1] = DefaultMaterial.New();
                                return true;
                            });
 

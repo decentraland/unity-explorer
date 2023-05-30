@@ -26,6 +26,8 @@ namespace SceneRunner.ECSWorld.Plugins
             LoadMaterialFromCacheSystem.InjectToWorld(ref builder, materialsCache);
             CreateBasicMaterialSystem.InjectToWorld(ref builder, materialsCache, LOADING_ATTEMPTS_COUNT);
             CreatePBRMaterialSystem.InjectToWorld(ref builder, materialsCache, LOADING_ATTEMPTS_COUNT);
+            ApplyMaterialSystem.InjectToWorld(ref builder);
+            ResetMaterialSystem.InjectToWorld(ref builder, materialsCache);
             CleanUpMaterialsSystem.InjectToWorld(ref builder, materialsCache);
         }
     }

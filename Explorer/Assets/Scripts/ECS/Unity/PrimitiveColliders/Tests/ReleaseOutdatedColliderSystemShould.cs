@@ -46,6 +46,27 @@ namespace ECS.Unity.PrimitiveColliders.Tests
         }
 
         [Test]
+        public void ReleaseColliderIfComponentRemoved()
+        {
+            BoxCollider oldCollider = new GameObject().AddComponent<BoxCollider>();
+
+            var comp = new PrimitiveColliderComponent
+            {
+                Collider = oldCollider,
+                ColliderType = typeof(BoxCollider),
+                SDKType = PBMeshCollider.MeshOneofCase.Box,
+            };
+
+            // No SDK component attached
+            Entity entity = world.Create(comp);
+
+            system.Update(0);
+
+            poolsRegistry.Received(1).TryGetPool(typeof(BoxCollider), out Arg.Any<IComponentPool>());
+            Assert.That(world.Has<PrimitiveColliderComponent>(entity), Is.False);
+        }
+
+        [Test]
         public void DoNothingIfNotDirty()
         {
             BoxCollider oldCollider = new GameObject().AddComponent<BoxCollider>();

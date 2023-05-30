@@ -4,6 +4,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System.Linq;
 using UnityEngine;
+using Utility.Primitives;
 
 namespace ECS.Unity.Materials.Tests
 {
@@ -112,6 +113,6 @@ namespace ECS.Unity.Materials.Tests
         }
 
         private static Material CreateMaterial() =>
-            new (Shader.Find("Universal Render Pipeline/Lit"));
+            DefaultMaterial.New();
     }
 }
