@@ -14,7 +14,7 @@ namespace ECS.Unity.Materials.Systems
     /// </summary>
     [UpdateInGroup(typeof(MaterialLoadingGroup))]
     [UpdateBefore(typeof(ApplyMaterialSystem))]
-    public class ResetMaterialSystem : BaseUnityLoopSystem
+    public partial class ResetMaterialSystem : BaseUnityLoopSystem
     {
         private readonly IMaterialsCache materialsCache;
 

@@ -15,7 +15,7 @@ namespace ECS.Unity.Materials.Systems
     [UpdateInGroup(typeof(MaterialLoadingGroup))]
     [UpdateAfter(typeof(CreateBasicMaterialSystem))]
     [UpdateAfter(typeof(CreatePBRMaterialSystem))]
-    public class ApplyMaterialSystem : BaseUnityLoopSystem
+    public partial class ApplyMaterialSystem : BaseUnityLoopSystem
     {
         internal ApplyMaterialSystem(World world) : base(world) { }
 
