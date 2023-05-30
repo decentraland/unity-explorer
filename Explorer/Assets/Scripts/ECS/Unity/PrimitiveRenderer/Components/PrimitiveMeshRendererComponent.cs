@@ -1,7 +1,7 @@
-using System;
 using DCL.ECSComponents;
 using ECS.ComponentsPooling;
 using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
+using System;
 using UnityEngine;
 
 namespace ECS.Unity.PrimitiveRenderer.Components
@@ -15,12 +15,12 @@ namespace ECS.Unity.PrimitiveRenderer.Components
 
         Type IPoolableComponentProvider<IPrimitiveMesh>.PoolableComponentType => PrimitiveMesh.GetType();
 
+        Type IPoolableComponentProvider<MeshRenderer>.PoolableComponentType => typeof(MeshRenderer);
+
         IPrimitiveMesh IPoolableComponentProvider<IPrimitiveMesh>.PoolableComponent => PrimitiveMesh;
 
         MeshRenderer IPoolableComponentProvider<MeshRenderer>.PoolableComponent => MeshRenderer;
 
-        public void Dispose()
-        {
-        }
+        public void Dispose() { }
     }
 }

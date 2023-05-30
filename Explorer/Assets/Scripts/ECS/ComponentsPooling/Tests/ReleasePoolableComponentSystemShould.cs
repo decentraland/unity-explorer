@@ -26,6 +26,7 @@ namespace ECS.ComponentsPooling.Tests
 
             TestComponent1 IPoolableComponentProvider<TestComponent1>.PoolableComponent => Component;
 
+            public void Dispose() { }
         }
 
         [Test]

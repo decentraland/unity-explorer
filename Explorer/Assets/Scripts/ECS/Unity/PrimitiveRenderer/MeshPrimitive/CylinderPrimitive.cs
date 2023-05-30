@@ -8,8 +8,7 @@ namespace ECS.Unity.PrimitiveRenderer.MeshPrimitive
 
         public CylinderPrimitive()
         {
-            var newMesh = new Mesh();
-            Mesh = newMesh;
+            Mesh = new Mesh();
         }
     }
 }

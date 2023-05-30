@@ -37,11 +37,11 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         {
             if (meshRenderer.IsDirty && meshRenderer.MeshCase != rendererComponent.SDKType)
             {
-                if (poolsRegistry.TryGetPool(
-                        ((IPoolableComponentProvider<IPrimitiveMesh>)rendererComponent).PoolableComponentType,
-                        out var componentPool))
+                if (poolsRegistry.TryGetPool(rendererComponent.PrimitiveMesh.GetType(), out IComponentPool componentPool))
+
+                    // TODO boxing allocation! change to the generic version
                     componentPool.Release(((IPoolableComponentProvider<IPrimitiveMesh>)rendererComponent)
-                        .PoolableComponent);
+                       .PoolableComponent);
 
                 // it will be a signal to instantiate a new collider
                 rendererComponent.PrimitiveMesh = null;

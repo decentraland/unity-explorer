@@ -1,6 +1,7 @@
-using System.Collections.Generic;
 using Arch.Core;
 using ECS.ComponentsPooling;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -24,6 +25,8 @@ namespace ECS.Unity.Transforms.Components
         }
 
         Transform IPoolableComponentProvider<Transform>.PoolableComponent => Transform;
+
+        Type IPoolableComponentProvider<Transform>.PoolableComponentType => typeof(Transform);
 
         public void Dispose()
         {

@@ -1,6 +1,6 @@
-using System;
 using DCL.ECSComponents;
 using ECS.ComponentsPooling;
+using System;
 using UnityEngine;
 
 namespace ECS.Unity.PrimitiveColliders.Components
@@ -16,6 +16,8 @@ namespace ECS.Unity.PrimitiveColliders.Components
 
         Collider IPoolableComponentProvider<Collider>.PoolableComponent => Collider;
 
-        Type IPoolableComponentProvider<Collider>.PoolableComponentType => Collider.GetType();
+        Type IPoolableComponentProvider<Collider>.PoolableComponentType => ColliderType;
+
+        public void Dispose() { }
     }
 }

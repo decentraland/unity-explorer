@@ -2,13 +2,9 @@
 
 namespace ECS.ComponentsPooling
 {
-    public interface IPoolableComponentProvider<T> : IDisposable where T : class
+    public interface IPoolableComponentProvider<out T> : IDisposable where T: class
     {
         T PoolableComponent { get; }
         Type PoolableComponentType => typeof(T);
-
-        void IDisposable.Dispose()
-        {
-        }
     }
 }
