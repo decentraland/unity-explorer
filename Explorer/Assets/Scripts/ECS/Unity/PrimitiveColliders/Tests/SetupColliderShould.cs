@@ -1,6 +1,7 @@
 ﻿using DCL.ECSComponents;
 using NUnit.Framework;
 using UnityEngine;
+using Utility.Primitives;
 
 namespace ECS.Unity.PrimitiveColliders.Tests
 {
@@ -13,7 +14,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             collider.size = new Vector3(40f, 40f, 33f);
             new SetupBoxCollider().Execute(collider, new PBMeshCollider { Box = new PBMeshCollider.Types.BoxMesh() });
 
-            Assert.AreEqual(new Vector3(SetupBoxCollider.CUBE_SIZE, SetupBoxCollider.CUBE_SIZE, SetupBoxCollider.CUBE_SIZE), collider.size);
+            Assert.AreEqual(new Vector3(PrimitivesSize.CUBE_SIZE, PrimitivesSize.CUBE_SIZE, PrimitivesSize.CUBE_SIZE), collider.size);
         }
 
         [Test]
@@ -23,7 +24,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             collider.radius = 40f;
             new SetupSphereCollider().Execute(collider, new PBMeshCollider { Sphere = new PBMeshCollider.Types.SphereMesh() });
 
-            Assert.AreEqual(SetupSphereCollider.SPHERE_RADIUS, collider.radius);
+            Assert.AreEqual(PrimitivesSize.SPHERE_RADIUS, collider.radius);
         }
 
         [Test]
@@ -33,7 +34,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             collider.size = new Vector3(40f, 40f, 33f);
             new SetupPlaneCollider().Execute(collider, new PBMeshCollider { Plane = new PBMeshCollider.Types.PlaneMesh() });
 
-            Assert.AreEqual(SetupPlaneCollider.SIZE, collider.size);
+            Assert.AreEqual(PrimitivesSize.PLANE_SIZE, collider.size);
         }
     }
 }

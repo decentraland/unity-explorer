@@ -172,6 +172,7 @@ MonoBehaviour:
     scenes:
     - cube_waves
     - cube_wave_v2
+    - cube_waves_primitives
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0

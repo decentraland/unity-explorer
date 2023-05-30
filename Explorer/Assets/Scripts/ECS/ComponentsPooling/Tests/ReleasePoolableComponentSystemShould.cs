@@ -3,8 +3,7 @@ using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle.Components;
 using NSubstitute;
 using NUnit.Framework;
-using System;
-using Random = UnityEngine.Random;
+using UnityEngine;
 
 namespace ECS.ComponentsPooling.Tests
 {
@@ -16,15 +15,16 @@ namespace ECS.ComponentsPooling.Tests
             public int v = Random.Range(0, 1000);
         }
 
-        public struct TestProvider : IPoolableComponentProvider
+        public struct TestProvider : IPoolableComponentProvider<TestComponent1>
         {
-            public TestProvider(object poolableComponent)
+            public TestComponent1 Component;
+
+            public TestProvider(TestComponent1 poolableComponent)
             {
-                PoolableComponent = poolableComponent;
+                Component = poolableComponent;
             }
 
-            public object PoolableComponent { get; }
-            public Type PoolableComponentType => typeof(TestComponent1);
+            TestComponent1 IPoolableComponentProvider<TestComponent1>.PoolableComponent => Component;
 
             public void Dispose() { }
         }
@@ -41,7 +41,8 @@ namespace ECS.ComponentsPooling.Tests
             for (var i = 0; i < 100; i++)
                 world.Create(new TestProvider(new TestComponent1()), new DeleteEntityIntention());
 
-            var system = new ReleasePoolableComponentSystem<TestProvider>(world, componentsPoolRegistry);
+            var system =
+                new ReleasePoolableComponentSystem<TestComponent1, TestProvider>(world, componentsPoolRegistry);
 
             system.Update(0);
 

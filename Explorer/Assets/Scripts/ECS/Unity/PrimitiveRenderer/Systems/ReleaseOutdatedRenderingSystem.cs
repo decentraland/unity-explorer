@@ -1,0 +1,51 @@
+using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.ECSComponents;
+using ECS.Abstract;
+using ECS.ComponentsPooling;
+using ECS.Unity.Groups;
+using ECS.Unity.PrimitiveRenderer.Components;
+using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
+
+namespace ECS.Unity.PrimitiveRenderer.Systems
+{
+    /// <summary>
+    ///     Releases the previous collider if its type was changed at runtime
+    /// </summary>
+    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateBefore(typeof(ComponentInstantiationGroup))]
+    public partial class ReleaseOutdatedRenderingSystem : BaseUnityLoopSystem
+    {
+        private readonly IComponentPoolsRegistry poolsRegistry;
+
+        internal ReleaseOutdatedRenderingSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
+        {
+            this.poolsRegistry = poolsRegistry;
+        }
+
+        protected override void Update(float t)
+        {
+            ValidateRenderingQuery(World);
+        }
+
+        [Query]
+        [All(typeof(PBMeshRenderer), typeof(PrimitiveMeshRendererComponent))]
+        private void ValidateRendering(ref PBMeshRenderer meshRenderer,
+            ref PrimitiveMeshRendererComponent rendererComponent)
+        {
+            if (meshRenderer.IsDirty && meshRenderer.MeshCase != rendererComponent.SDKType)
+            {
+                if (poolsRegistry.TryGetPool(rendererComponent.PrimitiveMesh.GetType(), out IComponentPool componentPool))
+
+                    // TODO boxing allocation! change to the generic version
+                    componentPool.Release(((IPoolableComponentProvider<IPrimitiveMesh>)rendererComponent)
+                       .PoolableComponent);
+
+                // it will be a signal to instantiate a new collider
+                rendererComponent.PrimitiveMesh = null;
+            }
+        }
+    }
+}
