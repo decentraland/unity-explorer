@@ -43,6 +43,8 @@ namespace ECS.Unity.Materials.Systems
 
                 meshRendererComponent.MeshRenderer.sharedMaterial = materialComponent.Result;
                 meshRendererComponent.MeshRenderer.shadowCastingMode = materialComponent.Data.CastShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
+
+                pbMeshRenderer.IsDirty = false;
             }
         }
     }

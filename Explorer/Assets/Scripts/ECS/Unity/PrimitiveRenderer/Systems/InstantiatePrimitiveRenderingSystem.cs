@@ -80,8 +80,6 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
 
                 // This means that the UVs have changed during runtime of a scene (should be an unusual case), so we update the mesh accordingly
                 setupMesh.Execute(sdkComponent, meshRendererComponent.PrimitiveMesh.Mesh);
-
-            sdkComponent.IsDirty = false;
         }
 
         /// <summary>
