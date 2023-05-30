@@ -11,7 +11,7 @@ namespace ECS.ComponentsPooling.Tests
         [SetUp]
         public void SetUp()
         {
-            unityComponentPool = new UnityComponentPool<Transform>(null, 1000);
+            unityComponentPool = new UnityComponentPool<Transform>(null, null, null, 1000);
         }
 
         [Test]

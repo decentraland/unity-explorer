@@ -1,12 +1,14 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Transform;
 using DCL.ECS7;
 using DCL.ECSComponents;
 using ECS.ComponentsPooling;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
 using UnityEngine;
+using Utility;
 
 namespace Global
 {
@@ -42,17 +44,30 @@ namespace Global
                 sdkComponentsRegistry.SdkComponents
                                      .Select(c => (c.ComponentType, c.Pool))
                                      .Concat(GetUnityComponentDictionary())
+                                     .Concat(GetPrimitivesMeshesDictionary())
                                      .ToDictionary(x => x.Item1, x => x.Item2));
 
             return new ComponentsContainer { SDKComponentsRegistry = sdkComponentsRegistry, ComponentPoolsRegistry = componentPoolsRegistry };
+        }
+
+        private static IEnumerable<(Type type, IComponentPool pool)> GetPrimitivesMeshesDictionary()
+        {
+            (Type type, IComponentPool pool) CreateExtraComponentPool<T>(Action<T> onGet = null, Action<T> onRelease = null) where T: class, new() =>
+                (typeof(T), new ComponentPool<T>(onGet, onRelease));
+
+            yield return CreateExtraComponentPool<BoxPrimitive>();
+            yield return CreateExtraComponentPool<SpherePrimitive>();
+            yield return CreateExtraComponentPool<PlanePrimitive>();
+            yield return CreateExtraComponentPool<CylinderPrimitive>();
+
         }
 
         private static IEnumerable<(Type type, IComponentPool pool)> GetUnityComponentDictionary()
         {
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
 
-            (Type type, IComponentPool pool) CreateComponentPool<T>(int maxSize = 1024) where T: Component =>
-                (typeof(T), new UnityComponentPool<T>(rootContainer, maxSize));
+            (Type type, IComponentPool pool) CreateComponentPool<T>(Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 1024) where T: Component =>
+                (typeof(T), new UnityComponentPool<T>(rootContainer, creationHandler, onRelease, maxSize: maxSize));
 
             yield return CreateComponentPool<Transform>();
 
@@ -60,6 +75,10 @@ namespace Global
             yield return CreateComponentPool<MeshCollider>();
             yield return CreateComponentPool<BoxCollider>();
             yield return CreateComponentPool<SphereCollider>();
+            yield return CreateComponentPool(MeshRendererPoolUtils.CreateMeshRendererComponent, MeshRendererPoolUtils.ReleaseMeshRendererComponent);
         }
     }
 }
+
+
+

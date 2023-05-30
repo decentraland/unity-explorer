@@ -11,7 +11,7 @@ namespace ECS.Unity.Transforms.Components
     ///     A wrapper over the transform unity component that is created from the SDKTransform component.
     ///     It's the Unity base representation of an Entity.
     /// </summary>
-    public struct TransformComponent : IPoolableComponentProvider
+    public struct TransformComponent : IPoolableComponentProvider<Transform>
     {
         public Transform Transform;
         public HashSet<EntityReference> Children;
@@ -24,8 +24,9 @@ namespace ECS.Unity.Transforms.Components
             Parent = EntityReference.Null;
         }
 
-        object IPoolableComponentProvider.PoolableComponent => Transform;
-        Type IPoolableComponentProvider.PoolableComponentType => typeof(Transform);
+        Transform IPoolableComponentProvider<Transform>.PoolableComponent => Transform;
+
+        Type IPoolableComponentProvider<Transform>.PoolableComponentType => typeof(Transform);
 
         public void Dispose()
         {

@@ -8,13 +8,13 @@ namespace Utility.Primitives
     public static class CylinderVariantsFactory
     {
         public const int VERTICES_NUM = 50;
-        public const float HEIGHT = 1;
         public const float OPENING_ANGLE = 0f;
+        public const float HEIGHT = PrimitivesSize.CYLINDER_HEIGHT;
 
         public static void Create(
             ref Mesh mesh,
-            float radiusTop,
-            float radiusBottom,
+            float radiusTop = 0.5f,
+            float radiusBottom = 0.5f,
             int numVertices = VERTICES_NUM,
             float length = HEIGHT,
             float openingAngle = OPENING_ANGLE)
@@ -207,6 +207,10 @@ namespace Utility.Primitives
             mesh.SetTriangles(tris, 0, trianglesCount, 0);
 
             PrimitivesBuffersPool.TRIANGLES.Return(tris);
+        }
+
+        public static void Update(ref Mesh mesh, float getTopRadius, float getBottomRadius)
+        {
         }
     }
 }
