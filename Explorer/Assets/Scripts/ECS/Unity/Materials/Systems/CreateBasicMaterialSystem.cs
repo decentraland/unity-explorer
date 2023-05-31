@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.Helpers;
 using DCL.Shaders;
 using ECS.StreamableLoading.Components.Common;
 using ECS.Unity.Materials.Components;
@@ -55,17 +54,15 @@ namespace ECS.Unity.Materials.Systems
             {
                 materialComponent.Status = MaterialComponent.LifeCycle.LoadingFinished;
 
-                Material mat = CreateNewMaterialInstance();
+                materialComponent.Result ??= CreateNewMaterialInstance();
 
-                SetUp(mat, materialComponent.Data.AlphaTest, materialComponent.Data.DiffuseColor);
+                SetUp(materialComponent.Result, materialComponent.Data.AlphaTest, materialComponent.Data.DiffuseColor);
 
-                TrySetTexture(mat, ref albedoResult, ShaderUtils.BaseMap);
+                TrySetTexture(materialComponent.Result, ref albedoResult, ShaderUtils.BaseMap);
 
                 DestroyEntityReference(in materialComponent.AlbedoTexPromise);
 
-                SRPBatchingHelper.OptimizeMaterial(mat);
-
-                materialComponent.Result = mat;
+                // SRPBatchingHelper.OptimizeMaterial(mat);
             }
         }
 
