@@ -1,4 +1,5 @@
 ﻿using SceneRunner.Scene;
+using System;
 using UnityEngine;
 using UnityEngine.Profiling;
 
@@ -9,7 +10,10 @@ namespace Global
     /// </summary>
     public class EntryPoint : MonoBehaviour
     {
-        [SerializeField] private SceneLauncher sceneLauncher;
+        //[SerializeField] private SceneLauncher sceneLauncher;
+        private GlobalScene globalScene;
+
+        [SerializeField] private Camera camera;
 
         public SceneSharedContainer SceneSharedContainer { get; private set; }
 
@@ -22,7 +26,15 @@ namespace Global
 
         private void Start()
         {
-            sceneLauncher.Initialize(SceneSharedContainer, destroyCancellationToken);
+            //sceneLauncher.Initialize(SceneSharedContainer, destroyCancellationToken);
+            globalScene = new GlobalScene();
+
+            globalScene.Initialize(SceneSharedContainer.SceneFactory, camera);
+        }
+
+        private void OnDestroy()
+        {
+            globalScene.Dispose();
         }
 
         public static SceneSharedContainer Install()

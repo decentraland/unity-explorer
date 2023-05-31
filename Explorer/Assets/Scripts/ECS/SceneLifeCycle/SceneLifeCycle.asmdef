@@ -1,10 +1,13 @@
 {
-    "name": "StreamableLoading",
+    "name": "ECS.SceneLifeCycle",
     "rootNamespace": "",
     "references": [
         "ECS",
+        "ECS.Unity",
         "UniTask",
-        "Ipfs"
+        "Ipfs",
+        "SceneRunner",
+        "SceneRunner.Scene"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
