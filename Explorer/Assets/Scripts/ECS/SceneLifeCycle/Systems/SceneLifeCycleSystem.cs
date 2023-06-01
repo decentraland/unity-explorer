@@ -4,10 +4,9 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.Components;
 using ECS.Unity.Transforms.Components;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
+using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -26,7 +25,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             // TODO: load realm-defined scenes to requirements (like Worlds)
 
-            HashSet<Ipfs.EntityDefinition> requiredScenes = new();
+            HashSet<Ipfs.SceneEntityDefinition> requiredScenes = new(); // TODO: Create in the class and clear
 
             var position = World.Get<TransformComponent>(state.PlayerEntity).Transform.position;
 
@@ -41,13 +40,22 @@ namespace ECS.SceneLifeCycle.Systems
             }
 
             // remove scenes that are not required
-            /*foreach (var (id, entity) in state.LiveScenes)
+            foreach (var (id, entity) in state.LiveScenes)
             {
-                if (!requiredScenes.Any(definition => definition.id == id))
+                var add = true;
+                foreach (var definition in requiredScenes)
                 {
-                    // TODO: Remove scene
+                    if (definition.id == id)
+                    {
+                        add = false;
+                    }
                 }
-            }*/
+
+                if (add)
+                {
+                    World.Add<DeleteSceneIntention>(entity);
+                }
+            }
 
             // create scenes that not exists
             foreach (var definition in requiredScenes)
@@ -61,8 +69,7 @@ namespace ECS.SceneLifeCycle.Systems
                     // this scene is not loaded... we need to load it
                     var entity = World.Create(new SceneLoadingComponent()
                     {
-                        Definition = definition,
-                        State = SceneLoadingState.Spawned
+                        Definition = definition
                     });
 
                     state.LiveScenes.Add(definition.id, entity);

@@ -5,16 +5,10 @@ namespace ECS.SceneLifeCycle.Components
 {
     public enum SceneLoadingState
     {
-        Spawned,
-        Loading,
-        Failed,
-        Canceled
     }
     public class SceneLoadingComponent
     {
-        public SceneLoadingState State = SceneLoadingState.Spawned;
-
-        public Ipfs.EntityDefinition Definition;
+        public Ipfs.SceneEntityDefinition Definition;
 
         public UniTask Request;
 

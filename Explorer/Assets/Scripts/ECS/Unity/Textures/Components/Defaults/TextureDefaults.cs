@@ -10,18 +10,18 @@ namespace ECS.Unity.Textures.Components.Defaults
 {
     public static class TextureDefaults
     {
-        public static TextureComponent? CreateTextureComponent([CanBeNull] this TextureUnion self, ISceneContentProvider contentProvider)
+        public static TextureComponent? CreateTextureComponent([CanBeNull] this TextureUnion self, ISceneData data)
         {
             if (self == null)
                 return null;
 
-            if (!self.TryGetTextureUrl(contentProvider, out string url))
+            if (!self.TryGetTextureUrl(data, out string url))
                 return null;
 
             return new TextureComponent(url, self.GetWrapMode(), self.GetFilterMode(), self.IsVideoTexture());
         }
 
-        public static bool TryGetTextureUrl(this TextureUnion self, ISceneContentProvider contentProvider, out string url)
+        public static bool TryGetTextureUrl(this TextureUnion self, ISceneData data, out string url)
         {
             switch (self.TexCase)
             {
@@ -31,7 +31,7 @@ namespace ECS.Unity.Textures.Components.Defaults
                     throw new NotImplementedException(nameof(TextureUnion.TexOneofCase.VideoTexture));
                 case TextureUnion.TexOneofCase.Texture:
                 default:
-                    return self.Texture.TryGetTextureUrl(contentProvider, out url);
+                    return self.Texture.TryGetTextureUrl(data, out url);
             }
         }
 
@@ -77,8 +77,8 @@ namespace ECS.Unity.Textures.Components.Defaults
             }
         }
 
-        public static bool TryGetTextureUrl(this Texture self, ISceneContentProvider contentProvider, out string url) =>
-            contentProvider.TryGetMediaUrl(self.Src, out url);
+        public static bool TryGetTextureUrl(this Texture self, ISceneData data, out string url) =>
+            data.TryGetMediaUrl(self.Src, out url);
 
         public static bool TryGetTextureUrl(this AvatarTexture self, out string url) =>
             throw new NotImplementedException(nameof(AvatarTexture));

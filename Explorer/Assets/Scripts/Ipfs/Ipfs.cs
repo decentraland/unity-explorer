@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -11,12 +12,16 @@ public class Ipfs
         public string hash;
     }
 
-    public class EntityDefinition
+    public class EntityDefinition : EntityDefinitionGeneric<object> {}
+
+    public class SceneEntityDefinition : EntityDefinitionGeneric<SceneMetadata> {}
+
+    public class EntityDefinitionGeneric<T>
     {
         public string id;
         public string[] pointers;
         public ContentDefinition[] content;
-        public object metadata;
+        public T metadata;
     }
 
     public class SceneMetadataScene
@@ -33,8 +38,9 @@ public class Ipfs
         public SceneMetadataScene scene;
     }
 
-    public static UnityWebRequestAsyncOperation RequestActiveEntities(string contentBaseUrl, List<Vector2Int> pointers)
+    public static UnityWebRequestAsyncOperation RequestActiveEntitiesByPointers(string contentBaseUrl, List<Vector2Int> pointers)
     {
+        // TODO: Construct directly the string with JSON Format
         List<string> pointerList = pointers.Select(parcel => $"{parcel.x},{parcel.y}").ToList();
 
         Dictionary<string, object> body = new ()
@@ -46,12 +52,15 @@ public class Ipfs
         return request.SendWebRequest();
     }
 
-    public static UnityWebRequestAsyncOperation RequestContentFile(string contentBaseUrl, ContentDefinition[] contentDefinitions, string file)
+    public static Vector2Int DecodePointer(string pointer)
     {
-        var content = contentDefinitions.First(definition => definition.file == file);
-        var request = UnityWebRequest.Get(contentBaseUrl + "/contents/" + content.hash);
-        request.SetRequestHeader("Content-Type", "application/json");
-        return request.SendWebRequest();
+        var commaPosition = pointer.IndexOf(",", StringComparison.Ordinal);
+        var span = pointer.AsSpan();
+
+        var firstPart = span[0..commaPosition];
+        var secondPart = span[(commaPosition+1)..];
+
+        return new Vector2Int(int.Parse(firstPart), int.Parse(secondPart));
     }
 }
 

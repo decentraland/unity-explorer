@@ -17,7 +17,7 @@ namespace ECS.SceneLifeCycle.Systems.Tests
         {
             system = new SceneDynamicLoaderSystem(world, new SceneLifeCycleState()
             {
-                ScenePointers = new Dictionary<Vector2Int, Ipfs.EntityDefinition>(),
+                ScenePointers = new Dictionary<Vector2Int, Ipfs.SceneEntityDefinition>(),
                 SceneLoadRadius = 2,
                 PlayerEntity = world.Create(new PlayerComponent(), new TransformComponent())
             });

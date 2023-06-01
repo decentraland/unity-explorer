@@ -1,13 +1,16 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace ECS.SceneLifeCycle
+namespace Utility
 {
     public class ParcelMathHelper
     {
-        internal const float PARCEL_SIZE = 16.0f;
+        public const float PARCEL_SIZE = 16.0f;
 
-        internal static List<Vector2Int> ParcelsInRange(Vector3 position, int loadRadius)
+        public static Vector3 GetPositionByParcelPosition(Vector2Int parcelPosition) =>
+            new Vector3(parcelPosition.x * PARCEL_SIZE, 0.0f, -parcelPosition.y * PARCEL_SIZE);
+
+        public static List<Vector2Int> ParcelsInRange(Vector3 position, int loadRadius)
         {
             float range = loadRadius * PARCEL_SIZE;
             Vector2 focus = new Vector2(position.x, position.z) * new Vector2(1.0f, -1.0f);
@@ -37,15 +40,7 @@ namespace ECS.SceneLifeCycle
                 }
             }
 
-            //return results;
-            return new List<Vector2Int>()
-            {
-                new Vector2Int()
-                {
-                    x = 78,
-                    y = -9
-                }
-            };
+            return results;
         }
     }
 }

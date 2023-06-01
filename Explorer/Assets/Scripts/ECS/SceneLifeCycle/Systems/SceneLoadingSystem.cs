@@ -29,9 +29,17 @@ namespace ECS.SceneLifeCycle.Systems
             ProcessSceneToLoadQuery(World);
         }
 
-        private async UniTask InitializeSceneAndStart(string jsCodeUrl, CancellationToken ct)
+        private async UniTask InitializeSceneAndStart(Ipfs.SceneEntityDefinition sceneDefinition, CancellationToken ct, LiveSceneComponent liveSceneComponent)
         {
-            var sceneFacade = await sceneFactory.CreateScene(jsCodeUrl, ct);
+            // TODO: Use contentBaseUrl from realm
+            const string CONTENT_BASE_URL = "https://sdk-test-scenes.decentraland.zone/content/contents/";
+
+            // main thread
+            var sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(CONTENT_BASE_URL, sceneDefinition, ct);
+
+            liveSceneComponent.SceneFacade = sceneFacade;
+
+            // thread pool
             await sceneFacade.StartUpdateLoop(30, ct);
         }
 
@@ -40,39 +48,21 @@ namespace ECS.SceneLifeCycle.Systems
         private void ProcessSceneToLoad(in Entity entity, ref SceneLoadingComponent sceneLoadingComponent)
         {
             // If the scene just spawned, we start the request
-            if (sceneLoadingComponent.State == SceneLoadingState.Spawned)
+            sceneLoadingComponent.CancellationTokenSource = new CancellationTokenSource();
+            var cts = sceneLoadingComponent.CancellationTokenSource;
+
+            var liveSceneComponent = new LiveSceneComponent()
             {
-                Ipfs.SceneMetadata sceneMetadata = JsonConvert.DeserializeObject<Ipfs.SceneMetadata>(sceneLoadingComponent.Definition.metadata.ToString());
+                CancellationToken = cts,
+                SceneLoop = sceneLoadingComponent.Request,
+            };
 
-                if (sceneMetadata == null)
-                {
-                    Debug.LogError("Failed to parse SceneMetadata");
-                    sceneLoadingComponent.State = SceneLoadingState.Failed;
-                    return;
-                }
+            World.Add(entity, liveSceneComponent);
 
-                //sceneLoadingComponent.Request = Ipfs.RequestContentFile("https://sdk-test-scenes.decentraland.zone/content", sceneLoadingComponent.Definition.content, sceneMetadata.main);
-                var sceneCodeContent = sceneLoadingComponent.Definition.content.First(definition => definition.file == sceneMetadata.main);
+            sceneLoadingComponent.Request = InitializeSceneAndStart(sceneLoadingComponent.Definition, sceneLoadingComponent.CancellationTokenSource.Token, liveSceneComponent);
 
-                sceneLoadingComponent.CancellationTokenSource = new CancellationTokenSource();
-                sceneLoadingComponent.Request = InitializeSceneAndStart("https://sdk-test-scenes.decentraland.zone/content/contents/" + sceneCodeContent.hash, sceneLoadingComponent.CancellationTokenSource.Token);
-
-                sceneLoadingComponent.State = SceneLoadingState.Loading;
-
-                Debug.Log("Spawned Scene: " + JsonConvert.SerializeObject(sceneLoadingComponent));
-            }
-            else if (sceneLoadingComponent.State == SceneLoadingState.Loading)
-            {
-                var cts = sceneLoadingComponent.CancellationTokenSource;
-
-                World.Add(entity, new LiveSceneComponent()
-                {
-                    CancellationToken = cts,
-                    SceneLoop = sceneLoadingComponent.Request,
-                });
-
-                World.Remove<SceneLoadingComponent>(entity);
-            }
+            World.Remove<SceneLoadingComponent>(entity);
+            Debug.Log("Spawned Scene: " + JsonConvert.SerializeObject(sceneLoadingComponent));
         }
     }
 }

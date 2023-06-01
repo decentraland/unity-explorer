@@ -15,29 +15,29 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float t)
         {
-            DestroySceneQuery(World);
+            DestroyLiveSceneQuery(World);
+            DestroyLoadingSceneQuery(World);
         }
 
         [Query]
-        [All(typeof(DeleteSceneIntention))]
-        private void DestroyScene(in Entity entity)
+        [All(typeof(DeleteSceneIntention), typeof(LiveSceneComponent))]
+        private void DestroyLiveScene(in Entity entity)
         {
-            if (World.Has<LiveSceneComponent>(entity))
-            {
-                var liveScene = World.Get<LiveSceneComponent>(entity);
+            var liveScene = World.Get<LiveSceneComponent>(entity);
 
-                liveScene.CancellationToken.Cancel();
-                liveScene.SceneFacade.DisposeAsync();
-                World.Destroy(entity);
-            }
-            else if (World.Has<SceneLoadingComponent>(entity))
-            {
-                var sceneLoading = World.Get<SceneLoadingComponent>(entity);
+            liveScene.CancellationToken?.Cancel();
+            liveScene.SceneFacade?.DisposeAsync();
+            World.Destroy(entity);
+        }
 
-                sceneLoading.CancellationTokenSource.Cancel();
-                sceneLoading.State = SceneLoadingState.Canceled;
-                World.Destroy(entity);
-            }
+        [Query]
+        [All(typeof(DeleteSceneIntention), typeof(SceneLoadingComponent))]
+        private void DestroyLoadingScene(in Entity entity)
+        {
+            var sceneLoading = World.Get<SceneLoadingComponent>(entity);
+
+            sceneLoading.CancellationTokenSource.Cancel();
+            World.Destroy(entity);
         }
     }
 }

@@ -14,6 +14,7 @@ using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Factory;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -47,11 +48,12 @@ namespace SceneRunner
         }
 
         public UniTask<ISceneFacade> CreateScene(string jsCodeUrl, CancellationToken ct) =>
-            CreateScene(new SceneContentProvider(new SceneData(jsCodeUrl), false), jsCodeUrl, ct);
+            throw new NotImplementedException();
 
         public async UniTask<ISceneFacade> CreateSceneFromStreamableDirectory(string directoryName, CancellationToken ct)
         {
-            const string SCENE_JSON_FILE_NAME = "scene.json";
+            throw new NotImplementedException();
+            /*const string SCENE_JSON_FILE_NAME = "scene.json";
 
             var fullPath = $"file://{Application.streamingAssetsPath}/Scenes/{directoryName}";
 
@@ -62,13 +64,20 @@ namespace SceneRunner
 
             RawSceneJson rawScene = JsonUtility.FromJson<RawSceneJson>(request.downloadHandler.text);
 
-            var contentProvider = new SceneContentProvider(new SceneData(fullPath, in rawScene), false);
+            var contentProvider = new SceneData(new SceneData(fullPath, in rawScene), false);
             string jsCodeUrl = fullPath + "/" + rawScene.main;
 
-            return await CreateScene(contentProvider, jsCodeUrl, ct);
+            return await CreateScene(contentProvider, jsCodeUrl, ct);*/
         }
 
-        private async UniTask<ISceneFacade> CreateScene(ISceneContentProvider contentProvider, string jsCodeUrl, CancellationToken ct)
+        public async UniTask<ISceneFacade> CreateSceneFromSceneDefinition(string contentBaseUrl, Ipfs.SceneEntityDefinition sceneDefinition, CancellationToken ct)
+        {
+            var contentProvider = new SceneData(contentBaseUrl, sceneDefinition, true);
+
+            return await CreateScene(contentProvider, ct);
+        }
+
+        private async UniTask<ISceneFacade> CreateScene(ISceneData sceneData, CancellationToken ct)
         {
             var entitiesMap = new Dictionary<CRDTEntity, Entity>(1000, CRDTEntityComparer.INSTANCE);
 
@@ -80,13 +89,14 @@ namespace SceneRunner
             var crdtDeserializer = new CRDTDeserializer(crdtMemoryAllocator);
 
             /* Pass dependencies here if they are needed by the systems */
-            var instanceDependencies = new ECSWorldInstanceSharedDependencies(contentProvider, entitiesMap);
+            var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, entitiesMap);
 
             ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(in instanceDependencies);
             ecsWorldFacade.Initialize();
 
             // Create an instance of Scene Runtime on the thread pool
-            SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPath(jsCodeUrl, instancePoolsProvider, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool);
+            sceneData.TryGetMainScriptUrl(out string sceneCodeUrl);
+            SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPath(sceneCodeUrl, instancePoolsProvider, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool);
 
             var crdtWorldSynchronizer = new CRDTWorldSynchronizer(ecsWorldFacade.EcsWorld, sdkComponentsRegistry, entityFactory, entitiesMap);
 

@@ -1,14 +1,13 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using Castle.Components.DictionaryAdapter.Xml;
 using ECS.Abstract;
 using ECS.Unity.Transforms.Components;
 using Newtonsoft.Json;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
+using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -41,12 +40,12 @@ namespace ECS.SceneLifeCycle.Systems
                 }
 
                 if (parcelsToLoad.Count > 0)
-                    pointerRequest = (Ipfs.RequestActiveEntities("https://sdk-test-scenes.decentraland.zone/content", parcelsToLoad), parcelsToLoad);
+                    pointerRequest = (Ipfs.RequestActiveEntitiesByPointers("https://sdk-test-scenes.decentraland.zone/content", parcelsToLoad), parcelsToLoad);
             }
             else if (pointerRequest.Value.Item1.isDone)
             {
                 var (request, requestedParcels) = pointerRequest.Value;
-                var retrievedScenes = JsonConvert.DeserializeObject<Ipfs.EntityDefinition[]>(request.webRequest.downloadHandler.text);
+                var retrievedScenes = JsonConvert.DeserializeObject<Ipfs.SceneEntityDefinition[]>(request.webRequest.downloadHandler.text);
 
                 if (retrievedScenes == null)
                 {
@@ -54,32 +53,26 @@ namespace ECS.SceneLifeCycle.Systems
                     return;
                 }
 
-                Debug.Log($"loading {retrievedScenes.Length} scenes from {requestedParcels.Count} parcels");
+                Debug.Log($"loading {retrievedScenes.Length} scenes from {requestedParcels.Count} parcels ({JsonConvert.SerializeObject(requestedParcels)})");
 
                 foreach (var scene in retrievedScenes)
                 {
                     foreach (var encodedPointer in scene.pointers)
                     {
-                        Vector2Int pointer = DecodePointer(encodedPointer);
+                        Vector2Int pointer = Ipfs.DecodePointer(encodedPointer);
                         requestedParcels.Remove(pointer);
                         state.ScenePointers.TryAdd(pointer, scene);
                     }
                 }
 
                 // load empty parcels!
-                foreach (var emptyParcel in requestedParcels) { state.ScenePointers.Add(emptyParcel, new Ipfs.EntityDefinition()
+                foreach (var emptyParcel in requestedParcels) { state.ScenePointers.Add(emptyParcel, new Ipfs.SceneEntityDefinition()
                 {
                     id = $"empty-parcel-{emptyParcel.x}-{emptyParcel.y}"
                 }); }
 
                 pointerRequest = null;
             }
-        }
-
-        internal static Vector2Int DecodePointer(string pointer)
-        {
-            string[] decoded = pointer.Split(",");
-            return new Vector2Int(int.Parse(decoded[0]), int.Parse(decoded[1]));
         }
     }
 }

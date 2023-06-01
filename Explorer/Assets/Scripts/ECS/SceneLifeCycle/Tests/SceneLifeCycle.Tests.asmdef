@@ -10,7 +10,8 @@
     "ECS.SceneLifeCycle",
     "UniTask",
     "CRDT.ECS.Bridge",
-    "Ipfs"
+    "Ipfs",
+    "Utility"
   ],
   "includePlatforms": [
     "Editor"

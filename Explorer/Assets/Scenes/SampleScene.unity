@@ -168,6 +168,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   camera: {fileID: 963194227}
+  StartPosition: {x: 78, y: -9}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,11 +1,8 @@
-using Cysharp.Threading.Tasks;
-using ECS.SceneLifeCycle.Systems;
-using ECS.TestSuite;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using UnityEngine;
+using Utility;
 
 namespace ECS.SceneLifeCycle.Systems.Tests
 {

@@ -19,14 +19,14 @@ namespace Global
 
         private World world;
 
-        public void Initialize(ISceneFactory sceneFactory, Camera unityCamera)
+        public void Initialize(ISceneFactory sceneFactory, Camera unityCamera, int sceneLoadRadius)
         {
             world = World.Create();
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
 
             state.PlayerEntity = world.Create(new PlayerComponent(), new TransformComponent());
-            state.SceneLoadRadius = 1;
+            state.SceneLoadRadius = sceneLoadRadius;
 
             SceneDynamicLoaderSystem.InjectToWorld(ref builder, state);
             SceneLifeCycleSystem.InjectToWorld(ref builder, state);

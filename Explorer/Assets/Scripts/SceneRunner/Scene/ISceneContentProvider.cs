@@ -1,10 +1,23 @@
-﻿namespace SceneRunner.Scene
+﻿using System.Collections.Generic;
+using UnityEngine;
+
+namespace SceneRunner.Scene
 {
-    public interface ISceneContentProvider
+    public interface ISceneData
     {
         string SceneName { get; }
 
+        IReadOnlyList<Vector2Int> Parcels { get; }
+
+        Vector2Int BaseParcel { get; }
+
         bool HasRequiredPermission(string permission);
+
+        /// <summary>
+        ///     Translates URL encoded in SDK components into a path in the scene bundle
+        ///     from which an asset can be downloaded from
+        /// </summary>
+        bool TryGetMainScriptUrl(out string result);
 
         /// <summary>
         ///     Translates URL encoded in SDK components into a path in the scene bundle

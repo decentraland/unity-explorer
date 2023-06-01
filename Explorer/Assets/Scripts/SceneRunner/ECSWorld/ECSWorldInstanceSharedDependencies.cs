@@ -7,12 +7,12 @@ namespace SceneRunner.ECSWorld
 {
     public readonly struct ECSWorldInstanceSharedDependencies
     {
-        public readonly ISceneContentProvider ContentProvider;
+        public readonly ISceneData SceneData;
         public readonly IReadOnlyDictionary<CRDTEntity, Entity> EntitiesMap;
 
-        public ECSWorldInstanceSharedDependencies(ISceneContentProvider contentProvider, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap)
+        public ECSWorldInstanceSharedDependencies(ISceneData sceneData, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap)
         {
-            ContentProvider = contentProvider;
+            SceneData = sceneData;
             EntitiesMap = entitiesMap;
         }
     }

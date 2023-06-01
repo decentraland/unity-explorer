@@ -1,7 +1,7 @@
 ﻿using SceneRunner.Scene;
-using System;
 using UnityEngine;
 using UnityEngine.Profiling;
+using Utility;
 
 namespace Global
 {
@@ -15,6 +15,10 @@ namespace Global
 
         [SerializeField] private Camera camera;
 
+        [SerializeField] private Vector2Int StartPosition;
+
+        [SerializeField] private int SceneLoadRadius = 4;
+
         public SceneSharedContainer SceneSharedContainer { get; private set; }
 
         private ISceneFacade sceneFacade;
@@ -22,6 +26,11 @@ namespace Global
         private void Awake()
         {
             SceneSharedContainer = Install();
+
+            var cameraPosition = ParcelMathHelper.GetPositionByParcelPosition(StartPosition);
+            cameraPosition.y += 8.0f;
+
+            camera.transform.position = cameraPosition;
         }
 
         private void Start()
@@ -29,7 +38,7 @@ namespace Global
             //sceneLauncher.Initialize(SceneSharedContainer, destroyCancellationToken);
             globalScene = new GlobalScene();
 
-            globalScene.Initialize(SceneSharedContainer.SceneFactory, camera);
+            globalScene.Initialize(SceneSharedContainer.SceneFactory, camera, SceneLoadRadius);
         }
 
         private void OnDestroy()

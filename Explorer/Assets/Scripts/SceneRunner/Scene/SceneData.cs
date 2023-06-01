@@ -4,37 +4,119 @@ using UnityEngine;
 
 namespace SceneRunner.Scene
 {
-    /// <summary>
-    ///     A dummy scene data for local scenes
-    /// </summary>
     public class SceneData : ISceneData
     {
-        public SceneData(string baseUrl, in RawSceneJson rawSceneJson)
+        private readonly Dictionary<string, string> fileToHash;
+
+        private readonly Ipfs.SceneEntityDefinition sceneDefinition;
+
+        private readonly string contentBaseUrl;
+
+        private readonly bool supportHashes;
+
+        private readonly List<Vector2Int> parcels = new List<Vector2Int>();
+
+        private readonly Vector2Int baseParcel;
+
+        public SceneData(string contentBaseUrl, Ipfs.SceneEntityDefinition sceneDefinition, bool supportHashes)
         {
-            BaseUrl = baseUrl;
-            RequiredPermissions = rawSceneJson.requiredPermissions;
-            AllowedMediaHostnames = rawSceneJson.allowedMediaHostnames;
-            Name = rawSceneJson.name;
+            this.contentBaseUrl = contentBaseUrl;
+            this.sceneDefinition = sceneDefinition;
+            this.supportHashes = supportHashes;
+
+            fileToHash = new Dictionary<string, string>(sceneDefinition.content.Length, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var contentDefinition in sceneDefinition.content)
+            {
+                fileToHash[contentDefinition.file] = contentDefinition.hash;
+            }
+
+            baseParcel = Ipfs.DecodePointer(sceneDefinition.metadata.scene.baseParcel);
+
+            foreach (string parcel in sceneDefinition.metadata.scene.parcels)
+            {
+                parcels.Add(Ipfs.DecodePointer(parcel));
+            }
         }
 
-        public SceneData(string jsCodeUrl)
+        public string SceneName => sceneDefinition.id;
+        public IReadOnlyList<Vector2Int> Parcels => parcels;
+        public Vector2Int BaseParcel => baseParcel;
+
+        public bool HasRequiredPermission(string permission)
         {
-            Name = jsCodeUrl.Substring(jsCodeUrl.LastIndexOf("/") + 1);
-            BaseUrl = string.Empty;
+            return true;
+
+            // TODO: Implement
+            /*for (var i = 0; i < sceneData.RequiredPermissions.Count; i++)
+            {
+                if (sceneData.RequiredPermissions[i] == permission)
+                    return true;
+            }
+
+            return false;*/
         }
 
-        public string Name { get; }
-        public string BaseUrl { get; }
+        public bool TryGetMainScriptUrl(out string result) =>
+            TryGetContentUrl(sceneDefinition.metadata.main, out result);
 
-        // TODO
-        public string BaseUrlBundles { get; }
+        public bool TryGetContentUrl(string url, out string result)
+        {
+            if (supportHashes)
+            {
+                if (fileToHash.TryGetValue(url, out string hash))
+                {
+                    result = contentBaseUrl + hash;
+                    return true;
+                }
 
-        // TODO
-        public IReadOnlyList<Vector2Int> Parcels { get; } = Array.Empty<Vector2Int>();
+                Debug.LogError($"{nameof(SceneData)}: {url} not found in {nameof(fileToHash)}");
 
-        // TODO
-        public IReadOnlyList<ISceneData.ContentMappingPair> Contents { get; } = Array.Empty<ISceneData.ContentMappingPair>();
-        public IReadOnlyList<string> RequiredPermissions { get; }
-        public IReadOnlyList<string> AllowedMediaHostnames { get; }
+                result = string.Empty;
+                return false;
+            }
+
+            result = contentBaseUrl + url;
+            return true;
+        }
+
+        public bool TryGetMediaUrl(string url, out string result)
+        {
+            if (string.IsNullOrEmpty(url))
+            {
+                result = string.Empty;
+                return false;
+            }
+
+            // Try resolve an internal URL
+            if (TryGetContentUrl(url, out result))
+                return true;
+
+            if (HasRequiredPermission(ScenePermissionNames.ALLOW_MEDIA_HOSTNAMES) && IsUrlDomainAllowed(url))
+            {
+                result = url;
+                return true;
+            }
+
+            result = string.Empty;
+            return false;
+        }
+
+        public bool IsUrlDomainAllowed(string url)
+        {
+            return true;
+
+            // TODO: Implement
+            /*if (Uri.TryCreate(url, UriKind.Absolute, out Uri uri))
+            {
+                for (var i = 0; i < sceneData.AllowedMediaHostnames.Count; i++)
+                {
+                    if (string.Equals(sceneData.AllowedMediaHostnames[i], uri.Host, StringComparison.CurrentCultureIgnoreCase))
+                        return true;
+                }
+            }
+
+            return false;*/
+        }
     }
 }
