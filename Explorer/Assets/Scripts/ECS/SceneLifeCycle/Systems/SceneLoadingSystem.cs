@@ -29,6 +29,12 @@ namespace ECS.SceneLifeCycle.Systems
             ProcessSceneToLoadQuery(World);
         }
 
+        private async UniTask InitializeSceneAndStart(string jsCodeUrl, CancellationToken ct)
+        {
+            var sceneFacade = await sceneFactory.CreateScene(jsCodeUrl, ct);
+            await sceneFacade.StartUpdateLoop(30, ct);
+        }
+
         [Query]
         [All(typeof(SceneLoadingComponent))]
         private void ProcessSceneToLoad(in Entity entity, ref SceneLoadingComponent sceneLoadingComponent)
@@ -48,8 +54,8 @@ namespace ECS.SceneLifeCycle.Systems
                 //sceneLoadingComponent.Request = Ipfs.RequestContentFile("https://sdk-test-scenes.decentraland.zone/content", sceneLoadingComponent.Definition.content, sceneMetadata.main);
                 var sceneCodeContent = sceneLoadingComponent.Definition.content.First(definition => definition.file == sceneMetadata.main);
 
-                sceneLoadingComponent.CancellationToken = new CancellationToken();
-                sceneLoadingComponent.Request = sceneFactory.CreateScene("https://sdk-test-scenes.decentraland.zone/content/contents/" + sceneCodeContent.hash, sceneLoadingComponent.CancellationToken);
+                sceneLoadingComponent.CancellationTokenSource = new CancellationTokenSource();
+                sceneLoadingComponent.Request = InitializeSceneAndStart("https://sdk-test-scenes.decentraland.zone/content/contents/" + sceneCodeContent.hash, sceneLoadingComponent.CancellationTokenSource.Token);
 
                 sceneLoadingComponent.State = SceneLoadingState.Loading;
 
@@ -57,13 +63,15 @@ namespace ECS.SceneLifeCycle.Systems
             }
             else if (sceneLoadingComponent.State == SceneLoadingState.Loading)
             {
-                if (sceneLoadingComponent.Request.Status.IsCompleted())
+                var cts = sceneLoadingComponent.CancellationTokenSource;
+
+                World.Add(entity, new LiveSceneComponent()
                 {
-                    Debug.Log("Done!");
-                    sceneLoadingComponent.State = SceneLoadingState.Loaded;
-                    World.Remove<SceneLoadingComponent>(entity);
-                    World.Add<LiveSceneComponent>(entity);
-                }
+                    CancellationToken = cts,
+                    SceneLoop = sceneLoadingComponent.Request,
+                });
+
+                World.Remove<SceneLoadingComponent>(entity);
             }
         }
     }

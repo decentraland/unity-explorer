@@ -37,7 +37,15 @@ namespace ECS.SceneLifeCycle
                 }
             }
 
-            return results;
+            //return results;
+            return new List<Vector2Int>()
+            {
+                new Vector2Int()
+                {
+                    x = 78,
+                    y = -9
+                }
+            };
         }
     }
 }

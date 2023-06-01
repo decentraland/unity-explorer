@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using SceneRunner.Scene;
 using System.Threading;
 
 namespace ECS.SceneLifeCycle.Components
@@ -9,7 +8,7 @@ namespace ECS.SceneLifeCycle.Components
         Spawned,
         Loading,
         Failed,
-        Loaded
+        Canceled
     }
     public class SceneLoadingComponent
     {
@@ -17,8 +16,8 @@ namespace ECS.SceneLifeCycle.Components
 
         public Ipfs.EntityDefinition Definition;
 
-        public UniTask<ISceneFacade> Request;
+        public UniTask Request;
 
-        public CancellationToken CancellationToken;
+        public CancellationTokenSource CancellationTokenSource;
     }
 }

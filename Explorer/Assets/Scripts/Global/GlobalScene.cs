@@ -31,6 +31,7 @@ namespace Global
             SceneDynamicLoaderSystem.InjectToWorld(ref builder, state);
             SceneLifeCycleSystem.InjectToWorld(ref builder, state);
             SceneLoadingSystem.InjectToWorld(ref builder, sceneFactory);
+            DestroySceneSystem.InjectToWorld(ref builder);
 
             DebugCameraTransformToPlayerTransformSystem.InjectToWorld(ref builder, state.PlayerEntity, unityCamera);
 
