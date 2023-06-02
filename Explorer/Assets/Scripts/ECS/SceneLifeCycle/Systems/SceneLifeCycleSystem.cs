@@ -54,6 +54,7 @@ namespace ECS.SceneLifeCycle.Systems
                 if (add)
                 {
                     World.Add<DeleteSceneIntention>(entity);
+                    state.LiveScenes.Remove(id);
                 }
             }
 

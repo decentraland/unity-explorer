@@ -24,14 +24,17 @@ namespace SceneRunner.Scene
             this.sceneDefinition = sceneDefinition;
             this.supportHashes = supportHashes;
 
-            fileToHash = new Dictionary<string, string>(sceneDefinition.content.Length, StringComparer.OrdinalIgnoreCase);
-
-            foreach (var contentDefinition in sceneDefinition.content)
+            if (!supportHashes)
             {
-                fileToHash[contentDefinition.file] = contentDefinition.hash;
+                baseParcel = new Vector2Int(0, 0);
+                return;
             }
 
-            baseParcel = Ipfs.DecodePointer(sceneDefinition.metadata.scene.baseParcel);
+            fileToHash = new Dictionary<string, string>(sceneDefinition.content.Length, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var contentDefinition in sceneDefinition.content) { fileToHash[contentDefinition.file] = contentDefinition.hash; }
+
+                baseParcel = Ipfs.DecodePointer(sceneDefinition.metadata.scene.baseParcel);
 
             foreach (string parcel in sceneDefinition.metadata.scene.parcels)
             {

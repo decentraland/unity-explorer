@@ -26,7 +26,6 @@ namespace ECS.SceneLifeCycle.Systems
             var liveScene = World.Get<LiveSceneComponent>(entity);
 
             liveScene.CancellationToken?.Cancel();
-            liveScene.SceneFacade?.DisposeAsync();
             World.Destroy(entity);
         }
 

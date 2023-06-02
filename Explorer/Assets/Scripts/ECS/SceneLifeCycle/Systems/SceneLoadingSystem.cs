@@ -29,7 +29,7 @@ namespace ECS.SceneLifeCycle.Systems
             ProcessSceneToLoadQuery(World);
         }
 
-        private async UniTask InitializeSceneAndStart(Ipfs.SceneEntityDefinition sceneDefinition, CancellationToken ct, LiveSceneComponent liveSceneComponent)
+        private async UniTask InitializeSceneAndStart(Ipfs.SceneEntityDefinition sceneDefinition, CancellationToken ct)
         {
             // TODO: Use contentBaseUrl from realm
             const string CONTENT_BASE_URL = "https://sdk-test-scenes.decentraland.zone/content/contents/";
@@ -37,7 +37,10 @@ namespace ECS.SceneLifeCycle.Systems
             // main thread
             var sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(CONTENT_BASE_URL, sceneDefinition, ct);
 
-            liveSceneComponent.SceneFacade = sceneFacade;
+            ct.RegisterWithoutCaptureExecutionContext(() =>
+            {
+                sceneFacade?.DisposeAsync();
+            });
 
             // thread pool
             await sceneFacade.StartUpdateLoop(30, ct);
@@ -59,7 +62,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             World.Add(entity, liveSceneComponent);
 
-            sceneLoadingComponent.Request = InitializeSceneAndStart(sceneLoadingComponent.Definition, sceneLoadingComponent.CancellationTokenSource.Token, liveSceneComponent);
+            sceneLoadingComponent.Request = InitializeSceneAndStart(sceneLoadingComponent.Definition, sceneLoadingComponent.CancellationTokenSource.Token);
 
             World.Remove<SceneLoadingComponent>(entity);
             Debug.Log("Spawned Scene: " + JsonConvert.SerializeObject(sceneLoadingComponent));

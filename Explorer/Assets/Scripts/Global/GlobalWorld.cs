@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace Global
 {
-    public class GlobalScene : IDisposable
+    public class GlobalWorld : IDisposable
     {
         private SceneLifeCycleState state = new SceneLifeCycleState();
 

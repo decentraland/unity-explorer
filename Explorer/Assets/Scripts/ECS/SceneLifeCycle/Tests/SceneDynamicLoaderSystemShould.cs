@@ -15,11 +15,13 @@ namespace ECS.SceneLifeCycle.Systems.Tests
         [SetUp]
         public void SetUp()
         {
+            var playerEntity = world.Create(new PlayerComponent());
+            AddTransformToEntity(playerEntity);
+
             system = new SceneDynamicLoaderSystem(world, new SceneLifeCycleState()
             {
-                ScenePointers = new Dictionary<Vector2Int, Ipfs.SceneEntityDefinition>(),
                 SceneLoadRadius = 2,
-                PlayerEntity = world.Create(new PlayerComponent(), new TransformComponent())
+                PlayerEntity = playerEntity
             });
         }
 

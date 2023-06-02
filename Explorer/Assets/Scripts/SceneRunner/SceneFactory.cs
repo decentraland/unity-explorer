@@ -47,34 +47,51 @@ namespace SceneRunner
             this.entityFactory = entityFactory;
         }
 
-        public UniTask<ISceneFacade> CreateScene(string jsCodeUrl, CancellationToken ct) =>
-            throw new NotImplementedException();
+        public async UniTask<ISceneFacade> CreateScene(string jsCodeUrl, CancellationToken ct)
+        {
+            Ipfs.SceneEntityDefinition sceneDefinition = new Ipfs.SceneEntityDefinition();
+
+            var lastSlash = jsCodeUrl.LastIndexOf("/", StringComparison.Ordinal);
+            var mainScenePath = jsCodeUrl.Substring(lastSlash + 1);
+            var baseUrl = jsCodeUrl.Substring(0, lastSlash + 1);
+
+            sceneDefinition.metadata = new Ipfs.SceneMetadata()
+            {
+                main = mainScenePath,
+            };
+
+            var sceneData = new SceneData(baseUrl, sceneDefinition, false);
+
+            return await CreateScene(sceneData, ct);
+        }
 
         public async UniTask<ISceneFacade> CreateSceneFromStreamableDirectory(string directoryName, CancellationToken ct)
         {
-            throw new NotImplementedException();
-            /*const string SCENE_JSON_FILE_NAME = "scene.json";
+            const string SCENE_JSON_FILE_NAME = "scene.json";
 
-            var fullPath = $"file://{Application.streamingAssetsPath}/Scenes/{directoryName}";
+            var fullPath = $"file://{Application.streamingAssetsPath}/Scenes/{directoryName}/";
 
-            string rawSceneJsonPath = fullPath + "/" + SCENE_JSON_FILE_NAME;
+            string rawSceneJsonPath = fullPath + SCENE_JSON_FILE_NAME;
 
             var request = UnityWebRequest.Get(rawSceneJsonPath);
             await request.SendWebRequest().WithCancellation(ct);
 
-            RawSceneJson rawScene = JsonUtility.FromJson<RawSceneJson>(request.downloadHandler.text);
+            Ipfs.SceneMetadata sceneMetadata = JsonUtility.FromJson<Ipfs.SceneMetadata>(request.downloadHandler.text);
 
-            var contentProvider = new SceneData(new SceneData(fullPath, in rawScene), false);
-            string jsCodeUrl = fullPath + "/" + rawScene.main;
+            Ipfs.SceneEntityDefinition sceneDefinition = new Ipfs.SceneEntityDefinition();
 
-            return await CreateScene(contentProvider, jsCodeUrl, ct);*/
+            sceneDefinition.id = directoryName;
+            sceneDefinition.metadata = sceneMetadata;
+            var sceneData = new SceneData(fullPath, sceneDefinition, false);
+
+            return await CreateScene(sceneData, ct);
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromSceneDefinition(string contentBaseUrl, Ipfs.SceneEntityDefinition sceneDefinition, CancellationToken ct)
         {
-            var contentProvider = new SceneData(contentBaseUrl, sceneDefinition, true);
+            var sceneData = new SceneData(contentBaseUrl, sceneDefinition, true);
 
-            return await CreateScene(contentProvider, ct);
+            return await CreateScene(sceneData, ct);
         }
 
         private async UniTask<ISceneFacade> CreateScene(ISceneData sceneData, CancellationToken ct)

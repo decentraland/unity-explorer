@@ -8,10 +8,9 @@ namespace Global
     /// <summary>
     /// An entry point to install and resolve all dependencies
     /// </summary>
-    public class EntryPoint : MonoBehaviour
+    public class DynamicSceneLoader : MonoBehaviour
     {
-        //[SerializeField] private SceneLauncher sceneLauncher;
-        private GlobalScene globalScene;
+        private GlobalWorld globalWorld;
 
         [SerializeField] private Camera camera;
 
@@ -35,20 +34,19 @@ namespace Global
 
         private void Start()
         {
-            //sceneLauncher.Initialize(SceneSharedContainer, destroyCancellationToken);
-            globalScene = new GlobalScene();
+            globalWorld = new GlobalWorld();
 
-            globalScene.Initialize(SceneSharedContainer.SceneFactory, camera, SceneLoadRadius);
+            globalWorld.Initialize(SceneSharedContainer.SceneFactory, camera, SceneLoadRadius);
         }
 
         private void OnDestroy()
         {
-            globalScene.Dispose();
+            globalWorld.Dispose();
         }
 
         public static SceneSharedContainer Install()
         {
-            Profiler.BeginSample($"{nameof(EntryPoint)}.Install");
+            Profiler.BeginSample($"{nameof(DynamicSceneLoader)}.Install");
 
             var componentsContainer = ComponentsContainer.Create();
             var sceneSharedContainer = SceneSharedContainer.Create(componentsContainer);
