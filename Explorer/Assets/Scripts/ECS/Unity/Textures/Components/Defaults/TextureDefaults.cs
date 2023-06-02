@@ -28,7 +28,9 @@ namespace ECS.Unity.Textures.Components.Defaults
                 case TextureUnion.TexOneofCase.AvatarTexture:
                     return self.AvatarTexture.TryGetTextureUrl(out url);
                 case TextureUnion.TexOneofCase.VideoTexture:
-                    throw new NotImplementedException(nameof(TextureUnion.TexOneofCase.VideoTexture));
+                    // Not implemented - just ignore to not break the loop
+                    url = string.Empty;
+                    return false;
                 case TextureUnion.TexOneofCase.Texture:
                 default:
                     return self.Texture.TryGetTextureUrl(data, out url);
@@ -80,8 +82,12 @@ namespace ECS.Unity.Textures.Components.Defaults
         public static bool TryGetTextureUrl(this Texture self, ISceneData data, out string url) =>
             data.TryGetMediaUrl(self.Src, out url);
 
-        public static bool TryGetTextureUrl(this AvatarTexture self, out string url) =>
-            throw new NotImplementedException(nameof(AvatarTexture));
+        public static bool TryGetTextureUrl(this AvatarTexture self, out string url)
+        {
+            // Not implemented
+            url = string.Empty;
+            return false;
+        }
 
         public static TextureWrapMode GetWrapMode(this Texture self) =>
             self.HasWrapMode ? self.WrapMode.ToUnityWrapMode() : TextureWrapMode.Clamp;
