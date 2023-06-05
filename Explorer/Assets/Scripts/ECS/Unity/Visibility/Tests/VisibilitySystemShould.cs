@@ -65,7 +65,7 @@ namespace ECS.Unity.Visibility.Tests
             world.Add(e, new PBVisibilityComponent
                 { Visible = false, IsDirty = true });
 
-            world.Get<PBVisibilityComponent>(e).IsDirty = true;
+            world.Get<PBMeshRenderer>(e).IsDirty = true;
             system.Update(0);
 
             //Assert
