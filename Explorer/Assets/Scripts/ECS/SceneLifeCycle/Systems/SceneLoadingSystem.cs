@@ -5,6 +5,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.Components;
+using Ipfs;
 using Newtonsoft.Json;
 using SceneRunner;
 using System.Linq;
@@ -19,9 +20,12 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private readonly ISceneFactory sceneFactory;
 
-        public SceneLoadingSystem(World world, ISceneFactory sceneFactory) : base(world)
+        private readonly IIpfsRealm ipfsRealm;
+
+        public SceneLoadingSystem(World world, IIpfsRealm ipfsRealm, ISceneFactory sceneFactory) : base(world)
         {
             this.sceneFactory = sceneFactory;
+            this.ipfsRealm = ipfsRealm;
         }
 
         protected override void Update(float t)
@@ -29,13 +33,10 @@ namespace ECS.SceneLifeCycle.Systems
             ProcessSceneToLoadQuery(World);
         }
 
-        private async UniTask InitializeSceneAndStart(Ipfs.SceneEntityDefinition sceneDefinition, CancellationToken ct)
+        private async UniTask InitializeSceneAndStart(IpfsTypes.SceneEntityDefinition sceneDefinition, CancellationToken ct)
         {
-            // TODO: Use contentBaseUrl from realm
-            const string CONTENT_BASE_URL = "https://sdk-test-scenes.decentraland.zone/content/contents/";
-
             // main thread
-            var sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(CONTENT_BASE_URL, sceneDefinition, ct);
+            var sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(ipfsRealm, sceneDefinition, ct);
 
             ct.RegisterWithoutCaptureExecutionContext(() =>
             {
@@ -56,8 +57,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             var liveSceneComponent = new LiveSceneComponent()
             {
-                CancellationToken = cts,
-                SceneLoop = sceneLoadingComponent.Request,
+                CancellationTokenSource = cts,
             };
 
             World.Add(entity, liveSceneComponent);

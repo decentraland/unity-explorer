@@ -32,8 +32,7 @@ namespace SceneRuntime.Apis
         [UsedImplicitly]
         public void Error(object message)
         {
-            Debug.LogError(message);
-            Debug.LogError(engine.GetStackTrace());
+            Debug.LogError(message + " stackTrace: " + engine.GetStackTrace());
         }
 
         [UsedImplicitly]
@@ -48,6 +47,7 @@ namespace SceneRuntime.Apis
 
             // Load JavaScript wrapper in the Runtime
             var moduleScript = moduleLoader.GetModuleScript(filename);
+
             return engine.Evaluate(moduleScript);
         }
     }

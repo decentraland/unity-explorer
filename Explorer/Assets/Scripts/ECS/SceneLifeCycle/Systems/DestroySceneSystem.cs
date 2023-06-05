@@ -21,21 +21,17 @@ namespace ECS.SceneLifeCycle.Systems
 
         [Query]
         [All(typeof(DeleteSceneIntention), typeof(LiveSceneComponent))]
-        private void DestroyLiveScene(in Entity entity)
+        private void DestroyLiveScene(in Entity entity, ref LiveSceneComponent liveSceneComponent)
         {
-            var liveScene = World.Get<LiveSceneComponent>(entity);
-
-            liveScene.CancellationToken?.Cancel();
+            liveSceneComponent.CancellationTokenSource.Cancel();
             World.Destroy(entity);
         }
 
         [Query]
         [All(typeof(DeleteSceneIntention), typeof(SceneLoadingComponent))]
-        private void DestroyLoadingScene(in Entity entity)
+        private void DestroyLoadingScene(in Entity entity, ref SceneLoadingComponent sceneLoadingComponent)
         {
-            var sceneLoading = World.Get<SceneLoadingComponent>(entity);
-
-            sceneLoading.CancellationTokenSource.Cancel();
+            sceneLoadingComponent.CancellationTokenSource.Cancel();
             World.Destroy(entity);
         }
     }

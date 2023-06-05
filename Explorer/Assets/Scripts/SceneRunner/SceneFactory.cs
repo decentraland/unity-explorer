@@ -10,6 +10,7 @@ using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using Ipfs;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRuntime;
@@ -49,18 +50,18 @@ namespace SceneRunner
 
         public async UniTask<ISceneFacade> CreateScene(string jsCodeUrl, CancellationToken ct)
         {
-            Ipfs.SceneEntityDefinition sceneDefinition = new Ipfs.SceneEntityDefinition();
+            IpfsTypes.SceneEntityDefinition sceneDefinition = new IpfsTypes.SceneEntityDefinition();
 
             var lastSlash = jsCodeUrl.LastIndexOf("/", StringComparison.Ordinal);
             var mainScenePath = jsCodeUrl.Substring(lastSlash + 1);
             var baseUrl = jsCodeUrl.Substring(0, lastSlash + 1);
 
-            sceneDefinition.metadata = new Ipfs.SceneMetadata()
+            sceneDefinition.metadata = new IpfsTypes.SceneMetadata()
             {
                 main = mainScenePath,
             };
 
-            var sceneData = new SceneData(baseUrl, sceneDefinition, false);
+            var sceneData = new SceneData(new IpfsRealm(baseUrl), sceneDefinition, false);
 
             return await CreateScene(sceneData, ct);
         }
@@ -76,20 +77,22 @@ namespace SceneRunner
             var request = UnityWebRequest.Get(rawSceneJsonPath);
             await request.SendWebRequest().WithCancellation(ct);
 
-            Ipfs.SceneMetadata sceneMetadata = JsonUtility.FromJson<Ipfs.SceneMetadata>(request.downloadHandler.text);
+            IpfsTypes.SceneMetadata sceneMetadata = JsonUtility.FromJson<IpfsTypes.SceneMetadata>(request.downloadHandler.text);
 
-            Ipfs.SceneEntityDefinition sceneDefinition = new Ipfs.SceneEntityDefinition();
+            IpfsTypes.SceneEntityDefinition sceneDefinition = new IpfsTypes.SceneEntityDefinition
+                {
+                    id = directoryName,
+                    metadata = sceneMetadata,
+                };
 
-            sceneDefinition.id = directoryName;
-            sceneDefinition.metadata = sceneMetadata;
-            var sceneData = new SceneData(fullPath, sceneDefinition, false);
+            var sceneData = new SceneData(new IpfsRealm(fullPath), sceneDefinition, false);
 
             return await CreateScene(sceneData, ct);
         }
 
-        public async UniTask<ISceneFacade> CreateSceneFromSceneDefinition(string contentBaseUrl, Ipfs.SceneEntityDefinition sceneDefinition, CancellationToken ct)
+        public async UniTask<ISceneFacade> CreateSceneFromSceneDefinition(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, CancellationToken ct)
         {
-            var sceneData = new SceneData(contentBaseUrl, sceneDefinition, true);
+            var sceneData = new SceneData(ipfsRealm, sceneDefinition, true);
 
             return await CreateScene(sceneData, ct);
         }

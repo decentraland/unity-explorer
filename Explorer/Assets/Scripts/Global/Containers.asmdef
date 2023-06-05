@@ -14,7 +14,8 @@
         "GUID:d414ef88f3b15f746a4b97636b50dfb4",
         "GUID:286980af24684da6acc1caa413039811",
         "GUID:0a68ab77e49b4261a9ffa7acd94eb68a",
-        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f"
+        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+        "Ipfs"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

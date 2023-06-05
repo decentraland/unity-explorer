@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using Ipfs;
 using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;
@@ -40,6 +41,6 @@ namespace SceneRunner
         /// <param name="sceneDefinition">EntityDefinition provided by the ContentServer</param>
         /// <param name="ct"></param>
         /// <returns>Scene Facade on the background thread</returns>
-        UniTask<ISceneFacade> CreateSceneFromSceneDefinition(string contentBaseUrl, Ipfs.SceneEntityDefinition sceneDefinition, CancellationToken ct);
+        UniTask<ISceneFacade> CreateSceneFromSceneDefinition(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, CancellationToken ct);
     }
 }

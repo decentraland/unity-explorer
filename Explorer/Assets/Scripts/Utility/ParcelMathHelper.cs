@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Utility
 {
-    public class ParcelMathHelper
+    public static class ParcelMathHelper
     {
         public const float PARCEL_SIZE = 16.0f;
 

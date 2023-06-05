@@ -5,6 +5,7 @@ using ECS.Global.Systems;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Systems;
 using ECS.Unity.Transforms.Components;
+using Ipfs;
 using SceneRunner;
 using System;
 using UnityEngine;
@@ -13,7 +14,9 @@ namespace Global
 {
     public class GlobalWorld : IDisposable
     {
-        private SceneLifeCycleState state = new SceneLifeCycleState();
+        private SceneLifeCycleState state;
+
+        private IIpfsRealm ipfsRealm;
 
         private SystemGroupWorld worldSystems;
 
@@ -21,16 +24,20 @@ namespace Global
 
         public void Initialize(ISceneFactory sceneFactory, Camera unityCamera, int sceneLoadRadius)
         {
+            ipfsRealm = new IpfsRealm("https://sdk-test-scenes.decentraland.zone/");
             world = World.Create();
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
 
-            state.PlayerEntity = world.Create(new PlayerComponent(), new TransformComponent());
-            state.SceneLoadRadius = sceneLoadRadius;
+            state = new SceneLifeCycleState()
+            {
+                PlayerEntity = world.Create(new PlayerComponent(), new TransformComponent()),
+                SceneLoadRadius = sceneLoadRadius,
+            };
 
-            SceneDynamicLoaderSystem.InjectToWorld(ref builder, state);
+            LoadSceneDynamicallySystem.InjectToWorld(ref builder, ipfsRealm, state);
             SceneLifeCycleSystem.InjectToWorld(ref builder, state);
-            SceneLoadingSystem.InjectToWorld(ref builder, sceneFactory);
+            SceneLoadingSystem.InjectToWorld(ref builder, ipfsRealm, sceneFactory);
             DestroySceneSystem.InjectToWorld(ref builder);
 
             DebugCameraTransformToPlayerTransformSystem.InjectToWorld(ref builder, state.PlayerEntity, unityCamera);

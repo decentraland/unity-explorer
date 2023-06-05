@@ -6,9 +6,9 @@ namespace ECS.SceneLifeCycle
 {
     public class SceneLifeCycleState
     {
-        public Dictionary<Vector2Int, Ipfs.SceneEntityDefinition> ScenePointers = new();
+        public readonly Dictionary<Vector2Int, IpfsTypes.SceneEntityDefinition> ScenePointers = new();
 
-        public Dictionary<string, Entity> LiveScenes = new();
+        public readonly Dictionary<string, Entity> LiveScenes = new();
 
         public int SceneLoadRadius;
 

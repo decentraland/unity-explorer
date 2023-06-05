@@ -1,3 +1,4 @@
+using Ipfs;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,19 +9,19 @@ namespace SceneRunner.Scene
     {
         private readonly Dictionary<string, string> fileToHash;
 
-        private readonly Ipfs.SceneEntityDefinition sceneDefinition;
+        private readonly IpfsTypes.SceneEntityDefinition sceneDefinition;
 
-        private readonly string contentBaseUrl;
+        private readonly IIpfsRealm ipfsRealm;
 
         private readonly bool supportHashes;
 
-        private readonly List<Vector2Int> parcels = new List<Vector2Int>();
+        private readonly List<Vector2Int> parcels = new ();
 
         private readonly Vector2Int baseParcel;
 
-        public SceneData(string contentBaseUrl, Ipfs.SceneEntityDefinition sceneDefinition, bool supportHashes)
+        public SceneData(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, bool supportHashes)
         {
-            this.contentBaseUrl = contentBaseUrl;
+            this.ipfsRealm = ipfsRealm;
             this.sceneDefinition = sceneDefinition;
             this.supportHashes = supportHashes;
 
@@ -30,15 +31,15 @@ namespace SceneRunner.Scene
                 return;
             }
 
-            fileToHash = new Dictionary<string, string>(sceneDefinition.content.Length, StringComparer.OrdinalIgnoreCase);
+            fileToHash = new Dictionary<string, string>(sceneDefinition.content.Count, StringComparer.OrdinalIgnoreCase);
 
             foreach (var contentDefinition in sceneDefinition.content) { fileToHash[contentDefinition.file] = contentDefinition.hash; }
 
-                baseParcel = Ipfs.DecodePointer(sceneDefinition.metadata.scene.baseParcel);
+                baseParcel = IpfsHelper.DecodePointer(sceneDefinition.metadata.scene.baseParcel);
 
             foreach (string parcel in sceneDefinition.metadata.scene.parcels)
             {
-                parcels.Add(Ipfs.DecodePointer(parcel));
+                parcels.Add(IpfsHelper.DecodePointer(parcel));
             }
         }
 
@@ -69,7 +70,7 @@ namespace SceneRunner.Scene
             {
                 if (fileToHash.TryGetValue(url, out string hash))
                 {
-                    result = contentBaseUrl + hash;
+                    result = ipfsRealm.ContentBaseUrl + "contents/" + hash;
                     return true;
                 }
 
@@ -79,7 +80,7 @@ namespace SceneRunner.Scene
                 return false;
             }
 
-            result = contentBaseUrl + url;
+            result = ipfsRealm.ContentBaseUrl + "contents/" + url;
             return true;
         }
 

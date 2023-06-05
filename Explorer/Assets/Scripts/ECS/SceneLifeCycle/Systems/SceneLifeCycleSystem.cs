@@ -11,10 +11,13 @@ using Utility;
 namespace ECS.SceneLifeCycle.Systems
 {
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    [UpdateAfter(typeof(SceneDynamicLoaderSystem))]
+    [UpdateAfter(typeof(LoadSceneDynamicallySystem))]
     public partial class SceneLifeCycleSystem : BaseUnityLoopSystem
     {
-        private SceneLifeCycleState state;
+        private readonly SceneLifeCycleState state;
+
+        // cache
+        private readonly HashSet<IpfsTypes.SceneEntityDefinition> requiredScenes = new();
 
         public SceneLifeCycleSystem(World world, SceneLifeCycleState state) : base(world)
         {
@@ -25,7 +28,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             // TODO: load realm-defined scenes to requirements (like Worlds)
 
-            HashSet<Ipfs.SceneEntityDefinition> requiredScenes = new(); // TODO: Create in the class and clear
+            requiredScenes.Clear();
 
             var position = World.Get<TransformComponent>(state.PlayerEntity).Transform.position;
 
