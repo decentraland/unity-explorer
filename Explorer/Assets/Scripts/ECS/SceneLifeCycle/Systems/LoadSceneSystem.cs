@@ -65,20 +65,19 @@ namespace ECS.SceneLifeCycle.Systems
             // create scenes that not exists
             foreach (var definition in requiredScenes)
             {
-                if (!state.LiveScenes.ContainsKey(definition.id))
+                if (state.LiveScenes.ContainsKey(definition.id)) continue;
+
+                // TODO: Remove this code, we must handle the empty-parcels in a different way
+                if (definition.id.StartsWith("empty-parcel"))
+                    continue;
+
+                // this scene is not loaded... we need to load it
+                var entity = World.Create(new SceneLoadingComponent()
                 {
-                    // TODO: Remove this code, we must handle the empty-parcels in a different way
-                    if (definition.id.StartsWith("empty-parcel"))
-                        continue;
+                    Definition = definition
+                });
 
-                    // this scene is not loaded... we need to load it
-                    var entity = World.Create(new SceneLoadingComponent()
-                    {
-                        Definition = definition
-                    });
-
-                    state.LiveScenes.Add(definition.id, entity);
-                }
+                state.LiveScenes.Add(definition.id, entity);
             }
         }
     }
