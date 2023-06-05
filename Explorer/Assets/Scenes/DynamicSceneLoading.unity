@@ -170,6 +170,9 @@ MonoBehaviour:
   camera: {fileID: 963194227}
   StartPosition: {x: 78, y: -9}
   SceneLoadRadius: 4
+  StaticLoadPositions:
+  - {x: 78, y: -9}
+  - {x: 78, y: -8}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0

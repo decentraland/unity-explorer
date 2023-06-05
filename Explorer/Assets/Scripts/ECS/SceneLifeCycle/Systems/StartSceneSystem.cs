@@ -15,14 +15,14 @@ using UnityEngine;
 namespace ECS.SceneLifeCycle.Systems
 {
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    [UpdateAfter(typeof(SceneLifeCycleSystem))]
-    public partial class SceneLoadingSystem : BaseUnityLoopSystem
+    [UpdateAfter(typeof(LoadSceneSystem))]
+    public partial class StartSceneSystem : BaseUnityLoopSystem
     {
         private readonly ISceneFactory sceneFactory;
 
         private readonly IIpfsRealm ipfsRealm;
 
-        public SceneLoadingSystem(World world, IIpfsRealm ipfsRealm, ISceneFactory sceneFactory) : base(world)
+        public StartSceneSystem(World world, IIpfsRealm ipfsRealm, ISceneFactory sceneFactory) : base(world)
         {
             this.sceneFactory = sceneFactory;
             this.ipfsRealm = ipfsRealm;

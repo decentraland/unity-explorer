@@ -32,7 +32,7 @@ namespace ECS.SceneLifeCycle.Systems.Tests
     }
 
     [TestFixture]
-    public class SceneDynamicLoaderSystemShould : UnitySystemTestBase<LoadSceneDynamicallySystem>
+    public class SceneDynamicLoaderSystemShould : UnitySystemTestBase<LoadScenesDynamicallySystem>
     {
         [SetUp]
         public void SetUp()
@@ -42,7 +42,7 @@ namespace ECS.SceneLifeCycle.Systems.Tests
             var playerEntity = world.Create(new PlayerComponent());
             AddTransformToEntity(playerEntity);
 
-            system = new LoadSceneDynamicallySystem(world, ipfsRealm, new SceneLifeCycleState()
+            system = new LoadScenesDynamicallySystem(world, ipfsRealm, new SceneLifeCycleState()
             {
                 SceneLoadRadius = 2,
                 PlayerEntity = playerEntity,

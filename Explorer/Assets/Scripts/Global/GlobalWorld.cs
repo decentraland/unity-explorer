@@ -6,8 +6,10 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Systems;
 using ECS.Unity.Transforms.Components;
 using Ipfs;
+using JetBrains.Annotations;
 using SceneRunner;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Global
@@ -22,7 +24,7 @@ namespace Global
 
         private World world;
 
-        public void Initialize(ISceneFactory sceneFactory, Camera unityCamera, int sceneLoadRadius)
+        public void Initialize(ISceneFactory sceneFactory, Camera unityCamera, int sceneLoadRadius, [CanBeNull] List<Vector2Int> staticLoadPositions = null)
         {
             ipfsRealm = new IpfsRealm("https://sdk-test-scenes.decentraland.zone/");
             world = World.Create();
@@ -35,9 +37,9 @@ namespace Global
                 SceneLoadRadius = sceneLoadRadius,
             };
 
-            LoadSceneDynamicallySystem.InjectToWorld(ref builder, ipfsRealm, state);
-            SceneLifeCycleSystem.InjectToWorld(ref builder, state);
-            SceneLoadingSystem.InjectToWorld(ref builder, ipfsRealm, sceneFactory);
+            LoadScenesDynamicallySystem.InjectToWorld(ref builder, ipfsRealm, state, staticLoadPositions);
+            LoadSceneSystem.InjectToWorld(ref builder, state);
+            StartSceneSystem.InjectToWorld(ref builder, ipfsRealm, sceneFactory);
             DestroySceneSystem.InjectToWorld(ref builder);
 
             DebugCameraTransformToPlayerTransformSystem.InjectToWorld(ref builder, state.PlayerEntity, unityCamera);

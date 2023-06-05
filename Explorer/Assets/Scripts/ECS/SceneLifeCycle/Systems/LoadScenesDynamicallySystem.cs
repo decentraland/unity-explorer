@@ -4,6 +4,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using ECS.Abstract;
 using ECS.Unity.Transforms.Components;
 using Ipfs;
+using JetBrains.Annotations;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,9 +14,11 @@ using Utility;
 namespace ECS.SceneLifeCycle.Systems
 {
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    public partial class LoadSceneDynamicallySystem : BaseUnityLoopSystem
+    public partial class LoadScenesDynamicallySystem : BaseUnityLoopSystem
     {
         private readonly IIpfsRealm ipfsRealm;
+
+        [CanBeNull] private readonly List<Vector2Int> staticParcelsToLoad;
 
         internal readonly SceneLifeCycleState state;
 
@@ -24,10 +27,11 @@ namespace ECS.SceneLifeCycle.Systems
         // cache
         private readonly List<IpfsTypes.SceneEntityDefinition> retrievedScenes = new();
 
-        public LoadSceneDynamicallySystem(World world, IIpfsRealm ipfsRealm, SceneLifeCycleState state) : base(world)
+        public LoadScenesDynamicallySystem(World world, IIpfsRealm ipfsRealm, SceneLifeCycleState state, [CanBeNull] List<Vector2Int> staticParcelsToLoad = null) : base(world)
         {
             this.state = state;
             this.ipfsRealm = ipfsRealm;
+            this.staticParcelsToLoad = staticParcelsToLoad;
         }
 
         protected override void Update(float dt)
@@ -39,7 +43,7 @@ namespace ECS.SceneLifeCycle.Systems
                 var position = World.Get<TransformComponent>(state.PlayerEntity).Transform.position;
 
                 List<Vector2Int> parcelsToLoad = new List<Vector2Int>();
-                var parcelsInRange = ParcelMathHelper.ParcelsInRange(position, state.SceneLoadRadius);
+                var parcelsInRange = staticParcelsToLoad ?? ParcelMathHelper.ParcelsInRange(position, state.SceneLoadRadius);
 
                 foreach (var parcel in parcelsInRange)
                 {

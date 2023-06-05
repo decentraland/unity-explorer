@@ -1,4 +1,5 @@
 ﻿using SceneRunner.Scene;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Profiling;
 using Utility;
@@ -18,6 +19,9 @@ namespace Global
 
         [SerializeField] private int SceneLoadRadius = 4;
 
+        // If it's 0, it will load every parcel in the range
+        [SerializeField] private List<Vector2Int> StaticLoadPositions;
+
         public SceneSharedContainer SceneSharedContainer { get; private set; }
 
         private ISceneFacade sceneFacade;
@@ -36,7 +40,9 @@ namespace Global
         {
             globalWorld = new GlobalWorld();
 
-            globalWorld.Initialize(SceneSharedContainer.SceneFactory, camera, SceneLoadRadius);
+            var staticLoadPositions = StaticLoadPositions.Count > 0 ? StaticLoadPositions : null;
+
+            globalWorld.Initialize(SceneSharedContainer.SceneFactory, camera, SceneLoadRadius, staticLoadPositions);
         }
 
         private void OnDestroy()

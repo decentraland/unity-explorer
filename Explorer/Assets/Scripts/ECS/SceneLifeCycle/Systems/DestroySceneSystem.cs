@@ -8,7 +8,7 @@ using ECS.SceneLifeCycle.Components;
 namespace ECS.SceneLifeCycle.Systems
 {
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    [UpdateAfter(typeof(SceneLoadingSystem))]
+    [UpdateAfter(typeof(StartSceneSystem))]
     public partial class DestroySceneSystem : BaseUnityLoopSystem
     {
         public DestroySceneSystem(World world) : base(world) { }

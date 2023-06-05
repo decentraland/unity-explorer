@@ -11,15 +11,15 @@ using Utility;
 namespace ECS.SceneLifeCycle.Systems
 {
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    [UpdateAfter(typeof(LoadSceneDynamicallySystem))]
-    public partial class SceneLifeCycleSystem : BaseUnityLoopSystem
+    [UpdateAfter(typeof(LoadScenesDynamicallySystem))]
+    public partial class LoadSceneSystem : BaseUnityLoopSystem
     {
         private readonly SceneLifeCycleState state;
 
         // cache
         private readonly HashSet<IpfsTypes.SceneEntityDefinition> requiredScenes = new();
 
-        public SceneLifeCycleSystem(World world, SceneLifeCycleState state) : base(world)
+        public LoadSceneSystem(World world, SceneLifeCycleState state) : base(world)
         {
             this.state = state;
         }
@@ -43,8 +43,9 @@ namespace ECS.SceneLifeCycle.Systems
             }
 
             // remove scenes that are not required
-            foreach (var (id, entity) in state.LiveScenes)
+            foreach (string id in state.LiveScenes.Keys.ToList())
             {
+                var entity = state.LiveScenes[id];
                 var add = true;
                 foreach (var definition in requiredScenes)
                 {
