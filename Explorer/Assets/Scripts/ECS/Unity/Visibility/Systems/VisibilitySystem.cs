@@ -1,14 +1,17 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.ECSComponents;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
+using ECS.Unity.Groups;
 using ECS.Unity.PrimitiveRenderer.Components;
+using ECS.Unity.PrimitiveRenderer.Systems;
 
 namespace ECS.Unity.Visibility.Systems
 {
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
+    [UpdateAfter(typeof(InstantiatePrimitiveRenderingSystem))]
     public partial class VisibilitySystem : BaseUnityLoopSystem
     {
         public VisibilitySystem(World world) : base(world) { }
@@ -16,6 +19,7 @@ namespace ECS.Unity.Visibility.Systems
         protected override void Update(float t)
         {
             UpdateVisibilityQuery(World);
+            HandleComponentRemovalQuery(World);
         }
 
         [Query]
@@ -26,6 +30,14 @@ namespace ECS.Unity.Visibility.Systems
                 return;
 
             primitiveMeshRendererComponent.MeshRenderer.enabled = visibilityComponent.Visible;
+        }
+
+        [Query]
+        [None(typeof(PBVisibilityComponent))]
+        private void HandleComponentRemoval(ref RemovedComponents removedComponents, ref PrimitiveMeshRendererComponent primitiveMeshRendererComponent)
+        {
+            if (removedComponents.RemovedComponentsSet.Remove(typeof(PBVisibilityComponent)))
+                primitiveMeshRendererComponent.MeshRenderer.enabled = true;
         }
     }
 }

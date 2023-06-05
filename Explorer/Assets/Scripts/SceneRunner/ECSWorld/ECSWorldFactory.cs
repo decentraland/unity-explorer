@@ -35,6 +35,7 @@ namespace SceneRunner.ECSWorld
                 worldPlugin.InjectToWorld(ref builder, in sharedDependencies, finalizeWorldSystems);
 
             finalizeWorldSystems.Add(ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry));
+            finalizeWorldSystems.Add(ReleaseRemovedComponentsSystem.InjectToWorld(ref builder));
 
             // Add other systems here
             var systemsWorld = builder.Finish();

@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using DCL.ECSComponents;
+using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Visibility.Systems;
@@ -37,6 +38,38 @@ namespace ECS.Unity.Visibility.Tests
                 // Assert
                 Assert.That(renderer.enabled, Is.EqualTo(visibilityChanges[i]));
             }
+        }
+
+        [Test]
+        public void ChangeVisibilityWhenComponentRemoved()
+        {
+            // Arrange
+            MeshRenderer renderer = new GameObject().AddComponent<MeshRenderer>();
+
+            Entity e = world.Create(new PBVisibilityComponent
+                { Visible = false, IsDirty = true }, new PBMeshRenderer
+                { IsDirty = true }, new PrimitiveMeshRendererComponent { MeshRenderer = renderer }, RemovedComponents.CreateDefault());
+
+            system.Update(0);
+            Assert.That(renderer.enabled, Is.EqualTo(false));
+
+            // Act
+            world.Remove<PBVisibilityComponent>(e);
+            world.Get<RemovedComponents>(e).RemovedComponentsSet.Add(typeof(PBVisibilityComponent));
+            system.Update(0);
+
+            //Assert
+            Assert.That(renderer.enabled, Is.EqualTo(true));
+
+            // Act
+            world.Add(e, new PBVisibilityComponent
+                { Visible = false, IsDirty = true });
+
+            world.Get<PBVisibilityComponent>(e).IsDirty = true;
+            system.Update(0);
+
+            //Assert
+            Assert.That(renderer.enabled, Is.EqualTo(false));
         }
     }
 }
