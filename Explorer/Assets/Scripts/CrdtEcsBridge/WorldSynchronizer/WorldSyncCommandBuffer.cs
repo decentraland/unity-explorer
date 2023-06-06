@@ -196,9 +196,6 @@ namespace CrdtEcsBridge.WorldSynchronizer
             if (!deserialized)
                 throw new InvalidOperationException($"{nameof(FinalizeAndDeserialize)} must be called before {nameof(Apply)}");
 
-            // TODO consider adding something like "isDirty" to the component (via State or Tag?), resolve it with the first implemented systems
-            // For now it just adds the protobuf component as is
-
             try
             {
                 foreach (var deletedEntity in deletedEntities)

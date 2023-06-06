@@ -299,7 +299,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                 {
                     new Action<World, Dictionary<CRDTEntity, Entity>>((world, map) =>
                     {
-                        var entity = world.Create(new TestComponent { Value = new byte[] { 0, 122, 13, 11 } });
+                        Entity entity = world.Create(new TestComponent { Value = new byte[] { 0, 122, 13, 11 } }, RemovedComponents.CreateDefault());
                         map.Add(ENTITY_ID, entity);
                     }),
                     new (CRDTMessage, CRDTReconciliationEffect)[]
@@ -319,7 +319,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                 {
                     new Action<World, Dictionary<CRDTEntity, Entity>>((world, map) =>
                     {
-                        var entity = world.Create(new TestComponent { Value = new byte[] { 0, 122, 13, 11 } });
+                        Entity entity = world.Create(new TestComponent { Value = new byte[] { 0, 122, 13, 11 } }, RemovedComponents.CreateDefault());
                         map.Add(ENTITY_ID, entity);
                     }),
                     new (CRDTMessage, CRDTReconciliationEffect)[]
@@ -332,7 +332,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                 {
                     new Action<World, Dictionary<CRDTEntity, Entity>>((world, map) =>
                     {
-                        var entity = world.Create(CreateTestMessage(data: new byte[] { 127, 126, 123 }));
+                        Entity entity = world.Create(CreateTestMessage(data: new byte[] { 127, 126, 123 }), RemovedComponents.CreateDefault());
                         map.Add(ENTITY_ID, entity);
                     }),
                     new (CRDTMessage, CRDTReconciliationEffect)[]

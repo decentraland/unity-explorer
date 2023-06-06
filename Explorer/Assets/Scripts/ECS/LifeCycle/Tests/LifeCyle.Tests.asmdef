@@ -1,0 +1,16 @@
+{
+    "name": "LifeCyle.Tests",
+    "rootNamespace": "",
+    "references": ["GUID:a3c61f15599a43ae9de508c9c4dd5530","GUID:1b8e1e1bd01505f478f0369c04a4fb2f"],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

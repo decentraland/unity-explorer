@@ -2,6 +2,7 @@
 using Arch.Core.Utils;
 using CRDT;
 using CrdtEcsBridge.Components.Special;
+using ECS.LifeCycle.Components;
 using System.Collections.Generic;
 
 namespace CrdtEcsBridge.Components
@@ -29,7 +30,7 @@ namespace CrdtEcsBridge.Components
                 case 2:
                     return world.Create(new CameraComponent(), crdtEntity);
                 default:
-                    return world.Create(crdtEntity);
+                    return world.Create(RemovedComponents.CreateDefault(), crdtEntity);
             }
         }
     }
