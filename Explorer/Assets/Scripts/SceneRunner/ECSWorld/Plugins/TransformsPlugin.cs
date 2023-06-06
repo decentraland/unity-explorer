@@ -29,6 +29,8 @@ namespace SceneRunner.ECSWorld.Plugins
 
             var basePosition = ParcelMathHelper.GetPositionByParcelPosition(sharedDependencies.SceneData.BaseParcel);
             sceneRootTransform.transform.position = basePosition;
+            sceneRootTransform.transform.rotation = Quaternion.identity;
+            sceneRootTransform.transform.localScale = Vector3.one;
 
             sceneRootTransform.name = $"SCENE_ROOT_{sharedDependencies.SceneData.SceneName}";
             Entity rootTransformEntity = builder.World.Create(new TransformComponent(sceneRootTransform));
