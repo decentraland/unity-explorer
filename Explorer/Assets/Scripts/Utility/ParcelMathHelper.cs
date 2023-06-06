@@ -7,6 +7,9 @@ namespace Utility
     {
         public const float PARCEL_SIZE = 16.0f;
 
+        // cache
+        private static readonly List<Vector2Int> results = new ();
+
         public static Vector3 GetPositionByParcelPosition(Vector2Int parcelPosition) =>
             new Vector3(parcelPosition.x * PARCEL_SIZE, 0.0f, -parcelPosition.y * PARCEL_SIZE);
 
@@ -21,7 +24,7 @@ namespace Utility
             Vector2Int minParcel = Vector2Int.FloorToInt(minPoint / 16.0f);
             Vector2Int maxParcel = Vector2Int.CeilToInt(maxPoint / 16.0f);
 
-            List<Vector2Int> results = new List<Vector2Int>();
+            results.Clear();
 
             for (int parcelX = minParcel.x; parcelX < maxParcel.x; ++parcelX)
             {

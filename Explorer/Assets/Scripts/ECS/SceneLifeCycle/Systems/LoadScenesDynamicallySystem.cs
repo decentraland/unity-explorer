@@ -26,6 +26,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         // cache
         private readonly List<IpfsTypes.SceneEntityDefinition> retrievedScenes = new();
+        private readonly List<Vector2Int> parcelsToLoad = new();
 
         public LoadScenesDynamicallySystem(World world, IIpfsRealm ipfsRealm, SceneLifeCycleState state, [CanBeNull] List<Vector2Int> staticParcelsToLoad = null) : base(world)
         {
@@ -42,7 +43,7 @@ namespace ECS.SceneLifeCycle.Systems
                 // If we don't have a pointer request, we check the parcels in range, filter the parcels that are not loaded, and we create the request
                 var position = World.Get<TransformComponent>(state.PlayerEntity).Transform.position;
 
-                List<Vector2Int> parcelsToLoad = new List<Vector2Int>();
+                parcelsToLoad.Clear();
                 var parcelsInRange = staticParcelsToLoad ?? ParcelMathHelper.ParcelsInRange(position, state.SceneLoadRadius);
 
                 foreach (var parcel in parcelsInRange)

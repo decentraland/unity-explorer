@@ -6,12 +6,9 @@ using Cysharp.Threading.Tasks;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.Components;
 using Ipfs;
-using Newtonsoft.Json;
 using SceneRunner;
 using System;
-using System.Linq;
 using System.Threading;
-using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -56,7 +53,6 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        [All(typeof(SceneLoadingComponent))]
         private void ProcessSceneToLoad(in Entity entity, ref SceneLoadingComponent sceneLoadingComponent)
         {
             // If the scene just spawned, we start the request
@@ -73,7 +69,6 @@ namespace ECS.SceneLifeCycle.Systems
             sceneLoadingComponent.Request = InitializeSceneAndStart(sceneLoadingComponent.Definition, sceneLoadingComponent.CancellationTokenSource.Token);
 
             World.Remove<SceneLoadingComponent>(entity);
-            Debug.Log("Spawned Scene: " + JsonConvert.SerializeObject(sceneLoadingComponent));
         }
     }
 }

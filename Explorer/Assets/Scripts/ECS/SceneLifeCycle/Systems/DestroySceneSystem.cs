@@ -20,7 +20,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        [All(typeof(DeleteSceneIntention), typeof(LiveSceneComponent))]
+        [All(typeof(DeleteSceneIntention))]
         private void DestroyLiveScene(in Entity entity, ref LiveSceneComponent liveSceneComponent)
         {
             liveSceneComponent.CancellationTokenSource.Cancel();
@@ -28,7 +28,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        [All(typeof(DeleteSceneIntention), typeof(SceneLoadingComponent))]
+        [All(typeof(DeleteSceneIntention))]
         private void DestroyLoadingScene(in Entity entity, ref SceneLoadingComponent sceneLoadingComponent)
         {
             sceneLoadingComponent.CancellationTokenSource.Cancel();

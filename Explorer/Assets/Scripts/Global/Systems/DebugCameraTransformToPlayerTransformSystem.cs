@@ -10,25 +10,27 @@ namespace ECS.Global.Systems
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     public partial class DebugCameraTransformToPlayerTransformSystem : BaseUnityLoopSystem
     {
-        private World world;
-
         private Entity playerEntity;
 
         private Camera unityCamera;
 
         public DebugCameraTransformToPlayerTransformSystem(World world, Entity playerEntity, Camera unityCamera) : base(world)
         {
-            this.world = world;
             this.playerEntity = playerEntity;
             this.unityCamera = unityCamera;
         }
 
+        public override void Initialize()
+        {
+            World.Set(playerEntity, new TransformComponent()
+            {
+                Transform = unityCamera.transform,
+            });
+        }
+
         protected override void Update(float t)
         {
-            world.Set(playerEntity, new TransformComponent()
-            {
-                Transform = unityCamera.transform
-            });
+            World.Get<TransformComponent>(playerEntity).Transform = unityCamera.transform;
         }
     }
 }
