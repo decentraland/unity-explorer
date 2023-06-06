@@ -61,7 +61,7 @@ namespace SceneRunner
                 main = mainScenePath,
             };
 
-            var sceneData = new SceneData(new IpfsRealm(baseUrl), sceneDefinition, false);
+            var sceneData = new SceneData(new IpfsRealm(baseUrl, baseUrl), sceneDefinition, false);
 
             return await CreateScene(sceneData, ct);
         }
@@ -85,7 +85,7 @@ namespace SceneRunner
                     metadata = sceneMetadata,
                 };
 
-            var sceneData = new SceneData(new IpfsRealm(fullPath), sceneDefinition, false);
+            var sceneData = new SceneData(new IpfsRealm(fullPath, fullPath), sceneDefinition, false);
 
             return await CreateScene(sceneData, ct);
         }

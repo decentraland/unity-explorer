@@ -24,6 +24,12 @@ namespace Ipfs
             ContentBaseUrl = CatalystBaseUrl + "content/";
         }
 
+        public IpfsRealm(string catalystBaseUrl, string contentBaseUrl)
+        {
+            CatalystBaseUrl = catalystBaseUrl;
+            ContentBaseUrl = contentBaseUrl;
+        }
+
         public UnityWebRequestAsyncOperation RequestActiveEntitiesByPointers(List<Vector2Int> pointers)
         {
             StringBuilder bodyBuilder = new StringBuilder("{\"pointers\":[");

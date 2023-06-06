@@ -10,6 +10,7 @@ using JetBrains.Annotations;
 using SceneRunner;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 namespace Global
@@ -23,6 +24,8 @@ namespace Global
         private SystemGroupWorld worldSystems;
 
         private World world;
+
+        private readonly CancellationTokenSource destroyCancellationSource = new ();
 
         public void Initialize(ISceneFactory sceneFactory, Camera unityCamera, int sceneLoadRadius, [CanBeNull] List<Vector2Int> staticLoadPositions = null)
         {
@@ -39,7 +42,7 @@ namespace Global
 
             LoadScenesDynamicallySystem.InjectToWorld(ref builder, ipfsRealm, state, staticLoadPositions);
             LoadSceneSystem.InjectToWorld(ref builder, state);
-            StartSceneSystem.InjectToWorld(ref builder, ipfsRealm, sceneFactory);
+            StartSceneSystem.InjectToWorld(ref builder, ipfsRealm, sceneFactory, destroyCancellationSource.Token);
             DestroySceneSystem.InjectToWorld(ref builder);
 
             DebugCameraTransformToPlayerTransformSystem.InjectToWorld(ref builder, state.PlayerEntity, unityCamera);
@@ -51,6 +54,7 @@ namespace Global
 
         public void Dispose()
         {
+            destroyCancellationSource.Cancel();
             worldSystems.Dispose();
             world.Dispose();
         }

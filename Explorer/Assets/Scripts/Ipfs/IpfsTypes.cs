@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -31,6 +32,10 @@ public static class IpfsTypes
         public string baseParcel;
 
         public List<string> parcels;
+
+        public List<string> requiredPermissions;
+
+        public List<string> allowedMediaHostnames;
     }
 
     public class SceneMetadata

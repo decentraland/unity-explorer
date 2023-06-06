@@ -49,16 +49,16 @@ namespace SceneRunner.Scene
 
         public bool HasRequiredPermission(string permission)
         {
-            return true;
+            if (sceneDefinition.metadata.scene.requiredPermissions == null)
+                return false;
 
-            // TODO: Implement
-            /*for (var i = 0; i < sceneData.RequiredPermissions.Count; i++)
+            foreach (string requiredPermission in sceneDefinition.metadata.scene.requiredPermissions)
             {
-                if (sceneData.RequiredPermissions[i] == permission)
+                if (requiredPermission == permission)
                     return true;
             }
 
-            return false;*/
+            return false;
         }
 
         public bool TryGetMainScriptUrl(out string result) =>
@@ -80,7 +80,7 @@ namespace SceneRunner.Scene
                 return false;
             }
 
-            result = ipfsRealm.ContentBaseUrl + "contents/" + url;
+            result = ipfsRealm.ContentBaseUrl + url;
             return true;
         }
 
@@ -108,19 +108,16 @@ namespace SceneRunner.Scene
 
         public bool IsUrlDomainAllowed(string url)
         {
-            return true;
-
-            // TODO: Implement
-            /*if (Uri.TryCreate(url, UriKind.Absolute, out Uri uri))
+            if (Uri.TryCreate(url, UriKind.Absolute, out Uri uri))
             {
-                for (var i = 0; i < sceneData.AllowedMediaHostnames.Count; i++)
+                foreach (string allowedMediaHostname in sceneDefinition.metadata.scene.allowedMediaHostnames)
                 {
-                    if (string.Equals(sceneData.AllowedMediaHostnames[i], uri.Host, StringComparison.CurrentCultureIgnoreCase))
+                    if (string.Equals(allowedMediaHostname, uri.Host, StringComparison.CurrentCultureIgnoreCase))
                         return true;
                 }
             }
 
-            return false;*/
+            return false;
         }
     }
 }

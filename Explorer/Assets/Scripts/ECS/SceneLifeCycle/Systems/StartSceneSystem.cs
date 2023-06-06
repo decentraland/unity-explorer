@@ -8,6 +8,7 @@ using ECS.SceneLifeCycle.Components;
 using Ipfs;
 using Newtonsoft.Json;
 using SceneRunner;
+using System;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
@@ -22,10 +23,13 @@ namespace ECS.SceneLifeCycle.Systems
 
         private readonly IIpfsRealm ipfsRealm;
 
-        public StartSceneSystem(World world, IIpfsRealm ipfsRealm, ISceneFactory sceneFactory) : base(world)
+        private readonly CancellationToken destroyCancellationToken;
+
+        public StartSceneSystem(World world, IIpfsRealm ipfsRealm, ISceneFactory sceneFactory, CancellationToken destroyCancellationToken) : base(world)
         {
             this.sceneFactory = sceneFactory;
             this.ipfsRealm = ipfsRealm;
+            this.destroyCancellationToken = destroyCancellationToken;
         }
 
         protected override void Update(float t)
@@ -38,10 +42,14 @@ namespace ECS.SceneLifeCycle.Systems
             // main thread
             var sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(ipfsRealm, sceneDefinition, ct);
 
-            ct.RegisterWithoutCaptureExecutionContext(() =>
+            var disposeScene = new Action(() =>
             {
                 sceneFacade?.DisposeAsync();
             });
+
+            ct.RegisterWithoutCaptureExecutionContext(disposeScene);
+
+            destroyCancellationToken.RegisterWithoutCaptureExecutionContext(disposeScene);
 
             // thread pool
             await sceneFacade.StartUpdateLoop(30, ct);
