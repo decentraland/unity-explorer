@@ -14,5 +14,10 @@ namespace SceneRuntime.Apis.Modules
 
         /// <returns>The full serialized CRDT State, A contiguous byte array of the CRDT Message</returns>
         public byte[] CrdtGetState();
+
+        /// <summary>
+        ///     Prevents handling messages while the scene runtime is being disposed
+        /// </summary>
+        void SetIsDisposing();
     }
 }

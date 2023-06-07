@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using Ipfs;
 using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;
@@ -33,5 +34,13 @@ namespace SceneRunner
         /// <returns></returns>
         UniTask<ISceneFacade> CreateSceneFromStreamingAssets(string fileName, CancellationToken ct) =>
             CreateScene($"file://{Application.streamingAssetsPath}/Scenes/{fileName}.js", ct);
+
+        /// <summary>
+        ///     Creates a scene from the EntityDefinition
+        /// </summary>
+        /// <param name="sceneDefinition">EntityDefinition provided by the ContentServer</param>
+        /// <param name="ct"></param>
+        /// <returns>Scene Facade on the background thread</returns>
+        UniTask<ISceneFacade> CreateSceneFromSceneDefinition(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, CancellationToken ct);
     }
 }

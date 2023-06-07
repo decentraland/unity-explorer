@@ -7,6 +7,7 @@ using ECS.Unity.Materials.Systems;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 
 namespace SceneRunner.ECSWorld.Plugins
 {
@@ -30,8 +31,8 @@ namespace SceneRunner.ECSWorld.Plugins
             Material basicMatReference = Resources.Load<Material>(CreateBasicMaterialSystem.MATERIAL_PATH);
             Material pbrMaterialReference = Resources.Load<Material>(CreatePBRMaterialSystem.MATERIAL_PATH);
 
-            basicMatPool = new ObjectPool<Material>(() => new Material(basicMatReference), actionOnDestroy: Object.Destroy, defaultCapacity: POOL_INITIAL_CAPACITY, maxSize: POOL_MAX_SIZE);
-            pbrMatPool = new ObjectPool<Material>(() => new Material(pbrMaterialReference), actionOnDestroy: Object.Destroy, defaultCapacity: POOL_INITIAL_CAPACITY, maxSize: POOL_MAX_SIZE);
+            basicMatPool = new ObjectPool<Material>(() => new Material(basicMatReference), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: POOL_INITIAL_CAPACITY, maxSize: POOL_MAX_SIZE);
+            pbrMatPool = new ObjectPool<Material>(() => new Material(pbrMaterialReference), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: POOL_INITIAL_CAPACITY, maxSize: POOL_MAX_SIZE);
 
             destroyMaterial = (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); };
 
@@ -40,7 +41,7 @@ namespace SceneRunner.ECSWorld.Plugins
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            StartMaterialsLoadingSystem.InjectToWorld(ref builder, destroyMaterial, sharedDependencies.ContentProvider);
+            StartMaterialsLoadingSystem.InjectToWorld(ref builder, destroyMaterial, sharedDependencies.SceneData);
 
             // the idea with cache didn't work out: the CPU pressure is too high and benefits are not clear
             // consider revising when and if needed

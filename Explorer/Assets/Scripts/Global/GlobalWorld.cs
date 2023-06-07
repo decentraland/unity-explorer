@@ -1,0 +1,62 @@
+using Arch.Core;
+using Arch.SystemGroups;
+using CrdtEcsBridge.Components.Special;
+using ECS.Global.Systems;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Systems;
+using ECS.Unity.Transforms.Components;
+using Ipfs;
+using JetBrains.Annotations;
+using SceneRunner;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using UnityEngine;
+
+namespace Global
+{
+    public class GlobalWorld : IDisposable
+    {
+        private SceneLifeCycleState state;
+
+        private IIpfsRealm ipfsRealm;
+
+        private SystemGroupWorld worldSystems;
+
+        private World world;
+
+        private readonly CancellationTokenSource destroyCancellationSource = new ();
+
+        public void Initialize(ISceneFactory sceneFactory, Camera unityCamera, int sceneLoadRadius, [CanBeNull] List<Vector2Int> staticLoadPositions = null)
+        {
+            ipfsRealm = new IpfsRealm("https://sdk-test-scenes.decentraland.zone/");
+            world = World.Create();
+
+            var builder = new ArchSystemsWorldBuilder<World>(world);
+
+            state = new SceneLifeCycleState()
+            {
+                PlayerEntity = world.Create(new PlayerComponent(), new TransformComponent()),
+                SceneLoadRadius = sceneLoadRadius,
+            };
+
+            LoadScenesDynamicallySystem.InjectToWorld(ref builder, ipfsRealm, state, staticLoadPositions);
+            LoadSceneSystem.InjectToWorld(ref builder, state);
+            StartSceneSystem.InjectToWorld(ref builder, ipfsRealm, sceneFactory, destroyCancellationSource.Token);
+            DestroySceneSystem.InjectToWorld(ref builder);
+
+            DebugCameraTransformToPlayerTransformSystem.InjectToWorld(ref builder, state.PlayerEntity, unityCamera);
+
+            worldSystems = builder.Finish();
+            worldSystems.Initialize();
+
+        }
+
+        public void Dispose()
+        {
+            destroyCancellationSource.Cancel();
+            worldSystems.Dispose();
+            world.Dispose();
+        }
+    }
+}
