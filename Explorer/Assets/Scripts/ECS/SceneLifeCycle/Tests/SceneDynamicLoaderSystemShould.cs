@@ -53,11 +53,10 @@ namespace ECS.SceneLifeCycle.Systems.Tests
         public async Task LoadScenePointers() {
             // should start the WebRequest
             system.Update(0.0f);
-            Assert.IsTrue(system.pointerRequest.HasValue);
-            var (request, _) = system.pointerRequest.Value;
+            Assert.IsNotNull(system.pointerRequest);
 
             // wait until the request is done
-            await request;
+            await system.pointerRequest;
 
             // should process the WebRequest, and load the scenes
             system.Update(0.0f);

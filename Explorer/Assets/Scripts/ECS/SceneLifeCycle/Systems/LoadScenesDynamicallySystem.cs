@@ -22,11 +22,10 @@ namespace ECS.SceneLifeCycle.Systems
 
         internal readonly SceneLifeCycleState state;
 
-        internal (UnityWebRequestAsyncOperation, List<Vector2Int>)? pointerRequest;
+        private readonly List<Vector2Int> parcelsToLoad = new ();
 
         // cache
-        private readonly List<IpfsTypes.SceneEntityDefinition> retrievedScenes = new();
-        private readonly List<Vector2Int> parcelsToLoad = new();
+        private readonly List<IpfsTypes.SceneEntityDefinition> retrievedScenes = new ();
 
         public LoadScenesDynamicallySystem(World world, IIpfsRealm ipfsRealm, SceneLifeCycleState state, [CanBeNull] List<Vector2Int> staticParcelsToLoad = null) : base(world)
         {
@@ -35,10 +34,12 @@ namespace ECS.SceneLifeCycle.Systems
             this.staticParcelsToLoad = staticParcelsToLoad;
         }
 
+        internal UnityWebRequestAsyncOperation pointerRequest { get; private set; }
+
         protected override void Update(float dt)
         {
             // TODO: Drop web request on realm change
-            if (!pointerRequest.HasValue)
+            if (pointerRequest == null)
             {
                 // If we don't have a pointer request, we check the parcels in range, filter the parcels that are not loaded, and we create the request
                 var position = World.Get<TransformComponent>(state.PlayerEntity).Transform.position;
@@ -47,35 +48,33 @@ namespace ECS.SceneLifeCycle.Systems
                 var parcelsInRange = staticParcelsToLoad ?? ParcelMathHelper.ParcelsInRange(position, state.SceneLoadRadius);
 
                 foreach (var parcel in parcelsInRange)
-                {
-                    if (!state.ScenePointers.ContainsKey(parcel)) { parcelsToLoad.Add(parcel); }
-                }
+                    if (!state.ScenePointers.ContainsKey(parcel)) parcelsToLoad.Add(parcel);
 
                 if (parcelsToLoad.Count > 0)
-                    pointerRequest = (ipfsRealm.RequestActiveEntitiesByPointers(parcelsToLoad), parcelsToLoad);
+                    pointerRequest = ipfsRealm.RequestActiveEntitiesByPointers(parcelsToLoad);
             }
-            else if (pointerRequest.Value.Item1.isDone)
+            else if (pointerRequest.isDone)
             {
-                var (request, requestedParcels) = pointerRequest.Value;
-                JsonConvert.PopulateObject(request.webRequest.downloadHandler.text, retrievedScenes);
+                JsonConvert.PopulateObject(pointerRequest.webRequest.downloadHandler.text, retrievedScenes);
 
-                Debug.Log($"loading {retrievedScenes.Count} scenes from {requestedParcels.Count} parcels ({JsonConvert.SerializeObject(requestedParcels)})");
+                Debug.Log($"loading {retrievedScenes.Count} scenes from {parcelsToLoad.Count} parcels ({JsonConvert.SerializeObject(parcelsToLoad)})");
 
                 foreach (var scene in retrievedScenes)
                 {
                     foreach (var encodedPointer in scene.pointers)
                     {
                         Vector2Int pointer = IpfsHelper.DecodePointer(encodedPointer);
-                        requestedParcels.Remove(pointer);
+                        parcelsToLoad.Remove(pointer);
                         state.ScenePointers.TryAdd(pointer, scene);
                     }
                 }
 
                 // load empty parcels!
-                foreach (var emptyParcel in requestedParcels) { state.ScenePointers.Add(emptyParcel, new IpfsTypes.SceneEntityDefinition()
-                {
-                    id = $"empty-parcel-{emptyParcel.x}-{emptyParcel.y}"
-                }); }
+                foreach (var emptyParcel in parcelsToLoad)
+                    state.ScenePointers.Add(emptyParcel, new IpfsTypes.SceneEntityDefinition()
+                    {
+                        id = $"empty-parcel-{emptyParcel.x}-{emptyParcel.y}"
+                    });
 
                 pointerRequest = null;
             }
