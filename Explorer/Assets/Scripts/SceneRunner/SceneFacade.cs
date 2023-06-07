@@ -133,7 +133,7 @@ namespace SceneRunner
             runtimeInstance.SetIsDisposing();
 
             await completionSource.Task.SuppressCancellationThrow();
-            await UniTask.Yield(PlayerLoopTiming.Initialization);
+            await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
 
             runtimeInstance.Dispose();
             ecsWorldFacade.Dispose();
