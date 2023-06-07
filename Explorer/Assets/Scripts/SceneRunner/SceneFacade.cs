@@ -129,8 +129,11 @@ namespace SceneRunner
             // so just mark it as disposed and let the update loop handle the disposal
             Volatile.Write(ref disposed, true);
 
+            // TODO do it better
+            runtimeInstance.SetIsDisposing();
+
             await completionSource.Task.SuppressCancellationThrow();
-            await UniTask.SwitchToMainThread();
+            await UniTask.Yield(PlayerLoopTiming.Initialization);
 
             runtimeInstance.Dispose();
             ecsWorldFacade.Dispose();

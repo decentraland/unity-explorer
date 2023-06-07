@@ -68,6 +68,11 @@ namespace SceneRuntime
             engine.AddHostObject("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider));
         }
 
+        public void SetIsDisposing()
+        {
+            engineApi?.SetIsDisposing();
+        }
+
         public UniTask StartScene() =>
             startFunc.InvokeAsFunction().ToTask().AsUniTask(); // It must use the current synchronization context
 

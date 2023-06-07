@@ -33,6 +33,8 @@ namespace CrdtEcsBridge.Engine
         private readonly CustomSampler worldSyncBufferSampler;
         private readonly CustomSampler outgoingMessagesSampler;
 
+        private bool isDisposing;
+
         public EngineAPIImplementation(
             ISharedPoolsProvider poolsProvider,
             IInstancePoolsProvider instancePoolsProvider,
@@ -57,6 +59,9 @@ namespace CrdtEcsBridge.Engine
 
         public byte[] CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory)
         {
+            // TODO it's dirty, think how to do it better
+            if (isDisposing) return Array.Empty<byte>();
+
             // Called on the thread where the Scene Runtime is running (background thread)
 
             ReleaseSerializationBuffer();
@@ -138,6 +143,9 @@ namespace CrdtEcsBridge.Engine
 
         public byte[] CrdtGetState()
         {
+            // TODO it's dirty, think how to do it better
+            if (isDisposing) return Array.Empty<byte>();
+
             Profiler.BeginThreadProfiling("SceneRuntime", "CrtdGetState");
 
             // Invoked on the background thread
@@ -178,6 +186,11 @@ namespace CrdtEcsBridge.Engine
 
             // Return the buffer to the caller
             return lastSerializationBuffer;
+        }
+
+        public void SetIsDisposing()
+        {
+            isDisposing = true;
         }
 
         /// <summary>

@@ -8,7 +8,6 @@ using ECS.SceneLifeCycle.Components;
 using Ipfs;
 using SceneRunner;
 using SceneRunner.Scene;
-using System;
 using System.Threading;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -39,11 +38,7 @@ namespace ECS.SceneLifeCycle.Systems
             // main thread
             ISceneFacade sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(ipfsRealm, sceneDefinition, ct);
 
-            var disposeScene = new Action(() => { sceneFacade?.DisposeAsync(); });
-
-            ct.RegisterWithoutCaptureExecutionContext(disposeScene);
-
-            destroyCancellationToken.RegisterWithoutCaptureExecutionContext(disposeScene);
+            ct.RegisterWithoutCaptureExecutionContext(() => sceneFacade?.DisposeAsync().Forget());
 
             // thread pool
             await sceneFacade.StartUpdateLoop(30, ct);
@@ -53,7 +48,7 @@ namespace ECS.SceneLifeCycle.Systems
         private void ProcessSceneToLoad(in Entity entity, ref SceneLoadingComponent sceneLoadingComponent)
         {
             // If the scene just spawned, we start the request
-            var cts = new CancellationTokenSource();
+            var cts = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
 
             var liveSceneComponent = new LiveSceneComponent
             {
