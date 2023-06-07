@@ -50,6 +50,11 @@ namespace SceneRuntime.Apis.Modules
         public byte[] CrdtGetState() =>
             api.CrdtGetState();
 
+        public void SetIsDisposing()
+        {
+            api.SetIsDisposing();
+        }
+
         public void Dispose()
         {
             // Dispose the last input buffer

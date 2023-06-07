@@ -27,7 +27,7 @@ namespace ECS.Unity.Materials.Tests
         private static string tex2 => $"file://{Application.dataPath + "/../TestResources/Images/atlas.png"}";
         private static string tex3 => $"file://{Application.dataPath + "/../TestResources/Images/Gradient A4.png"}";
 
-        private ISceneContentProvider sceneContentProvider;
+        private ISceneData sceneData;
         private DestroyMaterial destroyMaterial;
 
         [SetUp]
@@ -35,9 +35,9 @@ namespace ECS.Unity.Materials.Tests
         {
             system = new StartMaterialsLoadingSystem(world,
                 destroyMaterial = Substitute.For<DestroyMaterial>(),
-                sceneContentProvider = Substitute.For<ISceneContentProvider>());
+                sceneData = Substitute.For<ISceneData>());
 
-            sceneContentProvider.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<string>())
+            sceneData.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<string>())
                                 .Returns(c =>
                                  {
                                      c[1] = c.ArgAt<string>(0);

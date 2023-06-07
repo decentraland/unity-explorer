@@ -7,7 +7,7 @@ namespace Global
     /// <summary>
     /// An entry point to install and resolve all dependencies
     /// </summary>
-    public class EntryPoint : MonoBehaviour
+    public class StaticSceneLauncher : MonoBehaviour
     {
         [SerializeField] private SceneLauncher sceneLauncher;
 
@@ -24,10 +24,9 @@ namespace Global
         {
             sceneLauncher.Initialize(SceneSharedContainer, destroyCancellationToken);
         }
-
         public static SceneSharedContainer Install()
         {
-            Profiler.BeginSample($"{nameof(EntryPoint)}.Install");
+            Profiler.BeginSample($"{nameof(DynamicSceneLoader)}.Install");
 
             var componentsContainer = ComponentsContainer.Create();
             var sceneSharedContainer = SceneSharedContainer.Create(componentsContainer);

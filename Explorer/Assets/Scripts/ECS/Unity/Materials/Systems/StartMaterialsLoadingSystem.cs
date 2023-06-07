@@ -19,12 +19,12 @@ namespace ECS.Unity.Materials.Systems
     public partial class StartMaterialsLoadingSystem : BaseUnityLoopSystem
     {
         private readonly DestroyMaterial destroyMaterial;
-        private readonly ISceneContentProvider sceneContentProvider;
+        private readonly ISceneData sceneData;
 
-        public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneContentProvider sceneContentProvider) : base(world)
+        public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData) : base(world)
         {
             this.destroyMaterial = destroyMaterial;
-            this.sceneContentProvider = sceneContentProvider;
+            this.sceneData = sceneData;
         }
 
         protected override void Update(float t)
@@ -69,13 +69,13 @@ namespace ECS.Unity.Materials.Systems
         {
             // TODO Video Textures
 
-            TextureComponent? albedoTexture = (material.Pbr?.Texture ?? material.Unlit?.Texture).CreateTextureComponent(sceneContentProvider);
+            TextureComponent? albedoTexture = (material.Pbr?.Texture ?? material.Unlit?.Texture).CreateTextureComponent(sceneData);
 
             if (material.Pbr != null)
             {
-                TextureComponent? alphaTexture = material.Pbr.AlphaTexture.CreateTextureComponent(sceneContentProvider);
-                TextureComponent? emissiveTexture = material.Pbr.EmissiveTexture.CreateTextureComponent(sceneContentProvider);
-                TextureComponent? bumpTexture = material.Pbr.BumpTexture.CreateTextureComponent(sceneContentProvider);
+                TextureComponent? alphaTexture = material.Pbr.AlphaTexture.CreateTextureComponent(sceneData);
+                TextureComponent? emissiveTexture = material.Pbr.EmissiveTexture.CreateTextureComponent(sceneData);
+                TextureComponent? bumpTexture = material.Pbr.BumpTexture.CreateTextureComponent(sceneData);
 
                 return CreatePBRMaterialData(material, albedoTexture, alphaTexture, emissiveTexture, bumpTexture);
             }

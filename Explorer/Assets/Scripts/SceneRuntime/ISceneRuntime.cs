@@ -1,7 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using SceneRuntime.Apis.Modules;
 using System;
-using System.Threading.Tasks;
 
 namespace SceneRuntime
 {
@@ -12,5 +11,7 @@ namespace SceneRuntime
         UniTask StartScene();
 
         UniTask UpdateScene(float dt);
+
+        void SetIsDisposing();
     }
 }

@@ -6,13 +6,13 @@ namespace SceneRunner.Scene
     public interface ISceneFacade : IUniTaskAsyncDisposable
     {
         /// <summary>
-        /// Start an update loop with a given FPS
+        ///     Start an update loop with a given FPS
         /// </summary>
         UniTask StartUpdateLoop(int targetFPS, CancellationToken ct);
 
         /// <summary>
-        /// Change the target fps while the scene is running.
-        /// It will take effect right after the next update
+        ///     Change the target fps while the scene is running.
+        ///     It will take effect right after the next update
         /// </summary>
         /// <param name="fps">Target FPS</param>
         void SetTargetFPS(int fps);

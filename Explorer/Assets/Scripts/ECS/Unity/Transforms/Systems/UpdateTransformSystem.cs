@@ -27,8 +27,8 @@ namespace ECS.Unity.Transforms.Systems
             if (sdkTransform.IsDirty)
             {
                 Transform unityTransform = transformComponent.Transform;
-                unityTransform.position = sdkTransform.Position;
-                unityTransform.rotation = sdkTransform.Rotation;
+                unityTransform.localPosition = sdkTransform.Position;
+                unityTransform.localRotation = sdkTransform.Rotation;
                 unityTransform.localScale = sdkTransform.Scale;
                 sdkTransform.IsDirty = false;
             }

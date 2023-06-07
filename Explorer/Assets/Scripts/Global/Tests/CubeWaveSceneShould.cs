@@ -70,7 +70,7 @@ namespace Global.Editor
         [SetUp]
         public void SetUp()
         {
-            sceneSharedContainer = EntryPoint.Install();
+            sceneSharedContainer = StaticSceneLauncher.Install();
         }
 
         [Test]

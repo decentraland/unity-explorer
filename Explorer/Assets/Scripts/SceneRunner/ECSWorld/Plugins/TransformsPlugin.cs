@@ -8,6 +8,7 @@ using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 
 namespace SceneRunner.ECSWorld.Plugins
 {
@@ -25,7 +26,13 @@ namespace SceneRunner.ECSWorld.Plugins
             // We create the scene root transform
             Transform sceneRootTransform = componentPoolsRegistry.GetReferenceTypePool<Transform>().Get();
             sceneRootTransform.transform.SetParent(null);
-            sceneRootTransform.name = $"SCENE_ROOT_{sharedDependencies.ContentProvider.SceneName}";
+
+            var basePosition = ParcelMathHelper.GetPositionByParcelPosition(sharedDependencies.SceneData.BaseParcel);
+            sceneRootTransform.transform.position = basePosition;
+            sceneRootTransform.transform.rotation = Quaternion.identity;
+            sceneRootTransform.transform.localScale = Vector3.one;
+
+            sceneRootTransform.name = $"SCENE_ROOT_{sharedDependencies.SceneData.SceneName}";
             Entity rootTransformEntity = builder.World.Create(new TransformComponent(sceneRootTransform));
 
             UpdateTransformSystem.InjectToWorld(ref builder);

@@ -1,0 +1,22 @@
+{
+    "name": "ECS.SceneLifeCycle",
+    "rootNamespace": "",
+    "references": [
+        "ECS",
+        "ECS.Unity",
+        "UniTask",
+        "Ipfs",
+        "SceneRunner",
+        "SceneRunner.Scene",
+        "Utility"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
