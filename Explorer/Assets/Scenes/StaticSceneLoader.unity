@@ -175,6 +175,7 @@ MonoBehaviour:
     - Smoke
     - primitives-wave
     - cube-wave-32x32-colored
+    - cube-wave-16x16-visibility
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0

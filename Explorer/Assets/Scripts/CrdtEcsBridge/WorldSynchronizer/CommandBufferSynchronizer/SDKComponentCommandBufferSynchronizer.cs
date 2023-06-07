@@ -2,6 +2,7 @@ using Arch.CommandBuffer;
 using Arch.Core;
 using CRDT.Protocol;
 using ECS.ComponentsPooling;
+using ECS.LifeCycle.Components;
 using JetBrains.Annotations;
 
 namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
@@ -43,6 +44,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
                     // if component is deleted return to the pool the existing one
                     componentPool.Release(world.Get<T>(entity));
                     commandBuffer.Remove<T>(entity);
+                    world.Get<RemovedComponents>(entity).RemovedComponentsSet.Add(typeof(T));
                     break;
             }
         }

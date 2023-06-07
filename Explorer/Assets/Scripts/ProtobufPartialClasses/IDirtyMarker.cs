@@ -5,6 +5,11 @@ namespace DCL.ECSComponents
         bool IsDirty { get; set; }
     }
 
+    public partial class PBVisibilityComponent : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
     public partial class PBGltfContainer : IDirtyMarker
     {
         public bool IsDirty { get; set; }

@@ -3,6 +3,7 @@ using Arch.Core;
 using CRDT.Protocol;
 using CrdtEcsBridge.WorldSynchronizer.CommandBuffer;
 using ECS.ComponentsPooling;
+using ECS.LifeCycle.Components;
 using NSubstitute;
 using NUnit.Framework;
 
@@ -60,7 +61,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer.Tests
         [Test]
         public void ApplyDeletedComponent()
         {
-            entity = world.Create(new TestComponent { Value = 100 });
+            entity = world.Create(new TestComponent { Value = 100 }, RemovedComponents.CreateDefault());
 
             commandBufferSynchronizer.Apply(world, commandBuffer, entity, CRDTReconciliationEffect.ComponentDeleted, null);
             commandBuffer.Playback();

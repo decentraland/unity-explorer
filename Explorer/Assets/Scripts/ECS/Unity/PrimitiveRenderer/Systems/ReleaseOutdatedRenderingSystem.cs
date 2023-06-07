@@ -48,7 +48,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
                 if (poolsRegistry.TryGetPool(rendererComponent.PrimitiveMesh.GetType(), out IComponentPool componentPool))
                     componentPool.Release(rendererComponent.PrimitiveMesh);
 
-                // it will be a signal to instantiate a new collider
+                // it will be a signal to instantiate a new renderer
                 rendererComponent.PrimitiveMesh = null;
             }
         }

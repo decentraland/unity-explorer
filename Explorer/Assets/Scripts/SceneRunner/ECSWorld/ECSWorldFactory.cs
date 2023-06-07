@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using ECS.ComponentsPooling;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
+using ECS.LifeCycle.Systems;
 using SceneRunner.ECSWorld.Plugins;
 using System.Collections.Generic;
 
@@ -35,6 +36,7 @@ namespace SceneRunner.ECSWorld
                 worldPlugin.InjectToWorld(ref builder, in sharedDependencies, finalizeWorldSystems);
 
             finalizeWorldSystems.Add(ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry));
+            finalizeWorldSystems.Add(ReleaseRemovedComponentsSystem.InjectToWorld(ref builder));
 
             // Add other systems here
             var systemsWorld = builder.Finish();
