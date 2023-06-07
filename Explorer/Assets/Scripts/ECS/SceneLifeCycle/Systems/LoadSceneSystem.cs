@@ -5,7 +5,6 @@ using ECS.Abstract;
 using ECS.SceneLifeCycle.Components;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using Utility;
 
@@ -15,6 +14,8 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateAfter(typeof(LoadScenesDynamicallySystem))]
     public partial class LoadSceneSystem : BaseUnityLoopSystem
     {
+        private readonly List<string> deleteLiveScenesKeys = new ();
+
         // cache
         private readonly HashSet<IpfsTypes.SceneEntityDefinition> requiredScenes = new ();
         private readonly SceneLifeCycleState state;
@@ -40,9 +41,8 @@ namespace ECS.SceneLifeCycle.Systems
             }
 
             // remove scenes that are not required
-            foreach (string id in state.LiveScenes.Keys.ToList())
+            foreach ((string id, Entity entity) in state.LiveScenes)
             {
-                Entity entity = state.LiveScenes[id];
                 var add = true;
 
                 foreach (IpfsTypes.SceneEntityDefinition definition in requiredScenes)
@@ -53,9 +53,13 @@ namespace ECS.SceneLifeCycle.Systems
                 if (add)
                 {
                     World.Add<DeleteSceneIntention>(entity);
-                    state.LiveScenes.Remove(id);
+                    deleteLiveScenesKeys.Add(id);
                 }
             }
+
+            foreach (string key in deleteLiveScenesKeys) { state.LiveScenes.Remove(key); }
+
+            deleteLiveScenesKeys.Clear();
 
             // create scenes that not exists
             foreach (IpfsTypes.SceneEntityDefinition definition in requiredScenes)
