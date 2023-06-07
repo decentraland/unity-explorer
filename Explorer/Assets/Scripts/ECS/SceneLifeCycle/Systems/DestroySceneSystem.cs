@@ -31,7 +31,6 @@ namespace ECS.SceneLifeCycle.Systems
         [All(typeof(DeleteSceneIntention))]
         private void DestroyLoadingScene(in Entity entity, ref SceneLoadingComponent sceneLoadingComponent)
         {
-            sceneLoadingComponent.CancellationTokenSource.Cancel();
             World.Destroy(entity);
         }
     }

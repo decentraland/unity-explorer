@@ -42,10 +42,10 @@ namespace ECS.SceneLifeCycle.Systems
             if (pointerRequest == null)
             {
                 // If we don't have a pointer request, we check the parcels in range, filter the parcels that are not loaded, and we create the request
-                var position = World.Get<TransformComponent>(state.PlayerEntity).Transform.position;
+                Vector3 position = World.Get<TransformComponent>(state.PlayerEntity).Transform.position;
 
                 parcelsToLoad.Clear();
-                var parcelsInRange = staticParcelsToLoad ?? ParcelMathHelper.ParcelsInRange(position, state.SceneLoadRadius);
+                List<Vector2Int> parcelsInRange = staticParcelsToLoad ?? ParcelMathHelper.ParcelsInRange(position, state.SceneLoadRadius);
 
                 foreach (var parcel in parcelsInRange)
                     if (!state.ScenePointers.ContainsKey(parcel)) parcelsToLoad.Add(parcel);
@@ -57,11 +57,11 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 JsonConvert.PopulateObject(pointerRequest.webRequest.downloadHandler.text, retrievedScenes);
 
-                Debug.Log($"loading {retrievedScenes.Count} scenes from {parcelsToLoad.Count} parcels ({JsonConvert.SerializeObject(parcelsToLoad)})");
+                Debug.Log($"loading {retrievedScenes.Count} scenes from {parcelsToLoad.Count} parcels");
 
-                foreach (var scene in retrievedScenes)
+                foreach (IpfsTypes.SceneEntityDefinition scene in retrievedScenes)
                 {
-                    foreach (var encodedPointer in scene.pointers)
+                    foreach (string encodedPointer in scene.pointers)
                     {
                         Vector2Int pointer = IpfsHelper.DecodePointer(encodedPointer);
                         parcelsToLoad.Remove(pointer);
@@ -70,11 +70,13 @@ namespace ECS.SceneLifeCycle.Systems
                 }
 
                 // load empty parcels!
-                foreach (var emptyParcel in parcelsToLoad)
-                    state.ScenePointers.Add(emptyParcel, new IpfsTypes.SceneEntityDefinition()
+                foreach (Vector2Int emptyParcel in requestedParcels)
+                {
+                    state.ScenePointers.Add(emptyParcel, new IpfsTypes.SceneEntityDefinition
                     {
-                        id = $"empty-parcel-{emptyParcel.x}-{emptyParcel.y}"
+                        id = $"empty-parcel-{emptyParcel.x}-{emptyParcel.y}",
                     });
+                }
 
                 pointerRequest = null;
             }

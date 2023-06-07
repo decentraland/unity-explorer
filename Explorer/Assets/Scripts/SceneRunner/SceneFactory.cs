@@ -25,12 +25,12 @@ namespace SceneRunner
 {
     public class SceneFactory : ISceneFactory
     {
-        private readonly IECSWorldFactory ecsWorldFactory;
-        private readonly SceneRuntimeFactory sceneRuntimeFactory;
-        private readonly ISharedPoolsProvider sharedPoolsProvider;
         private readonly ICRDTSerializer crdtSerializer;
-        private readonly ISDKComponentsRegistry sdkComponentsRegistry;
+        private readonly IECSWorldFactory ecsWorldFactory;
         private readonly IEntityFactory entityFactory;
+        private readonly SceneRuntimeFactory sceneRuntimeFactory;
+        private readonly ISDKComponentsRegistry sdkComponentsRegistry;
+        private readonly ISharedPoolsProvider sharedPoolsProvider;
 
         public SceneFactory(
             IECSWorldFactory ecsWorldFactory,
@@ -50,13 +50,13 @@ namespace SceneRunner
 
         public async UniTask<ISceneFacade> CreateScene(string jsCodeUrl, CancellationToken ct)
         {
-            IpfsTypes.SceneEntityDefinition sceneDefinition = new IpfsTypes.SceneEntityDefinition();
+            var sceneDefinition = new IpfsTypes.SceneEntityDefinition();
 
-            var lastSlash = jsCodeUrl.LastIndexOf("/", StringComparison.Ordinal);
-            var mainScenePath = jsCodeUrl.Substring(lastSlash + 1);
-            var baseUrl = jsCodeUrl.Substring(0, lastSlash + 1);
+            int lastSlash = jsCodeUrl.LastIndexOf("/", StringComparison.Ordinal);
+            string mainScenePath = jsCodeUrl.Substring(lastSlash + 1);
+            string baseUrl = jsCodeUrl.Substring(0, lastSlash + 1);
 
-            sceneDefinition.metadata = new IpfsTypes.SceneMetadata()
+            sceneDefinition.metadata = new IpfsTypes.SceneMetadata
             {
                 main = mainScenePath,
             };
@@ -79,11 +79,11 @@ namespace SceneRunner
 
             IpfsTypes.SceneMetadata sceneMetadata = JsonUtility.FromJson<IpfsTypes.SceneMetadata>(request.downloadHandler.text);
 
-            IpfsTypes.SceneEntityDefinition sceneDefinition = new IpfsTypes.SceneEntityDefinition
-                {
-                    id = directoryName,
-                    metadata = sceneMetadata,
-                };
+            var sceneDefinition = new IpfsTypes.SceneEntityDefinition
+            {
+                id = directoryName,
+                metadata = sceneMetadata,
+            };
 
             var sceneData = new SceneData(new IpfsRealm(fullPath, fullPath), sceneDefinition, false);
 
