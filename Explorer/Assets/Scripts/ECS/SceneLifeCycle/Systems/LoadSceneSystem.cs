@@ -5,6 +5,7 @@ using ECS.Abstract;
 using ECS.SceneLifeCycle.Components;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Utility;
 
@@ -33,11 +34,11 @@ namespace ECS.SceneLifeCycle.Systems
 
             Vector3 position = World.Get<TransformComponent>(state.PlayerEntity).Transform.position;
 
-            List<Vector2Int> parcelsInRange = ParcelMathHelper.ParcelsInRange(position, state.SceneLoadRadius);
+            var parcelsInRange = ParcelMathHelper.ParcelsInRange(position, state.SceneLoadRadius);
 
             foreach ((Vector2Int parcel, IpfsTypes.SceneEntityDefinition definition) in state.ScenePointers)
             {
-                if (parcelsInRange.Contains(parcel)) { requiredScenes.Add(definition); }
+                if (parcelsInRange.Contains(parcel)) requiredScenes.Add(definition);
             }
 
             // remove scenes that are not required
@@ -47,7 +48,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 foreach (IpfsTypes.SceneEntityDefinition definition in requiredScenes)
                 {
-                    if (definition.id == id) { add = false; }
+                    if (definition.id == id) add = false;
                 }
 
                 if (add)
@@ -57,7 +58,7 @@ namespace ECS.SceneLifeCycle.Systems
                 }
             }
 
-            foreach (string key in deleteLiveScenesKeys) { state.LiveScenes.Remove(key); }
+            foreach (string key in deleteLiveScenesKeys) state.LiveScenes.Remove(key);
 
             deleteLiveScenesKeys.Clear();
 

@@ -45,7 +45,7 @@ namespace ECS.SceneLifeCycle.Systems
                 Vector3 position = World.Get<TransformComponent>(state.PlayerEntity).Transform.position;
 
                 parcelsToLoad.Clear();
-                List<Vector2Int> parcelsInRange = staticParcelsToLoad ?? ParcelMathHelper.ParcelsInRange(position, state.SceneLoadRadius);
+                var parcelsInRange = staticParcelsToLoad ?? ParcelMathHelper.ParcelsInRange(position, state.SceneLoadRadius);
 
                 foreach (var parcel in parcelsInRange)
                     if (!state.ScenePointers.ContainsKey(parcel)) parcelsToLoad.Add(parcel);
@@ -70,7 +70,7 @@ namespace ECS.SceneLifeCycle.Systems
                 }
 
                 // load empty parcels!
-                foreach (Vector2Int emptyParcel in requestedParcels)
+                foreach (Vector2Int emptyParcel in parcelsToLoad)
                 {
                     state.ScenePointers.Add(emptyParcel, new IpfsTypes.SceneEntityDefinition
                     {

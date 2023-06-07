@@ -17,7 +17,7 @@ namespace ECS.SceneLifeCycle.Systems.Tests
             // Test from position 0
             {
                 Vector3 position = new Vector3(0.0f, 0.0f, 0.0f) + centerScene;
-                List<Vector2Int> parcels = ParcelMathHelper.ParcelsInRange(position, 1);
+                var parcels = ParcelMathHelper.ParcelsInRange(position, 1);
 
                 var expectedParcels = new List<Vector2Int>
                 {
@@ -38,7 +38,7 @@ namespace ECS.SceneLifeCycle.Systems.Tests
             // Test from position 0
             {
                 Vector3 position = (new Vector3(100.0f, 0.0f, -100.0f) * ParcelMathHelper.PARCEL_SIZE) + centerScene;
-                List<Vector2Int> parcels = ParcelMathHelper.ParcelsInRange(position, 2);
+                var parcels = ParcelMathHelper.ParcelsInRange(position, 2);
 
                 var expectedParcels = new List<Vector2Int>
                 {
