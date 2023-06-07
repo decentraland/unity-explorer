@@ -1,10 +1,9 @@
+using Arch.Core;
 using CrdtEcsBridge.Components.Special;
 using Cysharp.Threading.Tasks;
 using ECS.TestSuite;
-using ECS.Unity.Transforms.Components;
 using Ipfs;
 using NUnit.Framework;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -39,22 +38,26 @@ namespace ECS.SceneLifeCycle.Systems.Tests
         {
             var ipfsRealm = new TestIpfsRealm();
 
-            var playerEntity = world.Create(new PlayerComponent());
+            Entity playerEntity = world.Create(new PlayerComponent());
             AddTransformToEntity(playerEntity);
 
-            system = new LoadScenesDynamicallySystem(world, ipfsRealm, new SceneLifeCycleState()
+            system = new LoadScenesDynamicallySystem(world, ipfsRealm, new SceneLifeCycleState
             {
                 SceneLoadRadius = 2,
                 PlayerEntity = playerEntity,
             });
         }
 
+        [TearDown]
+        public void TearDown() { }
+
         [Test]
-        public async Task LoadScenePointers() {
+        public async Task LoadScenePointers()
+        {
             // should start the WebRequest
             system.Update(0.0f);
             Assert.IsTrue(system.pointerRequest.HasValue);
-            var (request, _) = system.pointerRequest.Value;
+            (UnityWebRequestAsyncOperation request, _) = system.pointerRequest.Value;
 
             // wait until the request is done
             await request;
@@ -66,20 +69,12 @@ namespace ECS.SceneLifeCycle.Systems.Tests
 
             HashSet<string> requiredScenes = new ();
 
-            foreach (var (_, sceneDefinition) in system.state.ScenePointers)
+            foreach ((var _, IpfsTypes.SceneEntityDefinition sceneDefinition) in system.state.ScenePointers)
             {
-                if (!sceneDefinition.id.StartsWith("empty-parcel"))
-                {
-                    requiredScenes.Add(sceneDefinition.id);
-                }
+                if (!sceneDefinition.id.StartsWith("empty-parcel")) { requiredScenes.Add(sceneDefinition.id); }
             }
 
             Assert.IsTrue(requiredScenes.Count == 3);
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
         }
     }
 }

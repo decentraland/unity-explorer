@@ -7,15 +7,16 @@ namespace Ipfs
 {
     public interface IIpfsRealm
     {
-        public UnityWebRequestAsyncOperation RequestActiveEntitiesByPointers(List<Vector2Int> pointers);
-
         public string CatalystBaseUrl { get; }
         public string ContentBaseUrl { get; }
+
+        public UnityWebRequestAsyncOperation RequestActiveEntitiesByPointers(List<Vector2Int> pointers);
     }
+
     public class IpfsRealm : IIpfsRealm
     {
-        public string CatalystBaseUrl { get; }
-        public string ContentBaseUrl { get; }
+        // cache
+        private readonly StringBuilder bodyBuilder = new ();
 
         public IpfsRealm(string realmName)
         {
@@ -30,13 +31,17 @@ namespace Ipfs
             ContentBaseUrl = contentBaseUrl;
         }
 
+        public string CatalystBaseUrl { get; }
+        public string ContentBaseUrl { get; }
+
         public UnityWebRequestAsyncOperation RequestActiveEntitiesByPointers(List<Vector2Int> pointers)
         {
-            StringBuilder bodyBuilder = new StringBuilder("{\"pointers\":[");
+            bodyBuilder.Clear();
+            bodyBuilder.Append("{\"pointers\":[");
 
-            for (int i = 0; i < pointers.Count; ++i)
+            for (var i = 0; i < pointers.Count; ++i)
             {
-                var pointer = pointers[i];
+                Vector2Int pointer = pointers[i];
                 bodyBuilder.Append($"\"{pointer.x},{pointer.y}\"");
 
                 if (i != pointers.Count - 1)

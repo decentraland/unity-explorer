@@ -6,5 +6,7 @@ namespace ECS.SceneLifeCycle.Components
     public class LiveSceneComponent
     {
         public CancellationTokenSource CancellationTokenSource;
+
+        public UniTask Task;
     }
 }

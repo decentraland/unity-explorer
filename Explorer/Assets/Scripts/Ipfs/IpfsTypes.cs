@@ -1,11 +1,6 @@
-using JetBrains.Annotations;
 using Newtonsoft.Json;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
-using UnityEngine.Networking;
+
 public static class IpfsTypes
 {
     public class ContentDefinition
@@ -14,28 +9,27 @@ public static class IpfsTypes
         public string hash;
     }
 
-    public class EntityDefinition : EntityDefinitionGeneric<object> {}
+    public class EntityDefinition : EntityDefinitionGeneric<object> { }
 
-    public class SceneEntityDefinition : EntityDefinitionGeneric<SceneMetadata> {}
+    public class SceneEntityDefinition : EntityDefinitionGeneric<SceneMetadata> { }
 
     public class EntityDefinitionGeneric<T>
     {
-        public string id;
-        public List<string> pointers;
         public List<ContentDefinition> content;
+        public string id;
         public T metadata;
+        public List<string> pointers;
     }
 
     public class SceneMetadataScene
     {
+        public List<string> allowedMediaHostnames;
         [JsonProperty("base")]
         public string baseParcel;
 
         public List<string> parcels;
 
         public List<string> requiredPermissions;
-
-        public List<string> allowedMediaHostnames;
     }
 
     public class SceneMetadata
@@ -44,4 +38,3 @@ public static class IpfsTypes
         public SceneMetadataScene scene;
     }
 }
-

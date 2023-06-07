@@ -7,11 +7,11 @@ namespace Ipfs
     {
         public static Vector2Int DecodePointer(string pointer)
         {
-            var commaPosition = pointer.IndexOf(",", StringComparison.Ordinal);
-            var span = pointer.AsSpan();
+            int commaPosition = pointer.IndexOf(",", StringComparison.Ordinal);
+            ReadOnlySpan<char> span = pointer.AsSpan();
 
-            var firstPart = span[0..commaPosition];
-            var secondPart = span[(commaPosition+1)..];
+            ReadOnlySpan<char> firstPart = span[..commaPosition];
+            ReadOnlySpan<char> secondPart = span[(commaPosition + 1)..];
 
             return new Vector2Int(int.Parse(firstPart), int.Parse(secondPart));
         }

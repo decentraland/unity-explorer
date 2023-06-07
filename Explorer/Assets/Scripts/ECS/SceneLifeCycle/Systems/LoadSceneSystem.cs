@@ -6,6 +6,7 @@ using ECS.SceneLifeCycle.Components;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -14,10 +15,9 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateAfter(typeof(LoadScenesDynamicallySystem))]
     public partial class LoadSceneSystem : BaseUnityLoopSystem
     {
-        private readonly SceneLifeCycleState state;
-
         // cache
-        private readonly HashSet<IpfsTypes.SceneEntityDefinition> requiredScenes = new();
+        private readonly HashSet<IpfsTypes.SceneEntityDefinition> requiredScenes = new ();
+        private readonly SceneLifeCycleState state;
 
         public LoadSceneSystem(World world, SceneLifeCycleState state) : base(world)
         {
@@ -30,29 +30,24 @@ namespace ECS.SceneLifeCycle.Systems
 
             requiredScenes.Clear();
 
-            var position = World.Get<TransformComponent>(state.PlayerEntity).Transform.position;
+            Vector3 position = World.Get<TransformComponent>(state.PlayerEntity).Transform.position;
 
-            var parcelsInRange = ParcelMathHelper.ParcelsInRange(position, state.SceneLoadRadius);
+            List<Vector2Int> parcelsInRange = ParcelMathHelper.ParcelsInRange(position, state.SceneLoadRadius);
 
-            foreach (var (parcel, definition) in state.ScenePointers)
+            foreach ((Vector2Int parcel, IpfsTypes.SceneEntityDefinition definition) in state.ScenePointers)
             {
-                if (parcelsInRange.Contains(parcel))
-                {
-                    requiredScenes.Add(definition);
-                }
+                if (parcelsInRange.Contains(parcel)) { requiredScenes.Add(definition); }
             }
 
             // remove scenes that are not required
             foreach (string id in state.LiveScenes.Keys.ToList())
             {
-                var entity = state.LiveScenes[id];
+                Entity entity = state.LiveScenes[id];
                 var add = true;
-                foreach (var definition in requiredScenes)
+
+                foreach (IpfsTypes.SceneEntityDefinition definition in requiredScenes)
                 {
-                    if (definition.id == id)
-                    {
-                        add = false;
-                    }
+                    if (definition.id == id) { add = false; }
                 }
 
                 if (add)
@@ -63,7 +58,7 @@ namespace ECS.SceneLifeCycle.Systems
             }
 
             // create scenes that not exists
-            foreach (var definition in requiredScenes)
+            foreach (IpfsTypes.SceneEntityDefinition definition in requiredScenes)
             {
                 if (state.LiveScenes.ContainsKey(definition.id)) continue;
 
@@ -72,9 +67,9 @@ namespace ECS.SceneLifeCycle.Systems
                     continue;
 
                 // this scene is not loaded... we need to load it
-                var entity = World.Create(new SceneLoadingComponent()
+                Entity entity = World.Create(new SceneLoadingComponent
                 {
-                    Definition = definition
+                    Definition = definition,
                 });
 
                 state.LiveScenes.Add(definition.id, entity);

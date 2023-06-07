@@ -9,15 +9,13 @@ namespace SceneRunner.Scene
     {
         private readonly Dictionary<string, string> fileToHash;
 
-        private readonly IpfsTypes.SceneEntityDefinition sceneDefinition;
-
         private readonly IIpfsRealm ipfsRealm;
-
-        private readonly bool supportHashes;
 
         private readonly List<Vector2Int> parcels = new ();
 
-        private readonly Vector2Int baseParcel;
+        private readonly IpfsTypes.SceneEntityDefinition sceneDefinition;
+
+        private readonly bool supportHashes;
 
         public SceneData(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, bool supportHashes)
         {
@@ -27,25 +25,22 @@ namespace SceneRunner.Scene
 
             if (!supportHashes)
             {
-                baseParcel = new Vector2Int(0, 0);
+                BaseParcel = new Vector2Int(0, 0);
                 return;
             }
 
             fileToHash = new Dictionary<string, string>(sceneDefinition.content.Count, StringComparer.OrdinalIgnoreCase);
 
-            foreach (var contentDefinition in sceneDefinition.content) { fileToHash[contentDefinition.file] = contentDefinition.hash; }
+            foreach (IpfsTypes.ContentDefinition contentDefinition in sceneDefinition.content) { fileToHash[contentDefinition.file] = contentDefinition.hash; }
 
-                baseParcel = IpfsHelper.DecodePointer(sceneDefinition.metadata.scene.baseParcel);
+            BaseParcel = IpfsHelper.DecodePointer(sceneDefinition.metadata.scene.baseParcel);
 
-            foreach (string parcel in sceneDefinition.metadata.scene.parcels)
-            {
-                parcels.Add(IpfsHelper.DecodePointer(parcel));
-            }
+            foreach (string parcel in sceneDefinition.metadata.scene.parcels) { parcels.Add(IpfsHelper.DecodePointer(parcel)); }
         }
 
         public string SceneName => sceneDefinition.id;
         public IReadOnlyList<Vector2Int> Parcels => parcels;
-        public Vector2Int BaseParcel => baseParcel;
+        public Vector2Int BaseParcel { get; }
 
         public bool HasRequiredPermission(string permission)
         {
