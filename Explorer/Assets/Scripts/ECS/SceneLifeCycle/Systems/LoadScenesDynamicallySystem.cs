@@ -47,8 +47,11 @@ namespace ECS.SceneLifeCycle.Systems
                 parcelsToLoad.Clear();
                 var parcelsInRange = staticParcelsToLoad ?? ParcelMathHelper.ParcelsInRange(position, state.SceneLoadRadius);
 
-                foreach (var parcel in parcelsInRange)
+                for (var i = 0; i < parcelsInRange.Count; i++)
+                {
+                    Vector2Int parcel = parcelsInRange[i];
                     if (!state.ScenePointers.ContainsKey(parcel)) parcelsToLoad.Add(parcel);
+                }
 
                 if (parcelsToLoad.Count > 0)
                     pointerRequest = ipfsRealm.RequestActiveEntitiesByPointers(parcelsToLoad);
@@ -59,8 +62,10 @@ namespace ECS.SceneLifeCycle.Systems
 
                 Debug.Log($"loading {retrievedScenes.Count} scenes from {parcelsToLoad.Count} parcels");
 
-                foreach (IpfsTypes.SceneEntityDefinition scene in retrievedScenes)
+                for (var i = 0; i < retrievedScenes.Count; i++)
                 {
+                    IpfsTypes.SceneEntityDefinition scene = retrievedScenes[i];
+
                     foreach (string encodedPointer in scene.pointers)
                     {
                         Vector2Int pointer = IpfsHelper.DecodePointer(encodedPointer);
@@ -70,8 +75,10 @@ namespace ECS.SceneLifeCycle.Systems
                 }
 
                 // load empty parcels!
-                foreach (Vector2Int emptyParcel in parcelsToLoad)
+                for (var i = 0; i < parcelsToLoad.Count; i++)
                 {
+                    Vector2Int emptyParcel = parcelsToLoad[i];
+
                     state.ScenePointers.Add(emptyParcel, new IpfsTypes.SceneEntityDefinition
                     {
                         id = $"empty-parcel-{emptyParcel.x}-{emptyParcel.y}",
