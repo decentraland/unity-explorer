@@ -32,7 +32,7 @@ namespace SceneRunner.ECSWorld.Plugins
             sceneRootTransform.transform.rotation = Quaternion.identity;
             sceneRootTransform.transform.localScale = Vector3.one;
 
-            sceneRootTransform.name = $"SCENE_ROOT_{sharedDependencies.SceneData.SceneName}";
+            sceneRootTransform.name = $"{sharedDependencies.SceneData.BaseParcel}_{sharedDependencies.SceneData.SceneName}";
             Entity rootTransformEntity = builder.World.Create(new TransformComponent(sceneRootTransform));
 
             UpdateTransformSystem.InjectToWorld(ref builder);
