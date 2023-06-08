@@ -36,7 +36,9 @@ namespace SceneRuntime.Apis.Modules
                 lastInput = instancePoolsProvider.GetCrdtRawDataPool(intLength);
             }
 
-            data.Read(0, data.Length, lastInput, 0);
+            // V8ScriptItem does not support zero length
+            if (data.Length > 0)
+                data.Read(0, data.Length, lastInput, 0);
 
             // otherwise use the existing one
             byte[] result = api.CrdtSendToRenderer(lastInput.AsMemory().Slice(0, intLength));
