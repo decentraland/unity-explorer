@@ -1,6 +1,5 @@
-using ECS.StreamableLoading.Components;
-using ECS.StreamableLoading.Components.Common;
-using ECS.StreamableLoading.Systems;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using NUnit.Framework;
 using UnityEngine;
 

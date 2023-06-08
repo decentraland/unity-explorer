@@ -1,7 +1,7 @@
 using Arch.Core;
 using ECS.Abstract;
-using ECS.StreamableLoading.Components;
-using ECS.StreamableLoading.Components.Common;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using ECS.Unity.Textures.Components;
 using UnityEngine;
 using UnityEngine.Pool;

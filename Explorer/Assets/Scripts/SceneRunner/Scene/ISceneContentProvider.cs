@@ -7,6 +7,8 @@ namespace SceneRunner.Scene
     {
         string SceneName { get; }
 
+        SceneAssetBundleManifest AssetBundleManifest { get; }
+
         IReadOnlyList<Vector2Int> Parcels { get; }
 
         Vector2Int BaseParcel { get; }

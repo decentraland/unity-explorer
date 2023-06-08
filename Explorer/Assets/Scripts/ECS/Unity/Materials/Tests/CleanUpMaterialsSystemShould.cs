@@ -1,6 +1,6 @@
 ﻿using Arch.Core;
 using ECS.LifeCycle.Components;
-using ECS.StreamableLoading.Components.Common;
+using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Systems;

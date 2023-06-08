@@ -1,8 +1,11 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using ECS.LifeCycle;
-using ECS.StreamableLoading.Systems;
+using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Common.Systems;
+using ECS.StreamableLoading.Textures;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace SceneRunner.ECSWorld.Plugins
 {
@@ -12,7 +15,7 @@ namespace SceneRunner.ECSWorld.Plugins
         {
             StartLoadingTextureSystem.InjectToWorld(ref builder);
             RepeatTextureLoadingSystem.InjectToWorld(ref builder);
-            ConcludeTextureLoadingSystem.InjectToWorld(ref builder);
+            ConcludeTextureLoadingSystem.InjectToWorld(ref builder, NoCache<Texture2D, GetTextureIntention>.INSTANCE);
             AbortLoadingSystem.InjectToWorld(ref builder);
         }
     }

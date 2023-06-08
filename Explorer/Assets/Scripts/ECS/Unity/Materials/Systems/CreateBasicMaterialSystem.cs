@@ -2,7 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Shaders;
-using ECS.StreamableLoading.Components.Common;
+using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.Materials.Components;
 using UnityEngine;
 using UnityEngine.Pool;

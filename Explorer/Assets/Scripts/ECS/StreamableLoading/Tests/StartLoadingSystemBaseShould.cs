@@ -1,6 +1,6 @@
 ﻿using Arch.Core;
-using ECS.StreamableLoading.Components.Common;
-using ECS.StreamableLoading.Systems;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Common.Systems;
 using ECS.TestSuite;
 using NUnit.Framework;
 using UnityEngine.Networking;

@@ -13,7 +13,7 @@ namespace ECS.Abstract
 
         protected BaseUnityLoopSystem(World world) : base(world)
         {
-            updateSampler = CustomSampler.Create($"{GetType()}.Update");
+            updateSampler = CustomSampler.Create($"{GetType().Name}.Update");
         }
 
         public sealed override void Update(in float t)

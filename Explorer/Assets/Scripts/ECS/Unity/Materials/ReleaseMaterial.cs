@@ -1,5 +1,5 @@
 ﻿using Arch.Core;
-using ECS.StreamableLoading.Components.Common;
+using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.Materials.Components;
 
 namespace ECS.Unity.Materials

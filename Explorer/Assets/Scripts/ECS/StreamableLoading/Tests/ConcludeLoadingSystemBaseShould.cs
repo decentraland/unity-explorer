@@ -1,7 +1,7 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
-using ECS.StreamableLoading.Components.Common;
-using ECS.StreamableLoading.Systems;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Common.Systems;
 using ECS.TestSuite;
 using NUnit.Framework;
 using System.Threading.Tasks;

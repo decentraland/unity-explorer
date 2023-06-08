@@ -13,7 +13,7 @@ using System.Threading;
 namespace ECS.SceneLifeCycle.Systems
 {
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    [UpdateAfter(typeof(LoadSceneSystem))]
+    [UpdateAfter(typeof(ResolveScenesStateSystem))]
     public partial class StartSceneSystem : BaseUnityLoopSystem
     {
         private readonly CancellationToken destroyCancellationToken;
@@ -36,7 +36,7 @@ namespace ECS.SceneLifeCycle.Systems
         private async UniTask InitializeSceneAndStart(IpfsTypes.SceneEntityDefinition sceneDefinition, CancellationToken ct)
         {
             // main thread
-            ISceneFacade sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(ipfsRealm, sceneDefinition, ct);
+            ISceneFacade sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(ipfsRealm, sceneDefinition, SceneAssetBundleManifest.NULL, ct);
 
             ct.RegisterWithoutCaptureExecutionContext(() => sceneFacade?.DisposeAsync().Forget());
 

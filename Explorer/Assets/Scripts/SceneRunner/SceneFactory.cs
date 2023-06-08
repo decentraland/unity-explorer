@@ -61,7 +61,7 @@ namespace SceneRunner
                 main = mainScenePath,
             };
 
-            var sceneData = new SceneData(new IpfsRealm(baseUrl, baseUrl), sceneDefinition, false);
+            var sceneData = new SceneData(new IpfsRealm(baseUrl, baseUrl), sceneDefinition, false, SceneAssetBundleManifest.NULL);
 
             return await CreateScene(sceneData, ct);
         }
@@ -85,14 +85,14 @@ namespace SceneRunner
                 metadata = sceneMetadata,
             };
 
-            var sceneData = new SceneData(new IpfsRealm(fullPath, fullPath), sceneDefinition, false);
+            var sceneData = new SceneData(new IpfsRealm(fullPath, fullPath), sceneDefinition, false, SceneAssetBundleManifest.NULL);
 
             return await CreateScene(sceneData, ct);
         }
 
-        public async UniTask<ISceneFacade> CreateSceneFromSceneDefinition(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, CancellationToken ct)
+        public async UniTask<ISceneFacade> CreateSceneFromSceneDefinition(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, SceneAssetBundleManifest abManifest, CancellationToken ct)
         {
-            var sceneData = new SceneData(ipfsRealm, sceneDefinition, true);
+            var sceneData = new SceneData(ipfsRealm, sceneDefinition, true, abManifest);
 
             return await CreateScene(sceneData, ct);
         }

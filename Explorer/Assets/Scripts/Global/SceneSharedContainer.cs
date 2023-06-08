@@ -26,7 +26,8 @@ namespace Global
                 new PrimitiveCollidersPlugin(sharedDependencies),
                 new StreamableLoadingPlugin(),
                 new PrimitivesRenderingPlugin(sharedDependencies),
-                new VisibilityPlugin());
+                new VisibilityPlugin(),
+                new AssetBundlesPlugin());
 
             return new SceneSharedContainer
             {

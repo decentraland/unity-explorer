@@ -1,18 +1,21 @@
 {
-    "name": "StreamableLoading",
-    "rootNamespace": "",
-    "references": [
-        "ECS",
-        "UniTask",
-        "Ipfs"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
+  "name": "StreamableLoading",
+  "rootNamespace": "",
+  "references": [
+    "ECS",
+    "UniTask",
+    "Ipfs",
+    "AssetManagement",
+    "Utility",
+    "SceneRunner.Scene"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

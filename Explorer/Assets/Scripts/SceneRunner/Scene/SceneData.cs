@@ -1,4 +1,5 @@
 using Ipfs;
+using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -17,11 +18,12 @@ namespace SceneRunner.Scene
 
         private readonly bool supportHashes;
 
-        public SceneData(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, bool supportHashes)
+        public SceneData(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, bool supportHashes, [NotNull] SceneAssetBundleManifest assetBundleManifest)
         {
             this.ipfsRealm = ipfsRealm;
             this.sceneDefinition = sceneDefinition;
             this.supportHashes = supportHashes;
+            AssetBundleManifest = assetBundleManifest;
 
             if (!supportHashes)
             {
@@ -37,6 +39,8 @@ namespace SceneRunner.Scene
 
             foreach (string parcel in sceneDefinition.metadata.scene.parcels) { parcels.Add(IpfsHelper.DecodePointer(parcel)); }
         }
+
+        public SceneAssetBundleManifest AssetBundleManifest { get; }
 
         public string SceneName => sceneDefinition.id;
         public IReadOnlyList<Vector2Int> Parcels => parcels;

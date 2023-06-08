@@ -41,7 +41,7 @@ namespace Global
             };
 
             LoadScenesDynamicallySystem.InjectToWorld(ref builder, ipfsRealm, state, staticLoadPositions);
-            LoadSceneSystem.InjectToWorld(ref builder, state);
+            ResolveScenesStateSystem.InjectToWorld(ref builder, state);
             StartSceneSystem.InjectToWorld(ref builder, ipfsRealm, sceneFactory, destroyCancellationSource.Token);
             DestroySceneSystem.InjectToWorld(ref builder);
 
@@ -49,7 +49,6 @@ namespace Global
 
             worldSystems = builder.Finish();
             worldSystems.Initialize();
-
         }
 
         public void Dispose()

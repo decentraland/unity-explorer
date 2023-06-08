@@ -1,8 +1,8 @@
 ﻿using Arch.Core;
 using DCL.ECSComponents;
 using Decentraland.Common;
-using ECS.StreamableLoading.Components;
-using ECS.StreamableLoading.Components.Common;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Components.Defaults;
@@ -38,11 +38,11 @@ namespace ECS.Unity.Materials.Tests
                 sceneData = Substitute.For<ISceneData>());
 
             sceneData.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<string>())
-                                .Returns(c =>
-                                 {
-                                     c[1] = c.ArgAt<string>(0);
-                                     return true;
-                                 });
+                     .Returns(c =>
+                      {
+                          c[1] = c.ArgAt<string>(0);
+                          return true;
+                      });
         }
 
         [Test]
