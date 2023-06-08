@@ -72,7 +72,8 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         {
             if (!sdkComponent.IsDirty) return;
 
-            var setupMesh = setupMeshCases[sdkComponent.MeshCase];
+            if (!setupMeshCases.TryGetValue(sdkComponent.MeshCase, out ISetupMesh setupMesh))
+                return;
 
             // The model has changed entirely, so we need to reinstall the renderer
             if (ReferenceEquals(meshRendererComponent.PrimitiveMesh, null))
