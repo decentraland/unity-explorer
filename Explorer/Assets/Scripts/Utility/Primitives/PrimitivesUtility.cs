@@ -9,7 +9,8 @@ namespace Utility.Primitives
         {
             var uvsResultIndex = 0;
 
-            for (var i = 0; i < uvs.Count;) { uvsResult[uvsResultIndex++] = new Vector2(uvs[i++], uvs[i++]); }
+            for (var i = 0; i < uvs.Count && uvsResultIndex < uvsResult.Length;)
+                uvsResult[uvsResultIndex++] = new Vector2(uvs[i++], uvs[i++]);
 
             return uvsResult;
         }
