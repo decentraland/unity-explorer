@@ -63,9 +63,9 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         }
 
         [Query]
-        [All(typeof(PBMeshRenderer), typeof(SDKTransform), typeof(TransformComponent),
-            typeof(PrimitiveMeshRendererComponent))]
+        [All(typeof(PBMeshRenderer), typeof(SDKTransform), typeof(TransformComponent), typeof(PrimitiveMeshRendererComponent))]
         private void TrySetupExistingRenderer(
+            in Entity entity,
             ref PrimitiveMeshRendererComponent meshRendererComponent,
             ref PBMeshRenderer sdkComponent,
             ref TransformComponent transform)
@@ -73,7 +73,11 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             if (!sdkComponent.IsDirty) return;
 
             if (!setupMeshCases.TryGetValue(sdkComponent.MeshCase, out ISetupMesh setupMesh))
+            {
+                // Remove the renderer component so it's not grabbed by other systems in the invalid state
+                World.Remove<PrimitiveMeshRendererComponent>(entity);
                 return;
+            }
 
             // The model has changed entirely, so we need to reinstall the renderer
             if (ReferenceEquals(meshRendererComponent.PrimitiveMesh, null))

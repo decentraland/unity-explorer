@@ -7,8 +7,8 @@ using UnityEngine.Networking;
 
 namespace ECS.StreamableLoading.Tests
 {
-    public abstract class StartLoadingSystemBaseShould<TSystem, TIntention> : UnitySystemTestBase<TSystem>
-        where TSystem: StartLoadingSystemBase<TIntention>
+    public abstract class RepeatLoadingSystemBaseShould<TSystem, TAsset, TIntention> : UnitySystemTestBase<TSystem>
+        where TSystem: RepeatLoadingSystemBase<TIntention, TAsset>
         where TIntention: struct, ILoadingIntention
     {
         protected abstract TIntention CreateIntention();
@@ -42,10 +42,10 @@ namespace ECS.StreamableLoading.Tests
         }
 
         [Test]
-        public void CreateNewRequest()
+        public void RepeatRequest()
         {
             TIntention intention = CreateIntention();
-            Entity e = world.Create(intention);
+            Entity e = world.Create(intention, new LoadingRequest());
 
             system.Update(0f);
 
@@ -57,14 +57,18 @@ namespace ECS.StreamableLoading.Tests
         }
 
         [Test]
-        public void NotCreateRequestIfAborted()
+        public void NotRepeatRequestIfResultIsSet()
         {
             TIntention intention = CreateIntention();
-            Entity e = world.Create(intention, new ForgetLoadingIntent());
+            Entity e = world.Create(intention, new LoadingRequest(), new StreamableLoadingResult<TAsset>());
 
-            system.Update(0);
+            system.Update(0f);
 
-            Assert.IsFalse(world.Has<LoadingRequest>(e));
+            Assert.IsTrue(world.TryGet(e, out LoadingRequest loadingRequest));
+
+            StoreWebRequest(loadingRequest);
+
+            Assert.IsNull(loadingRequest.WebRequest);
         }
     }
 }

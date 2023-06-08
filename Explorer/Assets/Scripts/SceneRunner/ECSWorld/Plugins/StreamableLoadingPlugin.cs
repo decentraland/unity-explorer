@@ -11,6 +11,7 @@ namespace SceneRunner.ECSWorld.Plugins
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
             StartLoadingTextureSystem.InjectToWorld(ref builder);
+            RepeatTextureLoadingSystem.InjectToWorld(ref builder);
             ConcludeTextureLoadingSystem.InjectToWorld(ref builder);
             AbortLoadingSystem.InjectToWorld(ref builder);
         }
