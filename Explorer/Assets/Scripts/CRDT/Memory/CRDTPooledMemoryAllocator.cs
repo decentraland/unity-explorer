@@ -73,7 +73,8 @@ namespace CRDT.Memory
             memoryOwnerPool = new ObjectPool<MemoryOwner>(
                 () => new MemoryOwner(this),
                 defaultCapacity: 1024,
-                maxSize: 1024 * 1024
+                maxSize: 1024 * 1024,
+                collectionCheck: false // hot path
             );
         }
 

@@ -23,10 +23,10 @@ namespace CrdtEcsBridge.WorldSynchronizer
         private readonly IObjectPool<Dictionary<int, BatchState>> innerDictionariesPool = new ObjectPool<Dictionary<int, BatchState>>(
 
             // just preallocate an array big enough
-            createFunc: () => new Dictionary<int, BatchState>(256),
+            createFunc: () => new Dictionary<int, BatchState>(2048),
             actionOnRelease: dictionary => dictionary.Clear(),
             defaultCapacity: 8,
-            maxSize: 512,
+            maxSize: 2048 * 8,
 
             // hot path
             collectionCheck: false

@@ -32,6 +32,7 @@ namespace CrdtEcsBridge.Engine
         private readonly CustomSampler deserializeBatchSampler;
         private readonly CustomSampler worldSyncBufferSampler;
         private readonly CustomSampler outgoingMessagesSampler;
+        private readonly CustomSampler crdtProcessMessagesSampler;
 
         private bool isDisposing;
 
@@ -55,6 +56,7 @@ namespace CrdtEcsBridge.Engine
             deserializeBatchSampler = CustomSampler.Create("DeserializeBatch");
             worldSyncBufferSampler = CustomSampler.Create("WorldSyncBuffer");
             outgoingMessagesSampler = CustomSampler.Create("OutgoingMessages");
+            crdtProcessMessagesSampler = CustomSampler.Create("CRDTProcessMessage");
         }
 
         public byte[] CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory)
@@ -84,8 +86,12 @@ namespace CrdtEcsBridge.Engine
             // Reconcile CRDT state
             for (var i = 0; i < messages.Count; i++)
             {
+                crdtProcessMessagesSampler.Begin();
+
                 var message = messages[i];
                 var reconciliationResult = crdtProtocol.ProcessMessage(in message);
+
+                crdtProcessMessagesSampler.End();
 
                 // TODO add metric to understand how many conflicts we have based on CRDTStateReconciliationResult
 

@@ -1,4 +1,4 @@
-﻿using ECS.StreamableLoading.Components;
+using ECS.StreamableLoading.Components;
 using ECS.StreamableLoading.Components.Common;
 using ECS.StreamableLoading.Systems;
 using NUnit.Framework;
@@ -7,7 +7,7 @@ using UnityEngine;
 namespace ECS.StreamableLoading.Tests
 {
     [TestFixture]
-    public class StartLoadingTextureSystemShould : StartLoadingSystemBaseShould<StartLoadingTextureSystem, GetTextureIntention>
+    public class RepeatTextureLoadingSystemShould : RepeatLoadingSystemBaseShould<RepeatTextureLoadingSystem, Texture2D, GetTextureIntention>
     {
         private string path => $"file://{Application.dataPath + "/../TestResources/Images/alphaTexture.png"}";
 
@@ -19,7 +19,7 @@ namespace ECS.StreamableLoading.Tests
                 IsReadable = false,
             };
 
-        protected override StartLoadingTextureSystem CreateSystem() =>
+        protected override RepeatTextureLoadingSystem CreateSystem() =>
             new (world);
     }
 }
