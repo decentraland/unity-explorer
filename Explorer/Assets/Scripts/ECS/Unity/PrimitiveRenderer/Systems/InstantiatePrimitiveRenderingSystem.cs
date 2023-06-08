@@ -52,8 +52,10 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         [None(typeof(PrimitiveMeshRendererComponent))]
         private void InstantiateNonExistingRenderer(in Entity entity, ref PBMeshRenderer sdkComponent, ref TransformComponent transform)
         {
+            if (!setupMeshCases.TryGetValue(sdkComponent.MeshCase, out ISetupMesh setupMesh))
+                return;
+
             var meshRendererComponent = new PrimitiveMeshRendererComponent();
-            var setupMesh = setupMeshCases[sdkComponent.MeshCase];
             var meshRendererGo = rendererPoolRegistry.Get();
             meshRendererGo.sharedMaterial = DefaultMaterial.Shared;
             Instantiate(setupMesh, ref meshRendererGo, ref meshRendererComponent, sdkComponent, ref transform);
