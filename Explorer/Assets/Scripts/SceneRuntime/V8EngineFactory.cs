@@ -8,6 +8,11 @@ namespace SceneRuntime
         {
             var engine = new V8ScriptEngine();
 
+            // IL2CPP does not support dynamic bindings!
+            engine.DisableDynamicBinding = true;
+            engine.UseReflectionBindFallback = true;
+            engine.AllowReflection = true;
+
             return engine;
         }
     }
