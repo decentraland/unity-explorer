@@ -35,6 +35,7 @@ namespace SceneRunner.ECSWorld
             foreach (IECSWorldPlugin worldPlugin in plugins)
                 worldPlugin.InjectToWorld(ref builder, in sharedDependencies, finalizeWorldSystems);
 
+            DestroyEntitiesSystem.InjectToWorld(ref builder);
             finalizeWorldSystems.Add(ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleaseRemovedComponentsSystem.InjectToWorld(ref builder));
 
