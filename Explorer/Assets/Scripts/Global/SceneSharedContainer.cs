@@ -24,7 +24,7 @@ namespace Global
                 new TransformsPlugin(sharedDependencies),
                 new MaterialsPlugin(),
                 new PrimitiveCollidersPlugin(sharedDependencies),
-                new StreamableLoadingPlugin(),
+                new TexturesLoadingPlugin(),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AssetBundlesPlugin());

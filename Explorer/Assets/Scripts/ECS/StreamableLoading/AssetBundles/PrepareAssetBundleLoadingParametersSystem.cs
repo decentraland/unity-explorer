@@ -15,7 +15,7 @@ namespace ECS.StreamableLoading.AssetBundles
     ///     Prepares Asset Bundle Parameters
     /// </summary>
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
-    [UpdateBefore(typeof(StartLoadingAssetBundleSystem))]
+    [UpdateBefore(typeof(LoadAssetBundleSystem))]
     public partial class PrepareAssetBundleLoadingParametersSystem : BaseUnityLoopSystem
     {
         private readonly ISceneData sceneData;
@@ -27,11 +27,11 @@ namespace ECS.StreamableLoading.AssetBundles
 
         protected override void Update(float t)
         {
-            throw new NotImplementedException();
+            PrepareCommonArgumentsQuery(World);
         }
 
         [Query]
-        [None(typeof(LoadingRequest), typeof(StreamableLoadingResult<AssetBundle>))]
+        [None(typeof(LoadingInProgress), typeof(StreamableLoadingResult<AssetBundle>))]
 
         // If loading is not started yet and there is no result
         private void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention)

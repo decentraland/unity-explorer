@@ -1,6 +1,6 @@
 ﻿using Arch.Core;
-using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.Materials.Components;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.Unity.Materials
 {
@@ -49,14 +49,12 @@ namespace ECS.Unity.Materials
             }
         }
 
-        private static void TryAddAbortIntention(World world, ref EntityReference entityReference)
+        private static void TryAddAbortIntention(World world, ref Promise promise)
         {
-            if (!entityReference.IsAlive(world)) return;
-
-            world.Add(entityReference.Entity, new ForgetLoadingIntent());
+            promise.ForgetLoading(world);
 
             // Nullify the entity reference
-            entityReference = EntityReference.Null;
+            promise = Promise.NULL;
         }
     }
 }

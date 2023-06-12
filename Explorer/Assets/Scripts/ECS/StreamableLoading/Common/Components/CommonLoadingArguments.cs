@@ -1,4 +1,5 @@
 ﻿using AssetManagement;
+using System.Threading;
 
 namespace ECS.StreamableLoading.Common.Components
 {
@@ -16,6 +17,10 @@ namespace ECS.StreamableLoading.Common.Components
         /// </summary>
         public AssetSource CurrentSource;
 
+        public CancellationToken CancellationToken => cancellationTokenSource.Token;
+
+        internal readonly CancellationTokenSource cancellationTokenSource;
+
         public CommonLoadingArguments(string url,
             int timeout = StreamableLoadingDefaults.TIMEOUT,
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
@@ -27,6 +32,7 @@ namespace ECS.StreamableLoading.Common.Components
             Attempts = attempts;
             PermittedSources = permittedSources;
             CurrentSource = currentSource;
+            cancellationTokenSource = new CancellationTokenSource();
         }
     }
 }

@@ -80,11 +80,7 @@ namespace ECS.SceneLifeCycle.Systems
                 for (var i = 0; i < parcelsToLoad.Count; i++)
                 {
                     Vector2Int emptyParcel = parcelsToLoad[i];
-
-                    state.ScenePointers.Add(emptyParcel, new ScenePointer(new IpfsTypes.SceneEntityDefinition
-                    {
-                        id = $"empty-parcel-{emptyParcel.x}-{emptyParcel.y}",
-                    }, null));
+                    state.ScenePointers.Add(emptyParcel, new ScenePointer(emptyParcel));
                 }
 
                 pointerRequest = null;

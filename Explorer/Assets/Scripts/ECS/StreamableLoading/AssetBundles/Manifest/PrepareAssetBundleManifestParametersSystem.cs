@@ -12,7 +12,7 @@ namespace ECS.StreamableLoading.AssetBundles.Manifest
     ///     Prepares URL from the scene ID
     /// </summary>
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
-    [UpdateBefore(typeof(StartLoadingAssetBundleManifestSystem))]
+    [UpdateBefore(typeof(LoadAssetBundleManifestSystem))]
     public partial class PrepareAssetBundleManifestParametersSystem : BaseUnityLoopSystem
     {
         private const string URN_PREFIX = "urn:decentraland:entity:";
@@ -30,7 +30,7 @@ namespace ECS.StreamableLoading.AssetBundles.Manifest
         }
 
         [Query]
-        [None(typeof(LoadingRequest), typeof(StreamableLoadingResult<SceneAssetBundleManifest>))]
+        [None(typeof(LoadingInProgress), typeof(StreamableLoadingResult<SceneAssetBundleManifest>))]
         private void PrepareParameters(ref GetAssetBundleManifestIntention intention)
         {
             string entityId = GetEntityIdFromSceneId(intention.SceneId);

@@ -29,32 +29,43 @@ namespace Utility
             }
         }
 
-        public static void RemoveFlag<T>(this ref T x, T y) where T: unmanaged, Enum
+        public static unsafe void RemoveFlag<T>(this ref T x, T y) where T: unmanaged, Enum
         {
             // Check if the underlying type of the enum is byte, short, int, or long
-            if (typeof(T) == typeof(byte))
+            switch (sizeof(T))
             {
-                ref byte xRef = ref Unsafe.As<T, byte>(ref x);
-                ref byte yRef = ref Unsafe.As<T, byte>(ref y);
-                xRef &= (byte)~yRef;
-            }
-            else if (typeof(T) == typeof(short))
-            {
-                ref short xRef = ref Unsafe.As<T, short>(ref x);
-                ref short yRef = ref Unsafe.As<T, short>(ref y);
-                xRef &= (short)~yRef;
-            }
-            else if (typeof(T) == typeof(int))
-            {
-                ref int xRef = ref Unsafe.As<T, int>(ref x);
-                ref int yRef = ref Unsafe.As<T, int>(ref y);
-                xRef &= ~yRef;
-            }
-            else if (typeof(T) == typeof(long))
-            {
-                ref long xRef = ref Unsafe.As<T, long>(ref x);
-                ref long yRef = ref Unsafe.As<T, long>(ref y);
-                xRef &= ~yRef;
+                case sizeof(byte):
+                {
+                    ref byte xRef = ref Unsafe.As<T, byte>(ref x);
+                    ref byte yRef = ref Unsafe.As<T, byte>(ref y);
+                    xRef &= (byte)~yRef;
+                }
+
+                    return;
+                case sizeof(short):
+                {
+                    ref short xRef = ref Unsafe.As<T, short>(ref x);
+                    ref short yRef = ref Unsafe.As<T, short>(ref y);
+                    xRef &= (short)~yRef;
+                }
+
+                    return;
+                case sizeof(int):
+                {
+                    ref int xRef = ref Unsafe.As<T, int>(ref x);
+                    ref int yRef = ref Unsafe.As<T, int>(ref y);
+                    xRef &= ~yRef;
+                }
+
+                    return;
+                case sizeof(long):
+                {
+                    ref long xRef = ref Unsafe.As<T, long>(ref x);
+                    ref long yRef = ref Unsafe.As<T, long>(ref y);
+                    xRef &= ~yRef;
+                }
+
+                    return;
             }
         }
 

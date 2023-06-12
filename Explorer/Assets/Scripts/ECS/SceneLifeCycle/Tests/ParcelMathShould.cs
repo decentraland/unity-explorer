@@ -65,7 +65,7 @@ namespace ECS.SceneLifeCycle.Tests
                     new (102, 101),
                 };
 
-                Assert.IsTrue(parcels.SequenceEqual(expectedParcels));
+                CollectionAssert.AreEquivalent(expectedParcels, parcels);
             }
         }
     }

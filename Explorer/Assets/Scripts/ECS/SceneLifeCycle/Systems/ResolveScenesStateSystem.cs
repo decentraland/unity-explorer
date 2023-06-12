@@ -44,8 +44,9 @@ namespace ECS.SceneLifeCycle.Systems
             foreach ((Vector2Int parcel, ScenePointer pointer) in state.ScenePointers)
             {
                 // If Parcel is still in range AND the scene manifest is loaded the scene is a candidate to be launched
+                // TODO list.contains is O(n), in the loop is O(m*n)
                 if (parcelsInRange.Contains(parcel)
-                    && (pointer.ManifestPromise == null || pointer.ManifestPromise.Value.TryConsume(World, out _)))
+                    && (pointer.IsEmpty || pointer.ManifestPromise.TryConsume(World, out _)))
                     requiredScenes.Add(pointer);
             }
 
@@ -66,23 +67,25 @@ namespace ECS.SceneLifeCycle.Systems
                 }
             }
 
-            foreach (string key in deleteLiveScenesKeys) state.LiveScenes.Remove(key);
+            for (var i = 0; i < deleteLiveScenesKeys.Count; i++)
+            {
+                string key = deleteLiveScenesKeys[i];
+                state.LiveScenes.Remove(key);
+            }
 
             deleteLiveScenesKeys.Clear();
 
             // create scenes that don't exist
             foreach (ScenePointer pointer in requiredScenes)
             {
+                if (pointer.IsEmpty) continue;
+
                 IpfsTypes.SceneEntityDefinition definition = pointer.Definition;
                 if (state.LiveScenes.ContainsKey(definition.id)) continue;
 
-                // TODO: Remove this code, we must handle the empty-parcels in a different way
-                if (definition.id.StartsWith("empty-parcel"))
-                    continue;
-
                 // Launch the scene if the manifest is loaded
                 // TODO report if the manifest failed to load only once
-                if (!pointer.ManifestPromise.Value.TryGetResult(World, out StreamableLoadingResult<SceneAssetBundleManifest> manifest) || !manifest.Succeeded)
+                if (!pointer.ManifestPromise.TryGetResult(World, out StreamableLoadingResult<SceneAssetBundleManifest> manifest) || !manifest.Succeeded)
                     continue;
 
                 // this scene is not loaded... we need to load it

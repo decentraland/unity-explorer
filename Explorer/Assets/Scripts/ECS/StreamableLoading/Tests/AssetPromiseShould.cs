@@ -32,7 +32,7 @@ namespace ECS.StreamableLoading.Tests
         {
             var asset = new Asset();
 
-            world.Add(assetPromise.LoadingEntity.Entity, new StreamableLoadingResult<Asset>(asset));
+            world.Add(assetPromise.Entity.Entity, new StreamableLoadingResult<Asset>(asset));
 
             Assert.IsTrue(assetPromise.TryGetResult(world, out StreamableLoadingResult<Asset> result));
             Assert.AreEqual(asset, result.Asset);
@@ -52,13 +52,13 @@ namespace ECS.StreamableLoading.Tests
         {
             var asset = new Asset();
 
-            world.Add(assetPromise.LoadingEntity.Entity, new StreamableLoadingResult<Asset>(asset));
+            world.Add(assetPromise.Entity.Entity, new StreamableLoadingResult<Asset>(asset));
 
             Assert.IsTrue(assetPromise.TryConsume(world, out StreamableLoadingResult<Asset> result));
             Assert.AreEqual(asset, result.Asset);
             Assert.AreEqual(new StreamableLoadingResult<Asset>(asset), assetPromise.Result);
 
-            Assert.IsFalse(assetPromise.LoadingEntity.IsAlive(world));
+            Assert.IsFalse(assetPromise.Entity.IsAlive(world));
         }
 
         [Test]
@@ -66,19 +66,19 @@ namespace ECS.StreamableLoading.Tests
         {
             var asset = new Asset();
 
-            world.Add(assetPromise.LoadingEntity.Entity, new StreamableLoadingResult<Asset>(asset));
+            world.Add(assetPromise.Entity.Entity, new StreamableLoadingResult<Asset>(asset));
 
             Assert.IsTrue(assetPromise.TryConsume(world, out _));
             Assert.Throws<AssertionException>(() => assetPromise.TryConsume(world, out _));
         }
 
         [Test]
-        public void AddForgetIntent()
+        public void Forget()
         {
             assetPromise.ForgetLoading(world);
 
-            Assert.IsTrue(world.Has<ForgetLoadingIntent>(assetPromise.LoadingEntity));
-            Assert.IsFalse(assetPromise.LoadingEntity.IsAlive(world));
+            Assert.IsTrue(assetPromise.LoadingIntention.CommonArguments.CancellationToken.IsCancellationRequested);
+            Assert.IsFalse(assetPromise.Entity.IsAlive(world));
         }
 
         [TearDown]

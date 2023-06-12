@@ -1,0 +1,148 @@
+﻿using AssetManagement;
+using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Common.Systems;
+using ECS.TestSuite;
+using NSubstitute;
+using NUnit.Framework;
+using System.Threading.Tasks;
+
+namespace ECS.StreamableLoading.Tests
+{
+    public abstract class LoadSystemBaseShould<TSystem, TAsset, TIntention> : UnitySystemTestBase<TSystem>
+        where TSystem: LoadSystemBase<TAsset, TIntention>
+        where TIntention: struct, ILoadingIntention
+    {
+        protected abstract TIntention CreateSuccessIntention();
+
+        protected abstract TIntention CreateNotFoundIntention();
+
+        protected abstract TIntention CreateWrongTypeIntention();
+
+        protected abstract TSystem CreateSystem();
+
+        private AssetPromise<TAsset, TIntention> promise;
+
+        protected IStreamableCache<TAsset, TIntention> cache;
+
+        [SetUp]
+        public void BaseSetUp()
+        {
+            cache = Substitute.For<IStreamableCache<TAsset, TIntention>>();
+            system = CreateSystem();
+            system.Initialize();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            promise.LoadingIntention.CommonArguments.cancellationTokenSource?.Cancel();
+        }
+
+        [Test]
+        public async Task ConcludeSuccess()
+        {
+            promise = AssetPromise<TAsset, TIntention>.Create(world, CreateSuccessIntention());
+
+            // Launch the flow
+            system.Update(0);
+
+            StreamableLoadingResult<TAsset> result = await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
+
+            Assert.That(result.Succeeded, Is.True);
+            Assert.That(result.Asset, Is.Not.Null);
+
+            AssertSuccess(result.Asset);
+        }
+
+        [Test]
+        public async Task ConcludeExceptionOnParseFail()
+        {
+            promise = AssetPromise<TAsset, TIntention>.Create(world, CreateWrongTypeIntention());
+
+            // Launch the flow
+            system.Update(0);
+
+            StreamableLoadingResult<TAsset> result = await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
+
+            Assert.That(result.Succeeded, Is.False);
+            Assert.IsNotNull(result.Exception);
+        }
+
+        [Test]
+        public async Task ConcludeFailIfNotFound()
+        {
+            TIntention intent = CreateNotFoundIntention();
+            intent.SetAttempts(1);
+
+            promise = AssetPromise<TAsset, TIntention>.Create(world, intent);
+
+            // Launch the flow
+            system.Update(0);
+
+            StreamableLoadingResult<TAsset> result = await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
+
+            Assert.IsFalse(result.Succeeded);
+            Assert.IsNotNull(result.Exception);
+        }
+
+        [Test]
+        public async Task RemoveCurrentSourceFromPermittedSources()
+        {
+            TIntention intent = CreateSuccessIntention();
+            intent.SetSources(AssetSource.EMBEDDED, AssetSource.EMBEDDED);
+
+            promise = AssetPromise<TAsset, TIntention>.Create(world, CreateSuccessIntention());
+
+            // Launch the flow
+            system.Update(0);
+
+            Assert.AreEqual(AssetSource.NONE, world.Get<TIntention>(promise.Entity).CommonArguments.PermittedSources);
+            await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
+        }
+
+        [Test]
+        public async Task GetAssetFromCache()
+        {
+            TIntention successIntent = CreateSuccessIntention();
+            promise = AssetPromise<TAsset, TIntention>.Create(world, successIntent);
+
+            // Launch the flow
+            system.Update(0);
+
+            cache.Received(1).TryGet(promise.LoadingIntention, out Arg.Any<TAsset>());
+            cache.ClearReceivedCalls();
+
+            StreamableLoadingResult<TAsset> result = await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
+
+            // Second time
+
+            cache.TryGet(in successIntent, out Arg.Any<TAsset>())
+                 .Returns(c =>
+                  {
+                      c[1] = result.Asset;
+                      return true;
+                  });
+
+            promise = AssetPromise<TAsset, TIntention>.Create(world, successIntent);
+
+            // Launch the flow
+            system.Update(0);
+
+            // should exit immediately
+            Assert.That(world.Has<LoadingInProgress>(promise.Entity), Is.False);
+
+            result = await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
+
+            Assert.That(result.Succeeded, Is.True);
+            Assert.That(result.Asset, Is.Not.Null);
+        }
+
+        /// <summary>
+        ///     Additional assertion for successful promise
+        /// </summary>
+        /// <param name="asset"></param>
+        protected virtual void AssertSuccess(TAsset asset) { }
+    }
+}

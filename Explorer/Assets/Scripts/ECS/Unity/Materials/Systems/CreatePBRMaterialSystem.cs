@@ -43,10 +43,10 @@ namespace ECS.Unity.Materials.Systems
 
         private void StartTexturesLoading(ref MaterialComponent materialComponent)
         {
-            TryCreateGetTextureIntention(in materialComponent.Data.AlbedoTexture, ref materialComponent.AlbedoTexPromise);
-            TryCreateGetTextureIntention(in materialComponent.Data.EmissiveTexture, ref materialComponent.EmissiveTexPromise);
-            TryCreateGetTextureIntention(in materialComponent.Data.AlphaTexture, ref materialComponent.AlphaTexPromise);
-            TryCreateGetTextureIntention(in materialComponent.Data.BumpTexture, ref materialComponent.BumpTexPromise);
+            TryCreateGetTexturePromise(in materialComponent.Data.AlbedoTexture, ref materialComponent.AlbedoTexPromise);
+            TryCreateGetTexturePromise(in materialComponent.Data.EmissiveTexture, ref materialComponent.EmissiveTexPromise);
+            TryCreateGetTexturePromise(in materialComponent.Data.AlphaTexture, ref materialComponent.AlphaTexPromise);
+            TryCreateGetTexturePromise(in materialComponent.Data.BumpTexture, ref materialComponent.BumpTexPromise);
 
             materialComponent.Status = MaterialComponent.LifeCycle.LoadingInProgress;
         }
@@ -56,10 +56,10 @@ namespace ECS.Unity.Materials.Systems
             // Check if all promises are finished
             // Promises are finished if: all of their entities are invalid, no promises at all, or the result component exists
 
-            if (TryGetTextureResult(in materialComponent.AlbedoTexPromise, out StreamableLoadingResult<Texture2D> albedoResult)
-                && TryGetTextureResult(in materialComponent.EmissiveTexPromise, out StreamableLoadingResult<Texture2D> emissiveResult)
-                && TryGetTextureResult(in materialComponent.AlphaTexPromise, out StreamableLoadingResult<Texture2D> alphaResult)
-                && TryGetTextureResult(in materialComponent.BumpTexPromise, out StreamableLoadingResult<Texture2D> bumpResult))
+            if (TryGetTextureResult(ref materialComponent.AlbedoTexPromise, out StreamableLoadingResult<Texture2D> albedoResult)
+                && TryGetTextureResult(ref materialComponent.EmissiveTexPromise, out StreamableLoadingResult<Texture2D> emissiveResult)
+                && TryGetTextureResult(ref materialComponent.AlphaTexPromise, out StreamableLoadingResult<Texture2D> alphaResult)
+                && TryGetTextureResult(ref materialComponent.BumpTexPromise, out StreamableLoadingResult<Texture2D> bumpResult))
             {
                 materialComponent.Status = MaterialComponent.LifeCycle.LoadingFinished;
 
@@ -74,10 +74,10 @@ namespace ECS.Unity.Materials.Systems
                 TrySetTexture(materialComponent.Result, ref alphaResult, ShaderUtils.AlphaTexture);
                 TrySetTexture(materialComponent.Result, ref bumpResult, ShaderUtils.BumpMap);
 
-                DestroyEntityReference(in materialComponent.AlbedoTexPromise);
-                DestroyEntityReference(in materialComponent.EmissiveTexPromise);
-                DestroyEntityReference(in materialComponent.AlphaTexPromise);
-                DestroyEntityReference(in materialComponent.BumpTexPromise);
+                DestroyEntityReference(ref materialComponent.AlbedoTexPromise);
+                DestroyEntityReference(ref materialComponent.EmissiveTexPromise);
+                DestroyEntityReference(ref materialComponent.AlphaTexPromise);
+                DestroyEntityReference(ref materialComponent.BumpTexPromise);
 
                 // TODO It is super expensive and allocates 500 KB every call, the changes must be made in the common library
                 // SRPBatchingHelper.OptimizeMaterial(materialComponent.Result);

@@ -1,7 +1,7 @@
 ﻿using Arch.Core;
 using DCL.ECSComponents;
 using Decentraland.Common;
-using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using ECS.Unity.Materials.Components;
@@ -174,7 +174,7 @@ namespace ECS.Unity.Materials.Tests
             c.Status = MaterialComponent.LifeCycle.LoadingInProgress;
 
             // Add entity reference
-            EntityReference texPromise = world.Reference(world.Create(new GetTextureIntention()));
+            var texPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention());
             c.AlphaTexPromise = texPromise;
 
             // Second run -> release promise
@@ -184,7 +184,7 @@ namespace ECS.Unity.Materials.Tests
             Assert.IsTrue(world.TryGet(e, out MaterialComponent materialComponent));
             AssertBasicMaterial(material2, materialComponent);
 
-            Assert.IsTrue(world.Has<ForgetLoadingIntent>(texPromise.Entity));
+            Assert.IsTrue(texPromise.LoadingIntention.CommonArguments.CancellationToken.IsCancellationRequested);
             Assert.AreEqual(EntityReference.Null, materialComponent.AlphaTexPromise);
         }
 
@@ -199,7 +199,7 @@ namespace ECS.Unity.Materials.Tests
                         Texture = new Texture
                         {
                             Src = tex1,
-                            WrapMode = TextureWrapMode.TwmMirrorOnce,
+                            WrapMode = TextureWrapMode.TwmMirror,
                             FilterMode = TextureFilterMode.TfmPoint,
                         },
                     },

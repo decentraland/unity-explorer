@@ -1,5 +1,7 @@
 ﻿using Arch.Core;
 using ECS.StreamableLoading.Common.Components;
+using System;
+using System.Collections.Generic;
 using UnityEngine.Assertions;
 
 namespace ECS.StreamableLoading.Common
@@ -9,12 +11,14 @@ namespace ECS.StreamableLoading.Common
     /// </summary>
     /// <typeparam name="TAsset">Asset Type</typeparam>
     /// <typeparam name="TLoadingIntention">Loading Intention Type needed to dereference unused assets</typeparam>
-    public struct AssetPromise<TAsset, TLoadingIntention> where TLoadingIntention: ILoadingIntention
+    public struct AssetPromise<TAsset, TLoadingIntention> : IEquatable<AssetPromise<TAsset, TLoadingIntention>> where TLoadingIntention: ILoadingIntention
     {
+        public static readonly AssetPromise<TAsset, TLoadingIntention> NULL = new () { Entity = EntityReference.Null };
+
         /// <summary>
         ///     Entity Intention will be alive if the loading process is not consumed
         /// </summary>
-        public EntityReference LoadingEntity { get; private set; }
+        public EntityReference Entity { get; private set; }
 
         /// <summary>
         ///     Loading intention will persist so it can be used to dereference unused assets
@@ -30,7 +34,7 @@ namespace ECS.StreamableLoading.Common
             new ()
             {
                 LoadingIntention = loadingIntention,
-                LoadingEntity = world.Reference(world.Create(loadingIntention)),
+                Entity = world.Reference(world.Create(loadingIntention)),
             };
 
         /// <summary>
@@ -46,7 +50,7 @@ namespace ECS.StreamableLoading.Common
 
             result = default(StreamableLoadingResult<TAsset>);
 
-            if (world.TryGet(LoadingEntity, out result))
+            if (world.TryGet(Entity, out result))
             {
                 Result = result;
                 return true;
@@ -56,7 +60,7 @@ namespace ECS.StreamableLoading.Common
         }
 
         /// <summary>
-        ///     Returns the result and delete an entity if the loading is finished
+        ///     Returns the result and deletes an entity if the loading is finished
         /// </summary>
         public bool TryConsume(World world, out StreamableLoadingResult<TAsset> result)
         {
@@ -64,11 +68,11 @@ namespace ECS.StreamableLoading.Common
 
             result = default(StreamableLoadingResult<TAsset>);
 
-            if (world.TryGet(LoadingEntity, out result))
+            if (world.TryGet(Entity, out result))
             {
                 Result = result;
-                world.Destroy(LoadingEntity);
-                LoadingEntity = EntityReference.Null;
+                world.Destroy(Entity);
+                Entity = EntityReference.Null;
                 return true;
             }
 
@@ -80,9 +84,9 @@ namespace ECS.StreamableLoading.Common
         /// </summary>
         public void Consume(World world)
         {
-            if (LoadingEntity == EntityReference.Null || !LoadingEntity.IsAlive(world)) return;
+            if (Entity == EntityReference.Null || !Entity.IsAlive(world)) return;
 
-            world.Destroy(LoadingEntity);
+            world.Destroy(Entity);
         }
 
         /// <summary>
@@ -91,10 +95,25 @@ namespace ECS.StreamableLoading.Common
         /// <param name="world"></param>
         public void ForgetLoading(World world)
         {
-            if (LoadingEntity == EntityReference.Null || !LoadingEntity.IsAlive(world)) return;
+            if (Entity == EntityReference.Null || !Entity.IsAlive(world)) return;
 
-            world.Add(LoadingEntity.Entity, new ForgetLoadingIntent());
-            LoadingEntity = EntityReference.Null;
+            LoadingIntention.CommonArguments.cancellationTokenSource.Cancel();
+            Entity = EntityReference.Null;
         }
+
+        public bool Equals(AssetPromise<TAsset, TLoadingIntention> other) =>
+            Entity.Equals(other.Entity) && EqualityComparer<TLoadingIntention>.Default.Equals(LoadingIntention, other.LoadingIntention) && Nullable.Equals(Result, other.Result);
+
+        public override bool Equals(object obj) =>
+            obj is AssetPromise<TAsset, TLoadingIntention> other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(Entity, LoadingIntention, Result);
+
+        public static bool operator ==(AssetPromise<TAsset, TLoadingIntention> left, AssetPromise<TAsset, TLoadingIntention> right) =>
+            left.Equals(right);
+
+        public static bool operator !=(AssetPromise<TAsset, TLoadingIntention> left, AssetPromise<TAsset, TLoadingIntention> right) =>
+            !left.Equals(right);
     }
 }

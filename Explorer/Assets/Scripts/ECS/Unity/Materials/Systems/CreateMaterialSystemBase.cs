@@ -5,6 +5,7 @@ using ECS.StreamableLoading.Textures;
 using ECS.Unity.Textures.Components;
 using UnityEngine;
 using UnityEngine.Pool;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.Unity.Materials.Systems
 {
@@ -22,40 +23,33 @@ namespace ECS.Unity.Materials.Systems
         protected Material CreateNewMaterialInstance() =>
             materialsPool.Get();
 
-        protected bool TryCreateGetTextureIntention(in TextureComponent? textureComponent, ref EntityReference entityReference)
+        protected bool TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise promise)
         {
             if (textureComponent == null) return false;
 
-            Entity entity = World.Create(new GetTextureIntention
+            promise = Promise.Create(World, new GetTextureIntention
             {
                 CommonArguments = new CommonLoadingArguments(textureComponent.Value.Src, attempts: attemptsCount),
                 WrapMode = textureComponent.Value.WrapMode,
                 FilterMode = textureComponent.Value.FilterMode,
             });
 
-            entityReference = World.Reference(entity);
             return true;
         }
 
-        protected void DestroyEntityReference(in EntityReference entityReference)
+        protected void DestroyEntityReference(ref Promise promise)
         {
-            if (entityReference == EntityReference.Null || !entityReference.IsAlive(World))
-                return;
-
-            World.Destroy(entityReference);
+            promise.Consume(World);
         }
 
-        protected bool TryGetTextureResult(in EntityReference entityReference, out StreamableLoadingResult<Texture2D> textureResult)
+        protected bool TryGetTextureResult(ref Promise promise, out StreamableLoadingResult<Texture2D> textureResult)
         {
             textureResult = default(StreamableLoadingResult<Texture2D>);
 
-            if (entityReference == EntityReference.Null)
+            if (promise == Promise.NULL)
                 return true;
 
-            if (!entityReference.IsAlive(World))
-                return false;
-
-            return World.TryGet(entityReference, out textureResult);
+            return promise.TryGetResult(World, out textureResult);
         }
 
         protected static void TrySetTexture(Material material, ref StreamableLoadingResult<Texture2D> textureResult, int propId)
