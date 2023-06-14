@@ -3,6 +3,7 @@ using CrdtEcsBridge.Engine;
 using System.Buffers;
 using System.Collections.Generic;
 using UnityEngine.Pool;
+using Utility.Pool;
 using Utility.ThreadSafePool;
 
 namespace CrdtEcsBridge.PoolsProviders
@@ -15,12 +16,7 @@ namespace CrdtEcsBridge.PoolsProviders
         private static readonly ThreadSafeObjectPool<InstancePoolsProvider> POOL =
             new (() => new InstancePoolsProvider());
 
-        private readonly IObjectPool<IList<CRDTMessage>> crdtMessagesPool = new ObjectPool<IList<CRDTMessage>>(
-
-            // just preallocate an array big enough
-            createFunc: () => new List<CRDTMessage>(256),
-            actionOnRelease: list => list.Clear()
-        );
+        private readonly IObjectPool<List<CRDTMessage>> crdtMessagesPool = new ListObjectPool<CRDTMessage>(listInstanceDefaultCapacity: 256);
 
         private readonly ArrayPool<byte> crdtRawDataPool = ArrayPool<byte>.Create(16_777_216, 8); // 16 MB, 8 buckets, if the requested array is more than 16 mb than a new instance is simply returned
 
@@ -43,10 +39,10 @@ namespace CrdtEcsBridge.PoolsProviders
             crdtRawDataPool.Return(bytes);
         }
 
-        public IList<CRDTMessage> GetDeserializationMessagesPool() =>
+        public List<CRDTMessage> GetDeserializationMessagesPool() =>
             crdtMessagesPool.Get();
 
-        public void ReleaseDeserializationMessagesPool(IList<CRDTMessage> messages)
+        public void ReleaseDeserializationMessagesPool(List<CRDTMessage> messages)
         {
             crdtMessagesPool.Release(messages);
         }

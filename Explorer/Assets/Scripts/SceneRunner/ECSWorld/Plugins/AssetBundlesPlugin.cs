@@ -5,7 +5,6 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AssetBundles.Manifest;
 using ECS.StreamableLoading.Cache;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace SceneRunner.ECSWorld.Plugins
 {
@@ -28,7 +27,9 @@ namespace SceneRunner.ECSWorld.Plugins
 
             // Asset Bundles
             PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, sharedDependencies.SceneData);
-            LoadAssetBundleSystem.InjectToWorld(ref builder, NoCache<AssetBundle, GetAssetBundleIntention>.INSTANCE);
+
+            // TODO create a runtime ref-counting cache
+            LoadAssetBundleSystem.InjectToWorld(ref builder, NoCache<AssetBundleData, GetAssetBundleIntention>.INSTANCE);
         }
     }
 }

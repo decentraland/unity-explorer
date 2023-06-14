@@ -27,7 +27,8 @@ namespace Global
                 new TexturesLoadingPlugin(),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
-                new AssetBundlesPlugin());
+                new AssetBundlesPlugin(),
+                new GltfContainerPlugin(sharedDependencies));
 
             return new SceneSharedContainer
             {

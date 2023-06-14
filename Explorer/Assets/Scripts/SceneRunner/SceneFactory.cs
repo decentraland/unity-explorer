@@ -5,6 +5,7 @@ using CRDT.Memory;
 using CRDT.Protocol;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
+using CrdtEcsBridge.ComponentWriter;
 using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
@@ -107,9 +108,10 @@ namespace SceneRunner
             var instancePoolsProvider = InstancePoolsProvider.Create();
             var crdtMemoryAllocator = CRDTPooledMemoryAllocator.Create();
             var crdtDeserializer = new CRDTDeserializer(crdtMemoryAllocator);
+            var ecsToCrdtWriter = new ECSToCRDTWriter(crdtProtocol, outgoingCrtdMessagesProvider, sdkComponentsRegistry, crdtMemoryAllocator);
 
             /* Pass dependencies here if they are needed by the systems */
-            var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, entitiesMap);
+            var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, ecsToCrdtWriter, entitiesMap);
 
             ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(in instanceDependencies);
             ecsWorldFacade.Initialize();

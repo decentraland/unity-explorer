@@ -9,12 +9,12 @@ using UnityEngine;
 
 namespace ECS.Unity.Visibility.Tests
 {
-    public class VisibilitySystemShould : UnitySystemTestBase<VisibilitySystem>
+    public class PrimitivesVisibilitySystemShould : UnitySystemTestBase<PrimitivesVisibilitySystem>
     {
         [SetUp]
         public void SetUp()
         {
-            system = new VisibilitySystem(world);
+            system = new PrimitivesVisibilitySystem(world);
         }
 
         [Test]
@@ -55,7 +55,7 @@ namespace ECS.Unity.Visibility.Tests
 
             // Act
             world.Remove<PBVisibilityComponent>(e);
-            world.Get<RemovedComponents>(e).RemovedComponentsSet.Add(typeof(PBVisibilityComponent));
+            world.Get<RemovedComponents>(e).Set.Add(typeof(PBVisibilityComponent));
             system.Update(0);
 
             //Assert

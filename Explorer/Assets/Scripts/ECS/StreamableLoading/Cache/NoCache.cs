@@ -26,6 +26,6 @@ namespace ECS.StreamableLoading.Cache
 
         public void Add(in TLoadingIntention key, TAsset asset) { }
 
-        public void Dereference(in TLoadingIntention key) { }
+        public void Dereference(in TLoadingIntention key, TAsset asset) { }
     }
 }

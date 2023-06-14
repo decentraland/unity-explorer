@@ -69,7 +69,7 @@ namespace CrdtEcsBridge.Engine
             ReleaseSerializationBuffer();
 
             // Deserialize messages from the byte array
-            IList<CRDTMessage> messages = instancePoolsProvider.GetDeserializationMessagesPool();
+            List<CRDTMessage> messages = instancePoolsProvider.GetDeserializationMessagesPool();
 
             deserializeBatchSampler.Begin();
 

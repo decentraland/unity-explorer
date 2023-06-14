@@ -25,14 +25,15 @@ namespace ECS.StreamableLoading.Common.Components
             int timeout = StreamableLoadingDefaults.TIMEOUT,
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
             AssetSource permittedSources = AssetSource.WEB,
-            AssetSource currentSource = AssetSource.WEB)
+            AssetSource currentSource = AssetSource.WEB,
+            CancellationTokenSource cancellationTokenSource = null)
         {
             URL = url;
             Timeout = timeout;
             Attempts = attempts;
             PermittedSources = permittedSources;
             CurrentSource = currentSource;
-            cancellationTokenSource = new CancellationTokenSource();
+            this.cancellationTokenSource = cancellationTokenSource ?? new CancellationTokenSource();
         }
     }
 }

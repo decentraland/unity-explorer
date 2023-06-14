@@ -12,9 +12,9 @@ namespace ECS.Unity.Visibility.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [UpdateAfter(typeof(InstantiatePrimitiveRenderingSystem))]
-    public partial class VisibilitySystem : BaseUnityLoopSystem
+    public partial class PrimitivesVisibilitySystem : BaseUnityLoopSystem
     {
-        public VisibilitySystem(World world) : base(world) { }
+        public PrimitivesVisibilitySystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
@@ -36,7 +36,7 @@ namespace ECS.Unity.Visibility.Systems
         [None(typeof(PBVisibilityComponent))]
         private void HandleComponentRemoval(ref RemovedComponents removedComponents, ref PrimitiveMeshRendererComponent primitiveMeshRendererComponent)
         {
-            if (removedComponents.RemovedComponentsSet.Remove(typeof(PBVisibilityComponent)))
+            if (removedComponents.Set.Remove(typeof(PBVisibilityComponent)))
                 primitiveMeshRendererComponent.MeshRenderer.enabled = true;
         }
     }

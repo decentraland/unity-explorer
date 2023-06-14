@@ -139,7 +139,7 @@ namespace CrdtEcsBridge.Engine.Tests
                 }
 
                 worldSyncCommandBuffer.FinalizeAndDeserialize();
-                instancePoolsProvider.ReleaseDeserializationMessagesPool(Arg.Any<IList<CRDTMessage>>());
+                instancePoolsProvider.ReleaseDeserializationMessagesPool(Arg.Any<List<CRDTMessage>>());
 
                 outgoingCrtdMessagesProvider.GetSerializationSyncBlock();
                 sharedPoolsProvider.GetSerializedStateBytesPool(Arg.Any<int>());

@@ -11,7 +11,7 @@ namespace ECS.StreamableLoading.Common
     /// </summary>
     /// <typeparam name="TAsset">Asset Type</typeparam>
     /// <typeparam name="TLoadingIntention">Loading Intention Type needed to dereference unused assets</typeparam>
-    public struct AssetPromise<TAsset, TLoadingIntention> : IEquatable<AssetPromise<TAsset, TLoadingIntention>> where TLoadingIntention: ILoadingIntention
+    public struct AssetPromise<TAsset, TLoadingIntention> : IEquatable<AssetPromise<TAsset, TLoadingIntention>> where TLoadingIntention: IAssetIntention
     {
         public static readonly AssetPromise<TAsset, TLoadingIntention> NULL = new () { Entity = EntityReference.Null };
 
@@ -97,7 +97,7 @@ namespace ECS.StreamableLoading.Common
         {
             if (Entity == EntityReference.Null || !Entity.IsAlive(world)) return;
 
-            LoadingIntention.CommonArguments.cancellationTokenSource.Cancel();
+            LoadingIntention.CancellationTokenSource.Cancel();
             Entity = EntityReference.Null;
         }
 

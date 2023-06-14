@@ -1,11 +1,18 @@
 ﻿using AssetManagement;
+using System.Threading;
 using Utility;
 
 namespace ECS.StreamableLoading.Common.Components
 {
-    public interface ILoadingIntention
+    public interface IAssetIntention
+    {
+        CancellationTokenSource CancellationTokenSource { get; }
+    }
+
+    public interface ILoadingIntention : IAssetIntention
     {
         CommonLoadingArguments CommonArguments { get; set; }
+        CancellationTokenSource IAssetIntention.CancellationTokenSource => CommonArguments.cancellationTokenSource;
     }
 
     public static class LoadingIntentionExtensions

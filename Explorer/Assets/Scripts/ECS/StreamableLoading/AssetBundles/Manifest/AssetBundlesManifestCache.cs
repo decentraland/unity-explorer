@@ -24,9 +24,15 @@ namespace ECS.StreamableLoading.AssetBundles.Manifest
             cache.Add(key, asset);
         }
 
-        public void Dereference(in GetAssetBundleManifestIntention key)
+        public void Dereference(in GetAssetBundleManifestIntention key, SceneAssetBundleManifest asset)
         {
             // Eternal cache - no action required
         }
+
+        public bool Equals(GetAssetBundleManifestIntention x, GetAssetBundleManifestIntention y) =>
+            URLComparer<GetAssetBundleManifestIntention>.INSTANCE.Equals(x, y);
+
+        public int GetHashCode(GetAssetBundleManifestIntention obj) =>
+            URLComparer<GetAssetBundleManifestIntention>.INSTANCE.GetHashCode(obj);
     }
 }
