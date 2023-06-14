@@ -7,7 +7,6 @@ using ECS.LifeCycle.Components;
 using ECS.Unity.GLTFContainer;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -21,7 +20,8 @@ namespace ECS.Unity.Visibility.Systems
 
         protected override void Update(float t)
         {
-            throw new NotImplementedException();
+            UpdateVisibilityQuery(World);
+            HandleComponentRemovalQuery(World);
         }
 
         [Query]
