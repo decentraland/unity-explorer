@@ -38,6 +38,22 @@ namespace ECS.StreamableLoading.AssetBundles
         // If loading is not started yet and there is no result
         private void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention)
         {
+            // Remove not supported flags
+            assetBundleIntention.RemovePermittedSource(AssetSource.ADDRESSABLE); // addressables are not implemented
+
+            // If Hash is already provided just use it, otherwise resolve by the content provider
+            if (assetBundleIntention.Hash == null)
+
+                if (!sceneData.TryGetHash(assetBundleIntention.Name, out assetBundleIntention.Hash))
+                {
+                    // TODO Errors reporting
+                    // Add the failure to the entity
+                    World.Add(entity, new StreamableLoadingResult<AssetBundleData>
+                        (new ArgumentException($"Asset Bundle {assetBundleIntention.Name} not found in the content")));
+
+                    return;
+                }
+
             // First priority
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.EMBEDDED))
             {
@@ -52,12 +68,12 @@ namespace ECS.StreamableLoading.AssetBundles
             // Second priority
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.WEB))
             {
-                // Ignore root manifest for dependencies, they are not listed there
-                if (!sceneData.AssetBundleManifest.TryGetAssetBundleURL(assetBundleIntention.Hash, !assetBundleIntention.IsDependency, out string url))
+                // If Hash is already provided just use it, otherwise resolve by the content provider
+                if (!sceneData.AssetBundleManifest.Contains(assetBundleIntention.Hash))
                 {
                     // TODO Errors reporting
                     // Add the failure to the entity
-                    World.Add(entity, new StreamableLoadingResult<AssetBundle>
+                    World.Add(entity, new StreamableLoadingResult<AssetBundleData>
                         (new ArgumentException($"Asset Bundle {assetBundleIntention.Hash} not found in the manifest")));
 
                     return;
@@ -67,7 +83,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.Attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT;
                 ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
                 ca.CurrentSource = AssetSource.WEB;
-                ca.URL = url;
+                ca.URL = sceneData.AssetBundleManifest.GetAssetBundleURL(assetBundleIntention.Hash);
                 assetBundleIntention.CommonArguments = ca;
                 assetBundleIntention.cacheHash = sceneData.AssetBundleManifest.ComputeHash(assetBundleIntention.Hash);
             }

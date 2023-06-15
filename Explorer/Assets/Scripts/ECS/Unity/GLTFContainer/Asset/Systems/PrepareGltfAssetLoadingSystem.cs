@@ -30,11 +30,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         }
 
         [Query]
-        [None(typeof(StreamableLoadingResult<GltfContainerAsset>))]
+        [None(typeof(StreamableLoadingResult<GltfContainerAsset>), typeof(GetAssetBundleIntention))]
         private void Prepare(in Entity entity, ref GetGltfContainerAssetIntention intention)
         {
             // Try load from cache
-            if (cache.TryGet(intention.Hash, out GltfContainerAsset asset))
+            if (cache.TryGet(intention.Name, out GltfContainerAsset asset))
             {
                 // construct the result immediately
                 World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
@@ -42,7 +42,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             }
 
             // If not in cache, try load from asset bundle
-            World.Add(entity, new GetAssetBundleIntention(intention.Hash));
+            World.Add(entity, GetAssetBundleIntention.FromName(intention.Name));
         }
     }
 }

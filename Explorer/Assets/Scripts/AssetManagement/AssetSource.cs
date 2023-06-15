@@ -29,6 +29,6 @@ namespace AssetManagement
         /// <summary>
         ///     All sources
         /// </summary>
-        ALL = ~0,
+        ALL = EMBEDDED | WEB | ADDRESSABLE,
     }
 }

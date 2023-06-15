@@ -67,16 +67,10 @@ namespace SceneRunner.Scene
             fixed (char* ptr = hashBuilder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * hashBuilder.Length)); }
         }
 
-        public bool TryGetAssetBundleURL(string hash, bool checkManifest, out string url)
-        {
-            if (!checkManifest || convertedFiles.Contains(hash))
-            {
-                url = $"{assetBundlesBaseUrl}{dto.Version}/{hash}";
-                return true;
-            }
+        public bool Contains(string hash) =>
+            convertedFiles.Contains(hash);
 
-            url = null;
-            return false;
-        }
+        public string GetAssetBundleURL(string hash) =>
+            $"{assetBundlesBaseUrl}{dto.Version}/{hash}";
     }
 }

@@ -25,9 +25,32 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         }
 
         [Test]
+        public void ResolveHashFromName()
+        {
+            sceneData.TryGetHash("TEST", out Arg.Any<string>())
+                     .Returns(c =>
+                      {
+                          c[1] = "abcd";
+                          return true;
+                      });
+
+            var intent = GetAssetBundleIntention.FromName("TEST", permittedSources: AssetSource.EMBEDDED);
+
+            Entity e = world.Create(intent);
+
+            system.Update(0);
+
+            intent = world.Get<GetAssetBundleIntention>(e);
+
+            Assert.That(intent.CommonArguments.Attempts, Is.EqualTo(1));
+            Assert.That(intent.CommonArguments.CurrentSource, Is.EqualTo(AssetSource.EMBEDDED));
+            Assert.That(intent.CommonArguments.URL, Is.EqualTo(path + "abcd"));
+        }
+
+        [Test]
         public void LoadFromEmbeddedFirst()
         {
-            var intent = new GetAssetBundleIntention("TEST", permittedSources: AssetSource.EMBEDDED | AssetSource.WEB);
+            var intent = GetAssetBundleIntention.FromHash("TEST", permittedSources: AssetSource.EMBEDDED | AssetSource.WEB);
 
             Entity e = world.Create(intent);
 
@@ -45,7 +68,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         {
             sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest("http://www.fakepath.com/v1/", new SceneAbDto { files = new[] { "abcd" }, version = "200" }));
 
-            var intent = new GetAssetBundleIntention("abcd", permittedSources: AssetSource.WEB);
+            var intent = GetAssetBundleIntention.FromHash("abcd", permittedSources: AssetSource.WEB);
             Entity e = world.Create(intent);
             system.Update(0);
 
@@ -62,12 +85,12 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         {
             sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest("http://www.fakepath.com/v1/", new SceneAbDto { files = Array.Empty<string>() }));
 
-            var intent = new GetAssetBundleIntention("abcd", permittedSources: AssetSource.WEB);
+            var intent = GetAssetBundleIntention.FromHash("abcd", permittedSources: AssetSource.WEB);
             Entity e = world.Create(intent);
 
             system.Update(0);
 
-            Assert.That(world.TryGet(e, out StreamableLoadingResult<AssetBundle> result), Is.True);
+            Assert.That(world.TryGet(e, out StreamableLoadingResult<AssetBundleData> result), Is.True);
             Assert.That(result.Succeeded, Is.False);
             Assert.That(result.Asset, Is.Null);
             Assert.That(result.Exception, Is.TypeOf<ArgumentException>());

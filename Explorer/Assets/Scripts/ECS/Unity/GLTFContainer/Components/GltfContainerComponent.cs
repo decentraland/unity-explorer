@@ -7,7 +7,7 @@ namespace ECS.Unity.GLTFContainer.Components
 {
     public struct GltfContainerComponent
     {
-        public string Source => Promise.LoadingIntention.Hash;
+        public string Source => Promise.LoadingIntention.Name;
 
         public ColliderLayer VisibleMeshesCollisionMask;
         public ColliderLayer InvisibleMeshesCollisionMask;

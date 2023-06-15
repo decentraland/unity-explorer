@@ -23,7 +23,7 @@ namespace ECS.StreamableLoading.Common.Systems
     {
         private static readonly QueryDescription CREATE_WEB_REQUEST = new QueryDescription()
                                                                      .WithAll<TIntention>()
-                                                                     .WithNone<LoadingInProgress>();
+                                                                     .WithNone<LoadingInProgress, StreamableLoadingResult<TAsset>>();
 
         private readonly Query query;
 
@@ -188,6 +188,9 @@ namespace ECS.StreamableLoading.Common.Systems
                 {
                     UnityWebRequest webRequest = unityWebRequestException.UnityWebRequest;
 
+                    //Debug.LogError(unityWebRequestException.UnityWebRequest.url);
+                    //Debug.LogException(unityWebRequestException);
+
                     // Decide if we can repeat or not
                     --attemptCount;
 
@@ -207,6 +210,7 @@ namespace ECS.StreamableLoading.Common.Systems
                     // General exception
                     // conclude now, we can't do anything
                     // TODO errors reporting
+                    //Debug.LogException(e);
                     return new StreamableLoadingResult<TAsset>(e);
                 }
             }

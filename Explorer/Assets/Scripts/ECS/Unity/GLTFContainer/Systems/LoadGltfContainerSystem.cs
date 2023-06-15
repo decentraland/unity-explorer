@@ -9,6 +9,7 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Components.Defaults;
 using ECS.Unity.Transforms.Components;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Assertions;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.Unity.GLTFContainer.Asset.Components.GltfContainerAsset, ECS.Unity.GLTFContainer.Asset.Components.GetGltfContainerAssetIntention>;
 
@@ -63,6 +64,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                 if (!result.Succeeded)
                 {
                     component.State.Set(LoadingState.FinishedWithError);
+                    Debug.LogException(result.Exception);
                     return;
                 }
 

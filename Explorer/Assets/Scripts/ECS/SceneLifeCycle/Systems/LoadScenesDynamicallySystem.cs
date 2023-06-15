@@ -68,11 +68,15 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     IpfsTypes.SceneEntityDefinition scene = retrievedScenes[i];
 
+                    if (scene.pointers.Count == 0) continue;
+
+                    var scenePointer = new ScenePointer(scene, ManifestPromise.Create(World, new GetAssetBundleManifestIntention(scene.id)));
+
                     foreach (string encodedPointer in scene.pointers)
                     {
                         Vector2Int pointer = IpfsHelper.DecodePointer(encodedPointer);
                         parcelsToLoad.Remove(pointer);
-                        state.ScenePointers.TryAdd(pointer, new ScenePointer(scene, ManifestPromise.Create(World, new GetAssetBundleManifestIntention(scene.id))));
+                        state.ScenePointers.TryAdd(pointer, scenePointer);
                     }
                 }
 

@@ -83,6 +83,15 @@ namespace SceneRunner.Scene
             return true;
         }
 
+        public bool TryGetHash(string name, out string hash)
+        {
+            if (supportHashes)
+                return fileToHash.TryGetValue(name, out hash);
+
+            hash = name;
+            return true;
+        }
+
         public bool TryGetMediaUrl(string url, out string result)
         {
             if (string.IsNullOrEmpty(url))

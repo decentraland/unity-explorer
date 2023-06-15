@@ -30,6 +30,13 @@ namespace ECS.StreamableLoading.Common.Components
             loadingIntention.CommonArguments = ca;
         }
 
+        public static void RemovePermittedSource<T>(this ref T loadingIntention, AssetSource source) where T: struct, ILoadingIntention
+        {
+            CommonLoadingArguments ca = loadingIntention.CommonArguments;
+            ca.PermittedSources.RemoveFlag(source);
+            loadingIntention.CommonArguments = ca;
+        }
+
         public static void SetAttempts<T>(this ref T loadingIntention, int attempts) where T: struct, ILoadingIntention
         {
             CommonLoadingArguments ca = loadingIntention.CommonArguments;

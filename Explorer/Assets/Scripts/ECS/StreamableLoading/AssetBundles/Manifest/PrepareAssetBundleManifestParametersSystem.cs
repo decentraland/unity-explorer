@@ -35,7 +35,7 @@ namespace ECS.StreamableLoading.AssetBundles.Manifest
         {
             ReadOnlySpan<char> sceneId = intention.SceneId.AsSpan();
             GetEntityIdFromSceneId(ref sceneId);
-            intention.CommonArguments = new CommonLoadingArguments($"{assetBundleURL}/manifest/{sceneId.ToString()}.json");
+            intention.CommonArguments = new CommonLoadingArguments($"{assetBundleURL}manifest/{sceneId.ToString()}.json");
         }
 
         private static void GetEntityIdFromSceneId(ref ReadOnlySpan<char> sceneId)

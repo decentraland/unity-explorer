@@ -11,8 +11,6 @@ namespace SceneRunner.ECSWorld.Plugins
 {
     public class AssetBundlesPlugin : IECSWorldPlugin
     {
-        private const string ASSET_BUNDLES_URL = "https://ab-cdn.decentraland.org/";
-
         private static readonly string STREAMING_ASSETS_URL =
 #if UNITY_EDITOR || UNITY_STANDALONE
             $"file://{Application.streamingAssetsPath}/AssetBundles/";
@@ -22,17 +20,8 @@ namespace SceneRunner.ECSWorld.Plugins
 
         private readonly AssetBundlesManifestCache assetBundlesManifestCache;
 
-        public AssetBundlesPlugin()
-        {
-            assetBundlesManifestCache = new AssetBundlesManifestCache();
-        }
-
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            // Scene Manifest
-            PrepareAssetBundleManifestParametersSystem.InjectToWorld(ref builder, ASSET_BUNDLES_URL);
-            LoadAssetBundleManifestSystem.InjectToWorld(ref builder, assetBundlesManifestCache, ASSET_BUNDLES_URL);
-
             // Asset Bundles
             PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, STREAMING_ASSETS_URL);
 

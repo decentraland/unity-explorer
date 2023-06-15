@@ -58,7 +58,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             Assert.That(world.TryGet(entity, out GltfContainerComponent component), Is.True);
             Assert.That(component.Source, Is.EqualTo(GltfContainerTestResources.SIMPLE_RENDERER));
-            Assert.That(component.Promise.LoadingIntention.Hash, Is.EqualTo(GltfContainerTestResources.SIMPLE_RENDERER));
+            Assert.That(component.Promise.LoadingIntention.Name, Is.EqualTo(GltfContainerTestResources.SIMPLE_RENDERER));
             Assert.That(component.VisibleMeshesCollisionMask, Is.EqualTo(ColliderLayer.ClPointer));
             Assert.That(component.InvisibleMeshesCollisionMask, Is.EqualTo(ColliderLayer.ClPhysics | ColliderLayer.ClPointer));
             Assert.That(component.State.Value, Is.EqualTo(LoadingState.Loading));

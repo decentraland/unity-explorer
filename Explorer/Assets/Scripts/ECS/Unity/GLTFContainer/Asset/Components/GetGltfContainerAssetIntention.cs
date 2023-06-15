@@ -9,11 +9,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
     /// </summary>
     public readonly struct GetGltfContainerAssetIntention : IAssetIntention
     {
-        public readonly string Hash;
+        public readonly string Name;
 
-        public GetGltfContainerAssetIntention(string hash, CancellationTokenSource cancellationTokenSource)
+        public GetGltfContainerAssetIntention(string name, CancellationTokenSource cancellationTokenSource)
         {
-            Hash = hash;
+            Name = name;
             CancellationTokenSource = cancellationTokenSource;
         }
 

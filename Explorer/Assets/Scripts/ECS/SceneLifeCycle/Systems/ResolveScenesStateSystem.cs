@@ -46,7 +46,7 @@ namespace ECS.SceneLifeCycle.Systems
                 // If Parcel is still in range AND the scene manifest is loaded the scene is a candidate to be launched
                 // TODO list.contains is O(n), in the loop is O(m*n)
                 if (parcelsInRange.Contains(parcel)
-                    && (pointer.IsEmpty || pointer.ManifestPromise.TryConsume(World, out _)))
+                    && (pointer.IsEmpty || pointer.ManifestPromise.TryGetResult(World, out _)))
                     requiredScenes.Add(pointer);
             }
 
@@ -84,14 +84,18 @@ namespace ECS.SceneLifeCycle.Systems
                 if (state.LiveScenes.ContainsKey(definition.id)) continue;
 
                 // Launch the scene if the manifest is loaded
-                // TODO report if the manifest failed to load only once
-                if (!pointer.ManifestPromise.TryGetResult(World, out StreamableLoadingResult<SceneAssetBundleManifest> manifest) || !manifest.Succeeded)
+                // Don't block the scene if the loading manifest failed, just use NULL
+                // TODO report the error
+                if (!pointer.ManifestPromise.TryGetResult(World, out StreamableLoadingResult<SceneAssetBundleManifest> manifest))
                     continue;
+
+                pointer.ManifestPromise.Consume(World);
 
                 // this scene is not loaded... we need to load it
                 Entity entity = World.Create(new SceneLoadingComponent
                 {
                     Definition = definition,
+                    AssetBundleManifest = manifest.Succeeded ? manifest.Asset : SceneAssetBundleManifest.NULL,
                 });
 
                 state.LiveScenes.Add(definition.id, entity);
