@@ -2,6 +2,7 @@
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using NUnit.Framework;
+using System.Threading;
 using AssertionException = UnityEngine.Assertions.AssertionException;
 
 namespace ECS.StreamableLoading.Tests
@@ -11,6 +12,7 @@ namespace ECS.StreamableLoading.Tests
         public struct Intent : ILoadingIntention
         {
             public CommonLoadingArguments CommonArguments { get; set; }
+            public CancellationTokenSource CancellationTokenSource => CommonArguments.cancellationTokenSource;
         }
 
         public class Asset { }
@@ -24,7 +26,7 @@ namespace ECS.StreamableLoading.Tests
         {
             world = World.Create();
 
-            assetPromise = AssetPromise<Asset, Intent>.Create(world, new Intent());
+            assetPromise = AssetPromise<Asset, Intent>.Create(world, new Intent { CommonArguments = new CommonLoadingArguments("URL") });
         }
 
         [Test]

@@ -22,7 +22,7 @@ namespace ECS.StreamableLoading.Tests
 
         protected abstract TSystem CreateSystem();
 
-        private AssetPromise<TAsset, TIntention> promise;
+        protected AssetPromise<TAsset, TIntention> promise { get; private set; }
 
         protected IStreamableCache<TAsset, TIntention> cache;
 
@@ -48,8 +48,9 @@ namespace ECS.StreamableLoading.Tests
             // Launch the flow
             system.Update(0);
 
-            StreamableLoadingResult<TAsset> result = await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
+            promise = await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
 
+            Assert.That(promise.TryGetResult(world, out StreamableLoadingResult<TAsset> result), Is.True);
             Assert.That(result.Succeeded, Is.True);
             Assert.That(result.Asset, Is.Not.Null);
 
@@ -64,8 +65,9 @@ namespace ECS.StreamableLoading.Tests
             // Launch the flow
             system.Update(0);
 
-            StreamableLoadingResult<TAsset> result = await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
+            promise = await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
 
+            Assert.That(promise.TryGetResult(world, out StreamableLoadingResult<TAsset> result), Is.True);
             Assert.That(result.Succeeded, Is.False);
             Assert.IsNotNull(result.Exception);
         }
@@ -81,8 +83,9 @@ namespace ECS.StreamableLoading.Tests
             // Launch the flow
             system.Update(0);
 
-            StreamableLoadingResult<TAsset> result = await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
+            promise = await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
 
+            Assert.That(promise.TryGetResult(world, out StreamableLoadingResult<TAsset> result), Is.True);
             Assert.IsFalse(result.Succeeded);
             Assert.IsNotNull(result.Exception);
         }
@@ -108,17 +111,21 @@ namespace ECS.StreamableLoading.Tests
             TIntention successIntent = CreateSuccessIntention();
             promise = AssetPromise<TAsset, TIntention>.Create(world, successIntent);
 
+            TIntention checkIntent = successIntent;
+            checkIntent.RemoveCurrentSource();
+
             // Launch the flow
             system.Update(0);
 
-            cache.Received(1).TryGet(promise.LoadingIntention, out Arg.Any<TAsset>());
+            cache.Received(1).TryGet(checkIntent, out Arg.Any<TAsset>());
             cache.ClearReceivedCalls();
 
-            StreamableLoadingResult<TAsset> result = await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
+            promise = await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
+            Assert.That(promise.TryGetResult(world, out StreamableLoadingResult<TAsset> result), Is.True);
 
             // Second time
 
-            cache.TryGet(in successIntent, out Arg.Any<TAsset>())
+            cache.TryGet(in checkIntent, out Arg.Any<TAsset>())
                  .Returns(c =>
                   {
                       c[1] = result.Asset;
@@ -133,8 +140,9 @@ namespace ECS.StreamableLoading.Tests
             // should exit immediately
             Assert.That(world.Has<LoadingInProgress>(promise.Entity), Is.False);
 
-            result = await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
+            promise = await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
 
+            Assert.That(promise.TryGetResult(world, out result), Is.True);
             Assert.That(result.Succeeded, Is.True);
             Assert.That(result.Asset, Is.Not.Null);
         }

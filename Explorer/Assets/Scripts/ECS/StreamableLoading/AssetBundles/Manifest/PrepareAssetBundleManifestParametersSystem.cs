@@ -34,7 +34,7 @@ namespace ECS.StreamableLoading.AssetBundles.Manifest
         private void PrepareParameters(ref GetAssetBundleManifestIntention intention)
         {
             string entityId = GetEntityIdFromSceneId(intention.SceneId);
-            intention.CommonArguments = new CommonLoadingArguments($"{assetBundleURL}/manifest/{entityId}");
+            intention.CommonArguments = new CommonLoadingArguments($"{assetBundleURL}/manifest/{entityId}.json");
         }
 
         private static string GetEntityIdFromSceneId(string sceneId)

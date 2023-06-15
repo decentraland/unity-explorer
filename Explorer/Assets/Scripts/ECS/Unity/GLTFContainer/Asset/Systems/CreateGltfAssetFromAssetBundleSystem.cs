@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using CrdtEcsBridge.Physics;
 using ECS.Abstract;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
@@ -108,7 +107,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
                 for (var j = 0; j < list.Count; j++)
                 {
-                    MeshFilter meshFilter = list[i];
+                    MeshFilter meshFilter = list[j];
 
                     GameObject meshFilterGameObject = meshFilter.gameObject;
 
@@ -119,7 +118,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 }
             }
 
-            World.Add(entity, result);
+            World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
         }
 
         /// <summary>
@@ -134,10 +133,10 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         private static void CreateInvisibleColliders(List<Collider> results, GameObject meshFilterGo, MeshFilter meshFilter)
         {
             // Asset Bundle converter creates Colliders during the processing in some cases
-            if (meshFilterGo.layer == PhysicsLayers.CHARACTER_ONLY_LAYER)
-            {
-                Collider collider = meshFilterGo.GetComponent<Collider>();
+            Collider collider = meshFilterGo.GetComponent<Collider>();
 
+            if (collider)
+            {
                 // Disable it as its activity controlled by another system based on PBGltfContainer component
                 collider.enabled = false;
 

@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using ECS.Unity.Materials.Components;
@@ -25,7 +26,7 @@ namespace ECS.Unity.Materials.Tests
         {
             system = new CleanUpMaterialsSystem(world, destroyMaterial = Substitute.For<DestroyMaterial>());
 
-            e = world.Create(new MaterialComponent { AlbedoTexPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention()) }, new DeleteEntityIntention());
+            e = world.Create(new MaterialComponent(new MaterialData()) { AlbedoTexPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention { CommonArguments = new CommonLoadingArguments("url") }) }, new DeleteEntityIntention());
         }
 
         [Test]

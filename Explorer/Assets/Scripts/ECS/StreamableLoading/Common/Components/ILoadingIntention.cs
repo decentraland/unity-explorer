@@ -12,7 +12,6 @@ namespace ECS.StreamableLoading.Common.Components
     public interface ILoadingIntention : IAssetIntention
     {
         CommonLoadingArguments CommonArguments { get; set; }
-        CancellationTokenSource IAssetIntention.CancellationTokenSource => CommonArguments.cancellationTokenSource;
     }
 
     public static class LoadingIntentionExtensions

@@ -126,6 +126,8 @@ namespace ECS.StreamableLoading.Common.Systems
             {
                 // If we don't set an exception it will spin forever
                 World.Add(entity, new StreamableLoadingResult<TAsset>(e));
+
+                // TODO errors reporting
             }
         }
 
@@ -204,6 +206,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 {
                     // General exception
                     // conclude now, we can't do anything
+                    // TODO errors reporting
                     return new StreamableLoadingResult<TAsset>(e);
                 }
             }

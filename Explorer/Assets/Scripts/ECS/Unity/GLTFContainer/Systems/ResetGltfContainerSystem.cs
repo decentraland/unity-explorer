@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using CRDT;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.StreamableLoading.Cache;
@@ -37,10 +36,10 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         [Query]
         [None(typeof(PBGltfContainer))]
-        private void HandleComponentRemoval(ref CRDTEntity crdtEntity, ref GltfContainerComponent component)
+        private void HandleComponentRemoval(ref GltfContainerComponent component)
         {
-            component.Promise.ForgetLoading(World);
             TryReleaseAsset(ref component);
+            component.Promise.ForgetLoading(World);
         }
 
         private void TryReleaseAsset(ref GltfContainerComponent component)

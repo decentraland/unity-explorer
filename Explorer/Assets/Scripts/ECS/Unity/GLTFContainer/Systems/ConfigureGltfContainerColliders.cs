@@ -11,6 +11,21 @@ namespace ECS.Unity.GLTFContainer.Systems
     {
         private void SetupColliders(ref GltfContainerComponent component, GltfContainerAsset asset)
         {
+            SetupVisibleColliders(ref component, asset);
+            SetupInvisibleColliders(ref component, asset);
+        }
+
+        private void SetupInvisibleColliders(ref GltfContainerComponent component, GltfContainerAsset asset)
+        {
+            // Invisible colliders are contained in the asset by default (not instantiation on demand needed)
+            if (component.InvisibleMeshesCollisionMask != ColliderLayer.ClNone)
+                EnableColliders(asset.InvisibleColliders, component.InvisibleMeshesCollisionMask);
+            else
+                DisableColliders(asset.InvisibleColliders);
+        }
+
+        private void SetupVisibleColliders(ref GltfContainerComponent component, GltfContainerAsset asset)
+        {
             if (component.VisibleMeshesCollisionMask != ColliderLayer.ClNone)
             {
                 TryInstantiateVisibleMeshesColliders(asset);
@@ -18,12 +33,6 @@ namespace ECS.Unity.GLTFContainer.Systems
             }
             else if (asset.VisibleMeshesColliders != null)
                 DisableColliders(asset.VisibleMeshesColliders);
-
-            // Invisible colliders are contained in the asset by default (not instantiation on demand needed)
-            if (component.InvisibleMeshesCollisionMask != ColliderLayer.ClNone)
-                EnableColliders(asset.InvisibleColliders, component.InvisibleMeshesCollisionMask);
-            else
-                DisableColliders(asset.InvisibleColliders);
         }
 
         private void EnableColliders(IReadOnlyList<Collider> colliders, ColliderLayer colliderLayer)

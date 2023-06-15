@@ -2,6 +2,7 @@
 using DCL.ECSComponents;
 using Decentraland.Common;
 using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using ECS.Unity.Materials.Components;
@@ -174,7 +175,7 @@ namespace ECS.Unity.Materials.Tests
             c.Status = MaterialComponent.LifeCycle.LoadingInProgress;
 
             // Add entity reference
-            var texPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention());
+            var texPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention { CommonArguments = new CommonLoadingArguments("URL") });
             c.AlphaTexPromise = texPromise;
 
             // Second run -> release promise
@@ -185,7 +186,7 @@ namespace ECS.Unity.Materials.Tests
             AssertBasicMaterial(material2, materialComponent);
 
             Assert.IsTrue(texPromise.LoadingIntention.CommonArguments.CancellationToken.IsCancellationRequested);
-            Assert.AreEqual(EntityReference.Null, materialComponent.AlphaTexPromise);
+            Assert.AreEqual(EntityReference.Null, materialComponent.AlphaTexPromise.Entity);
         }
 
         private static PBMaterial CreatePBRMaterial1()

@@ -42,10 +42,10 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         [Query]
         [None(typeof(GltfContainerComponent))]
-        private void StartLoading(in Entity entity, ref PBGltfContainer sdkComponent, ref TransformComponent transformComponent)
+        private void StartLoading(in Entity entity, ref PBGltfContainer sdkComponent)
         {
             // It's not the best idea to pass Transform directly but we rely on cancellation source to cancel if the entity dies
-            var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, new CancellationTokenSource(), transformComponent.Transform));
+            var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, new CancellationTokenSource()));
             var component = new GltfContainerComponent(sdkComponent.GetVisibleMeshesCollisionMask(), sdkComponent.GetInvisibleMeshesCollisionMask(), promise);
             component.State.Set(LoadingState.Loading);
             World.Add(entity, component);
@@ -78,7 +78,7 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         // SDK Component was changed
         [Query]
-        private void ReconfigureGltfContainer(ref GltfContainerComponent component, ref PBGltfContainer sdkComponent, ref TransformComponent transformComponent)
+        private void ReconfigureGltfContainer(ref GltfContainerComponent component, ref PBGltfContainer sdkComponent)
         {
             if (sdkComponent.IsDirty)
             {
@@ -86,7 +86,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                 {
                     // The source is changed, should start downloading over again
                     case LoadingState.Unknown:
-                        var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, new CancellationTokenSource(), transformComponent.Transform));
+                        var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, new CancellationTokenSource()));
                         component.Promise = promise;
                         component.State.Set(LoadingState.Loading);
                         return;
@@ -106,16 +106,16 @@ namespace ECS.Unity.GLTFContainer.Systems
 
                         if (visibleCollisionMask != component.VisibleMeshesCollisionMask)
                         {
-                            SetupColliders(ref component, result.Asset);
                             component.VisibleMeshesCollisionMask = visibleCollisionMask;
+                            SetupVisibleColliders(ref component, result.Asset);
                         }
 
                         ColliderLayer invisibleCollisionMask = sdkComponent.GetInvisibleMeshesCollisionMask();
 
                         if (invisibleCollisionMask != component.InvisibleMeshesCollisionMask)
                         {
-                            SetupColliders(ref component, result.Asset);
                             component.InvisibleMeshesCollisionMask = invisibleCollisionMask;
+                            SetupInvisibleColliders(ref component, result.Asset);
                         }
 
                         return;

@@ -1,4 +1,5 @@
 ﻿using ECS.StreamableLoading.Common.Components;
+using System.Threading;
 
 namespace ECS.StreamableLoading.AssetBundles.Manifest
 {
@@ -12,5 +13,7 @@ namespace ECS.StreamableLoading.AssetBundles.Manifest
         {
             SceneId = sceneId;
         }
+
+        public CancellationTokenSource CancellationTokenSource => CommonArguments.cancellationTokenSource;
     }
 }

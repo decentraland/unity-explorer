@@ -50,6 +50,8 @@ namespace ECS.StreamableLoading.Common
 
             result = default(StreamableLoadingResult<TAsset>);
 
+            if (Entity == EntityReference.Null || !Entity.IsAlive(world)) return false;
+
             if (world.TryGet(Entity, out result))
             {
                 Result = result;

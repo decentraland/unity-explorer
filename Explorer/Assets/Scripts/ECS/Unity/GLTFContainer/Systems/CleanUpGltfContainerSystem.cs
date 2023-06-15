@@ -33,10 +33,10 @@ namespace ECS.Unity.GLTFContainer.Systems
         [All(typeof(DeleteEntityIntention))]
         private void Release(ref GltfContainerComponent component)
         {
-            component.Promise.ForgetLoading(World);
-
             if (component.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
                 cache.Dereference(component.Source, result.Asset);
+
+            component.Promise.ForgetLoading(World);
         }
     }
 }

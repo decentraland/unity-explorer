@@ -2,3 +2,4 @@
 
 [assembly: InternalsVisibleTo("SceneRunner")]
 [assembly: InternalsVisibleTo("Containers.Tests")]
+[assembly: InternalsVisibleTo("StreamableLoading.Tests")]

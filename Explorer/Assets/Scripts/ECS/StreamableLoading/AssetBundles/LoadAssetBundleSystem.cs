@@ -7,6 +7,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -34,7 +35,7 @@ namespace ECS.StreamableLoading.AssetBundles
             AssetBundle assetBundle = DownloadHandlerAssetBundle.GetContent(webRequest);
 
             // resolve dependencies
-            TextAsset metadata = GetMetadata(assetBundle);
+            string metadata = GetMetadata(assetBundle)?.text;
 
             // get metrics
             TextAsset metricsFile = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME);
@@ -48,7 +49,7 @@ namespace ECS.StreamableLoading.AssetBundles
             if (metadata != null)
             {
                 // Parse metadata
-                JsonUtility.FromJsonOverwrite(metadata.text, REUSABLE_METADATA);
+                JsonUtility.FromJsonOverwrite(metadata, REUSABLE_METADATA);
 
                 // Construct dependency promises and wait for them
                 // Switch to main thread to create dependency promises
@@ -72,7 +73,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             // Can't avoid an array instantiation - no API with List
             // Can't avoid casting - no generic API
-            return (GameObject[])asyncOp.allAssets;
+            return asyncOp.allAssets.Length > 0 ? new List<GameObject>(asyncOp.allAssets.Cast<GameObject>()) : Array.Empty<GameObject>();
         }
 
         private async UniTask WaitForDependency(string hash, CancellationToken ct)

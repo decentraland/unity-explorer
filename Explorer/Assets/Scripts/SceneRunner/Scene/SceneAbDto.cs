@@ -9,9 +9,9 @@ namespace SceneRunner.Scene
     public struct SceneAbDto
     {
         [SerializeField]
-        private string version;
+        internal string version;
         [SerializeField]
-        private string[] files;
+        internal string[] files;
         [SerializeField]
         private int exitCode;
 

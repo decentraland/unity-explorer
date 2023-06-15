@@ -19,10 +19,12 @@ namespace ECS.StreamableLoading.AssetBundles
     public partial class PrepareAssetBundleLoadingParametersSystem : BaseUnityLoopSystem
     {
         private readonly ISceneData sceneData;
+        private readonly string streamingAssetURL;
 
-        internal PrepareAssetBundleLoadingParametersSystem(World world, ISceneData sceneData) : base(world)
+        internal PrepareAssetBundleLoadingParametersSystem(World world, ISceneData sceneData, string streamingAssetURL) : base(world)
         {
             this.sceneData = sceneData;
+            this.streamingAssetURL = streamingAssetURL;
         }
 
         protected override void Update(float t)
@@ -50,7 +52,8 @@ namespace ECS.StreamableLoading.AssetBundles
             // Second priority
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.WEB))
             {
-                if (!sceneData.AssetBundleManifest.TryGetAssetBundleURL(assetBundleIntention.Hash, out string url))
+                // Ignore root manifest for dependencies, they are not listed there
+                if (!sceneData.AssetBundleManifest.TryGetAssetBundleURL(assetBundleIntention.Hash, !assetBundleIntention.IsDependency, out string url))
                 {
                     // TODO Errors reporting
                     // Add the failure to the entity
@@ -66,15 +69,16 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.CurrentSource = AssetSource.WEB;
                 ca.URL = url;
                 assetBundleIntention.CommonArguments = ca;
+                assetBundleIntention.cacheHash = sceneData.AssetBundleManifest.ComputeHash(assetBundleIntention.Hash);
             }
         }
 
-        private static string GetStreamingAssetsUrl(string hash)
+        private string GetStreamingAssetsUrl(string hash)
         {
 #if UNITY_EDITOR || UNITY_STANDALONE
-            return $"file://{Application.streamingAssetsPath}/AssetBundles/{hash}";
+            return $"{streamingAssetURL}{hash}";
 #else
-            return $"{Application.streamingAssetsPath}/AssetBundles/{hash}";
+            return $"{streamingAssetURL}{hash}";
 #endif
         }
     }

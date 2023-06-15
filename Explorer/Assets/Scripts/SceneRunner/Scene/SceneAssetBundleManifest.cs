@@ -11,8 +11,8 @@ namespace SceneRunner.Scene
         public static readonly SceneAssetBundleManifest NULL = new ();
 
         private readonly string assetBundlesBaseUrl;
-        private readonly SceneAbDto dto;
-        private readonly HashSet<string> convertedFiles;
+        internal readonly SceneAbDto dto;
+        internal readonly HashSet<string> convertedFiles;
 
         private readonly string versionHashPart;
 
@@ -22,7 +22,7 @@ namespace SceneRunner.Scene
             this.dto = dto;
             convertedFiles = new HashSet<string>(dto.Files);
 
-            versionHashPart = ComputeVersionedHashPart(assetBundlesBaseUrl);
+            versionHashPart = string.IsNullOrEmpty(dto.Version) ? ComputeVersionedHashPart(assetBundlesBaseUrl) : dto.Version;
         }
 
         /// <summary>
@@ -67,9 +67,9 @@ namespace SceneRunner.Scene
             fixed (char* ptr = hashBuilder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * hashBuilder.Length)); }
         }
 
-        public bool TryGetAssetBundleURL(string hash, out string url)
+        public bool TryGetAssetBundleURL(string hash, bool checkManifest, out string url)
         {
-            if (convertedFiles.Contains(hash))
+            if (!checkManifest || convertedFiles.Contains(hash))
             {
                 url = $"{assetBundlesBaseUrl}{dto.Version}/{hash}";
                 return true;
