@@ -4,7 +4,7 @@ using Arch.SystemGroups;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
-using System.Text.RegularExpressions;
+using System;
 
 namespace ECS.StreamableLoading.AssetBundles.Manifest
 {
@@ -33,20 +33,25 @@ namespace ECS.StreamableLoading.AssetBundles.Manifest
         [None(typeof(LoadingInProgress), typeof(StreamableLoadingResult<SceneAssetBundleManifest>))]
         private void PrepareParameters(ref GetAssetBundleManifestIntention intention)
         {
-            string entityId = GetEntityIdFromSceneId(intention.SceneId);
-            intention.CommonArguments = new CommonLoadingArguments($"{assetBundleURL}/manifest/{entityId}.json");
+            ReadOnlySpan<char> sceneId = intention.SceneId.AsSpan();
+            GetEntityIdFromSceneId(ref sceneId);
+            intention.CommonArguments = new CommonLoadingArguments($"{assetBundleURL}/manifest/{sceneId.ToString()}.json");
         }
 
-        private static string GetEntityIdFromSceneId(string sceneId)
+        private static void GetEntityIdFromSceneId(ref ReadOnlySpan<char> sceneId)
         {
             // This case happens when loading worlds
             if (sceneId.StartsWith(URN_PREFIX))
             {
-                sceneId = sceneId.Replace(URN_PREFIX, "");
-                sceneId = Regex.Replace(sceneId, "\\?.+", "", RegexOptions.Compiled); // from "?" char onwards we delete everything
-            }
+                sceneId = sceneId[URN_PREFIX.Length..];
+                int indexOfQuestionMark = sceneId.LastIndexOf('?');
 
-            return sceneId;
+                if (indexOfQuestionMark > -1)
+                {
+                    // from "?" char onwards we delete everything
+                    sceneId = sceneId[..indexOfQuestionMark];
+                }
+            }
         }
     }
 }
