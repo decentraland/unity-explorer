@@ -73,13 +73,7 @@ namespace ECS.StreamableLoading.AssetBundles
             }
         }
 
-        private string GetStreamingAssetsUrl(string hash)
-        {
-#if UNITY_EDITOR || UNITY_STANDALONE
-            return $"{streamingAssetURL}{hash}";
-#else
-            return $"{streamingAssetURL}{hash}";
-#endif
-        }
+        private string GetStreamingAssetsUrl(string hash) =>
+            $"{streamingAssetURL}{hash}";
     }
 }
