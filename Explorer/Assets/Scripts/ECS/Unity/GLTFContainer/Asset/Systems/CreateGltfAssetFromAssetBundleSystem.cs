@@ -91,18 +91,18 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 GameObject instance = Object.Instantiate(go, containerTransform);
 
                 // Collect all renderers, they are needed for Visibility system
-                using (ListObjectPool<Renderer>.Scope instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())
+                using (PoolExtensions.Scope<List<Renderer>> instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())
                 {
-                    instance.GetComponentsInChildren(true, instanceRenderers.List);
-                    result.Renderers.AddRange(instanceRenderers.List);
+                    instance.GetComponentsInChildren(true, instanceRenderers.Value);
+                    result.Renderers.AddRange(instanceRenderers.Value);
                 }
 
                 // Collect colliders and mesh filters
                 // Colliders are created/fetched disabled as its layer is controlled by another system
 
-                using ListObjectPool<MeshFilter>.Scope meshFilterScope = GltfContainerAsset.MESH_FILTERS_POOL.AutoScope();
+                using PoolExtensions.Scope<List<MeshFilter>> meshFilterScope = GltfContainerAsset.MESH_FILTERS_POOL.AutoScope();
 
-                List<MeshFilter> list = meshFilterScope.List;
+                List<MeshFilter> list = meshFilterScope.Value;
                 instance.GetComponentsInChildren(true, list);
 
                 for (var j = 0; j < list.Count; j++)

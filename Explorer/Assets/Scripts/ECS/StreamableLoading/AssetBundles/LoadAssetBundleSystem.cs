@@ -11,14 +11,16 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
+using Utility.Pool;
+using Utility.ThreadSafePool;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     public partial class LoadAssetBundleSystem : LoadSystemBase<AssetBundleData, GetAssetBundleIntention>
     {
-        // Parsing executes on the main thread so we need only one instance at a time
-        private static readonly AssetBundleMetadata REUSABLE_METADATA = new ();
+        private static readonly ThreadSafeObjectPool<AssetBundleMetadata> METADATA_POOL
+            = new (() => new AssetBundleMetadata(), maxSize: 100);
 
         private const string METADATA_FILENAME = "metadata.json";
         private const string METRICS_FILENAME = "metrics.json";
@@ -48,15 +50,17 @@ namespace ECS.StreamableLoading.AssetBundles
 
             if (metadata != null)
             {
+                using PoolExtensions.Scope<AssetBundleMetadata> reusableMetadata = METADATA_POOL.AutoScope();
+
                 // Parse metadata
-                JsonUtility.FromJsonOverwrite(metadata, REUSABLE_METADATA);
+                JsonUtility.FromJsonOverwrite(metadata, reusableMetadata.Value);
 
                 // Construct dependency promises and wait for them
                 // Switch to main thread to create dependency promises
                 await UniTask.SwitchToMainThread();
 
                 // WhenAll uses pool under the hood
-                await UniTask.WhenAll(REUSABLE_METADATA.dependencies.Select(hash => WaitForDependency(hash, ct)));
+                await UniTask.WhenAll(reusableMetadata.Value.dependencies.Select(hash => WaitForDependency(hash, ct)));
             }
 
             await UniTask.SwitchToMainThread();

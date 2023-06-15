@@ -22,26 +22,5 @@ namespace Utility.Pool
             collectionCheck,
             defaultCapacity,
             maxSize) { }
-
-        public Scope AutoScope() =>
-            new (Get(), this);
-
-        public struct Scope : IDisposable
-        {
-            private readonly ListObjectPool<T> pool;
-            public List<T> List { get; private set; }
-
-            internal Scope(List<T> list, ListObjectPool<T> pool)
-            {
-                this.pool = pool;
-                List = list;
-            }
-
-            public void Dispose()
-            {
-                pool.Release(List);
-                List = null;
-            }
-        }
     }
 }
