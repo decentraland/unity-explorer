@@ -72,6 +72,8 @@ namespace ECS.Unity.GLTFContainer.Systems
 
                 // Reparent to the current transform
                 result.Asset.Root.transform.SetParent(transformComponent.Transform);
+                result.Asset.Root.transform.localPosition = Vector3.zero;
+                result.Asset.Root.transform.localScale = Vector3.one;
                 result.Asset.Root.SetActive(true);
 
                 component.State.Set(LoadingState.Finished);

@@ -90,6 +90,6 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         private string GetStreamingAssetsUrl(string hash) =>
-            $"{streamingAssetURL}{hash}";
+            $"{streamingAssetURL}{hash.GetHashCode()}";
     }
 }
