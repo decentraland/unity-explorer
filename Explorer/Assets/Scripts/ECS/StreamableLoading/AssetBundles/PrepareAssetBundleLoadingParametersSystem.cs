@@ -43,7 +43,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             // If Hash is already provided just use it, otherwise resolve by the content provider
             if (assetBundleIntention.Hash == null)
-
+            {
                 if (!sceneData.TryGetHash(assetBundleIntention.Name, out assetBundleIntention.Hash))
                 {
                     // TODO Errors reporting
@@ -53,6 +53,10 @@ namespace ECS.StreamableLoading.AssetBundles
 
                     return;
                 }
+
+                // TODO Hack, kill me
+                assetBundleIntention.Hash = assetBundleIntention.Hash.GetHashCode().ToString();
+            }
 
             // First priority
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.EMBEDDED))
@@ -90,6 +94,6 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         private string GetStreamingAssetsUrl(string hash) =>
-            $"{streamingAssetURL}{hash.GetHashCode()}";
+            $"{streamingAssetURL}{hash}";
     }
 }

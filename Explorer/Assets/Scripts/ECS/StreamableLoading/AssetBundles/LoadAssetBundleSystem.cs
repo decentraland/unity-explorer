@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using AssetManagement;
 using Cysharp.Threading.Tasks;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
@@ -25,28 +26,28 @@ namespace ECS.StreamableLoading.AssetBundles
         private const string METADATA_FILENAME = "metadata.json";
         private const string METRICS_FILENAME = "metrics.json";
 
-        internal LoadAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache) : base(world, cache) { }
+        private readonly AssetBundleManifest assetBundleManifest;
 
-        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternal(GetAssetBundleIntention intention, CancellationToken ct)
+        internal LoadAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache, AssetBundleManifest assetBundleManifest) : base(world, cache)
         {
-            UnityWebRequest webRequest = intention.cacheHash.HasValue
-                ? UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL, intention.cacheHash.Value)
-                : UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL);
+            this.assetBundleManifest = assetBundleManifest;
+        }
 
-            await webRequest.SendWebRequest().WithCancellation(ct);
-            AssetBundle assetBundle = DownloadHandlerAssetBundle.GetContent(webRequest);
+        private async UniTask LoadDependencies(GetAssetBundleIntention intention, AssetBundle assetBundle, CancellationToken ct)
+        {
+#region KILL_ME
+            // HACK! Load Asset Bundle Manifest from streaming assets
+            if (intention.CommonArguments.CurrentSource == AssetSource.EMBEDDED)
+            {
+                await UniTask.SwitchToMainThread();
+                string[] dependencies = assetBundleManifest?.GetAllDependencies(intention.Hash) ?? Array.Empty<string>();
+                await UniTask.WhenAll(dependencies.Select(hash => WaitForDependency(hash, ct)));
+                return;
+            }
+#endregion
 
             // resolve dependencies
             string metadata = GetMetadata(assetBundle)?.text;
-
-            // get metrics
-            TextAsset metricsFile = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME);
-
-            // Switch to thread pool to parse JSONs
-
-            await UniTask.SwitchToThreadPool();
-
-            AssetBundleMetrics? metrics = metricsFile != null ? JsonUtility.FromJson<AssetBundleMetrics>(metricsFile.text) : null;
 
             if (metadata != null)
             {
@@ -62,6 +63,31 @@ namespace ECS.StreamableLoading.AssetBundles
                 // WhenAll uses pool under the hood
                 await UniTask.WhenAll(reusableMetadata.Value.dependencies.Select(hash => WaitForDependency(hash, ct)));
             }
+        }
+
+        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternal(GetAssetBundleIntention intention, CancellationToken ct)
+        {
+            UnityWebRequest webRequest = intention.cacheHash.HasValue
+                ? UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL, intention.cacheHash.Value)
+                : UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL);
+
+            await webRequest.SendWebRequest().WithCancellation(ct);
+            AssetBundle assetBundle = DownloadHandlerAssetBundle.GetContent(webRequest);
+
+            // if GetContent prints an error, null will be thrown
+            if (assetBundle == null)
+                throw new NullReferenceException($"{intention.Hash} Asset Bundle is null");
+
+            // get metrics
+            TextAsset metricsFile = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME);
+
+            // Switch to thread pool to parse JSONs
+
+            await UniTask.SwitchToThreadPool();
+
+            AssetBundleMetrics? metrics = metricsFile != null ? JsonUtility.FromJson<AssetBundleMetrics>(metricsFile.text) : null;
+
+            await LoadDependencies(intention, assetBundle, ct);
 
             await UniTask.SwitchToMainThread();
             IReadOnlyList<GameObject> gameObjects = await LoadAllAssets(assetBundle, ct);
@@ -84,7 +110,16 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(hash));
 
-            try { await assetBundlePromise.ToUniTask(World, cancellationToken: ct); }
+            try
+            {
+                AssetPromise<AssetBundleData, GetAssetBundleIntention> depPromise = await assetBundlePromise.ToUniTask(World, cancellationToken: ct);
+
+                if (!depPromise.TryGetResult(World, out StreamableLoadingResult<AssetBundleData> depResult))
+                    throw new Exception($"Dependency {hash} is not resolved");
+
+                if (!depResult.Succeeded)
+                    throw new Exception($"Dependency {hash} resolution failed", depResult.Exception);
+            }
             catch (OperationCanceledException) { assetBundlePromise.ForgetLoading(World); }
         }
 

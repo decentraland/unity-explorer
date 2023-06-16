@@ -11,6 +11,7 @@ using ECS.Unity.Transforms.Components;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Assertions;
+using Utility;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.Unity.GLTFContainer.Asset.Components.GltfContainerAsset, ECS.Unity.GLTFContainer.Asset.Components.GetGltfContainerAssetIntention>;
 
 namespace ECS.Unity.GLTFContainer.Systems
@@ -72,8 +73,7 @@ namespace ECS.Unity.GLTFContainer.Systems
 
                 // Reparent to the current transform
                 result.Asset.Root.transform.SetParent(transformComponent.Transform);
-                result.Asset.Root.transform.localPosition = Vector3.zero;
-                result.Asset.Root.transform.localScale = Vector3.one;
+                result.Asset.Root.transform.ResetLocalTRS();
                 result.Asset.Root.SetActive(true);
 
                 component.State.Set(LoadingState.Finished);

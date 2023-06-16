@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Pool;
 
@@ -33,14 +34,14 @@ namespace ECS.StreamableLoading.Common.Systems
         /// <summary>
         ///     Resolves the problem of having multiple requests to the same URL at a time
         /// </summary>
-        private readonly Dictionary<string, AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>> cachedRequests;
+        private readonly Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>> cachedRequests;
 
         protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache) : base(world)
         {
             this.cache = cache;
             query = World.Query(in CREATE_WEB_REQUEST);
 
-            cachedRequests = DictionaryPool<string, AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>.Get();
+            cachedRequests = DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>.Get();
         }
 
         public override void Initialize()
@@ -53,7 +54,7 @@ namespace ECS.StreamableLoading.Common.Systems
             cancellationTokenSource.Cancel();
             cancellationTokenSource.Dispose();
 
-            DictionaryPool<string, AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>.Release(cachedRequests);
+            DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>.Release(cachedRequests);
         }
 
         protected override void Update(float t)
@@ -97,7 +98,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 StreamableLoadingResult<TAsset>? result = null;
 
                 // if the request is cached wait for it
-                if (cachedRequests.TryGetValue(intention.CommonArguments.URL, out AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?> cachedSource))
+                if (cachedRequests.TryGetValue(intention.CommonArguments.URL, out UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> cachedSource))
                 {
                     // if the cached request is cancelled it does not mean failure for the new intent
                     (requestIsNotFulfilled, result) = await cachedSource.Task.SuppressCancellationThrow();
@@ -141,7 +142,7 @@ namespace ECS.StreamableLoading.Common.Systems
         /// </summary>
         private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlow(TIntention intention, CancellationToken ct)
         {
-            var source = AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
+            var source = new UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
             cachedRequests[intention.CommonArguments.URL] = source;
 
             try
@@ -188,8 +189,8 @@ namespace ECS.StreamableLoading.Common.Systems
                 {
                     UnityWebRequest webRequest = unityWebRequestException.UnityWebRequest;
 
-                    //Debug.LogError(unityWebRequestException.UnityWebRequest.url);
-                    //Debug.LogException(unityWebRequestException);
+                    Debug.LogError(unityWebRequestException.UnityWebRequest.url);
+                    Debug.LogException(unityWebRequestException);
 
                     // Decide if we can repeat or not
                     --attemptCount;
@@ -210,7 +211,7 @@ namespace ECS.StreamableLoading.Common.Systems
                     // General exception
                     // conclude now, we can't do anything
                     // TODO errors reporting
-                    //Debug.LogException(e);
+                    Debug.LogException(e);
                     return new StreamableLoadingResult<TAsset>(e);
                 }
             }

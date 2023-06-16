@@ -32,6 +32,6 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
         protected override LoadAssetBundleSystem CreateSystem() =>
-            new (world, cache);
+            new (world, cache, null);
     }
 }
