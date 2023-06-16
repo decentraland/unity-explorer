@@ -90,7 +90,10 @@ namespace ECS.StreamableLoading.Common.Systems
 
             // If the given URL failed irrecoverably just return the failure
             if (irrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset> failure))
+            {
                 World.Add(entity, failure);
+                return;
+            }
 
             // Indicate that loading has started
             World.Add(entity, new LoadingInProgress());

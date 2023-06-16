@@ -97,11 +97,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                     result.Renderers.AddRange(instanceRenderers.Value);
                 }
 
-                // TODO: For some reason, the material is not instantiated from asset bundle with the loaded shader.
-                // Reassign it till I find the issue
-                foreach (Renderer resultRenderer in result.Renderers)
-                    resultRenderer.sharedMaterial.shader = Shader.Find("DCL/Universal Render Pipeline/Lit");
-
                 // Collect colliders and mesh filters
                 // Colliders are created/fetched disabled as its layer is controlled by another system
 
