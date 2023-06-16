@@ -36,12 +36,15 @@ namespace ECS.StreamableLoading.Common.Systems
         /// </summary>
         private readonly Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>> cachedRequests;
 
+        private readonly Dictionary<string, StreamableLoadingResult<TAsset>> irrecoverableFailures;
+
         protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache) : base(world)
         {
             this.cache = cache;
             query = World.Query(in CREATE_WEB_REQUEST);
 
             cachedRequests = DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>.Get();
+            irrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<TAsset>>.Get();
         }
 
         public override void Initialize()
@@ -55,6 +58,7 @@ namespace ECS.StreamableLoading.Common.Systems
             cancellationTokenSource.Dispose();
 
             DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>.Release(cachedRequests);
+            DictionaryPool<string, StreamableLoadingResult<TAsset>>.Release(irrecoverableFailures);
         }
 
         protected override void Update(float t)
@@ -83,6 +87,10 @@ namespace ECS.StreamableLoading.Common.Systems
             // Try load from cache first
             if (TryLoadFromCache(in entity, in intention))
                 return;
+
+            // If the given URL failed irrecoverably just return the failure
+            if (irrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset> failure))
+                World.Add(entity, failure);
 
             // Indicate that loading has started
             World.Add(entity, new LoadingInProgress());
@@ -195,12 +203,14 @@ namespace ECS.StreamableLoading.Common.Systems
                     // Decide if we can repeat or not
                     --attemptCount;
 
-                    if (attemptCount <= 0 || webRequest.IsAborted() || !webRequest.IsServerError())
+                    bool isIrrecoverableError = !webRequest.IsServerError();
+
+                    if (attemptCount <= 0 || webRequest.IsAborted() || isIrrecoverableError)
                     {
                         if (intention.CommonArguments.PermittedSources == AssetSource.NONE)
 
                             // conclude now
-                            return new StreamableLoadingResult<TAsset>(unityWebRequestException);
+                            return SetIrrecoverableFailure(intention, new StreamableLoadingResult<TAsset>(unityWebRequestException));
 
                         // Leave other systems to decide on other sources
                         return null;
@@ -212,9 +222,15 @@ namespace ECS.StreamableLoading.Common.Systems
                     // conclude now, we can't do anything
                     // TODO errors reporting
                     Debug.LogException(e);
-                    return new StreamableLoadingResult<TAsset>(e);
+                    return SetIrrecoverableFailure(intention, new StreamableLoadingResult<TAsset>(e));
                 }
             }
+        }
+
+        private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention, StreamableLoadingResult<TAsset> failure)
+        {
+            irrecoverableFailures[intention.CommonArguments.URL] = failure;
+            return failure;
         }
 
         private bool TryLoadFromCache(in Entity entity, in TIntention intention)
