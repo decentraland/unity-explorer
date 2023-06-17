@@ -6,7 +6,6 @@ using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
-using UnityEngine;
 using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -33,7 +32,7 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         [Query]
-        [None(typeof(LoadingInProgress), typeof(StreamableLoadingResult<AssetBundle>))]
+        [None(typeof(LoadingInProgress), typeof(StreamableLoadingResult<AssetBundleData>))]
 
         // If loading is not started yet and there is no result
         private void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention)
