@@ -33,7 +33,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
             Assert.That(world.Has<StreamableLoadingResult<GltfContainerAsset>>(e), Is.False);
             Assert.That(world.TryGet(e, out GetAssetBundleIntention result), Is.True);
-            Assert.That(result.Hash, Is.EqualTo("TEST"));
+            Assert.That(result.Name, Is.EqualTo("TEST"));
         }
 
         [Test]

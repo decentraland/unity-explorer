@@ -89,6 +89,7 @@ namespace ECS.StreamableLoading.Common
             if (Entity == EntityReference.Null || !Entity.IsAlive(world)) return;
 
             world.Destroy(Entity);
+            Entity = EntityReference.Null;
         }
 
         /// <summary>

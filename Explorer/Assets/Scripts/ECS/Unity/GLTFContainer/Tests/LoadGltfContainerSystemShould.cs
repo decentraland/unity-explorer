@@ -18,6 +18,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine.TestTools;
 
 namespace ECS.Unity.GLTFContainer.Tests
 {
@@ -75,6 +76,8 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             Entity e = world.Create(component, new TransformComponent(), new PBGltfContainer());
             world.Add(component.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(new Exception()));
+
+            LogAssert.ignoreFailingMessages = true;
 
             system.Update(0);
 
