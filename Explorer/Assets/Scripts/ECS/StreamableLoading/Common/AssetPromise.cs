@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using ECS.StreamableLoading.Common.Components;
 using System;
-using System.Collections.Generic;
 using UnityEngine.Assertions;
 
 namespace ECS.StreamableLoading.Common
@@ -11,7 +10,8 @@ namespace ECS.StreamableLoading.Common
     /// </summary>
     /// <typeparam name="TAsset">Asset Type</typeparam>
     /// <typeparam name="TLoadingIntention">Loading Intention Type needed to dereference unused assets</typeparam>
-    public struct AssetPromise<TAsset, TLoadingIntention> : IEquatable<AssetPromise<TAsset, TLoadingIntention>> where TLoadingIntention: IAssetIntention
+    public struct AssetPromise<TAsset, TLoadingIntention> : IEquatable<AssetPromise<TAsset, TLoadingIntention>>
+        where TLoadingIntention: IAssetIntention, IEquatable<TLoadingIntention>
     {
         public static readonly AssetPromise<TAsset, TLoadingIntention> NULL = new () { Entity = EntityReference.Null };
 
@@ -104,7 +104,7 @@ namespace ECS.StreamableLoading.Common
         }
 
         public bool Equals(AssetPromise<TAsset, TLoadingIntention> other) =>
-            Entity.Equals(other.Entity) && EqualityComparer<TLoadingIntention>.Default.Equals(LoadingIntention, other.LoadingIntention) && Nullable.Equals(Result, other.Result);
+            Entity.Equals(other.Entity) && LoadingIntention.Equals(other.LoadingIntention) && Nullable.Equals(Result, other.Result);
 
         public override bool Equals(object obj) =>
             obj is AssetPromise<TAsset, TLoadingIntention> other && Equals(other);

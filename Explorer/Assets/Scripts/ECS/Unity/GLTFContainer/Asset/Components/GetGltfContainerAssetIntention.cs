@@ -1,4 +1,5 @@
 using ECS.StreamableLoading.Common.Components;
+using System;
 using System.Threading;
 
 namespace ECS.Unity.GLTFContainer.Asset.Components
@@ -7,7 +8,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
     ///     Intermediate intent agnostic to the loading source.
     ///     <para>It enables support for loading GLTF Container from Asset Bundles or GLTFast</para>
     /// </summary>
-    public readonly struct GetGltfContainerAssetIntention : IAssetIntention
+    public readonly struct GetGltfContainerAssetIntention : IAssetIntention, IEquatable<GetGltfContainerAssetIntention>
     {
         public readonly string Name;
 
@@ -18,5 +19,14 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         }
 
         public CancellationTokenSource CancellationTokenSource { get; }
+
+        public bool Equals(GetGltfContainerAssetIntention other) =>
+            Name == other.Name;
+
+        public override bool Equals(object obj) =>
+            obj is GetGltfContainerAssetIntention other && Equals(other);
+
+        public override int GetHashCode() =>
+            Name != null ? Name.GetHashCode() : 0;
     }
 }
