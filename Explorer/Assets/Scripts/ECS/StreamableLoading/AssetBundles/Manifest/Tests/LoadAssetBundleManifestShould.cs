@@ -3,6 +3,7 @@ using ECS.StreamableLoading.Tests;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using UnityEngine;
+using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.AssetBundles.Manifest.Tests
 {
@@ -29,6 +30,6 @@ namespace ECS.StreamableLoading.AssetBundles.Manifest.Tests
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
         protected override LoadAssetBundleManifestSystem CreateSystem() =>
-            new (world, cache, "http://www.fakepath.com/AssetBundles/");
+            new (world, cache, "http://www.fakepath.com/AssetBundles/", new MutexSync());
     }
 }

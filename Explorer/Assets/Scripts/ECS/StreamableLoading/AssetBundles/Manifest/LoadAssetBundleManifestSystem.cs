@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
@@ -8,16 +9,18 @@ using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
+using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.AssetBundles.Manifest
 {
-    [UpdateInGroup(typeof(StreamableLoadingGroup))]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class LoadAssetBundleManifestSystem : LoadSystemBase<SceneAssetBundleManifest, GetAssetBundleManifestIntention>
     {
         private readonly string assetBundleURL;
 
-        public LoadAssetBundleManifestSystem(World world, IStreamableCache<SceneAssetBundleManifest, GetAssetBundleManifestIntention> cache, string assetBundleURL)
-            : base(world, cache)
+        public LoadAssetBundleManifestSystem(World world, IStreamableCache<SceneAssetBundleManifest, GetAssetBundleManifestIntention> cache,
+            string assetBundleURL, MutexSync mutexSync)
+            : base(world, cache, mutexSync)
         {
             this.assetBundleURL = assetBundleURL;
         }

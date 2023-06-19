@@ -1,5 +1,5 @@
 ﻿using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
+using ECS.Groups;
 using ECS.StreamableLoading;
 
 namespace ECS.Unity.Materials
@@ -8,7 +8,7 @@ namespace ECS.Unity.Materials
     ///     Material systems create intentions to load textures so they should be executed before
     ///     Streamable Loading Group
     /// </summary>
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     [UpdateBefore(typeof(StreamableLoadingGroup))]
     public partial class MaterialLoadingGroup { }
 }

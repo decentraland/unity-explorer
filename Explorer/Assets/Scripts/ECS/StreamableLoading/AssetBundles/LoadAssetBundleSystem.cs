@@ -12,6 +12,7 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
+using Utility.Multithreading;
 using Utility.Pool;
 using Utility.ThreadSafePool;
 
@@ -28,7 +29,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private readonly AssetBundleManifest assetBundleManifest;
 
-        internal LoadAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache, AssetBundleManifest assetBundleManifest) : base(world, cache)
+        internal LoadAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache,
+            AssetBundleManifest assetBundleManifest, MutexSync mutexSync) : base(world, cache, mutexSync)
         {
             this.assetBundleManifest = assetBundleManifest;
         }

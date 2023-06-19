@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility.Multithreading;
 
 namespace Global
 {
@@ -50,8 +51,9 @@ namespace Global
             const string ASSET_BUNDLES_URL = "https://ab-cdn.decentraland.org/";
 
             var assetBundlesManifestCache = new AssetBundlesManifestCache();
+            var mutex = new MutexSync();
             PrepareAssetBundleManifestParametersSystem.InjectToWorld(ref builder, ASSET_BUNDLES_URL);
-            LoadAssetBundleManifestSystem.InjectToWorld(ref builder, assetBundlesManifestCache, ASSET_BUNDLES_URL);
+            LoadAssetBundleManifestSystem.InjectToWorld(ref builder, assetBundlesManifestCache, ASSET_BUNDLES_URL, mutex);
 
             DebugCameraTransformToPlayerTransformSystem.InjectToWorld(ref builder, state.PlayerEntity, unityCamera);
 

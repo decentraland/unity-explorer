@@ -11,6 +11,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Pool;
+using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.Common.Systems
 {
@@ -29,6 +30,10 @@ namespace ECS.StreamableLoading.Common.Systems
         private readonly Query query;
 
         private readonly IStreamableCache<TAsset, TIntention> cache;
+
+        // asynchronous operations run independently on Update that is already synchronized
+        // so they require explicit synchronisation
+        private readonly MutexSync mutexSync;
         private CancellationTokenSource cancellationTokenSource;
 
         /// <summary>
@@ -38,9 +43,10 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private readonly Dictionary<string, StreamableLoadingResult<TAsset>> irrecoverableFailures;
 
-        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache) : base(world)
+        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync) : base(world)
         {
             this.cache = cache;
+            this.mutexSync = mutexSync;
             query = World.Query(in CREATE_WEB_REQUEST);
 
             cachedRequests = DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>.Get();
@@ -120,6 +126,8 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (requestIsNotFulfilled)
                     result = await CacheableFlow(intention, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
 
+                using MutexSync.Scope sync = mutexSync.GetScope();
+
                 if (!result.HasValue)
                 {
                     // Indicate that it should be grabbed by another system
@@ -137,6 +145,7 @@ namespace ECS.StreamableLoading.Common.Systems
             catch (Exception e)
             {
                 // If we don't set an exception it will spin forever
+                using MutexSync.Scope sync = mutexSync.GetScope();
                 World.Add(entity, new StreamableLoadingResult<TAsset>(e));
 
                 // TODO errors reporting

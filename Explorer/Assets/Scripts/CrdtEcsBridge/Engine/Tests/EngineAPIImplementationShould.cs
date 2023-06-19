@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Utility.Multithreading;
 
 namespace CrdtEcsBridge.Engine.Tests
 {
@@ -75,7 +76,8 @@ namespace CrdtEcsBridge.Engine.Tests
                 crdtDeserializer = Substitute.For<ICRDTDeserializer>(),
                 crdtSerializer = new CRDTSerializer(),
                 crdtWorldSynchronizer = Substitute.For<ICRDTWorldSynchronizer>(),
-                outgoingCrtdMessagesProvider = Substitute.For<IOutgoingCRTDMessagesProvider>()
+                outgoingCrtdMessagesProvider = Substitute.For<IOutgoingCRTDMessagesProvider>(),
+                new MutexSync()
             );
 
             crdtDeserializer.When(d => d.DeserializeBatch(ref Arg.Any<ReadOnlyMemory<byte>>(), Arg.Any<IList<CRDTMessage>>()))

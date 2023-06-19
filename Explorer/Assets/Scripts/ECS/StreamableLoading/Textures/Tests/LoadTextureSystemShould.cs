@@ -2,6 +2,7 @@
 using ECS.StreamableLoading.Tests;
 using NUnit.Framework;
 using UnityEngine;
+using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.Textures.Tests
 {
@@ -27,7 +28,7 @@ namespace ECS.StreamableLoading.Textures.Tests
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
         protected override LoadTextureSystem CreateSystem() =>
-            new (world, cache);
+            new (world, cache, new MutexSync());
 
         protected override void AssertSuccess(Texture2D asset)
         {
