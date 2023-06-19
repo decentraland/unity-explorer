@@ -136,8 +136,6 @@ namespace CrdtEcsBridge.Engine
 
             applyBufferSampler.Begin();
 
-            applyBufferSampler.Begin();
-
             // Apply changes to the ECS World on the main thread
             crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncBuffer);
             applyBufferSampler.End();
