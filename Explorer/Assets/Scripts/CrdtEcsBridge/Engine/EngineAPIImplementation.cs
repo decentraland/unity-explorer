@@ -64,7 +64,7 @@ namespace CrdtEcsBridge.Engine
             applyBufferSampler = CustomSampler.Create(nameof(ApplySyncCommandBuffer));
         }
 
-        public byte[] CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory)
+        public ArraySegment<byte> CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory)
         {
             // TODO it's dirty, think how to do it better
             if (isDisposing) return Array.Empty<byte>();
@@ -115,10 +115,12 @@ namespace CrdtEcsBridge.Engine
 
             outgoingMessagesSampler.Begin();
 
+            int payloadLength;
+
             // before returning to the main thread serialize outgoing CRDT Messages
             using (var outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock())
             {
-                lastSerializationBuffer = sharedPoolsProvider.GetSerializedStateBytesPool(outgoingMessagesSyncBlock.GetPayloadLength());
+                lastSerializationBuffer = sharedPoolsProvider.GetSerializedStateBytesPool(payloadLength = outgoingMessagesSyncBlock.GetPayloadLength());
                 SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, lastSerializationBuffer.AsSpan());
             }
 
@@ -126,7 +128,7 @@ namespace CrdtEcsBridge.Engine
 
             ApplySyncCommandBuffer(worldSyncBuffer);
 
-            return lastSerializationBuffer;
+            return new ArraySegment<byte>(lastSerializationBuffer, 0, payloadLength);
         }
 
         // Use mutex to apply command buffer from the background thread instead of synchronizing by the main one
@@ -151,7 +153,7 @@ namespace CrdtEcsBridge.Engine
             }
         }
 
-        public byte[] CrdtGetState()
+        public ArraySegment<byte> CrdtGetState()
         {
             // TODO it's dirty, think how to do it better
             if (isDisposing) return Array.Empty<byte>();
@@ -195,7 +197,7 @@ namespace CrdtEcsBridge.Engine
             Profiler.EndThreadProfiling();
 
             // Return the buffer to the caller
-            return lastSerializationBuffer;
+            return new ArraySegment<byte>(lastSerializationBuffer, 0, totalPayloadLength);
         }
 
         public void SetIsDisposing()

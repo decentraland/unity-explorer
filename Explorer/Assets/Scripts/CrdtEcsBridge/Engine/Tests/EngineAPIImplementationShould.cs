@@ -155,7 +155,7 @@ namespace CrdtEcsBridge.Engine.Tests
         [Test]
         public void MakeCallsInProperOrderCrdtGetState()
         {
-            byte[] state = engineAPIImplementation.CrdtGetState();
+            ArraySegment<byte> state = engineAPIImplementation.CrdtGetState();
 
             Received.InOrder(() =>
             {
@@ -167,7 +167,7 @@ namespace CrdtEcsBridge.Engine.Tests
                 sharedPoolsProvider.ReleaseSerializationCrdtMessagesPool(Arg.Is<ProcessedCRDTMessage[]>(p => p.Length == crdtStateMessages.Count));
             });
 
-            Assert.AreEqual(400 + 120, state.Length);
+            Assert.AreEqual(400 + 120, state.Count);
         }
 
         [Test]
