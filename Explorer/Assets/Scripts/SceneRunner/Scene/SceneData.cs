@@ -1,4 +1,5 @@
 using Ipfs;
+using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -17,26 +18,34 @@ namespace SceneRunner.Scene
 
         private readonly bool supportHashes;
 
-        public SceneData(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, bool supportHashes)
+        private readonly Dictionary<string, (bool success, string url)> resolvedContentURLs;
+
+        public SceneData(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, bool supportHashes, [NotNull] SceneAssetBundleManifest assetBundleManifest)
         {
             this.ipfsRealm = ipfsRealm;
             this.sceneDefinition = sceneDefinition;
             this.supportHashes = supportHashes;
+            AssetBundleManifest = assetBundleManifest;
 
             if (!supportHashes)
             {
+                resolvedContentURLs = new Dictionary<string, (bool success, string url)>(StringComparer.OrdinalIgnoreCase);
                 BaseParcel = new Vector2Int(0, 0);
                 return;
             }
 
             fileToHash = new Dictionary<string, string>(sceneDefinition.content.Count, StringComparer.OrdinalIgnoreCase);
 
-            foreach (IpfsTypes.ContentDefinition contentDefinition in sceneDefinition.content) { fileToHash[contentDefinition.file] = contentDefinition.hash; }
+            foreach (IpfsTypes.ContentDefinition contentDefinition in sceneDefinition.content) fileToHash[contentDefinition.file] = contentDefinition.hash;
 
             BaseParcel = IpfsHelper.DecodePointer(sceneDefinition.metadata.scene.baseParcel);
 
-            foreach (string parcel in sceneDefinition.metadata.scene.parcels) { parcels.Add(IpfsHelper.DecodePointer(parcel)); }
+            foreach (string parcel in sceneDefinition.metadata.scene.parcels) parcels.Add(IpfsHelper.DecodePointer(parcel));
+
+            resolvedContentURLs = new Dictionary<string, (bool success, string url)>(fileToHash.Count, StringComparer.OrdinalIgnoreCase);
         }
+
+        public SceneAssetBundleManifest AssetBundleManifest { get; }
 
         public string SceneName => sceneDefinition.id;
         public IReadOnlyList<Vector2Int> Parcels => parcels;
@@ -61,21 +70,39 @@ namespace SceneRunner.Scene
 
         public bool TryGetContentUrl(string url, out string result)
         {
+            if (resolvedContentURLs.TryGetValue(url, out (bool success, string url) cachedResult))
+            {
+                result = cachedResult.url;
+                return cachedResult.success;
+            }
+
             if (supportHashes)
             {
                 if (fileToHash.TryGetValue(url, out string hash))
                 {
                     result = ipfsRealm.ContentBaseUrl + "contents/" + hash;
+                    resolvedContentURLs[url] = (true, result);
                     return true;
                 }
 
                 Debug.LogError($"{nameof(SceneData)}: {url} not found in {nameof(fileToHash)}");
 
                 result = string.Empty;
+                resolvedContentURLs[url] = (false, result);
                 return false;
             }
 
             result = ipfsRealm.ContentBaseUrl + url;
+            resolvedContentURLs[url] = (true, result);
+            return true;
+        }
+
+        public bool TryGetHash(string name, out string hash)
+        {
+            if (supportHashes)
+                return fileToHash.TryGetValue(name, out hash);
+
+            hash = name;
             return true;
         }
 

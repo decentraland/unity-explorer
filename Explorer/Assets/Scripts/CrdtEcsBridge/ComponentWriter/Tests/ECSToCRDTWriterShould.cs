@@ -30,7 +30,7 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
             var crdtEntity = new CRDTEntity(1);
 
             //Act
-            ecsToCRDTWriter.AppendMessage(crdtEntity, ComponentID.POINTER_EVENTS_RESULT, new PBPointerEventsResult());
+            ecsToCRDTWriter.AppendMessage(crdtEntity, new PBPointerEventsResult());
 
             //Assert
             crdtProtocol.Received().CreateAppendMessage(crdtEntity, Arg.Any<int>(), Arg.Any<IMemoryOwner<byte>>());
@@ -50,7 +50,7 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
             var ecsToCRDTWriter = new ComponentWriter.ECSToCRDTWriter(crdtProtocol, outgoingCRDTMessageProvider, sdkComponentRegistry, CRDTPooledMemoryAllocator.Create());
 
             //Act
-            ecsToCRDTWriter.PutMessage(new CRDTEntity(), ComponentID.POINTER_EVENTS_RESULT, new PBPointerEventsResult());
+            ecsToCRDTWriter.PutMessage(new CRDTEntity(), new PBPointerEventsResult());
 
             //Assert
             Assert.AreEqual(crdtProtocol.GetMessagesCount(), 1);

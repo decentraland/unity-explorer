@@ -1,12 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Transform;
 using DCL.ECS7;
 using DCL.ECSComponents;
 using ECS.ComponentsPooling;
 using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Utility;
 
@@ -35,8 +35,8 @@ namespace Global
                .Add(SDKComponentBuilder<PBMaterial>.Create(ComponentID.MATERIAL).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBPointerEvents>.Create(ComponentID.POINTER_EVENTS).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBBillboard>.Create(ComponentID.BILLBOARD).AsProtobufComponent())
-               .Add(SDKComponentBuilder<PBVisibilityComponent>.Create(ComponentID.VISIBILITY_COMPONENT).AsProtobufComponent());
-
+               .Add(SDKComponentBuilder<PBVisibilityComponent>.Create(ComponentID.VISIBILITY_COMPONENT).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBGltfContainerLoadingState>.Create(ComponentID.GLTF_CONTAINER_LOADING_STATE).AsProtobufComponent());
 
             // add others as required
 
@@ -61,7 +61,6 @@ namespace Global
             yield return CreateExtraComponentPool<SpherePrimitive>();
             yield return CreateExtraComponentPool<PlanePrimitive>();
             yield return CreateExtraComponentPool<CylinderPrimitive>();
-
         }
 
         private static IEnumerable<(Type type, IComponentPool pool)> GetUnityComponentDictionary()
@@ -81,6 +80,3 @@ namespace Global
         }
     }
 }
-
-
-

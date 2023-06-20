@@ -1,10 +1,10 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.ComponentsPooling;
+using ECS.Groups;
 using ECS.Unity.Groups;
 using ECS.Unity.PrimitiveColliders.Components;
 
@@ -13,7 +13,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
     /// <summary>
     ///     Releases the previous collider if its type was changed at runtime or the SDK component is removed
     /// </summary>
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateBefore(typeof(ComponentInstantiationGroup))]
     public partial class ReleaseOutdatedColliderSystem : BaseUnityLoopSystem
     {

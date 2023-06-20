@@ -1,8 +1,8 @@
-﻿using Arch.Core;
-using DCL.ECSComponents;
+﻿using DCL.ECSComponents;
 using Decentraland.Common;
-using ECS.StreamableLoading.Components;
-using ECS.StreamableLoading.Components.Common;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Components.Defaults;
@@ -38,11 +38,11 @@ namespace ECS.Unity.Materials.Tests
                 sceneData = Substitute.For<ISceneData>());
 
             sceneData.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<string>())
-                                .Returns(c =>
-                                 {
-                                     c[1] = c.ArgAt<string>(0);
-                                     return true;
-                                 });
+                     .Returns(c =>
+                      {
+                          c[1] = c.ArgAt<string>(0);
+                          return true;
+                      });
         }
 
         [Test]
@@ -174,7 +174,7 @@ namespace ECS.Unity.Materials.Tests
             c.Status = MaterialComponent.LifeCycle.LoadingInProgress;
 
             // Add entity reference
-            EntityReference texPromise = world.Reference(world.Create(new GetTextureIntention()));
+            var texPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention { CommonArguments = new CommonLoadingArguments("URL") });
             c.AlphaTexPromise = texPromise;
 
             // Second run -> release promise
@@ -184,8 +184,8 @@ namespace ECS.Unity.Materials.Tests
             Assert.IsTrue(world.TryGet(e, out MaterialComponent materialComponent));
             AssertBasicMaterial(material2, materialComponent);
 
-            Assert.IsTrue(world.Has<ForgetLoadingIntent>(texPromise.Entity));
-            Assert.AreEqual(EntityReference.Null, materialComponent.AlphaTexPromise);
+            Assert.IsTrue(texPromise.LoadingIntention.CommonArguments.CancellationToken.IsCancellationRequested);
+            Assert.IsFalse(materialComponent.AlphaTexPromise.HasValue);
         }
 
         private static PBMaterial CreatePBRMaterial1()
@@ -199,7 +199,7 @@ namespace ECS.Unity.Materials.Tests
                         Texture = new Texture
                         {
                             Src = tex1,
-                            WrapMode = TextureWrapMode.TwmMirrorOnce,
+                            WrapMode = TextureWrapMode.TwmMirror,
                             FilterMode = TextureFilterMode.TfmPoint,
                         },
                     },

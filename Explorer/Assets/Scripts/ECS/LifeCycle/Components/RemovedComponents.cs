@@ -6,17 +6,20 @@ namespace ECS.LifeCycle.Components
 {
     public struct RemovedComponents : IDisposable
     {
-        public readonly HashSet<Type> RemovedComponentsSet;
+        public readonly HashSet<Type> Set;
 
         private RemovedComponents(HashSet<Type> defaultHashSet)
         {
-            RemovedComponentsSet = defaultHashSet;
+            Set = defaultHashSet;
         }
+
+        public bool Remove<T>() =>
+            Set.Remove(typeof(T));
 
         public static RemovedComponents CreateDefault() =>
             new (HashSetPool<Type>.Get());
 
         public void Dispose() =>
-            HashSetPool<Type>.Release(RemovedComponentsSet);
+            HashSetPool<Type>.Release(Set);
     }
 }

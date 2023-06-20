@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using ECS.Abstract;
+using ECS.StreamableLoading.AssetBundles.Manifest;
 using ECS.Unity.Transforms.Components;
 using Ipfs;
 using JetBrains.Annotations;
@@ -10,6 +11,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
+using ManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.Manifest.GetAssetBundleManifestIntention>;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -18,14 +20,14 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private readonly IIpfsRealm ipfsRealm;
 
-        [CanBeNull] private readonly List<Vector2Int> staticParcelsToLoad;
-
-        internal readonly SceneLifeCycleState state;
-
         private readonly List<Vector2Int> parcelsToLoad = new ();
 
         // cache
         private readonly List<IpfsTypes.SceneEntityDefinition> retrievedScenes = new ();
+
+        internal readonly SceneLifeCycleState state;
+
+        [CanBeNull] private readonly List<Vector2Int> staticParcelsToLoad;
 
         public LoadScenesDynamicallySystem(World world, IIpfsRealm ipfsRealm, SceneLifeCycleState state, [CanBeNull] List<Vector2Int> staticParcelsToLoad = null) : base(world)
         {
@@ -45,7 +47,7 @@ namespace ECS.SceneLifeCycle.Systems
                 Vector3 position = World.Get<TransformComponent>(state.PlayerEntity).Transform.position;
 
                 parcelsToLoad.Clear();
-                var parcelsInRange = staticParcelsToLoad ?? ParcelMathHelper.ParcelsInRange(position, state.SceneLoadRadius);
+                IReadOnlyList<Vector2Int> parcelsInRange = staticParcelsToLoad ?? ParcelMathHelper.ParcelsInRange(position, state.SceneLoadRadius);
 
                 for (var i = 0; i < parcelsInRange.Count; i++)
                 {
@@ -66,11 +68,15 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     IpfsTypes.SceneEntityDefinition scene = retrievedScenes[i];
 
+                    if (scene.pointers.Count == 0) continue;
+
+                    var scenePointer = new ScenePointer(scene, ManifestPromise.Create(World, new GetAssetBundleManifestIntention(scene.id)));
+
                     foreach (string encodedPointer in scene.pointers)
                     {
                         Vector2Int pointer = IpfsHelper.DecodePointer(encodedPointer);
                         parcelsToLoad.Remove(pointer);
-                        state.ScenePointers.TryAdd(pointer, scene);
+                        state.ScenePointers.TryAdd(pointer, scenePointer);
                     }
                 }
 
@@ -78,11 +84,7 @@ namespace ECS.SceneLifeCycle.Systems
                 for (var i = 0; i < parcelsToLoad.Count; i++)
                 {
                     Vector2Int emptyParcel = parcelsToLoad[i];
-
-                    state.ScenePointers.Add(emptyParcel, new IpfsTypes.SceneEntityDefinition
-                    {
-                        id = $"empty-parcel-{emptyParcel.x}-{emptyParcel.y}",
-                    });
+                    state.ScenePointers.Add(emptyParcel, new ScenePointer(emptyParcel));
                 }
 
                 pointerRequest = null;

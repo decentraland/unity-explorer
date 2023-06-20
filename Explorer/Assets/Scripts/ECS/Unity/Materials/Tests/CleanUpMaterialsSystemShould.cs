@@ -1,11 +1,15 @@
 ﻿using Arch.Core;
 using ECS.LifeCycle.Components;
-using ECS.StreamableLoading.Components.Common;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Systems;
 using NSubstitute;
 using NUnit.Framework;
+using System.Threading;
+using UnityEngine;
 using Utility.Primitives;
 
 namespace ECS.Unity.Materials.Tests
@@ -22,7 +26,7 @@ namespace ECS.Unity.Materials.Tests
         {
             system = new CleanUpMaterialsSystem(world, destroyMaterial = Substitute.For<DestroyMaterial>());
 
-            e = world.Create(new MaterialComponent { AlbedoTexPromise = world.Reference(texPromise = world.Create()) }, new DeleteEntityIntention());
+            e = world.Create(new MaterialComponent(new MaterialData()) { AlbedoTexPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention { CommonArguments = new CommonLoadingArguments("url") }) }, new DeleteEntityIntention());
         }
 
         [Test]
@@ -31,10 +35,12 @@ namespace ECS.Unity.Materials.Tests
             ref MaterialComponent component = ref world.Get<MaterialComponent>(e);
             component.Status = MaterialComponent.LifeCycle.LoadingInProgress;
 
+            CancellationToken ct = component.AlbedoTexPromise.Value.LoadingIntention.CommonArguments.CancellationToken;
+
             system.Update(0);
 
-            Assert.That(world.Has<ForgetLoadingIntent>(texPromise), Is.True);
-            Assert.That(world.Get<MaterialComponent>(e).AlbedoTexPromise, Is.EqualTo(EntityReference.Null));
+            Assert.That(ct.IsCancellationRequested, Is.True);
+            Assert.That(world.Get<MaterialComponent>(e).AlbedoTexPromise, Is.EqualTo(null));
         }
 
         [Test]

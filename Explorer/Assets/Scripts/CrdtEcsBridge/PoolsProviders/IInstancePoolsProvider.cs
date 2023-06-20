@@ -13,8 +13,8 @@ namespace CrdtEcsBridge.Engine
 
         public void ReleaseCrdtRawDataPool(byte[] bytes);
 
-        IList<CRDTMessage> GetDeserializationMessagesPool();
+        List<CRDTMessage> GetDeserializationMessagesPool();
 
-        void ReleaseDeserializationMessagesPool(IList<CRDTMessage> messages);
+        void ReleaseDeserializationMessagesPool(List<CRDTMessage> messages);
     }
 }

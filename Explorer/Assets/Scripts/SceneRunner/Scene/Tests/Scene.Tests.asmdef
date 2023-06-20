@@ -1,0 +1,25 @@
+﻿{
+    "name": "Scene.Tests",
+    "rootNamespace": "",
+    "references": [
+        "GUID:286980af24684da6acc1caa413039811"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "NSubstitute.dll",
+        "Arch.dll",
+        "Arch.System.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

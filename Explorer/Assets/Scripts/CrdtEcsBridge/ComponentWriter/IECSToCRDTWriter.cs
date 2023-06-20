@@ -5,10 +5,10 @@ namespace CrdtEcsBridge.ECSToCRDTWriter
 {
     public interface IECSToCRDTWriter
     {
-        void PutMessage<T>(CRDTEntity crdtID, int componentId, T model) where T: IMessage<T>;
+        void PutMessage<T>(CRDTEntity crdtID, T model) where T: IMessage<T>;
 
-        void AppendMessage<T>(CRDTEntity crdtID, int componentId, T model) where T: IMessage<T>;
+        void AppendMessage<T>(CRDTEntity crdtID, T model) where T: IMessage<T>;
 
-        void DeleteMessage(CRDTEntity crdtID, int componentId);
+        void DeleteMessage<T>(CRDTEntity crdtID) where T: IMessage<T>;
     }
 }

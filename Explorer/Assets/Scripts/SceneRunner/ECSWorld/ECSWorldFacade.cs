@@ -4,6 +4,7 @@ using CRDT;
 using ECS.LifeCycle;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Profiling;
 
 namespace SceneRunner.ECSWorld
@@ -34,7 +35,11 @@ namespace SceneRunner.ECSWorld
             Profiler.BeginSample("FinalizeSDKComponents");
 
             for (var i = 0; i < finalizeWorldSystems.Count; i++)
-                finalizeWorldSystems[i].FinalizeComponents(in finalizeSDKComponentsQuery);
+            {
+                // We must be able to finalize world no matter what
+                try { finalizeWorldSystems[i].FinalizeComponents(in finalizeSDKComponentsQuery); }
+                catch (Exception e) { Debug.LogException(e); }
+            }
 
             Profiler.EndSample();
 

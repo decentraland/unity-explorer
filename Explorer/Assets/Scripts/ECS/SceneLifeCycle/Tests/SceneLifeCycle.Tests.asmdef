@@ -1,5 +1,5 @@
 {
-  "name": "ECS.SceneLifeCycle.Tests",
+  "name": "SceneLifeCycle.Tests",
   "rootNamespace": "",
   "references": [
     "UnityEngine.TestRunner",
@@ -11,7 +11,9 @@
     "UniTask",
     "CRDT.ECS.Bridge",
     "Ipfs",
-    "Utility"
+    "Utility",
+    "StreamableLoading",
+    "SceneRunner.Scene"
   ],
   "includePlatforms": [
     "Editor"

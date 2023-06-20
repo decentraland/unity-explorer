@@ -1,6 +1,5 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -10,7 +9,7 @@ namespace ECS.LifeCycle.Systems
     /// <summary>
     ///     Destroys all entities marked for deletion
     /// </summary>
-    [UpdateInGroup(typeof(PostRenderingSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
     [UpdateAfter(typeof(CleanUpGroup))]
     public partial class DestroyEntitiesSystem : BaseUnityLoopSystem
     {
