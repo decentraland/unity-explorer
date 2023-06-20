@@ -8,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Pool;
 using Utility.Multithreading;
@@ -209,8 +208,8 @@ namespace ECS.StreamableLoading.Common.Systems
                 {
                     UnityWebRequest webRequest = unityWebRequestException.UnityWebRequest;
 
-                    Debug.LogError(unityWebRequestException.UnityWebRequest.url);
-                    Debug.LogException(unityWebRequestException);
+                    //Debug.LogError(unityWebRequestException.UnityWebRequest.url);
+                    //Debug.LogException(unityWebRequestException);
 
                     // Decide if we can repeat or not
                     --attemptCount;
@@ -233,7 +232,7 @@ namespace ECS.StreamableLoading.Common.Systems
                     // General exception
                     // conclude now, we can't do anything
                     // TODO errors reporting
-                    Debug.LogException(e);
+                    //Debug.LogException(e);
                     return SetIrrecoverableFailure(intention, new StreamableLoadingResult<TAsset>(e));
                 }
             }

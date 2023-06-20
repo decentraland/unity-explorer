@@ -37,11 +37,12 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private async UniTask LoadDependencies(GetAssetBundleIntention intention, AssetBundle assetBundle, CancellationToken ct)
         {
+            await UniTask.SwitchToMainThread();
+
 #region KILL_ME
             // HACK! Load Asset Bundle Manifest from streaming assets
             if (intention.CommonArguments.CurrentSource == AssetSource.EMBEDDED)
             {
-                await UniTask.SwitchToMainThread();
                 string[] dependencies = assetBundleManifest?.GetAllDependencies(intention.Hash) ?? Array.Empty<string>();
                 await UniTask.WhenAll(dependencies.Select(hash => WaitForDependency(hash, ct)));
                 return;

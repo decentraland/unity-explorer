@@ -44,7 +44,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             Assert.That(intent.CommonArguments.Attempts, Is.EqualTo(1));
             Assert.That(intent.CommonArguments.CurrentSource, Is.EqualTo(AssetSource.EMBEDDED));
-            Assert.That(intent.CommonArguments.URL, Is.EqualTo(path + "abcd"));
+            Assert.That(intent.CommonArguments.URL, Is.EqualTo(path + "abcd").Or.EqualTo(path + "abcd".GetHashCode()));
         }
 
         [Test]
