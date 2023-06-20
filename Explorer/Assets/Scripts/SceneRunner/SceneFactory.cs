@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
+using Utility.Multithreading;
 
 namespace SceneRunner
 {
@@ -103,6 +104,7 @@ namespace SceneRunner
             var entitiesMap = new Dictionary<CRDTEntity, Entity>(1000, CRDTEntityComparer.INSTANCE);
 
             // Per scene instance dependencies
+            var ecsMutexSync = new MutexSync();
             var crdtProtocol = new CRDTProtocol();
             var outgoingCrtdMessagesProvider = new OutgoingCRTDMessagesProvider();
             var instancePoolsProvider = InstancePoolsProvider.Create();
@@ -111,7 +113,7 @@ namespace SceneRunner
             var ecsToCrdtWriter = new ECSToCRDTWriter(crdtProtocol, outgoingCrtdMessagesProvider, sdkComponentsRegistry, crdtMemoryAllocator);
 
             /* Pass dependencies here if they are needed by the systems */
-            var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, ecsToCrdtWriter, entitiesMap);
+            var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, ecsToCrdtWriter, entitiesMap, ecsMutexSync);
 
             ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(in instanceDependencies);
             ecsWorldFacade.Initialize();
@@ -128,7 +130,8 @@ namespace SceneRunner
                 crdtDeserializer,
                 crdtSerializer,
                 crdtWorldSynchronizer,
-                outgoingCrtdMessagesProvider);
+                outgoingCrtdMessagesProvider,
+                ecsMutexSync);
 
             sceneRuntime.RegisterEngineApi(engineAPI);
 

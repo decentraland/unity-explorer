@@ -4,12 +4,12 @@ using CRDT.Protocol.Factory;
 using CRDT.Serializer;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.WorldSynchronizer;
-using Cysharp.Threading.Tasks;
 using SceneRuntime.Apis.Modules;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine.Profiling;
+using Utility.Multithreading;
 
 namespace CrdtEcsBridge.Engine
 {
@@ -26,6 +26,7 @@ namespace CrdtEcsBridge.Engine
         private readonly ICRDTSerializer crdtSerializer;
         private readonly ICRDTWorldSynchronizer crdtWorldSynchronizer;
         private readonly IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider;
+        private readonly MutexSync mutexSync;
 
         private byte[] lastSerializationBuffer;
 
@@ -33,6 +34,7 @@ namespace CrdtEcsBridge.Engine
         private readonly CustomSampler worldSyncBufferSampler;
         private readonly CustomSampler outgoingMessagesSampler;
         private readonly CustomSampler crdtProcessMessagesSampler;
+        private readonly CustomSampler applyBufferSampler;
 
         private bool isDisposing;
 
@@ -43,7 +45,8 @@ namespace CrdtEcsBridge.Engine
             ICRDTDeserializer crdtDeserializer,
             ICRDTSerializer crdtSerializer,
             ICRDTWorldSynchronizer crdtWorldSynchronizer,
-            IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider)
+            IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider,
+            MutexSync mutexSync)
         {
             sharedPoolsProvider = poolsProvider;
             this.instancePoolsProvider = instancePoolsProvider;
@@ -52,14 +55,16 @@ namespace CrdtEcsBridge.Engine
             this.crdtSerializer = crdtSerializer;
             this.crdtWorldSynchronizer = crdtWorldSynchronizer;
             this.outgoingCrtdMessagesProvider = outgoingCrtdMessagesProvider;
+            this.mutexSync = mutexSync;
 
             deserializeBatchSampler = CustomSampler.Create("DeserializeBatch");
             worldSyncBufferSampler = CustomSampler.Create("WorldSyncBuffer");
             outgoingMessagesSampler = CustomSampler.Create("OutgoingMessages");
             crdtProcessMessagesSampler = CustomSampler.Create("CRDTProcessMessage");
+            applyBufferSampler = CustomSampler.Create(nameof(ApplySyncCommandBuffer));
         }
 
-        public byte[] CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory)
+        public ArraySegment<byte> CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory)
         {
             // TODO it's dirty, think how to do it better
             if (isDisposing) return Array.Empty<byte>();
@@ -110,31 +115,32 @@ namespace CrdtEcsBridge.Engine
 
             outgoingMessagesSampler.Begin();
 
+            int payloadLength;
+
             // before returning to the main thread serialize outgoing CRDT Messages
             using (var outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock())
             {
-                lastSerializationBuffer = sharedPoolsProvider.GetSerializedStateBytesPool(outgoingMessagesSyncBlock.GetPayloadLength());
+                lastSerializationBuffer = sharedPoolsProvider.GetSerializedStateBytesPool(payloadLength = outgoingMessagesSyncBlock.GetPayloadLength());
                 SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, lastSerializationBuffer.AsSpan());
             }
 
             outgoingMessagesSampler.End();
 
-            // Now (unless we make ECS run on the background thread) we need to switch to the main thread
-            // before all systems start to update - in the beginning of the Player Loop
-            // TODO Validate if we can just launch and forget() without waiting
+            ApplySyncCommandBuffer(worldSyncBuffer);
 
-            // don't use `UniTask` as it will switch us to the main thread and the continuation will keep running on the main thread
-            ApplySyncCommandBuffer(worldSyncBuffer).Forget();
-
-            return lastSerializationBuffer;
+            return new ArraySegment<byte>(lastSerializationBuffer, 0, payloadLength);
         }
 
-        private async UniTaskVoid ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer)
+        // Use mutex to apply command buffer from the background thread instead of synchronizing by the main one
+        private void ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer)
         {
-            await UniTask.Yield(PlayerLoopTiming.Initialization);
+            using MutexSync.Scope mutex = mutexSync.GetScope();
+
+            applyBufferSampler.Begin();
 
             // Apply changes to the ECS World on the main thread
             crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncBuffer);
+            applyBufferSampler.End();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -147,7 +153,7 @@ namespace CrdtEcsBridge.Engine
             }
         }
 
-        public byte[] CrdtGetState()
+        public ArraySegment<byte> CrdtGetState()
         {
             // TODO it's dirty, think how to do it better
             if (isDisposing) return Array.Empty<byte>();
@@ -191,7 +197,7 @@ namespace CrdtEcsBridge.Engine
             Profiler.EndThreadProfiling();
 
             // Return the buffer to the caller
-            return lastSerializationBuffer;
+            return new ArraySegment<byte>(lastSerializationBuffer, 0, totalPayloadLength);
         }
 
         public void SetIsDisposing()

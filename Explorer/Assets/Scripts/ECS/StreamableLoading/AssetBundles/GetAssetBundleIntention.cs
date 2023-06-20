@@ -1,11 +1,12 @@
 ﻿using AssetManagement;
 using ECS.StreamableLoading.Common.Components;
+using System;
 using System.Threading;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
-    public struct GetAssetBundleIntention : ILoadingIntention
+    public struct GetAssetBundleIntention : ILoadingIntention, IEquatable<GetAssetBundleIntention>
     {
         public CommonLoadingArguments CommonArguments { get; set; }
 
@@ -43,5 +44,14 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public static GetAssetBundleIntention FromHash(string hash, AssetSource permittedSources = AssetSource.ALL) =>
             new (hash: hash, permittedSources: permittedSources);
+
+        public bool Equals(GetAssetBundleIntention other) =>
+            Hash == other.Hash || Name == other.Name;
+
+        public override bool Equals(object obj) =>
+            obj is GetAssetBundleIntention other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(Hash, Name);
     }
 }

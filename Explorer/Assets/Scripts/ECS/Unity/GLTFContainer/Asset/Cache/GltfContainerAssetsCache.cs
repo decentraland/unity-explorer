@@ -3,6 +3,7 @@ using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 
 namespace ECS.Unity.GLTFContainer.Asset.Cache
 {
@@ -29,7 +30,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
         public bool TryGet(in string key, out GltfContainerAsset asset)
         {
-            if (cache.TryGetValue(key, out List<GltfContainerAsset> list))
+            if (cache.TryGetValue(key, out List<GltfContainerAsset> list) && list.Count > 0)
             {
                 // Remove from the tail of the list
                 asset = list[^1];
@@ -53,6 +54,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
                 cache[key] = list = new List<GltfContainerAsset>(maxSize / 10);
 
             list.Add(asset);
+
+            // This logic should not be executed if the application is quitting
+            if (UnityObjectUtils.IsQuitting) return;
 
             asset.Root.SetActive(false);
             asset.Root.transform.SetParent(parentContainer);

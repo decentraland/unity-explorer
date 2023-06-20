@@ -35,12 +35,12 @@ namespace ECS.Unity.Materials.Tests
             ref MaterialComponent component = ref world.Get<MaterialComponent>(e);
             component.Status = MaterialComponent.LifeCycle.LoadingInProgress;
 
-            CancellationToken ct = component.AlbedoTexPromise.LoadingIntention.CommonArguments.CancellationToken;
+            CancellationToken ct = component.AlbedoTexPromise.Value.LoadingIntention.CommonArguments.CancellationToken;
 
             system.Update(0);
 
             Assert.That(ct.IsCancellationRequested, Is.True);
-            Assert.That(world.Get<MaterialComponent>(e).AlbedoTexPromise, Is.EqualTo(AssetPromise<Texture2D, GetTextureIntention>.NULL));
+            Assert.That(world.Get<MaterialComponent>(e).AlbedoTexPromise, Is.EqualTo(null));
         }
 
         [Test]

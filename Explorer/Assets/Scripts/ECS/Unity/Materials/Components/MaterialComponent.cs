@@ -25,17 +25,17 @@ namespace ECS.Unity.Materials.Components
         /// </summary>
         public Material Result;
 
-        public Promise AlbedoTexPromise;
-        public Promise EmissiveTexPromise;
-        public Promise AlphaTexPromise;
-        public Promise BumpTexPromise;
+        public Promise? AlbedoTexPromise;
+        public Promise? EmissiveTexPromise;
+        public Promise? AlphaTexPromise;
+        public Promise? BumpTexPromise;
 
         public MaterialComponent(MaterialData data)
         {
-            AlbedoTexPromise = Promise.NULL;
-            EmissiveTexPromise = Promise.NULL;
-            AlphaTexPromise = Promise.NULL;
-            BumpTexPromise = Promise.NULL;
+            AlbedoTexPromise = null;
+            EmissiveTexPromise = null;
+            AlphaTexPromise = null;
+            BumpTexPromise = null;
 
             Data = data;
             Status = LifeCycle.LoadingNotStarted;

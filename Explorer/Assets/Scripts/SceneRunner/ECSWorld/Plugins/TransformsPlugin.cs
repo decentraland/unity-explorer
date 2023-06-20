@@ -25,12 +25,13 @@ namespace SceneRunner.ECSWorld.Plugins
         {
             // We create the scene root transform
             Transform sceneRootTransform = componentPoolsRegistry.GetReferenceTypePool<Transform>().Get();
-            sceneRootTransform.transform.SetParent(null);
+
+            sceneRootTransform.SetParent(null);
 
             var basePosition = ParcelMathHelper.GetPositionByParcelPosition(sharedDependencies.SceneData.BaseParcel);
-            sceneRootTransform.transform.position = basePosition;
-            sceneRootTransform.transform.rotation = Quaternion.identity;
-            sceneRootTransform.transform.localScale = Vector3.one;
+            sceneRootTransform.position = basePosition;
+            sceneRootTransform.rotation = Quaternion.identity;
+            sceneRootTransform.localScale = Vector3.one;
 
             sceneRootTransform.name = $"{sharedDependencies.SceneData.BaseParcel}_{sharedDependencies.SceneData.SceneName}";
             Entity rootTransformEntity = builder.World.Create(new TransformComponent(sceneRootTransform));

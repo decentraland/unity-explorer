@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using ECS.ComponentsPooling;
 using ECS.ComponentsPooling.Systems;
+using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using SceneRunner.ECSWorld.Plugins;
@@ -29,6 +30,12 @@ namespace SceneRunner.ECSWorld
 
             // Create all systems and add them to the world
             var builder = new ArchSystemsWorldBuilder<World>(world);
+
+            builder
+               .InjectCustomGroup(new SyncedInitializationSystemGroup(sharedDependencies.MutexSync))
+               .InjectCustomGroup(new SyncedSimulationSystemGroup(sharedDependencies.MutexSync))
+               .InjectCustomGroup(new SyncedPresentationSystemGroup(sharedDependencies.MutexSync))
+               .InjectCustomGroup(new SyncedPostRenderingSystemGroup(sharedDependencies.MutexSync));
 
             var finalizeWorldSystems = new List<IFinalizeWorldSystem>(32);
 

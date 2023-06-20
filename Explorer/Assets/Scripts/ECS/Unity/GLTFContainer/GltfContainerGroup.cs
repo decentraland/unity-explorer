@@ -1,10 +1,10 @@
 ﻿using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
+using ECS.Groups;
 using ECS.StreamableLoading;
 
 namespace ECS.Unity.GLTFContainer
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     [UpdateBefore(typeof(StreamableLoadingGroup))]
     public partial class GltfContainerGroup { }
 }

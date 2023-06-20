@@ -1,8 +1,7 @@
 ﻿using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 
 namespace ECS.Groups
 {
-    [UpdateInGroup(typeof(PostRenderingSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
     public partial class CleanUpGroup { }
 }

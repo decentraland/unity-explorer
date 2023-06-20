@@ -86,18 +86,19 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(afterUpdate.Result, Is.Null);
         }
 
-        private void CreateAndFinalizeTexturePromise(ref AssetPromise<Texture2D, GetTextureIntention> promise)
+        private void CreateAndFinalizeTexturePromise(ref AssetPromise<Texture2D, GetTextureIntention>? promise)
         {
             promise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention());
-            world.Add(promise.Entity, new StreamableLoadingResult<Texture2D>(Texture2D.grayTexture));
+            world.Add(promise.Value.Entity, new StreamableLoadingResult<Texture2D>(Texture2D.grayTexture));
         }
 
-        private void AssertTexturePromise(ref AssetPromise<Texture2D, GetTextureIntention> promise, string src)
+        private void AssertTexturePromise(ref AssetPromise<Texture2D, GetTextureIntention>? promise, string src)
         {
-            Assert.AreNotEqual(AssetPromise<Texture2D, GetTextureIntention>.NULL, promise);
-            Assert.AreNotEqual(EntityReference.Null, promise.Entity);
+            Assert.That(promise.HasValue, Is.True);
+            AssetPromise<Texture2D, GetTextureIntention> promiseValue = promise.Value;
+            Assert.AreNotEqual(EntityReference.Null, promiseValue.Entity);
 
-            Assert.That(world.TryGet(promise.Entity, out GetTextureIntention intention), Is.True);
+            Assert.That(world.TryGet(promiseValue.Entity, out GetTextureIntention intention), Is.True);
             Assert.That(intention.CommonArguments.URL, Is.EqualTo(src));
             Assert.That(intention.CommonArguments.Attempts, Is.EqualTo(ATTEMPTS_COUNT));
         }

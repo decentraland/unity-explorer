@@ -49,12 +49,15 @@ namespace ECS.Unity.Materials
             }
         }
 
-        private static void TryAddAbortIntention(World world, ref Promise promise)
+        internal static void TryAddAbortIntention(World world, ref Promise? promise)
         {
-            promise.ForgetLoading(world);
+            if (promise == null)
+                return;
+
+            promise.Value.ForgetLoading(world);
 
             // Nullify the entity reference
-            promise = Promise.NULL;
+            promise = null;
         }
     }
 }

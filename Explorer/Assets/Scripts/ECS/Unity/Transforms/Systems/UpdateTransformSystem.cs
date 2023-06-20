@@ -1,15 +1,15 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using CrdtEcsBridge.Components.Transform;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.Unity.Transforms.Components;
 using UnityEngine;
 
 namespace ECS.Unity.Transforms.Systems
 {
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateAfter(typeof(ParentingTransformSystem))]
     public partial class UpdateTransformSystem : BaseUnityLoopSystem
     {

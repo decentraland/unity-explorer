@@ -23,33 +23,61 @@ namespace ECS.Unity.Materials.Systems
         protected Material CreateNewMaterialInstance() =>
             materialsPool.Get();
 
-        protected bool TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise promise)
+        protected bool TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise? promise)
         {
-            if (textureComponent == null) return false;
+            if (textureComponent == null)
+            {
+                // If component is being reuse forget the previous promise
+                ReleaseMaterial.TryAddAbortIntention(World, ref promise);
+                return false;
+            }
+
+            TextureComponent textureComponentValue = textureComponent.Value;
+
+            // If data inside promise has not changed just reuse the same promise
+            // as creating and waiting for a new one can be expensive
+            if (Equals(ref textureComponentValue, ref promise))
+                return false;
+
+            // If component is being reuse forget the previous promise
+            ReleaseMaterial.TryAddAbortIntention(World, ref promise);
 
             promise = Promise.Create(World, new GetTextureIntention
             {
-                CommonArguments = new CommonLoadingArguments(textureComponent.Value.Src, attempts: attemptsCount),
-                WrapMode = textureComponent.Value.WrapMode,
-                FilterMode = textureComponent.Value.FilterMode,
+                CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
+                WrapMode = textureComponentValue.WrapMode,
+                FilterMode = textureComponentValue.FilterMode,
             });
 
             return true;
         }
 
-        protected void DestroyEntityReference(ref Promise promise)
+        private static bool Equals(ref TextureComponent textureComponent, ref Promise? promise)
         {
-            promise.Consume(World);
+            if (promise == null) return false;
+
+            Promise promiseValue = promise.Value;
+
+            GetTextureIntention intention = promiseValue.LoadingIntention;
+
+            return textureComponent.Src == promiseValue.LoadingIntention.CommonArguments.URL &&
+                   textureComponent.WrapMode == intention.WrapMode &&
+                   textureComponent.FilterMode == intention.FilterMode;
         }
 
-        protected bool TryGetTextureResult(ref Promise promise, out StreamableLoadingResult<Texture2D> textureResult)
+        protected void DestroyEntityReference(ref Promise? promise)
+        {
+            promise?.Consume(World);
+        }
+
+        protected bool TryGetTextureResult(ref Promise? promise, out StreamableLoadingResult<Texture2D> textureResult)
         {
             textureResult = default(StreamableLoadingResult<Texture2D>);
 
-            if (promise == Promise.NULL)
+            if (promise == null)
                 return true;
 
-            return promise.TryGetResult(World, out textureResult);
+            return promise.Value.TryGetResult(World, out textureResult);
         }
 
         protected static void TrySetTexture(Material material, ref StreamableLoadingResult<Texture2D> textureResult, int propId)

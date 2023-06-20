@@ -6,13 +6,14 @@ using ECS.StreamableLoading.Common.Systems;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using System.Threading.Tasks;
 
 namespace ECS.StreamableLoading.Tests
 {
     public abstract class LoadSystemBaseShould<TSystem, TAsset, TIntention> : UnitySystemTestBase<TSystem>
         where TSystem: LoadSystemBase<TAsset, TIntention>
-        where TIntention: struct, ILoadingIntention
+        where TIntention: struct, ILoadingIntention, IEquatable<TIntention>
     {
         protected abstract TIntention CreateSuccessIntention();
 

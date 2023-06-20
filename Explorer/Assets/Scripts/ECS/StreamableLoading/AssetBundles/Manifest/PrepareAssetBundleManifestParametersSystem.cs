@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
@@ -11,7 +12,7 @@ namespace ECS.StreamableLoading.AssetBundles.Manifest
     /// <summary>
     ///     Prepares URL from the scene ID
     /// </summary>
-    [UpdateInGroup(typeof(StreamableLoadingGroup))]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateBefore(typeof(LoadAssetBundleManifestSystem))]
     public partial class PrepareAssetBundleManifestParametersSystem : BaseUnityLoopSystem
     {

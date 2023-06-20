@@ -5,6 +5,7 @@ using SceneRunner;
 using SceneRunner.ECSWorld;
 using SceneRunner.ECSWorld.Plugins;
 using SceneRuntime.Factory;
+using UnityEngine;
 
 namespace Global
 {
@@ -16,7 +17,7 @@ namespace Global
     {
         public ISceneFactory SceneFactory { get; internal init; }
 
-        public static SceneSharedContainer Create(in ComponentsContainer componentsContainer)
+        public static SceneSharedContainer Create(in ComponentsContainer componentsContainer, AssetBundleManifest localAssetBundleManifest)
         {
             var sharedDependencies = new ECSWorldSingletonSharedDependencies(componentsContainer.ComponentPoolsRegistry);
 
@@ -27,7 +28,7 @@ namespace Global
                 new TexturesLoadingPlugin(),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
-                new AssetBundlesPlugin(),
+                new AssetBundlesPlugin(localAssetBundleManifest),
                 new GltfContainerPlugin(sharedDependencies));
 
             return new SceneSharedContainer

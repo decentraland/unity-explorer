@@ -1,5 +1,4 @@
-﻿using Arch.Core;
-using DCL.ECSComponents;
+﻿using DCL.ECSComponents;
 using Decentraland.Common;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -186,7 +185,7 @@ namespace ECS.Unity.Materials.Tests
             AssertBasicMaterial(material2, materialComponent);
 
             Assert.IsTrue(texPromise.LoadingIntention.CommonArguments.CancellationToken.IsCancellationRequested);
-            Assert.AreEqual(EntityReference.Null, materialComponent.AlphaTexPromise.Entity);
+            Assert.IsFalse(materialComponent.AlphaTexPromise.HasValue);
         }
 
         private static PBMaterial CreatePBRMaterial1()

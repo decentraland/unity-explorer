@@ -6,7 +6,6 @@ using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
-using UnityEngine;
 using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -33,7 +32,7 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         [Query]
-        [None(typeof(LoadingInProgress), typeof(StreamableLoadingResult<AssetBundle>))]
+        [None(typeof(LoadingInProgress), typeof(StreamableLoadingResult<AssetBundleData>))]
 
         // If loading is not started yet and there is no result
         private void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention)
@@ -43,7 +42,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             // If Hash is already provided just use it, otherwise resolve by the content provider
             if (assetBundleIntention.Hash == null)
-
+            {
                 if (!sceneData.TryGetHash(assetBundleIntention.Name, out assetBundleIntention.Hash))
                 {
                     // TODO Errors reporting
@@ -53,6 +52,10 @@ namespace ECS.StreamableLoading.AssetBundles
 
                     return;
                 }
+
+                // TODO Hack, kill me
+                assetBundleIntention.Hash = assetBundleIntention.Hash.GetHashCode().ToString();
+            }
 
             // First priority
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.EMBEDDED))

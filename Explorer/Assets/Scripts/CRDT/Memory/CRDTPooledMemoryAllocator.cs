@@ -49,7 +49,7 @@ namespace CRDT.Memory
             () => new CRDTPooledMemoryAllocator());
 
         // Introduce a pool of memory owners to prevent allocations per message
-        private readonly ObjectPool<MemoryOwner> memoryOwnerPool;
+        private readonly IObjectPool<MemoryOwner> memoryOwnerPool;
 
         public static CRDTPooledMemoryAllocator Create() =>
             POOL.Get();
@@ -70,7 +70,7 @@ namespace CRDT.Memory
             // TODO add analytics that will signal if our assumptions are wrong
             arrayPool = ArrayPool<byte>.Create(1024 * 1024, 1024);
 
-            memoryOwnerPool = new ObjectPool<MemoryOwner>(
+            memoryOwnerPool = new ThreadSafeObjectPool<MemoryOwner>(
                 () => new MemoryOwner(this),
                 defaultCapacity: 1024,
                 maxSize: 1024 * 1024,

@@ -1,8 +1,8 @@
 ﻿using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
@@ -15,28 +15,47 @@ namespace ECS.Unity.GLTFContainer.Systems
     ///     Cancel promises on the dying entities
     /// </summary>
     [UpdateInGroup(typeof(CleanUpGroup))]
-    public partial class CleanUpGltfContainerSystem : BaseUnityLoopSystem
+    public partial class CleanUpGltfContainerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private readonly IStreamableCache<GltfContainerAsset, string> cache;
+        private readonly QueryDescription entityDestroyQuery = new QueryDescription()
+           .WithAll<DeleteEntityIntention, GltfContainerComponent>();
+
+        private ReleaseOnEntityDestroy releaseOnEntityDestroy;
+
 
         internal CleanUpGltfContainerSystem(World world, IStreamableCache<GltfContainerAsset, string> cache) : base(world)
         {
-            this.cache = cache;
+            releaseOnEntityDestroy = new ReleaseOnEntityDestroy(cache, World);
         }
 
         protected override void Update(float t)
         {
-            ReleaseQuery(World);
+            World.InlineQuery<ReleaseOnEntityDestroy, GltfContainerComponent>(in entityDestroyQuery, ref releaseOnEntityDestroy);
         }
 
-        [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void Release(ref GltfContainerComponent component)
+        public void FinalizeComponents(in Query query)
         {
-            if (component.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
-                cache.Dereference(component.Source, result.Asset);
+            World.InlineQuery<ReleaseOnEntityDestroy, GltfContainerComponent>(in new QueryDescription().WithAll<GltfContainerComponent>(), ref releaseOnEntityDestroy);
+        }
 
-            component.Promise.ForgetLoading(World);
+        private readonly struct ReleaseOnEntityDestroy : IForEach<GltfContainerComponent>
+        {
+            private readonly IStreamableCache<GltfContainerAsset, string> cache;
+            private readonly World world;
+
+            public ReleaseOnEntityDestroy(IStreamableCache<GltfContainerAsset, string> cache, World world)
+            {
+                this.cache = cache;
+                this.world = world;
+            }
+
+            public void Update(ref GltfContainerComponent component)
+            {
+                if (component.Promise.TryGetResult(world, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
+                    cache.Dereference(component.Source, result.Asset);
+
+                component.Promise.ForgetLoading(world);
+            }
         }
     }
 }
