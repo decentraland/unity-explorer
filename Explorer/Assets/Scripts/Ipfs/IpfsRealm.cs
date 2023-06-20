@@ -9,6 +9,7 @@ namespace Ipfs
     {
         public string CatalystBaseUrl { get; }
         public string ContentBaseUrl { get; }
+        public List<string> SceneUrns { get; }
 
         public UnityWebRequestAsyncOperation RequestActiveEntitiesByPointers(List<Vector2Int> pointers);
     }
@@ -18,21 +19,30 @@ namespace Ipfs
         // cache
         private readonly StringBuilder bodyBuilder = new ();
 
-        public IpfsRealm(string realmName)
+        public IpfsRealm(string realmName, IpfsTypes.ServerAbout serverAbout = null)
         {
             // TODO: realmName resolution, for now just accepts custom realm paths...
             CatalystBaseUrl = realmName;
-            ContentBaseUrl = CatalystBaseUrl + "content/";
-        }
 
-        public IpfsRealm(string catalystBaseUrl, string contentBaseUrl)
-        {
-            CatalystBaseUrl = catalystBaseUrl;
-            ContentBaseUrl = contentBaseUrl;
+            if (serverAbout != null)
+            {
+                SceneUrns = serverAbout.configurations.scenesUrn;
+                ContentBaseUrl = serverAbout.content.publicUrl;
+                entitiesActiveEndpoint = ContentBaseUrl + "entities/active";
+            }
+            else
+            {
+                ContentBaseUrl = CatalystBaseUrl + "content/contents/";
+                entitiesActiveEndpoint = CatalystBaseUrl + "content/entities/active";
+            }
         }
 
         public string CatalystBaseUrl { get; }
         public string ContentBaseUrl { get; }
+
+        private readonly string entitiesActiveEndpoint;
+
+        public List<string> SceneUrns { get; }
 
         public UnityWebRequestAsyncOperation RequestActiveEntitiesByPointers(List<Vector2Int> pointers)
         {
@@ -50,7 +60,7 @@ namespace Ipfs
 
             bodyBuilder.Append("]}");
 
-            var request = UnityWebRequest.Post(ContentBaseUrl + "entities/active", bodyBuilder.ToString(), "application/json");
+            var request = UnityWebRequest.Post(entitiesActiveEndpoint, bodyBuilder.ToString(), "application/json");
             return request.SendWebRequest();
         }
     }

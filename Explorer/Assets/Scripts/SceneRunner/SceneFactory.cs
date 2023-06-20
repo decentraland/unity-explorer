@@ -11,6 +11,7 @@ using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using Ipfs;
+using Newtonsoft.Json;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRuntime;
@@ -61,7 +62,7 @@ namespace SceneRunner
                 main = mainScenePath,
             };
 
-            var sceneData = new SceneData(new IpfsRealm(baseUrl, baseUrl), sceneDefinition, false);
+            var sceneData = new SceneData(new IpfsRealm(baseUrl), sceneDefinition, false);
 
             return await CreateScene(sceneData, ct);
         }
@@ -85,14 +86,33 @@ namespace SceneRunner
                 metadata = sceneMetadata,
             };
 
-            var sceneData = new SceneData(new IpfsRealm(fullPath, fullPath), sceneDefinition, false);
+            var sceneData = new SceneData(new IpfsRealm(fullPath), sceneDefinition, false);
 
             return await CreateScene(sceneData, ct);
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromSceneDefinition(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, CancellationToken ct)
         {
-            var sceneData = new SceneData(ipfsRealm, sceneDefinition, true);
+            string sceneJsonHash = null;
+
+            foreach (var contentDefinition in sceneDefinition.content)
+            {
+                if (contentDefinition.file != "scene.json") continue;
+
+                sceneJsonHash = contentDefinition.hash;
+                break;
+            }
+
+            if (sceneJsonHash == null)
+                throw new ArgumentException("scene.json no exists in the content");
+
+            string contentBaseUrl = sceneDefinition.urn.BaseUrl.Length > 0 ? sceneDefinition.urn.BaseUrl : ipfsRealm.ContentBaseUrl;
+
+            var content = await UnityWebRequest.Get(contentBaseUrl + sceneJsonHash).SendWebRequest();
+
+            JsonConvert.PopulateObject(content.downloadHandler.text, sceneDefinition.metadata);
+
+            var sceneData = new SceneData(ipfsRealm, sceneDefinition, true, contentBaseUrl);
 
             return await CreateScene(sceneData, ct);
         }

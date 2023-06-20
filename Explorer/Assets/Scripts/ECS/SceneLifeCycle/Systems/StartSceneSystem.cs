@@ -8,7 +8,9 @@ using ECS.SceneLifeCycle.Components;
 using Ipfs;
 using SceneRunner;
 using SceneRunner.Scene;
+using System;
 using System.Threading;
+using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -18,13 +20,13 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private readonly CancellationToken destroyCancellationToken;
 
-        private readonly IIpfsRealm ipfsRealm;
+        private readonly SceneLifeCycleState state;
         private readonly ISceneFactory sceneFactory;
 
-        public StartSceneSystem(World world, IIpfsRealm ipfsRealm, ISceneFactory sceneFactory, CancellationToken destroyCancellationToken) : base(world)
+        public StartSceneSystem(World world, SceneLifeCycleState state, ISceneFactory sceneFactory, CancellationToken destroyCancellationToken) : base(world)
         {
             this.sceneFactory = sceneFactory;
-            this.ipfsRealm = ipfsRealm;
+            this.state = state;
             this.destroyCancellationToken = destroyCancellationToken;
         }
 
@@ -36,7 +38,7 @@ namespace ECS.SceneLifeCycle.Systems
         private async UniTask InitializeSceneAndStart(IpfsTypes.SceneEntityDefinition sceneDefinition, CancellationToken ct)
         {
             // main thread
-            ISceneFacade sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(ipfsRealm, sceneDefinition, ct);
+            ISceneFacade sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(state.IpfsRealm, sceneDefinition, ct);
 
             ct.RegisterWithoutCaptureExecutionContext(() => sceneFacade?.DisposeAsync().Forget());
 

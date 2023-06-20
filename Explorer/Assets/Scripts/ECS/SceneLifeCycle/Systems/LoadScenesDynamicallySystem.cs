@@ -14,23 +14,21 @@ using Utility;
 namespace ECS.SceneLifeCycle.Systems
 {
     [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateAfter(typeof(LoadSceneMetadataSystem))]
     public partial class LoadScenesDynamicallySystem : BaseUnityLoopSystem
     {
-        private readonly IIpfsRealm ipfsRealm;
-
-        [CanBeNull] private readonly List<Vector2Int> staticParcelsToLoad;
-
-        internal readonly SceneLifeCycleState state;
-
         private readonly List<Vector2Int> parcelsToLoad = new ();
 
         // cache
         private readonly List<IpfsTypes.SceneEntityDefinition> retrievedScenes = new ();
 
-        public LoadScenesDynamicallySystem(World world, IIpfsRealm ipfsRealm, SceneLifeCycleState state, [CanBeNull] List<Vector2Int> staticParcelsToLoad = null) : base(world)
+        internal readonly SceneLifeCycleState state;
+
+        [CanBeNull] private readonly List<Vector2Int> staticParcelsToLoad;
+
+        public LoadScenesDynamicallySystem(World world, SceneLifeCycleState state, [CanBeNull] List<Vector2Int> staticParcelsToLoad = null) : base(world)
         {
             this.state = state;
-            this.ipfsRealm = ipfsRealm;
             this.staticParcelsToLoad = staticParcelsToLoad;
         }
 
@@ -38,14 +36,22 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float dt)
         {
-            // TODO: Drop web request on realm change
+            // we don't try to find parcels, if we don't have a realm set
+            if (state.IpfsRealm == null) return;
+
+            // we just process scenes dynamically when we don't have fixed scenes
+            if (state.IpfsRealm.SceneUrns is { Count: > 0 }) { return; }
+
+            // If we're changing realm on this frame, we drop the request if we have one...
+            if (state.NewRealm) { pointerRequest = null; }
+
             if (pointerRequest == null)
             {
                 // If we don't have a pointer request, we check the parcels in range, filter the parcels that are not loaded, and we create the request
                 Vector3 position = World.Get<TransformComponent>(state.PlayerEntity).Transform.position;
 
                 parcelsToLoad.Clear();
-                var parcelsInRange = staticParcelsToLoad ?? ParcelMathHelper.ParcelsInRange(position, state.SceneLoadRadius);
+                IReadOnlyList<Vector2Int> parcelsInRange = staticParcelsToLoad ?? ParcelMathHelper.ParcelsInRange(position, state.SceneLoadRadius);
 
                 for (var i = 0; i < parcelsInRange.Count; i++)
                 {
@@ -54,7 +60,7 @@ namespace ECS.SceneLifeCycle.Systems
                 }
 
                 if (parcelsToLoad.Count > 0)
-                    pointerRequest = ipfsRealm.RequestActiveEntitiesByPointers(parcelsToLoad);
+                    pointerRequest = state.IpfsRealm.RequestActiveEntitiesByPointers(parcelsToLoad);
             }
             else if (pointerRequest.isDone)
             {
@@ -65,6 +71,13 @@ namespace ECS.SceneLifeCycle.Systems
                 for (var i = 0; i < retrievedScenes.Count; i++)
                 {
                     IpfsTypes.SceneEntityDefinition scene = retrievedScenes[i];
+
+                    scene.urn = new IpfsTypes.IpfsPath()
+                    {
+                        Urn = "",
+                        BaseUrl = "",
+                        EntityId = scene.id,
+                    };
 
                     foreach (string encodedPointer in scene.pointers)
                     {

@@ -19,6 +19,8 @@ namespace ECS.SceneLifeCycle.Systems.Tests
             ContentBaseUrl = CatalystBaseUrl + "Content/";
         }
 
+        public List<string> SceneUrns { get; } = new ();
+
         public UnityWebRequestAsyncOperation RequestActiveEntitiesByPointers(List<Vector2Int> pointers)
         {
             var fullPath = $"{ContentBaseUrl}ActiveEntitiesByPointer.json";
@@ -41,10 +43,11 @@ namespace ECS.SceneLifeCycle.Systems.Tests
             Entity playerEntity = world.Create(new PlayerComponent());
             AddTransformToEntity(playerEntity);
 
-            system = new LoadScenesDynamicallySystem(world, ipfsRealm, new SceneLifeCycleState
+            system = new LoadScenesDynamicallySystem(world, new SceneLifeCycleState
             {
                 SceneLoadRadius = 2,
                 PlayerEntity = playerEntity,
+                IpfsRealm = ipfsRealm
             });
         }
 

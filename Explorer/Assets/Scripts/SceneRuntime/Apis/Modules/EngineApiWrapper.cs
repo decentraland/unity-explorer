@@ -19,6 +19,10 @@ namespace SceneRuntime.Apis.Modules
             this.instancePoolsProvider = instancePoolsProvider;
         }
 
+        // [    bytes    ]
+        // [first][second]
+        // [first]
+
         [UsedImplicitly]
         public ScriptableByteArray CrdtSendToRenderer(ITypedArray<byte> data)
         {

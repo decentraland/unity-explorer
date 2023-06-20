@@ -28,9 +28,10 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float t)
         {
-            // TODO: load realm-defined scenes to requirements (like Worlds)
-
             requiredScenes.Clear();
+
+            // the fixed scenes are always required
+            foreach (var definition in state.FixedScenes) { requiredScenes.Add(definition); }
 
             Vector3 position = World.Get<TransformComponent>(state.PlayerEntity).Transform.position;
 

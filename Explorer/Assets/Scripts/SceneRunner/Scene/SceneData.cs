@@ -15,13 +15,23 @@ namespace SceneRunner.Scene
 
         private readonly IpfsTypes.SceneEntityDefinition sceneDefinition;
 
+        private string customContentBaseUrl = null;
+
         private readonly bool supportHashes;
 
-        public SceneData(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, bool supportHashes)
+        private string GetContentBaseUrl()
+        {
+            if (customContentBaseUrl != null) { return customContentBaseUrl; }
+
+            return ipfsRealm.ContentBaseUrl;
+        }
+
+        public SceneData(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, bool supportHashes, string customContentBaseUrl = null)
         {
             this.ipfsRealm = ipfsRealm;
             this.sceneDefinition = sceneDefinition;
             this.supportHashes = supportHashes;
+            this.customContentBaseUrl = customContentBaseUrl;
 
             if (!supportHashes)
             {
@@ -33,9 +43,9 @@ namespace SceneRunner.Scene
 
             foreach (IpfsTypes.ContentDefinition contentDefinition in sceneDefinition.content) { fileToHash[contentDefinition.file] = contentDefinition.hash; }
 
-            BaseParcel = IpfsHelper.DecodePointer(sceneDefinition.metadata.scene.baseParcel);
-
             foreach (string parcel in sceneDefinition.metadata.scene.parcels) { parcels.Add(IpfsHelper.DecodePointer(parcel)); }
+
+            BaseParcel = IpfsHelper.DecodePointer(sceneDefinition.metadata.scene.baseParcel);
         }
 
         public string SceneName => sceneDefinition.id;
@@ -65,7 +75,7 @@ namespace SceneRunner.Scene
             {
                 if (fileToHash.TryGetValue(url, out string hash))
                 {
-                    result = ipfsRealm.ContentBaseUrl + "contents/" + hash;
+                    result = GetContentBaseUrl() + hash;
                     return true;
                 }
 
@@ -75,7 +85,7 @@ namespace SceneRunner.Scene
                 return false;
             }
 
-            result = ipfsRealm.ContentBaseUrl + url;
+            result = GetContentBaseUrl() + url;
             return true;
         }
 
