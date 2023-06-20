@@ -12,7 +12,7 @@ namespace SceneRunner.ECSWorld.Plugins
     {
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            VisibilitySystem.InjectToWorld(ref builder);
+            PrimitivesVisibilitySystem.InjectToWorld(ref builder);
             ResetDirtyFlagSystem<PBVisibilityComponent>.InjectToWorld(ref builder);
         }
     }

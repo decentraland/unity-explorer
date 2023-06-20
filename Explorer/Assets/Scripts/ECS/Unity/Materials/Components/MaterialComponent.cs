@@ -1,5 +1,5 @@
-using Arch.Core;
 using UnityEngine;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.Unity.Materials.Components
 {
@@ -25,17 +25,17 @@ namespace ECS.Unity.Materials.Components
         /// </summary>
         public Material Result;
 
-        public EntityReference AlbedoTexPromise;
-        public EntityReference EmissiveTexPromise;
-        public EntityReference AlphaTexPromise;
-        public EntityReference BumpTexPromise;
+        public Promise? AlbedoTexPromise;
+        public Promise? EmissiveTexPromise;
+        public Promise? AlphaTexPromise;
+        public Promise? BumpTexPromise;
 
         public MaterialComponent(MaterialData data)
         {
-            AlbedoTexPromise = EntityReference.Null;
-            EmissiveTexPromise = EntityReference.Null;
-            AlphaTexPromise = EntityReference.Null;
-            BumpTexPromise = EntityReference.Null;
+            AlbedoTexPromise = null;
+            EmissiveTexPromise = null;
+            AlphaTexPromise = null;
+            BumpTexPromise = null;
 
             Data = data;
             Status = LifeCycle.LoadingNotStarted;

@@ -38,19 +38,23 @@ namespace SceneRuntime.Apis.Modules
 
             // V8ScriptItem does not support zero length
             if (data.Length > 0)
+
+                // otherwise use the existing one
                 data.Read(0, data.Length, lastInput, 0);
 
-            // otherwise use the existing one
-            byte[] result = api.CrdtSendToRenderer(lastInput.AsMemory().Slice(0, intLength));
+            ArraySegment<byte> result = api.CrdtSendToRenderer(lastInput.AsMemory().Slice(0, intLength));
 
             Profiler.EndThreadProfiling();
 
-            return result.Length > 0 ? new ScriptableByteArray(result) : ScriptableByteArray.EMPTY;
+            return result.Count > 0 ? new ScriptableByteArray(result) : ScriptableByteArray.EMPTY;
         }
 
         [UsedImplicitly]
-        public byte[] CrdtGetState() =>
-            api.CrdtGetState();
+        public ScriptableByteArray CrdtGetState()
+        {
+            ArraySegment<byte> result = api.CrdtGetState();
+            return result.Count > 0 ? new ScriptableByteArray(result) : ScriptableByteArray.EMPTY;
+        }
 
         public void SetIsDisposing()
         {

@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
-using ECS.StreamableLoading.Components;
-using ECS.StreamableLoading.Components.Common;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Systems;
@@ -82,8 +83,8 @@ namespace ECS.Unity.Materials.Tests
             CreateAndFinalizeTexturePromise(ref component.AlbedoTexPromise);
             CreateAndFinalizeTexturePromise(ref component.AlphaTexPromise);
 
-            component.BumpTexPromise = world.Reference(world.Create());
-            component.EmissiveTexPromise = world.Reference(world.Create());
+            component.BumpTexPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention());
+            component.EmissiveTexPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention());
 
             Entity e = world.Create(component);
 
@@ -95,18 +96,18 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(afterUpdate.Result, Is.Null);
         }
 
-        private void CreateAndFinalizeTexturePromise(ref EntityReference entityReference)
+        private void CreateAndFinalizeTexturePromise(ref AssetPromise<Texture2D, GetTextureIntention>? promise)
         {
-            var result = new StreamableLoadingResult<Texture2D>(Texture2D.grayTexture);
-            Entity e = world.Create(result);
-            entityReference = world.Reference(e);
+            promise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention());
+            world.Add(promise.Value.Entity, new StreamableLoadingResult<Texture2D>(Texture2D.grayTexture));
         }
 
-        private void AssertTexturePromise(in EntityReference entityReference, string src)
+        private void AssertTexturePromise(in AssetPromise<Texture2D, GetTextureIntention>? promise, string src)
         {
-            Assert.AreNotEqual(EntityReference.Null, entityReference);
+            Assert.That(promise.HasValue, Is.True);
+            AssetPromise<Texture2D, GetTextureIntention> promiseValue = promise.Value;
 
-            Assert.That(world.TryGet(entityReference.Entity, out GetTextureIntention intention), Is.True);
+            Assert.That(world.TryGet(promiseValue.Entity, out GetTextureIntention intention), Is.True);
             Assert.That(intention.CommonArguments.URL, Is.EqualTo(src));
             Assert.That(intention.CommonArguments.Attempts, Is.EqualTo(ATTEMPTS_COUNT));
         }

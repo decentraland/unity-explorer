@@ -1,4 +1,4 @@
-using ECS.StreamableLoading.Components.Common;
+using ECS.StreamableLoading.Common.Components;
 using UnityEngine.Networking;
 
 namespace ECS.StreamableLoading

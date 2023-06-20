@@ -4,6 +4,7 @@ using CrdtEcsBridge.Components.Special;
 using ECS.Global.Systems;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Systems;
+using ECS.StreamableLoading.AssetBundles.Manifest;
 using ECS.Unity.Transforms.Components;
 using Ipfs;
 using JetBrains.Annotations;
@@ -12,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility.Multithreading;
 
 namespace Global
 {
@@ -41,15 +43,22 @@ namespace Global
             };
 
             LoadScenesDynamicallySystem.InjectToWorld(ref builder, ipfsRealm, state, staticLoadPositions);
-            LoadSceneSystem.InjectToWorld(ref builder, state);
+            ResolveScenesStateSystem.InjectToWorld(ref builder, state);
             StartSceneSystem.InjectToWorld(ref builder, ipfsRealm, sceneFactory, destroyCancellationSource.Token);
             DestroySceneSystem.InjectToWorld(ref builder);
+
+            // Asset Bundle Manifest
+            const string ASSET_BUNDLES_URL = "https://ab-cdn.decentraland.org/";
+
+            var assetBundlesManifestCache = new AssetBundlesManifestCache();
+            var mutex = new MutexSync();
+            PrepareAssetBundleManifestParametersSystem.InjectToWorld(ref builder, ASSET_BUNDLES_URL);
+            LoadAssetBundleManifestSystem.InjectToWorld(ref builder, assetBundlesManifestCache, ASSET_BUNDLES_URL, mutex);
 
             DebugCameraTransformToPlayerTransformSystem.InjectToWorld(ref builder, state.PlayerEntity, unityCamera);
 
             worldSystems = builder.Finish();
             worldSystems.Initialize();
-
         }
 
         public void Dispose()

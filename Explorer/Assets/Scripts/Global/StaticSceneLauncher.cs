@@ -24,12 +24,13 @@ namespace Global
         {
             sceneLauncher.Initialize(SceneSharedContainer, destroyCancellationToken);
         }
+
         public static SceneSharedContainer Install()
         {
             Profiler.BeginSample($"{nameof(DynamicSceneLoader)}.Install");
 
             var componentsContainer = ComponentsContainer.Create();
-            var sceneSharedContainer = SceneSharedContainer.Create(componentsContainer);
+            var sceneSharedContainer = SceneSharedContainer.Create(componentsContainer, null);
 
             Profiler.EndSample();
             return sceneSharedContainer;

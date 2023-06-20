@@ -12,16 +12,13 @@ using ECS.Unity.PrimitiveColliders.Components;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 
 namespace ECS.Unity.PrimitiveColliders.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     public partial class InstantiatePrimitiveColliderSystem : BaseUnityLoopSystem
     {
-        private const int LAYER_PHYSICS = (int)ColliderLayer.ClPhysics;
-        private const int LAYER_POINTER = (int)ColliderLayer.ClPointer;
-        private const int LAYER_PHYSICS_POINTER = LAYER_PHYSICS | LAYER_POINTER;
-
         private readonly IComponentPoolsRegistry poolsRegistry;
 
         private static readonly Dictionary<PBMeshCollider.MeshOneofCase, ISetupCollider> SETUP_COLLIDER_LOGIC = new ()
@@ -88,22 +85,14 @@ namespace ECS.Unity.PrimitiveColliders.Systems
 
         private bool SetColliderLayer(Collider collider, in PBMeshCollider sdkComponent)
         {
-            uint colliderLayer = sdkComponent.GetColliderLayer();
+            ColliderLayer colliderLayer = sdkComponent.GetColliderLayer();
 
             GameObject colliderGameObject = collider.gameObject;
 
-            var enabled = true;
+            bool enabled = PhysicsLayers.TryGetUnityLayerFromSDKLayer(colliderLayer, out int unityLayer);
 
-            if ((colliderLayer & LAYER_PHYSICS_POINTER) == LAYER_PHYSICS_POINTER)
-                colliderGameObject.layer = PhysicsLayers.DEFAULT_LAYER;
-            else if ((colliderLayer & LAYER_PHYSICS) == LAYER_PHYSICS)
-                colliderGameObject.layer = PhysicsLayers.CHARACTER_ONLY_LAYER;
-            else if ((colliderLayer & LAYER_POINTER) == LAYER_POINTER)
-                colliderGameObject.layer = PhysicsLayers.ON_POINTER_EVENT_LAYER;
-            else if (PhysicsLayers.LayerMaskHasAnySDKCustomLayer(colliderLayer))
-                colliderGameObject.layer = PhysicsLayers.SDK_CUSTOM_LAYER;
-            else
-                enabled = false;
+            if (enabled)
+                colliderGameObject.layer = unityLayer;
 
             collider.enabled = enabled;
             return enabled;
@@ -126,9 +115,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
             Transform colliderTransform = collider.transform;
 
             colliderTransform.SetParent(transformComponent.Transform, false);
-            colliderTransform.localPosition = Vector3.zero;
-            colliderTransform.localRotation = Quaternion.identity;
-            colliderTransform.localScale = Vector3.one;
+            colliderTransform.ResetLocalTRS();
 
             component.Collider = collider;
         }

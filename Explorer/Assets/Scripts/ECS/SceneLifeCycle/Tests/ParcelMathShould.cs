@@ -1,10 +1,9 @@
 using NUnit.Framework;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using Utility;
 
-namespace ECS.SceneLifeCycle.Systems.Tests
+namespace ECS.SceneLifeCycle.Tests
 {
     [TestFixture]
     public class ParcelMathShould
@@ -21,18 +20,18 @@ namespace ECS.SceneLifeCycle.Systems.Tests
 
                 var expectedParcels = new List<Vector2Int>
                 {
+                    new (-1, -2),
                     new (-1, -1),
                     new (-1, 0),
-                    new (-1, 1),
+                    new (0, -2),
                     new (0, -1),
                     new (0, 0),
-                    new (0, 1),
+                    new (1, -2),
                     new (1, -1),
                     new (1, 0),
-                    new (1, 1),
                 };
 
-                Assert.IsTrue(parcels.SequenceEqual(expectedParcels));
+                CollectionAssert.AreEquivalent(expectedParcels, parcels);
             }
 
             // Test from position 0
@@ -42,30 +41,30 @@ namespace ECS.SceneLifeCycle.Systems.Tests
 
                 var expectedParcels = new List<Vector2Int>
                 {
-                    new (98, 99),
-                    new (98, 100),
-                    new (98, 101),
-                    new (99, 98),
-                    new (99, 99),
-                    new (99, 100),
-                    new (99, 101),
-                    new (99, 102),
-                    new (100, 98),
-                    new (100, 99),
-                    new (100, 100),
-                    new (100, 101),
-                    new (100, 102),
-                    new (101, 98),
-                    new (101, 99),
-                    new (101, 100),
-                    new (101, 101),
-                    new (101, 102),
-                    new (102, 99),
-                    new (102, 100),
-                    new (102, 101),
+                    new (98, -102),
+                    new (98, -101),
+                    new (98, -100),
+                    new (99, -103),
+                    new (99, -102),
+                    new (99, -101),
+                    new (99, -100),
+                    new (99, -99),
+                    new (100, -103),
+                    new (100, -102),
+                    new (100, -101),
+                    new (100, -100),
+                    new (100, -99),
+                    new (101, -103),
+                    new (101, -102),
+                    new (101, -101),
+                    new (101, -100),
+                    new (101, -99),
+                    new (102, -102),
+                    new (102, -101),
+                    new (102, -100),
                 };
 
-                Assert.IsTrue(parcels.SequenceEqual(expectedParcels));
+                CollectionAssert.AreEquivalent(expectedParcels, parcels);
             }
         }
     }

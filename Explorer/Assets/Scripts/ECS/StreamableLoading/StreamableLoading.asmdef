@@ -4,11 +4,15 @@
     "references": [
         "ECS",
         "UniTask",
-        "Ipfs"
+        "Ipfs",
+        "AssetManagement",
+        "Utility",
+        "SceneRunner.Scene",
+        "Unity.Collections"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
-    "allowUnsafeCode": false,
+    "allowUnsafeCode": true,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,

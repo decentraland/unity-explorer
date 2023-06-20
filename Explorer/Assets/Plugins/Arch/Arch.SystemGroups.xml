@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <doc>
     <assembly>
-        <name>Arch.SystemGroups</name>
+        <name>Arch.SystemGroups.NoUnity</name>
     </assembly>
     <members>
         <member name="T:Arch.SystemGroups.ArchSystemsSorter">
@@ -21,90 +21,172 @@
         </member>
         <member name="T:Arch.SystemGroups.ArchSystemsWorldBuilder`1">
             <summary>
-            The builder of systems attached to the Unity Player Loop
+                The builder of systems attached to the Unity Player Loop
             </summary>
             <typeparam name="T"></typeparam>
         </member>
         <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilder`1.#ctor(`0)">
             <summary>
-            Create a systems builder for the given world
+                Create a systems builder for the given world
             </summary>
             <param name="world">ECS World (Normally "Arch.Core.World")</param>
         </member>
         <member name="P:Arch.SystemGroups.ArchSystemsWorldBuilder`1.World">
             <summary>
-            Current World
+                Current World
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilder`1.TryCreateGroup``1(System.Type,System.Action{System.Collections.Generic.Dictionary{System.Type,System.Collections.Generic.List{System.Type}}})">
             <summary>
-            Creates Groups Automatically
+                Creates Groups Automatically
             </summary>
         </member>
-        <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilder`1.AddToGroup(Arch.System.ISystem{System.Single},System.Type,System.Type,System.Action{System.Collections.Generic.Dictionary{System.Type,System.Collections.Generic.List{System.Type}}})">
+        <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilder`1.TryRegisterGroup``1(System.Type,System.Action{System.Collections.Generic.Dictionary{System.Type,System.Collections.Generic.List{System.Type}}})">
             <summary>
-            Used by auto-generated code
+                Registers a group that is not created automatically
+            </summary>
+        </member>
+        <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilder`1.AddToGroup(Arch.System.ISystem{System.Single},System.Type,System.Type,System.Action{System.Collections.Generic.Dictionary{System.Type,System.Collections.Generic.List{System.Type}}},System.Boolean)">
+            <summary>
+                Used by auto-generated code
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilder`1.Finish">
             <summary>
-            Finalize the builder and create a systems world
+                Finalize the builder and create a systems world
             </summary>
             <returns></returns>
         </member>
-        <member name="T:Arch.SystemGroups.CustomGroup`1">
+        <member name="T:Arch.SystemGroups.ArchSystemsWorldBuilderExtensions">
             <summary>
-            Similar to `Arch.System.Group` but with better API that allows pooling
+            Publicly available extensions for the ArchSystemsWorldBuilder
+            </summary>
+        </member>
+        <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilderExtensions.InjectCustomGroup``2(Arch.SystemGroups.ArchSystemsWorldBuilder{``0}@,``1)">
+            <summary>
+            Inject a custom group into the world. It allows to create a group with custom parameters.
+            </summary>
+        </member>
+        <member name="T:Arch.SystemGroups.CustomGroupBase`1">
+            <summary>
+            The base class that can be used to provide custom behaviour for a group
             </summary>
             <typeparam name="T"></typeparam>
         </member>
-        <member name="M:Arch.SystemGroups.CustomGroup`1.#ctor">
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.#ctor">
             <summary>
-            Creates an empty group, for auto-generated code only,
-            Don't invoke it manually
+            Creates an empty group
             </summary>
         </member>
-        <member name="M:Arch.SystemGroups.CustomGroup`1.#ctor(System.Collections.Generic.IEnumerable{Arch.System.ISystem{`0}})">
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.#ctor(System.Collections.Generic.IEnumerable{Arch.System.ISystem{`0}})">
             <summary>
             Creates a group from the collection from which a pooled instance of the list will be created
             </summary>
             <param name="systems"></param>
         </member>
-        <member name="M:Arch.SystemGroups.CustomGroup`1.#ctor(System.Collections.Generic.List{Arch.System.ISystem{`0}})">
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.#ctor(System.Collections.Generic.List{Arch.System.ISystem{`0}})">
             <summary>
             Creates a group from the list that won't be copied
             </summary>
             <param name="systems"></param>
         </member>
-        <member name="M:Arch.SystemGroups.CustomGroup`1.AddRange(System.Collections.Generic.IEnumerable{Arch.System.ISystem{`0}})">
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.AddRange(System.Collections.Generic.IEnumerable{Arch.System.ISystem{`0}})">
             <summary>
             Adds systems to the group
             </summary>
             <param name="systems"></param>
         </member>
-        <member name="M:Arch.SystemGroups.CustomGroup`1.Initialize">
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.InitializeInternal">
             <summary>
             Initialize all systems in the group
             </summary>
         </member>
-        <member name="M:Arch.SystemGroups.CustomGroup`1.Dispose">
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.DisposeInternal">
             <summary>
             Dispose all systems in the group
             </summary>
         </member>
-        <member name="M:Arch.SystemGroups.CustomGroup`1.BeforeUpdate(`0@)">
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.BeforeUpdateInternal(`0@)">
+            <summary>
+            Update all systems
+            </summary>
+            <param name="t">Delta time</param>
+        </member>
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.UpdateInternal(`0@)">
+            <summary>
+            Update all systems
+            </summary>
+            <param name="t">Delta time</param>
+        </member>
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.AfterUpdateInternal(`0@)">
+            <summary>
+            Update all systems
+            </summary>
+            <param name="t">Delta time</param>
+        </member>
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.Dispose">
+            <summary>
+            Override to provide Dispose behaviour, you can use <see cref="M:Arch.SystemGroups.CustomGroupBase`1.DisposeInternal"/> as the default implementation
+            </summary>
+        </member>
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.Initialize">
+            <summary>
+            Override to provide initialization behaviour, you can use <see cref="M:Arch.SystemGroups.CustomGroupBase`1.InitializeInternal"/> as the default implementation
+            </summary>
+        </member>
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.BeforeUpdate(`0@)">
+            <summary>
+            Override to provide BeforeUpdate, you can use <see cref="M:Arch.SystemGroups.CustomGroupBase`1.BeforeUpdateInternal(`0@)"/> as the default implementation
+            </summary>
+            <param name="t"></param>
+        </member>
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.Update(`0@)">
+            <summary>
+            Override to provide Update behaviour, you can use <see cref="M:Arch.SystemGroups.CustomGroupBase`1.UpdateInternal(`0@)"/> as the default implementation
+            </summary>
+            <param name="t"></param>
+        </member>
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.AfterUpdate(`0@)">
+            <summary>
+            Override to provide AfterUpdate behaviour, you can use <see cref="M:Arch.SystemGroups.CustomGroupBase`1.AfterUpdateInternal(`0@)"/> as the default implementation
+            </summary>
+            <param name="t"></param>
+        </member>
+        <member name="T:Arch.SystemGroups.DefaultGroup`1">
+            <summary>
+            Similar to `Arch.System.Group` but with better API that allows pooling
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="M:Arch.SystemGroups.DefaultGroup`1.#ctor">
+            <summary>
+            Creates an empty group, for auto-generated code only,
+            Don't invoke it manually
+            </summary>
+        </member>
+        <member name="M:Arch.SystemGroups.DefaultGroup`1.Initialize">
+            <summary>
+            Initialize all systems in the group
+            </summary>
+        </member>
+        <member name="M:Arch.SystemGroups.DefaultGroup`1.Dispose">
+            <summary>
+            Dispose all systems in the group
+            </summary>
+        </member>
+        <member name="M:Arch.SystemGroups.DefaultGroup`1.BeforeUpdate(`0@)">
             <summary>
             To comply with Arch.System.ISystem
             </summary>
             <param name="t">Delta time</param>
         </member>
-        <member name="M:Arch.SystemGroups.CustomGroup`1.Update(`0@)">
+        <member name="M:Arch.SystemGroups.DefaultGroup`1.Update(`0@)">
             <summary>
             To comply with Arch.System.ISystem
             </summary>
             <param name="t">Delta time</param>
         </member>
-        <member name="M:Arch.SystemGroups.CustomGroup`1.AfterUpdate(`0@)">
+        <member name="M:Arch.SystemGroups.DefaultGroup`1.AfterUpdate(`0@)">
             <summary>
             To comply with Arch.System.ISystem
             </summary>
@@ -139,6 +221,12 @@
         <member name="T:Arch.SystemGroups.DefaultSystemGroups.SimulationSystemGroup">
             <summary>
             Updates at the end of the Update phase of the player loop
+            </summary>
+        </member>
+        <member name="T:Arch.SystemGroups.GroupNotFoundException">
+            <summary>
+            Indicates that the group was not injected into the builder
+            but there are systems included in it.
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.IUnityPlayerLoopHelper">
@@ -254,7 +342,7 @@
         </member>
         <member name="T:Arch.SystemGroups.UpdateBeforeAttribute">
             <summary>
-            Apply to a system to specify an update ordering constraint with another system in the same <see cref="T:Arch.SystemGroups.SystemGroup"/> or <see cref="T:Arch.SystemGroups.CustomGroup`1"/>.
+            Apply to a system to specify an update ordering constraint with another system in the same <see cref="T:Arch.SystemGroups.SystemGroup"/> or <see cref="T:Arch.SystemGroups.DefaultGroup`1"/>.
             </summary>
             <remarks>Updating before or after a system constrains the scheduler ordering of these systems within a ComponentSystemGroup.
             Both the before and after systems must be a members of the same ComponentSystemGroup.</remarks>
@@ -264,7 +352,7 @@
             Specify a system which the tagged system must update before.
             </summary>
             <param name="systemType">The target system which the tagged system must update before. This system must be
-            a member of the same <see cref="T:Arch.SystemGroups.SystemGroup"/> or <see cref="T:Arch.SystemGroups.CustomGroup`1"/>.</param>
+            a member of the same <see cref="T:Arch.SystemGroups.SystemGroup"/> or <see cref="T:Arch.SystemGroups.DefaultGroup`1"/>.</param>
             <exception cref="T:System.ArgumentNullException">Thrown if the system type is empty.</exception>
         </member>
         <member name="P:Arch.SystemGroups.UpdateBeforeAttribute.SystemType">
@@ -274,7 +362,7 @@
         </member>
         <member name="T:Arch.SystemGroups.UpdateAfterAttribute">
             <summary>
-            Apply to a system to specify an update ordering constraint with another system in the same <see cref="T:Arch.SystemGroups.SystemGroup"/> or <see cref="T:Arch.SystemGroups.CustomGroup`1"/>.
+            Apply to a system to specify an update ordering constraint with another system in the same <see cref="T:Arch.SystemGroups.SystemGroup"/> or <see cref="T:Arch.SystemGroups.DefaultGroup`1"/>.
             </summary>
             <remarks>Updating before or after a system constrains the scheduler ordering of these systems within a ComponentSystemGroup.
             Both the before and after systems must be a members of the same ComponentSystemGroup.</remarks>
@@ -284,12 +372,17 @@
             Specify a system which the tagged system must update after.
             </summary>
             <param name="systemType">The target system which the tagged system must update after. This system must be
-            a member of the same <see cref="T:Arch.SystemGroups.SystemGroup"/> or <see cref="T:Arch.SystemGroups.CustomGroup`1"/>.</param>
+            a member of the same <see cref="T:Arch.SystemGroups.SystemGroup"/> or <see cref="T:Arch.SystemGroups.DefaultGroup`1"/>.</param>
             <exception cref="T:System.ArgumentNullException">Thrown if the system type is empty.</exception>
         </member>
         <member name="P:Arch.SystemGroups.UpdateAfterAttribute.SystemType">
             <summary>
             The type of the target system, which the tagged system must update after.
+            </summary>
+        </member>
+        <member name="T:Arch.SystemGroups.UnityBridge.Time">
+            <summary>
+            Can't call Unity API without Unity running
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.UpdateInGroupAttribute">
