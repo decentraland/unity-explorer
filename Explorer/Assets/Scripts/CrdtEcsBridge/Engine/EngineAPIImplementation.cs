@@ -3,6 +3,7 @@ using CRDT.Protocol;
 using CRDT.Protocol.Factory;
 using CRDT.Serializer;
 using CrdtEcsBridge.OutgoingMessages;
+using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using SceneRuntime.Apis.Modules;
 using System;
@@ -26,6 +27,7 @@ namespace CrdtEcsBridge.Engine
         private readonly ICRDTSerializer crdtSerializer;
         private readonly ICRDTWorldSynchronizer crdtWorldSynchronizer;
         private readonly IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider;
+        private readonly ISystemGroupsUpdateGate systemGroupsUpdateGate;
         private readonly MutexSync mutexSync;
 
         private byte[] lastSerializationBuffer;
@@ -46,6 +48,7 @@ namespace CrdtEcsBridge.Engine
             ICRDTSerializer crdtSerializer,
             ICRDTWorldSynchronizer crdtWorldSynchronizer,
             IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider,
+            ISystemGroupsUpdateGate systemGroupsUpdateGate,
             MutexSync mutexSync)
         {
             sharedPoolsProvider = poolsProvider;
@@ -56,6 +59,7 @@ namespace CrdtEcsBridge.Engine
             this.crdtWorldSynchronizer = crdtWorldSynchronizer;
             this.outgoingCrtdMessagesProvider = outgoingCrtdMessagesProvider;
             this.mutexSync = mutexSync;
+            this.systemGroupsUpdateGate = systemGroupsUpdateGate;
 
             deserializeBatchSampler = CustomSampler.Create("DeserializeBatch");
             worldSyncBufferSampler = CustomSampler.Create("WorldSyncBuffer");
@@ -141,6 +145,10 @@ namespace CrdtEcsBridge.Engine
             // Apply changes to the ECS World on the main thread
             crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncBuffer);
             applyBufferSampler.End();
+
+            // Allow system for which throttling is enabled to process once
+            // If the scene is updated more frequently than Unity Loop the gate will be effectively open all the time
+            systemGroupsUpdateGate.Open();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -221,6 +229,7 @@ namespace CrdtEcsBridge.Engine
         public void Dispose()
         {
             ReleaseSerializationBuffer();
+            systemGroupsUpdateGate.Dispose();
         }
     }
 }

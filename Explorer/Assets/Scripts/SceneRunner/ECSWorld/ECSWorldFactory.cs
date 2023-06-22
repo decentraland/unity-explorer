@@ -1,5 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using CrdtEcsBridge.UpdateGate;
 using ECS.ComponentsPooling;
 using ECS.ComponentsPooling.Systems;
 using ECS.Groups;
@@ -21,7 +22,7 @@ namespace SceneRunner.ECSWorld
             singletonDependencies = sharedDependencies;
         }
 
-        public ECSWorldFacade CreateWorld(in ECSWorldInstanceSharedDependencies sharedDependencies)
+        public ECSWorldFacade CreateWorld(in ECSWorldInstanceSharedDependencies sharedDependencies, in ISystemGroupsUpdateGate systemGroupsUpdateGate)
         {
             // Worlds uses Pooled Collections under the hood so the memory impact is minimized
             var world = World.Create();
@@ -29,7 +30,7 @@ namespace SceneRunner.ECSWorld
             IComponentPoolsRegistry componentPoolsRegistry = singletonDependencies.ComponentPoolsRegistry;
 
             // Create all systems and add them to the world
-            var builder = new ArchSystemsWorldBuilder<World>(world);
+            var builder = new ArchSystemsWorldBuilder<World>(world, systemGroupsUpdateGate, systemGroupsUpdateGate);
 
             builder
                .InjectCustomGroup(new SyncedInitializationSystemGroup(sharedDependencies.MutexSync))

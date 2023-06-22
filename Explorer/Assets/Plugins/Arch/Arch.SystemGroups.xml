@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <doc>
     <assembly>
-        <name>Arch.SystemGroups.NoUnity</name>
+        <name>Arch.SystemGroups</name>
     </assembly>
     <members>
         <member name="T:Arch.SystemGroups.ArchSystemsSorter">
@@ -25,28 +25,30 @@
             </summary>
             <typeparam name="T"></typeparam>
         </member>
-        <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilder`1.#ctor(`0)">
+        <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilder`1.#ctor(`0,Arch.SystemGroups.Throttling.IFixedUpdateBasedSystemGroupThrottler,Arch.SystemGroups.Throttling.IUpdateBasedSystemGroupThrottler)">
             <summary>
                 Create a systems builder for the given world
             </summary>
             <param name="world">ECS World (Normally "Arch.Core.World")</param>
+            <param name="fixedUpdateBasedSystemGroupThrottler">Throttler for all Fixed Update based Systems</param>
+            <param name="updateBasedSystemGroupThrottler">Throttler for all Update based Systems</param>
         </member>
         <member name="P:Arch.SystemGroups.ArchSystemsWorldBuilder`1.World">
             <summary>
                 Current World
             </summary>
         </member>
-        <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilder`1.TryCreateGroup``1(System.Type,System.Action{System.Collections.Generic.Dictionary{System.Type,System.Collections.Generic.List{System.Type}}})">
+        <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilder`1.TryCreateGroup``1(System.Type,System.Action{System.Collections.Generic.Dictionary{System.Type,System.Collections.Generic.List{System.Type}}},System.Boolean)">
             <summary>
                 Creates Groups Automatically
             </summary>
         </member>
-        <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilder`1.TryRegisterGroup``1(System.Type,System.Action{System.Collections.Generic.Dictionary{System.Type,System.Collections.Generic.List{System.Type}}})">
+        <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilder`1.TryRegisterGroup``1(System.Type,System.Action{System.Collections.Generic.Dictionary{System.Type,System.Collections.Generic.List{System.Type}}},System.Boolean)">
             <summary>
                 Registers a group that is not created automatically
             </summary>
         </member>
-        <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilder`1.AddToGroup(Arch.System.ISystem{System.Single},System.Type,System.Type,System.Action{System.Collections.Generic.Dictionary{System.Type,System.Collections.Generic.List{System.Type}}},System.Boolean)">
+        <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilder`1.AddToGroup(Arch.System.ISystem{System.Single},System.Type,System.Type,System.Action{System.Collections.Generic.Dictionary{System.Type,System.Collections.Generic.List{System.Type}}},System.Boolean,System.Boolean)">
             <summary>
                 Used by auto-generated code
             </summary>
@@ -69,88 +71,89 @@
         </member>
         <member name="T:Arch.SystemGroups.CustomGroupBase`1">
             <summary>
-            The base class that can be used to provide custom behaviour for a group
+                The base class that can be used to provide custom behaviour for a group
             </summary>
             <typeparam name="T"></typeparam>
         </member>
         <member name="M:Arch.SystemGroups.CustomGroupBase`1.#ctor">
             <summary>
-            Creates an empty group
+                Creates an empty group
             </summary>
         </member>
-        <member name="M:Arch.SystemGroups.CustomGroupBase`1.#ctor(System.Collections.Generic.IEnumerable{Arch.System.ISystem{`0}})">
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.#ctor(System.Collections.Generic.IEnumerable{Arch.System.ISystem{`0}},System.Boolean)">
             <summary>
-            Creates a group from the collection from which a pooled instance of the list will be created
+                Creates a group from the collection from which a pooled instance of the list will be created
             </summary>
-            <param name="systems"></param>
         </member>
-        <member name="M:Arch.SystemGroups.CustomGroupBase`1.#ctor(System.Collections.Generic.List{Arch.System.ISystem{`0}})">
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.Dispose">
             <summary>
-            Creates a group from the list that won't be copied
+                Override to provide Dispose behaviour, you can use <see cref="M:Arch.SystemGroups.CustomGroupBase`1.DisposeInternal" /> as the default implementation
             </summary>
-            <param name="systems"></param>
         </member>
-        <member name="M:Arch.SystemGroups.CustomGroupBase`1.AddRange(System.Collections.Generic.IEnumerable{Arch.System.ISystem{`0}})">
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.Initialize">
             <summary>
-            Adds systems to the group
+                Override to provide initialization behaviour, you can use <see cref="M:Arch.SystemGroups.CustomGroupBase`1.InitializeInternal" /> as the default
+                implementation
+            </summary>
+        </member>
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.BeforeUpdate(`0@,System.Boolean)">
+            <summary>
+                Override to provide BeforeUpdate, you can use <see cref="M:Arch.SystemGroups.CustomGroupBase`1.BeforeUpdateInternal(`0@,System.Boolean)" /> as the default implementation
+            </summary>
+            <param name="t"></param>
+            <param name="throttle">Indicates that the current invocation is throttled</param>
+        </member>
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.Update(`0@,System.Boolean)">
+            <summary>
+                Override to provide Update behaviour, you can use <see cref="M:Arch.SystemGroups.CustomGroupBase`1.UpdateInternal(`0@,System.Boolean)" /> as the default implementation
+            </summary>
+            <param name="t"></param>
+            <param name="throttle">Indicates that the current invocation is throttled</param>
+        </member>
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.AfterUpdate(`0@,System.Boolean)">
+            <summary>
+                Override to provide AfterUpdate behaviour, you can use <see cref="M:Arch.SystemGroups.CustomGroupBase`1.AfterUpdateInternal(`0@,System.Boolean)" /> as the default
+                implementation
+            </summary>
+            <param name="throttle">Indicates that the current invocation is throttled</param>
+            <param name="t"></param>
+        </member>
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.AddRange(System.Collections.Generic.IEnumerable{Arch.SystemGroups.ExecutionNode{`0}})">
+            <summary>
+                Adds systems to the group
             </summary>
             <param name="systems"></param>
         </member>
         <member name="M:Arch.SystemGroups.CustomGroupBase`1.InitializeInternal">
             <summary>
-            Initialize all systems in the group
+                Initialize all systems in the group
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.CustomGroupBase`1.DisposeInternal">
             <summary>
-            Dispose all systems in the group
+                Dispose all systems in the group
             </summary>
         </member>
-        <member name="M:Arch.SystemGroups.CustomGroupBase`1.BeforeUpdateInternal(`0@)">
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.BeforeUpdateInternal(`0@,System.Boolean)">
             <summary>
-            Update all systems
+                Update all systems
             </summary>
             <param name="t">Delta time</param>
+            <param name="throttle">Current update is throttled</param>
         </member>
-        <member name="M:Arch.SystemGroups.CustomGroupBase`1.UpdateInternal(`0@)">
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.UpdateInternal(`0@,System.Boolean)">
             <summary>
-            Update all systems
+                Update all systems
             </summary>
             <param name="t">Delta time</param>
+            <param name="throttle">Current update is throttled</param>
         </member>
-        <member name="M:Arch.SystemGroups.CustomGroupBase`1.AfterUpdateInternal(`0@)">
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.AfterUpdateInternal(`0@,System.Boolean)">
             <summary>
-            Update all systems
+                Update all systems
             </summary>
             <param name="t">Delta time</param>
-        </member>
-        <member name="M:Arch.SystemGroups.CustomGroupBase`1.Dispose">
-            <summary>
-            Override to provide Dispose behaviour, you can use <see cref="M:Arch.SystemGroups.CustomGroupBase`1.DisposeInternal"/> as the default implementation
-            </summary>
-        </member>
-        <member name="M:Arch.SystemGroups.CustomGroupBase`1.Initialize">
-            <summary>
-            Override to provide initialization behaviour, you can use <see cref="M:Arch.SystemGroups.CustomGroupBase`1.InitializeInternal"/> as the default implementation
-            </summary>
-        </member>
-        <member name="M:Arch.SystemGroups.CustomGroupBase`1.BeforeUpdate(`0@)">
-            <summary>
-            Override to provide BeforeUpdate, you can use <see cref="M:Arch.SystemGroups.CustomGroupBase`1.BeforeUpdateInternal(`0@)"/> as the default implementation
-            </summary>
-            <param name="t"></param>
-        </member>
-        <member name="M:Arch.SystemGroups.CustomGroupBase`1.Update(`0@)">
-            <summary>
-            Override to provide Update behaviour, you can use <see cref="M:Arch.SystemGroups.CustomGroupBase`1.UpdateInternal(`0@)"/> as the default implementation
-            </summary>
-            <param name="t"></param>
-        </member>
-        <member name="M:Arch.SystemGroups.CustomGroupBase`1.AfterUpdate(`0@)">
-            <summary>
-            Override to provide AfterUpdate behaviour, you can use <see cref="M:Arch.SystemGroups.CustomGroupBase`1.AfterUpdateInternal(`0@)"/> as the default implementation
-            </summary>
-            <param name="t"></param>
+            <param name="throttle">Current update is throttled</param>
         </member>
         <member name="T:Arch.SystemGroups.DefaultGroup`1">
             <summary>
@@ -174,23 +177,20 @@
             Dispose all systems in the group
             </summary>
         </member>
-        <member name="M:Arch.SystemGroups.DefaultGroup`1.BeforeUpdate(`0@)">
+        <member name="M:Arch.SystemGroups.DefaultGroup`1.BeforeUpdate(`0@,System.Boolean)">
             <summary>
             To comply with Arch.System.ISystem
             </summary>
-            <param name="t">Delta time</param>
         </member>
-        <member name="M:Arch.SystemGroups.DefaultGroup`1.Update(`0@)">
+        <member name="M:Arch.SystemGroups.DefaultGroup`1.Update(`0@,System.Boolean)">
             <summary>
             To comply with Arch.System.ISystem
             </summary>
-            <param name="t">Delta time</param>
         </member>
-        <member name="M:Arch.SystemGroups.DefaultGroup`1.AfterUpdate(`0@)">
+        <member name="M:Arch.SystemGroups.DefaultGroup`1.AfterUpdate(`0@,System.Boolean)">
             <summary>
             To comply with Arch.System.ISystem
             </summary>
-            <param name="t">Delta time</param>
         </member>
         <member name="T:Arch.SystemGroups.DefaultSystemGroups.InitializationSystemGroup">
             <summary>
@@ -223,10 +223,31 @@
             Updates at the end of the Update phase of the player loop
             </summary>
         </member>
+        <member name="T:Arch.SystemGroups.DefaultSystemGroups.SystemGroupsUtils">
+            <summary>
+                System Groups Utility Functions
+            </summary>
+        </member>
+        <member name="F:Arch.SystemGroups.DefaultSystemGroups.SystemGroupsUtils.Count">
+            <summary>
+                The number of defined system groups:
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.InitializationSystemGroup" />
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PhysicsSystemGroup" />
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PresentationSystemGroup" />
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.SimulationSystemGroup" />
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PostPhysicsSystemGroup" />
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroustemGroups.PostRenderingSystemGroup" />
+            </summary>
+        </member>
         <member name="T:Arch.SystemGroups.GroupNotFoundException">
             <summary>
-            Indicates that the group was not injected into the builder
-            but there are systems included in it.
+                Indicates that the group was not injected into the builder
+                but there are systems included in it.
+            </summary>
+        </member>
+        <member name="P:Arch.SystemGroups.GroupNotFoundException.Message">
+            <summary>
+                <inheritdoc cref="P:System.Exception.Message" />
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.IUnityPlayerLoopHelper">
@@ -380,9 +401,69 @@
             The type of the target system, which the tagged system must update after.
             </summary>
         </member>
-        <member name="T:Arch.SystemGroups.UnityBridge.Time">
+        <member name="T:Arch.SystemGroups.Throttling.ISystemGroupThrottler">
             <summary>
-            Can't call Unity API without Unity running
+                Provides a way to throttle systems in the root system group, reused for different system groups
+            </summary>
+        </member>
+        <member name="M:Arch.SystemGroups.Throttling.ISystemGroupThrottler.ShouldThrottle(System.Type,Arch.SystemGroups.UnityBridge.TimeProvider.Info@)">
+            <summary>
+                Called when the system group begins to update within the Unity Player Loop
+            </summary>
+            <param name="systemGroupType">Type of the system group</param>
+            <param name="timeInfo">Information about time</param>
+        </member>
+        <member name="M:Arch.SystemGroups.Throttling.ISystemGroupThrottler.OnSystemGroupUpdateFinished(System.Type,System.Boolean)">
+            <summary>
+                Called when the whole system group finishes its update, irrespective of whether it was throttled or not
+            </summary>
+            <param name="systemGroupType">Type of the system group</param>
+            <param name="wasThrottled">The execution was throttled</param>
+        </member>
+        <member name="T:Arch.SystemGroups.Throttling.IUpdateBasedSystemGroupThrottler">
+            <summary>
+                Throttler dedicated to the system groups based on non-fixed updates
+            </summary>
+        </member>
+        <member name="T:Arch.SystemGroups.Throttling.IFixedUpdateBasedSystemGroupThrottler">
+            <summary>
+                Throttler dedicated to the system groups based on fixed updates
+            </summary>
+        </member>
+        <member name="T:Arch.SystemGroups.Throttling.ThrottlingEnabledAttribute">
+            <summary>
+                Indicates that the system or the group can throttle
+                <para>If the group is marked by this attribute all its direct and transitive children will inherit it</para>
+            </summary>
+        </member>
+        <member name="T:Arch.SystemGroups.UnityBridge.TimeProvider">
+            <summary>
+                Can't call Unity API without Unity running
+            </summary>
+        </member>
+        <member name="T:Arch.SystemGroups.UnityBridge.TimeProvider.Info">
+            <summary>
+            Information about time, contains Fixed Time for Physics Systems Groups and Time for the rest
+            </summary>
+        </member>
+        <member name="F:Arch.SystemGroups.UnityBridge.TimeProvider.Info.DeltaTime">
+            <summary>
+            <see cref="P:UnityEngine.Time.deltaTime"/> or <see cref="P:UnityEngine.Time.fixedDeltaTime"/>
+            </summary>
+        </member>
+        <member name="F:Arch.SystemGroups.UnityBridge.TimeProvider.Info.CurrentUnscaledTime">
+            <summary>
+            <see cref="P:UnityEngine.Time.unscaledDeltaTime"/> or <see cref="P:UnityEngine.Time.fixedUnscaledDeltaTime"/>
+            </summary>
+        </member>
+        <member name="F:Arch.SystemGroups.UnityBridge.TimeProvider.Info.CurrentScaledTime">
+            <summary>
+            <see cref="P:UnityEngine.Time.time"/> or <see cref="P:UnityEngine.Time.fixedTime"/>
+            </summary>
+        </member>
+        <member name="F:Arch.SystemGroups.UnityBridge.TimeProvider.Info.Realtime">
+            <summary>
+            <see cref="P:UnityEngine.Time.realtimeSinceStartup"/>
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.UpdateInGroupAttribute">
