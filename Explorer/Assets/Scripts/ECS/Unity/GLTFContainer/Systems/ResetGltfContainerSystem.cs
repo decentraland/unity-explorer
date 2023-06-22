@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.StreamableLoading.Cache;
@@ -17,6 +18,7 @@ namespace ECS.Unity.GLTFContainer.Systems
     /// </summary>
     [UpdateInGroup(typeof(GltfContainerGroup))]
     [UpdateBefore(typeof(LoadGltfContainerSystem))]
+    [ThrottlingEnabled]
     public partial class ResetGltfContainerSystem : BaseUnityLoopSystem
     {
         private readonly IStreamableCache<GltfContainerAsset, string> cache;

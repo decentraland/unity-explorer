@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -12,6 +13,7 @@ namespace ECS.Unity.Visibility.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [UpdateAfter(typeof(InstantiatePrimitiveRenderingSystem))]
+    [ThrottlingEnabled]
     public partial class PrimitivesVisibilitySystem : BaseUnityLoopSystem
     {
         public PrimitivesVisibilitySystem(World world) : base(world) { }

@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -11,6 +12,7 @@ namespace ECS.LifeCycle.Systems
     /// </summary>
     [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
     [UpdateAfter(typeof(CleanUpGroup))]
+    [ThrottlingEnabled]
     public partial class DestroyEntitiesSystem : BaseUnityLoopSystem
     {
         private readonly QueryDescription query = new QueryDescription().WithAll<DeleteEntityIntention>();

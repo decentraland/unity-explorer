@@ -1,25 +1,24 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Components.Defaults;
-using ECS.Unity.Transforms.Components;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Assertions;
-using Utility;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.Unity.GLTFContainer.Asset.Components.GltfContainerAsset, ECS.Unity.GLTFContainer.Asset.Components.GetGltfContainerAssetIntention>;
 
 namespace ECS.Unity.GLTFContainer.Systems
 {
     /// <summary>
-    ///     Resolves the state of Gltf Container Loading.
+    ///     Starts GltfContainerAsset loading initially or upon the SDK Component change
     /// </summary>
     [UpdateInGroup(typeof(GltfContainerGroup))]
+    [ThrottlingEnabled]
     public partial class LoadGltfContainerSystem : BaseUnityLoopSystem
     {
         internal LoadGltfContainerSystem(World world) : base(world) { }
@@ -33,7 +32,6 @@ namespace ECS.Unity.GLTFContainer.Systems
         {
             StartLoadingQuery(World);
             ReconfigureGltfContainerQuery(World);
-            FinalizeLoadingQuery(World);
         }
 
         [Query]
@@ -51,33 +49,6 @@ namespace ECS.Unity.GLTFContainer.Systems
             var component = new GltfContainerComponent(sdkComponent.GetVisibleMeshesCollisionMask(), sdkComponent.GetInvisibleMeshesCollisionMask(), promise);
             component.State.Set(LoadingState.Loading);
             World.Add(entity, component);
-        }
-
-        [Query]
-        [All(typeof(PBGltfContainer))]
-        private void FinalizeLoading(ref GltfContainerComponent component, ref TransformComponent transformComponent)
-        {
-            // Try consume removes the entity if the loading is finished
-            if (component.State == LoadingState.Loading
-                && component.Promise.TryConsume(World, out StreamableLoadingResult<GltfContainerAsset> result))
-            {
-                // TODO error reporting
-                if (!result.Succeeded)
-                {
-                    component.State.Set(LoadingState.FinishedWithError);
-                    Debug.LogException(result.Exception);
-                    return;
-                }
-
-                SetupColliders(ref component, result.Asset);
-
-                // Reparent to the current transform
-                result.Asset.Root.transform.SetParent(transformComponent.Transform);
-                result.Asset.Root.transform.ResetLocalTRS();
-                result.Asset.Root.SetActive(true);
-
-                component.State.Set(LoadingState.Finished);
-            }
         }
 
         // SDK Component was changed
@@ -111,7 +82,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                         if (visibleCollisionMask != component.VisibleMeshesCollisionMask)
                         {
                             component.VisibleMeshesCollisionMask = visibleCollisionMask;
-                            SetupVisibleColliders(ref component, result.Asset);
+                            ConfigureGltfContainerColliders.SetupVisibleColliders(ref component, result.Asset);
                         }
 
                         ColliderLayer invisibleCollisionMask = sdkComponent.GetInvisibleMeshesCollisionMask();
@@ -119,7 +90,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                         if (invisibleCollisionMask != component.InvisibleMeshesCollisionMask)
                         {
                             component.InvisibleMeshesCollisionMask = invisibleCollisionMask;
-                            SetupInvisibleColliders(ref component, result.Asset);
+                            ConfigureGltfContainerColliders.SetupInvisibleColliders(ref component, result.Asset);
                         }
 
                         return;
