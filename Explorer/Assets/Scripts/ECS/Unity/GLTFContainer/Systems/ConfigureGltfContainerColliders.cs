@@ -7,15 +7,15 @@ using UnityEngine;
 
 namespace ECS.Unity.GLTFContainer.Systems
 {
-    public partial class LoadGltfContainerSystem
+    internal static class ConfigureGltfContainerColliders
     {
-        private void SetupColliders(ref GltfContainerComponent component, GltfContainerAsset asset)
+        internal static void SetupColliders(ref GltfContainerComponent component, GltfContainerAsset asset)
         {
             SetupVisibleColliders(ref component, asset);
             SetupInvisibleColliders(ref component, asset);
         }
 
-        private void SetupInvisibleColliders(ref GltfContainerComponent component, GltfContainerAsset asset)
+        internal static void SetupInvisibleColliders(ref GltfContainerComponent component, GltfContainerAsset asset)
         {
             // Invisible colliders are contained in the asset by default (not instantiation on demand needed)
             if (component.InvisibleMeshesCollisionMask != ColliderLayer.ClNone)
@@ -24,7 +24,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                 DisableColliders(asset.InvisibleColliders);
         }
 
-        private void SetupVisibleColliders(ref GltfContainerComponent component, GltfContainerAsset asset)
+        internal static void SetupVisibleColliders(ref GltfContainerComponent component, GltfContainerAsset asset)
         {
             if (component.VisibleMeshesCollisionMask != ColliderLayer.ClNone)
             {
@@ -35,7 +35,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                 DisableColliders(asset.VisibleMeshesColliders);
         }
 
-        private void EnableColliders(IReadOnlyList<Collider> colliders, ColliderLayer colliderLayer)
+        private static void EnableColliders(IReadOnlyList<Collider> colliders, ColliderLayer colliderLayer)
         {
             bool hasUnityLayer = PhysicsLayers.TryGetUnityLayerFromSDKLayer(colliderLayer, out int unityLayer);
 
@@ -50,13 +50,13 @@ namespace ECS.Unity.GLTFContainer.Systems
             }
         }
 
-        private void DisableColliders(IReadOnlyList<Collider> colliders)
+        private static void DisableColliders(IReadOnlyList<Collider> colliders)
         {
             for (var i = 0; i < colliders.Count; i++)
                 colliders[i].enabled = false;
         }
 
-        private void TryInstantiateVisibleMeshesColliders(GltfContainerAsset asset)
+        private static void TryInstantiateVisibleMeshesColliders(GltfContainerAsset asset)
         {
             // They can't change
             if (asset.VisibleMeshesColliders != null)

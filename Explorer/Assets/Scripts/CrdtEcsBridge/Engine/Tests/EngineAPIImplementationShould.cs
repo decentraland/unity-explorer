@@ -4,6 +4,7 @@ using CRDT.Protocol;
 using CRDT.Protocol.Factory;
 using CRDT.Serializer;
 using CrdtEcsBridge.OutgoingMessages;
+using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using NSubstitute;
 using NUnit.Framework;
@@ -77,6 +78,7 @@ namespace CrdtEcsBridge.Engine.Tests
                 crdtSerializer = new CRDTSerializer(),
                 crdtWorldSynchronizer = Substitute.For<ICRDTWorldSynchronizer>(),
                 outgoingCrtdMessagesProvider = Substitute.For<IOutgoingCRTDMessagesProvider>(),
+                Substitute.For<ISystemGroupsUpdateGate>(),
                 new MutexSync()
             );
 

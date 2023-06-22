@@ -11,11 +11,12 @@ using UnityEngine.Rendering;
 namespace ECS.Unity.Materials.Systems
 {
     [UpdateInGroup(typeof(MaterialLoadingGroup))]
+    [UpdateAfter(typeof(StartMaterialsLoadingSystem))]
     public partial class CreateBasicMaterialSystem : CreateMaterialSystemBase
     {
         public const string MATERIAL_PATH = "BasicShapeMaterial";
 
-        internal CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool, int attemptsCount) : base(world, materialsPool, attemptsCount) { }
+        internal CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool) : base(world, materialsPool) { }
 
         protected override void Update(float t)
         {
@@ -28,21 +29,8 @@ namespace ECS.Unity.Materials.Systems
             if (materialComponent.Data.IsPbrMaterial)
                 return;
 
-            switch (materialComponent.Status)
-            {
-                case MaterialComponent.LifeCycle.LoadingNotStarted:
-                    StartTexturesLoading(ref materialComponent);
-                    break;
-                case MaterialComponent.LifeCycle.LoadingInProgress:
-                    ConstructMaterial(ref materialComponent);
-                    break;
-            }
-        }
-
-        private void StartTexturesLoading(ref MaterialComponent materialComponent)
-        {
-            TryCreateGetTexturePromise(in materialComponent.Data.AlbedoTexture, ref materialComponent.AlbedoTexPromise);
-            materialComponent.Status = MaterialComponent.LifeCycle.LoadingInProgress;
+            if (materialComponent.Status == MaterialComponent.LifeCycle.LoadingInProgress)
+                ConstructMaterial(ref materialComponent);
         }
 
         private void ConstructMaterial(ref MaterialComponent materialComponent)
@@ -61,8 +49,6 @@ namespace ECS.Unity.Materials.Systems
                 TrySetTexture(materialComponent.Result, ref albedoResult, ShaderUtils.BaseMap);
 
                 DestroyEntityReference(ref materialComponent.AlbedoTexPromise);
-
-                // SRPBatchingHelper.OptimizeMaterial(mat);
             }
         }
 

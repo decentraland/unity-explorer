@@ -9,6 +9,7 @@ using CrdtEcsBridge.ComponentWriter;
 using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
+using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using Ipfs;
@@ -111,11 +112,12 @@ namespace SceneRunner
             var crdtMemoryAllocator = CRDTPooledMemoryAllocator.Create();
             var crdtDeserializer = new CRDTDeserializer(crdtMemoryAllocator);
             var ecsToCrdtWriter = new ECSToCRDTWriter(crdtProtocol, outgoingCrtdMessagesProvider, sdkComponentsRegistry, crdtMemoryAllocator);
+            var systemGroupThrottler = new SystemGroupsUpdateGate();
 
             /* Pass dependencies here if they are needed by the systems */
             var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, ecsToCrdtWriter, entitiesMap, ecsMutexSync);
 
-            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(in instanceDependencies);
+            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(in instanceDependencies, systemGroupThrottler);
             ecsWorldFacade.Initialize();
 
             // Create an instance of Scene Runtime on the thread pool
@@ -131,6 +133,7 @@ namespace SceneRunner
                 crdtSerializer,
                 crdtWorldSynchronizer,
                 outgoingCrtdMessagesProvider,
+                systemGroupThrottler,
                 ecsMutexSync);
 
             sceneRuntime.RegisterEngineApi(engineAPI);

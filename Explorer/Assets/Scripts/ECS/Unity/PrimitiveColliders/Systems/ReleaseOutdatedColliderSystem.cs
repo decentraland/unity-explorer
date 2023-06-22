@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.ComponentsPooling;
@@ -15,6 +16,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
     /// </summary>
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateBefore(typeof(ComponentInstantiationGroup))]
+    [ThrottlingEnabled]
     public partial class ReleaseOutdatedColliderSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPoolsRegistry poolsRegistry;
