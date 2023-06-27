@@ -34,11 +34,9 @@ namespace ECS.Unity.GLTFContainer.Systems
             if (component.State == LoadingState.Loading
                 && component.Promise.TryConsume(World, out StreamableLoadingResult<GltfContainerAsset> result))
             {
-                // TODO error reporting
                 if (!result.Succeeded)
                 {
                     component.State.Set(LoadingState.FinishedWithError);
-                    Debug.LogException(result.Exception);
                     return;
                 }
 

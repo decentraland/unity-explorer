@@ -1,6 +1,7 @@
 using System;
 using System.Buffers;
 using UnityEngine.Pool;
+using Utility.Pool;
 using Utility.ThreadSafePool;
 
 namespace CRDT.Memory
@@ -46,7 +47,7 @@ namespace CRDT.Memory
         }
 
         private static readonly ThreadSafeObjectPool<CRDTPooledMemoryAllocator> POOL = new (
-            () => new CRDTPooledMemoryAllocator());
+            () => new CRDTPooledMemoryAllocator(), defaultCapacity: PoolConstants.SCENES_COUNT);
 
         // Introduce a pool of memory owners to prevent allocations per message
         private readonly IObjectPool<MemoryOwner> memoryOwnerPool;

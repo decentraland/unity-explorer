@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using Diagnostics.ReportsHandling;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
@@ -12,6 +13,7 @@ using Utility.Multithreading;
 namespace ECS.StreamableLoading.Textures
 {
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
+    [LogCategory(ReportCategory.TEXTURES)]
     public partial class LoadTextureSystem : LoadSystemBase<Texture2D, GetTextureIntention>
     {
         internal LoadTextureSystem(World world, IStreamableCache<Texture2D, GetTextureIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync) { }

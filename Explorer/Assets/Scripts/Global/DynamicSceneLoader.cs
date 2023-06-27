@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using Diagnostics.ReportsHandling;
 using SceneRunner.ECSWorld.Plugins;
 using SceneRunner.Scene;
 using System.Collections.Generic;
@@ -16,10 +17,9 @@ namespace Global
     public class DynamicSceneLoader : MonoBehaviour
     {
         [SerializeField] private Camera camera;
-
         [SerializeField] private Vector2Int StartPosition;
-
         [SerializeField] private int SceneLoadRadius = 4;
+        [SerializeField] private ReportsHandlingSettings reportsHandlingSettings;
 
         // If it's 0, it will load every parcel in the range
         [SerializeField] private List<Vector2Int> StaticLoadPositions;
@@ -48,7 +48,7 @@ namespace Global
             AssetBundle manifestAssetBundle = DownloadHandlerAssetBundle.GetContent(wr);
             AssetBundleManifest assetBundleManifest = manifestAssetBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
 
-            SceneSharedContainer = Install(assetBundleManifest);
+            SceneSharedContainer = Install(assetBundleManifest, reportsHandlingSettings);
 
             Vector3 cameraPosition = ParcelMathHelper.GetPositionByParcelPosition(StartPosition);
             cameraPosition.y += 8.0f;
@@ -62,12 +62,12 @@ namespace Global
             globalWorld.Initialize(SceneSharedContainer.SceneFactory, camera, SceneLoadRadius, staticLoadPositions);
         }
 
-        public static SceneSharedContainer Install(AssetBundleManifest localManifest)
+        public static SceneSharedContainer Install(AssetBundleManifest localManifest, IReportsHandlingSettings reportsHandlingSettings)
         {
             Profiler.BeginSample($"{nameof(DynamicSceneLoader)}.Install");
 
             var componentsContainer = ComponentsContainer.Create();
-            var sceneSharedContainer = SceneSharedContainer.Create(componentsContainer, localManifest);
+            var sceneSharedContainer = SceneSharedContainer.Create(componentsContainer, localManifest, reportsHandlingSettings);
 
             Profiler.EndSample();
             return sceneSharedContainer;

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <doc>
     <assembly>
-        <name>Arch.SystemGroups</name>
+        <name>Arch.SystemGroups.NoUnity</name>
     </assembly>
     <members>
         <member name="T:Arch.SystemGroups.ArchSystemsSorter">
@@ -25,13 +25,14 @@
             </summary>
             <typeparam name="T"></typeparam>
         </member>
-        <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilder`1.#ctor(`0,Arch.SystemGroups.Throttling.IFixedUpdateBasedSystemGroupThrottler,Arch.SystemGroups.Throttling.IUpdateBasedSystemGroupThrottler)">
+        <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilder`1.#ctor(`0,Arch.SystemGroups.Throttling.IFixedUpdateBasedSystemGroupThrottler,Arch.SystemGroups.Throttling.IUpdateBasedSystemGroupThrottler,Arch.SystemGroups.ISystemGroupExceptionHandler)">
             <summary>
                 Create a systems builder for the given world
             </summary>
             <param name="world">ECS World (Normally "Arch.Core.World")</param>
             <param name="fixedUpdateBasedSystemGroupThrottler">Throttler for all Fixed Update based Systems</param>
             <param name="updateBasedSystemGroupThrottler">Throttler for all Update based Systems</param>
+            <param name="exceptionHandler">Exception handler</param>
         </member>
         <member name="P:Arch.SystemGroups.ArchSystemsWorldBuilder`1.World">
             <summary>
@@ -67,6 +68,53 @@
         <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilderExtensions.InjectCustomGroup``2(Arch.SystemGroups.ArchSystemsWorldBuilder{``0}@,``1)">
             <summary>
             Inject a custom group into the world. It allows to create a group with custom parameters.
+            </summary>
+        </member>
+        <member name="T:Arch.SystemGroups.DefaultSystemGroups.InitializationSystemGroup">
+            <summary>
+            Updates at the end of the Initialization phase of the player loop
+            </summary>
+        </member>
+        <member name="T:Arch.SystemGroups.DefaultSystemGroups.PhysicsSystemGroup">
+            <summary>
+            Updates at the beginning of the FixedUpdate phase of the player loop
+            before all fixed updates
+            </summary>
+        </member>
+        <member name="T:Arch.SystemGroups.DefaultSystemGroups.PostPhysicsSystemGroup">
+            <summary>
+                Updates at the end of the FixedUpdate phase of the player loop
+            </summary>
+        </member>
+        <member name="T:Arch.SystemGroups.DefaultSystemGroups.PostRenderingSystemGroup">
+            <summary>
+            Updates at the end of the PostLateUpdate phase of the player loop.
+            </summary>
+        </member>
+        <member name="T:Arch.SystemGroups.DefaultSystemGroups.PresentationSystemGroup">
+            <summary>
+            Updates at the end of the PreLateUpdate phase of the player loop.
+            </summary>
+        </member>
+        <member name="T:Arch.SystemGroups.DefaultSystemGroups.SimulationSystemGroup">
+            <summary>
+            Updates at the end of the Update phase of the player loop
+            </summary>
+        </member>
+        <member name="T:Arch.SystemGroups.DefaultSystemGroups.SystemGroupsUtils">
+            <summary>
+                System Groups Utility Functions
+            </summary>
+        </member>
+        <member name="F:Arch.SystemGroups.DefaultSystemGroups.SystemGroupsUtils.Count">
+            <summary>
+                The number of defined system groups:
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.InitializationSystemGroup" />
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PhysicsSystemGroup" />
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PresentationSystemGroup" />
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.SimulationSystemGroup" />
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PostPhysicsSystemGroup" />
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PostRenderingSystemGroup" />
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.CustomGroupBase`1">
@@ -155,6 +203,12 @@
             <param name="t">Delta time</param>
             <param name="throttle">Current update is throttled</param>
         </member>
+        <member name="M:Arch.SystemGroups.CustomGroupBase`1.GetMetadataInternal">
+            <summary>
+               The metadata of the group in an abstract form
+            </summary>
+            <returns></returns>
+        </member>
         <member name="T:Arch.SystemGroups.DefaultGroup`1">
             <summary>
             Similar to `Arch.System.Group` but with better API that allows pooling
@@ -192,53 +246,6 @@
             To comply with Arch.System.ISystem
             </summary>
         </member>
-        <member name="T:Arch.SystemGroups.DefaultSystemGroups.InitializationSystemGroup">
-            <summary>
-            Updates at the end of the Initialization phase of the player loop
-            </summary>
-        </member>
-        <member name="T:Arch.SystemGroups.DefaultSystemGroups.PhysicsSystemGroup">
-            <summary>
-            Updates at the beginning of the FixedUpdate phase of the player loop
-            before all fixed updates
-            </summary>
-        </member>
-        <member name="T:Arch.SystemGroups.DefaultSystemGroups.PostPhysicsSystemGroup">
-            <summary>
-            Updates at the end of the FixedUpdate phase of the player loop
-            </summary>
-        </member>
-        <member name="T:Arch.SystemGroups.DefaultSystemGroups.PostRenderingSystemGroup">
-            <summary>
-            Updates at the end of the PostLateUpdate phase of the player loop.
-            </summary>
-        </member>
-        <member name="T:Arch.SystemGroups.DefaultSystemGroups.PresentationSystemGroup">
-            <summary>
-            Updates at the end of the PreLateUpdate phase of the player loop.
-            </summary>
-        </member>
-        <member name="T:Arch.SystemGroups.DefaultSystemGroups.SimulationSystemGroup">
-            <summary>
-            Updates at the end of the Update phase of the player loop
-            </summary>
-        </member>
-        <member name="T:Arch.SystemGroups.DefaultSystemGroups.SystemGroupsUtils">
-            <summary>
-                System Groups Utility Functions
-            </summary>
-        </member>
-        <member name="F:Arch.SystemGroups.DefaultSystemGroups.SystemGroupsUtils.Count">
-            <summary>
-                The number of defined system groups:
-                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.InitializationSystemGroup" />
-                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PhysicsSystemGroup" />
-                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PresentationSystemGroup" />
-                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.SimulationSystemGroup" />
-                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PostPhysicsSystemGroup" />
-                <see cref="T:Arch.SystemGroups.DefaultSystemGroustemGroups.PostRenderingSystemGroup" />
-            </summary>
-        </member>
         <member name="T:Arch.SystemGroups.GroupNotFoundException">
             <summary>
                 Indicates that the group was not injected into the builder
@@ -248,6 +255,74 @@
         <member name="P:Arch.SystemGroups.GroupNotFoundException.Message">
             <summary>
                 <inheritdoc cref="P:System.Exception.Message" />
+            </summary>
+        </member>
+        <member name="T:Arch.SystemGroups.ISystemGroupExceptionHandler">
+            <summary>
+                Provides exceptions handling on the level of the <see cref="T:Arch.SystemGroups.SystemGroup" />
+            </summary>
+        </member>
+        <member name="F:Arch.SystemGroups.ISystemGroupExceptionHandler.Action.Continue">
+            <summary>
+                Continue execution of the system
+            </summary>
+        </member>
+        <member name="F:Arch.SystemGroups.ISystemGroupExceptionHandler.Action.Suspend">
+            <summary>
+                Put the system group into the Error state and stops the execution
+            </summary>
+        </member>
+        <member name="F:Arch.SystemGroups.ISystemGroupExceptionHandler.Action.Dispose">
+            <summary>
+                Dispose the system group and stops the execution
+            </summary>
+        </member>
+        <member name="M:Arch.SystemGroups.ISystemGroupExceptionHandler.Handle(System.Exception,System.Type)">
+            <summary>
+                Handles the exception thrown by the system group, at some point the execution of the system group
+                should be suspended to prevent exceptions flood
+            </summary>
+            <param name="exception">Exception</param>
+            <param name="systemGroupType">System Group Type</param>
+            <returns>An action to tell the System Group how to behave after <paramref name="exception" /></returns>
+        </member>
+        <member name="T:Arch.SystemGroups.Metadata.AttributesInfoBase">
+            <summary>
+                Generated attributes info, allows to avoid reflection if such access is needed
+            </summary>
+        </member>
+        <member name="P:Arch.SystemGroups.Metadata.AttributesInfoBase.UpdateInGroup">
+            <summary>
+                <see cref="T:Arch.SystemGroups.UpdateInGroupAttribute" /> reflection, will be null for system groups
+            </summary>
+        </member>
+        <member name="P:Arch.SystemGroups.Metadata.AttributesInfoBase.GroupMetadata">
+            <summary>
+                Metadata of the group this system belongs to, will be null for system groups
+            </summary>
+        </member>
+        <member name="M:Arch.SystemGroups.Metadata.AttributesInfoBase.GetAttribute``1">
+            <summary>
+                Get first attribute of type <typeparamref name="T" />
+            </summary>
+            <typeparam name="T">Type of attribute</typeparam>
+            <returns>Null if such attribute is not defined for the class</returns>
+        </member>
+        <member name="M:Arch.SystemGroups.Metadata.AttributesInfoBase.GetAttributes``1">
+            <summary>
+                Get all attributes of type <typeparamref name="T" />
+            </summary>
+            <typeparam name="T">Type of attribute</typeparam>
+            <returns>An empty list if no attributes are found</returns>
+        </member>
+        <member name="T:Arch.SystemGroups.Metadata.DefaultGroupAttributesInfo">
+            <summary>
+            Contains information about UpdateInGroup and GroupMetadata only
+            </summary>
+        </member>
+        <member name="T:Arch.SystemGroups.Metadata.SystemGroupAttributesInfo">
+            <summary>
+            Dummy attributes info for system groups
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.IUnityPlayerLoopHelper">
@@ -332,17 +407,49 @@
             Remove the system group from the player loop
             </summary>
         </member>
+        <member name="T:Arch.SystemGroups.PlayerLoopSystem`1">
+            <summary>
+                The base system for all systems that are executed in the player loop
+            </summary>
+            <typeparam name="TWorld"></typeparam>
+        </member>
+        <member name="M:Arch.SystemGroups.PlayerLoopSystem`1.GetMetadataInternal">
+            <summary>
+               The metadata of the system in an abstract form
+            </summary>
+            <returns></returns>
+        </member>
         <member name="T:Arch.SystemGroups.SystemGroup">
             <summary>
-            Denotes a root group connected to a specific phase of the player loop.
-            By default updated by the scaled deltaTime.
-            If Unscaled delta time is needed consider using Time.unscaledXXX manually.
+                Denotes a root group connected to a specific phase of the player loop.
+                By default updated by the scaled deltaTime.
+                If Unscaled delta time is needed consider using Time.unscaledXXX manually.
+            </summary>
+        </member>
+        <member name="F:Arch.SystemGroups.SystemGroup.State.NotInitialized">
+            <summary>
+                Initialized was not called yet
+            </summary>
+        </member>
+        <member name="F:Arch.SystemGroups.SystemGroup.State.Active">
+            <summary>
+                Up and Running
+            </summary>
+        </member>
+        <member name="F:Arch.SystemGroups.SystemGroup.State.Suspended">
+            <summary>
+                The execution of update functions is suspended but the group is not disposed
+            </summary>
+        </member>
+        <member name="F:Arch.SystemGroups.SystemGroup.State.Disposed">
+            <summary>
+                Disposed was executed
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.SystemGroup.Dispose">
             <summary>
-            Dispose all systems and release the list allocated for them.
-            After the dispose is called the instance of the group is no longer usable.
+                Dispose all systems and release the list allocated for them.
+                After the dispose is called the instance of the group is no longer usable.
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.SystemGroupWorld">

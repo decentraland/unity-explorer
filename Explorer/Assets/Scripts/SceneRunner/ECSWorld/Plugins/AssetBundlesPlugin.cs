@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using Diagnostics.ReportsHandling;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AssetBundles.Manifest;
@@ -19,12 +20,14 @@ namespace SceneRunner.ECSWorld.Plugins
 
         private readonly AssetBundlesManifestCache assetBundlesManifestCache;
         private readonly AssetBundleManifest localAssetBundleManifest;
+        private readonly IReportsHandlingSettings reportsHandlingSettings;
 
         private readonly AssetBundleCache assetBundleCache;
 
-        public AssetBundlesPlugin(AssetBundleManifest localAssetBundleManifest)
+        public AssetBundlesPlugin(AssetBundleManifest localAssetBundleManifest, IReportsHandlingSettings reportsHandlingSettings)
         {
             this.localAssetBundleManifest = localAssetBundleManifest;
+            this.reportsHandlingSettings = reportsHandlingSettings;
             assetBundleCache = new AssetBundleCache();
         }
 
@@ -32,6 +35,7 @@ namespace SceneRunner.ECSWorld.Plugins
         {
             // Asset Bundles
             PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, STREAMING_ASSETS_URL);
+            ReportAssetBundleErrorSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // TODO create a runtime ref-counting cache
             LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, localAssetBundleManifest, sharedDependencies.MutexSync);

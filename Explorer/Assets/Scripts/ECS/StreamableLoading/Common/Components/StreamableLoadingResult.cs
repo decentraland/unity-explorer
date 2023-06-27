@@ -7,7 +7,6 @@ namespace ECS.StreamableLoading.Common.Components
     /// </summary>
     public readonly struct StreamableLoadingResult<T>
     {
-        // TODO Error reporting
         public readonly Exception Exception;
         public readonly bool Succeeded;
         public readonly T Asset;

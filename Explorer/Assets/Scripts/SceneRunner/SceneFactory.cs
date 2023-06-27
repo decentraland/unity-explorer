@@ -15,6 +15,7 @@ using Cysharp.Threading.Tasks;
 using Ipfs;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
+using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
 using SceneRuntime.Factory;
 using System;
@@ -113,9 +114,11 @@ namespace SceneRunner
             var crdtDeserializer = new CRDTDeserializer(crdtMemoryAllocator);
             var ecsToCrdtWriter = new ECSToCRDTWriter(crdtProtocol, outgoingCrtdMessagesProvider, sdkComponentsRegistry, crdtMemoryAllocator);
             var systemGroupThrottler = new SystemGroupsUpdateGate();
+            var sceneStateProvider = new SceneStateProvider();
+            var exceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider);
 
             /* Pass dependencies here if they are needed by the systems */
-            var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, ecsToCrdtWriter, entitiesMap, ecsMutexSync);
+            var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, ecsToCrdtWriter, entitiesMap, exceptionsHandler, ecsMutexSync);
 
             ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(in instanceDependencies, systemGroupThrottler);
             ecsWorldFacade.Initialize();
@@ -134,6 +137,7 @@ namespace SceneRunner
                 crdtWorldSynchronizer,
                 outgoingCrtdMessagesProvider,
                 systemGroupThrottler,
+                exceptionsHandler,
                 ecsMutexSync);
 
             sceneRuntime.RegisterEngineApi(engineAPI);
@@ -145,7 +149,9 @@ namespace SceneRunner
                 outgoingCrtdMessagesProvider,
                 crdtWorldSynchronizer,
                 instancePoolsProvider,
-                crdtMemoryAllocator);
+                crdtMemoryAllocator,
+                exceptionsHandler,
+                sceneStateProvider);
         }
     }
 }

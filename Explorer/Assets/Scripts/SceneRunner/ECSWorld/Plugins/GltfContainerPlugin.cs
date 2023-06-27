@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
+using Diagnostics.ReportsHandling;
 using ECS.ComponentsPooling;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
@@ -16,11 +17,13 @@ namespace SceneRunner.ECSWorld.Plugins
     {
         private readonly GltfContainerAssetsCache assetsCache;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly IReportsHandlingSettings reportsHandlingSettings;
         private readonly GltfContainerInstantiationThrottler throttler;
 
         public GltfContainerPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies)
         {
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
+            reportsHandlingSettings = singletonSharedDependencies.ReportsHandlingSettings;
             assetsCache = new GltfContainerAssetsCache(1000);
             throttler = new GltfContainerInstantiationThrottler(20);
         }
@@ -31,6 +34,7 @@ namespace SceneRunner.ECSWorld.Plugins
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);
             CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, throttler);
+            ReportGltfErrorsSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // GLTF Container
             LoadGltfContainerSystem.InjectToWorld(ref builder);

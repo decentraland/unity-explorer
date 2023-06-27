@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
+using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis;
 using SceneRuntime.Apis.Modules;
 using System.Collections.Generic;
@@ -65,7 +66,7 @@ namespace SceneRuntime
 
         public void RegisterEngineApi(IEngineApi api)
         {
-            engine.AddHostObject("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider));
+            engine.AddHostObject("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, new RethrowSceneExceptionsHandler()));
         }
 
         public void SetIsDisposing()

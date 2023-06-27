@@ -2,8 +2,10 @@
 using Arch.System;
 using Arch.SystemGroups;
 using AssetManagement;
+using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Common.Systems;
 using SceneRunner.Scene;
 using System;
 using Utility;
@@ -15,6 +17,7 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     [UpdateBefore(typeof(LoadAssetBundleSystem))]
+    [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class PrepareAssetBundleLoadingParametersSystem : BaseUnityLoopSystem
     {
         private readonly ISceneData sceneData;
@@ -45,10 +48,11 @@ namespace ECS.StreamableLoading.AssetBundles
             {
                 if (!sceneData.TryGetHash(assetBundleIntention.Name, out assetBundleIntention.Hash))
                 {
-                    // TODO Errors reporting
                     // Add the failure to the entity
-                    World.Add(entity, new StreamableLoadingResult<AssetBundleData>
-                        (new ArgumentException($"Asset Bundle {assetBundleIntention.Name} not found in the content")));
+                    var exception = new ArgumentException($"Asset Bundle {assetBundleIntention.Name} not found in the content");
+                    World.Add(entity, new StreamableLoadingResult<AssetBundleData>(exception));
+
+                    ReportStreamableLoadingErrorSystem<GetAssetBundleIntention, AssetBundleData>.ReportException(GetReportCategory(), exception);
 
                     return;
                 }

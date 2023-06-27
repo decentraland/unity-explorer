@@ -1,6 +1,5 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using ECS.Abstract;
 using ECS.StreamableLoading.AssetBundles.Manifest;
 using ECS.Unity.Transforms.Components;
@@ -15,7 +14,7 @@ using ManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Sc
 
 namespace ECS.SceneLifeCycle.Systems
 {
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(SceneLifeCycleGroup))]
     public partial class LoadScenesDynamicallySystem : BaseUnityLoopSystem
     {
         private readonly IIpfsRealm ipfsRealm;

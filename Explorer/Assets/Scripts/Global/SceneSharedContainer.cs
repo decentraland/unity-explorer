@@ -1,6 +1,7 @@
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Engine;
+using Diagnostics.ReportsHandling;
 using SceneRunner;
 using SceneRunner.ECSWorld;
 using SceneRunner.ECSWorld.Plugins;
@@ -17,9 +18,10 @@ namespace Global
     {
         public ISceneFactory SceneFactory { get; internal init; }
 
-        public static SceneSharedContainer Create(in ComponentsContainer componentsContainer, AssetBundleManifest localAssetBundleManifest)
+        public static SceneSharedContainer Create(in ComponentsContainer componentsContainer, AssetBundleManifest localAssetBundleManifest,
+            IReportsHandlingSettings reportsHandlingSettings)
         {
-            var sharedDependencies = new ECSWorldSingletonSharedDependencies(componentsContainer.ComponentPoolsRegistry);
+            var sharedDependencies = new ECSWorldSingletonSharedDependencies(componentsContainer.ComponentPoolsRegistry, reportsHandlingSettings);
 
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 new TransformsPlugin(sharedDependencies),
@@ -28,7 +30,7 @@ namespace Global
                 new TexturesLoadingPlugin(),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
-                new AssetBundlesPlugin(localAssetBundleManifest),
+                new AssetBundlesPlugin(localAssetBundleManifest, reportsHandlingSettings),
                 new GltfContainerPlugin(sharedDependencies));
 
             return new SceneSharedContainer

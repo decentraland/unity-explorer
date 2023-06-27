@@ -30,7 +30,8 @@ namespace SceneRunner.ECSWorld
             IComponentPoolsRegistry componentPoolsRegistry = singletonDependencies.ComponentPoolsRegistry;
 
             // Create all systems and add them to the world
-            var builder = new ArchSystemsWorldBuilder<World>(world, systemGroupsUpdateGate, systemGroupsUpdateGate);
+            var builder = new ArchSystemsWorldBuilder<World>(world, systemGroupsUpdateGate, systemGroupsUpdateGate,
+                sharedDependencies.SceneExceptionsHandler);
 
             builder
                .InjectCustomGroup(new SyncedInitializationSystemGroup(sharedDependencies.MutexSync))

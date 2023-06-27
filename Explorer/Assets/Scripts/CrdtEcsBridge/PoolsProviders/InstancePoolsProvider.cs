@@ -14,7 +14,7 @@ namespace CrdtEcsBridge.PoolsProviders
         ///     Reuse pools when the scene is disposed
         /// </summary>
         private static readonly ThreadSafeObjectPool<InstancePoolsProvider> POOL =
-            new (() => new InstancePoolsProvider());
+            new (() => new InstancePoolsProvider(), defaultCapacity: PoolConstants.SCENES_COUNT);
 
         private readonly IObjectPool<List<CRDTMessage>> crdtMessagesPool = new ListObjectPool<CRDTMessage>(listInstanceDefaultCapacity: 256);
 
