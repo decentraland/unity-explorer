@@ -6,19 +6,37 @@ namespace Diagnostics.ReportsHandling
     /// <summary>
     ///     Exception happened in the ECS system
     /// </summary>
-    public class EcsSystemException : Exception
+    public class EcsSystemException : Exception, IManagedEcsException
     {
         /// <summary>
         ///     Can be used for stability analytics
         /// </summary>
         public readonly ISystem<float> FaultySystem;
 
-        public readonly ReportData ReportData;
+        /// <summary>
+        ///     Indicates that the exception was intercepted by a higher level abstraction and not handled by the user code itself
+        /// </summary>
+        public readonly bool Unhandled;
 
-        public EcsSystemException(ISystem<float> faultySystem, Exception innerException, ReportData reportData) : base($"[{reportData.Category}]", innerException)
+        private string messagePrefix;
+
+        internal ReportData reportData;
+
+        public EcsSystemException(ISystem<float> faultySystem, Exception innerException, ReportData reportData, bool unhandled = true)
+            : base(faultySystem == null ? string.Empty : $"[{faultySystem.GetType().Name}]", innerException)
         {
-            ReportData = reportData;
+            this.reportData = reportData;
             FaultySystem = faultySystem;
+            Unhandled = unhandled;
         }
+
+        public override string Message => messagePrefix + base.Message;
+
+        string IManagedEcsException.MessagePrefix
+        {
+            set => messagePrefix = value;
+        }
+
+        public ref readonly ReportData ReportData => ref reportData;
     }
 }

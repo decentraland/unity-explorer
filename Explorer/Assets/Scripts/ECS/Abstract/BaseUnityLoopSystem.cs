@@ -14,7 +14,7 @@ namespace ECS.Abstract
     {
         private readonly CustomSampler updateSampler;
 
-        private static string cachedCategory;
+        private string cachedCategory;
 
         protected BaseUnityLoopSystem(World world) : base(world)
         {
@@ -32,13 +32,13 @@ namespace ECS.Abstract
             catch (Exception e)
             {
                 // enrich and propagate exception to the system group handler
-                throw CreateException(e);
+                throw CreateException(e, ReportHint.None, true);
             }
         }
 
         protected abstract void Update(float t);
 
-        protected string GetReportCategory()
+        protected internal string GetReportCategory()
         {
             // Look for category starting from the class itself and then groups recursively
             // if not found fall back to "ECS"
@@ -59,6 +59,9 @@ namespace ECS.Abstract
         ///     Enriches exception with additional system-wise data
         /// </summary>
         protected EcsSystemException CreateException(Exception inner, ReportHint hint = ReportHint.None) =>
-            new (this, inner, new ReportData(GetReportCategory(), hint));
+            CreateException(inner, hint, false);
+
+        private EcsSystemException CreateException(Exception inner, ReportHint hint, bool unhandled) =>
+            new (this, inner, new ReportData(GetReportCategory(), hint), unhandled);
     }
 }

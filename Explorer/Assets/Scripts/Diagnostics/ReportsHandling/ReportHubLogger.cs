@@ -44,6 +44,7 @@ namespace Diagnostics.ReportsHandling
         /// <param name="reportData">Report Data, try to provide as specific data as possible</param>
         /// <param name="message">Message</param>
         /// <param name="reportToHandlers">Handlers to report to, All by default</param>
+        [HideInCallstack]
         public void Log(LogType logType, ReportData reportData, object message, ReportHandler reportToHandlers = ReportHandler.All)
         {
             foreach ((ReportHandler type, IReportHandler handler) in reportHandlers)
@@ -61,6 +62,7 @@ namespace Diagnostics.ReportsHandling
         /// <param name="message">Message</param>
         /// <param name="context">Object to which the message applies.</param>
         /// <param name="reportToHandlers">Handlers to report to, All by default</param>
+        [HideInCallstack]
         public void Log(LogType logType, ReportData reportData, object message, Object context, ReportHandler reportToHandlers = ReportHandler.All)
         {
             foreach ((ReportHandler type, IReportHandler handler) in reportHandlers)
@@ -78,6 +80,7 @@ namespace Diagnostics.ReportsHandling
         /// <param name="message">Message</param>
         /// <param name="reportHandler">Handlers to report to, All by default</param>
         /// <param name="args">Format arguments</param>
+        [HideInCallstack]
         public void LogFormat(LogType logType, ReportData reportData, object message, ReportHandler reportHandler = ReportHandler.All, params object[] args)
         {
             foreach ((ReportHandler type, IReportHandler handler) in reportHandlers)
@@ -92,7 +95,8 @@ namespace Diagnostics.ReportsHandling
         /// </summary>
         /// <param name="ecsSystemException">ECS System Exception</param>
         /// <param name="reportHandler">Handlers to report to, All by default</param>
-        public void LogException(EcsSystemException ecsSystemException, ReportHandler reportHandler = ReportHandler.All)
+        [HideInCallstack]
+        public void LogException<T>(T ecsSystemException, ReportHandler reportHandler = ReportHandler.All) where T: Exception, IManagedEcsException
         {
             foreach ((ReportHandler type, IReportHandler handler) in reportHandlers)
             {
@@ -107,6 +111,7 @@ namespace Diagnostics.ReportsHandling
         /// <param name="exception">Exception</param>
         /// <param name="reportData">Report Data, try to provide as specific data as possible</param>
         /// <param name="reportHandler">Handlers to report to, All by default</param>
+        [HideInCallstack]
         public void LogException(Exception exception, ReportData reportData, ReportHandler reportHandler = ReportHandler.All)
         {
             foreach ((ReportHandler type, IReportHandler handler) in reportHandlers)

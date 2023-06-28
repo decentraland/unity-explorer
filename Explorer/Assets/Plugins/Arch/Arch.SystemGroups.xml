@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <doc>
     <assembly>
-        <name>Arch.SystemGroups.NoUnity</name>
+        <name>Arch.SystemGroups</name>
     </assembly>
     <members>
         <member name="T:Arch.SystemGroups.ArchSystemsSorter">
@@ -234,7 +234,7 @@
         <member name="M:Arch.SystemGroups.DefaultGroup`1.BeforeUpdate(`0@,System.Boolean)">
             <summary>
             To comply with Arch.System.ISystem
-            </summary>
+                    </summary>
         </member>
         <member name="M:Arch.SystemGroups.DefaultGroup`1.Update(`0@,System.Boolean)">
             <summary>

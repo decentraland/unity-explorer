@@ -29,7 +29,7 @@ namespace SceneRunner.ECSWorld.Plugins
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder,
-            in ECSWorldInstanceSharedDependencies sharedDependencies, List<IFinalizeWorldSystem> finalizeWorldSystems)
+            in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);
@@ -38,7 +38,7 @@ namespace SceneRunner.ECSWorld.Plugins
 
             // GLTF Container
             LoadGltfContainerSystem.InjectToWorld(ref builder);
-            FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder);
+            FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot);
 
             ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache);
             WriteGltfContainerLoadingStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, componentPoolsRegistry.GetReferenceTypePool<PBGltfContainerLoadingState>());

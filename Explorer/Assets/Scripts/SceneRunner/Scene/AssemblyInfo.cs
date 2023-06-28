@@ -4,3 +4,4 @@
 [assembly: InternalsVisibleTo("Containers.Tests")]
 [assembly: InternalsVisibleTo("StreamableLoading.Tests")]
 [assembly: InternalsVisibleTo("SceneExceptionsHandling")]
+[assembly: InternalsVisibleTo("Scene.Tests")]

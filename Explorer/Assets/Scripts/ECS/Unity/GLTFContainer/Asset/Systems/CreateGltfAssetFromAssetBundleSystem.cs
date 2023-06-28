@@ -58,7 +58,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             if (!assetBundleResult.Succeeded)
             {
                 // Just propagate an exception, we can't do anything
-                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(assetBundleResult.Exception));
+                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(CreateException(assetBundleResult.Exception)));
                 return;
             }
 
@@ -67,7 +67,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             // if asset bundle has no game objects we can't process it further but the promise should be resolved
             if (assetBundleData.GameObjectNodes.Count == 0)
             {
-                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(new MissingGltfAssetsException(assetBundleData.AssetBundle.name)));
+                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(CreateException(new MissingGltfAssetsException(assetBundleData.AssetBundle.name))));
                 return;
             }
 

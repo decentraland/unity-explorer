@@ -1,5 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using CrdtEcsBridge.Components;
 using CrdtEcsBridge.UpdateGate;
 using ECS.ComponentsPooling;
 using ECS.ComponentsPooling.Systems;
@@ -29,6 +30,10 @@ namespace SceneRunner.ECSWorld
 
             IComponentPoolsRegistry componentPoolsRegistry = singletonDependencies.ComponentPoolsRegistry;
 
+            Entity sceneRootEntity = singletonDependencies.EntityFactory.Create(SpecialEntititiesID.SCENE_ROOT_ENTITY, world);
+
+            var persistentEntities = new PersistentEntities(world.Reference(sceneRootEntity));
+
             // Create all systems and add them to the world
             var builder = new ArchSystemsWorldBuilder<World>(world, systemGroupsUpdateGate, systemGroupsUpdateGate,
                 sharedDependencies.SceneExceptionsHandler);
@@ -42,7 +47,7 @@ namespace SceneRunner.ECSWorld
             var finalizeWorldSystems = new List<IFinalizeWorldSystem>(32);
 
             foreach (IECSWorldPlugin worldPlugin in plugins)
-                worldPlugin.InjectToWorld(ref builder, in sharedDependencies, finalizeWorldSystems);
+                worldPlugin.InjectToWorld(ref builder, in sharedDependencies, in persistentEntities, finalizeWorldSystems);
 
             DestroyEntitiesSystem.InjectToWorld(ref builder);
             finalizeWorldSystems.Add(ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry));

@@ -1,4 +1,5 @@
 ﻿using Diagnostics.ReportsHandling;
+using System;
 using UnityEngine;
 
 namespace Diagnostics
@@ -6,9 +7,11 @@ namespace Diagnostics
     /// <summary>
     ///     Holds diagnostics dependencies that can be shared between different systems
     /// </summary>
-    public class DiagnosticsContainer
+    public class DiagnosticsContainer : IDisposable
     {
         public ReportHubLogger ReportHubLogger { get; private set; }
+
+        private ILogHandler defaultLogHandler;
 
         public static DiagnosticsContainer Create(IReportsHandlingSettings settings)
         {
@@ -19,13 +22,21 @@ namespace Diagnostics
                 // Insert Sentry Logger when implemented
             });
 
+            ILogHandler defaultLogHandler = Debug.unityLogger.logHandler;
+
             // Override Default Unity Logger
             Debug.unityLogger.logHandler = logger;
 
             // Enable Hub static accessors
             ReportHub.Instance = logger;
 
-            return new DiagnosticsContainer { ReportHubLogger = logger };
+            return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler };
+        }
+
+        public void Dispose()
+        {
+            // Restore Default Unity Logger
+            Debug.unityLogger.logHandler = defaultLogHandler;
         }
     }
 }

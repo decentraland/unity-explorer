@@ -10,7 +10,7 @@ namespace Diagnostics.ReportsHandling
 
         void LogFormat(LogType logType, ReportData reportData, Object context, object message, params object[] args);
 
-        void LogException(EcsSystemException ecsSystemException);
+        void LogException<T>(T ecsSystemException) where T: Exception, IManagedEcsException;
 
         void LogException(Exception exception, ReportData reportData, Object context);
     }

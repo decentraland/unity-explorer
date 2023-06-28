@@ -1,21 +1,22 @@
 {
-    "name": "WorldSynchronizer",
-    "rootNamespace": "",
-    "references": [
-        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
-        "GUID:0f4c0f120707fb74497f5d581b9858f8",
-        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
-        "GUID:83cc766db25f4a84b0fdfaf8a091122d",
-        "GUID:6e2b4bed29ad1c549ab19b744f36f388",
-        "GUID:d414ef88f3b15f746a4b97636b50dfb4"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
+  "name": "WorldSynchronizer",
+  "rootNamespace": "",
+  "references": [
+    "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+    "GUID:0f4c0f120707fb74497f5d581b9858f8",
+    "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+    "GUID:83cc766db25f4a84b0fdfaf8a091122d",
+    "GUID:6e2b4bed29ad1c549ab19b744f36f388",
+    "GUID:d414ef88f3b15f746a4b97636b50dfb4",
+    "GUID:101b8b6ebaf64668909b49c4b7a1420d"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

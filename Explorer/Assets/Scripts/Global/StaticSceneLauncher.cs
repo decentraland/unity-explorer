@@ -27,6 +27,11 @@ namespace Global
             sceneLauncher.Initialize(SceneSharedContainer, destroyCancellationToken);
         }
 
+        private void OnDestroy()
+        {
+            SceneSharedContainer?.Dispose();
+        }
+
         public static SceneSharedContainer Install(IReportsHandlingSettings reportsHandlingSettings)
         {
             Profiler.BeginSample($"{nameof(DynamicSceneLoader)}.Install");

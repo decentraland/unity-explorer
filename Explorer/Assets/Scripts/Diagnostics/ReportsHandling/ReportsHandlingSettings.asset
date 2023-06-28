@@ -64,8 +64,6 @@ MonoBehaviour:
       Severity: 4
     - Category: TEXTURES
       Severity: 4
-    - Category: GLTF_CONTAINER
-      Severity: 4
     - Category: MATERIALS
       Severity: 4
     - Category: PRIMITIVE_COLLIDERS
@@ -164,6 +162,8 @@ MonoBehaviour:
       Severity: 2
     - Category: UNSPECIFIED
       Severity: 2
+    - Category: GLTF_CONTAINER
+      Severity: 4
   sentryMatrix:
     entries:
     - Category: ENGINE

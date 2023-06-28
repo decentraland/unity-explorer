@@ -1,4 +1,5 @@
 using Arch.SystemGroups;
+using Diagnostics;
 using Diagnostics.ReportsHandling;
 using System;
 using System.Linq;
@@ -14,13 +15,14 @@ namespace SceneRunner.Scene.ExceptionsHandling
     public class SceneExceptionsHandler : ISceneExceptionsHandler
     {
         // Experiment with this, maybe tolerance should be 0
-        private const int ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE = 3;
+        internal const int ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE = 3;
 
         private static readonly ThreadSafeObjectPool<SceneExceptionsHandler> POOL = new (() => new SceneExceptionsHandler(), defaultCapacity: PoolConstants.SCENES_COUNT);
 
         private readonly ExceptionEntry?[] ecsExceptionsBag = new ExceptionEntry?[ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE];
 
         private ISceneStateProvider sceneState;
+        private SceneShortInfo sceneShortInfo;
 
         private SceneExceptionsHandler() { }
 
@@ -30,33 +32,53 @@ namespace SceneRunner.Scene.ExceptionsHandling
 
             // Report exception
             if (exception is EcsSystemException ecsSystemException)
+            {
+                // Add scene information, we don't add this info in the BaseUnityLoopSystem as we would need to propagate it for all systems
+                // and it's inconvenient and cumbersome
+                ecsSystemException.reportData.SceneShortInfo = sceneShortInfo;
+
                 ReportHub.LogException(ecsSystemException);
+            }
             else
-                ReportHub.LogException(exception, new ReportData(ReportCategory.ECS));
+                ReportHub.LogException(exception, new ReportData(ReportCategory.ECS, sceneShortInfo: sceneShortInfo));
 
             float time = Time.realtimeSinceStartup;
 
-            int validIndex = -1;
-            int i;
+            var validRangeStartIndex = 0;
+            int validRangeEndIndex = -1;
 
-            for (i = 0; i < ecsExceptionsBag.Length; i++)
+            for (var i = 0; i < ecsExceptionsBag.Length; i++)
             {
                 ExceptionEntry? e = ecsExceptionsBag[i];
 
-                // The first available slot
                 if (!e.HasValue)
                     break;
 
                 // Detect invalid exceptions
                 if (time - e.Value.Time < INTERVAL)
-                    validIndex = i;
+                {
+                    validRangeStartIndex = i;
+                    validRangeEndIndex = i;
+
+                    for (++i; i < ecsExceptionsBag.Length; i++)
+                    {
+                        e = ecsExceptionsBag[i];
+
+                        if (!e.HasValue)
+                            break;
+
+                        validRangeEndIndex = i;
+                    }
+
+                    break;
+                }
             }
 
             // All tolerance is used
-            if (validIndex == ecsExceptionsBag.Length - 1)
+            if (validRangeEndIndex == ecsExceptionsBag.Length - 1 && validRangeStartIndex == 0)
             {
                 // log an aggregated exception
-                ReportHub.LogException(new AggregateException(ecsExceptionsBag.Select(e => e.Value.Exception).Append(exception)), new ReportData(ReportCategory.ECS));
+                ReportHub.LogException(new SceneExecutionException(ecsExceptionsBag.Select(e => e.Value.Exception).Append(exception), new ReportData(ReportCategory.ECS, sceneShortInfo: sceneShortInfo)));
 
                 // Put the scene into the error state
                 sceneState.State = SceneState.EcsError;
@@ -64,16 +86,16 @@ namespace SceneRunner.Scene.ExceptionsHandling
             }
 
             // Shift the array to the left
-            var elementsCopied = 0;
+            if (validRangeStartIndex > -1)
+                Array.Copy(ecsExceptionsBag, validRangeStartIndex, ecsExceptionsBag, 0, validRangeEndIndex - validRangeStartIndex + 1);
 
-            if (validIndex > -1)
-                Array.Copy(ecsExceptionsBag, validIndex, ecsExceptionsBag, 0, elementsCopied = ecsExceptionsBag.Length - validIndex);
+            int firstEmptySlot = validRangeEndIndex - validRangeStartIndex + 1;
 
             // Clear the rest of the array
-            Array.Clear(ecsExceptionsBag, elementsCopied, ecsExceptionsBag.Length - elementsCopied);
+            Array.Clear(ecsExceptionsBag, firstEmptySlot, ecsExceptionsBag.Length - firstEmptySlot);
 
             // Write to the first available slot
-            ecsExceptionsBag[elementsCopied] = new ExceptionEntry { Time = time, Exception = exception };
+            ecsExceptionsBag[firstEmptySlot] = new ExceptionEntry { Time = time, Exception = exception };
             return ISystemGroupExceptionHandler.Action.Continue;
         }
 
@@ -97,10 +119,11 @@ namespace SceneRunner.Scene.ExceptionsHandling
             POOL.Release(this);
         }
 
-        public static SceneExceptionsHandler Create(ISceneStateProvider sceneState)
+        public static SceneExceptionsHandler Create(ISceneStateProvider sceneState, SceneShortInfo sceneShortInfo)
         {
             SceneExceptionsHandler handler = POOL.Get();
             handler.sceneState = sceneState;
+            handler.sceneShortInfo = sceneShortInfo;
             return handler;
         }
 

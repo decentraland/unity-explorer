@@ -37,6 +37,7 @@ namespace Global
         private void OnDestroy()
         {
             globalWorld?.Dispose();
+            SceneSharedContainer?.Dispose();
         }
 
         private async UniTask InitializeAsync(CancellationToken ct)
