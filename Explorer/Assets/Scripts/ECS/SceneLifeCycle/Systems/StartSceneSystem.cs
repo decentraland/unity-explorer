@@ -15,7 +15,7 @@ using UnityEngine;
 namespace ECS.SceneLifeCycle.Systems
 {
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    [UpdateAfter(typeof(LoadSceneSystem))]
+    [UpdateAfter(typeof(ResolveScenesStateSystem))]
     public partial class StartSceneSystem : BaseUnityLoopSystem
     {
         private readonly CancellationToken destroyCancellationToken;
@@ -35,9 +35,10 @@ namespace ECS.SceneLifeCycle.Systems
             ProcessSceneToLoadQuery(World);
         }
 
-        private async UniTask InitializeSceneAndStart(IpfsTypes.SceneEntityDefinition sceneDefinition, CancellationToken ct)
+        private async UniTask InitializeSceneAndStart(SceneLoadingComponent sceneLoadingComponent, CancellationToken ct)
         {
             // main thread
+            ISceneFacade sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(ipfsRealm, sceneLoadingComponent.Definition, sceneLoadingComponent.AssetBundleManifest, ct);
             ISceneFacade sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(state.IpfsRealm, sceneDefinition, ct);
 
             ct.RegisterWithoutCaptureExecutionContext(() => sceneFacade?.DisposeAsync().Forget());
@@ -55,7 +56,7 @@ namespace ECS.SceneLifeCycle.Systems
             var liveSceneComponent = new LiveSceneComponent
             {
                 CancellationTokenSource = cts,
-                Task = InitializeSceneAndStart(sceneLoadingComponent.Definition, cts.Token),
+                Task = InitializeSceneAndStart(sceneLoadingComponent, cts.Token),
             };
 
             World.Add(entity, liveSceneComponent);

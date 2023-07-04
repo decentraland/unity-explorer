@@ -1,6 +1,7 @@
 using Arch.Core;
 using CrdtEcsBridge.Components.Special;
 using Cysharp.Threading.Tasks;
+using ECS.SceneLifeCycle.Systems;
 using ECS.TestSuite;
 using Ipfs;
 using NUnit.Framework;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace ECS.SceneLifeCycle.Systems.Tests
+namespace ECS.SceneLifeCycle.Tests
 {
     public class TestIpfsRealm : IIpfsRealm
     {
@@ -71,10 +72,9 @@ namespace ECS.SceneLifeCycle.Systems.Tests
 
             HashSet<string> requiredScenes = new ();
 
-            foreach ((var _, IpfsTypes.SceneEntityDefinition sceneDefinition) in system.state.ScenePointers)
-            {
-                if (!sceneDefinition.id.StartsWith("empty-parcel")) { requiredScenes.Add(sceneDefinition.id); }
-            }
+            foreach (ScenePointer pointer in system.state.ScenePointers.Values)
+                if (!pointer.Definition.id.StartsWith("empty-parcel"))
+                    requiredScenes.Add(pointer.Definition.id);
 
             Assert.IsTrue(requiredScenes.Count == 3);
         }

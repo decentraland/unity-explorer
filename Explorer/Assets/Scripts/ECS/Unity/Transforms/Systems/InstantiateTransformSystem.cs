@@ -1,16 +1,18 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
+using Arch.SystemGroups.Throttling;
 using CrdtEcsBridge.Components.Transform;
 using ECS.Abstract;
 using ECS.ComponentsPooling;
+using ECS.Groups;
 using ECS.Unity.Transforms.Components;
 using UnityEngine;
 
 namespace ECS.Unity.Transforms.Systems
 {
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
+    [ThrottlingEnabled]
     public partial class InstantiateTransformSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPool<Transform> transformPool;

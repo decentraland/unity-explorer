@@ -12,6 +12,7 @@ using ECS.Unity.PrimitiveRenderer.MeshSetup;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 using Utility.Primitives;
 
 namespace ECS.Unity.PrimitiveRenderer.Systems
@@ -107,9 +108,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
 
             Transform rendererTransform = meshRendererGo.transform;
             rendererTransform.SetParent(transformComponent.Transform, false);
-            rendererTransform.localPosition = Vector3.zero;
-            rendererTransform.localRotation = Quaternion.identity;
-            rendererTransform.localScale = Vector3.one;
+            rendererTransform.ResetLocalTRS();
         }
     }
 }

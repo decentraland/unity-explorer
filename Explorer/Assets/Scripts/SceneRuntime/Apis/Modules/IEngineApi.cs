@@ -10,10 +10,10 @@ namespace SceneRuntime.Apis.Modules
     {
         /// <param name="dataMemory"></param>
         /// <returns>A contiguous byte array of the CRDT Message representing the outgoing messages</returns>
-        public byte[] CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory);
+        public ArraySegment<byte> CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory);
 
         /// <returns>The full serialized CRDT State, A contiguous byte array of the CRDT Message</returns>
-        public byte[] CrdtGetState();
+        public ArraySegment<byte> CrdtGetState();
 
         /// <summary>
         ///     Prevents handling messages while the scene runtime is being disposed

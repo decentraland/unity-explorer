@@ -4,6 +4,7 @@ using CRDT.Protocol;
 using CRDT.Protocol.Factory;
 using CRDT.Serializer;
 using CrdtEcsBridge.OutgoingMessages;
+using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using NSubstitute;
 using NUnit.Framework;
@@ -11,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Utility.Multithreading;
 
 namespace CrdtEcsBridge.Engine.Tests
 {
@@ -75,7 +77,9 @@ namespace CrdtEcsBridge.Engine.Tests
                 crdtDeserializer = Substitute.For<ICRDTDeserializer>(),
                 crdtSerializer = new CRDTSerializer(),
                 crdtWorldSynchronizer = Substitute.For<ICRDTWorldSynchronizer>(),
-                outgoingCrtdMessagesProvider = Substitute.For<IOutgoingCRTDMessagesProvider>()
+                outgoingCrtdMessagesProvider = Substitute.For<IOutgoingCRTDMessagesProvider>(),
+                Substitute.For<ISystemGroupsUpdateGate>(),
+                new MutexSync()
             );
 
             crdtDeserializer.When(d => d.DeserializeBatch(ref Arg.Any<ReadOnlyMemory<byte>>(), Arg.Any<IList<CRDTMessage>>()))
@@ -139,7 +143,7 @@ namespace CrdtEcsBridge.Engine.Tests
                 }
 
                 worldSyncCommandBuffer.FinalizeAndDeserialize();
-                instancePoolsProvider.ReleaseDeserializationMessagesPool(Arg.Any<IList<CRDTMessage>>());
+                instancePoolsProvider.ReleaseDeserializationMessagesPool(Arg.Any<List<CRDTMessage>>());
 
                 outgoingCrtdMessagesProvider.GetSerializationSyncBlock();
                 sharedPoolsProvider.GetSerializedStateBytesPool(Arg.Any<int>());
@@ -153,7 +157,7 @@ namespace CrdtEcsBridge.Engine.Tests
         [Test]
         public void MakeCallsInProperOrderCrdtGetState()
         {
-            byte[] state = engineAPIImplementation.CrdtGetState();
+            ArraySegment<byte> state = engineAPIImplementation.CrdtGetState();
 
             Received.InOrder(() =>
             {
@@ -165,7 +169,7 @@ namespace CrdtEcsBridge.Engine.Tests
                 sharedPoolsProvider.ReleaseSerializationCrdtMessagesPool(Arg.Is<ProcessedCRDTMessage[]>(p => p.Length == crdtStateMessages.Count));
             });
 
-            Assert.AreEqual(400 + 120, state.Length);
+            Assert.AreEqual(400 + 120, state.Count);
         }
 
         [Test]

@@ -11,9 +11,9 @@ namespace SceneRuntime.Apis.Modules
 
         public static readonly ScriptableByteArray EMPTY = new (Array.Empty<byte>());
 
-        public ScriptableByteArray(byte[] array)
+        public ScriptableByteArray(ArraySegment<byte> array)
         {
-            enumerator = ((IEnumerable<byte>)array).GetEnumerator();
+            enumerator = array.GetEnumerator();
         }
 
         public bool MoveNext() =>

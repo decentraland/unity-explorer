@@ -1,6 +1,9 @@
-﻿using SceneRunner.Scene;
+﻿using Cysharp.Threading.Tasks;
+using SceneRunner.ECSWorld.Plugins;
+using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.Profiling;
 using Utility;
 
@@ -27,16 +30,30 @@ namespace Global
 
         private void Awake()
         {
-            SceneSharedContainer = Install();
+            InitializeAsync(destroyCancellationToken).Forget();
+        }
+
+        private void OnDestroy()
+        {
+            globalWorld?.Dispose();
+        }
+
+        private async UniTask InitializeAsync(CancellationToken ct)
+        {
+            // HACK!!! Load Local Asset Bundle Manifest Once
+
+            UnityWebRequest wr = UnityWebRequestAssetBundle.GetAssetBundle($"{AssetBundlesPlugin.STREAMING_ASSETS_URL}AssetBundles");
+            await wr.SendWebRequest().WithCancellation(ct);
+            AssetBundle manifestAssetBundle = DownloadHandlerAssetBundle.GetContent(wr);
+            AssetBundleManifest assetBundleManifest = manifestAssetBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
+
+            SceneSharedContainer = Install(assetBundleManifest);
 
             Vector3 cameraPosition = ParcelMathHelper.GetPositionByParcelPosition(StartPosition);
             cameraPosition.y += 8.0f;
 
             camera.transform.position = cameraPosition;
-        }
 
-        private void Start()
-        {
             globalWorld = new GlobalWorld();
 
             List<Vector2Int> staticLoadPositions = StaticLoadPositions.Count > 0 ? StaticLoadPositions : null;
@@ -45,17 +62,12 @@ namespace Global
             globalWorld.SetRealm("https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main");
         }
 
-        private void OnDestroy()
-        {
-            globalWorld.Dispose();
-        }
-
-        public static SceneSharedContainer Install()
+        public static SceneSharedContainer Install(AssetBundleManifest localManifest)
         {
             Profiler.BeginSample($"{nameof(DynamicSceneLoader)}.Install");
 
             var componentsContainer = ComponentsContainer.Create();
-            var sceneSharedContainer = SceneSharedContainer.Create(componentsContainer);
+            var sceneSharedContainer = SceneSharedContainer.Create(componentsContainer, localManifest);
 
             Profiler.EndSample();
             return sceneSharedContainer;

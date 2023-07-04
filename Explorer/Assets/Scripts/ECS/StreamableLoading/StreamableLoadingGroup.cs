@@ -1,8 +1,8 @@
 ﻿using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
+using ECS.Groups;
 
 namespace ECS.StreamableLoading
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     public partial class StreamableLoadingGroup { }
 }

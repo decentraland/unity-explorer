@@ -9,7 +9,12 @@ namespace ECS.SceneLifeCycle
     {
         public readonly Dictionary<string, Entity> LiveScenes = new ();
 
+        /// <summary>
+        ///     Scene pointers are cached and never removed
+        /// </summary>
         public readonly Dictionary<Vector2Int, IpfsTypes.SceneEntityDefinition> ScenePointers = new ();
+
+        public readonly Dictionary<string, Entity> LiveScenes = new ();
 
         public readonly HashSet<IpfsTypes.SceneEntityDefinition> FixedScenes = new ();
 

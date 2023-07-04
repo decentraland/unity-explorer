@@ -2,7 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Shaders;
-using ECS.StreamableLoading.Components.Common;
+using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Textures.Components;
 using UnityEngine;
@@ -12,6 +12,7 @@ using UnityEngine.Rendering;
 namespace ECS.Unity.Materials.Systems
 {
     [UpdateInGroup(typeof(MaterialLoadingGroup))]
+    [UpdateAfter(typeof(StartMaterialsLoadingSystem))]
     public partial class CreatePBRMaterialSystem : CreateMaterialSystemBase
     {
         /// <summary>
@@ -19,8 +20,7 @@ namespace ECS.Unity.Materials.Systems
         /// </summary>
         public const string MATERIAL_PATH = "ShapeMaterial";
 
-        internal CreatePBRMaterialSystem(World world, IObjectPool<Material> materialsPool, int attemptsCount)
-            : base(world, materialsPool, attemptsCount) { }
+        internal CreatePBRMaterialSystem(World world, IObjectPool<Material> materialsPool) : base(world, materialsPool) { }
 
         protected override void Update(float t)
         {
@@ -33,22 +33,9 @@ namespace ECS.Unity.Materials.Systems
             if (!materialComponent.Data.IsPbrMaterial)
                 return;
 
-            if (materialComponent.Status == MaterialComponent.LifeCycle.LoadingNotStarted)
-                StartTexturesLoading(ref materialComponent);
-
             // if there are no textures to load we can construct a material right away
             if (materialComponent.Status == MaterialComponent.LifeCycle.LoadingInProgress)
                 ConstructMaterial(ref materialComponent);
-        }
-
-        private void StartTexturesLoading(ref MaterialComponent materialComponent)
-        {
-            TryCreateGetTextureIntention(in materialComponent.Data.AlbedoTexture, ref materialComponent.AlbedoTexPromise);
-            TryCreateGetTextureIntention(in materialComponent.Data.EmissiveTexture, ref materialComponent.EmissiveTexPromise);
-            TryCreateGetTextureIntention(in materialComponent.Data.AlphaTexture, ref materialComponent.AlphaTexPromise);
-            TryCreateGetTextureIntention(in materialComponent.Data.BumpTexture, ref materialComponent.BumpTexPromise);
-
-            materialComponent.Status = MaterialComponent.LifeCycle.LoadingInProgress;
         }
 
         private void ConstructMaterial(ref MaterialComponent materialComponent)
@@ -56,10 +43,10 @@ namespace ECS.Unity.Materials.Systems
             // Check if all promises are finished
             // Promises are finished if: all of their entities are invalid, no promises at all, or the result component exists
 
-            if (TryGetTextureResult(in materialComponent.AlbedoTexPromise, out StreamableLoadingResult<Texture2D> albedoResult)
-                && TryGetTextureResult(in materialComponent.EmissiveTexPromise, out StreamableLoadingResult<Texture2D> emissiveResult)
-                && TryGetTextureResult(in materialComponent.AlphaTexPromise, out StreamableLoadingResult<Texture2D> alphaResult)
-                && TryGetTextureResult(in materialComponent.BumpTexPromise, out StreamableLoadingResult<Texture2D> bumpResult))
+            if (TryGetTextureResult(ref materialComponent.AlbedoTexPromise, out StreamableLoadingResult<Texture2D> albedoResult)
+                && TryGetTextureResult(ref materialComponent.EmissiveTexPromise, out StreamableLoadingResult<Texture2D> emissiveResult)
+                && TryGetTextureResult(ref materialComponent.AlphaTexPromise, out StreamableLoadingResult<Texture2D> alphaResult)
+                && TryGetTextureResult(ref materialComponent.BumpTexPromise, out StreamableLoadingResult<Texture2D> bumpResult))
             {
                 materialComponent.Status = MaterialComponent.LifeCycle.LoadingFinished;
 
@@ -74,10 +61,10 @@ namespace ECS.Unity.Materials.Systems
                 TrySetTexture(materialComponent.Result, ref alphaResult, ShaderUtils.AlphaTexture);
                 TrySetTexture(materialComponent.Result, ref bumpResult, ShaderUtils.BumpMap);
 
-                DestroyEntityReference(in materialComponent.AlbedoTexPromise);
-                DestroyEntityReference(in materialComponent.EmissiveTexPromise);
-                DestroyEntityReference(in materialComponent.AlphaTexPromise);
-                DestroyEntityReference(in materialComponent.BumpTexPromise);
+                DestroyEntityReference(ref materialComponent.AlbedoTexPromise);
+                DestroyEntityReference(ref materialComponent.EmissiveTexPromise);
+                DestroyEntityReference(ref materialComponent.AlphaTexPromise);
+                DestroyEntityReference(ref materialComponent.BumpTexPromise);
 
                 // TODO It is super expensive and allocates 500 KB every call, the changes must be made in the common library
                 // SRPBatchingHelper.OptimizeMaterial(materialComponent.Result);

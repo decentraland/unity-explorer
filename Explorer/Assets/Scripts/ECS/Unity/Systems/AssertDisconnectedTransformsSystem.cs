@@ -1,10 +1,11 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
+using Arch.SystemGroups.Throttling;
 using CRDT;
 using CrdtEcsBridge.Components.Transform;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
@@ -17,9 +18,10 @@ namespace ECS.Unity.Systems
     ///     Runs after the full cycle of the systems to ensure that all Transforms are instantiated.
     ///     <para>It's important to validate it as Unity Components systems rely on the existence of the parent transform</para>
     /// </summary>
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateAfter(typeof(InstantiateTransformSystem))]
     [UpdateBefore(typeof(ComponentInstantiationGroup))]
+    [ThrottlingEnabled]
     public partial class AssertDisconnectedTransformsSystem : BaseUnityLoopSystem
     {
         internal AssertDisconnectedTransformsSystem(World world) : base(world) { }

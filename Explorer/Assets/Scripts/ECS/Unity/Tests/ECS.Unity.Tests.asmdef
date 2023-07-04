@@ -13,7 +13,9 @@
     "GUID:0f4c0f120707fb74497f5d581b9858f8",
     "GUID:d414ef88f3b15f746a4b97636b50dfb4",
     "GUID:286980af24684da6acc1caa413039811",
-    "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
+    "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+    "GUID:f51ebe6a0ceec4240a699833d6309b23",
+    "GUID:bfcb7f4c56e9fe947a7bdce7523884ff"
   ],
   "includePlatforms": [
     "Editor"
@@ -26,7 +28,8 @@
     "Arch.System.dll",
     "Arch.dll",
     "Arch.SystemGroups.dll",
-    "NSubstitute.dll"
+    "NSubstitute.dll",
+    "Google.Protobuf.dll"
   ],
   "autoReferenced": false,
   "defineConstraints": [

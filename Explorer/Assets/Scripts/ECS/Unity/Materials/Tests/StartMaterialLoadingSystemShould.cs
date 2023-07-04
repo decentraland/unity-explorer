@@ -1,8 +1,8 @@
-﻿using Arch.Core;
-using DCL.ECSComponents;
+﻿using DCL.ECSComponents;
 using Decentraland.Common;
-using ECS.StreamableLoading.Components;
-using ECS.StreamableLoading.Components.Common;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Components.Defaults;
@@ -23,6 +23,8 @@ namespace ECS.Unity.Materials.Tests
 {
     public class StartMaterialLoadingSystemShould : UnitySystemTestBase<StartMaterialsLoadingSystem>
     {
+        private const int ATTEMPTS_COUNT = 5;
+
         private static string tex1 => $"file://{Application.dataPath + "/../TestResources/Images/alphaTexture.png"}";
         private static string tex2 => $"file://{Application.dataPath + "/../TestResources/Images/atlas.png"}";
         private static string tex3 => $"file://{Application.dataPath + "/../TestResources/Images/Gradient A4.png"}";
@@ -35,14 +37,14 @@ namespace ECS.Unity.Materials.Tests
         {
             system = new StartMaterialsLoadingSystem(world,
                 destroyMaterial = Substitute.For<DestroyMaterial>(),
-                sceneData = Substitute.For<ISceneData>());
+                sceneData = Substitute.For<ISceneData>(), ATTEMPTS_COUNT);
 
             sceneData.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<string>())
-                                .Returns(c =>
-                                 {
-                                     c[1] = c.ArgAt<string>(0);
-                                     return true;
-                                 });
+                     .Returns(c =>
+                      {
+                          c[1] = c.ArgAt<string>(0);
+                          return true;
+                      });
         }
 
         [Test]
@@ -56,7 +58,7 @@ namespace ECS.Unity.Materials.Tests
 
             Assert.IsTrue(world.TryGet(e, out MaterialComponent materialComponent));
 
-            Assert.AreEqual(MaterialComponent.LifeCycle.LoadingNotStarted, materialComponent.Status);
+            Assert.AreEqual(MaterialComponent.LifeCycle.LoadingInProgress, materialComponent.Status);
             Assert.IsNull(materialComponent.Result);
 
             Assert.IsTrue(materialComponent.Data.IsPbrMaterial);
@@ -75,7 +77,7 @@ namespace ECS.Unity.Materials.Tests
 
             Assert.IsTrue(world.TryGet(e, out MaterialComponent materialComponent));
 
-            Assert.AreEqual(MaterialComponent.LifeCycle.LoadingNotStarted, materialComponent.Status);
+            Assert.AreEqual(MaterialComponent.LifeCycle.LoadingInProgress, materialComponent.Status);
             Assert.IsNull(materialComponent.Result);
 
             Assert.IsFalse(materialComponent.Data.IsPbrMaterial);
@@ -156,6 +158,39 @@ namespace ECS.Unity.Materials.Tests
         }
 
         [Test]
+        public void StartBasicLoading()
+        {
+            PBMaterial sdkComponent = CreateBasicMaterial();
+
+            Entity e = world.Create(sdkComponent);
+
+            system.Update(0);
+
+            MaterialComponent afterUpdate = world.Get<MaterialComponent>(e);
+            Assert.That(afterUpdate.Status, Is.EqualTo(MaterialComponent.LifeCycle.LoadingInProgress));
+
+            AssertTexturePromise(in afterUpdate.AlbedoTexPromise, tex2);
+        }
+
+        [Test]
+        public void StartPBRLoading()
+        {
+            PBMaterial sdkComponent = CreatePBRMaterial1();
+
+            Entity e = world.Create(sdkComponent);
+
+            system.Update(0);
+
+            MaterialComponent afterUpdate = world.Get<MaterialComponent>(e);
+            Assert.That(afterUpdate.Status, Is.EqualTo(MaterialComponent.LifeCycle.LoadingInProgress));
+
+            AssertTexturePromise(afterUpdate.AlbedoTexPromise, tex1);
+            AssertTexturePromise(afterUpdate.AlphaTexPromise, tex3);
+            AssertTexturePromise(afterUpdate.EmissiveTexPromise, tex1);
+            AssertTexturePromise(afterUpdate.BumpTexPromise, tex2);
+        }
+
+        [Test]
         public void AbortRequestIfMaterialChanged()
         {
             PBMaterial material1 = CreatePBRMaterial1();
@@ -174,7 +209,7 @@ namespace ECS.Unity.Materials.Tests
             c.Status = MaterialComponent.LifeCycle.LoadingInProgress;
 
             // Add entity reference
-            EntityReference texPromise = world.Reference(world.Create(new GetTextureIntention()));
+            var texPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention { CommonArguments = new CommonLoadingArguments("URL") });
             c.AlphaTexPromise = texPromise;
 
             // Second run -> release promise
@@ -184,8 +219,18 @@ namespace ECS.Unity.Materials.Tests
             Assert.IsTrue(world.TryGet(e, out MaterialComponent materialComponent));
             AssertBasicMaterial(material2, materialComponent);
 
-            Assert.IsTrue(world.Has<ForgetLoadingIntent>(texPromise.Entity));
-            Assert.AreEqual(EntityReference.Null, materialComponent.AlphaTexPromise);
+            Assert.IsTrue(texPromise.LoadingIntention.CommonArguments.CancellationToken.IsCancellationRequested);
+            Assert.IsFalse(materialComponent.AlphaTexPromise.HasValue);
+        }
+
+        private void AssertTexturePromise(in AssetPromise<Texture2D, GetTextureIntention>? promise, string src)
+        {
+            Assert.That(promise.HasValue, Is.True);
+            AssetPromise<Texture2D, GetTextureIntention> promiseValue = promise.Value;
+
+            Assert.That(world.TryGet(promiseValue.Entity, out GetTextureIntention intention), Is.True);
+            Assert.That(intention.CommonArguments.URL, Is.EqualTo(src));
+            Assert.That(intention.CommonArguments.Attempts, Is.EqualTo(ATTEMPTS_COUNT));
         }
 
         private static PBMaterial CreatePBRMaterial1()
@@ -199,7 +244,7 @@ namespace ECS.Unity.Materials.Tests
                         Texture = new Texture
                         {
                             Src = tex1,
-                            WrapMode = TextureWrapMode.TwmMirrorOnce,
+                            WrapMode = TextureWrapMode.TwmMirror,
                             FilterMode = TextureFilterMode.TfmPoint,
                         },
                     },

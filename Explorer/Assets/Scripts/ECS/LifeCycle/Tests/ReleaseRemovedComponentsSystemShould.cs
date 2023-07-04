@@ -26,12 +26,12 @@ namespace ECS.LifeCycle.Tests
         {
             Entity e = world.Create(new TestComponent1(), RemovedComponents.CreateDefault());
 
-            world.Get<RemovedComponents>(e).RemovedComponentsSet.Add(typeof(TestComponent1));
-            Assert.That(world.Get<RemovedComponents>(e).RemovedComponentsSet.Count, Is.EqualTo(1));
+            world.Get<RemovedComponents>(e).Set.Add(typeof(TestComponent1));
+            Assert.That(world.Get<RemovedComponents>(e).Set.Count, Is.EqualTo(1));
 
             system.FinalizeComponents(new Query());
 
-            Assert.That(world.Get<RemovedComponents>(e).RemovedComponentsSet.Count, Is.EqualTo(0));
+            Assert.That(world.Get<RemovedComponents>(e).Set.Count, Is.EqualTo(0));
         }
     }
 }

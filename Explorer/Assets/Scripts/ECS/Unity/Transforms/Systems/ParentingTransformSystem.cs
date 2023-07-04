@@ -1,10 +1,11 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
+using Arch.SystemGroups.Throttling;
 using CRDT;
 using CrdtEcsBridge.Components.Transform;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
@@ -12,8 +13,9 @@ using UnityEngine;
 
 namespace ECS.Unity.Transforms.Systems
 {
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateAfter(typeof(InstantiateTransformSystem))]
+    [ThrottlingEnabled]
     public partial class ParentingTransformSystem : BaseUnityLoopSystem
     {
         private readonly EntityReference sceneRootEntityReference;
@@ -40,6 +42,7 @@ namespace ECS.Unity.Transforms.Systems
                 SetNewChild(ref World.Get<TransformComponent>(childEntity.Entity),
                     childEntity, sceneRootEntityReference);
             }
+
             transformComponentToBeDeleted.Children.Clear();
         }
 

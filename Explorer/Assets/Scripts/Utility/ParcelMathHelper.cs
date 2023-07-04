@@ -11,12 +11,12 @@ namespace Utility
         private static readonly List<Vector2Int> RESULTS = new ();
 
         public static Vector3 GetPositionByParcelPosition(Vector2Int parcelPosition) =>
-            new (parcelPosition.x * PARCEL_SIZE, 0.0f, -parcelPosition.y * PARCEL_SIZE);
+            new (parcelPosition.x * PARCEL_SIZE, 0.0f, parcelPosition.y * PARCEL_SIZE);
 
         public static IReadOnlyList<Vector2Int> ParcelsInRange(Vector3 position, int loadRadius)
         {
             float range = loadRadius * PARCEL_SIZE;
-            Vector2 focus = new Vector2(position.x, position.z) * new Vector2(1.0f, -1.0f);
+            Vector2 focus = new Vector2(position.x, position.z) * new Vector2(1.0f, 1.0f);
 
             Vector2 minPoint = focus - new Vector2(range, range);
             Vector2 maxPoint = focus + new Vector2(range, range);

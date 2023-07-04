@@ -2,7 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Shaders;
-using ECS.StreamableLoading.Components.Common;
+using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.Materials.Components;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -11,11 +11,12 @@ using UnityEngine.Rendering;
 namespace ECS.Unity.Materials.Systems
 {
     [UpdateInGroup(typeof(MaterialLoadingGroup))]
+    [UpdateAfter(typeof(StartMaterialsLoadingSystem))]
     public partial class CreateBasicMaterialSystem : CreateMaterialSystemBase
     {
         public const string MATERIAL_PATH = "BasicShapeMaterial";
 
-        internal CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool, int attemptsCount) : base(world, materialsPool, attemptsCount) { }
+        internal CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool) : base(world, materialsPool) { }
 
         protected override void Update(float t)
         {
@@ -28,21 +29,8 @@ namespace ECS.Unity.Materials.Systems
             if (materialComponent.Data.IsPbrMaterial)
                 return;
 
-            switch (materialComponent.Status)
-            {
-                case MaterialComponent.LifeCycle.LoadingNotStarted:
-                    StartTexturesLoading(ref materialComponent);
-                    break;
-                case MaterialComponent.LifeCycle.LoadingInProgress:
-                    ConstructMaterial(ref materialComponent);
-                    break;
-            }
-        }
-
-        private void StartTexturesLoading(ref MaterialComponent materialComponent)
-        {
-            TryCreateGetTextureIntention(in materialComponent.Data.AlbedoTexture, ref materialComponent.AlbedoTexPromise);
-            materialComponent.Status = MaterialComponent.LifeCycle.LoadingInProgress;
+            if (materialComponent.Status == MaterialComponent.LifeCycle.LoadingInProgress)
+                ConstructMaterial(ref materialComponent);
         }
 
         private void ConstructMaterial(ref MaterialComponent materialComponent)
@@ -50,7 +38,7 @@ namespace ECS.Unity.Materials.Systems
             // Check if all promises are finished
             // Promises are finished if: all of their entities are invalid, no promises at all, or the result component exists
 
-            if (TryGetTextureResult(in materialComponent.AlbedoTexPromise, out StreamableLoadingResult<Texture2D> albedoResult))
+            if (TryGetTextureResult(ref materialComponent.AlbedoTexPromise, out StreamableLoadingResult<Texture2D> albedoResult))
             {
                 materialComponent.Status = MaterialComponent.LifeCycle.LoadingFinished;
 
@@ -60,9 +48,7 @@ namespace ECS.Unity.Materials.Systems
 
                 TrySetTexture(materialComponent.Result, ref albedoResult, ShaderUtils.BaseMap);
 
-                DestroyEntityReference(in materialComponent.AlbedoTexPromise);
-
-                // SRPBatchingHelper.OptimizeMaterial(mat);
+                DestroyEntityReference(ref materialComponent.AlbedoTexPromise);
             }
         }
 

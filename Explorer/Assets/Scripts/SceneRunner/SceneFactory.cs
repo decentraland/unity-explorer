@@ -5,9 +5,11 @@ using CRDT.Memory;
 using CRDT.Protocol;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
+using CrdtEcsBridge.ComponentWriter;
 using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
+using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using Ipfs;
@@ -21,6 +23,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
+using Utility.Multithreading;
 
 namespace SceneRunner
 {
@@ -91,7 +94,7 @@ namespace SceneRunner
             return await CreateScene(sceneData, ct);
         }
 
-        public async UniTask<ISceneFacade> CreateSceneFromSceneDefinition(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, CancellationToken ct)
+        public async UniTask<ISceneFacade> CreateSceneFromSceneDefinition(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, SceneAssetBundleManifest abManifest, CancellationToken ct)
         {
             string sceneJsonHash = null;
 
@@ -122,16 +125,19 @@ namespace SceneRunner
             var entitiesMap = new Dictionary<CRDTEntity, Entity>(1000, CRDTEntityComparer.INSTANCE);
 
             // Per scene instance dependencies
+            var ecsMutexSync = new MutexSync();
             var crdtProtocol = new CRDTProtocol();
             var outgoingCrtdMessagesProvider = new OutgoingCRTDMessagesProvider();
             var instancePoolsProvider = InstancePoolsProvider.Create();
             var crdtMemoryAllocator = CRDTPooledMemoryAllocator.Create();
             var crdtDeserializer = new CRDTDeserializer(crdtMemoryAllocator);
+            var ecsToCrdtWriter = new ECSToCRDTWriter(crdtProtocol, outgoingCrtdMessagesProvider, sdkComponentsRegistry, crdtMemoryAllocator);
+            var systemGroupThrottler = new SystemGroupsUpdateGate();
 
             /* Pass dependencies here if they are needed by the systems */
-            var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, entitiesMap);
+            var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, ecsToCrdtWriter, entitiesMap, ecsMutexSync);
 
-            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(in instanceDependencies);
+            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(in instanceDependencies, systemGroupThrottler);
             ecsWorldFacade.Initialize();
 
             // Create an instance of Scene Runtime on the thread pool
@@ -146,7 +152,9 @@ namespace SceneRunner
                 crdtDeserializer,
                 crdtSerializer,
                 crdtWorldSynchronizer,
-                outgoingCrtdMessagesProvider);
+                outgoingCrtdMessagesProvider,
+                systemGroupThrottler,
+                ecsMutexSync);
 
             sceneRuntime.RegisterEngineApi(engineAPI);
 

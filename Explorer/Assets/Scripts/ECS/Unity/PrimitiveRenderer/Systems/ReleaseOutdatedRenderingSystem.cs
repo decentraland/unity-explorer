@@ -1,10 +1,11 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
+using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.ComponentsPooling;
+using ECS.Groups;
 using ECS.Unity.Groups;
 using ECS.Unity.PrimitiveRenderer.Components;
 
@@ -13,8 +14,9 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
     /// <summary>
     ///     Releases the previous collider if its type was changed at runtime
     /// </summary>
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateBefore(typeof(ComponentInstantiationGroup))]
+    [ThrottlingEnabled]
     public partial class ReleaseOutdatedRenderingSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPoolsRegistry poolsRegistry;

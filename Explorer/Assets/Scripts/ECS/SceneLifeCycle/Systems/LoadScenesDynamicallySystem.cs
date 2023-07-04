@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using ECS.Abstract;
+using ECS.StreamableLoading.AssetBundles.Manifest;
 using ECS.Unity.Transforms.Components;
 using Ipfs;
 using JetBrains.Annotations;
@@ -10,6 +11,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
+using ManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.Manifest.GetAssetBundleManifestIntention>;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -72,6 +74,8 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     IpfsTypes.SceneEntityDefinition scene = retrievedScenes[i];
 
+
+                    // TODO: Review
                     scene.urn = new IpfsTypes.IpfsPath()
                     {
                         Urn = "",
@@ -79,11 +83,15 @@ namespace ECS.SceneLifeCycle.Systems
                         EntityId = scene.id,
                     };
 
+                    if (scene.pointers.Count == 0) continue;
+
+                    var scenePointer = new ScenePointer(scene, ManifestPromise.Create(World, new GetAssetBundleManifestIntention(scene.id)));
+
                     foreach (string encodedPointer in scene.pointers)
                     {
                         Vector2Int pointer = IpfsHelper.DecodePointer(encodedPointer);
                         parcelsToLoad.Remove(pointer);
-                        state.ScenePointers.TryAdd(pointer, scene);
+                        state.ScenePointers.TryAdd(pointer, scenePointer);
                     }
                 }
 
@@ -91,11 +99,7 @@ namespace ECS.SceneLifeCycle.Systems
                 for (var i = 0; i < parcelsToLoad.Count; i++)
                 {
                     Vector2Int emptyParcel = parcelsToLoad[i];
-
-                    state.ScenePointers.Add(emptyParcel, new IpfsTypes.SceneEntityDefinition
-                    {
-                        id = $"empty-parcel-{emptyParcel.x}-{emptyParcel.y}",
-                    });
+                    state.ScenePointers.Add(emptyParcel, new ScenePointer(emptyParcel));
                 }
 
                 pointerRequest = null;

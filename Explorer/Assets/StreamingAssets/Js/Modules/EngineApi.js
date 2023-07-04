@@ -2,7 +2,7 @@
 module.exports.crdtSendToRenderer = async function(messages) {
     const data = new Uint8Array(UnityEngineApi.CrdtSendToRenderer(messages.data))
     return {
-        data
+        data: [data]
     };
 }
 
