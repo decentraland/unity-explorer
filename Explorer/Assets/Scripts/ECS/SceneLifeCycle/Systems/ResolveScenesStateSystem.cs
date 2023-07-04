@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.Components;
+using ECS.StreamableLoading.AssetBundles.Manifest;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
@@ -10,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Utility;
+using ManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.Manifest.GetAssetBundleManifestIntention>;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -34,6 +36,14 @@ namespace ECS.SceneLifeCycle.Systems
         protected override void Update(float t)
         {
             // TODO: load realm-defined scenes to requirements (like Worlds)
+
+            // the fixed scenes are always required
+            foreach (var definition in state.FixedScenes)
+            {
+                // TODO: REVIEW THIS
+                var scenePointer = new ScenePointer(definition, ManifestPromise.Create(World, new GetAssetBundleManifestIntention(definition.id)));
+                requiredScenes.Add(scenePointer);
+            }
 
             requiredScenes.Clear();
 
