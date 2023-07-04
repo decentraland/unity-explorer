@@ -8,6 +8,7 @@ using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -79,6 +80,7 @@ namespace CrdtEcsBridge.Engine.Tests
                 crdtWorldSynchronizer = Substitute.For<ICRDTWorldSynchronizer>(),
                 outgoingCrtdMessagesProvider = Substitute.For<IOutgoingCRTDMessagesProvider>(),
                 Substitute.For<ISystemGroupsUpdateGate>(),
+                new RethrowSceneExceptionsHandler(),
                 new MutexSync()
             );
 

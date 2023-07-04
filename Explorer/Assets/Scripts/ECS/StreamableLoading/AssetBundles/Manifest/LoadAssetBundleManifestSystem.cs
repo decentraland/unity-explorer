@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
+using Diagnostics.ReportsHandling;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
@@ -14,6 +15,7 @@ using Utility.Multithreading;
 namespace ECS.StreamableLoading.AssetBundles.Manifest
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class LoadAssetBundleManifestSystem : LoadSystemBase<SceneAssetBundleManifest, GetAssetBundleManifestIntention>
     {
         private readonly string assetBundleURL;
