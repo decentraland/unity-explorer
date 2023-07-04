@@ -16,7 +16,7 @@ namespace SceneRunner.Scene
 
         private readonly IpfsTypes.SceneEntityDefinition sceneDefinition;
 
-        private string customContentBaseUrl = null;
+        private readonly string customContentBaseUrl = null;
 
         private readonly bool supportHashes;
 
