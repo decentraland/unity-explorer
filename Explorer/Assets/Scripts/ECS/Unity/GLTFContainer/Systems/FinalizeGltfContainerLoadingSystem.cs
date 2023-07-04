@@ -7,7 +7,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.Transforms.Components;
-using UnityEngine;
 using Utility;
 
 namespace ECS.Unity.GLTFContainer.Systems
@@ -19,11 +18,30 @@ namespace ECS.Unity.GLTFContainer.Systems
     [UpdateAfter(typeof(LoadGltfContainerSystem))]
     public partial class FinalizeGltfContainerLoadingSystem : BaseUnityLoopSystem
     {
-        public FinalizeGltfContainerLoadingSystem(World world) : base(world) { }
+        private readonly EntityReference sceneRoot;
+
+        public FinalizeGltfContainerLoadingSystem(World world, EntityReference sceneRoot) : base(world)
+        {
+            this.sceneRoot = sceneRoot;
+        }
 
         protected override void Update(float t)
         {
             FinalizeLoadingQuery(World);
+            FinalizeLoadingNoTransformQuery(World);
+        }
+
+        /// <summary>
+        ///     The overload that uses the scene transform as a parent
+        /// </summary>
+        /// <param name="component"></param>
+        [Query]
+        [All(typeof(PBGltfContainer))]
+        [None(typeof(TransformComponent))]
+        private void FinalizeLoadingNoTransform(ref GltfContainerComponent component)
+        {
+            if (World.TryGet(sceneRoot, out TransformComponent transformComponent))
+                FinalizeLoading(ref component, ref transformComponent);
         }
 
         [Query]
@@ -31,14 +49,12 @@ namespace ECS.Unity.GLTFContainer.Systems
         private void FinalizeLoading(ref GltfContainerComponent component, ref TransformComponent transformComponent)
         {
             // Try consume removes the entity if the loading is finished
-            if (component.State == LoadingState.Loading
+            if (component.State.Value == LoadingState.Loading
                 && component.Promise.TryConsume(World, out StreamableLoadingResult<GltfContainerAsset> result))
             {
-                // TODO error reporting
                 if (!result.Succeeded)
                 {
                     component.State.Set(LoadingState.FinishedWithError);
-                    Debug.LogException(result.Exception);
                     return;
                 }
 

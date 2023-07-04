@@ -3,10 +3,10 @@ using Arch.Core;
 using CRDT;
 using CRDT.Protocol;
 using CrdtEcsBridge.Components;
+using Diagnostics.ReportsHandling;
 using ECS.LifeCycle.Components;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace CrdtEcsBridge.WorldSynchronizer
 {
@@ -108,7 +108,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
                     if (!sdkComponentsRegistry.TryGet(message.ComponentId, out var sdkComponentBridge))
                     {
-                        Debug.LogWarning($"SDK Component {message.ComponentId} is not registered");
+                        ReportHub.LogWarning(ReportCategory.CRDT_ECS_BRIDGE, $"SDK Component {message.ComponentId} is not registered");
                         return CRDTReconciliationEffect.NoChanges;
                     }
 

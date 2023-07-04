@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
+using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.ComponentsPooling;
 using ECS.Unity.Groups;
@@ -18,6 +19,7 @@ using Utility.Primitives;
 namespace ECS.Unity.PrimitiveRenderer.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
+    [LogCategory(ReportCategory.PRIMITIVE_MESHES)]
     public partial class InstantiatePrimitiveRenderingSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPool<MeshRenderer> rendererPoolRegistry;

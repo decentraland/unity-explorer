@@ -1,18 +1,19 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
+using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.Components;
 using Ipfs;
 using SceneRunner;
 using SceneRunner.Scene;
+using System;
 using System.Threading;
 
 namespace ECS.SceneLifeCycle.Systems
 {
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(SceneLifeCycleGroup))]
     [UpdateAfter(typeof(ResolveScenesStateSystem))]
     public partial class StartSceneSystem : BaseUnityLoopSystem
     {
@@ -35,10 +36,19 @@ namespace ECS.SceneLifeCycle.Systems
 
         private async UniTask InitializeSceneAndStart(SceneLoadingComponent sceneLoadingComponent, CancellationToken ct)
         {
-            // main thread
-            ISceneFacade sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(ipfsRealm, sceneLoadingComponent.Definition, sceneLoadingComponent.AssetBundleManifest, ct);
+            ISceneFacade sceneFacade;
 
-            ct.RegisterWithoutCaptureExecutionContext(() => sceneFacade?.DisposeAsync().Forget());
+            try
+            {
+                // main thread
+                sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(ipfsRealm, sceneLoadingComponent.Definition, sceneLoadingComponent.AssetBundleManifest, ct);
+                ct.RegisterWithoutCaptureExecutionContext(() => sceneFacade?.DisposeAsync().Forget());
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.SCENE_FACTORY));
+                return;
+            }
 
             // thread pool
             await sceneFacade.StartUpdateLoop(30, ct);
