@@ -2,11 +2,13 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using ECS.Abstract;
+using ECS.StreamableLoading.AssetBundles.Manifest;
 using Ipfs;
 using System.Collections.Generic;
 using Unity.Plastic.Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Networking;
+using ManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.Manifest.GetAssetBundleManifestIntention>;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -53,10 +55,12 @@ namespace ECS.SceneLifeCycle.Systems
                         sceneEntityDefinition.id ??= entityUrn.EntityId;
                         sceneEntityDefinition.urn = entityUrn;
 
+                        var scenePointer = new ScenePointer(sceneEntityDefinition, ManifestPromise.Create(World, new GetAssetBundleManifestIntention(sceneEntityDefinition.id)));
+
                         foreach (string encodedPointer in sceneEntityDefinition.metadata.scene.parcels)
                         {
                             Vector2Int pointer = IpfsHelper.DecodePointer(encodedPointer);
-                            state.ScenePointers.TryAdd(pointer, sceneEntityDefinition);
+                            state.ScenePointers.TryAdd(pointer, scenePointer);
                         }
 
                         state.FixedScenes.Add(sceneEntityDefinition);

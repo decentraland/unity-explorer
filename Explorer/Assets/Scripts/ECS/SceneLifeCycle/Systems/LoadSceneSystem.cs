@@ -37,9 +37,9 @@ namespace ECS.SceneLifeCycle.Systems
 
             var parcelsInRange = ParcelMathHelper.ParcelsInRange(position, state.SceneLoadRadius);
 
-            foreach ((Vector2Int parcel, IpfsTypes.SceneEntityDefinition definition) in state.ScenePointers)
+            foreach ((Vector2Int parcel, ScenePointer scenePointer) in state.ScenePointers)
             {
-                if (parcelsInRange.Contains(parcel)) requiredScenes.Add(definition);
+                if (parcelsInRange.Contains(parcel)) requiredScenes.Add(scenePointer.Definition);
             }
 
             // remove scenes that are not required

@@ -47,12 +47,9 @@ namespace Global
                 SceneLoadRadius = sceneLoadRadius,
             };
 
-            // TODO: REVIEW
-            LoadScenesDynamicallySystem.InjectToWorld(ref builder, ipfsRealm, state, staticLoadPositions);
-            ResolveScenesStateSystem.InjectToWorld(ref builder, state);
-            StartSceneSystem.InjectToWorld(ref builder, ipfsRealm, sceneFactory, destroyCancellationSource.Token);
             processRealmChangeSystem = ProcessRealmChangeSystem.InjectToWorld(ref builder, state);
             LoadScenesDynamicallySystem.InjectToWorld(ref builder, state, staticLoadPositions);
+            ResolveScenesStateSystem.InjectToWorld(ref builder, state);
             LoadSceneMetadataSystem.InjectToWorld(ref builder, state);
             LoadSceneSystem.InjectToWorld(ref builder, state);
             StartSceneSystem.InjectToWorld(ref builder, state, sceneFactory, destroyCancellationSource.Token);

@@ -65,7 +65,7 @@ namespace SceneRunner
                 main = mainScenePath,
             };
 
-            var sceneData = new SceneData(new IpfsRealm(baseUrl), sceneDefinition, false);
+            var sceneData = new SceneData(new IpfsRealm(baseUrl), sceneDefinition, false, SceneAssetBundleManifest.NULL);
 
             return await CreateScene(sceneData, ct);
         }
@@ -89,7 +89,7 @@ namespace SceneRunner
                 metadata = sceneMetadata,
             };
 
-            var sceneData = new SceneData(new IpfsRealm(fullPath), sceneDefinition, false);
+            var sceneData = new SceneData(new IpfsRealm(fullPath), sceneDefinition, false, SceneAssetBundleManifest.NULL);
 
             return await CreateScene(sceneData, ct);
         }
@@ -115,7 +115,7 @@ namespace SceneRunner
 
             JsonConvert.PopulateObject(content.downloadHandler.text, sceneDefinition.metadata);
 
-            var sceneData = new SceneData(ipfsRealm, sceneDefinition, true, contentBaseUrl);
+            var sceneData = new SceneData(ipfsRealm, sceneDefinition, true, abManifest, contentBaseUrl);
 
             return await CreateScene(sceneData, ct);
         }

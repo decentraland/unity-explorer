@@ -29,8 +29,7 @@ namespace SceneRunner.Scene
             return ipfsRealm.ContentBaseUrl;
         }
 
-        public SceneData(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, bool supportHashes, [NotNull] SceneAssetBundleManifest assetBundleManifest)
-        public SceneData(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, bool supportHashes, string customContentBaseUrl = null)
+        public SceneData(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, bool supportHashes, [NotNull] SceneAssetBundleManifest assetBundleManifest, string customContentBaseUrl = null)
         {
             this.ipfsRealm = ipfsRealm;
             this.sceneDefinition = sceneDefinition;

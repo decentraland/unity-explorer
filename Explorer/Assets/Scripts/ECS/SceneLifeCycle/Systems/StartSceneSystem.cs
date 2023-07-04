@@ -38,8 +38,7 @@ namespace ECS.SceneLifeCycle.Systems
         private async UniTask InitializeSceneAndStart(SceneLoadingComponent sceneLoadingComponent, CancellationToken ct)
         {
             // main thread
-            ISceneFacade sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(ipfsRealm, sceneLoadingComponent.Definition, sceneLoadingComponent.AssetBundleManifest, ct);
-            ISceneFacade sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(state.IpfsRealm, sceneDefinition, ct);
+            ISceneFacade sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(state.IpfsRealm, sceneLoadingComponent.Definition, sceneLoadingComponent.AssetBundleManifest, ct);
 
             ct.RegisterWithoutCaptureExecutionContext(() => sceneFacade?.DisposeAsync().Forget());
 
