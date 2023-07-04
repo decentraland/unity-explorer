@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using CrdtEcsBridge.Components.Transform;
 using ECS.Abstract;
 using ECS.ComponentsPooling;
@@ -11,6 +12,7 @@ using UnityEngine;
 namespace ECS.Unity.Transforms.Systems
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
+    [ThrottlingEnabled]
     public partial class InstantiateTransformSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPool<Transform> transformPool;

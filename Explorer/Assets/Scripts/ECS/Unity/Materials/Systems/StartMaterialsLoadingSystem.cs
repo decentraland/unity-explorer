@@ -1,13 +1,17 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using ECS.Abstract;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Defaults;
 using SceneRunner.Scene;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.Unity.Materials.Systems
 {
@@ -16,15 +20,18 @@ namespace ECS.Unity.Materials.Systems
     ///     Does not provide support for Video Textures
     /// </summary>
     [UpdateInGroup(typeof(MaterialLoadingGroup))]
+    [ThrottlingEnabled]
     public partial class StartMaterialsLoadingSystem : BaseUnityLoopSystem
     {
         private readonly DestroyMaterial destroyMaterial;
         private readonly ISceneData sceneData;
+        private readonly int attemptsCount;
 
-        public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData) : base(world)
+        public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData, int attemptsCount) : base(world)
         {
             this.destroyMaterial = destroyMaterial;
             this.sceneData = sceneData;
+            this.attemptsCount = attemptsCount;
         }
 
         protected override void Update(float t)
@@ -53,8 +60,9 @@ namespace ECS.Unity.Materials.Systems
                 materialComponent.Result = null;
             }
 
-            materialComponent.Status = MaterialComponent.LifeCycle.LoadingNotStarted;
             materialComponent.Data = materialData;
+            CreateGetTexturePromises(ref materialComponent);
+            materialComponent.Status = MaterialComponent.LifeCycle.LoadingInProgress;
         }
 
         [Query]
@@ -62,7 +70,23 @@ namespace ECS.Unity.Materials.Systems
         [None(typeof(MaterialComponent))]
         private void CreateMaterialComponent(in Entity entity, ref PBMaterial material)
         {
-            World.Add(entity, new MaterialComponent(CreateMaterialData(ref material)));
+            var materialComponent = new MaterialComponent(CreateMaterialData(ref material));
+            CreateGetTexturePromises(ref materialComponent);
+            materialComponent.Status = MaterialComponent.LifeCycle.LoadingInProgress;
+
+            World.Add(entity, materialComponent);
+        }
+
+        private void CreateGetTexturePromises(ref MaterialComponent materialComponent)
+        {
+            TryCreateGetTexturePromise(in materialComponent.Data.AlbedoTexture, ref materialComponent.AlbedoTexPromise);
+
+            if (materialComponent.Data.IsPbrMaterial)
+            {
+                TryCreateGetTexturePromise(in materialComponent.Data.AlphaTexture, ref materialComponent.AlphaTexPromise);
+                TryCreateGetTexturePromise(in materialComponent.Data.EmissiveTexture, ref materialComponent.EmissiveTexPromise);
+                TryCreateGetTexturePromise(in materialComponent.Data.BumpTexture, ref materialComponent.BumpTexPromise);
+            }
         }
 
         private MaterialData CreateMaterialData(ref PBMaterial material)
@@ -113,5 +137,47 @@ namespace ECS.Unity.Materials.Systems
 
         private static MaterialData CreateBasicMaterialData(in PBMaterial pbMaterial, in TextureComponent? albedoTexture) =>
             MaterialData.CreateBasicMaterial(albedoTexture, pbMaterial.GetAlphaTest(), pbMaterial.GetDiffuseColor(), pbMaterial.GetCastShadows());
+
+        private bool TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise? promise)
+        {
+            if (textureComponent == null)
+            {
+                // If component is being reuse forget the previous promise
+                ReleaseMaterial.TryAddAbortIntention(World, ref promise);
+                return false;
+            }
+
+            TextureComponent textureComponentValue = textureComponent.Value;
+
+            // If data inside promise has not changed just reuse the same promise
+            // as creating and waiting for a new one can be expensive
+            if (Equals(ref textureComponentValue, ref promise))
+                return false;
+
+            // If component is being reused forget the previous promise
+            ReleaseMaterial.TryAddAbortIntention(World, ref promise);
+
+            promise = Promise.Create(World, new GetTextureIntention
+            {
+                CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
+                WrapMode = textureComponentValue.WrapMode,
+                FilterMode = textureComponentValue.FilterMode,
+            });
+
+            return true;
+        }
+
+        private static bool Equals(ref TextureComponent textureComponent, ref Promise? promise)
+        {
+            if (promise == null) return false;
+
+            Promise promiseValue = promise.Value;
+
+            GetTextureIntention intention = promiseValue.LoadingIntention;
+
+            return textureComponent.Src == promiseValue.LoadingIntention.CommonArguments.URL &&
+                   textureComponent.WrapMode == intention.WrapMode &&
+                   textureComponent.FilterMode == intention.FilterMode;
+        }
     }
 }

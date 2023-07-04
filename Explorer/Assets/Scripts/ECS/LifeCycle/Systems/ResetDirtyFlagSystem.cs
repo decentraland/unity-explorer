@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Groups;
@@ -14,6 +15,7 @@ namespace ECS.LifeCycle.Systems
 
     // Update survived components only
     [UpdateAfter(typeof(CleanUpGroup))]
+    [ThrottlingEnabled]
     public partial class ResetDirtyFlagSystem<T> : BaseUnityLoopSystem where T: IDirtyMarker
     {
         internal ResetDirtyFlagSystem(World world) : base(world) { }

@@ -7,6 +7,7 @@ using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.OutgoingMessages;
+using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using ECS.LifeCycle;
@@ -49,7 +50,7 @@ namespace SceneRunner.Tests
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>();
 
-            ecsWorldFactory.CreateWorld(in Arg.Any<ECSWorldInstanceSharedDependencies>())
+            ecsWorldFactory.CreateWorld(in Arg.Any<ECSWorldInstanceSharedDependencies>(), Arg.Any<ISystemGroupsUpdateGate>())
                            .Returns(_ =>
                             {
                                 var world = World.Create();

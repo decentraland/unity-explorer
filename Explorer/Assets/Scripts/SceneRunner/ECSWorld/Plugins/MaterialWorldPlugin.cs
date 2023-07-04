@@ -41,13 +41,13 @@ namespace SceneRunner.ECSWorld.Plugins
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            StartMaterialsLoadingSystem.InjectToWorld(ref builder, destroyMaterial, sharedDependencies.SceneData);
+            StartMaterialsLoadingSystem.InjectToWorld(ref builder, destroyMaterial, sharedDependencies.SceneData, LOADING_ATTEMPTS_COUNT);
 
             // the idea with cache didn't work out: the CPU pressure is too high and benefits are not clear
             // consider revising when and if needed
             // LoadMaterialFromCacheSystem.InjectToWorld(ref builder, materialsCache);
-            CreateBasicMaterialSystem.InjectToWorld(ref builder, basicMatPool, LOADING_ATTEMPTS_COUNT);
-            CreatePBRMaterialSystem.InjectToWorld(ref builder, pbrMatPool, LOADING_ATTEMPTS_COUNT);
+            CreateBasicMaterialSystem.InjectToWorld(ref builder, basicMatPool);
+            CreatePBRMaterialSystem.InjectToWorld(ref builder, pbrMatPool);
             ApplyMaterialSystem.InjectToWorld(ref builder);
             ResetMaterialSystem.InjectToWorld(ref builder, destroyMaterial);
             CleanUpMaterialsSystem.InjectToWorld(ref builder, destroyMaterial);

@@ -1,4 +1,5 @@
 ﻿using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using ECS.Groups;
 using ECS.Unity.Transforms.Systems;
 
@@ -9,5 +10,6 @@ namespace ECS.Unity.Groups
     /// </summary>
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateAfter(typeof(InstantiateTransformSystem))]
+    [ThrottlingEnabled]
     public partial class ComponentInstantiationGroup { }
 }

@@ -34,17 +34,17 @@ namespace SceneRunner.ECSWorld.Plugins
 
             // GLTF Container
             LoadGltfContainerSystem.InjectToWorld(ref builder);
+            FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder);
 
-            //CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache);
             ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache);
             WriteGltfContainerLoadingStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, componentPoolsRegistry.GetReferenceTypePool<PBGltfContainerLoadingState>());
 
             ResetDirtyFlagSystem<PBGltfContainer>.InjectToWorld(ref builder);
 
-            var releaseTransformSystem =
+            var cleanUpGltfContainerSystem =
                 CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache);
 
-            finalizeWorldSystems.Add(releaseTransformSystem);
+            finalizeWorldSystems.Add(cleanUpGltfContainerSystem);
         }
     }
 }

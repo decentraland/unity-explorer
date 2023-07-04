@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
@@ -14,11 +13,10 @@ using ECS.Unity.GLTFContainer.Systems;
 using ECS.Unity.Transforms.Components;
 using NSubstitute;
 using NUnit.Framework;
-using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEngine.TestTools;
+using Utility;
 
 namespace ECS.Unity.GLTFContainer.Tests
 {
@@ -66,25 +64,6 @@ namespace ECS.Unity.GLTFContainer.Tests
             Assert.That(component.State.ChangedThisFrame(), Is.True);
         }
 
-        [Test]
-        public void FinalizeWithError()
-        {
-            var component = new GltfContainerComponent(ColliderLayer.ClPhysics, ColliderLayer.ClPointer,
-                AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention()));
-
-            component.State.Set(LoadingState.Loading);
-
-            Entity e = world.Create(component, new TransformComponent(), new PBGltfContainer());
-            world.Add(component.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(new Exception()));
-
-            LogAssert.ignoreFailingMessages = true;
-
-            system.Update(0);
-
-            component = world.Get<GltfContainerComponent>(e);
-            Assert.That(component.State.Value, Is.EqualTo(LoadingState.FinishedWithError));
-        }
-
         private async Task InstantiateAssetBundle(string hash, Entity promiseEntity)
         {
             StreamableLoadingResult<AssetBundleData> assetBundleData = await resources.LoadAssetBundle(hash);
@@ -92,57 +71,6 @@ namespace ECS.Unity.GLTFContainer.Tests
             // Just pass it through another system for simplicity, otherwise there is too much logic to replicate
             world.Add(promiseEntity, assetBundleData);
             createGltfAssetFromAssetBundleSystem.Update(0);
-        }
-
-        [Test]
-        public async Task FinalizeWithSuccess()
-        {
-            var component = new GltfContainerComponent(ColliderLayer.ClPhysics, ColliderLayer.ClPointer,
-                AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
-                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SIMPLE_RENDERER, new CancellationTokenSource())));
-
-            component.State.Set(LoadingState.Loading);
-
-            await InstantiateAssetBundle(GltfContainerTestResources.SIMPLE_RENDERER, component.Promise.Entity);
-
-            Entity e = world.Create(component, new PBGltfContainer { Src = GltfContainerTestResources.SIMPLE_RENDERER });
-            TransformComponent transform = AddTransformToEntity(e);
-
-            system.Update(0);
-
-            component = world.Get<GltfContainerComponent>(e);
-
-            Assert.That(component.State.Value, Is.EqualTo(LoadingState.Finished));
-            Assert.That(component.Promise.Result.Value.Asset.Root.transform.parent, Is.EqualTo(transform.Transform));
-            Assert.That(component.Promise.Result.Value.Asset.Root.activeSelf, Is.EqualTo(true));
-        }
-
-        [Test]
-        public async Task EnableInvisibleColliders()
-        {
-            var component = new GltfContainerComponent(ColliderLayer.ClNone, ColliderLayer.ClPointer,
-                AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
-                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SCENE_WITH_COLLIDER, new CancellationTokenSource())));
-
-            component.State.Set(LoadingState.Loading);
-
-            await InstantiateAssetBundle(GltfContainerTestResources.SCENE_WITH_COLLIDER, component.Promise.Entity);
-
-            Entity e = world.Create(component, new PBGltfContainer { Src = GltfContainerTestResources.SCENE_WITH_COLLIDER });
-            AddTransformToEntity(e);
-
-            system.Update(0);
-
-            component = world.Get<GltfContainerComponent>(e);
-
-            GltfContainerAsset promiseAsset = component.Promise.Result.Value.Asset;
-
-            // 1 Collider
-            Assert.That(promiseAsset.InvisibleColliders.All(c => c.enabled), Is.True);
-            Assert.That(promiseAsset.InvisibleColliders.All(c => c.gameObject.layer == PhysicsLayers.ON_POINTER_EVENT_LAYER), Is.True);
-
-            // No visible colliders created
-            Assert.That(promiseAsset.VisibleMeshesColliders, Is.Null);
         }
 
         [Test]
@@ -154,19 +82,22 @@ namespace ECS.Unity.GLTFContainer.Tests
                 AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
                     world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SCENE_WITH_COLLIDER, new CancellationTokenSource())));
 
-            component.State.Set(LoadingState.Loading);
-
             await InstantiateAssetBundle(GltfContainerTestResources.SCENE_WITH_COLLIDER, component.Promise.Entity);
 
+            component.State.Set(LoadingState.Finished);
+            component.Promise.TryConsume(world, out StreamableLoadingResult<GltfContainerAsset> result);
+
             Entity e = world.Create(component, new PBGltfContainer { Src = GltfContainerTestResources.SCENE_WITH_COLLIDER });
-            AddTransformToEntity(e);
+            TransformComponent transformComponent = AddTransformToEntity(e);
 
-            system.Update(0);
+            ConfigureGltfContainerColliders.SetupColliders(ref component, result.Asset);
 
-            component = world.Get<GltfContainerComponent>(e);
+            // Reparent to the current transform
+            result.Asset.Root.transform.SetParent(transformComponent.Transform);
+            result.Asset.Root.transform.ResetLocalTRS();
+            result.Asset.Root.SetActive(true);
 
-            GltfContainerAsset promiseAsset = component.Promise.Result.Value.Asset;
-
+            GltfContainerAsset promiseAsset = result.Asset;
             Assert.That(promiseAsset.InvisibleColliders.All(c => c.enabled), Is.EqualTo(from));
 
             // then modify the component to disable colliders
@@ -175,29 +106,6 @@ namespace ECS.Unity.GLTFContainer.Tests
             system.Update(0);
 
             Assert.That(promiseAsset.InvisibleColliders.All(c => c.enabled), Is.EqualTo(to));
-        }
-
-        [Test]
-        public async Task InstantiateVisibleMeshesColliders()
-        {
-            var component = new GltfContainerComponent(ColliderLayer.ClPointer, ColliderLayer.ClNone,
-                AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
-                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SCENE_WITH_COLLIDER, new CancellationTokenSource())));
-
-            component.State.Set(LoadingState.Loading);
-
-            await InstantiateAssetBundle(GltfContainerTestResources.SCENE_WITH_COLLIDER, component.Promise.Entity);
-
-            Entity e = world.Create(component, new PBGltfContainer { Src = GltfContainerTestResources.SCENE_WITH_COLLIDER, IsDirty = true });
-            AddTransformToEntity(e);
-
-            system.Update(0);
-
-            component = world.Get<GltfContainerComponent>(e);
-            GltfContainerAsset promiseAsset = component.Promise.Result.Value.Asset;
-
-            Assert.That(promiseAsset.VisibleMeshesColliders.Count, Is.EqualTo(196));
-            Assert.That(promiseAsset.VisibleMeshesColliders.All(c => c.gameObject.layer == PhysicsLayers.ON_POINTER_EVENT_LAYER), Is.True);
         }
 
         [Test]

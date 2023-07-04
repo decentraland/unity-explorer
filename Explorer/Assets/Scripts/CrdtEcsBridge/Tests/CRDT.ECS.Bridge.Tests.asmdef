@@ -22,7 +22,8 @@
         "NSubstitute.dll",
         "Arch.dll",
         "Arch.System.dll",
-        "Google.Protobuf.dll"
+        "Google.Protobuf.dll",
+        "Arch.SystemGroups.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [

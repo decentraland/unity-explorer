@@ -1,3 +1,5 @@
+using CrdtEcsBridge.UpdateGate;
+
 namespace SceneRunner.ECSWorld
 {
     public interface IECSWorldFactory
@@ -5,6 +7,6 @@ namespace SceneRunner.ECSWorld
         /// <summary>
         /// Create a new instance of the ECS world, all its systems and attach them to the player loop
         /// </summary>
-        ECSWorldFacade CreateWorld(in ECSWorldInstanceSharedDependencies sharedDependencies);
+        ECSWorldFacade CreateWorld(in ECSWorldInstanceSharedDependencies sharedDependencies, in ISystemGroupsUpdateGate systemGroupsUpdateGate);
     }
 }

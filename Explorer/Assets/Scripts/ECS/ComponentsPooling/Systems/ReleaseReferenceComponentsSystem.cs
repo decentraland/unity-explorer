@@ -1,5 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -11,6 +12,7 @@ namespace ECS.ComponentsPooling.Systems
     /// Called as a last step before entity destruction to return reference components to the pool
     /// </summary>
     [UpdateInGroup(typeof(CleanUpGroup))]
+    [ThrottlingEnabled]
     public partial class ReleaseReferenceComponentsSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly QueryDescription queryDescription = new QueryDescription().WithAll<DeleteEntityIntention>();

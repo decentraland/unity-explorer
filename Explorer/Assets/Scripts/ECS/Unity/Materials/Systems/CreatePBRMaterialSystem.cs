@@ -12,6 +12,7 @@ using UnityEngine.Rendering;
 namespace ECS.Unity.Materials.Systems
 {
     [UpdateInGroup(typeof(MaterialLoadingGroup))]
+    [UpdateAfter(typeof(StartMaterialsLoadingSystem))]
     public partial class CreatePBRMaterialSystem : CreateMaterialSystemBase
     {
         /// <summary>
@@ -19,8 +20,7 @@ namespace ECS.Unity.Materials.Systems
         /// </summary>
         public const string MATERIAL_PATH = "ShapeMaterial";
 
-        internal CreatePBRMaterialSystem(World world, IObjectPool<Material> materialsPool, int attemptsCount)
-            : base(world, materialsPool, attemptsCount) { }
+        internal CreatePBRMaterialSystem(World world, IObjectPool<Material> materialsPool) : base(world, materialsPool) { }
 
         protected override void Update(float t)
         {
@@ -33,22 +33,9 @@ namespace ECS.Unity.Materials.Systems
             if (!materialComponent.Data.IsPbrMaterial)
                 return;
 
-            if (materialComponent.Status == MaterialComponent.LifeCycle.LoadingNotStarted)
-                StartTexturesLoading(ref materialComponent);
-
             // if there are no textures to load we can construct a material right away
             if (materialComponent.Status == MaterialComponent.LifeCycle.LoadingInProgress)
                 ConstructMaterial(ref materialComponent);
-        }
-
-        private void StartTexturesLoading(ref MaterialComponent materialComponent)
-        {
-            TryCreateGetTexturePromise(in materialComponent.Data.AlbedoTexture, ref materialComponent.AlbedoTexPromise);
-            TryCreateGetTexturePromise(in materialComponent.Data.EmissiveTexture, ref materialComponent.EmissiveTexPromise);
-            TryCreateGetTexturePromise(in materialComponent.Data.AlphaTexture, ref materialComponent.AlphaTexPromise);
-            TryCreateGetTexturePromise(in materialComponent.Data.BumpTexture, ref materialComponent.BumpTexPromise);
-
-            materialComponent.Status = MaterialComponent.LifeCycle.LoadingInProgress;
         }
 
         private void ConstructMaterial(ref MaterialComponent materialComponent)

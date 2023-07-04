@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Unity.Materials.Components;
@@ -14,6 +15,7 @@ namespace ECS.Unity.Materials.Systems
     /// </summary>
     [UpdateInGroup(typeof(MaterialLoadingGroup))]
     [UpdateBefore(typeof(ApplyMaterialSystem))]
+    [ThrottlingEnabled]
     public partial class ResetMaterialSystem : BaseUnityLoopSystem
     {
         private readonly DestroyMaterial destroyMaterial;

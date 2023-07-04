@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using CRDT;
 using CrdtEcsBridge.Components.Transform;
 using ECS.Abstract;
@@ -20,6 +21,7 @@ namespace ECS.Unity.Systems
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateAfter(typeof(InstantiateTransformSystem))]
     [UpdateBefore(typeof(ComponentInstantiationGroup))]
+    [ThrottlingEnabled]
     public partial class AssertDisconnectedTransformsSystem : BaseUnityLoopSystem
     {
         internal AssertDisconnectedTransformsSystem(World world) : base(world) { }

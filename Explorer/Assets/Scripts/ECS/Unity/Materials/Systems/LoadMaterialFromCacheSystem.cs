@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using ECS.Abstract;
 using ECS.Unity.Materials.Components;
 using UnityEngine;
@@ -8,12 +9,14 @@ using UnityEngine;
 namespace ECS.Unity.Materials.Systems
 {
     /// <summary>
-    ///     Intercepts the loading process if the material is in the cache
+    ///     Intercepts the loading process if the material is in the cache.
+    ///     TODO Consider reworking as currently Materials caching is disabled
     /// </summary>
     [UpdateInGroup(typeof(MaterialLoadingGroup))]
     [UpdateAfter(typeof(StartMaterialsLoadingSystem))]
     [UpdateBefore(typeof(CreatePBRMaterialSystem))]
     [UpdateBefore(typeof(CreateBasicMaterialSystem))]
+    [ThrottlingEnabled]
     public partial class LoadMaterialFromCacheSystem : BaseUnityLoopSystem
     {
         private readonly IMaterialsCache materialsCache;

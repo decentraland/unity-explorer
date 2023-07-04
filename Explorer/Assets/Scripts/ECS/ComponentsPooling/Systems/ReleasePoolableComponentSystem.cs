@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -11,8 +12,9 @@ namespace ECS.ComponentsPooling.Systems
     ///     Releases components with poolable fields in a generic non-allocating manner
     /// </summary>
     [UpdateInGroup(typeof(CleanUpGroup))]
+    [ThrottlingEnabled]
     public partial class ReleasePoolableComponentSystem<T, TProvider> : BaseUnityLoopSystem, IFinalizeWorldSystem
-        where TProvider : IPoolableComponentProvider<T> where T : class
+        where TProvider: IPoolableComponentProvider<T> where T: class
     {
         private readonly QueryDescription entityDestroyQuery = new QueryDescription()
            .WithAll<DeleteEntityIntention, TProvider>();
@@ -51,7 +53,6 @@ namespace ECS.ComponentsPooling.Systems
                 poolsRegistry.GetPool(provider.PoolableComponentType).Release(provider.PoolableComponent);
                 provider.Dispose();
             }
-
         }
     }
 }

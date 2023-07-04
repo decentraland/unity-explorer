@@ -40,22 +40,22 @@ namespace ECS.Groups
             this.mutexSync = mutexSync;
         }
 
-        public override void BeforeUpdate(in float t)
+        public override void BeforeUpdate(in float t, bool throttle)
         {
             using MutexSync.Scope scope = mutexSync.GetScope();
-            BeforeUpdateInternal(in t);
+            BeforeUpdateInternal(in t, throttle);
         }
 
-        public override void Update(in float t)
+        public override void Update(in float t, bool throttle)
         {
             using MutexSync.Scope scope = mutexSync.GetScope();
-            UpdateInternal(in t);
+            UpdateInternal(in t, throttle);
         }
 
-        public override void AfterUpdate(in float t)
+        public override void AfterUpdate(in float t, bool throttle)
         {
             using MutexSync.Scope scope = mutexSync.GetScope();
-            AfterUpdateInternal(in t);
+            AfterUpdateInternal(in t, throttle);
         }
 
         public override void Dispose()

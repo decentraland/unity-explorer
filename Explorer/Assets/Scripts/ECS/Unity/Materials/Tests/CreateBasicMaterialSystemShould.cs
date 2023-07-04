@@ -15,8 +15,6 @@ namespace ECS.Unity.Materials.Tests
 {
     public class CreateBasicMaterialSystemShould : UnitySystemTestBase<CreateBasicMaterialSystem>
     {
-        private const int ATTEMPTS_COUNT = 5;
-
         private Material basicMat;
 
         [SetUp]
@@ -26,25 +24,8 @@ namespace ECS.Unity.Materials.Tests
             IObjectPool<Material> pool = Substitute.For<IObjectPool<Material>>();
             pool.Get().Returns(_ => new Material(basicMat));
 
-            system = new CreateBasicMaterialSystem(world, pool, ATTEMPTS_COUNT);
+            system = new CreateBasicMaterialSystem(world, pool);
             system.Initialize();
-        }
-
-        [Test]
-        public void StartLoading()
-        {
-            MaterialComponent component = CreateMaterialComponent();
-
-            component.Status = MaterialComponent.LifeCycle.LoadingNotStarted;
-
-            Entity e = world.Create(component);
-
-            system.Update(0);
-
-            MaterialComponent afterUpdate = world.Get<MaterialComponent>(e);
-            Assert.That(afterUpdate.Status, Is.EqualTo(MaterialComponent.LifeCycle.LoadingInProgress));
-
-            AssertTexturePromise(ref afterUpdate.AlbedoTexPromise, "albedo");
         }
 
         [Test]
@@ -92,18 +73,7 @@ namespace ECS.Unity.Materials.Tests
             world.Add(promise.Value.Entity, new StreamableLoadingResult<Texture2D>(Texture2D.grayTexture));
         }
 
-        private void AssertTexturePromise(ref AssetPromise<Texture2D, GetTextureIntention>? promise, string src)
-        {
-            Assert.That(promise.HasValue, Is.True);
-            AssetPromise<Texture2D, GetTextureIntention> promiseValue = promise.Value;
-            Assert.AreNotEqual(EntityReference.Null, promiseValue.Entity);
-
-            Assert.That(world.TryGet(promiseValue.Entity, out GetTextureIntention intention), Is.True);
-            Assert.That(intention.CommonArguments.URL, Is.EqualTo(src));
-            Assert.That(intention.CommonArguments.Attempts, Is.EqualTo(ATTEMPTS_COUNT));
-        }
-
-        private static MaterialComponent CreateMaterialComponent() =>
+        internal static MaterialComponent CreateMaterialComponent() =>
             new (MaterialData.CreateBasicMaterial(
                 new TextureComponent("albedo", TextureWrapMode.Mirror, FilterMode.Point),
                 0,
