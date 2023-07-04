@@ -1,6 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
+using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.Components;
 using ECS.StreamableLoading.AssetBundles.Manifest;
@@ -18,7 +18,7 @@ namespace ECS.SceneLifeCycle.Systems
     /// <summary>
     ///     Decides if loaded scenes should launched or destroyed
     /// </summary>
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(SceneLifeCycleGroup))]
     [UpdateAfter(typeof(LoadScenesDynamicallySystem))]
     public partial class ResolveScenesStateSystem : BaseUnityLoopSystem
     {
@@ -95,9 +95,11 @@ namespace ECS.SceneLifeCycle.Systems
 
                 // Launch the scene if the manifest is loaded
                 // Don't block the scene if the loading manifest failed, just use NULL
-                // TODO report the error
                 if (!pointer.ManifestPromise.TryGetResult(World, out StreamableLoadingResult<SceneAssetBundleManifest> manifest))
+                {
+                    ReportHub.LogError(new ReportData(GetReportCategory(), ReportHint.SessionStatic), $"Asset Bundles Manifest is not loaded for scene {definition.id}");
                     continue;
+                }
 
                 pointer.ManifestPromise.Consume(World);
 

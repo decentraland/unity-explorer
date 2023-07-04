@@ -1,8 +1,8 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
+using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.Components;
 using Ipfs;
@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
 {
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(SceneLifeCycleGroup))]
     [UpdateAfter(typeof(ResolveScenesStateSystem))]
     public partial class StartSceneSystem : BaseUnityLoopSystem
     {

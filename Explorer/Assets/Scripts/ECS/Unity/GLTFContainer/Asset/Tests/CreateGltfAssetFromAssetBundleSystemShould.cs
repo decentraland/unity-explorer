@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using Diagnostics.ReportsHandling;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
@@ -130,7 +131,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
             Assert.That(world.TryGet(e, out StreamableLoadingResult<GltfContainerAsset> result), Is.True);
             Assert.That(result.Succeeded, Is.False);
-            Assert.That(result.Exception, Is.TypeOf<MissingGltfAssetsException>());
+            Assert.That(result.Exception, Is.TypeOf<MissingGltfAssetsException>().Or.TypeOf<EcsSystemException>().And.InnerException.TypeOf<MissingGltfAssetsException>());
         }
 
         [Test]
@@ -145,7 +146,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
             Assert.That(world.TryGet(e, out StreamableLoadingResult<GltfContainerAsset> result), Is.True);
             Assert.That(result.Succeeded, Is.False);
-            Assert.That(result.Exception, Is.EqualTo(exception));
+            Assert.That(result.Exception, Is.EqualTo(exception).Or.TypeOf<EcsSystemException>().And.InnerException.EqualTo(exception));
         }
     }
 }

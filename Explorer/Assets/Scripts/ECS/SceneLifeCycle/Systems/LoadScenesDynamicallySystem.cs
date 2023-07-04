@@ -1,6 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
+using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.StreamableLoading.AssetBundles.Manifest;
 using ECS.Unity.Transforms.Components;
@@ -15,8 +15,8 @@ using ManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Sc
 
 namespace ECS.SceneLifeCycle.Systems
 {
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
     [UpdateAfter(typeof(LoadSceneMetadataSystem))]
+    [UpdateInGroup(typeof(SceneLifeCycleGroup))]
     public partial class LoadScenesDynamicallySystem : BaseUnityLoopSystem
     {
         private readonly List<Vector2Int> parcelsToLoad = new ();
@@ -68,7 +68,7 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 JsonConvert.PopulateObject(pointerRequest.webRequest.downloadHandler.text, retrievedScenes);
 
-                Debug.Log($"loading {retrievedScenes.Count} scenes from {parcelsToLoad.Count} parcels");
+                ReportHub.Log(GetReportCategory(), $"loading {retrievedScenes.Count} scenes from {parcelsToLoad.Count} parcels");
 
                 for (var i = 0; i < retrievedScenes.Count; i++)
                 {

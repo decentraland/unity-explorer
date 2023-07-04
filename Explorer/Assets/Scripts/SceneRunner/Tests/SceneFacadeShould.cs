@@ -14,6 +14,8 @@ using ECS.LifeCycle;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.ECSWorld;
+using SceneRunner.Scene;
+using SceneRunner.Scene.ExceptionsHandling;
 using SceneRunner.Tests.TestUtils;
 using SceneRuntime;
 using SceneRuntime.Factory;
@@ -110,7 +112,9 @@ namespace SceneRunner.Tests
                 Substitute.For<IOutgoingCRTDMessagesProvider>(),
                 Substitute.For<ICRDTWorldSynchronizer>(),
                 Substitute.For<IInstancePoolsProvider>(),
-                Substitute.For<ICRDTMemoryAllocator>()
+                Substitute.For<ICRDTMemoryAllocator>(),
+                Substitute.For<ISceneExceptionsHandler>(),
+                new SceneStateProvider()
             );
 
             sceneFacades.Add(sceneFacade);
@@ -193,7 +197,9 @@ namespace SceneRunner.Tests
                 Substitute.For<IOutgoingCRTDMessagesProvider>(),
                 Substitute.For<ICRDTWorldSynchronizer>(),
                 Substitute.For<IInstancePoolsProvider>(),
-                Substitute.For<ICRDTMemoryAllocator>()
+                Substitute.For<ICRDTMemoryAllocator>(),
+                Substitute.For<ISceneExceptionsHandler>(),
+                new SceneStateProvider()
             );
 
             await UniTask.SwitchToThreadPool();

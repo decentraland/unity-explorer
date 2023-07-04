@@ -1,4 +1,5 @@
 ﻿using Arch.SystemGroups;
+using Diagnostics.ReportsHandling;
 using ECS.Groups;
 using ECS.StreamableLoading;
 
@@ -10,5 +11,6 @@ namespace ECS.Unity.Materials
     /// </summary>
     [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     [UpdateBefore(typeof(StreamableLoadingGroup))]
+    [LogCategory(ReportCategory.MATERIALS)]
     public partial class MaterialLoadingGroup { }
 }

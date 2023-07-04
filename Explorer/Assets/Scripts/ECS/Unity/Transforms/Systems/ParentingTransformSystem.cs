@@ -4,12 +4,12 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CRDT;
 using CrdtEcsBridge.Components.Transform;
+using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace ECS.Unity.Transforms.Systems
 {
@@ -74,7 +74,7 @@ namespace ECS.Unity.Transforms.Systems
 
             if (!parentEntityReference.IsAlive(World))
             {
-                Debug.LogError($"Trying to parent entity {childEntityReference.Entity} to a dead entity parent");
+                ReportHub.LogError(GetReportCategory(), $"Trying to parent entity {childEntityReference.Entity} to a dead entity parent");
                 return;
             }
 

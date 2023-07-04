@@ -1,3 +1,4 @@
+using Diagnostics;
 using Ipfs;
 using JetBrains.Annotations;
 using System;
@@ -40,7 +41,7 @@ namespace SceneRunner.Scene
             if (!supportHashes)
             {
                 resolvedContentURLs = new Dictionary<string, (bool success, string url)>(StringComparer.OrdinalIgnoreCase);
-                BaseParcel = new Vector2Int(0, 0);
+                SceneShortInfo = new SceneShortInfo(Vector2Int.zero, sceneDefinition.id);
                 return;
             }
 
@@ -48,18 +49,16 @@ namespace SceneRunner.Scene
 
             foreach (IpfsTypes.ContentDefinition contentDefinition in sceneDefinition.content) fileToHash[contentDefinition.file] = contentDefinition.hash;
 
-            BaseParcel = IpfsHelper.DecodePointer(sceneDefinition.metadata.scene.baseParcel);
+            SceneShortInfo = new SceneShortInfo(IpfsHelper.DecodePointer(sceneDefinition.metadata.scene.baseParcel), sceneDefinition.id);
 
             foreach (string parcel in sceneDefinition.metadata.scene.parcels) parcels.Add(IpfsHelper.DecodePointer(parcel));
 
             resolvedContentURLs = new Dictionary<string, (bool success, string url)>(fileToHash.Count, StringComparer.OrdinalIgnoreCase);
         }
 
+        public SceneShortInfo SceneShortInfo { get; }
         public SceneAssetBundleManifest AssetBundleManifest { get; }
-
-        public string SceneName => sceneDefinition.id;
         public IReadOnlyList<Vector2Int> Parcels => parcels;
-        public Vector2Int BaseParcel { get; }
 
         public bool HasRequiredPermission(string permission)
         {
