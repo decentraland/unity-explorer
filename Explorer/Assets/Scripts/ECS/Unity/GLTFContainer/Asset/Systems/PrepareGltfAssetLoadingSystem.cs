@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
@@ -15,6 +16,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     /// </summary>
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     [UpdateBefore(typeof(LoadAssetBundleSystem))]
+    [LogCategory(ReportCategory.GLTF_CONTAINER)]
     public partial class PrepareGltfAssetLoadingSystem : BaseUnityLoopSystem
     {
         private readonly IStreamableCache<GltfContainerAsset, string> cache;

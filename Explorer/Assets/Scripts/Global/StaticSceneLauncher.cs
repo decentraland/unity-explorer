@@ -1,4 +1,5 @@
-﻿using SceneRunner.Scene;
+﻿using Diagnostics.ReportsHandling;
+using SceneRunner.Scene;
 using UnityEngine;
 using UnityEngine.Profiling;
 
@@ -10,6 +11,7 @@ namespace Global
     public class StaticSceneLauncher : MonoBehaviour
     {
         [SerializeField] private SceneLauncher sceneLauncher;
+        [SerializeField] private ReportsHandlingSettings reportsHandlingSettings;
 
         public SceneSharedContainer SceneSharedContainer { get; private set; }
 
@@ -17,7 +19,7 @@ namespace Global
 
         private void Awake()
         {
-            SceneSharedContainer = Install();
+            SceneSharedContainer = Install(reportsHandlingSettings);
         }
 
         private void Start()
@@ -25,12 +27,17 @@ namespace Global
             sceneLauncher.Initialize(SceneSharedContainer, destroyCancellationToken);
         }
 
-        public static SceneSharedContainer Install()
+        private void OnDestroy()
+        {
+            SceneSharedContainer?.Dispose();
+        }
+
+        public static SceneSharedContainer Install(IReportsHandlingSettings reportsHandlingSettings)
         {
             Profiler.BeginSample($"{nameof(DynamicSceneLoader)}.Install");
 
             var componentsContainer = ComponentsContainer.Create();
-            var sceneSharedContainer = SceneSharedContainer.Create(componentsContainer, null);
+            var sceneSharedContainer = SceneSharedContainer.Create(componentsContainer, null, reportsHandlingSettings);
 
             Profiler.EndSample();
             return sceneSharedContainer;

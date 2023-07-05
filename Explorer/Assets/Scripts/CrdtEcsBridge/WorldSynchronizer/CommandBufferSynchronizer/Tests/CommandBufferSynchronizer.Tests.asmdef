@@ -18,7 +18,8 @@
     "precompiledReferences": [
         "nunit.framework.dll",
         "NSubstitute.dll",
-        "Arch.dll"
+        "Arch.dll",
+        "Arch.SystemGroups.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [

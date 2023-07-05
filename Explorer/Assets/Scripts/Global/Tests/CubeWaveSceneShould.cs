@@ -2,6 +2,8 @@ using Arch.Core;
 using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
+using Diagnostics.ReportsHandling;
+using NSubstitute;
 using NUnit.Framework;
 using SceneRunner;
 using SceneRunner.Scene;
@@ -70,7 +72,17 @@ namespace Global.Editor
         [SetUp]
         public void SetUp()
         {
-            sceneSharedContainer = StaticSceneLauncher.Install();
+            IReportsHandlingSettings reportSettings = Substitute.For<IReportsHandlingSettings>();
+
+            reportSettings.GetMatrix(Arg.Any<ReportHandler>())
+                          .Returns(_ =>
+                           {
+                               ICategorySeverityMatrix matrix = Substitute.For<ICategorySeverityMatrix>();
+                               matrix.IsEnabled(Arg.Any<string>(), Arg.Any<LogType>()).Returns(false);
+                               return matrix;
+                           });
+
+            sceneSharedContainer = StaticSceneLauncher.Install(reportSettings);
         }
 
         [Test]

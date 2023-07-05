@@ -1,17 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using Diagnostics;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SceneRunner.Scene
 {
     public interface ISceneData
     {
-        string SceneName { get; }
+        SceneShortInfo SceneShortInfo { get; }
 
         SceneAssetBundleManifest AssetBundleManifest { get; }
 
         IReadOnlyList<Vector2Int> Parcels { get; }
-
-        Vector2Int BaseParcel { get; }
 
         bool HasRequiredPermission(string permission);
 

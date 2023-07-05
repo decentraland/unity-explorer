@@ -1,8 +1,9 @@
-﻿{
+{
     "name": "Scene.Tests",
     "rootNamespace": "",
     "references": [
-        "GUID:286980af24684da6acc1caa413039811"
+        "GUID:286980af24684da6acc1caa413039811",
+        "GUID:101b8b6ebaf64668909b49c4b7a1420d"
     ],
     "includePlatforms": [
         "Editor"
@@ -14,7 +15,8 @@
         "nunit.framework.dll",
         "NSubstitute.dll",
         "Arch.dll",
-        "Arch.System.dll"
+        "Arch.System.dll",
+        "Arch.SystemGroups.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [

@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -12,6 +13,7 @@ namespace ECS.Unity.Materials.Systems
     ///     Dereferences materials on the dying entities
     /// </summary>
     [UpdateInGroup(typeof(CleanUpGroup))]
+    [LogCategory(ReportCategory.MATERIALS)]
     public partial class CleanUpMaterialsSystem : BaseUnityLoopSystem
     {
         private readonly DestroyMaterial destroyMaterial;

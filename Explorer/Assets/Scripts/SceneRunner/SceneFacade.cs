@@ -6,6 +6,7 @@ using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
+using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
 using System;
 using System.Diagnostics;
@@ -23,11 +24,10 @@ namespace SceneRunner
         internal readonly ICRDTWorldSynchronizer crdtWorldSynchronizer;
         internal readonly IInstancePoolsProvider instancePoolsProvider;
         internal readonly ICRDTMemoryAllocator crdtMemoryAllocator;
+        internal readonly ISceneExceptionsHandler sceneExceptionsHandler;
+        private readonly ISceneStateProvider sceneStateProvider;
 
         private int intervalMS;
-        private bool started;
-
-        private bool disposed;
 
         private readonly UniTaskCompletionSource completionSource;
 
@@ -38,7 +38,9 @@ namespace SceneRunner
             IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider,
             ICRDTWorldSynchronizer crdtWorldSynchronizer,
             IInstancePoolsProvider instancePoolsProvider,
-            ICRDTMemoryAllocator crdtMemoryAllocator)
+            ICRDTMemoryAllocator crdtMemoryAllocator,
+            ISceneExceptionsHandler sceneExceptionsHandler,
+            ISceneStateProvider sceneStateProvider)
         {
             this.runtimeInstance = runtimeInstance;
             this.ecsWorldFacade = ecsWorldFacade;
@@ -47,6 +49,8 @@ namespace SceneRunner
             this.crdtWorldSynchronizer = crdtWorldSynchronizer;
             this.instancePoolsProvider = instancePoolsProvider;
             this.crdtMemoryAllocator = crdtMemoryAllocator;
+            this.sceneExceptionsHandler = sceneExceptionsHandler;
+            this.sceneStateProvider = sceneStateProvider;
 
             completionSource = new UniTaskCompletionSource();
         }
@@ -66,10 +70,10 @@ namespace SceneRunner
         {
             AssertIsNotMainThread(nameof(StartUpdateLoop));
 
-            if (started)
+            if (sceneStateProvider.State != SceneState.NotStarted)
                 throw new ThreadStateException($"{nameof(StartUpdateLoop)} is already started!");
 
-            started = true;
+            sceneStateProvider.State = SceneState.Running;
 
             SetTargetFPS(targetFPS);
 
@@ -89,7 +93,7 @@ namespace SceneRunner
                     break;
                 }
 
-                if (Volatile.Read(ref disposed))
+                if (sceneStateProvider.State != SceneState.Running)
                 {
                     completionSource.TrySetResult();
                     break;
@@ -127,7 +131,7 @@ namespace SceneRunner
         {
             // Because of multithreading Disposing is not synced with the update loop
             // so just mark it as disposed and let the update loop handle the disposal
-            Volatile.Write(ref disposed, true);
+            sceneStateProvider.State = SceneState.Disposing;
 
             // TODO do it better
             runtimeInstance.SetIsDisposing();
@@ -142,6 +146,9 @@ namespace SceneRunner
             crdtWorldSynchronizer.Dispose();
             instancePoolsProvider.Dispose();
             crdtMemoryAllocator.Dispose();
+            sceneExceptionsHandler.Dispose();
+
+            sceneStateProvider.State = SceneState.Disposed;
         }
     }
 }

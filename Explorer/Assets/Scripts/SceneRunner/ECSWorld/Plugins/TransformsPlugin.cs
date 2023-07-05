@@ -21,24 +21,24 @@ namespace SceneRunner.ECSWorld.Plugins
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, List<IFinalizeWorldSystem> finalizeWorldSystems)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
             // We create the scene root transform
             Transform sceneRootTransform = componentPoolsRegistry.GetReferenceTypePool<Transform>().Get();
 
             sceneRootTransform.SetParent(null);
 
-            var basePosition = ParcelMathHelper.GetPositionByParcelPosition(sharedDependencies.SceneData.BaseParcel);
+            Vector3 basePosition = ParcelMathHelper.GetPositionByParcelPosition(sharedDependencies.SceneData.SceneShortInfo.BaseParcel);
             sceneRootTransform.position = basePosition;
             sceneRootTransform.rotation = Quaternion.identity;
             sceneRootTransform.localScale = Vector3.one;
 
-            sceneRootTransform.name = $"{sharedDependencies.SceneData.BaseParcel}_{sharedDependencies.SceneData.SceneName}";
-            Entity rootTransformEntity = builder.World.Create(new TransformComponent(sceneRootTransform));
+            sceneRootTransform.name = $"{sharedDependencies.SceneData.SceneShortInfo.BaseParcel}_{sharedDependencies.SceneData.SceneShortInfo.Name}";
+            builder.World.Add(persistentEntities.SceneRoot, new TransformComponent(sceneRootTransform));
 
             UpdateTransformSystem.InjectToWorld(ref builder);
             InstantiateTransformSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            ParentingTransformSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, builder.World.Reference(rootTransformEntity));
+            ParentingTransformSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, persistentEntities.SceneRoot);
             AssertDisconnectedTransformsSystem.InjectToWorld(ref builder);
 
             var releaseTransformSystem =

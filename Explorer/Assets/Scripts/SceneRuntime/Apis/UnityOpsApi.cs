@@ -1,6 +1,6 @@
-﻿using JetBrains.Annotations;
+﻿using Diagnostics.ReportsHandling;
+using JetBrains.Annotations;
 using Microsoft.ClearScript.V8;
-using UnityEngine;
 
 namespace SceneRuntime.Apis
 {
@@ -20,19 +20,19 @@ namespace SceneRuntime.Apis
         [UsedImplicitly]
         public void Log(object message)
         {
-            Debug.Log(message);
+            ReportHub.Log(new ReportData(ReportCategory.JAVASCRIPT), message);
         }
 
         [UsedImplicitly]
         public void Warning(object message)
         {
-            Debug.LogWarning(message);
+            ReportHub.LogWarning(new ReportData(ReportCategory.JAVASCRIPT), message);
         }
 
         [UsedImplicitly]
         public void Error(object message)
         {
-            Debug.LogError(message + " stackTrace: " + engine.GetStackTrace());
+            ReportHub.LogError(new ReportData(ReportCategory.JAVASCRIPT), message + " stackTrace: " + engine.GetStackTrace());
         }
 
         [UsedImplicitly]

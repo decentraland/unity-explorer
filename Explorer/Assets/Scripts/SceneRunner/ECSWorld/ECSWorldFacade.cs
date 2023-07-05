@@ -16,7 +16,10 @@ namespace SceneRunner.ECSWorld
 
         private readonly SystemGroupWorld systemGroupWorld;
 
-        public ECSWorldFacade(SystemGroupWorld systemGroupWorld, World ecsWorld, IReadOnlyList<IFinalizeWorldSystem> finalizeWorldSystems)
+        public ECSWorldFacade(
+            SystemGroupWorld systemGroupWorld,
+            World ecsWorld,
+            IReadOnlyList<IFinalizeWorldSystem> finalizeWorldSystems)
         {
             this.systemGroupWorld = systemGroupWorld;
             this.EcsWorld = ecsWorld;

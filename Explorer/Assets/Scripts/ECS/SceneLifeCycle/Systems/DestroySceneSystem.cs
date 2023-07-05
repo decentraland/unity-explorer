@@ -1,13 +1,12 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using ECS.Abstract;
 using ECS.SceneLifeCycle.Components;
 
 namespace ECS.SceneLifeCycle.Systems
 {
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(SceneLifeCycleGroup))]
     [UpdateAfter(typeof(StartSceneSystem))]
     public partial class DestroySceneSystem : BaseUnityLoopSystem
     {

@@ -1,6 +1,7 @@
 ﻿using CrdtEcsBridge.Engine;
 using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
+using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using UnityEngine.Profiling;
 
@@ -10,43 +11,54 @@ namespace SceneRuntime.Apis.Modules
     {
         private readonly IEngineApi api;
         private readonly IInstancePoolsProvider instancePoolsProvider;
+        private readonly ISceneExceptionsHandler exceptionsHandler;
 
         private byte[] lastInput;
 
-        public EngineApiWrapper(IEngineApi api, IInstancePoolsProvider instancePoolsProvider)
+        public EngineApiWrapper(IEngineApi api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler)
         {
             this.api = api;
             this.instancePoolsProvider = instancePoolsProvider;
+            this.exceptionsHandler = exceptionsHandler;
         }
 
         [UsedImplicitly]
         public ScriptableByteArray CrdtSendToRenderer(ITypedArray<byte> data)
         {
-            Profiler.BeginThreadProfiling("SceneRuntime", "CrdtSendToRenderer");
-
-            var intLength = (int)data.Length;
-
-            if (lastInput == null || lastInput.Length < intLength)
+            try
             {
-                // Release the old one
-                if (lastInput != null)
-                    instancePoolsProvider.ReleaseCrdtRawDataPool(lastInput);
+                Profiler.BeginThreadProfiling("SceneRuntime", "CrdtSendToRenderer");
 
-                // Rent a new one
-                lastInput = instancePoolsProvider.GetCrdtRawDataPool(intLength);
+                var intLength = (int)data.Length;
+
+                if (lastInput == null || lastInput.Length < intLength)
+                {
+                    // Release the old one
+                    if (lastInput != null)
+                        instancePoolsProvider.ReleaseCrdtRawDataPool(lastInput);
+
+                    // Rent a new one
+                    lastInput = instancePoolsProvider.GetCrdtRawDataPool(intLength);
+                }
+
+                // V8ScriptItem does not support zero length
+                if (data.Length > 0)
+
+                    // otherwise use the existing one
+                    data.Read(0, data.Length, lastInput, 0);
+
+                ArraySegment<byte> result = api.CrdtSendToRenderer(lastInput.AsMemory().Slice(0, intLength));
+
+                Profiler.EndThreadProfiling();
+
+                return result.Count > 0 ? new ScriptableByteArray(result) : ScriptableByteArray.EMPTY;
             }
-
-            // V8ScriptItem does not support zero length
-            if (data.Length > 0)
-
-                // otherwise use the existing one
-                data.Read(0, data.Length, lastInput, 0);
-
-            ArraySegment<byte> result = api.CrdtSendToRenderer(lastInput.AsMemory().Slice(0, intLength));
-
-            Profiler.EndThreadProfiling();
-
-            return result.Count > 0 ? new ScriptableByteArray(result) : ScriptableByteArray.EMPTY;
+            catch (Exception e)
+            {
+                // Report an uncategorized exception
+                exceptionsHandler.OnEngineException(e);
+                return ScriptableByteArray.EMPTY;
+            }
         }
 
         [UsedImplicitly]

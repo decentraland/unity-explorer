@@ -176,6 +176,7 @@ MonoBehaviour:
     - primitives-wave
     - cube-wave-32x32-colored
     - cube-wave-16x16-visibility
+  reportsHandlingSettings: {fileID: 11400000, guid: 6c1c35a66af59874a8373ebcd51572a4, type: 2}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -417,6 +418,7 @@ MonoBehaviour:
   m_Dithering: 0
   m_ClearDepth: 1
   m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
   m_UseScreenCoordOverride: 0
   m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
   m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}

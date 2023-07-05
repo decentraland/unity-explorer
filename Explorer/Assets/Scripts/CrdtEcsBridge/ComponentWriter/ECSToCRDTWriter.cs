@@ -5,9 +5,9 @@ using CRDT.Protocol.Factory;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.OutgoingMessages;
+using Diagnostics.ReportsHandling;
 using Google.Protobuf;
 using System.Buffers;
-using UnityEngine;
 
 namespace CrdtEcsBridge.ComponentWriter
 {
@@ -29,24 +29,27 @@ namespace CrdtEcsBridge.ComponentWriter
 
         public void PutMessage<T>(CRDTEntity crdtID, T model) where T: IMessage<T>
         {
-            if (!componentsRegistry.TryGet<T>(out SDKComponentBridge componentBridge))
-            {
-                Debug.LogWarning($"SDK Component {typeof(T)} is not registered");
-                return;
-            }
+            if (!TryGetComponentBridge<T>(out SDKComponentBridge componentBridge)) return;
 
             IMemoryOwner<byte> memory = memoryAllocator.GetMemoryBuffer(model.CalculateSize());
             componentBridge.Serializer.SerializeInto(model, memoryAllocator.GetMemoryBuffer(model.CalculateSize()).Memory.Span);
             ProcessMessage(crdtProtocol.CreatePutMessage(crdtID, componentBridge.Id, memory));
         }
 
+        private bool TryGetComponentBridge<T>(out SDKComponentBridge componentBridge) where T: IMessage<T>
+        {
+            if (!componentsRegistry.TryGet<T>(out componentBridge))
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.CRDT_ECS_BRIDGE, ReportHint.AssemblyStatic), $"SDK Component {typeof(T)} is not registered");
+                return false;
+            }
+
+            return true;
+        }
+
         public void AppendMessage<T>(CRDTEntity crdtID, T model) where T: IMessage<T>
         {
-            if (!componentsRegistry.TryGet<T>(out SDKComponentBridge componentBridge))
-            {
-                Debug.LogWarning($"SDK Component {typeof(T)} is not registered");
-                return;
-            }
+            if (!TryGetComponentBridge<T>(out SDKComponentBridge componentBridge)) return;
 
             IMemoryOwner<byte> memory = memoryAllocator.GetMemoryBuffer(model.CalculateSize());
             componentBridge.Serializer.SerializeInto(model, memoryAllocator.GetMemoryBuffer(model.CalculateSize()).Memory.Span);
@@ -55,11 +58,7 @@ namespace CrdtEcsBridge.ComponentWriter
 
         public void DeleteMessage<T>(CRDTEntity crdtID) where T: IMessage<T>
         {
-            if (!componentsRegistry.TryGet<T>(out SDKComponentBridge componentBridge))
-            {
-                Debug.LogWarning($"SDK Component {typeof(T)} is not registered");
-                return;
-            }
+            if (!TryGetComponentBridge<T>(out SDKComponentBridge componentBridge)) return;
 
             ProcessMessage(crdtProtocol.CreateDeleteMessage(crdtID, componentBridge.Id));
         }

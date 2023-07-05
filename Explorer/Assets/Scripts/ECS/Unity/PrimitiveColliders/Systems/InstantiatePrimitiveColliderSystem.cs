@@ -5,6 +5,7 @@ using CrdtEcsBridge.Components.Defaults;
 using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
+using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.ComponentsPooling;
 using ECS.Unity.Groups;
@@ -17,6 +18,7 @@ using Utility;
 namespace ECS.Unity.PrimitiveColliders.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
+    [LogCategory(ReportCategory.PRIMITIVE_COLLIDERS)]
     public partial class InstantiatePrimitiveColliderSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPoolsRegistry poolsRegistry;

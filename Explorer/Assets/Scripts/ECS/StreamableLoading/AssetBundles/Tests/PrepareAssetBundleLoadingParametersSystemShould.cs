@@ -93,7 +93,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             Assert.That(world.TryGet(e, out StreamableLoadingResult<AssetBundleData> result), Is.True);
             Assert.That(result.Succeeded, Is.False);
             Assert.That(result.Asset, Is.Null);
-            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>().Or.InnerException.TypeOf<ArgumentException>());
         }
     }
 }

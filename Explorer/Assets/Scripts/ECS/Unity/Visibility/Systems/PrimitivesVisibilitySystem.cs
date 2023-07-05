@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
+using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;
@@ -13,6 +14,7 @@ namespace ECS.Unity.Visibility.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [UpdateAfter(typeof(InstantiatePrimitiveRenderingSystem))]
+    [LogCategory(ReportCategory.PRIMITIVE_MESHES)]
     [ThrottlingEnabled]
     public partial class PrimitivesVisibilitySystem : BaseUnityLoopSystem
     {

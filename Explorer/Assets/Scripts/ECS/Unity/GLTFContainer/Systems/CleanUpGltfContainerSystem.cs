@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -15,13 +16,13 @@ namespace ECS.Unity.GLTFContainer.Systems
     ///     Cancel promises on the dying entities
     /// </summary>
     [UpdateInGroup(typeof(CleanUpGroup))]
+    [LogCategory(ReportCategory.GLTF_CONTAINER)]
     public partial class CleanUpGltfContainerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly QueryDescription entityDestroyQuery = new QueryDescription()
            .WithAll<DeleteEntityIntention, GltfContainerComponent>();
 
         private ReleaseOnEntityDestroy releaseOnEntityDestroy;
-
 
         internal CleanUpGltfContainerSystem(World world, IStreamableCache<GltfContainerAsset, string> cache) : base(world)
         {

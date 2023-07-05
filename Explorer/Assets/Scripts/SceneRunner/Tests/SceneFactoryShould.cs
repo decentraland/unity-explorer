@@ -72,6 +72,7 @@ namespace SceneRunner.Tests
             Assert.IsNotNull(sceneFacadeImpl.crdtWorldSynchronizer);
             Assert.IsNotNull(sceneFacadeImpl.instancePoolsProvider);
             Assert.IsNotNull(sceneFacadeImpl.crdtMemoryAllocator);
+            Assert.IsNotNull(sceneFacadeImpl.sceneExceptionsHandler);
 
             Assert.AreNotEqual(default(World), sceneFacadeImpl.ecsWorldFacade.EcsWorld);
         }

@@ -19,7 +19,7 @@ namespace SceneRunner.ECSWorld.Plugins
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, List<IFinalizeWorldSystem> finalizeWorldSystems)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
             InstantiatePrimitiveColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             ReleaseOutdatedColliderSystem.InjectToWorld(ref builder, componentPoolsRegistry);

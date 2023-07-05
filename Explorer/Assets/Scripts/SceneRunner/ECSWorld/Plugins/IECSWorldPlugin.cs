@@ -14,6 +14,10 @@ namespace SceneRunner.ECSWorld.Plugins
         /// <summary>
         ///     Create dependencies and systems that should exist per scene
         /// </summary>
-        void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, List<IFinalizeWorldSystem> finalizeWorldSystems);
+        void InjectToWorld(
+            ref ArchSystemsWorldBuilder<World> builder,
+            in ECSWorldInstanceSharedDependencies sharedDependencies,
+            in PersistentEntities persistentEntities,
+            List<IFinalizeWorldSystem> finalizeWorldSystems);
     }
 }
