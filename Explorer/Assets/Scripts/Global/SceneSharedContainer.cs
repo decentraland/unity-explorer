@@ -6,6 +6,7 @@ using Diagnostics.ReportsHandling;
 using SceneRunner;
 using SceneRunner.ECSWorld;
 using SceneRunner.ECSWorld.Plugins;
+using SceneRunner.ECSWorld.Plugins.Editor;
 using SceneRuntime.Factory;
 using System;
 using UnityEngine;
@@ -37,7 +38,11 @@ namespace Global
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AssetBundlesPlugin(localAssetBundleManifest, reportsHandlingSettings),
-                new GltfContainerPlugin(sharedDependencies));
+                new GltfContainerPlugin(sharedDependencies)
+                #if UNITY_EDITOR || DEVELOPMENT_BUILD
+                ,new EditorPlugin()
+                #endif
+            );
 
             return new SceneSharedContainer
             {

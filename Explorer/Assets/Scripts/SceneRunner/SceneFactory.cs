@@ -12,6 +12,7 @@ using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using ECS.Editor.Systems;
 using Ipfs;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;

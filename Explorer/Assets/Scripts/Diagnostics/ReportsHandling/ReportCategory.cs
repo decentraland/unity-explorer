@@ -76,6 +76,11 @@
         public const string PRIMITIVE_MESHES = nameof(PRIMITIVE_MESHES);
 
         /// <summary>
+        ///     Everything related to editor specific functionality (like tools)
+        /// </summary>
+        public const string EDITOR = nameof(EDITOR);
+
+        /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
         /// </summary>
         public const string UNSPECIFIED = nameof(UNSPECIFIED);
