@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Special;
 using ECS.Global.Systems;
+using ECS.Prioritization.DeferredLoading;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles.Manifest;
@@ -9,6 +10,7 @@ using ECS.Unity.Transforms.Components;
 using Ipfs;
 using JetBrains.Annotations;
 using SceneRunner;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -53,7 +55,12 @@ namespace Global
             var assetBundlesManifestCache = new AssetBundlesManifestCache();
             var mutex = new MutexSync();
             PrepareAssetBundleManifestParametersSystem.InjectToWorld(ref builder, ASSET_BUNDLES_URL);
-            LoadAssetBundleManifestSystem.InjectToWorld(ref builder, assetBundlesManifestCache, ASSET_BUNDLES_URL, mutex);
+
+            //TODO: Should we create a concurrent loading provider only for scenes?
+            ConcurrentLoadingBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(100);
+            LoadAssetBundleManifestSystem.InjectToWorld(ref builder, assetBundlesManifestCache, ASSET_BUNDLES_URL, mutex, sceneBudgetProvider);
+            DeferredLoadingSystem<SceneAssetBundleManifest, GetAssetBundleManifestIntention>.InjectToWorld(ref builder, sceneBudgetProvider);
+
 
             DebugCameraTransformToPlayerTransformSystem.InjectToWorld(ref builder, state.PlayerEntity, unityCamera);
 

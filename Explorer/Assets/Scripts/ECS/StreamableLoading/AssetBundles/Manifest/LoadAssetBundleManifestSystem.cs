@@ -22,8 +22,8 @@ namespace ECS.StreamableLoading.AssetBundles.Manifest
         private readonly string assetBundleURL;
 
         public LoadAssetBundleManifestSystem(World world, IStreamableCache<SceneAssetBundleManifest, GetAssetBundleManifestIntention> cache,
-            string assetBundleURL, MutexSync mutexSync)
-            : base(world, cache, mutexSync, new ConcurrentLoadingBudgetProvider(100))
+            string assetBundleURL, MutexSync mutexSync, ConcurrentLoadingBudgetProvider loadingBudgetProvider)
+            : base(world, cache, mutexSync, loadingBudgetProvider)
         {
             this.assetBundleURL = assetBundleURL;
         }

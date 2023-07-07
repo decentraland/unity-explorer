@@ -3,14 +3,22 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.AssetBundles.Manifest;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Collections.LowLevel.Unsafe;
+using UnityEngine;
 
 namespace ECS.Prioritization.DeferredLoading
 {
-    [UpdateInGroup(typeof(InitializationSystemGroup))]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateAfter(typeof(PrepareAssetBundleManifestParametersSystem))]
+    [UpdateBefore(typeof(LoadAssetBundleManifestSystem))]
+    [UpdateBefore(typeof(LoadTextureSystem))]
+    [UpdateBefore(typeof(LoadAssetBundleSystem))]
     public partial class DeferredLoadingSystem<TAsset, TIntention> : BaseUnityLoopSystem where TIntention: struct, ILoadingIntention
     {
         private static readonly QueryDescription CREATE_LOADING_REQUEST = new QueryDescription()
@@ -40,6 +48,8 @@ namespace ECS.Prioritization.DeferredLoading
                 foreach (int entityIndex in chunk)
                 {
                     ref PartitionComponent partition = ref Unsafe.Add(ref partitionFirstElement, entityIndex);
+                    ref TIntention intention = ref Unsafe.Add(ref intentionFirstElement, entityIndex);
+
                     void* intentionPointer = UnsafeUtility.AddressOf(ref Unsafe.Add(ref intentionFirstElement, entityIndex));
 
                     var intentionData = new IntentionData()
@@ -51,7 +61,6 @@ namespace ECS.Prioritization.DeferredLoading
                     loadingIntentions.Add(intentionData);
                 }
             }
-
             loadingIntentions.Sort((p1, p2) => p1.PartitionComponent.CompareTo(p2.PartitionComponent));
             AnalyzeBudget();
         }
