@@ -62,23 +62,23 @@
         </member>
         <member name="T:Arch.SystemGroups.ArchSystemsWorldBuilderExtensions">
             <summary>
-                Publicly available extensions for the ArchSystemsWorldBuilder
+            Publicly available extensions for the ArchSystemsWorldBuilder
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilderExtensions.InjectCustomGroup``2(Arch.SystemGroups.ArchSystemsWorldBuilder{``0}@,``1)">
             <summary>
-                Inject a custom group into the world. It allows to create a group with custom parameters.
+            Inject a custom group into the world. It allows to create a group with custom parameters.
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.DefaultSystemGroups.InitializationSystemGroup">
             <summary>
-                Updates at the end of the Initialization phase of the player loop
+            Updates at the end of the Initialization phase of the player loop
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.DefaultSystemGroups.PhysicsSystemGroup">
             <summary>
-                Updates at the beginning of the FixedUpdate phase of the player loop
-                before all fixed updates
+            Updates at the beginning of the FixedUpdate phase of the player loop
+            before all fixed updates
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.DefaultSystemGroups.PostPhysicsSystemGroup">
@@ -88,17 +88,17 @@
         </member>
         <member name="T:Arch.SystemGroups.DefaultSystemGroups.PostRenderingSystemGroup">
             <summary>
-                Updates at the end of the PostLateUpdate phase of the player loop.
+            Updates at the end of the PostLateUpdate phase of the player loop.
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.DefaultSystemGroups.PresentationSystemGroup">
             <summary>
-                Updates at the end of the PreLateUpdate phase of the player loop.
+            Updates at the end of the PreLateUpdate phase of the player loop.
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.DefaultSystemGroups.SimulationSystemGroup">
             <summary>
-                Updates at the end of the Update phase of the player loop
+            Updates at the end of the Update phase of the player loop
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.DefaultSystemGroups.SystemGroupsUtils">
@@ -109,12 +109,12 @@
         <member name="F:Arch.SystemGroups.DefaultSystemGroups.SystemGroupsUtils.Count">
             <summary>
                 The number of defined system groups:
-                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.InitializationSystemGroup"/>
-                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PhysicsSystemGroup"/>
-                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PresentationSystemGroup"/>
-                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.SimulationSystemGroup"/>
-                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PostPhysicsSystemGroup"/>
-                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PostRenderingSystemGroup"/>
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.InitializationSystemGroup" />
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PhysicsSystemGroup" />
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PresentationSystemGroup" />
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.SimulationSystemGroup" />
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PostPhysicsSystemGroup" />
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PostRenderingSystemGroup" />
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.CustomGroupBase`1">
@@ -205,20 +205,20 @@
         </member>
         <member name="M:Arch.SystemGroups.CustomGroupBase`1.GetMetadataInternal">
             <summary>
-                The metadata of the group in an abstract form
+               The metadata of the group in an abstract form
             </summary>
             <returns></returns>
         </member>
         <member name="T:Arch.SystemGroups.DefaultGroup`1">
             <summary>
-                Similar to `Arch.System.Group` but with better API that allows pooling
+            Similar to `Arch.System.Group` but with better API that allows pooling
             </summary>
             <typeparam name="T"></typeparam>
         </member>
         <member name="M:Arch.SystemGroups.DefaultGroup`1.#ctor">
             <summary>
-                Creates an empty group, for auto-generated code only,
-                Don't invoke it manually
+            Creates an empty group, for auto-generated code only,
+            Don't invoke it manually
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.DefaultGroup`1.Initialize">
@@ -233,17 +233,17 @@
         </member>
         <member name="M:Arch.SystemGroups.DefaultGroup`1.BeforeUpdate(`0@,System.Boolean)">
             <summary>
-                To comply with Arch.System.ISystem
-            </summary>
+            To comply with Arch.System.ISystem
+                    </summary>
         </member>
         <member name="M:Arch.SystemGroups.DefaultGroup`1.Update(`0@,System.Boolean)">
             <summary>
-                To comply with Arch.System.ISystem
+            To comply with Arch.System.ISystem
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.DefaultGroup`1.AfterUpdate(`0@,System.Boolean)">
             <summary>
-                To comply with Arch.System.ISystem
+            To comply with Arch.System.ISystem
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.GroupNotFoundException">
@@ -254,13 +254,12 @@
         </member>
         <member name="P:Arch.SystemGroups.GroupNotFoundException.Message">
             <summary>
-                <inheritdoc cref="P:System.Exception.Message"/>
+                <inheritdoc cref="P:System.Exception.Message" />
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.ISystemGroupExceptionHandler">
             <summary>
-                Provides exceptions handling on the level of the
-                <see cref="T:Arch.SystemGroups.SystemGroup"/>
+                Provides exceptions handling on the level of the <see cref="T:Arch.SystemGroups.SystemGroup" />
             </summary>
         </member>
         <member name="F:Arch.SystemGroups.ISystemGroupExceptionHandler.Action.Continue">
@@ -285,9 +284,7 @@
             </summary>
             <param name="exception">Exception</param>
             <param name="systemGroupType">System Group Type</param>
-            <returns>An action to tell the System Group how to behave after
-                <paramref name="exception"/>
-            </returns>
+            <returns>An action to tell the System Group how to behave after <paramref name="exception" /></returns>
         </member>
         <member name="T:Arch.SystemGroups.Metadata.AttributesInfoBase">
             <summary>
@@ -296,8 +293,7 @@
         </member>
         <member name="P:Arch.SystemGroups.Metadata.AttributesInfoBase.UpdateInGroup">
             <summary>
-                <see cref="T:Arch.SystemGroups.UpdateInGroupAttribute"/>
-                reflection, will be null for system groups
+                <see cref="T:Arch.SystemGroups.UpdateInGroupAttribute" /> reflection, will be null for system groups
             </summary>
         </member>
         <member name="P:Arch.SystemGroups.Metadata.AttributesInfoBase.GroupMetadata">
@@ -307,38 +303,36 @@
         </member>
         <member name="M:Arch.SystemGroups.Metadata.AttributesInfoBase.GetAttribute``1">
             <summary>
-                Get first attribute of type
-                <typeparamref name="T"/>
+                Get first attribute of type <typeparamref name="T" />
             </summary>
             <typeparam name="T">Type of attribute</typeparam>
             <returns>Null if such attribute is not defined for the class</returns>
         </member>
         <member name="M:Arch.SystemGroups.Metadata.AttributesInfoBase.GetAttributes``1">
             <summary>
-                Get all attributes of type
-                <typeparamref name="T"/>
+                Get all attributes of type <typeparamref name="T" />
             </summary>
             <typeparam name="T">Type of attribute</typeparam>
             <returns>An empty list if no attributes are found</returns>
         </member>
         <member name="T:Arch.SystemGroups.Metadata.DefaultGroupAttributesInfo">
             <summary>
-                Contains information about UpdateInGroup and GroupMetadata only
+            Contains information about UpdateInGroup and GroupMetadata only
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.Metadata.SystemGroupAttributesInfo">
             <summary>
-                Dummy attributes info for system groups
+            Dummy attributes info for system groups
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.IUnityPlayerLoopHelper">
             <summary>
-                Abstraction needed for Mocking or providing a custom implementation of injection into the Player Loop
+            Abstraction needed for Mocking or providing a custom implementation of injection into the Player Loop
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.IUnityPlayerLoopHelper.AppendWorldToCurrentPlayerLoop(Arch.SystemGroups.DefaultSystemGroups.InitializationSystemGroup,Arch.SystemGroups.DefaultSystemGroups.SimulationSystemGroup,Arch.SystemGroups.DefaultSystemGroups.PresentationSystemGroup,Arch.SystemGroups.DefaultSystemGroups.PostRenderingSystemGroup,Arch.SystemGroups.DefaultSystemGroups.PhysicsSystemGroup,Arch.SystemGroups.DefaultSystemGroups.PostPhysicsSystemGroup)">
             <summary>
-                Attaches all system groups to the Unity Player Loop.
+            Attaches all system groups to the Unity Player Loop.
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.IUnityPlayerLoopHelper.RemoveFromCurrentPlayerLoop(Arch.SystemGroups.SystemGroup)">
@@ -394,29 +388,23 @@
         </member>
         <member name="M:Arch.SystemGroups.UnityPlayerLoopHelper.AddSystemToPlayerLoop(Arch.SystemGroups.SystemGroup,UnityEngine.LowLevel.PlayerLoopSystem@,System.Type,Arch.SystemGroups.UnityPlayerLoopHelper.AddMode)">
             <summary>
-                Add an ECS system to a specific point in the Unity player loop, so that it is updated every frame.
-                <para>The system groups are being inserted into their corresponding aggregate that is unique for each
-                    group type,
-                    the execution order of the system groups inside the aggregate is not guaranteed and must be expected
-                    to be used for independent worlds
-                </para>
+            Add an ECS system to a specific point in the Unity player loop, so that it is updated every frame.
+            <para>The system groups are being inserted into their corresponding aggregate that is unique for each group type,
+            the execution order of the system groups inside the aggregate is not guaranteed and must be expected to be used for independent worlds</para>
             </summary>
             <remarks>
-                This function does not change the currently active player loop. If this behavior is desired, it's
-                necessary
-                to call PlayerLoop.SetPlayerLoop(playerLoop) after the systems have been removed.
+            This function does not change the currently active player loop. If this behavior is desired, it's necessary
+            to call PlayerLoop.SetPlayerLoop(playerLoop) after the systems have been removed.
             </remarks>
             <param name="systemGroup">The ECS system to add to the player loop.</param>
             <param name="playerLoop">Existing player loop to modify (e.g. PlayerLoop.GetCurrentPlayerLoop())</param>
-            <param name="playerLoopSystemType">The Type of the PlayerLoopSystem subsystem to which the ECS system should
-                be appended.
-                See the UnityEngine.PlayerLoop namespace for valid values.
-            </param>
+            <param name="playerLoopSystemType">The Type of the PlayerLoopSystem subsystem to which the ECS system should be appended.
+            See the UnityEngine.PlayerLoop namespace for valid values.</param>
             <param name="addMode">Append or Prepend</param>
         </member>
         <member name="M:Arch.SystemGroups.UnityPlayerLoopHelper.RemoveFromCurrentPlayerLoop(Arch.SystemGroups.SystemGroup)">
             <summary>
-                Remove the system group from the player loop
+            Remove the system group from the player loop
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.PlayerLoopSystem`1">
@@ -427,7 +415,7 @@
         </member>
         <member name="M:Arch.SystemGroups.PlayerLoopSystem`1.GetMetadataInternal">
             <summary>
-                The metadata of the system in an abstract form
+               The metadata of the system in an abstract form
             </summary>
             <returns></returns>
         </member>

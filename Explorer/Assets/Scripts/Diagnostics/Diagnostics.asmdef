@@ -1,16 +1,16 @@
 {
-  "name": "Diagnostics",
-  "rootNamespace": "",
-  "references": [
-    "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "Diagnostics",
+    "rootNamespace": "",
+    "references": [
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
