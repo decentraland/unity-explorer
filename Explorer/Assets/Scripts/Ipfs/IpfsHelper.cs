@@ -1,12 +1,12 @@
 using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace Ipfs
 {
     public static class IpfsHelper
     {
+        private const string URN_PREFIX = "urn:decentraland:entity:";
+
         public static Vector2Int DecodePointer(string pointer)
         {
             int commaPosition = pointer.IndexOf(",", StringComparison.Ordinal);
@@ -18,43 +18,49 @@ namespace Ipfs
             return new Vector2Int(int.Parse(firstPart), int.Parse(secondPart));
         }
 
-        public static void GetParams(string url, ref Dictionary<string, string> ret)
-        {
-            ret.Clear();
-            string parameters = url.TrimStart('?');
-            if (parameters.Length == 0) return;
-
-            string[] paramsArray = parameters.Split('&');
-
-            foreach (string param in paramsArray)
-            {
-                string[] keyValue = param.Split('=');
-
-                if (keyValue.Length > 1) { ret[keyValue[0]] = keyValue[1]; }
-                else { ret[keyValue[0]] = ""; }
-            }
-        }
-
         // Example:
         // urn:decentraland:entity:bafkreia2eo3hbl74iddvaxbx7wuzdjjhbvdyyrywsviamdejppza6vrl4y?=&baseUrl=https://sdk-team-cdn.decentraland.org/ipfs/
         public static IpfsTypes.IpfsPath ParseUrn(string urn)
         {
-            Dictionary<string, string> ret = new Dictionary<string, string>();
+            const string BASE_URL_TOKEN = "baseUrl=";
 
-            var regex = new Regex("^(urn\\:decentraland\\:entity\\:(ba[a-zA-Z0-9]{57}))");
-            var matches = regex.Match(urn);
+            ReadOnlySpan<char> urnSpan = urn.AsSpan();
 
-            if (!matches.Success) { return null; }
+            // skip the prefix entirely we don't need it
+            urnSpan = urnSpan[URN_PREFIX.Length..];
 
-            GetParams(urn, ref ret);
-            string baseUrl = ret.GetValueOrDefault("baseUrl", "");
+            // isolate entity id
+            string entityId;
+            string baseUrl;
+            int qmIndex = urnSpan.IndexOf('?');
 
-            return new IpfsTypes.IpfsPath()
+            if (qmIndex > -1)
             {
-                Urn = matches.Groups[0].Value,
-                EntityId = matches.Groups[2].Value,
-                BaseUrl = baseUrl,
-            };
+                entityId = urnSpan[..qmIndex].ToString();
+
+                // isolate base URL
+                int indexOfBaseUrl = urnSpan.IndexOf(BASE_URL_TOKEN);
+
+                if (indexOfBaseUrl > -1)
+                {
+                    urnSpan = urnSpan[(indexOfBaseUrl + BASE_URL_TOKEN.Length)..];
+
+                    // Take the rest of the string until next '&'
+                    int indexOfAmp = urnSpan.IndexOf('&');
+                    baseUrl = indexOfAmp > -1 ? urnSpan[..indexOfAmp].ToString() : urnSpan.ToString();
+                }
+                else
+                    baseUrl = string.Empty;
+            }
+            else
+            {
+                entityId = urnSpan.ToString();
+
+                // No base URL
+                baseUrl = string.Empty;
+            }
+
+            return new IpfsTypes.IpfsPath(entityId, baseUrl);
         }
     }
 }

@@ -3,14 +3,14 @@ using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Special;
 using ECS.Global.Systems;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
-using ECS.StreamableLoading.AssetBundles.Manifest;
+using ECS.StreamableLoading.Cache;
 using ECS.Unity.Transforms.Components;
 using Ipfs;
-using JetBrains.Annotations;
 using SceneRunner;
+using SceneRunner.Scene;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
@@ -21,56 +21,47 @@ namespace Global
     {
         private readonly CancellationTokenSource destroyCancellationSource = new ();
 
-        private ProcessRealmChangeSystem processRealmChangeSystem;
-        private SceneLifeCycleState state;
-
-        private World world;
-
         private SystemGroupWorld worldSystems;
 
-        public void Dispose()
+        public World World { get; private set; }
+
+        public void Initialize(ISceneFactory sceneFactory, Camera unityCamera)
         {
-            destroyCancellationSource.Cancel();
-            worldSystems.Dispose();
-            world.Dispose();
-        }
+            World = World.Create();
 
-        public void Initialize(ISceneFactory sceneFactory, Camera unityCamera, int sceneLoadRadius, [CanBeNull] List<Vector2Int> staticLoadPositions = null)
-        {
-            world = World.Create();
+            var builder = new ArchSystemsWorldBuilder<World>(World);
+            Entity playerEntity = World.Create(new PlayerComponent(), new TransformComponent());
 
-            var builder = new ArchSystemsWorldBuilder<World>(world);
-
-            state = new SceneLifeCycleState
-            {
-                PlayerEntity = world.Create(new PlayerComponent(), new TransformComponent()),
-                SceneLoadRadius = sceneLoadRadius,
-            };
-
-            processRealmChangeSystem = ProcessRealmChangeSystem.InjectToWorld(ref builder, state);
-            LoadScenesDynamicallySystem.InjectToWorld(ref builder, state, staticLoadPositions);
-            ResolveScenesStateSystem.InjectToWorld(ref builder, state);
-            LoadSceneMetadataSystem.InjectToWorld(ref builder, state);
-            StartSceneSystem.InjectToWorld(ref builder, state, sceneFactory, destroyCancellationSource.Token);
-            DestroySceneSystem.InjectToWorld(ref builder);
+            // not synced by mutex
+            var mutex = new MutexSync();
 
             // Asset Bundle Manifest
             const string ASSET_BUNDLES_URL = "https://ab-cdn.decentraland.org/";
 
-            var assetBundlesManifestCache = new AssetBundlesManifestCache();
-            var mutex = new MutexSync();
-            PrepareAssetBundleManifestParametersSystem.InjectToWorld(ref builder, ASSET_BUNDLES_URL);
-            LoadAssetBundleManifestSystem.InjectToWorld(ref builder, assetBundlesManifestCache, ASSET_BUNDLES_URL, mutex);
+            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
+            LoadSceneDefinitionSystem.InjectToWorld(ref builder, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
+            LoadSceneSystem.InjectToWorld(ref builder, ASSET_BUNDLES_URL, sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex);
 
-            DebugCameraTransformToPlayerTransformSystem.InjectToWorld(ref builder, state.PlayerEntity, unityCamera);
+            CalculateParcelsInRangeSystem.InjectToWorld(ref builder, playerEntity);
+            LoadStaticPointersSystem.InjectToWorld(ref builder);
+            LoadFixedPointersSystem.InjectToWorld(ref builder);
+            LoadPointersByRadiusSystem.InjectToWorld(ref builder);
+            ResolveSceneStateByRadiusSystem.InjectToWorld(ref builder);
+            ResolveStaticPointersSystem.InjectToWorld(ref builder);
+            UnloadSceneSystem.InjectToWorld(ref builder);
+            StartSceneSystem.InjectToWorld(ref builder, destroyCancellationSource.Token);
+
+            DebugCameraTransformToPlayerTransformSystem.InjectToWorld(ref builder, playerEntity, unityCamera);
 
             worldSystems = builder.Finish();
             worldSystems.Initialize();
         }
 
-        public void SetRealm(string realm)
+        public void Dispose()
         {
-            processRealmChangeSystem.ChangeRealm(realm);
+            destroyCancellationSource.Cancel();
+            worldSystems.Dispose();
+            World.Dispose();
         }
     }
 }

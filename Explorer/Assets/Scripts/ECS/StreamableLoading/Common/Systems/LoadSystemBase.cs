@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using AssetManagement;
 using Cysharp.Threading.Tasks;
 using ECS.Abstract;
 using ECS.StreamableLoading.Cache;
@@ -8,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using UnityEngine.Networking;
 using UnityEngine.Pool;
 using Utility.Multithreading;
 
@@ -33,6 +31,9 @@ namespace ECS.StreamableLoading.Common.Systems
         // asynchronous operations run independently on Update that is already synchronized
         // so they require explicit synchronisation
         private readonly MutexSync mutexSync;
+
+        private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, TIntention> cachedInternalFlowDelegate;
+
         private CancellationTokenSource cancellationTokenSource;
 
         /// <summary>
@@ -50,6 +51,8 @@ namespace ECS.StreamableLoading.Common.Systems
 
             cachedRequests = DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>.Get();
             irrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<TAsset>>.Get();
+
+            cachedInternalFlowDelegate = FlowInternal;
         }
 
         public override void Initialize()
@@ -161,7 +164,7 @@ namespace ECS.StreamableLoading.Common.Systems
         /// </summary>
         private void ReportException(Exception exception)
         {
-            ReportStreamableLoadingErrorSystem<TIntention, TAsset>.ReportException(GetReportCategory(), exception);
+            AssetsLoadingUtility.ReportException(GetReportCategory(), exception);
         }
 
         /// <summary>
@@ -204,45 +207,11 @@ namespace ECS.StreamableLoading.Common.Systems
             finally { cachedRequests.Remove(intention.CommonArguments.URL); }
         }
 
+
         private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoop(TIntention intention, CancellationToken ct)
         {
-            int attemptCount = intention.CommonArguments.Attempts;
-
-            while (true)
-            {
-                try { return await FlowInternal(intention, ct); }
-
-                catch (UnityWebRequestException unityWebRequestException)
-                {
-                    UnityWebRequest webRequest = unityWebRequestException.UnityWebRequest;
-
-                    //Debug.LogError(unityWebRequestException.UnityWebRequest.url);
-                    //Debug.LogException(unityWebRequestException);
-
-                    // Decide if we can repeat or not
-                    --attemptCount;
-
-                    bool isIrrecoverableError = !webRequest.IsServerError();
-
-                    if (attemptCount <= 0 || webRequest.IsAborted() || isIrrecoverableError)
-                    {
-                        if (intention.CommonArguments.PermittedSources == AssetSource.NONE)
-
-                            // conclude now
-                            return SetIrrecoverableFailure(intention, new StreamableLoadingResult<TAsset>(unityWebRequestException));
-
-                        // Leave other systems to decide on other sources
-                        return null;
-                    }
-                }
-                catch (Exception e)
-                {
-                    // General exception
-                    // conclude now, we can't do anything
-                    ReportException(e);
-                    return SetIrrecoverableFailure(intention, new StreamableLoadingResult<TAsset>(e));
-                }
-            }
+            StreamableLoadingResult<TAsset>? result = await intention.RepeatLoop(cachedInternalFlowDelegate, GetReportCategory(), ct);
+            return result is { Succeeded: false } ? SetIrrecoverableFailure(intention, result.Value) : result;
         }
 
         private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention, StreamableLoadingResult<TAsset> failure)

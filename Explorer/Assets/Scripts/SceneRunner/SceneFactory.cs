@@ -13,7 +13,6 @@ using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using Ipfs;
-using Newtonsoft.Json;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -53,7 +52,7 @@ namespace SceneRunner
             this.entityFactory = entityFactory;
         }
 
-        public async UniTask<ISceneFacade> CreateScene(string jsCodeUrl, CancellationToken ct)
+        public async UniTask<ISceneFacade> CreateSceneFromFile(string jsCodeUrl, CancellationToken ct)
         {
             var sceneDefinition = new IpfsTypes.SceneEntityDefinition();
 
@@ -66,7 +65,7 @@ namespace SceneRunner
                 main = mainScenePath,
             };
 
-            var sceneData = new SceneData(new IpfsRealm(baseUrl), sceneDefinition, false, SceneAssetBundleManifest.NULL);
+            var sceneData = new SceneData(new LocalIpfsRealm(baseUrl), sceneDefinition, false, SceneAssetBundleManifest.NULL);
 
             return await CreateScene(sceneData, ct);
         }
@@ -90,32 +89,13 @@ namespace SceneRunner
                 metadata = sceneMetadata,
             };
 
-            var sceneData = new SceneData(new IpfsRealm(fullPath), sceneDefinition, false, SceneAssetBundleManifest.NULL);
+            var sceneData = new SceneData(new LocalIpfsRealm(fullPath), sceneDefinition, false, SceneAssetBundleManifest.NULL);
 
             return await CreateScene(sceneData, ct);
         }
 
-        public async UniTask<ISceneFacade> CreateSceneFromSceneDefinition(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, SceneAssetBundleManifest abManifest, CancellationToken ct)
+        public async UniTask<ISceneFacade> CreateSceneFromSceneDefinition(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, SceneAssetBundleManifest abManifest, string contentBaseUrl, CancellationToken ct)
         {
-            string sceneJsonHash = null;
-
-            foreach (var contentDefinition in sceneDefinition.content)
-            {
-                if (contentDefinition.file != "scene.json") continue;
-
-                sceneJsonHash = contentDefinition.hash;
-                break;
-            }
-
-            if (sceneJsonHash == null)
-                throw new ArgumentException("scene.json no exists in the content");
-
-            string contentBaseUrl = sceneDefinition.urn.BaseUrl.Length > 0 ? sceneDefinition.urn.BaseUrl : ipfsRealm.ContentBaseUrl;
-
-            var content = await UnityWebRequest.Get(contentBaseUrl + sceneJsonHash).SendWebRequest();
-
-            JsonConvert.PopulateObject(content.downloadHandler.text, sceneDefinition.metadata);
-
             var sceneData = new SceneData(ipfsRealm, sceneDefinition, true, abManifest, contentBaseUrl);
 
             return await CreateScene(sceneData, ct);

@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using Diagnostics.ReportsHandling;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.AssetBundles.Manifest;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,7 +17,6 @@ namespace SceneRunner.ECSWorld.Plugins
             return $"{Application.streamingAssetsPath}/AssetBundles/";
 #endif
 
-        private readonly AssetBundlesManifestCache assetBundlesManifestCache;
         private readonly AssetBundleManifest localAssetBundleManifest;
         private readonly IReportsHandlingSettings reportsHandlingSettings;
 

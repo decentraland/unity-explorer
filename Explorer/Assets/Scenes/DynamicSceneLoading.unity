@@ -169,7 +169,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   camera: {fileID: 963194227}
   StartPosition: {x: 78, y: -7}
-  SceneLoadRadius: 4
+  SceneLoadRadius: 1
   reportsHandlingSettings: {fileID: 11400000, guid: 6c1c35a66af59874a8373ebcd51572a4, type: 2}
   StaticLoadPositions: []
 --- !u!1 &705507993
