@@ -6,6 +6,7 @@ using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
+using static ECS.StreamableLoading.StreamableLoadingDefaults;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.Textures.Components;
@@ -159,7 +160,7 @@ namespace ECS.Unity.Materials.Systems
 
             promise = Promise.Create(World, new GetTextureIntention
             {
-                CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
+                CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount, deferredLoadingState: DeferredLoadingState.Forbidden),
                 WrapMode = textureComponentValue.WrapMode,
                 FilterMode = textureComponentValue.FilterMode,
             });

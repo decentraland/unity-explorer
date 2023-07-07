@@ -2,12 +2,15 @@
 using AssetManagement;
 using Cysharp.Threading.Tasks;
 using ECS.Abstract;
+using ECS.Prioritization.DeferredLoading;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Pool;
 using Utility.Multithreading;
@@ -35,6 +38,8 @@ namespace ECS.StreamableLoading.Common.Systems
         private readonly MutexSync mutexSync;
         private CancellationTokenSource cancellationTokenSource;
 
+        private readonly ConcurrentLoadingBudgetProvider concurrentLoadingBudgetProvider;
+
         /// <summary>
         ///     Resolves the problem of having multiple requests to the same URL at a time
         /// </summary>
@@ -46,6 +51,18 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             this.cache = cache;
             this.mutexSync = mutexSync;
+            concurrentLoadingBudgetProvider = new ConcurrentLoadingBudgetProvider(100);
+            query = World.Query(in CREATE_WEB_REQUEST);
+
+            cachedRequests = DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>.Get();
+            irrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<TAsset>>.Get();
+        }
+
+        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync, ConcurrentLoadingBudgetProvider concurrentLoadingBudgetProvider) : base(world)
+        {
+            this.cache = cache;
+            this.mutexSync = mutexSync;
+            this.concurrentLoadingBudgetProvider = concurrentLoadingBudgetProvider;
             query = World.Query(in CREATE_WEB_REQUEST);
 
             cachedRequests = DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>.Get();
@@ -85,6 +102,9 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private void Execute(in Entity entity, ref TIntention intention)
         {
+            if (!intention.IsAllowed())
+                return;
+
             // Remove current source flag from the permitted sources
             // it indicates that the current source was used
             intention.RemoveCurrentSource();
@@ -115,13 +135,11 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 // if the request is cached wait for it
                 if (cachedRequests.TryGetValue(intention.CommonArguments.URL, out UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> cachedSource))
-                {
+
                     // if the cached request is cancelled it does not mean failure for the new intent
                     (requestIsNotFulfilled, result) = await cachedSource.Task.SuppressCancellationThrow();
 
-                    // if this request must be cancelled by `intention.CommonArguments.CancellationToken` it will be cancelled after `if (!requestIsNotFulfilled)`
-                }
-
+                // if this request must be cancelled by `intention.CommonArguments.CancellationToken` it will be cancelled after `if (!requestIsNotFulfilled)`
                 if (requestIsNotFulfilled)
                     result = await CacheableFlow(intention, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
 
@@ -149,6 +167,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 // TODO errors reporting
             }
+            finally { concurrentLoadingBudgetProvider?.ReleaseBudget(); }
         }
 
         /// <summary>
