@@ -25,25 +25,27 @@ namespace ECS.StreamableLoading.AssetBundles
         /// <param name="hash">Hash of the asset, if it is provided manifest is not checked</param>
         /// <param name="name">Name is resolved into Hash before loading by the manifest</param>
         /// <param name="permittedSources">Sources from which systems will try to load</param>
-        private GetAssetBundleIntention(string name = null, string hash = null, AssetSource permittedSources = AssetSource.ALL)
+        private GetAssetBundleIntention(string name = null, string hash = null, AssetSource permittedSources = AssetSource.ALL,
+            StreamableLoadingDefaults.DeferredLoadingState deferredLoadingState = StreamableLoadingDefaults.DeferredLoadingState.Allowed)
         {
             Name = name;
             Hash = hash;
 
             // Don't resolve URL here
 
-            CommonArguments = new CommonLoadingArguments(string.Empty, permittedSources: permittedSources);
-
+            CommonArguments = new CommonLoadingArguments(string.Empty, permittedSources: permittedSources, deferredLoadingState: deferredLoadingState);
             cacheHash = null;
         }
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.cancellationTokenSource;
 
-        public static GetAssetBundleIntention FromName(string name, AssetSource permittedSources = AssetSource.ALL) =>
-            new (name: name, permittedSources: permittedSources);
+        public static GetAssetBundleIntention FromName(string name, AssetSource permittedSources = AssetSource.ALL,
+            StreamableLoadingDefaults.DeferredLoadingState deferredLoadingState = StreamableLoadingDefaults.DeferredLoadingState.Allowed) =>
+            new (name: name, permittedSources: permittedSources, deferredLoadingState: deferredLoadingState);
 
-        public static GetAssetBundleIntention FromHash(string hash, AssetSource permittedSources = AssetSource.ALL) =>
-            new (hash: hash, permittedSources: permittedSources);
+        public static GetAssetBundleIntention FromHash(string hash, AssetSource permittedSources = AssetSource.ALL,
+            StreamableLoadingDefaults.DeferredLoadingState deferredLoadingState = StreamableLoadingDefaults.DeferredLoadingState.Allowed) =>
+            new (hash: hash, permittedSources: permittedSources, deferredLoadingState: deferredLoadingState);
 
         public bool Equals(GetAssetBundleIntention other) =>
             Hash == other.Hash || Name == other.Name;

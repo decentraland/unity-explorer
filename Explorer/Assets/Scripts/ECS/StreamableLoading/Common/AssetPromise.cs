@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using UnityEngine.Assertions;
@@ -25,6 +26,7 @@ namespace ECS.StreamableLoading.Common
         /// </summary>
         public TLoadingIntention LoadingIntention { get; private set; }
 
+
         /// <summary>
         ///     The result if it was loaded
         /// </summary>
@@ -34,7 +36,13 @@ namespace ECS.StreamableLoading.Common
             new ()
             {
                 LoadingIntention = loadingIntention,
-                Entity = world.Reference(world.Create(loadingIntention)),
+                Entity = world.Reference(world.Create(loadingIntention,
+                    new PartitionComponent()
+                    {
+                        Bucket = 0,
+                        IsBehind = false,
+                        IsDirty = true
+                    })),
             };
 
         /// <summary>

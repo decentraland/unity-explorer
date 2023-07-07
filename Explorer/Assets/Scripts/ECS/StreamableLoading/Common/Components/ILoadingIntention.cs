@@ -1,5 +1,6 @@
 ﻿using AssetManagement;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace ECS.StreamableLoading.Common.Components
@@ -16,6 +17,16 @@ namespace ECS.StreamableLoading.Common.Components
 
     public static class LoadingIntentionExtensions
     {
+        public static bool IsAllowed<T>(this ref T loadingIntention) where T: struct, ILoadingIntention =>
+            loadingIntention.CommonArguments.DeferredLoadingState.Equals(StreamableLoadingDefaults.DeferredLoadingState.Allowed);
+
+        public static void SetAllowed<T>(this ref T loadingIntention) where T: struct, ILoadingIntention
+        {
+            CommonLoadingArguments ca = loadingIntention.CommonArguments;
+            ca.DeferredLoadingState = StreamableLoadingDefaults.DeferredLoadingState.Allowed;
+            loadingIntention.CommonArguments = ca;
+        }
+
         public static void SetURL<T>(this ref T loadingIntention, string url) where T: struct, ILoadingIntention
         {
             CommonLoadingArguments ca = loadingIntention.CommonArguments;

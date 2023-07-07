@@ -1,6 +1,18 @@
 ﻿{
   "name": "Prioritization",
+  "rootNamespace": "",
   "references": [
-    "GUID:3c7b57a14671040bd8c549056adc04f5"
-  ]
+    "GUID:3c7b57a14671040bd8c549056adc04f5",
+    "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+    "GUID:f42e0dd6512e44775995f01f05bb10c1"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
 }
