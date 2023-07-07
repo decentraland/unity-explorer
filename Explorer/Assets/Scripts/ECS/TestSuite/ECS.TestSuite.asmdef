@@ -17,7 +17,8 @@
     "nunit.framework.dll",
     "NSubstitute.dll",
     "Arch.dll",
-    "Arch.System.dll"
+    "Arch.System.dll",
+    "Arch.SystemGroups.dll"
   ],
   "autoReferenced": false,
   "defineConstraints": [

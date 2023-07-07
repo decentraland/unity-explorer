@@ -1,8 +1,10 @@
 using Arch.Core;
+using Arch.SystemGroups.Metadata;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using ECS.Abstract;
+using System;
 using System.Runtime.CompilerServices;
 
 namespace ECS.Feedback.Systems
@@ -40,5 +42,8 @@ namespace ECS.Feedback.Systems
                 world.Remove(entity, typeof(PBPointerEventsResult));
             }
         }
+
+        protected override AttributesInfoBase GetMetadataInternal() =>
+            throw new NotImplementedException();
     }
 }

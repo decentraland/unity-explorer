@@ -2,6 +2,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using Arch.SystemGroups.UnityBridge;
 using System;
 using System.Collections.Generic;
+using Utility.Pool;
 using Utility.ThreadSafePool;
 
 namespace CrdtEcsBridge.UpdateGate
@@ -11,7 +12,7 @@ namespace CrdtEcsBridge.UpdateGate
     /// </summary>
     public class SystemGroupsUpdateGate : ISystemGroupsUpdateGate
     {
-        private static readonly ThreadSafeHashSetPool<Type> POOL = new (SystemGroupsUtils.Count, 50);
+        private static readonly ThreadSafeHashSetPool<Type> POOL = new (SystemGroupsUtils.Count, PoolConstants.SCENES_COUNT);
 
         private HashSet<Type> openGroups;
 

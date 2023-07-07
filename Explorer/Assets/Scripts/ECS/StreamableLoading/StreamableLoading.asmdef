@@ -8,7 +8,7 @@
         "AssetManagement",
         "Utility",
         "SceneRunner.Scene",
-        "Prioritization"
+        "Unity.Collections"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

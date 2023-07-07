@@ -9,7 +9,8 @@
     "SceneRunner",
     "SceneRunner.Scene",
     "Utility",
-    "StreamableLoading"
+    "StreamableLoading",
+    "Diagnostics"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

@@ -1,8 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using ECS.LifeCycle;
-using ECS.Prioritization.DeferredLoading;
-using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AssetBundles.Manifest;
 using System.Collections.Generic;
@@ -23,12 +21,10 @@ namespace SceneRunner.ECSWorld.Plugins
         private readonly AssetBundleManifest localAssetBundleManifest;
 
         private readonly AssetBundleCache assetBundleCache;
-        private readonly ConcurrentLoadingBudgetProvider concurrentLoadingBudgetProvider;
 
-        public AssetBundlesPlugin(AssetBundleManifest localAssetBundleManifest, ConcurrentLoadingBudgetProvider concurrentLoadingBudgetProvider)
+        public AssetBundlesPlugin(AssetBundleManifest localAssetBundleManifest)
         {
             this.localAssetBundleManifest = localAssetBundleManifest;
-            this.concurrentLoadingBudgetProvider = concurrentLoadingBudgetProvider;
             assetBundleCache = new AssetBundleCache();
         }
 
@@ -39,7 +35,6 @@ namespace SceneRunner.ECSWorld.Plugins
 
             // TODO create a runtime ref-counting cache
             LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, localAssetBundleManifest, sharedDependencies.MutexSync);
-            DeferredLoadingSystem<AssetBundleData, GetAssetBundleIntention>.InjectToWorld(ref builder, concurrentLoadingBudgetProvider);
         }
     }
 }

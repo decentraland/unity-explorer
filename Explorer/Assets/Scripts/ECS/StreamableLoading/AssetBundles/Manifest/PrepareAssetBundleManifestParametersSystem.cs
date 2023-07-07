@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
@@ -14,6 +15,7 @@ namespace ECS.StreamableLoading.AssetBundles.Manifest
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateBefore(typeof(LoadAssetBundleManifestSystem))]
+    [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class PrepareAssetBundleManifestParametersSystem : BaseUnityLoopSystem
     {
         private const string URN_PREFIX = "urn:decentraland:entity:";

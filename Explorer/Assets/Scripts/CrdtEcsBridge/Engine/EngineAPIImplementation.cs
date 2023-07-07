@@ -5,6 +5,8 @@ using CRDT.Serializer;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
+using Diagnostics.ReportsHandling;
+using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules;
 using System;
 using System.Collections.Generic;
@@ -28,6 +30,7 @@ namespace CrdtEcsBridge.Engine
         private readonly ICRDTWorldSynchronizer crdtWorldSynchronizer;
         private readonly IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider;
         private readonly ISystemGroupsUpdateGate systemGroupsUpdateGate;
+        private readonly ISceneExceptionsHandler exceptionsHandler;
         private readonly MutexSync mutexSync;
 
         private byte[] lastSerializationBuffer;
@@ -49,6 +52,7 @@ namespace CrdtEcsBridge.Engine
             ICRDTWorldSynchronizer crdtWorldSynchronizer,
             IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider,
             ISystemGroupsUpdateGate systemGroupsUpdateGate,
+            ISceneExceptionsHandler exceptionsHandler,
             MutexSync mutexSync)
         {
             sharedPoolsProvider = poolsProvider;
@@ -60,6 +64,7 @@ namespace CrdtEcsBridge.Engine
             this.outgoingCrtdMessagesProvider = outgoingCrtdMessagesProvider;
             this.mutexSync = mutexSync;
             this.systemGroupsUpdateGate = systemGroupsUpdateGate;
+            this.exceptionsHandler = exceptionsHandler;
 
             deserializeBatchSampler = CustomSampler.Create("DeserializeBatch");
             worldSyncBufferSampler = CustomSampler.Create("WorldSyncBuffer");
@@ -108,47 +113,65 @@ namespace CrdtEcsBridge.Engine
                 worldSyncBuffer.SyncCRDTMessage(in message, reconciliationResult.Effect);
             }
 
-            // Deserialize messages on the main thread
+            // Deserialize messages
             worldSyncBuffer.FinalizeAndDeserialize();
 
             worldSyncBufferSampler.End();
 
-            // Return messages to the pool before switching to the main thread,
-            // it is a must because CRDT_MESSAGES_POOL is ThreadLocal
             instancePoolsProvider.ReleaseDeserializationMessagesPool(messages);
 
-            outgoingMessagesSampler.Begin();
-
-            int payloadLength;
-
-            // before returning to the main thread serialize outgoing CRDT Messages
-            using (var outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock())
-            {
-                lastSerializationBuffer = sharedPoolsProvider.GetSerializedStateBytesPool(payloadLength = outgoingMessagesSyncBlock.GetPayloadLength());
-                SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, lastSerializationBuffer.AsSpan());
-            }
-
-            outgoingMessagesSampler.End();
+            int payloadLength = SerializeOutgoingCRDTMessages();
 
             ApplySyncCommandBuffer(worldSyncBuffer);
 
             return new ArraySegment<byte>(lastSerializationBuffer, 0, payloadLength);
         }
 
+        private int SerializeOutgoingCRDTMessages()
+        {
+            try
+            {
+                outgoingMessagesSampler.Begin();
+
+                int payloadLength;
+
+                using (OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock())
+                {
+                    lastSerializationBuffer =
+                        sharedPoolsProvider.GetSerializedStateBytesPool(
+                            payloadLength = outgoingMessagesSyncBlock.GetPayloadLength());
+
+                    SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, lastSerializationBuffer.AsSpan());
+                }
+
+                outgoingMessagesSampler.End();
+                return payloadLength;
+            }
+            catch (Exception e)
+            {
+                exceptionsHandler.OnEngineException(e, ReportCategory.CRDT);
+                return 0;
+            }
+        }
+
         // Use mutex to apply command buffer from the background thread instead of synchronizing by the main one
         private void ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer)
         {
-            using MutexSync.Scope mutex = mutexSync.GetScope();
+            try
+            {
+                using MutexSync.Scope mutex = mutexSync.GetScope();
 
-            applyBufferSampler.Begin();
+                applyBufferSampler.Begin();
 
-            // Apply changes to the ECS World on the main thread
-            crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncBuffer);
-            applyBufferSampler.End();
+                // Apply changes to the ECS World on the main thread
+                crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncBuffer);
+                applyBufferSampler.End();
 
-            // Allow system for which throttling is enabled to process once
-            // If the scene is updated more frequently than Unity Loop the gate will be effectively open all the time
-            systemGroupsUpdateGate.Open();
+                // Allow system for which throttling is enabled to process once
+                // If the scene is updated more frequently than Unity Loop the gate will be effectively open all the time
+                systemGroupsUpdateGate.Open();
+            }
+            catch (Exception e) { exceptionsHandler.OnEngineException(e, ReportCategory.CRDT_ECS_BRIDGE); }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -163,7 +186,6 @@ namespace CrdtEcsBridge.Engine
 
         public ArraySegment<byte> CrdtGetState()
         {
-            // TODO it's dirty, think how to do it better
             if (isDisposing) return Array.Empty<byte>();
 
             Profiler.BeginThreadProfiling("SceneRuntime", "CrtdGetState");
@@ -173,39 +195,46 @@ namespace CrdtEcsBridge.Engine
 
             ReleaseSerializationBuffer();
 
-            // Create CRDT Messages from the current state
-            // we know exactly how big the array should be
-            ProcessedCRDTMessage[] processedMessages = sharedPoolsProvider.GetSerializationCrdtMessagesPool(crdtProtocol.GetMessagesCount());
+            try
+            {
+                // Create CRDT Messages from the current state
+                // we know exactly how big the array should be
+                ProcessedCRDTMessage[] processedMessages = sharedPoolsProvider.GetSerializationCrdtMessagesPool(crdtProtocol.GetMessagesCount());
 
-            var currentStatePayloadLength = crdtProtocol.CreateMessagesFromTheCurrentState(processedMessages);
+                int currentStatePayloadLength = crdtProtocol.CreateMessagesFromTheCurrentState(processedMessages);
 
-            // Sync block ensures that no messages are added while they are being processed
-            // By the end of the block messages are flushed and adding is unblocked
-            using var outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock();
+                // Sync block ensures that no messages are added while they are being processed
+                // By the end of the block messages are flushed and adding is unblocked
+                using OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock();
 
-            var outgoingCRDTMessagesPayloadLength = outgoingMessagesSyncBlock.GetPayloadLength();
+                int outgoingCRDTMessagesPayloadLength = outgoingMessagesSyncBlock.GetPayloadLength();
 
-            var totalPayloadLength = currentStatePayloadLength + outgoingCRDTMessagesPayloadLength;
+                int totalPayloadLength = currentStatePayloadLength + outgoingCRDTMessagesPayloadLength;
 
-            // We know exactly how many bytes we need to serialize
-            lastSerializationBuffer = sharedPoolsProvider.GetSerializedStateBytesPool(totalPayloadLength);
+                // We know exactly how many bytes we need to serialize
+                lastSerializationBuffer = sharedPoolsProvider.GetSerializedStateBytesPool(totalPayloadLength);
 
-            // Serialize the current state
-            var currentStateSpan = lastSerializationBuffer.AsSpan().Slice(currentStatePayloadLength);
+                // Serialize the current state
+                Span<byte> currentStateSpan = lastSerializationBuffer.AsSpan().Slice(currentStatePayloadLength);
 
-            for (var i = 0; i < processedMessages.Length; i++)
-                crdtSerializer.Serialize(ref currentStateSpan, in processedMessages[i]);
+                for (var i = 0; i < processedMessages.Length; i++)
+                    crdtSerializer.Serialize(ref currentStateSpan, in processedMessages[i]);
 
-            // Messages are serialized, we no longer need them in the managed form
-            sharedPoolsProvider.ReleaseSerializationCrdtMessagesPool(processedMessages);
+                // Messages are serialized, we no longer need them in the managed form
+                sharedPoolsProvider.ReleaseSerializationCrdtMessagesPool(processedMessages);
 
-            // Serialize outgoing messages
-            SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, lastSerializationBuffer.AsSpan().Slice(currentStatePayloadLength, outgoingCRDTMessagesPayloadLength));
+                // Serialize outgoing messages
+                SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, lastSerializationBuffer.AsSpan().Slice(currentStatePayloadLength, outgoingCRDTMessagesPayloadLength));
 
-            Profiler.EndThreadProfiling();
-
-            // Return the buffer to the caller
-            return new ArraySegment<byte>(lastSerializationBuffer, 0, totalPayloadLength);
+                // Return the buffer to the caller
+                return new ArraySegment<byte>(lastSerializationBuffer, 0, totalPayloadLength);
+            }
+            catch (Exception e)
+            {
+                exceptionsHandler.OnEngineException(e, ReportCategory.CRDT);
+                return Array.Empty<byte>();
+            }
+            finally { Profiler.EndThreadProfiling(); }
         }
 
         public void SetIsDisposing()

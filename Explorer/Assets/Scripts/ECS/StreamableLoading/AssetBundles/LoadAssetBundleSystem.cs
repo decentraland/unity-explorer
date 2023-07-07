@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using AssetManagement;
 using Cysharp.Threading.Tasks;
+using Diagnostics.ReportsHandling;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -19,6 +20,7 @@ using Utility.ThreadSafePool;
 namespace ECS.StreamableLoading.AssetBundles
 {
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
+    [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class LoadAssetBundleSystem : LoadSystemBase<AssetBundleData, GetAssetBundleIntention>
     {
         private static readonly ThreadSafeObjectPool<AssetBundleMetadata> METADATA_POOL

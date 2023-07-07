@@ -1,7 +1,6 @@
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Engine;
-using ECS.Prioritization.DeferredLoading;
 using SceneRunner;
 using SceneRunner.ECSWorld;
 using SceneRunner.ECSWorld.Plugins;
@@ -20,17 +19,16 @@ namespace Global
 
         public static SceneSharedContainer Create(in ComponentsContainer componentsContainer, AssetBundleManifest localAssetBundleManifest)
         {
-            var sharedDependencies = new ECSWorldSingletonSharedDependencies(componentsContainer.ComponentPoolsRegistry,
-                new ConcurrentLoadingBudgetProvider(100), new ConcurrentLoadingBudgetProvider(100));
+            var sharedDependencies = new ECSWorldSingletonSharedDependencies(componentsContainer.ComponentPoolsRegistry);
 
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 new TransformsPlugin(sharedDependencies),
                 new MaterialsPlugin(),
                 new PrimitiveCollidersPlugin(sharedDependencies),
-                new TexturesLoadingPlugin(sharedDependencies.LoadingBudgetProvider),
+                new TexturesLoadingPlugin(),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
-                new AssetBundlesPlugin(localAssetBundleManifest, sharedDependencies.LoadingBudgetProvider),
+                new AssetBundlesPlugin(localAssetBundleManifest),
                 new GltfContainerPlugin(sharedDependencies));
 
             return new SceneSharedContainer

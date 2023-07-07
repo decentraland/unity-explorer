@@ -165,7 +165,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 using MutexSync.Scope sync = mutexSync.GetScope();
                 World.Add(entity, new StreamableLoadingResult<TAsset>(e));
 
-                // TODO errors reporting
+                ReportException(e);
             }
             finally { concurrentLoadingBudgetProvider?.ReleaseBudget(); }
         }
@@ -174,6 +174,14 @@ namespace ECS.StreamableLoading.Common.Systems
         ///     All exceptions are handled by the upper functions, just do pure work
         /// </summary>
         protected abstract UniTask<StreamableLoadingResult<TAsset>> FlowInternal(TIntention intention, CancellationToken ct);
+
+        /// <summary>
+        ///     Can't move it to another system as the update cycle is not synchronized with systems but based on UniTasks
+        /// </summary>
+        private void ReportException(Exception exception)
+        {
+            ReportStreamableLoadingErrorSystem<TIntention, TAsset>.ReportException(GetReportCategory(), exception);
+        }
 
         /// <summary>
         ///     Part of the flow that can be reused by multiple intentions
@@ -250,8 +258,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 {
                     // General exception
                     // conclude now, we can't do anything
-                    // TODO errors reporting
-                    //Debug.LogException(e);
+                    ReportException(e);
                     return SetIrrecoverableFailure(intention, new StreamableLoadingResult<TAsset>(e));
                 }
             }

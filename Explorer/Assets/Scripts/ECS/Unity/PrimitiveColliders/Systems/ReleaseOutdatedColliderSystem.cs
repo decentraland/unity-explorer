@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
+using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.ComponentsPooling;
 using ECS.Groups;
@@ -16,6 +17,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
     /// </summary>
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateBefore(typeof(ComponentInstantiationGroup))]
+    [LogCategory(ReportCategory.PRIMITIVE_COLLIDERS)]
     [ThrottlingEnabled]
     public partial class ReleaseOutdatedColliderSystem : BaseUnityLoopSystem
     {
