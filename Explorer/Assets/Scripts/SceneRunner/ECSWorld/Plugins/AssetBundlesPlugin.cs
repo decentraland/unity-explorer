@@ -1,6 +1,8 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using Diagnostics.ReportsHandling;
 using ECS.LifeCycle;
+using ECS.Prioritization.DeferredLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AssetBundles.Manifest;
 using System.Collections.Generic;
@@ -19,22 +21,28 @@ namespace SceneRunner.ECSWorld.Plugins
 
         private readonly AssetBundlesManifestCache assetBundlesManifestCache;
         private readonly AssetBundleManifest localAssetBundleManifest;
+        private readonly IReportsHandlingSettings reportsHandlingSettings;
+        private readonly ConcurrentLoadingBudgetProvider loadingBudgetProvider;
 
         private readonly AssetBundleCache assetBundleCache;
 
-        public AssetBundlesPlugin(AssetBundleManifest localAssetBundleManifest)
+        public AssetBundlesPlugin(AssetBundleManifest localAssetBundleManifest, IReportsHandlingSettings reportsHandlingSettings, ConcurrentLoadingBudgetProvider loadingBudgetProvider)
         {
             this.localAssetBundleManifest = localAssetBundleManifest;
+            this.reportsHandlingSettings = reportsHandlingSettings;
+            this.loadingBudgetProvider = loadingBudgetProvider;
             assetBundleCache = new AssetBundleCache();
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, List<IFinalizeWorldSystem> finalizeWorldSystems)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
             // Asset Bundles
             PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, STREAMING_ASSETS_URL);
+            ReportAssetBundleErrorSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // TODO create a runtime ref-counting cache
-            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, localAssetBundleManifest, sharedDependencies.MutexSync);
+            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, localAssetBundleManifest, sharedDependencies.MutexSync, loadingBudgetProvider);
+            DeferredLoadingSystem<AssetBundleData, GetAssetBundleIntention>.InjectToWorld(ref builder, loadingBudgetProvider);
         }
     }
 }

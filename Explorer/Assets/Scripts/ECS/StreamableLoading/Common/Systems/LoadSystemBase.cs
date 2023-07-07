@@ -47,17 +47,6 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private readonly Dictionary<string, StreamableLoadingResult<TAsset>> irrecoverableFailures;
 
-        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync) : base(world)
-        {
-            this.cache = cache;
-            this.mutexSync = mutexSync;
-            concurrentLoadingBudgetProvider = new ConcurrentLoadingBudgetProvider(100);
-            query = World.Query(in CREATE_WEB_REQUEST);
-
-            cachedRequests = DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>.Get();
-            irrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<TAsset>>.Get();
-        }
-
         protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync, ConcurrentLoadingBudgetProvider concurrentLoadingBudgetProvider) : base(world)
         {
             this.cache = cache;

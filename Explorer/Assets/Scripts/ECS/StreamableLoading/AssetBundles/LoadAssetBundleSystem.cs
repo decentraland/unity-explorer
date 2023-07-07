@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using AssetManagement;
 using Cysharp.Threading.Tasks;
 using Diagnostics.ReportsHandling;
+using ECS.Prioritization.DeferredLoading;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -32,7 +33,7 @@ namespace ECS.StreamableLoading.AssetBundles
         private readonly AssetBundleManifest assetBundleManifest;
 
         internal LoadAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache,
-            AssetBundleManifest assetBundleManifest, MutexSync mutexSync) : base(world, cache, mutexSync)
+            AssetBundleManifest assetBundleManifest, MutexSync mutexSync, ConcurrentLoadingBudgetProvider loadingBudgetProvider) : base(world, cache, mutexSync, loadingBudgetProvider)
         {
             this.assetBundleManifest = assetBundleManifest;
         }

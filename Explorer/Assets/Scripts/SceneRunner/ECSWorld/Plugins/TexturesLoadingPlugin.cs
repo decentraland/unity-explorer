@@ -24,5 +24,6 @@ namespace SceneRunner.ECSWorld.Plugins
             LoadTextureSystem.InjectToWorld(ref builder, NoCache<Texture2D, GetTextureIntention>.INSTANCE, sharedDependencies.MutexSync, concurrentLoadingBudgetProvider);
             DeferredLoadingSystem<Texture2D, GetTextureIntention>.InjectToWorld(ref builder, concurrentLoadingBudgetProvider);
         }
+
     }
 }

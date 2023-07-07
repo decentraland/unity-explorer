@@ -1,16 +1,14 @@
 using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using Codice.CM.SEIDInfo;
+using Arch.SystemGroups.Metadata;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.Textures;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Collections.LowLevel.Unsafe;
-using UnityEngine;
 
 namespace ECS.Prioritization.DeferredLoading
 {
@@ -75,6 +73,7 @@ namespace ECS.Prioritization.DeferredLoading
                 intentionRef.SetAllowed();
             }
         }
+
     }
 
     public unsafe struct IntentionData

@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using Diagnostics.ReportsHandling;
+using ECS.Prioritization.DeferredLoading;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
@@ -22,7 +23,7 @@ namespace ECS.StreamableLoading.AssetBundles.Manifest
 
         public LoadAssetBundleManifestSystem(World world, IStreamableCache<SceneAssetBundleManifest, GetAssetBundleManifestIntention> cache,
             string assetBundleURL, MutexSync mutexSync)
-            : base(world, cache, mutexSync)
+            : base(world, cache, mutexSync, new ConcurrentLoadingBudgetProvider(100))
         {
             this.assetBundleURL = assetBundleURL;
         }

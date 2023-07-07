@@ -1,4 +1,5 @@
-﻿using ECS.StreamableLoading.Common.Components;
+﻿using ECS.Prioritization.DeferredLoading;
+using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
 using NUnit.Framework;
 using UnityEngine;
@@ -33,6 +34,6 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
         protected override LoadAssetBundleSystem CreateSystem() =>
-            new (world, cache, null, new MutexSync());
+            new (world, cache, null, new MutexSync(), new ConcurrentLoadingBudgetProvider(100));
     }
 }

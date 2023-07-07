@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using ECS.Prioritization.DeferredLoading;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
@@ -14,7 +15,9 @@ namespace ECS.StreamableLoading.Textures
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     public partial class LoadTextureSystem : LoadSystemBase<Texture2D, GetTextureIntention>
     {
-        internal LoadTextureSystem(World world, IStreamableCache<Texture2D, GetTextureIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync) { }
+        internal LoadTextureSystem(World world, IStreamableCache<Texture2D, GetTextureIntention> cache, MutexSync mutexSync, ConcurrentLoadingBudgetProvider loadingBudget) :
+            base(world, cache, mutexSync, loadingBudget) { }
+
 
         protected override async UniTask<StreamableLoadingResult<Texture2D>> FlowInternal(GetTextureIntention intention, CancellationToken ct)
         {

@@ -218,7 +218,7 @@
         <member name="M:Arch.SystemGroups.DefaultGroup`1.#ctor">
             <summary>
                 Creates an empty group, for auto-generated code only,
-            Don't invoke it manually
+                Don't invoke it manually
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.DefaultGroup`1.Initialize">
@@ -394,13 +394,17 @@
         </member>
         <member name="M:Arch.SystemGroups.UnityPlayerLoopHelper.AddSystemToPlayerLoop(Arch.SystemGroups.SystemGroup,UnityEngine.LowLevel.PlayerLoopSystem@,System.Type,Arch.SystemGroups.UnityPlayerLoopHelper.AddMode)">
             <summary>
-            Add an ECS system to a specific point in the Unity player loop, so that it is updated every frame.
-            <para>The system groups are being inserted into their corresponding aggregate that is unique for each group type,
-            the execution order of the system groups inside the aggregate is not guaranteed and must be expected to be used for independent worlds</para>
+                Add an ECS system to a specific point in the Unity player loop, so that it is updated every frame.
+                <para>The system groups are being inserted into their corresponding aggregate that is unique for each
+                    group type,
+                    the execution order of the system groups inside the aggregate is not guaranteed and must be expected
+                    to be used for independent worlds
+                </para>
             </summary>
             <remarks>
-            This function does not change the currently active player loop. If this behavior is desired, it's necessary
-            to call PlayerLoop.SetPlayerLoop(playerLoop) after the systems have been removed.
+                This function does not change the currently active player loop. If this behavior is desired, it's
+                necessary
+                to call PlayerLoop.SetPlayerLoop(playerLoop) after the systems have been removed.
             </remarks>
             <param name="systemGroup">The ECS system to add to the player loop.</param>
             <param name="playerLoop">Existing player loop to modify (e.g. PlayerLoop.GetCurrentPlayerLoop())</param>
