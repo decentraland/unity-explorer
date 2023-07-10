@@ -1,0 +1,193 @@
+[
+  {
+    "version": "v3",
+    "type": "scene",
+    "id": "b64-L3Vzci9zcmMvYXBwLy0zLi0zLmdsYi1mbG9vcg==",
+    "pointers": [
+      "-3,-3",
+      "-3,-2",
+      "-2,-3",
+      "-2,-2"
+    ],
+    "timestamp": 1685974330457,
+    "metadata": {
+      "display": {
+        "title": "fervent_mcnulty",
+        "favicon": "favicon_asset"
+      },
+      "owner": "",
+      "contact": {
+        "name": "Agustin",
+        "email": ""
+      },
+      "main": "game.js",
+      "tags": [],
+      "scene": {
+        "parcels": [
+          "-3,-3",
+          "-3,-2",
+          "-2,-3",
+          "-2,-2"
+        ],
+        "base": "-3,-3"
+      },
+      "policy": {
+        "contentRating": "E",
+        "fly": true,
+        "voiceEnabled": true,
+        "blacklist": [],
+        "teleportPosition": ""
+      }
+    },
+    "content": [
+      {
+        "file": "floor.glb",
+        "hash": "b64-L3Vzci9zcmMvYXBwLy0zLi0zLmdsYi1mbG9vci9mbG9vci5nbGI="
+      },
+      {
+        "file": "game.js",
+        "hash": "b64-L3Vzci9zcmMvYXBwLy0zLi0zLmdsYi1mbG9vci9nYW1lLmpz"
+      },
+      {
+        "file": "game.js.lib",
+        "hash": "b64-L3Vzci9zcmMvYXBwLy0zLi0zLmdsYi1mbG9vci9nYW1lLmpzLmxpYg=="
+      },
+      {
+        "file": "scene.json",
+        "hash": "b64-L3Vzci9zcmMvYXBwLy0zLi0zLmdsYi1mbG9vci9zY2VuZS5qc29u"
+      }
+    ]
+  },
+  {
+    "version": "v3",
+    "type": "scene",
+    "id": "b64-L3Vzci9zcmMvYXBwLzAuMC5ibGFuay1zY2VuZQ==",
+    "pointers": [
+      "0,0"
+    ],
+    "timestamp": 1685974330460,
+    "metadata": {
+      "display": {
+        "title": "Blank Scene"
+      },
+      "owner": "",
+      "contact": {
+        "name": "",
+        "email": ""
+      },
+      "main": "game.js",
+      "tags": [],
+      "scene": {
+        "parcels": [
+          "0,0"
+        ],
+        "base": "0,0"
+      },
+      "policy": {
+        "contentRating": "E",
+        "fly": true,
+        "voiceEnabled": false,
+        "blacklist": [],
+        "teleportPosition": ""
+      }
+    },
+    "content": [
+      {
+        "file": "game.js",
+        "hash": "b64-L3Vzci9zcmMvYXBwLzAuMC5ibGFuay1zY2VuZS9nYW1lLmpz"
+      },
+      {
+        "file": "game.js.lib",
+        "hash": "b64-L3Vzci9zcmMvYXBwLzAuMC5ibGFuay1zY2VuZS9nYW1lLmpzLmxpYg=="
+      },
+      {
+        "file": "scene.json",
+        "hash": "b64-L3Vzci9zcmMvYXBwLzAuMC5ibGFuay1zY2VuZS9zY2VuZS5qc29u"
+      }
+    ]
+  },
+  {
+    "version": "v3",
+    "type": "scene",
+    "id": "b64-L3Vzci9zcmMvYXBwL2dpdGh1Yi5jb21fZGVjZW50cmFsYW5kX3Nkazctc2NlbmUtdGVtcGxhdGUtMTY4NTk1OTQ3NTU0NA==",
+    "pointers": [
+      "1,-2"
+    ],
+    "timestamp": 1685974330842,
+    "metadata": {
+      "ecs7": true,
+      "runtimeVersion": "7",
+      "display": {
+        "title": "SDK7 Decentraland - Cube Spawner Scene",
+        "description": "First scene with SDK7",
+        "navmapThumbnail": "images/scene-thumbnail.png",
+        "favicon": "favicon_asset"
+      },
+      "owner": "",
+      "contact": {
+        "name": "SDK",
+        "email": ""
+      },
+      "main": "bin/index.js",
+      "tags": [],
+      "scene": {
+        "parcels": [
+          "1,-2"
+        ],
+        "base": "1,-2"
+      },
+      "spawnPoints": [
+        {
+          "name": "spawn1",
+          "default": true,
+          "position": {
+            "x": [
+              0,
+              3
+            ],
+            "y": [
+              0,
+              0
+            ],
+            "z": [
+              0,
+              3
+            ]
+          },
+          "cameraTarget": {
+            "x": 8,
+            "y": 1,
+            "z": 8
+          }
+        }
+      ],
+      "requiredPermissions": [
+        "ALLOW_TO_TRIGGER_AVATAR_EMOTE",
+        "ALLOW_TO_MOVE_PLAYER_INSIDE_SCENE"
+      ],
+      "featureToggles": {}
+    },
+    "content": [
+      {
+        "file": "bin/index.js",
+        "hash": "b64-L3Vzci9zcmMvYXBwL2dpdGh1Yi5jb21fZGVjZW50cmFsYW5kX3Nkazctc2NlbmUtdGVtcGxhdGUtMTY4NTk1OTQ3NTU0NC9iaW4vaW5kZXguanM="
+      },
+      {
+        "file": "images/scene-thumbnail.png",
+        "hash": "b64-L3Vzci9zcmMvYXBwL2dpdGh1Yi5jb21fZGVjZW50cmFsYW5kX3Nkazctc2NlbmUtdGVtcGxhdGUtMTY4NTk1OTQ3NTU0NC9pbWFnZXMvc2NlbmUtdGh1bWJuYWlsLnBuZw=="
+      },
+      {
+        "file": "main.composite",
+        "hash": "b64-L3Vzci9zcmMvYXBwL2dpdGh1Yi5jb21fZGVjZW50cmFsYW5kX3Nkazctc2NlbmUtdGVtcGxhdGUtMTY4NTk1OTQ3NTU0NC9tYWluLmNvbXBvc2l0ZQ=="
+      },
+      {
+        "file": "package.json",
+        "hash": "b64-L3Vzci9zcmMvYXBwL2dpdGh1Yi5jb21fZGVjZW50cmFsYW5kX3Nkazctc2NlbmUtdGVtcGxhdGUtMTY4NTk1OTQ3NTU0NC9wYWNrYWdlLmpzb24="
+      },
+      {
+        "file": "scene.json",
+        "hash": "b64-L3Vzci9zcmMvYXBwL2dpdGh1Yi5jb21fZGVjZW50cmFsYW5kX3Nkazctc2NlbmUtdGVtcGxhdGUtMTY4NTk1OTQ3NTU0NC9zY2VuZS5qc29u"
+      }
+    ]
+  }
+]
