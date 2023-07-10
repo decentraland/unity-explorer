@@ -26,7 +26,7 @@ namespace ECS.StreamableLoading.AssetBundles
         /// <param name="name">Name is resolved into Hash before loading by the manifest</param>
         /// <param name="permittedSources">Sources from which systems will try to load</param>
         private GetAssetBundleIntention(string name = null, string hash = null, AssetSource permittedSources = AssetSource.ALL,
-            StreamableLoadingDefaults.DeferredLoadingState deferredLoadingState = StreamableLoadingDefaults.DeferredLoadingState.Allowed)
+            DeferredLoadingState deferredLoadingState = DeferredLoadingState.Allowed)
         {
             Name = name;
             Hash = hash;
@@ -40,11 +40,11 @@ namespace ECS.StreamableLoading.AssetBundles
         public CancellationTokenSource CancellationTokenSource => CommonArguments.cancellationTokenSource;
 
         public static GetAssetBundleIntention FromName(string name, AssetSource permittedSources = AssetSource.ALL,
-            StreamableLoadingDefaults.DeferredLoadingState deferredLoadingState = StreamableLoadingDefaults.DeferredLoadingState.Allowed) =>
+            DeferredLoadingState deferredLoadingState = DeferredLoadingState.Allowed) =>
             new (name: name, permittedSources: permittedSources, deferredLoadingState: deferredLoadingState);
 
         public static GetAssetBundleIntention FromHash(string hash, AssetSource permittedSources = AssetSource.ALL,
-            StreamableLoadingDefaults.DeferredLoadingState deferredLoadingState = StreamableLoadingDefaults.DeferredLoadingState.Allowed) =>
+            DeferredLoadingState deferredLoadingState = DeferredLoadingState.Allowed) =>
             new (hash: hash, permittedSources: permittedSources, deferredLoadingState: deferredLoadingState);
 
         public bool Equals(GetAssetBundleIntention other) =>

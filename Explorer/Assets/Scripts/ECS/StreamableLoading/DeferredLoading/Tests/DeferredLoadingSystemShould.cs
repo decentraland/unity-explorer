@@ -35,7 +35,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
                 Entity newEntity = world.Create(
                     new GetTextureIntention
                     {
-                        CommonArguments = new CommonLoadingArguments("", deferredLoadingState: StreamableLoadingDefaults.DeferredLoadingState.Forbidden),
+                        CommonArguments = new CommonLoadingArguments("", deferredLoadingState: DeferredLoadingState.Forbidden),
                     },
                     new PartitionComponent
                     {
@@ -52,7 +52,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
 
             for (var i = 0; i < entities.Count; i++)
                 Assert.AreEqual(i % 2 != 0,
-                    world.Get<GetTextureIntention>(entities[i]).CommonArguments.DeferredLoadingState == StreamableLoadingDefaults.DeferredLoadingState.Allowed);
+                    world.Get<GetTextureIntention>(entities[i]).CommonArguments.DeferredLoadingState == DeferredLoadingState.Allowed);
         }
 
         [Test]
@@ -63,7 +63,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
                 Entity newEntity = world.Create(
                     new GetTextureIntention
                     {
-                        CommonArguments = new CommonLoadingArguments("", deferredLoadingState: StreamableLoadingDefaults.DeferredLoadingState.Forbidden),
+                        CommonArguments = new CommonLoadingArguments("", deferredLoadingState: DeferredLoadingState.Forbidden),
                     },
                     new PartitionComponent
                     {
@@ -80,7 +80,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
 
             for (var i = 0; i < entities.Count; i++)
                 Assert.AreEqual(i < 5,
-                    world.Get<GetTextureIntention>(entities[i]).CommonArguments.DeferredLoadingState == StreamableLoadingDefaults.DeferredLoadingState.Allowed);
+                    world.Get<GetTextureIntention>(entities[i]).CommonArguments.DeferredLoadingState == DeferredLoadingState.Allowed);
         }
 
         [Test]
@@ -91,7 +91,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
                 Entity newEntity = world.Create(
                     new GetTextureIntention
                     {
-                        CommonArguments = new CommonLoadingArguments("", deferredLoadingState: StreamableLoadingDefaults.DeferredLoadingState.Forbidden),
+                        CommonArguments = new CommonLoadingArguments("", deferredLoadingState: DeferredLoadingState.Forbidden),
                     },
                     new PartitionComponent
                     {
@@ -108,7 +108,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
 
             for (var i = 0; i < entities.Count; i++)
                 Assert.AreEqual(i < 5,
-                    world.Get<GetTextureIntention>(entities[i]).CommonArguments.DeferredLoadingState == StreamableLoadingDefaults.DeferredLoadingState.Allowed);
+                    world.Get<GetTextureIntention>(entities[i]).CommonArguments.DeferredLoadingState == DeferredLoadingState.Allowed);
 
             // We'll release 3 budget and check that additional 3 intentions are allowed
             for (int i = 0; i < 3; i++)
@@ -118,7 +118,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
 
             for (var i = 0; i < entities.Count; i++)
                 Assert.AreEqual(i < 8,
-                    world.Get<GetTextureIntention>(entities[i]).CommonArguments.DeferredLoadingState == StreamableLoadingDefaults.DeferredLoadingState.Allowed);
+                    world.Get<GetTextureIntention>(entities[i]).CommonArguments.DeferredLoadingState == DeferredLoadingState.Allowed);
         }
     }
 }

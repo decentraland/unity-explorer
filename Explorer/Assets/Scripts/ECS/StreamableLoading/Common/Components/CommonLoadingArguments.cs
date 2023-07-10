@@ -17,7 +17,7 @@ namespace ECS.StreamableLoading.Common.Components
         /// </summary>
         public AssetSource CurrentSource;
 
-        public StreamableLoadingDefaults.DeferredLoadingState DeferredLoadingState;
+        public DeferredLoadingState DeferredLoadingState;
 
         public CancellationToken CancellationToken => cancellationTokenSource.Token;
 
@@ -28,7 +28,7 @@ namespace ECS.StreamableLoading.Common.Components
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
             AssetSource permittedSources = AssetSource.WEB,
             AssetSource currentSource = AssetSource.WEB,
-            StreamableLoadingDefaults.DeferredLoadingState deferredLoadingState = StreamableLoadingDefaults.DeferredLoadingState.Allowed,
+            DeferredLoadingState deferredLoadingState = DeferredLoadingState.Allowed,
             CancellationTokenSource cancellationTokenSource = null)
         {
             DeferredLoadingState = deferredLoadingState;

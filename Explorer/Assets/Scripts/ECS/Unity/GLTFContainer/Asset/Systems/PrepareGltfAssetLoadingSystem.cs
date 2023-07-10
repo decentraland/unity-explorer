@@ -44,7 +44,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             }
 
             // If not in cache, try load from asset bundle
-            World.Add(entity, GetAssetBundleIntention.FromName(intention.Name, deferredLoadingState: StreamableLoadingDefaults.DeferredLoadingState.Forbidden));
+            World.Add(entity, GetAssetBundleIntention.FromName(intention.Name, deferredLoadingState: DeferredLoadingState.Forbidden));
         }
     }
 }
