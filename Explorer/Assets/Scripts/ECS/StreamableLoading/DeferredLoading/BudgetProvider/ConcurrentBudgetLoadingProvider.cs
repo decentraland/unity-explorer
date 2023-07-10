@@ -1,11 +1,11 @@
 using System;
 
-namespace ECS.Prioritization.DeferredLoading
+namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
 {
     public class ConcurrentLoadingBudgetProvider : IConcurrentBudgetProvider
     {
         private int currentBudget;
-        private int maxBudget;
+        private readonly int maxBudget;
 
         public ConcurrentLoadingBudgetProvider(int initialBudget)
         {

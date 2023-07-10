@@ -1,4 +1,4 @@
-namespace ECS.Prioritization.DeferredLoading
+namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
 {
     public interface IConcurrentBudgetProvider
     {

@@ -1,7 +1,7 @@
 using CrdtEcsBridge.Components;
 using Diagnostics.ReportsHandling;
 using ECS.ComponentsPooling;
-using ECS.Prioritization.DeferredLoading;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 
 namespace SceneRunner.ECSWorld
 {

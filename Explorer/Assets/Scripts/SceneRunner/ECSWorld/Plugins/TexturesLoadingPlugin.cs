@@ -1,9 +1,9 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using ECS.LifeCycle;
-using ECS.Prioritization.DeferredLoading;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.DeferredLoading;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.StreamableLoading.Textures;
 using System.Collections.Generic;
 using UnityEngine;

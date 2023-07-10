@@ -1,5 +1,5 @@
-using ECS.Prioritization.DeferredLoading;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.StreamableLoading.Tests;
 using NUnit.Framework;
 using SceneRunner.Scene;
@@ -31,6 +31,6 @@ namespace ECS.StreamableLoading.AssetBundles.Manifest.Tests
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
         protected override LoadAssetBundleManifestSystem CreateSystem() =>
-            new (world, cache, "http://www.fakepath.com/AssetBundles/", new MutexSync(), new ConcurrentLoadingBudgetProvider(100));
+            new (world, cache, "http://www.fakepath.com/AssetBundles/", new MutexSync(), new NullBudgetProvider());
     }
 }

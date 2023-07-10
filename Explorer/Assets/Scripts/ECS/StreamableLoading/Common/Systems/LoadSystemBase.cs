@@ -2,9 +2,9 @@
 using AssetManagement;
 using Cysharp.Threading.Tasks;
 using ECS.Abstract;
-using ECS.Prioritization.DeferredLoading;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;

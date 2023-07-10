@@ -3,10 +3,10 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using Diagnostics.ReportsHandling;
-using ECS.Prioritization.DeferredLoading;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;
@@ -41,5 +41,6 @@ namespace ECS.StreamableLoading.AssetBundles.Manifest
             return new StreamableLoadingResult<SceneAssetBundleManifest>(
                 new SceneAssetBundleManifest(assetBundleURL, JsonUtility.FromJson<SceneAbDto>(text)));
         }
+
     }
 }

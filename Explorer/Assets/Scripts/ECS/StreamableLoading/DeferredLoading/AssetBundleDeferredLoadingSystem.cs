@@ -1,8 +1,8 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using ECS.Prioritization.DeferredLoading;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 
 namespace ECS.StreamableLoading.DeferredLoading
 {

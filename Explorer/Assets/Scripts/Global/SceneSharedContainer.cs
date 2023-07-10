@@ -3,7 +3,7 @@ using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Engine;
 using Diagnostics;
 using Diagnostics.ReportsHandling;
-using ECS.Prioritization.DeferredLoading;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using SceneRunner;
 using SceneRunner.ECSWorld;
 using SceneRunner.ECSWorld.Plugins;
