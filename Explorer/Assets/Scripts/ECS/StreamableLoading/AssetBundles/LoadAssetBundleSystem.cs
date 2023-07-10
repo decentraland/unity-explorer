@@ -114,7 +114,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private async UniTask WaitForDependency(string hash, CancellationToken ct)
         {
-            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(hash, deferredLoadingState: DeferredLoadingState.Forbidden));
+            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(hash));
 
             try
             {

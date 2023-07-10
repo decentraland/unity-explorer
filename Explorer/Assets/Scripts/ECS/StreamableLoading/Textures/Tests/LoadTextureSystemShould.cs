@@ -17,16 +17,16 @@ namespace ECS.StreamableLoading.Textures.Tests
         protected override GetTextureIntention CreateSuccessIntention() =>
             new ()
             {
-                CommonArguments = new CommonLoadingArguments(successPath),
+                CommonArguments = new CommonLoadingArguments(successPath, deferredLoadingState: DeferredLoadingState.Allowed),
                 WrapMode = TextureWrapMode.MirrorOnce,
                 FilterMode = FilterMode.Trilinear,
             };
 
         protected override GetTextureIntention CreateNotFoundIntention() =>
-            new () { CommonArguments = new CommonLoadingArguments(failPath) };
+            new () { CommonArguments = new CommonLoadingArguments(failPath, deferredLoadingState: DeferredLoadingState.Allowed) };
 
         protected override GetTextureIntention CreateWrongTypeIntention() =>
-            new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
+            new () { CommonArguments = new CommonLoadingArguments(wrongTypePath, deferredLoadingState: DeferredLoadingState.Allowed) };
 
         protected override LoadTextureSystem CreateSystem() =>
             new (world, cache, new MutexSync(), new NullBudgetProvider());

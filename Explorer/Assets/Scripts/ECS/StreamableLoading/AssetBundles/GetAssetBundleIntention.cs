@@ -33,7 +33,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             // Don't resolve URL here
 
-            CommonArguments = new CommonLoadingArguments(string.Empty, permittedSources: permittedSources, deferredLoadingState: deferredLoadingState);
+            CommonArguments = new CommonLoadingArguments(string.Empty, permittedSources: permittedSources);
             cacheHash = null;
         }
 
@@ -41,11 +41,11 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public static GetAssetBundleIntention FromName(string name, AssetSource permittedSources = AssetSource.ALL,
             DeferredLoadingState deferredLoadingState = DeferredLoadingState.Allowed) =>
-            new (name: name, permittedSources: permittedSources, deferredLoadingState: deferredLoadingState);
+            new (name: name, permittedSources: permittedSources);
 
         public static GetAssetBundleIntention FromHash(string hash, AssetSource permittedSources = AssetSource.ALL,
             DeferredLoadingState deferredLoadingState = DeferredLoadingState.Allowed) =>
-            new (hash: hash, permittedSources: permittedSources, deferredLoadingState: deferredLoadingState);
+            new (hash: hash, permittedSources: permittedSources);
 
         public bool Equals(GetAssetBundleIntention other) =>
             Hash == other.Hash || Name == other.Name;

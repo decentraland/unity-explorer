@@ -35,7 +35,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
                 Entity newEntity = world.Create(
                     new GetTextureIntention
                     {
-                        CommonArguments = new CommonLoadingArguments("", deferredLoadingState: DeferredLoadingState.Forbidden),
+                        CommonArguments = new CommonLoadingArguments(""),
                     },
                     new PartitionComponent
                     {
@@ -63,7 +63,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
                 Entity newEntity = world.Create(
                     new GetTextureIntention
                     {
-                        CommonArguments = new CommonLoadingArguments("", deferredLoadingState: DeferredLoadingState.Forbidden),
+                        CommonArguments = new CommonLoadingArguments(""),
                     },
                     new PartitionComponent
                     {
@@ -91,7 +91,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
                 Entity newEntity = world.Create(
                     new GetTextureIntention
                     {
-                        CommonArguments = new CommonLoadingArguments("", deferredLoadingState: DeferredLoadingState.Forbidden),
+                        CommonArguments = new CommonLoadingArguments(""),
                     },
                     new PartitionComponent
                     {

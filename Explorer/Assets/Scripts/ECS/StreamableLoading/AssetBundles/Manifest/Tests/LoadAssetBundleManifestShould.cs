@@ -16,7 +16,7 @@ namespace ECS.StreamableLoading.AssetBundles.Manifest.Tests
         private string notFoundPath => $"file://{Application.dataPath + "/../TestResources/AssetBundles/not_found.json"}";
 
         protected override GetAssetBundleManifestIntention CreateSuccessIntention() =>
-            new () { CommonArguments = new CommonLoadingArguments(successPath) };
+            new () { CommonArguments = new CommonLoadingArguments(successPath, deferredLoadingState: DeferredLoadingState.Allowed) };
 
         protected override void AssertSuccess(SceneAssetBundleManifest asset)
         {
@@ -25,10 +25,10 @@ namespace ECS.StreamableLoading.AssetBundles.Manifest.Tests
         }
 
         protected override GetAssetBundleManifestIntention CreateNotFoundIntention() =>
-            new () { CommonArguments = new CommonLoadingArguments(notFoundPath) };
+            new () { CommonArguments = new CommonLoadingArguments(notFoundPath, deferredLoadingState: DeferredLoadingState.Allowed) };
 
         protected override GetAssetBundleManifestIntention CreateWrongTypeIntention() =>
-            new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
+            new () { CommonArguments = new CommonLoadingArguments(wrongTypePath, deferredLoadingState: DeferredLoadingState.Allowed) };
 
         protected override LoadAssetBundleManifestSystem CreateSystem() =>
             new (world, cache, "http://www.fakepath.com/AssetBundles/", new MutexSync(), new NullBudgetProvider());

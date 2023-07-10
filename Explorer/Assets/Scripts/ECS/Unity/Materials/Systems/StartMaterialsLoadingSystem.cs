@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using ECS.Abstract;
-using ECS.StreamableLoading;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.Materials.Components;
@@ -160,7 +159,7 @@ namespace ECS.Unity.Materials.Systems
 
             promise = Promise.Create(World, new GetTextureIntention
             {
-                CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount, deferredLoadingState: DeferredLoadingState.Forbidden),
+                CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
                 WrapMode = textureComponentValue.WrapMode,
                 FilterMode = textureComponentValue.FilterMode,
             });

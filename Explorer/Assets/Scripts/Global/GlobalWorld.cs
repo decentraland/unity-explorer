@@ -59,7 +59,7 @@ namespace Global
             //TODO: Should we create a concurrent loading provider only for scenes?
             ConcurrentLoadingBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(100);
             LoadAssetBundleManifestSystem.InjectToWorld(ref builder, assetBundlesManifestCache, ASSET_BUNDLES_URL, mutex, sceneBudgetProvider);
-            AssetBundleDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider);
+            AssetBundleManifestDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider);
 
             DebugCameraTransformToPlayerTransformSystem.InjectToWorld(ref builder, state.PlayerEntity, unityCamera);
 
