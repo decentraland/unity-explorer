@@ -6,11 +6,11 @@ using ECS.Prioritization.DeferredLoading;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles.Manifest;
+using ECS.StreamableLoading.DeferredLoading;
 using ECS.Unity.Transforms.Components;
 using Ipfs;
 using JetBrains.Annotations;
 using SceneRunner;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -59,8 +59,7 @@ namespace Global
             //TODO: Should we create a concurrent loading provider only for scenes?
             ConcurrentLoadingBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(100);
             LoadAssetBundleManifestSystem.InjectToWorld(ref builder, assetBundlesManifestCache, ASSET_BUNDLES_URL, mutex, sceneBudgetProvider);
-            DeferredLoadingSystem<SceneAssetBundleManifest, GetAssetBundleManifestIntention>.InjectToWorld(ref builder, sceneBudgetProvider);
-
+            AssetBundleDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider);
 
             DebugCameraTransformToPlayerTransformSystem.InjectToWorld(ref builder, state.PlayerEntity, unityCamera);
 

@@ -5,6 +5,7 @@ using ECS.LifeCycle;
 using ECS.Prioritization.DeferredLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AssetBundles.Manifest;
+using ECS.StreamableLoading.DeferredLoading;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -42,7 +43,7 @@ namespace SceneRunner.ECSWorld.Plugins
 
             // TODO create a runtime ref-counting cache
             LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, localAssetBundleManifest, sharedDependencies.MutexSync, loadingBudgetProvider);
-            DeferredLoadingSystem<AssetBundleData, GetAssetBundleIntention>.InjectToWorld(ref builder, loadingBudgetProvider);
+            AssetBundleDeferredLoadingSystem.InjectToWorld(ref builder, loadingBudgetProvider);
         }
     }
 }

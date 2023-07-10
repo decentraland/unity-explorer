@@ -1,38 +1,36 @@
 using Arch.Core;
-using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.AssetBundles.Manifest;
+using ECS.Prioritization.DeferredLoading;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.Textures;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Collections.LowLevel.Unsafe;
+using UnityEngine.Pool;
 
-namespace ECS.Prioritization.DeferredLoading
+namespace ECS.StreamableLoading.DeferredLoading
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(PrepareAssetBundleManifestParametersSystem))]
-    [UpdateBefore(typeof(LoadAssetBundleManifestSystem))]
-    [UpdateBefore(typeof(LoadTextureSystem))]
-    [UpdateBefore(typeof(LoadAssetBundleSystem))]
-    public partial class DeferredLoadingSystem<TAsset, TIntention> : BaseUnityLoopSystem where TIntention: struct, ILoadingIntention
+    public abstract class DeferredLoadingSystem<TAsset, TIntention> : BaseUnityLoopSystem where TIntention: struct, ILoadingIntention
     {
+        private unsafe struct IntentionData
+        {
+            public PartitionComponent PartitionComponent;
+            public void* IntentionDataPointer;
+        }
+
         private static readonly QueryDescription CREATE_LOADING_REQUEST = new QueryDescription()
-                                                                         .WithAll<TIntention>()
+                                                                         .WithAll<TIntention, PartitionComponent>()
                                                                          .WithNone<LoadingInProgress, StreamableLoadingResult<TAsset>>();
         private readonly Query query;
 
         private readonly IConcurrentBudgetProvider concurrentLoadingBudgetProvider;
-        private readonly unsafe List<IntentionData> loadingIntentions;
+        private readonly List<IntentionData> loadingIntentions;
 
-        public DeferredLoadingSystem(World world, IConcurrentBudgetProvider concurrentLoadingBudgetProvider) : base(world)
+        protected DeferredLoadingSystem(World world, IConcurrentBudgetProvider concurrentLoadingBudgetProvider) : base(world)
         {
             this.concurrentLoadingBudgetProvider = concurrentLoadingBudgetProvider;
             query = World.Query(in CREATE_LOADING_REQUEST);
-            loadingIntentions = new List<IntentionData>();
+            loadingIntentions = ListPool<IntentionData>.Get();
         }
 
         protected override unsafe void Update(float t)
@@ -49,18 +47,20 @@ namespace ECS.Prioritization.DeferredLoading
                     ref PartitionComponent partition = ref Unsafe.Add(ref partitionFirstElement, entityIndex);
                     ref TIntention intention = ref Unsafe.Add(ref intentionFirstElement, entityIndex);
 
-                    void* intentionPointer = UnsafeUtility.AddressOf(ref Unsafe.Add(ref intentionFirstElement, entityIndex));
+                    if (intention.IsAllowed())
+                        continue;
 
                     var intentionData = new IntentionData()
                     {
                         PartitionComponent = partition,
-                        IntentionDataPointer = intentionPointer,
+                        IntentionDataPointer = UnsafeUtility.AddressOf(ref intention),
                     };
 
                     loadingIntentions.Add(intentionData);
                 }
             }
-            loadingIntentions.Sort((p1, p2) => p1.PartitionComponent.CompareTo(p2.PartitionComponent));
+
+            loadingIntentions.Sort(static (p1, p2) => p1.PartitionComponent.CompareTo(p2.PartitionComponent));
             AnalyzeBudget();
         }
 
@@ -80,11 +80,10 @@ namespace ECS.Prioritization.DeferredLoading
             }
         }
 
-    }
-
-    public unsafe struct IntentionData
-    {
-        public PartitionComponent PartitionComponent;
-        public void* IntentionDataPointer;
+        public override void Dispose()
+        {
+            base.Dispose();
+            ListPool<IntentionData>.Release(loadingIntentions);
+        }
     }
 }
