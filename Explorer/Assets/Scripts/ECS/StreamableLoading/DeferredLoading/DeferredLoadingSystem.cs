@@ -10,7 +10,6 @@ using ECS.StreamableLoading.Textures;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Collections.LowLevel.Unsafe;
-using UnityEngine;
 
 namespace ECS.Prioritization.DeferredLoading
 {
@@ -29,7 +28,7 @@ namespace ECS.Prioritization.DeferredLoading
         private readonly IConcurrentBudgetProvider concurrentLoadingBudgetProvider;
         private readonly unsafe List<IntentionData> loadingIntentions;
 
-        public DeferredLoadingSystem(World world, ConcurrentLoadingBudgetProvider concurrentLoadingBudgetProvider) : base(world)
+        public DeferredLoadingSystem(World world, IConcurrentBudgetProvider concurrentLoadingBudgetProvider) : base(world)
         {
             this.concurrentLoadingBudgetProvider = concurrentLoadingBudgetProvider;
             query = World.Query(in CREATE_LOADING_REQUEST);

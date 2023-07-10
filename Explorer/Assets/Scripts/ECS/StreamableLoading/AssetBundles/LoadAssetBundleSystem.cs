@@ -33,7 +33,7 @@ namespace ECS.StreamableLoading.AssetBundles
         private readonly AssetBundleManifest assetBundleManifest;
 
         internal LoadAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache,
-            AssetBundleManifest assetBundleManifest, MutexSync mutexSync, ConcurrentLoadingBudgetProvider loadingBudgetProvider) : base(world, cache, mutexSync, loadingBudgetProvider)
+            AssetBundleManifest assetBundleManifest, MutexSync mutexSync, IConcurrentBudgetProvider loadingBudgetProvider) : base(world, cache, mutexSync, loadingBudgetProvider)
         {
             this.assetBundleManifest = assetBundleManifest;
         }

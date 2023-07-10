@@ -17,7 +17,7 @@ namespace ECS.StreamableLoading.Textures
     [LogCategory(ReportCategory.TEXTURES)]
     public partial class LoadTextureSystem : LoadSystemBase<Texture2D, GetTextureIntention>
     {
-        internal LoadTextureSystem(World world, IStreamableCache<Texture2D, GetTextureIntention> cache, MutexSync mutexSync, ConcurrentLoadingBudgetProvider loadingBudget) :
+        internal LoadTextureSystem(World world, IStreamableCache<Texture2D, GetTextureIntention> cache, MutexSync mutexSync, IConcurrentBudgetProvider loadingBudget) :
             base(world, cache, mutexSync, loadingBudget) { }
 
 

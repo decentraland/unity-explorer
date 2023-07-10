@@ -22,11 +22,11 @@ namespace SceneRunner.ECSWorld.Plugins
         private readonly AssetBundlesManifestCache assetBundlesManifestCache;
         private readonly AssetBundleManifest localAssetBundleManifest;
         private readonly IReportsHandlingSettings reportsHandlingSettings;
-        private readonly ConcurrentLoadingBudgetProvider loadingBudgetProvider;
+        private readonly IConcurrentBudgetProvider loadingBudgetProvider;
 
         private readonly AssetBundleCache assetBundleCache;
 
-        public AssetBundlesPlugin(AssetBundleManifest localAssetBundleManifest, IReportsHandlingSettings reportsHandlingSettings, ConcurrentLoadingBudgetProvider loadingBudgetProvider)
+        public AssetBundlesPlugin(AssetBundleManifest localAssetBundleManifest, IReportsHandlingSettings reportsHandlingSettings, IConcurrentBudgetProvider loadingBudgetProvider)
         {
             this.localAssetBundleManifest = localAssetBundleManifest;
             this.reportsHandlingSettings = reportsHandlingSettings;

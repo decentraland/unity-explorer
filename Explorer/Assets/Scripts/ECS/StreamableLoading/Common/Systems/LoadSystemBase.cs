@@ -5,12 +5,10 @@ using ECS.Abstract;
 using ECS.Prioritization.DeferredLoading;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Pool;
 using Utility.Multithreading;
@@ -38,7 +36,7 @@ namespace ECS.StreamableLoading.Common.Systems
         private readonly MutexSync mutexSync;
         private CancellationTokenSource cancellationTokenSource;
 
-        private readonly ConcurrentLoadingBudgetProvider concurrentLoadingBudgetProvider;
+        private readonly IConcurrentBudgetProvider concurrentLoadingBudgetProvider;
 
         /// <summary>
         ///     Resolves the problem of having multiple requests to the same URL at a time
@@ -47,7 +45,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private readonly Dictionary<string, StreamableLoadingResult<TAsset>> irrecoverableFailures;
 
-        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync, ConcurrentLoadingBudgetProvider concurrentLoadingBudgetProvider) : base(world)
+        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync, IConcurrentBudgetProvider concurrentLoadingBudgetProvider) : base(world)
         {
             this.cache = cache;
             this.mutexSync = mutexSync;

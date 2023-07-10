@@ -10,19 +10,15 @@ namespace SceneRunner.ECSWorld
         public readonly IComponentPoolsRegistry ComponentPoolsRegistry;
         public readonly IReportsHandlingSettings ReportsHandlingSettings;
         public readonly IEntityFactory EntityFactory;
-        public readonly ConcurrentLoadingBudgetProvider LoadingBudgetProvider;
-
-        //TODO
-        public readonly IConcurrentBudgetProvider InstantiatingBudgetProvider;
+        public readonly IConcurrentBudgetProvider LoadingBudgetProvider;
 
         public ECSWorldSingletonSharedDependencies(IComponentPoolsRegistry componentPoolsRegistry, IReportsHandlingSettings reportsHandlingSettings, IEntityFactory entityFactory,
-            ConcurrentLoadingBudgetProvider loadingBudgetProvider)
+            IConcurrentBudgetProvider loadingBudgetProvider)
         {
             ComponentPoolsRegistry = componentPoolsRegistry;
             ReportsHandlingSettings = reportsHandlingSettings;
             EntityFactory = entityFactory;
             LoadingBudgetProvider = loadingBudgetProvider;
-            InstantiatingBudgetProvider = null;
         }
     }
 }

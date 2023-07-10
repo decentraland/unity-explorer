@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using ECS.LifeCycle;
 using ECS.Prioritization.DeferredLoading;
 using ECS.StreamableLoading.Cache;
-using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,9 +11,9 @@ namespace SceneRunner.ECSWorld.Plugins
 {
     public class TexturesLoadingPlugin : IECSWorldPlugin
     {
-        private readonly ConcurrentLoadingBudgetProvider concurrentLoadingBudgetProvider;
+        private readonly IConcurrentBudgetProvider concurrentLoadingBudgetProvider;
 
-        public TexturesLoadingPlugin(ConcurrentLoadingBudgetProvider concurrentLoadingBudgetProvider)
+        public TexturesLoadingPlugin(IConcurrentBudgetProvider concurrentLoadingBudgetProvider)
         {
             this.concurrentLoadingBudgetProvider = concurrentLoadingBudgetProvider;
         }
