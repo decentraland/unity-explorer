@@ -1,6 +1,6 @@
 using ECS.Prioritization.DeferredLoading;
 using NUnit.Framework;
-using System.Reflection;
+using System;
 
 namespace ECS.StreamableLoading.DeferredLoading.Tests
 {
@@ -8,7 +8,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
     public class ConcurrentLoadingBudgetProviderShould
     {
         [Test]
-        public void BudgetSpent()
+        public void SpendBudget()
         {
             // Arrange
             int initialBudget = 1;
@@ -20,7 +20,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
         }
 
         [Test]
-        public void BudgetRefilled()
+        public void RefillBudget()
         {
             // Arrange
             int initialBudget = 1;
@@ -38,7 +38,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
         }
 
         [Test]
-        public void BudgetNotOverflowed()
+        public void BudgetOverflowThrown()
         {
             // Arrange
             int initialBudget = 1;
@@ -50,12 +50,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
 
             // Act
             budgetProvider.ReleaseBudget();
-            budgetProvider.ReleaseBudget();
-            budgetProvider.ReleaseBudget();
-
-            // Assert (The second budget spend sould still be false, since the max budget is 1)
-            Assert.AreEqual(true, budgetProvider.TrySpendBudget());
-            Assert.AreEqual(false, budgetProvider.TrySpendBudget());
+            Assert.Throws<Exception>(() => budgetProvider.ReleaseBudget());
         }
     }
 }

@@ -26,6 +26,8 @@ namespace ECS.Prioritization.DeferredLoading
 
         public void ReleaseBudget()
         {
+            if (currentBudget + 1 > maxBudget)
+                throw new Exception("Tried to release more budget than the max budget allows");
             currentBudget = Math.Clamp(currentBudget + 1, 0, maxBudget);
         }
     }
