@@ -13,7 +13,7 @@ namespace ECS.StreamableLoading.Textures
         public TextureWrapMode WrapMode;
         public FilterMode FilterMode;
 
-        public CancellationTokenSource CancellationTokenSource => CommonArguments.cancellationTokenSource;
+        public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
         public bool Equals(GetTextureIntention other) =>
             IsReadable == other.IsReadable && WrapMode == other.WrapMode && FilterMode == other.FilterMode && CommonArguments.URL == other.CommonArguments.URL;

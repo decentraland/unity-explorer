@@ -7,35 +7,29 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
-using System.Collections.Generic;
 
 namespace SceneRunner.Scene.Tests
 {
     [TestFixture]
     public class SceneExceptionHandlerShould
     {
-        private ReportHubLogger savedInstance;
+        private ISceneStateProvider sceneStateProvider;
+        private SceneExceptionsHandler sceneExceptionsHandler;
+        private MockedReportScope reportHandler;
 
         [SetUp]
         public void SetUp()
         {
             sceneExceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider = Substitute.For<ISceneStateProvider>(), new SceneShortInfo());
 
-            savedInstance = ReportHub.Instance;
-
-            ReportHub.Instance = new ReportHubLogger(
-                new List<(ReportHandler, IReportHandler)> { (ReportHandler.DebugLog, reportHandler = Substitute.For<IReportHandler>()) });
+            reportHandler = new MockedReportScope();
         }
 
         [TearDown]
         public void TearDown()
         {
-            ReportHub.Instance = savedInstance;
+            reportHandler.Dispose();
         }
-
-        private ISceneStateProvider sceneStateProvider;
-        private SceneExceptionsHandler sceneExceptionsHandler;
-        private IReportHandler reportHandler;
 
         [Test]
         public void SetStateOnEngineException()
@@ -44,7 +38,7 @@ namespace SceneRunner.Scene.Tests
             sceneExceptionsHandler.OnEngineException(e, "TEST");
 
             sceneStateProvider.Received().State = SceneState.EngineError;
-            reportHandler.Received().LogException(e, new ReportData("TEST"), null);
+            reportHandler.Mock.Received().LogException(e, new ReportData("TEST"), null);
         }
 
         [Test]
@@ -74,7 +68,7 @@ namespace SceneRunner.Scene.Tests
             Assert.That(action, Is.EqualTo(ISystemGroupExceptionHandler.Action.Suspend));
             sceneStateProvider.Received().State = SceneState.EcsError;
 
-            reportHandler.Received(1)
+            reportHandler.Mock.Received(1)
                          .LogException(
                               Arg.Is<SceneExecutionException>(e => e.InnerExceptions.Count == SceneExceptionsHandler.ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE + 1));
         }

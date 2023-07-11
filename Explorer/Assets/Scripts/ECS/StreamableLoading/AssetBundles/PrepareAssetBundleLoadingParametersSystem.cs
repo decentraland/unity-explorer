@@ -55,7 +55,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 }
 
                 // TODO Hack, kill me
-                assetBundleIntention.Hash = assetBundleIntention.Hash.GetHashCode().ToString();
+                // assetBundleIntention.Hash = assetBundleIntention.Hash.GetHashCode().ToString();
             }
 
             // First priority

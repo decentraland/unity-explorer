@@ -13,19 +13,23 @@ namespace SceneRunner.Scene
 
         private readonly IIpfsRealm ipfsRealm;
 
-        private readonly List<Vector2Int> parcels = new ();
-
         private readonly IpfsTypes.SceneEntityDefinition sceneDefinition;
+
+        private readonly string customContentBaseUrl;
 
         private readonly bool supportHashes;
 
         private readonly Dictionary<string, (bool success, string url)> resolvedContentURLs;
 
-        public SceneData(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, bool supportHashes, [NotNull] SceneAssetBundleManifest assetBundleManifest)
+        private string GetContentBaseUrl() =>
+            customContentBaseUrl ?? ipfsRealm.ContentBaseUrl;
+
+        public SceneData(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, bool supportHashes, [NotNull] SceneAssetBundleManifest assetBundleManifest, string customContentBaseUrl = null)
         {
             this.ipfsRealm = ipfsRealm;
             this.sceneDefinition = sceneDefinition;
             this.supportHashes = supportHashes;
+            this.customContentBaseUrl = customContentBaseUrl;
             AssetBundleManifest = assetBundleManifest;
 
             if (!supportHashes)
@@ -41,14 +45,11 @@ namespace SceneRunner.Scene
 
             SceneShortInfo = new SceneShortInfo(IpfsHelper.DecodePointer(sceneDefinition.metadata.scene.baseParcel), sceneDefinition.id);
 
-            foreach (string parcel in sceneDefinition.metadata.scene.parcels) parcels.Add(IpfsHelper.DecodePointer(parcel));
-
             resolvedContentURLs = new Dictionary<string, (bool success, string url)>(fileToHash.Count, StringComparer.OrdinalIgnoreCase);
         }
 
         public SceneShortInfo SceneShortInfo { get; }
         public SceneAssetBundleManifest AssetBundleManifest { get; }
-        public IReadOnlyList<Vector2Int> Parcels => parcels;
 
         public bool HasRequiredPermission(string permission)
         {
@@ -79,7 +80,7 @@ namespace SceneRunner.Scene
             {
                 if (fileToHash.TryGetValue(url, out string hash))
                 {
-                    result = ipfsRealm.ContentBaseUrl + "contents/" + hash;
+                    result = GetContentBaseUrl() + hash;
                     resolvedContentURLs[url] = (true, result);
                     return true;
                 }
