@@ -16,7 +16,7 @@ using UnityEngine;
 namespace ECS.SceneLifeCycle.Systems
 {
     /// <summary>
-    ///     Decides if loaded scenes should launched or destroyed based on the loading radius radius
+    ///     Decides if loaded scenes should be launched or destroyed based on the loading radius
     /// </summary>
     [UpdateInGroup(typeof(RealmGroup))]
     [UpdateAfter(typeof(LoadPointersByRadiusSystem))]
@@ -50,16 +50,9 @@ namespace ECS.SceneLifeCycle.Systems
             if (definition.IsEmpty) return;
 
             // Create an intention if the scene is within the radius
-            for (var i = 0; i < definition.Parcels.Count; i++)
-            {
-                if (parcelsInRange.Contains(definition.Parcels[i]))
-                {
-                    World.Add(entity,
-                        AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World, new GetSceneFacadeIntention(realm, definition.IpfsPath, definition.Definition)));
-
-                    return;
-                }
-            }
+            if (SceneIsInRange(in definition, parcelsInRange))
+                World.Add(entity,
+                    AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World, new GetSceneFacadeIntention(realm, definition.IpfsPath, definition.Definition)));
         }
 
         [Query]
