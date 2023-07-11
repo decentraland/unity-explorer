@@ -16,7 +16,7 @@ namespace SceneRunner
         /// <param name="jsCodeUrl"></param>
         /// <param name="ct"></param>
         /// <returns>Scene Facade on the background thread</returns>
-        UniTask<ISceneFacade> CreateScene(string jsCodeUrl, CancellationToken ct);
+        UniTask<ISceneFacade> CreateSceneFromFile(string jsCodeUrl, CancellationToken ct);
 
         /// <summary>
         ///     Create a scene from the directory with the scene.json file (just like it is in the goerli-plaza repo)
@@ -33,7 +33,7 @@ namespace SceneRunner
         /// <param name="ct"></param>
         /// <returns></returns>
         UniTask<ISceneFacade> CreateSceneFromStreamingAssets(string fileName, CancellationToken ct) =>
-            CreateScene($"file://{Application.streamingAssetsPath}/Scenes/{fileName}.js", ct);
+            CreateSceneFromFile($"file://{Application.streamingAssetsPath}/Scenes/{fileName}.js", ct);
 
         /// <summary>
         ///     Creates a scene from the EntityDefinition
@@ -41,8 +41,9 @@ namespace SceneRunner
         /// <param name="ipfsRealm"></param>
         /// <param name="sceneDefinition">EntityDefinition provided by the ContentServer</param>
         /// <param name="abManifest"></param>
+        /// <param name="contentBaseUrl"></param>
         /// <param name="ct"></param>
         /// <returns>Scene Facade on the background thread</returns>
-        UniTask<ISceneFacade> CreateSceneFromSceneDefinition(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, SceneAssetBundleManifest abManifest, CancellationToken ct);
+        UniTask<ISceneFacade> CreateSceneFromSceneDefinition(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, SceneAssetBundleManifest abManifest, string contentBaseUrl, CancellationToken ct);
     }
 }

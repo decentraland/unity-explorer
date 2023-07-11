@@ -30,6 +30,8 @@ namespace ECS.StreamableLoading.Common
         /// </summary>
         public StreamableLoadingResult<TAsset>? Result { get; private set; }
 
+        public bool IsConsumed => Entity == EntityReference.Null;
+
         public static AssetPromise<TAsset, TLoadingIntention> Create(World world, TLoadingIntention loadingIntention) =>
             new ()
             {
@@ -62,7 +64,8 @@ namespace ECS.StreamableLoading.Common
         }
 
         /// <summary>
-        ///     Returns the result and deletes an entity if the loading is finished
+        ///     Returns the result and deletes an entity if the loading is finished,
+        /// can't be consumed several times
         /// </summary>
         public bool TryConsume(World world, out StreamableLoadingResult<TAsset> result)
         {

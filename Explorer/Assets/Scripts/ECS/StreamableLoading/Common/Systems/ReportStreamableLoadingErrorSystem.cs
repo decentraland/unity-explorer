@@ -2,7 +2,6 @@
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
-using System;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.Common.Systems
@@ -39,11 +38,6 @@ namespace ECS.StreamableLoading.Common.Systems
             World.InlineQuery<TryReport, StreamableLoadingResult<TAsset>>(in QUERY, ref tryReport);
         }
 
-        public static void ReportException(string category, Exception exception)
-        {
-            ReportHub.LogException(exception, new ReportData(category, ReportHint.SessionStatic));
-        }
-
         private readonly struct TryReport : IForEach<StreamableLoadingResult<TAsset>>
         {
             private readonly string category;
@@ -56,7 +50,7 @@ namespace ECS.StreamableLoading.Common.Systems
             public void Update(ref StreamableLoadingResult<TAsset> streamableLoadingResult)
             {
                 if (!streamableLoadingResult.Succeeded)
-                    ReportException(category, streamableLoadingResult.Exception);
+                    AssetsLoadingUtility.ReportException(category, streamableLoadingResult.Exception);
             }
         }
     }

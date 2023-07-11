@@ -12,7 +12,7 @@ namespace AssetManagement
         NONE = 0,
 
         /// <summary>
-        ///     From the resources bundles at build time
+        ///     From the resources bundled at build time
         /// </summary>
         EMBEDDED = 1,
 

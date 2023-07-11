@@ -7,13 +7,10 @@ namespace Utility
     {
         public const float PARCEL_SIZE = 16.0f;
 
-        // cache
-        private static readonly List<Vector2Int> RESULTS = new ();
-
         public static Vector3 GetPositionByParcelPosition(Vector2Int parcelPosition) =>
             new (parcelPosition.x * PARCEL_SIZE, 0.0f, parcelPosition.y * PARCEL_SIZE);
 
-        public static IReadOnlyList<Vector2Int> ParcelsInRange(Vector3 position, int loadRadius)
+        public static IReadOnlyCollection<Vector2Int> ParcelsInRange(Vector3 position, int loadRadius, HashSet<Vector2Int> results)
         {
             float range = loadRadius * PARCEL_SIZE;
             Vector2 focus = new Vector2(position.x, position.z) * new Vector2(1.0f, 1.0f);
@@ -24,7 +21,7 @@ namespace Utility
             Vector2Int minParcel = Vector2Int.FloorToInt(minPoint / 16.0f);
             Vector2Int maxParcel = Vector2Int.CeilToInt(maxPoint / 16.0f);
 
-            RESULTS.Clear();
+            results.Clear();
 
             for (int parcelX = minParcel.x; parcelX < maxParcel.x; ++parcelX)
             {
@@ -39,11 +36,11 @@ namespace Utility
                     Vector2 nearestPoint = new Vector2(nearestPointX, nearestPointY);
                     float distance = Vector2.Distance(nearestPoint, focus);
 
-                    if (distance < range) { RESULTS.Add(new Vector2Int(parcelX, parcelY)); }
+                    if (distance < range) results.Add(new Vector2Int(parcelX, parcelY));
                 }
             }
 
-            return RESULTS;
+            return results;
         }
     }
 }
