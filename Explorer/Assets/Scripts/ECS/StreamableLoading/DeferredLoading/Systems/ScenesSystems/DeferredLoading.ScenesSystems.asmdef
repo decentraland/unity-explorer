@@ -1,0 +1,4 @@
+{
+	"name": "DeferredLoading.ScenesSystems",
+	"references":[ "GUID:0a68ab77e49b4261a9ffa7acd94eb68a", "GUID:c2b7e3e0e95f4eb588516c8ae12e919b", "GUID:286980af24684da6acc1caa413039811", "GUID:1b8e1e1bd01505f478f0369c04a4fb2f", "GUID:8322ea9340a544c59ddc56d4793eac74" ]
+}

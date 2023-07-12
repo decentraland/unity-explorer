@@ -102,7 +102,7 @@ namespace ECS.StreamableLoading.Common.Systems
             // Try load from cache first
             if (TryLoadFromCache(in entity, in intention))
             {
-                concurrentLoadingBudgetProvider?.ReleaseBudget();
+                concurrentLoadingBudgetProvider.ReleaseBudget();
                 return;
             }
 
@@ -110,7 +110,7 @@ namespace ECS.StreamableLoading.Common.Systems
             if (irrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset> failure))
             {
                 World.Add(entity, failure);
-                concurrentLoadingBudgetProvider?.ReleaseBudget();
+                concurrentLoadingBudgetProvider.ReleaseBudget();
                 return;
             }
 
@@ -161,7 +161,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 ReportException(e);
             }
-            finally { concurrentLoadingBudgetProvider?.ReleaseBudget(); }
+            finally { concurrentLoadingBudgetProvider.ReleaseBudget(); }
         }
 
         /// <summary>

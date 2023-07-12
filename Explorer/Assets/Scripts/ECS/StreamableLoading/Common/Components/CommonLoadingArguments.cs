@@ -19,7 +19,7 @@ namespace ECS.StreamableLoading.Common.Components
 
         public DeferredLoadingState DeferredLoadingState;
 
-        public CancellationToken CancellationToken => cancellationTokenSource.Token;
+        public CancellationToken CancellationToken => CancellationTokenSource.Token;
         public readonly CancellationTokenSource CancellationTokenSource;
 
         public CommonLoadingArguments(string url,

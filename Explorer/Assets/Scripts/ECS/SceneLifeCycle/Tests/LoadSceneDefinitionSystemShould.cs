@@ -1,5 +1,6 @@
 ﻿using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.StreamableLoading.Tests;
 using Ipfs;
 using NUnit.Framework;
@@ -25,7 +26,7 @@ namespace ECS.SceneLifeCycle.Tests
             new (new CommonLoadingArguments(wrongTypePath), new IpfsTypes.IpfsPath());
 
         protected override LoadSceneDefinitionSystem CreateSystem() =>
-            new (world, cache, new MutexSync());
+            new (world, cache, new MutexSync(), new NullBudgetProvider());
 
         protected override void AssertSuccess(IpfsTypes.SceneEntityDefinition asset)
         {

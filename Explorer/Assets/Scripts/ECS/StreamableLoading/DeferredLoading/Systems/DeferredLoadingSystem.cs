@@ -50,7 +50,7 @@ namespace ECS.StreamableLoading.DeferredLoading
                     if (intention.IsAllowed())
                         continue;
 
-                    var intentionData = new IntentionData()
+                    var intentionData = new IntentionData
                     {
                         PartitionComponent = partition,
                         IntentionDataPointer = UnsafeUtility.AddressOf(ref intention),
