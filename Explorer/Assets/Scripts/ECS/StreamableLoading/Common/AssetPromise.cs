@@ -39,7 +39,9 @@ namespace ECS.StreamableLoading.Common
             {
                 LoadingIntention = loadingIntention,
                 Entity = world.Reference(world.Create(loadingIntention,
-                    new PartitionComponent()
+
+                    // TODO synchronize with the spawning entity
+                    new PartitionComponent
                     {
                         Bucket = 0,
                         IsBehind = false,

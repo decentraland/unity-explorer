@@ -6,13 +6,11 @@ using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using NUnit.Framework;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace ECS.StreamableLoading.DeferredLoading.Tests
 {
-    public class DeferredLoadingSystemShould : UnitySystemTestBase<DeferredLoadingSystem<Texture2D, GetTextureIntention>>
+    public class DeferredLoadingSystemShould : UnitySystemTestBase<AssetsDeferredLoadingSystem>
     {
-        private DeferredLoadingSystem<Texture2D, GetTextureIntention> deferredLoadingSystem;
         private List<Entity> entities;
         private ConcurrentLoadingBudgetProvider concurrentLoadingBudgetProvider;
 
@@ -21,7 +19,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
         {
             // We ll create a budget system that only allows 5 concurrent loading requests
             concurrentLoadingBudgetProvider = new ConcurrentLoadingBudgetProvider(5);
-            system = new TextureDeferredLoadingSystem(world, concurrentLoadingBudgetProvider);
+            system = new AssetsDeferredLoadingSystem(world, concurrentLoadingBudgetProvider);
             entities = new List<Entity>();
         }
 

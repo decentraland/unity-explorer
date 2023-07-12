@@ -22,8 +22,6 @@ namespace SceneRunner.ECSWorld.Plugins
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
             LoadTextureSystem.InjectToWorld(ref builder, NoCache<Texture2D, GetTextureIntention>.INSTANCE, sharedDependencies.MutexSync, concurrentLoadingBudgetProvider);
-            TextureDeferredLoadingSystem.InjectToWorld(ref builder, concurrentLoadingBudgetProvider);
         }
-
     }
 }

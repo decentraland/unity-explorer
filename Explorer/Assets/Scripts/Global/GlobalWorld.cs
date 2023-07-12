@@ -3,10 +3,10 @@ using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Special;
 using ECS.Global.Systems;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.DeferredLoading;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
-using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Transforms.Components;
 using Ipfs;
@@ -43,13 +43,10 @@ namespace Global
             IConcurrentBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(100);
 
             LoadSceneDefinitionListSystem.InjectToWorld(ref builder, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex, sceneBudgetProvider);
-            SceneDefinitionListDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider);
-
             LoadSceneDefinitionSystem.InjectToWorld(ref builder, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex, sceneBudgetProvider);
-            SceneDefinitionDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider);
-
             LoadSceneSystem.InjectToWorld(ref builder, ASSET_BUNDLES_URL, sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex, sceneBudgetProvider);
-            SceneDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider);
+
+            SceneLifeCycleDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider);
 
             CalculateParcelsInRangeSystem.InjectToWorld(ref builder, playerEntity);
             LoadStaticPointersSystem.InjectToWorld(ref builder);

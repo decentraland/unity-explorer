@@ -41,7 +41,6 @@ namespace SceneRunner.ECSWorld.Plugins
 
             // TODO create a runtime ref-counting cache
             LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, localAssetBundleManifest, sharedDependencies.MutexSync, loadingBudgetProvider);
-            AssetBundleDeferredLoadingSystem.InjectToWorld(ref builder, loadingBudgetProvider);
         }
     }
 }
