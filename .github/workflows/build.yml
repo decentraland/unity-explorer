@@ -40,11 +40,11 @@ jobs:
       # Configure test runner
       - uses: game-ci/unity-builder@v2
         with:
+          projectPath: Explorer
           targetPlatform: StandaloneWindows64
 
       # Upload artifact
       - uses: actions/upload-artifact@v2
-        if: always()
         with:
-          name: Test results (play mode & edit mode)
-          path: ${{ steps.testRunner.outputs.artifactsPath }}
+          name: Build
+          path: build
