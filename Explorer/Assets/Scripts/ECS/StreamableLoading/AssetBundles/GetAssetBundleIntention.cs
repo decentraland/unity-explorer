@@ -43,7 +43,7 @@ namespace ECS.StreamableLoading.AssetBundles
             new (name: name, permittedSources: permittedSources);
 
         public static GetAssetBundleIntention FromHash(string hash, AssetSource permittedSources = AssetSource.ALL) =>
-            new (hash: hash + PlatformUtils.GetPlatform(), permittedSources: permittedSources);
+            new (hash: hash, permittedSources: permittedSources);
 
         public bool Equals(GetAssetBundleIntention other) =>
             Hash == other.Hash || Name == other.Name;
