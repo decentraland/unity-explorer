@@ -7,7 +7,6 @@ using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
-using UnityEngine;
 using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles
