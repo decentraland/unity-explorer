@@ -5,6 +5,7 @@ using Diagnostics.ReportsHandling;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -16,7 +17,9 @@ namespace ECS.StreamableLoading.Textures
     [LogCategory(ReportCategory.TEXTURES)]
     public partial class LoadTextureSystem : LoadSystemBase<Texture2D, GetTextureIntention>
     {
-        internal LoadTextureSystem(World world, IStreamableCache<Texture2D, GetTextureIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync) { }
+        internal LoadTextureSystem(World world, IStreamableCache<Texture2D, GetTextureIntention> cache, MutexSync mutexSync, IConcurrentBudgetProvider loadingBudget) :
+            base(world, cache, mutexSync, loadingBudget) { }
+
 
         protected override async UniTask<StreamableLoadingResult<Texture2D>> FlowInternal(GetTextureIntention intention, CancellationToken ct)
         {

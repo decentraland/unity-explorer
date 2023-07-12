@@ -3,9 +3,11 @@ using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Special;
 using ECS.Global.Systems;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.DeferredLoading;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Transforms.Components;
 using Ipfs;
 using SceneRunner;
@@ -38,9 +40,13 @@ namespace Global
             // Asset Bundle Manifest
             const string ASSET_BUNDLES_URL = "https://ab-cdn.decentraland.org/";
 
-            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
-            LoadSceneDefinitionSystem.InjectToWorld(ref builder, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
-            LoadSceneSystem.InjectToWorld(ref builder, ASSET_BUNDLES_URL, sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex);
+            IConcurrentBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(100);
+
+            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex, sceneBudgetProvider);
+            LoadSceneDefinitionSystem.InjectToWorld(ref builder, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex, sceneBudgetProvider);
+            LoadSceneSystem.InjectToWorld(ref builder, ASSET_BUNDLES_URL, sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex, sceneBudgetProvider);
+
+            SceneLifeCycleDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider);
 
             CalculateParcelsInRangeSystem.InjectToWorld(ref builder, playerEntity);
             LoadStaticPointersSystem.InjectToWorld(ref builder);

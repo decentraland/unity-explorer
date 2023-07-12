@@ -50,7 +50,9 @@ namespace ECS.StreamableLoading.Tests
         [Test]
         public async Task ConcludeSuccess()
         {
-            promise = AssetPromise<TAsset, TIntention>.Create(world, CreateSuccessIntention());
+            TIntention intent = CreateSuccessIntention();
+            intent.SetAllowed();
+            promise = AssetPromise<TAsset, TIntention>.Create(world, intent);
 
             // Launch the flow
             system.Update(0);
@@ -67,7 +69,9 @@ namespace ECS.StreamableLoading.Tests
         [Test]
         public async Task ConcludeExceptionOnParseFail()
         {
-            promise = AssetPromise<TAsset, TIntention>.Create(world, CreateWrongTypeIntention());
+            TIntention intent = CreateWrongTypeIntention();
+            intent.SetAllowed();
+            promise = AssetPromise<TAsset, TIntention>.Create(world, intent);
 
             // Launch the flow
             system.Update(0);
@@ -84,6 +88,7 @@ namespace ECS.StreamableLoading.Tests
         {
             TIntention intent = CreateNotFoundIntention();
             intent.SetAttempts(1);
+            intent.SetAllowed();
 
             promise = AssetPromise<TAsset, TIntention>.Create(world, intent);
 
@@ -102,8 +107,9 @@ namespace ECS.StreamableLoading.Tests
         {
             TIntention intent = CreateSuccessIntention();
             intent.SetSources(AssetSource.EMBEDDED, AssetSource.EMBEDDED);
+            intent.SetAllowed();
 
-            promise = AssetPromise<TAsset, TIntention>.Create(world, CreateSuccessIntention());
+            promise = AssetPromise<TAsset, TIntention>.Create(world, intent);
 
             // Launch the flow
             system.Update(0);
@@ -116,6 +122,7 @@ namespace ECS.StreamableLoading.Tests
         public async Task GetAssetFromCache()
         {
             TIntention successIntent = CreateSuccessIntention();
+            successIntent.SetAllowed();
             promise = AssetPromise<TAsset, TIntention>.Create(world, successIntent);
 
             TIntention checkIntent = successIntent;

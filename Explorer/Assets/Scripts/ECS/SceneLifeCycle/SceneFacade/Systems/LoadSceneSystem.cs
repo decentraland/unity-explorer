@@ -6,6 +6,7 @@ using Diagnostics.ReportsHandling;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using Ipfs;
 using SceneRunner;
 using SceneRunner.Scene;
@@ -29,7 +30,7 @@ namespace ECS.SceneLifeCycle
 
         internal LoadSceneSystem(World world, string assetBundleURL,
             ISceneFactory sceneFactory, IStreamableCache<ISceneFacade, GetSceneFacadeIntention> cache,
-            MutexSync mutexSync) : base(world, cache, mutexSync)
+            MutexSync mutexSync, IConcurrentBudgetProvider concurrentBudgetProvider) : base(world, cache, mutexSync, concurrentBudgetProvider)
         {
             this.assetBundleURL = assetBundleURL;
             this.sceneFactory = sceneFactory;
