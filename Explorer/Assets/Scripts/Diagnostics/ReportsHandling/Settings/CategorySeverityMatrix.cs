@@ -17,7 +17,18 @@ namespace Diagnostics.ReportsHandling
         // Remove an entry if category no longer exists
         [SerializeField] internal List<Entry> entries;
 
-        public bool IsEnabled(string category, LogType severity) =>
-            entries.Find(e => e.Category == category && e.Severity == severity) != null;
+        // TODO cache results and invalidate only when entries are changed
+        public bool IsEnabled(string category, LogType severity)
+        {
+            for (var i = 0; i < entries.Count; i++)
+            {
+                Entry entry = entries[i];
+
+                if (entry.Category == category && entry.Severity == severity)
+                    return true;
+            }
+
+            return false;
+        }
     }
 }

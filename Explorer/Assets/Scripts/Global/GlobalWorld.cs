@@ -3,16 +3,16 @@ using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Special;
 using ECS.Global.Systems;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles.Manifest;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
+using ECS.StreamableLoading.Cache;
 using ECS.Unity.Transforms.Components;
 using Ipfs;
-using JetBrains.Annotations;
 using SceneRunner;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
@@ -21,47 +21,39 @@ namespace Global
 {
     public class GlobalWorld : IDisposable
     {
-        private SceneLifeCycleState state;
-
-        private IIpfsRealm ipfsRealm;
+        private readonly CancellationTokenSource destroyCancellationSource = new ();
 
         private SystemGroupWorld worldSystems;
 
-        private World world;
+        public World World { get; private set; }
 
-        private readonly CancellationTokenSource destroyCancellationSource = new ();
-
-        public void Initialize(ISceneFactory sceneFactory, Camera unityCamera, int sceneLoadRadius, [CanBeNull] List<Vector2Int> staticLoadPositions = null)
+        public void Initialize(ISceneFactory sceneFactory, Camera unityCamera)
         {
-            ipfsRealm = new IpfsRealm("https://sdk-test-scenes.decentraland.zone/");
-            world = World.Create();
+            World = World.Create();
 
-            var builder = new ArchSystemsWorldBuilder<World>(world);
+            var builder = new ArchSystemsWorldBuilder<World>(World);
+            Entity playerEntity = World.Create(new PlayerComponent(), new TransformComponent());
 
-            state = new SceneLifeCycleState()
-            {
-                PlayerEntity = world.Create(new PlayerComponent(), new TransformComponent()),
-                SceneLoadRadius = sceneLoadRadius,
-            };
-
-            LoadScenesDynamicallySystem.InjectToWorld(ref builder, ipfsRealm, state, staticLoadPositions);
-            ResolveScenesStateSystem.InjectToWorld(ref builder, state);
-            StartSceneSystem.InjectToWorld(ref builder, ipfsRealm, sceneFactory, destroyCancellationSource.Token);
-            DestroySceneSystem.InjectToWorld(ref builder);
+            // not synced by mutex
+            var mutex = new MutexSync();
 
             // Asset Bundle Manifest
             const string ASSET_BUNDLES_URL = "https://ab-cdn.decentraland.org/";
 
-            var assetBundlesManifestCache = new AssetBundlesManifestCache();
-            var mutex = new MutexSync();
-            PrepareAssetBundleManifestParametersSystem.InjectToWorld(ref builder, ASSET_BUNDLES_URL);
+            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
+            LoadSceneDefinitionSystem.InjectToWorld(ref builder, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
+            LoadSceneSystem.InjectToWorld(ref builder, ASSET_BUNDLES_URL, sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex);
 
-            //TODO: Should we create a concurrent loading provider only for scenes?
-            ConcurrentLoadingBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(100);
-            LoadAssetBundleManifestSystem.InjectToWorld(ref builder, assetBundlesManifestCache, ASSET_BUNDLES_URL, mutex, sceneBudgetProvider);
-            AssetBundleManifestDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider);
+            CalculateParcelsInRangeSystem.InjectToWorld(ref builder, playerEntity);
+            LoadStaticPointersSystem.InjectToWorld(ref builder);
+            LoadFixedPointersSystem.InjectToWorld(ref builder);
+            LoadPointersByRadiusSystem.InjectToWorld(ref builder);
+            ResolveSceneStateByRadiusSystem.InjectToWorld(ref builder);
+            ResolveStaticPointersSystem.InjectToWorld(ref builder);
+            UnloadSceneSystem.InjectToWorld(ref builder);
+            StartSceneSystem.InjectToWorld(ref builder, destroyCancellationSource.Token);
 
-            DebugCameraTransformToPlayerTransformSystem.InjectToWorld(ref builder, state.PlayerEntity, unityCamera);
+            DebugCameraTransformToPlayerTransformSystem.InjectToWorld(ref builder, playerEntity, unityCamera);
 
             worldSystems = builder.Finish();
             worldSystems.Initialize();

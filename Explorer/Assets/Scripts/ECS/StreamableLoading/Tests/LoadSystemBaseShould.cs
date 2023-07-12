@@ -6,6 +6,7 @@ using ECS.StreamableLoading.Common.Systems;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene.Tests;
 using System;
 using System.Threading.Tasks;
 
@@ -27,9 +28,13 @@ namespace ECS.StreamableLoading.Tests
 
         protected IStreamableCache<TAsset, TIntention> cache;
 
+        private MockedReportScope mockedReportScope;
+
         [SetUp]
         public void BaseSetUp()
         {
+            mockedReportScope = new MockedReportScope();
+
             cache = Substitute.For<IStreamableCache<TAsset, TIntention>>();
             system = CreateSystem();
             system.Initialize();
@@ -38,7 +43,8 @@ namespace ECS.StreamableLoading.Tests
         [TearDown]
         public void TearDown()
         {
-            promise.LoadingIntention.CommonArguments.cancellationTokenSource?.Cancel();
+            mockedReportScope.Dispose();
+            promise.LoadingIntention.CommonArguments.CancellationTokenSource?.Cancel();
         }
 
         [Test]

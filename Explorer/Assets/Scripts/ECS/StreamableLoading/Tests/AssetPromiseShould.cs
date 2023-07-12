@@ -13,7 +13,7 @@ namespace ECS.StreamableLoading.Tests
         public struct Intent : ILoadingIntention, IEquatable<Intent>
         {
             public CommonLoadingArguments CommonArguments { get; set; }
-            public CancellationTokenSource CancellationTokenSource => CommonArguments.cancellationTokenSource;
+            public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
             public bool Equals(Intent other) =>
                 CommonArguments.URL == other.CommonArguments.URL;

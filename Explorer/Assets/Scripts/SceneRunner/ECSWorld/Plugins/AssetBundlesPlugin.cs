@@ -20,7 +20,6 @@ namespace SceneRunner.ECSWorld.Plugins
             return $"{Application.streamingAssetsPath}/AssetBundles/";
 #endif
 
-        private readonly AssetBundlesManifestCache assetBundlesManifestCache;
         private readonly AssetBundleManifest localAssetBundleManifest;
         private readonly IReportsHandlingSettings reportsHandlingSettings;
         private readonly IConcurrentBudgetProvider loadingBudgetProvider;

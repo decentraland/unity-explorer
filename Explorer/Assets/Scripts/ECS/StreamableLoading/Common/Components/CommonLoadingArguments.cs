@@ -20,8 +20,7 @@ namespace ECS.StreamableLoading.Common.Components
         public DeferredLoadingState DeferredLoadingState;
 
         public CancellationToken CancellationToken => cancellationTokenSource.Token;
-
-        internal readonly CancellationTokenSource cancellationTokenSource;
+        public readonly CancellationTokenSource CancellationTokenSource;
 
         public CommonLoadingArguments(string url,
             int timeout = StreamableLoadingDefaults.TIMEOUT,
@@ -37,7 +36,7 @@ namespace ECS.StreamableLoading.Common.Components
             Attempts = attempts;
             PermittedSources = permittedSources;
             CurrentSource = currentSource;
-            this.cancellationTokenSource = cancellationTokenSource ?? new CancellationTokenSource();
+            CancellationTokenSource = cancellationTokenSource ?? new CancellationTokenSource();
         }
     }
 }

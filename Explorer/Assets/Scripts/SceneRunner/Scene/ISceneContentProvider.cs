@@ -10,8 +10,6 @@ namespace SceneRunner.Scene
 
         SceneAssetBundleManifest AssetBundleManifest { get; }
 
-        IReadOnlyList<Vector2Int> Parcels { get; }
-
         bool HasRequiredPermission(string permission);
 
         /// <summary>

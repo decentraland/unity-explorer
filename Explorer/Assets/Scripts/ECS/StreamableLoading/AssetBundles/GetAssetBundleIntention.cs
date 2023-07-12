@@ -37,7 +37,7 @@ namespace ECS.StreamableLoading.AssetBundles
             cacheHash = null;
         }
 
-        public CancellationTokenSource CancellationTokenSource => CommonArguments.cancellationTokenSource;
+        public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
         public static GetAssetBundleIntention FromName(string name, AssetSource permittedSources = AssetSource.ALL,
             DeferredLoadingState deferredLoadingState = DeferredLoadingState.Allowed) =>

@@ -2,73 +2,60 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using Diagnostics.ReportsHandling;
 using ECS.Abstract;
-using ECS.SceneLifeCycle.Components;
-using Ipfs;
-using SceneRunner;
+using ECS.LifeCycle.Components;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
-using System;
 using System.Threading;
 
 namespace ECS.SceneLifeCycle.Systems
 {
-    [UpdateInGroup(typeof(SceneLifeCycleGroup))]
-    [UpdateAfter(typeof(ResolveScenesStateSystem))]
+    /// <summary>
+    ///     Starts scenes that are already loaded
+    /// </summary>
+    [UpdateInGroup(typeof(RealmGroup))]
+    [UpdateAfter(typeof(ResolveSceneStateByRadiusSystem))]
+    [UpdateAfter(typeof(ResolveStaticPointersSystem))]
     public partial class StartSceneSystem : BaseUnityLoopSystem
     {
         private readonly CancellationToken destroyCancellationToken;
 
-        private readonly IIpfsRealm ipfsRealm;
-        private readonly ISceneFactory sceneFactory;
-
-        public StartSceneSystem(World world, IIpfsRealm ipfsRealm, ISceneFactory sceneFactory, CancellationToken destroyCancellationToken) : base(world)
+        internal StartSceneSystem(World world, CancellationToken destroyCancellationToken) : base(world)
         {
-            this.sceneFactory = sceneFactory;
-            this.ipfsRealm = ipfsRealm;
             this.destroyCancellationToken = destroyCancellationToken;
         }
 
         protected override void Update(float t)
         {
-            ProcessSceneToLoadQuery(World);
-        }
-
-        private async UniTask InitializeSceneAndStart(SceneLoadingComponent sceneLoadingComponent, CancellationToken ct)
-        {
-            ISceneFacade sceneFacade;
-
-            try
-            {
-                // main thread
-                sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(ipfsRealm, sceneLoadingComponent.Definition, sceneLoadingComponent.AssetBundleManifest, ct);
-                ct.RegisterWithoutCaptureExecutionContext(() => sceneFacade?.DisposeAsync().Forget());
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, new ReportData(ReportCategory.SCENE_FACTORY));
-                return;
-            }
-
-            // thread pool
-            await sceneFacade.StartUpdateLoop(30, ct);
+            StartSceneQuery(World);
         }
 
         [Query]
-        private void ProcessSceneToLoad(in Entity entity, ref SceneLoadingComponent sceneLoadingComponent)
+        [None(typeof(DeleteEntityIntention), typeof(ISceneFacade))]
+        private void StartScene(in Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
         {
-            // If the scene just spawned, we start the request
-            var cts = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
+            // Gracefully consume with the possibility of repetitions (in case the scene loading has failed)
+            if (promise.IsConsumed) return;
 
-            var liveSceneComponent = new LiveSceneComponent
+            if (promise.TryConsume(World, out StreamableLoadingResult<ISceneFacade> result) && result.Succeeded)
             {
-                CancellationTokenSource = cts,
-                Task = InitializeSceneAndStart(sceneLoadingComponent, cts.Token),
-            };
+                ISceneFacade scene = result.Asset;
 
-            World.Add(entity, liveSceneComponent);
+                async UniTaskVoid RunOnThreadPool()
+                {
+                    await UniTask.SwitchToThreadPool();
 
-            World.Remove<SceneLoadingComponent>(entity);
+                    // Provide basic Thread Pool synchronization context
+                    SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+                    await scene.StartUpdateLoop(30, destroyCancellationToken);
+                }
+
+                RunOnThreadPool().Forget();
+
+                // So we know the scene has started
+                World.Add(entity, scene);
+            }
         }
     }
 }

@@ -60,7 +60,7 @@ namespace SceneRunner.Tests
         [Test]
         public async Task CreateSceneFacadeForTestScene()
         {
-            sceneFacade = await sceneFactory.CreateScene(path, CancellationToken.None);
+            sceneFacade = await sceneFactory.CreateSceneFromFile(path, CancellationToken.None);
 
             var sceneFacadeImpl = (SceneFacade)sceneFacade;
 
@@ -82,7 +82,7 @@ namespace SceneRunner.Tests
         {
             var threadId = Thread.CurrentThread.ManagedThreadId;
 
-            sceneFacade = await sceneFactory.CreateScene(path, CancellationToken.None);
+            sceneFacade = await sceneFactory.CreateSceneFromFile(path, CancellationToken.None);
 
             Assert.AreNotEqual(threadId, Thread.CurrentThread.ManagedThreadId);
         }

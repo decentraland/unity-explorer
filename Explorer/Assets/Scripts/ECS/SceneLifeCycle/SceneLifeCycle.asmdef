@@ -10,7 +10,9 @@
     "SceneRunner.Scene",
     "Utility",
     "StreamableLoading",
-    "Diagnostics"
+    "Diagnostics",
+    "Decentraland.Protocol.GeneratedCode",
+    "AssetManagement"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
