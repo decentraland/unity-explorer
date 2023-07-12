@@ -6,6 +6,7 @@ using Diagnostics.ReportsHandling;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using Ipfs;
 using Newtonsoft.Json;
 using System.Collections.Generic;
@@ -28,8 +29,9 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         private readonly StringBuilder bodyBuilder = new ();
 
         // There is no cache for the list but a cache per entity that is stored in ECS itself
-        internal LoadSceneDefinitionListSystem(World world, IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache, MutexSync mutexSync)
-            : base(world, cache, mutexSync) { }
+        internal LoadSceneDefinitionListSystem(World world, IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache,
+            MutexSync mutexSync, IConcurrentBudgetProvider concurrentBudgetProvider)
+            : base(world, cache, mutexSync, concurrentBudgetProvider) { }
 
         protected override async UniTask<StreamableLoadingResult<SceneDefinitions>> FlowInternal(GetSceneDefinitionList intention, CancellationToken ct)
         {

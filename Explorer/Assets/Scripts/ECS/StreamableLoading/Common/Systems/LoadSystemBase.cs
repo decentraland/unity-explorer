@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using ECS.Abstract;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -36,6 +37,8 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private CancellationTokenSource cancellationTokenSource;
 
+        private readonly IConcurrentBudgetProvider concurrentLoadingBudgetProvider;
+
         /// <summary>
         ///     Resolves the problem of having multiple requests to the same URL at a time
         /// </summary>
@@ -43,10 +46,11 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private readonly Dictionary<string, StreamableLoadingResult<TAsset>> irrecoverableFailures;
 
-        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync) : base(world)
+        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync, IConcurrentBudgetProvider concurrentLoadingBudgetProvider) : base(world)
         {
             this.cache = cache;
             this.mutexSync = mutexSync;
+            this.concurrentLoadingBudgetProvider = concurrentLoadingBudgetProvider;
             query = World.Query(in CREATE_WEB_REQUEST);
 
             cachedRequests = DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>.Get();
@@ -88,18 +92,25 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private void Execute(in Entity entity, ref TIntention intention)
         {
+            if (!intention.IsAllowed())
+                return;
+
             // Remove current source flag from the permitted sources
             // it indicates that the current source was used
             intention.RemoveCurrentSource();
 
             // Try load from cache first
             if (TryLoadFromCache(in entity, in intention))
+            {
+                concurrentLoadingBudgetProvider.ReleaseBudget();
                 return;
+            }
 
             // If the given URL failed irrecoverably just return the failure
             if (irrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset> failure))
             {
                 World.Add(entity, failure);
+                concurrentLoadingBudgetProvider.ReleaseBudget();
                 return;
             }
 
@@ -118,13 +129,11 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 // if the request is cached wait for it
                 if (cachedRequests.TryGetValue(intention.CommonArguments.URL, out UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> cachedSource))
-                {
+
                     // if the cached request is cancelled it does not mean failure for the new intent
                     (requestIsNotFulfilled, result) = await cachedSource.Task.SuppressCancellationThrow();
 
-                    // if this request must be cancelled by `intention.CommonArguments.CancellationToken` it will be cancelled after `if (!requestIsNotFulfilled)`
-                }
-
+                // if this request must be cancelled by `intention.CommonArguments.CancellationToken` it will be cancelled after `if (!requestIsNotFulfilled)`
                 if (requestIsNotFulfilled)
                     result = await CacheableFlow(intention, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
 
@@ -152,6 +161,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 ReportException(e);
             }
+            finally { concurrentLoadingBudgetProvider.ReleaseBudget(); }
         }
 
         /// <summary>

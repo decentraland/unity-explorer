@@ -7,6 +7,7 @@ using ECS.ComponentsPooling.Systems;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
+using ECS.StreamableLoading.DeferredLoading;
 using SceneRunner.ECSWorld.Plugins;
 using System.Collections.Generic;
 
@@ -48,6 +49,9 @@ namespace SceneRunner.ECSWorld
 
             foreach (IECSWorldPlugin worldPlugin in plugins)
                 worldPlugin.InjectToWorld(ref builder, in sharedDependencies, in persistentEntities, finalizeWorldSystems);
+
+            // Deferred loading
+            AssetsDeferredLoadingSystem.InjectToWorld(ref builder, singletonDependencies.LoadingBudgetProvider);
 
             DestroyEntitiesSystem.InjectToWorld(ref builder);
             finalizeWorldSystems.Add(ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry));

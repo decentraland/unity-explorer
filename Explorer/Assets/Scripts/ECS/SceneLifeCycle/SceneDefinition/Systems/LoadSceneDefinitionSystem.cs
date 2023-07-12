@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using Ipfs;
 using System.Threading;
 using UnityEngine;
@@ -19,8 +20,9 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class LoadSceneDefinitionSystem : LoadSystemBase<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>
     {
-        internal LoadSceneDefinitionSystem(World world, IStreamableCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition> cache, MutexSync mutexSync)
-            : base(world, cache, mutexSync) { }
+        internal LoadSceneDefinitionSystem(World world, IStreamableCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition> cache, MutexSync mutexSync,
+            IConcurrentBudgetProvider concurrentBudgetProvider)
+            : base(world, cache, mutexSync, concurrentBudgetProvider) { }
 
         protected override async UniTask<StreamableLoadingResult<IpfsTypes.SceneEntityDefinition>> FlowInternal(GetSceneDefinition intention, CancellationToken ct)
         {
