@@ -13,7 +13,7 @@ namespace ECS.Editor.GUI
         public static void ShowExample()
         {
             HierarchyEditorWindow wnd = GetWindow<HierarchyEditorWindow>();
-            wnd.titleContent = new GUIContent("MyEditorWindow");
+            wnd.titleContent = new GUIContent("ECS Hierarchy");
         }
 
         Dictionary<string, Label> labels = new ();
