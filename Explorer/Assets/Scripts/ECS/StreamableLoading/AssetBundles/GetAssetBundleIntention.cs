@@ -3,6 +3,7 @@ using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
@@ -42,7 +43,7 @@ namespace ECS.StreamableLoading.AssetBundles
             new (name: name, permittedSources: permittedSources);
 
         public static GetAssetBundleIntention FromHash(string hash, AssetSource permittedSources = AssetSource.ALL) =>
-            new (hash: hash, permittedSources: permittedSources);
+            new (hash: hash + PlatformUtils.GetPlatform(), permittedSources: permittedSources);
 
         public bool Equals(GetAssetBundleIntention other) =>
             Hash == other.Hash || Name == other.Name;

@@ -7,6 +7,7 @@ using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
+using UnityEngine;
 using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -54,8 +55,7 @@ namespace ECS.StreamableLoading.AssetBundles
                     return;
                 }
 
-                // TODO Hack, kill me
-                // assetBundleIntention.Hash = assetBundleIntention.Hash.GetHashCode().ToString();
+                assetBundleIntention.Hash += PlatformUtils.GetPlatform();
             }
 
             // First priority
