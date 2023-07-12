@@ -3,6 +3,7 @@ using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Engine;
 using Diagnostics;
 using Diagnostics.ReportsHandling;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using SceneRunner;
 using SceneRunner.ECSWorld;
 using SceneRunner.ECSWorld.Plugins;
@@ -27,16 +28,16 @@ namespace Global
         {
             var entityFactory = new EntityFactory();
 
-            var sharedDependencies = new ECSWorldSingletonSharedDependencies(componentsContainer.ComponentPoolsRegistry, reportsHandlingSettings, entityFactory);
+            var sharedDependencies = new ECSWorldSingletonSharedDependencies(componentsContainer.ComponentPoolsRegistry, reportsHandlingSettings, entityFactory, new ConcurrentLoadingBudgetProvider(100));
 
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 new TransformsPlugin(sharedDependencies),
                 new MaterialsPlugin(),
                 new PrimitiveCollidersPlugin(sharedDependencies),
-                new TexturesLoadingPlugin(),
+                new TexturesLoadingPlugin(sharedDependencies.LoadingBudgetProvider),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
-                new AssetBundlesPlugin(localAssetBundleManifest, reportsHandlingSettings),
+                new AssetBundlesPlugin(localAssetBundleManifest, reportsHandlingSettings, sharedDependencies.LoadingBudgetProvider),
                 new GltfContainerPlugin(sharedDependencies));
 
             return new SceneSharedContainer

@@ -6,6 +6,7 @@ using ECS.StreamableLoading.Common.Systems;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene.Tests;
 using System;
 using System.Threading.Tasks;
 
@@ -27,9 +28,13 @@ namespace ECS.StreamableLoading.Tests
 
         protected IStreamableCache<TAsset, TIntention> cache;
 
+        private MockedReportScope mockedReportScope;
+
         [SetUp]
         public void BaseSetUp()
         {
+            mockedReportScope = new MockedReportScope();
+
             cache = Substitute.For<IStreamableCache<TAsset, TIntention>>();
             system = CreateSystem();
             system.Initialize();
@@ -38,13 +43,16 @@ namespace ECS.StreamableLoading.Tests
         [TearDown]
         public void TearDown()
         {
-            promise.LoadingIntention.CommonArguments.cancellationTokenSource?.Cancel();
+            mockedReportScope.Dispose();
+            promise.LoadingIntention.CommonArguments.CancellationTokenSource?.Cancel();
         }
 
         [Test]
         public async Task ConcludeSuccess()
         {
-            promise = AssetPromise<TAsset, TIntention>.Create(world, CreateSuccessIntention());
+            TIntention intent = CreateSuccessIntention();
+            intent.SetAllowed();
+            promise = AssetPromise<TAsset, TIntention>.Create(world, intent);
 
             // Launch the flow
             system.Update(0);
@@ -61,7 +69,9 @@ namespace ECS.StreamableLoading.Tests
         [Test]
         public async Task ConcludeExceptionOnParseFail()
         {
-            promise = AssetPromise<TAsset, TIntention>.Create(world, CreateWrongTypeIntention());
+            TIntention intent = CreateWrongTypeIntention();
+            intent.SetAllowed();
+            promise = AssetPromise<TAsset, TIntention>.Create(world, intent);
 
             // Launch the flow
             system.Update(0);
@@ -78,6 +88,7 @@ namespace ECS.StreamableLoading.Tests
         {
             TIntention intent = CreateNotFoundIntention();
             intent.SetAttempts(1);
+            intent.SetAllowed();
 
             promise = AssetPromise<TAsset, TIntention>.Create(world, intent);
 
@@ -96,8 +107,9 @@ namespace ECS.StreamableLoading.Tests
         {
             TIntention intent = CreateSuccessIntention();
             intent.SetSources(AssetSource.EMBEDDED, AssetSource.EMBEDDED);
+            intent.SetAllowed();
 
-            promise = AssetPromise<TAsset, TIntention>.Create(world, CreateSuccessIntention());
+            promise = AssetPromise<TAsset, TIntention>.Create(world, intent);
 
             // Launch the flow
             system.Update(0);
@@ -110,6 +122,7 @@ namespace ECS.StreamableLoading.Tests
         public async Task GetAssetFromCache()
         {
             TIntention successIntent = CreateSuccessIntention();
+            successIntent.SetAllowed();
             promise = AssetPromise<TAsset, TIntention>.Create(world, successIntent);
 
             TIntention checkIntent = successIntent;

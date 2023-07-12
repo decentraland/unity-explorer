@@ -17,23 +17,26 @@ namespace ECS.StreamableLoading.Common.Components
         /// </summary>
         public AssetSource CurrentSource;
 
-        public CancellationToken CancellationToken => cancellationTokenSource.Token;
+        public DeferredLoadingState DeferredLoadingState;
 
-        internal readonly CancellationTokenSource cancellationTokenSource;
+        public CancellationToken CancellationToken => CancellationTokenSource.Token;
+        public readonly CancellationTokenSource CancellationTokenSource;
 
         public CommonLoadingArguments(string url,
             int timeout = StreamableLoadingDefaults.TIMEOUT,
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
             AssetSource permittedSources = AssetSource.WEB,
             AssetSource currentSource = AssetSource.WEB,
+            DeferredLoadingState deferredLoadingState = DeferredLoadingState.Forbidden,
             CancellationTokenSource cancellationTokenSource = null)
         {
+            DeferredLoadingState = deferredLoadingState;
             URL = url;
             Timeout = timeout;
             Attempts = attempts;
             PermittedSources = permittedSources;
             CurrentSource = currentSource;
-            this.cancellationTokenSource = cancellationTokenSource ?? new CancellationTokenSource();
+            CancellationTokenSource = cancellationTokenSource ?? new CancellationTokenSource();
         }
     }
 }

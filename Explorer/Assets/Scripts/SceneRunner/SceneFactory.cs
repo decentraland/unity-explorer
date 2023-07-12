@@ -52,7 +52,7 @@ namespace SceneRunner
             this.entityFactory = entityFactory;
         }
 
-        public async UniTask<ISceneFacade> CreateScene(string jsCodeUrl, CancellationToken ct)
+        public async UniTask<ISceneFacade> CreateSceneFromFile(string jsCodeUrl, CancellationToken ct)
         {
             var sceneDefinition = new IpfsTypes.SceneEntityDefinition();
 
@@ -65,7 +65,7 @@ namespace SceneRunner
                 main = mainScenePath,
             };
 
-            var sceneData = new SceneData(new IpfsRealm(baseUrl, baseUrl), sceneDefinition, false, SceneAssetBundleManifest.NULL);
+            var sceneData = new SceneData(new LocalIpfsRealm(baseUrl), sceneDefinition, false, SceneAssetBundleManifest.NULL);
 
             return await CreateScene(sceneData, ct);
         }
@@ -89,14 +89,14 @@ namespace SceneRunner
                 metadata = sceneMetadata,
             };
 
-            var sceneData = new SceneData(new IpfsRealm(fullPath, fullPath), sceneDefinition, false, SceneAssetBundleManifest.NULL);
+            var sceneData = new SceneData(new LocalIpfsRealm(fullPath), sceneDefinition, false, SceneAssetBundleManifest.NULL);
 
             return await CreateScene(sceneData, ct);
         }
 
-        public async UniTask<ISceneFacade> CreateSceneFromSceneDefinition(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, SceneAssetBundleManifest abManifest, CancellationToken ct)
+        public async UniTask<ISceneFacade> CreateSceneFromSceneDefinition(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, SceneAssetBundleManifest abManifest, string contentBaseUrl, CancellationToken ct)
         {
-            var sceneData = new SceneData(ipfsRealm, sceneDefinition, true, abManifest);
+            var sceneData = new SceneData(ipfsRealm, sceneDefinition, true, abManifest, contentBaseUrl);
 
             return await CreateScene(sceneData, ct);
         }
