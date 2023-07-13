@@ -8,6 +8,7 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using ECS.StreamableLoading.DeferredLoading;
+using ECS.StreamableLoading.DeferredLoading.Systems;
 using SceneRunner.ECSWorld.Plugins;
 using System.Collections.Generic;
 
@@ -52,6 +53,7 @@ namespace SceneRunner.ECSWorld
 
             // Deferred loading
             AssetsDeferredLoadingSystem.InjectToWorld(ref builder, singletonDependencies.LoadingBudgetProvider);
+            AssetsBandwidthCalculatorSystem.InjectToWorld(ref builder);
 
             DestroyEntitiesSystem.InjectToWorld(ref builder);
             finalizeWorldSystems.Add(ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry));

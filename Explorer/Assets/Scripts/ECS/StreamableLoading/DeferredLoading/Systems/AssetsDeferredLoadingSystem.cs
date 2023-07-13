@@ -11,7 +11,8 @@ namespace ECS.StreamableLoading.DeferredLoading
     /// <summary>
     ///     Weighs asset bundles and textures against each other according to their partition
     /// </summary>
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(StreamableLoadingGroup))]
+    [UpdateAfter(typeof(PrepareAssetBundleLoadingParametersSystem))]
     [UpdateBefore(typeof(LoadTextureSystem))]
     [UpdateBefore(typeof(LoadAssetBundleSystem))]
     public partial class AssetsDeferredLoadingSystem : DeferredLoadingSystem

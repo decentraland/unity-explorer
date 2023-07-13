@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
 {
@@ -13,20 +14,19 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
             currentBudget = initialBudget;
         }
 
-        public bool TrySpendBudget()
+        public bool TrySpendBudget(int budgetCost)
         {
-            if (currentBudget > 0)
+            if (currentBudget - budgetCost > 0)
             {
-                currentBudget--;
+                currentBudget -= budgetCost;
                 return true;
             }
-
             return false;
         }
 
-        public void ReleaseBudget()
+        public void ReleaseBudget(int budgetReleased)
         {
-            if (currentBudget + 1 > maxBudget)
+            if (currentBudget + budgetReleased > maxBudget)
                 throw new Exception("Tried to release more budget than the max budget allows");
             currentBudget = Math.Clamp(currentBudget + 1, 0, maxBudget);
         }

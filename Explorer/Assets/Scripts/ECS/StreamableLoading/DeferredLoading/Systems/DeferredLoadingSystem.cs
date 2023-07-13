@@ -24,7 +24,7 @@ namespace ECS.StreamableLoading.DeferredLoading
         /// </summary>
         public abstract class ComponentHandler
         {
-            internal abstract unsafe void SetAllowed(void* dataPointer);
+            internal abstract unsafe void AnalyzeBudget(IConcurrentBudgetProvider budgetProvider, void* dataPointer);
 
             internal abstract void Update(World world, List<IntentionData> loadingIntentions);
         }
@@ -38,7 +38,7 @@ namespace ECS.StreamableLoading.DeferredLoading
         {
             private static readonly QueryDescription CREATE_LOADING_REQUEST = new QueryDescription()
                                                                              .WithAll<TIntention, PartitionComponent>()
-                                                                             .WithNone<LoadingInProgress, StreamableLoadingResult<TAsset>>();
+                                                                             .WithNone<HeadRequestInProgress, LoadingInProgress, StreamableLoadingResult<TAsset>>();
 
             internal override unsafe void Update(World world, List<IntentionData> loadingIntentions)
             {
@@ -67,9 +67,12 @@ namespace ECS.StreamableLoading.DeferredLoading
                 }
             }
 
-            internal override unsafe void SetAllowed(void* dataPointer)
+            internal override unsafe void AnalyzeBudget(IConcurrentBudgetProvider budgetProvider, void* dataPointer)
             {
                 ref TIntention intentionRef = ref UnsafeUtility.AsRef<TIntention>(dataPointer);
+                if (!budgetProvider.TrySpendBudget(intentionRef.CommonArguments.BudgetCost))
+                    return;
+
                 intentionRef.SetAllowed();
             }
         }
@@ -101,12 +104,7 @@ namespace ECS.StreamableLoading.DeferredLoading
         private unsafe void AnalyzeBudget()
         {
             foreach (IntentionData intentionToAnalyze in loadingIntentions)
-            {
-                if (!concurrentLoadingBudgetProvider.TrySpendBudget())
-                    break;
-
-                intentionToAnalyze.Handler.SetAllowed(intentionToAnalyze.IntentionDataPointer);
-            }
+                intentionToAnalyze.Handler.AnalyzeBudget(concurrentLoadingBudgetProvider, intentionToAnalyze.IntentionDataPointer);
         }
 
         public override void Dispose()

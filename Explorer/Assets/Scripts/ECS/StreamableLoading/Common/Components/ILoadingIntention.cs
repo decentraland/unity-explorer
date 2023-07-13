@@ -26,6 +26,13 @@ namespace ECS.StreamableLoading.Common.Components
             loadingIntention.CommonArguments = ca;
         }
 
+        public static void SetBudgetCost<T>(this ref T loadingIntention, int budgetCost) where T: struct, ILoadingIntention
+        {
+            CommonLoadingArguments ca = loadingIntention.CommonArguments;
+            ca.BudgetCost = budgetCost;
+            loadingIntention.CommonArguments = ca;
+        }
+
         public static void SetURL<T>(this ref T loadingIntention, string url) where T: struct, ILoadingIntention
         {
             CommonLoadingArguments ca = loadingIntention.CommonArguments;

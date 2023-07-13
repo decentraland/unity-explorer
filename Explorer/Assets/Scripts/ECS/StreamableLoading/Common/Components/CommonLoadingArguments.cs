@@ -8,6 +8,7 @@ namespace ECS.StreamableLoading.Common.Components
         public string URL;
         public int Attempts;
         public int Timeout;
+        public int BudgetCost;
         /// <summary>
         ///     When the system fails to load from the current source it removes the source from the flags
         /// </summary>
@@ -28,9 +29,11 @@ namespace ECS.StreamableLoading.Common.Components
             AssetSource permittedSources = AssetSource.WEB,
             AssetSource currentSource = AssetSource.WEB,
             DeferredLoadingState deferredLoadingState = DeferredLoadingState.Forbidden,
+            int budgetCost = 1,
             CancellationTokenSource cancellationTokenSource = null)
         {
             DeferredLoadingState = deferredLoadingState;
+            BudgetCost = budgetCost;
             URL = url;
             Timeout = timeout;
             Attempts = attempts;

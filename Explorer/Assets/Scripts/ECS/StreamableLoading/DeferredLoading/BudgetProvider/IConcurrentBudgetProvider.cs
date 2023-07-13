@@ -2,8 +2,8 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
 {
     public interface IConcurrentBudgetProvider
     {
-        bool TrySpendBudget();
+        bool TrySpendBudget(int budgetCost);
 
-        void ReleaseBudget();
+        void ReleaseBudget(int budgetReleased);
     }
 }

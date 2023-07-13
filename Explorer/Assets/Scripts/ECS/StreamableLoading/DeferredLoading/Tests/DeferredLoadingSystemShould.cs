@@ -110,7 +110,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
 
             // We'll release 3 budget and check that additional 3 intentions are allowed
             for (int i = 0; i < 3; i++)
-                concurrentLoadingBudgetProvider.ReleaseBudget();
+                concurrentLoadingBudgetProvider.ReleaseBudget(1);
 
             system.Update(0);
 

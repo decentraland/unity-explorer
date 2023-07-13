@@ -15,8 +15,8 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
             var budgetProvider = new ConcurrentLoadingBudgetProvider(initialBudget);
 
             // Assert
-            Assert.AreEqual(true, budgetProvider.TrySpendBudget());
-            Assert.AreEqual(false, budgetProvider.TrySpendBudget());
+            Assert.AreEqual(true, budgetProvider.TrySpendBudget(1));
+            Assert.AreEqual(false, budgetProvider.TrySpendBudget(1));
         }
 
         [Test]
@@ -27,14 +27,14 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
             var budgetProvider = new ConcurrentLoadingBudgetProvider(initialBudget);
 
             // Assert
-            Assert.AreEqual(true, budgetProvider.TrySpendBudget());
-            Assert.AreEqual(false, budgetProvider.TrySpendBudget());
+            Assert.AreEqual(true, budgetProvider.TrySpendBudget(1));
+            Assert.AreEqual(false, budgetProvider.TrySpendBudget(1));
 
             // Act
-            budgetProvider.ReleaseBudget();
+            budgetProvider.ReleaseBudget(1);
 
             // Assert
-            Assert.AreEqual(true, budgetProvider.TrySpendBudget());
+            Assert.AreEqual(true, budgetProvider.TrySpendBudget(1));
         }
 
         [Test]
@@ -45,12 +45,12 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
             var budgetProvider = new ConcurrentLoadingBudgetProvider(initialBudget);
 
             // Assert
-            Assert.AreEqual(true, budgetProvider.TrySpendBudget());
-            Assert.AreEqual(false, budgetProvider.TrySpendBudget());
+            Assert.AreEqual(true, budgetProvider.TrySpendBudget(1));
+            Assert.AreEqual(false, budgetProvider.TrySpendBudget(1));
 
             // Act
-            budgetProvider.ReleaseBudget();
-            Assert.Throws<Exception>(() => budgetProvider.ReleaseBudget());
+            budgetProvider.ReleaseBudget(1);
+            Assert.Throws<Exception>(() => budgetProvider.ReleaseBudget(1));
         }
     }
 }
