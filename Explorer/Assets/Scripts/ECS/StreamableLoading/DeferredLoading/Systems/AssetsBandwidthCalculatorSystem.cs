@@ -85,6 +85,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Systems
         {
             componentHandlers = new AssetBandwidthCalculator[]
             {
+                new AssetBandwidthCalculator<AssetBundleData, GetAssetBundleIntention>(world),
                 new AssetBandwidthCalculator<Texture2D, GetTextureIntention>(world)
             };
         }
