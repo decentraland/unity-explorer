@@ -1,4 +1,4 @@
-name: Unity Build and Test
+name: Unity Test
 
 on:
   pull_request: {}
