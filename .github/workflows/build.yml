@@ -49,11 +49,12 @@ jobs:
           projectPath: Explorer
           targetPlatform: StandaloneWindows64
 
-      - name: Git LFS Pull
+      - name: Print
         run: |
-          ls -la
-          ls -la Explorer/
-          echo 'Project Version: ${{ steps.build.outputs.outputName }}'
+          dir
+          cd Explorer
+          dir
+          echo 'Output Name: ${{ steps.build.outputs.outputName }}'
           echo 'Project Version: ${{ steps.build.outputs.buildVersion }}'
 
       # Upload artifact
