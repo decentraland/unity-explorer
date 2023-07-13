@@ -39,6 +39,7 @@ jobs:
 
       # Configure test runner
       - uses: game-ci/unity-builder@v2
+        id: build
         timeout-minutes: 45
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -47,6 +48,13 @@ jobs:
         with:
           projectPath: Explorer
           targetPlatform: StandaloneWindows64
+
+      - name: Git LFS Pull
+        run: |
+          ls -la
+          ls -la Explorer/
+          echo 'Project Version: ${{ steps.build.outputs.outputName }}'
+          echo 'Project Version: ${{ steps.build.outputs.buildVersion }}'
 
       # Upload artifact
       - uses: actions/upload-artifact@v3
