@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
@@ -13,8 +14,8 @@ using Utility.Pool;
 namespace ECS.SceneLifeCycle.Systems
 {
     /// <summary>
-    ///     In case realm does not provide a fixed list of scenes scenes are loaded by radius
-    ///     (this system will be changed for prioritisation)
+    ///     In case realm does not provide a fixed list of scenes scenes are loaded by radius,
+    ///     Radius is gradually increased until the limit is reached (TODO)
     /// </summary>
     [UpdateInGroup(typeof(RealmGroup))]
     [UpdateAfter(typeof(CalculateParcelsInRangeSystem))]
@@ -66,7 +67,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             volatileScenePointers.ActivePromise
                 = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
-                    new GetSceneDefinitionList(volatileScenePointers.RetrievedReusableList, input, new CommonLoadingArguments(realm.Ipfs.EntitiesActiveEndpoint)));
+                    new GetSceneDefinitionList(volatileScenePointers.RetrievedReusableList, input, new CommonLoadingArguments(realm.Ipfs.EntitiesActiveEndpoint)), PartitionComponent.TOP_PRIORITY);
         }
 
         [Query]

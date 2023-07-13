@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
@@ -24,7 +25,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             IConcurrentBudgetProvider concurrentBudgetProvider)
             : base(world, cache, mutexSync, concurrentBudgetProvider) { }
 
-        protected override async UniTask<StreamableLoadingResult<IpfsTypes.SceneEntityDefinition>> FlowInternal(GetSceneDefinition intention, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<IpfsTypes.SceneEntityDefinition>> FlowInternal(GetSceneDefinition intention, IPartitionComponent partition, CancellationToken ct)
         {
             var wr = UnityWebRequest.Get(intention.CommonArguments.URL);
             await wr.SendWebRequest().WithCancellation(ct);

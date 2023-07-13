@@ -18,12 +18,12 @@ namespace ECS.Unity.Transforms.Systems
     [ThrottlingEnabled]
     public partial class ParentingTransformSystem : BaseUnityLoopSystem
     {
-        private readonly EntityReference sceneRootEntityReference;
+        private readonly Entity sceneRoot;
         private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
 
-        public ParentingTransformSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, EntityReference sceneRootEntityReference) : base(world)
+        public ParentingTransformSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, Entity sceneRoot) : base(world)
         {
-            this.sceneRootEntityReference = sceneRootEntityReference;
+            this.sceneRoot = sceneRoot;
             this.entitiesMap = entitiesMap;
         }
 
@@ -40,7 +40,7 @@ namespace ECS.Unity.Transforms.Systems
             foreach (EntityReference childEntity in transformComponentToBeDeleted.Children)
             {
                 SetNewChild(ref World.Get<TransformComponent>(childEntity.Entity),
-                    childEntity, sceneRootEntityReference);
+                    childEntity, sceneRoot);
             }
 
             transformComponentToBeDeleted.Children.Clear();
@@ -52,11 +52,11 @@ namespace ECS.Unity.Transforms.Systems
         {
             if (!sdkTransform.IsDirty) return;
 
-            EntityReference parentReference = sceneRootEntityReference;
+            Entity parentReference = sceneRoot;
 
             if (entitiesMap.TryGetValue(sdkTransform.ParentId, out Entity newParentEntity))
             {
-                parentReference = World.Reference(newParentEntity);
+                parentReference = newParentEntity;
 
                 //We have to remove the child from the old parent
                 if (transformComponent.Parent != parentReference)
@@ -67,20 +67,20 @@ namespace ECS.Unity.Transforms.Systems
         }
 
         private void SetNewChild(ref TransformComponent childComponent, EntityReference childEntityReference,
-            EntityReference parentEntityReference)
+            Entity parentEntity)
         {
-            if (childComponent.Parent == parentEntityReference)
+            if (childComponent.Parent == parentEntity)
                 return;
 
-            if (!parentEntityReference.IsAlive(World))
+            if (!World.IsAlive(parentEntity))
             {
                 ReportHub.LogError(GetReportCategory(), $"Trying to parent entity {childEntityReference.Entity} to a dead entity parent");
                 return;
             }
 
-            TransformComponent parentComponent = World.Get<TransformComponent>(parentEntityReference.Entity);
+            TransformComponent parentComponent = World.Get<TransformComponent>(parentEntity);
             childComponent.Transform.SetParent(parentComponent.Transform, true);
-            childComponent.Parent = parentEntityReference;
+            childComponent.Parent = World.Reference(parentEntity);
             parentComponent.Children.Add(childEntityReference);
         }
 

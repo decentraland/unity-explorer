@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using AssetManagement;
 using Cysharp.Threading.Tasks;
 using Diagnostics.ReportsHandling;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -38,7 +39,7 @@ namespace ECS.StreamableLoading.AssetBundles
             this.assetBundleManifest = assetBundleManifest;
         }
 
-        private async UniTask LoadDependencies(GetAssetBundleIntention intention, AssetBundle assetBundle, CancellationToken ct)
+        private async UniTask LoadDependencies(GetAssetBundleIntention intention, IPartitionComponent partition, AssetBundle assetBundle, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
 
@@ -47,7 +48,7 @@ namespace ECS.StreamableLoading.AssetBundles
             if (intention.CommonArguments.CurrentSource == AssetSource.EMBEDDED)
             {
                 string[] dependencies = assetBundleManifest?.GetAllDependencies(intention.Hash) ?? Array.Empty<string>();
-                await UniTask.WhenAll(dependencies.Select(hash => WaitForDependency(hash, ct)));
+                await UniTask.WhenAll(dependencies.Select(hash => WaitForDependency(hash, partition, ct)));
                 return;
             }
 #endregion
@@ -67,11 +68,11 @@ namespace ECS.StreamableLoading.AssetBundles
                 await UniTask.SwitchToMainThread();
 
                 // WhenAll uses pool under the hood
-                await UniTask.WhenAll(reusableMetadata.Value.dependencies.Select(hash => WaitForDependency(hash, ct)));
+                await UniTask.WhenAll(reusableMetadata.Value.dependencies.Select(hash => WaitForDependency(hash, partition, ct)));
             }
         }
 
-        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternal(GetAssetBundleIntention intention, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternal(GetAssetBundleIntention intention, IPartitionComponent partition, CancellationToken ct)
         {
             UnityWebRequest webRequest = intention.cacheHash.HasValue
                 ? UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL, intention.cacheHash.Value)
@@ -93,7 +94,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             AssetBundleMetrics? metrics = metricsFile != null ? JsonUtility.FromJson<AssetBundleMetrics>(metricsFile.text) : null;
 
-            await LoadDependencies(intention, assetBundle, ct);
+            await LoadDependencies(intention, partition, assetBundle, ct);
 
             await UniTask.SwitchToMainThread();
             IReadOnlyList<GameObject> gameObjects = await LoadAllAssets(assetBundle, ct);
@@ -112,9 +113,10 @@ namespace ECS.StreamableLoading.AssetBundles
             return asyncOp.allAssets.Length > 0 ? new List<GameObject>(asyncOp.allAssets.Cast<GameObject>()) : Array.Empty<GameObject>();
         }
 
-        private async UniTask WaitForDependency(string hash, CancellationToken ct)
+        private async UniTask WaitForDependency(string hash, IPartitionComponent partition, CancellationToken ct)
         {
-            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(hash));
+            // Inherit partition from the parent promise
+            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(hash), partition);
 
             try
             {

@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -55,7 +56,7 @@ namespace ECS.Unity.Materials.Tests
 
             component.Status = MaterialComponent.LifeCycle.LoadingInProgress;
 
-            component.AlbedoTexPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention());
+            component.AlbedoTexPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention(), PartitionComponent.TOP_PRIORITY);
 
             Entity e = world.Create(component);
 
@@ -69,7 +70,7 @@ namespace ECS.Unity.Materials.Tests
 
         private void CreateAndFinalizeTexturePromise(ref AssetPromise<Texture2D, GetTextureIntention>? promise)
         {
-            promise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention());
+            promise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention(), PartitionComponent.TOP_PRIORITY);
             world.Add(promise.Value.Entity, new StreamableLoadingResult<Texture2D>(Texture2D.grayTexture));
         }
 

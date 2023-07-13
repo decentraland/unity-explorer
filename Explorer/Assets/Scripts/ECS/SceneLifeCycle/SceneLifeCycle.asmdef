@@ -12,7 +12,9 @@
     "StreamableLoading",
     "Diagnostics",
     "Decentraland.Protocol.GeneratedCode",
-    "AssetManagement"
+    "AssetManagement",
+    "Prioritization",
+    "ComponentsPooling"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

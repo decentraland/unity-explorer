@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using ECS.Abstract;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
@@ -22,7 +23,7 @@ namespace ECS.StreamableLoading.Common.Systems
     public abstract class LoadSystemBase<TAsset, TIntention> : BaseUnityLoopSystem where TIntention: struct, ILoadingIntention
     {
         private static readonly QueryDescription CREATE_WEB_REQUEST = new QueryDescription()
-                                                                     .WithAll<TIntention>()
+                                                                     .WithAll<TIntention, IPartitionComponent>()
                                                                      .WithNone<LoadingInProgress, StreamableLoadingResult<TAsset>>();
 
         private readonly Query query;
@@ -79,18 +80,20 @@ namespace ECS.StreamableLoading.Common.Systems
             {
                 ref Entity entityFirstElement = ref chunk.Entity(0);
                 ref TIntention intentionFirstElement = ref chunk.GetFirst<TIntention>();
+                ref IPartitionComponent partitionComponentFirstElement = ref chunk.GetFirst<IPartitionComponent>();
 
                 foreach (int entityIndex in chunk)
                 {
                     ref readonly Entity entity = ref Unsafe.Add(ref entityFirstElement, entityIndex);
                     ref TIntention intention = ref Unsafe.Add(ref intentionFirstElement, entityIndex);
+                    ref IPartitionComponent partitionComponent = ref Unsafe.Add(ref partitionComponentFirstElement, entityIndex);
 
-                    Execute(in entity, ref intention);
+                    Execute(in entity, ref intention, ref partitionComponent);
                 }
             }
         }
 
-        private void Execute(in Entity entity, ref TIntention intention)
+        private void Execute(in Entity entity, ref TIntention intention, ref IPartitionComponent partitionComponent)
         {
             if (!intention.IsAllowed())
                 return;
@@ -117,10 +120,10 @@ namespace ECS.StreamableLoading.Common.Systems
             // Indicate that loading has started
             World.Add(entity, new LoadingInProgress());
 
-            Flow(entity, intention, cancellationTokenSource.Token).Forget();
+            Flow(entity, intention, partitionComponent, cancellationTokenSource.Token).Forget();
         }
 
-        private async UniTask Flow(Entity entity, TIntention intention, CancellationToken disposalCt)
+        private async UniTask Flow(Entity entity, TIntention intention, IPartitionComponent partition, CancellationToken disposalCt)
         {
             try
             {
@@ -135,7 +138,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 // if this request must be cancelled by `intention.CommonArguments.CancellationToken` it will be cancelled after `if (!requestIsNotFulfilled)`
                 if (requestIsNotFulfilled)
-                    result = await CacheableFlow(intention, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
+                    result = await CacheableFlow(intention, partition, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
 
                 using MutexSync.Scope sync = mutexSync.GetScope();
 
@@ -167,7 +170,7 @@ namespace ECS.StreamableLoading.Common.Systems
         /// <summary>
         ///     All exceptions are handled by the upper functions, just do pure work
         /// </summary>
-        protected abstract UniTask<StreamableLoadingResult<TAsset>> FlowInternal(TIntention intention, CancellationToken ct);
+        protected abstract UniTask<StreamableLoadingResult<TAsset>> FlowInternal(TIntention intention, IPartitionComponent partition, CancellationToken ct);
 
         /// <summary>
         ///     Can't move it to another system as the update cycle is not synchronized with systems but based on UniTasks
@@ -180,14 +183,14 @@ namespace ECS.StreamableLoading.Common.Systems
         /// <summary>
         ///     Part of the flow that can be reused by multiple intentions
         /// </summary>
-        private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlow(TIntention intention, CancellationToken ct)
+        private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlow(TIntention intention, IPartitionComponent partition, CancellationToken ct)
         {
             var source = new UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
             cachedRequests[intention.CommonArguments.URL] = source;
 
             try
             {
-                StreamableLoadingResult<TAsset>? result = await RepeatLoop(intention, ct);
+                StreamableLoadingResult<TAsset>? result = await RepeatLoop(intention, partition, ct);
 
                 // Ensure that we returned to the main thread
                 await UniTask.SwitchToMainThread();
@@ -217,10 +220,9 @@ namespace ECS.StreamableLoading.Common.Systems
             finally { cachedRequests.Remove(intention.CommonArguments.URL); }
         }
 
-
-        private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoop(TIntention intention, CancellationToken ct)
+        private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoop(TIntention intention, IPartitionComponent partition, CancellationToken ct)
         {
-            StreamableLoadingResult<TAsset>? result = await intention.RepeatLoop(cachedInternalFlowDelegate, GetReportCategory(), ct);
+            StreamableLoadingResult<TAsset>? result = await intention.RepeatLoop(partition, cachedInternalFlowDelegate, GetReportCategory(), ct);
             return result is { Succeeded: false } ? SetIrrecoverableFailure(intention, result.Value) : result;
         }
 

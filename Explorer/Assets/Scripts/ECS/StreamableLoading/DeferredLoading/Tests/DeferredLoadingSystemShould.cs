@@ -35,7 +35,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
                     {
                         CommonArguments = new CommonLoadingArguments(""),
                     },
-                    new PartitionComponent
+                    (IPartitionComponent)new PartitionComponent
                     {
                         Bucket = (byte)i,
                         IsBehind = i % 2 == 0,
@@ -45,12 +45,12 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
                 entities.Add(newEntity);
             }
 
-            //After the first update, only the intentions with odd bucket values should be allowed
+            //After the first update, 5 first intentions should be allowed
             system.Update(0);
 
             for (var i = 0; i < entities.Count; i++)
-                Assert.AreEqual(i % 2 != 0,
-                    world.Get<GetTextureIntention>(entities[i]).CommonArguments.DeferredLoadingState == DeferredLoadingState.Allowed);
+                Assert.That(world.Get<GetTextureIntention>(entities[i]).CommonArguments.DeferredLoadingState,
+                    Is.EqualTo(i < 5 ? DeferredLoadingState.Allowed : DeferredLoadingState.Forbidden));
         }
 
         [Test]
@@ -63,7 +63,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
                     {
                         CommonArguments = new CommonLoadingArguments(""),
                     },
-                    new PartitionComponent
+                    (IPartitionComponent)new PartitionComponent
                     {
                         Bucket = (byte)i,
                         IsBehind = false,
@@ -91,7 +91,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
                     {
                         CommonArguments = new CommonLoadingArguments(""),
                     },
-                    new PartitionComponent
+                    (IPartitionComponent)new PartitionComponent
                     {
                         Bucket = (byte)i,
                         IsBehind = false,

@@ -14,7 +14,7 @@ namespace ECS.StreamableLoading.DeferredLoading
     {
         internal unsafe struct IntentionData
         {
-            public PartitionComponent PartitionComponent;
+            public IPartitionComponent PartitionComponent;
             public void* IntentionDataPointer;
             public ComponentHandler Handler;
         }
@@ -37,7 +37,7 @@ namespace ECS.StreamableLoading.DeferredLoading
         public class ComponentHandler<TAsset, TIntention> : ComponentHandler where TIntention: struct, ILoadingIntention
         {
             private static readonly QueryDescription CREATE_LOADING_REQUEST = new QueryDescription()
-                                                                             .WithAll<TIntention, PartitionComponent>()
+                                                                             .WithAll<TIntention, IPartitionComponent>()
                                                                              .WithNone<LoadingInProgress, StreamableLoadingResult<TAsset>>();
 
             internal override unsafe void Update(World world, List<IntentionData> loadingIntentions)
@@ -45,11 +45,11 @@ namespace ECS.StreamableLoading.DeferredLoading
                 foreach (ref Chunk chunk in world.Query(in CREATE_LOADING_REQUEST).GetChunkIterator())
                 {
                     ref TIntention intentionFirstElement = ref chunk.GetFirst<TIntention>();
-                    ref PartitionComponent partitionFirstElement = ref chunk.GetFirst<PartitionComponent>();
+                    ref IPartitionComponent partitionFirstElement = ref chunk.GetFirst<IPartitionComponent>();
 
                     foreach (int entityIndex in chunk)
                     {
-                        ref PartitionComponent partition = ref Unsafe.Add(ref partitionFirstElement, entityIndex);
+                        ref IPartitionComponent partition = ref Unsafe.Add(ref partitionFirstElement, entityIndex);
                         ref TIntention intention = ref Unsafe.Add(ref intentionFirstElement, entityIndex);
 
                         if (intention.IsAllowed())

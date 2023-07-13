@@ -10,6 +10,9 @@ namespace Utility
         public static Vector3 GetPositionByParcelPosition(Vector2Int parcelPosition) =>
             new (parcelPosition.x * PARCEL_SIZE, 0.0f, parcelPosition.y * PARCEL_SIZE);
 
+        public static Vector2Int FloorToParcel(Vector3 position) =>
+            new (Mathf.FloorToInt(position.x / PARCEL_SIZE), Mathf.FloorToInt(position.z / PARCEL_SIZE));
+
         public static IReadOnlyCollection<Vector2Int> ParcelsInRange(Vector3 position, int loadRadius, HashSet<Vector2Int> results)
         {
             float range = loadRadius * PARCEL_SIZE;

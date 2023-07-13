@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
@@ -45,14 +46,14 @@ namespace ECS.SceneLifeCycle.Systems
         [Query]
         [None(typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
         private void StartScenesLoading([Data] IReadOnlyCollection<Vector2Int> parcelsInRange, [Data] IIpfsRealm realm,
-            in Entity entity, ref SceneDefinitionComponent definition)
+            in Entity entity, ref SceneDefinitionComponent definition, ref PartitionComponent partitionComponent)
         {
             if (definition.IsEmpty) return;
 
             // Create an intention if the scene is within the radius
             if (SceneIsInRange(in definition, parcelsInRange))
                 World.Add(entity,
-                    AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World, new GetSceneFacadeIntention(realm, definition.IpfsPath, definition.Definition)));
+                    AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World, new GetSceneFacadeIntention(realm, definition.IpfsPath, definition.Definition), partitionComponent));
         }
 
         [Query]

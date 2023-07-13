@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using Diagnostics.ReportsHandling;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
@@ -33,7 +34,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             MutexSync mutexSync, IConcurrentBudgetProvider concurrentBudgetProvider)
             : base(world, cache, mutexSync, concurrentBudgetProvider) { }
 
-        protected override async UniTask<StreamableLoadingResult<SceneDefinitions>> FlowInternal(GetSceneDefinitionList intention, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<SceneDefinitions>> FlowInternal(GetSceneDefinitionList intention, IPartitionComponent partition, CancellationToken ct)
         {
             bodyBuilder.Clear();
             bodyBuilder.Append("{\"pointers\":[");

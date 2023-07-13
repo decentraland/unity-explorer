@@ -1,39 +1,42 @@
 {
-    "name": "SceneLifeCycle.Tests",
-    "rootNamespace": "",
-    "references": [
-        "GUID:27619889b8ba8c24980f49ee34dbb44a",
-        "GUID:0acc523941302664db1f4e527237feb3",
-        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
-        "GUID:a3c61f15599a43ae9de508c9c4dd5530",
-        "GUID:4794e238ed0f65142a4aea5848b513e5",
-        "GUID:0a68ab77e49b4261a9ffa7acd94eb68a",
-        "GUID:f51ebe6a0ceec4240a699833d6309b23",
-        "GUID:d414ef88f3b15f746a4b97636b50dfb4",
-        "GUID:8322ea9340a544c59ddc56d4793eac74",
-        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
-        "GUID:c2b7e3e0e95f4eb588516c8ae12e919b",
-        "GUID:286980af24684da6acc1caa413039811",
-        "GUID:a02836be93074ac9b645f6e99b536bc0",
-        "GUID:bfcb7f4c56e9fe947a7bdce7523884ff"
-    ],
-    "includePlatforms": [
-        "Editor"
-    ],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": true,
-    "precompiledReferences": [
-        "nunit.framework.dll",
-        "NSubstitute.dll",
-        "Arch.dll",
-        "Arch.System.dll",
-        "Arch.SystemGroups.dll"
-    ],
-    "autoReferenced": false,
-    "defineConstraints": [
-        "UNITY_INCLUDE_TESTS"
-    ],
-    "versionDefines": [],
-    "noEngineReferences": false
+  "name": "SceneLifeCycle.Tests",
+  "rootNamespace": "",
+  "references": [
+    "GUID:27619889b8ba8c24980f49ee34dbb44a",
+    "GUID:0acc523941302664db1f4e527237feb3",
+    "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+    "GUID:a3c61f15599a43ae9de508c9c4dd5530",
+    "GUID:4794e238ed0f65142a4aea5848b513e5",
+    "GUID:0a68ab77e49b4261a9ffa7acd94eb68a",
+    "GUID:f51ebe6a0ceec4240a699833d6309b23",
+    "GUID:d414ef88f3b15f746a4b97636b50dfb4",
+    "GUID:8322ea9340a544c59ddc56d4793eac74",
+    "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+    "GUID:c2b7e3e0e95f4eb588516c8ae12e919b",
+    "GUID:286980af24684da6acc1caa413039811",
+    "GUID:a02836be93074ac9b645f6e99b536bc0",
+    "GUID:bfcb7f4c56e9fe947a7bdce7523884ff",
+    "GUID:fa0cb088e184452c8a89ecdeff7c731d",
+    "GUID:3c7b57a14671040bd8c549056adc04f5",
+    "GUID:6e2b4bed29ad1c549ab19b744f36f388"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll",
+    "NSubstitute.dll",
+    "Arch.dll",
+    "Arch.System.dll",
+    "Arch.SystemGroups.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

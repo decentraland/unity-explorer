@@ -1,0 +1,91 @@
+using Arch.Core;
+using Arch.SystemGroups;
+using CrdtEcsBridge.Components.Special;
+using ECS.ComponentsPooling;
+using ECS.ComponentsPooling.Systems;
+using ECS.LifeCycle;
+using ECS.Prioritization;
+using ECS.Prioritization.Components;
+using ECS.Prioritization.Systems;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.DeferredLoading;
+using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.SceneLifeCycle.Systems;
+using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
+using ECS.Unity.Transforms.Components;
+using Ipfs;
+using SceneRunner;
+using SceneRunner.Scene;
+using System.Threading;
+using UnityEngine;
+using Utility.Multithreading;
+
+namespace Global.Dynamic
+{
+    public class GlobalWorldFactory
+    {
+        private readonly CancellationTokenSource destroyCancellationSource = new ();
+        private readonly ISystemGroupAggregate<IPartitionComponent>.IFactory partitionedWorldsAggregateFactory;
+        private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly IPartitionSettings partitionSettings;
+        private readonly IRealmPartitionSettings realmPartitionSettings;
+        private readonly CameraSamplingData cameraSamplingData;
+        private readonly RealmSamplingData realmSamplingData;
+
+        public GlobalWorldFactory(in StaticContainer staticContainer, IRealmPartitionSettings realmPartitionSettings, RealmSamplingData realmSamplingData)
+        {
+            partitionedWorldsAggregateFactory = staticContainer.WorldsAggregateFactory;
+            componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
+            partitionSettings = staticContainer.PartitionSettings;
+            this.realmPartitionSettings = realmPartitionSettings;
+            this.realmSamplingData = realmSamplingData;
+        }
+
+        public GlobalWorld Create(ISceneFactory sceneFactory, Camera unityCamera)
+        {
+            var world = World.Create();
+
+            var builder = new ArchSystemsWorldBuilder<World>(world);
+            Entity playerEntity = world.Create(new PlayerComponent(), new TransformComponent { Transform = unityCamera.transform }, new CameraComponent(unityCamera), cameraSamplingData);
+
+            // not synced by mutex
+            var mutex = new MutexSync();
+
+            // Asset Bundle Manifest
+            const string ASSET_BUNDLES_URL = "https://ab-cdn.decentraland.org/";
+
+            IConcurrentBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(100);
+
+            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex, sceneBudgetProvider);
+            LoadSceneDefinitionSystem.InjectToWorld(ref builder, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex, sceneBudgetProvider);
+
+            LoadSceneSystem.InjectToWorld(ref builder, ASSET_BUNDLES_URL, sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, sceneBudgetProvider, mutex);
+
+            SceneLifeCycleDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider);
+
+            CalculateParcelsInRangeSystem.InjectToWorld(ref builder, playerEntity);
+            LoadStaticPointersSystem.InjectToWorld(ref builder);
+            LoadFixedPointersSystem.InjectToWorld(ref builder);
+            LoadPointersByRadiusSystem.InjectToWorld(ref builder);
+            ResolveSceneStateByRadiusSystem.InjectToWorld(ref builder);
+            ResolveStaticPointersSystem.InjectToWorld(ref builder);
+            UnloadSceneSystem.InjectToWorld(ref builder);
+            ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token);
+
+            PartitionSceneEntitiesSystem.InjectToWorld(ref builder, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>(), partitionSettings, cameraSamplingData);
+            CheckCameraQualifiedForRepartitioningSystem.InjectToWorld(ref builder, partitionSettings);
+            SortWorldsAggregateSystem.InjectToWorld(ref builder, partitionedWorldsAggregateFactory, realmPartitionSettings);
+
+            var finalizeWorldSystems = new IFinalizeWorldSystem[]
+            {
+                ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry),
+            };
+
+            SystemGroupWorld worldSystems = builder.Finish();
+            worldSystems.Initialize();
+
+            return new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
+        }
+    }
+}

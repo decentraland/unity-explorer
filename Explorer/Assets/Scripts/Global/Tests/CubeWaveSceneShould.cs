@@ -3,6 +3,8 @@ using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using Diagnostics.ReportsHandling;
+using ECS.Prioritization.Components;
+using Global.Static;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner;
@@ -89,7 +91,7 @@ namespace Global.Editor
         public async Task EmitECSComponents()
         {
             // It will switch to the background thread and assign SynchronizationContext
-            sceneFacade = await sceneSharedContainer.SceneFactory.CreateSceneFromStreamableDirectory(PATH, CancellationToken.None);
+            sceneFacade = await sceneSharedContainer.SceneFactory.CreateSceneFromStreamableDirectory(PATH, Substitute.For<IPartitionComponent>(), CancellationToken.None);
 
             // It will call `IEngineAPI.GetState()`
             await sceneFacade.StartScene();

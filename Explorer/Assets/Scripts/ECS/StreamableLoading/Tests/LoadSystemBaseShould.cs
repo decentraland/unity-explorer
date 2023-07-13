@@ -1,4 +1,5 @@
 ﻿using AssetManagement;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -52,7 +53,7 @@ namespace ECS.StreamableLoading.Tests
         {
             TIntention intent = CreateSuccessIntention();
             intent.SetAllowed();
-            promise = AssetPromise<TAsset, TIntention>.Create(world, intent);
+            promise = AssetPromise<TAsset, TIntention>.Create(world, intent, PartitionComponent.TOP_PRIORITY);
 
             // Launch the flow
             system.Update(0);
@@ -71,7 +72,7 @@ namespace ECS.StreamableLoading.Tests
         {
             TIntention intent = CreateWrongTypeIntention();
             intent.SetAllowed();
-            promise = AssetPromise<TAsset, TIntention>.Create(world, intent);
+            promise = AssetPromise<TAsset, TIntention>.Create(world, intent, PartitionComponent.TOP_PRIORITY);
 
             // Launch the flow
             system.Update(0);
@@ -90,7 +91,7 @@ namespace ECS.StreamableLoading.Tests
             intent.SetAttempts(1);
             intent.SetAllowed();
 
-            promise = AssetPromise<TAsset, TIntention>.Create(world, intent);
+            promise = AssetPromise<TAsset, TIntention>.Create(world, intent, PartitionComponent.TOP_PRIORITY);
 
             // Launch the flow
             system.Update(0);
@@ -109,7 +110,7 @@ namespace ECS.StreamableLoading.Tests
             intent.SetSources(AssetSource.EMBEDDED, AssetSource.EMBEDDED);
             intent.SetAllowed();
 
-            promise = AssetPromise<TAsset, TIntention>.Create(world, intent);
+            promise = AssetPromise<TAsset, TIntention>.Create(world, intent, PartitionComponent.TOP_PRIORITY);
 
             // Launch the flow
             system.Update(0);
@@ -123,7 +124,7 @@ namespace ECS.StreamableLoading.Tests
         {
             TIntention successIntent = CreateSuccessIntention();
             successIntent.SetAllowed();
-            promise = AssetPromise<TAsset, TIntention>.Create(world, successIntent);
+            promise = AssetPromise<TAsset, TIntention>.Create(world, successIntent, PartitionComponent.TOP_PRIORITY);
 
             TIntention checkIntent = successIntent;
             checkIntent.RemoveCurrentSource();
@@ -146,7 +147,7 @@ namespace ECS.StreamableLoading.Tests
                       return true;
                   });
 
-            promise = AssetPromise<TAsset, TIntention>.Create(world, successIntent);
+            promise = AssetPromise<TAsset, TIntention>.Create(world, successIntent, PartitionComponent.TOP_PRIORITY);
 
             // Launch the flow
             system.Update(0);

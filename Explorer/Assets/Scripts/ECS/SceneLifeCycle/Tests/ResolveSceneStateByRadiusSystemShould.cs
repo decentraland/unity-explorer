@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using ECS.LifeCycle.Components;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
@@ -36,7 +37,8 @@ namespace ECS.SceneLifeCycle.Tests
             // wider range
             var sceneParcels = new Vector2Int[] { new (0, 0), new (0, 1), new (1, 0), new (2, 0), new (2, 1), new (3, 0), new (3, 1) };
 
-            Entity scene = world.Create(new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition(), sceneParcels, new IpfsTypes.IpfsPath()));
+            Entity scene = world.Create(new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition(),
+                sceneParcels, new IpfsTypes.IpfsPath()), PartitionComponent.TOP_PRIORITY);
 
             system.Update(0f);
 
@@ -53,7 +55,8 @@ namespace ECS.SceneLifeCycle.Tests
             // no match
             var sceneParcels = new Vector2Int[] { new (0, 0), new (0, 1) };
 
-            Entity scene = world.Create(new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition(), sceneParcels, new IpfsTypes.IpfsPath()));
+            Entity scene = world.Create(new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition(), sceneParcels, new IpfsTypes.IpfsPath()),
+                PartitionComponent.TOP_PRIORITY);
 
             system.Update(0f);
 
@@ -68,7 +71,7 @@ namespace ECS.SceneLifeCycle.Tests
 
             // no match
             var sceneParcels = new Vector2Int[] { new (0, 0), new (0, 1) };
-            Entity scene = world.Create(new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition(), sceneParcels, new IpfsTypes.IpfsPath()));
+            Entity scene = world.Create(new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition(), sceneParcels, new IpfsTypes.IpfsPath()), PartitionComponent.TOP_PRIORITY);
 
             system.Update(0);
 
@@ -83,7 +86,7 @@ namespace ECS.SceneLifeCycle.Tests
 
             // match
             var sceneParcels = new Vector2Int[] { new (5, 5), new (0, 1) };
-            Entity scene = world.Create(new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition(), sceneParcels, new IpfsTypes.IpfsPath()));
+            Entity scene = world.Create(new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition(), sceneParcels, new IpfsTypes.IpfsPath()), PartitionComponent.TOP_PRIORITY);
 
             system.Update(0);
 

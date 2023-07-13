@@ -26,7 +26,6 @@ namespace ECS.StreamableLoading.Common
         /// </summary>
         public TLoadingIntention LoadingIntention { get; private set; }
 
-
         /// <summary>
         ///     The result if it was loaded
         /// </summary>
@@ -34,19 +33,11 @@ namespace ECS.StreamableLoading.Common
 
         public bool IsConsumed => Entity == EntityReference.Null;
 
-        public static AssetPromise<TAsset, TLoadingIntention> Create(World world, TLoadingIntention loadingIntention) =>
+        public static AssetPromise<TAsset, TLoadingIntention> Create(World world, TLoadingIntention loadingIntention, IPartitionComponent partition) =>
             new ()
             {
                 LoadingIntention = loadingIntention,
-                Entity = world.Reference(world.Create(loadingIntention,
-
-                    // TODO synchronize with the spawning entity
-                    new PartitionComponent
-                    {
-                        Bucket = 0,
-                        IsBehind = false,
-                        IsDirty = true
-                    })),
+                Entity = world.Reference(world.Create(loadingIntention, partition)),
             };
 
         /// <summary>

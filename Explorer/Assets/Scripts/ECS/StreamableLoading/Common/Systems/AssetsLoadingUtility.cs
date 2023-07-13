@@ -1,6 +1,7 @@
 ﻿using AssetManagement;
 using Cysharp.Threading.Tasks;
 using Diagnostics.ReportsHandling;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Threading;
@@ -10,7 +11,7 @@ namespace ECS.StreamableLoading.Common.Systems
 {
     public static class AssetsLoadingUtility
     {
-        public delegate UniTask<StreamableLoadingResult<TAsset>> InternalFlowDelegate<TAsset, in TIntention>(TIntention intention, CancellationToken ct)
+        public delegate UniTask<StreamableLoadingResult<TAsset>> InternalFlowDelegate<TAsset, in TIntention>(TIntention intention, IPartitionComponent partition, CancellationToken ct)
             where TIntention: struct, ILoadingIntention;
 
         /// <summary>
@@ -20,6 +21,7 @@ namespace ECS.StreamableLoading.Common.Systems
         ///     <para>Null - if PermittedSources have value</para>
         /// </returns>
         public static async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoop<TIntention, TAsset>(this TIntention intention,
+            IPartitionComponent partition,
             InternalFlowDelegate<TAsset, TIntention> flow, string reportCategory, CancellationToken ct)
             where TIntention: struct, ILoadingIntention
         {
@@ -27,7 +29,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
             while (true)
             {
-                try { return await flow(intention, ct); }
+                try { return await flow(intention, partition, ct); }
 
                 catch (UnityWebRequestException unityWebRequestException)
                 {

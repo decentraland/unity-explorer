@@ -37,6 +37,9 @@ namespace Diagnostics.ReportsHandling
             { ReportCategory.ASSET_BUNDLES, ColorUtility.ToHtmlStringRGB(new Color(0.10f, 0.56f, 0.20f)) },
             { ReportCategory.PRIMITIVE_MESHES, ColorUtility.ToHtmlStringRGB(new Color(0.35f, 0.85f, 0.40f)) },
             { ReportCategory.PRIMITIVE_COLLIDERS, ColorUtility.ToHtmlStringRGB(new Color(0.35f, 0.85f, 0.40f)) },
+
+            // Prioritisation
+            { ReportCategory.PRIORITIZATION, ColorUtility.ToHtmlStringRGB(new Color(0.2f, 0.92f, 0.69f)) },
         };
 
         // Redirect Logs to the default Unity logger

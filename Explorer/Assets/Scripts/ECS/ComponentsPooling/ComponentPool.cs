@@ -11,9 +11,10 @@ namespace ECS.ComponentsPooling
         /// </summary>
         private readonly ThreadSafeObjectPool<T> objectPool;
 
-        public ComponentPool(Action<T> onGet = null, Action<T> onRelease = null)
+        public ComponentPool(Action<T> onGet = null, Action<T> onRelease = null, int defaultCapacity = 10, int maxSize = 10000)
         {
-            objectPool = new ThreadSafeObjectPool<T>(() => new T(), actionOnGet: onGet, actionOnRelease: onRelease, collectionCheck: false);
+            objectPool = new ThreadSafeObjectPool<T>(() => new T(), actionOnGet: onGet, actionOnRelease: onRelease, collectionCheck: false,
+                defaultCapacity: defaultCapacity, maxSize: maxSize);
         }
 
         public T Get() =>

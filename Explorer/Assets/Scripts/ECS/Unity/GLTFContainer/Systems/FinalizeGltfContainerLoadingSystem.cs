@@ -18,9 +18,9 @@ namespace ECS.Unity.GLTFContainer.Systems
     [UpdateAfter(typeof(LoadGltfContainerSystem))]
     public partial class FinalizeGltfContainerLoadingSystem : BaseUnityLoopSystem
     {
-        private readonly EntityReference sceneRoot;
+        private readonly Entity sceneRoot;
 
-        public FinalizeGltfContainerLoadingSystem(World world, EntityReference sceneRoot) : base(world)
+        public FinalizeGltfContainerLoadingSystem(World world, Entity sceneRoot) : base(world)
         {
             this.sceneRoot = sceneRoot;
         }
