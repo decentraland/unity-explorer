@@ -23,8 +23,7 @@ namespace Global
 
         public DiagnosticsContainer DiagnosticsContainer { get; internal init; }
 
-        public static SceneSharedContainer Create(in ComponentsContainer componentsContainer, AssetBundleManifest localAssetBundleManifest,
-            IReportsHandlingSettings reportsHandlingSettings)
+        public static SceneSharedContainer Create(in ComponentsContainer componentsContainer, IReportsHandlingSettings reportsHandlingSettings)
         {
             var entityFactory = new EntityFactory();
 
@@ -37,7 +36,7 @@ namespace Global
                 new TexturesLoadingPlugin(sharedDependencies.LoadingBudgetProvider),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
-                new AssetBundlesPlugin(localAssetBundleManifest, reportsHandlingSettings, sharedDependencies.LoadingBudgetProvider),
+                new AssetBundlesPlugin(reportsHandlingSettings, sharedDependencies.LoadingBudgetProvider),
                 new GltfContainerPlugin(sharedDependencies));
 
             return new SceneSharedContainer

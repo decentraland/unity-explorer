@@ -51,13 +51,7 @@ namespace Global
 
         private async UniTask InitializeAsync(CancellationToken ct)
         {
-            // HACK!!! Load Local Asset Bundle Manifest Once
-            UnityWebRequest wr = UnityWebRequestAssetBundle.GetAssetBundle($"{AssetBundlesPlugin.STREAMING_ASSETS_URL}AssetBundles");
-            await wr.SendWebRequest().WithCancellation(ct);
-            AssetBundle manifestAssetBundle = DownloadHandlerAssetBundle.GetContent(wr);
-            AssetBundleManifest assetBundleManifest = manifestAssetBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
-
-            SceneSharedContainer = Install(assetBundleManifest, reportsHandlingSettings);
+            SceneSharedContainer = Install(reportsHandlingSettings);
 
             Vector3 cameraPosition = ParcelMathHelper.GetPositionByParcelPosition(StartPosition);
             cameraPosition.y += 8.0f;
@@ -72,12 +66,12 @@ namespace Global
             await realmController.SetRealm(globalWorld.World, "https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main", destroyCancellationToken);
         }
 
-        public static SceneSharedContainer Install(AssetBundleManifest localManifest, IReportsHandlingSettings reportsHandlingSettings)
+        public static SceneSharedContainer Install(IReportsHandlingSettings reportsHandlingSettings)
         {
             Profiler.BeginSample($"{nameof(DynamicSceneLoader)}.Install");
 
             var componentsContainer = ComponentsContainer.Create();
-            var sceneSharedContainer = SceneSharedContainer.Create(componentsContainer, localManifest, reportsHandlingSettings);
+            var sceneSharedContainer = SceneSharedContainer.Create(componentsContainer, reportsHandlingSettings);
 
             Profiler.EndSample();
             return sceneSharedContainer;

@@ -30,27 +30,13 @@ namespace ECS.StreamableLoading.AssetBundles
         private const string METADATA_FILENAME = "metadata.json";
         private const string METRICS_FILENAME = "metrics.json";
 
-        private readonly AssetBundleManifest assetBundleManifest;
 
-        internal LoadAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache,
-            AssetBundleManifest assetBundleManifest, MutexSync mutexSync, IConcurrentBudgetProvider loadingBudgetProvider = null) : base(world, cache, mutexSync, loadingBudgetProvider)
-        {
-            this.assetBundleManifest = assetBundleManifest;
-        }
+        internal LoadAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache, MutexSync mutexSync, IConcurrentBudgetProvider loadingBudgetProvider) : base(world, cache, mutexSync, loadingBudgetProvider)
+        { }
 
-        private async UniTask LoadDependencies(GetAssetBundleIntention intention, AssetBundle assetBundle, CancellationToken ct)
+        private async UniTask LoadDependencies(AssetBundle assetBundle, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
-
-#region KILL_ME
-            // HACK! Load Asset Bundle Manifest from streaming assets
-            if (intention.CommonArguments.CurrentSource == AssetSource.EMBEDDED)
-            {
-                string[] dependencies = assetBundleManifest?.GetAllDependencies(intention.Hash) ?? Array.Empty<string>();
-                await UniTask.WhenAll(dependencies.Select(hash => WaitForDependency(hash, ct)));
-                return;
-            }
-#endregion
 
             // resolve dependencies
             string metadata = GetMetadata(assetBundle)?.text;
@@ -93,7 +79,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             AssetBundleMetrics? metrics = metricsFile != null ? JsonUtility.FromJson<AssetBundleMetrics>(metricsFile.text) : null;
 
-            await LoadDependencies(intention, assetBundle, ct);
+            await LoadDependencies(assetBundle, ct);
 
             await UniTask.SwitchToMainThread();
             IReadOnlyList<GameObject> gameObjects = await LoadAllAssets(assetBundle, ct);

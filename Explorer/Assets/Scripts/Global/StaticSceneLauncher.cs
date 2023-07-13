@@ -37,7 +37,7 @@ namespace Global
             Profiler.BeginSample($"{nameof(DynamicSceneLoader)}.Install");
 
             var componentsContainer = ComponentsContainer.Create();
-            var sceneSharedContainer = SceneSharedContainer.Create(componentsContainer, null, reportsHandlingSettings);
+            var sceneSharedContainer = SceneSharedContainer.Create(componentsContainer, reportsHandlingSettings);
 
             Profiler.EndSample();
             return sceneSharedContainer;
