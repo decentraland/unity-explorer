@@ -52,7 +52,7 @@ jobs:
       - name: Print
         run: |
           dir
-          cd Explorer
+          cd build
           dir
           echo 'Output Name: ${{ steps.build.outputs.outputName }}'
           echo 'Project Version: ${{ steps.build.outputs.buildVersion }}'
@@ -61,4 +61,4 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: Build
-          path: Explorer/build
+          path: build
