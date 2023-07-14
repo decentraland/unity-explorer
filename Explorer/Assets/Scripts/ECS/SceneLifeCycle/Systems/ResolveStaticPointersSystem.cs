@@ -38,7 +38,10 @@ namespace ECS.SceneLifeCycle.Systems
         private void StartSceneLoading([Data] IIpfsRealm realm, [Data] in StaticScenePointers staticScenePointers,
             in Entity entity, ref SceneDefinitionComponent definition, ref PartitionComponent partitionComponent)
         {
-            foreach (Vector2Int parcel in definition.Parcels)
+            for (var i = 0; i < definition.Parcels.Count; i++)
+            {
+                Vector2Int parcel = definition.Parcels[i];
+
                 if (staticScenePointers.Value.Contains(parcel))
                 {
                     World.Add(entity,
@@ -46,6 +49,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                     return;
                 }
+            }
         }
     }
 }

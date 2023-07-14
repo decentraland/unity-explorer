@@ -17,7 +17,7 @@ namespace Global.Dynamic
             new ()
             {
                 RealmController = new RealmController(sceneLoadRadius, staticLoadPositions, staticContainer.CameraSamplingData),
-                GlobalWorldFactory = new GlobalWorldFactory(in staticContainer, realmPartitionSettings, new RealmSamplingData()),
+                GlobalWorldFactory = new GlobalWorldFactory(in staticContainer, realmPartitionSettings, staticContainer.CameraSamplingData, new RealmSamplingData()),
             };
     }
 }

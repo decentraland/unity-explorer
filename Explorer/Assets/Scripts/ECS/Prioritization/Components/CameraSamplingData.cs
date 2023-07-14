@@ -1,4 +1,6 @@
-﻿namespace ECS.Prioritization.Components
+﻿using UnityEngine;
+
+namespace ECS.Prioritization.Components
 {
     /// <summary>
     ///     An OOP singleton-like way to set and retrieve partition data connected to the player's camera
@@ -12,5 +14,7 @@
         {
             Clear();
         }
+
+        public Plane XYPlane { get; }
     }
 }

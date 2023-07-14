@@ -5,10 +5,32 @@ namespace Utility
 {
     public static class ParcelMathHelper
     {
+        public readonly struct ParcelCorners
+        {
+            public readonly Vector3 minXZ;
+            public readonly Vector3 minXmaxZ;
+            public readonly Vector3 maxXZ;
+            public readonly Vector3 maxXminZ;
+
+            public ParcelCorners(Vector3 minXZ, Vector3 minXmaxZ, Vector3 maxXZ, Vector3 maxXminZ)
+            {
+                this.minXZ = minXZ;
+                this.minXmaxZ = minXmaxZ;
+                this.maxXZ = maxXZ;
+                this.maxXminZ = maxXminZ;
+            }
+        }
+
         public const float PARCEL_SIZE = 16.0f;
 
         public static Vector3 GetPositionByParcelPosition(Vector2Int parcelPosition) =>
             new (parcelPosition.x * PARCEL_SIZE, 0.0f, parcelPosition.y * PARCEL_SIZE);
+
+        public static ParcelCorners CalculateCorners(Vector2Int parcelPosition)
+        {
+            Vector3 min = GetPositionByParcelPosition(parcelPosition);
+            return new ParcelCorners(min, min + new Vector3(0, 0, PARCEL_SIZE), min + new Vector3(PARCEL_SIZE, 0, PARCEL_SIZE), min + new Vector3(PARCEL_SIZE, 0, 0));
+        }
 
         public static Vector2Int FloorToParcel(Vector3 position) =>
             new (Mathf.FloorToInt(position.x / PARCEL_SIZE), Mathf.FloorToInt(position.z / PARCEL_SIZE));

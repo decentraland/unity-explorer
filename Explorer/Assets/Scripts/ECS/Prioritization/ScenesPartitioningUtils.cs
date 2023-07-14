@@ -8,9 +8,7 @@ namespace ECS.Prioritization
 {
     public static class ScenesPartitioningUtils
     {
-        private const float PARCEL_SIZE_SQR = ParcelMathHelper.PARCEL_SIZE * ParcelMathHelper.PARCEL_SIZE;
-
-        public static void CheckCameraTransformChanged(PartitionDiscreteDataBase partitionDiscreteData, in CameraComponent cameraComponent,
+        public static bool CheckCameraTransformChanged(PartitionDiscreteDataBase partitionDiscreteData, in CameraComponent cameraComponent,
             float sqrPositionTolerance, float angleTolerance)
         {
             Transform camTransform = cameraComponent.Camera.transform;
@@ -28,12 +26,14 @@ namespace ECS.Prioritization
                 partitionDiscreteData.IsDirty = true;
             }
             else partitionDiscreteData.IsDirty = false;
+
+            return partitionDiscreteData.IsDirty;
         }
 
         /// <summary>
         ///     Partitioning is performed accordingly to the closest scene parcel to the camera.
         /// </summary>
-        public static void Partition(IPartitionSettings partitionSettings, IReadOnlyList<Vector2Int> sceneParcels, in IReadOnlyCameraSamplingData readOnlyCameraData, ref PartitionComponent partitionComponent)
+        public static void Partition(IPartitionSettings partitionSettings, IReadOnlyList<ParcelMathHelper.ParcelCorners> parcelsCorners, IReadOnlyCameraSamplingData readOnlyCameraData, PartitionComponent partitionComponent)
         {
             byte bucket = partitionComponent.Bucket;
             bool isBehind = partitionComponent.IsBehind;
@@ -41,24 +41,36 @@ namespace ECS.Prioritization
             // Find the closest scene parcel
             // The Y component can be safely ignored as all plots are allocated on one plane
 
-            int minSqrMagnitude = int.MaxValue;
-            Vector2Int vectorToCamera = Vector2Int.zero;
+            // Is Behind must be calculated for each parcel the scene contains
+            partitionComponent.IsBehind = true;
 
-            for (var i = 0; i < sceneParcels.Count; i++)
+            float minSqrMagnitude = float.MaxValue;
+
+            for (var i = 0; i < parcelsCorners.Count; i++)
             {
-                Vector2Int vct = sceneParcels[i] - readOnlyCameraData.Parcel;
-                int sqr = vct.sqrMagnitude;
-
-                if (sqr < minSqrMagnitude)
+                void ProcessCorners(Vector3 corner)
                 {
-                    minSqrMagnitude = sqr;
-                    vectorToCamera = vct;
+                    Vector3 vectorToCamera = corner - readOnlyCameraData.Position;
+                    vectorToCamera.y = 0; // ignore Y
+                    float sqr = vectorToCamera.sqrMagnitude;
+
+                    if (sqr < minSqrMagnitude)
+                        minSqrMagnitude = sqr;
+
+                    // partition is not behind if at least one corner is not behind
+                    if (partitionComponent.IsBehind)
+                        partitionComponent.IsBehind = Vector3.Dot(readOnlyCameraData.Forward, vectorToCamera) < 0;
                 }
+
+                ParcelMathHelper.ParcelCorners corners = parcelsCorners[i];
+                ProcessCorners(corners.minXZ);
+                ProcessCorners(corners.minXmaxZ);
+                ProcessCorners(corners.maxXminZ);
+                ProcessCorners(corners.maxXZ);
             }
 
             // translate parcel back to coordinates
-            float sqrDistance = minSqrMagnitude * PARCEL_SIZE_SQR;
-            Vector3 vectorToCameraCoords = new Vector3(vectorToCamera.x, 0, vectorToCamera.y) * ParcelMathHelper.PARCEL_SIZE;
+            float sqrDistance = minSqrMagnitude;
 
             // Find the bucket
             byte bucketIndex;
@@ -74,7 +86,6 @@ namespace ECS.Prioritization
             // Is behind is a dot product
             // mind that taking cosines is not cheap
             // the same scene is counted as InFront
-            partitionComponent.IsBehind = vectorToCamera != Vector2Int.zero && Vector3.Dot(readOnlyCameraData.Forward, vectorToCameraCoords) < 0;
             partitionComponent.IsDirty = partitionComponent.Bucket != bucket || partitionComponent.IsBehind != isBehind;
         }
     }

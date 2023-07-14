@@ -43,11 +43,9 @@ namespace ECS.Prioritization.Systems
         [Query]
         private void CheckCameraTransformChanged(ref RealmSamplingData samplingData, ref CameraComponent cameraComponent)
         {
-            ScenesPartitioningUtils.CheckCameraTransformChanged(samplingData, in cameraComponent,
-                partitionSettings.AggregatePositionSqrTolerance, partitionSettings.AggregateAngleTolerance);
-
             // if camera transform changed significantly re-sort all loaded worlds
-            if (samplingData.IsDirty)
+            if (ScenesPartitioningUtils.CheckCameraTransformChanged(samplingData, in cameraComponent,
+                    partitionSettings.AggregatePositionSqrTolerance, partitionSettings.AggregateAngleTolerance))
             {
                 PlayerLoopHelper.GetAggregates<IPartitionedWorldsAggregate, IPartitionComponent>(partitionedWorldsAggregateFactory, samplingData.Aggregates);
 

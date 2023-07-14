@@ -2,7 +2,6 @@ using Arch.Core;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Special;
 using ECS.ComponentsPooling;
-using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -25,20 +24,22 @@ namespace Global.Dynamic
 {
     public class GlobalWorldFactory
     {
+        private readonly CameraSamplingData cameraSamplingData;
+        private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly CancellationTokenSource destroyCancellationSource = new ();
         private readonly ISystemGroupAggregate<IPartitionComponent>.IFactory partitionedWorldsAggregateFactory;
-        private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IPartitionSettings partitionSettings;
         private readonly IRealmPartitionSettings realmPartitionSettings;
-        private readonly CameraSamplingData cameraSamplingData;
         private readonly RealmSamplingData realmSamplingData;
 
-        public GlobalWorldFactory(in StaticContainer staticContainer, IRealmPartitionSettings realmPartitionSettings, RealmSamplingData realmSamplingData)
+        public GlobalWorldFactory(in StaticContainer staticContainer, IRealmPartitionSettings realmPartitionSettings,
+            CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData)
         {
             partitionedWorldsAggregateFactory = staticContainer.WorldsAggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
             partitionSettings = staticContainer.PartitionSettings;
             this.realmPartitionSettings = realmPartitionSettings;
+            this.cameraSamplingData = cameraSamplingData;
             this.realmSamplingData = realmSamplingData;
         }
 
@@ -46,11 +47,12 @@ namespace Global.Dynamic
         {
             var world = World.Create();
 
-            var builder = new ArchSystemsWorldBuilder<World>(world);
-            Entity playerEntity = world.Create(new PlayerComponent(), new TransformComponent { Transform = unityCamera.transform }, new CameraComponent(unityCamera), cameraSamplingData);
-
-            // not synced by mutex
+            // not synced by mutex, for compatibility only
             var mutex = new MutexSync();
+
+            var builder = new ArchSystemsWorldBuilder<World>(world);
+
+            Entity playerEntity = world.Create(new PlayerComponent(), new TransformComponent { Transform = unityCamera.transform }, new CameraComponent(unityCamera), cameraSamplingData);
 
             // Asset Bundle Manifest
             const string ASSET_BUNDLES_URL = "https://ab-cdn.decentraland.org/";
@@ -78,9 +80,7 @@ namespace Global.Dynamic
             SortWorldsAggregateSystem.InjectToWorld(ref builder, partitionedWorldsAggregateFactory, realmPartitionSettings);
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
-            {
-                ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry),
-            };
+                { new ReleaseRealmPooledComponentSystem(componentPoolsRegistry) };
 
             SystemGroupWorld worldSystems = builder.Finish();
             worldSystems.Initialize();

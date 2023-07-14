@@ -43,8 +43,17 @@ namespace ECS.SceneLifeCycle.Systems
             // Repartition if camera transform is qualified
             if (readOnlyCameraSamplingData.IsDirty)
                 PartitionExistingEntityQuery(World);
+            else
+                ResetDirtyQuery(World);
 
             PartitionNewEntityQuery(World);
+        }
+
+        [Query]
+        [All(typeof(SceneDefinitionComponent))]
+        private void ResetDirty(ref PartitionComponent partitionComponent)
+        {
+            partitionComponent.IsDirty = false;
         }
 
         [Query]
@@ -54,7 +63,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (definition.IsEmpty) return;
 
             PartitionComponent partitionComponent = partitionComponentPool.Get();
-            ScenesPartitioningUtils.Partition(partitionSettings, definition.Parcels, readOnlyCameraSamplingData, ref partitionComponent);
+            ScenesPartitioningUtils.Partition(partitionSettings, definition.ParcelsCorners, readOnlyCameraSamplingData, partitionComponent);
             partitionComponent.IsDirty = true;
             World.Add(entity, partitionComponent);
         }
@@ -62,7 +71,7 @@ namespace ECS.SceneLifeCycle.Systems
         [Query]
         private void PartitionExistingEntity(ref SceneDefinitionComponent definition, ref PartitionComponent partitionComponent)
         {
-            ScenesPartitioningUtils.Partition(partitionSettings, definition.Parcels, readOnlyCameraSamplingData, ref partitionComponent);
+            ScenesPartitioningUtils.Partition(partitionSettings, definition.ParcelsCorners, readOnlyCameraSamplingData, partitionComponent);
         }
     }
 }

@@ -66,6 +66,8 @@ namespace ECS.Unity.Systems
             }
             else
             {
+                ResetDirtyQuery(World);
+
                 // Repartition all entities with dirty transform
                 RePartitionExistingEntityQuery(World, cameraPosition, cameraForward, true);
             }
@@ -73,6 +75,13 @@ namespace ECS.Unity.Systems
             // Then partition all entities that are not partitioned yet
             PartitionNewEntityQuery(World, cameraPosition, cameraForward);
             PartitionNewEntityWithoutTransformQuery(World, scenePosition, cameraPosition, cameraForward);
+        }
+
+        [Query]
+        [Any(typeof(PBGltfContainer), typeof(PBMaterial))]
+        private void ResetDirty(ref PartitionComponent partitionComponent)
+        {
+            partitionComponent.IsDirty = false;
         }
 
         [Query]
