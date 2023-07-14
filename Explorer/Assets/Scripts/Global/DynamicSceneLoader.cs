@@ -1,7 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using Diagnostics.ReportsHandling;
 using SceneRunner.ECSWorld.Plugins;
-using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -23,9 +22,9 @@ namespace Global
 
         // If it's 0, it will load every parcel in the range
         [SerializeField] private List<Vector2Int> StaticLoadPositions;
-        private GlobalWorld globalWorld;
 
-        private ISceneFacade sceneFacade;
+        private GlobalWorld globalWorld;
+        private IRealmController realmController;
 
         public SceneSharedContainer SceneSharedContainer { get; private set; }
 
@@ -36,14 +35,23 @@ namespace Global
 
         private void OnDestroy()
         {
-            globalWorld?.Dispose();
-            SceneSharedContainer?.Dispose();
+            async UniTaskVoid DisposeAsync()
+            {
+                if (globalWorld == null)
+                    return;
+
+                if (realmController != null)
+                    await realmController.UnloadCurrentRealm(globalWorld.World);
+
+                globalWorld.Dispose();
+            }
+
+            DisposeAsync().Forget();
         }
 
         private async UniTask InitializeAsync(CancellationToken ct)
         {
             // HACK!!! Load Local Asset Bundle Manifest Once
-
             UnityWebRequest wr = UnityWebRequestAssetBundle.GetAssetBundle($"{AssetBundlesPlugin.STREAMING_ASSETS_URL}AssetBundles");
             await wr.SendWebRequest().WithCancellation(ct);
             AssetBundle manifestAssetBundle = DownloadHandlerAssetBundle.GetContent(wr);
@@ -57,10 +65,11 @@ namespace Global
             camera.transform.position = cameraPosition;
 
             globalWorld = new GlobalWorld();
+            globalWorld.Initialize(SceneSharedContainer.SceneFactory, camera);
 
-            List<Vector2Int> staticLoadPositions = StaticLoadPositions.Count > 0 ? StaticLoadPositions : null;
+            realmController = new RealmController(SceneLoadRadius, StaticLoadPositions);
 
-            globalWorld.Initialize(SceneSharedContainer.SceneFactory, camera, SceneLoadRadius, staticLoadPositions);
+            await realmController.SetRealm(globalWorld.World, "https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main", destroyCancellationToken);
         }
 
         public static SceneSharedContainer Install(AssetBundleManifest localManifest, IReportsHandlingSettings reportsHandlingSettings)

@@ -21,6 +21,11 @@
         public const string CRDT_ECS_BRIDGE = nameof(CRDT_ECS_BRIDGE);
 
         /// <summary>
+        ///     Everything connected to realms
+        /// </summary>
+        public const string REALM = nameof(REALM);
+
+        /// <summary>
         ///     Messages related to the scene creation process
         /// </summary>
         public const string SCENE_FACTORY = nameof(SCENE_FACTORY);

@@ -11,12 +11,13 @@ namespace ECS.SceneLifeCycle.Tests
         [Test]
         public void CheckParcelsInRange()
         {
+            var parcels = new HashSet<Vector2Int>(100);
             var centerScene = new Vector3(ParcelMathHelper.PARCEL_SIZE / 2.0f, 0.0f, -ParcelMathHelper.PARCEL_SIZE / 2.0f);
 
             // Test from position 0
             {
                 Vector3 position = new Vector3(0.0f, 0.0f, 0.0f) + centerScene;
-                var parcels = ParcelMathHelper.ParcelsInRange(position, 1);
+                ParcelMathHelper.ParcelsInRange(position, 1, parcels);
 
                 var expectedParcels = new List<Vector2Int>
                 {
@@ -37,7 +38,7 @@ namespace ECS.SceneLifeCycle.Tests
             // Test from position 0
             {
                 Vector3 position = (new Vector3(100.0f, 0.0f, -100.0f) * ParcelMathHelper.PARCEL_SIZE) + centerScene;
-                var parcels = ParcelMathHelper.ParcelsInRange(position, 2);
+                ParcelMathHelper.ParcelsInRange(position, 2, parcels);
 
                 var expectedParcels = new List<Vector2Int>
                 {

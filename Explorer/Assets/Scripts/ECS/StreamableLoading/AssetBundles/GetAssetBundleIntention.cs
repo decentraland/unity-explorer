@@ -33,11 +33,10 @@ namespace ECS.StreamableLoading.AssetBundles
             // Don't resolve URL here
 
             CommonArguments = new CommonLoadingArguments(string.Empty, permittedSources: permittedSources);
-
             cacheHash = null;
         }
 
-        public CancellationTokenSource CancellationTokenSource => CommonArguments.cancellationTokenSource;
+        public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
         public static GetAssetBundleIntention FromName(string name, AssetSource permittedSources = AssetSource.ALL) =>
             new (name: name, permittedSources: permittedSources);

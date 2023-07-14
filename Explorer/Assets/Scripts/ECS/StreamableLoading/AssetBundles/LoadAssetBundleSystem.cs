@@ -7,6 +7,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,7 +33,7 @@ namespace ECS.StreamableLoading.AssetBundles
         private readonly AssetBundleManifest assetBundleManifest;
 
         internal LoadAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache,
-            AssetBundleManifest assetBundleManifest, MutexSync mutexSync) : base(world, cache, mutexSync)
+            AssetBundleManifest assetBundleManifest, MutexSync mutexSync, IConcurrentBudgetProvider loadingBudgetProvider = null) : base(world, cache, mutexSync, loadingBudgetProvider)
         {
             this.assetBundleManifest = assetBundleManifest;
         }

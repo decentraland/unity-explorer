@@ -85,7 +85,7 @@ namespace SceneRunner.Tests
         [Test]
         public async Task ContinueUpdateLoopOnBackgroundThread([Values(5, 10, 20, 30, 60, 90, 180)] int fps, [Values(100, 500, 1000, 2000, 4000)] int lifeTimeMs)
         {
-            var sceneFacade = (SceneFacade)await sceneFactory.CreateScene(path, CancellationToken.None);
+            var sceneFacade = (SceneFacade)await sceneFactory.CreateSceneFromFile(path, CancellationToken.None);
             sceneFacades.Add(sceneFacade);
 
             var cancellationTokenSource = new CancellationTokenSource();
@@ -162,7 +162,7 @@ namespace SceneRunner.Tests
 
             async UniTask CreateAndLaunch(int fps, int lifeTime)
             {
-                var sceneFacade = (SceneFacade)await sceneFactory.CreateScene(path, CancellationToken.None);
+                var sceneFacade = (SceneFacade)await sceneFactory.CreateSceneFromFile(path, CancellationToken.None);
                 sceneFacades.Add(sceneFacade);
 
                 var cancellationTokenSource = new CancellationTokenSource();

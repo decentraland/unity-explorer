@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using UnityEngine.Assertions;
@@ -25,16 +26,27 @@ namespace ECS.StreamableLoading.Common
         /// </summary>
         public TLoadingIntention LoadingIntention { get; private set; }
 
+
         /// <summary>
         ///     The result if it was loaded
         /// </summary>
         public StreamableLoadingResult<TAsset>? Result { get; private set; }
 
+        public bool IsConsumed => Entity == EntityReference.Null;
+
         public static AssetPromise<TAsset, TLoadingIntention> Create(World world, TLoadingIntention loadingIntention) =>
             new ()
             {
                 LoadingIntention = loadingIntention,
-                Entity = world.Reference(world.Create(loadingIntention)),
+                Entity = world.Reference(world.Create(loadingIntention,
+
+                    // TODO synchronize with the spawning entity
+                    new PartitionComponent
+                    {
+                        Bucket = 0,
+                        IsBehind = false,
+                        IsDirty = true
+                    })),
             };
 
         /// <summary>
@@ -62,7 +74,8 @@ namespace ECS.StreamableLoading.Common
         }
 
         /// <summary>
-        ///     Returns the result and deletes an entity if the loading is finished
+        ///     Returns the result and deletes an entity if the loading is finished,
+        /// can't be consumed several times
         /// </summary>
         public bool TryConsume(World world, out StreamableLoadingResult<TAsset> result)
         {
