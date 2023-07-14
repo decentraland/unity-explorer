@@ -39,8 +39,8 @@ namespace ECS.SceneLifeCycle.Tests
         {
             samplingData.IsDirty.Returns(isDirty);
             samplingData.Forward.Returns(Vector3.forward);
-            samplingData.Position.Returns(new Vector3(0, 0, 26)); // Partition #1
-            samplingData.Parcel.Returns(ParcelMathHelper.FloorToParcel(new Vector3(0, 0, 26)));
+            samplingData.Position.Returns(new Vector3(0, 0, 46)); // Partition #1
+            samplingData.Parcel.Returns(ParcelMathHelper.FloorToParcel(new Vector3(0, 0, 46)));
 
             partitionSettings.SqrDistanceBuckets.Returns(new[] { 16 * 16, 32 * 32, 64 * 64 });
 
@@ -59,8 +59,8 @@ namespace ECS.SceneLifeCycle.Tests
         {
             samplingData.IsDirty.Returns(isDirty);
             samplingData.Forward.Returns(Vector3.forward);
-            samplingData.Position.Returns(new Vector3(0, 0, 26)); // Partition #1
-            samplingData.Parcel.Returns(ParcelMathHelper.FloorToParcel(new Vector3(0, 0, 26)));
+            samplingData.Position.Returns(new Vector3(0, 0, 46)); // Partition #1
+            samplingData.Parcel.Returns(ParcelMathHelper.FloorToParcel(new Vector3(0, 0, 46)));
 
             partitionSettings.SqrDistanceBuckets.Returns(new[] { 16 * 16, 32 * 32, 64 * 64 });
 

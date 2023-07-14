@@ -69,15 +69,12 @@ namespace ECS.Prioritization
                 ProcessCorners(corners.maxXZ);
             }
 
-            // translate parcel back to coordinates
-            float sqrDistance = minSqrMagnitude;
-
             // Find the bucket
             byte bucketIndex;
 
             for (bucketIndex = 0; bucketIndex < partitionSettings.SqrDistanceBuckets.Count; bucketIndex++)
             {
-                if (sqrDistance < partitionSettings.SqrDistanceBuckets[bucketIndex])
+                if (minSqrMagnitude < partitionSettings.SqrDistanceBuckets[bucketIndex])
                     break;
             }
 
