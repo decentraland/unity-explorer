@@ -18,7 +18,8 @@ namespace SceneRunner.ECSWorld.Plugins.Editor
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            EditorMonitoringSystem.InjectToWorld(ref builder, sharedDependencies.SceneData.SceneShortInfo.ToString(), this.sceneMonitor);
+            var uniqueSceneName = sharedDependencies.SceneData.SceneShortInfo.ToString();
+            EditorMonitoringSystem.InjectToWorld(ref builder, uniqueSceneName, this.sceneMonitor);
         }
     }
 }

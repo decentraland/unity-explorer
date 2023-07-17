@@ -13,9 +13,12 @@ namespace ECS.Editor.Systems
         private World world { get; }
         private IEditorSceneMonitor sceneMonitor { get; }
 
+        private string originScene { get; }
+
         public EditorMonitoringSystem(World world, string originScene, IEditorSceneMonitor monitor) : base(world)
         {
             this.world = world;
+            this.originScene = originScene;
             this.sceneMonitor = monitor;
             this.sceneMonitor.Register(originScene, world);
         }
@@ -23,6 +26,12 @@ namespace ECS.Editor.Systems
         protected override void Update(float t)
         {
             sceneMonitor.Tick();
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            sceneMonitor.Unregister(originScene);
         }
     }
 }

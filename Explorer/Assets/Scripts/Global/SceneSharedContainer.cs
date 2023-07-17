@@ -39,7 +39,7 @@ namespace Global
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AssetBundlesPlugin(localAssetBundleManifest, reportsHandlingSettings, sharedDependencies.LoadingBudgetProvider),
-                new GltfContainerPlugin(sharedDependencies));
+                new GltfContainerPlugin(sharedDependencies)
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 ,new EditorPlugin()
 #endif
