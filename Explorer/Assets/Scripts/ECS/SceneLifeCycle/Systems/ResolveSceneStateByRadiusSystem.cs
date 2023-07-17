@@ -4,17 +4,22 @@ using Arch.SystemGroups;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
 using Ipfs;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using UnityEngine;
+using Unity.Mathematics;
+using Utility;
+using int2Collection = System.Collections.Generic.IReadOnlyCollection<Unity.Mathematics.int2>;
 
-namespace ECS.SceneLifeCycle.Systems
+// namespace changed to fix generators' bug
+namespace Realm
 {
     /// <summary>
     ///     Decides if loaded scenes should be launched or destroyed based on the loading radius
@@ -37,7 +42,7 @@ namespace ECS.SceneLifeCycle.Systems
         [None(typeof(StaticScenePointers))]
         private void ProcessRealm(ref RealmComponent realm, ref ParcelsInRange parcelsInRangeComponent)
         {
-            HashSet<Vector2Int> parcelsInRange = parcelsInRangeComponent.Value;
+            HashSet<int2> parcelsInRange = parcelsInRangeComponent.Value;
 
             StartScenesLoadingQuery(World, parcelsInRange, realm.Ipfs);
             AddDestroyIntentionQuery(World, parcelsInRange);
@@ -45,7 +50,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         [Query]
         [None(typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
-        private void StartScenesLoading([Data] IReadOnlyCollection<Vector2Int> parcelsInRange, [Data] IIpfsRealm realm,
+        private void StartScenesLoading([Data] int2Collection parcelsInRange, [Data] IIpfsRealm realm,
             in Entity entity, ref SceneDefinitionComponent definition, ref PartitionComponent partitionComponent)
         {
             if (definition.IsEmpty) return;
@@ -58,7 +63,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void AddDestroyIntention([Data] IReadOnlyCollection<Vector2Int> parcelsInRange, in Entity entity, ref SceneDefinitionComponent definition)
+        private void AddDestroyIntention([Data] int2Collection parcelsInRange, in Entity entity, ref SceneDefinitionComponent definition)
         {
             if (SceneIsInRange(definition, parcelsInRange))
                 return;
@@ -67,10 +72,10 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool SceneIsInRange(in SceneDefinitionComponent definition, IReadOnlyCollection<Vector2Int> parcelsInRange)
+        private static bool SceneIsInRange(in SceneDefinitionComponent definition, int2Collection parcelsInRange)
         {
             for (var i = 0; i < definition.Parcels.Count; i++)
-                if (parcelsInRange.Contains(definition.Parcels[i]))
+                if (parcelsInRange.Contains(definition.Parcels[i].ToInt2()))
                     return true;
 
             return false;

@@ -4,6 +4,7 @@ using ECS.Prioritization;
 using SceneRunner.ECSWorld.Plugins;
 using System.Collections.Generic;
 using System.Threading;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Profiling;
@@ -24,7 +25,7 @@ namespace Global.Dynamic
         [SerializeField] private PartitionSettingsAsset partitionSettingsAsset;
 
         // If it's 0, it will load every parcel in the range
-        [SerializeField] private List<Vector2Int> StaticLoadPositions;
+        [SerializeField] private List<int2> StaticLoadPositions;
         private DynamicWorldContainer dynamicWorldContainer;
 
         private GlobalWorld globalWorld;

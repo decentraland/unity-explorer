@@ -1,7 +1,7 @@
 ﻿using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using System.Collections.Generic;
-using UnityEngine;
+using Unity.Mathematics;
 
 namespace Global.Dynamic
 {
@@ -13,7 +13,7 @@ namespace Global.Dynamic
 
         public static DynamicWorldContainer Create(in StaticContainer staticContainer,
             IRealmPartitionSettings realmPartitionSettings,
-            IReadOnlyList<Vector2Int> staticLoadPositions, int sceneLoadRadius) =>
+            IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius) =>
             new ()
             {
                 RealmController = new RealmController(sceneLoadRadius, staticLoadPositions, staticContainer.CameraSamplingData),

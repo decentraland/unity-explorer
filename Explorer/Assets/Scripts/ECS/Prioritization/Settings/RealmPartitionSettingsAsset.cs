@@ -26,6 +26,15 @@ namespace ECS.Prioritization
         [field: SerializeField]
         public int MaxLoadingDistanceInParcels { get; private set; }
 
+        [field: SerializeField]
+        public int UnloadBucket { get; private set; }
+
+        [field: SerializeField]
+        public int ScenesRequestBatchSize { get; private set; }
+
+        [field: SerializeField]
+        public int ScenesDefinitionsRequestBatchSize { get; private set; }
+
         public float AggregatePositionSqrTolerance { get; private set; }
 
         public int GetSceneUpdateFrequency(in PartitionComponent partition)

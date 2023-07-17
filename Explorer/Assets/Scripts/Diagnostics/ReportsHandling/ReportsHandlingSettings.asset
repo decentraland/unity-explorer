@@ -24,8 +24,6 @@ MonoBehaviour:
       Severity: 0
     - Category: SCENE_LOADING
       Severity: 0
-    - Category: JAVASCRIPT
-      Severity: 0
     - Category: ECS
       Severity: 0
     - Category: STREAMABLE_LOADING
@@ -54,8 +52,6 @@ MonoBehaviour:
       Severity: 4
     - Category: SCENE_LOADING
       Severity: 4
-    - Category: JAVASCRIPT
-      Severity: 4
     - Category: ECS
       Severity: 4
     - Category: STREAMABLE_LOADING
@@ -81,8 +77,6 @@ MonoBehaviour:
     - Category: SCENE_FACTORY
       Severity: 1
     - Category: SCENE_LOADING
-      Severity: 1
-    - Category: JAVASCRIPT
       Severity: 1
     - Category: ECS
       Severity: 1
@@ -112,8 +106,6 @@ MonoBehaviour:
       Severity: 3
     - Category: SCENE_LOADING
       Severity: 3
-    - Category: JAVASCRIPT
-      Severity: 3
     - Category: ECS
       Severity: 3
     - Category: STREAMABLE_LOADING
@@ -142,8 +134,6 @@ MonoBehaviour:
       Severity: 2
     - Category: SCENE_LOADING
       Severity: 2
-    - Category: JAVASCRIPT
-      Severity: 2
     - Category: ECS
       Severity: 2
     - Category: STREAMABLE_LOADING
@@ -164,6 +154,36 @@ MonoBehaviour:
       Severity: 2
     - Category: GLTF_CONTAINER
       Severity: 4
+    - Category: REALM
+      Severity: 3
+    - Category: REALM
+      Severity: 2
+    - Category: REALM
+      Severity: 0
+    - Category: REALM
+      Severity: 4
+    - Category: REALM
+      Severity: 1
+    - Category: PRIORITIZATION
+      Severity: 3
+    - Category: PRIORITIZATION
+      Severity: 2
+    - Category: PRIORITIZATION
+      Severity: 0
+    - Category: PRIORITIZATION
+      Severity: 4
+    - Category: PRIORITIZATION
+      Severity: 1
+    - Category: JAVASCRIPT
+      Severity: 3
+    - Category: JAVASCRIPT
+      Severity: 2
+    - Category: JAVASCRIPT
+      Severity: 0
+    - Category: JAVASCRIPT
+      Severity: 4
+    - Category: JAVASCRIPT
+      Severity: 1
   sentryMatrix:
     entries:
     - Category: ENGINE
@@ -256,4 +276,4 @@ MonoBehaviour:
       Severity: 1
     - Category: UNSPECIFIED
       Severity: 1
-  debounceEnabled: 0
+  debounceEnabled: 1

@@ -8,6 +8,7 @@ using ECS.Prioritization.Components;
 using ECS.Prioritization.Systems;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.DeferredLoading;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
@@ -18,6 +19,7 @@ using SceneRunner;
 using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;
+using Utility;
 using Utility.Multithreading;
 
 namespace Global.Dynamic
@@ -69,8 +71,16 @@ namespace Global.Dynamic
             CalculateParcelsInRangeSystem.InjectToWorld(ref builder, playerEntity);
             LoadStaticPointersSystem.InjectToWorld(ref builder);
             LoadFixedPointersSystem.InjectToWorld(ref builder);
-            LoadPointersByRadiusSystem.InjectToWorld(ref builder);
-            ResolveSceneStateByRadiusSystem.InjectToWorld(ref builder);
+
+            // Archaic systems
+            // LoadPointersByRadiusSystem.InjectToWorld(ref builder);
+            // ResolveSceneStateByRadiusSystem.InjectToWorld(ref builder);
+            // are replace by increasing radius
+            var jobsMathHelper = new ParcelMathJobifiedHelper();
+            StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
+            LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
+            ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings);
+
             ResolveStaticPointersSystem.InjectToWorld(ref builder);
             UnloadSceneSystem.InjectToWorld(ref builder);
             ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token);

@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   positionTolerance: 0.1
   distanceBuckets: 10000000200000003000000060000000000100000002000000080000
-  fastPathDistance: 256
+  fastPathDistance: 48
   <AngleTolerance>k__BackingField: 3

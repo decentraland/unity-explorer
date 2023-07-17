@@ -11,6 +11,7 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility.Pool;
@@ -31,10 +32,10 @@ namespace Global.Dynamic
         private readonly IpfsTypes.ServerAbout serverAbout = new ();
 
         private readonly int sceneLoadRadius;
-        private readonly IReadOnlyList<Vector2Int> staticLoadPositions;
+        private readonly IReadOnlyList<int2> staticLoadPositions;
         private readonly CameraSamplingData cameraSamplingData;
 
-        public RealmController(int sceneLoadRadius, IReadOnlyList<Vector2Int> staticLoadPositions, CameraSamplingData cameraSamplingData)
+        public RealmController(int sceneLoadRadius, IReadOnlyList<int2> staticLoadPositions, CameraSamplingData cameraSamplingData)
         {
             this.sceneLoadRadius = sceneLoadRadius;
             this.staticLoadPositions = staticLoadPositions;
@@ -69,14 +70,31 @@ namespace Global.Dynamic
             // Add the realm component
             var realmComp = new RealmComponent(new IpfsRealm(realm, result));
 
-            Entity realmEntity = world.Create(realmComp, new ParcelsInRange(new HashSet<Vector2Int>(100), sceneLoadRadius));
+            Entity realmEntity = world.Create(realmComp, new ParcelsInRange(new HashSet<int2>(100), sceneLoadRadius));
 
-            if (staticLoadPositions is { Count: > 0 })
+            ComplimentWithStaticPointers(world, realmEntity);
 
-                // Static scene pointers don't replace the logic of fixed pointers loading but compliment it
-                world.Add(realmEntity, new StaticScenePointers(staticLoadPositions));
+            if (!ComplimentWithStaticPointers(world, realmEntity) && !realmComp.ScenesAreFixed)
+                ComplimentWithVolatilePointers(world, realmEntity);
 
             // Hide loading screen
+        }
+
+        private void ComplimentWithVolatilePointers(World world, Entity realmEntity)
+        {
+            world.Add(realmEntity, VolatileScenePointers.Create());
+        }
+
+        private bool ComplimentWithStaticPointers(World world, Entity realmEntity)
+        {
+            if (staticLoadPositions is { Count: > 0 })
+            {
+                // Static scene pointers don't replace the logic of fixed pointers loading but compliment it
+                world.Add(realmEntity, new StaticScenePointers(staticLoadPositions));
+                return true;
+            }
+
+            return false;
         }
 
         public async UniTask UnloadCurrentRealm(GlobalWorld globalWorld)

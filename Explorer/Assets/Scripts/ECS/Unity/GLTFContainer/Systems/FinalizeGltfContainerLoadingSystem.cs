@@ -27,8 +27,10 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         protected override void Update(float t)
         {
+            ref TransformComponent sceneTransform = ref World.Get<TransformComponent>(sceneRoot);
+
             FinalizeLoadingQuery(World);
-            FinalizeLoadingNoTransformQuery(World);
+            FinalizeLoadingNoTransformQuery(World, ref sceneTransform);
         }
 
         /// <summary>
@@ -38,10 +40,9 @@ namespace ECS.Unity.GLTFContainer.Systems
         [Query]
         [All(typeof(PBGltfContainer))]
         [None(typeof(TransformComponent))]
-        private void FinalizeLoadingNoTransform(ref GltfContainerComponent component)
+        private void FinalizeLoadingNoTransform([Data] ref TransformComponent sceneTransform, ref GltfContainerComponent component)
         {
-            if (World.TryGet(sceneRoot, out TransformComponent transformComponent))
-                FinalizeLoading(ref component, ref transformComponent);
+            FinalizeLoading(ref component, ref sceneTransform);
         }
 
         [Query]

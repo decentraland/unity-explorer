@@ -13,7 +13,7 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using UnityEngine;
+using Unity.Mathematics;
 using UnityEngine.Networking;
 using Utility.Multithreading;
 
@@ -41,7 +41,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             for (var i = 0; i < intention.Pointers.Count; ++i)
             {
-                Vector2Int pointer = intention.Pointers[i];
+                int2 pointer = intention.Pointers[i];
 
                 // String Builder has overloads for int to prevent allocations
                 bodyBuilder.Append('\"');

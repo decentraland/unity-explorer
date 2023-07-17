@@ -84,6 +84,9 @@ namespace ECS.Prioritization
             // mind that taking cosines is not cheap
             // the same scene is counted as InFront
             partitionComponent.IsDirty = partitionComponent.Bucket != bucket || partitionComponent.IsBehind != isBehind;
+
+            if (partitionComponent.IsDirty)
+                partitionComponent.RawSqrDistance = minSqrMagnitude;
         }
     }
 }

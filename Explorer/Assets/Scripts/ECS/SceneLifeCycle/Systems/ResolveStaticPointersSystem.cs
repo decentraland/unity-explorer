@@ -10,6 +10,7 @@ using Ipfs;
 using SceneRunner.Scene;
 using System.Linq;
 using UnityEngine;
+using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -42,7 +43,7 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 Vector2Int parcel = definition.Parcels[i];
 
-                if (staticScenePointers.Value.Contains(parcel))
+                if (staticScenePointers.Value.Contains(parcel.ToInt2()))
                 {
                     World.Add(entity,
                         AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World, new GetSceneFacadeIntention(realm, definition.IpfsPath, definition.Definition), partitionComponent));

@@ -16,6 +16,16 @@ namespace ECS.Prioritization.Components
         };
 
         /// <summary>
+        ///     Indicates that the partition value has changed and the processes assigned to it should be re-prioritized
+        /// </summary>
+        public bool IsDirty { get; set; }
+
+        /// <summary>
+        ///     Raw Square Distance from camera to entity based on which the bucket is calculated
+        /// </summary>
+        public float RawSqrDistance { get; set; }
+
+        /// <summary>
         ///     Each entity falls into one of the buckets within the predefined range of values.
         ///     The higher value of bucket is the less priority the processing of the entity should be given
         /// </summary>
@@ -26,10 +36,13 @@ namespace ECS.Prioritization.Components
         /// </summary>
         public bool IsBehind { get; set; }
 
-        /// <summary>
-        ///     Indicates that the partition value has changed and the processes assigned to it should be re-prioritized
-        /// </summary>
-        public bool IsDirty { get; set; }
+        public int CompareTo(IPartitionComponent other)
+        {
+            // First compare by bucket so the ordering will look like this:
+            // [0 Front; 0 Behind; 1 Front; 1 Behind; ..]
+            int bucketComparison = Bucket.CompareTo(other.Bucket);
+            return bucketComparison != 0 ? bucketComparison : IsBehind.CompareTo(other.IsBehind);
+        }
 
         public bool Equals(IPartitionComponent other) =>
             Bucket == other.Bucket && IsBehind == other.IsBehind;
@@ -40,12 +53,7 @@ namespace ECS.Prioritization.Components
         public override int GetHashCode() =>
             HashCode.Combine(Bucket, IsBehind);
 
-        public int CompareTo(IPartitionComponent other)
-        {
-            // First compare by bucket so the ordering will look like this:
-            // [0 Front; 0 Behind; 1 Front; 1 Behind; ..]
-            int bucketComparison = Bucket.CompareTo(other.Bucket);
-            return bucketComparison != 0 ? bucketComparison : IsBehind.CompareTo(other.IsBehind);
-        }
+        public override string ToString() =>
+            $"Partition: (Bucket {Bucket.ToString()}, IsBehind {IsBehind.ToString()})";
     }
 }

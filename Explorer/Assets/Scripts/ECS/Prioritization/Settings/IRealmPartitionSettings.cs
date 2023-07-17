@@ -20,9 +20,25 @@ namespace ECS.Prioritization
         float AggregatePositionSqrTolerance { get; }
 
         /// <summary>
-        ///     The hard distance limit after which scenes do not load
+        ///     The hard distance limit after which scenes and scenes definitions do not load
         /// </summary>
         int MaxLoadingDistanceInParcels { get; }
+
+        /// <summary>
+        ///     Bucket from which the scenes start to unload, the distance corresponding to this bucket should be bigger than <see cref="MaxLoadingDistanceInParcels" />
+        ///     so distant parcels will start unloading gradually
+        /// </summary>
+        int UnloadBucket { get; }
+
+        /// <summary>
+        ///     The number of closest scenes that can be requested at a time
+        /// </summary>
+        int ScenesRequestBatchSize { get; }
+
+        /// <summary>
+        ///     The number of scenes definitions that can be requested a time within the same list request
+        /// </summary>
+        int ScenesDefinitionsRequestBatchSize { get; }
 
         /// <summary>
         ///     Get the desired update frequency for a scene in a given partition.

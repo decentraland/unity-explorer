@@ -3,13 +3,14 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
 using ECS.TestSuite;
 using Ipfs;
 using NUnit.Framework;
+using Realm;
 using SceneRunner.Scene;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Tests
@@ -28,9 +29,9 @@ namespace ECS.SceneLifeCycle.Tests
         [Test]
         public void CreateStartPromisesIfInRange()
         {
-            var parcels = new Vector2Int[] { new (0, 0), new (0, 1), new (1, 0), new (1, 1) };
+            var parcels = new int2[] { new (0, 0), new (0, 1), new (1, 0), new (1, 1) };
 
-            var parcelsInRange = new ParcelsInRange(new HashSet<Vector2Int>(parcels), 2);
+            var parcelsInRange = new ParcelsInRange(new HashSet<int2>(parcels), 2);
 
             world.Create(parcelsInRange, realmComponent);
 
@@ -48,7 +49,7 @@ namespace ECS.SceneLifeCycle.Tests
         [Test]
         public void NotCreateStartPromisesIfOutOfRange()
         {
-            var parcelsInRange = new ParcelsInRange(new HashSet<Vector2Int>(new Vector2Int[] { new (5, 5), new (4, 4), new (3, 3), new (2, 2) }), 2);
+            var parcelsInRange = new ParcelsInRange(new HashSet<int2>(new int2[] { new (5, 5), new (4, 4), new (3, 3), new (2, 2) }), 2);
 
             world.Create(parcelsInRange, realmComponent);
 
@@ -66,7 +67,7 @@ namespace ECS.SceneLifeCycle.Tests
         [Test]
         public void AddDestroyIntentionIfOutOfRange()
         {
-            var parcelsInRange = new ParcelsInRange(new HashSet<Vector2Int>(new Vector2Int[] { new (5, 5), new (4, 4), new (3, 3), new (2, 2) }), 2);
+            var parcelsInRange = new ParcelsInRange(new HashSet<int2>(new int2[] { new (5, 5), new (4, 4), new (3, 3), new (2, 2) }), 2);
             world.Create(parcelsInRange, realmComponent);
 
             // no match
@@ -81,7 +82,7 @@ namespace ECS.SceneLifeCycle.Tests
         [Test]
         public void NotAddDestroyIntentionIfInRange()
         {
-            var parcelsInRange = new ParcelsInRange(new HashSet<Vector2Int>(new Vector2Int[] { new (5, 5), new (4, 4), new (3, 3), new (2, 2) }), 2);
+            var parcelsInRange = new ParcelsInRange(new HashSet<int2>(new int2[] { new (5, 5), new (4, 4), new (3, 3), new (2, 2) }), 2);
             world.Create(parcelsInRange, realmComponent);
 
             // match

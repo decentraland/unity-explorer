@@ -14,7 +14,5 @@ namespace ECS.Prioritization.Components
         {
             Clear();
         }
-
-        public Plane XYPlane { get; }
     }
 }

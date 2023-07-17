@@ -1,6 +1,5 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.StreamableLoading.Textures;
@@ -11,7 +10,8 @@ namespace ECS.StreamableLoading.DeferredLoading
     /// <summary>
     ///     Weighs asset bundles and textures against each other according to their partition
     /// </summary>
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(StreamableLoadingGroup))]
+    [UpdateAfter(typeof(PrepareAssetBundleLoadingParametersSystem))]
     [UpdateBefore(typeof(LoadTextureSystem))]
     [UpdateBefore(typeof(LoadAssetBundleSystem))]
     public partial class AssetsDeferredLoadingSystem : DeferredLoadingSystem

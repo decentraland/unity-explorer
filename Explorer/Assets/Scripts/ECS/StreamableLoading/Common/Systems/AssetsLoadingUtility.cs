@@ -29,6 +29,8 @@ namespace ECS.StreamableLoading.Common.Systems
 
             while (true)
             {
+                ReportHub.Log(reportCategory, $"Starting loading {intention}\n{partition}, attempts left: {attemptCount}");
+
                 try { return await flow(intention, partition, ct); }
 
                 catch (UnityWebRequestException unityWebRequestException)

@@ -1,52 +1,72 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Ipfs;
 using System.Collections.Generic;
+using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using Utility;
 
-namespace ECS.SceneLifeCycle.Systems
+namespace ECS.SceneLifeCycle.IncreasingRadius
 {
     /// <summary>
-    ///     In case realm does not provide a fixed list of scenes scenes are loaded by radius,
-    ///     Radius is gradually increased until the limit is reached (TODO)
+    ///     Mutually exclusive to <see cref="LoadPointersByRadiusSystem" />
     /// </summary>
+    [UpdateAfter(typeof(LoadFixedPointersSystem))]
     [UpdateInGroup(typeof(RealmGroup))]
-    [UpdateAfter(typeof(CalculateParcelsInRangeSystem))]
-    public partial class LoadPointersByRadiusSystem : LoadScenePointerSystemBase
+    public partial class LoadPointersByIncreasingRadiusSystem : LoadScenePointerSystemBase
     {
-        internal LoadPointersByRadiusSystem(World world) : base(world) { }
+        private readonly ParcelMathJobifiedHelper parcelMathJobifiedHelper;
+        private readonly IRealmPartitionSettings realmPartitionSettings;
+
+        internal LoadPointersByIncreasingRadiusSystem(World world,
+            ParcelMathJobifiedHelper parcelMathJobifiedHelper,
+            IRealmPartitionSettings realmPartitionSettings) : base(world)
+        {
+            this.parcelMathJobifiedHelper = parcelMathJobifiedHelper;
+            this.realmPartitionSettings = realmPartitionSettings;
+        }
 
         protected override void Update(float t)
         {
-            // Resolve the current promise
-            ResolveActivePromiseQuery(World);
+            // VolatileScenePointers should be created from RealmController
 
-            StartLoadingInRadiusQuery(World);
+            ResolveActivePromiseQuery(World);
+            StartLoadingFromVolatilePointersQuery(World);
         }
 
+        /// <summary>
+        ///     We can't use this flow if realm/world provides with a fixed pointers list
+        ///     as EntitiesActiveEndpoint is not supported by its content server
+        /// </summary>
         [Query]
-        private void StartLoadingInRadius(ref RealmComponent realm, ref VolatileScenePointers volatileScenePointers, ref ParcelsInRange parcelsInRange)
+        [None(typeof(FixedScenePointers))]
+        private void StartLoadingFromVolatilePointers(ref RealmComponent realm, ref VolatileScenePointers volatileScenePointers)
         {
-            // Create promises if they are not yet created
-            // Promise is a bulk request
+            if (!parcelMathJobifiedHelper.JobStarted) return;
+
             // maintain one bulk request at a time
             if (volatileScenePointers.ActivePromise != null) return;
 
-            // Check that there are no created scenes definitions for desired parcels already
+            // Take up to <ScenesDefinitionsRequestBatchSize> closest pointers that were not processed yet
             List<int2> input = volatileScenePointers.InputReusableList;
 
-            foreach (int2 parcel in parcelsInRange.Value)
+            ref readonly NativeArray<ParcelMathJobifiedHelper.ParcelInfo> flatArray = ref parcelMathJobifiedHelper.FinishParcelsRingSplit();
+
+            for (var i = 0; i < flatArray.Length; i++)
             {
-                if (!volatileScenePointers.ProcessedParcels.Contains(parcel))
-                    input.Add(parcel);
+                ParcelMathJobifiedHelper.ParcelInfo parcelInfo = flatArray[i];
+
+                if (input.Count < realmPartitionSettings.ScenesDefinitionsRequestBatchSize && !parcelInfo.AlreadyProcessed)
+                    input.Add(parcelInfo.Parcel);
             }
 
             if (input.Count == 0) return;

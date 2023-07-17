@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Utility
@@ -23,6 +25,14 @@ namespace Utility
 
         public const float PARCEL_SIZE = 16.0f;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int2 ToInt2(this Vector2Int vector2Int) =>
+            new (vector2Int.x, vector2Int.y);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2Int ToVector2Int(this int2 int2) =>
+            new (int2.x, int2.y);
+
         public static Vector3 GetPositionByParcelPosition(Vector2Int parcelPosition) =>
             new (parcelPosition.x * PARCEL_SIZE, 0.0f, parcelPosition.y * PARCEL_SIZE);
 
@@ -35,16 +45,16 @@ namespace Utility
         public static Vector2Int FloorToParcel(Vector3 position) =>
             new (Mathf.FloorToInt(position.x / PARCEL_SIZE), Mathf.FloorToInt(position.z / PARCEL_SIZE));
 
-        public static IReadOnlyCollection<Vector2Int> ParcelsInRange(Vector3 position, int loadRadius, HashSet<Vector2Int> results)
+        public static void ParcelsInRange(Vector3 position, int loadRadius, HashSet<int2> results)
         {
             float range = loadRadius * PARCEL_SIZE;
-            Vector2 focus = new Vector2(position.x, position.z) * new Vector2(1.0f, 1.0f);
+            var focus = new Vector2(position.x, position.z);
 
             Vector2 minPoint = focus - new Vector2(range, range);
             Vector2 maxPoint = focus + new Vector2(range, range);
 
-            Vector2Int minParcel = Vector2Int.FloorToInt(minPoint / 16.0f);
-            Vector2Int maxParcel = Vector2Int.CeilToInt(maxPoint / 16.0f);
+            var minParcel = Vector2Int.FloorToInt(minPoint / PARCEL_SIZE);
+            var maxParcel = Vector2Int.CeilToInt(maxPoint / PARCEL_SIZE);
 
             results.Clear();
 
@@ -61,11 +71,9 @@ namespace Utility
                     Vector2 nearestPoint = new Vector2(nearestPointX, nearestPointY);
                     float distance = Vector2.Distance(nearestPoint, focus);
 
-                    if (distance < range) results.Add(new Vector2Int(parcelX, parcelY));
+                    if (distance < range) results.Add(new int2(parcelX, parcelY));
                 }
             }
-
-            return results;
         }
     }
 }
