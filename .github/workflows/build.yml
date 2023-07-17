@@ -28,11 +28,11 @@ jobs:
           git add .
           git reset --hard
 
-      # - name: Restore Library cache
-      #   uses: actions/cache@v2
-      #   with:
-      #     path: Explorer/Library
-      #     key: Library-Explorer-Windows
+       - name: Restore Library cache
+         uses: actions/cache@v2
+         with:
+           path: Explorer/Library
+           key: Library-Explorer-Windows
 
       # Configure test runner
       - uses: game-ci/unity-builder@v2
