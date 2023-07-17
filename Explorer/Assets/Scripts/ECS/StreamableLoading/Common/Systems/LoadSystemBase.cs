@@ -149,6 +149,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 {
                     // Indicate that it should be grabbed by another system
                     World.Remove<LoadingInProgress>(entity);
+                    World.Get<TIntention>(entity).SetDeferredState(DeferredLoadingState.NotEvaluated);
                     return;
                 }
 
@@ -171,9 +172,6 @@ namespace ECS.StreamableLoading.Common.Systems
             {
                 if (!budgetReleased.Value)
                     concurrentLoadingBudgetProvider.ReleaseBudget();
-
-                using MutexSync.Scope sync = mutexSync.GetScope();
-                World.Get<TIntention>(entity).SetDeferredState(DeferredLoadingState.NotEvaluated);
             }
         }
 

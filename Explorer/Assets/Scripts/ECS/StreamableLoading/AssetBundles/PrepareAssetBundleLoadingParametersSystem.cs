@@ -66,7 +66,6 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.Attempts = 1;
                 ca.CurrentSource = AssetSource.EMBEDDED;
                 ca.URL = GetStreamingAssetsUrl(assetBundleIntention.Hash);
-                ca.DeferredLoadingState = DeferredLoadingState.Forbidden;
                 assetBundleIntention.CommonArguments = ca;
                 return;
             }
@@ -90,7 +89,6 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
                 ca.CurrentSource = AssetSource.WEB;
                 ca.URL = sceneData.AssetBundleManifest.GetAssetBundleURL(assetBundleIntention.Hash);
-                ca.DeferredLoadingState = DeferredLoadingState.Forbidden;
                 assetBundleIntention.CommonArguments = ca;
                 assetBundleIntention.cacheHash = sceneData.AssetBundleManifest.ComputeHash(assetBundleIntention.Hash);
             }
