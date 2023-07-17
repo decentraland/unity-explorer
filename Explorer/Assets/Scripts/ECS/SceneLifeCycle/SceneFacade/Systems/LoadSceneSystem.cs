@@ -15,6 +15,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
+using Utility;
 using Utility.Multithreading;
 
 namespace ECS.SceneLifeCycle
@@ -58,7 +59,7 @@ namespace ECS.SceneLifeCycle
 
         private async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifest(string sceneId, CancellationToken ct)
         {
-            var subIntent = new SubIntention(new CommonLoadingArguments($"{assetBundleURL}manifest/{sceneId}.json"));
+            var subIntent = new SubIntention(new CommonLoadingArguments($"{assetBundleURL}manifest/{sceneId}{PlatformUtils.GetPlatform()}.json"));
 
             // Repeat loop for this request only
             async UniTask<StreamableLoadingResult<string>> InnerFlow(SubIntention subIntention, IPartitionComponent partition, CancellationToken ct)

@@ -21,7 +21,7 @@ namespace Global
 
         public void Dispose() { }
 
-        public static SceneSharedContainer Create(in StaticContainer staticContainer, AssetBundleManifest localAssetBundleManifest)
+        public static SceneSharedContainer Create(in StaticContainer staticContainer)
         {
             var entityFactory = new EntityFactory();
 
@@ -40,7 +40,7 @@ namespace Global
                 new TexturesLoadingPlugin(sharedDependencies.LoadingBudgetProvider),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
-                new AssetBundlesPlugin(localAssetBundleManifest, staticContainer.ReportsHandlingSettings, sharedDependencies.LoadingBudgetProvider),
+                new AssetBundlesPlugin(staticContainer.ReportsHandlingSettings, sharedDependencies.LoadingBudgetProvider),
                 new GltfContainerPlugin(sharedDependencies));
 
             return new SceneSharedContainer
