@@ -81,6 +81,9 @@ namespace ECS.StreamableLoading.AssetBundles
             await webRequest.SendWebRequest().WithCancellation(ct);
             AssetBundle assetBundle = DownloadHandlerAssetBundle.GetContent(webRequest);
 
+            // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
+            ReleaseBudget();
+
             // if GetContent prints an error, null will be thrown
             if (assetBundle == null)
                 throw new NullReferenceException($"{intention.Hash} Asset Bundle is null");

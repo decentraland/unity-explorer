@@ -26,6 +26,8 @@ namespace ECS.StreamableLoading.Common.Systems
                                                                      .WithAll<TIntention, IPartitionComponent>()
                                                                      .WithNone<LoadingInProgress, StreamableLoadingResult<TAsset>>();
 
+        private static readonly AsyncLocal<bool> budgetReleased = new ();
+
         private readonly Query query;
 
         private readonly IStreamableCache<TAsset, TIntention> cache;
@@ -127,6 +129,7 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             try
             {
+                budgetReleased.Value = false;
                 var requestIsNotFulfilled = true;
                 StreamableLoadingResult<TAsset>? result = null;
 
@@ -164,13 +167,26 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 ReportException(e);
             }
-            finally { concurrentLoadingBudgetProvider.ReleaseBudget(); }
+            finally
+            {
+                if (!budgetReleased.Value)
+                    concurrentLoadingBudgetProvider.ReleaseBudget();
+
+                using MutexSync.Scope sync = mutexSync.GetScope();
+                World.Get<TIntention>(entity).SetDeferredState(DeferredLoadingState.NotEvaluated);
+            }
         }
 
         /// <summary>
         ///     All exceptions are handled by the upper functions, just do pure work
         /// </summary>
         protected abstract UniTask<StreamableLoadingResult<TAsset>> FlowInternal(TIntention intention, IPartitionComponent partition, CancellationToken ct);
+
+        protected void ReleaseBudget()
+        {
+            concurrentLoadingBudgetProvider.ReleaseBudget();
+            budgetReleased.Value = true;
+        }
 
         /// <summary>
         ///     Can't move it to another system as the update cycle is not synchronized with systems but based on UniTasks

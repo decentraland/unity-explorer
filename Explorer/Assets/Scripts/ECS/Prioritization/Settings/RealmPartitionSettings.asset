@@ -18,5 +18,5 @@ MonoBehaviour:
   <AggregateAngleTolerance>k__BackingField: 10
   <MaxLoadingDistanceInParcels>k__BackingField: 10
   <UnloadBucket>k__BackingField: 5
-  <ScenesRequestBatchSize>k__BackingField: 4
-  <ScenesDefinitionsRequestBatchSize>k__BackingField: 24
+  <ScenesRequestBatchSize>k__BackingField: 6
+  <ScenesDefinitionsRequestBatchSize>k__BackingField: 30

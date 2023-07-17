@@ -52,7 +52,7 @@ namespace ECS.StreamableLoading.Tests
         public async Task ConcludeSuccess()
         {
             TIntention intent = CreateSuccessIntention();
-            intent.SetAllowed();
+            intent.SetDeferredState(DeferredLoadingState.Allowed);
             promise = AssetPromise<TAsset, TIntention>.Create(world, intent, PartitionComponent.TOP_PRIORITY);
 
             // Launch the flow
@@ -71,7 +71,7 @@ namespace ECS.StreamableLoading.Tests
         public async Task ConcludeExceptionOnParseFail()
         {
             TIntention intent = CreateWrongTypeIntention();
-            intent.SetAllowed();
+            intent.SetDeferredState(DeferredLoadingState.Allowed);
             promise = AssetPromise<TAsset, TIntention>.Create(world, intent, PartitionComponent.TOP_PRIORITY);
 
             // Launch the flow
@@ -89,7 +89,7 @@ namespace ECS.StreamableLoading.Tests
         {
             TIntention intent = CreateNotFoundIntention();
             intent.SetAttempts(1);
-            intent.SetAllowed();
+            intent.SetDeferredState(DeferredLoadingState.Allowed);
 
             promise = AssetPromise<TAsset, TIntention>.Create(world, intent, PartitionComponent.TOP_PRIORITY);
 
@@ -108,7 +108,7 @@ namespace ECS.StreamableLoading.Tests
         {
             TIntention intent = CreateSuccessIntention();
             intent.SetSources(AssetSource.EMBEDDED, AssetSource.EMBEDDED);
-            intent.SetAllowed();
+            intent.SetDeferredState(DeferredLoadingState.Allowed);
 
             promise = AssetPromise<TAsset, TIntention>.Create(world, intent, PartitionComponent.TOP_PRIORITY);
 
@@ -123,7 +123,7 @@ namespace ECS.StreamableLoading.Tests
         public async Task GetAssetFromCache()
         {
             TIntention successIntent = CreateSuccessIntention();
-            successIntent.SetAllowed();
+            successIntent.SetDeferredState(DeferredLoadingState.Allowed);
             promise = AssetPromise<TAsset, TIntention>.Create(world, successIntent, PartitionComponent.TOP_PRIORITY);
 
             TIntention checkIntent = successIntent;

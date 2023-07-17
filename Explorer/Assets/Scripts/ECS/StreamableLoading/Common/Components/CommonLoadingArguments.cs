@@ -29,7 +29,7 @@ namespace ECS.StreamableLoading.Common.Components
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
             AssetSource permittedSources = AssetSource.WEB,
             AssetSource currentSource = AssetSource.WEB,
-            DeferredLoadingState deferredLoadingState = DeferredLoadingState.Forbidden,
+            DeferredLoadingState deferredLoadingState = DeferredLoadingState.NotEvaluated,
             CancellationTokenSource cancellationTokenSource = null)
         {
             DeferredLoadingState = deferredLoadingState;

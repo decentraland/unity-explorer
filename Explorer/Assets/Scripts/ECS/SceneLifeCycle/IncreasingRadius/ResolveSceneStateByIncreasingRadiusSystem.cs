@@ -59,19 +59,36 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         protected override void Update(float t)
         {
-            float maxLoadingDistance = realmPartitionSettings.MaxLoadingDistanceInParcels * ParcelMathHelper.PARCEL_SIZE;
-            float maxLoadingSqrDistance = maxLoadingDistance * maxLoadingDistance;
+            // Start a new loading if the previous batch is finished
+            var anyNonEmpty = false;
+            CheckAnyLoadingInProgressQuery(World, ref anyNonEmpty);
 
-            ProcessVolatileRealmQuery(World, maxLoadingSqrDistance);
-            ProcessesFixedRealmQuery(World, maxLoadingSqrDistance);
+            if (!anyNonEmpty)
+            {
+                float maxLoadingDistance = realmPartitionSettings.MaxLoadingDistanceInParcels * ParcelMathHelper.PARCEL_SIZE;
+                float maxLoadingSqrDistance = maxLoadingDistance * maxLoadingDistance;
+
+                ProcessVolatileRealmQuery(World, maxLoadingSqrDistance);
+                ProcessesFixedRealmQuery(World, maxLoadingSqrDistance);
+            }
+
             StartUnloadingQuery(World);
+        }
+
+        [Query]
+        [All(typeof(PartitionComponent))]
+        [None(typeof(ISceneFacade))]
+        private void CheckAnyLoadingInProgress([Data] ref bool anyNonEmpty,
+            ref SceneDefinitionComponent sceneDefinitionComponent, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
+        {
+            anyNonEmpty |= !sceneDefinitionComponent.IsEmpty && !promise.IsConsumed;
         }
 
         [Query]
         [None(typeof(StaticScenePointers), typeof(FixedScenePointers))]
         private void ProcessVolatileRealm([Data] float maxLoadingSqrDistance, ref RealmComponent realm)
         {
-            StartScenesLoading(realm.Ipfs, maxLoadingSqrDistance);
+            StartScenesLoading(ref realm, maxLoadingSqrDistance);
         }
 
         /// <summary>
@@ -83,10 +100,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private void ProcessesFixedRealm([Data] float maxLoadingSqrDistance, ref RealmComponent realmComponent, ref FixedScenePointers fixedScenePointers)
         {
             if (fixedScenePointers.AllPromisesResolved)
-                StartScenesLoading(realmComponent.Ipfs, maxLoadingSqrDistance);
+                StartScenesLoading(ref realmComponent, maxLoadingSqrDistance);
         }
 
-        private void StartScenesLoading(IIpfsRealm ipfsRealm, float maxLoadingSqrDistance)
+        private void StartScenesLoading(ref RealmComponent realmComponent, float maxLoadingSqrDistance)
         {
             // Order the scenes definitions by the CURRENT partition and serve first N of them
 
@@ -118,6 +135,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             }
 
             orderedData.Sort(static (p1, p2) => p1.PartitionComponent.CompareTo(p2.PartitionComponent));
+
+            IIpfsRealm ipfsRealm = realmComponent.Ipfs;
 
             // Take first N
             for (var i = 0; i < orderedData.Count && i < realmPartitionSettings.ScenesRequestBatchSize; i++)

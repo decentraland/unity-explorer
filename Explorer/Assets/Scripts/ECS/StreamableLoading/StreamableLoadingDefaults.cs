@@ -6,5 +6,21 @@
         public const int TIMEOUT = 60;
     }
 
-    public enum DeferredLoadingState { Allowed, Forbidden }
+    public enum DeferredLoadingState : byte
+    {
+        /// <summary>
+        ///     The state was not evaluated yet
+        /// </summary>
+        NotEvaluated,
+
+        /// <summary>
+        ///     The state was evaluated as Allowed
+        /// </summary>
+        Allowed,
+
+        /// <summary>
+        ///     The state was evaluated as Forbidden
+        /// </summary>
+        Forbidden,
+    }
 }

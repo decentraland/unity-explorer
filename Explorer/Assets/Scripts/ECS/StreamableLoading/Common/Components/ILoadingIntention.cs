@@ -19,10 +19,10 @@ namespace ECS.StreamableLoading.Common.Components
         public static bool IsAllowed<T>(this ref T loadingIntention) where T: struct, ILoadingIntention =>
             loadingIntention.CommonArguments.DeferredLoadingState == DeferredLoadingState.Allowed;
 
-        public static void SetAllowed<T>(this ref T loadingIntention) where T: struct, ILoadingIntention
+        public static void SetDeferredState<T>(this ref T loadingIntention, DeferredLoadingState state) where T: struct, ILoadingIntention
         {
             CommonLoadingArguments ca = loadingIntention.CommonArguments;
-            ca.DeferredLoadingState = DeferredLoadingState.Allowed;
+            ca.DeferredLoadingState = state;
             loadingIntention.CommonArguments = ca;
         }
 

@@ -24,7 +24,7 @@ namespace ECS.StreamableLoading.DeferredLoading
         /// </summary>
         public abstract class ComponentHandler
         {
-            internal abstract unsafe void SetAllowed(void* dataPointer);
+            internal abstract unsafe void SetState(void* dataPointer, DeferredLoadingState state);
 
             internal abstract void Update(World world, List<IntentionData> loadingIntentions);
         }
@@ -67,10 +67,10 @@ namespace ECS.StreamableLoading.DeferredLoading
                 }
             }
 
-            internal override unsafe void SetAllowed(void* dataPointer)
+            internal override unsafe void SetState(void* dataPointer, DeferredLoadingState state)
             {
                 ref TIntention intentionRef = ref UnsafeUtility.AsRef<TIntention>(dataPointer);
-                intentionRef.SetAllowed();
+                intentionRef.SetDeferredState(state);
             }
         }
 
@@ -94,18 +94,31 @@ namespace ECS.StreamableLoading.DeferredLoading
             foreach (ComponentHandler componentHandler in componentHandlers)
                 componentHandler.Update(World, loadingIntentions);
 
+            if (loadingIntentions.Count == 0) return;
+
             loadingIntentions.Sort(static (p1, p2) => p1.PartitionComponent.CompareTo(p2.PartitionComponent));
             AnalyzeBudget();
         }
 
         private unsafe void AnalyzeBudget()
         {
-            foreach (IntentionData intentionToAnalyze in loadingIntentions)
+            int i;
+
+            for (i = 0; i < loadingIntentions.Count; i++)
             {
+                IntentionData intentionToAnalyze = loadingIntentions[i];
+
                 if (!concurrentLoadingBudgetProvider.TrySpendBudget())
                     break;
 
-                intentionToAnalyze.Handler.SetAllowed(intentionToAnalyze.IntentionDataPointer);
+                intentionToAnalyze.Handler.SetState(intentionToAnalyze.IntentionDataPointer, DeferredLoadingState.Allowed);
+            }
+
+            // Set Forbidden for the rest
+            for (; i < loadingIntentions.Count; i++)
+            {
+                IntentionData intentionToAnalyze = loadingIntentions[i];
+                intentionToAnalyze.Handler.SetState(intentionToAnalyze.IntentionDataPointer, DeferredLoadingState.Forbidden);
             }
         }
 

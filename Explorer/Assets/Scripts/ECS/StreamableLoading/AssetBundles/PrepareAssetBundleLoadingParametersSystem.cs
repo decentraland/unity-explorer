@@ -39,6 +39,8 @@ namespace ECS.StreamableLoading.AssetBundles
         // If loading is not started yet and there is no result
         private void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention)
         {
+            if (assetBundleIntention.CommonArguments.DeferredLoadingState != DeferredLoadingState.NotEvaluated) return;
+
             // Remove not supported flags
             assetBundleIntention.RemovePermittedSource(AssetSource.ADDRESSABLE); // addressables are not implemented
 
