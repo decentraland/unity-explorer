@@ -1,6 +1,8 @@
 ﻿using Ipfs;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using Utility;
 
 namespace ECS.SceneLifeCycle.SceneDefinition
 {
@@ -13,6 +15,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         // This allocation is left on purpose as realm switching will lead to GC so we can keep things simple
         public readonly IReadOnlyList<Vector2Int> Parcels;
+        public readonly IReadOnlyList<ParcelMathHelper.ParcelCorners> ParcelsCorners;
         public readonly IpfsTypes.IpfsPath IpfsPath;
         public readonly bool IsEmpty;
 
@@ -20,6 +23,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         {
             Definition = definition;
             Parcels = parcels;
+            ParcelsCorners = new List<ParcelMathHelper.ParcelCorners>(parcels.Select(ParcelMathHelper.CalculateCorners));
             IpfsPath = ipfsPath;
             IsEmpty = false;
         }
@@ -29,6 +33,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         /// </summary>
         public SceneDefinitionComponent(Vector2Int parcel)
         {
+            ParcelsCorners = new[] { ParcelMathHelper.CalculateCorners(parcel) };
             Parcels = new[] { parcel };
             IsEmpty = true;
             IpfsPath = default(IpfsTypes.IpfsPath);

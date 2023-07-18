@@ -30,5 +30,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         public override int GetHashCode() =>
             IpfsPath.EntityId.GetHashCode();
+
+        public override string ToString() =>
+            $"Get Scene Definition: {IpfsPath.ToString()}, {CommonArguments.URL}";
     }
 }

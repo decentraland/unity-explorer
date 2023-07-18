@@ -1,5 +1,6 @@
 ﻿using DCL.ECSComponents;
 using Decentraland.Common;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -52,7 +53,7 @@ namespace ECS.Unity.Materials.Tests
         {
             PBMaterial material = CreatePBRMaterial1();
 
-            Entity e = world.Create(material);
+            Entity e = world.Create(material, PartitionComponent.TOP_PRIORITY);
 
             system.Update(0);
 
@@ -71,7 +72,7 @@ namespace ECS.Unity.Materials.Tests
         {
             PBMaterial basic = CreateBasicMaterial();
 
-            Entity e = world.Create(basic);
+            Entity e = world.Create(basic, PartitionComponent.TOP_PRIORITY);
 
             system.Update(0);
 
@@ -99,7 +100,7 @@ namespace ECS.Unity.Materials.Tests
         {
             PBMaterial material1 = CreatePBRMaterial1();
 
-            Entity e = world.Create(material1);
+            Entity e = world.Create(material1, PartitionComponent.TOP_PRIORITY);
 
             // First run -> create material component
 
@@ -131,7 +132,7 @@ namespace ECS.Unity.Materials.Tests
         {
             PBMaterial material1 = CreatePBRMaterial1();
 
-            Entity e = world.Create(material1);
+            Entity e = world.Create(material1, PartitionComponent.TOP_PRIORITY);
 
             // First run -> create material component
 
@@ -162,7 +163,7 @@ namespace ECS.Unity.Materials.Tests
         {
             PBMaterial sdkComponent = CreateBasicMaterial();
 
-            Entity e = world.Create(sdkComponent);
+            Entity e = world.Create(sdkComponent, PartitionComponent.TOP_PRIORITY);
 
             system.Update(0);
 
@@ -177,7 +178,7 @@ namespace ECS.Unity.Materials.Tests
         {
             PBMaterial sdkComponent = CreatePBRMaterial1();
 
-            Entity e = world.Create(sdkComponent);
+            Entity e = world.Create(sdkComponent, PartitionComponent.TOP_PRIORITY);
 
             system.Update(0);
 
@@ -195,7 +196,7 @@ namespace ECS.Unity.Materials.Tests
         {
             PBMaterial material1 = CreatePBRMaterial1();
 
-            Entity e = world.Create(material1);
+            Entity e = world.Create(material1, PartitionComponent.TOP_PRIORITY);
 
             // First run -> create material component
 
@@ -209,7 +210,7 @@ namespace ECS.Unity.Materials.Tests
             c.Status = MaterialComponent.LifeCycle.LoadingInProgress;
 
             // Add entity reference
-            var texPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention { CommonArguments = new CommonLoadingArguments("URL") });
+            var texPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention { CommonArguments = new CommonLoadingArguments("URL") }, PartitionComponent.TOP_PRIORITY);
             c.AlphaTexPromise = texPromise;
 
             // Second run -> release promise

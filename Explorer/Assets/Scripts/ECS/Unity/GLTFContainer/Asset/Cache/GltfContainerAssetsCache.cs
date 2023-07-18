@@ -1,4 +1,6 @@
-﻿using ECS.StreamableLoading.Cache;
+﻿using Cysharp.Threading.Tasks;
+using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
 using System.Collections.Generic;
@@ -27,6 +29,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             parentContainerGo.SetActive(false);
             parentContainer = parentContainerGo.transform;
         }
+
+        public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>> OngoingRequests => throw new NotImplementedException($"{nameof(GltfContainerAssetsCache)} doesn't support web requests directly");
 
         public bool TryGet(in string key, out GltfContainerAsset asset)
         {

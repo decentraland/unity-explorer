@@ -1,20 +1,22 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Ipfs;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
-using Utility.Pool;
+using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
 {
     /// <summary>
-    ///     In case realm does not provide a fixed list of scenes scenes are loaded by radius
-    ///     (this system will be changed for prioritisation)
+    ///     In case realm does not provide a fixed list of scenes scenes are loaded by radius,
+    ///     Radius is gradually increased until the limit is reached (TODO)
     /// </summary>
     [UpdateInGroup(typeof(RealmGroup))]
     [UpdateAfter(typeof(CalculateParcelsInRangeSystem))]
@@ -27,22 +29,7 @@ namespace ECS.SceneLifeCycle.Systems
             // Resolve the current promise
             ResolveActivePromiseQuery(World);
 
-            InitiateDefinitionsLoadingQuery(World);
             StartLoadingInRadiusQuery(World);
-        }
-
-        [Query]
-        [All(typeof(ParcelsInRange))]
-        [None(typeof(VolatileScenePointers), typeof(StaticScenePointers))]
-        private void InitiateDefinitionsLoading(in Entity entity, ref RealmComponent realmComponent)
-        {
-            if (realmComponent.ScenesAreFixed) return;
-
-            // Tolerate allocation - once per realm only
-            World.Add(entity, new VolatileScenePointers(
-                new List<IpfsTypes.SceneEntityDefinition>(PoolConstants.SCENES_COUNT),
-                new HashSet<Vector2Int>(PoolConstants.SCENES_COUNT * 4),
-                new List<Vector2Int>(PoolConstants.SCENES_COUNT)));
         }
 
         [Query]
@@ -54,9 +41,9 @@ namespace ECS.SceneLifeCycle.Systems
             if (volatileScenePointers.ActivePromise != null) return;
 
             // Check that there are no created scenes definitions for desired parcels already
-            List<Vector2Int> input = volatileScenePointers.InputReusableList;
+            List<int2> input = volatileScenePointers.InputReusableList;
 
-            foreach (Vector2Int parcel in parcelsInRange.Value)
+            foreach (int2 parcel in parcelsInRange.Value)
             {
                 if (!volatileScenePointers.ProcessedParcels.Contains(parcel))
                     input.Add(parcel);
@@ -66,7 +53,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             volatileScenePointers.ActivePromise
                 = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
-                    new GetSceneDefinitionList(volatileScenePointers.RetrievedReusableList, input, new CommonLoadingArguments(realm.Ipfs.EntitiesActiveEndpoint)));
+                    new GetSceneDefinitionList(volatileScenePointers.RetrievedReusableList, input, new CommonLoadingArguments(realm.Ipfs.EntitiesActiveEndpoint)), PartitionComponent.TOP_PRIORITY);
         }
 
         [Query]
@@ -79,7 +66,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (!promise.TryConsume(World, out StreamableLoadingResult<SceneDefinitions> result)) return;
 
             // contains the list of parcels that were requested
-            IReadOnlyList<Vector2Int> requestedList = promise.LoadingIntention.Pointers;
+            IReadOnlyList<int2> requestedList = promise.LoadingIntention.Pointers;
 
             if (result.Succeeded)
             {
@@ -93,25 +80,22 @@ namespace ECS.SceneLifeCycle.Systems
                     CreateSceneEntity(scene, new IpfsTypes.IpfsPath(scene.id, string.Empty), out Vector2Int[] sceneParcels);
 
                     for (var j = 0; j < sceneParcels.Length; j++)
-                        volatileScenePointers.ProcessedParcels.Add(sceneParcels[j]);
+                        volatileScenePointers.ProcessedParcels.Add(sceneParcels[j].ToInt2());
                 }
 
                 // Empty parcels = parcels for which no scene pointers were retrieved
                 for (var i = 0; i < requestedList.Count; i++)
                 {
-                    Vector2Int parcel = requestedList[i];
+                    int2 parcel = requestedList[i];
                     if (!volatileScenePointers.ProcessedParcels.Add(parcel)) continue;
-                    World.Create(new SceneDefinitionComponent(parcel));
+                    World.Create(new SceneDefinitionComponent(parcel.ToVector2Int()));
                 }
             }
             else
             {
                 // Signal that those parcels should not be requested again
                 for (var i = 0; i < requestedList.Count; i++)
-                {
-                    Vector2Int failedParcel = requestedList[i];
-                    volatileScenePointers.ProcessedParcels.Add(failedParcel);
-                }
+                    volatileScenePointers.ProcessedParcels.Add(requestedList[i]);
             }
 
             volatileScenePointers.ActivePromise = null;

@@ -1,15 +1,12 @@
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Engine;
-using Diagnostics;
-using Diagnostics.ReportsHandling;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using SceneRunner;
 using SceneRunner.ECSWorld;
 using SceneRunner.ECSWorld.Plugins;
 using SceneRuntime.Factory;
 using System;
-using UnityEngine;
 
 namespace Global
 {
@@ -19,24 +16,30 @@ namespace Global
     /// </summary>
     public class SceneSharedContainer : IDisposable
     {
-        public ISceneFactory SceneFactory { get; internal init; }
+        public ISceneFactory SceneFactory { get; private set; }
 
-        public DiagnosticsContainer DiagnosticsContainer { get; internal init; }
+        public void Dispose() { }
 
-        public static SceneSharedContainer Create(in ComponentsContainer componentsContainer, IReportsHandlingSettings reportsHandlingSettings)
+        public static SceneSharedContainer Create(in StaticContainer staticContainer)
         {
             var entityFactory = new EntityFactory();
 
-            var sharedDependencies = new ECSWorldSingletonSharedDependencies(componentsContainer.ComponentPoolsRegistry, reportsHandlingSettings, entityFactory, new ConcurrentLoadingBudgetProvider(100));
+            var sharedDependencies = new ECSWorldSingletonSharedDependencies(staticContainer.ComponentsContainer.ComponentPoolsRegistry,
+                staticContainer.ReportsHandlingSettings,
+                entityFactory,
+                staticContainer.WorldsAggregateFactory,
+                new ConcurrentLoadingBudgetProvider(10));
 
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
+                staticContainer.PartitionSettings,
+                staticContainer.CameraSamplingData,
                 new TransformsPlugin(sharedDependencies),
                 new MaterialsPlugin(),
                 new PrimitiveCollidersPlugin(sharedDependencies),
                 new TexturesLoadingPlugin(sharedDependencies.LoadingBudgetProvider),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
-                new AssetBundlesPlugin(reportsHandlingSettings, sharedDependencies.LoadingBudgetProvider),
+                new AssetBundlesPlugin(staticContainer.ReportsHandlingSettings, sharedDependencies.LoadingBudgetProvider),
                 new GltfContainerPlugin(sharedDependencies));
 
             return new SceneSharedContainer
@@ -46,16 +49,10 @@ namespace Global
                     new SceneRuntimeFactory(),
                     new SharedPoolsProvider(),
                     new CRDTSerializer(),
-                    componentsContainer.SDKComponentsRegistry,
+                    staticContainer.ComponentsContainer.SDKComponentsRegistry,
                     entityFactory
                 ),
-                DiagnosticsContainer = DiagnosticsContainer.Create(reportsHandlingSettings),
             };
-        }
-
-        public void Dispose()
-        {
-            DiagnosticsContainer.Dispose();
         }
     }
 }

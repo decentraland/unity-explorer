@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using DCL.ECSComponents;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -51,7 +52,7 @@ namespace ECS.Unity.GLTFContainer.Tests
                 VisibleMeshesCollisionMask = (uint)ColliderLayer.ClPointer,
             };
 
-            Entity entity = world.Create(sdkComponent);
+            Entity entity = world.Create(sdkComponent, PartitionComponent.TOP_PRIORITY);
 
             system.Update(0);
 
@@ -69,7 +70,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             StreamableLoadingResult<AssetBundleData> assetBundleData = await resources.LoadAssetBundle(hash);
 
             // Just pass it through another system for simplicity, otherwise there is too much logic to replicate
-            world.Add(promiseEntity, assetBundleData);
+            world.Add(promiseEntity, assetBundleData, PartitionComponent.TOP_PRIORITY);
             createGltfAssetFromAssetBundleSystem.Update(0);
         }
 
@@ -80,14 +81,14 @@ namespace ECS.Unity.GLTFContainer.Tests
         {
             var component = new GltfContainerComponent(ColliderLayer.ClNone, from ? ColliderLayer.ClPointer : ColliderLayer.ClNone,
                 AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
-                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SCENE_WITH_COLLIDER, new CancellationTokenSource())));
+                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SCENE_WITH_COLLIDER, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY));
 
             await InstantiateAssetBundle(GltfContainerTestResources.SCENE_WITH_COLLIDER, component.Promise.Entity);
 
             component.State.Set(LoadingState.Finished);
             component.Promise.TryConsume(world, out StreamableLoadingResult<GltfContainerAsset> result);
 
-            Entity e = world.Create(component, new PBGltfContainer { Src = GltfContainerTestResources.SCENE_WITH_COLLIDER });
+            Entity e = world.Create(component, new PBGltfContainer { Src = GltfContainerTestResources.SCENE_WITH_COLLIDER }, PartitionComponent.TOP_PRIORITY);
             TransformComponent transformComponent = AddTransformToEntity(e);
 
             ConfigureGltfContainerColliders.SetupColliders(ref component, result.Asset);
@@ -113,9 +114,9 @@ namespace ECS.Unity.GLTFContainer.Tests
         {
             var component = new GltfContainerComponent(ColliderLayer.ClNone, ColliderLayer.ClNone,
                 AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
-                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SCENE_WITH_COLLIDER, new CancellationTokenSource())));
+                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SCENE_WITH_COLLIDER, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY));
 
-            Entity e = world.Create(component, new PBGltfContainer { Src = GltfContainerTestResources.SIMPLE_RENDERER, IsDirty = true });
+            Entity e = world.Create(component, new PBGltfContainer { Src = GltfContainerTestResources.SIMPLE_RENDERER, IsDirty = true }, PartitionComponent.TOP_PRIORITY);
             AddTransformToEntity(e);
 
             system.Update(0);
