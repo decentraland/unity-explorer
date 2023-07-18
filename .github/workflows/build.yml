@@ -9,6 +9,9 @@ env:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        target_platform: [StandaloneWindows64, StandaloneOSX]
     name: Build
     runs-on: ubuntu-latest
     steps:
@@ -31,11 +34,11 @@ jobs:
           git add .
           git reset --hard
 
-      # - name: Restore Library cache
-      #   uses: actions/cache@v2
-      #   with:
-      #     path: Explorer/Library
-      #     key: Library-Explorer-Windows
+      - name: Restore Library cache
+        uses: actions/cache@v2
+        with:
+          path: Explorer/Library
+          key: Library-Explorer-${{ matrix.target_platform }}
 
       # Configure test runner
       - uses: game-ci/unity-builder@v2
@@ -43,18 +46,10 @@ jobs:
         timeout-minutes: 45
         with:
           projectPath: Explorer
-          targetPlatform: StandaloneWindows64
-
-      - name: Print
-        run: |
-          ls -la
-          cd build/StandaloneWindows64
-          ls -la
-          echo 'Output Name: ${{ steps.build.outputs.outputName }}'
-          echo 'Project Version: ${{ steps.build.outputs.buildVersion }}'
+          targetPlatform: ${{ matrix.target_platform }}
 
       # Upload artifact
       - uses: actions/upload-artifact@v3
         with:
           name: Build
-          path: build/StandaloneWindows64
+          path: build
