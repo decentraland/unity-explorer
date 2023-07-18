@@ -12,54 +12,49 @@ namespace ECS.StreamableLoading.DeferredLoading
 {
     public abstract class DeferredLoadingSystem : BaseUnityLoopSystem
     {
-        internal unsafe struct IntentionData
+        private readonly IConcurrentBudgetProvider concurrentLoadingBudgetProvider;
+
+        private readonly List<IntentionData> loadingIntentions;
+
+        private readonly QueryDescription[] sameBoatQueries;
+
+        protected DeferredLoadingSystem(World world, QueryDescription[] sameBoatQueries, IConcurrentBudgetProvider concurrentLoadingBudgetProvider) : base(world)
         {
-            public PartitionComponent PartitionComponent;
-            public void* IntentionDataPointer;
-            public ComponentHandler Handler;
+            this.sameBoatQueries = sameBoatQueries;
+            this.concurrentLoadingBudgetProvider = concurrentLoadingBudgetProvider;
+            loadingIntentions = ListPool<IntentionData>.Get();
         }
 
-        /// <summary>
-        ///     Strongly typed handler for each component type for which deferred loading is enabled
-        /// </summary>
-        public abstract class ComponentHandler
+        protected static QueryDescription CreateQuery<TIntention, TAsset>() where TIntention: ILoadingIntention =>
+            new QueryDescription()
+               .WithAll<TIntention, IPartitionComponent, StreamableLoadingState>()
+               .WithNone<StreamableLoadingResult<TAsset>>();
+
+        protected override unsafe void Update(float t)
         {
-            internal abstract unsafe void SetAllowed(void* dataPointer);
+            loadingIntentions.Clear();
 
-            internal abstract void Update(World world, List<IntentionData> loadingIntentions);
-        }
-
-        /// <summary>
-        ///     It is state-less so we can have a single instance shared between multiple scenes
-        /// </summary>
-        /// <typeparam name="TAsset"></typeparam>
-        /// <typeparam name="TIntention"></typeparam>
-        public class ComponentHandler<TAsset, TIntention> : ComponentHandler where TIntention: struct, ILoadingIntention
-        {
-            private static readonly QueryDescription CREATE_LOADING_REQUEST = new QueryDescription()
-                                                                             .WithAll<TIntention, PartitionComponent>()
-                                                                             .WithNone<LoadingInProgress, StreamableLoadingResult<TAsset>>();
-
-            internal override unsafe void Update(World world, List<IntentionData> loadingIntentions)
+            // All types of intentions are weighed against each other all together, not each type individually
+            foreach (QueryDescription query in sameBoatQueries)
             {
-                foreach (ref Chunk chunk in world.Query(in CREATE_LOADING_REQUEST).GetChunkIterator())
+                foreach (ref Chunk chunk in World.Query(in query).GetChunkIterator())
                 {
-                    ref TIntention intentionFirstElement = ref chunk.GetFirst<TIntention>();
-                    ref PartitionComponent partitionFirstElement = ref chunk.GetFirst<PartitionComponent>();
+                    ref IPartitionComponent partitionFirstElement = ref chunk.GetFirst<IPartitionComponent>();
+                    ref StreamableLoadingState stateFirstElement = ref chunk.GetFirst<StreamableLoadingState>();
 
                     foreach (int entityIndex in chunk)
                     {
-                        ref PartitionComponent partition = ref Unsafe.Add(ref partitionFirstElement, entityIndex);
-                        ref TIntention intention = ref Unsafe.Add(ref intentionFirstElement, entityIndex);
+                        ref StreamableLoadingState state = ref Unsafe.Add(ref stateFirstElement, entityIndex);
+                        ref IPartitionComponent partition = ref Unsafe.Add(ref partitionFirstElement, entityIndex);
 
-                        if (intention.IsAllowed())
+                        // Process only not evaluated and explicitly forbidden entities
+                        if (state.Value is not (StreamableLoadingState.Status.NotStarted or StreamableLoadingState.Status.Forbidden))
                             continue;
 
                         var intentionData = new IntentionData
                         {
+                            StatePointer = UnsafeUtility.AddressOf(ref state),
                             PartitionComponent = partition,
-                            IntentionDataPointer = UnsafeUtility.AddressOf(ref intention),
-                            Handler = this,
                         };
 
                         loadingIntentions.Add(intentionData);
@@ -67,32 +62,7 @@ namespace ECS.StreamableLoading.DeferredLoading
                 }
             }
 
-            internal override unsafe void SetAllowed(void* dataPointer)
-            {
-                ref TIntention intentionRef = ref UnsafeUtility.AsRef<TIntention>(dataPointer);
-                intentionRef.SetAllowed();
-            }
-        }
-
-        private readonly IConcurrentBudgetProvider concurrentLoadingBudgetProvider;
-        private readonly ComponentHandler[] componentHandlers;
-
-        private readonly List<IntentionData> loadingIntentions;
-
-        protected DeferredLoadingSystem(World world, ComponentHandler[] componentHandlers, IConcurrentBudgetProvider concurrentLoadingBudgetProvider) : base(world)
-        {
-            this.componentHandlers = componentHandlers;
-            this.concurrentLoadingBudgetProvider = concurrentLoadingBudgetProvider;
-            loadingIntentions = ListPool<IntentionData>.Get();
-        }
-
-        protected override void Update(float t)
-        {
-            loadingIntentions.Clear();
-
-            // All types of intentions are weighed against each other all together, not each type individually
-            foreach (ComponentHandler componentHandler in componentHandlers)
-                componentHandler.Update(World, loadingIntentions);
+            if (loadingIntentions.Count == 0) return;
 
             loadingIntentions.Sort(static (p1, p2) => p1.PartitionComponent.CompareTo(p2.PartitionComponent));
             AnalyzeBudget();
@@ -100,12 +70,25 @@ namespace ECS.StreamableLoading.DeferredLoading
 
         private unsafe void AnalyzeBudget()
         {
-            foreach (IntentionData intentionToAnalyze in loadingIntentions)
+            int i;
+
+            for (i = 0; i < loadingIntentions.Count; i++)
             {
+                IntentionData intentionToAnalyze = loadingIntentions[i];
+
                 if (!concurrentLoadingBudgetProvider.TrySpendBudget())
                     break;
 
-                intentionToAnalyze.Handler.SetAllowed(intentionToAnalyze.IntentionDataPointer);
+                ref StreamableLoadingState state = ref UnsafeUtility.AsRef<StreamableLoadingState>(intentionToAnalyze.StatePointer);
+                state.SetAllowed(AcquiredBudget.Create(concurrentLoadingBudgetProvider));
+            }
+
+            // Set the rest to forbidden
+            for (; i < loadingIntentions.Count; i++)
+            {
+                IntentionData intentionToAnalyze = loadingIntentions[i];
+                ref StreamableLoadingState state = ref UnsafeUtility.AsRef<StreamableLoadingState>(intentionToAnalyze.StatePointer);
+                state.Value = StreamableLoadingState.Status.Forbidden;
             }
         }
 
@@ -113,6 +96,12 @@ namespace ECS.StreamableLoading.DeferredLoading
         {
             base.Dispose();
             ListPool<IntentionData>.Release(loadingIntentions);
+        }
+
+        internal unsafe struct IntentionData
+        {
+            public IPartitionComponent PartitionComponent;
+            public void* StatePointer;
         }
     }
 }

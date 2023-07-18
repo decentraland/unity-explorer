@@ -1,7 +1,7 @@
 ﻿using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using System.Collections.Generic;
-using UnityEngine;
+using Unity.Mathematics;
 
 namespace ECS.SceneLifeCycle.Components
 {
@@ -10,11 +10,11 @@ namespace ECS.SceneLifeCycle.Components
     /// </summary>
     public struct StaticScenePointers
     {
-        public readonly IReadOnlyList<Vector2Int> Value;
+        public readonly IReadOnlyList<int2> Value;
 
         public AssetPromise<SceneDefinitions, GetSceneDefinitionList>? Promise;
 
-        public StaticScenePointers(IReadOnlyList<Vector2Int> value)
+        public StaticScenePointers(IReadOnlyList<int2> value)
         {
             Value = value;
             Promise = null;

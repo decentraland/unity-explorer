@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using DCL.ECSComponents;
 using ECS.LifeCycle.Components;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -31,7 +32,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         {
             var sdkComponent = new PBGltfContainer { IsDirty = true, Src = "2" };
             var c = new GltfContainerComponent();
-            c.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention("1", new CancellationTokenSource()));
+            c.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention("1", new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY);
             world.Add(c.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(GltfContainerAsset.Create(new GameObject())));
             c.State.Set(LoadingState.Finished);
 

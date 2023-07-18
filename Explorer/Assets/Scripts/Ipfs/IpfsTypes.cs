@@ -121,6 +121,9 @@ namespace Ipfs
 
                 return defaultContentUrl + EntityId;
             }
+
+            public override string ToString() =>
+                $"IpfsPath (EntityId: {EntityId}, BaseUrl: {BaseUrl})";
         }
     }
 }

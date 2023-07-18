@@ -12,6 +12,7 @@ using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using ECS.Prioritization.Components;
 using Ipfs;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
@@ -52,7 +53,7 @@ namespace SceneRunner
             this.entityFactory = entityFactory;
         }
 
-        public async UniTask<ISceneFacade> CreateSceneFromFile(string jsCodeUrl, CancellationToken ct)
+        public async UniTask<ISceneFacade> CreateSceneFromFile(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct)
         {
             var sceneDefinition = new IpfsTypes.SceneEntityDefinition();
 
@@ -67,10 +68,10 @@ namespace SceneRunner
 
             var sceneData = new SceneData(new LocalIpfsRealm(baseUrl), sceneDefinition, false, SceneAssetBundleManifest.NULL);
 
-            return await CreateScene(sceneData, ct);
+            return await CreateScene(sceneData, partitionProvider, ct);
         }
 
-        public async UniTask<ISceneFacade> CreateSceneFromStreamableDirectory(string directoryName, CancellationToken ct)
+        public async UniTask<ISceneFacade> CreateSceneFromStreamableDirectory(string directoryName, IPartitionComponent partitionProvider, CancellationToken ct)
         {
             const string SCENE_JSON_FILE_NAME = "scene.json";
 
@@ -91,17 +92,13 @@ namespace SceneRunner
 
             var sceneData = new SceneData(new LocalIpfsRealm(fullPath), sceneDefinition, false, SceneAssetBundleManifest.NULL);
 
-            return await CreateScene(sceneData, ct);
+            return await CreateScene(sceneData, partitionProvider, ct);
         }
 
-        public async UniTask<ISceneFacade> CreateSceneFromSceneDefinition(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, SceneAssetBundleManifest abManifest, string contentBaseUrl, CancellationToken ct)
-        {
-            var sceneData = new SceneData(ipfsRealm, sceneDefinition, true, abManifest, contentBaseUrl);
+        public UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct) =>
+            CreateScene(sceneData, partitionProvider, ct);
 
-            return await CreateScene(sceneData, ct);
-        }
-
-        private async UniTask<ISceneFacade> CreateScene(ISceneData sceneData, CancellationToken ct)
+        private async UniTask<ISceneFacade> CreateScene(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)
         {
             var entitiesMap = new Dictionary<CRDTEntity, Entity>(1000, CRDTEntityComparer.INSTANCE);
 
@@ -120,7 +117,7 @@ namespace SceneRunner
             /* Pass dependencies here if they are needed by the systems */
             var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, ecsToCrdtWriter, entitiesMap, exceptionsHandler, ecsMutexSync);
 
-            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(in instanceDependencies, systemGroupThrottler);
+            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(in instanceDependencies, systemGroupThrottler, in partitionProvider);
             ecsWorldFacade.Initialize();
 
             // Create an instance of Scene Runtime on the thread pool
@@ -151,7 +148,8 @@ namespace SceneRunner
                 instancePoolsProvider,
                 crdtMemoryAllocator,
                 exceptionsHandler,
-                sceneStateProvider);
+                sceneStateProvider,
+                sceneData);
         }
     }
 }
