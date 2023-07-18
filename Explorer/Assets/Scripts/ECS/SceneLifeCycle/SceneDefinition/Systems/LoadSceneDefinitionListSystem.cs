@@ -31,10 +31,10 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         // There is no cache for the list but a cache per entity that is stored in ECS itself
         internal LoadSceneDefinitionListSystem(World world, IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache,
-            MutexSync mutexSync, IConcurrentBudgetProvider concurrentBudgetProvider)
-            : base(world, cache, mutexSync, concurrentBudgetProvider) { }
+            MutexSync mutexSync)
+            : base(world, cache, mutexSync) { }
 
-        protected override async UniTask<StreamableLoadingResult<SceneDefinitions>> FlowInternal(GetSceneDefinitionList intention, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<SceneDefinitions>> FlowInternal(GetSceneDefinitionList intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             bodyBuilder.Clear();
             bodyBuilder.Append("{\"pointers\":[");

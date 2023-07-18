@@ -37,7 +37,7 @@ namespace ECS.StreamableLoading.Common
             new ()
             {
                 LoadingIntention = loadingIntention,
-                Entity = world.Reference(world.Create(loadingIntention, partition)),
+                Entity = world.Reference(world.Create(loadingIntention, partition, new StreamableLoadingState())),
             };
 
         /// <summary>

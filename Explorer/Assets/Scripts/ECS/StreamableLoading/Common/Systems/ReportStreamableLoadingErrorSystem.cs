@@ -15,11 +15,9 @@ namespace ECS.StreamableLoading.Common.Systems
     {
         private const LogType LOG_TYPE = LogType.Exception;
 
-        private readonly IReportsHandlingSettings settings;
+        private static readonly QueryDescription QUERY = new QueryDescription().WithAll<TIntention, StreamableLoadingResult<TAsset>>();
 
-        private static readonly QueryDescription QUERY = new QueryDescription()
-                                                        .WithAll<TIntention, StreamableLoadingResult<TAsset>>()
-                                                        .WithNone<LoadingInProgress>();
+        private readonly IReportsHandlingSettings settings;
 
         private TryReport tryReport;
 

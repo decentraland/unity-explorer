@@ -6,6 +6,7 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using Ipfs;
 using SceneRunner.Scene;
 using System;
@@ -53,7 +54,7 @@ namespace Global.Dynamic
 
             await UnloadCurrentRealm(globalWorld);
 
-            async UniTask<StreamableLoadingResult<IpfsTypes.ServerAbout>> CreateServerAboutRequest(SubIntention intention, IPartitionComponent partition, CancellationToken ct)
+            async UniTask<StreamableLoadingResult<IpfsTypes.ServerAbout>> CreateServerAboutRequest(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
             {
                 UnityWebRequest wr = await UnityWebRequest.Get(intention.CommonArguments.URL).SendWebRequest().WithCancellation(ct);
                 string text = wr.downloadHandler.text;
@@ -65,7 +66,7 @@ namespace Global.Dynamic
             }
 
             var intent = new SubIntention(new CommonLoadingArguments(realm + "/about"));
-            IpfsTypes.ServerAbout result = (await intent.RepeatLoop(PartitionComponent.TOP_PRIORITY, CreateServerAboutRequest, ReportCategory.REALM, ct)).UnwrapAndRethrow();
+            IpfsTypes.ServerAbout result = (await intent.RepeatLoop(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateServerAboutRequest, ReportCategory.REALM, ct)).UnwrapAndRethrow();
 
             // Add the realm component
             var realmComp = new RealmComponent(new IpfsRealm(realm, result));

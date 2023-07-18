@@ -1,6 +1,5 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
-using AssetManagement;
 using Cysharp.Threading.Tasks;
 using Diagnostics.ReportsHandling;
 using ECS.Prioritization.Components;
@@ -31,9 +30,7 @@ namespace ECS.StreamableLoading.AssetBundles
         private const string METADATA_FILENAME = "metadata.json";
         private const string METRICS_FILENAME = "metrics.json";
 
-
-        internal LoadAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache, MutexSync mutexSync, IConcurrentBudgetProvider loadingBudgetProvider) : base(world, cache, mutexSync, loadingBudgetProvider)
-        { }
+        internal LoadAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync) { }
 
         private async UniTask LoadDependencies(IPartitionComponent partition, AssetBundle assetBundle, CancellationToken ct)
         {
@@ -58,7 +55,7 @@ namespace ECS.StreamableLoading.AssetBundles
             }
         }
 
-        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternal(GetAssetBundleIntention intention, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternal(GetAssetBundleIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             UnityWebRequest webRequest = intention.cacheHash.HasValue
                 ? UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL, intention.cacheHash.Value)
@@ -68,11 +65,11 @@ namespace ECS.StreamableLoading.AssetBundles
             AssetBundle assetBundle = DownloadHandlerAssetBundle.GetContent(webRequest);
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
-            ReleaseBudget();
+            acquiredBudget.Release();
 
             // if GetContent prints an error, null will be thrown
             if (assetBundle == null)
-                throw new NullReferenceException($"{intention.Hash} Asset Bundle is null");
+                throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {webRequest.downloadHandler.error}");
 
             // get metrics
             TextAsset metricsFile = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME);
@@ -109,9 +106,9 @@ namespace ECS.StreamableLoading.AssetBundles
 
             try
             {
-                AssetPromise<AssetBundleData, GetAssetBundleIntention> depPromise = await assetBundlePromise.ToUniTask(World, cancellationToken: ct);
+                assetBundlePromise = await assetBundlePromise.ToUniTask(World, cancellationToken: ct);
 
-                if (!depPromise.TryGetResult(World, out StreamableLoadingResult<AssetBundleData> depResult))
+                if (!assetBundlePromise.TryGetResult(World, out StreamableLoadingResult<AssetBundleData> depResult))
                     throw new Exception($"Dependency {hash} is not resolved");
 
                 if (!depResult.Succeeded)

@@ -15,7 +15,6 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
-using Utility;
 using Utility.Multithreading;
 
 namespace ECS.SceneLifeCycle
@@ -31,15 +30,13 @@ namespace ECS.SceneLifeCycle
         private readonly ISceneFactory sceneFactory;
 
         internal LoadSceneSystem(World world, string assetBundleURL,
-            ISceneFactory sceneFactory, IStreamableCache<ISceneFacade, GetSceneFacadeIntention> cache,
-            IConcurrentBudgetProvider concurrentBudgetProvider,
-            MutexSync mutexSync) : base(world, cache, mutexSync, concurrentBudgetProvider)
+            ISceneFactory sceneFactory, IStreamableCache<ISceneFacade, GetSceneFacadeIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync)
         {
             this.assetBundleURL = assetBundleURL;
             this.sceneFactory = sceneFactory;
         }
 
-        protected override async UniTask<StreamableLoadingResult<ISceneFacade>> FlowInternal(GetSceneFacadeIntention intention, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<ISceneFacade>> FlowInternal(GetSceneFacadeIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             // Before a scene can be ever loaded the asset bundle manifest should be retrieved
             UniTask<SceneAssetBundleManifest> loadAssetBundleManifest = LoadAssetBundleManifest(intention.IpfsPath.EntityId, ct);
@@ -62,13 +59,13 @@ namespace ECS.SceneLifeCycle
             var subIntent = new SubIntention(new CommonLoadingArguments($"{assetBundleURL}manifest/{sceneId}{PlatformUtils.GetPlatform()}.json"));
 
             // Repeat loop for this request only
-            async UniTask<StreamableLoadingResult<string>> InnerFlow(SubIntention subIntention, IPartitionComponent partition, CancellationToken ct)
+            async UniTask<StreamableLoadingResult<string>> InnerFlow(SubIntention subIntention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
             {
                 UnityWebRequest wr = await UnityWebRequest.Get(subIntention.CommonArguments.URL).SendWebRequest().WithCancellation(ct);
                 return new StreamableLoadingResult<string>(wr.downloadHandler.text);
             }
 
-            StreamableLoadingResult<string> result = (await subIntent.RepeatLoop(PartitionComponent.TOP_PRIORITY, InnerFlow, GetReportCategory(), ct)).Denullify();
+            StreamableLoadingResult<string> result = (await subIntent.RepeatLoop(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, InnerFlow, GetReportCategory(), ct)).Denullify();
 
             if (result.Succeeded)
             {
@@ -113,13 +110,13 @@ namespace ECS.SceneLifeCycle
             var subIntent = new SubIntention(new CommonLoadingArguments(contentBaseUrl + sceneJsonHash));
 
             // Repeat loop for this request only
-            async UniTask<StreamableLoadingResult<string>> InnerFlow(SubIntention subIntention, IPartitionComponent partition, CancellationToken ct)
+            async UniTask<StreamableLoadingResult<string>> InnerFlow(SubIntention subIntention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
             {
                 UnityWebRequest wr = await UnityWebRequest.Get(subIntention.CommonArguments.URL).SendWebRequest().WithCancellation(ct);
                 return new StreamableLoadingResult<string>(wr.downloadHandler.text);
             }
 
-            string result = (await subIntent.RepeatLoop(PartitionComponent.TOP_PRIORITY, InnerFlow, GetReportCategory(), ct)).UnwrapAndRethrow();
+            string result = (await subIntent.RepeatLoop(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, InnerFlow, GetReportCategory(), ct)).UnwrapAndRethrow();
 
             await UniTask.SwitchToThreadPool();
 

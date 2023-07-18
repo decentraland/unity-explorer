@@ -7,7 +7,6 @@ using SceneRunner.ECSWorld;
 using SceneRunner.ECSWorld.Plugins;
 using SceneRuntime.Factory;
 using System;
-using UnityEngine;
 
 namespace Global
 {
@@ -29,7 +28,7 @@ namespace Global
                 staticContainer.ReportsHandlingSettings,
                 entityFactory,
                 staticContainer.WorldsAggregateFactory,
-                new ConcurrentLoadingBudgetProvider(100));
+                new ConcurrentLoadingBudgetProvider(10));
 
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 staticContainer.PartitionSettings,

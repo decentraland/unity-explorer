@@ -36,7 +36,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             var intent = GetAssetBundleIntention.FromName("TEST", permittedSources: AssetSource.EMBEDDED);
 
-            Entity e = world.Create(intent);
+            Entity e = world.Create(intent, new StreamableLoadingState());
 
             system.Update(0);
 
@@ -52,7 +52,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         {
             var intent = GetAssetBundleIntention.FromHash("TEST", permittedSources: AssetSource.EMBEDDED | AssetSource.WEB);
 
-            Entity e = world.Create(intent);
+            Entity e = world.Create(intent, new StreamableLoadingState());
 
             system.Update(0);
 
@@ -69,7 +69,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest("http://www.fakepath.com/v1/", new SceneAbDto { files = new[] { "abcd" }, version = "200" }));
 
             var intent = GetAssetBundleIntention.FromHash("abcd", permittedSources: AssetSource.WEB);
-            Entity e = world.Create(intent);
+            Entity e = world.Create(intent, new StreamableLoadingState());
             system.Update(0);
 
             intent = world.Get<GetAssetBundleIntention>(e);
@@ -86,7 +86,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest("http://www.fakepath.com/v1/", new SceneAbDto { files = Array.Empty<string>() }));
 
             var intent = GetAssetBundleIntention.FromHash("abcd", permittedSources: AssetSource.WEB);
-            Entity e = world.Create(intent);
+            Entity e = world.Create(intent, new StreamableLoadingState());
 
             system.Update(0);
 

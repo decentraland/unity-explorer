@@ -23,11 +23,10 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     [LogCategory(ReportCategory.SCENE_LOADING)]
     public partial class LoadSceneDefinitionSystem : LoadSystemBase<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>
     {
-        internal LoadSceneDefinitionSystem(World world, IStreamableCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition> cache, MutexSync mutexSync,
-            IConcurrentBudgetProvider concurrentBudgetProvider)
-            : base(world, cache, mutexSync, concurrentBudgetProvider) { }
+        internal LoadSceneDefinitionSystem(World world, IStreamableCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition> cache, MutexSync mutexSync)
+            : base(world, cache, mutexSync) { }
 
-        protected override async UniTask<StreamableLoadingResult<IpfsTypes.SceneEntityDefinition>> FlowInternal(GetSceneDefinition intention, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<IpfsTypes.SceneEntityDefinition>> FlowInternal(GetSceneDefinition intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             var wr = UnityWebRequest.Get(intention.CommonArguments.URL);
             await wr.SendWebRequest().WithCancellation(ct);

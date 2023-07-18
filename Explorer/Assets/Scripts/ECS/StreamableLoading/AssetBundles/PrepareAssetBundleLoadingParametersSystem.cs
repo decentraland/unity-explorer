@@ -34,12 +34,12 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         [Query]
-        [None(typeof(LoadingInProgress), typeof(StreamableLoadingResult<AssetBundleData>))]
+        [None(typeof(StreamableLoadingResult<AssetBundleData>))]
 
         // If loading is not started yet and there is no result
-        private void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention)
+        private void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
         {
-            if (assetBundleIntention.CommonArguments.DeferredLoadingState != DeferredLoadingState.NotEvaluated) return;
+            if (state.Value != StreamableLoadingState.Status.NotStarted) return;
 
             // Remove not supported flags
             assetBundleIntention.RemovePermittedSource(AssetSource.ADDRESSABLE); // addressables are not implemented
@@ -76,7 +76,6 @@ namespace ECS.StreamableLoading.AssetBundles
                 // If Hash is already provided just use it, otherwise resolve by the content provider
                 if (!sceneData.AssetBundleManifest.Contains(assetBundleIntention.Hash))
                 {
-                    // TODO Errors reporting
                     // Add the failure to the entity
                     World.Add(entity, new StreamableLoadingResult<AssetBundleData>
                         (CreateException(new ArgumentException($"Asset Bundle {assetBundleIntention.Hash} {assetBundleIntention.Name} not found in the manifest"))));

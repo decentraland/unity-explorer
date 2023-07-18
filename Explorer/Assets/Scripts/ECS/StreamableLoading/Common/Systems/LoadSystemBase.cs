@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
+using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -23,40 +24,28 @@ namespace ECS.StreamableLoading.Common.Systems
     public abstract class LoadSystemBase<TAsset, TIntention> : BaseUnityLoopSystem where TIntention: struct, ILoadingIntention
     {
         private static readonly QueryDescription CREATE_WEB_REQUEST = new QueryDescription()
-                                                                     .WithAll<TIntention, IPartitionComponent>()
-                                                                     .WithNone<LoadingInProgress, StreamableLoadingResult<TAsset>>();
-
-        private static readonly AsyncLocal<bool> budgetReleased = new ();
-
-        private readonly Query query;
+                                                                     .WithAll<TIntention, IPartitionComponent, StreamableLoadingState>()
+                                                                     .WithNone<StreamableLoadingResult<TAsset>>();
 
         private readonly IStreamableCache<TAsset, TIntention> cache;
+
+        private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, TIntention> cachedInternalFlowDelegate;
+
+        private readonly Dictionary<string, StreamableLoadingResult<TAsset>> irrecoverableFailures;
 
         // asynchronous operations run independently on Update that is already synchronized
         // so they require explicit synchronisation
         private readonly MutexSync mutexSync;
 
-        private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, TIntention> cachedInternalFlowDelegate;
+        private readonly Query query;
 
         private CancellationTokenSource cancellationTokenSource;
 
-        private readonly IConcurrentBudgetProvider concurrentLoadingBudgetProvider;
-
-        /// <summary>
-        ///     Resolves the problem of having multiple requests to the same URL at a time
-        /// </summary>
-        private readonly Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>> cachedRequests;
-
-        private readonly Dictionary<string, StreamableLoadingResult<TAsset>> irrecoverableFailures;
-
-        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync, IConcurrentBudgetProvider concurrentLoadingBudgetProvider) : base(world)
+        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync) : base(world)
         {
             this.cache = cache;
             this.mutexSync = mutexSync;
-            this.concurrentLoadingBudgetProvider = concurrentLoadingBudgetProvider;
             query = World.Query(in CREATE_WEB_REQUEST);
-
-            cachedRequests = DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>.Get();
             irrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<TAsset>>.Get();
 
             cachedInternalFlowDelegate = FlowInternal;
@@ -72,7 +61,6 @@ namespace ECS.StreamableLoading.Common.Systems
             cancellationTokenSource.Cancel();
             cancellationTokenSource.Dispose();
 
-            DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>.Release(cachedRequests);
             DictionaryPool<string, StreamableLoadingResult<TAsset>>.Release(irrecoverableFailures);
         }
 
@@ -83,21 +71,23 @@ namespace ECS.StreamableLoading.Common.Systems
                 ref Entity entityFirstElement = ref chunk.Entity(0);
                 ref TIntention intentionFirstElement = ref chunk.GetFirst<TIntention>();
                 ref IPartitionComponent partitionComponentFirstElement = ref chunk.GetFirst<IPartitionComponent>();
+                ref StreamableLoadingState stateFirstElement = ref chunk.GetFirst<StreamableLoadingState>();
 
                 foreach (int entityIndex in chunk)
                 {
                     ref readonly Entity entity = ref Unsafe.Add(ref entityFirstElement, entityIndex);
                     ref TIntention intention = ref Unsafe.Add(ref intentionFirstElement, entityIndex);
                     ref IPartitionComponent partitionComponent = ref Unsafe.Add(ref partitionComponentFirstElement, entityIndex);
+                    ref StreamableLoadingState state = ref Unsafe.Add(ref stateFirstElement, entityIndex);
 
-                    Execute(in entity, ref intention, ref partitionComponent);
+                    Execute(in entity, ref state, ref intention, ref partitionComponent);
                 }
             }
         }
 
-        private void Execute(in Entity entity, ref TIntention intention, ref IPartitionComponent partitionComponent)
+        private void Execute(in Entity entity, ref StreamableLoadingState state, ref TIntention intention, ref IPartitionComponent partitionComponent)
         {
-            if (!intention.IsAllowed())
+            if (state.Value != StreamableLoadingState.Status.Allowed)
                 return;
 
             // Remove current source flag from the permitted sources
@@ -106,55 +96,44 @@ namespace ECS.StreamableLoading.Common.Systems
 
             // Try load from cache first
             if (TryLoadFromCache(in entity, in intention))
-            {
-                concurrentLoadingBudgetProvider.ReleaseBudget();
                 return;
-            }
 
             // If the given URL failed irrecoverably just return the failure
             if (irrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset> failure))
             {
-                World.Add(entity, failure);
-                concurrentLoadingBudgetProvider.ReleaseBudget();
+                FinalizeLoading(entity, intention, failure);
                 return;
             }
 
             // Indicate that loading has started
-            World.Add(entity, new LoadingInProgress());
+            state.Value = StreamableLoadingState.Status.InProgress;
 
-            Flow(entity, intention, partitionComponent, cancellationTokenSource.Token).Forget();
+            Flow(entity, intention, state.AcquiredBudget, partitionComponent, cancellationTokenSource.Token).Forget();
         }
 
-        private async UniTask Flow(Entity entity, TIntention intention, IPartitionComponent partition, CancellationToken disposalCt)
+        private async UniTask Flow(Entity entity, TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken disposalCt)
         {
+            StreamableLoadingResult<TAsset>? result = null;
+
             try
             {
-                budgetReleased.Value = false;
                 var requestIsNotFulfilled = true;
-                StreamableLoadingResult<TAsset>? result = null;
 
                 // if the request is cached wait for it
-                if (cachedRequests.TryGetValue(intention.CommonArguments.URL, out UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> cachedSource))
+                if (cache.OngoingRequests.TryGetValue(intention.CommonArguments.URL, out UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> cachedSource))
 
                     // if the cached request is cancelled it does not mean failure for the new intent
                     (requestIsNotFulfilled, result) = await cachedSource.Task.SuppressCancellationThrow();
 
                 // if this request must be cancelled by `intention.CommonArguments.CancellationToken` it will be cancelled after `if (!requestIsNotFulfilled)`
                 if (requestIsNotFulfilled)
-                    result = await CacheableFlow(intention, partition, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
-
-                using MutexSync.Scope sync = mutexSync.GetScope();
+                    result = await CacheableFlow(intention, acquiredBudget, partition, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
 
                 if (!result.HasValue)
-                {
-                    // Indicate that it should be grabbed by another system
-                    World.Remove<LoadingInProgress>(entity);
-                    World.Get<TIntention>(entity).SetDeferredState(DeferredLoadingState.NotEvaluated);
-                    return;
-                }
 
-                // Add result to ECS
-                World.Add(entity, result.Value);
+                    // Indicate that it should be grabbed by another system
+                    // finally will handle the rest
+                    return;
             }
             catch (OperationCanceledException)
             {
@@ -163,28 +142,44 @@ namespace ECS.StreamableLoading.Common.Systems
             catch (Exception e)
             {
                 // If we don't set an exception it will spin forever
-                using MutexSync.Scope sync = mutexSync.GetScope();
-                World.Add(entity, new StreamableLoadingResult<TAsset>(e));
-
+                result = new StreamableLoadingResult<TAsset>(e);
                 ReportException(e);
             }
             finally
             {
-                if (!budgetReleased.Value)
-                    concurrentLoadingBudgetProvider.ReleaseBudget();
+                await UniTask.SwitchToMainThread();
+                FinalizeLoading(entity, intention, result);
+            }
+        }
+
+        private void FinalizeLoading(in Entity entity, TIntention intention, StreamableLoadingResult<TAsset>? result)
+        {
+            using MutexSync.Scope sync = mutexSync.GetScope();
+            ref StreamableLoadingState state = ref World.Get<StreamableLoadingState>(entity);
+
+            state.DisposeBudget();
+
+            if (result.HasValue)
+            {
+                state.Value = StreamableLoadingState.Status.Finished;
+
+                // If we make a structural change before changing refs it will invalidate them, take care!!!
+                World.Add(entity, result.Value);
+
+                if (result.Value.Succeeded)
+                    ReportHub.Log(GetReportCategory(), $"{intention}'s successfully loaded");
+            }
+            else
+            {
+                // Indicate that it should be reevaluated
+                state.Value = StreamableLoadingState.Status.NotStarted;
             }
         }
 
         /// <summary>
         ///     All exceptions are handled by the upper functions, just do pure work
         /// </summary>
-        protected abstract UniTask<StreamableLoadingResult<TAsset>> FlowInternal(TIntention intention, IPartitionComponent partition, CancellationToken ct);
-
-        protected void ReleaseBudget()
-        {
-            concurrentLoadingBudgetProvider.ReleaseBudget();
-            budgetReleased.Value = true;
-        }
+        protected abstract UniTask<StreamableLoadingResult<TAsset>> FlowInternal(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct);
 
         /// <summary>
         ///     Can't move it to another system as the update cycle is not synchronized with systems but based on UniTasks
@@ -197,14 +192,14 @@ namespace ECS.StreamableLoading.Common.Systems
         /// <summary>
         ///     Part of the flow that can be reused by multiple intentions
         /// </summary>
-        private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlow(TIntention intention, IPartitionComponent partition, CancellationToken ct)
+        private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlow(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             var source = new UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
-            cachedRequests[intention.CommonArguments.URL] = source;
+            cache.OngoingRequests[intention.CommonArguments.URL] = source;
 
             try
             {
-                StreamableLoadingResult<TAsset>? result = await RepeatLoop(intention, partition, ct);
+                StreamableLoadingResult<TAsset>? result = await RepeatLoop(intention, acquiredBudget, partition, ct);
 
                 // Ensure that we returned to the main thread
                 await UniTask.SwitchToMainThread();
@@ -231,12 +226,18 @@ namespace ECS.StreamableLoading.Common.Systems
                 source.TrySetCanceled(operationCanceledException.CancellationToken);
                 throw;
             }
-            finally { cachedRequests.Remove(intention.CommonArguments.URL); }
+            finally
+            {
+                // If we don't switch to the main thread in finally we are in trouble because of
+                // race conditions in non-concurrent collections
+                await UniTask.SwitchToMainThread();
+                cache.OngoingRequests.Remove(intention.CommonArguments.URL);
+            }
         }
 
-        private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoop(TIntention intention, IPartitionComponent partition, CancellationToken ct)
+        private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoop(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            StreamableLoadingResult<TAsset>? result = await intention.RepeatLoop(partition, cachedInternalFlowDelegate, GetReportCategory(), ct);
+            StreamableLoadingResult<TAsset>? result = await intention.RepeatLoop(acquiredBudget, partition, cachedInternalFlowDelegate, GetReportCategory(), ct);
             return result is { Succeeded: false } ? SetIrrecoverableFailure(intention, result.Value) : result;
         }
 
@@ -250,7 +251,7 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             if (cache.TryGet(in intention, out TAsset asset))
             {
-                World.Add(entity, new StreamableLoadingResult<TAsset>(asset));
+                FinalizeLoading(entity, intention, new StreamableLoadingResult<TAsset>(asset));
                 return true;
             }
 
