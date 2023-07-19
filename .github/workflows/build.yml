@@ -11,9 +11,15 @@ jobs:
   build:
     strategy:
       matrix:
-        target_platform: [StandaloneWindows64, StandaloneOSX]
+        include:
+          - targetPlatform: StandaloneWindows64
+            dockerImage: windows-2019
+          - targetPlatform: StandaloneOSX
+            dockerImage: macos-latest
+
+
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.dockerImage }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -38,18 +44,22 @@ jobs:
         uses: actions/cache@v2
         with:
           path: Explorer/Library
-          key: Library-Explorer-${{ matrix.target_platform }}
+          key: Library-Explorer-${{ matrix.targetPlatform }}
 
       # Configure test runner
       - uses: game-ci/unity-builder@v2
         id: build
         timeout-minutes: 45
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           projectPath: Explorer
-          targetPlatform: ${{ matrix.target_platform }}
+          targetPlatform: ${{ matrix.targetPlatform }}
 
       # Upload artifact
       - uses: actions/upload-artifact@v3
         with:
-          name: Build-${{ matrix.target_platform }}
+          name: Build-${{ matrix.targetPlatform }}
           path: build
