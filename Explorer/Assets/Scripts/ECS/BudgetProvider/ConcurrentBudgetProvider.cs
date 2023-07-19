@@ -1,21 +1,21 @@
 using System;
 
-namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
+namespace ECS.BudgetProvider
 {
-    public class ConcurrentLoadingBudgetProvider : IConcurrentBudgetProvider
+    public class ConcurrentBudgetProvider : IConcurrentBudgetProvider
     {
         private int currentBudget;
         private readonly int maxBudget;
 
-        public ConcurrentLoadingBudgetProvider(int initialBudget)
+        public ConcurrentBudgetProvider(int initialBudget)
         {
             maxBudget = initialBudget;
             currentBudget = initialBudget;
         }
 
-        public bool TrySpendBudget()
+        public bool TrySpendBudget(int budgetCost = 1)
         {
-            if (currentBudget > 0)
+            if (currentBudget - budgetCost > 0)
             {
                 currentBudget--;
                 return true;
@@ -24,9 +24,9 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
             return false;
         }
 
-        public void ReleaseBudget()
+        public void ReleaseBudget(int budgetToRelease = 1)
         {
-            if (currentBudget + 1 > maxBudget)
+            if (currentBudget + budgetToRelease > maxBudget)
                 throw new Exception("Tried to release more budget than the max budget allows");
 
             currentBudget = Math.Clamp(currentBudget + 1, 0, maxBudget);

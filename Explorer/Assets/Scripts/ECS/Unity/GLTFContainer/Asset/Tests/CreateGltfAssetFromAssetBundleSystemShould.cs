@@ -81,6 +81,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [Test]
         public async Task SkipIfThrottled()
         {
+            //TODO: FIX Test
             //throttler.Acquire(Arg.Any<int>()).Returns(false);
 
             StreamableLoadingResult<AssetBundleData> ab = await resources.LoadAssetBundle(GltfContainerTestResources.SIMPLE_RENDERER);

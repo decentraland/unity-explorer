@@ -2,7 +2,7 @@
 using UnityEngine.Pool;
 using Utility.ThreadSafePool;
 
-namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
+namespace ECS.BudgetProvider
 {
     public interface IAcquiredBudget : IDisposable
     {
@@ -31,6 +31,7 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
 
         private IConcurrentBudgetProvider provider;
         private bool released;
+        private int budgetCost;
 
         private AcquiredBudget() { }
 
@@ -46,16 +47,17 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
         public void Release()
         {
             if (!released)
-                provider.ReleaseBudget();
+                provider.ReleaseBudget(budgetCost);
 
             released = true;
         }
 
-        public static IAcquiredBudget Create(IConcurrentBudgetProvider concurrentBudgetProvider)
+        public static IAcquiredBudget Create(IConcurrentBudgetProvider concurrentBudgetProvider, int budgetCost = 1)
         {
             AcquiredBudget b = POOL.Get();
             b.provider = concurrentBudgetProvider;
             b.released = false;
+            b.budgetCost = budgetCost;
             return b;
         }
     }
