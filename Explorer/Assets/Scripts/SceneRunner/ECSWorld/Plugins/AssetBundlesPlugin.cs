@@ -1,9 +1,9 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Diagnostics.ReportsHandling;
+using ECS.BudgetProvider;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System.Collections.Generic;
 using UnityEngine;
 

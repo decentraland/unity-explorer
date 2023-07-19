@@ -1,4 +1,4 @@
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
+using ECS.BudgetProvider;
 using NUnit.Framework;
 using System;
 
@@ -12,7 +12,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
         {
             // Arrange
             int initialBudget = 1;
-            var budgetProvider = new ConcurrentLoadingBudgetProvider(initialBudget);
+            var budgetProvider = new ConcurrentBudgetProvider(initialBudget);
 
             // Assert
             Assert.AreEqual(true, budgetProvider.TrySpendBudget());
@@ -24,7 +24,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
         {
             // Arrange
             int initialBudget = 1;
-            var budgetProvider = new ConcurrentLoadingBudgetProvider(initialBudget);
+            var budgetProvider = new ConcurrentBudgetProvider(initialBudget);
 
             // Assert
             Assert.AreEqual(true, budgetProvider.TrySpendBudget());
@@ -42,7 +42,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
         {
             // Arrange
             int initialBudget = 1;
-            var budgetProvider = new ConcurrentLoadingBudgetProvider(initialBudget);
+            var budgetProvider = new ConcurrentBudgetProvider(initialBudget);
 
             // Assert
             Assert.AreEqual(true, budgetProvider.TrySpendBudget());

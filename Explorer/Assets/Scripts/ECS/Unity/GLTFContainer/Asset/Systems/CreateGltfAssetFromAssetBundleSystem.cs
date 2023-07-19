@@ -23,32 +23,19 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     [LogCategory(ReportCategory.GLTF_CONTAINER)]
     public partial class CreateGltfAssetFromAssetBundleSystem : BaseUnityLoopSystem
     {
-        /// <summary>
-        ///     TODO Temporary throttler to increase performance before we introduce the proper prioritisation mechanism
-        /// </summary>
-        private readonly IGltfContainerInstantiationThrottler instantiationThrottler;
-
-        internal CreateGltfAssetFromAssetBundleSystem(World world, IGltfContainerInstantiationThrottler throttler) : base(world)
+        internal CreateGltfAssetFromAssetBundleSystem(World world) : base(world)
         {
-            instantiationThrottler = throttler;
-        }
-
-        public override void BeforeUpdate(in float t)
-        {
-            instantiationThrottler.Reset();
         }
 
         protected override void Update(float t)
         {
+            PrepareQuery(World);
             ConvertFromAssetBundleQuery(World);
         }
 
-        /// <summary>
-        ///     Called on a separate entity with a promise creates a result with <see cref="GltfContainerAsset" />
-        /// </summary>
         [Query]
-        [None(typeof(StreamableLoadingResult<GltfContainerAsset>))]
-        private void ConvertFromAssetBundle(in Entity entity, ref GetGltfContainerAssetIntention assetIntention, ref StreamableLoadingResult<AssetBundleData> assetBundleResult)
+        [None(typeof(StreamableLoadingResult<GltfContainerAsset>), typeof(StreamableInstantiatingState))]
+        private void Prepare(in Entity entity, ref GetGltfContainerAssetIntention assetIntention, ref StreamableLoadingResult<AssetBundleData> assetBundleResult)
         {
             if (assetIntention.CancellationTokenSource.IsCancellationRequested)
 
@@ -71,10 +58,21 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 return;
             }
 
-            if (!instantiationThrottler.Acquire(assetBundleData.GameObjectNodes.Count))
+            //Will be prioritized and sorted in DeferredInstantiationSystem
+            World.Add(entity, new StreamableInstantiatingState() { Value = StreamableInstantiatingState.Status.Forbidden, InstantiationCost = assetBundleData.GameObjectNodes.Count } );
+        }
 
-                // delay to the next frame, it will be grabbed by this system again
+        /// <summary>
+        ///     Called on a separate entity with a promise creates a result with <see cref="GltfContainerAsset" />
+        /// </summary>
+        [Query]
+        [None(typeof(StreamableLoadingResult<GltfContainerAsset>))]
+        private void ConvertFromAssetBundle(in Entity entity, ref StreamableLoadingResult<AssetBundleData> assetBundleResult, ref StreamableInstantiatingState instantiatingState)
+        {
+            if (instantiatingState.Value != StreamableInstantiatingState.Status.Allowed)
                 return;
+
+            AssetBundleData assetBundleData = assetBundleResult.Asset;
 
             // Create a new container root
             // It will be cached and pooled
@@ -119,6 +117,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                     FilterVisibleColliderCandidate(result.VisibleColliderMeshes, meshFilter);
                 }
             }
+
+            instantiatingState.DisposeBudget();
+            instantiatingState.Value = StreamableInstantiatingState.Status.Finished;
 
             World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
         }

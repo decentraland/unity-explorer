@@ -1,7 +1,7 @@
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Engine;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
+using ECS.BudgetProvider;
 using SceneRunner;
 using SceneRunner.ECSWorld;
 using SceneRunner.ECSWorld.Plugins;
@@ -28,7 +28,7 @@ namespace Global
                 staticContainer.ReportsHandlingSettings,
                 entityFactory,
                 staticContainer.WorldsAggregateFactory,
-                new ConcurrentLoadingBudgetProvider(10));
+                new ConcurrentBudgetProvider(10));
 
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 staticContainer.PartitionSettings,

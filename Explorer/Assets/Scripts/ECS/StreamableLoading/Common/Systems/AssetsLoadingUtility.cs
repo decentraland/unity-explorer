@@ -1,9 +1,9 @@
 ﻿using AssetManagement;
 using Cysharp.Threading.Tasks;
 using Diagnostics.ReportsHandling;
+using ECS.BudgetProvider;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System;
 using System.Threading;
 using UnityEngine.Networking;

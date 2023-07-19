@@ -1,7 +1,7 @@
 using Arch.Core;
+using ECS.BudgetProvider;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using NUnit.Framework;
@@ -12,14 +12,14 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
     public class DeferredLoadingSystemShould : UnitySystemTestBase<AssetsDeferredLoadingSystem>
     {
         private List<Entity> entities;
-        private ConcurrentLoadingBudgetProvider concurrentLoadingBudgetProvider;
+        private ConcurrentBudgetProvider concurrentBudgetProvider;
 
         [SetUp]
         public void SetUp()
         {
             // We ll create a budget system that only allows 5 concurrent loading requests
-            concurrentLoadingBudgetProvider = new ConcurrentLoadingBudgetProvider(5);
-            system = new AssetsDeferredLoadingSystem(world, concurrentLoadingBudgetProvider);
+            concurrentBudgetProvider = new ConcurrentBudgetProvider(5);
+            system = new AssetsDeferredLoadingSystem(world, concurrentBudgetProvider);
             entities = new List<Entity>();
         }
 
@@ -110,7 +110,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
 
             // We'll release 3 budget and check that additional 3 intentions are allowed
             for (int i = 0; i < 3; i++)
-                concurrentLoadingBudgetProvider.ReleaseBudget();
+                concurrentBudgetProvider.ReleaseBudget();
 
             system.Update(0);
 

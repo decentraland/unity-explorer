@@ -2,10 +2,10 @@
 using Cysharp.Threading.Tasks;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
+using ECS.BudgetProvider;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;

@@ -1,7 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using ECS.BudgetProvider;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.StreamableLoading.Textures;
 using UnityEngine;
 

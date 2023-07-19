@@ -1,9 +1,9 @@
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
 using Diagnostics.ReportsHandling;
+using ECS.BudgetProvider;
 using ECS.ComponentsPooling;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 
 namespace SceneRunner.ECSWorld
 {

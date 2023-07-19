@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Special;
+using ECS.BudgetProvider;
 using ECS.ComponentsPooling;
 using ECS.LifeCycle;
 using ECS.Prioritization;
@@ -12,7 +13,6 @@ using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Transforms.Components;
 using Ipfs;
 using SceneRunner;
@@ -59,7 +59,7 @@ namespace Global.Dynamic
             // Asset Bundle Manifest
             const string ASSET_BUNDLES_URL = "https://ab-cdn.decentraland.org/";
 
-            IConcurrentBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(100);
+            IConcurrentBudgetProvider sceneBudgetProvider = new ConcurrentBudgetProvider(100);
 
             LoadSceneDefinitionListSystem.InjectToWorld(ref builder, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
             LoadSceneDefinitionSystem.InjectToWorld(ref builder, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);

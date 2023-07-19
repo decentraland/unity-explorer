@@ -1,9 +1,9 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using ECS.BudgetProvider;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.DeferredLoading;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using Ipfs;
 using SceneRunner.Scene;
 

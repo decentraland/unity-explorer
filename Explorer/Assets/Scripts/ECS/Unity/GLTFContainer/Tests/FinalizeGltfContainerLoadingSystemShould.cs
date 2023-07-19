@@ -35,9 +35,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             Entity sceneRoot = world.Create();
             AddTransformToEntity(sceneRoot);
             system = new FinalizeGltfContainerLoadingSystem(world, world.Reference(sceneRoot));
-            IGltfContainerInstantiationThrottler throttler = Substitute.For<IGltfContainerInstantiationThrottler>();
-            throttler.Acquire(Arg.Any<int>()).Returns(true);
-            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, throttler);
+            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world);
         }
 
         [TearDown]

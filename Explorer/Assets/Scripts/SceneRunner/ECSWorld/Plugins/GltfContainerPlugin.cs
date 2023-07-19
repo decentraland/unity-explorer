@@ -2,11 +2,12 @@ using Arch.Core;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
 using Diagnostics.ReportsHandling;
+using ECS.BudgetProvider;
 using ECS.ComponentsPooling;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
-using ECS.Unity.GLTFContainer.Asset;
 using ECS.Unity.GLTFContainer.Asset.Cache;
+using ECS.Unity.GLTFContainer.Asset.DeferredInstantiating;
 using ECS.Unity.GLTFContainer.Asset.Systems;
 using ECS.Unity.GLTFContainer.Systems;
 using System.Collections.Generic;
@@ -18,14 +19,14 @@ namespace SceneRunner.ECSWorld.Plugins
         private readonly GltfContainerAssetsCache assetsCache;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IReportsHandlingSettings reportsHandlingSettings;
-        private readonly GltfContainerInstantiationThrottler throttler;
+        private readonly IConcurrentBudgetProvider budgetProvider;
 
         public GltfContainerPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies)
         {
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
             reportsHandlingSettings = singletonSharedDependencies.ReportsHandlingSettings;
             assetsCache = new GltfContainerAssetsCache(1000);
-            throttler = new GltfContainerInstantiationThrottler(20);
+            budgetProvider = new ConcurrentBudgetProvider(5);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder,
@@ -33,7 +34,8 @@ namespace SceneRunner.ECSWorld.Plugins
         {
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);
-            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, throttler);
+            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder);
+            DeferredInstantiatingSystem.InjectToWorld(ref builder, budgetProvider);
             ReportGltfErrorsSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // GLTF Container

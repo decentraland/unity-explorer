@@ -7,15 +7,10 @@ namespace ECS.StreamableLoading.Common.Components
     /// <summary>
     ///     Common state for all streamable types
     /// </summary>
-    public struct StreamableLoadingState
+    public struct StreamableInstantiatingState
     {
         public enum Status : byte
         {
-            /// <summary>
-            ///     The state was not evaluated yet
-            /// </summary>
-            NotStarted,
-
             /// <summary>
             ///     The state was evaluated as Allowed but the loading is not started yet
             /// </summary>
@@ -27,17 +22,13 @@ namespace ECS.StreamableLoading.Common.Components
             Forbidden,
 
             /// <summary>
-            ///     Loading is in progress
-            /// </summary>
-            InProgress,
-
-            /// <summary>
             ///     StreamableLoadingResult is ready
             /// </summary>
             Finished,
         }
 
         public Status Value;
+        public int InstantiationCost;
 
         /// <summary>
         ///     Budget is not null if Status is Allowed or InProgress
