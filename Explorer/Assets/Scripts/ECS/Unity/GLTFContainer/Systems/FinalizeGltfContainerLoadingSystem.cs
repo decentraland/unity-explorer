@@ -18,17 +18,19 @@ namespace ECS.Unity.GLTFContainer.Systems
     [UpdateAfter(typeof(LoadGltfContainerSystem))]
     public partial class FinalizeGltfContainerLoadingSystem : BaseUnityLoopSystem
     {
-        private readonly EntityReference sceneRoot;
+        private readonly Entity sceneRoot;
 
-        public FinalizeGltfContainerLoadingSystem(World world, EntityReference sceneRoot) : base(world)
+        public FinalizeGltfContainerLoadingSystem(World world, Entity sceneRoot) : base(world)
         {
             this.sceneRoot = sceneRoot;
         }
 
         protected override void Update(float t)
         {
+            ref TransformComponent sceneTransform = ref World.Get<TransformComponent>(sceneRoot);
+
             FinalizeLoadingQuery(World);
-            FinalizeLoadingNoTransformQuery(World);
+            FinalizeLoadingNoTransformQuery(World, ref sceneTransform);
         }
 
         /// <summary>
@@ -38,10 +40,9 @@ namespace ECS.Unity.GLTFContainer.Systems
         [Query]
         [All(typeof(PBGltfContainer))]
         [None(typeof(TransformComponent))]
-        private void FinalizeLoadingNoTransform(ref GltfContainerComponent component)
+        private void FinalizeLoadingNoTransform([Data] ref TransformComponent sceneTransform, ref GltfContainerComponent component)
         {
-            if (World.TryGet(sceneRoot, out TransformComponent transformComponent))
-                FinalizeLoading(ref component, ref transformComponent);
+            FinalizeLoading(ref component, ref sceneTransform);
         }
 
         [Query]

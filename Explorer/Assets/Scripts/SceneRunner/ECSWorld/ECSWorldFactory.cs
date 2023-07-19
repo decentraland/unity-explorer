@@ -7,7 +7,10 @@ using ECS.ComponentsPooling.Systems;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
+using ECS.Prioritization;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.DeferredLoading;
+using ECS.Unity.Systems;
 using SceneRunner.ECSWorld.Plugins;
 using System.Collections.Generic;
 
@@ -16,15 +19,22 @@ namespace SceneRunner.ECSWorld
     public class ECSWorldFactory : IECSWorldFactory
     {
         private readonly ECSWorldSingletonSharedDependencies singletonDependencies;
+        private readonly IPartitionSettings partitionSettings;
+        private readonly IReadOnlyCameraSamplingData cameraSamplingData;
         private readonly IReadOnlyList<IECSWorldPlugin> plugins;
 
-        public ECSWorldFactory(ECSWorldSingletonSharedDependencies sharedDependencies, params IECSWorldPlugin[] plugins)
+        public ECSWorldFactory(ECSWorldSingletonSharedDependencies sharedDependencies,
+            IPartitionSettings partitionSettings, IReadOnlyCameraSamplingData cameraSamplingData, params IECSWorldPlugin[] plugins)
         {
             this.plugins = plugins;
             singletonDependencies = sharedDependencies;
+            this.partitionSettings = partitionSettings;
+            this.cameraSamplingData = cameraSamplingData;
         }
 
-        public ECSWorldFacade CreateWorld(in ECSWorldInstanceSharedDependencies sharedDependencies, in ISystemGroupsUpdateGate systemGroupsUpdateGate)
+        public ECSWorldFacade CreateWorld(in ECSWorldInstanceSharedDependencies sharedDependencies,
+            in ISystemGroupsUpdateGate systemGroupsUpdateGate,
+            in IPartitionComponent scenePartition)
         {
             // Worlds uses Pooled Collections under the hood so the memory impact is minimized
             var world = World.Create();
@@ -50,7 +60,8 @@ namespace SceneRunner.ECSWorld
             foreach (IECSWorldPlugin worldPlugin in plugins)
                 worldPlugin.InjectToWorld(ref builder, in sharedDependencies, in persistentEntities, finalizeWorldSystems);
 
-            // Deferred loading
+            // Prioritization
+            PartitionAssetEntitiesSystem.InjectToWorld(ref builder, partitionSettings, scenePartition, cameraSamplingData, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>(), sceneRootEntity);
             AssetsDeferredLoadingSystem.InjectToWorld(ref builder, singletonDependencies.LoadingBudgetProvider);
 
             DestroyEntitiesSystem.InjectToWorld(ref builder);
@@ -58,7 +69,7 @@ namespace SceneRunner.ECSWorld
             finalizeWorldSystems.Add(ReleaseRemovedComponentsSystem.InjectToWorld(ref builder));
 
             // Add other systems here
-            var systemsWorld = builder.Finish();
+            SystemGroupWorld systemsWorld = builder.Finish(singletonDependencies.AggregateFactory, scenePartition);
 
             return new ECSWorldFacade(systemsWorld, world, finalizeWorldSystems);
         }

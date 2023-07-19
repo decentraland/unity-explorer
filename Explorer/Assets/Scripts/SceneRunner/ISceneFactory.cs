@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using Ipfs;
+using ECS.Prioritization.Components;
 using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;
@@ -14,36 +14,37 @@ namespace SceneRunner
         /// Then switches to the background thread for the rest of instantiations
         /// </summary>
         /// <param name="jsCodeUrl"></param>
+        /// <param name="partitionProvider"></param>
         /// <param name="ct"></param>
         /// <returns>Scene Facade on the background thread</returns>
-        UniTask<ISceneFacade> CreateSceneFromFile(string jsCodeUrl, CancellationToken ct);
+        UniTask<ISceneFacade> CreateSceneFromFile(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct);
 
         /// <summary>
         ///     Create a scene from the directory with the scene.json file (just like it is in the goerli-plaza repo)
         /// </summary>
         /// <param name="directoryName"></param>
+        /// <param name="partitionProvider"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        UniTask<ISceneFacade> CreateSceneFromStreamableDirectory(string directoryName, CancellationToken ct);
+        UniTask<ISceneFacade> CreateSceneFromStreamableDirectory(string directoryName, IPartitionComponent partitionProvider, CancellationToken ct);
 
         /// <summary>
         ///     Creates a scene from the StreamingAssets/Scenes/ folder
         /// </summary>
         /// <param name="fileName">File name without JS extension</param>
+        /// <param name="partitionProvider"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        UniTask<ISceneFacade> CreateSceneFromStreamingAssets(string fileName, CancellationToken ct) =>
-            CreateSceneFromFile($"file://{Application.streamingAssetsPath}/Scenes/{fileName}.js", ct);
+        UniTask<ISceneFacade> CreateSceneFromStreamingAssets(string fileName, IPartitionComponent partitionProvider, CancellationToken ct) =>
+            CreateSceneFromFile($"file://{Application.streamingAssetsPath}/Scenes/{fileName}.js", partitionProvider, ct);
 
         /// <summary>
         ///     Creates a scene from the EntityDefinition
         /// </summary>
-        /// <param name="ipfsRealm"></param>
-        /// <param name="sceneDefinition">EntityDefinition provided by the ContentServer</param>
-        /// <param name="abManifest"></param>
-        /// <param name="contentBaseUrl"></param>
+        /// <param name="sceneData"></param>
+        /// <param name="partitionProvider"></param>
         /// <param name="ct"></param>
         /// <returns>Scene Facade on the background thread</returns>
-        UniTask<ISceneFacade> CreateSceneFromSceneDefinition(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, SceneAssetBundleManifest abManifest, string contentBaseUrl, CancellationToken ct);
+        UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct);
     }
 }

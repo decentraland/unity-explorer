@@ -1,8 +1,10 @@
 ﻿using AssetManagement;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
@@ -29,6 +31,7 @@ namespace ECS.StreamableLoading.Tests
         protected IStreamableCache<TAsset, TIntention> cache;
 
         private MockedReportScope mockedReportScope;
+        private IAcquiredBudget budget;
 
         [SetUp]
         public void BaseSetUp()
@@ -36,6 +39,7 @@ namespace ECS.StreamableLoading.Tests
             mockedReportScope = new MockedReportScope();
 
             cache = Substitute.For<IStreamableCache<TAsset, TIntention>>();
+            budget = Substitute.For<IAcquiredBudget>();
             system = CreateSystem();
             system.Initialize();
         }
@@ -47,12 +51,17 @@ namespace ECS.StreamableLoading.Tests
             promise.LoadingIntention.CommonArguments.CancellationTokenSource?.Cancel();
         }
 
+        private void ForceAllowed()
+        {
+            world.Get<StreamableLoadingState>(promise.Entity).SetAllowed(budget);
+        }
+
         [Test]
         public async Task ConcludeSuccess()
         {
             TIntention intent = CreateSuccessIntention();
-            intent.SetAllowed();
-            promise = AssetPromise<TAsset, TIntention>.Create(world, intent);
+            promise = AssetPromise<TAsset, TIntention>.Create(world, intent, PartitionComponent.TOP_PRIORITY);
+            ForceAllowed();
 
             // Launch the flow
             system.Update(0);
@@ -70,8 +79,8 @@ namespace ECS.StreamableLoading.Tests
         public async Task ConcludeExceptionOnParseFail()
         {
             TIntention intent = CreateWrongTypeIntention();
-            intent.SetAllowed();
-            promise = AssetPromise<TAsset, TIntention>.Create(world, intent);
+            promise = AssetPromise<TAsset, TIntention>.Create(world, intent, PartitionComponent.TOP_PRIORITY);
+            ForceAllowed();
 
             // Launch the flow
             system.Update(0);
@@ -88,9 +97,8 @@ namespace ECS.StreamableLoading.Tests
         {
             TIntention intent = CreateNotFoundIntention();
             intent.SetAttempts(1);
-            intent.SetAllowed();
-
-            promise = AssetPromise<TAsset, TIntention>.Create(world, intent);
+            promise = AssetPromise<TAsset, TIntention>.Create(world, intent, PartitionComponent.TOP_PRIORITY);
+            ForceAllowed();
 
             // Launch the flow
             system.Update(0);
@@ -107,9 +115,9 @@ namespace ECS.StreamableLoading.Tests
         {
             TIntention intent = CreateSuccessIntention();
             intent.SetSources(AssetSource.EMBEDDED, AssetSource.EMBEDDED);
-            intent.SetAllowed();
 
-            promise = AssetPromise<TAsset, TIntention>.Create(world, intent);
+            promise = AssetPromise<TAsset, TIntention>.Create(world, intent, PartitionComponent.TOP_PRIORITY);
+            ForceAllowed();
 
             // Launch the flow
             system.Update(0);
@@ -122,8 +130,8 @@ namespace ECS.StreamableLoading.Tests
         public async Task GetAssetFromCache()
         {
             TIntention successIntent = CreateSuccessIntention();
-            successIntent.SetAllowed();
-            promise = AssetPromise<TAsset, TIntention>.Create(world, successIntent);
+            promise = AssetPromise<TAsset, TIntention>.Create(world, successIntent, PartitionComponent.TOP_PRIORITY);
+            ForceAllowed();
 
             TIntention checkIntent = successIntent;
             checkIntent.RemoveCurrentSource();
@@ -139,20 +147,23 @@ namespace ECS.StreamableLoading.Tests
 
             // Second time
 
+            TAsset asset = result.Asset;
+
             cache.TryGet(in checkIntent, out Arg.Any<TAsset>())
                  .Returns(c =>
                   {
-                      c[1] = result.Asset;
+                      c[1] = asset;
                       return true;
                   });
 
-            promise = AssetPromise<TAsset, TIntention>.Create(world, successIntent);
+            promise = AssetPromise<TAsset, TIntention>.Create(world, successIntent, PartitionComponent.TOP_PRIORITY);
+            ForceAllowed();
 
             // Launch the flow
             system.Update(0);
 
             // should exit immediately
-            Assert.That(world.Has<LoadingInProgress>(promise.Entity), Is.False);
+            Assert.That(world.Get<StreamableLoadingState>(promise.Entity).Value, Is.EqualTo(StreamableLoadingState.Status.Finished));
 
             promise = await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
 

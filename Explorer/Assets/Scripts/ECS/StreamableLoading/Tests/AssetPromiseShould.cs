@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using NUnit.Framework;
@@ -30,7 +31,7 @@ namespace ECS.StreamableLoading.Tests
         {
             world = World.Create();
 
-            assetPromise = AssetPromise<Asset, Intent>.Create(world, new Intent { CommonArguments = new CommonLoadingArguments("URL") });
+            assetPromise = AssetPromise<Asset, Intent>.Create(world, new Intent { CommonArguments = new CommonLoadingArguments("URL") }, PartitionComponent.TOP_PRIORITY);
         }
 
         [Test]

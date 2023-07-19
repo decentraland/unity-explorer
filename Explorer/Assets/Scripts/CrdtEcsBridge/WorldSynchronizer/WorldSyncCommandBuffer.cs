@@ -226,9 +226,6 @@ namespace CrdtEcsBridge.WorldSynchronizer
                         if (batchState.reconciliationState.Last == CRDTReconciliationEffect.NoChanges)
                             continue;
 
-                        // TODO add proper logging with Levels
-                        // Debug.Log($"{entity} -> {realEntity}: Apply {batchState.sdkComponentBridge.ComponentType.Name} {batchState.reconciliationState.Last}");
-
                         batchState.sdkComponentBridge.CommandBufferSynchronizer.Apply(world, commandBuffer, realEntity,
                             batchState.reconciliationState.Last, batchState.deserializationTarget);
                     }

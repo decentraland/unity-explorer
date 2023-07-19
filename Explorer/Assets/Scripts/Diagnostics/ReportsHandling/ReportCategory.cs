@@ -81,6 +81,11 @@
         public const string PRIMITIVE_MESHES = nameof(PRIMITIVE_MESHES);
 
         /// <summary>
+        ///     Everything related to prioritization
+        /// </summary>
+        public const string PRIORITIZATION = nameof(PRIORITIZATION);
+
+        /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
         /// </summary>
         public const string UNSPECIFIED = nameof(UNSPECIFIED);

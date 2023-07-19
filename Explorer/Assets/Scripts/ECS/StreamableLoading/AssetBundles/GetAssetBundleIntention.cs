@@ -53,5 +53,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public override int GetHashCode() =>
             HashCode.Combine(Hash, Name);
+
+        public override string ToString() =>
+            $"Get Asset Bundle: {Name} ({Hash})";
     }
 }

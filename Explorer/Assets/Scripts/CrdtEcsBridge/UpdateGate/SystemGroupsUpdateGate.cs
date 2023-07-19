@@ -49,6 +49,8 @@ namespace CrdtEcsBridge.UpdateGate
 
         public void Dispose()
         {
+            if (openGroups == null) return;
+
             POOL.Release(openGroups);
             openGroups = null;
         }

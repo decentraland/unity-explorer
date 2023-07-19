@@ -3,6 +3,7 @@ using CrdtEcsBridge.Components.Transform;
 using DCL.ECS7;
 using DCL.ECSComponents;
 using ECS.ComponentsPooling;
+using ECS.Prioritization.Components;
 using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
 using System;
 using System.Collections.Generic;
@@ -15,11 +16,11 @@ namespace Global
     /// <summary>
     /// Registers all components that should exist in the ECS
     /// </summary>
-    public readonly struct ComponentsContainer
+    public struct ComponentsContainer
     {
-        public ISDKComponentsRegistry SDKComponentsRegistry { get; internal init; }
+        public ISDKComponentsRegistry SDKComponentsRegistry { get; private set; }
 
-        public IComponentPoolsRegistry ComponentPoolsRegistry { get; internal init; }
+        public IComponentPoolsRegistry ComponentPoolsRegistry { get; private set; }
 
         public static ComponentsContainer Create()
         {
@@ -45,7 +46,7 @@ namespace Global
                 // merge SDK components with Non-SDK
                 sdkComponentsRegistry.SdkComponents
                                      .Select(c => (c.ComponentType, c.Pool))
-                                     .Concat(GetUnityComponentDictionary())
+                                     .Concat(GetMiscComponents())
                                      .Concat(GetPrimitivesMeshesDictionary())
                                      .ToDictionary(x => x.Item1, x => x.Item2));
 
@@ -63,7 +64,7 @@ namespace Global
             yield return CreateExtraComponentPool<CylinderPrimitive>();
         }
 
-        private static IEnumerable<(Type type, IComponentPool pool)> GetUnityComponentDictionary()
+        private static IEnumerable<(Type type, IComponentPool pool)> GetMiscComponents()
         {
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
 
@@ -77,6 +78,9 @@ namespace Global
             yield return CreateComponentPool<BoxCollider>();
             yield return CreateComponentPool<SphereCollider>();
             yield return CreateComponentPool(MeshRendererPoolUtils.CreateMeshRendererComponent, MeshRendererPoolUtils.ReleaseMeshRendererComponent);
+
+            // Partition Component
+            yield return (typeof(PartitionComponent), new ComponentPool<PartitionComponent>(defaultCapacity: 2000));
         }
     }
 }

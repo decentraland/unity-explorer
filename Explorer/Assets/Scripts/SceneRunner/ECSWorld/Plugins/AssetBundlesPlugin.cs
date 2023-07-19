@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using Diagnostics.ReportsHandling;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System.Collections.Generic;
 using UnityEngine;
@@ -38,7 +37,7 @@ namespace SceneRunner.ECSWorld.Plugins
             ReportAssetBundleErrorSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // TODO create a runtime ref-counting cache
-            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, sharedDependencies.MutexSync, loadingBudgetProvider);
+            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, sharedDependencies.MutexSync);
         }
     }
 }

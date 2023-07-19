@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -58,7 +59,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         public void FinalizeWithError()
         {
             var component = new GltfContainerComponent(ColliderLayer.ClPhysics, ColliderLayer.ClPointer,
-                AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention()));
+                AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention(), PartitionComponent.TOP_PRIORITY));
 
             component.State.Set(LoadingState.Loading);
 
@@ -78,7 +79,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         {
             var component = new GltfContainerComponent(ColliderLayer.ClPhysics, ColliderLayer.ClPointer,
                 AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
-                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SIMPLE_RENDERER, new CancellationTokenSource())));
+                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SIMPLE_RENDERER, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY));
 
             component.State.Set(LoadingState.Loading);
 
@@ -101,7 +102,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         {
             var component = new GltfContainerComponent(ColliderLayer.ClPointer, ColliderLayer.ClNone,
                 AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
-                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SCENE_WITH_COLLIDER, new CancellationTokenSource())));
+                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SCENE_WITH_COLLIDER, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY));
 
             component.State.Set(LoadingState.Loading);
 
@@ -124,7 +125,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         {
             var component = new GltfContainerComponent(ColliderLayer.ClNone, ColliderLayer.ClPointer,
                 AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
-                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SCENE_WITH_COLLIDER, new CancellationTokenSource())));
+                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SCENE_WITH_COLLIDER, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY));
 
             component.State.Set(LoadingState.Loading);
 
