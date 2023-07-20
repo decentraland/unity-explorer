@@ -36,5 +36,8 @@ namespace ECS.SceneLifeCycle
 
         public override int GetHashCode() =>
             HashCode.Combine(IpfsRealm, Definition);
+
+        public override string ToString() =>
+            $"Get Scene Facade: {Definition?.id}";
     }
 }

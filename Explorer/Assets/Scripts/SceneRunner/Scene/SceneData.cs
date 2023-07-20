@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 
 namespace SceneRunner.Scene
 {
@@ -44,11 +45,13 @@ namespace SceneRunner.Scene
             foreach (IpfsTypes.ContentDefinition contentDefinition in sceneDefinition.content) fileToHash[contentDefinition.file] = contentDefinition.hash;
 
             SceneShortInfo = new SceneShortInfo(IpfsHelper.DecodePointer(sceneDefinition.metadata.scene.baseParcel), sceneDefinition.id);
+            BasePosition = ParcelMathHelper.GetPositionByParcelPosition(SceneShortInfo.BaseParcel);
 
             resolvedContentURLs = new Dictionary<string, (bool success, string url)>(fileToHash.Count, StringComparer.OrdinalIgnoreCase);
         }
 
         public SceneShortInfo SceneShortInfo { get; }
+        public Vector3 BasePosition { get; }
         public SceneAssetBundleManifest AssetBundleManifest { get; }
 
         public bool HasRequiredPermission(string permission)

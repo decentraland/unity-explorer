@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using ECS.Abstract;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.Materials.Components;
@@ -41,7 +42,7 @@ namespace ECS.Unity.Materials.Systems
         }
 
         [Query]
-        private void InvalidateMaterialComponent(ref PBMaterial material, ref MaterialComponent materialComponent)
+        private void InvalidateMaterialComponent(ref PBMaterial material, ref MaterialComponent materialComponent, ref PartitionComponent partitionComponent)
         {
             if (!material.IsDirty)
                 return;
@@ -61,31 +62,31 @@ namespace ECS.Unity.Materials.Systems
             }
 
             materialComponent.Data = materialData;
-            CreateGetTexturePromises(ref materialComponent);
+            CreateGetTexturePromises(ref materialComponent, ref partitionComponent);
             materialComponent.Status = MaterialComponent.LifeCycle.LoadingInProgress;
         }
 
         [Query]
         [All(typeof(PBMaterial))]
         [None(typeof(MaterialComponent))]
-        private void CreateMaterialComponent(in Entity entity, ref PBMaterial material)
+        private void CreateMaterialComponent(in Entity entity, ref PBMaterial material, ref PartitionComponent partitionComponent)
         {
             var materialComponent = new MaterialComponent(CreateMaterialData(ref material));
-            CreateGetTexturePromises(ref materialComponent);
+            CreateGetTexturePromises(ref materialComponent, ref partitionComponent);
             materialComponent.Status = MaterialComponent.LifeCycle.LoadingInProgress;
 
             World.Add(entity, materialComponent);
         }
 
-        private void CreateGetTexturePromises(ref MaterialComponent materialComponent)
+        private void CreateGetTexturePromises(ref MaterialComponent materialComponent, ref PartitionComponent partitionComponent)
         {
-            TryCreateGetTexturePromise(in materialComponent.Data.AlbedoTexture, ref materialComponent.AlbedoTexPromise);
+            TryCreateGetTexturePromise(in materialComponent.Data.AlbedoTexture, ref materialComponent.AlbedoTexPromise, ref partitionComponent);
 
             if (materialComponent.Data.IsPbrMaterial)
             {
-                TryCreateGetTexturePromise(in materialComponent.Data.AlphaTexture, ref materialComponent.AlphaTexPromise);
-                TryCreateGetTexturePromise(in materialComponent.Data.EmissiveTexture, ref materialComponent.EmissiveTexPromise);
-                TryCreateGetTexturePromise(in materialComponent.Data.BumpTexture, ref materialComponent.BumpTexPromise);
+                TryCreateGetTexturePromise(in materialComponent.Data.AlphaTexture, ref materialComponent.AlphaTexPromise, ref partitionComponent);
+                TryCreateGetTexturePromise(in materialComponent.Data.EmissiveTexture, ref materialComponent.EmissiveTexPromise, ref partitionComponent);
+                TryCreateGetTexturePromise(in materialComponent.Data.BumpTexture, ref materialComponent.BumpTexPromise, ref partitionComponent);
             }
         }
 
@@ -138,7 +139,7 @@ namespace ECS.Unity.Materials.Systems
         private static MaterialData CreateBasicMaterialData(in PBMaterial pbMaterial, in TextureComponent? albedoTexture) =>
             MaterialData.CreateBasicMaterial(albedoTexture, pbMaterial.GetAlphaTest(), pbMaterial.GetDiffuseColor(), pbMaterial.GetCastShadows());
 
-        private bool TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise? promise)
+        private bool TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise? promise, ref PartitionComponent partitionComponent)
         {
             if (textureComponent == null)
             {
@@ -162,7 +163,7 @@ namespace ECS.Unity.Materials.Systems
                 CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
                 WrapMode = textureComponentValue.WrapMode,
                 FilterMode = textureComponentValue.FilterMode,
-            });
+            }, partitionComponent);
 
             return true;
         }

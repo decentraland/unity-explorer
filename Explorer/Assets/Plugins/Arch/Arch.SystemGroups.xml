@@ -1,21 +1,23 @@
 <?xml version="1.0"?>
 <doc>
     <assembly>
-        <name>Arch.SystemGroups.NoUnity</name>
+        <name>Arch.SystemGroups</name>
     </assembly>
     <members>
         <member name="T:Arch.SystemGroups.ArchSystemsSorter">
             <summary>
-            Sorts systems. Used by auto-generated code. Consider ignoring it
+                Sorts systems. Used by auto-generated code. Consider ignoring it
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.ArchSystemsSorter.AddEdge(System.Type,System.Type,System.Collections.Generic.Dictionary{System.Type,System.Collections.Generic.List{System.Type}})">
             <summary>
-            Adds a dependency edge to the graph.
-            Supports redundancies.
-            Circular dependencies will be resolved on the final stage of the graph traversal
+                Adds a dependency edge to the graph.
+                Supports redundancies.
+                Circular dependencies will be resolved on the final stage of the graph traversal
             </summary>
-            <param name="from">System that should be updated before <paramref name="to"/> </param>
+            <param name="from">System that should be updated before
+                <paramref name="to"/>
+            </param>
             <param name="to">System that should be updated after</param>
             <param name="edges">Storage of edges</param>
         </member>
@@ -56,7 +58,7 @@
         </member>
         <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilder`1.Finish">
             <summary>
-            Finalize the builder and create a systems world
+                Finalize the builder and create a systems world
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilder`1.Finish``1(Arch.SystemGroups.ISystemGroupAggregate{``0}.IFactory,``0)">
@@ -70,23 +72,23 @@
         </member>
         <member name="T:Arch.SystemGroups.ArchSystemsWorldBuilderExtensions">
             <summary>
-            Publicly available extensions for the ArchSystemsWorldBuilder
+                Publicly available extensions for the ArchSystemsWorldBuilder
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.ArchSystemsWorldBuilderExtensions.InjectCustomGroup``2(Arch.SystemGroups.ArchSystemsWorldBuilder{``0}@,``1)">
             <summary>
-            Inject a custom group into the world. It allows to create a group with custom parameters.
+                Inject a custom group into the world. It allows to create a group with custom parameters.
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.DefaultSystemGroups.InitializationSystemGroup">
             <summary>
-            Updates at the end of the Initialization phase of the player loop
+                Updates at the end of the Initialization phase of the player loop
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.DefaultSystemGroups.PhysicsSystemGroup">
             <summary>
-            Updates at the beginning of the FixedUpdate phase of the player loop
-            before all fixed updates
+                Updates at the beginning of the FixedUpdate phase of the player loop
+                before all fixed updates
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.DefaultSystemGroups.PostPhysicsSystemGroup">
@@ -96,17 +98,17 @@
         </member>
         <member name="T:Arch.SystemGroups.DefaultSystemGroups.PostRenderingSystemGroup">
             <summary>
-            Updates at the end of the PostLateUpdate phase of the player loop.
+                Updates at the end of the PostLateUpdate phase of the player loop.
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.DefaultSystemGroups.PresentationSystemGroup">
             <summary>
-            Updates at the end of the PreLateUpdate phase of the player loop.
+                Updates at the end of the PreLateUpdate phase of the player loop.
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.DefaultSystemGroups.SimulationSystemGroup">
             <summary>
-            Updates at the end of the Update phase of the player loop
+                Updates at the end of the Update phase of the player loop
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.DefaultSystemGroups.SystemGroupsUtils">
@@ -117,12 +119,12 @@
         <member name="F:Arch.SystemGroups.DefaultSystemGroups.SystemGroupsUtils.Count">
             <summary>
                 The number of defined system groups:
-                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.InitializationSystemGroup" />
-                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PhysicsSystemGroup" />
-                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PresentationSystemGroup" />
-                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.SimulationSystemGroup" />
-                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PostPhysicsSystemGroup" />
-                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PostRenderingSystemGroup" />
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.InitializationSystemGroup"/>
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PhysicsSystemGroup"/>
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PresentationSystemGroup"/>
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.SimulationSystemGroup"/>
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PostPhysicsSystemGroup"/>
+                <see cref="T:Arch.SystemGroups.DefaultSystemGroups.PostRenderingSystemGroup"/>
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.CustomGroupBase`1">
@@ -143,32 +145,42 @@
         </member>
         <member name="M:Arch.SystemGroups.CustomGroupBase`1.Dispose">
             <summary>
-                Override to provide Dispose behaviour, you can use <see cref="M:Arch.SystemGroups.CustomGroupBase`1.DisposeInternal" /> as the default implementation
+                Override to provide Dispose behaviour, you can use
+                <see cref="M:Arch.SystemGroups.CustomGroupBase`1.DisposeInternal"/>
+                as the default implementation
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.CustomGroupBase`1.Initialize">
             <summary>
-                Override to provide initialization behaviour, you can use <see cref="M:Arch.SystemGroups.CustomGroupBase`1.InitializeInternal" /> as the default
+                Override to provide initialization behaviour, you can use
+                <see cref="M:Arch.SystemGroups.CustomGroupBase`1.InitializeInternal"/>
+                as the default
                 implementation
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.CustomGroupBase`1.BeforeUpdate(`0@,System.Boolean)">
             <summary>
-                Override to provide BeforeUpdate, you can use <see cref="M:Arch.SystemGroups.CustomGroupBase`1.BeforeUpdateInternal(`0@,System.Boolean)" /> as the default implementation
+                Override to provide BeforeUpdate, you can use
+                <see cref="M:Arch.SystemGroups.CustomGroupBase`1.BeforeUpdateInternal(`0@,System.Boolean)"/>
+                as the default implementation
             </summary>
             <param name="t"></param>
             <param name="throttle">Indicates that the current invocation is throttled</param>
         </member>
         <member name="M:Arch.SystemGroups.CustomGroupBase`1.Update(`0@,System.Boolean)">
             <summary>
-                Override to provide Update behaviour, you can use <see cref="M:Arch.SystemGroups.CustomGroupBase`1.UpdateInternal(`0@,System.Boolean)" /> as the default implementation
+                Override to provide Update behaviour, you can use
+                <see cref="M:Arch.SystemGroups.CustomGroupBase`1.UpdateInternal(`0@,System.Boolean)"/>
+                as the default implementation
             </summary>
             <param name="t"></param>
             <param name="throttle">Indicates that the current invocation is throttled</param>
         </member>
         <member name="M:Arch.SystemGroups.CustomGroupBase`1.AfterUpdate(`0@,System.Boolean)">
             <summary>
-                Override to provide AfterUpdate behaviour, you can use <see cref="M:Arch.SystemGroups.CustomGroupBase`1.AfterUpdateInternal(`0@,System.Boolean)" /> as the default
+                Override to provide AfterUpdate behaviour, you can use
+                <see cref="M:Arch.SystemGroups.CustomGroupBase`1.AfterUpdateInternal(`0@,System.Boolean)"/>
+                as the default
                 implementation
             </summary>
             <param name="throttle">Indicates that the current invocation is throttled</param>
@@ -213,45 +225,45 @@
         </member>
         <member name="M:Arch.SystemGroups.CustomGroupBase`1.GetMetadataInternal">
             <summary>
-               The metadata of the group in an abstract form
+                The metadata of the group in an abstract form
             </summary>
             <returns></returns>
         </member>
         <member name="T:Arch.SystemGroups.DefaultGroup`1">
             <summary>
-            Similar to `Arch.System.Group` but with better API that allows pooling
+                Similar to `Arch.System.Group` but with better API that allows pooling
             </summary>
             <typeparam name="T"></typeparam>
         </member>
         <member name="M:Arch.SystemGroups.DefaultGroup`1.#ctor">
             <summary>
-            Creates an empty group, for auto-generated code only,
-            Don't invoke it manually
+                Creates an empty group, for auto-generated code only,
+                Don't invoke it manually
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.DefaultGroup`1.Initialize">
             <summary>
-            Initialize all systems in the group
+                Initialize all systems in the group
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.DefaultGroup`1.Dispose">
             <summary>
-            Dispose all systems in the group
+                Dispose all systems in the group
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.DefaultGroup`1.BeforeUpdate(`0@,System.Boolean)">
             <summary>
-            To comply with Arch.System.ISystem
+                To comply with Arch.System.ISystem
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.DefaultGroup`1.Update(`0@,System.Boolean)">
             <summary>
-            To comply with Arch.System.ISystem
+                To comply with Arch.System.ISystem
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.DefaultGroup`1.AfterUpdate(`0@,System.Boolean)">
             <summary>
-            To comply with Arch.System.ISystem
+                To comply with Arch.System.ISystem
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.GroupNotFoundException">
@@ -262,17 +274,18 @@
         </member>
         <member name="P:Arch.SystemGroups.GroupNotFoundException.Message">
             <summary>
-                <inheritdoc cref="P:System.Exception.Message" />
+                <inheritdoc cref="P:System.Exception.Message"/>
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.ISystemGroupExceptionHandler">
             <summary>
-                Provides exceptions handling on the level of the <see cref="T:Arch.SystemGroups.SystemGroup" />
+                Provides exceptions handling on the level of the
+                <see cref="T:Arch.SystemGroups.SystemGroup"/>
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.ISystemGroupExceptionHandler.Action">
             <summary>
-               Action to tell the System Group how to behave after the exception
+                Action to tell the System Group how to behave after the exception
             </summary>
         </member>
         <member name="F:Arch.SystemGroups.ISystemGroupExceptionHandler.Action.Continue">
@@ -297,7 +310,9 @@
             </summary>
             <param name="exception">Exception</param>
             <param name="systemGroupType">System Group Type</param>
-            <returns>An action to tell the System Group how to behave after <paramref name="exception" /></returns>
+            <returns>An action to tell the System Group how to behave after
+                <paramref name="exception"/>
+            </returns>
         </member>
         <member name="T:Arch.SystemGroups.Metadata.AttributesInfoBase">
             <summary>
@@ -306,7 +321,8 @@
         </member>
         <member name="P:Arch.SystemGroups.Metadata.AttributesInfoBase.UpdateInGroup">
             <summary>
-                <see cref="T:Arch.SystemGroups.UpdateInGroupAttribute" /> reflection, will be null for system groups
+                <see cref="T:Arch.SystemGroups.UpdateInGroupAttribute"/>
+                reflection, will be null for system groups
             </summary>
         </member>
         <member name="P:Arch.SystemGroups.Metadata.AttributesInfoBase.GroupMetadata">
@@ -316,55 +332,58 @@
         </member>
         <member name="M:Arch.SystemGroups.Metadata.AttributesInfoBase.GetAttribute``1">
             <summary>
-                Get first attribute of type <typeparamref name="T" />
+                Get first attribute of type
+                <typeparamref name="T"/>
             </summary>
             <typeparam name="T">Type of attribute</typeparam>
             <returns>Null if such attribute is not defined for the class</returns>
         </member>
         <member name="M:Arch.SystemGroups.Metadata.AttributesInfoBase.GetAttributes``1">
             <summary>
-                Get all attributes of type <typeparamref name="T" />
+                Get all attributes of type
+                <typeparamref name="T"/>
             </summary>
             <typeparam name="T">Type of attribute</typeparam>
             <returns>An empty list if no attributes are found</returns>
         </member>
         <member name="T:Arch.SystemGroups.Metadata.SystemGroupAttributesInfo">
             <summary>
-            Dummy attributes info for system groups
+                Dummy attributes info for system groups
             </summary>
         </member>
         <member name="F:Arch.SystemGroups.Metadata.SystemGroupAttributesInfo.Instance">
             <summary>
-            Instance shared between all System Groups as they provide no attributes data
+                Instance shared between all System Groups as they provide no attributes data
             </summary>
         </member>
         <member name="P:Arch.SystemGroups.Metadata.SystemGroupAttributesInfo.UpdateInGroup">
             <summary>
-            Returns null
+                Returns null
             </summary>
         </member>
         <member name="P:Arch.SystemGroups.Metadata.SystemGroupAttributesInfo.GroupMetadata">
             <summary>
-            Returns null
+                Returns null
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.Metadata.SystemGroupAttributesInfo.GetAttribute``1">
             <summary>
-            Returns null
+                Returns null
             </summary>
             <typeparam name="T"></typeparam>
             <returns></returns>
         </member>
         <member name="M:Arch.SystemGroups.Metadata.SystemGroupAttributesInfo.GetAttributes``1">
             <summary>
-            Returns an empty array
+                Returns an empty array
             </summary>
             <typeparam name="T"></typeparam>
             <returns></returns>
         </member>
         <member name="T:Arch.SystemGroups.ISystemGroupAggregate">
             <summary>
-                Non-generic interface for <see cref="T:Arch.SystemGroups.ISystemGroupAggregate`1" />
+                Non-generic interface for
+                <see cref="T:Arch.SystemGroups.ISystemGroupAggregate`1"/>
             </summary>
         </member>
         <member name="P:Arch.SystemGroups.ISystemGroupAggregate.Count">
@@ -412,36 +431,40 @@
         </member>
         <member name="T:Arch.SystemGroups.OrderedSystemGroupAggregate`1">
             <summary>
-            Executes system groups in a specific order
+                Executes system groups in a specific order
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.OrderedSystemGroupAggregate`1.#ctor(System.Collections.Generic.IComparer{`0},System.Boolean,System.Int32)">
             <summary>
-            Creates a new instance of OrderedSystemGroupAggregate with the specified comparer
+                Creates a new instance of OrderedSystemGroupAggregate with the specified comparer
             </summary>
-            <param name="comparer">Comparer should never return 0 for different system groups as it is forbidden by <see cref="T:System.Collections.Generic.SortedList`2"/>.
-            Specify "debounceEqualValues" to force it</param>
-            <param name="debounceEqualValues">If True overrides the behaviour of comparer in a way that it never returns 0</param>
+            <param name="comparer">Comparer should never return 0 for different system groups as it is forbidden by<see
+                    cref="T:System.Collections.Generic.SortedList`2"/>.
+                Specify "debounceEqualValues" to force it
+            </param>
+            <param name="debounceEqualValues">If True overrides the behaviour of comparer in a way that it never returns
+                0
+            </param>
             <param name="initialCapacity">Initial capacity of the underlying collection</param>
         </member>
         <member name="P:Arch.SystemGroups.OrderedSystemGroupAggregate`1.Count">
             <summary>
-            <inheritdoc cref="P:Arch.SystemGroups.ISystemGroupAggregate.Count"/>
+                <inheritdoc cref="P:Arch.SystemGroups.ISystemGroupAggregate.Count"/>
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.OrderedSystemGroupAggregate`1.TriggerUpdate">
             <summary>
-            <inheritdoc cref="M:Arch.SystemGroups.ISystemGroupAggregate.TriggerUpdate"/>
+                <inheritdoc cref="M:Arch.SystemGroups.ISystemGroupAggregate.TriggerUpdate"/>
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.OrderedSystemGroupAggregate`1.Add(`0@,Arch.SystemGroups.SystemGroup)">
             <summary>
-            <inheritdoc cref="M:Arch.SystemGroups.ISystemGroupAggregate`1.Add(`0@,Arch.SystemGroups.SystemGroup)"/>
+                <inheritdoc cref="M:Arch.SystemGroups.ISystemGroupAggregate`1.Add(`0@,Arch.SystemGroups.SystemGroup)"/>
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.OrderedSystemGroupAggregate`1.Remove(Arch.SystemGroups.SystemGroup)">
             <summary>
-            <inheritdoc cref="M:Arch.SystemGroups.ISystemGroupAggregate.Remove(Arch.SystemGroups.SystemGroup)"/>
+                <inheritdoc cref="M:Arch.SystemGroups.ISystemGroupAggregate.Remove(Arch.SystemGroups.SystemGroup)"/>
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.SystemGroupAggregate">
@@ -456,69 +479,84 @@
         </member>
         <member name="T:Arch.SystemGroups.SystemGroupAggregateCache">
             <summary>
-            Caches the system group aggregates by type of system group, produced for each <see cref="T:Arch.SystemGroups.ISystemGroupAggregateFactory"/>
+                Caches the system group aggregates by type of system group, produced for each
+                <see cref="T:Arch.SystemGroups.ISystemGroupAggregateFactory"/>
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.IPlayerLoop">
             <summary>
-            Abstraction needed for Mocking or providing a custom implementation of injection into the Player Loop
+                Abstraction needed for Mocking or providing a custom implementation of injection into the Player Loop
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.IPlayerLoop.OnWorldStartAppending">
             <summary>
-            Called before all other methods once for each world
+                Called before all other methods once for each world
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.IPlayerLoop.OnWorldEndAppending">
             <summary>
-            Called after all <see cref="M:Arch.SystemGroups.IPlayerLoop.AddAggregate``1(System.Type,Arch.SystemGroups.ISystemGroupAggregate{``0})"/> and <see cref="M:Arch.SystemGroups.IPlayerLoop.RemoveAggregate(Arch.SystemGroups.ISystemGroupAggregate)"/>
+                Called after all
+                <see cref="M:Arch.SystemGroups.IPlayerLoop.AddAggregate``1(System.Type,Arch.SystemGroups.ISystemGroupAggregate{``0})"/>
+                and
+                <see cref="M:Arch.SystemGroups.IPlayerLoop.RemoveAggregate(Arch.SystemGroups.ISystemGroupAggregate)"/>
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.IPlayerLoop.AddAggregate``1(System.Type,Arch.SystemGroups.ISystemGroupAggregate{``0})">
             <summary>
-            Adds an aggregate of system groups to the player loop. It is called only once upon the first mentioning of <paramref name="systemGroupType"/>.
+                Adds an aggregate of system groups to the player loop. It is called only once upon the first mentioning
+                of<paramref name="systemGroupType"/>.
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.IPlayerLoop.RemoveAggregate(Arch.SystemGroups.ISystemGroupAggregate)">
             <summary>
-            Removes the given system group from the Unity Player Loop.
+                Removes Removes the given system group from the Unity Player Loop.
             </summary>
             <param name="aggregate"></param>
         </member>
         <member name="T:Arch.SystemGroups.PlayerLoopAddMode">
             <summary>
-            Determines whether the system should be added to the beginning or the end of the step of the player loop
+                Determines whether the system should be added to the beginning or the end of the step of the player loop
             </summary>
         </member>
         <member name="F:Arch.SystemGroups.PlayerLoopAddMode.Prepend">
             <summary>
-            Add the system to the beginning of the step
+                Add the system to the beginning of the step
             </summary>
         </member>
         <member name="F:Arch.SystemGroups.PlayerLoopAddMode.Append">
             <summary>
-            Add the system to the end of the step
+                Add the system to the end of the step
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.PlayerLoopHelper">
             <summary>
-            Provides utilities to inject systems into the Unity Player Loop
+                Provides utilities to inject systems into the Unity Player Loop
             </summary>
+        </member>
+        <member name="M:Arch.SystemGroups.PlayerLoopHelper.GetAggregates``2(Arch.SystemGroups.ISystemGroupAggregateFactory,System.Collections.Generic.List{``0})">
+            <summary>
+                Retrieve all aggregates created from the given factory
+            </summary>
+            <returns></returns>
         </member>
         <member name="M:Arch.SystemGroups.PlayerLoopHelper.AppendWorldToCurrentPlayerLoop``1(Arch.SystemGroups.IPlayerLoop,Arch.SystemGroups.ISystemGroupAggregate{``0}.IFactory,``0,Arch.SystemGroups.DefaultSystemGroups.InitializationSystemGroup,Arch.SystemGroups.DefaultSystemGroups.SimulationSystemGroup,Arch.SystemGroups.DefaultSystemGroups.PresentationSystemGroup,Arch.SystemGroups.DefaultSystemGroups.PostRenderingSystemGroup,Arch.SystemGroups.DefaultSystemGroups.PhysicsSystemGroup,Arch.SystemGroups.DefaultSystemGroups.PostPhysicsSystemGroup)">
             <summary>
-            Append ECS world to the provided player loop, supports custom system group aggregates
+                Append ECS world to the provided player loop, supports custom system group aggregates
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.PlayerLoopHelper.AddSystemToPlayerLoop``1(Arch.SystemGroups.IPlayerLoop,``0@,Arch.SystemGroups.SystemGroup,Arch.SystemGroups.ISystemGroupAggregate{``0}.IFactory)">
             <summary>
-            Add an ECS system to a specific point in the Unity player loop, so that it is updated every frame.
-            <para>The system groups are being inserted into their corresponding aggregate that is unique for each group type,
-            the execution order of the system groups inside the aggregate is not guaranteed and must be expected to be used for independent worlds</para>
+                Add an ECS system to a specific point in the Unity player loop, so that it is updated every frame.
+                <para>The system groups are being inserted into their corresponding aggregate that is unique for each
+                    group type,
+                    the execution order of the system groups inside the aggregate is not guaranteed and must be expected
+                    to be used for independent worlds
+                </para>
             </summary>
             <remarks>
-            This function does not change the currently active player loop. If this behavior is desired, it's necessary
-            to call PlayerLoop.SetPlayerLoop(playerLoop) after the systems have been removed.
+                This function does not change the currently active player loop. If this behavior is desired, it's
+                necessary
+                to call PlayerLoop.SetPlayerLoop(playerLoop) after the systems have been removed.
             </remarks>
             <param name="data">Additional data per world</param>
             <param name="systemGroup">The ECS system to add to the player loop.</param>
@@ -527,7 +565,7 @@
         </member>
         <member name="M:Arch.SystemGroups.PlayerLoopHelper.RemoveFromPlayerLoop(Arch.SystemGroups.IPlayerLoop,Arch.SystemGroups.ISystemGroupAggregateFactory,Arch.SystemGroups.SystemGroup)">
             <summary>
-            Remove the system group from the player loop
+                Remove the system group from the player loop
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.UnityPlayerLoop">
@@ -542,22 +580,24 @@
         </member>
         <member name="M:Arch.SystemGroups.UnityPlayerLoop.OnWorldStartAppending">
             <summary>
-                <inheritdoc cref="M:Arch.SystemGroups.IPlayerLoop.OnWorldStartAppending" />
+                <inheritdoc cref="M:Arch.SystemGroups.IPlayerLoop.OnWorldStartAppending"/>
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.UnityPlayerLoop.OnWorldEndAppending">
             <summary>
-                <inheritdoc cref="M:Arch.SystemGroups.IPlayerLoop.OnWorldEndAppending" />
+                <inheritdoc cref="M:Arch.SystemGroups.IPlayerLoop.OnWorldEndAppending"/>
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.UnityPlayerLoop.AddAggregate``1(System.Type,Arch.SystemGroups.ISystemGroupAggregate{``0})">
             <summary>
-                <inheritdoc cref="M:Arch.SystemGroups.IPlayerLoop.AddAggregate``1(System.Type,Arch.SystemGroups.ISystemGroupAggregate{``0})" />
+                <inheritdoc
+                        cref="M:Arch.SystemGroups.IPlayerLoop.AddAggregate``1(System.Type,Arch.SystemGroups.ISystemGroupAggregate{``0})"/>
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.UnityPlayerLoop.RemoveAggregate(Arch.SystemGroups.ISystemGroupAggregate)">
             <summary>
-                <inheritdoc cref="M:Arch.SystemGroups.IPlayerLoop.RemoveAggregate(Arch.SystemGroups.ISystemGroupAggregate)" />
+                <inheritdoc
+                        cref="M:Arch.SystemGroups.IPlayerLoop.RemoveAggregate(Arch.SystemGroups.ISystemGroupAggregate)"/>
             </summary>
             <param name="aggregate"></param>
         </member>
@@ -622,60 +662,79 @@
                 After the dispose is called the instance of the group is no longer usable.
             </summary>
         </member>
+        <member name="M:Arch.SystemGroups.SystemGroup.Update">
+            <summary>
+                Update all nodes in the group
+            </summary>
+        </member>
         <member name="T:Arch.SystemGroups.SystemGroupWorld">
             <summary>
-            An entry point to the systems connected to the Unity Player Loop.
+                An entry point to the systems connected to the Unity Player Loop.
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.SystemGroupWorld.Initialize">
             <summary>
-            Recursively Initialize all systems in the world according to their execution order
+                Recursively Initialize all systems in the world according to their execution order
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.SystemGroupWorld.Dispose">
             <summary>
-            Recursively Dispose all systems in the world according to their execution order.
-            Remove all systems from the player loop
+                Recursively Dispose all systems in the world according to their execution order.
+                Remove all systems from the player loop
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.UpdateBeforeAttribute">
             <summary>
-            Apply to a system to specify an update ordering constraint with another system in the same <see cref="T:Arch.SystemGroups.SystemGroup"/> or <see cref="T:Arch.SystemGroups.DefaultGroup`1"/>.
+                Apply to a system to specify an update ordering constraint with another system in the same
+                <see cref="T:Arch.SystemGroups.SystemGroup"/>
+                or<see cref="T:Arch.SystemGroups.DefaultGroup`1"/>.
             </summary>
-            <remarks>Updating before or after a system constrains the scheduler ordering of these systems within a ComponentSystemGroup.
-            Both the before and after systems must be a members of the same ComponentSystemGroup.</remarks>
+            <remarks>Updating before or after a system constrains the scheduler ordering of these systems within a
+                ComponentSystemGroup.
+                Both the before and after systems must be a members of the same ComponentSystemGroup.
+            </remarks>
         </member>
         <member name="M:Arch.SystemGroups.UpdateBeforeAttribute.#ctor(System.Type)">
             <summary>
-            Specify a system which the tagged system must update before.
+                Specify a system which the tagged system must update before.
             </summary>
             <param name="systemType">The target system which the tagged system must update before. This system must be
-            a member of the same <see cref="T:Arch.SystemGroups.SystemGroup"/> or <see cref="T:Arch.SystemGroups.DefaultGroup`1"/>.</param>
+                a member of the same
+                <see cref="T:Arch.SystemGroups.SystemGroup"/>
+                or<see cref="T:Arch.SystemGroups.DefaultGroup`1"/>.
+            </param>
             <exception cref="T:System.ArgumentNullException">Thrown if the system type is empty.</exception>
         </member>
         <member name="P:Arch.SystemGroups.UpdateBeforeAttribute.SystemType">
             <summary>
-            The type of the target system, which the tagged system must update before.
+                The type of the target system, which the tagged system must update before.
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.UpdateAfterAttribute">
             <summary>
-            Apply to a system to specify an update ordering constraint with another system in the same <see cref="T:Arch.SystemGroups.SystemGroup"/> or <see cref="T:Arch.SystemGroups.DefaultGroup`1"/>.
+                Apply to a system to specify an update ordering constraint with another system in the same
+                <see cref="T:Arch.SystemGroups.SystemGroup"/>
+                or<see cref="T:Arch.SystemGroups.DefaultGroup`1"/>.
             </summary>
-            <remarks>Updating before or after a system constrains the scheduler ordering of these systems within a ComponentSystemGroup.
-            Both the before and after systems must be a members of the same ComponentSystemGroup.</remarks>
+            <remarks>Updating before or after a system constrains the scheduler ordering of these systems within a
+                ComponentSystemGroup.
+                Both the before and after systems must be a members of the same ComponentSystemGroup.
+            </remarks>
         </member>
         <member name="M:Arch.SystemGroups.UpdateAfterAttribute.#ctor(System.Type)">
             <summary>
-            Specify a system which the tagged system must update after.
+                Specify a system which the tagged system must update after.
             </summary>
             <param name="systemType">The target system which the tagged system must update after. This system must be
-            a member of the same <see cref="T:Arch.SystemGroups.SystemGroup"/> or <see cref="T:Arch.SystemGroups.DefaultGroup`1"/>.</param>
+                a member of the same
+                <see cref="T:Arch.SystemGroups.SystemGroup"/>
+                or<see cref="T:Arch.SystemGroups.DefaultGroup`1"/>.
+            </param>
             <exception cref="T:System.ArgumentNullException">Thrown if the system type is empty.</exception>
         </member>
         <member name="P:Arch.SystemGroups.UpdateAfterAttribute.SystemType">
             <summary>
-            The type of the target system, which the tagged system must update after.
+                The type of the target system, which the tagged system must update after.
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.Throttling.ISystemGroupThrottler">
@@ -710,7 +769,8 @@
         <member name="T:Arch.SystemGroups.Throttling.ThrottlingEnabledAttribute">
             <summary>
                 Indicates that the system or the group can throttle
-                <para>If the group is marked by this attribute all its direct and transitive children will inherit it</para>
+                <para>If the group is marked by this attribute all its direct and transitive children will inherit it
+                </para>
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.UnityBridge.TimeProvider">
@@ -720,49 +780,67 @@
         </member>
         <member name="T:Arch.SystemGroups.UnityBridge.TimeProvider.Info">
             <summary>
-            Information about time, contains Fixed Time for Physics Systems Groups and Time for the rest
+                Information about time, contains Fixed Time for Physics Systems Groups and Time for the rest
             </summary>
         </member>
         <member name="F:Arch.SystemGroups.UnityBridge.TimeProvider.Info.DeltaTime">
             <summary>
-            <see cref="P:UnityEngine.Time.deltaTime"/> or <see cref="P:UnityEngine.Time.fixedDeltaTime"/>
+                <see cref="P:UnityEngine.Time.deltaTime"/>
+                or
+                <see cref="P:UnityEngine.Time.fixedDeltaTime"/>
             </summary>
         </member>
         <member name="F:Arch.SystemGroups.UnityBridge.TimeProvider.Info.CurrentUnscaledTime">
             <summary>
-            <see cref="P:UnityEngine.Time.unscaledDeltaTime"/> or <see cref="P:UnityEngine.Time.fixedUnscaledDeltaTime"/>
+                <see cref="P:UnityEngine.Time.unscaledDeltaTime"/>
+                or
+                <see cref="P:UnityEngine.Time.fixedUnscaledDeltaTime"/>
             </summary>
         </member>
         <member name="F:Arch.SystemGroups.UnityBridge.TimeProvider.Info.CurrentScaledTime">
             <summary>
-            <see cref="P:UnityEngine.Time.time"/> or <see cref="P:UnityEngine.Time.fixedTime"/>
+                <see cref="P:UnityEngine.Time.time"/>
+                or
+                <see cref="P:UnityEngine.Time.fixedTime"/>
             </summary>
         </member>
         <member name="F:Arch.SystemGroups.UnityBridge.TimeProvider.Info.Realtime">
             <summary>
-            <see cref="P:UnityEngine.Time.realtimeSinceStartup"/>
+                <see cref="P:UnityEngine.Time.realtimeSinceStartup"/>
             </summary>
         </member>
         <member name="T:Arch.SystemGroups.UpdateInGroupAttribute">
             <summary>
-            The specified Type must be a SystemGroup.
-            Updating in a group means this system will be automatically updated by the specified ComponentSystemGroup when the group is updated.
-            The system may order itself relative to other systems in the group with UpdateBefore and UpdateAfter. This ordering takes
-            effect when the system group is sorted.
+                The specified Type must be a SystemGroup.
+                Updating in a group means this system will be automatically updated by the specified
+                ComponentSystemGroup when the group is updated.
+                The system may order itself relative to other systems in the group with UpdateBefore and UpdateAfter.
+                This ordering takes
+                effect when the system group is sorted.
             </summary>
         </member>
         <member name="M:Arch.SystemGroups.UpdateInGroupAttribute.#ctor(System.Type)">
             <summary>
-            Specify the <see cref="T:Arch.SystemGroups.SystemGroup"/> or <see cref="T:Arch.System.Group`1"/> which the tagged system should be added to. The tagged system
-            will be updated as part of this system group's Update() method.
+                Specify the
+                <see cref="T:Arch.SystemGroups.SystemGroup"/>
+                or
+                <see cref="T:Arch.System.Group`1"/>
+                which the tagged system should be added to. The tagged system
+                will be updated as part of this system group's Update() method.
             </summary>
-            <param name="groupType">The <see cref="T:Arch.SystemGroups.SystemGroup"/> type/</param>
+            <param name="groupType">The
+                <see cref="T:Arch.SystemGroups.SystemGroup"/>
+                type/
+            </param>
             <exception cref="T:System.ArgumentNullException">Thrown id the group type is empty.</exception>
         </member>
         <member name="P:Arch.SystemGroups.UpdateInGroupAttribute.GroupType">
             <summary>
-            Retrieve the <see cref="T:Arch.SystemGroups.SystemGroup"/> type.
+                Retrieve the
+                <see cref="T:Arch.SystemGroups.SystemGroup"/>
+                type.
             </summary>
         </member>
     </members>
 </doc>
+        </doc>

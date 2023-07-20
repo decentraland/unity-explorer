@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using Diagnostics.ReportsHandling;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
@@ -12,7 +13,7 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using UnityEngine;
+using Unity.Mathematics;
 using UnityEngine.Networking;
 using Utility.Multithreading;
 
@@ -30,17 +31,17 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         // There is no cache for the list but a cache per entity that is stored in ECS itself
         internal LoadSceneDefinitionListSystem(World world, IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache,
-            MutexSync mutexSync, IConcurrentBudgetProvider concurrentBudgetProvider)
-            : base(world, cache, mutexSync, concurrentBudgetProvider) { }
+            MutexSync mutexSync)
+            : base(world, cache, mutexSync) { }
 
-        protected override async UniTask<StreamableLoadingResult<SceneDefinitions>> FlowInternal(GetSceneDefinitionList intention, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<SceneDefinitions>> FlowInternal(GetSceneDefinitionList intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             bodyBuilder.Clear();
             bodyBuilder.Append("{\"pointers\":[");
 
             for (var i = 0; i < intention.Pointers.Count; ++i)
             {
-                Vector2Int pointer = intention.Pointers[i];
+                int2 pointer = intention.Pointers[i];
 
                 // String Builder has overloads for int to prevent allocations
                 bodyBuilder.Append('\"');

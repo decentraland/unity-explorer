@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
@@ -38,8 +39,9 @@ namespace ECS.SceneLifeCycle.Systems
                 string urn = realmComponent.Ipfs.SceneUrns[i];
                 IpfsTypes.IpfsPath ipfsPath = IpfsHelper.ParseUrn(urn);
 
+                // can't prioritize scenes definition - they are always top priority
                 var promise = AssetPromise<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>
-                   .Create(World, new GetSceneDefinition(new CommonLoadingArguments(ipfsPath.GetUrl(realmComponent.Ipfs.ContentBaseUrl)), ipfsPath));
+                   .Create(World, new GetSceneDefinition(new CommonLoadingArguments(ipfsPath.GetUrl(realmComponent.Ipfs.ContentBaseUrl)), ipfsPath), PartitionComponent.TOP_PRIORITY);
 
                 promises[i] = promise;
             }

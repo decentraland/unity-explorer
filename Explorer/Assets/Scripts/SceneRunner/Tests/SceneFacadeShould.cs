@@ -11,6 +11,7 @@ using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using ECS.LifeCycle;
+using ECS.Prioritization.Components;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.ECSWorld;
@@ -52,7 +53,7 @@ namespace SceneRunner.Tests
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>();
 
-            ecsWorldFactory.CreateWorld(in Arg.Any<ECSWorldInstanceSharedDependencies>(), Arg.Any<ISystemGroupsUpdateGate>())
+            ecsWorldFactory.CreateWorld(in Arg.Any<ECSWorldInstanceSharedDependencies>(), Arg.Any<ISystemGroupsUpdateGate>(), in Arg.Any<IPartitionComponent>())
                            .Returns(_ =>
                             {
                                 var world = World.Create();
@@ -85,7 +86,7 @@ namespace SceneRunner.Tests
         [Test]
         public async Task ContinueUpdateLoopOnBackgroundThread([Values(5, 10, 20, 30, 60, 90, 180)] int fps, [Values(100, 500, 1000, 2000, 4000)] int lifeTimeMs)
         {
-            var sceneFacade = (SceneFacade)await sceneFactory.CreateSceneFromFile(path, CancellationToken.None);
+            var sceneFacade = (SceneFacade)await sceneFactory.CreateSceneFromFile(path, Substitute.For<IPartitionComponent>(), CancellationToken.None);
             sceneFacades.Add(sceneFacade);
 
             var cancellationTokenSource = new CancellationTokenSource();
@@ -114,7 +115,8 @@ namespace SceneRunner.Tests
                 Substitute.For<IInstancePoolsProvider>(),
                 Substitute.For<ICRDTMemoryAllocator>(),
                 Substitute.For<ISceneExceptionsHandler>(),
-                new SceneStateProvider()
+                new SceneStateProvider(),
+                Substitute.For<ISceneData>()
             );
 
             sceneFacades.Add(sceneFacade);
@@ -162,7 +164,7 @@ namespace SceneRunner.Tests
 
             async UniTask CreateAndLaunch(int fps, int lifeTime)
             {
-                var sceneFacade = (SceneFacade)await sceneFactory.CreateSceneFromFile(path, CancellationToken.None);
+                var sceneFacade = (SceneFacade)await sceneFactory.CreateSceneFromFile(path, Substitute.For<IPartitionComponent>(), CancellationToken.None);
                 sceneFacades.Add(sceneFacade);
 
                 var cancellationTokenSource = new CancellationTokenSource();
@@ -199,7 +201,8 @@ namespace SceneRunner.Tests
                 Substitute.For<IInstancePoolsProvider>(),
                 Substitute.For<ICRDTMemoryAllocator>(),
                 Substitute.For<ISceneExceptionsHandler>(),
-                new SceneStateProvider()
+                new SceneStateProvider(),
+                Substitute.For<ISceneData>()
             );
 
             await UniTask.SwitchToThreadPool();

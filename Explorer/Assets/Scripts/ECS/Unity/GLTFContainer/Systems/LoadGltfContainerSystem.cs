@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using ECS.Abstract;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
@@ -42,10 +43,10 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         [Query]
         [None(typeof(GltfContainerComponent))]
-        private void StartLoading(in Entity entity, ref PBGltfContainer sdkComponent)
+        private void StartLoading(in Entity entity, ref PBGltfContainer sdkComponent, ref PartitionComponent partitionComponent)
         {
             // It's not the best idea to pass Transform directly but we rely on cancellation source to cancel if the entity dies
-            var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, new CancellationTokenSource()));
+            var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, new CancellationTokenSource()), partitionComponent);
             var component = new GltfContainerComponent(sdkComponent.GetVisibleMeshesCollisionMask(), sdkComponent.GetInvisibleMeshesCollisionMask(), promise);
             component.State.Set(LoadingState.Loading);
             World.Add(entity, component);
@@ -53,7 +54,7 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         // SDK Component was changed
         [Query]
-        private void ReconfigureGltfContainer(ref GltfContainerComponent component, ref PBGltfContainer sdkComponent)
+        private void ReconfigureGltfContainer(ref GltfContainerComponent component, ref PBGltfContainer sdkComponent, ref PartitionComponent partitionComponent)
         {
             if (sdkComponent.IsDirty)
             {
@@ -61,7 +62,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                 {
                     // The source is changed, should start downloading over again
                     case LoadingState.Unknown:
-                        var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, new CancellationTokenSource()));
+                        var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, new CancellationTokenSource()), partitionComponent);
                         component.Promise = promise;
                         component.State.Set(LoadingState.Loading);
                         return;

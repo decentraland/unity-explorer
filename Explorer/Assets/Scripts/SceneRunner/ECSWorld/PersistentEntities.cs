@@ -7,9 +7,9 @@ namespace SceneRunner.ECSWorld
     /// </summary>
     public readonly struct PersistentEntities
     {
-        public readonly EntityReference SceneRoot;
+        public readonly Entity SceneRoot;
 
-        public PersistentEntities(EntityReference sceneRoot)
+        public PersistentEntities(Entity sceneRoot)
         {
             SceneRoot = sceneRoot;
         }

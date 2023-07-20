@@ -6,7 +6,7 @@ namespace ECS.StreamableLoading.AssetBundles
     /// <summary>
     ///     An eternal runtime cache to prevent parallel loading of the same bundle
     /// </summary>
-    public class AssetBundleCache : IStreamableCache<AssetBundleData, GetAssetBundleIntention>
+    public class AssetBundleCache : OngoingRequestsCacheBase<AssetBundleData>, IStreamableCache<AssetBundleData, GetAssetBundleIntention>
     {
         private readonly Dictionary<GetAssetBundleIntention, AssetBundleData> cache;
 

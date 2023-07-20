@@ -40,7 +40,8 @@ namespace SceneRunner
             IInstancePoolsProvider instancePoolsProvider,
             ICRDTMemoryAllocator crdtMemoryAllocator,
             ISceneExceptionsHandler sceneExceptionsHandler,
-            ISceneStateProvider sceneStateProvider)
+            ISceneStateProvider sceneStateProvider,
+            ISceneData sceneData)
         {
             this.runtimeInstance = runtimeInstance;
             this.ecsWorldFacade = ecsWorldFacade;
@@ -51,9 +52,12 @@ namespace SceneRunner
             this.crdtMemoryAllocator = crdtMemoryAllocator;
             this.sceneExceptionsHandler = sceneExceptionsHandler;
             this.sceneStateProvider = sceneStateProvider;
+            SceneData = sceneData;
 
             completionSource = new UniTaskCompletionSource();
         }
+
+        public ISceneData SceneData { get; }
 
         public void SetTargetFPS(int fps)
         {
@@ -105,6 +109,12 @@ namespace SceneRunner
                 await runtimeInstance.UpdateScene(deltaTime);
 
                 AssertIsNotMainThread(nameof(SceneRuntimeImpl.UpdateScene));
+
+                // Support scene freeze (0 FPS, int.MinValue)
+                while (intervalMS < 0)
+
+                    // Just idle, don't do anything, need to wait for an actual value
+                    await Task.Delay(10);
 
                 var sleepMS = Math.Max(intervalMS - (int)stopWatch.ElapsedMilliseconds, 0);
 
