@@ -8,7 +8,7 @@ namespace AssetManagement.JsCodeResolver
     {
         public async UniTask<string> GetJsCodeAsync(string url, CancellationToken cancellationToken = default)
         {
-            var request = UnityWebRequest.Get(url);
+            using var request = UnityWebRequest.Get(url);
 
             await request.SendWebRequest().WithCancellation(cancellationToken);
 

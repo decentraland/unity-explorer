@@ -22,7 +22,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
         internal async UniTask<StreamableLoadingResult<AssetBundleData>> LoadAssetBundle(string hash)
         {
-            UnityWebRequest wr = UnityWebRequestAssetBundle.GetAssetBundle($"{TEST_FOLDER}{hash}");
+            using UnityWebRequest wr = UnityWebRequestAssetBundle.GetAssetBundle($"{TEST_FOLDER}{hash}");
             await wr.SendWebRequest();
             assetBundle = DownloadHandlerAssetBundle.GetContent(wr);
             return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, null, assetBundle.LoadAllAssets<GameObject>()));

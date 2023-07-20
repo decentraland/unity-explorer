@@ -89,41 +89,48 @@ namespace SceneRunner
             var stopWatch = new Stopwatch();
             var deltaTime = 0f;
 
-            while (true)
+            try
             {
-                if (ct.IsCancellationRequested)
+                while (true)
                 {
-                    completionSource.TrySetCanceled();
-                    break;
+                    if (ct.IsCancellationRequested)
+                    {
+                        completionSource.TrySetCanceled();
+                        break;
+                    }
+
+                    if (sceneStateProvider.State != SceneState.Running)
+                    {
+                        completionSource.TrySetResult();
+                        break;
+                    }
+
+                    stopWatch.Restart();
+
+                    // We can't guarantee that the thread is preserved between updates
+                    await runtimeInstance.UpdateScene(deltaTime);
+
+                    AssertIsNotMainThread(nameof(SceneRuntimeImpl.UpdateScene));
+
+                    // Passing ct to Task.Delay allows to break the loop immediately
+                    // as, otherwise, due to 0 or low FPS it can spin for much longer
+
+                    // Support scene freeze (0 FPS, int.MinValue)
+                    while (intervalMS < 0)
+
+                        // Just idle, don't do anything, need to wait for an actual value
+                        await Task.Delay(10, ct);
+
+                    int sleepMS = Math.Max(intervalMS - (int)stopWatch.ElapsedMilliseconds, 0);
+
+                    // We can't use Thread.Sleep as EngineAPI is called on the same thread
+                    // We can't use UniTask.Delay as this loop has nothing to do with the Unity Player Loop
+                    await Task.Delay(sleepMS, ct);
+                    AssertIsNotMainThread(nameof(Task.Delay));
+                    deltaTime = stopWatch.ElapsedMilliseconds / 1000f;
                 }
-
-                if (sceneStateProvider.State != SceneState.Running)
-                {
-                    completionSource.TrySetResult();
-                    break;
-                }
-
-                stopWatch.Restart();
-
-                // We can't guarantee that the thread is preserved between updates
-                await runtimeInstance.UpdateScene(deltaTime);
-
-                AssertIsNotMainThread(nameof(SceneRuntimeImpl.UpdateScene));
-
-                // Support scene freeze (0 FPS, int.MinValue)
-                while (intervalMS < 0)
-
-                    // Just idle, don't do anything, need to wait for an actual value
-                    await Task.Delay(10);
-
-                var sleepMS = Math.Max(intervalMS - (int)stopWatch.ElapsedMilliseconds, 0);
-
-                // We can't use Thread.Sleep as EngineAPI is called on the same thread
-                // We can't use UniTask.Delay as this loop has nothing to do with the Unity Player Loop
-                await Task.Delay(sleepMS); // No CancellationToken -> Cancel gracefully
-                AssertIsNotMainThread(nameof(Task.Delay));
-                deltaTime = stopWatch.ElapsedMilliseconds / 1000f;
             }
+            catch (OperationCanceledException) { completionSource.TrySetCanceled(); }
         }
 
         /// <summary>

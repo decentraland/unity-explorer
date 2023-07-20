@@ -12,11 +12,6 @@ namespace SceneRunner.Scene.ExceptionsHandling
         private readonly ReportData reportData;
         private string messagePrefix;
 
-        internal SceneExecutionException(Exception[] innerExceptions, ReportData reportData) : base(innerExceptions)
-        {
-            this.reportData = reportData;
-        }
-
         internal SceneExecutionException(IEnumerable<Exception> innerExceptions, ReportData reportData) : base(innerExceptions)
         {
             this.reportData = reportData;

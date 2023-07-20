@@ -3,7 +3,6 @@ using CRDT.Deserializer;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Engine;
-using CrdtEcsBridge.UpdateGate;
 using Cysharp.Threading.Tasks;
 using ECS.Prioritization.Components;
 using NSubstitute;
@@ -43,7 +42,7 @@ namespace SceneRunner.Tests
             sceneRuntimeFactory = new SceneRuntimeFactory();
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>();
-            ecsWorldFactory.CreateWorld(Arg.Any<ECSWorldInstanceSharedDependencies>(), Arg.Any<ISystemGroupsUpdateGate>(), in Arg.Any<IPartitionComponent>()).Returns(ecsWorldFacade);
+            ecsWorldFactory.CreateWorld(in Arg.Any<ECSWorldFactoryArgs>()).Returns(ecsWorldFacade);
 
             sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>();
             crdtSerializer = Substitute.For<ICRDTSerializer>();

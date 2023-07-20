@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using ECS.StreamableLoading.Common.Components;
 using UnityEngine.Networking;
 
@@ -12,13 +13,13 @@ namespace ECS.StreamableLoading
             // Add more as needed
         }
 
-        public static bool IsServerError(this UnityWebRequest request) =>
-            request is { responseCode: >= 500 and < 600 };
+        public static bool IsServerError(this UnityWebRequestException exception) =>
+            exception is { ResponseCode: >= 500 and < 600 };
 
-        public static bool IsTimedOut(this UnityWebRequest request) =>
-            request is { error: "Request timeout" };
+        public static bool IsTimedOut(this UnityWebRequestException exception) =>
+            exception is { Error: "Request timeout" };
 
-        public static bool IsAborted(this UnityWebRequest request) =>
-            request is { result: UnityWebRequest.Result.ConnectionError or UnityWebRequest.Result.ProtocolError, error: "Request aborted" or "User Aborted" };
+        public static bool IsAborted(this UnityWebRequestException exception) =>
+            exception is { Result: UnityWebRequest.Result.ConnectionError or UnityWebRequest.Result.ProtocolError, Error: "Request aborted" or "User Aborted" };
     }
 }
