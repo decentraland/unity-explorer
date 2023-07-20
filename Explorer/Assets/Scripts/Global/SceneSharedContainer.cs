@@ -28,13 +28,14 @@ namespace Global
                 staticContainer.ReportsHandlingSettings,
                 entityFactory,
                 staticContainer.WorldsAggregateFactory,
-                new ConcurrentBudgetProvider(10));
+                new ConcurrentBudgetProvider(10),
+                staticContainer.InstantiationBudgetProvider);
 
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 staticContainer.PartitionSettings,
                 staticContainer.CameraSamplingData,
                 new TransformsPlugin(sharedDependencies),
-                new MaterialsPlugin(),
+                new MaterialsPlugin(sharedDependencies.InstantiationFrameBudgetProvider),
                 new PrimitiveCollidersPlugin(sharedDependencies),
                 new TexturesLoadingPlugin(sharedDependencies.LoadingBudgetProvider),
                 new PrimitivesRenderingPlugin(sharedDependencies),

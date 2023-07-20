@@ -5,5 +5,11 @@ namespace ECS.BudgetProvider
         bool TrySpendBudget(int budgetCost = 1);
 
         void ReleaseBudget(int budgetToRelease = 1);
+
+        void ResetBudget()
+        {
+
+
+        }
     }
 }

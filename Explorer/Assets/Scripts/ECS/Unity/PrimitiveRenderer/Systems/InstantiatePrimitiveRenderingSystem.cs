@@ -5,6 +5,7 @@ using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
+using ECS.BudgetProvider;
 using ECS.ComponentsPooling;
 using ECS.Unity.Groups;
 using ECS.Unity.PrimitiveRenderer.Components;
@@ -35,13 +36,21 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
 
         private readonly Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases;
 
-        internal InstantiatePrimitiveRenderingSystem(World world, IComponentPoolsRegistry poolsRegistry,
+        private readonly IConcurrentBudgetProvider frameTimeBudgetProvider;
+
+        internal InstantiatePrimitiveRenderingSystem(World world, IComponentPoolsRegistry poolsRegistry, IConcurrentBudgetProvider frameTimeBudgetProvider,
             Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases = null) : base(world)
         {
             this.setupMeshCases = setupMeshCases ?? SETUP_MESH_LOGIC;
             poolRegistry = poolsRegistry;
 
             rendererPoolRegistry = poolsRegistry.GetReferenceTypePool<MeshRenderer>();
+            this.frameTimeBudgetProvider = frameTimeBudgetProvider;
+        }
+
+        public override void BeforeUpdate(in float t)
+        {
+            frameTimeBudgetProvider.ResetBudget();
         }
 
         protected override void Update(float t)
@@ -56,6 +65,9 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         private void InstantiateNonExistingRenderer(in Entity entity, ref PBMeshRenderer sdkComponent, ref TransformComponent transform)
         {
             if (!setupMeshCases.TryGetValue(sdkComponent.MeshCase, out ISetupMesh setupMesh))
+                return;
+
+            if (!frameTimeBudgetProvider.TrySpendBudget())
                 return;
 
             var meshRendererComponent = new PrimitiveMeshRendererComponent();
@@ -74,6 +86,9 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             ref TransformComponent transform)
         {
             if (!sdkComponent.IsDirty) return;
+
+            if (!frameTimeBudgetProvider.TrySpendBudget())
+                return;
 
             if (!setupMeshCases.TryGetValue(sdkComponent.MeshCase, out ISetupMesh setupMesh))
             {

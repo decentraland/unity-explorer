@@ -7,7 +7,6 @@ using ECS.ComponentsPooling;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using ECS.Unity.GLTFContainer.Asset.Cache;
-using ECS.Unity.GLTFContainer.Asset.DeferredInstantiating;
 using ECS.Unity.GLTFContainer.Asset.Systems;
 using ECS.Unity.GLTFContainer.Systems;
 using System.Collections.Generic;
@@ -19,14 +18,14 @@ namespace SceneRunner.ECSWorld.Plugins
         private readonly GltfContainerAssetsCache assetsCache;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IReportsHandlingSettings reportsHandlingSettings;
-        private readonly IConcurrentBudgetProvider budgetProvider;
+        private readonly IConcurrentBudgetProvider frameTimeBudgetProvider;
 
         public GltfContainerPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies)
         {
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
             reportsHandlingSettings = singletonSharedDependencies.ReportsHandlingSettings;
             assetsCache = new GltfContainerAssetsCache(1000);
-            budgetProvider = new ConcurrentBudgetProvider(5);
+            frameTimeBudgetProvider = singletonSharedDependencies.InstantiationFrameBudgetProvider;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder,
@@ -34,8 +33,7 @@ namespace SceneRunner.ECSWorld.Plugins
         {
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);
-            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder);
-            DeferredInstantiatingSystem.InjectToWorld(ref builder, budgetProvider);
+            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, frameTimeBudgetProvider);
             ReportGltfErrorsSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // GLTF Container

@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Diagnostics.ReportsHandling;
+using ECS.BudgetProvider;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
@@ -10,6 +11,7 @@ using NUnit.Framework;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Unity.Profiling;
 
 namespace ECS.Unity.GLTFContainer.Asset.Tests
 {
@@ -21,7 +23,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new CreateGltfAssetFromAssetBundleSystem(world);
+            IConcurrentBudgetProvider frameTimeCounter = Substitute.For<IConcurrentBudgetProvider>();
+            frameTimeCounter.TrySpendBudget().Returns(true);
+            system = new CreateGltfAssetFromAssetBundleSystem(world, frameTimeCounter);
         }
 
         [TearDown]

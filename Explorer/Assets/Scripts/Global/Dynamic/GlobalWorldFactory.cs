@@ -33,6 +33,8 @@ namespace Global.Dynamic
         private readonly IPartitionSettings partitionSettings;
         private readonly IRealmPartitionSettings realmPartitionSettings;
         private readonly RealmSamplingData realmSamplingData;
+        private readonly IConcurrentBudgetProvider instantiationBudgetProvider;
+        private readonly IConcurrentBudgetProvider sceneBudgetProvider;
 
         public GlobalWorldFactory(in StaticContainer staticContainer, IRealmPartitionSettings realmPartitionSettings,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData)
@@ -43,6 +45,8 @@ namespace Global.Dynamic
             this.realmPartitionSettings = realmPartitionSettings;
             this.cameraSamplingData = cameraSamplingData;
             this.realmSamplingData = realmSamplingData;
+            this.instantiationBudgetProvider = staticContainer.InstantiationBudgetProvider;
+            this.sceneBudgetProvider = new ConcurrentBudgetProvider(100);
         }
 
         public GlobalWorld Create(ISceneFactory sceneFactory, Camera unityCamera)
@@ -59,7 +63,7 @@ namespace Global.Dynamic
             // Asset Bundle Manifest
             const string ASSET_BUNDLES_URL = "https://ab-cdn.decentraland.org/";
 
-            IConcurrentBudgetProvider sceneBudgetProvider = new ConcurrentBudgetProvider(100);
+            ResetFrameTimeBudgetProviderSystem.InjectToWorld(ref builder, instantiationBudgetProvider);
 
             LoadSceneDefinitionListSystem.InjectToWorld(ref builder, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
             LoadSceneDefinitionSystem.InjectToWorld(ref builder, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);

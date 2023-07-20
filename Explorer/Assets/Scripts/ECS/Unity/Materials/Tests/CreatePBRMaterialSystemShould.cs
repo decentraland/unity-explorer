@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using ECS.BudgetProvider;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -25,7 +26,9 @@ namespace ECS.Unity.Materials.Tests
             IObjectPool<Material> pool = Substitute.For<IObjectPool<Material>>();
             pool.Get().Returns(_ => new Material(pbrMat));
 
-            system = new CreatePBRMaterialSystem(world, pool);
+            IConcurrentBudgetProvider concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+            concurrentBudgetProvider.TrySpendBudget().Returns(true);
+            system = new CreatePBRMaterialSystem(world, pool, concurrentBudgetProvider);
             system.Initialize();
         }
 

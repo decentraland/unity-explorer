@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
+using ECS.BudgetProvider;
 using ECS.ComponentsPooling;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
@@ -16,15 +17,17 @@ namespace SceneRunner.ECSWorld.Plugins
     public class PrimitivesRenderingPlugin : IECSWorldPlugin
     {
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly IConcurrentBudgetProvider InstantiationFrameTimeBudgetProvider;
 
         public PrimitivesRenderingPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies)
         {
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
+            InstantiationFrameTimeBudgetProvider = singletonSharedDependencies.InstantiationFrameBudgetProvider;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            InstantiatePrimitiveRenderingSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            InstantiatePrimitiveRenderingSystem.InjectToWorld(ref builder, componentPoolsRegistry, InstantiationFrameTimeBudgetProvider);
             ReleaseOutdatedRenderingSystem.InjectToWorld(ref builder, componentPoolsRegistry);
 
             ResetDirtyFlagSystem<PBMeshRenderer>.InjectToWorld(ref builder);

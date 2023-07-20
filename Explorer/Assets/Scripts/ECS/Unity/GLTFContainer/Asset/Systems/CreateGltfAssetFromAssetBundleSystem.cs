@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
+using ECS.BudgetProvider;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
@@ -23,19 +24,28 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     [LogCategory(ReportCategory.GLTF_CONTAINER)]
     public partial class CreateGltfAssetFromAssetBundleSystem : BaseUnityLoopSystem
     {
-        internal CreateGltfAssetFromAssetBundleSystem(World world) : base(world)
+        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
+        internal CreateGltfAssetFromAssetBundleSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider) : base(world)
         {
+            this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
+        }
+
+        public override void BeforeUpdate(in float t)
+        {
+            instantiationFrameTimeBudgetProvider.ResetBudget();
         }
 
         protected override void Update(float t)
         {
-            PrepareQuery(World);
             ConvertFromAssetBundleQuery(World);
         }
 
+        /// <summary>
+        ///     Called on a separate entity with a promise creates a result with <see cref="GltfContainerAsset" />
+        /// </summary>
         [Query]
-        [None(typeof(StreamableLoadingResult<GltfContainerAsset>), typeof(StreamableInstantiatingState))]
-        private void Prepare(in Entity entity, ref GetGltfContainerAssetIntention assetIntention, ref StreamableLoadingResult<AssetBundleData> assetBundleResult)
+        [None(typeof(StreamableLoadingResult<GltfContainerAsset>))]
+        private void ConvertFromAssetBundle(in Entity entity, ref GetGltfContainerAssetIntention assetIntention, ref StreamableLoadingResult<AssetBundleData> assetBundleResult)
         {
             if (assetIntention.CancellationTokenSource.IsCancellationRequested)
 
@@ -58,21 +68,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 return;
             }
 
-            //Will be prioritized and sorted in DeferredInstantiationSystem
-            World.Add(entity, new StreamableInstantiatingState() { Value = StreamableInstantiatingState.Status.Forbidden, InstantiationCost = assetBundleData.GameObjectNodes.Count } );
-        }
-
-        /// <summary>
-        ///     Called on a separate entity with a promise creates a result with <see cref="GltfContainerAsset" />
-        /// </summary>
-        [Query]
-        [None(typeof(StreamableLoadingResult<GltfContainerAsset>))]
-        private void ConvertFromAssetBundle(in Entity entity, ref StreamableLoadingResult<AssetBundleData> assetBundleResult, ref StreamableInstantiatingState instantiatingState)
-        {
-            if (instantiatingState.Value != StreamableInstantiatingState.Status.Allowed)
+            if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
                 return;
-
-            AssetBundleData assetBundleData = assetBundleResult.Asset;
 
             // Create a new container root
             // It will be cached and pooled
@@ -117,9 +114,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                     FilterVisibleColliderCandidate(result.VisibleColliderMeshes, meshFilter);
                 }
             }
-
-            instantiatingState.DisposeBudget();
-            instantiatingState.Value = StreamableInstantiatingState.Status.Finished;
 
             World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
         }
@@ -168,3 +162,4 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         }
     }
 }
+

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Arch.Core;
 using DCL.ECSComponents;
+using ECS.BudgetProvider;
 using ECS.ComponentsPooling;
 using ECS.TestSuite;
 using ECS.Unity.PrimitiveRenderer.Components;
@@ -50,7 +51,9 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
                     { typeof(PlanePrimitive), new ComponentPool<PlanePrimitive>() }
                 });
 
-            system = new InstantiatePrimitiveRenderingSystem(world, poolsRegistry, setupMeshes);
+            IConcurrentBudgetProvider concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+            concurrentBudgetProvider.TrySpendBudget().Returns(true);
+            system = new InstantiatePrimitiveRenderingSystem(world, poolsRegistry, concurrentBudgetProvider ,setupMeshes);
 
             entity = world.Create();
             AddTransformToEntity(entity);

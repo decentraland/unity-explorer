@@ -2,9 +2,11 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Shaders;
+using ECS.BudgetProvider;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Textures.Components;
+using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.Rendering;
@@ -20,7 +22,17 @@ namespace ECS.Unity.Materials.Systems
         /// </summary>
         public const string MATERIAL_PATH = "ShapeMaterial";
 
-        internal CreatePBRMaterialSystem(World world, IObjectPool<Material> materialsPool) : base(world, materialsPool) { }
+        private readonly IConcurrentBudgetProvider frameTimeBudgetProvider;
+
+        internal CreatePBRMaterialSystem(World world, IObjectPool<Material> materialsPool, IConcurrentBudgetProvider frameTimeBudgetProvider) : base(world, materialsPool)
+        {
+            this.frameTimeBudgetProvider = frameTimeBudgetProvider;
+        }
+
+        public override void BeforeUpdate(in float t)
+        {
+            frameTimeBudgetProvider.ResetBudget();
+        }
 
         protected override void Update(float t)
         {
@@ -40,14 +52,17 @@ namespace ECS.Unity.Materials.Systems
 
         private void ConstructMaterial(ref MaterialComponent materialComponent)
         {
+            if (!frameTimeBudgetProvider.TrySpendBudget())
+                return;
+
             // Check if all promises are finished
             // Promises are finished if: all of their entities are invalid, no promises at all, or the result component exists
-
             if (TryGetTextureResult(ref materialComponent.AlbedoTexPromise, out StreamableLoadingResult<Texture2D> albedoResult)
                 && TryGetTextureResult(ref materialComponent.EmissiveTexPromise, out StreamableLoadingResult<Texture2D> emissiveResult)
                 && TryGetTextureResult(ref materialComponent.AlphaTexPromise, out StreamableLoadingResult<Texture2D> alphaResult)
                 && TryGetTextureResult(ref materialComponent.BumpTexPromise, out StreamableLoadingResult<Texture2D> bumpResult))
             {
+
                 materialComponent.Status = MaterialComponent.LifeCycle.LoadingFinished;
 
                 materialComponent.Result ??= CreateNewMaterialInstance();

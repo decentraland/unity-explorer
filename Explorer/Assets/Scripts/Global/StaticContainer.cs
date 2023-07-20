@@ -1,6 +1,7 @@
 ﻿using Arch.SystemGroups;
 using Diagnostics;
 using Diagnostics.ReportsHandling;
+using ECS.BudgetProvider;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using System;
@@ -26,6 +27,9 @@ namespace Global
 
         public IReportsHandlingSettings ReportsHandlingSettings { get; private set; }
 
+        public IConcurrentBudgetProvider InstantiationBudgetProvider { get; private set; }
+
+
         public void Dispose()
         {
             DiagnosticsContainer?.Dispose();
@@ -40,6 +44,7 @@ namespace Global
                 WorldsAggregateFactory = new PartitionedWorldsAggregate.Factory(),
                 CameraSamplingData = new CameraSamplingData(),
                 ReportsHandlingSettings = reportsHandlingSettings,
+                InstantiationBudgetProvider = new FrameTimeBudgetProvider(1f, new FrameTimeCounter())
             };
     }
 }

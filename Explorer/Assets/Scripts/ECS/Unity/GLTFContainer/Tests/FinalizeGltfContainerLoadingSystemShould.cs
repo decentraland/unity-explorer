@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
+using ECS.BudgetProvider;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
@@ -35,7 +36,9 @@ namespace ECS.Unity.GLTFContainer.Tests
             Entity sceneRoot = world.Create();
             AddTransformToEntity(sceneRoot);
             system = new FinalizeGltfContainerLoadingSystem(world, world.Reference(sceneRoot));
-            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world);
+            IConcurrentBudgetProvider frameTimeCounter = Substitute.For<IConcurrentBudgetProvider>();
+            frameTimeCounter.TrySpendBudget().Returns(true);
+            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, frameTimeCounter);
         }
 
         [TearDown]
