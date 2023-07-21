@@ -56,9 +56,13 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             bodyBuilder.Append("]}");
 
-            var request = UnityWebRequest.Post(intention.CommonArguments.URL, bodyBuilder.ToString(), "application/json");
-            await request.SendWebRequest().WithCancellation(ct);
-            string text = request.downloadHandler.text;
+            string text;
+
+            using (var request = UnityWebRequest.Post(intention.CommonArguments.URL, bodyBuilder.ToString(), "application/json"))
+            {
+                await request.SendWebRequest().WithCancellation(ct);
+                text = request.downloadHandler.text;
+            }
 
             await UniTask.SwitchToThreadPool();
 

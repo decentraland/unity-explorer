@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility.Pool;
 using Utility.ThreadSafePool;
 
 namespace CrdtEcsBridge.WorldSynchronizer
@@ -15,7 +16,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
     internal class WorldSyncCommandBufferCollectionsPool : IDisposable
     {
         private static readonly ThreadSafeObjectPool<WorldSyncCommandBufferCollectionsPool> POOL = new (
-            () => new WorldSyncCommandBufferCollectionsPool());
+            () => new WorldSyncCommandBufferCollectionsPool(), defaultCapacity: PoolConstants.SCENES_COUNT);
 
         private Dictionary<CRDTEntity, Dictionary<int, BatchState>> mainDictionary = new (1024, CRDTEntityComparer.INSTANCE);
         private List<CRDTEntity> deletedEntities = new (256);

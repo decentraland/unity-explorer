@@ -54,6 +54,7 @@ namespace ECS.SceneLifeCycle.Systems
                 async UniTaskVoid RunOnThreadPool()
                 {
                     await UniTask.SwitchToThreadPool();
+                    if (destroyCancellationToken.IsCancellationRequested) return;
 
                     // Provide basic Thread Pool synchronization context
                     SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());

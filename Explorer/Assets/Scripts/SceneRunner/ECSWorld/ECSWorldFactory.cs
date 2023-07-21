@@ -32,10 +32,12 @@ namespace SceneRunner.ECSWorld
             this.cameraSamplingData = cameraSamplingData;
         }
 
-        public ECSWorldFacade CreateWorld(in ECSWorldInstanceSharedDependencies sharedDependencies,
-            in ISystemGroupsUpdateGate systemGroupsUpdateGate,
-            in IPartitionComponent scenePartition)
+        public ECSWorldFacade CreateWorld(in ECSWorldFactoryArgs args)
         {
+            ISystemGroupsUpdateGate systemGroupsUpdateGate = args.SystemGroupsUpdateGate;
+            ECSWorldInstanceSharedDependencies sharedDependencies = args.SharedDependencies;
+            IPartitionComponent scenePartition = args.ScenePartition;
+
             // Worlds uses Pooled Collections under the hood so the memory impact is minimized
             var world = World.Create();
 
@@ -50,10 +52,10 @@ namespace SceneRunner.ECSWorld
                 sharedDependencies.SceneExceptionsHandler);
 
             builder
-               .InjectCustomGroup(new SyncedInitializationSystemGroup(sharedDependencies.MutexSync))
-               .InjectCustomGroup(new SyncedSimulationSystemGroup(sharedDependencies.MutexSync))
-               .InjectCustomGroup(new SyncedPresentationSystemGroup(sharedDependencies.MutexSync))
-               .InjectCustomGroup(new SyncedPostRenderingSystemGroup(sharedDependencies.MutexSync));
+               .InjectCustomGroup(new SyncedInitializationSystemGroup(sharedDependencies.MutexSync, args.SceneStateProvider))
+               .InjectCustomGroup(new SyncedSimulationSystemGroup(sharedDependencies.MutexSync, args.SceneStateProvider))
+               .InjectCustomGroup(new SyncedPresentationSystemGroup(sharedDependencies.MutexSync, args.SceneStateProvider))
+               .InjectCustomGroup(new SyncedPostRenderingSystemGroup(sharedDependencies.MutexSync, args.SceneStateProvider));
 
             var finalizeWorldSystems = new List<IFinalizeWorldSystem>(32);
 

@@ -61,7 +61,7 @@ namespace ECS.SceneLifeCycle
             // Repeat loop for this request only
             async UniTask<StreamableLoadingResult<string>> InnerFlow(SubIntention subIntention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
             {
-                UnityWebRequest wr = await UnityWebRequest.Get(subIntention.CommonArguments.URL).SendWebRequest().WithCancellation(ct);
+                using UnityWebRequest wr = await UnityWebRequest.Get(subIntention.CommonArguments.URL).SendWebRequest().WithCancellation(ct);
                 return new StreamableLoadingResult<string>(wr.downloadHandler.text);
             }
 
@@ -112,7 +112,7 @@ namespace ECS.SceneLifeCycle
             // Repeat loop for this request only
             async UniTask<StreamableLoadingResult<string>> InnerFlow(SubIntention subIntention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
             {
-                UnityWebRequest wr = await UnityWebRequest.Get(subIntention.CommonArguments.URL).SendWebRequest().WithCancellation(ct);
+                using UnityWebRequest wr = await UnityWebRequest.Get(subIntention.CommonArguments.URL).SendWebRequest().WithCancellation(ct);
                 return new StreamableLoadingResult<string>(wr.downloadHandler.text);
             }
 
