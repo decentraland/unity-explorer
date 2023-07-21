@@ -6,6 +6,7 @@ using DCL.ECSComponents;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.ComponentsPooling;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Groups;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
@@ -24,6 +25,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
     {
         private readonly IComponentPool<MeshRenderer> rendererPoolRegistry;
         private readonly IComponentPoolsRegistry poolRegistry;
+        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
 
         private static readonly Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> SETUP_MESH_LOGIC = new ()
         {
@@ -36,12 +38,18 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         private readonly Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases;
 
         internal InstantiatePrimitiveRenderingSystem(World world, IComponentPoolsRegistry poolsRegistry,
-            Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases = null) : base(world)
+            IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases = null) : base(world)
         {
             this.setupMeshCases = setupMeshCases ?? SETUP_MESH_LOGIC;
+            this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
             poolRegistry = poolsRegistry;
 
             rendererPoolRegistry = poolsRegistry.GetReferenceTypePool<MeshRenderer>();
+        }
+
+        public override void BeforeUpdate(in float t)
+        {
+            instantiationFrameTimeBudgetProvider.ReleaseBudget();
         }
 
         protected override void Update(float t)
@@ -56,6 +64,9 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         private void InstantiateNonExistingRenderer(in Entity entity, ref PBMeshRenderer sdkComponent, ref TransformComponent transform)
         {
             if (!setupMeshCases.TryGetValue(sdkComponent.MeshCase, out ISetupMesh setupMesh))
+                return;
+
+            if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
                 return;
 
             var meshRendererComponent = new PrimitiveMeshRendererComponent();
@@ -81,6 +92,9 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
                 World.Remove<PrimitiveMeshRendererComponent>(entity);
                 return;
             }
+
+            if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
+                return;
 
             // The model has changed entirely, so we need to reinstall the renderer
             if (ReferenceEquals(meshRendererComponent.PrimitiveMesh, null))

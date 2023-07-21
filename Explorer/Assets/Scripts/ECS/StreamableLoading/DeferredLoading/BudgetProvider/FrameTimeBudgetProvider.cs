@@ -28,9 +28,9 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
                 return false;
 
             currentAvailableBudget -= (profilingProvider.GetCurrentFrameTimeValue() - startTime);
-            ResetBudget();
-            outOfBudget = currentAvailableBudget < 0;
+            ReleaseBudget();
 
+            outOfBudget = currentAvailableBudget < 0;
             return true;
         }
 
