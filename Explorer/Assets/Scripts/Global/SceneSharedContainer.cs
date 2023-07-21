@@ -28,7 +28,8 @@ namespace Global
                 staticContainer.ReportsHandlingSettings,
                 entityFactory,
                 staticContainer.WorldsAggregateFactory,
-                new ConcurrentLoadingBudgetProvider(10));
+                new ConcurrentLoadingBudgetProvider(10),
+                new FrameTimeBudgetProvider(5,staticContainer.ProfilingProvider));
 
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 staticContainer.PartitionSettings,

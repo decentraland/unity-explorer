@@ -3,6 +3,7 @@ using Diagnostics;
 using Diagnostics.ReportsHandling;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
+using ECS.Profiling;
 using System;
 
 namespace Global
@@ -26,6 +27,8 @@ namespace Global
 
         public IReportsHandlingSettings ReportsHandlingSettings { get; private set; }
 
+        public IProfilingProvider ProfilingProvider { get; private set; }
+
         public void Dispose()
         {
             DiagnosticsContainer?.Dispose();
@@ -40,6 +43,7 @@ namespace Global
                 WorldsAggregateFactory = new PartitionedWorldsAggregate.Factory(),
                 CameraSamplingData = new CameraSamplingData(),
                 ReportsHandlingSettings = reportsHandlingSettings,
+                ProfilingProvider = new ProfilingProvider()
             };
     }
 }

@@ -5,6 +5,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.TestSuite;
 using ECS.Unity.GLTFContainer.Asset;
 using ECS.Unity.GLTFContainer.Asset.Components;
@@ -35,9 +36,9 @@ namespace ECS.Unity.GLTFContainer.Tests
             Entity sceneRoot = world.Create();
             AddTransformToEntity(sceneRoot);
             system = new FinalizeGltfContainerLoadingSystem(world, world.Reference(sceneRoot));
-            IGltfContainerInstantiationThrottler throttler = Substitute.For<IGltfContainerInstantiationThrottler>();
-            throttler.Acquire(Arg.Any<int>()).Returns(true);
-            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, throttler);
+            IConcurrentBudgetProvider budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+            budgetProvider.TrySpendBudget().Returns(true);
+            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budgetProvider);
         }
 
         [TearDown]

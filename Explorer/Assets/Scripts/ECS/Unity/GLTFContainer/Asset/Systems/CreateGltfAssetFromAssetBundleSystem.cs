@@ -6,6 +6,7 @@ using ECS.Abstract;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
 using System.Collections.Generic;
@@ -23,19 +24,15 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     [LogCategory(ReportCategory.GLTF_CONTAINER)]
     public partial class CreateGltfAssetFromAssetBundleSystem : BaseUnityLoopSystem
     {
-        /// <summary>
-        ///     TODO Temporary throttler to increase performance before we introduce the proper prioritisation mechanism
-        /// </summary>
-        private readonly IGltfContainerInstantiationThrottler instantiationThrottler;
-
-        internal CreateGltfAssetFromAssetBundleSystem(World world, IGltfContainerInstantiationThrottler throttler) : base(world)
+        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
+        internal CreateGltfAssetFromAssetBundleSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider) : base(world)
         {
-            instantiationThrottler = throttler;
+            this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
         }
 
         public override void BeforeUpdate(in float t)
         {
-            instantiationThrottler.Reset();
+            instantiationFrameTimeBudgetProvider.ReleaseBudget();
         }
 
         protected override void Update(float t)
@@ -71,9 +68,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 return;
             }
 
-            if (!instantiationThrottler.Acquire(assetBundleData.GameObjectNodes.Count))
-
-                // delay to the next frame, it will be grabbed by this system again
+            if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
                 return;
 
             // Create a new container root

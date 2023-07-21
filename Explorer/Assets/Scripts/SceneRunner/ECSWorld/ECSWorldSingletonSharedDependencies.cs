@@ -14,18 +14,21 @@ namespace SceneRunner.ECSWorld
         public readonly ISystemGroupAggregate<IPartitionComponent>.IFactory AggregateFactory;
         public readonly IEntityFactory EntityFactory;
         public readonly IConcurrentBudgetProvider LoadingBudgetProvider;
+        public readonly IConcurrentBudgetProvider InstantiationFrameTimeBudgetProvider;
 
         public ECSWorldSingletonSharedDependencies(IComponentPoolsRegistry componentPoolsRegistry,
             IReportsHandlingSettings reportsHandlingSettings,
             IEntityFactory entityFactory,
             ISystemGroupAggregate<IPartitionComponent>.IFactory aggregateFactory,
-            IConcurrentBudgetProvider loadingBudgetProvider)
+            IConcurrentBudgetProvider loadingBudgetProvider,
+            IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider)
         {
             ComponentPoolsRegistry = componentPoolsRegistry;
             ReportsHandlingSettings = reportsHandlingSettings;
             EntityFactory = entityFactory;
             LoadingBudgetProvider = loadingBudgetProvider;
             AggregateFactory = aggregateFactory;
+            InstantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
         }
     }
 }

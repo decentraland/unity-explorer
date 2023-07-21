@@ -2,6 +2,7 @@
 using Diagnostics.ReportsHandling;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.TestSuite;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Asset.Systems;
@@ -23,7 +24,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new CreateGltfAssetFromAssetBundleSystem(world, throttler = Substitute.For<IGltfContainerInstantiationThrottler>());
+            IConcurrentBudgetProvider budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+            budgetProvider.TrySpendBudget().Returns(true);
+            system = new CreateGltfAssetFromAssetBundleSystem(world, budgetProvider);
             throttler.Acquire(Arg.Any<int>()).Returns(true);
         }
 
