@@ -31,6 +31,8 @@ namespace Global.Dynamic
         private SceneSharedContainer sceneSharedContainer;
         private StaticContainer staticContainer;
 
+        [SerializeField] public float frameBudget;
+
         private void Awake()
         {
             InitializeAsync(destroyCancellationToken).Forget();
@@ -66,7 +68,7 @@ namespace Global.Dynamic
             Profiler.BeginSample($"{nameof(DynamicSceneLoader)}.Install");
 
             staticContainer = StaticContainer.Create(partitionSettingsAsset, reportsHandlingSettings);
-            sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
+            sceneSharedContainer = SceneSharedContainer.Create(in staticContainer, frameBudget);
             dynamicWorldContainer = DynamicWorldContainer.Create(in staticContainer, realmPartitionSettingsAsset, StaticLoadPositions, SceneLoadRadius);
 
             Profiler.EndSample();

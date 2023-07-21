@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using ECS.LifeCycle;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Materials;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Systems;
@@ -25,8 +26,9 @@ namespace SceneRunner.ECSWorld.Plugins
         private readonly IObjectPool<Material> pbrMatPool;
 
         private readonly DestroyMaterial destroyMaterial;
+        private readonly IConcurrentBudgetProvider instantiationFrameBudgetProvider;
 
-        public MaterialsPlugin()
+        public MaterialsPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies)
         {
             Material basicMatReference = Resources.Load<Material>(CreateBasicMaterialSystem.MATERIAL_PATH);
             Material pbrMaterialReference = Resources.Load<Material>(CreatePBRMaterialSystem.MATERIAL_PATH);
@@ -35,6 +37,8 @@ namespace SceneRunner.ECSWorld.Plugins
             pbrMatPool = new ObjectPool<Material>(() => new Material(pbrMaterialReference), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: POOL_INITIAL_CAPACITY, maxSize: POOL_MAX_SIZE);
 
             destroyMaterial = (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); };
+
+            instantiationFrameBudgetProvider = singletonSharedDependencies.InstantiationFrameTimeBudgetProvider;
 
             // materialsCache = new MaterialsCappedCache(CACHE_CAPACITY, (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); });
         }
@@ -47,7 +51,7 @@ namespace SceneRunner.ECSWorld.Plugins
             // consider revising when and if needed
             // LoadMaterialFromCacheSystem.InjectToWorld(ref builder, materialsCache);
             CreateBasicMaterialSystem.InjectToWorld(ref builder, basicMatPool);
-            CreatePBRMaterialSystem.InjectToWorld(ref builder, pbrMatPool);
+            CreatePBRMaterialSystem.InjectToWorld(ref builder, pbrMatPool, instantiationFrameBudgetProvider);
             ApplyMaterialSystem.InjectToWorld(ref builder);
             ResetMaterialSystem.InjectToWorld(ref builder, destroyMaterial);
             CleanUpMaterialsSystem.InjectToWorld(ref builder, destroyMaterial);

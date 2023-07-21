@@ -2,6 +2,7 @@ using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Engine;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
+using Global.Dynamic;
 using SceneRunner;
 using SceneRunner.ECSWorld;
 using SceneRunner.ECSWorld.Plugins;
@@ -20,7 +21,7 @@ namespace Global
 
         public void Dispose() { }
 
-        public static SceneSharedContainer Create(in StaticContainer staticContainer)
+        public static SceneSharedContainer Create(in StaticContainer staticContainer, float frameBudget)
         {
             var entityFactory = new EntityFactory();
 
@@ -29,13 +30,13 @@ namespace Global
                 entityFactory,
                 staticContainer.WorldsAggregateFactory,
                 new ConcurrentLoadingBudgetProvider(10),
-                new FrameTimeBudgetProvider(1,staticContainer.ProfilingProvider));
+                new FrameTimeBudgetProvider(frameBudget,staticContainer.ProfilingProvider));
 
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 staticContainer.PartitionSettings,
                 staticContainer.CameraSamplingData,
                 new TransformsPlugin(sharedDependencies),
-                new MaterialsPlugin(),
+                new MaterialsPlugin(sharedDependencies),
                 new PrimitiveCollidersPlugin(sharedDependencies),
                 new TexturesLoadingPlugin(sharedDependencies.LoadingBudgetProvider),
                 new PrimitivesRenderingPlugin(sharedDependencies),

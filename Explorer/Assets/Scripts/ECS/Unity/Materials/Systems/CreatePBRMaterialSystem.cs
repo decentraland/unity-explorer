@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.Shaders;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Textures.Components;
 using UnityEngine;
@@ -19,8 +20,18 @@ namespace ECS.Unity.Materials.Systems
         ///     The path from the shared package
         /// </summary>
         public const string MATERIAL_PATH = "ShapeMaterial";
+        private readonly IConcurrentBudgetProvider instantiationFrameBudgetProvider;
 
-        internal CreatePBRMaterialSystem(World world, IObjectPool<Material> materialsPool) : base(world, materialsPool) { }
+        internal CreatePBRMaterialSystem(World world, IObjectPool<Material> materialsPool,
+            IConcurrentBudgetProvider instantiationFrameBudgetProvider) : base(world, materialsPool)
+        {
+            this.instantiationFrameBudgetProvider = instantiationFrameBudgetProvider;
+        }
+
+        public override void BeforeUpdate(in float t)
+        {
+            instantiationFrameBudgetProvider.ReleaseBudget();
+        }
 
         protected override void Update(float t)
         {
@@ -48,6 +59,9 @@ namespace ECS.Unity.Materials.Systems
                 && TryGetTextureResult(ref materialComponent.AlphaTexPromise, out StreamableLoadingResult<Texture2D> alphaResult)
                 && TryGetTextureResult(ref materialComponent.BumpTexPromise, out StreamableLoadingResult<Texture2D> bumpResult))
             {
+                if (!instantiationFrameBudgetProvider.TrySpendBudget())
+                    return;
+
                 materialComponent.Status = MaterialComponent.LifeCycle.LoadingFinished;
 
                 materialComponent.Result ??= CreateNewMaterialInstance();

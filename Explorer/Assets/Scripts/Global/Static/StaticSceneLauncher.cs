@@ -38,7 +38,7 @@ namespace Global.Static
             Profiler.BeginSample($"{nameof(DynamicSceneLoader)}.Install");
 
             var staticContainer = StaticContainer.Create(new NoPartitionSettings(), reportsHandlingSettings);
-            var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
+            var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer, 1000);
 
             Profiler.EndSample();
             return sceneSharedContainer;
