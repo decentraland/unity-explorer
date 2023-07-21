@@ -29,7 +29,8 @@ namespace ECS.StreamableLoading.AssetBundles
         private static readonly ThreadSafeObjectPool<AssetBundleMetadata> METADATA_POOL
             = new (() => new AssetBundleMetadata(), maxSize: 100);
 
-        internal LoadAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync) { }
+        internal LoadAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache, MutexSync mutexSync,
+            IConcurrentBudgetProvider loadingFrameTimeBudgetProvider) : base(world, cache, mutexSync, loadingFrameTimeBudgetProvider) { }
 
         private async UniTask LoadDependencies(IPartitionComponent partition, AssetBundle assetBundle, CancellationToken ct)
         {

@@ -19,14 +19,14 @@ namespace SceneRunner.ECSWorld.Plugins
 #endif
 
         private readonly IReportsHandlingSettings reportsHandlingSettings;
-        private readonly IConcurrentBudgetProvider loadingBudgetProvider;
+        private readonly IConcurrentBudgetProvider loadingFrameTimeBudgetProvider;
 
         private readonly AssetBundleCache assetBundleCache;
 
-        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, IConcurrentBudgetProvider loadingBudgetProvider)
+        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, IConcurrentBudgetProvider loadingFrameTimeBudgetProvider)
         {
             this.reportsHandlingSettings = reportsHandlingSettings;
-            this.loadingBudgetProvider = loadingBudgetProvider;
+            this.loadingFrameTimeBudgetProvider = loadingFrameTimeBudgetProvider;
             assetBundleCache = new AssetBundleCache();
         }
 
@@ -37,7 +37,7 @@ namespace SceneRunner.ECSWorld.Plugins
             ReportAssetBundleErrorSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // TODO create a runtime ref-counting cache
-            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, sharedDependencies.MutexSync);
+            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, sharedDependencies.MutexSync, loadingFrameTimeBudgetProvider);
         }
     }
 }

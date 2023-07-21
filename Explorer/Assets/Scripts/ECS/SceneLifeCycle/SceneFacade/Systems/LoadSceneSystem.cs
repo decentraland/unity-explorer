@@ -30,7 +30,7 @@ namespace ECS.SceneLifeCycle
         private readonly ISceneFactory sceneFactory;
 
         internal LoadSceneSystem(World world, string assetBundleURL,
-            ISceneFactory sceneFactory, IStreamableCache<ISceneFacade, GetSceneFacadeIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync)
+            ISceneFactory sceneFactory, IStreamableCache<ISceneFacade, GetSceneFacadeIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync, new NullBudgetProvider())
         {
             this.assetBundleURL = assetBundleURL;
             this.sceneFactory = sceneFactory;

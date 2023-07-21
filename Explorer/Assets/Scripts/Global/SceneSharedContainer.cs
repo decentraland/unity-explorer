@@ -21,7 +21,7 @@ namespace Global
 
         public void Dispose() { }
 
-        public static SceneSharedContainer Create(in StaticContainer staticContainer, float frameBudget)
+        public static SceneSharedContainer Create(in StaticContainer staticContainer, float instantiationframeBudget, float loadingFrameBudget)
         {
             var entityFactory = new EntityFactory();
 
@@ -30,7 +30,8 @@ namespace Global
                 entityFactory,
                 staticContainer.WorldsAggregateFactory,
                 new ConcurrentLoadingBudgetProvider(10),
-                new FrameTimeBudgetProvider(frameBudget,staticContainer.ProfilingProvider));
+                new FrameTimeBudgetProvider(instantiationframeBudget,staticContainer.ProfilingProvider),
+                new FrameTimeBudgetProvider(loadingFrameBudget, staticContainer.ProfilingProvider));
 
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 staticContainer.PartitionSettings,
@@ -38,10 +39,10 @@ namespace Global
                 new TransformsPlugin(sharedDependencies),
                 new MaterialsPlugin(sharedDependencies),
                 new PrimitiveCollidersPlugin(sharedDependencies),
-                new TexturesLoadingPlugin(sharedDependencies.LoadingBudgetProvider),
+                new TexturesLoadingPlugin(sharedDependencies.InstantiationFrameTimeBudgetProvider),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
-                new AssetBundlesPlugin(staticContainer.ReportsHandlingSettings, sharedDependencies.LoadingBudgetProvider),
+                new AssetBundlesPlugin(staticContainer.ReportsHandlingSettings, sharedDependencies.InstantiationFrameTimeBudgetProvider),
                 new GltfContainerPlugin(sharedDependencies));
 
             return new SceneSharedContainer

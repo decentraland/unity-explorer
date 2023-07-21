@@ -11,16 +11,16 @@ namespace SceneRunner.ECSWorld.Plugins
 {
     public class TexturesLoadingPlugin : IECSWorldPlugin
     {
-        private readonly IConcurrentBudgetProvider concurrentLoadingBudgetProvider;
+        private readonly IConcurrentBudgetProvider loadingFrameTimeBudgetProvider;
 
-        public TexturesLoadingPlugin(IConcurrentBudgetProvider concurrentLoadingBudgetProvider)
+        public TexturesLoadingPlugin(IConcurrentBudgetProvider loadingFrameTimeBudgetProvider)
         {
-            this.concurrentLoadingBudgetProvider = concurrentLoadingBudgetProvider;
+            this.loadingFrameTimeBudgetProvider = loadingFrameTimeBudgetProvider;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            LoadTextureSystem.InjectToWorld(ref builder, NoCache<Texture2D, GetTextureIntention>.INSTANCE, sharedDependencies.MutexSync);
+            LoadTextureSystem.InjectToWorld(ref builder, NoCache<Texture2D, GetTextureIntention>.INSTANCE, sharedDependencies.MutexSync, loadingFrameTimeBudgetProvider);
         }
     }
 }

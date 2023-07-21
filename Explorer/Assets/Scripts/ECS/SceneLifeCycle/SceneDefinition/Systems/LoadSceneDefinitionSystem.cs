@@ -24,7 +24,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     public partial class LoadSceneDefinitionSystem : LoadSystemBase<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>
     {
         internal LoadSceneDefinitionSystem(World world, IStreamableCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition> cache, MutexSync mutexSync)
-            : base(world, cache, mutexSync) { }
+            : base(world, cache, mutexSync, new NullBudgetProvider()) { }
 
         protected override async UniTask<StreamableLoadingResult<IpfsTypes.SceneEntityDefinition>> FlowInternal(GetSceneDefinition intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
