@@ -5,10 +5,10 @@ namespace ECS.BudgetProvider
 {
     public class FrameTimeBudgetProvider : IConcurrentBudgetProvider
     {
-        public float currentBudget;
+        public double currentBudget;
         private readonly float totalBudgetAvailable;
         private readonly IFrameTimeCounter frameTimeCounter;
-        private float startTime;
+        private long startTime;
         private bool budgetBlown;
 
         public FrameTimeBudgetProvider(float totalBudgetAvailableInMiliseconds, IFrameTimeCounter frameTimeCounter)
@@ -21,22 +21,27 @@ namespace ECS.BudgetProvider
 
         public bool TrySpendBudget(int budgetCost = 1)
         {
+            return true;
             if (budgetBlown)
                 return false;
 
             currentBudget -= (frameTimeCounter.GetFrameTime() - startTime);
+            ResetBudget();
             budgetBlown = currentBudget < 0;
+
             return true;
         }
 
         public void ReleaseBudget(int budgetToRelease = 1)
         {
+            return;
             currentBudget = totalBudgetAvailable;
             budgetBlown = false;
         }
 
         public void ResetBudget()
         {
+            return;
             startTime = frameTimeCounter.GetFrameTime();
         }
 

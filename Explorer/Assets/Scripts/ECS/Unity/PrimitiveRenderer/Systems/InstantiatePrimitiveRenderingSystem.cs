@@ -48,10 +48,10 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
         }
 
-        public override void BeforeUpdate(in float t)
+        /*public override void BeforeUpdate(in float t)
         {
             frameTimeBudgetProvider.ResetBudget();
-        }
+        }*/
 
         protected override void Update(float t)
         {
@@ -67,8 +67,8 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             if (!setupMeshCases.TryGetValue(sdkComponent.MeshCase, out ISetupMesh setupMesh))
                 return;
 
-            if (!frameTimeBudgetProvider.TrySpendBudget())
-                return;
+            //if (!frameTimeBudgetProvider.TrySpendBudget())
+            //    return;
 
             var meshRendererComponent = new PrimitiveMeshRendererComponent();
             var meshRendererGo = rendererPoolRegistry.Get();
@@ -87,8 +87,8 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         {
             if (!sdkComponent.IsDirty) return;
 
-            if (!frameTimeBudgetProvider.TrySpendBudget())
-                return;
+            //if (!frameTimeBudgetProvider.TrySpendBudget())
+            //    return;
 
             if (!setupMeshCases.TryGetValue(sdkComponent.MeshCase, out ISetupMesh setupMesh))
             {

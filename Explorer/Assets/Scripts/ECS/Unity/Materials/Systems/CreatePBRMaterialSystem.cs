@@ -29,10 +29,10 @@ namespace ECS.Unity.Materials.Systems
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
         }
 
-        public override void BeforeUpdate(in float t)
+        /*public override void BeforeUpdate(in float t)
         {
             frameTimeBudgetProvider.ResetBudget();
-        }
+        }*/
 
         protected override void Update(float t)
         {
@@ -52,9 +52,6 @@ namespace ECS.Unity.Materials.Systems
 
         private void ConstructMaterial(ref MaterialComponent materialComponent)
         {
-            if (!frameTimeBudgetProvider.TrySpendBudget())
-                return;
-
             // Check if all promises are finished
             // Promises are finished if: all of their entities are invalid, no promises at all, or the result component exists
             if (TryGetTextureResult(ref materialComponent.AlbedoTexPromise, out StreamableLoadingResult<Texture2D> albedoResult)
@@ -62,6 +59,8 @@ namespace ECS.Unity.Materials.Systems
                 && TryGetTextureResult(ref materialComponent.AlphaTexPromise, out StreamableLoadingResult<Texture2D> alphaResult)
                 && TryGetTextureResult(ref materialComponent.BumpTexPromise, out StreamableLoadingResult<Texture2D> bumpResult))
             {
+                //if (!frameTimeBudgetProvider.TrySpendBudget())
+                //    return;
 
                 materialComponent.Status = MaterialComponent.LifeCycle.LoadingFinished;
 

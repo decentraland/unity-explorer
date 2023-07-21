@@ -68,6 +68,9 @@ namespace Global.Dynamic
             var intent = new SubIntention(new CommonLoadingArguments(realm + "/about"));
             IpfsTypes.ServerAbout result = (await intent.RepeatLoop(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateServerAboutRequest, ReportCategory.REALM, ct)).UnwrapAndRethrow();
 
+            //result.configurations.scenesUrn.Remove("urn:decentraland:entity:bafkreiekyfzmqva7o6rvnud3aisc6rdyibgkbsbrtel3qikac52nlc625q?=&baseUrl=https://sdk-team-cdn.decentraland.org/ipfs/");
+            // THis is the floor scene, 78, -3
+
             // Add the realm component
             var realmComp = new RealmComponent(new IpfsRealm(realm, result));
 

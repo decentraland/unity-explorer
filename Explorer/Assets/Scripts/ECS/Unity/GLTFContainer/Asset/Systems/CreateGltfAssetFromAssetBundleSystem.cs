@@ -30,10 +30,10 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
         }
 
-        public override void BeforeUpdate(in float t)
+        /*public override void BeforeUpdate(in float t)
         {
             instantiationFrameTimeBudgetProvider.ResetBudget();
-        }
+        }*/
 
         protected override void Update(float t)
         {
@@ -68,8 +68,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 return;
             }
 
-            if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
-                return;
+            //if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
+            //    return;
 
             // Create a new container root
             // It will be cached and pooled

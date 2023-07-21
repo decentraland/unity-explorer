@@ -9,7 +9,7 @@ public class FrameTimeCounter  : IFrameTimeCounter
 
     public FrameTimeCounter()
     {
-        mainThreadTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", 1);
+        //mainThreadTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread");
     }
 
     public long GetFrameTime() =>

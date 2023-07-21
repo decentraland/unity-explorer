@@ -44,7 +44,11 @@ namespace Global
                 WorldsAggregateFactory = new PartitionedWorldsAggregate.Factory(),
                 CameraSamplingData = new CameraSamplingData(),
                 ReportsHandlingSettings = reportsHandlingSettings,
-                InstantiationBudgetProvider = new FrameTimeBudgetProvider(1f, new FrameTimeCounter())
+                InstantiationBudgetProvider = new FrameTimeBudgetProvider(100000f, new FrameTimeCounter())
+                //Con 100 = 35
+                //Con 10 = 140
+                //Con 5 = 245
+                //Con 1 = 645
             };
     }
 }
