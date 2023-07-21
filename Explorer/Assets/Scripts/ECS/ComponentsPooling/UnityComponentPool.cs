@@ -53,7 +53,7 @@ namespace ECS.ComponentsPooling
 
         private void HandleRelease(T component)
         {
-            if (component == null)
+            if (component == null || UnityObjectUtils.IsQuitting)
                 return;
 
             onRelease?.Invoke(component);

@@ -16,7 +16,7 @@ namespace Global.Dynamic
             IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius) =>
             new ()
             {
-                RealmController = new RealmController(sceneLoadRadius, staticLoadPositions, staticContainer.CameraSamplingData),
+                RealmController = new RealmController(sceneLoadRadius, staticLoadPositions),
                 GlobalWorldFactory = new GlobalWorldFactory(in staticContainer, realmPartitionSettings, staticContainer.CameraSamplingData, new RealmSamplingData()),
             };
     }

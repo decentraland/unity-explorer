@@ -34,13 +34,11 @@ namespace Global.Dynamic
 
         private readonly int sceneLoadRadius;
         private readonly IReadOnlyList<int2> staticLoadPositions;
-        private readonly CameraSamplingData cameraSamplingData;
 
-        public RealmController(int sceneLoadRadius, IReadOnlyList<int2> staticLoadPositions, CameraSamplingData cameraSamplingData)
+        public RealmController(int sceneLoadRadius, IReadOnlyList<int2> staticLoadPositions)
         {
             this.sceneLoadRadius = sceneLoadRadius;
             this.staticLoadPositions = staticLoadPositions;
-            this.cameraSamplingData = cameraSamplingData;
         }
 
         /// <summary>
@@ -56,8 +54,10 @@ namespace Global.Dynamic
 
             async UniTask<StreamableLoadingResult<IpfsTypes.ServerAbout>> CreateServerAboutRequest(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
             {
-                UnityWebRequest wr = await UnityWebRequest.Get(intention.CommonArguments.URL).SendWebRequest().WithCancellation(ct);
-                string text = wr.downloadHandler.text;
+                string text;
+
+                using (UnityWebRequest wr = await UnityWebRequest.Get(intention.CommonArguments.URL).SendWebRequest().WithCancellation(ct))
+                    text = wr.downloadHandler.text;
 
                 await UniTask.SwitchToThreadPool();
                 JsonUtility.FromJsonOverwrite(text, serverAbout);
@@ -102,12 +102,7 @@ namespace Global.Dynamic
         {
             World world = globalWorld.EcsWorld;
 
-            // Dispose all scenes
-            allScenes.Clear();
-
-            // find all loaded scenes
-            world.Query(in SCENES, (ref ISceneFacade scene) => allScenes.Add(scene));
-            await UniTask.WhenAll(allScenes.Select(s => s.DisposeAsync()));
+            FindLoadedScenes(world);
 
             // release pooled entities
             for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
@@ -118,8 +113,30 @@ namespace Global.Dynamic
 
             globalWorld.Clear();
 
+            await UniTask.WhenAll(allScenes.Select(s => s.DisposeAsync()));
+
             // Collect garbage, good moment to do it
             GC.Collect();
+        }
+
+        public async UniTask DisposeGlobalWorld(GlobalWorld globalWorld)
+        {
+            World world = globalWorld.EcsWorld;
+            FindLoadedScenes(world);
+
+            // Destroy everything without awaiting as it's Application Quit
+            globalWorld.Dispose();
+
+            await UniTask.WhenAll(allScenes.Select(s => s.DisposeAsync()));
+        }
+
+        private void FindLoadedScenes(World world)
+        {
+            // Dispose all scenes
+            allScenes.Clear();
+
+            // find all loaded scenes
+            world.Query(in SCENES, (ref ISceneFacade scene) => allScenes.Add(scene));
         }
     }
 }

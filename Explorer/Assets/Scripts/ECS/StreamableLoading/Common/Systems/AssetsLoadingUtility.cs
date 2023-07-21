@@ -6,7 +6,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System;
 using System.Threading;
-using UnityEngine.Networking;
 
 namespace ECS.StreamableLoading.Common.Systems
 {
@@ -37,26 +36,26 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 catch (UnityWebRequestException unityWebRequestException)
                 {
-                    UnityWebRequest webRequest = unityWebRequestException.UnityWebRequest;
+                    // we can't access web request here as it is disposed already
 
                     // no more sources left
                     if (intention.CommonArguments.PermittedSources == AssetSource.NONE)
                     {
-                        ReportHub.LogError(reportCategory, $"Exception occured on loading {typeof(TAsset)} from {webRequest.url}");
+                        ReportHub.LogError(reportCategory, $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()}");
                         ReportHub.LogException(unityWebRequestException, reportCategory);
                     }
                     else
                     {
-                        ReportHub.Log(reportCategory, $"Exception occured on loading {typeof(TAsset)} from {webRequest.url}.\n"
+                        ReportHub.Log(reportCategory, $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()}.\n"
                                                       + $"Trying sources: {intention.CommonArguments.PermittedSources}");
                     }
 
                     // Decide if we can repeat or not
                     --attemptCount;
 
-                    bool isIrrecoverableError = !webRequest.IsServerError();
+                    bool isIrrecoverableError = !unityWebRequestException.IsServerError();
 
-                    if (attemptCount <= 0 || webRequest.IsAborted() || isIrrecoverableError)
+                    if (attemptCount <= 0 || unityWebRequestException.IsAborted() || isIrrecoverableError)
                     {
                         if (intention.CommonArguments.PermittedSources == AssetSource.NONE)
 
