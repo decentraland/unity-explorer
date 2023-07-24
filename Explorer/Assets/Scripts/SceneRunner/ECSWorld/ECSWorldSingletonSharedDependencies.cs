@@ -14,8 +14,6 @@ namespace SceneRunner.ECSWorld
         public readonly ISystemGroupAggregate<IPartitionComponent>.IFactory AggregateFactory;
         public readonly IEntityFactory EntityFactory;
         public readonly IConcurrentBudgetProvider LoadingBudgetProvider;
-        public readonly IConcurrentBudgetProvider InstantiationFrameTimeBudgetProvider;
-        public readonly IConcurrentBudgetProvider LoadingFrameTimeBudgetProvider;
         public readonly IConcurrentBudgetProvider CapFrameTimeBudgetProvider;
 
 
@@ -24,8 +22,6 @@ namespace SceneRunner.ECSWorld
             IEntityFactory entityFactory,
             ISystemGroupAggregate<IPartitionComponent>.IFactory aggregateFactory,
             IConcurrentBudgetProvider loadingBudgetProvider,
-            IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider,
-            IConcurrentBudgetProvider loadingFrameTimeBudgetProvider,
             IConcurrentBudgetProvider capFrameTimeBudgetProvider)
         {
             ComponentPoolsRegistry = componentPoolsRegistry;
@@ -33,9 +29,7 @@ namespace SceneRunner.ECSWorld
             EntityFactory = entityFactory;
             LoadingBudgetProvider = loadingBudgetProvider;
             AggregateFactory = aggregateFactory;
-            InstantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
             CapFrameTimeBudgetProvider = capFrameTimeBudgetProvider;
-            LoadingFrameTimeBudgetProvider = CapFrameTimeBudgetProvider;
         }
     }
 }

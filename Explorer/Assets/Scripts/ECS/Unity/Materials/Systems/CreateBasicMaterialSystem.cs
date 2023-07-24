@@ -16,12 +16,12 @@ namespace ECS.Unity.Materials.Systems
     public partial class CreateBasicMaterialSystem : CreateMaterialSystemBase
     {
         public const string MATERIAL_PATH = "BasicShapeMaterial";
-        private readonly IConcurrentBudgetProvider instantiationFrameBudgetProvider;
+        private readonly IConcurrentBudgetProvider capFrameBudgetProvider;
 
 
-        internal CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool, IConcurrentBudgetProvider instantiationFrameBudgetProvider) : base(world, materialsPool)
+        internal CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool, IConcurrentBudgetProvider capFrameBudgetProvider) : base(world, materialsPool)
         {
-            this.instantiationFrameBudgetProvider = instantiationFrameBudgetProvider;
+            this.capFrameBudgetProvider = capFrameBudgetProvider;
         }
 
         protected override void Update(float t)
@@ -35,7 +35,7 @@ namespace ECS.Unity.Materials.Systems
             if (materialComponent.Data.IsPbrMaterial)
                 return;
 
-            if (!instantiationFrameBudgetProvider.TrySpendBudget())
+            if (!capFrameBudgetProvider.TrySpendBudget())
                 return;
 
             if (materialComponent.Status == MaterialComponent.LifeCycle.LoadingInProgress)

@@ -25,16 +25,13 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private readonly IRealmPartitionSettings realmPartitionSettings;
         private readonly CancellationToken destroyCancellationToken;
-        private readonly IConcurrentBudgetProvider budgetCap;
 
         internal ControlSceneUpdateLoopSystem(World world,
             IRealmPartitionSettings realmPartitionSettings,
-            CancellationToken destroyCancellationToken,
-            IConcurrentBudgetProvider budgetCap) : base(world)
+            CancellationToken destroyCancellationToken) : base(world)
         {
             this.realmPartitionSettings = realmPartitionSettings;
             this.destroyCancellationToken = destroyCancellationToken;
-            this.budgetCap = budgetCap;
         }
 
         protected override void Update(float t)
@@ -47,10 +44,6 @@ namespace ECS.SceneLifeCycle.Systems
         [None(typeof(DeleteEntityIntention), typeof(ISceneFacade))]
         private void StartScene(in Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise, ref PartitionComponent partition)
         {
-            // Check if we can spend budget
-            if (!budgetCap.TrySpendBudget())
-                return;
-
             // Gracefully consume with the possibility of repetitions (in case the scene loading has failed)
             if (promise.IsConsumed) return;
 

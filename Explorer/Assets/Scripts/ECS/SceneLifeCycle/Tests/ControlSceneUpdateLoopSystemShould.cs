@@ -22,9 +22,7 @@ namespace ECS.SceneLifeCycle.Tests
         public void SetUp()
         {
             realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
-            IConcurrentBudgetProvider capBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
-            capBudgetProvider.TrySpendBudget().Returns(true);
-            system = new ControlSceneUpdateLoopSystem(world, realmPartitionSettings, CancellationToken.None, capBudgetProvider);
+            system = new ControlSceneUpdateLoopSystem(world, realmPartitionSettings, CancellationToken.None);
         }
 
         [Test]

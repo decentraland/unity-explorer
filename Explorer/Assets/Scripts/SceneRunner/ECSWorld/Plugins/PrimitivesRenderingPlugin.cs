@@ -17,17 +17,17 @@ namespace SceneRunner.ECSWorld.Plugins
     public class PrimitivesRenderingPlugin : IECSWorldPlugin
     {
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
-        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
+        private readonly IConcurrentBudgetProvider capFrameTimeBudgetProvider;
 
         public PrimitivesRenderingPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies)
         {
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
-            this.instantiationFrameTimeBudgetProvider = singletonSharedDependencies.CapFrameTimeBudgetProvider;
+            this.capFrameTimeBudgetProvider = singletonSharedDependencies.CapFrameTimeBudgetProvider;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            InstantiatePrimitiveRenderingSystem.InjectToWorld(ref builder, componentPoolsRegistry, instantiationFrameTimeBudgetProvider);
+            InstantiatePrimitiveRenderingSystem.InjectToWorld(ref builder, componentPoolsRegistry, capFrameTimeBudgetProvider);
             ReleaseOutdatedRenderingSystem.InjectToWorld(ref builder, componentPoolsRegistry);
 
             ResetDirtyFlagSystem<PBMeshRenderer>.InjectToWorld(ref builder);

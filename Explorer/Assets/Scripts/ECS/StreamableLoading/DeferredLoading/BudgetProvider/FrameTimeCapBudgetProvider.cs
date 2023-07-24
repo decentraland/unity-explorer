@@ -11,40 +11,20 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
         private readonly IProfilingProvider profilingProvider;
         private bool outOfBudget;
 
-        private int currentFrameNumber;
-
         public FrameTimeCapBudgetProvider(float budgetCap, IProfilingProvider profilingProvider)
         {
             //FrameTime return CurrentValue in nanoseconds, so we are converting milliseconds to nanoseconds
             this.totalBudgetAvailable = budgetCap * 1000000;
             this.profilingProvider = profilingProvider;
-
-            currentFrameNumber = Time.frameCount;
         }
 
-        public bool TrySpendBudget()
-        {
-            TryResetBudget();
-            if (outOfBudget)
-                return false;
-
-            outOfBudget = profilingProvider.GetCurrentFrameTimeValueInNS() > totalBudgetAvailable;
-
-            return true;
-        }
+        public bool TrySpendBudget() =>
+            profilingProvider.GetCurrentFrameTimeValueInNS() < totalBudgetAvailable;
 
         public void ReleaseBudget()
         {
         }
 
-        private void TryResetBudget()
-        {
-            if (currentFrameNumber != Time.frameCount)
-            {
-                outOfBudget = false;
-                currentFrameNumber = Time.frameCount;
-            }
-        }
 
     }
 }

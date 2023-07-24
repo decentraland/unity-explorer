@@ -20,17 +20,16 @@ namespace ECS.Unity.Materials.Systems
         ///     The path from the shared package
         /// </summary>
         public const string MATERIAL_PATH = "ShapeMaterial";
-        private readonly IConcurrentBudgetProvider instantiationFrameBudgetProvider;
+        private readonly IConcurrentBudgetProvider capFrameBudgetProvider;
 
         internal CreatePBRMaterialSystem(World world, IObjectPool<Material> materialsPool,
-            IConcurrentBudgetProvider instantiationFrameBudgetProvider) : base(world, materialsPool)
+            IConcurrentBudgetProvider capFrameBudgetProvider) : base(world, materialsPool)
         {
-            this.instantiationFrameBudgetProvider = instantiationFrameBudgetProvider;
+            this.capFrameBudgetProvider = capFrameBudgetProvider;
         }
 
         protected override void Update(float t)
         {
-            instantiationFrameBudgetProvider.ReleaseBudget();
             HandleQuery(World);
         }
 
@@ -40,7 +39,7 @@ namespace ECS.Unity.Materials.Systems
             if (!materialComponent.Data.IsPbrMaterial)
                 return;
 
-            if (!instantiationFrameBudgetProvider.TrySpendBudget())
+            if (!capFrameBudgetProvider.TrySpendBudget())
                 return;
 
             // if there are no textures to load we can construct a material right away

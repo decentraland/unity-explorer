@@ -19,16 +19,14 @@ namespace SceneRunner.ECSWorld.Plugins
         private readonly GltfContainerAssetsCache assetsCache;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IReportsHandlingSettings reportsHandlingSettings;
-        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
-        private readonly IConcurrentBudgetProvider capFrameTimeBudgetProvider;
+        private readonly IConcurrentBudgetProvider capBudgetProvider;
 
         public GltfContainerPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies)
         {
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
             reportsHandlingSettings = singletonSharedDependencies.ReportsHandlingSettings;
             assetsCache = new GltfContainerAssetsCache(1000);
-            instantiationFrameTimeBudgetProvider = singletonSharedDependencies.CapFrameTimeBudgetProvider;
-            capFrameTimeBudgetProvider = singletonSharedDependencies.CapFrameTimeBudgetProvider;
+            capBudgetProvider = singletonSharedDependencies.CapFrameTimeBudgetProvider;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder,
@@ -36,12 +34,12 @@ namespace SceneRunner.ECSWorld.Plugins
         {
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);
-            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, instantiationFrameTimeBudgetProvider);
+            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, new NullBudgetProvider());
             ReportGltfErrorsSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // GLTF Container
             LoadGltfContainerSystem.InjectToWorld(ref builder);
-            FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, instantiationFrameTimeBudgetProvider);
+            FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, capBudgetProvider);
 
             ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache);
             WriteGltfContainerLoadingStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, componentPoolsRegistry.GetReferenceTypePool<PBGltfContainerLoadingState>());
