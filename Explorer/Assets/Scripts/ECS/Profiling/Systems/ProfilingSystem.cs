@@ -33,10 +33,9 @@ namespace ECS.Profiling.Systems
             {
                 await UniTask.Delay(500);
                 profilerView.averageFrameRate.text = $"Frame Rate: {profilingProvider.GetFrameRate():F1} FPS";
-                profilerView.hiccupCounter.text = $"50ms: {profilingProvider.GetHiccupValue(HiccupKey.FiftyMS)}";
-                                                   //$"30ms: {profilingProvider.GetHiccupValue(HiccupKey.ThirtyMS)}\n"
-                                                  //+ $"40ms: {profilingProvider.GetHiccupValue(HiccupKey.FourtyMS)}\n"
-
+                profilerView.hiccupCounter.text = $"30ms: {profilingProvider.GetHiccupValue(HiccupKey.ThirtyMS)}\n"
+                                                  + $"40ms: {profilingProvider.GetHiccupValue(HiccupKey.FourtyMS)}\n"
+                                                  + $"50ms: {profilingProvider.GetHiccupValue(HiccupKey.FiftyMS)}";
             }
         }
 
