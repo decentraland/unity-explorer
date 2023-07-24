@@ -22,7 +22,7 @@ namespace SceneRunner.ECSWorld.Plugins
         public PrimitivesRenderingPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies)
         {
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
-            this.instantiationFrameTimeBudgetProvider = singletonSharedDependencies.InstantiationFrameTimeBudgetProvider;
+            this.instantiationFrameTimeBudgetProvider = singletonSharedDependencies.CapFrameTimeBudgetProvider;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)

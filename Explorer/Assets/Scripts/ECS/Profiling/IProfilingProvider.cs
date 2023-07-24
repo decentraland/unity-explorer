@@ -3,7 +3,7 @@ namespace ECS.Profiling
 
     public interface IProfilingProvider
     {
-        public long GetCurrentFrameTimeValue();
+        public long GetCurrentFrameTimeValueInNS();
 
         public float GetFrameRate();
 

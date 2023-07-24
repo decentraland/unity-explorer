@@ -38,7 +38,7 @@ namespace SceneRunner.ECSWorld.Plugins
 
             destroyMaterial = (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); };
 
-            instantiationFrameBudgetProvider = singletonSharedDependencies.InstantiationFrameTimeBudgetProvider;
+            instantiationFrameBudgetProvider = singletonSharedDependencies.CapFrameTimeBudgetProvider;
 
             // materialsCache = new MaterialsCappedCache(CACHE_CAPACITY, (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); });
         }
@@ -50,7 +50,7 @@ namespace SceneRunner.ECSWorld.Plugins
             // the idea with cache didn't work out: the CPU pressure is too high and benefits are not clear
             // consider revising when and if needed
             // LoadMaterialFromCacheSystem.InjectToWorld(ref builder, materialsCache);
-            CreateBasicMaterialSystem.InjectToWorld(ref builder, basicMatPool);
+            CreateBasicMaterialSystem.InjectToWorld(ref builder, basicMatPool, instantiationFrameBudgetProvider);
             CreatePBRMaterialSystem.InjectToWorld(ref builder, pbrMatPool, instantiationFrameBudgetProvider);
             ApplyMaterialSystem.InjectToWorld(ref builder);
             ResetMaterialSystem.InjectToWorld(ref builder, destroyMaterial);

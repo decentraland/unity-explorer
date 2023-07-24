@@ -30,13 +30,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
         }
 
-        public override void BeforeUpdate(in float t)
-        {
-            instantiationFrameTimeBudgetProvider.ReleaseBudget();
-        }
-
         protected override void Update(float t)
         {
+            instantiationFrameTimeBudgetProvider.ReleaseBudget();
             ConvertFromAssetBundleQuery(World);
         }
 
@@ -47,6 +43,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         [None(typeof(StreamableLoadingResult<GltfContainerAsset>))]
         private void ConvertFromAssetBundle(in Entity entity, ref GetGltfContainerAssetIntention assetIntention, ref StreamableLoadingResult<AssetBundleData> assetBundleResult)
         {
+            if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
+                return;
+
             if (assetIntention.CancellationTokenSource.IsCancellationRequested)
 
                 // Don't care anymore, the entity will be deleted in the system that created this promise
@@ -67,9 +66,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(CreateException(new MissingGltfAssetsException(assetBundleData.AssetBundle.name))));
                 return;
             }
-
-            if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
-                return;
 
             // Create a new container root
             // It will be cached and pooled

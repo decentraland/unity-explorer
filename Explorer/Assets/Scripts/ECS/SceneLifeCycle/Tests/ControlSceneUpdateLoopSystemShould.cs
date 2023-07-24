@@ -4,6 +4,7 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
@@ -21,7 +22,9 @@ namespace ECS.SceneLifeCycle.Tests
         public void SetUp()
         {
             realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
-            system = new ControlSceneUpdateLoopSystem(world, realmPartitionSettings, CancellationToken.None);
+            IConcurrentBudgetProvider capBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+            capBudgetProvider.TrySpendBudget().Returns(true);
+            system = new ControlSceneUpdateLoopSystem(world, realmPartitionSettings, CancellationToken.None, capBudgetProvider);
         }
 
         [Test]

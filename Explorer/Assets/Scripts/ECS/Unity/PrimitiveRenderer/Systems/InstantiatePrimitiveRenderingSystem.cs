@@ -47,13 +47,9 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             rendererPoolRegistry = poolsRegistry.GetReferenceTypePool<MeshRenderer>();
         }
 
-        public override void BeforeUpdate(in float t)
-        {
-            instantiationFrameTimeBudgetProvider.ReleaseBudget();
-        }
-
         protected override void Update(float t)
         {
+            instantiationFrameTimeBudgetProvider.ReleaseBudget();
             InstantiateNonExistingRendererQuery(World);
             TrySetupExistingRendererQuery(World);
         }

@@ -35,7 +35,9 @@ namespace ECS.Unity.GLTFContainer.Tests
         {
             Entity sceneRoot = world.Create();
             AddTransformToEntity(sceneRoot);
-            system = new FinalizeGltfContainerLoadingSystem(world, world.Reference(sceneRoot));
+            IConcurrentBudgetProvider concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+            concurrentBudgetProvider.TrySpendBudget().Returns(true);
+            system = new FinalizeGltfContainerLoadingSystem(world, world.Reference(sceneRoot), concurrentBudgetProvider);
             IConcurrentBudgetProvider budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
             budgetProvider.TrySpendBudget().Returns(true);
             createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budgetProvider);

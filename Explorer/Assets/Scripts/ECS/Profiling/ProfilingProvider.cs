@@ -26,7 +26,7 @@ namespace ECS.Profiling
             CountHiccup().Forget();
         }
 
-        public long GetCurrentFrameTimeValue() =>
+        public long GetCurrentFrameTimeValueInNS() =>
             mainThreadTimeRecorder.CurrentValue;
 
         public float GetFrameRate() =>

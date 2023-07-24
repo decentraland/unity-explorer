@@ -4,21 +4,19 @@ using UnityEngine;
 
 namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
 {
-    public class FrameTimeBudgetProvider : IConcurrentBudgetProvider
+    public class FrameTimeCapBudgetProvider : IConcurrentBudgetProvider
     {
-        private double currentAvailableBudget;
+
         private readonly float totalBudgetAvailable;
         private readonly IProfilingProvider profilingProvider;
-        private long startTime;
         private bool outOfBudget;
 
         private int currentFrameNumber;
 
-        public FrameTimeBudgetProvider(float totalBudgetAvailableInMiliseconds, IProfilingProvider profilingProvider)
+        public FrameTimeCapBudgetProvider(float budgetCap, IProfilingProvider profilingProvider)
         {
             //FrameTime return CurrentValue in nanoseconds, so we are converting milliseconds to nanoseconds
-            this.totalBudgetAvailable = totalBudgetAvailableInMiliseconds * 1000000;
-            this.currentAvailableBudget = totalBudgetAvailable;
+            this.totalBudgetAvailable = budgetCap * 1000000;
             this.profilingProvider = profilingProvider;
 
             currentFrameNumber = Time.frameCount;
@@ -27,28 +25,22 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
         public bool TrySpendBudget()
         {
             TryResetBudget();
-
             if (outOfBudget)
                 return false;
 
-            currentAvailableBudget -= (profilingProvider.GetCurrentFrameTimeValueInNS() - startTime);
-            ReleaseBudget();
-
-            outOfBudget = currentAvailableBudget < 0;
+            outOfBudget = profilingProvider.GetCurrentFrameTimeValueInNS() > totalBudgetAvailable;
 
             return true;
         }
 
         public void ReleaseBudget()
         {
-            startTime = profilingProvider.GetCurrentFrameTimeValueInNS();
         }
 
         private void TryResetBudget()
         {
             if (currentFrameNumber != Time.frameCount)
             {
-                currentAvailableBudget = totalBudgetAvailable;
                 outOfBudget = false;
                 currentFrameNumber = Time.frameCount;
             }

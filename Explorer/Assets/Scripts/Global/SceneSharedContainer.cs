@@ -31,7 +31,8 @@ namespace Global
                 staticContainer.WorldsAggregateFactory,
                 new ConcurrentLoadingBudgetProvider(10),
                 new FrameTimeBudgetProvider(instantiationframeBudget,staticContainer.ProfilingProvider),
-                new FrameTimeBudgetProvider(loadingFrameBudget, staticContainer.ProfilingProvider));
+                new FrameTimeBudgetProvider(loadingFrameBudget, staticContainer.ProfilingProvider),
+                new FrameTimeCapBudgetProvider(10, staticContainer.ProfilingProvider));
 
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 staticContainer.PartitionSettings,
@@ -39,10 +40,10 @@ namespace Global
                 new TransformsPlugin(sharedDependencies),
                 new MaterialsPlugin(sharedDependencies),
                 new PrimitiveCollidersPlugin(sharedDependencies),
-                new TexturesLoadingPlugin(sharedDependencies.InstantiationFrameTimeBudgetProvider),
+                new TexturesLoadingPlugin(sharedDependencies.LoadingFrameTimeBudgetProvider),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
-                new AssetBundlesPlugin(staticContainer.ReportsHandlingSettings, sharedDependencies.InstantiationFrameTimeBudgetProvider),
+                new AssetBundlesPlugin(staticContainer.ReportsHandlingSettings, sharedDependencies.LoadingFrameTimeBudgetProvider),
                 new GltfContainerPlugin(sharedDependencies));
 
             return new SceneSharedContainer

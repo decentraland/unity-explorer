@@ -28,13 +28,9 @@ namespace ECS.Unity.Materials.Systems
             this.instantiationFrameBudgetProvider = instantiationFrameBudgetProvider;
         }
 
-        public override void BeforeUpdate(in float t)
-        {
-            instantiationFrameBudgetProvider.ReleaseBudget();
-        }
-
         protected override void Update(float t)
         {
+            instantiationFrameBudgetProvider.ReleaseBudget();
             HandleQuery(World);
         }
 
@@ -42,6 +38,9 @@ namespace ECS.Unity.Materials.Systems
         private void Handle(ref MaterialComponent materialComponent)
         {
             if (!materialComponent.Data.IsPbrMaterial)
+                return;
+
+            if (!instantiationFrameBudgetProvider.TrySpendBudget())
                 return;
 
             // if there are no textures to load we can construct a material right away
@@ -59,9 +58,6 @@ namespace ECS.Unity.Materials.Systems
                 && TryGetTextureResult(ref materialComponent.AlphaTexPromise, out StreamableLoadingResult<Texture2D> alphaResult)
                 && TryGetTextureResult(ref materialComponent.BumpTexPromise, out StreamableLoadingResult<Texture2D> bumpResult))
             {
-                if (!instantiationFrameBudgetProvider.TrySpendBudget())
-                    return;
-
                 materialComponent.Status = MaterialComponent.LifeCycle.LoadingFinished;
 
                 materialComponent.Result ??= CreateNewMaterialInstance();
