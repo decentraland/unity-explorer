@@ -34,7 +34,7 @@ namespace SceneRunner.ECSWorld.Plugins
         {
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);
-            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, new NullBudgetProvider());
+            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, capBudgetProvider);
             ReportGltfErrorsSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // GLTF Container
