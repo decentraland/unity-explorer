@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using System.Threading;
+using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -13,6 +14,19 @@ namespace Utility.Multithreading
     {
         private static bool isPaused;
 
+        private class FrameCounter : IPlayerLoopItem
+        {
+            public long frameCount;
+
+            public bool MoveNext()
+            {
+                frameCount = Time.frameCount;
+                return true;
+            }
+        }
+
+        private static FrameCounter frameCounter;
+
 #if UNITY_EDITOR
         static MultithreadingUtility()
         {
@@ -25,6 +39,17 @@ namespace Utility.Multithreading
         }
 
 #endif
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void SaveFrameCount()
+        {
+            PlayerLoopHelper.AddAction(PlayerLoopTiming.Initialization, frameCounter = new FrameCounter());
+        }
+
+        /// <summary>
+        ///     Thread-safe frame count
+        /// </summary>
+        public static long FrameCount => Application.isPlaying ? Interlocked.Read(ref frameCounter.frameCount) : 0;
 
         /// <summary>
         ///     Freezes the background thread while the Editor App is paused

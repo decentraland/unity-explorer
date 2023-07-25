@@ -6,7 +6,7 @@ using ECS.LifeCycle;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.Prioritization.Systems;
-using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.DeferredLoading;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -16,6 +16,7 @@ using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Transforms.Components;
 using Ipfs;
 using SceneRunner;
+using SceneRunner.EmptyScene;
 using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;
@@ -26,6 +27,8 @@ namespace Global.Dynamic
 {
     public class GlobalWorldFactory
     {
+        private static readonly string EMPTY_SCENES_MAPPINGS_URL = Application.streamingAssetsPath + "/EmptyScenes/mappings.json";
+
         private readonly CameraSamplingData cameraSamplingData;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly CancellationTokenSource destroyCancellationSource = new ();
@@ -37,7 +40,7 @@ namespace Global.Dynamic
         public GlobalWorldFactory(in StaticContainer staticContainer, IRealmPartitionSettings realmPartitionSettings,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData)
         {
-            partitionedWorldsAggregateFactory = staticContainer.WorldsAggregateFactory;
+            partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
             partitionSettings = staticContainer.PartitionSettings;
             this.realmPartitionSettings = realmPartitionSettings;
@@ -45,7 +48,7 @@ namespace Global.Dynamic
             this.realmSamplingData = realmSamplingData;
         }
 
-        public GlobalWorld Create(ISceneFactory sceneFactory, Camera unityCamera)
+        public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory, Camera unityCamera)
         {
             var world = World.Create();
 
@@ -64,7 +67,10 @@ namespace Global.Dynamic
             LoadSceneDefinitionListSystem.InjectToWorld(ref builder, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
             LoadSceneDefinitionSystem.InjectToWorld(ref builder, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
 
-            LoadSceneSystem.InjectToWorld(ref builder, ASSET_BUNDLES_URL, sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex);
+            LoadSceneSystem.InjectToWorld(ref builder,
+                new LoadSceneSystemLogic(ASSET_BUNDLES_URL),
+                new LoadEmptySceneSystemLogic(emptyScenesWorldFactory, componentPoolsRegistry, EMPTY_SCENES_MAPPINGS_URL),
+                sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex);
 
             SceneLifeCycleDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider);
 
@@ -80,6 +86,7 @@ namespace Global.Dynamic
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
             ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings);
+            CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 
             ResolveStaticPointersSystem.InjectToWorld(ref builder);
             UnloadSceneSystem.InjectToWorld(ref builder);

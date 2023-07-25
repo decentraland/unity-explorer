@@ -99,12 +99,6 @@ namespace SceneRunner
                         break;
                     }
 
-                    if (sceneStateProvider.State != SceneState.Running)
-                    {
-                        completionSource.TrySetResult();
-                        break;
-                    }
-
                     stopWatch.Restart();
 
                     // We can't guarantee that the thread is preserved between updates
@@ -115,11 +109,8 @@ namespace SceneRunner
                     // Passing ct to Task.Delay allows to break the loop immediately
                     // as, otherwise, due to 0 or low FPS it can spin for much longer
 
-                    // Support scene freeze (0 FPS, int.MinValue)
-                    while (intervalMS < 0)
-
-                        // Just idle, don't do anything, need to wait for an actual value
-                        await Task.Delay(10, ct);
+                    if (!await IdleWhileRunning(ct))
+                        break;
 
                     int sleepMS = Math.Max(intervalMS - (int)stopWatch.ElapsedMilliseconds, 0);
 
@@ -131,6 +122,35 @@ namespace SceneRunner
                 }
             }
             catch (OperationCanceledException) { completionSource.TrySetCanceled(); }
+        }
+
+        private async ValueTask<bool> IdleWhileRunning(CancellationToken ct)
+        {
+            bool TryComplete()
+            {
+                if (sceneStateProvider.State != SceneState.Running)
+                {
+                    completionSource.TrySetResult();
+                    return true;
+                }
+
+                return false;
+            }
+
+            if (TryComplete())
+                return false;
+
+            // Support scene freeze (0 FPS, int.MinValue)
+            while (intervalMS < 0)
+            {
+                if (TryComplete())
+                    return false;
+
+                // Just idle, don't do anything, need to wait for an actual value
+                await Task.Delay(10, ct);
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -153,7 +173,7 @@ namespace SceneRunner
             // TODO do it better
             runtimeInstance.SetIsDisposing();
 
-            await completionSource.Task.SuppressCancellationThrow();
+            completionSource.TrySetCanceled();
             await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
 
             runtimeInstance.Dispose();

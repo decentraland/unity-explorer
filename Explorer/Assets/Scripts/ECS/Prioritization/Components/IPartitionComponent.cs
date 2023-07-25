@@ -21,5 +21,9 @@ namespace ECS.Prioritization.Components
         ///     Indicates if entity position is counted as behind the forward vector of the camera
         /// </summary>
         public bool IsBehind { get; }
+
+        bool IsDirty { get; }
+
+        float RawSqrDistance { get; }
     }
 }

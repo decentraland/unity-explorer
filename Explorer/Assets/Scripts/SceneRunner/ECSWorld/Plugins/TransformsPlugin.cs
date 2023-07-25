@@ -6,6 +6,7 @@ using ECS.LifeCycle;
 using ECS.Unity.Systems;
 using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
+using SceneRunner.EmptyScene;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -45,6 +46,14 @@ namespace SceneRunner.ECSWorld.Plugins
                 ReleasePoolableComponentSystem<Transform, TransformComponent>.InjectToWorld(ref builder, componentPoolsRegistry);
 
             finalizeWorldSystems.Add(releaseTransformSystem);
+        }
+
+        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<World> builder, in EmptyScenesWorldSharedDependencies dependencies)
+        {
+            UpdateTransformSystem.InjectToWorld(ref builder);
+            InstantiateTransformSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            ParentingTransformSystem.InjectToWorld(ref builder, dependencies.FakeEntitiesMap, dependencies.SceneRoot);
+            ReleasePoolableComponentSystem<Transform, TransformComponent>.InjectToWorld(ref builder, componentPoolsRegistry);
         }
     }
 }

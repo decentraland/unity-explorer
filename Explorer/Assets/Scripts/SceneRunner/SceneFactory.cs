@@ -66,7 +66,7 @@ namespace SceneRunner
                 main = mainScenePath,
             };
 
-            var sceneData = new SceneData(new LocalIpfsRealm(baseUrl), sceneDefinition, false, SceneAssetBundleManifest.NULL);
+            var sceneData = new SceneData(new LocalIpfsRealm(baseUrl), sceneDefinition, false, SceneAssetBundleManifest.NULL, Vector2Int.zero);
 
             return await CreateScene(sceneData, partitionProvider, ct);
         }
@@ -90,7 +90,7 @@ namespace SceneRunner
                 metadata = sceneMetadata,
             };
 
-            var sceneData = new SceneData(new LocalIpfsRealm(fullPath), sceneDefinition, false, SceneAssetBundleManifest.NULL);
+            var sceneData = new SceneData(new LocalIpfsRealm(fullPath), sceneDefinition, false, SceneAssetBundleManifest.NULL, Vector2Int.zero);
 
             return await CreateScene(sceneData, partitionProvider, ct);
         }
