@@ -18,7 +18,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
             ProfilingProvider provider = new ProfilingProvider();
 
             // Arrange
-            var budgetProvider = new FrameTimeCapBudgetProvider(0.5, provider);
+            var budgetProvider = new FrameTimeCapBudgetProvider(0.5f, provider);
 
             yield return UniTask.Yield();
 
