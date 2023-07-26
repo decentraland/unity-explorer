@@ -27,7 +27,12 @@ namespace Global.Dynamic
 {
     public class GlobalWorldFactory
     {
-        private static readonly string EMPTY_SCENES_MAPPINGS_URL = Application.streamingAssetsPath + "/EmptyScenes/mappings.json";
+        private static readonly string EMPTY_SCENES_MAPPINGS_URL =
+#if UNITY_EDITOR || UNITY_STANDALONE
+            $"file://{Application.streamingAssetsPath}/EmptyScenes/mappings.json";
+#else
+            return $"{Application.streamingAssetsPath}/EmptyScenes/mappings.json";
+#endif
 
         private readonly CameraSamplingData cameraSamplingData;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;

@@ -23,7 +23,7 @@ namespace ECS.SceneLifeCycle.Tests
 {
     public class LoadEmptySceneSystemShould
     {
-        private static readonly string EMPTY_SCENES_MAPPINGS_URL = Application.streamingAssetsPath + "/EmptyScenes/mappings.json";
+        private static readonly string EMPTY_SCENES_MAPPINGS_URL = $"file://{Application.streamingAssetsPath}/EmptyScenes/mappings.json";
 
         private LoadEmptySceneSystemLogic loadEmptySceneSystemLogic;
         private IEmptyScenesWorldFactory emptyScenesWorldFactory;
