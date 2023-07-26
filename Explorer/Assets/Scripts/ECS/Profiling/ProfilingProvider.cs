@@ -58,9 +58,7 @@ namespace ECS.Profiling
 
             return r;
         }
-
     }
-
 }
 
 

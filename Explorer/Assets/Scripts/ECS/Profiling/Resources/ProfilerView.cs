@@ -22,13 +22,31 @@ namespace ECS.Profiling
         [SerializeField]
         private Button closeButton;
 
-        public event Action OnOpen;
-        public event Action OnClose;
-
         private void Start()
         {
             openButton.onClick.AddListener(OpenProfilerWindow);
             closeButton.onClick.AddListener(CloseProfilerWindow);
+        }
+
+        private void OnDestroy()
+        {
+            openButton.onClick.RemoveAllListeners();
+            closeButton.onClick.RemoveAllListeners();
+        }
+
+        public event Action OnOpen;
+        public event Action OnClose;
+
+        public void SetFPS(float averageFrameTimeInSeconds)
+        {
+            float frameTimeInMS = averageFrameTimeInSeconds * 1e3f;
+            float frameRate = 1 / averageFrameTimeInSeconds;
+            averageFrameRate.text = $"Frame Rate: {frameRate:F1} fps ({frameTimeInMS:F1} ms)";
+        }
+
+        public void SetHiccups(int hiccupCount)
+        {
+            hiccupCounter.text = $"Hiccups last 1000 frames: {hiccupCount}";
         }
 
         private void CloseProfilerWindow()
@@ -43,24 +61,6 @@ namespace ECS.Profiling
             openButton.gameObject.SetActive(false);
             debugViewWindow.gameObject.SetActive(true);
             OnOpen?.Invoke();
-        }
-
-        public void SetFPS(float averageFrameTimeInSeconds)
-        {
-            float frameTimeInMS = averageFrameTimeInSeconds * 1e3f;
-            float frameRate = 1 / averageFrameTimeInSeconds;
-            averageFrameRate.text = $"Frame Rate: {frameRate:F1} fps ({frameTimeInMS:F1} ms)";
-        }
-
-        public void SetHiccups(int hiccupCount)
-        {
-            hiccupCounter.text = $"Hiccups last 1000 frames: {hiccupCount}";
-        }
-
-        private void OnDestroy()
-        {
-            openButton.onClick.RemoveAllListeners();
-            closeButton.onClick.RemoveAllListeners();
         }
     }
 }

@@ -52,6 +52,5 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
                 currentFrameNumber = Time.frameCount;
             }
         }
-
     }
 }
