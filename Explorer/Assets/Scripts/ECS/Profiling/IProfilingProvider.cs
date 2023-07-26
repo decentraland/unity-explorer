@@ -5,11 +5,10 @@ namespace ECS.Profiling
     {
         public long GetCurrentFrameTimeValueInNS();
 
-        public float GetFrameRate();
+        public double GetAverageFrameTimeValueInNS();
 
-        public int GetHiccupValue(HiccupKey miliseconds);
+        public int GetHiccupCountInBuffer();
     }
 
-    public enum HiccupKey { FiftyMS, FourtyMS, ThirtyMS };
 
 }

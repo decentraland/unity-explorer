@@ -3,14 +3,13 @@ using ECS.Profiling;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using NUnit.Framework;
 using System.Collections;
-using System.Threading;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-namespace ECS.StreamableLoading.DeferredLoading.Tests
+namespace SceneRunner.Tests
 {
     [TestFixture]
-    public class CapFrameTimeBudgetProviderShould
+    public class FrameTimeCapBudgetProviderShould
     {
         [UnityTest]
         public IEnumerator SpendBudget()
@@ -26,7 +25,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
             Assert.AreEqual(true, budgetProvider.TrySpendBudget());
 
 
-            for(int i=0;i<1000;i++)
+            for(int i=0;i<10_000;i++)
                 GameObject.CreatePrimitive(PrimitiveType.Cube);
 
             Assert.AreEqual(false, budgetProvider.TrySpendBudget());

@@ -1,10 +1,9 @@
-using Cysharp.Threading.Tasks;
 using ECS.Profiling;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
 {
-    public class FrameTimeBudgetProvider : IConcurrentBudgetProvider
+    public class FrameTimeSharedBudgetProvider : IConcurrentBudgetProvider
     {
         private double currentAvailableBudget;
         private readonly float totalBudgetAvailable;
@@ -14,7 +13,7 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
 
         private int currentFrameNumber;
 
-        public FrameTimeBudgetProvider(float totalBudgetAvailableInMiliseconds, IProfilingProvider profilingProvider)
+        public FrameTimeSharedBudgetProvider(float totalBudgetAvailableInMiliseconds, IProfilingProvider profilingProvider)
         {
             //FrameTime return CurrentValue in nanoseconds, so we are converting milliseconds to nanoseconds
             this.totalBudgetAvailable = totalBudgetAvailableInMiliseconds * 1000000;

@@ -9,7 +9,6 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
 
         private readonly float totalBudgetAvailable;
         private readonly IProfilingProvider profilingProvider;
-        private bool outOfBudget;
 
         public FrameTimeCapBudgetProvider(float budgetCap, IProfilingProvider profilingProvider)
         {

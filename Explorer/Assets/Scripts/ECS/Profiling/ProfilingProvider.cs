@@ -1,67 +1,46 @@
 using Cysharp.Threading.Tasks;
-using System;
-using System.Collections.Generic;
 using Unity.Profiling;
-using UnityEngine;
 
 namespace ECS.Profiling
 {
+    /// <summary>
+    /// Profiling provider to provide in game metrics. Profiler recorder returns values in NS, so to stay consistent with it,
+    /// our most used metric is going to be NS
+    /// </summary>
     public class ProfilingProvider  : IProfilingProvider
     {
         private ProfilerRecorder mainThreadTimeRecorder;
-        private ProfilerRecorder fpsTimeRecorder;
-
-        private Dictionary<HiccupKey, int> hiccupCounter;
+        private const int HICCUP_THRESHOLD_IN_NS = 50_000_000;
+        private const int HICCUP_BUFFER_SIZE = 1_000;
+        private LinealBufferHiccupCounter hiccupBufferCounter;
 
         public ProfilingProvider()
         {
             mainThreadTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", 15);
-            hiccupCounter = new Dictionary<HiccupKey, int>
-            {
-                { HiccupKey.FiftyMS, 0 },
-                { HiccupKey.FourtyMS, 0 },
-                { HiccupKey.ThirtyMS, 0 },
-            };
-
+            hiccupBufferCounter = new LinealBufferHiccupCounter(HICCUP_BUFFER_SIZE, HICCUP_THRESHOLD_IN_NS);
             CountHiccup().Forget();
         }
 
         public long GetCurrentFrameTimeValueInNS() =>
             mainThreadTimeRecorder.CurrentValue;
 
-        public float GetFrameRate() =>
-            1 / ((float)GetRecorderFrameAverage(mainThreadTimeRecorder) * 1e-9f);
+        public double GetAverageFrameTimeValueInNS() =>
+            GetRecorderFPSAverage(mainThreadTimeRecorder);
 
-        public int GetHiccupValue(HiccupKey hiccupKey)
-        {
-            return hiccupCounter[hiccupKey];
-        }
+
+        public int GetHiccupCountInBuffer() =>
+            hiccupBufferCounter.HiccupsCountInBuffer;
 
         private async UniTaskVoid CountHiccup()
         {
             while (true)
             {
                 await UniTask.Yield();
-
-                if (mainThreadTimeRecorder.LastValue * 1e-6f > 50)
-                {
-                    hiccupCounter[HiccupKey.FiftyMS]++;
-                    hiccupCounter[HiccupKey.FourtyMS]++;
-                    hiccupCounter[HiccupKey.ThirtyMS]++;
-                }
-                else if (mainThreadTimeRecorder.LastValue * 1e-6f > 40)
-                {
-                    hiccupCounter[HiccupKey.FourtyMS]++;
-                    hiccupCounter[HiccupKey.ThirtyMS]++;
-                }
-                else if(mainThreadTimeRecorder.LastValue * 1e-6f > 30)
-                {
-                    hiccupCounter[HiccupKey.ThirtyMS]++;
-                }
+                hiccupBufferCounter.AddDeltaTime(mainThreadTimeRecorder.LastValue);
             }
         }
 
-        static double GetRecorderFrameAverage(ProfilerRecorder recorder)
+        private double GetRecorderFPSAverage(ProfilerRecorder recorder)
         {
             var samplesCount = recorder.Capacity;
             if (samplesCount == 0)
@@ -81,6 +60,7 @@ namespace ECS.Profiling
         }
 
     }
+
 }
 
 
