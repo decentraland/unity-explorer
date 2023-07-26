@@ -29,7 +29,7 @@ namespace Global
                 entityFactory,
                 staticContainer.WorldsAggregateFactory,
                 new ConcurrentLoadingBudgetProvider(10),
-                new FrameTimeCapBudgetProvider(20,staticContainer.ProfilingProvider));
+                new FrameTimeCapBudgetProvider(40 ,staticContainer.ProfilingProvider));
 
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 staticContainer.PartitionSettings,
