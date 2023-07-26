@@ -38,7 +38,7 @@ namespace SceneRunner.ECSWorld.Plugins
 
             destroyMaterial = (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); };
 
-            capFrameTimeBudgetProvider = singletonSharedDependencies.CapFrameTimeBudgetProvider;
+            capFrameTimeBudgetProvider = singletonSharedDependencies.FrameTimeCapBudgetProvider;
 
             // materialsCache = new MaterialsCappedCache(CACHE_CAPACITY, (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); });
         }

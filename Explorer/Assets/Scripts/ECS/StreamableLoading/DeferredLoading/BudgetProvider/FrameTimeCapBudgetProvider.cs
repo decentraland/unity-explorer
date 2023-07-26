@@ -8,10 +8,10 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
 
         private readonly float totalBudgetAvailable;
 
-        public FrameTimeCapBudgetProvider(float budgetCap, IProfilingProvider profilingProvider)
+        public FrameTimeCapBudgetProvider(float budgetCapInMS, IProfilingProvider profilingProvider)
         {
             //FrameTime return CurrentValue in nanoseconds, so we are converting milliseconds to nanoseconds
-            totalBudgetAvailable = budgetCap * 1000000;
+            totalBudgetAvailable = budgetCapInMS * 1000000;
             this.profilingProvider = profilingProvider;
         }
 

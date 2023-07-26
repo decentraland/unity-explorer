@@ -2,7 +2,6 @@ using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Engine;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
-using Global.Dynamic;
 using SceneRunner;
 using SceneRunner.ECSWorld;
 using SceneRunner.ECSWorld.Plugins;
@@ -41,7 +40,7 @@ namespace Global
                 new TexturesLoadingPlugin(),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
-                new AssetBundlesPlugin(staticContainer.ReportsHandlingSettings, sharedDependencies.CapFrameTimeBudgetProvider),
+                new AssetBundlesPlugin(staticContainer.ReportsHandlingSettings, sharedDependencies.FrameTimeCapBudgetProvider),
                 new GltfContainerPlugin(sharedDependencies));
 
             return new SceneSharedContainer

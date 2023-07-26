@@ -6,7 +6,6 @@ using ECS.ComponentsPooling;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
-using ECS.Unity.GLTFContainer.Asset;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Systems;
 using ECS.Unity.GLTFContainer.Systems;
@@ -26,7 +25,7 @@ namespace SceneRunner.ECSWorld.Plugins
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
             reportsHandlingSettings = singletonSharedDependencies.ReportsHandlingSettings;
             assetsCache = new GltfContainerAssetsCache(1000);
-            capBudgetProvider = singletonSharedDependencies.CapFrameTimeBudgetProvider;
+            capBudgetProvider = singletonSharedDependencies.FrameTimeCapBudgetProvider;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder,
