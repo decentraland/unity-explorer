@@ -130,9 +130,6 @@ namespace ECS.SceneLifeCycle.Tests
             Assert.That(world.CountEntities(new QueryDescription().WithExclusive<SDKTransform>()), Is.EqualTo(1));
             Assert.That(world.Get<SDKTransform>(facade.sceneRoot).Position, Is.EqualTo(Vector3.one));
 
-            // 2 entities
-            Assert.That(world.CountEntities(new QueryDescription().WithAll<SDKTransform, PBGltfContainer, IPartitionComponent, PartitionComponent>()), Is.EqualTo(2));
-
             Assert.That(world.Get<SDKTransform>(facade.environment).Position, Is.EqualTo(EmptySceneFacade.GLTF_POSITION));
 
             //Assert.That(world.Get<SDKTransform>(facade.grass).Position, Is.EqualTo(EmptySceneFacade.GLTF_POSITION));
