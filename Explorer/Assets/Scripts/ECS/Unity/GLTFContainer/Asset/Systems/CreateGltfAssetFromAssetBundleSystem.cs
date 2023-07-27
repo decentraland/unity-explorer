@@ -59,8 +59,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             AssetBundleData assetBundleData = assetBundleResult.Asset;
 
-            // if asset bundle has no game objects we can't process it further but the promise should be resolved
-            if (assetBundleData.GameObjectNodes.Count == 0)
+            // if asset bundle has no game object we can't process it further but the promise should be resolved
+            if (assetBundleData.GameObject == null)
             {
                 World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(CreateException(new MissingGltfAssetsException(assetBundleData.AssetBundle.name))));
                 return;
@@ -77,37 +77,33 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             var result = GltfContainerAsset.Create(container);
 
-            for (var i = 0; i < assetBundleData.GameObjectNodes.Count; i++)
+            GameObject instance = Object.Instantiate(assetBundleData.GameObject, containerTransform);
+
+            // Collect all renderers, they are needed for Visibility system
+            using (PoolExtensions.Scope<List<Renderer>> instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())
             {
-                GameObject go = assetBundleData.GameObjectNodes[i];
-                GameObject instance = Object.Instantiate(go, containerTransform);
+                instance.GetComponentsInChildren(true, instanceRenderers.Value);
+                result.Renderers.AddRange(instanceRenderers.Value);
+            }
 
-                // Collect all renderers, they are needed for Visibility system
-                using (PoolExtensions.Scope<List<Renderer>> instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())
-                {
-                    instance.GetComponentsInChildren(true, instanceRenderers.Value);
-                    result.Renderers.AddRange(instanceRenderers.Value);
-                }
+            // Collect colliders and mesh filters
+            // Colliders are created/fetched disabled as its layer is controlled by another system
 
-                // Collect colliders and mesh filters
-                // Colliders are created/fetched disabled as its layer is controlled by another system
+            using PoolExtensions.Scope<List<MeshFilter>> meshFilterScope = GltfContainerAsset.MESH_FILTERS_POOL.AutoScope();
 
-                using PoolExtensions.Scope<List<MeshFilter>> meshFilterScope = GltfContainerAsset.MESH_FILTERS_POOL.AutoScope();
+            List<MeshFilter> list = meshFilterScope.Value;
+            instance.GetComponentsInChildren(true, list);
 
-                List<MeshFilter> list = meshFilterScope.Value;
-                instance.GetComponentsInChildren(true, list);
+            for (var j = 0; j < list.Count; j++)
+            {
+                MeshFilter meshFilter = list[j];
 
-                for (var j = 0; j < list.Count; j++)
-                {
-                    MeshFilter meshFilter = list[j];
+                GameObject meshFilterGameObject = meshFilter.gameObject;
 
-                    GameObject meshFilterGameObject = meshFilter.gameObject;
+                // gather invisible colliders
+                CreateInvisibleColliders(result.InvisibleColliders, meshFilterGameObject, meshFilter);
 
-                    // gather invisible colliders
-                    CreateInvisibleColliders(result.InvisibleColliders, meshFilterGameObject, meshFilter);
-
-                    FilterVisibleColliderCandidate(result.VisibleColliderMeshes, meshFilter);
-                }
+                FilterVisibleColliderCandidate(result.VisibleColliderMeshes, meshFilter);
             }
 
             World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
