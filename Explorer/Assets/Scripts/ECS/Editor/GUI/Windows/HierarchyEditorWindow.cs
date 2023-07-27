@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Tree = Unity.VisualScripting.Antlr3.Runtime.Tree.Tree;
 
 public class HierarchyEditorWindow : EditorWindow
 {
@@ -21,9 +20,6 @@ public class HierarchyEditorWindow : EditorWindow
     public void CreateGUI()
     {
         rootVisualElement.Add(m_VisualTreeAsset.Instantiate());
-
-        var treeView = rootVisualElement.GetFirstAncestorOfType<TreeView>();
-        treeView.makeItem
     }
 
     public void OnEnable()

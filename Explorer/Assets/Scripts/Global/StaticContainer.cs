@@ -6,6 +6,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using SceneRunner.ECSWorld;
 using SceneRunner.ECSWorld.Plugins;
+using SceneRunner.ECSWorld.Plugins.Editor;
 using System;
 using System.Collections.Generic;
 
@@ -63,7 +64,10 @@ namespace Global
                     new PrimitivesRenderingPlugin(sharedDependencies),
                     new VisibilityPlugin(),
                     new AssetBundlesPlugin(reportsHandlingSettings, sharedDependencies.LoadingBudgetProvider),
-                    new GltfContainerPlugin(sharedDependencies),
+                    new GltfContainerPlugin(sharedDependencies)
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                   ,new EditorPlugin()
+#endif
                 },
             };
         }
