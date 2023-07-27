@@ -46,7 +46,8 @@ namespace ECS.SceneLifeCycle.Systems
                 if (staticScenePointers.Value.Contains(parcel.ToInt2()))
                 {
                     World.Add(entity,
-                        AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World, new GetSceneFacadeIntention(realm, definition.IpfsPath, definition.Definition), partitionComponent));
+                        AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
+                            new GetSceneFacadeIntention(realm, definition.IpfsPath, definition.Definition, definition.Parcels, definition.IsEmpty), partitionComponent));
 
                     return;
                 }

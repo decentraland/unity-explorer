@@ -61,8 +61,6 @@ namespace ECS.SceneLifeCycle.Systems
         [None(typeof(PartitionComponent))]
         private void PartitionNewEntity(in Entity entity, ref SceneDefinitionComponent definition)
         {
-            if (definition.IsEmpty) return;
-
             PartitionComponent partitionComponent = partitionComponentPool.Get();
             ScenesPartitioningUtils.Partition(partitionSettings, definition.ParcelsCorners, readOnlyCameraSamplingData, partitionComponent);
             partitionComponent.IsDirty = true;

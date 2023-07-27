@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: PartitionSettings
   m_EditorClassIdentifier: 
   positionTolerance: 0.1
-  distanceBuckets: 10000000200000003000000060000000000100000002000000080000
+  distanceBuckets: 10000000200000003000000060000000b40000000001000000020000
   fastPathDistance: 48
   <AngleTolerance>k__BackingField: 3

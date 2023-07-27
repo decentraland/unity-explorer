@@ -24,21 +24,10 @@ namespace ECS.Unity.GLTFContainer.Systems
     {
         internal LoadGltfContainerSystem(World world) : base(world) { }
 
-        public override void BeforeUpdate(in float t)
-        {
-            ResetStateChangedQuery(World);
-        }
-
         protected override void Update(float t)
         {
             StartLoadingQuery(World);
             ReconfigureGltfContainerQuery(World);
-        }
-
-        [Query]
-        private void ResetStateChanged(ref GltfContainerComponent component)
-        {
-            component.State.SetFramePassed();
         }
 
         [Query]

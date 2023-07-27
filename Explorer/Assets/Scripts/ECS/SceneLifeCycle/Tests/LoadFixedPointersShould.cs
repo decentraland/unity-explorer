@@ -85,7 +85,7 @@ namespace ECS.SceneLifeCycle.Tests
 
             // Create realm + fixed pointers
 
-            Entity realm = world.Create(new RealmComponent(ipfsRealm), new FixedScenePointers(results));
+            Entity realm = world.Create(new RealmComponent(ipfsRealm), new FixedScenePointers(results), ProcessesScenePointers.Create());
 
             system.Update(0);
 

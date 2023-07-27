@@ -33,7 +33,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        private void StartLoadingInRadius(ref RealmComponent realm, ref VolatileScenePointers volatileScenePointers, ref ParcelsInRange parcelsInRange)
+        private void StartLoadingInRadius(ref RealmComponent realm, ref VolatileScenePointers volatileScenePointers, ref ParcelsInRange parcelsInRange, ref ProcessesScenePointers processesScenePointers)
         {
             // Create promises if they are not yet created
             // Promise is a bulk request
@@ -45,7 +45,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             foreach (int2 parcel in parcelsInRange.Value)
             {
-                if (!volatileScenePointers.ProcessedParcels.Contains(parcel))
+                if (!processesScenePointers.Value.Contains(parcel))
                     input.Add(parcel);
             }
 
@@ -57,7 +57,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        private void ResolveActivePromise(ref VolatileScenePointers volatileScenePointers)
+        private void ResolveActivePromise(ref VolatileScenePointers volatileScenePointers, ref ProcessesScenePointers processesScenePointers)
         {
             if (!volatileScenePointers.ActivePromise.HasValue) return;
 
@@ -80,14 +80,14 @@ namespace ECS.SceneLifeCycle.Systems
                     CreateSceneEntity(scene, new IpfsTypes.IpfsPath(scene.id, string.Empty), out Vector2Int[] sceneParcels);
 
                     for (var j = 0; j < sceneParcels.Length; j++)
-                        volatileScenePointers.ProcessedParcels.Add(sceneParcels[j].ToInt2());
+                        processesScenePointers.Value.Add(sceneParcels[j].ToInt2());
                 }
 
                 // Empty parcels = parcels for which no scene pointers were retrieved
                 for (var i = 0; i < requestedList.Count; i++)
                 {
                     int2 parcel = requestedList[i];
-                    if (!volatileScenePointers.ProcessedParcels.Add(parcel)) continue;
+                    if (!processesScenePointers.Value.Add(parcel)) continue;
                     World.Create(new SceneDefinitionComponent(parcel.ToVector2Int()));
                 }
             }
@@ -95,7 +95,7 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 // Signal that those parcels should not be requested again
                 for (var i = 0; i < requestedList.Count; i++)
-                    volatileScenePointers.ProcessedParcels.Add(requestedList[i]);
+                    processesScenePointers.Value.Add(requestedList[i]);
             }
 
             volatileScenePointers.ActivePromise = null;

@@ -6,6 +6,8 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Realm;
@@ -49,6 +51,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (promise.TryConsume(World, out StreamableLoadingResult<ISceneFacade> result) && result.Succeeded)
             {
                 ISceneFacade scene = result.Asset;
+
                 int fps = realmPartitionSettings.GetSceneUpdateFrequency(in partition);
 
                 async UniTaskVoid RunOnThreadPool()
@@ -72,9 +75,10 @@ namespace ECS.SceneLifeCycle.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ChangeSceneFPS(ref ISceneFacade sceneFacade, ref PartitionComponent partition)
+        private void ChangeSceneFPS(ref ISceneFacade sceneFacade, ref SceneDefinitionComponent sceneDefinition, ref PartitionComponent partition)
         {
             if (!partition.IsDirty) return;
+            if (sceneDefinition.IsEmpty) return; // Never tweak FPS of empty scenes
 
             sceneFacade.SetTargetFPS(realmPartitionSettings.GetSceneUpdateFrequency(in partition));
         }

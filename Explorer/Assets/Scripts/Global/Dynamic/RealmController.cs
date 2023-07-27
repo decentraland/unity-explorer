@@ -71,7 +71,8 @@ namespace Global.Dynamic
             // Add the realm component
             var realmComp = new RealmComponent(new IpfsRealm(realm, result));
 
-            Entity realmEntity = world.Create(realmComp, new ParcelsInRange(new HashSet<int2>(100), sceneLoadRadius));
+            Entity realmEntity = world.Create(realmComp,
+                new ParcelsInRange(new HashSet<int2>(100), sceneLoadRadius), ProcessesScenePointers.Create());
 
             ComplimentWithStaticPointers(world, realmEntity);
 
