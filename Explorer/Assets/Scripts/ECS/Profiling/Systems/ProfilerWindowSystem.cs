@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using ECS.Abstract;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace ECS.Profiling.Systems
 {
@@ -19,11 +20,11 @@ namespace ECS.Profiling.Systems
         {
             this.profilingProvider = profilingProvider;
             profilerView = Object.Instantiate(Resources.Load<ProfilerView>("ProfilerView"));
-            profilerView.OnOpen += StartTimer;
-            profilerView.OnClose += StopTimer;
+            profilerView.OnOpen += ShowMetrics;
+            profilerView.OnClose += HideMetrics;
         }
 
-        private void StartTimer()
+        private void ShowMetrics()
         {
             cts = new CancellationTokenSource();
             profilerView.SetHiccups(profilingProvider.GetHiccupCountInBuffer());
@@ -31,7 +32,7 @@ namespace ECS.Profiling.Systems
             UpdateView(cts.Token).Forget();
         }
 
-        private void StopTimer()
+        private void HideMetrics()
         {
             cts.Cancel();
         }
@@ -50,11 +51,9 @@ namespace ECS.Profiling.Systems
 
         public override void Dispose()
         {
-            profilerView.OnOpen -= StartTimer;
-            profilerView.OnClose -= StopTimer;
-            cts.Cancel();
-            cts.Dispose();
-            base.Dispose();
+            profilerView.OnOpen -= ShowMetrics;
+            profilerView.OnClose -= HideMetrics;
+            cts.SafeCancelAndDispose();
         }
     }
 }
