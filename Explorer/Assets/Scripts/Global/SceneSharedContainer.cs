@@ -40,7 +40,7 @@ namespace Global
                 new TexturesLoadingPlugin(),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
-                new AssetBundlesPlugin(staticContainer.ReportsHandlingSettings, sharedDependencies.FrameTimeCapBudgetProvider),
+                new AssetBundlesPlugin(staticContainer.ReportsHandlingSettings),
                 new GltfContainerPlugin(sharedDependencies));
 
             return new SceneSharedContainer

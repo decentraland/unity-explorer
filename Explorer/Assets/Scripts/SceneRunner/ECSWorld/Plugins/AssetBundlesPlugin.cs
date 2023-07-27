@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using Diagnostics.ReportsHandling;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -19,14 +18,12 @@ namespace SceneRunner.ECSWorld.Plugins
 #endif
 
         private readonly IReportsHandlingSettings reportsHandlingSettings;
-        private readonly IConcurrentBudgetProvider capFrameTimeBudget;
 
         private readonly AssetBundleCache assetBundleCache;
 
-        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, IConcurrentBudgetProvider capFrameTimeBudget)
+        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings)
         {
             this.reportsHandlingSettings = reportsHandlingSettings;
-            this.capFrameTimeBudget = capFrameTimeBudget;
             assetBundleCache = new AssetBundleCache();
         }
 
@@ -37,7 +34,7 @@ namespace SceneRunner.ECSWorld.Plugins
             ReportAssetBundleErrorSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // TODO create a runtime ref-counting cache
-            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, sharedDependencies.MutexSync, capFrameTimeBudget);
+            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, sharedDependencies.MutexSync);
         }
     }
 }

@@ -1,11 +1,10 @@
-using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace ECS.Profiling
 {
-    public class ProfilerView : MonoBehaviour, IProfilerView
+    public class ProfilingView : MonoBehaviour, IProfilerView
     {
         [SerializeField]
         private GameObject debugViewWindow;
@@ -22,45 +21,47 @@ namespace ECS.Profiling
         [SerializeField]
         private Button closeButton;
 
+        public bool IsOpen { get; private set; }
+
+        private readonly string frameRateFormat = "Frame Rate: {0:1} fps ({1:1} ms)";
+        private readonly string hiccupCounterFormat = "Hiccups last 1000 frames: {0}";
+
+
         private void Start()
         {
             openButton.onClick.AddListener(OpenProfilerWindow);
             closeButton.onClick.AddListener(CloseProfilerWindow);
         }
-
-        private void OnDestroy()
-        {
-            openButton.onClick.RemoveAllListeners();
-            closeButton.onClick.RemoveAllListeners();
-        }
-
-        public event Action OnOpen;
-        public event Action OnClose;
-
         public void SetFPS(float averageFrameTimeInSeconds)
         {
             float frameTimeInMS = averageFrameTimeInSeconds * 1e3f;
             float frameRate = 1 / averageFrameTimeInSeconds;
-            averageFrameRate.text = $"Frame Rate: {frameRate:F1} fps ({frameTimeInMS:F1} ms)";
+
+            averageFrameRate.SetText(frameRateFormat, frameRate, frameTimeInMS);
         }
 
         public void SetHiccups(int hiccupCount)
         {
-            hiccupCounter.text = $"Hiccups last 1000 frames: {hiccupCount}";
+            hiccupCounter.SetText(hiccupCounterFormat, hiccupCount);
         }
-
         private void CloseProfilerWindow()
         {
             openButton.gameObject.SetActive(true);
             debugViewWindow.gameObject.SetActive(false);
-            OnClose?.Invoke();
+            IsOpen = false;
         }
 
         private void OpenProfilerWindow()
         {
             openButton.gameObject.SetActive(false);
             debugViewWindow.gameObject.SetActive(true);
-            OnOpen?.Invoke();
+            IsOpen = true;
+        }
+
+        private void OnDestroy()
+        {
+            openButton.onClick.RemoveAllListeners();
+            closeButton.onClick.RemoveAllListeners();
         }
     }
 }

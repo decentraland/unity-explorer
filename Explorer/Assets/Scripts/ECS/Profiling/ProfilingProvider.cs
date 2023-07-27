@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using Unity.Profiling;
 
 namespace ECS.Profiling
@@ -18,7 +17,6 @@ namespace ECS.Profiling
         {
             mainThreadTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", 15);
             hiccupBufferCounter = new LinealBufferHiccupCounter(HICCUP_BUFFER_SIZE, HICCUP_THRESHOLD_IN_NS);
-            CountHiccup().Forget();
         }
 
         public long GetCurrentFrameTimeValueInNS() =>
@@ -27,18 +25,12 @@ namespace ECS.Profiling
         public double GetAverageFrameTimeValueInNS() =>
             GetRecorderFPSAverage(mainThreadTimeRecorder);
 
+        public void CheckHiccup() =>
+            hiccupBufferCounter.AddDeltaTime(mainThreadTimeRecorder.LastValue);
 
         public int GetHiccupCountInBuffer() =>
             hiccupBufferCounter.HiccupsCountInBuffer;
 
-        private async UniTaskVoid CountHiccup()
-        {
-            while (true)
-            {
-                await UniTask.Yield();
-                hiccupBufferCounter.AddDeltaTime(mainThreadTimeRecorder.LastValue);
-            }
-        }
 
         private double GetRecorderFPSAverage(ProfilerRecorder recorder)
         {

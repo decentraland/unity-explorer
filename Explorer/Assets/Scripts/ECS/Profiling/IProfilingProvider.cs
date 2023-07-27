@@ -7,5 +7,7 @@ namespace ECS.Profiling
         double GetAverageFrameTimeValueInNS();
 
         int GetHiccupCountInBuffer();
+
+        void CheckHiccup();
     }
 }

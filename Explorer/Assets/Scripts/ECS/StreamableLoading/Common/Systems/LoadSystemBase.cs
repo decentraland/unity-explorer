@@ -41,13 +41,10 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private CancellationTokenSource cancellationTokenSource;
 
-        private IConcurrentBudgetProvider frameTimeCapBudgetProvider;
-
-        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync, IConcurrentBudgetProvider frameTimeCapBudgetProvider) : base(world)
+        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync) : base(world)
         {
             this.cache = cache;
             this.mutexSync = mutexSync;
-            this.frameTimeCapBudgetProvider = frameTimeCapBudgetProvider;
             query = World.Query(in CREATE_WEB_REQUEST);
             irrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<TAsset>>.Get();
 
@@ -78,9 +75,6 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 foreach (int entityIndex in chunk)
                 {
-                    if (!frameTimeCapBudgetProvider.TrySpendBudget())
-                        break;
-
                     ref readonly Entity entity = ref Unsafe.Add(ref entityFirstElement, entityIndex);
                     ref TIntention intention = ref Unsafe.Add(ref intentionFirstElement, entityIndex);
                     ref IPartitionComponent partitionComponent = ref Unsafe.Add(ref partitionComponentFirstElement, entityIndex);

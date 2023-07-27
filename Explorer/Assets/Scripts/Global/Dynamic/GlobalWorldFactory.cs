@@ -93,7 +93,7 @@ namespace Global.Dynamic
             CheckCameraQualifiedForRepartitioningSystem.InjectToWorld(ref builder, partitionSettings);
             SortWorldsAggregateSystem.InjectToWorld(ref builder, partitionedWorldsAggregateFactory, realmPartitionSettings);
 
-            ProfilerWindowSystem.InjectToWorld(ref builder, profilingProvider);
+            ProfilingSystem.InjectToWorld(ref builder, profilingProvider);
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
                 { new ReleaseRealmPooledComponentSystem(componentPoolsRegistry) };
