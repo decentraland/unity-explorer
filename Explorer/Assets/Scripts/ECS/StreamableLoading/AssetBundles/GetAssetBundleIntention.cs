@@ -3,6 +3,7 @@ using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
@@ -52,5 +53,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public override int GetHashCode() =>
             HashCode.Combine(Hash, Name);
+
+        public override string ToString() =>
+            $"Get Asset Bundle: {Name} ({Hash})";
     }
 }

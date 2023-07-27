@@ -3,7 +3,7 @@ using Ipfs;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
+using Unity.Mathematics;
 
 namespace ECS.SceneLifeCycle.SceneDefinition
 {
@@ -16,7 +16,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         public CommonLoadingArguments CommonArguments { get; set; }
 
-        public readonly IReadOnlyList<Vector2Int> Pointers;
+        public readonly IReadOnlyList<int2> Pointers;
 
         /// <summary>
         ///     Reusable collection the results are placed in
@@ -24,7 +24,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         public readonly List<IpfsTypes.SceneEntityDefinition> TargetCollection;
 
         public GetSceneDefinitionList(List<IpfsTypes.SceneEntityDefinition> targetCollection,
-            IReadOnlyList<Vector2Int> pointers,
+            IReadOnlyList<int2> pointers,
             CommonLoadingArguments commonArguments)
         {
             TargetCollection = targetCollection;

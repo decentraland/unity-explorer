@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine.Pool;
+using Utility.Pool;
+using Utility.ThreadSafePool;
 
 namespace ECS.LifeCycle.Components
 {
     public struct RemovedComponents : IDisposable
     {
+        private static readonly ThreadSafeHashSetPool<Type> POOL = new (PoolConstants.SDK_COMPONENT_TYPES_COUNT, PoolConstants.SCENES_COUNT);
+
         public readonly HashSet<Type> Set;
 
         private RemovedComponents(HashSet<Type> defaultHashSet)
@@ -17,9 +20,9 @@ namespace ECS.LifeCycle.Components
             Set.Remove(typeof(T));
 
         public static RemovedComponents CreateDefault() =>
-            new (HashSetPool<Type>.Get());
+            new (POOL.Get());
 
         public void Dispose() =>
-            HashSetPool<Type>.Release(Set);
+            POOL.Release(Set);
     }
 }

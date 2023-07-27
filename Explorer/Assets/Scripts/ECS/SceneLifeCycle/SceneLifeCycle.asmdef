@@ -12,7 +12,12 @@
     "StreamableLoading",
     "Diagnostics",
     "Decentraland.Protocol.GeneratedCode",
-    "AssetManagement"
+    "AssetManagement",
+    "Prioritization",
+    "ComponentsPooling",
+    "Unity.Collections",
+    "Unity.Mathematics",
+    "CRDT"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

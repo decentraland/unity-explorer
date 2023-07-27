@@ -4,6 +4,7 @@ using ECS.LifeCycle;
 using ECS.Unity.Materials;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Systems;
+using SceneRunner.EmptyScene;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -52,5 +53,7 @@ namespace SceneRunner.ECSWorld.Plugins
             ResetMaterialSystem.InjectToWorld(ref builder, destroyMaterial);
             CleanUpMaterialsSystem.InjectToWorld(ref builder, destroyMaterial);
         }
+
+        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
     }
 }

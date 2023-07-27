@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using UnityEngine;
+using Unity.Mathematics;
 
 namespace ECS.SceneLifeCycle.Components
 {
@@ -9,9 +9,9 @@ namespace ECS.SceneLifeCycle.Components
         public readonly int LoadRadius;
 
         // Reusable Set of parcels, don't cache it
-        [NotNull] public readonly HashSet<Vector2Int> Value;
+        [NotNull] public readonly HashSet<int2> Value;
 
-        public ParcelsInRange(HashSet<Vector2Int> value, int loadRadius)
+        public ParcelsInRange(HashSet<int2> value, int loadRadius)
         {
             Value = value;
             LoadRadius = loadRadius;

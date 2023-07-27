@@ -16,5 +16,8 @@ namespace ECS.StreamableLoading.Common.Components
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
         public CommonLoadingArguments CommonArguments { get; set; }
+
+        public override string ToString() =>
+            CommonArguments.URL;
     }
 }

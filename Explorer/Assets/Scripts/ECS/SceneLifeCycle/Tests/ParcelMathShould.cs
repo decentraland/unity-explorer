@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 using Utility;
 
@@ -11,7 +12,7 @@ namespace ECS.SceneLifeCycle.Tests
         [Test]
         public void CheckParcelsInRange()
         {
-            var parcels = new HashSet<Vector2Int>(100);
+            var parcels = new HashSet<int2>(100);
             var centerScene = new Vector3(ParcelMathHelper.PARCEL_SIZE / 2.0f, 0.0f, -ParcelMathHelper.PARCEL_SIZE / 2.0f);
 
             // Test from position 0
@@ -19,7 +20,7 @@ namespace ECS.SceneLifeCycle.Tests
                 Vector3 position = new Vector3(0.0f, 0.0f, 0.0f) + centerScene;
                 ParcelMathHelper.ParcelsInRange(position, 1, parcels);
 
-                var expectedParcels = new List<Vector2Int>
+                var expectedParcels = new List<int2>
                 {
                     new (-1, -2),
                     new (-1, -1),
@@ -40,7 +41,7 @@ namespace ECS.SceneLifeCycle.Tests
                 Vector3 position = (new Vector3(100.0f, 0.0f, -100.0f) * ParcelMathHelper.PARCEL_SIZE) + centerScene;
                 ParcelMathHelper.ParcelsInRange(position, 2, parcels);
 
-                var expectedParcels = new List<Vector2Int>
+                var expectedParcels = new List<int2>
                 {
                     new (98, -102),
                     new (98, -101),

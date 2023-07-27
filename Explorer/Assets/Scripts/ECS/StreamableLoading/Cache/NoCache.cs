@@ -8,7 +8,7 @@ namespace ECS.StreamableLoading.Cache
     /// </summary>
     /// <typeparam name="TAsset"></typeparam>
     /// <typeparam name="TLoadingIntention"></typeparam>
-    public class NoCache<TAsset, TLoadingIntention> : IStreamableCache<TAsset, TLoadingIntention> where TLoadingIntention: struct, ILoadingIntention
+    public class NoCache<TAsset, TLoadingIntention> : OngoingRequestsCacheBase<TAsset>, IStreamableCache<TAsset, TLoadingIntention> where TLoadingIntention: struct, ILoadingIntention
     {
         public static readonly NoCache<TAsset, TLoadingIntention> INSTANCE = new ();
 

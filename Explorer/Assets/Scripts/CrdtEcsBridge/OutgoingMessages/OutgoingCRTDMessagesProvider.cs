@@ -1,17 +1,15 @@
 using CRDT.Protocol.Factory;
-using System;
 using System.Collections.Generic;
 using System.Threading;
+using Utility.Pool;
 using Utility.ThreadSafePool;
 
 namespace CrdtEcsBridge.OutgoingMessages
 {
     public class OutgoingCRTDMessagesProvider : IOutgoingCRTDMessagesProvider
     {
-        internal const int START_POOL_CAPACITY = 8;
-
         // All OutgoingCRTDMessagesProviders use this pool with a big initial capacity to prevent dynamic allocations
-        internal static readonly ThreadSafeListPool<ProcessedCRDTMessage> SHARED_POOL = new (64, START_POOL_CAPACITY);
+        internal static readonly ThreadSafeListPool<ProcessedCRDTMessage> SHARED_POOL = new (64, PoolConstants.SCENES_COUNT);
 
         private readonly List<ProcessedCRDTMessage> processedCRDTMessages;
 

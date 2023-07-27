@@ -1,7 +1,9 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using Ipfs;
@@ -18,12 +20,17 @@ namespace ECS.SceneLifeCycle.DeferredLoading
     [UpdateBefore(typeof(LoadSceneDefinitionSystem))]
     public partial class SceneLifeCycleDeferredLoadingSystem : DeferredLoadingSystem
     {
-        private static readonly ComponentHandler[] COMPONENT_HANDLERS =
+        private static readonly QueryDescription[] COMPONENT_HANDLERS;
+
+        static SceneLifeCycleDeferredLoadingSystem()
         {
-            new ComponentHandler<SceneDefinitions, GetSceneDefinitionList>(),
-            new ComponentHandler<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>(),
-            new ComponentHandler<ISceneFacade, GetSceneFacadeIntention>(),
-        };
+            COMPONENT_HANDLERS = new[]
+            {
+                CreateQuery<GetSceneDefinitionList, SceneDefinitions>(),
+                CreateQuery<GetSceneDefinition, IpfsTypes.SceneEntityDefinition>(),
+                CreateQuery<GetSceneFacadeIntention, ISceneFacade>(),
+            };
+        }
 
         internal SceneLifeCycleDeferredLoadingSystem(World world, IConcurrentBudgetProvider concurrentLoadingBudgetProvider)
             : base(world, COMPONENT_HANDLERS, concurrentLoadingBudgetProvider) { }

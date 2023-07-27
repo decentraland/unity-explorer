@@ -5,6 +5,4 @@
         public const int ATTEMPTS_COUNT = 3;
         public const int TIMEOUT = 60;
     }
-
-    public enum DeferredLoadingState { Allowed, Forbidden }
 }

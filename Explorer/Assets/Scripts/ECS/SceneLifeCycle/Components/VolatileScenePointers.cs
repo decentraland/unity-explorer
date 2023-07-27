@@ -2,7 +2,8 @@
 using ECS.StreamableLoading.Common;
 using Ipfs;
 using System.Collections.Generic;
-using UnityEngine;
+using Unity.Mathematics;
+using Utility.Pool;
 
 namespace ECS.SceneLifeCycle.Components
 {
@@ -12,24 +13,22 @@ namespace ECS.SceneLifeCycle.Components
     public struct VolatileScenePointers
     {
         public readonly List<IpfsTypes.SceneEntityDefinition> RetrievedReusableList;
-        public readonly List<Vector2Int> InputReusableList;
-
-        /// <summary>
-        ///     These parcels were already processed and won't be processed again
-        /// </summary>
-        public readonly HashSet<Vector2Int> ProcessedParcels;
+        public readonly List<int2> InputReusableList;
 
         /// <summary>
         ///     Only one bulk request at a time
         /// </summary>
         public AssetPromise<SceneDefinitions, GetSceneDefinitionList>? ActivePromise;
 
-        public VolatileScenePointers(List<IpfsTypes.SceneEntityDefinition> retrievedReusableList, HashSet<Vector2Int> processedParcels, List<Vector2Int> inputReusableList)
+        public VolatileScenePointers(List<IpfsTypes.SceneEntityDefinition> retrievedReusableList, List<int2> inputReusableList)
         {
             RetrievedReusableList = retrievedReusableList;
-            ProcessedParcels = processedParcels;
             InputReusableList = inputReusableList;
             ActivePromise = null;
         }
+
+        public static VolatileScenePointers Create() =>
+            new (new List<IpfsTypes.SceneEntityDefinition>(PoolConstants.SCENES_COUNT),
+                new List<int2>(PoolConstants.SCENES_COUNT));
     }
 }

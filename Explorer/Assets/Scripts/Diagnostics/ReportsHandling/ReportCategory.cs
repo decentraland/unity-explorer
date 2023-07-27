@@ -81,6 +81,11 @@
         public const string PRIMITIVE_MESHES = nameof(PRIMITIVE_MESHES);
 
         /// <summary>
+        ///     Everything related to prioritization
+        /// </summary>
+        public const string PRIORITIZATION = nameof(PRIORITIZATION);
+
+        /// <summary>
         ///     Everything related to editor specific functionality (like tools)
         /// </summary>
         public const string EDITOR = nameof(EDITOR);

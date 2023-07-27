@@ -1,16 +1,17 @@
 ﻿using AssetManagement;
 using Cysharp.Threading.Tasks;
 using Diagnostics.ReportsHandling;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System;
 using System.Threading;
-using UnityEngine.Networking;
 
 namespace ECS.StreamableLoading.Common.Systems
 {
     public static class AssetsLoadingUtility
     {
-        public delegate UniTask<StreamableLoadingResult<TAsset>> InternalFlowDelegate<TAsset, in TIntention>(TIntention intention, CancellationToken ct)
+        public delegate UniTask<StreamableLoadingResult<TAsset>> InternalFlowDelegate<TAsset, in TIntention>(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
             where TIntention: struct, ILoadingIntention;
 
         /// <summary>
@@ -20,6 +21,8 @@ namespace ECS.StreamableLoading.Common.Systems
         ///     <para>Null - if PermittedSources have value</para>
         /// </returns>
         public static async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoop<TIntention, TAsset>(this TIntention intention,
+            IAcquiredBudget acquiredBudget,
+            IPartitionComponent partition,
             InternalFlowDelegate<TAsset, TIntention> flow, string reportCategory, CancellationToken ct)
             where TIntention: struct, ILoadingIntention
         {
@@ -27,21 +30,32 @@ namespace ECS.StreamableLoading.Common.Systems
 
             while (true)
             {
-                try { return await flow(intention, ct); }
+                ReportHub.Log(reportCategory, $"Starting loading {intention}\n{partition}, attempts left: {attemptCount}");
+
+                try { return await flow(intention, acquiredBudget, partition, ct); }
 
                 catch (UnityWebRequestException unityWebRequestException)
                 {
-                    UnityWebRequest webRequest = unityWebRequestException.UnityWebRequest;
+                    // we can't access web request here as it is disposed already
 
-                    ReportHub.LogError(reportCategory, $"Exception occured on loading {typeof(TAsset)} from {webRequest.url}");
-                    ReportHub.LogException(unityWebRequestException, reportCategory);
+                    // no more sources left
+                    if (intention.CommonArguments.PermittedSources == AssetSource.NONE)
+                    {
+                        ReportHub.LogError(reportCategory, $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()}");
+                        ReportHub.LogException(unityWebRequestException, reportCategory);
+                    }
+                    else
+                    {
+                        ReportHub.Log(reportCategory, $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()}.\n"
+                                                      + $"Trying sources: {intention.CommonArguments.PermittedSources}");
+                    }
 
                     // Decide if we can repeat or not
                     --attemptCount;
 
-                    bool isIrrecoverableError = !webRequest.IsServerError();
+                    bool isIrrecoverableError = !unityWebRequestException.IsServerError();
 
-                    if (attemptCount <= 0 || webRequest.IsAborted() || isIrrecoverableError)
+                    if (attemptCount <= 0 || unityWebRequestException.IsAborted() || isIrrecoverableError)
                     {
                         if (intention.CommonArguments.PermittedSources == AssetSource.NONE)
 

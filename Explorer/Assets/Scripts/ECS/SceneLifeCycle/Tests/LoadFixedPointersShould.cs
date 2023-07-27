@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
 using Cysharp.Threading.Tasks;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
@@ -67,7 +68,7 @@ namespace ECS.SceneLifeCycle.Tests
                                                                                                              IpfsTypes.IpfsPath path = IpfsHelper.ParseUrn(urn);
 
                                                                                                              var promise = AssetPromise<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>
-                                                                                                                .Create(world, new GetSceneDefinition(new CommonLoadingArguments(), path));
+                                                                                                                .Create(world, new GetSceneDefinition(new CommonLoadingArguments(), path), PartitionComponent.TOP_PRIORITY);
 
                                                                                                              // resolve it
                                                                                                              UnityWebRequestAsyncOperation request = UnityWebRequest.Get(ipfsRealm.ContentBaseUrl + path.EntityId).SendWebRequest();
@@ -84,7 +85,7 @@ namespace ECS.SceneLifeCycle.Tests
 
             // Create realm + fixed pointers
 
-            Entity realm = world.Create(new RealmComponent(ipfsRealm), new FixedScenePointers(results));
+            Entity realm = world.Create(new RealmComponent(ipfsRealm), new FixedScenePointers(results), ProcessesScenePointers.Create());
 
             system.Update(0);
 

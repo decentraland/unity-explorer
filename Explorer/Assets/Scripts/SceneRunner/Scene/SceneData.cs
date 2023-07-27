@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 
 namespace SceneRunner.Scene
 {
@@ -24,7 +25,13 @@ namespace SceneRunner.Scene
         private string GetContentBaseUrl() =>
             customContentBaseUrl ?? ipfsRealm.ContentBaseUrl;
 
-        public SceneData(IIpfsRealm ipfsRealm, IpfsTypes.SceneEntityDefinition sceneDefinition, bool supportHashes, [NotNull] SceneAssetBundleManifest assetBundleManifest, string customContentBaseUrl = null)
+        public SceneData(
+            IIpfsRealm ipfsRealm,
+            IpfsTypes.SceneEntityDefinition sceneDefinition,
+            bool supportHashes,
+            [NotNull] SceneAssetBundleManifest assetBundleManifest,
+            Vector2Int baseParcel,
+            string customContentBaseUrl = null)
         {
             this.ipfsRealm = ipfsRealm;
             this.sceneDefinition = sceneDefinition;
@@ -43,12 +50,14 @@ namespace SceneRunner.Scene
 
             foreach (IpfsTypes.ContentDefinition contentDefinition in sceneDefinition.content) fileToHash[contentDefinition.file] = contentDefinition.hash;
 
-            SceneShortInfo = new SceneShortInfo(IpfsHelper.DecodePointer(sceneDefinition.metadata.scene.baseParcel), sceneDefinition.id);
+            SceneShortInfo = new SceneShortInfo(baseParcel, sceneDefinition.id);
+            BasePosition = ParcelMathHelper.GetPositionByParcelPosition(SceneShortInfo.BaseParcel);
 
             resolvedContentURLs = new Dictionary<string, (bool success, string url)>(fileToHash.Count, StringComparer.OrdinalIgnoreCase);
         }
 
         public SceneShortInfo SceneShortInfo { get; }
+        public Vector3 BasePosition { get; }
         public SceneAssetBundleManifest AssetBundleManifest { get; }
 
         public bool HasRequiredPermission(string permission)

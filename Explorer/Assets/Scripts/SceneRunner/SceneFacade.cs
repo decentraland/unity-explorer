@@ -40,7 +40,8 @@ namespace SceneRunner
             IInstancePoolsProvider instancePoolsProvider,
             ICRDTMemoryAllocator crdtMemoryAllocator,
             ISceneExceptionsHandler sceneExceptionsHandler,
-            ISceneStateProvider sceneStateProvider)
+            ISceneStateProvider sceneStateProvider,
+            ISceneData sceneData)
         {
             this.runtimeInstance = runtimeInstance;
             this.ecsWorldFacade = ecsWorldFacade;
@@ -51,9 +52,12 @@ namespace SceneRunner
             this.crdtMemoryAllocator = crdtMemoryAllocator;
             this.sceneExceptionsHandler = sceneExceptionsHandler;
             this.sceneStateProvider = sceneStateProvider;
+            SceneData = sceneData;
 
             completionSource = new UniTaskCompletionSource();
         }
+
+        public ISceneData SceneData { get; }
 
         public void SetTargetFPS(int fps)
         {
@@ -85,35 +89,68 @@ namespace SceneRunner
             var stopWatch = new Stopwatch();
             var deltaTime = 0f;
 
-            while (true)
+            try
             {
-                if (ct.IsCancellationRequested)
+                while (true)
                 {
-                    completionSource.TrySetCanceled();
-                    break;
-                }
+                    if (ct.IsCancellationRequested)
+                    {
+                        completionSource.TrySetCanceled();
+                        break;
+                    }
 
+                    stopWatch.Restart();
+
+                    // We can't guarantee that the thread is preserved between updates
+                    await runtimeInstance.UpdateScene(deltaTime);
+
+                    AssertIsNotMainThread(nameof(SceneRuntimeImpl.UpdateScene));
+
+                    // Passing ct to Task.Delay allows to break the loop immediately
+                    // as, otherwise, due to 0 or low FPS it can spin for much longer
+
+                    if (!await IdleWhileRunning(ct))
+                        break;
+
+                    int sleepMS = Math.Max(intervalMS - (int)stopWatch.ElapsedMilliseconds, 0);
+
+                    // We can't use Thread.Sleep as EngineAPI is called on the same thread
+                    // We can't use UniTask.Delay as this loop has nothing to do with the Unity Player Loop
+                    await Task.Delay(sleepMS, ct);
+                    AssertIsNotMainThread(nameof(Task.Delay));
+                    deltaTime = stopWatch.ElapsedMilliseconds / 1000f;
+                }
+            }
+            catch (OperationCanceledException) { completionSource.TrySetCanceled(); }
+        }
+
+        private async ValueTask<bool> IdleWhileRunning(CancellationToken ct)
+        {
+            bool TryComplete()
+            {
                 if (sceneStateProvider.State != SceneState.Running)
                 {
                     completionSource.TrySetResult();
-                    break;
+                    return true;
                 }
 
-                stopWatch.Restart();
-
-                // We can't guarantee that the thread is preserved between updates
-                await runtimeInstance.UpdateScene(deltaTime);
-
-                AssertIsNotMainThread(nameof(SceneRuntimeImpl.UpdateScene));
-
-                var sleepMS = Math.Max(intervalMS - (int)stopWatch.ElapsedMilliseconds, 0);
-
-                // We can't use Thread.Sleep as EngineAPI is called on the same thread
-                // We can't use UniTask.Delay as this loop has nothing to do with the Unity Player Loop
-                await Task.Delay(sleepMS); // No CancellationToken -> Cancel gracefully
-                AssertIsNotMainThread(nameof(Task.Delay));
-                deltaTime = stopWatch.ElapsedMilliseconds / 1000f;
+                return false;
             }
+
+            if (TryComplete())
+                return false;
+
+            // Support scene freeze (0 FPS, int.MinValue)
+            while (intervalMS < 0)
+            {
+                if (TryComplete())
+                    return false;
+
+                // Just idle, don't do anything, need to wait for an actual value
+                await Task.Delay(10, ct);
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -136,7 +173,7 @@ namespace SceneRunner
             // TODO do it better
             runtimeInstance.SetIsDisposing();
 
-            await completionSource.Task.SuppressCancellationThrow();
+            completionSource.TrySetCanceled();
             await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
 
             runtimeInstance.Dispose();

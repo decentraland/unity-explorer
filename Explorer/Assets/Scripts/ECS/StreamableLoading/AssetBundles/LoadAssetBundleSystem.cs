@@ -1,8 +1,8 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
-using AssetManagement;
 using Cysharp.Threading.Tasks;
 using Diagnostics.ReportsHandling;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -24,33 +24,16 @@ namespace ECS.StreamableLoading.AssetBundles
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class LoadAssetBundleSystem : LoadSystemBase<AssetBundleData, GetAssetBundleIntention>
     {
+        private const string METADATA_FILENAME = "metadata.json";
+        private const string METRICS_FILENAME = "metrics.json";
         private static readonly ThreadSafeObjectPool<AssetBundleMetadata> METADATA_POOL
             = new (() => new AssetBundleMetadata(), maxSize: 100);
 
-        private const string METADATA_FILENAME = "metadata.json";
-        private const string METRICS_FILENAME = "metrics.json";
+        internal LoadAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync) { }
 
-        private readonly AssetBundleManifest assetBundleManifest;
-
-        internal LoadAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache,
-            AssetBundleManifest assetBundleManifest, MutexSync mutexSync, IConcurrentBudgetProvider loadingBudgetProvider = null) : base(world, cache, mutexSync, loadingBudgetProvider)
-        {
-            this.assetBundleManifest = assetBundleManifest;
-        }
-
-        private async UniTask LoadDependencies(GetAssetBundleIntention intention, AssetBundle assetBundle, CancellationToken ct)
+        private async UniTask LoadDependencies(IPartitionComponent partition, AssetBundle assetBundle, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
-
-#region KILL_ME
-            // HACK! Load Asset Bundle Manifest from streaming assets
-            if (intention.CommonArguments.CurrentSource == AssetSource.EMBEDDED)
-            {
-                string[] dependencies = assetBundleManifest?.GetAllDependencies(intention.Hash) ?? Array.Empty<string>();
-                await UniTask.WhenAll(dependencies.Select(hash => WaitForDependency(hash, ct)));
-                return;
-            }
-#endregion
 
             // resolve dependencies
             string metadata = GetMetadata(assetBundle)?.text;
@@ -67,22 +50,28 @@ namespace ECS.StreamableLoading.AssetBundles
                 await UniTask.SwitchToMainThread();
 
                 // WhenAll uses pool under the hood
-                await UniTask.WhenAll(reusableMetadata.Value.dependencies.Select(hash => WaitForDependency(hash, ct)));
+                await UniTask.WhenAll(reusableMetadata.Value.dependencies.Select(hash => WaitForDependency(hash, partition, ct)));
             }
         }
 
-        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternal(GetAssetBundleIntention intention, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternal(GetAssetBundleIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            UnityWebRequest webRequest = intention.cacheHash.HasValue
-                ? UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL, intention.cacheHash.Value)
-                : UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL);
+            AssetBundle assetBundle;
 
-            await webRequest.SendWebRequest().WithCancellation(ct);
-            AssetBundle assetBundle = DownloadHandlerAssetBundle.GetContent(webRequest);
+            using (UnityWebRequest webRequest = intention.cacheHash.HasValue
+                       ? UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL, intention.cacheHash.Value)
+                       : UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL))
+            {
+                await webRequest.SendWebRequest().WithCancellation(ct);
+                assetBundle = DownloadHandlerAssetBundle.GetContent(webRequest);
 
-            // if GetContent prints an error, null will be thrown
-            if (assetBundle == null)
-                throw new NullReferenceException($"{intention.Hash} Asset Bundle is null");
+                // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
+                acquiredBudget.Release();
+
+                // if GetContent prints an error, null will be thrown
+                if (assetBundle == null)
+                    throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {webRequest.downloadHandler.error}");
+            }
 
             // get metrics
             TextAsset metricsFile = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME);
@@ -90,12 +79,14 @@ namespace ECS.StreamableLoading.AssetBundles
             // Switch to thread pool to parse JSONs
 
             await UniTask.SwitchToThreadPool();
+            ct.ThrowIfCancellationRequested();
 
             AssetBundleMetrics? metrics = metricsFile != null ? JsonUtility.FromJson<AssetBundleMetrics>(metricsFile.text) : null;
 
-            await LoadDependencies(intention, assetBundle, ct);
+            await LoadDependencies(partition, assetBundle, ct);
 
             await UniTask.SwitchToMainThread();
+            ct.ThrowIfCancellationRequested();
             IReadOnlyList<GameObject> gameObjects = await LoadAllAssets(assetBundle, ct);
 
             return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, gameObjects));
@@ -112,15 +103,16 @@ namespace ECS.StreamableLoading.AssetBundles
             return asyncOp.allAssets.Length > 0 ? new List<GameObject>(asyncOp.allAssets.Cast<GameObject>()) : Array.Empty<GameObject>();
         }
 
-        private async UniTask WaitForDependency(string hash, CancellationToken ct)
+        private async UniTask WaitForDependency(string hash, IPartitionComponent partition, CancellationToken ct)
         {
-            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(hash));
+            // Inherit partition from the parent promise
+            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(hash), partition);
 
             try
             {
-                AssetPromise<AssetBundleData, GetAssetBundleIntention> depPromise = await assetBundlePromise.ToUniTask(World, cancellationToken: ct);
+                assetBundlePromise = await assetBundlePromise.ToUniTask(World, cancellationToken: ct);
 
-                if (!depPromise.TryGetResult(World, out StreamableLoadingResult<AssetBundleData> depResult))
+                if (!assetBundlePromise.TryGetResult(World, out StreamableLoadingResult<AssetBundleData> depResult))
                     throw new Exception($"Dependency {hash} is not resolved");
 
                 if (!depResult.Succeeded)

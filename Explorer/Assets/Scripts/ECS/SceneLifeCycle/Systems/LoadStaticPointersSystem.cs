@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
@@ -31,7 +32,8 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 // start loading
                 staticScenePointers.Promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(World,
-                    new GetSceneDefinitionList(new List<IpfsTypes.SceneEntityDefinition>(staticScenePointers.Value.Count), staticScenePointers.Value, new CommonLoadingArguments(realm.Ipfs.EntitiesActiveEndpoint)));
+                    new GetSceneDefinitionList(new List<IpfsTypes.SceneEntityDefinition>(staticScenePointers.Value.Count), staticScenePointers.Value,
+                        new CommonLoadingArguments(realm.Ipfs.EntitiesActiveEndpoint)), PartitionComponent.TOP_PRIORITY);
             }
             else
             {

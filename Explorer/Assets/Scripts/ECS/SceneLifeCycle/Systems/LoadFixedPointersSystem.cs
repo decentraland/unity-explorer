@@ -1,11 +1,15 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Ipfs;
+using UnityEngine;
+using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -13,6 +17,7 @@ namespace ECS.SceneLifeCycle.Systems
     ///     Loads scene definition from fixed scene pointers if the realm provides them
     /// </summary>
     [UpdateInGroup(typeof(RealmGroup))]
+    [UpdateAfter(typeof(CreateEmptyPointersInFixedRealmSystem))] // we must execute it after to complete the split job, otherwise we write in a collection that is used by it
     public partial class LoadFixedPointersSystem : LoadScenePointerSystemBase
     {
         internal LoadFixedPointersSystem(World world) : base(world) { }
@@ -38,8 +43,9 @@ namespace ECS.SceneLifeCycle.Systems
                 string urn = realmComponent.Ipfs.SceneUrns[i];
                 IpfsTypes.IpfsPath ipfsPath = IpfsHelper.ParseUrn(urn);
 
+                // can't prioritize scenes definition - they are always top priority
                 var promise = AssetPromise<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>
-                   .Create(World, new GetSceneDefinition(new CommonLoadingArguments(ipfsPath.GetUrl(realmComponent.Ipfs.ContentBaseUrl)), ipfsPath));
+                   .Create(World, new GetSceneDefinition(new CommonLoadingArguments(ipfsPath.GetUrl(realmComponent.Ipfs.ContentBaseUrl)), ipfsPath), PartitionComponent.TOP_PRIORITY);
 
                 promises[i] = promise;
             }
@@ -48,7 +54,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        private void ResolvePromises(ref FixedScenePointers fixedScenePointers)
+        private void ResolvePromises(ref FixedScenePointers fixedScenePointers, ref ProcessesScenePointers processesScenePointers)
         {
             if (fixedScenePointers.AllPromisesResolved) return;
 
@@ -62,7 +68,12 @@ namespace ECS.SceneLifeCycle.Systems
                 if (promise.TryConsume(World, out StreamableLoadingResult<IpfsTypes.SceneEntityDefinition> result))
                 {
                     if (result.Succeeded)
-                        CreateSceneEntity(result.Asset, promise.LoadingIntention.IpfsPath, out _);
+                    {
+                        CreateSceneEntity(result.Asset, promise.LoadingIntention.IpfsPath, out Vector2Int[] parcels);
+
+                        for (var j = 0; j < parcels.Length; j++)
+                            processesScenePointers.Value.Add(parcels[j].ToInt2());
+                    }
                 }
                 else
                 {

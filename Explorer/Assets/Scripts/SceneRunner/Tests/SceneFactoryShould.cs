@@ -3,8 +3,8 @@ using CRDT.Deserializer;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Engine;
-using CrdtEcsBridge.UpdateGate;
 using Cysharp.Threading.Tasks;
+using ECS.Prioritization.Components;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.ECSWorld;
@@ -42,7 +42,7 @@ namespace SceneRunner.Tests
             sceneRuntimeFactory = new SceneRuntimeFactory();
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>();
-            ecsWorldFactory.CreateWorld(Arg.Any<ECSWorldInstanceSharedDependencies>(), Arg.Any<ISystemGroupsUpdateGate>()).Returns(ecsWorldFacade);
+            ecsWorldFactory.CreateWorld(in Arg.Any<ECSWorldFactoryArgs>()).Returns(ecsWorldFacade);
 
             sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>();
             crdtSerializer = Substitute.For<ICRDTSerializer>();
@@ -60,7 +60,7 @@ namespace SceneRunner.Tests
         [Test]
         public async Task CreateSceneFacadeForTestScene()
         {
-            sceneFacade = await sceneFactory.CreateSceneFromFile(path, CancellationToken.None);
+            sceneFacade = await sceneFactory.CreateSceneFromFile(path, Substitute.For<IPartitionComponent>(), CancellationToken.None);
 
             var sceneFacadeImpl = (SceneFacade)sceneFacade;
 
@@ -82,7 +82,7 @@ namespace SceneRunner.Tests
         {
             var threadId = Thread.CurrentThread.ManagedThreadId;
 
-            sceneFacade = await sceneFactory.CreateSceneFromFile(path, CancellationToken.None);
+            sceneFacade = await sceneFactory.CreateSceneFromFile(path, Substitute.For<IPartitionComponent>(), CancellationToken.None);
 
             Assert.AreNotEqual(threadId, Thread.CurrentThread.ManagedThreadId);
         }
