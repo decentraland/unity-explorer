@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Diagnostics.ReportsHandling;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.AssetBundles;
+using SceneRunner.EmptyScene;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -35,6 +36,16 @@ namespace SceneRunner.ECSWorld.Plugins
 
             // TODO create a runtime ref-counting cache
             LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, sharedDependencies.MutexSync);
+        }
+
+        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<World> builder, in EmptyScenesWorldSharedDependencies dependencies)
+        {
+            // Asset Bundles
+            PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, dependencies.SceneData, STREAMING_ASSETS_URL);
+            ReportAssetBundleErrorSystem.InjectToWorld(ref builder, reportsHandlingSettings);
+
+            // TODO create a runtime ref-counting cache
+            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, dependencies.Mutex);
         }
     }
 }

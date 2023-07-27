@@ -5,6 +5,7 @@ using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Materials;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Systems;
+using SceneRunner.EmptyScene;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -28,7 +29,7 @@ namespace SceneRunner.ECSWorld.Plugins
         private readonly DestroyMaterial destroyMaterial;
         private readonly IConcurrentBudgetProvider capFrameTimeBudgetProvider;
 
-        public MaterialsPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies)
+        public MaterialsPlugin(ECSWorldSingletonSharedDependencies sharedDependencies)
         {
             Material basicMatReference = Resources.Load<Material>(CreateBasicMaterialSystem.MATERIAL_PATH);
             Material pbrMaterialReference = Resources.Load<Material>(CreatePBRMaterialSystem.MATERIAL_PATH);
@@ -38,7 +39,7 @@ namespace SceneRunner.ECSWorld.Plugins
 
             destroyMaterial = (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); };
 
-            capFrameTimeBudgetProvider = singletonSharedDependencies.FrameTimeCapBudgetProvider;
+            capFrameTimeBudgetProvider = sharedDependencies.FrameTimeCapBudgetProvider;
 
             // materialsCache = new MaterialsCappedCache(CACHE_CAPACITY, (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); });
         }
@@ -56,5 +57,7 @@ namespace SceneRunner.ECSWorld.Plugins
             ResetMaterialSystem.InjectToWorld(ref builder, destroyMaterial);
             CleanUpMaterialsSystem.InjectToWorld(ref builder, destroyMaterial);
         }
+
+        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
     }
 }

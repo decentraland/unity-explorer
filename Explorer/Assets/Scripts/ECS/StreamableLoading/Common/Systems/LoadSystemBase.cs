@@ -135,15 +135,13 @@ namespace ECS.StreamableLoading.Common.Systems
                     // finally will handle the rest
                     return;
             }
-            catch (OperationCanceledException)
-            {
-                // ignore
-            }
             catch (Exception e)
             {
                 // If we don't set an exception it will spin forever
                 result = new StreamableLoadingResult<TAsset>(e);
-                ReportException(e);
+
+                if (e is not OperationCanceledException)
+                    ReportException(e);
             }
             finally
             {

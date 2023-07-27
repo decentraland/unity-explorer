@@ -8,6 +8,11 @@ namespace Utility.Pool
         public const int SCENES_COUNT = 50;
 
         /// <summary>
+        ///     Initial capacity of pools that should exist per empty scene context
+        /// </summary>
+        public const int EMPTY_SCENES_COUNT = 400;
+
+        /// <summary>
         ///     The maximum number of scenes before everything explodes according to our expectations
         /// </summary>
         public const int SCENES_MAX_CAPACITY = 300;

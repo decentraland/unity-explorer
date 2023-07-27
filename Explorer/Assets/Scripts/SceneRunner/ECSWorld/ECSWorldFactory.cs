@@ -24,7 +24,7 @@ namespace SceneRunner.ECSWorld
         private readonly IReadOnlyList<IECSWorldPlugin> plugins;
 
         public ECSWorldFactory(ECSWorldSingletonSharedDependencies sharedDependencies,
-            IPartitionSettings partitionSettings, IReadOnlyCameraSamplingData cameraSamplingData, params IECSWorldPlugin[] plugins)
+            IPartitionSettings partitionSettings, IReadOnlyCameraSamplingData cameraSamplingData, IReadOnlyList<IECSWorldPlugin> plugins)
         {
             this.plugins = plugins;
             singletonDependencies = sharedDependencies;

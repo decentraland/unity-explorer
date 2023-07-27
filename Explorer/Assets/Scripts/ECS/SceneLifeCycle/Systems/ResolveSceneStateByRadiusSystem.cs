@@ -53,12 +53,11 @@ namespace Realm
         private void StartScenesLoading([Data] int2Collection parcelsInRange, [Data] IIpfsRealm realm,
             in Entity entity, ref SceneDefinitionComponent definition, ref PartitionComponent partitionComponent)
         {
-            if (definition.IsEmpty) return;
-
             // Create an intention if the scene is within the radius
             if (SceneIsInRange(in definition, parcelsInRange))
                 World.Add(entity,
-                    AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World, new GetSceneFacadeIntention(realm, definition.IpfsPath, definition.Definition), partitionComponent));
+                    AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
+                        new GetSceneFacadeIntention(realm, definition.IpfsPath, definition.Definition, definition.Parcels, definition.IsEmpty), partitionComponent));
         }
 
         [Query]
