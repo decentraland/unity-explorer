@@ -1,15 +1,14 @@
 ﻿using Google.Protobuf;
 using System;
 using System.Collections.Generic;
+using Utility.Pool;
 
 namespace CrdtEcsBridge.Components
 {
     public class SDKComponentsRegistry : ISDKComponentsRegistry
     {
-        private const int INITIAL_CAPACITY = 30;
-
-        private readonly Dictionary<int, SDKComponentBridge> bridges = new (INITIAL_CAPACITY);
-        private readonly Dictionary<Type, SDKComponentBridge> bridgeByType = new (INITIAL_CAPACITY);
+        private readonly Dictionary<int, SDKComponentBridge> bridges = new (PoolConstants.SDK_COMPONENT_TYPES_COUNT);
+        private readonly Dictionary<Type, SDKComponentBridge> bridgeByType = new (PoolConstants.SDK_COMPONENT_TYPES_COUNT);
 
         public SDKComponentsRegistry Add(SDKComponentBridge bridge)
         {

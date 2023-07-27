@@ -1,12 +1,10 @@
 ﻿using Cysharp.Threading.Tasks;
 using Diagnostics.ReportsHandling;
 using ECS.Prioritization;
-using SceneRunner.ECSWorld.Plugins;
 using System.Collections.Generic;
 using System.Threading;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.Profiling;
 using Utility;
 
@@ -45,10 +43,7 @@ namespace Global.Dynamic
                 if (globalWorld == null)
                     return;
 
-                if (dynamicWorldContainer != null)
-                    await dynamicWorldContainer.RealmController.UnloadCurrentRealm(globalWorld);
-
-                globalWorld.Dispose();
+                await dynamicWorldContainer.RealmController.DisposeGlobalWorld(globalWorld).SuppressCancellationThrow();
             }
 
             DisposeAsync().Forget();
@@ -62,7 +57,7 @@ namespace Global.Dynamic
             cameraPosition.y += 8.0f;
             camera.transform.position = cameraPosition;
 
-            globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory, camera);
+            globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory, dynamicWorldContainer.EmptyScenesWorldFactory, camera);
             await dynamicWorldContainer.RealmController.SetRealm(globalWorld, "https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main", destroyCancellationToken);
         }
 

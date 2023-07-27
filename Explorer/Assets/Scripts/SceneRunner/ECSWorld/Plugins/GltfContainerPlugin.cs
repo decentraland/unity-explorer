@@ -9,6 +9,7 @@ using ECS.Unity.GLTFContainer.Asset;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Systems;
 using ECS.Unity.GLTFContainer.Systems;
+using SceneRunner.EmptyScene;
 using System.Collections.Generic;
 
 namespace SceneRunner.ECSWorld.Plugins
@@ -49,6 +50,24 @@ namespace SceneRunner.ECSWorld.Plugins
                 CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache);
 
             finalizeWorldSystems.Add(cleanUpGltfContainerSystem);
+        }
+
+        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<World> builder, in EmptyScenesWorldSharedDependencies dependencies)
+        {
+            // Asset loading
+            PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);
+            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, throttler);
+            ReportGltfErrorsSystem.InjectToWorld(ref builder, reportsHandlingSettings);
+
+            // GLTF Container
+            LoadGltfContainerSystem.InjectToWorld(ref builder);
+            FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, dependencies.SceneRoot);
+
+            ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache);
+
+            ResetDirtyFlagSystem<PBGltfContainer>.InjectToWorld(ref builder);
+
+            CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache);
         }
     }
 }

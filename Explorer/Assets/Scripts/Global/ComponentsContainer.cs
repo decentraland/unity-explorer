@@ -80,7 +80,12 @@ namespace Global
             yield return CreateComponentPool(MeshRendererPoolUtils.CreateMeshRendererComponent, MeshRendererPoolUtils.ReleaseMeshRendererComponent);
 
             // Partition Component
-            yield return (typeof(PartitionComponent), new ComponentPool<PartitionComponent>(defaultCapacity: 2000));
+            yield return (typeof(PartitionComponent), new ComponentPool<PartitionComponent>(defaultCapacity: 2000, onRelease: p =>
+            {
+                p.IsBehind = false;
+                p.Bucket = byte.MaxValue;
+                p.RawSqrDistance = 0;
+            }));
         }
     }
 }

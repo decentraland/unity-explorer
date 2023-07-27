@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using ECS.SceneLifeCycle.Components;
 using ECS.StreamableLoading.Common;
 using Realm;
 using SceneRunner.Scene;

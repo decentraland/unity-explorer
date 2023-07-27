@@ -32,11 +32,11 @@ namespace ECS.SceneLifeCycle.Tests
 
             var parcelsInRange = new ParcelsInRange(new HashSet<int2>(array), 2);
 
-            var volatilePointers = new VolatileScenePointers(new List<IpfsTypes.SceneEntityDefinition>(), new NativeHashSet<int2>(100, AllocatorManager.Persistent), new List<int2>());
+            var volatilePointers = new VolatileScenePointers(new List<IpfsTypes.SceneEntityDefinition>(), new List<int2>());
 
             var realm = new RealmComponent(new TestIpfsRealm());
 
-            Entity e = world.Create(parcelsInRange, volatilePointers, realm);
+            Entity e = world.Create(parcelsInRange, volatilePointers, realm, new ProcessesScenePointers { Value = new NativeHashSet<int2>(100, AllocatorManager.Persistent) });
 
             system.Update(0);
 
@@ -59,16 +59,17 @@ namespace ECS.SceneLifeCycle.Tests
 
             var parcelsInRange = new ParcelsInRange(new HashSet<int2>(array), 2);
 
+            var processedParcels = new NativeHashSet<int2>(100, AllocatorManager.Persistent);
+
             var volatilePointers = new VolatileScenePointers(new List<IpfsTypes.SceneEntityDefinition>(),
-                new NativeHashSet<int2>(100, AllocatorManager.Persistent),
                 new List<int2>());
 
             foreach (int2 vector2Int in array)
-                volatilePointers.ProcessedParcels.Add(vector2Int);
+                processedParcels.Add(vector2Int);
 
             var realm = new RealmComponent(new TestIpfsRealm());
 
-            Entity e = world.Create(parcelsInRange, volatilePointers, realm);
+            Entity e = world.Create(parcelsInRange, volatilePointers, realm, new ProcessesScenePointers { Value = processedParcels });
 
             system.Update(0);
 

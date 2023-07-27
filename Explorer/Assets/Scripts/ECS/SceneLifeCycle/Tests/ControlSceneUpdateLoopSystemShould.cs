@@ -1,6 +1,8 @@
 ﻿using Arch.Core;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -71,7 +73,7 @@ namespace ECS.SceneLifeCycle.Tests
             var partition = new PartitionComponent { Bucket = 3, IsDirty = true };
             realmPartitionSettings.GetSceneUpdateFrequency(in partition).Returns(15);
 
-            world.Create(scene, partition);
+            world.Create(scene, partition, new SceneDefinitionComponent());
 
             system.Update(0f);
 

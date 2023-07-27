@@ -8,6 +8,7 @@ using ECS.LifeCycle.Systems;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
 using ECS.Unity.PrimitiveRenderer.Systems;
+using SceneRunner.EmptyScene;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -35,5 +36,7 @@ namespace SceneRunner.ECSWorld.Plugins
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<IPrimitiveMesh, PrimitiveMeshRendererComponent>.InjectToWorld(
                 ref builder, componentPoolsRegistry));
         }
+
+        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
     }
 }

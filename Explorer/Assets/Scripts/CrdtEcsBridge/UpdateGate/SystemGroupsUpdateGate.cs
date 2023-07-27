@@ -2,6 +2,8 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using Arch.SystemGroups.UnityBridge;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
+using Utility.Multithreading;
 using Utility.Pool;
 using Utility.ThreadSafePool;
 
@@ -16,6 +18,10 @@ namespace CrdtEcsBridge.UpdateGate
 
         private HashSet<Type> openGroups;
 
+        // Ensure that the gate will be opened from the beginning of the next frame,
+        // If we open it in the middle of the current frame the update order will be broken
+        private long keepOpenFrame;
+
         public SystemGroupsUpdateGate()
         {
             openGroups = POOL.Get();
@@ -27,7 +33,15 @@ namespace CrdtEcsBridge.UpdateGate
         {
             // Close the group so it won't be updated unless the gate is opened again
             // Sync is required as ShouldThrottle is called from the main thread
-            lock (openGroups) { return openGroups.Remove(systemGroupType); }
+            lock (openGroups)
+            {
+                // Let systems run in the remaining of the current frame
+                if (Time.frameCount < keepOpenFrame)
+                    return false;
+
+                // Otherwise, just let them run once
+                return !openGroups.Remove(systemGroupType);
+            }
         }
 
         public void OnSystemGroupUpdateFinished(Type systemGroupType, bool wasThrottled) { }
@@ -44,6 +58,8 @@ namespace CrdtEcsBridge.UpdateGate
                 openGroups.Add(typeof(PhysicsSystemGroup));
                 openGroups.Add(typeof(PostPhysicsSystemGroup));
                 openGroups.Add(typeof(PostRenderingSystemGroup));
+
+                keepOpenFrame = MultithreadingUtility.FrameCount + 1;
             }
         }
 

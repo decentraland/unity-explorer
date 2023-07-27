@@ -24,11 +24,10 @@ namespace ECS.StreamableLoading.AssetBundles
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class LoadAssetBundleSystem : LoadSystemBase<AssetBundleData, GetAssetBundleIntention>
     {
-        private static readonly ThreadSafeObjectPool<AssetBundleMetadata> METADATA_POOL
-            = new (() => new AssetBundleMetadata(), maxSize: 100);
-
         private const string METADATA_FILENAME = "metadata.json";
         private const string METRICS_FILENAME = "metrics.json";
+        private static readonly ThreadSafeObjectPool<AssetBundleMetadata> METADATA_POOL
+            = new (() => new AssetBundleMetadata(), maxSize: 100);
 
         internal LoadAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync) { }
 
@@ -57,19 +56,22 @@ namespace ECS.StreamableLoading.AssetBundles
 
         protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternal(GetAssetBundleIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            UnityWebRequest webRequest = intention.cacheHash.HasValue
-                ? UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL, intention.cacheHash.Value)
-                : UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL);
+            AssetBundle assetBundle;
 
-            await webRequest.SendWebRequest().WithCancellation(ct);
-            AssetBundle assetBundle = DownloadHandlerAssetBundle.GetContent(webRequest);
+            using (UnityWebRequest webRequest = intention.cacheHash.HasValue
+                       ? UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL, intention.cacheHash.Value)
+                       : UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL))
+            {
+                await webRequest.SendWebRequest().WithCancellation(ct);
+                assetBundle = DownloadHandlerAssetBundle.GetContent(webRequest);
 
-            // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
-            acquiredBudget.Release();
+                // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
+                acquiredBudget.Release();
 
-            // if GetContent prints an error, null will be thrown
-            if (assetBundle == null)
-                throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {webRequest.downloadHandler.error}");
+                // if GetContent prints an error, null will be thrown
+                if (assetBundle == null)
+                    throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {webRequest.downloadHandler.error}");
+            }
 
             // get metrics
             TextAsset metricsFile = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME);
@@ -77,12 +79,14 @@ namespace ECS.StreamableLoading.AssetBundles
             // Switch to thread pool to parse JSONs
 
             await UniTask.SwitchToThreadPool();
+            ct.ThrowIfCancellationRequested();
 
             AssetBundleMetrics? metrics = metricsFile != null ? JsonUtility.FromJson<AssetBundleMetrics>(metricsFile.text) : null;
 
             await LoadDependencies(partition, assetBundle, ct);
 
             await UniTask.SwitchToMainThread();
+            ct.ThrowIfCancellationRequested();
             IReadOnlyList<GameObject> gameObjects = await LoadAllAssets(assetBundle, ct);
 
             return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, gameObjects));

@@ -11,6 +11,12 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     /// </summary>
     public struct SceneDefinitionComponent
     {
+        internal static readonly IpfsTypes.SceneMetadataScene EMPTY_METADATA = new ()
+        {
+            allowedMediaHostnames = new List<string>(),
+            requiredPermissions = new List<string>(),
+        };
+
         public readonly IpfsTypes.SceneEntityDefinition Definition;
 
         // This allocation is left on purpose as realm switching will lead to GC so we can keep things simple
@@ -33,14 +39,23 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         /// </summary>
         public SceneDefinitionComponent(Vector2Int parcel)
         {
+            var id = $"empty-parcel-{parcel.x}-{parcel.y}";
+
             ParcelsCorners = new[] { ParcelMathHelper.CalculateCorners(parcel) };
             Parcels = new[] { parcel };
             IsEmpty = true;
-            IpfsPath = default(IpfsTypes.IpfsPath);
+            IpfsPath = new IpfsTypes.IpfsPath(id, string.Empty);
 
             Definition = new IpfsTypes.SceneEntityDefinition
             {
-                id = $"empty-parcel-{parcel.x}-{parcel.y}",
+                id = id,
+                metadata = new IpfsTypes.SceneMetadata
+                {
+                    main = "bin/game.js",
+                    scene = EMPTY_METADATA,
+                },
+
+                // content will be filled by the loading system
             };
         }
     }
