@@ -34,7 +34,7 @@ namespace ECS.Profiling.Systems
 
         private void HideMetrics()
         {
-            cts.Cancel();
+            cts.SafeCancelAndDispose();
         }
 
         protected override void Update(float t) { }
