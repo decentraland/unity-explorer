@@ -29,17 +29,24 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         protected override void Update(float t)
         {
-            StartSplittingQuery(World);
+            ProcessRealmQuery(World);
         }
 
         [Query]
-        private void StartSplitting(ref CameraSamplingData cameraSamplingData, ref VolatileScenePointers volatileScenePointers)
+        [All(typeof(RealmComponent))]
+        private void ProcessRealm(ref ProcessesScenePointers processesScenePointers)
+        {
+            StartSplittingQuery(World, in processesScenePointers);
+        }
+
+        [Query]
+        private void StartSplitting([Data] in ProcessesScenePointers processesScenePointers, ref CameraSamplingData cameraSamplingData)
         {
             if (cameraSamplingData.IsDirty)
                 parcelMathJobifiedHelper.StartParcelsRingSplit(
                     cameraSamplingData.Parcel.ToInt2(),
                     realmPartitionSettings.MaxLoadingDistanceInParcels,
-                    volatileScenePointers.ProcessedParcels);
+                    processesScenePointers.Value);
         }
     }
 }

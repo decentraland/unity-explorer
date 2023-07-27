@@ -4,6 +4,7 @@ using DCL.ECSComponents;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using ECS.Unity.Visibility.Systems;
+using SceneRunner.EmptyScene;
 using System.Collections.Generic;
 
 namespace SceneRunner.ECSWorld.Plugins
@@ -15,5 +16,7 @@ namespace SceneRunner.ECSWorld.Plugins
             PrimitivesVisibilitySystem.InjectToWorld(ref builder);
             ResetDirtyFlagSystem<PBVisibilityComponent>.InjectToWorld(ref builder);
         }
+
+        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
     }
 }

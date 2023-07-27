@@ -5,6 +5,7 @@ using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using ECS.Unity.PrimitiveColliders.Components;
 using ECS.Unity.PrimitiveColliders.Systems;
+using SceneRunner.EmptyScene;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -30,5 +31,7 @@ namespace SceneRunner.ECSWorld.Plugins
 
             finalizeWorldSystems.Add(releaseColliderSystem);
         }
+
+        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
     }
 }
