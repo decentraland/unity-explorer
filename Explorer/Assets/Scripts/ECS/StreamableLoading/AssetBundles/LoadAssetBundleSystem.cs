@@ -9,8 +9,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -87,12 +85,13 @@ namespace ECS.StreamableLoading.AssetBundles
 
             await UniTask.SwitchToMainThread();
             ct.ThrowIfCancellationRequested();
-            GameObject gameObjects = await LoadAllAssets(assetBundle, ct);
 
-            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, gameObjects));
+            //GameObject gameObjects = await LoadAllAssets(assetBundle, ct);
+
+            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics));
         }
 
-        private async UniTask<GameObject> LoadAllAssets(AssetBundle assetBundle, CancellationToken ct)
+        /*private async UniTask<GameObject> LoadAllAssets(AssetBundle assetBundle, CancellationToken ct)
         {
             // we are only interested in game objects
             AssetBundleRequest asyncOp = assetBundle.LoadAllAssetsAsync<GameObject>();
@@ -108,7 +107,7 @@ namespace ECS.StreamableLoading.AssetBundles
             GameObject rootGameObject = gameObjects.Count > 0 ? gameObjects[0] : null;
 
             return rootGameObject;
-        }
+        }*/
 
         private async UniTask WaitForDependency(string hash, IPartitionComponent partition, CancellationToken ct)
         {
