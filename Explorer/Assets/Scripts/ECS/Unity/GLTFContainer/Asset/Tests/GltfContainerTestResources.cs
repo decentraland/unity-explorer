@@ -25,7 +25,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             using UnityWebRequest wr = UnityWebRequestAssetBundle.GetAssetBundle($"{TEST_FOLDER}{hash}");
             await wr.SendWebRequest();
             assetBundle = DownloadHandlerAssetBundle.GetContent(wr);
-            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, null, assetBundle.LoadAllAssets<GameObject>()));
+            GameObject gameObject = assetBundle.LoadAllAssets<GameObject>().Length > 0 ? assetBundle.LoadAllAssets<GameObject>()[0] : null;
+            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, null, gameObject));
         }
 
         internal void UnloadBundle()

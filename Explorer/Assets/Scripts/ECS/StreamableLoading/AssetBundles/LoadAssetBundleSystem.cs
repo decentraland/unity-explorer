@@ -87,12 +87,12 @@ namespace ECS.StreamableLoading.AssetBundles
 
             await UniTask.SwitchToMainThread();
             ct.ThrowIfCancellationRequested();
-            IReadOnlyList<GameObject> gameObjects = await LoadAllAssets(assetBundle, ct);
+            GameObject gameObjects = await LoadAllAssets(assetBundle, ct);
 
             return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, gameObjects));
         }
 
-        private async UniTask<IReadOnlyList<GameObject>> LoadAllAssets(AssetBundle assetBundle, CancellationToken ct)
+        private async UniTask<GameObject> LoadAllAssets(AssetBundle assetBundle, CancellationToken ct)
         {
             // we are only interested in game objects
             AssetBundleRequest asyncOp = assetBundle.LoadAllAssetsAsync<GameObject>();
@@ -100,7 +100,14 @@ namespace ECS.StreamableLoading.AssetBundles
 
             // Can't avoid an array instantiation - no API with List
             // Can't avoid casting - no generic API
-            return asyncOp.allAssets.Length > 0 ? new List<GameObject>(asyncOp.allAssets.Cast<GameObject>()) : Array.Empty<GameObject>();
+            var gameObjects = new List<GameObject>(asyncOp.allAssets.Cast<GameObject>());
+
+            if (gameObjects.Count > 1)
+                ReportHub.LogError(GetReportCategory(), $"AssetBundle {assetBundle.name} contains more than one root gameobject. Only the first one will be used.");
+
+            GameObject rootGameObject = gameObjects.Count > 0 ? gameObjects[0] : null;
+
+            return rootGameObject;
         }
 
         private async UniTask WaitForDependency(string hash, IPartitionComponent partition, CancellationToken ct)
