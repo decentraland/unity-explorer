@@ -91,8 +91,8 @@
 // uniform half3 _SkyTint;
 // uniform half _AtmosphereThickness;
 
-int _CMFParams;
-// #define _CubeFace _Params
+int _CurrentCubeFace;
+#define _Current_CubeFace _CurrentCubeFace
 // static const int _CubeFaceSTUFF = 0;
 
 float3 ComputeCubeDirection(float2 globalTexcoord)
@@ -100,34 +100,31 @@ float3 ComputeCubeDirection(float2 globalTexcoord)
     //return float3(0.0, 1.0, 0.0);
     float2 xy = globalTexcoord * 2.0 - 1.0;
     float3 direction;
-    if(_CMFParams == 20)
+
+    if(_Current_CubeFace == 0)
     {
         direction = normalize(float3(1.0, -xy.y, -xy.x));
     }
-    // if(_CubeFace == 0.0)
-    // {
-    //     direction = normalize(float3(1.0, -xy.y, -xy.x));
-    // }
-    // else if(_CubeFace == 1.0)
-    // {
-    //     direction = normalize(float3(-1.0, -xy.y, xy.x));
-    // }
-    // else if(_CubeFace == 2.0)
-    // {
-    //     direction = normalize(float3(xy.x, 1.0, xy.y));
-    // }
-    // else if(_CubeFace == 3.0)
-    // {
-    //     direction = normalize(float3(xy.x, -1.0, -xy.y));
-    // }
-    // else if(_CubeFace == 4.0)
-    // {
-    //     direction = normalize(float3(xy.x, -xy.y, 1.0));
-    // }
-    // else if(_CubeFace == 5.0)
-    // {
-    //     direction = normalize(float3(-xy.x, -xy.y, -1.0));
-    // }
+    else if(_Current_CubeFace == 1)
+    {
+        direction = normalize(float3(-1.0, -xy.y, xy.x));
+    }
+    else if(_Current_CubeFace == 2)
+    {
+        direction = normalize(float3(xy.x, 1.0, xy.y));
+    }
+    else if(_Current_CubeFace == 3)
+    {
+        direction = normalize(float3(xy.x, -1.0, -xy.y));
+    }
+    else if(_Current_CubeFace == 4)
+    {
+        direction = normalize(float3(xy.x, -xy.y, 1.0));
+    }
+    else if(_Current_CubeFace == 5)
+    {
+        direction = normalize(float3(-xy.x, -xy.y, -1.0));
+    }
 
     return direction;
 }

@@ -28,7 +28,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         private Matrix4x4 viewMatrix;
         private Matrix4x4 projMatrix;
         RTHandle m_SkyBoxCubeMap_RTHandle;
-        private static readonly int s_ParamsID = Shader.PropertyToID("_CMFParams");
+        private static readonly int s_ParamsID = Shader.PropertyToID("_CurrentCubeFace");
 
         // Constants
         private const string k_SkyBoxCubemapTextureName = "_SkyBox_Cubemap_Texture";
@@ -119,31 +119,31 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             {
                 //MaterialPropertyBlock properties
                 CoreUtils.ClearCubemap(cmd, this.m_SkyBoxCubeMap_RTHandle.rt , Color.blue, clearMips : false);
-                cmd.SetGlobalInt(s_ParamsID, 666);
+                cmd.SetGlobalInt(s_ParamsID, 0);
                 Debug.Log(s_ParamsID);
                 CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.PositiveX, depthSlice: 0);
                 CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Right);
 
-                // cmd.SetGlobalInt(s_ParamsID, 1);
-                // CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.NegativeX, depthSlice: 0);
-                // CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Left);
+                cmd.SetGlobalInt(s_ParamsID, 1);
+                CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.NegativeX, depthSlice: 0);
+                CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Left);
 
-                // cmd.SetGlobalInt(s_ParamsID, 2);
-                // CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.PositiveY, depthSlice: 0);
-                // CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Up);
+                cmd.SetGlobalInt(s_ParamsID, 2);
+                CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.PositiveY, depthSlice: 0);
+                CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Up);
 
-                // cmd.SetGlobalInt(s_ParamsID, 3);
-                // CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.NegativeY, depthSlice: 0);
-                // CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Down);
+                cmd.SetGlobalInt(s_ParamsID, 3);
+                CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.NegativeY, depthSlice: 0);
+                CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Down);
 
-                // cmd.SetGlobalInt(s_ParamsID, 4);
-                // CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.PositiveZ, depthSlice: 0);
-                // CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Front);
+                cmd.SetGlobalInt(s_ParamsID, 4);
+                CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.PositiveZ, depthSlice: 0);
+                CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Front);
 
                 
-                // cmd.SetGlobalInt(s_ParamsID, 5);
-                // CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.NegativeZ, depthSlice: 0);
-                // CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Back);                
+                cmd.SetGlobalInt(s_ParamsID, 5);
+                CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.NegativeZ, depthSlice: 0);
+                CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Back);                
             }
 
             context.ExecuteCommandBuffer(cmd);
