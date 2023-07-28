@@ -1,5 +1,4 @@
-﻿using Diagnostics.ReportsHandling;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -17,8 +16,8 @@ namespace ECS.StreamableLoading.AssetBundles
         /// <summary>
         ///     Root assets - Game Objects
         /// </summary>
-        public GameObject GameObject
-        {
+        public GameObject GameObject { get; }
+        /*{
             get
             {
                 if (gameObjectLoaded)
@@ -32,17 +31,17 @@ namespace ECS.StreamableLoading.AssetBundles
                 gameObjectLoaded = true;
                 return gameObject = rootNodes.Length > 0 ? rootNodes[0] : null;
             }
-        }
+        }*/
 
         [CanBeNull]
         public readonly AssetBundleMetrics? Metrics;
 
-        public AssetBundleData(AssetBundle assetBundle, [CanBeNull] AssetBundleMetrics? metrics /*, GameObject gameObject*/)
+        public AssetBundleData(AssetBundle assetBundle, [CanBeNull] AssetBundleMetrics? metrics, GameObject gameObject)
         {
             AssetBundle = assetBundle;
             Metrics = metrics;
 
-            //GameObject = gameObject;
+            GameObject = gameObject;
         }
     }
 }

@@ -9,6 +9,8 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -26,6 +28,8 @@ namespace ECS.StreamableLoading.AssetBundles
         private const string METRICS_FILENAME = "metrics.json";
         private static readonly ThreadSafeObjectPool<AssetBundleMetadata> METADATA_POOL
             = new (() => new AssetBundleMetadata(), maxSize: 100);
+
+        private static bool assetsAreBeingLoaded;
 
         internal LoadAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync) { }
 
@@ -86,28 +90,35 @@ namespace ECS.StreamableLoading.AssetBundles
             await UniTask.SwitchToMainThread();
             ct.ThrowIfCancellationRequested();
 
-            //GameObject gameObjects = await LoadAllAssets(assetBundle, ct);
+            GameObject gameObjects = await LoadAllAssets(assetBundle, ct);
 
-            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics));
+            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, gameObjects));
         }
 
-        /*private async UniTask<GameObject> LoadAllAssets(AssetBundle assetBundle, CancellationToken ct)
+        private async UniTask<GameObject> LoadAllAssets(AssetBundle assetBundle, CancellationToken ct)
         {
-            // we are only interested in game objects
-            AssetBundleRequest asyncOp = assetBundle.LoadAllAssetsAsync<GameObject>();
-            await asyncOp.WithCancellation(ct);
+            await UniTask.WaitWhile(static () => assetsAreBeingLoaded, cancellationToken: ct);
+            assetsAreBeingLoaded = true;
 
-            // Can't avoid an array instantiation - no API with List
-            // Can't avoid casting - no generic API
-            var gameObjects = new List<GameObject>(asyncOp.allAssets.Cast<GameObject>());
+            try
+            {
+                // we are only interested in game objects
+                AssetBundleRequest asyncOp = assetBundle.LoadAllAssetsAsync<GameObject>();
+                await asyncOp.WithCancellation(ct);
 
-            if (gameObjects.Count > 1)
-                ReportHub.LogError(GetReportCategory(), $"AssetBundle {assetBundle.name} contains more than one root gameobject. Only the first one will be used.");
+                // Can't avoid an array instantiation - no API with List
+                // Can't avoid casting - no generic API
+                var gameObjects = new List<GameObject>(asyncOp.allAssets.Cast<GameObject>());
 
-            GameObject rootGameObject = gameObjects.Count > 0 ? gameObjects[0] : null;
+                if (gameObjects.Count > 1)
+                    ReportHub.LogError(GetReportCategory(), $"AssetBundle {assetBundle.name} contains more than one root gameobject. Only the first one will be used.");
 
-            return rootGameObject;
-        }*/
+                GameObject rootGameObject = gameObjects.Count > 0 ? gameObjects[0] : null;
+
+                return rootGameObject;
+            }
+            finally { assetsAreBeingLoaded = false; }
+        }
 
         private async UniTask WaitForDependency(string hash, IPartitionComponent partition, CancellationToken ct)
         {
