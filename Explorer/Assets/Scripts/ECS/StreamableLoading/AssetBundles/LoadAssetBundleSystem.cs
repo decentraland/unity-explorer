@@ -31,14 +31,32 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private static bool assetsAreBeingLoaded;
 
+        public struct LoadingRegion : IDisposable
+        {
+            public static LoadingRegion Enter()
+            {
+                assetsAreBeingLoaded = true;
+                return new LoadingRegion();
+            }
+
+            public void Dispose()
+            {
+                assetsAreBeingLoaded = false;
+            }
+        }
+
         internal LoadAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync) { }
 
         private async UniTask LoadDependencies(IPartitionComponent partition, AssetBundle assetBundle, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
+            string metadata = null;
 
             // resolve dependencies
-            string metadata = GetMetadata(assetBundle)?.text;
+            await WaitWhileLoadingInProgress(ct);
+
+            using (var _ = LoadingRegion.Enter())
+                metadata = GetMetadata(assetBundle)?.text;
 
             if (metadata != null)
             {
@@ -56,6 +74,11 @@ namespace ECS.StreamableLoading.AssetBundles
             }
         }
 
+        private static UniTask WaitWhileLoadingInProgress(CancellationToken ct)
+        {
+            return UniTask.WaitWhile(static () => assetsAreBeingLoaded, cancellationToken: ct);
+        }
+
         protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternal(GetAssetBundleIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             AssetBundle assetBundle;
@@ -64,8 +87,13 @@ namespace ECS.StreamableLoading.AssetBundles
                        ? UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL, intention.cacheHash.Value)
                        : UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL))
             {
+                ((DownloadHandlerAssetBundle)webRequest.downloadHandler).autoLoadAssetBundle = false;
                 await webRequest.SendWebRequest().WithCancellation(ct);
-                assetBundle = DownloadHandlerAssetBundle.GetContent(webRequest);
+
+                await WaitWhileLoadingInProgress(ct);
+
+                using (var _ = LoadingRegion.Enter())
+                    assetBundle = DownloadHandlerAssetBundle.GetContent(webRequest);
 
                 // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
                 acquiredBudget.Release();
@@ -76,7 +104,13 @@ namespace ECS.StreamableLoading.AssetBundles
             }
 
             // get metrics
-            TextAsset metricsFile = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME);
+
+            TextAsset metricsFile = null;
+
+            await WaitWhileLoadingInProgress(ct);
+
+            using (var _ = LoadingRegion.Enter())
+                metricsFile = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME);
 
             // Switch to thread pool to parse JSONs
 
@@ -97,27 +131,23 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private async UniTask<GameObject> LoadAllAssets(AssetBundle assetBundle, CancellationToken ct)
         {
-            await UniTask.WaitWhile(static () => assetsAreBeingLoaded, cancellationToken: ct);
-            assetsAreBeingLoaded = true;
+            await WaitWhileLoadingInProgress(ct);
+            using var _ = LoadingRegion.Enter();
 
-            try
-            {
-                // we are only interested in game objects
-                AssetBundleRequest asyncOp = assetBundle.LoadAllAssetsAsync<GameObject>();
-                await asyncOp.WithCancellation(ct);
+            // we are only interested in game objects
+            AssetBundleRequest asyncOp = assetBundle.LoadAllAssetsAsync<GameObject>();
+            await asyncOp.WithCancellation(ct);
 
-                // Can't avoid an array instantiation - no API with List
-                // Can't avoid casting - no generic API
-                var gameObjects = new List<GameObject>(asyncOp.allAssets.Cast<GameObject>());
+            // Can't avoid an array instantiation - no API with List
+            // Can't avoid casting - no generic API
+            var gameObjects = new List<GameObject>(asyncOp.allAssets.Cast<GameObject>());
 
-                if (gameObjects.Count > 1)
-                    ReportHub.LogError(GetReportCategory(), $"AssetBundle {assetBundle.name} contains more than one root gameobject. Only the first one will be used.");
+            if (gameObjects.Count > 1)
+                ReportHub.LogError(GetReportCategory(), $"AssetBundle {assetBundle.name} contains more than one root gameobject. Only the first one will be used.");
 
-                GameObject rootGameObject = gameObjects.Count > 0 ? gameObjects[0] : null;
+            GameObject rootGameObject = gameObjects.Count > 0 ? gameObjects[0] : null;
 
-                return rootGameObject;
-            }
-            finally { assetsAreBeingLoaded = false; }
+            return rootGameObject;
         }
 
         private async UniTask WaitForDependency(string hash, IPartitionComponent partition, CancellationToken ct)
