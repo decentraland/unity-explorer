@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using Diagnostics.ReportsHandling;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using SceneRunner.EmptyScene;
 using System.Collections.Generic;
 using UnityEngine;
@@ -20,14 +19,12 @@ namespace SceneRunner.ECSWorld.Plugins
 #endif
 
         private readonly IReportsHandlingSettings reportsHandlingSettings;
-        private readonly IConcurrentBudgetProvider loadingBudgetProvider;
 
         private readonly AssetBundleCache assetBundleCache;
 
-        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, IConcurrentBudgetProvider loadingBudgetProvider)
+        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings)
         {
             this.reportsHandlingSettings = reportsHandlingSettings;
-            this.loadingBudgetProvider = loadingBudgetProvider;
             assetBundleCache = new AssetBundleCache();
         }
 

@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.Shaders;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Textures.Components;
 using UnityEngine;
@@ -19,8 +20,13 @@ namespace ECS.Unity.Materials.Systems
         ///     The path from the shared package
         /// </summary>
         public const string MATERIAL_PATH = "ShapeMaterial";
+        private readonly IConcurrentBudgetProvider capFrameBudgetProvider;
 
-        internal CreatePBRMaterialSystem(World world, IObjectPool<Material> materialsPool) : base(world, materialsPool) { }
+        internal CreatePBRMaterialSystem(World world, IObjectPool<Material> materialsPool,
+            IConcurrentBudgetProvider capFrameBudgetProvider) : base(world, materialsPool)
+        {
+            this.capFrameBudgetProvider = capFrameBudgetProvider;
+        }
 
         protected override void Update(float t)
         {
@@ -31,6 +37,9 @@ namespace ECS.Unity.Materials.Systems
         private void Handle(ref MaterialComponent materialComponent)
         {
             if (!materialComponent.Data.IsPbrMaterial)
+                return;
+
+            if (!capFrameBudgetProvider.TrySpendBudget())
                 return;
 
             // if there are no textures to load we can construct a material right away

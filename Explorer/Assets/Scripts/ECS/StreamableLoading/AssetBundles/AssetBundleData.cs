@@ -1,5 +1,4 @@
 ﻿using JetBrains.Annotations;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -14,16 +13,16 @@ namespace ECS.StreamableLoading.AssetBundles
         /// <summary>
         ///     Root assets - Game Objects
         /// </summary>
-        public readonly IReadOnlyList<GameObject> GameObjectNodes;
+        public readonly GameObject GameObject;
 
         [CanBeNull]
         public readonly AssetBundleMetrics? Metrics;
 
-        public AssetBundleData(AssetBundle assetBundle, [CanBeNull] AssetBundleMetrics? metrics, IReadOnlyList<GameObject> gameObjectNodes)
+        public AssetBundleData(AssetBundle assetBundle, [CanBeNull] AssetBundleMetrics? metrics, GameObject gameObject)
         {
             AssetBundle = assetBundle;
             Metrics = metrics;
-            GameObjectNodes = gameObjectNodes;
+            GameObject = gameObject;
         }
     }
 }
