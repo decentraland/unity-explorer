@@ -29,6 +29,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 if (rootNodes.Length > 1)
                     ReportHub.LogError(ReportCategory.ASSET_BUNDLES, $"AssetBundle {AssetBundle.name} contains more than one root game object. Only the first one will be used.");
 
+                gameObjectLoaded = true;
                 return gameObject = rootNodes.Length > 0 ? rootNodes[0] : null;
             }
         }
