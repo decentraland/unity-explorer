@@ -29,33 +29,22 @@ namespace ECS.StreamableLoading.AssetBundles
         private static readonly ThreadSafeObjectPool<AssetBundleMetadata> METADATA_POOL
             = new (() => new AssetBundleMetadata(), maxSize: 100);
 
-        private static bool assetsAreBeingLoaded;
+        private readonly AssetBundleLoadingMutex loadingMutex;
 
-        public struct LoadingRegion : IDisposable
+        internal LoadAssetBundleSystem(World world,
+            IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache,
+            MutexSync mutexSync,
+            AssetBundleLoadingMutex loadingMutex) : base(world, cache, mutexSync)
         {
-            public static LoadingRegion Enter()
-            {
-                assetsAreBeingLoaded = true;
-                return new LoadingRegion();
-            }
-
-            public void Dispose()
-            {
-                assetsAreBeingLoaded = false;
-            }
+            this.loadingMutex = loadingMutex;
         }
-
-        internal LoadAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync) { }
 
         private async UniTask LoadDependencies(IPartitionComponent partition, AssetBundle assetBundle, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
-            string metadata = null;
+            string metadata;
 
-            // resolve dependencies
-            await WaitWhileLoadingInProgress(ct);
-
-            using (var _ = LoadingRegion.Enter())
+            using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.Acquire(ct))
                 metadata = GetMetadata(assetBundle)?.text;
 
             if (metadata != null)
@@ -74,11 +63,6 @@ namespace ECS.StreamableLoading.AssetBundles
             }
         }
 
-        private static UniTask WaitWhileLoadingInProgress(CancellationToken ct)
-        {
-            return UniTask.WaitWhile(static () => assetsAreBeingLoaded, cancellationToken: ct);
-        }
-
         protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternal(GetAssetBundleIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             AssetBundle assetBundle;
@@ -90,9 +74,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 ((DownloadHandlerAssetBundle)webRequest.downloadHandler).autoLoadAssetBundle = false;
                 await webRequest.SendWebRequest().WithCancellation(ct);
 
-                await WaitWhileLoadingInProgress(ct);
-
-                using (var _ = LoadingRegion.Enter())
+                using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.Acquire(ct))
                     assetBundle = DownloadHandlerAssetBundle.GetContent(webRequest);
 
                 // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
@@ -105,11 +87,9 @@ namespace ECS.StreamableLoading.AssetBundles
 
             // get metrics
 
-            TextAsset metricsFile = null;
+            TextAsset metricsFile;
 
-            await WaitWhileLoadingInProgress(ct);
-
-            using (var _ = LoadingRegion.Enter())
+            using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.Acquire(ct))
                 metricsFile = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME);
 
             // Switch to thread pool to parse JSONs
@@ -131,8 +111,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private async UniTask<GameObject> LoadAllAssets(AssetBundle assetBundle, CancellationToken ct)
         {
-            await WaitWhileLoadingInProgress(ct);
-            using var _ = LoadingRegion.Enter();
+            using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.Acquire(ct);
 
             // we are only interested in game objects
             AssetBundleRequest asyncOp = assetBundle.LoadAllAssetsAsync<GameObject>();
