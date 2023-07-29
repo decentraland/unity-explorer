@@ -1,6 +1,9 @@
-﻿namespace ECS.CharacterMotion.Components
+﻿
+using ECS.Input.Component;
+
+namespace ECS.CharacterMotion.Components
 {
-    public struct JumpInputComponent
+    public struct JumpInputComponent : InputComponent
     {
         /// <summary>
         ///     Normalized value [0;1] indicating how long we pressed the jump button,
@@ -8,4 +11,5 @@
         /// </summary>
         public float Power;
     }
+
 }
