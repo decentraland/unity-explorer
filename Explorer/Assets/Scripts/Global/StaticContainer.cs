@@ -1,6 +1,7 @@
 ﻿using CrdtEcsBridge.Components;
 using Diagnostics;
 using Diagnostics.ReportsHandling;
+using ECS.Input;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
@@ -30,6 +31,8 @@ namespace Global
 
         public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
 
+        public InputContainer InputContainer { get; private set; }
+
         public void Dispose()
         {
             DiagnosticsContainer?.Dispose();
@@ -38,6 +41,9 @@ namespace Global
         public static StaticContainer Create(IPartitionSettings partitionSettings, IReportsHandlingSettings reportsHandlingSettings)
         {
             var componentsContainer = ComponentsContainer.Create();
+
+
+
 
             var sharedDependencies = new ECSWorldSingletonSharedDependencies(
                 componentsContainer.ComponentPoolsRegistry,
@@ -54,6 +60,7 @@ namespace Global
                 PartitionSettings = partitionSettings,
                 SingletonSharedDependencies = sharedDependencies,
                 CameraSamplingData = new CameraSamplingData(),
+                InputContainer = new InputContainer(),
                 ECSWorldPlugins = new IECSWorldPlugin[]
                 {
                     new TransformsPlugin(sharedDependencies),

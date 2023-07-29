@@ -1,7 +1,10 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Special;
+using ECS.CharacterMotion.Components;
 using ECS.ComponentsPooling;
+using ECS.Input;
+using ECS.Input.Systems;
 using ECS.LifeCycle;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -41,6 +44,7 @@ namespace Global.Dynamic
         private readonly IPartitionSettings partitionSettings;
         private readonly IRealmPartitionSettings realmPartitionSettings;
         private readonly RealmSamplingData realmSamplingData;
+        private readonly InputContainer inputContainer;
 
         public GlobalWorldFactory(in StaticContainer staticContainer, IRealmPartitionSettings realmPartitionSettings,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData)
@@ -48,6 +52,7 @@ namespace Global.Dynamic
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
             partitionSettings = staticContainer.PartitionSettings;
+            inputContainer = staticContainer.InputContainer;
             this.realmPartitionSettings = realmPartitionSettings;
             this.cameraSamplingData = cameraSamplingData;
             this.realmSamplingData = realmSamplingData;
@@ -62,7 +67,9 @@ namespace Global.Dynamic
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
 
-            Entity playerEntity = world.Create(new PlayerComponent(), new TransformComponent { Transform = unityCamera.transform }, new CameraComponent(unityCamera), cameraSamplingData);
+
+            Entity playerEntity = world.Create(new PlayerComponent(), new TransformComponent { Transform = unityCamera.transform }, new CameraComponent(unityCamera), cameraSamplingData,
+                new JumpInputComponent(), new MovementInputComponent());
 
             // Asset Bundle Manifest
             const string ASSET_BUNDLES_URL = "https://ab-cdn.decentraland.org/";
@@ -100,6 +107,9 @@ namespace Global.Dynamic
             PartitionSceneEntitiesSystem.InjectToWorld(ref builder, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>(), partitionSettings, cameraSamplingData);
             CheckCameraQualifiedForRepartitioningSystem.InjectToWorld(ref builder, partitionSettings);
             SortWorldsAggregateSystem.InjectToWorld(ref builder, partitionedWorldsAggregateFactory, realmPartitionSettings);
+
+
+            DCLInputSystem.InjectToWorld(ref builder, inputContainer.dclInput, inputContainer.inputComponentHandlers);
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
                 { new ReleaseRealmPooledComponentSystem(componentPoolsRegistry) };
