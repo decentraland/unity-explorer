@@ -21,11 +21,13 @@ namespace SceneRunner.ECSWorld.Plugins
         private readonly IReportsHandlingSettings reportsHandlingSettings;
 
         private readonly AssetBundleCache assetBundleCache;
+        private readonly AssetBundleLoadingMutex assetBundleLoadingMutex;
 
         public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings)
         {
             this.reportsHandlingSettings = reportsHandlingSettings;
             assetBundleCache = new AssetBundleCache();
+            assetBundleLoadingMutex = new AssetBundleLoadingMutex();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
@@ -35,7 +37,7 @@ namespace SceneRunner.ECSWorld.Plugins
             ReportAssetBundleErrorSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // TODO create a runtime ref-counting cache
-            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, sharedDependencies.MutexSync);
+            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, sharedDependencies.MutexSync, assetBundleLoadingMutex);
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<World> builder, in EmptyScenesWorldSharedDependencies dependencies)
@@ -45,7 +47,7 @@ namespace SceneRunner.ECSWorld.Plugins
             ReportAssetBundleErrorSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // TODO create a runtime ref-counting cache
-            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, dependencies.Mutex);
+            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, dependencies.Mutex, assetBundleLoadingMutex);
         }
     }
 }
