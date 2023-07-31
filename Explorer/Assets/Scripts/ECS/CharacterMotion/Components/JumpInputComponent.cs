@@ -8,4 +8,17 @@
         /// </summary>
         public float Power;
     }
+
+    public struct DeferredInput<T>
+    {
+        /// <summary>
+        ///     Momentum Input access
+        /// </summary>
+        public T Update;
+
+        /// <summary>
+        ///     Input saved till Fixed Update
+        /// </summary>
+        public T FixedUpdate;
+    }
 }

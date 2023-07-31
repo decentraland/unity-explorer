@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace ECS.CharacterMotion.Settings
 {
     /// <summary>
@@ -11,6 +13,7 @@ namespace ECS.CharacterMotion.Settings
         float AirAcceleration { get; }
         float RotationAngularSpeed { get; }
         float Gravity { get; }
-        float JumpHeight { get; }
+        Vector2 JumpHeight { get; }
+        float AirDrag { get; }
     }
 }

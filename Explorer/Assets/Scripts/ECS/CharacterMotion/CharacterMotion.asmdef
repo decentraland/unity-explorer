@@ -1,3 +1,20 @@
-﻿{
-  "name": "CharacterMotion"
+{
+  "name": "CharacterMotion",
+  "rootNamespace": "",
+  "references": [
+    "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+    "GUID:4794e238ed0f65142a4aea5848b513e5",
+    "GUID:fa0cb088e184452c8a89ecdeff7c731d",
+    "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+    "GUID:d414ef88f3b15f746a4b97636b50dfb4"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

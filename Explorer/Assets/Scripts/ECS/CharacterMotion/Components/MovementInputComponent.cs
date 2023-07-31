@@ -7,14 +7,9 @@ namespace ECS.CharacterMotion.Components
         public MovementKind Kind;
 
         /// <summary>
-        ///     The normalized value of axes (X, Y) that indicated pressing force
+        ///     The normalized value of axes (X, Y) that indicates pressing force
         ///     (0,0) means no movement
         /// </summary>
         public Vector2 Axes;
-
-        /// <summary>
-        ///     Desired forward orientation
-        /// </summary>
-        public Vector3 TargetCharacterForward;
     }
 }
