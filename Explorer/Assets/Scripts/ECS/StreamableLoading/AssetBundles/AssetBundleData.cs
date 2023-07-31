@@ -8,12 +8,15 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleData
     {
+        private GameObject gameObject;
+        private bool gameObjectLoaded;
+
         public readonly AssetBundle AssetBundle;
 
         /// <summary>
         ///     Root assets - Game Objects
         /// </summary>
-        public readonly GameObject GameObject;
+        public GameObject GameObject { get; }
 
         [CanBeNull]
         public readonly AssetBundleMetrics? Metrics;
@@ -22,6 +25,7 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             AssetBundle = assetBundle;
             Metrics = metrics;
+
             GameObject = gameObject;
         }
     }
