@@ -1,7 +1,12 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Special;
+using ECS.CharacterMotion.Components;
 using ECS.ComponentsPooling;
+using ECS.Input;
+using ECS.Input.Component;
+using ECS.Input.Systems;
+using ECS.Input.Systems.Physics;
 using ECS.LifeCycle;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -62,6 +67,7 @@ namespace Global.Dynamic
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
 
+
             Entity playerEntity = world.Create(new PlayerComponent(), new TransformComponent { Transform = unityCamera.transform }, new CameraComponent(unityCamera), cameraSamplingData);
 
             // Asset Bundle Manifest
@@ -100,6 +106,9 @@ namespace Global.Dynamic
             PartitionSceneEntitiesSystem.InjectToWorld(ref builder, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>(), partitionSettings, cameraSamplingData);
             CheckCameraQualifiedForRepartitioningSystem.InjectToWorld(ref builder, partitionSettings);
             SortWorldsAggregateSystem.InjectToWorld(ref builder, partitionedWorldsAggregateFactory, realmPartitionSettings);
+
+            InputPlugin inputPlugin = new InputPlugin();
+            inputPlugin.InjectToWorld(ref builder);
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
                 { new ReleaseRealmPooledComponentSystem(componentPoolsRegistry) };

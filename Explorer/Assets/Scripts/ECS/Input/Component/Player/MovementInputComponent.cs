@@ -1,8 +1,9 @@
+using ECS.Input.Component;
 using UnityEngine;
 
 namespace ECS.CharacterMotion.Components
 {
-    public struct MovementInputComponent
+    public struct MovementInputComponent : InputComponent
     {
         public MovementKind Kind;
 
