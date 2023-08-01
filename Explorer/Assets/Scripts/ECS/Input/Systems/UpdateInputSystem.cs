@@ -10,12 +10,9 @@ namespace ECS.Input.Systems
 
         protected UpdateInputSystem(World world) : base(world)
         {
-        }
-
-        public override void Initialize()
-        {
             World.Query(new QueryDescription().WithAll<PlayerComponent>().WithNone<T>(),
                 (in Entity entity) => World.Add<T>(entity));
         }
+
     }
 }
