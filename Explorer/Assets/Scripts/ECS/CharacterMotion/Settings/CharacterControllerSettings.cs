@@ -17,13 +17,16 @@ namespace ECS.CharacterMotion.Settings
         [field: SerializeField] [field: Tooltip("Acceleration in the air")]
         public float AirAcceleration { get; private set; } = 10;
 
-        [field: SerializeField] [field: Tooltip("Speed of rotation to the desired vector")]
+        [field: SerializeField] [field: Tooltip("Speed of rotation to the desired forward vector")]
         public float RotationAngularSpeed { get; private set; } = 10;
 
         [field: SerializeField]
         public float Gravity { get; private set; } = -9.8f;
 
+        [field: SerializeField] [field: Tooltip("Min and Max jump height")]
+        public Vector2 JumpHeight { get; private set; } = new (1.5f, 2.0f);
+
         [field: SerializeField]
-        public float JumpHeight { get; private set; } = 2;
+        public float AirDrag { get; private set; }
     }
 }
