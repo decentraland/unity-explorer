@@ -14,6 +14,8 @@ namespace ECS.CharacterMotion.Systems
         {
             if (!characterPhysics.IsGrounded)
                 characterPhysics.Velocity += Vector3.down * characterControllerSettings.Gravity * deltaTime;
+            else
+                characterPhysics.Velocity.y = 0f;
         }
     }
 }
