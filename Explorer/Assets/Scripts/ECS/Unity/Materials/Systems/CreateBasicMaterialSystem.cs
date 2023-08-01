@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.Shaders;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Materials.Components;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -15,8 +16,13 @@ namespace ECS.Unity.Materials.Systems
     public partial class CreateBasicMaterialSystem : CreateMaterialSystemBase
     {
         public const string MATERIAL_PATH = "BasicShapeMaterial";
+        private readonly IConcurrentBudgetProvider capFrameBudgetProvider;
 
-        internal CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool) : base(world, materialsPool) { }
+
+        internal CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool, IConcurrentBudgetProvider capFrameBudgetProvider) : base(world, materialsPool)
+        {
+            this.capFrameBudgetProvider = capFrameBudgetProvider;
+        }
 
         protected override void Update(float t)
         {
@@ -27,6 +33,9 @@ namespace ECS.Unity.Materials.Systems
         private void Handle(ref MaterialComponent materialComponent)
         {
             if (materialComponent.Data.IsPbrMaterial)
+                return;
+
+            if (!capFrameBudgetProvider.TrySpendBudget())
                 return;
 
             if (materialComponent.Status == MaterialComponent.LifeCycle.LoadingInProgress)

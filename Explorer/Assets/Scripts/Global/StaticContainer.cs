@@ -1,9 +1,14 @@
-﻿using Arch.SystemGroups;
+﻿using CrdtEcsBridge.Components;
 using Diagnostics;
 using Diagnostics.ReportsHandling;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
+using ECS.Profiling;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
+using SceneRunner.ECSWorld;
+using SceneRunner.ECSWorld.Plugins;
 using System;
+using System.Collections.Generic;
 
 namespace Global
 {
@@ -18,28 +23,55 @@ namespace Global
 
         public ComponentsContainer ComponentsContainer { get; private set; }
 
-        public ISystemGroupAggregate<IPartitionComponent>.IFactory WorldsAggregateFactory { get; private set; }
-
         public IPartitionSettings PartitionSettings { get; private set; }
 
         public CameraSamplingData CameraSamplingData { get; private set; }
 
-        public IReportsHandlingSettings ReportsHandlingSettings { get; private set; }
+        public IReadOnlyList<IECSWorldPlugin> ECSWorldPlugins { get; private set; }
+
+        public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
+
+        public IProfilingProvider ProfilingProvider { get; private set; }
 
         public void Dispose()
         {
             DiagnosticsContainer?.Dispose();
         }
 
-        public static StaticContainer Create(IPartitionSettings partitionSettings, IReportsHandlingSettings reportsHandlingSettings) =>
-            new ()
+        public static StaticContainer Create(IPartitionSettings partitionSettings, IReportsHandlingSettings reportsHandlingSettings)
+        {
+            var componentsContainer = ComponentsContainer.Create();
+            var profilingProvider = new ProfilingProvider();
+
+            var sharedDependencies = new ECSWorldSingletonSharedDependencies(
+                componentsContainer.ComponentPoolsRegistry,
+                reportsHandlingSettings,
+                new EntityFactory(),
+                new PartitionedWorldsAggregate.Factory(),
+                new ConcurrentLoadingBudgetProvider(50),
+                new FrameTimeCapBudgetProvider(40, profilingProvider)
+            );
+
+            return new StaticContainer
             {
                 DiagnosticsContainer = DiagnosticsContainer.Create(reportsHandlingSettings),
-                ComponentsContainer = ComponentsContainer.Create(),
+                ComponentsContainer = componentsContainer,
                 PartitionSettings = partitionSettings,
-                WorldsAggregateFactory = new PartitionedWorldsAggregate.Factory(),
+                SingletonSharedDependencies = sharedDependencies,
                 CameraSamplingData = new CameraSamplingData(),
-                ReportsHandlingSettings = reportsHandlingSettings,
+                ProfilingProvider = profilingProvider,
+                ECSWorldPlugins = new IECSWorldPlugin[]
+                {
+                    new TransformsPlugin(sharedDependencies),
+                    new MaterialsPlugin(sharedDependencies),
+                    new PrimitiveCollidersPlugin(sharedDependencies),
+                    new TexturesLoadingPlugin(),
+                    new PrimitivesRenderingPlugin(sharedDependencies),
+                    new VisibilityPlugin(),
+                    new AssetBundlesPlugin(reportsHandlingSettings),
+                    new GltfContainerPlugin(sharedDependencies),
+                },
             };
+        }
     }
 }

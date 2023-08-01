@@ -70,7 +70,7 @@ namespace ECS.StreamableLoading.Common
         /// </summary>
         public bool TryConsume(World world, out StreamableLoadingResult<TAsset> result)
         {
-            Assert.IsFalse(Result.HasValue, $"Promise {LoadingIntention} has been already consumed");
+            Assert.IsFalse(Result.HasValue);
 
             result = default(StreamableLoadingResult<TAsset>);
 

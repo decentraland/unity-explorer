@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using ECS.LifeCycle;
+using SceneRunner.EmptyScene;
 using System.Collections.Generic;
 
 namespace SceneRunner.ECSWorld.Plugins
@@ -19,5 +20,12 @@ namespace SceneRunner.ECSWorld.Plugins
             in ECSWorldInstanceSharedDependencies sharedDependencies,
             in PersistentEntities persistentEntities,
             List<IFinalizeWorldSystem> finalizeWorldSystems);
+
+        /// <summary>
+        ///     Creates a subset of systems that should run in the empty scenes world that exists in a single instance
+        /// </summary>
+        void InjectToEmptySceneWorld(
+            ref ArchSystemsWorldBuilder<World> builder,
+            in EmptyScenesWorldSharedDependencies dependencies);
     }
 }

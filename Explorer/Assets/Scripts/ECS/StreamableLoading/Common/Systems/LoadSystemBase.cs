@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using AssetManagement;
 using Cysharp.Threading.Tasks;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
@@ -90,28 +91,31 @@ namespace ECS.StreamableLoading.Common.Systems
             if (state.Value != StreamableLoadingState.Status.Allowed)
                 return;
 
+            AssetSource currentSource = intention.CommonArguments.CurrentSource;
+
             // Remove current source flag from the permitted sources
             // it indicates that the current source was used
             intention.RemoveCurrentSource();
 
             // Try load from cache first
-            if (TryLoadFromCache(in entity, in intention))
+            if (TryLoadFromCache(in entity, in intention, currentSource))
                 return;
 
             // If the given URL failed irrecoverably just return the failure
             if (irrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset> failure))
             {
-                FinalizeLoading(entity, intention, failure);
+                FinalizeLoading(entity, intention, failure, currentSource);
                 return;
             }
 
             // Indicate that loading has started
             state.Value = StreamableLoadingState.Status.InProgress;
 
-            Flow(entity, intention, state.AcquiredBudget, partitionComponent, cancellationTokenSource.Token).Forget();
+            Flow(entity, currentSource, intention, state.AcquiredBudget, partitionComponent, cancellationTokenSource.Token).Forget();
         }
 
-        private async UniTask Flow(Entity entity, TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken disposalCt)
+        private async UniTask Flow(Entity entity,
+            AssetSource source, TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken disposalCt)
         {
             StreamableLoadingResult<TAsset>? result = null;
 
@@ -121,9 +125,12 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 // if the request is cached wait for it
                 if (cache.OngoingRequests.TryGetValue(intention.CommonArguments.URL, out UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> cachedSource))
-
+                {
+                    // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
+                    acquiredBudget.Release();
                     // if the cached request is cancelled it does not mean failure for the new intent
                     (requestIsNotFulfilled, result) = await cachedSource.Task.SuppressCancellationThrow();
+                }
 
                 // if this request must be cancelled by `intention.CommonArguments.CancellationToken` it will be cancelled after `if (!requestIsNotFulfilled)`
                 if (requestIsNotFulfilled)
@@ -135,24 +142,22 @@ namespace ECS.StreamableLoading.Common.Systems
                     // finally will handle the rest
                     return;
             }
-            catch (OperationCanceledException)
-            {
-                // ignore
-            }
             catch (Exception e)
             {
                 // If we don't set an exception it will spin forever
                 result = new StreamableLoadingResult<TAsset>(e);
-                ReportException(e);
+
+                if (e is not OperationCanceledException)
+                    ReportException(e);
             }
             finally
             {
                 await UniTask.SwitchToMainThread();
-                FinalizeLoading(entity, intention, result);
+                FinalizeLoading(entity, intention, result, source);
             }
         }
 
-        private void FinalizeLoading(in Entity entity, TIntention intention, StreamableLoadingResult<TAsset>? result)
+        private void FinalizeLoading(in Entity entity, TIntention intention, StreamableLoadingResult<TAsset>? result, AssetSource source)
         {
             using MutexSync.Scope sync = mutexSync.GetScope();
             ref StreamableLoadingState state = ref World.Get<StreamableLoadingState>(entity);
@@ -167,7 +172,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 World.Add(entity, result.Value);
 
                 if (result.Value.Succeeded)
-                    ReportHub.Log(GetReportCategory(), $"{intention}'s successfully loaded");
+                    ReportHub.Log(GetReportCategory(), $"{intention}'s successfully loaded from {source}");
             }
             else
             {
@@ -247,11 +252,11 @@ namespace ECS.StreamableLoading.Common.Systems
             return failure;
         }
 
-        private bool TryLoadFromCache(in Entity entity, in TIntention intention)
+        private bool TryLoadFromCache(in Entity entity, in TIntention intention, AssetSource source)
         {
             if (cache.TryGet(in intention, out TAsset asset))
             {
-                FinalizeLoading(entity, intention, new StreamableLoadingResult<TAsset>(asset));
+                FinalizeLoading(entity, intention, new StreamableLoadingResult<TAsset>(asset), source);
                 return true;
             }
 

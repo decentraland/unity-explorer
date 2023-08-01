@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine;
 using Utility;
 
 namespace ECS.Abstract
@@ -9,31 +10,26 @@ namespace ECS.Abstract
     /// <typeparam name="T"></typeparam>
     public struct EnumState<T> where T: unmanaged, Enum
     {
-        private bool changedThisFrame;
+        private int changeFrame;
 
         public T Value { get; private set; }
 
         public EnumState(T value, bool setAsChanged = false)
         {
-            changedThisFrame = setAsChanged;
+            changeFrame = setAsChanged ? Time.frameCount : int.MinValue;
             Value = value;
         }
 
         public bool ChangedThisFrame() =>
-            changedThisFrame;
+            changeFrame == Time.frameCount;
 
         public bool ChangedThisFrameTo(T value) =>
-            changedThisFrame && EnumUtils.Equals(value, Value);
+            changeFrame == Time.frameCount && EnumUtils.Equals(value, Value);
 
         public void Set(T value)
         {
             Value = value;
-            changedThisFrame = true;
-        }
-
-        public void SetFramePassed()
-        {
-            changedThisFrame = false;
+            changeFrame = Time.frameCount;
         }
 
         public static implicit operator T(in EnumState<T> enumState) =>

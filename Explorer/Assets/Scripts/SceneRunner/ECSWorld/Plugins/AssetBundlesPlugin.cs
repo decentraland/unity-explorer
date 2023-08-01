@@ -3,7 +3,7 @@ using Arch.SystemGroups;
 using Diagnostics.ReportsHandling;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
+using SceneRunner.EmptyScene;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -19,15 +19,15 @@ namespace SceneRunner.ECSWorld.Plugins
 #endif
 
         private readonly IReportsHandlingSettings reportsHandlingSettings;
-        private readonly IConcurrentBudgetProvider loadingBudgetProvider;
 
         private readonly AssetBundleCache assetBundleCache;
+        private readonly AssetBundleLoadingMutex assetBundleLoadingMutex;
 
-        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, IConcurrentBudgetProvider loadingBudgetProvider)
+        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings)
         {
             this.reportsHandlingSettings = reportsHandlingSettings;
-            this.loadingBudgetProvider = loadingBudgetProvider;
             assetBundleCache = new AssetBundleCache();
+            assetBundleLoadingMutex = new AssetBundleLoadingMutex();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
@@ -37,7 +37,17 @@ namespace SceneRunner.ECSWorld.Plugins
             ReportAssetBundleErrorSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // TODO create a runtime ref-counting cache
-            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, sharedDependencies.MutexSync);
+            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, sharedDependencies.MutexSync, assetBundleLoadingMutex);
+        }
+
+        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<World> builder, in EmptyScenesWorldSharedDependencies dependencies)
+        {
+            // Asset Bundles
+            PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, dependencies.SceneData, STREAMING_ASSETS_URL);
+            ReportAssetBundleErrorSystem.InjectToWorld(ref builder, reportsHandlingSettings);
+
+            // TODO create a runtime ref-counting cache
+            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, dependencies.Mutex, assetBundleLoadingMutex);
         }
     }
 }

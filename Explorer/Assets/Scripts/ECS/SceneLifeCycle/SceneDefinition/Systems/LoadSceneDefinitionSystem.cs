@@ -28,11 +28,16 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         protected override async UniTask<StreamableLoadingResult<IpfsTypes.SceneEntityDefinition>> FlowInternal(GetSceneDefinition intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            var wr = UnityWebRequest.Get(intention.CommonArguments.URL);
-            await wr.SendWebRequest().WithCancellation(ct);
+            string text;
 
-            // Get text on the main thread
-            string text = wr.downloadHandler.text;
+            using (var wr = UnityWebRequest.Get(intention.CommonArguments.URL))
+            {
+                await wr.SendWebRequest().WithCancellation(ct);
+
+                // Get text on the main thread
+                text = wr.downloadHandler.text;
+            }
+
             await UniTask.SwitchToThreadPool();
 
             IpfsTypes.SceneEntityDefinition sceneEntityDefinition = JsonUtility.FromJson<IpfsTypes.SceneEntityDefinition>(text);

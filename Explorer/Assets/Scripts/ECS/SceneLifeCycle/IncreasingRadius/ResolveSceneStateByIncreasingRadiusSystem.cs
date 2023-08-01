@@ -27,6 +27,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
     [UpdateAfter(typeof(LoadFixedPointersSystem))]
     [UpdateAfter(typeof(LoadStaticPointersSystem))]
     [UpdateAfter(typeof(CalculateParcelsInRangeSystem))]
+    [UpdateAfter(typeof(CreateEmptyPointersInFixedRealmSystem))]
     public partial class ResolveSceneStateByIncreasingRadiusSystem : BaseUnityLoopSystem
     {
         private static readonly QueryDescription START_SCENES_LOADING = new QueryDescription()
@@ -39,8 +40,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         {
             public Entity Entity;
             public PartitionComponent PartitionComponent;
-            public IpfsTypes.IpfsPath IpfsPath;
-            public IpfsTypes.SceneEntityDefinition SceneEntityDefinition;
+            public SceneDefinitionComponent DefinitionComponent;
         }
 
         private readonly List<OrderedData> orderedData;
@@ -76,12 +76,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         }
 
         [Query]
-        [All(typeof(PartitionComponent))]
+        [All(typeof(PartitionComponent), typeof(SceneDefinitionComponent))]
         [None(typeof(ISceneFacade))]
-        private void CheckAnyLoadingInProgress([Data] ref bool anyNonEmpty,
-            ref SceneDefinitionComponent sceneDefinitionComponent, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
+        private void CheckAnyLoadingInProgress([Data] ref bool anyNonEmpty, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
         {
-            anyNonEmpty |= !sceneDefinitionComponent.IsEmpty && !promise.IsConsumed;
+            anyNonEmpty |= !promise.IsConsumed;
         }
 
         [Query]
@@ -121,15 +120,13 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     ref readonly Entity entity = ref Unsafe.Add(ref entityFirstElement, entityIndex);
                     ref PartitionComponent partitionComponent = ref Unsafe.Add(ref partitionComponentFirst, entityIndex);
 
-                    if (definition.IsEmpty) continue;
                     if (partitionComponent.RawSqrDistance >= maxLoadingSqrDistance) continue;
 
                     orderedData.Add(new OrderedData
                     {
                         Entity = entity,
-                        IpfsPath = definition.IpfsPath,
-                        SceneEntityDefinition = definition.Definition,
                         PartitionComponent = partitionComponent,
+                        DefinitionComponent = definition,
                     });
                 }
             }
@@ -144,15 +141,17 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 OrderedData data = orderedData[i];
 
                 World.Add(data.Entity,
-                    AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World, new GetSceneFacadeIntention(ipfsRealm, data.IpfsPath, data.SceneEntityDefinition), data.PartitionComponent));
+                    AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
+                        new GetSceneFacadeIntention(ipfsRealm, data.DefinitionComponent.IpfsPath, data.DefinitionComponent.Definition, data.DefinitionComponent.Parcels, data.DefinitionComponent.IsEmpty),
+                        data.PartitionComponent));
             }
         }
 
         [Query]
+        [All(typeof(SceneDefinitionComponent))]
         [None(typeof(DeleteEntityIntention))]
-        private void StartUnloading(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent)
+        private void StartUnloading(in Entity entity, ref PartitionComponent partitionComponent)
         {
-            if (sceneDefinitionComponent.IsEmpty) return;
             if (partitionComponent.Bucket < realmPartitionSettings.UnloadBucket) return;
             World.Add(entity, new DeleteEntityIntention());
         }

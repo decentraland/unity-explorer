@@ -24,20 +24,28 @@ namespace ECS.StreamableLoading.AssetBundles
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class LoadAssetBundleSystem : LoadSystemBase<AssetBundleData, GetAssetBundleIntention>
     {
+        private const string METADATA_FILENAME = "metadata.json";
+        private const string METRICS_FILENAME = "metrics.json";
         private static readonly ThreadSafeObjectPool<AssetBundleMetadata> METADATA_POOL
             = new (() => new AssetBundleMetadata(), maxSize: 100);
 
-        private const string METADATA_FILENAME = "metadata.json";
-        private const string METRICS_FILENAME = "metrics.json";
+        private readonly AssetBundleLoadingMutex loadingMutex;
 
-        internal LoadAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync) { }
+        internal LoadAssetBundleSystem(World world,
+            IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache,
+            MutexSync mutexSync,
+            AssetBundleLoadingMutex loadingMutex) : base(world, cache, mutexSync)
+        {
+            this.loadingMutex = loadingMutex;
+        }
 
         private async UniTask LoadDependencies(IPartitionComponent partition, AssetBundle assetBundle, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
+            string metadata;
 
-            // resolve dependencies
-            string metadata = GetMetadata(assetBundle)?.text;
+            using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.Acquire(ct))
+                metadata = GetMetadata(assetBundle)?.text;
 
             if (metadata != null)
             {
@@ -57,46 +65,68 @@ namespace ECS.StreamableLoading.AssetBundles
 
         protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternal(GetAssetBundleIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            UnityWebRequest webRequest = intention.cacheHash.HasValue
-                ? UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL, intention.cacheHash.Value)
-                : UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL);
+            AssetBundle assetBundle;
 
-            await webRequest.SendWebRequest().WithCancellation(ct);
-            AssetBundle assetBundle = DownloadHandlerAssetBundle.GetContent(webRequest);
+            using (UnityWebRequest webRequest = intention.cacheHash.HasValue
+                       ? UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL, intention.cacheHash.Value)
+                       : UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL))
+            {
+                ((DownloadHandlerAssetBundle)webRequest.downloadHandler).autoLoadAssetBundle = false;
+                await webRequest.SendWebRequest().WithCancellation(ct);
 
-            // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
-            acquiredBudget.Release();
+                using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.Acquire(ct))
+                    assetBundle = DownloadHandlerAssetBundle.GetContent(webRequest);
 
-            // if GetContent prints an error, null will be thrown
-            if (assetBundle == null)
-                throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {webRequest.downloadHandler.error}");
+                // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
+                acquiredBudget.Release();
+
+                // if GetContent prints an error, null will be thrown
+                if (assetBundle == null)
+                    throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {webRequest.downloadHandler.error}");
+            }
 
             // get metrics
-            TextAsset metricsFile = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME);
+
+            TextAsset metricsFile;
+
+            using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.Acquire(ct))
+                metricsFile = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME);
 
             // Switch to thread pool to parse JSONs
 
             await UniTask.SwitchToThreadPool();
+            ct.ThrowIfCancellationRequested();
 
             AssetBundleMetrics? metrics = metricsFile != null ? JsonUtility.FromJson<AssetBundleMetrics>(metricsFile.text) : null;
 
             await LoadDependencies(partition, assetBundle, ct);
 
             await UniTask.SwitchToMainThread();
-            IReadOnlyList<GameObject> gameObjects = await LoadAllAssets(assetBundle, ct);
+            ct.ThrowIfCancellationRequested();
+
+            GameObject gameObjects = await LoadAllAssets(assetBundle, ct);
 
             return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, gameObjects));
         }
 
-        private async UniTask<IReadOnlyList<GameObject>> LoadAllAssets(AssetBundle assetBundle, CancellationToken ct)
+        private async UniTask<GameObject> LoadAllAssets(AssetBundle assetBundle, CancellationToken ct)
         {
+            using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.Acquire(ct);
+
             // we are only interested in game objects
             AssetBundleRequest asyncOp = assetBundle.LoadAllAssetsAsync<GameObject>();
             await asyncOp.WithCancellation(ct);
 
             // Can't avoid an array instantiation - no API with List
             // Can't avoid casting - no generic API
-            return asyncOp.allAssets.Length > 0 ? new List<GameObject>(asyncOp.allAssets.Cast<GameObject>()) : Array.Empty<GameObject>();
+            var gameObjects = new List<GameObject>(asyncOp.allAssets.Cast<GameObject>());
+
+            if (gameObjects.Count > 1)
+                ReportHub.LogError(GetReportCategory(), $"AssetBundle {assetBundle.name} contains more than one root gameobject. Only the first one will be used.");
+
+            GameObject rootGameObject = gameObjects.Count > 0 ? gameObjects[0] : null;
+
+            return rootGameObject;
         }
 
         private async UniTask WaitForDependency(string hash, IPartitionComponent partition, CancellationToken ct)

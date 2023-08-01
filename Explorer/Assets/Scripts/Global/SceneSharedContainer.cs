@@ -1,10 +1,7 @@
 using CRDT.Serializer;
-using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Engine;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using SceneRunner;
 using SceneRunner.ECSWorld;
-using SceneRunner.ECSWorld.Plugins;
 using SceneRuntime.Factory;
 using System;
 
@@ -22,25 +19,12 @@ namespace Global
 
         public static SceneSharedContainer Create(in StaticContainer staticContainer)
         {
-            var entityFactory = new EntityFactory();
-
-            var sharedDependencies = new ECSWorldSingletonSharedDependencies(staticContainer.ComponentsContainer.ComponentPoolsRegistry,
-                staticContainer.ReportsHandlingSettings,
-                entityFactory,
-                staticContainer.WorldsAggregateFactory,
-                new ConcurrentLoadingBudgetProvider(10));
+            ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
 
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 staticContainer.PartitionSettings,
                 staticContainer.CameraSamplingData,
-                new TransformsPlugin(sharedDependencies),
-                new MaterialsPlugin(),
-                new PrimitiveCollidersPlugin(sharedDependencies),
-                new TexturesLoadingPlugin(sharedDependencies.LoadingBudgetProvider),
-                new PrimitivesRenderingPlugin(sharedDependencies),
-                new VisibilityPlugin(),
-                new AssetBundlesPlugin(staticContainer.ReportsHandlingSettings, sharedDependencies.LoadingBudgetProvider),
-                new GltfContainerPlugin(sharedDependencies));
+                staticContainer.ECSWorldPlugins);
 
             return new SceneSharedContainer
             {
@@ -50,7 +34,7 @@ namespace Global
                     new SharedPoolsProvider(),
                     new CRDTSerializer(),
                     staticContainer.ComponentsContainer.SDKComponentsRegistry,
-                    entityFactory
+                    sharedDependencies.EntityFactory
                 ),
             };
         }
