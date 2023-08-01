@@ -1,20 +1,10 @@
-using UnityEngine.InputSystem;
-
 namespace ECS.Input.Component
 {
-    public interface InputComponent
-    {
-
-    }
+    public interface InputComponent { }
 
     public interface KeyComponent : InputComponent
     {
         ButtonArguments ButtonArguments { get; set; }
-    }
-
-    public interface PhysicalKeyComponent : InputComponent
-    {
-        PhysicalButtonArguments PhysicalButtonArguments { get; set; }
     }
 
     public struct ButtonArguments
@@ -24,11 +14,18 @@ namespace ECS.Input.Component
         public bool IsKeyPressed;
     }
 
-    public struct PhysicalButtonArguments
+    public struct PhysicalJumpButtonArguments
     {
-        public int tickDown;
-        public int tickUp;
-        public bool IsKeyPressed;
+        public int tickWhenJumpOcurred;
+        public float Power;
+
+        public float GetPower(int physicsTick)
+        {
+            if (physicsTick == tickWhenJumpOcurred)
+                return Power;
+
+            return 0;
+        }
 
     }
 
@@ -68,36 +65,6 @@ namespace ECS.Input.Component
             ButtonArguments ba = keyComponent.ButtonArguments;
             ba.IsKeyPressed = isKeyPressed;
             keyComponent.ButtonArguments = ba;
-        }
-
-        public static bool IsKeyDown<T>(this ref T keyComponent, int physicsTick) where T: struct, PhysicalKeyComponent =>
-            keyComponent.PhysicalButtonArguments.tickDown == physicsTick;
-
-        public static bool IsKeyUp<T>(this ref T keyComponent, int physicsTick) where T: struct, PhysicalKeyComponent =>
-            keyComponent.PhysicalButtonArguments.tickUp == physicsTick;
-
-        public static bool IsPhysicalKeyPressed<T>(this ref T keyComponent) where T: struct, PhysicalKeyComponent =>
-            keyComponent.PhysicalButtonArguments.IsKeyPressed;
-
-        public static void SetPhysicsTickKeyDown<T>(this ref T keyComponent, int tickWhenPressed) where T: struct, PhysicalKeyComponent
-        {
-            PhysicalButtonArguments pba = keyComponent.PhysicalButtonArguments;
-            pba.tickDown = tickWhenPressed;
-            keyComponent.PhysicalButtonArguments = pba;
-        }
-
-        public static void SetPhysicsTickKeyUp<T>(this ref T keyComponent, int tickWhenPressed) where T: struct, PhysicalKeyComponent
-        {
-            PhysicalButtonArguments pba = keyComponent.PhysicalButtonArguments;
-            pba.tickUp = tickWhenPressed;
-            keyComponent.PhysicalButtonArguments = pba;
-        }
-
-        public static void SetPhysicsKeyPressed<T>(this ref T keyComponent, bool value) where T: struct, PhysicalKeyComponent
-        {
-            PhysicalButtonArguments pba = keyComponent.PhysicalButtonArguments;
-            pba.IsKeyPressed = value;
-            keyComponent.PhysicalButtonArguments = pba;
         }
 
     }

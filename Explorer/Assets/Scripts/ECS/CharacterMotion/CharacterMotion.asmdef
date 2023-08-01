@@ -1,21 +1,23 @@
 {
-  "name": "CharacterMotion",
-  "rootNamespace": "",
-  "references": [
-    "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
-    "GUID:4794e238ed0f65142a4aea5848b513e5",
-    "GUID:fa0cb088e184452c8a89ecdeff7c731d",
-    "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
-    "GUID:d414ef88f3b15f746a4b97636b50dfb4",
-    "GUID:ac3295688c7c22745a96e6ac34718181"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "CharacterMotion",
+    "rootNamespace": "",
+    "references": [
+        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+        "GUID:4794e238ed0f65142a4aea5848b513e5",
+        "GUID:fa0cb088e184452c8a89ecdeff7c731d",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:d414ef88f3b15f746a4b97636b50dfb4",
+        "GUID:ac3295688c7c22745a96e6ac34718181",
+        "GUID:75469ad4d38634e559750d17036d5f7c",
+        "GUID:17381a5480012e948a8c344028f41089"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

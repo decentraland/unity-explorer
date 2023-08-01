@@ -1,7 +1,9 @@
 using Arch.Core;
+using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using ECS.Input.Component;
+using System;
 using UnityEngine.InputSystem;
 
 namespace ECS.Input.Systems
@@ -17,11 +19,18 @@ namespace ECS.Input.Systems
             this.inputAction = dclInputAction;
         }
 
-        protected override void UpdateInput(ref T component)
+        protected override void Update(float t)
+        {
+            UpdateInputQuery(World);
+        }
+
+        [Query]
+        private void UpdateInput(ref T component)
         {
             component.SetKeyDown(inputAction.WasPressedThisFrame());
             component.SetKeyUp(inputAction.WasReleasedThisFrame());
             component.SetKeyPressed(inputAction.IsPressed());
         }
+
     }
 }

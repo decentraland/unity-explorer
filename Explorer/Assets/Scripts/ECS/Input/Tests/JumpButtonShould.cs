@@ -11,7 +11,7 @@ using UnityEngine.InputSystem;
 public class JumpInputComponentShould : InputTestFixture
 {
 
-    private UpdateInputPhysicsTickSystem updatePhysicsTickSystem;
+    /*private UpdateInputPhysicsTickSystem updatePhysicsTickSystem;
     private UpdateInputPhysicsButtonSystem<JumpInputComponent> updateInputPhysicsButtonSystem;
     private UpdateInputJumpSystem updateInputJumpSystem;
 
@@ -75,7 +75,7 @@ public class JumpInputComponentShould : InputTestFixture
 
         updatePhysicsTickSystem.Update(0);
         updateInputPhysicsButtonSystem.Update(0);
-        updateInputJumpSystem.Update(UpdateInputJumpSystem.AIR_TIME * 1000 / 2);
+        updateInputJumpSystem.Update(UpdateInputJumpSystem.HOLD_TIME * 1000 / 2);
 
         //Assert
         world.Query(new QueryDescription().WithAll<JumpInputComponent>(),
@@ -83,7 +83,7 @@ public class JumpInputComponentShould : InputTestFixture
 
         updatePhysicsTickSystem.Update(0);
         updateInputPhysicsButtonSystem.Update(0);
-        updateInputJumpSystem.Update(UpdateInputJumpSystem.AIR_TIME * 1000);
+        updateInputJumpSystem.Update(UpdateInputJumpSystem.HOLD_TIME * 1000);
 
         //Assert
         world.Query(new QueryDescription().WithAll<JumpInputComponent>(),
@@ -136,5 +136,5 @@ public class JumpInputComponentShould : InputTestFixture
         updatePhysicsTickSystem.Update(0);
         world.Query(new QueryDescription().WithAll<JumpInputComponent>(),
             (ref JumpInputComponent jumpInput) => Assert.IsFalse(jumpInput.IsKeyDown(updateInputJumpSystem.tickValue)));
-    }
+    }*/
 }

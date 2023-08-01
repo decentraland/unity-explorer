@@ -1,6 +1,8 @@
 using Arch.Core;
+using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -21,11 +23,18 @@ namespace ECS.Input.Systems
             zoomWheelAction = dclInput.Player.Zoom;
         }
 
+        protected override void Update(float t)
+        {
+            UpdateInputQuery(World);
+        }
 
-        protected override void UpdateInput(ref CameraZoomComponent inputToUpdate)
+        [Query]
+        private void UpdateInput(ref CameraZoomComponent inputToUpdate)
         {
             inputToUpdate.DoZoomIn = zoomWheelAction.ReadValue<Vector2>().y > 0  || zoomInAction.WasPressedThisFrame();
             inputToUpdate.DoZoomOut = zoomWheelAction.ReadValue<Vector2>().y < 0  ||zoomOutAction.WasPressedThisFrame();
         }
+
+
     }
 }

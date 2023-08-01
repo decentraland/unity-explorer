@@ -6,6 +6,8 @@ using CrdtEcsBridge.Components.Special;
 using ECS.Abstract;
 using ECS.CharacterMotion.Components;
 using ECS.CharacterMotion.Settings;
+using ECS.Input.Component.Physics;
+using NSubstitute.Core;
 
 namespace ECS.CharacterMotion.Systems
 {
@@ -19,12 +21,19 @@ namespace ECS.CharacterMotion.Systems
 
         protected override void Update(float t)
         {
-            ResolveVelocityQuery(World, t);
+            GetTickValueQuery(World, t);
+        }
+
+        [Query]
+        private void GetTickValue([Data] float dt, ref PhysicsTickComponent physicsTickComponent)
+        {
+            ResolveVelocityQuery(World, dt, physicsTickComponent.tick);
         }
 
         [Query]
         private void ResolveVelocity(
             [Data] float dt,
+            [Data] int physicsTick,
             ref ICharacterControllerSettings characterControllerSettings,
             ref CharacterPhysics physics,
             ref CameraComponent camera,
@@ -35,7 +44,7 @@ namespace ECS.CharacterMotion.Systems
 
             // Apply all velocities
             ApplyCharacterMovementVelocity.Execute(characterControllerSettings, ref physics, in camera, in movementInput, dt);
-            ApplyJump.Execute(characterControllerSettings, ref jump, ref physics);
+            ApplyJump.Execute(characterControllerSettings, ref jump, ref physics, physicsTick);
             ApplyGravity.Execute(characterControllerSettings, ref physics, dt);
             ApplyAirDrag.Execute(characterControllerSettings, ref physics, dt);
         }

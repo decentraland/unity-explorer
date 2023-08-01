@@ -2,57 +2,51 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using ECS.Abstract;
 using ECS.CharacterMotion.Components;
-using ECS.Input.Component;
+using ECS.CharacterMotion.Settings;
 using ECS.Input.Component.Physics;
-using ECS.Input.Systems.Physics;
+using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace ECS.Input.Systems
 {
-    [UpdateInGroup(typeof(PhysicsSystemGroup))]
-    [UpdateBefore(typeof(UpdateInputPhysicsTickSystem))]
-    public partial class UpdateInputJumpSystem : BaseUnityLoopSystem
+    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    public partial class UpdateInputJumpSystem : UpdateInputSystem<JumpInputComponent>
     {
-        internal static readonly float AIR_TIME = 1.5f;
 
-        private float currentAirTime;
-        private bool isJumping;
-        internal int tickValue;
-
-        public UpdateInputJumpSystem(World world) : base(world)
+        private readonly InputAction inputAction;
+        public UpdateInputJumpSystem(World world, InputAction inputAction) : base(world)
         {
+            this.inputAction = inputAction;
         }
 
         protected override void Update(float t)
         {
             GetTickValueQuery(World);
-            UpdateInputQuery(World);
-
-            if (isJumping)
-                currentAirTime += t;
         }
 
         [Query]
         private void GetTickValue(ref PhysicsTickComponent physicsTickComponent)
         {
-            tickValue = physicsTickComponent.tick;
+            UpdateInputQuery(World, physicsTickComponent.tick);
         }
 
         [Query]
-        private void UpdateInput(ref JumpInputComponent inputToUpdate)
+        private void UpdateInput([Data]int tickValue, ref JumpInputComponent inputToUpdate,
+            ref CharacterPhysics characterPhysics, ref ICharacterControllerSettings characterControllerSettings)
         {
-            //TODO: We need to add ground check, if not we could jump again while in the air
-            if (inputToUpdate.IsKeyDown(tickValue) && !isJumping)
-                isJumping = true;
-
-            if (inputToUpdate.IsKeyUp(tickValue) || currentAirTime > AIR_TIME)
+            if (characterPhysics.IsGrounded && inputAction.WasPressedThisFrame())
+                inputToUpdate.IsChargingJump = true;
+            else if (inputToUpdate.IsChargingJump && (inputAction.WasReleasedThisFrame()
+                                                  || inputToUpdate.CurrentHoldTime > characterControllerSettings.HoldJumpTime))
             {
-                isJumping = false;
-                currentAirTime = 0;
-            }
+                inputToUpdate.PhysicalButtonArguments.tickWhenJumpOcurred = tickValue;
 
-            inputToUpdate.Power = isJumping ? 1 : 0;
+                inputToUpdate.IsChargingJump = false;
+                inputToUpdate.CurrentHoldTime = 0;
+                inputToUpdate.PhysicalButtonArguments.Power =
+                    Mathf.Clamp01(inputToUpdate.CurrentHoldTime / characterControllerSettings.HoldJumpTime);
+            }
         }
     }
 }
