@@ -46,7 +46,7 @@ jobs:
       # Configure test runner
       - uses: game-ci/unity-builder@v2
         id: build
-        timeout-minutes: 45
+        timeout-minutes: 120
         env:
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}

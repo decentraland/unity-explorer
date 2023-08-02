@@ -40,6 +40,7 @@ jobs:
       # Configure test runner
       - uses: game-ci/unity-test-runner@v2
         id: testRunner
+        timeout-minutes: 60
         with:
           projectPath: Explorer
           testMode: all
