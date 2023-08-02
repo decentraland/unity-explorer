@@ -7,6 +7,7 @@ on:
 jobs:
   build:
     strategy:
+      max-parallel: 1
       matrix:
         include:
           - targetPlatform: StandaloneWindows64
@@ -55,8 +56,14 @@ jobs:
           projectPath: Explorer
           targetPlatform: ${{ matrix.targetPlatform }}
 
+      - name: Unity - Return License
+        uses: game-ci/unity-return-license@v2.0.0
+        if: always()
+
+
       # Upload artifact
       - uses: actions/upload-artifact@v3
         with:
           name: Build-${{ matrix.targetPlatform }}
           path: build
+          if-no-files-found: error

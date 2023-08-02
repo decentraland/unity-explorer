@@ -75,3 +75,4 @@ jobs:
         with:
           name: Test results (play mode & edit mode)
           path: ${{ steps.testRunner.outputs.artifactsPath }}
+          if-no-files-found: error
