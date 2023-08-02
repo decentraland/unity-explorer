@@ -20,7 +20,7 @@ namespace DCL.CharacterCamera.Systems
 
         protected override void Update(float t)
         {
-            UpdateInputQuery(World);
+            // UpdateInputQuery(World);
         }
 
         [Query]

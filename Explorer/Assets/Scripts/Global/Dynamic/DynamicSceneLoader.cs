@@ -2,6 +2,7 @@
 using DCL.Character;
 using DCL.CharacterCamera.Settings;
 using Diagnostics.ReportsHandling;
+using ECS.CharacterMotion.Settings;
 using ECS.Prioritization;
 using System.Collections.Generic;
 using System.Threading;
@@ -24,6 +25,7 @@ namespace Global.Dynamic
         [SerializeField] private ReportsHandlingSettings reportsHandlingSettings;
         [SerializeField] private RealmPartitionSettingsAsset realmPartitionSettingsAsset;
         [SerializeField] private PartitionSettingsAsset partitionSettingsAsset;
+        [SerializeField] private CharacterControllerSettings characterControllerSettings;
 
         // If it's 0, it will load every parcel in the range
         [SerializeField] private List<int2> StaticLoadPositions;
@@ -57,8 +59,8 @@ namespace Global.Dynamic
             Install();
 
             Vector3 cameraPosition = ParcelMathHelper.GetPositionByParcelPosition(StartPosition);
-            cameraPosition.y += 8.0f;
-            camera.transform.position = cameraPosition;
+            cameraPosition.y += 1f;
+            character.transform.position = cameraPosition;
 
             globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory, dynamicWorldContainer.EmptyScenesWorldFactory, character);
             await dynamicWorldContainer.RealmController.SetRealm(globalWorld, "https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main", destroyCancellationToken);
@@ -70,7 +72,10 @@ namespace Global.Dynamic
 
             staticContainer = StaticContainer.Create(partitionSettingsAsset, reportsHandlingSettings);
             sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
-            dynamicWorldContainer = DynamicWorldContainer.Create(in staticContainer, realmPartitionSettingsAsset, camera, StaticLoadPositions, SceneLoadRadius);
+
+            dynamicWorldContainer = DynamicWorldContainer.Create(in staticContainer, realmPartitionSettingsAsset,
+                camera, characterControllerSettings,
+                StaticLoadPositions, SceneLoadRadius);
 
             Profiler.EndSample();
         }

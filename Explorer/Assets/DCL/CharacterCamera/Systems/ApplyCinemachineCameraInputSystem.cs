@@ -40,6 +40,9 @@ namespace DCL.CharacterCamera.Systems
                     break;
                 }
             }
+
+            // Update the brain manually
+            cinemachinePreset.Brain.ManualUpdate();
         }
     }
 }

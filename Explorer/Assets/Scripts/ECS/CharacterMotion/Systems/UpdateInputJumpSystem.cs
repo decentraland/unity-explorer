@@ -26,6 +26,7 @@ namespace ECS.CharacterMotion.Systems
 
         public override void Initialize()
         {
+            base.Initialize();
             fixedTick = World.CachePhysicsTick();
         }
 

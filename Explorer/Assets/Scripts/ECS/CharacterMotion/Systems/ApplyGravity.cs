@@ -13,7 +13,9 @@ namespace ECS.CharacterMotion.Systems
             float deltaTime)
         {
             if (!characterPhysics.IsGrounded)
-                characterPhysics.Velocity += Vector3.down * characterControllerSettings.Gravity * deltaTime;
+
+                // Gravity is already negative
+                characterPhysics.Velocity += Vector3.up * characterControllerSettings.Gravity * deltaTime;
             else
                 characterPhysics.Velocity.y = 0f;
         }

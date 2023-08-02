@@ -5,6 +5,7 @@ using CrdtEcsBridge.Components;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
+using DCL.CharacterCamera.Systems;
 using ECS.Prioritization.Components;
 
 namespace Global.Dynamic.Plugins
@@ -38,6 +39,8 @@ namespace Global.Dynamic.Plugins
             cinemachinePreset.ThirdPersonCameraData.Camera.Follow = playerFocus.CameraFocus;
             cinemachinePreset.ThirdPersonCameraData.Camera.LookAt = playerFocus.CameraFocus;
 
+            cinemachinePreset.Brain.ControlledObject = cinemachinePreset.Brain.gameObject;
+
             // Create a special camera entity
             world.Create(
                 new CRDTEntity(SpecialEntititiesID.CAMERA_ENTITY),
@@ -47,6 +50,10 @@ namespace Global.Dynamic.Plugins
                 new CameraInputSettings(cinemachinePreset.CameraModeMouseWheelThreshold),
                 cameraSamplingData,
                 realmSamplingData);
+
+            // Register systems
+            ControlCinemachineVirtualCameraSystem.InjectToWorld(ref builder);
+            ApplyCinemachineCameraInputSystem.InjectToWorld(ref builder);
         }
     }
 }

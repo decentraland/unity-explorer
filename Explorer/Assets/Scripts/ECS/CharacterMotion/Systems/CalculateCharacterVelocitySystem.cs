@@ -42,6 +42,7 @@ namespace ECS.CharacterMotion.Systems
             ref ICharacterControllerSettings characterControllerSettings,
             ref CharacterPhysics physics,
             ref JumpInputComponent jump,
+            ref CharacterRigidTransform rigidTransform,
             ref MovementInputComponent movementInput)
         {
             // Grounding should be calculated here?
@@ -51,6 +52,10 @@ namespace ECS.CharacterMotion.Systems
             ApplyJump.Execute(characterControllerSettings, ref jump, ref physics, physicsTick);
             ApplyGravity.Execute(characterControllerSettings, ref physics, dt);
             ApplyAirDrag.Execute(characterControllerSettings, ref physics, dt);
+
+            // Calculate target position
+            rigidTransform.PreviousTargetPosition = rigidTransform.TargetPosition;
+            rigidTransform.TargetPosition += physics.Velocity * dt;
         }
     }
 }
