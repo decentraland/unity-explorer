@@ -2,34 +2,36 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Character.Components;
+using ECS.Abstract;
 using ECS.CharacterMotion.Components;
 using ECS.CharacterMotion.Settings;
-using ECS.Input.Component;
-using ECS.Input.Component.Physics;
+using ECS.Input;
+using ECS.Input.Systems;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace ECS.Input.Systems
+namespace ECS.CharacterMotion.Systems
 {
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    public partial class UpdateInputJumpSystem : UpdateInputSystem<JumpInputComponent>
+    public partial class UpdateInputJumpSystem : UpdateInputSystem<JumpInputComponent, PlayerComponent>
     {
-
         private readonly InputAction inputAction;
+        private SingleInstanceEntity fixedTick;
+
         public UpdateInputJumpSystem(World world, InputAction inputAction) : base(world)
         {
             this.inputAction = inputAction;
         }
 
-        protected override void Update(float t)
+        public override void Initialize()
         {
-            GetTickValueQuery(World, t);
+            fixedTick = World.CachePhysicsTick();
         }
 
-        [Query]
-        private void GetTickValue([Data] float t, ref PhysicsTickComponent physicsTickComponent)
+        protected override void Update(float t)
         {
-            UpdateInputQuery(World, t, physicsTickComponent.tick);
+            UpdateInputQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick);
         }
 
         [Query]

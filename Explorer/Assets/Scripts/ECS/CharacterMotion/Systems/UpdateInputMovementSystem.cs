@@ -4,10 +4,11 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
 using ECS.CharacterMotion.Components;
+using ECS.Input.Systems;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace ECS.Input.Systems
+namespace ECS.CharacterMotion.Systems
 {
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     public partial class UpdateInputMovementSystem : UpdateInputSystem<MovementInputComponent, PlayerComponent>

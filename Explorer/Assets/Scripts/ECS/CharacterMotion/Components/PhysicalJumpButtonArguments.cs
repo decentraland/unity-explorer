@@ -1,4 +1,4 @@
-namespace ECS.Input.Component
+namespace ECS.CharacterMotion.Components
 {
     public struct PhysicalJumpButtonArguments
     {

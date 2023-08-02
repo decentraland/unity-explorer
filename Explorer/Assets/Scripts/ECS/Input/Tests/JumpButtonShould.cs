@@ -1,11 +1,10 @@
 using Arch.Core;
-using CrdtEcsBridge.Components.Special;
 using Cysharp.Threading.Tasks;
+using DCL.Character.Components;
 using ECS.CharacterMotion.Components;
 using ECS.CharacterMotion.Settings;
-using ECS.Input.Component;
+using ECS.CharacterMotion.Systems;
 using ECS.Input.Component.Physics;
-using ECS.Input.Systems;
 using ECS.Input.Systems.Physics;
 using NSubstitute;
 using NUnit.Framework;
@@ -15,7 +14,6 @@ using UnityEngine.InputSystem;
 [TestFixture]
 public class JumpInputComponentShould : InputTestFixture
 {
-
     private UpdateInputPhysicsTickSystem updatePhysicsTickSystem;
     private UpdateInputJumpSystem updateInputJumpSystem;
 
@@ -25,13 +23,11 @@ public class JumpInputComponentShould : InputTestFixture
     private Entity playerEntity;
     private Entity physicsTickEntity;
 
-
     [SetUp]
     public void SetUp()
     {
         base.Setup();
         world = World.Create();
-
 
         DCLInput dlcInput = new DCLInput();
         dlcInput.Enable();
@@ -42,9 +38,9 @@ public class JumpInputComponentShould : InputTestFixture
 
         playerEntity = world.Create(new PlayerComponent(), controllerSettings,
             new CharacterPhysics()
-        {
-            IsGrounded = true
-        });
+            {
+                IsGrounded = true,
+            });
 
         updatePhysicsTickSystem = new UpdateInputPhysicsTickSystem(world);
         updateInputJumpSystem = new UpdateInputJumpSystem(world, dlcInput.Player.Jump);
@@ -58,6 +54,7 @@ public class JumpInputComponentShould : InputTestFixture
         Press(inputDevice.spaceKey);
 
         updateInputJumpSystem.Update(0);
+
         //Assert
         Assert.IsTrue(world.Get<JumpInputComponent>(playerEntity).IsChargingJump);
 
@@ -106,9 +103,7 @@ public class JumpInputComponentShould : InputTestFixture
         await UniTask.Yield();
 
         //This simulated another fixed update. On this call, the jump should occur
-        int physicsTick = world.Get<PhysicsTickComponent>(physicsTickEntity).tick;
+        int physicsTick = world.Get<PhysicsTickComponent>(physicsTickEntity).Tick;
         Assert.IsTrue(world.Get<JumpInputComponent>(playerEntity).PhysicalButtonArguments.GetPower(physicsTick) > 0);
     }
-
-
 }
