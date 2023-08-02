@@ -1,10 +1,11 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
+using ECS.Abstract;
 using ECS.CharacterMotion.Components;
 using ECS.CharacterMotion.Settings;
 using ECS.CharacterMotion.Systems;
-using ECS.Input.Component.Physics;
+using ECS.Input;
 using ECS.Input.Systems.Physics;
 using NSubstitute;
 using NUnit.Framework;
@@ -14,6 +15,7 @@ using UnityEngine.InputSystem;
 [TestFixture]
 public class JumpInputComponentShould : InputTestFixture
 {
+
     private UpdateInputPhysicsTickSystem updatePhysicsTickSystem;
     private UpdateInputJumpSystem updateInputJumpSystem;
 
@@ -21,7 +23,7 @@ public class JumpInputComponentShould : InputTestFixture
     private Keyboard inputDevice;
 
     private Entity playerEntity;
-    private Entity physicsTickEntity;
+    private SingleInstanceEntity fixedTick;
 
     [SetUp]
     public void SetUp()
@@ -29,23 +31,23 @@ public class JumpInputComponentShould : InputTestFixture
         base.Setup();
         world = World.Create();
 
-        DCLInput dlcInput = new DCLInput();
+        var dlcInput = new DCLInput();
         dlcInput.Enable();
         inputDevice = InputSystem.AddDevice<Keyboard>();
 
         ICharacterControllerSettings controllerSettings = Substitute.For<ICharacterControllerSettings>();
         controllerSettings.HoldJumpTime.Returns(1f);
 
-        playerEntity = world.Create(new PlayerComponent(), controllerSettings,
-            new CharacterPhysics()
-            {
-                IsGrounded = true,
-            });
+        playerEntity = world.Create(new PlayerComponent(), controllerSettings, new CharacterPhysics
+        {
+            IsGrounded = true,
+        });
 
         updatePhysicsTickSystem = new UpdateInputPhysicsTickSystem(world);
         updateInputJumpSystem = new UpdateInputJumpSystem(world, dlcInput.Player.Jump);
+        updateInputJumpSystem.Initialize();
 
-        world.Query(new QueryDescription().WithAll<PhysicsTickComponent>(), (in Entity entity) => { physicsTickEntity = entity; });
+        fixedTick = world.CachePhysicsTick();
     }
 
     [Test]
@@ -103,7 +105,6 @@ public class JumpInputComponentShould : InputTestFixture
         await UniTask.Yield();
 
         //This simulated another fixed update. On this call, the jump should occur
-        int physicsTick = world.Get<PhysicsTickComponent>(physicsTickEntity).Tick;
-        Assert.IsTrue(world.Get<JumpInputComponent>(playerEntity).PhysicalButtonArguments.GetPower(physicsTick) > 0);
+        Assert.IsTrue(world.Get<JumpInputComponent>(playerEntity).PhysicalButtonArguments.GetPower(fixedTick.GetPhysicsTickComponent(world).Tick) > 0);
     }
 }
