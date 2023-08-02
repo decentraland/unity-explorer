@@ -6,7 +6,7 @@ namespace DCL.CharacterCamera.Components
     /// <summary>
     ///     Data for camera setup based on the Unity's Cinemachine
     /// </summary>
-    internal interface ICinemachinePreset
+    public interface ICinemachinePreset
     {
         CameraMode DefaultCameraMode { get; }
 
@@ -17,10 +17,10 @@ namespace DCL.CharacterCamera.Components
         /// </summary>
         float CameraModeMouseWheelThreshold { get; }
 
-        ICinemachineThirdPersonCameraData ThirdPersonCameraData { get; }
+        internal ICinemachineThirdPersonCameraData ThirdPersonCameraData { get; }
 
-        ICinemachineFirstPersonCameraData FirstPersonCameraData { get; }
+        internal ICinemachineFirstPersonCameraData FirstPersonCameraData { get; }
 
-        ICinemachineFreeCameraData FreeCameraData { get; }
+        internal ICinemachineFreeCameraData FreeCameraData { get; }
     }
 }

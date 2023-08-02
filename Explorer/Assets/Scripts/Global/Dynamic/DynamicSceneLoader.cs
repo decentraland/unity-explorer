@@ -70,7 +70,7 @@ namespace Global.Dynamic
 
             staticContainer = StaticContainer.Create(partitionSettingsAsset, reportsHandlingSettings);
             sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
-            dynamicWorldContainer = DynamicWorldContainer.Create(in staticContainer, realmPartitionSettingsAsset, StaticLoadPositions, SceneLoadRadius);
+            dynamicWorldContainer = DynamicWorldContainer.Create(in staticContainer, realmPartitionSettingsAsset, camera, StaticLoadPositions, SceneLoadRadius);
 
             Profiler.EndSample();
         }

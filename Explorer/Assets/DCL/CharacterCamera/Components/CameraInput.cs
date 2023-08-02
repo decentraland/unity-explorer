@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using ECS.Input.Component;
+using UnityEngine;
 
 namespace DCL.CharacterCamera.Components
 {
@@ -7,10 +8,11 @@ namespace DCL.CharacterCamera.Components
     ///     Abstracted from the source it is originated from.
     ///     Having values on this component means that it will be actually applied and won't be filtered
     /// </summary>
-    public struct CameraInput
+    public struct CameraInput : IInputComponent
     {
-        public Vector2 Axes;
+        public bool ZoomIn;
+        public bool ZoomOut;
 
-        public float WheelVerticalValue;
+        public Vector2 Axes;
     }
 }

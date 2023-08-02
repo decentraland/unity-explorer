@@ -2,13 +2,11 @@
 
 namespace ECS.CharacterMotion.Components
 {
-    public struct JumpInputComponent : InputComponent
+    public struct JumpInputComponent : IInputComponent
     {
         public PhysicalJumpButtonArguments PhysicalButtonArguments;
 
         public float CurrentHoldTime;
         public bool IsChargingJump;
-
     }
-
 }

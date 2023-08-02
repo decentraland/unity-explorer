@@ -2,19 +2,19 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Character.Components;
 using ECS.CharacterMotion.Components;
-using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace ECS.Input.Systems
 {
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    public partial class UpdateInputMovementSystem : UpdateInputSystem<MovementInputComponent>
+    public partial class UpdateInputMovementSystem : UpdateInputSystem<MovementInputComponent, PlayerComponent>
     {
-
         private readonly InputAction movementAxis;
         private readonly InputAction sprintAction;
+
         public UpdateInputMovementSystem(World world, DCLInput dclInput) : base(world)
         {
             movementAxis = dclInput.Player.Movement;

@@ -1,8 +1,8 @@
 namespace ECS.Input.Component
 {
-    public interface InputComponent { }
+    public interface IInputComponent { }
 
-    public interface KeyComponent : InputComponent
+    public interface IKeyComponent : IInputComponent
     {
         ButtonArguments ButtonArguments { get; set; }
     }
@@ -16,57 +16,53 @@ namespace ECS.Input.Component
 
     public struct PhysicalJumpButtonArguments
     {
-        public int tickWhenJumpOcurred;
+        public int TickWhenJumpOccurred;
         public float Power;
 
         public float GetPower(int physicsTick)
         {
-            if (physicsTick == tickWhenJumpOcurred)
+            if (physicsTick == TickWhenJumpOccurred)
                 return Power;
 
             return 0;
         }
-
     }
 
-    public struct PrimaryKey : KeyComponent
+    public struct PrimaryKey : IKeyComponent
     {
         public ButtonArguments ButtonArguments { get; set; }
     }
 
     public static class InputComponentExtensions
     {
-
-        public static bool IsKeyDown<T>(this ref T keyComponent) where T: struct, KeyComponent =>
+        public static bool IsKeyDown<T>(this ref T keyComponent) where T: struct, IKeyComponent =>
             keyComponent.ButtonArguments.IsKeyDown;
 
-        public static bool IsKeyUp<T>(this ref T keyComponent) where T: struct, KeyComponent =>
+        public static bool IsKeyUp<T>(this ref T keyComponent) where T: struct, IKeyComponent =>
             keyComponent.ButtonArguments.IsKeyUp;
 
-        public static bool IsKeyPressed<T>(this ref T keyComponent) where T: struct, KeyComponent =>
+        public static bool IsKeyPressed<T>(this ref T keyComponent) where T: struct, IKeyComponent =>
             keyComponent.ButtonArguments.IsKeyPressed;
 
-        public static void SetKeyDown<T>(this ref T keyComponent, bool isKeyDown) where T: struct, KeyComponent
+        public static void SetKeyDown<T>(this ref T keyComponent, bool isKeyDown) where T: struct, IKeyComponent
         {
             ButtonArguments ba = keyComponent.ButtonArguments;
             ba.IsKeyDown = isKeyDown;
             keyComponent.ButtonArguments = ba;
         }
 
-        public static void SetKeyUp<T>(this ref T keyComponent, bool isKeyUp) where T: struct, KeyComponent
+        public static void SetKeyUp<T>(this ref T keyComponent, bool isKeyUp) where T: struct, IKeyComponent
         {
             ButtonArguments ba = keyComponent.ButtonArguments;
             ba.IsKeyUp = isKeyUp;
             keyComponent.ButtonArguments = ba;
         }
 
-        public static void SetKeyPressed<T>(this ref T keyComponent, bool isKeyPressed) where T: struct, KeyComponent
+        public static void SetKeyPressed<T>(this ref T keyComponent, bool isKeyPressed) where T: struct, IKeyComponent
         {
             ButtonArguments ba = keyComponent.ButtonArguments;
             ba.IsKeyPressed = isKeyPressed;
             keyComponent.ButtonArguments = ba;
         }
-
     }
-
 }

@@ -1,34 +1,36 @@
 {
-    "name": "ECS.TestSuite",
-    "rootNamespace": "",
-    "references": [
-        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
-        "GUID:f95f5feadbbe2f9448969f3a23470e3d",
-        "GUID:4794e238ed0f65142a4aea5848b513e5",
-        "GUID:d414ef88f3b15f746a4b97636b50dfb4",
-        "GUID:ac3295688c7c22745a96e6ac34718181",
-        "GUID:dc04f38471c3a459fb4d31124ee9127d",
-        "GUID:75469ad4d38634e559750d17036d5f7c",
-        "GUID:f51ebe6a0ceec4240a699833d6309b23",
-        "GUID:17381a5480012e948a8c344028f41089"
-    ],
-    "includePlatforms": [
-        "Editor"
-    ],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": true,
-    "precompiledReferences": [
-        "nunit.framework.dll",
-        "NSubstitute.dll",
-        "Arch.dll",
-        "Arch.System.dll",
-        "Arch.SystemGroups.dll"
-    ],
-    "autoReferenced": false,
-    "defineConstraints": [
-        "UNITY_INCLUDE_TESTS"
-    ],
-    "versionDefines": [],
-    "noEngineReferences": false
+  "name": "ECS.TestSuite",
+  "rootNamespace": "",
+  "references": [
+    "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+    "GUID:f95f5feadbbe2f9448969f3a23470e3d",
+    "GUID:4794e238ed0f65142a4aea5848b513e5",
+    "GUID:d414ef88f3b15f746a4b97636b50dfb4",
+    "GUID:ac3295688c7c22745a96e6ac34718181",
+    "GUID:dc04f38471c3a459fb4d31124ee9127d",
+    "GUID:75469ad4d38634e559750d17036d5f7c",
+    "GUID:f51ebe6a0ceec4240a699833d6309b23",
+    "GUID:17381a5480012e948a8c344028f41089",
+    "GUID:c80c82a8f4e04453b85fbab973d6774a",
+    "GUID:007bff6000804d90ac597452fb69a4ee"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll",
+    "NSubstitute.dll",
+    "Arch.dll",
+    "Arch.System.dll",
+    "Arch.SystemGroups.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

@@ -83,7 +83,7 @@ namespace DCL.CharacterCamera.Systems
                 return;
 
             // Zoom out
-            if (input.WheelVerticalValue < -cinemachinePreset.CameraModeMouseWheelThreshold)
+            if (input.ZoomOut)
             {
                 switch (cameraComponent.Mode)
                 {
@@ -96,20 +96,20 @@ namespace DCL.CharacterCamera.Systems
                         break;
                     case CameraMode.ThirdPerson:
                         // Zoom out according to sensitivity
-                        state.ThirdPersonZoomValue = Mathf.Clamp01(state.ThirdPersonZoomValue + (cinemachinePreset.ThirdPersonCameraData.ZoomSensitivity * -input.WheelVerticalValue));
+                        state.ThirdPersonZoomValue = Mathf.Clamp01(state.ThirdPersonZoomValue + cinemachinePreset.ThirdPersonCameraData.ZoomSensitivity);
                         break;
                 }
             }
 
             // Zoom in
-            else if (input.WheelVerticalValue > cinemachinePreset.CameraModeMouseWheelThreshold)
+            else if (input.ZoomIn)
             {
                 // Act only if in Third Person
                 if (cameraComponent.Mode == CameraMode.ThirdPerson)
                 {
                     // Zoom in according to sensitivity
                     float previousZoomValue = state.ThirdPersonZoomValue;
-                    float targetUnclampedValue = state.ThirdPersonZoomValue - (cinemachinePreset.ThirdPersonCameraData.ZoomSensitivity * input.WheelVerticalValue);
+                    float targetUnclampedValue = state.ThirdPersonZoomValue - cinemachinePreset.ThirdPersonCameraData.ZoomSensitivity;
 
                     // If we exceed the zoom more than by twice the previous value, switch to FP
                     if (targetUnclampedValue < 0 && -targetUnclampedValue > previousZoomValue)
@@ -136,7 +136,7 @@ namespace DCL.CharacterCamera.Systems
             IReadOnlyList<CinemachineFreeLook.Orbit> zoomOutOrbitThreshold = cinemachinePreset.ThirdPersonCameraData.ZoomOutOrbitThreshold;
 
             static CinemachineFreeLook.Orbit LerpOrbit(CinemachineFreeLook.Orbit a, CinemachineFreeLook.Orbit b, float t) =>
-                new()
+                new ()
                 {
                     m_Height = Mathf.Lerp(a.m_Height, b.m_Height, t),
                     m_Radius = Mathf.Lerp(a.m_Radius, b.m_Radius, t),

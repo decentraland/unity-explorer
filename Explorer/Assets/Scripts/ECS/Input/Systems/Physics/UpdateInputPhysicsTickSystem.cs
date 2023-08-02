@@ -23,8 +23,7 @@ namespace ECS.Input.Systems.Physics
         [Query]
         private void UpdateTick(ref PhysicsTickComponent tickComponent)
         {
-            tickComponent.tick++;
+            tickComponent.Tick++;
         }
-
     }
 }

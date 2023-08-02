@@ -1,12 +1,10 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using CrdtEcsBridge.Components.Special;
-using ECS.CharacterMotion.Components;
+using CRDT;
+using CrdtEcsBridge.Components;
+using DCL.Character;
+using DCL.Character.Components;
 using ECS.ComponentsPooling;
-using ECS.Input;
-using ECS.Input.Component;
-using ECS.Input.Systems;
-using ECS.Input.Systems.Physics;
 using ECS.LifeCycle;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -19,10 +17,12 @@ using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Transforms.Components;
+using Global.Dynamic.Plugins;
 using Ipfs;
 using SceneRunner;
 using SceneRunner.EmptyScene;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -46,9 +46,10 @@ namespace Global.Dynamic
         private readonly IPartitionSettings partitionSettings;
         private readonly IRealmPartitionSettings realmPartitionSettings;
         private readonly RealmSamplingData realmSamplingData;
+        private readonly IReadOnlyList<IECSGlobalPlugin> globalPlugins;
 
         public GlobalWorldFactory(in StaticContainer staticContainer, IRealmPartitionSettings realmPartitionSettings,
-            CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData)
+            CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData, IReadOnlyList<IECSGlobalPlugin> globalPlugins)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -56,6 +57,7 @@ namespace Global.Dynamic
             this.realmPartitionSettings = realmPartitionSettings;
             this.cameraSamplingData = cameraSamplingData;
             this.realmSamplingData = realmSamplingData;
+            this.globalPlugins = globalPlugins;
         }
 
         public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory, ICharacterObject characterObject)
@@ -109,8 +111,10 @@ namespace Global.Dynamic
             CheckCameraQualifiedForRepartitioningSystem.InjectToWorld(ref builder, partitionSettings);
             SortWorldsAggregateSystem.InjectToWorld(ref builder, partitionedWorldsAggregateFactory, realmPartitionSettings);
 
-            InputPlugin inputPlugin = new InputPlugin();
-            inputPlugin.InjectToWorld(ref builder);
+            var pluginArgs = new GlobalPluginArguments(playerEntity);
+
+            for (var i = 0; i < globalPlugins.Count; i++)
+                globalPlugins[i].InjectToWorld(ref builder, pluginArgs);
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
                 { new ReleaseRealmPooledComponentSystem(componentPoolsRegistry) };

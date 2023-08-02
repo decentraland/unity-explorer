@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace ECS.CharacterMotion.Components
 {
-    public struct MovementInputComponent : InputComponent
+    public struct MovementInputComponent : IInputComponent
     {
         public MovementKind Kind;
 

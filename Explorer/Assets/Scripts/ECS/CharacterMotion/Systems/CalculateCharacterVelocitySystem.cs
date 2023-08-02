@@ -2,12 +2,12 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using CrdtEcsBridge.Components.Special;
+using DCL.CharacterCamera;
 using ECS.Abstract;
 using ECS.CharacterMotion.Components;
 using ECS.CharacterMotion.Settings;
-using ECS.Input.Component.Physics;
-using NSubstitute.Core;
+using ECS.Input;
+using ECS.Input.Systems.Physics;
 
 namespace ECS.CharacterMotion.Systems
 {
@@ -15,28 +15,32 @@ namespace ECS.CharacterMotion.Systems
     ///     Entry point to calculate everything that affects character's velocity
     /// </summary>
     [UpdateInGroup(typeof(PhysicsSystemGroup))]
+    [UpdateAfter(typeof(UpdateInputPhysicsTickSystem))]
     public partial class CalculateCharacterVelocitySystem : BaseUnityLoopSystem
     {
+        private SingleInstanceEntity camera;
+        private SingleInstanceEntity fixedTick;
+
         internal CalculateCharacterVelocitySystem(World world) : base(world) { }
+
+        public override void Initialize()
+        {
+            camera = World.CacheCamera();
+            fixedTick = World.CachePhysicsTick();
+        }
 
         protected override void Update(float t)
         {
-            GetTickValueQuery(World, t);
-        }
-
-        [Query]
-        private void GetTickValue([Data] float dt, ref PhysicsTickComponent physicsTickComponent)
-        {
-            ResolveVelocityQuery(World, dt, physicsTickComponent.tick);
+            ResolveVelocityQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick, in camera.GetCameraComponent(World));
         }
 
         [Query]
         private void ResolveVelocity(
             [Data] float dt,
             [Data] int physicsTick,
+            [Data] in CameraComponent camera,
             ref ICharacterControllerSettings characterControllerSettings,
             ref CharacterPhysics physics,
-            ref CameraComponent camera,
             ref JumpInputComponent jump,
             ref MovementInputComponent movementInput)
         {
