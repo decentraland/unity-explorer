@@ -2,14 +2,13 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace ECS.Input.Systems
 {
     [UpdateInGroup(typeof(SimulationSystemGroup))]
-    public partial class UpdateInputCameraZoomSystem : UpdateInputSystem<CameraZoomComponent>
+    public partial class UpdateInputCameraZoomSystem : UpdateInputSystem<CameraZoomInputComponent>
     {
 
         private readonly InputAction zoomInAction;
@@ -29,7 +28,7 @@ namespace ECS.Input.Systems
         }
 
         [Query]
-        private void UpdateInput(ref CameraZoomComponent inputToUpdate)
+        private void UpdateInput(ref CameraZoomInputComponent inputToUpdate)
         {
             inputToUpdate.DoZoomIn = zoomWheelAction.ReadValue<Vector2>().y > 0  || zoomInAction.WasPressedThisFrame();
             inputToUpdate.DoZoomOut = zoomWheelAction.ReadValue<Vector2>().y < 0  ||zoomOutAction.WasPressedThisFrame();

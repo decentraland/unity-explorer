@@ -1,5 +1,6 @@
 using ECS.CharacterMotion.Components;
 using ECS.CharacterMotion.Settings;
+using ECS.Input.Component;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 

@@ -6,8 +6,8 @@ using CrdtEcsBridge.Components.Special;
 using ECS.Abstract;
 using ECS.CharacterMotion.Components;
 using ECS.CharacterMotion.Settings;
+using ECS.Input.Component;
 using ECS.Input.Component.Physics;
-using NSubstitute.Core;
 
 namespace ECS.CharacterMotion.Systems
 {

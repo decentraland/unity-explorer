@@ -1,9 +1,14 @@
 using ECS.Input.Component;
 
-public struct CameraZoomComponent : InputComponent
+public struct CameraZoomInputComponent : InputComponent
 {
-
+    /// <summary>
+    ///     Describes if a zoom in action should be fired
+    /// </summary>
     public bool DoZoomIn;
-    public bool DoZoomOut;
 
+    /// <summary>
+    ///     Describes if a zoom out action should be fired
+    /// </summary>
+    public bool DoZoomOut;
 }
