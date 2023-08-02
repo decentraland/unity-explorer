@@ -28,5 +28,7 @@ namespace ECS.CharacterMotion.Settings
 
         [field: SerializeField]
         public float AirDrag { get; private set; }
+        [field: SerializeField]
+        public float HoldJumpTime { get; private set; } = 0.5f;
     }
 }

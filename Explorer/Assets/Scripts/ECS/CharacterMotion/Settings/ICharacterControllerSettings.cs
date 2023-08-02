@@ -15,5 +15,6 @@ namespace ECS.CharacterMotion.Settings
         float Gravity { get; }
         Vector2 JumpHeight { get; }
         float AirDrag { get; }
+        float HoldJumpTime { get; }
     }
 }

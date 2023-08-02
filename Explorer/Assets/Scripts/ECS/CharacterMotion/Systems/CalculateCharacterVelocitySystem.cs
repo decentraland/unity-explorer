@@ -2,10 +2,12 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.CharacterCamera;
+using CrdtEcsBridge.Components.Special;
 using ECS.Abstract;
 using ECS.CharacterMotion.Components;
 using ECS.CharacterMotion.Settings;
+using ECS.Input.Component.Physics;
+using NSubstitute.Core;
 
 namespace ECS.CharacterMotion.Systems
 {
@@ -15,26 +17,26 @@ namespace ECS.CharacterMotion.Systems
     [UpdateInGroup(typeof(PhysicsSystemGroup))]
     public partial class CalculateCharacterVelocitySystem : BaseUnityLoopSystem
     {
-        private SingleInstanceEntity camera;
-
         internal CalculateCharacterVelocitySystem(World world) : base(world) { }
-
-        public override void Initialize()
-        {
-            camera = World.CacheCamera();
-        }
 
         protected override void Update(float t)
         {
-            ResolveVelocityQuery(World, in camera.GetCameraComponent(World), t);
+            GetTickValueQuery(World, t);
+        }
+
+        [Query]
+        private void GetTickValue([Data] float dt, ref PhysicsTickComponent physicsTickComponent)
+        {
+            ResolveVelocityQuery(World, dt, physicsTickComponent.tick);
         }
 
         [Query]
         private void ResolveVelocity(
-            [Data] in CameraComponent camera,
             [Data] float dt,
+            [Data] int physicsTick,
             ref ICharacterControllerSettings characterControllerSettings,
             ref CharacterPhysics physics,
+            ref CameraComponent camera,
             ref JumpInputComponent jump,
             ref MovementInputComponent movementInput)
         {
@@ -42,7 +44,7 @@ namespace ECS.CharacterMotion.Systems
 
             // Apply all velocities
             ApplyCharacterMovementVelocity.Execute(characterControllerSettings, ref physics, in camera, in movementInput, dt);
-            ApplyJump.Execute(characterControllerSettings, ref jump, ref physics);
+            ApplyJump.Execute(characterControllerSettings, ref jump, ref physics, physicsTick);
             ApplyGravity.Execute(characterControllerSettings, ref physics, dt);
             ApplyAirDrag.Execute(characterControllerSettings, ref physics, dt);
         }

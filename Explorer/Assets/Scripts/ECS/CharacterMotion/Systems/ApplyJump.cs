@@ -11,11 +11,13 @@ namespace ECS.CharacterMotion.Systems
         public static void Execute(
             ICharacterControllerSettings characterControllerSettings,
             ref JumpInputComponent jump,
-            ref CharacterPhysics characterPhysics)
+            ref CharacterPhysics characterPhysics,
+            int physicsTick)
         {
-            if (characterPhysics.IsGrounded && jump.Power > 0)
+            float power = jump.PhysicalButtonArguments.GetPower(physicsTick);
+            if (characterPhysics.IsGrounded && power > 0)
             {
-                float jumpHeight = Mathf.Lerp(characterControllerSettings.JumpHeight.x, characterControllerSettings.JumpHeight.y, jump.Power);
+                float jumpHeight = Mathf.Lerp(characterControllerSettings.JumpHeight.x, characterControllerSettings.JumpHeight.y, power);
 
                 // Override velocity in a jump direction
                 characterPhysics.Velocity.y = Mathf.Sqrt(-2 * jumpHeight * characterControllerSettings.Gravity);

@@ -1,10 +1,12 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using CRDT;
-using CrdtEcsBridge.Components;
-using DCL.Character;
-using DCL.Character.Components;
+using CrdtEcsBridge.Components.Special;
+using ECS.CharacterMotion.Components;
 using ECS.ComponentsPooling;
+using ECS.Input;
+using ECS.Input.Component;
+using ECS.Input.Systems;
+using ECS.Input.Systems.Physics;
 using ECS.LifeCycle;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -106,6 +108,9 @@ namespace Global.Dynamic
             PartitionSceneEntitiesSystem.InjectToWorld(ref builder, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>(), partitionSettings, cameraSamplingData);
             CheckCameraQualifiedForRepartitioningSystem.InjectToWorld(ref builder, partitionSettings);
             SortWorldsAggregateSystem.InjectToWorld(ref builder, partitionedWorldsAggregateFactory, realmPartitionSettings);
+
+            InputPlugin inputPlugin = new InputPlugin();
+            inputPlugin.InjectToWorld(ref builder);
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
                 { new ReleaseRealmPooledComponentSystem(componentPoolsRegistry) };
