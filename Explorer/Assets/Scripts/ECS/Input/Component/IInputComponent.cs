@@ -14,20 +14,6 @@ namespace ECS.Input.Component
         public bool IsKeyPressed;
     }
 
-    public struct PhysicalJumpButtonArguments
-    {
-        public int TickWhenJumpOccurred;
-        public float Power;
-
-        public float GetPower(int physicsTick)
-        {
-            if (physicsTick == TickWhenJumpOccurred)
-                return Power;
-
-            return 0;
-        }
-    }
-
     public struct PrimaryKey : IKeyComponent
     {
         public ButtonArguments ButtonArguments { get; set; }
