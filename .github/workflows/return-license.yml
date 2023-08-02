@@ -1,0 +1,16 @@
+name: Return license
+on:
+  workflow_dispatch: {}
+jobs:
+  activation:
+    name: Manual return license 🔑
+    runs-on: ubuntu-latest
+    steps:
+      # Return Unity License Manually
+      - name: Unity Return License
+        uses: game-ci/unity-return-license@v2.0.0
+        if: always()
+        env:
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
