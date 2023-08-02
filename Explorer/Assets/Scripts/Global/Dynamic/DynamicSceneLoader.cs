@@ -1,4 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Character;
+using DCL.CharacterCamera.Settings;
 using Diagnostics.ReportsHandling;
 using ECS.Prioritization;
 using System.Collections.Generic;
@@ -15,7 +17,8 @@ namespace Global.Dynamic
     /// </summary>
     public class DynamicSceneLoader : MonoBehaviour
     {
-        [SerializeField] private Camera camera;
+        [SerializeField] private CharacterObject character;
+        [SerializeField] private CinemachinePreset camera;
         [SerializeField] private Vector2Int StartPosition;
         [SerializeField] private int SceneLoadRadius = 4;
         [SerializeField] private ReportsHandlingSettings reportsHandlingSettings;
@@ -57,7 +60,7 @@ namespace Global.Dynamic
             cameraPosition.y += 8.0f;
             camera.transform.position = cameraPosition;
 
-            globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory, dynamicWorldContainer.EmptyScenesWorldFactory, camera);
+            globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory, dynamicWorldContainer.EmptyScenesWorldFactory, character);
             await dynamicWorldContainer.RealmController.SetRealm(globalWorld, "https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main", destroyCancellationToken);
         }
 

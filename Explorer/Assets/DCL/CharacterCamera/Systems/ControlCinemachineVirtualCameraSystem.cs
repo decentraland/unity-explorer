@@ -1,0 +1,156 @@
+﻿using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using Cinemachine;
+using DCL.CharacterCamera.Components;
+using ECS.Abstract;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace DCL.CharacterCamera.Systems
+{
+    /// <summary>
+    ///     Controls switching between First Person and Third Person camera modes.
+    ///     When in Third Person mode, it also controls the camera distance from the character.
+    /// </summary>
+    [UpdateInGroup(typeof(CameraGroup))]
+    public partial class ControlCinemachineVirtualCameraSystem : BaseUnityLoopSystem
+    {
+        internal ControlCinemachineVirtualCameraSystem(World world) : base(world) { }
+
+        public override void Initialize()
+        {
+            // Resolve default state
+            ApplyDefaultCameraModeQuery(World);
+        }
+
+        [Query]
+        private void ApplyDefaultCameraMode(ref ICinemachinePreset cinemachinePreset, ref CameraComponent camera, ref CinemachineCameraState cameraState)
+        {
+            camera.Mode = cinemachinePreset.DefaultCameraMode;
+
+            switch (cinemachinePreset.DefaultCameraMode)
+            {
+                case CameraMode.FirstPerson:
+                    SetActiveCamera(ref cameraState, cinemachinePreset.FirstPersonCameraData.Camera);
+                    break;
+                case CameraMode.ThirdPerson:
+                    SetActiveCamera(ref cameraState, cinemachinePreset.ThirdPersonCameraData.Camera);
+                    break;
+                case CameraMode.Free:
+                    // TODO free;
+                    break;
+            }
+        }
+
+        protected override void Update(float t)
+        {
+            HandleZoomingQuery(World);
+        }
+
+        private static void SetActiveCamera(ref CinemachineCameraState cameraState, CinemachineVirtualCameraBase camera)
+        {
+            cameraState.CurrentCamera = camera;
+            camera.enabled = true;
+        }
+
+        private static void ActivateCamera(CameraMode targetCameraMode, ref ICinemachinePreset cinemachinePreset, ref CameraComponent camera, ref CinemachineCameraState cameraState)
+        {
+            if (camera.Mode == targetCameraMode)
+                return;
+
+            cameraState.CurrentCamera.enabled = false;
+
+            switch (camera.Mode)
+            {
+                case CameraMode.FirstPerson:
+                    SetActiveCamera(ref cameraState, cinemachinePreset.FirstPersonCameraData.Camera);
+                    break;
+                case CameraMode.ThirdPerson:
+                    SetActiveCamera(ref cameraState, cinemachinePreset.ThirdPersonCameraData.Camera);
+                    break;
+                case CameraMode.Free:
+                    // TODO free;
+                    break;
+            }
+        }
+
+        [Query]
+        private void HandleZooming(ref CameraComponent cameraComponent, ref CameraInput input, ref ICinemachinePreset cinemachinePreset, ref CinemachineCameraState state)
+        {
+            // Zooming in free mode does not make sense
+            if (cameraComponent.Mode == CameraMode.Free)
+                return;
+
+            // Zoom out
+            if (input.WheelVerticalValue < -cinemachinePreset.CameraModeMouseWheelThreshold)
+            {
+                switch (cameraComponent.Mode)
+                {
+                    // if we switch from FP to TP just zoom at 0 position
+                    case CameraMode.FirstPerson:
+                        ActivateCamera(CameraMode.ThirdPerson, ref cinemachinePreset, ref cameraComponent, ref state);
+
+                        // Reset zoom value
+                        state.ThirdPersonZoomValue = 0f;
+                        break;
+                    case CameraMode.ThirdPerson:
+                        // Zoom out according to sensitivity
+                        state.ThirdPersonZoomValue = Mathf.Clamp01(state.ThirdPersonZoomValue + (cinemachinePreset.ThirdPersonCameraData.ZoomSensitivity * -input.WheelVerticalValue));
+                        break;
+                }
+            }
+
+            // Zoom in
+            else if (input.WheelVerticalValue > cinemachinePreset.CameraModeMouseWheelThreshold)
+            {
+                // Act only if in Third Person
+                if (cameraComponent.Mode == CameraMode.ThirdPerson)
+                {
+                    // Zoom in according to sensitivity
+                    float previousZoomValue = state.ThirdPersonZoomValue;
+                    float targetUnclampedValue = state.ThirdPersonZoomValue - (cinemachinePreset.ThirdPersonCameraData.ZoomSensitivity * input.WheelVerticalValue);
+
+                    // If we exceed the zoom more than by twice the previous value, switch to FP
+                    if (targetUnclampedValue < 0 && -targetUnclampedValue > previousZoomValue)
+                    {
+                        ActivateCamera(CameraMode.FirstPerson, ref cinemachinePreset, ref cameraComponent, ref state);
+                        return;
+                    }
+
+                    state.ThirdPersonZoomValue = Mathf.Clamp01(targetUnclampedValue);
+                }
+            }
+            else
+
+                // if zoom was not changed
+                return;
+
+            // Set a freshly assigned value
+            SetThirdPersonZoom(state.ThirdPersonZoomValue, in cinemachinePreset);
+        }
+
+        private static void SetThirdPersonZoom(float normValue, in ICinemachinePreset cinemachinePreset)
+        {
+            IReadOnlyList<CinemachineFreeLook.Orbit> zoomInOrbitThreshold = cinemachinePreset.ThirdPersonCameraData.ZoomInOrbitThreshold;
+            IReadOnlyList<CinemachineFreeLook.Orbit> zoomOutOrbitThreshold = cinemachinePreset.ThirdPersonCameraData.ZoomOutOrbitThreshold;
+
+            static CinemachineFreeLook.Orbit LerpOrbit(CinemachineFreeLook.Orbit a, CinemachineFreeLook.Orbit b, float t) =>
+                new()
+                {
+                    m_Height = Mathf.Lerp(a.m_Height, b.m_Height, t),
+                    m_Radius = Mathf.Lerp(a.m_Radius, b.m_Radius, t),
+                };
+
+            for (var i = 0; i < 3; i++)
+            {
+                // Lerp orbit values
+                // 0 is closest
+                // 1 is farthest
+
+                CinemachineFreeLook.Orbit orbitValue = LerpOrbit(zoomInOrbitThreshold[i], zoomOutOrbitThreshold[i], normValue);
+                cinemachinePreset.ThirdPersonCameraData.Camera.m_Orbits[i] = orbitValue;
+            }
+        }
+    }
+}

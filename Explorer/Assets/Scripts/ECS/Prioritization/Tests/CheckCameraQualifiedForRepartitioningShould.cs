@@ -1,5 +1,5 @@
 ﻿using Arch.Core;
-using CrdtEcsBridge.Components.Special;
+using DCL.CharacterCamera;
 using ECS.Prioritization.Components;
 using ECS.Prioritization.Systems;
 using ECS.TestSuite;

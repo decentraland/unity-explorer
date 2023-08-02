@@ -1,0 +1,17 @@
+{
+  "name": "CharacterCamera",
+  "rootNamespace": "",
+  "references": [
+    "GUID:4307f53044263cf4b835bd812fc161a4",
+    "GUID:1b8e1e1bd01505f478f0369c04a4fb2f"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

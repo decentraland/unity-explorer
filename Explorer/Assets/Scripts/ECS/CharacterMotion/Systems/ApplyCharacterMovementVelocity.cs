@@ -1,4 +1,4 @@
-﻿using CrdtEcsBridge.Components.Special;
+﻿using DCL.CharacterCamera;
 using ECS.CharacterMotion.Components;
 using ECS.CharacterMotion.Settings;
 using System.Runtime.CompilerServices;

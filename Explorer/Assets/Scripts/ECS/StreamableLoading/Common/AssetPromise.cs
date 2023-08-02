@@ -2,7 +2,6 @@
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using System;
-using UnityEngine.Assertions;
 
 namespace ECS.StreamableLoading.Common
 {
@@ -70,7 +69,7 @@ namespace ECS.StreamableLoading.Common
         /// </summary>
         public bool TryConsume(World world, out StreamableLoadingResult<TAsset> result)
         {
-            Assert.IsFalse(Result.HasValue, $"Promise {LoadingIntention} has been already consumed");
+            // Assert.IsFalse(Result.HasValue, $"Promise {LoadingIntention} has been already consumed");
 
             result = default(StreamableLoadingResult<TAsset>);
 

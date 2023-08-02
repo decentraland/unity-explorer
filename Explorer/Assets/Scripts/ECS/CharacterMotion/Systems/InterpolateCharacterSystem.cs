@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.CharacterCamera;
 using ECS.Abstract;
 using ECS.CharacterMotion.Components;
 using ECS.Prioritization.Systems;
@@ -19,6 +20,7 @@ namespace ECS.CharacterMotion.Systems
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateBefore(typeof(CheckCameraQualifiedForRepartitioningSystem))]
+    [UpdateBefore(typeof(CameraGroup))]
     public partial class InterpolateCharacterSystem : BaseUnityLoopSystem
     {
         internal InterpolateCharacterSystem(World world) : base(world) { }

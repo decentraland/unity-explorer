@@ -2,7 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using CrdtEcsBridge.Components.Special;
+using DCL.CharacterCamera;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 
@@ -17,6 +17,7 @@ namespace ECS.Prioritization.Systems
     ///     </para>
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateAfter(typeof(CameraGroup))]
     public partial class CheckCameraQualifiedForRepartitioningSystem : BaseUnityLoopSystem
     {
         private readonly IPartitionSettings partitionSettings;

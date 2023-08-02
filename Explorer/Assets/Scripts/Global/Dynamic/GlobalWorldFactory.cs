@@ -1,6 +1,9 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using CrdtEcsBridge.Components.Special;
+using CRDT;
+using CrdtEcsBridge.Components;
+using DCL.Character;
+using DCL.Character.Components;
 using ECS.ComponentsPooling;
 using ECS.LifeCycle;
 using ECS.Prioritization;
@@ -53,7 +56,7 @@ namespace Global.Dynamic
             this.realmSamplingData = realmSamplingData;
         }
 
-        public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory, Camera unityCamera)
+        public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory, ICharacterObject characterObject)
         {
             var world = World.Create();
 
@@ -62,7 +65,10 @@ namespace Global.Dynamic
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
 
-            Entity playerEntity = world.Create(new PlayerComponent(), new TransformComponent { Transform = unityCamera.transform }, new CameraComponent(unityCamera), cameraSamplingData);
+            Entity playerEntity = world.Create(
+                new CRDTEntity(SpecialEntititiesID.PLAYER_ENTITY),
+                new PlayerComponent(characterObject.CameraFocus),
+                new TransformComponent { Transform = characterObject.Transform });
 
             // Asset Bundle Manifest
             const string ASSET_BUNDLES_URL = "https://ab-cdn.decentraland.org/";
