@@ -28,6 +28,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         private Matrix4x4 viewMatrix;
         private Matrix4x4 projMatrix;
         RTHandle m_SkyBoxCubeMap_RTHandle;
+
         private static readonly int s_ParamsID = Shader.PropertyToID("_CurrentCubeFace");
 
         // Constants
@@ -39,12 +40,12 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         
         private enum ShaderPasses
         {
-            CubeMapFace_Front = 0,
+            CubeMapFace_Right = 0,
             CubeMapFace_Left = 1,
-            CubeMapFace_Back = 2,
-            CubeMapFace_Right = 3,
-            CubeMapFace_Up = 4,
-            CubeMapFace_Down = 5
+            CubeMapFace_Up = 2,
+            CubeMapFace_Down = 3,
+            CubeMapFace_Front = 4,
+            CubeMapFace_Back = 5
         }
 
         internal DCL_RenderPass_GenerateSkyBox()
@@ -119,29 +120,28 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             {
                 //MaterialPropertyBlock properties
                 CoreUtils.ClearCubemap(cmd, this.m_SkyBoxCubeMap_RTHandle.rt , Color.blue, clearMips : false);
-                cmd.SetGlobalInt(s_ParamsID, 0);
+                cmd.SetGlobalVector(s_ParamsID, new Vector4(0.0f, 0.0f, 0.0f, 0.0f));
                 Debug.Log(s_ParamsID);
                 CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.PositiveX, depthSlice: 0);
                 CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Right);
 
-                cmd.SetGlobalInt(s_ParamsID, 1);
+                cmd.SetGlobalVector(s_ParamsID, new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
                 CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.NegativeX, depthSlice: 0);
                 CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Left);
 
-                cmd.SetGlobalInt(s_ParamsID, 2);
+                cmd.SetGlobalVector(s_ParamsID, new Vector4(2.0f, 0.0f, 0.0f, 0.0f));
                 CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.PositiveY, depthSlice: 0);
                 CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Up);
 
-                cmd.SetGlobalInt(s_ParamsID, 3);
+                cmd.SetGlobalVector(s_ParamsID, new Vector4(3.0f, 0.0f, 0.0f, 0.0f));
                 CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.NegativeY, depthSlice: 0);
                 CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Down);
 
-                cmd.SetGlobalInt(s_ParamsID, 4);
+                cmd.SetGlobalVector(s_ParamsID, new Vector4(4.0f, 0.0f, 0.0f, 0.0f));
                 CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.PositiveZ, depthSlice: 0);
                 CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Front);
 
-                
-                cmd.SetGlobalInt(s_ParamsID, 5);
+                cmd.SetGlobalVector(s_ParamsID, new Vector4(5.0f, 0.0f, 0.0f, 0.0f));
                 CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.NegativeZ, depthSlice: 0);
                 CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Back);                
             }

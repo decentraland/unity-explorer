@@ -147,8 +147,8 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
     {
         Debug.Log("DCL_RenderFeature_ProceduralSkyBox::Dispose");
         m_SkyBoxCubeMap_RTHandle?.Release();
-        m_GeneratePass.dispose();
-        m_DrawPass.dispose();
+        m_GeneratePass?.dispose();
+        m_DrawPass?.dispose();
         CoreUtils.Destroy(m_Material_Generate);
         CoreUtils.Destroy(m_Material_Draw);
     }

@@ -3,192 +3,371 @@
 
 // Includes
 #include "Assets/DCL_SkyBox_Data.hlsl"
-//#include "UnityCG.cginc"
-//#include "UnityCustomRenderTexture.cginc"
+#include "UnityLightingCommon.cginc"
+
+#if defined(UNITY_COLORSPACE_GAMMA)
+    #define GAMMA 2
+    #define COLOR_2_GAMMA(color) color
+    #define COLOR_2_LINEAR(color) color*color
+    #define LINEAR_2_OUTPUT(color) sqrt(color)
+#else
+    #define GAMMA 2.2
+    // HACK: to get gfx-tests in Gamma mode to agree until UNITY_ACTIVE_COLORSPACE_IS_GAMMA is working properly
+    #define COLOR_2_GAMMA(color) ((unity_ColorSpaceDouble.r>2.0) ? pow(color,1.0/GAMMA) : color)
+    #define COLOR_2_LINEAR(color) color
+    #define LINEAR_2_LINEAR(color) color
+#endif
+
+// RGB wavelengths
+// .35 (.62=158), .43 (.68=174), .525 (.75=190)
+static const float3 kDefaultScatteringWavelength = float3(.65, .57, .475);
+static const float3 kVariableRangeForScatteringWavelength = float3(.15, .15, .15);
+
+#define OUTER_RADIUS 1.025
+static const float kOuterRadius = OUTER_RADIUS;
+static const float kOuterRadius2 = OUTER_RADIUS*OUTER_RADIUS;
+static const float kInnerRadius = 1.0;
+static const float kInnerRadius2 = 1.0;
+
+static const float kCameraHeight = 0.0001;
+
+#define kRAYLEIGH (lerp(0.0, 0.0025, pow(_AtmosphereThickness,2.5)))      // Rayleigh constant
+#define kMIE 0.0010             // Mie constant
+#define kSUN_BRIGHTNESS 20.0    // Sun brightness
+
+#define kMAX_SCATTER 50.0 // Maximum scattering value, to prevent math overflows on Adrenos
+
+static const half kHDSundiskIntensityFactor = 15.0;
+static const half kSimpleSundiskIntensityFactor = 27.0;
+
+static const half kSunScale = 400.0 * kSUN_BRIGHTNESS;
+static const float kKmESun = kMIE * kSUN_BRIGHTNESS;
+static const float kKm4PI = kMIE * 4.0 * 3.14159265;
+static const float kScale = 1.0 / (OUTER_RADIUS - 1.0);
+static const float kScaleDepth = 0.25;
+static const float kScaleOverScaleDepth = (1.0 / (OUTER_RADIUS - 1.0)) / 0.25;
+static const float kSamples = 2.0; // THIS IS UNROLLED MANUALLY, DON'T TOUCH
+
+#define MIE_G (-0.990)
+#define MIE_G2 0.9801
+
+#define SKY_GROUND_THRESHOLD 0.02
+
+#ifndef SKYBOX_COLOR_IN_TARGET_COLOR_SPACE
+    #if defined(SHADER_API_MOBILE)
+        #define SKYBOX_COLOR_IN_TARGET_COLOR_SPACE 1
+    #else
+        #define SKYBOX_COLOR_IN_TARGET_COLOR_SPACE 0
+    #endif
+#endif
+
+float scale(float inCos)
+{
+    float x = 1.0 - inCos;
+    return 0.25 * exp(-0.00287 + x*(0.459 + x*(3.83 + x*(-6.80 + x*5.25))));
+}
+
+// Calculates the Rayleigh phase function
+half getRayleighPhase(half eyeCos2)
+{
+    return 0.75 + 0.75*eyeCos2;
+}
+half getRayleighPhase(half3 light, half3 ray)
+{
+    half eyeCos = dot(light, ray);
+    return getRayleighPhase(eyeCos * eyeCos);
+}
 
 // Calculates the Mie phase function
-// half getMiePhase(half eyeCos, half eyeCos2)
+half getMiePhase(half eyeCos, half eyeCos2, float fSunSize)
+{
+    half temp = 1.0 + MIE_G2 - 2.0 * MIE_G * eyeCos;
+    temp = pow(temp, pow(fSunSize,0.65) * 10);
+    temp = max(temp,1.0e-4); // prevent division by zero, esp. in half precision
+    temp = 1.5 * ((1.0 - MIE_G2) / (2.0 + MIE_G2)) * (1.0 + eyeCos2) / temp;
+    #if defined(UNITY_COLORSPACE_GAMMA) && SKYBOX_COLOR_IN_TARGET_COLOR_SPACE
+        temp = pow(temp, .454545);
+    #endif
+    return temp;
+}
+
+// Calculates the sun shape
+half calcSunAttenuation(half3 lightPos, half3 ray, float fSunSize, float fSunSizeConvergence)
+{
+    half focusedEyeCos = pow(saturate(dot(lightPos, ray)), fSunSizeConvergence);
+    return getMiePhase(-focusedEyeCos, focusedEyeCos * focusedEyeCos, fSunSize);
+}
+
+// struct DirectionalLightData
 // {
-//     half temp = 1.0 + MIE_G2 - 2.0 * MIE_G * eyeCos;
-//     temp = pow(temp, pow(_SunSize,0.65) * 10);
-//     temp = max(temp,1.0e-4); // prevent division by zero, esp. in half precision
-//     temp = 1.5 * ((1.0 - MIE_G2) / (2.0 + MIE_G2)) * (1.0 + eyeCos2) / temp;
-//     #if defined(UNITY_COLORSPACE_GAMMA) && SKYBOX_COLOR_IN_TARGET_COLOR_SPACE
-//         temp = pow(temp, .454545);
-//     #endif
-//     return temp;
-// }
+//     float skyAngularDiameter
+//     float3 forward;
+//     float4 surfaceTextureScaleOffset;
+//     float3 color;
+//     float flareCosInner;
+//     float flareCosOuter;
+//     float distanceFromCamera;
+//     uint bodyType;
+//     float3 right;
+//     float3 up;
+//     float3 surfaceTint;
+//     float flareSize;
+//     float flareFalloff;
+//     float3 flareTint;
+// };
 
-// // Calculates the sun shape
-// half calcSunAttenuation(half3 lightPos, half3 ray)
+// float3 RenderSunDisk(inout float tFrag, float tExit, float3 V)
 // {
-//     half focusedEyeCos = pow(saturate(dot(lightPos, ray)), _SunSizeConvergence);
-//     return getMiePhase(-focusedEyeCos, focusedEyeCos * focusedEyeCos);
-// }
+//     float3 radiance = 0;
 
-////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////
-//v2f OUT;
-// UNITY_SETUP_INSTANCE_ID(IN);
-// UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(OUT);
-// //OUT.pos = UnityObjectToClipPos(v.vertex);
-
-// float3 kSkyTintInGammaSpace = COLOR_2_GAMMA(_SkyTint); // convert tint from Linear back to Gamma
-// float3 kScatteringWavelength = lerp (   kDefaultScatteringWavelength-kVariableRangeForScatteringWavelength,
-//                                         kDefaultScatteringWavelength+kVariableRangeForScatteringWavelength,
-//                                         half3(1,1,1) - kSkyTintInGammaSpace); // using Tint in sRGB gamma allows for more visually linear interpolation and to keep (.5) at (128, gray in sRGB) point
-// float3 kInvWavelength = 1.0 / pow(kScatteringWavelength, 4);
-
-// float kKrESun = kRAYLEIGH * kSUN_BRIGHTNESS;
-// float kKr4PI = kRAYLEIGH * 4.0 * 3.14159265;
-
-// float3 cameraPos = float3(0,kInnerRadius + kCameraHeight,0);    // The camera's current position
-
-// // Get the ray from the camera to the vertex and its length (which is the far point of the ray passing through the atmosphere)
-// float3 eyeRay = float3(1.0, 1.0, 1.0);//normalize(mul((float3x3)unity_ObjectToWorld, IN.vertex.xyz));
-
-// float far = 0.0;
-// half3 cIn, cOut;
-
-// if(eyeRay.y >= 0.0)
-// {
-//     // Sky
-//     // Calculate the length of the "atmosphere"
-//     far = sqrt(kOuterRadius2 + kInnerRadius2 * eyeRay.y * eyeRay.y - kInnerRadius2) - kInnerRadius * eyeRay.y;
-
-//     float3 pos = cameraPos + far * eyeRay;
-
-//     // Calculate the ray's starting position, then calculate its scattering offset
-//     float height = kInnerRadius + kCameraHeight;
-//     float depth = exp(kScaleOverScaleDepth * (-kCameraHeight));
-//     float startAngle = dot(eyeRay, cameraPos) / height;
-//     float startOffset = depth*scale(startAngle);
-
-
-//     // Initialize the scattering loop variables
-//     float sampleLength = far / kSamples;
-//     float scaledLength = sampleLength * kScale;
-//     float3 sampleRay = eyeRay * sampleLength;
-//     float3 samplePoint = cameraPos + sampleRay * 0.5;
-
-//     // Now loop through the sample rays
-//     float3 frontColor = float3(0.0, 0.0, 0.0);
-//     // Weird workaround: WP8 and desktop FL_9_3 do not like the for loop here
-//     // (but an almost identical loop is perfectly fine in the ground calculations below)
-//     // Just unrolling this manually seems to make everything fine again.
-//     // for(int i=0; i<int(kSamples); i++)
+//     // Intersect and shade emissive celestial bodies.
+//     // Unfortunately, they don't write depth.
+//     //for (uint i = 0; i < _DirectionalLightCount; i++)
 //     {
-//         float height = length(samplePoint);
-//         float depth = exp(kScaleOverScaleDepth * (kInnerRadius - height));
-//         float lightAngle = dot(_WorldSpaceLightPos0.xyz, samplePoint) / height;
-//         float cameraAngle = dot(eyeRay, samplePoint) / height;
-//         float scatter = (startOffset + depth*(scale(lightAngle) - scale(cameraAngle)));
-//         float3 attenuate = exp(-clamp(scatter, 0.0, kMAX_SCATTER) * (kInvWavelength * kKr4PI + kKm4PI));
+//         DirectionalLightData light;
 
-//         frontColor += attenuate * (depth * scaledLength);
-//         samplePoint += sampleRay;
-//     }
-//     {
-//         float height = length(samplePoint);
-//         float depth = exp(kScaleOverScaleDepth * (kInnerRadius - height));
-//         float lightAngle = dot(_WorldSpaceLightPos0.xyz, samplePoint) / height;
-//         float cameraAngle = dot(eyeRay, samplePoint) / height;
-//         float scatter = (startOffset + depth*(scale(lightAngle) - scale(cameraAngle)));
-//         float3 attenuate = exp(-clamp(scatter, 0.0, kMAX_SCATTER) * (kInvWavelength * kKr4PI + kKm4PI));
+//         light.skyAngularDiameter
+//         light.forward = float3(-0.36f, 0.2f, 0.9f);
+//         light.surfaceTextureScaleOffset = float4(1.0, 1.0, 1.0, 1.0);
 
-//         frontColor += attenuate * (depth * scaledLength);
-//         samplePoint += sampleRay;
-//     }
+//         // Use scalar or integer cores (more efficient).
+//         bool interactsWithSky = asint(light.distanceFromCamera) >= 0;
 
-//     // Finally, scale the Mie and Rayleigh colors and set up the varying variables for the pixel shader
-//     cIn = frontColor * (kInvWavelength * kKrESun);
-//     cOut = frontColor * kKmESun;
-// }
-// else
-// {
-//     // Ground
-//     far = (-kCameraHeight) / (min(-0.001, eyeRay.y));
+//         // Celestial body must be outside the atmosphere (request from Pierre D).
+//         float lightDist = max(light.distanceFromCamera, tExit);
 
-//     float3 pos = cameraPos + far * eyeRay;
+//         if (interactsWithSky && asint(light.skyAngularDiameter) != 0 && lightDist < tFrag)
+//         {
+//             // We may be able to see the celestial body.
+//             float3 L = -light.forward.xyz;
 
-//     // Calculate the ray's starting position, then calculate its scattering offset
-//     float depth = exp((-kCameraHeight) * (1.0/kScaleDepth));
-//     float cameraAngle = dot(-eyeRay, pos);
-//     float lightAngle = dot(_WorldSpaceLightPos0.xyz, pos);
-//     float cameraScale = scale(cameraAngle);
-//     float lightScale = scale(lightAngle);
-//     float cameraOffset = depth*cameraScale;
-//     float temp = (lightScale + cameraScale);
+//             float LdotV    = -dot(L, V);
+//             float rad      = acos(LdotV);
+//             float radInner = 0.5 * light.skyAngularDiameter;
 
-//     // Initialize the scattering loop variables
-//     float sampleLength = far / kSamples;
-//     float scaledLength = sampleLength * kScale;
-//     float3 sampleRay = eyeRay * sampleLength;
-//     float3 samplePoint = cameraPos + sampleRay * 0.5;
+//             if (LdotV >= light.flareCosOuter)
+//             {
+//                 // Sun flare is visible. Sun disk may or may not be visible.
+//                 // Assume uniform emission.
+//                 float solidAngle = TWO_PI * (1 - light.flareCosInner);
+//                 float3 color = light.color.rgb * rcp(solidAngle);
 
-//     // Now loop through the sample rays
-//     float3 frontColor = float3(0.0, 0.0, 0.0);
-//     float3 attenuate;
-//     // for(int i=0; i<int(kSamples); i++) // Loop removed because we kept hitting SM2.0 temp variable limits. Doesn't affect the image too much.
-//     {
-//         float height = length(samplePoint);
-//         float depth = exp(kScaleOverScaleDepth * (kInnerRadius - height));
-//         float scatter = depth*temp - cameraOffset;
-//         attenuate = exp(-clamp(scatter, 0.0, kMAX_SCATTER) * (kInvWavelength * kKr4PI + kKm4PI));
-//         frontColor += attenuate * (depth * scaledLength);
-//         samplePoint += sampleRay;
+//                 if (LdotV >= light.flareCosInner) // Sun disk.
+//                 {
+//                     tFrag = lightDist;
+
+//                     float2 uv = 0;
+//                     if (light.bodyType == 2 || light.surfaceTextureScaleOffset.x > 0)
+//                     {
+//                         // The cookie code de-normalizes the axes.
+//                         float2 proj   = float2(dot(-V, normalize(light.right)), dot(-V, normalize(light.up)));
+//                         float2 angles = float2(FastASin(-proj.x), FastASin(proj.y));
+//                         uv = angles * rcp(radInner);
+//                     }
+
+//                     uint sunIndex = max(_DirectionalShadowIndex, 0);
+//                     if ((light.bodyType == 1 && sunIndex != i) || light.bodyType == 2)
+//                     {
+//                         DirectionalLightData sun = _DirectionalLightDatas[sunIndex];
+//                         float earthshine = sunIndex != i ? ComputeEarthshine(light, sun) : 0.0f;
+//                         float3 sunColor = (sunIndex == i ? rcp(solidAngle) : 1.0f) * sun.color.rgb;;
+//                         color = (ComputeMoonPhase(light, sun, V, uv) * INV_PI + earthshine) * sunColor;
+//                     }
+
+//                     if (light.surfaceTextureScaleOffset.x > 0)
+//                     {
+//                         color *= SampleCookie2D(uv * 0.5 + 0.5, light.surfaceTextureScaleOffset);
+//                     }
+
+//                     color *= light.surfaceTint;
+//                     radiance = color;
+//                 }
+//                 else // Flare region.
+//                 {
+//                     float r = max(0, rad - radInner);
+//                     float w = saturate(1 - r * rcp(light.flareSize));
+
+//                     color *= light.flareTint;
+//                     color *= SafePositivePow(w, light.flareFalloff);
+//                     radiance += color;
+//                 }
+
+//             }
+//         }
 //     }
 
-//     cIn = frontColor * (kInvWavelength * kKrESun + kKmESun);
-//     cOut = clamp(attenuate, 0.0, 1.0);
+//     return radiance;
 // }
-
-// OUT.vertexRayDir          = -eyeRay;
-// // if we want to calculate color in vprog:
-// // 1. in case of linear: multiply by _Exposure in here (even in case of lerp it will be common multiplier, so we can skip mul in fshader)
-// // 2. in case of gamma and SKYBOX_COLOR_IN_TARGET_COLOR_SPACE: do sqrt right away instead of doing that in fshader
-
-// OUT.groundColor = _Exposure * (cIn + COLOR_2_LINEAR(_GroundColor) * cOut);
-// OUT.skyColor    = _Exposure * (cIn * getRayleighPhase(_WorldSpaceLightPos0.xyz, -eyeRay));
-
-// // The sun should have a stable intensity in its course in the sky. Moreover it should match the highlight of a purely specular material.
-// // This matching was done using the standard shader BRDF1 on the 5/31/2017
-// // Finally we want the sun to be always bright even in LDR thus the normalization of the lightColor for low intensity.
-// half lightColorIntensity = clamp(length(_LightColor0.xyz), 0.25, 1);
-// OUT.sunColor    = kHDSundiskIntensityFactor * saturate(cOut) * _LightColor0.xyz / lightColorIntensity;
-
-// #if defined(UNITY_COLORSPACE_GAMMA) && SKYBOX_COLOR_IN_TARGET_COLOR_SPACE
-//     OUT.groundColor = sqrt(OUT.groundColor);
-//     OUT.skyColor    = sqrt(OUT.skyColor);
-//     OUT.sunColor= sqrt(OUT.sunColor);
-// #endif
-
-// return OUT;
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
+
+float _SunSize;
+float _SunSizeConvergence;
+float4 _SkyTint;
+float _AtmosphereThickness;
+float4 _GroundColor;
+float _Exposure;
 
 float4 sk_frag(sk_v2f IN) : SV_Target
 {
-    half3 col = half3(0.0, 1.0, 0.0);
+    float3 vSunPos = float3(-0.36f, -0.4f, 0.9f);
+    // float3 kSkyTintInGammaSpace = COLOR_2_GAMMA(_SkyTint); // convert tint from Linear back to Gamma
+    // float3 kScatteringWavelength = lerp (   kDefaultScatteringWavelength-kVariableRangeForScatteringWavelength,
+    //                                         kDefaultScatteringWavelength+kVariableRangeForScatteringWavelength,
+    //                                         half3(1,1,1) - kSkyTintInGammaSpace); // using Tint in sRGB gamma allows for more visually linear interpolation and to keep (.5) at (128, gray in sRGB) point
+    // float3 kInvWavelength = 1.0 / pow(kScatteringWavelength, 4);
 
-    col = IN.direction;
+    // float kKrESun = kRAYLEIGH * kSUN_BRIGHTNESS;
+    // float kKr4PI = kRAYLEIGH * 4.0 * 3.14159265;
 
-    // half3 ray = normalize(IN.vertexRayDir.xyz);
-    // half y = ray.y / SKY_GROUND_THRESHOLD;
+    // // The camera's current position
+    // float3 cameraPos = float3(0, kInnerRadius + kCameraHeight, 0);    
 
-    // // if we did precalculate color in vprog: just do lerp between them
-    // col = lerp(IN.skyColor, IN.groundColor, saturate(y));
+    // // Get the ray from the camera to the fragment and its length (which is the far point of the ray passing through the atmosphere)
+    // float3 eyeRay = normalize(IN.direction);
 
-    // if(y < 0.0)
+    // float far = 0.0;
+    // half3 cIn, cOut;
+
+    // if(eyeRay.y >= 0.0) // Sky
     // {
-    //     col += IN.sunColor * calcSunAttenuation(_WorldSpaceLightPos0.xyz, -ray);
+    //     // Calculate the length of the "atmosphere"
+    //     far = sqrt(kOuterRadius2 + kInnerRadius2 * eyeRay.y * eyeRay.y - kInnerRadius2) - kInnerRadius * eyeRay.y;
+
+    //     float3 pos = cameraPos + far * eyeRay;
+
+    //     // Calculate the ray's starting position, then calculate its scattering offset
+    //     float height = kInnerRadius + kCameraHeight;
+    //     float depth = exp(kScaleOverScaleDepth * (-kCameraHeight));
+    //     float startAngle = dot(eyeRay, cameraPos) / height;
+    //     float startOffset = depth*scale(startAngle);
+
+
+    //     // Initialize the scattering loop variables
+    //     float sampleLength = far / kSamples;
+    //     float scaledLength = sampleLength * kScale;
+    //     float3 sampleRay = eyeRay * sampleLength;
+    //     float3 samplePoint = cameraPos + sampleRay * 0.5;
+
+    //     // Now loop through the sample rays
+    //     float3 frontColor = float3(0.0, 0.0, 0.0);
+    //     // Weird workaround: WP8 and desktop FL_9_3 do not like the for loop here
+    //     // (but an almost identical loop is perfectly fine in the ground calculations below)
+    //     // Just unrolling this manually seems to make everything fine again.
+    //     // for(int i=0; i<int(kSamples); i++)
+    //     {
+    //         float height = length(samplePoint);
+    //         float depth = exp(kScaleOverScaleDepth * (kInnerRadius - height));
+    //         float lightAngle = dot(vSunPos.xyz, samplePoint) / height;
+    //         float cameraAngle = dot(eyeRay, samplePoint) / height;
+    //         float scatter = (startOffset + depth*(scale(lightAngle) - scale(cameraAngle)));
+    //         float3 attenuate = exp(-clamp(scatter, 0.0, kMAX_SCATTER) * (kInvWavelength * kKr4PI + kKm4PI));
+
+    //         frontColor += attenuate * (depth * scaledLength);
+    //         samplePoint += sampleRay;
+    //     }
+    //     {
+    //         float height = length(samplePoint);
+    //         float depth = exp(kScaleOverScaleDepth * (kInnerRadius - height));
+    //         float lightAngle = dot(vSunPos.xyz, samplePoint) / height;
+    //         float cameraAngle = dot(eyeRay, samplePoint) / height;
+    //         float scatter = (startOffset + depth*(scale(lightAngle) - scale(cameraAngle)));
+    //         float3 attenuate = exp(-clamp(scatter, 0.0, kMAX_SCATTER) * (kInvWavelength * kKr4PI + kKm4PI));
+
+    //         frontColor += attenuate * (depth * scaledLength);
+    //         samplePoint += sampleRay;
+    //     }
+
+    //     // Finally, scale the Mie and Rayleigh colors and set up the varying variables for the pixel shader
+    //     cIn = frontColor * (kInvWavelength * kKrESun);
+    //     cOut = frontColor * kKmESun;
     // }
+    // else // Ground
+    // {
+    //     far = (-kCameraHeight) / (min(-0.001, eyeRay.y));
+
+    //     float3 pos = cameraPos + far * eyeRay;
+
+    //     // Calculate the ray's starting position, then calculate its scattering offset
+    //     float depth = exp((-kCameraHeight) * (1.0/kScaleDepth));
+    //     float cameraAngle = dot(-eyeRay, pos);
+    //     float lightAngle = dot(vSunPos.xyz, pos);
+    //     float cameraScale = scale(cameraAngle);
+    //     float lightScale = scale(lightAngle);
+    //     float cameraOffset = depth*cameraScale;
+    //     float temp = (lightScale + cameraScale);
+
+    //     // Initialize the scattering loop variables
+    //     float sampleLength = far / kSamples;
+    //     float scaledLength = sampleLength * kScale;
+    //     float3 sampleRay = eyeRay * sampleLength;
+    //     float3 samplePoint = cameraPos + sampleRay * 0.5;
+
+    //     // Now loop through the sample rays
+    //     float3 frontColor = float3(0.0, 0.0, 0.0);
+    //     float3 attenuate;
+    //     // for(int i=0; i<int(kSamples); i++) // Loop removed because we kept hitting SM2.0 temp variable limits. Doesn't affect the image too much.
+    //     {
+    //         float height = length(samplePoint);
+    //         float depth = exp(kScaleOverScaleDepth * (kInnerRadius - height));
+    //         float scatter = depth*temp - cameraOffset;
+    //         attenuate = exp(-clamp(scatter, 0.0, kMAX_SCATTER) * (kInvWavelength * kKr4PI + kKm4PI));
+    //         frontColor += attenuate * (depth * scaledLength);
+    //         samplePoint += sampleRay;
+    //     }
+
+    //     cIn = frontColor * (kInvWavelength * kKrESun + kKmESun);
+    //     cOut = clamp(attenuate, 0.0, 1.0);
+    // }
+
+    // // if we want to calculate color in vprog:
+    // // 1. in case of linear: multiply by _Exposure in here (even in case of lerp it will be common multiplier, so we can skip mul in fshader)
+    // // 2. in case of gamma and SKYBOX_COLOR_IN_TARGET_COLOR_SPACE: do sqrt right away instead of doing that in fshader
+    // float3 groundColor = _Exposure * (cIn + COLOR_2_LINEAR(_GroundColor) * cOut);
+    // float3 skyColor    = _Exposure * (cIn * getRayleighPhase(vSunPos.xyz, -eyeRay));
+    // groundColor = (_GroundColor.xyz);
+    // skyColor    = (_SkyTint.xyz);
+
+    // // The sun should have a stable intensity in its course in the sky. Moreover it should match the highlight of a purely specular material.
+    // // This matching was done using the standard shader BRDF1 on the 5/31/2017
+    // // Finally we want the sun to be always bright even in LDR thus the normalization of the lightColor for low intensity.
+    // half lightColorIntensity = clamp(length(_LightColor0.xyz), 0.25, 1);
+    // float3 sunColor    = kHDSundiskIntensityFactor * saturate(cOut) * _LightColor0.xyz / lightColorIntensity;
+
+    // #if defined(UNITY_COLORSPACE_GAMMA) && SKYBOX_COLOR_IN_TARGET_COLOR_SPACE
+    //     groundColor = sqrt(groundColor);
+    //     skyColor    = sqrt(skyColor);
+    //     sunColor    = sqrt(sunColor);
+    // #endif
+
+    half3 col = half3(0.0, 0.0, 0.0);
+    half3 ray = normalize(IN.direction);
+    //half y = (ray.y / SKY_GROUND_THRESHOLD);
+
+    // if we did precalculate color in vprog: just do lerp between them
+    //col = lerp(skyColor, groundColor, saturate(y));
+
+    if(ray.y > 0.0)
+    {
+        float3 L = vSunPos.xyz;
+        //float LdotV = pow(saturate(dot(L, -ray)), 10000.0f);
+        float LdotV = saturate(dot(L, -ray));
+        float LdotVPow = pow(LdotV, 100);
+        if(LdotVPow >= 1.0f)
+        {
+            // half temp = (pow(saturate(dot(vSunPos.xyz, -ray)), 10.0));
+            // temp = pow(temp, pow(0.04,0.5) * 1);
+            col += float3(1.0, 0.0, 0.0);// * LdotVPow;
+        }
+        //col += sunColor * calcSunAttenuation(vSunPos.xyz, -ray, _SunSize, _SunSizeConvergence);
+    }
 
     // #if defined(UNITY_COLORSPACE_GAMMA) && !SKYBOX_COLOR_IN_TARGET_COLOR_SPACE
     //     col = LINEAR_2_OUTPUT(col);
     // #endif
 
+    //return half4(IN.direction, 1.0);
     return half4(col,1.0);
 }
 
