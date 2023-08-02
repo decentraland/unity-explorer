@@ -24,12 +24,12 @@ namespace DCL.CharacterCamera.Systems
         }
 
         [Query]
-        private void UpdateInput(ref CameraInput inputToUpdate, ref CameraInputSettings cameraInputSettings)
+        private void UpdateInput(ref CameraInput inputToUpdate)
         {
-            inputToUpdate.ZoomIn = cameraActions.Zoom.ReadValue<Vector2>().y > cameraInputSettings.CameraModeMouseWheelThreshold
+            inputToUpdate.ZoomIn = cameraActions.Zoom.ReadValue<Vector2>().y > 0
                                    || cameraActions.ZoomIn.WasPressedThisFrame();
 
-            inputToUpdate.ZoomOut = cameraActions.Zoom.ReadValue<Vector2>().y < -cameraInputSettings.CameraModeMouseWheelThreshold
+            inputToUpdate.ZoomOut = cameraActions.Zoom.ReadValue<Vector2>().y < 0
                                     || cameraActions.ZoomOut.WasPressedThisFrame();
 
             inputToUpdate.Axes = cameraActions.Drag.ReadValue<Vector2>();

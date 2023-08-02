@@ -47,7 +47,6 @@ namespace Global.Dynamic.Plugins
                 new CameraComponent(cinemachinePreset.Brain.OutputCamera),
                 cinemachinePreset,
                 new CinemachineCameraState(),
-                new CameraInputSettings(cinemachinePreset.CameraModeMouseWheelThreshold),
                 cameraSamplingData,
                 realmSamplingData);
 
