@@ -46,7 +46,7 @@ namespace ECS.CharacterMotion.Systems
 
                 if (inputAction.WasReleasedThisFrame() || inputToUpdate.CurrentHoldTime > characterControllerSettings.HoldJumpTime)
                 {
-                    inputToUpdate.PhysicalButtonArguments.tickWhenJumpOcurred = tickValue;
+                    inputToUpdate.PhysicalButtonArguments.TickWhenJumpOccurred = tickValue;
 
                     inputToUpdate.PhysicalButtonArguments.Power =
                         Mathf.Clamp01(inputToUpdate.CurrentHoldTime / characterControllerSettings.HoldJumpTime);
