@@ -31,7 +31,7 @@ namespace DCL.CharacterCamera.Systems
                 {
                     CinemachineFreeLook tpc = cinemachinePreset.ThirdPersonCameraData.Camera;
                     tpc.m_XAxis.Value = cameraInput.Axes.x;
-                    tpc.m_YAxis.Value = cameraInput.Axes.y;
+                    tpc.m_YAxis.Value = 0.5f;
                     break;
                 }
                 case CameraMode.Free:
