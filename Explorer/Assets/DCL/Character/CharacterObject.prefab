@@ -78,6 +78,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63e2d5b311274733b09ab35a7285c4b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Controller>k__BackingField: {fileID: 3347068169948242622}
   <CameraFocus>k__BackingField: {fileID: 1374657620861807003}
 --- !u!143 &3347068169948242622
 CharacterController:

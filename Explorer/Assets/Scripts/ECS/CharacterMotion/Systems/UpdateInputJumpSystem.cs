@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
 using ECS.Abstract;
 using ECS.CharacterMotion.Components;
@@ -13,7 +12,7 @@ using UnityEngine.InputSystem;
 
 namespace ECS.CharacterMotion.Systems
 {
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(InputGroup))]
     public partial class UpdateInputJumpSystem : UpdateInputSystem<JumpInputComponent, PlayerComponent>
     {
         private readonly InputAction inputAction;
@@ -37,9 +36,9 @@ namespace ECS.CharacterMotion.Systems
 
         [Query]
         private void UpdateInput([Data] float t, [Data] int tickValue, ref JumpInputComponent inputToUpdate,
-            ref CharacterPhysics characterPhysics, ref ICharacterControllerSettings characterControllerSettings)
+            ref CharacterRigidTransform characterPhysics, ref ICharacterControllerSettings characterControllerSettings)
         {
-            if (characterPhysics.IsGrounded && inputAction.WasPressedThisFrame())
+            if (characterPhysics.PhysicsValues.IsGrounded && inputAction.WasPressedThisFrame())
                 inputToUpdate.IsChargingJump = true;
             else if (inputToUpdate.IsChargingJump)
             {
@@ -47,7 +46,8 @@ namespace ECS.CharacterMotion.Systems
 
                 if (inputAction.WasReleasedThisFrame() || inputToUpdate.CurrentHoldTime > characterControllerSettings.HoldJumpTime)
                 {
-                    inputToUpdate.PhysicalButtonArguments.TickWhenJumpOccurred = tickValue;
+                    // +1 because Update is executed before Physics so it will always hold the previous tick value
+                    inputToUpdate.PhysicalButtonArguments.TickWhenJumpOccurred = tickValue + 1;
 
                     inputToUpdate.PhysicalButtonArguments.Power =
                         Mathf.Clamp01(inputToUpdate.CurrentHoldTime / characterControllerSettings.HoldJumpTime);

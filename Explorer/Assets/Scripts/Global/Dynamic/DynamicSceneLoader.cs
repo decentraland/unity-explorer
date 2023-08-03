@@ -73,9 +73,14 @@ namespace Global.Dynamic
             staticContainer = StaticContainer.Create(partitionSettingsAsset, reportsHandlingSettings);
             sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
 
-            dynamicWorldContainer = DynamicWorldContainer.Create(in staticContainer, realmPartitionSettingsAsset,
-                camera, characterControllerSettings,
-                StaticLoadPositions, SceneLoadRadius);
+            dynamicWorldContainer = DynamicWorldContainer.Create(
+                in staticContainer,
+                realmPartitionSettingsAsset,
+                camera,
+                characterControllerSettings,
+                character,
+                StaticLoadPositions,
+                SceneLoadRadius);
 
             Profiler.EndSample();
         }

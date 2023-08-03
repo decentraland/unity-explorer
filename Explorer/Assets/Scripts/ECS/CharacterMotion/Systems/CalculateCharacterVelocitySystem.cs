@@ -8,6 +8,8 @@ using ECS.CharacterMotion.Components;
 using ECS.CharacterMotion.Settings;
 using ECS.Input;
 using ECS.Input.Systems.Physics;
+using ECS.Unity.Transforms.Components;
+using UnityEngine;
 
 namespace ECS.CharacterMotion.Systems
 {
@@ -39,13 +41,14 @@ namespace ECS.CharacterMotion.Systems
             [Data] float dt,
             [Data] int physicsTick,
             [Data] in CameraComponent camera,
+            ref TransformComponent transform,
             ref ICharacterControllerSettings characterControllerSettings,
-            ref CharacterPhysics physics,
             ref JumpInputComponent jump,
             ref CharacterRigidTransform rigidTransform,
             ref MovementInputComponent movementInput)
         {
             // Grounding should be calculated here?
+            ref CharacterRigidTransform.Physics physics = ref rigidTransform.PhysicsValues;
 
             // Apply all velocities
             ApplyCharacterMovementVelocity.Execute(characterControllerSettings, ref physics, in camera, in movementInput, dt);
@@ -56,6 +59,7 @@ namespace ECS.CharacterMotion.Systems
             // Calculate target position
             rigidTransform.PreviousTargetPosition = rigidTransform.TargetPosition;
             rigidTransform.TargetPosition += physics.Velocity * dt;
+            rigidTransform.ModificationTimestamp = Time.time;
         }
     }
 }

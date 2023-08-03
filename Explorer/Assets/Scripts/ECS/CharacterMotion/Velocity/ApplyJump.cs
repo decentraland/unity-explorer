@@ -1,10 +1,9 @@
 using ECS.CharacterMotion.Components;
 using ECS.CharacterMotion.Settings;
-using ECS.Input.Component;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace ECS.CharacterMotion.Systems
+namespace ECS.CharacterMotion
 {
     public static class ApplyJump
     {
@@ -12,10 +11,11 @@ namespace ECS.CharacterMotion.Systems
         public static void Execute(
             ICharacterControllerSettings characterControllerSettings,
             ref JumpInputComponent jump,
-            ref CharacterPhysics characterPhysics,
+            ref CharacterRigidTransform.Physics characterPhysics,
             int physicsTick)
         {
             float power = jump.PhysicalButtonArguments.GetPower(physicsTick);
+
             if (characterPhysics.IsGrounded && power > 0)
             {
                 float jumpHeight = Mathf.Lerp(characterControllerSettings.JumpHeight.x, characterControllerSettings.JumpHeight.y, power);

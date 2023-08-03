@@ -15,16 +15,6 @@ using UnityEngine.InputSystem;
 [TestFixture]
 public class JumpInputComponentShould : InputTestFixture
 {
-
-    private UpdateInputPhysicsTickSystem updatePhysicsTickSystem;
-    private UpdateInputJumpSystem updateInputJumpSystem;
-
-    private World world;
-    private Keyboard inputDevice;
-
-    private Entity playerEntity;
-    private SingleInstanceEntity fixedTick;
-
     [SetUp]
     public void SetUp()
     {
@@ -38,10 +28,7 @@ public class JumpInputComponentShould : InputTestFixture
         ICharacterControllerSettings controllerSettings = Substitute.For<ICharacterControllerSettings>();
         controllerSettings.HoldJumpTime.Returns(1f);
 
-        playerEntity = world.Create(new PlayerComponent(), controllerSettings, new CharacterPhysics
-        {
-            IsGrounded = true,
-        });
+        playerEntity = world.Create(new PlayerComponent(), controllerSettings, new CharacterRigidTransform { PhysicsValues = { IsGrounded = true } });
 
         updatePhysicsTickSystem = new UpdateInputPhysicsTickSystem(world);
         updateInputJumpSystem = new UpdateInputJumpSystem(world, dlcInput.Player.Jump);
@@ -49,6 +36,15 @@ public class JumpInputComponentShould : InputTestFixture
 
         fixedTick = world.CachePhysicsTick();
     }
+
+    private UpdateInputPhysicsTickSystem updatePhysicsTickSystem;
+    private UpdateInputJumpSystem updateInputJumpSystem;
+
+    private World world;
+    private Keyboard inputDevice;
+
+    private Entity playerEntity;
+    private SingleInstanceEntity fixedTick;
 
     [Test]
     public async Task PressAndReleaseJump()

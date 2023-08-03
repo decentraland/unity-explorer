@@ -1,16 +1,16 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
 using ECS.CharacterMotion.Components;
+using ECS.Input;
 using ECS.Input.Systems;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace ECS.CharacterMotion.Systems
 {
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(InputGroup))]
     public partial class UpdateInputMovementSystem : UpdateInputSystem<MovementInputComponent, PlayerComponent>
     {
         private readonly InputAction movementAxis;

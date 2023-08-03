@@ -1,4 +1,5 @@
-﻿using DCL.CharacterCamera.Components;
+﻿using DCL.Character;
+using DCL.CharacterCamera.Components;
 using ECS.CharacterMotion.Settings;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -22,6 +23,7 @@ namespace Global.Dynamic
             IRealmPartitionSettings realmPartitionSettings,
             ICinemachinePreset cinemachinePreset,
             ICharacterControllerSettings characterControllerSettings,
+            ICharacterObject characterObject,
             IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius)
         {
             var realmSamplingData = new RealmSamplingData();
@@ -32,7 +34,7 @@ namespace Global.Dynamic
                 GlobalWorldFactory = new GlobalWorldFactory(in staticContainer, realmPartitionSettings,
                     staticContainer.CameraSamplingData, realmSamplingData, new IECSGlobalPlugin[]
                     {
-                        new CharacterMotionPlugin(characterControllerSettings),
+                        new CharacterMotionPlugin(characterControllerSettings, characterObject),
                         new InputPlugin(),
                         new CharacterCameraPlugin(cinemachinePreset, realmSamplingData, staticContainer.CameraSamplingData),
                     }),

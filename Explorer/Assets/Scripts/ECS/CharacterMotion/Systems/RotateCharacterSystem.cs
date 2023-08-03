@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.CharacterCamera;
+using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.CharacterMotion.Components;
 using ECS.CharacterMotion.Settings;
@@ -15,6 +16,7 @@ namespace ECS.CharacterMotion.Systems
     ///     Rotates character outside of physics update as it does not impact collisions or any other interactions
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [LogCategory(ReportCategory.MOTION)]
     [UpdateAfter(typeof(CameraGroup))]
     public partial class RotateCharacterSystem : BaseUnityLoopSystem
     {

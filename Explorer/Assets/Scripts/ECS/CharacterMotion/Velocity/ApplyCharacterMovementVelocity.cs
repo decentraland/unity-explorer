@@ -4,12 +4,12 @@ using ECS.CharacterMotion.Settings;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace ECS.CharacterMotion.Systems
+namespace ECS.CharacterMotion
 {
     public static class ApplyCharacterMovementVelocity
     {
         public static void Execute(ICharacterControllerSettings characterControllerSettings,
-            ref CharacterPhysics characterPhysics,
+            ref CharacterRigidTransform.Physics characterPhysics,
             in CameraComponent camera,
             in MovementInputComponent input,
             float deltaTime)
@@ -29,7 +29,7 @@ namespace ECS.CharacterMotion.Systems
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static float GetAcceleration(ICharacterControllerSettings characterControllerSettings, in CharacterPhysics physics) =>
+        private static float GetAcceleration(ICharacterControllerSettings characterControllerSettings, in CharacterRigidTransform.Physics physics) =>
             physics.IsGrounded ? characterControllerSettings.GroundAcceleration : characterControllerSettings.AirAcceleration;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

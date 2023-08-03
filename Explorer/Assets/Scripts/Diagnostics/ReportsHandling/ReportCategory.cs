@@ -86,6 +86,16 @@
         public const string PRIORITIZATION = nameof(PRIORITIZATION);
 
         /// <summary>
+        ///     Everything related to the player's motion
+        /// </summary>
+        public const string MOTION = nameof(MOTION);
+
+        /// <summary>
+        ///     Input
+        /// </summary>
+        public const string INPUT = nameof(INPUT);
+
+        /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
         /// </summary>
         public const string UNSPECIFIED = nameof(UNSPECIFIED);

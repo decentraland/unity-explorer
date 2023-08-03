@@ -14,6 +14,23 @@ namespace ECS.CharacterMotion.Components
     /// </summary>
     public class CharacterRigidTransform
     {
+        public struct Physics
+        {
+            /// <summary>
+            ///     Whether the character is grounded
+            /// </summary>
+            public bool IsGrounded;
+
+            public Vector3 Velocity;
+
+            /// <summary>
+            ///     TODO Collider if <see cref="IsGrounded" /> is true
+            /// </summary>
+            public Collider GroundedCollider;
+        }
+
+        public Physics PhysicsValues;
+
         /// <summary>
         ///     Last time when component was modified
         /// </summary>

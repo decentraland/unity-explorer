@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.CharacterCamera;
+using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.CharacterMotion.Components;
 using ECS.Prioritization.Systems;
@@ -19,6 +20,7 @@ namespace ECS.CharacterMotion.Systems
     ///     </para>
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [LogCategory(ReportCategory.MOTION)]
     [UpdateBefore(typeof(CheckCameraQualifiedForRepartitioningSystem))]
     [UpdateBefore(typeof(CameraGroup))]
     public partial class InterpolateCharacterSystem : BaseUnityLoopSystem
@@ -31,8 +33,7 @@ namespace ECS.CharacterMotion.Systems
         }
 
         [Query]
-        private void Interpolate([Data] float dt, ref CharacterRigidTransform rigidTransform,
-            ref CharacterPhysics characterPhysics, ref TransformComponent transformComponent, ref CharacterController characterController)
+        private void Interpolate([Data] float dt, ref CharacterRigidTransform rigidTransform, ref TransformComponent transformComponent, ref CharacterController characterController)
         {
             // we assume that target position is set in Fixed Update but for foreign avatars it can be set after CRDT processing
             float timeAheadOfLastFixedUpdate = Time.time - rigidTransform.ModificationTimestamp;
@@ -43,10 +44,9 @@ namespace ECS.CharacterMotion.Systems
                 (rigidTransform.PreviousTargetPosition, rigidTransform.TargetPosition, normalizedTimeAhead);
 
             Vector3 delta = interpolatedPosition - transformComponent.Transform.localPosition;
-
             CollisionFlags collisionFlags = characterController.Move(delta);
 
-            characterPhysics.IsGrounded = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
+            rigidTransform.PhysicsValues.IsGrounded = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
         }
     }
 }

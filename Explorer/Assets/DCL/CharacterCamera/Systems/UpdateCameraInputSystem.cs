@@ -1,14 +1,14 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.CharacterCamera.Components;
+using ECS.Input;
 using ECS.Input.Systems;
 using UnityEngine;
 
 namespace DCL.CharacterCamera.Systems
 {
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(InputGroup))]
     public partial class UpdateCameraInputSystem : UpdateInputSystem<CameraInput, CameraComponent>
     {
         private readonly DCLInput.CameraActions cameraActions;

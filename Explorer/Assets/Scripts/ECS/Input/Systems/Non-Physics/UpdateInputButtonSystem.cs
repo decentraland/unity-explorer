@@ -1,13 +1,12 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using ECS.Input.Component;
 using UnityEngine.InputSystem;
 
 namespace ECS.Input.Systems
 {
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(InputGroup))]
     public partial class UpdateInputButtonSystem<T, TQueryComponent> : UpdateInputSystem<T, TQueryComponent> where T: struct, IKeyComponent
     {
         protected readonly InputAction inputAction;
