@@ -96,7 +96,11 @@ public class JumpInputComponentShould : InputTestFixture
         await UniTask.Yield();
 
         Release(inputDevice.spaceKey);
+
         updateInputJumpSystem.Update(1);
+
+        // next physics tick
+        updatePhysicsTickSystem.Update(1);
 
         await UniTask.Yield();
 

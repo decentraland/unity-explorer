@@ -53,7 +53,8 @@ namespace ECS.CharacterMotion.Systems
             Transform characterTransform = transform.Transform;
             Vector3 characterForward = characterTransform.forward;
 
-            characterTransform.forward = Vector3.Slerp(characterForward, targetForward, characterControllerSettings.RotationAngularSpeed * dt);
+            if (targetForward != Vector3.zero)
+                characterTransform.forward = Vector3.Slerp(characterForward, targetForward, characterControllerSettings.RotationAngularSpeed * dt);
         }
     }
 }
