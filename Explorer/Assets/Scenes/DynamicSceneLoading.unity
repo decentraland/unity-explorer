@@ -168,7 +168,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   camera: {fileID: 963194227}
-  StartPosition: {x: 78, y: -7}
+  StartPosition: {x: -13, y: -7}
   SceneLoadRadius: 4
   reportsHandlingSettings: {fileID: 11400000, guid: 6c1c35a66af59874a8373ebcd51572a4, type: 2}
   realmPartitionSettingsAsset: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
