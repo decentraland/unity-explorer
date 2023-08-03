@@ -594,7 +594,7 @@ MonoBehaviour:
   m_VerticalAxis:
     Value: 0
     m_SpeedMode: 1
-    m_MaxSpeed: 1.858586
+    m_MaxSpeed: 0.31
     m_AccelTime: 0.1
     m_DecelTime: 0.3
     m_InputAxisName: 
@@ -618,7 +618,7 @@ MonoBehaviour:
   m_HorizontalAxis:
     Value: 0
     m_SpeedMode: 1
-    m_MaxSpeed: 1.858586
+    m_MaxSpeed: 0.37
     m_AccelTime: 0.1
     m_DecelTime: 0.03
     m_InputAxisName: 

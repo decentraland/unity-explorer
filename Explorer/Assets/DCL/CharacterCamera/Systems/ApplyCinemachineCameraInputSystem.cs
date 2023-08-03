@@ -34,6 +34,16 @@ namespace DCL.CharacterCamera.Systems
                     tpc.m_YAxis.m_InputAxisValue = cameraInput.Axes.y;
                     break;
                 }
+                case CameraMode.FirstPerson:
+                    CinemachinePOV pov = cinemachinePreset.FirstPersonCameraData.POV;
+
+                    if (pov)
+                    {
+                        pov.m_HorizontalAxis.m_InputAxisValue = cameraInput.Axes.x;
+                        pov.m_VerticalAxis.m_InputAxisValue = cameraInput.Axes.y;
+                    }
+
+                    break;
                 case CameraMode.Free:
                 {
                     // TODO
