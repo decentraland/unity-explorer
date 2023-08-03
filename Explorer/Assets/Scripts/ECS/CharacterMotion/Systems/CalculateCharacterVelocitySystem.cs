@@ -59,7 +59,7 @@ namespace ECS.CharacterMotion.Systems
             // Calculate target position
             rigidTransform.PreviousTargetPosition = rigidTransform.TargetPosition;
             rigidTransform.TargetPosition += physics.Velocity * dt;
-            rigidTransform.ModificationTimestamp = Time.time;
+            rigidTransform.ModificationTimestamp = Time.fixedTime;
         }
     }
 }

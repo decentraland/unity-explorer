@@ -29,15 +29,15 @@ namespace ECS.CharacterMotion.Systems
 
         protected override void Update(float t)
         {
-            InterpolateQuery(World, t);
+            InterpolateQuery(World);
         }
 
         [Query]
-        private void Interpolate([Data] float dt, ref CharacterRigidTransform rigidTransform, ref TransformComponent transformComponent, ref CharacterController characterController)
+        private void Interpolate(ref CharacterRigidTransform rigidTransform, ref TransformComponent transformComponent, ref CharacterController characterController)
         {
             // we assume that target position is set in Fixed Update but for foreign avatars it can be set after CRDT processing
             float timeAheadOfLastFixedUpdate = Time.time - rigidTransform.ModificationTimestamp;
-            float normalizedTimeAhead = Mathf.Clamp(timeAheadOfLastFixedUpdate / dt, 0f, 1f);
+            float normalizedTimeAhead = Mathf.Clamp(timeAheadOfLastFixedUpdate / Time.fixedDeltaTime, 0f, 1f);
 
             // interpolate between previous and target position
             var interpolatedPosition = Vector3.Lerp
