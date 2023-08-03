@@ -169,7 +169,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   character: {fileID: 1366421110}
   camera: {fileID: 8790867836433778296}
-  StartPosition: {x: 78, y: -7}
+  StartPosition: {x: 0, y: 0}
   SceneLoadRadius: 4
   reportsHandlingSettings: {fileID: 11400000, guid: 6c1c35a66af59874a8373ebcd51572a4, type: 2}
   realmPartitionSettingsAsset: {fileID: 11400000, guid: 7899019423f09d049a8463a0751037a5, type: 2}
@@ -454,19 +454,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 714769523706360879, guid: 654e496ed12f12e4f80243ab9f1d97c7, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.9691072
+      value: 0.9691118
       objectReference: {fileID: 0}
     - target: {fileID: 714769523706360879, guid: 654e496ed12f12e4f80243ab9f1d97c7, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.2361019
+      value: -0.23610303
       objectReference: {fileID: 0}
     - target: {fileID: 714769523706360879, guid: 654e496ed12f12e4f80243ab9f1d97c7, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.06929731
+      value: 0.06923336
       objectReference: {fileID: 0}
     - target: {fileID: 714769523706360879, guid: 654e496ed12f12e4f80243ab9f1d97c7, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.016882783
+      value: 0.016867204
       objectReference: {fileID: 0}
     - target: {fileID: 766485968713730526, guid: 654e496ed12f12e4f80243ab9f1d97c7, type: 3}
       propertyPath: m_RootOrder
@@ -582,15 +582,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2941871934698390008, guid: 654e496ed12f12e4f80243ab9f1d97c7, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.36279407
+      value: -0.36279413
       objectReference: {fileID: 0}
     - target: {fileID: 2941871934698390008, guid: 654e496ed12f12e4f80243ab9f1d97c7, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.14687912
+      value: 0.14687914
       objectReference: {fileID: 0}
     - target: {fileID: 2941871934698390008, guid: 654e496ed12f12e4f80243ab9f1d97c7, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.05802204
+      value: 0.05802205
       objectReference: {fileID: 0}
     - target: {fileID: 3879923591789973987, guid: 654e496ed12f12e4f80243ab9f1d97c7, type: 3}
       propertyPath: m_IsActive

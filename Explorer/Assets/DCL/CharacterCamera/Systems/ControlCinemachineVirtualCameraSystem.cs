@@ -60,6 +60,7 @@ namespace DCL.CharacterCamera.Systems
                 return;
 
             cameraState.CurrentCamera.enabled = false;
+            camera.Mode = targetCameraMode;
 
             switch (camera.Mode)
             {

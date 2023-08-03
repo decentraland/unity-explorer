@@ -592,7 +592,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_RecenterTarget: 0
   m_VerticalAxis:
-    Value: -28.81077
+    Value: 0
     m_SpeedMode: 1
     m_MaxSpeed: 1.858586
     m_AccelTime: 0.1
@@ -616,7 +616,7 @@ MonoBehaviour:
     m_LegacyHeadingDefinition: -1
     m_LegacyVelocityFilterStrength: -1
   m_HorizontalAxis:
-    Value: 17.11465
+    Value: 0
     m_SpeedMode: 1
     m_MaxSpeed: 1.858586
     m_AccelTime: 0.1
@@ -718,7 +718,7 @@ MonoBehaviour:
   m_YAxis:
     Value: 0
     m_SpeedMode: 1
-    m_MaxSpeed: 0.02727273
+    m_MaxSpeed: 0.002
     m_AccelTime: 0
     m_DecelTime: 0.066
     m_InputAxisName: 
@@ -742,7 +742,7 @@ MonoBehaviour:
   m_XAxis:
     Value: 0
     m_SpeedMode: 1
-    m_MaxSpeed: 2.454545
+    m_MaxSpeed: 0.3
     m_AccelTime: 0
     m_DecelTime: 0.066
     m_InputAxisName: 
