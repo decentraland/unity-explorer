@@ -45,7 +45,7 @@ jobs:
           key: Library-Explorer-${{ matrix.targetPlatform }}
 
       # Configure test runner
-      - uses: game-ci/unity-builder@v2
+      - uses: game-ci/unity-builder@v2.2.0
         id: build
         timeout-minutes: 120
         env:
