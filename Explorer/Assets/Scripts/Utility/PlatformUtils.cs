@@ -12,7 +12,7 @@ public static class PlatformUtils
             if (Application.isEditor || Application.platform == RuntimePlatform.WindowsPlayer)
                 platformSuffix = "_windows";
             else if (Application.platform == RuntimePlatform.OSXPlayer)
-                platformSuffix = "_mac";
+                platformSuffix = "_osx";
             else if (Application.platform == RuntimePlatform.LinuxPlayer)
                 platformSuffix = "_linux";
             else
