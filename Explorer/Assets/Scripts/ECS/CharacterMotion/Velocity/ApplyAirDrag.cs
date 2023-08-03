@@ -8,11 +8,11 @@ namespace ECS.CharacterMotion
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Execute(ICharacterControllerSettings characterControllerSettings,
-            ref CharacterRigidTransform.Physics characterPhysics,
+            ref CharacterRigidTransform characterPhysics,
             float deltaTime)
         {
             if (!characterPhysics.IsGrounded)
-                characterPhysics.Velocity *= 1f / (1f + (characterControllerSettings.AirDrag * deltaTime));
+                characterPhysics.NonInterpolatedVelocity *= 1f / (1f + (characterControllerSettings.AirDrag * deltaTime));
         }
     }
 }

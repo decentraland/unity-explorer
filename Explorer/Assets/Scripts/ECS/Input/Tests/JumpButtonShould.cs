@@ -28,7 +28,7 @@ public class JumpInputComponentShould : InputTestFixture
         ICharacterControllerSettings controllerSettings = Substitute.For<ICharacterControllerSettings>();
         controllerSettings.HoldJumpTime.Returns(1f);
 
-        playerEntity = world.Create(new PlayerComponent(), controllerSettings, new CharacterRigidTransform { PhysicsValues = { IsGrounded = true } });
+        playerEntity = world.Create(new PlayerComponent(), controllerSettings, new CharacterRigidTransform { IsGrounded = true });
 
         updatePhysicsTickSystem = new UpdateInputPhysicsTickSystem(world);
         updateInputJumpSystem = new UpdateInputJumpSystem(world, dlcInput.Player.Jump);

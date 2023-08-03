@@ -27,11 +27,7 @@ namespace Global.Dynamic.Plugins
 
             // Add Motion components
             world.Add(arguments.PlayerEntity,
-                new CharacterRigidTransform
-                {
-                    PreviousTargetPosition = playerPosition,
-                    TargetPosition = playerPosition,
-                },
+                new CharacterRigidTransform(),
                 settings,
                 characterObject.Controller);
 

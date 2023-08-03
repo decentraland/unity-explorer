@@ -8,8 +8,6 @@ using ECS.CharacterMotion.Components;
 using ECS.CharacterMotion.Settings;
 using ECS.Input;
 using ECS.Input.Systems.Physics;
-using ECS.Unity.Transforms.Components;
-using UnityEngine;
 
 namespace ECS.CharacterMotion.Systems
 {
@@ -41,25 +39,16 @@ namespace ECS.CharacterMotion.Systems
             [Data] float dt,
             [Data] int physicsTick,
             [Data] in CameraComponent camera,
-            ref TransformComponent transform,
             ref ICharacterControllerSettings characterControllerSettings,
             ref JumpInputComponent jump,
             ref CharacterRigidTransform rigidTransform,
             ref MovementInputComponent movementInput)
         {
-            // Grounding should be calculated here?
-            ref CharacterRigidTransform.Physics physics = ref rigidTransform.PhysicsValues;
-
             // Apply all velocities
-            ApplyCharacterMovementVelocity.Execute(characterControllerSettings, ref physics, in camera, in movementInput, dt);
-            ApplyJump.Execute(characterControllerSettings, ref jump, ref physics, physicsTick);
-            ApplyGravity.Execute(characterControllerSettings, ref physics, dt);
-            ApplyAirDrag.Execute(characterControllerSettings, ref physics, dt);
-
-            // Calculate target position
-            rigidTransform.PreviousTargetPosition = rigidTransform.TargetPosition;
-            rigidTransform.TargetPosition += physics.Velocity * dt;
-            rigidTransform.ModificationTimestamp = Time.fixedTime;
+            ApplyCharacterMovementVelocity.Execute(characterControllerSettings, ref rigidTransform.MoveVelocity, in camera, in movementInput);
+            ApplyJump.Execute(characterControllerSettings, ref jump, ref rigidTransform, physicsTick);
+            ApplyGravity.Execute(characterControllerSettings, ref rigidTransform, dt);
+            ApplyAirDrag.Execute(characterControllerSettings, ref rigidTransform, dt);
         }
     }
 }

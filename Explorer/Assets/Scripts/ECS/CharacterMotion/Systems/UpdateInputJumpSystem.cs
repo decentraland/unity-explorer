@@ -38,7 +38,7 @@ namespace ECS.CharacterMotion.Systems
         private void UpdateInput([Data] float t, [Data] int tickValue, ref JumpInputComponent inputToUpdate,
             ref CharacterRigidTransform characterPhysics, ref ICharacterControllerSettings characterControllerSettings)
         {
-            if (characterPhysics.PhysicsValues.IsGrounded && inputAction.WasPressedThisFrame())
+            if (characterPhysics.IsGrounded && inputAction.WasPressedThisFrame())
                 inputToUpdate.IsChargingJump = true;
             else if (inputToUpdate.IsChargingJump)
             {

@@ -6,8 +6,7 @@ using DCL.CharacterCamera;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.CharacterMotion.Components;
-using ECS.Prioritization.Systems;
-using ECS.Unity.Transforms.Components;
+using ECS.CharacterMotion.Settings;
 using UnityEngine;
 using Utility;
 
@@ -28,24 +27,27 @@ namespace ECS.CharacterMotion.Systems
 
         protected override void Update(float t)
         {
-            InterpolateQuery(World);
+            InterpolateQuery(World, t);
         }
 
         [Query]
-        private void Interpolate(ref CharacterRigidTransform rigidTransform, ref TransformComponent transformComponent, ref CharacterController characterController)
+        private void Interpolate(
+            [Data] float dt,
+            ref ICharacterControllerSettings settings,
+            ref CharacterRigidTransform rigidTransform,
+            ref CharacterController characterController)
         {
-            // we assume that target position is set in Fixed Update but for foreign avatars it can be set after CRDT processing
-            float timeAheadOfLastFixedUpdate = Time.time - rigidTransform.ModificationTimestamp;
-            float normalizedTimeAhead = Mathf.Clamp(timeAheadOfLastFixedUpdate / Time.fixedDeltaTime, 0f, 1f);
+            float acceleration = GetAcceleration(settings, in rigidTransform);
+            rigidTransform.MoveVelocity.Interpolated = Vector3.MoveTowards(rigidTransform.MoveVelocity.Interpolated, rigidTransform.MoveVelocity.Target, acceleration * dt);
 
-            // interpolate between previous and target position
-            var interpolatedPosition = Vector3.Lerp
-                (rigidTransform.PreviousTargetPosition, rigidTransform.TargetPosition, normalizedTimeAhead);
+            Vector3 delta = (rigidTransform.MoveVelocity.Interpolated + rigidTransform.NonInterpolatedVelocity) * dt;
 
-            Vector3 delta = interpolatedPosition - transformComponent.Transform.localPosition;
             CollisionFlags collisionFlags = characterController.Move(delta);
 
-            rigidTransform.PhysicsValues.IsGrounded = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
+            rigidTransform.IsGrounded = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
         }
+
+        private static float GetAcceleration(ICharacterControllerSettings characterControllerSettings, in CharacterRigidTransform physics) =>
+            physics.IsGrounded ? characterControllerSettings.GroundAcceleration : characterControllerSettings.AirAcceleration;
     }
 }

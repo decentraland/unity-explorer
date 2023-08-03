@@ -9,10 +9,9 @@ namespace ECS.CharacterMotion
     public static class ApplyCharacterMovementVelocity
     {
         public static void Execute(ICharacterControllerSettings characterControllerSettings,
-            ref CharacterRigidTransform.Physics characterPhysics,
+            ref CharacterRigidTransform.MovementVelocity movementVelocity,
             in CameraComponent camera,
-            in MovementInputComponent input,
-            float deltaTime)
+            in MovementInputComponent input)
         {
             Transform cameraTransform = camera.Camera.transform;
             Vector3 forward = cameraTransform.forward;
@@ -22,15 +21,8 @@ namespace ECS.CharacterMotion
 
             Vector3 targetForward = ((forward * input.Axes.y) + (right * input.Axes.x)).normalized;
             Vector3 targetVelocity = targetForward * GetSpeedLimit(characterControllerSettings, input);
-
-            // Interpolate velocity
-            float acceleration = GetAcceleration(characterControllerSettings, characterPhysics);
-            characterPhysics.Velocity = Vector3.MoveTowards(characterPhysics.Velocity, targetVelocity, acceleration * deltaTime);
+            movementVelocity.Target = targetVelocity;
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static float GetAcceleration(ICharacterControllerSettings characterControllerSettings, in CharacterRigidTransform.Physics physics) =>
-            physics.IsGrounded ? characterControllerSettings.GroundAcceleration : characterControllerSettings.AirAcceleration;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static float GetSpeedLimit(ICharacterControllerSettings characterControllerSettings, in MovementInputComponent inputComponent)

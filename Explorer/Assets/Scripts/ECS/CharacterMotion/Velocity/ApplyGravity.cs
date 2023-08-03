@@ -9,15 +9,15 @@ namespace ECS.CharacterMotion
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Execute(ICharacterControllerSettings characterControllerSettings,
-            ref CharacterRigidTransform.Physics characterPhysics,
+            ref CharacterRigidTransform characterPhysics,
             float deltaTime)
         {
             if (!characterPhysics.IsGrounded)
 
                 // Gravity is already negative
-                characterPhysics.Velocity += Vector3.up * characterControllerSettings.Gravity * deltaTime;
+                characterPhysics.NonInterpolatedVelocity += Vector3.up * characterControllerSettings.Gravity * deltaTime;
             else
-                characterPhysics.Velocity.y = 0f;
+                characterPhysics.NonInterpolatedVelocity.y = 0f;
         }
     }
 }

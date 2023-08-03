@@ -14,36 +14,29 @@ namespace ECS.CharacterMotion.Components
     /// </summary>
     public class CharacterRigidTransform
     {
-        public struct Physics
+        public struct MovementVelocity
         {
             /// <summary>
-            ///     Whether the character is grounded
+            /// Set by physics system in FixedUpdate
             /// </summary>
-            public bool IsGrounded;
-
-            public Vector3 Velocity;
+            public Vector3 Target;
 
             /// <summary>
-            ///     TODO Collider if <see cref="IsGrounded" /> is true
+            /// Interpolated according to acceleration every Update
             /// </summary>
-            public Collider GroundedCollider;
+            public Vector3 Interpolated;
         }
 
-        public Physics PhysicsValues;
+        public MovementVelocity MoveVelocity;
 
         /// <summary>
-        ///     Last time when component was modified
+        ///     Whether the character is grounded
         /// </summary>
-        public float ModificationTimestamp;
+        public bool IsGrounded;
 
         /// <summary>
-        ///     Used for the interpolating purpose, assigned before <see cref="TargetPosition" /> is calculated
+        /// Every velocity that is applied as is
         /// </summary>
-        public Vector3 PreviousTargetPosition;
-
-        /// <summary>
-        ///     Target Position the object tends to
-        /// </summary>
-        public Vector3 TargetPosition;
+        public Vector3 NonInterpolatedVelocity;
     }
 }

@@ -11,7 +11,7 @@ namespace ECS.CharacterMotion
         public static void Execute(
             ICharacterControllerSettings characterControllerSettings,
             ref JumpInputComponent jump,
-            ref CharacterRigidTransform.Physics characterPhysics,
+            ref CharacterRigidTransform characterPhysics,
             int physicsTick)
         {
             float power = jump.PhysicalButtonArguments.GetPower(physicsTick);
@@ -21,7 +21,7 @@ namespace ECS.CharacterMotion
                 float jumpHeight = Mathf.Lerp(characterControllerSettings.JumpHeight.x, characterControllerSettings.JumpHeight.y, power);
 
                 // Override velocity in a jump direction
-                characterPhysics.Velocity.y = Mathf.Sqrt(-2 * jumpHeight * characterControllerSettings.Gravity);
+                characterPhysics.NonInterpolatedVelocity.y = Mathf.Sqrt(-2 * jumpHeight * characterControllerSettings.Gravity);
 
                 characterPhysics.IsGrounded = false;
             }
