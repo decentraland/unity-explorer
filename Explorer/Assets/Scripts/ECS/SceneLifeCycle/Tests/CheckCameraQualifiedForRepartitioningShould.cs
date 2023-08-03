@@ -1,13 +1,14 @@
 ﻿using Arch.Core;
 using DCL.CharacterCamera;
+using ECS.Prioritization;
 using ECS.Prioritization.Components;
-using ECS.Prioritization.Systems;
+using ECS.SceneLifeCycle.Systems;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace ECS.Prioritization.Tests
+namespace ECS.SceneLifeCycle.Tests
 {
     public class CheckCameraQualifiedForRepartitioningShould : UnitySystemTestBase<CheckCameraQualifiedForRepartitioningSystem>
     {

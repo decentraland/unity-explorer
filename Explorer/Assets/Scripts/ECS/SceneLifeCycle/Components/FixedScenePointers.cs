@@ -14,10 +14,13 @@ namespace ECS.SceneLifeCycle.Components
         // Quick path to avoid an iteration
         public bool AllPromisesResolved;
 
+        public int EmptyParcelsLastProcessedIndex;
+
         public FixedScenePointers(AssetPromise<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>[] promises)
         {
             Promises = promises;
             AllPromisesResolved = false;
+            EmptyParcelsLastProcessedIndex = 0;
         }
     }
 }

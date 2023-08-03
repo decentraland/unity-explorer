@@ -21,7 +21,6 @@ namespace ECS.CharacterMotion.Systems
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.MOTION)]
-    [UpdateBefore(typeof(CheckCameraQualifiedForRepartitioningSystem))]
     [UpdateBefore(typeof(CameraGroup))]
     public partial class InterpolateCharacterSystem : BaseUnityLoopSystem
     {

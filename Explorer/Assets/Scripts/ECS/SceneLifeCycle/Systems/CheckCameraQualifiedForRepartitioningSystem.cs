@@ -4,9 +4,12 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.CharacterCamera;
 using ECS.Abstract;
+using ECS.CharacterMotion.Systems;
+using ECS.Prioritization;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.Components;
 
-namespace ECS.Prioritization.Systems
+namespace ECS.SceneLifeCycle.Systems
 {
     /// <summary>
     ///     <para>
@@ -17,9 +20,12 @@ namespace ECS.Prioritization.Systems
     ///     </para>
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateAfter(typeof(InterpolateCharacterSystem))]
     [UpdateAfter(typeof(CameraGroup))]
     public partial class CheckCameraQualifiedForRepartitioningSystem : BaseUnityLoopSystem
     {
+        private static readonly QueryDescription REALM_QUERY = new QueryDescription().WithAll<RealmComponent>();
+
         private readonly IPartitionSettings partitionSettings;
 
         internal CheckCameraQualifiedForRepartitioningSystem(World world, IPartitionSettings partitionSettings) : base(world)
@@ -29,7 +35,9 @@ namespace ECS.Prioritization.Systems
 
         protected override void Update(float t)
         {
-            CheckCameraTransformChangedQuery(World);
+            // it should be updated only if realm is already loaded
+            if (World.CountEntities(in REALM_QUERY) > 0)
+                CheckCameraTransformChangedQuery(World);
         }
 
         [Query]
