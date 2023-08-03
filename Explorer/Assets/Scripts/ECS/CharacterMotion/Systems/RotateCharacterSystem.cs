@@ -31,11 +31,12 @@ namespace ECS.CharacterMotion.Systems
 
         protected override void Update(float t)
         {
-            LerpRotationQuery(World, in camera.GetCameraComponent(World));
+            LerpRotationQuery(World, t, in camera.GetCameraComponent(World));
         }
 
         [Query]
         private void LerpRotation(
+            [Data] float dt,
             [Data] in CameraComponent camera,
             ref ICharacterControllerSettings characterControllerSettings,
             ref TransformComponent transform,
@@ -52,7 +53,7 @@ namespace ECS.CharacterMotion.Systems
             Transform characterTransform = transform.Transform;
             Vector3 characterForward = characterTransform.forward;
 
-            characterTransform.forward = Vector3.Slerp(characterForward, targetForward, characterControllerSettings.RotationAngularSpeed * Time.deltaTime);
+            characterTransform.forward = Vector3.Slerp(characterForward, targetForward, characterControllerSettings.RotationAngularSpeed * dt);
         }
     }
 }
