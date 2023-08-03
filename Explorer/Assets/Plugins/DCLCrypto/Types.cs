@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
-using Unity.Plastic.Newtonsoft.Json;
-using Unity.Plastic.Newtonsoft.Json.Converters;
-
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace DCLCrypto
 {
     [Serializable]
-    public enum AuthLinkType {
+    public enum AuthLinkType
+    {
         SIGNER,
         ECDSA_EPHEMERAL,
         ECDSA_SIGNED_ENTITY,
@@ -21,9 +21,10 @@ namespace DCLCrypto
          */
         ECDSA_EIP_1654_SIGNED_ENTITY,
     }
-    
+
     [Serializable]
-    public struct AuthLink {
+    public struct AuthLink
+    {
         [JsonConverter(typeof(StringEnumConverter))]
         public AuthLinkType type;
         public string payload;
@@ -38,7 +39,7 @@ namespace DCLCrypto
             newChain.AddRange(this);
             return newChain;
         }
-        
+
         public string ToJsonString()
         {
             return JsonConvert.SerializeObject(this);
@@ -59,7 +60,7 @@ namespace DCLCrypto
             this.EphemeralIdentity = ephemeralIdentity;
             this.Expiration = expiration;
         }
-        
+
         public bool IsExpired()
         {
             return DateTime.Now > Expiration;
