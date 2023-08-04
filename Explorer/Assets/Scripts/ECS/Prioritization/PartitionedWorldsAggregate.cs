@@ -24,7 +24,7 @@ namespace ECS.Prioritization
             IPartitionComponent partitionX = x.data;
             IPartitionComponent partitionY = y.data;
 
-            return partitionX.CompareTo(partitionY);
+            return BucketBasedComparer.INSTANCE.Compare(partitionX, partitionY);
         }
 
         public void Add(in IPartitionComponent data, SystemGroup systemGroup)
