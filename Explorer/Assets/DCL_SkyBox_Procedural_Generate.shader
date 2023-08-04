@@ -26,6 +26,7 @@ Shader "CustomRenderTexture/SkyBox_Procedural_Generate"
             Name "SkyBox_Procedural_Generate_Right"
 
             HLSLPROGRAM
+                #pragma multi_compile _CUBEMAP_FACE_RIGHT
                 #pragma target 5.0
                 #pragma vertex sk_vert
                 #pragma fragment sk_frag             
@@ -38,6 +39,7 @@ Shader "CustomRenderTexture/SkyBox_Procedural_Generate"
             Name "SkyBox_Procedural_Generate_Left"
 
             HLSLPROGRAM
+                #pragma multi_compile _CUBEMAP_FACE_LEFT
                 #pragma target 5.0
                 #pragma vertex sk_vert
                 #pragma fragment sk_frag          
@@ -50,6 +52,7 @@ Shader "CustomRenderTexture/SkyBox_Procedural_Generate"
             Name "SkyBox_Procedural_Generate_Up"
 
             HLSLPROGRAM
+                #pragma multi_compile _CUBEMAP_FACE_UP
                 #pragma target 5.0
                 #pragma vertex sk_vert
                 #pragma fragment sk_frag
@@ -62,6 +65,7 @@ Shader "CustomRenderTexture/SkyBox_Procedural_Generate"
             Name "SkyBox_Procedural_Generate_Down"
 
             HLSLPROGRAM
+                #pragma multi_compile _CUBEMAP_FACE_DOWN
                 #pragma target 5.0
                 #pragma vertex sk_vert
                 #pragma fragment sk_frag
@@ -74,6 +78,7 @@ Shader "CustomRenderTexture/SkyBox_Procedural_Generate"
             Name "SkyBox_Procedural_Generate_Front"
 
             HLSLPROGRAM
+                #pragma multi_compile _CUBEMAP_FACE_FRONT
                 #pragma target 5.0
                 #pragma vertex sk_vert
                 #pragma fragment sk_frag
@@ -86,6 +91,7 @@ Shader "CustomRenderTexture/SkyBox_Procedural_Generate"
             Name "SkyBox_Procedural_Generate_Back"
 
             HLSLPROGRAM
+                #pragma multi_compile _CUBEMAP_FACE_BACK
                 #pragma target 5.0
                 #pragma vertex sk_vert
                 #pragma fragment sk_frag

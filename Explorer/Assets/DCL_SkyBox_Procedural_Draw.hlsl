@@ -45,9 +45,9 @@ v2f vert (appdata_t v)
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
     float3 rotated = RotateAroundYInDegrees(v.vertex, _Rotation);
     //float3 rotated = RotateAroundYInDegrees(v.vertex, 45.0f);
-    o.vertex = UnityObjectToClipPos(rotated);
+    o.vertex = UnityObjectToClipPos(v.vertex);
     o.vertex.z = 0.0f;
-    o.texcoord = normalize(mul(UNITY_MATRIX_I_V, normalize(v.vertex) ).xyz);
+    o.texcoord = v.vertex;//normalize(mul(UNITY_MATRIX_I_V, normalize(v.vertex) ).xyz);
     return o;
 }
 
