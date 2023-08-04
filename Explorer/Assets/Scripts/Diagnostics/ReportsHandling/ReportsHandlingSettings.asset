@@ -184,6 +184,26 @@ MonoBehaviour:
       Severity: 4
     - Category: JAVASCRIPT
       Severity: 1
+    - Category: MOTION
+      Severity: 3
+    - Category: MOTION
+      Severity: 2
+    - Category: MOTION
+      Severity: 0
+    - Category: MOTION
+      Severity: 4
+    - Category: MOTION
+      Severity: 1
+    - Category: INPUT
+      Severity: 3
+    - Category: INPUT
+      Severity: 2
+    - Category: INPUT
+      Severity: 0
+    - Category: INPUT
+      Severity: 4
+    - Category: INPUT
+      Severity: 1
   sentryMatrix:
     entries:
     - Category: ENGINE
