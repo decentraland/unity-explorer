@@ -36,9 +36,18 @@ namespace Global.Dynamic
         private SceneSharedContainer sceneSharedContainer;
         private StaticContainer staticContainer;
 
+        [SerializeField] private RealmLauncher realmLauncher;
+        [SerializeField] private string[] realms;
+
         private void Awake()
         {
-            InitializeAsync(destroyCancellationToken).Forget();
+            realmLauncher.Initialize(realms);
+            realmLauncher.OnRealmSelected += SetRealm;
+        }
+
+        private void SetRealm(string selectedRealm)
+        {
+            InitializeAsync(destroyCancellationToken, selectedRealm);
         }
 
         private void OnDestroy()
@@ -50,11 +59,12 @@ namespace Global.Dynamic
 
                 await dynamicWorldContainer.RealmController.DisposeGlobalWorld(globalWorld).SuppressCancellationThrow();
             }
-
+            realmLauncher.OnRealmSelected -= SetRealm;
             DisposeAsync().Forget();
+
         }
 
-        private async UniTask InitializeAsync(CancellationToken ct)
+        private async UniTask InitializeAsync(CancellationToken ct, string selectedRealm)
         {
             Install();
 
@@ -63,7 +73,7 @@ namespace Global.Dynamic
             character.transform.position = cameraPosition;
 
             globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory, dynamicWorldContainer.EmptyScenesWorldFactory, character);
-            await dynamicWorldContainer.RealmController.SetRealm(globalWorld, "https://sdk-team-cdn.decentraland.org/ipfs/streaming-world-main", destroyCancellationToken);
+            await dynamicWorldContainer.RealmController.SetRealm(globalWorld, selectedRealm, destroyCancellationToken);
         }
 
         internal void Install()
