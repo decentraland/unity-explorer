@@ -44,7 +44,10 @@ namespace ECS.CharacterMotion.Systems
 
             CollisionFlags collisionFlags = characterController.Move(delta);
 
-            rigidTransform.IsGrounded = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
+            bool hasGroundedFlag = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
+
+            if (!Mathf.Approximately(delta.y, 0f))
+                rigidTransform.IsGrounded = hasGroundedFlag;
         }
 
         private static float GetAcceleration(ICharacterControllerSettings characterControllerSettings, in CharacterRigidTransform physics) =>
