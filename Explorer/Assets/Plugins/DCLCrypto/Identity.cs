@@ -1,37 +1,30 @@
-﻿using System.Text;
-using Nethereum.Signer;
+﻿using Nethereum.Signer;
 
 namespace DCLCrypto
 {
     public class Identity
     {
         private readonly EthECKey key;
-        private readonly EthereumMessageSigner signer = new EthereumMessageSigner();
-
-        public static Identity CreateRandom()
-        {
-            return new Identity(EthECKey.GenerateKey());
-        }
+        private readonly EthereumMessageSigner signer = new ();
 
         public Identity(EthECKey key)
         {
             this.key = key;
         }
 
-        public string Sign(string message)
-        {
-            return signer.EncodeUTF8AndSign(message, key);
-        }
+        public static Identity CreateRandom() =>
+            new (EthECKey.GenerateKey());
+
+        public string Sign(string message) =>
+            signer.EncodeUTF8AndSign(message, key);
 
         public bool Verify(string message, string signature)
         {
-            var address = signer.EncodeUTF8AndEcRecover(message, signature);
+            string address = signer.EncodeUTF8AndEcRecover(message, signature);
             return address == Address();
         }
 
-        public string Address()
-        {
-            return key.GetPublicAddress();
-        }
+        public string Address() =>
+            key.GetPublicAddress();
     }
 }

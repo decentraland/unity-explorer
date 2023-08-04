@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System;
+using System.Collections.Generic;
 
 namespace DCLCrypto
 {
     [Serializable]
+
+    // ReSharper disable InconsistentNaming
     public enum AuthLinkType
     {
         SIGNER,
@@ -29,7 +31,7 @@ namespace DCLCrypto
         public AuthLinkType type;
         public string payload;
         [CanBeNull] public string signature;
-    };
+    }
 
     public class AuthChain : List<AuthLink>
     {
@@ -40,30 +42,26 @@ namespace DCLCrypto
             return newChain;
         }
 
-        public string ToJsonString()
-        {
-            return JsonConvert.SerializeObject(this);
-        }
+        public string ToJsonString() =>
+            JsonConvert.SerializeObject(this);
     }
 
     public class AuthIdentity
     {
-        public readonly string EthAddress;
         public readonly AuthChain AuthChain;
         public readonly Identity EphemeralIdentity;
+        public readonly string EthAddress;
         public readonly DateTime Expiration;
 
         public AuthIdentity(string ethAddress, AuthChain authChain, Identity ephemeralIdentity, DateTime expiration)
         {
-            this.EthAddress = ethAddress;
-            this.AuthChain = authChain;
-            this.EphemeralIdentity = ephemeralIdentity;
-            this.Expiration = expiration;
+            EthAddress = ethAddress;
+            AuthChain = authChain;
+            EphemeralIdentity = ephemeralIdentity;
+            Expiration = expiration;
         }
 
-        public bool IsExpired()
-        {
-            return DateTime.Now > Expiration;
-        }
+        public bool IsExpired() =>
+            DateTime.Now > Expiration;
     }
 }
