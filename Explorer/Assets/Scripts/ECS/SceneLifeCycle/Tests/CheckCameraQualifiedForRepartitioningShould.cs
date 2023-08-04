@@ -2,6 +2,7 @@
 using DCL.CharacterCamera;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Systems;
 using ECS.TestSuite;
 using NSubstitute;
@@ -19,6 +20,8 @@ namespace ECS.SceneLifeCycle.Tests
         {
             partitionSettings = Substitute.For<IPartitionSettings>();
             system = new CheckCameraQualifiedForRepartitioningSystem(world, partitionSettings);
+
+            world.Create(new RealmComponent());
         }
 
         [Test]
