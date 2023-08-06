@@ -34,7 +34,7 @@ namespace Comms.Systems
         private ClientWebSocket webSocket;
 
         // Data produced from Comms
-        private Dictionary<uint, PeerInfo> peersIdentities = new();
+        private Dictionary<uint, PeerInfo> peersIdentities = new ();
         private uint myAlias;
 
         private CancellationTokenSource _cancellationTokenSource;
@@ -43,6 +43,9 @@ namespace Comms.Systems
         // Pre-cache received buffer
         private const int ARRAY_SIZE = 8192;
         byte[] receiveBuffer = new byte[ARRAY_SIZE];
+
+        // Events
+        public event EventHandler<string> OnChatMessage;
 
         public WSCommsRoom()
         {
@@ -68,7 +71,7 @@ namespace Comms.Systems
 
         public bool IsConnected()
         {
-            return webSocket is {State: WebSocketState.Open} && _ready;
+            return webSocket is { State: WebSocketState.Open } && _ready;
         }
 
         private async UniTask<ArraySegment<byte>> ReceiveNextMessage()
@@ -85,6 +88,7 @@ namespace Comms.Systems
                 if (result.Count <= 0) continue;
 
                 offset += result.Count;
+
                 if (result.EndOfMessage)
                     break;
             }
@@ -138,6 +142,7 @@ namespace Comms.Systems
 
                 case WsPacket.MessageOneofCase.PeerJoinMessage:
                     Debug.Log($"PeerJoinMessage {packet.PeerJoinMessage.Alias}");
+
                     peersIdentities.Add(packet.PeerJoinMessage.Alias, new PeerInfo()
                     {
                         alias = packet.PeerJoinMessage.Address,
@@ -154,8 +159,10 @@ namespace Comms.Systems
                     Debug.LogError("We were kicked from the WS Rooms.");
                     peersIdentities.Clear();
                     state = WSCommsRoomState.Disconnected;
+
                     await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Kicked",
                         _cancellationTokenSource.Token);
+
                     break;
 
                 case WsPacket.MessageOneofCase.PeerUpdateMessage:
@@ -175,12 +182,10 @@ namespace Comms.Systems
             {
                 case Rfc4.Packet.MessageOneofCase.Chat:
                     Debug.Log($"Chat: {alias} {packet.Chat.Message}");
+                    OnChatMessage?.Invoke(this, $"{alias.ToString()}> {packet.Chat.Message}");
                     break;
                 case Rfc4.Packet.MessageOneofCase.Position:
-                    if (peersIdentities.TryGetValue(alias, out PeerInfo value))
-                    {
-                        value.position = packet.Position;
-                    }
+                    if (peersIdentities.TryGetValue(alias, out PeerInfo value)) { value.position = packet.Position; }
 
                     break;
                 case Rfc4.Packet.MessageOneofCase.Scene:
@@ -216,6 +221,7 @@ namespace Comms.Systems
 
                     await webSocket.SendAsync(joinMessage.ToByteArray(), WebSocketMessageType.Binary, true,
                         _cancellationTokenSource.Token);
+
                     break;
 
                 case WsPacket.MessageOneofCase.WelcomeMessage:
@@ -238,7 +244,7 @@ namespace Comms.Systems
             }
         }
 
-        public async UniTask SendPlayerPosition(Rfc4.Position position, CancellationTokenSource ctSource)
+        public async UniTask SendPlayerPosition(Rfc4.Position position)
         {
             var joinMessage = new WsPacket()
             {
@@ -250,7 +256,28 @@ namespace Comms.Systems
                 }
             };
 
-            await webSocket.SendAsync(joinMessage.ToByteArray(), WebSocketMessageType.Binary, true, ctSource.Token);
+            await webSocket.SendAsync(joinMessage.ToByteArray(), WebSocketMessageType.Binary, true, _cancellationTokenSource.Token);
+        }
+
+        public async UniTask SendChat(string message)
+        {
+            var chatMessage = new Rfc4.Chat
+            {
+                Message = message,
+                Timestamp = DateTime.Now.Ticks,
+            };
+
+            var joinMessage = new WsPacket()
+            {
+                PeerUpdateMessage = new WsPeerUpdate()
+                {
+                    FromAlias = myAlias,
+                    Body = chatMessage.ToByteString(),
+                    Unreliable = false,
+                }
+            };
+
+            await webSocket.SendAsync(joinMessage.ToByteArray(), WebSocketMessageType.Binary, true, _cancellationTokenSource.Token);
         }
 
         private async UniTask SendIdentification()
