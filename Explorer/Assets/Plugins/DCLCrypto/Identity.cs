@@ -5,7 +5,7 @@ namespace DCLCrypto
     public class Identity
     {
         private readonly EthECKey key;
-        private readonly EthereumMessageSigner signer = new ();
+        private static readonly EthereumMessageSigner Signer = new ();
 
         public Identity(EthECKey key)
         {
@@ -16,11 +16,11 @@ namespace DCLCrypto
             new (EthECKey.GenerateKey());
 
         public string Sign(string message) =>
-            signer.EncodeUTF8AndSign(message, key);
+            Signer.EncodeUTF8AndSign(message, key);
 
         public bool Verify(string message, string signature)
         {
-            string address = signer.EncodeUTF8AndEcRecover(message, signature);
+            string address = Signer.EncodeUTF8AndEcRecover(message, signature);
             return address == Address();
         }
 

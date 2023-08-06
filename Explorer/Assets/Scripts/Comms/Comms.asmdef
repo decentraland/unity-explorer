@@ -1,0 +1,21 @@
+{
+    "name": "Comms",
+    "rootNamespace": "",
+    "references": [
+        "DCLCrypto",
+        "Decentraland.Protocol.GeneratedCode",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Google.Api.CommonProtos.dll",
+        "Google.Protobuf.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
