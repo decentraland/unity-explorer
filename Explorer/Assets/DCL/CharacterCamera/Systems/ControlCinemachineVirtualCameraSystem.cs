@@ -165,7 +165,11 @@ namespace DCL.CharacterCamera.Systems
         {
             // take previous position from third person camera
             var tpPos = preset.ThirdPersonCameraData.Camera.transform.position;
-            preset.FreeCameraData.Camera.transform.position = tpPos;
+            preset.FreeCameraData.Camera.transform.position = tpPos + preset.FreeCameraData.DefaultPosition;
+
+            // copy POV
+            preset.FreeCameraData.POV.m_HorizontalAxis.Value = preset.ThirdPersonCameraData.Camera.m_XAxis.Value;
+            preset.FreeCameraData.POV.m_VerticalAxis.Value = preset.ThirdPersonCameraData.Camera.m_YAxis.Value;
         }
 
         /// <summary>
