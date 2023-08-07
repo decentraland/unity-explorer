@@ -42,12 +42,14 @@ namespace Global.Dynamic
         private void Awake()
         {
             realmLauncher.Initialize(realms);
+            Install();
+
             realmLauncher.OnRealmSelected += SetRealm;
         }
 
         private void SetRealm(string selectedRealm)
         {
-            InitializeAsync(destroyCancellationToken, selectedRealm);
+            ChangeRealm(destroyCancellationToken, selectedRealm).Forget();
         }
 
         private void OnDestroy()
@@ -59,21 +61,22 @@ namespace Global.Dynamic
 
                 await dynamicWorldContainer.RealmController.DisposeGlobalWorld(globalWorld).SuppressCancellationThrow();
             }
+
             realmLauncher.OnRealmSelected -= SetRealm;
             DisposeAsync().Forget();
-
         }
 
-        private async UniTask InitializeAsync(CancellationToken ct, string selectedRealm)
+        private async UniTask ChangeRealm(CancellationToken ct, string selectedRealm)
         {
-            Install();
+            if (globalWorld != null)
+                await dynamicWorldContainer.RealmController.UnloadCurrentRealm(globalWorld);
+
+            await UniTask.SwitchToMainThread();
 
             Vector3 cameraPosition = ParcelMathHelper.GetPositionByParcelPosition(StartPosition);
             cameraPosition.y += 1f;
             character.transform.position = cameraPosition;
-
-            globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory, dynamicWorldContainer.EmptyScenesWorldFactory, character);
-            await dynamicWorldContainer.RealmController.SetRealm(globalWorld, selectedRealm, destroyCancellationToken);
+            await dynamicWorldContainer.RealmController.SetRealm(globalWorld, selectedRealm, ct);
         }
 
         internal void Install()
@@ -91,6 +94,8 @@ namespace Global.Dynamic
                 character,
                 StaticLoadPositions,
                 SceneLoadRadius);
+
+            globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory, dynamicWorldContainer.EmptyScenesWorldFactory, character);
 
             Profiler.EndSample();
         }
