@@ -1,6 +1,7 @@
 using AssetManagement.JsCodeResolver;
 using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -70,15 +71,23 @@ namespace SceneRuntime.Factory
         private UniTask<string> GetJsInitSourceCode(CancellationToken ct) =>
             LoadJavaScriptSourceCode($"file://{Application.streamingAssetsPath}/Js/Init.js", ct);
 
+        private async UniTask AddModule(string moduleName, IDictionary<string, string> moduleDictionary, CancellationToken ct) =>
+            moduleDictionary.Add(moduleName, WrapInModuleCommonJs(await LoadJavaScriptSourceCode($"file://{Application.streamingAssetsPath}/Js/Modules/{moduleName}", ct)));
+
         private async UniTask<Dictionary<string, string>> GetJsModuleDictionary(CancellationToken ct)
         {
-            var moduleDictionary = new Dictionary<string, string>
-            {
-                {
-                    "EngineApi.js",
-                    WrapInModuleCommonJs(await LoadJavaScriptSourceCode($"file://{Application.streamingAssetsPath}/Js/Modules/EngineAPI.js", ct))
-                },
-            };
+            var moduleDictionary = new Dictionary<string, string>();
+
+            await AddModule("EngineApi.js", moduleDictionary, ct);
+            await AddModule("EthereumController.js", moduleDictionary, ct);
+            await AddModule("Players.js", moduleDictionary, ct);
+            await AddModule("PortableExperiences.js", moduleDictionary, ct);
+            await AddModule("RestrictedActions.js", moduleDictionary, ct);
+            await AddModule("Runtime.js", moduleDictionary, ct);
+            await AddModule("Scene.js", moduleDictionary, ct);
+            await AddModule("SignedFetch.js", moduleDictionary, ct);
+            await AddModule("Testing.js", moduleDictionary, ct);
+            await AddModule("UserIdentity.js", moduleDictionary, ct);
 
             return moduleDictionary;
         }
