@@ -212,12 +212,12 @@ MonoBehaviour:
     <Camera>k__BackingField: {fileID: 4115714836209283951}
   thirdPersonCameraData:
     zoomInOrbitThreshold:
-    - m_Height: 4
-      m_Radius: 1.1
-    - m_Height: 0.5
-      m_Radius: 3.2
+    - m_Height: 9
+      m_Radius: 2.2
+    - m_Height: 1
+      m_Radius: 6.4
     - m_Height: -0.75
-      m_Radius: 1.2
+      m_Radius: 2.4
     zoomOutOrbitThreshold:
     - m_Height: 16
       m_Radius: 4.4
@@ -771,12 +771,12 @@ MonoBehaviour:
   m_BindingMode: 4
   m_SplineCurvature: 0
   m_Orbits:
-  - m_Height: 4
-    m_Radius: 1.1
-  - m_Height: 0.5
-    m_Radius: 3.2
+  - m_Height: 9
+    m_Radius: 2.2
+  - m_Height: 1
+    m_Radius: 6.4
   - m_Height: -0.75
-    m_Radius: 1.2
+    m_Radius: 2.4
   m_LegacyHeadingBias: 3.4028235e+38
   m_Rigs:
   - {fileID: 820877881861908172}
