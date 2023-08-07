@@ -2,20 +2,20 @@ using System;
 using TMPro;
 using UnityEngine;
 
-public class RealmLauncher : MonoBehaviour
+namespace Global.Dynamic
 {
-
-    [SerializeField] private TMP_Dropdown realmPicker;
-
-    public Action<string> OnRealmSelected;
-
-    public void Initialize(string[] realms)
+    public class RealmLauncher : MonoBehaviour
     {
-        foreach (string realm in realms)
+        [SerializeField] private TMP_Dropdown realmPicker;
+
+        public Action<string> OnRealmSelected;
+
+        public void Initialize(string[] realms)
         {
-            realmPicker.options.Add(new TMP_Dropdown.OptionData(realm));
+            foreach (string realm in realms) { realmPicker.options.Add(new TMP_Dropdown.OptionData(realm)); }
+
+            realmPicker.onValueChanged.AddListener(selectedValue =>
+                OnRealmSelected(realmPicker.options[selectedValue].text));
         }
-        realmPicker.onValueChanged.AddListener((int selectedValue) =>
-            OnRealmSelected(realmPicker.options[selectedValue].text));
     }
 }
