@@ -1,0 +1,49 @@
+﻿using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.CharacterCamera;
+using ECS.Abstract;
+using ECS.CharacterMotion.Systems;
+using ECS.Prioritization;
+using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.Components;
+
+namespace ECS.SceneLifeCycle.Systems
+{
+    /// <summary>
+    ///     <para>
+    ///         Runs in a global world, checks if camera position has changed enough to be qualified for re-partitioning
+    ///     </para>
+    ///     <para>
+    ///         Executes in `LateUpdate` as all movement is happening in `Update`
+    ///     </para>
+    /// </summary>
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateAfter(typeof(InterpolateCharacterSystem))]
+    [UpdateAfter(typeof(CameraGroup))]
+    public partial class CheckCameraQualifiedForRepartitioningSystem : BaseUnityLoopSystem
+    {
+        private static readonly QueryDescription REALM_QUERY = new QueryDescription().WithAll<RealmComponent>();
+
+        private readonly IPartitionSettings partitionSettings;
+
+        internal CheckCameraQualifiedForRepartitioningSystem(World world, IPartitionSettings partitionSettings) : base(world)
+        {
+            this.partitionSettings = partitionSettings;
+        }
+
+        protected override void Update(float t)
+        {
+            // it should be updated only if realm is already loaded
+            if (World.CountEntities(in REALM_QUERY) > 0)
+                CheckCameraTransformChangedQuery(World);
+        }
+
+        [Query]
+        private void CheckCameraTransformChanged(ref CameraSamplingData cameraSamplingData, ref CameraComponent cameraComponent)
+        {
+            ScenesPartitioningUtils.CheckCameraTransformChanged(cameraSamplingData, in cameraComponent, partitionSettings.PositionSqrTolerance, partitionSettings.AngleTolerance);
+        }
+    }
+}
