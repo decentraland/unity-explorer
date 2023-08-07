@@ -264,9 +264,87 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": true
                 }
             ]
+        },
+        {
+            ""name"": ""FreeCamera"",
+            ""id"": ""df907d37-36e3-4d4c-9dd6-2c21e6553699"",
+            ""actions"": [
+                {
+                    ""name"": ""Movement"",
+                    ""type"": ""Value"",
+                    ""id"": ""e670b927-75dc-417a-ba3c-43015efe2c0d"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": ""2D Vector"",
+                    ""id"": ""73eb8e6a-540a-4141-8c3f-7ed9b171b2a7"",
+                    ""path"": ""2DVector(mode=1)"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Movement"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""up"",
+                    ""id"": ""86c6406b-8105-4754-a1c0-895d6eec2363"",
+                    ""path"": ""<Keyboard>/w"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Movement"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""down"",
+                    ""id"": ""a8a87abb-94e0-45c2-9085-adbaf52a766a"",
+                    ""path"": ""<Keyboard>/s"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Movement"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""left"",
+                    ""id"": ""40a02ba9-1082-4825-b888-ece3375d5b54"",
+                    ""path"": ""<Keyboard>/a"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Movement"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""right"",
+                    ""id"": ""c644590f-a145-4465-955b-5a526070e2f6"",
+                    ""path"": ""<Keyboard>/d"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Movement"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                }
+            ]
         }
     ],
-    ""controlSchemes"": []
+    ""controlSchemes"": [
+        {
+            ""name"": ""Desktop"",
+            ""bindingGroup"": ""Desktop"",
+            ""devices"": []
+        }
+    ]
 }");
         // Player
         m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
@@ -280,6 +358,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Camera_Zoom = m_Camera.FindAction("Zoom", throwIfNotFound: true);
         m_Camera_ZoomIn = m_Camera.FindAction("ZoomIn", throwIfNotFound: true);
         m_Camera_Drag = m_Camera.FindAction("Drag", throwIfNotFound: true);
+        // FreeCamera
+        m_FreeCamera = asset.FindActionMap("FreeCamera", throwIfNotFound: true);
+        m_FreeCamera_Movement = m_FreeCamera.FindAction("Movement", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -477,6 +558,61 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         }
     }
     public CameraActions @Camera => new CameraActions(this);
+
+    // FreeCamera
+    private readonly InputActionMap m_FreeCamera;
+    private List<IFreeCameraActions> m_FreeCameraActionsCallbackInterfaces = new List<IFreeCameraActions>();
+    private readonly InputAction m_FreeCamera_Movement;
+    public struct FreeCameraActions
+    {
+        private @DCLInput m_Wrapper;
+        public FreeCameraActions(@DCLInput wrapper) { m_Wrapper = wrapper; }
+        public InputAction @Movement => m_Wrapper.m_FreeCamera_Movement;
+        public InputActionMap Get() { return m_Wrapper.m_FreeCamera; }
+        public void Enable() { Get().Enable(); }
+        public void Disable() { Get().Disable(); }
+        public bool enabled => Get().enabled;
+        public static implicit operator InputActionMap(FreeCameraActions set) { return set.Get(); }
+        public void AddCallbacks(IFreeCameraActions instance)
+        {
+            if (instance == null || m_Wrapper.m_FreeCameraActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_FreeCameraActionsCallbackInterfaces.Add(instance);
+            @Movement.started += instance.OnMovement;
+            @Movement.performed += instance.OnMovement;
+            @Movement.canceled += instance.OnMovement;
+        }
+
+        private void UnregisterCallbacks(IFreeCameraActions instance)
+        {
+            @Movement.started -= instance.OnMovement;
+            @Movement.performed -= instance.OnMovement;
+            @Movement.canceled -= instance.OnMovement;
+        }
+
+        public void RemoveCallbacks(IFreeCameraActions instance)
+        {
+            if (m_Wrapper.m_FreeCameraActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        public void SetCallbacks(IFreeCameraActions instance)
+        {
+            foreach (var item in m_Wrapper.m_FreeCameraActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_FreeCameraActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    public FreeCameraActions @FreeCamera => new FreeCameraActions(this);
+    private int m_DesktopSchemeIndex = -1;
+    public InputControlScheme DesktopScheme
+    {
+        get
+        {
+            if (m_DesktopSchemeIndex == -1) m_DesktopSchemeIndex = asset.FindControlSchemeIndex("Desktop");
+            return asset.controlSchemes[m_DesktopSchemeIndex];
+        }
+    }
     public interface IPlayerActions
     {
         void OnJump(InputAction.CallbackContext context);
@@ -490,5 +626,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnZoom(InputAction.CallbackContext context);
         void OnZoomIn(InputAction.CallbackContext context);
         void OnDrag(InputAction.CallbackContext context);
+    }
+    public interface IFreeCameraActions
+    {
+        void OnMovement(InputAction.CallbackContext context);
     }
 }

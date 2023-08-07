@@ -13,6 +13,14 @@ namespace DCL.CharacterCamera.Components
         public bool ZoomIn;
         public bool ZoomOut;
 
-        public Vector2 Axes;
+        /// <summary>
+        /// Camera's point of view input
+        /// </summary>
+        public Vector2 POV;
+
+        /// <summary>
+        /// When in free camera mode, this is the movement vector
+        /// </summary>
+        public Vector2 FreeMovement;
     }
 }

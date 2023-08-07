@@ -1,8 +1,8 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Character;
 using DCL.CharacterCamera.Settings;
+using DCL.CharacterMotion.Settings;
 using Diagnostics.ReportsHandling;
-using ECS.CharacterMotion.Settings;
 using ECS.Prioritization;
 using System.Collections.Generic;
 using System.Threading;

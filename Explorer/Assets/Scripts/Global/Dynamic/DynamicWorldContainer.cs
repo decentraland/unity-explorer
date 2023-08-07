@@ -1,6 +1,6 @@
 ﻿using DCL.Character;
 using DCL.CharacterCamera.Components;
-using ECS.CharacterMotion.Settings;
+using DCL.CharacterMotion.Settings;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using Global.Dynamic.Plugins;

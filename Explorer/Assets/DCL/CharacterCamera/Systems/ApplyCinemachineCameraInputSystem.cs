@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Cinemachine;
 using DCL.CharacterCamera.Components;
 using ECS.Abstract;
+using UnityEngine;
 
 namespace DCL.CharacterCamera.Systems
 {
@@ -19,40 +20,59 @@ namespace DCL.CharacterCamera.Systems
 
         protected override void Update(float t)
         {
-            ApplyQuery(World);
+            ApplyQuery(World, t);
         }
 
         [Query]
-        private void Apply(ref CameraComponent camera, ref CameraInput cameraInput, ref ICinemachinePreset cinemachinePreset)
+        private void Apply([Data] float dt, ref CameraComponent camera, ref CameraInput cameraInput, ref ICinemachinePreset cinemachinePreset)
         {
             switch (camera.Mode)
             {
                 case CameraMode.ThirdPerson:
-                {
+
                     CinemachineFreeLook tpc = cinemachinePreset.ThirdPersonCameraData.Camera;
-                    tpc.m_XAxis.m_InputAxisValue = cameraInput.Axes.x;
-                    tpc.m_YAxis.m_InputAxisValue = cameraInput.Axes.y;
+                    tpc.m_XAxis.m_InputAxisValue = cameraInput.POV.x;
+                    tpc.m_YAxis.m_InputAxisValue = cameraInput.POV.y;
                     break;
-                }
+
                 case CameraMode.FirstPerson:
-                    CinemachinePOV pov = cinemachinePreset.FirstPersonCameraData.POV;
-
-                    if (pov)
-                    {
-                        pov.m_HorizontalAxis.m_InputAxisValue = cameraInput.Axes.x;
-                        pov.m_VerticalAxis.m_InputAxisValue = cameraInput.Axes.y;
-                    }
-
+                    ApplyPOV(cinemachinePreset.FirstPersonCameraData.POV, in cameraInput);
                     break;
                 case CameraMode.Free:
-                {
-                    // TODO
+                    ApplyPOV(cinemachinePreset.FreeCameraData.POV, in cameraInput);
+
+                    // Apply free movement
+
+                    ApplyFreeCameraMovement(dt, camera, cameraInput, cinemachinePreset);
+
                     break;
-                }
             }
 
             // Update the brain manually
             cinemachinePreset.Brain.ManualUpdate();
+        }
+
+        private static void ApplyFreeCameraMovement(float dt, in CameraComponent camera, in CameraInput cameraInput,
+            ICinemachinePreset cinemachinePreset)
+        {
+            // Camera's position is under Cinemachine control
+            Transform cinemachineTransform = cinemachinePreset.FreeCameraData.Camera.transform;
+
+            // Camera's rotation is not
+            var cameraTransform = camera.Camera.transform;
+
+            cinemachineTransform.localPosition += ((cameraTransform.forward * cameraInput.FreeMovement.y) +
+                                                   (cameraTransform.right * cameraInput.FreeMovement.x))
+                                                  * cinemachinePreset.FreeCameraData.Speed * dt;
+        }
+
+        private void ApplyPOV(CinemachinePOV cinemachinePOV, in CameraInput cameraInput)
+        {
+            if (cinemachinePOV)
+            {
+                cinemachinePOV.m_HorizontalAxis.m_InputAxisValue = cameraInput.POV.x;
+                cinemachinePOV.m_VerticalAxis.m_InputAxisValue = cameraInput.POV.y;
+            }
         }
     }
 }
