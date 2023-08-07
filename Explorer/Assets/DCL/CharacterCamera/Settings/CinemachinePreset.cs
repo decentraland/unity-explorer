@@ -16,9 +16,6 @@ namespace DCL.CharacterCamera.Settings
         [field: SerializeField]
         public CinemachineBrain Brain { get; private set; }
 
-        [field: SerializeField]
-        public float CameraModeMouseWheelThreshold { get; private set; } = 0.04f;
-
         ICinemachineThirdPersonCameraData ICinemachinePreset.ThirdPersonCameraData => thirdPersonCameraData;
 
         ICinemachineFirstPersonCameraData ICinemachinePreset.FirstPersonCameraData => firstPersonCameraData;

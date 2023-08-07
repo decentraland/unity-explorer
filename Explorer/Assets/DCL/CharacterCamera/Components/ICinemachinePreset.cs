@@ -12,11 +12,6 @@ namespace DCL.CharacterCamera.Components
 
         CinemachineBrain Brain { get; }
 
-        /// <summary>
-        ///     Absolute mouse wheel threshold to change the camera mode
-        /// </summary>
-        float CameraModeMouseWheelThreshold { get; }
-
         internal ICinemachineThirdPersonCameraData ThirdPersonCameraData { get; }
 
         internal ICinemachineFirstPersonCameraData FirstPersonCameraData { get; }

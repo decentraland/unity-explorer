@@ -1,8 +1,8 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Character;
 using DCL.CharacterCamera.Settings;
+using DCL.CharacterMotion.Settings;
 using Diagnostics.ReportsHandling;
-using ECS.CharacterMotion.Settings;
 using ECS.Prioritization;
 using System.Collections.Generic;
 using System.Threading;
@@ -73,9 +73,11 @@ namespace Global.Dynamic
 
             await UniTask.SwitchToMainThread();
 
-            Vector3 cameraPosition = ParcelMathHelper.GetPositionByParcelPosition(StartPosition);
-            cameraPosition.y += 1f;
-            character.transform.position = cameraPosition;
+            Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(StartPosition);
+            characterPos.y = 1f;
+
+            character.Controller.Move(characterPos - character.Transform.position);
+
             await dynamicWorldContainer.RealmController.SetRealm(globalWorld, selectedRealm, ct);
         }
 

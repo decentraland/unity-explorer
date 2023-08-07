@@ -24,15 +24,15 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 510392172125064392}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0.14239529, y: -0, z: -0, w: 0.9898099}
+  m_LocalPosition: {x: 0, y: 15.02, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1043145276212922183}
   m_Father: {fileID: 766485968713730526}
   m_RootOrder: -1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 16.373, y: 0, z: 0}
 --- !u!114 &4997933640858091397
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -212,12 +212,12 @@ MonoBehaviour:
     <Camera>k__BackingField: {fileID: 4115714836209283951}
   thirdPersonCameraData:
     zoomInOrbitThreshold:
-    - m_Height: 4
-      m_Radius: 1.1
-    - m_Height: 0.5
-      m_Radius: 3.2
+    - m_Height: 9
+      m_Radius: 2.2
+    - m_Height: 1
+      m_Radius: 6.4
     - m_Height: -0.75
-      m_Radius: 1.2
+      m_Radius: 2.4
     zoomOutOrbitThreshold:
     - m_Height: 16
       m_Radius: 4.4
@@ -229,9 +229,10 @@ MonoBehaviour:
     <Camera>k__BackingField: {fileID: 1829658356799049534}
   freeCameraData:
     <Camera>k__BackingField: {fileID: 4997933640858091397}
+    <Speed>k__BackingField: 10
+    <DefaultPosition>k__BackingField: {x: 0, y: 25, z: 0}
   <DefaultCameraMode>k__BackingField: 1
   <Brain>k__BackingField: {fileID: 1924827267997815873}
-  <CameraModeMouseWheelThreshold>k__BackingField: 0.04
 --- !u!1 &3879923591789973987
 GameObject:
   m_ObjectHideFlags: 0
@@ -770,12 +771,12 @@ MonoBehaviour:
   m_BindingMode: 4
   m_SplineCurvature: 0
   m_Orbits:
-  - m_Height: 4
-    m_Radius: 1.1
-  - m_Height: 0.5
-    m_Radius: 3.2
+  - m_Height: 9
+    m_Radius: 2.2
+  - m_Height: 1
+    m_Radius: 6.4
   - m_Height: -0.75
-    m_Radius: 1.2
+    m_Radius: 2.4
   m_LegacyHeadingBias: 3.4028235e+38
   m_Rigs:
   - {fileID: 820877881861908172}
@@ -948,6 +949,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1043145276212922183}
   - component: {fileID: 2789885389893343408}
+  - component: {fileID: 4089446836869634479}
   m_Layer: 0
   m_Name: cm
   m_TagString: Untagged
@@ -982,6 +984,68 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac0b09e7857660247b1477e93731de29, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &4089446836869634479
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6786270023864290576}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c9beda531928fc40968802117a5d256, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_RecenterTarget: 0
+  m_VerticalAxis:
+    Value: 0
+    m_SpeedMode: 1
+    m_MaxSpeed: 0.31
+    m_AccelTime: 0.1
+    m_DecelTime: 0.3
+    m_InputAxisName: 
+    m_InputAxisValue: 0
+    m_InvertInput: 1
+    m_MinValue: -180
+    m_MaxValue: 180
+    m_Wrap: 1
+    m_Recentering:
+      m_enabled: 0
+      m_WaitTime: 1
+      m_RecenteringTime: 2
+      m_LegacyHeadingDefinition: -1
+      m_LegacyVelocityFilterStrength: -1
+  m_VerticalRecentering:
+    m_enabled: 0
+    m_WaitTime: 1
+    m_RecenteringTime: 2
+    m_LegacyHeadingDefinition: -1
+    m_LegacyVelocityFilterStrength: -1
+  m_HorizontalAxis:
+    Value: 0
+    m_SpeedMode: 1
+    m_MaxSpeed: 0.37
+    m_AccelTime: 0.1
+    m_DecelTime: 0.03
+    m_InputAxisName: 
+    m_InputAxisValue: 0
+    m_InvertInput: 0
+    m_MinValue: -180
+    m_MaxValue: 180
+    m_Wrap: 1
+    m_Recentering:
+      m_enabled: 0
+      m_WaitTime: 1
+      m_RecenteringTime: 2
+      m_LegacyHeadingDefinition: -1
+      m_LegacyVelocityFilterStrength: -1
+  m_HorizontalRecentering:
+    m_enabled: 0
+    m_WaitTime: 1
+    m_RecenteringTime: 2
+    m_LegacyHeadingDefinition: -1
+    m_LegacyVelocityFilterStrength: -1
+  m_ApplyBeforeBody: 0
 --- !u!1 &8572707583035131875
 GameObject:
   m_ObjectHideFlags: 0

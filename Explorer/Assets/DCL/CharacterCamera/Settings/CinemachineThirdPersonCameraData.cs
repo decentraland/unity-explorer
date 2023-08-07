@@ -15,7 +15,7 @@ namespace DCL.CharacterCamera.Settings
         private CinemachineFreeLook.Orbit[] zoomOutOrbitThreshold = new CinemachineFreeLook.Orbit[3];
 
         [field: SerializeField]
-        public float ZoomSensitivity { get; private set; } = 1.0f;
+        public float ZoomSensitivity { get; private set; } = 0.05f;
 
         public IReadOnlyList<CinemachineFreeLook.Orbit> ZoomInOrbitThreshold => zoomInOrbitThreshold;
 
