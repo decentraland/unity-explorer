@@ -1,8 +1,9 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using DCL.CharacterCamera.Systems;
-using ECS.CharacterMotion.Systems;
-using ECS.Input.Systems.Physics;
+using DCL.CharacterMotion.Systems;
+using DCL.Input.Component;
+using DCL.Input.Systems;
 
 namespace Global.Dynamic.Plugins
 {
@@ -18,6 +19,9 @@ namespace Global.Dynamic.Plugins
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
+            builder.World.Create(new InputMapComponent((InputMapComponent.Kind)(~0)));
+
+            ApplyInputMapsSystem.InjectToWorld(ref builder, dclInput);
             UpdateInputPhysicsTickSystem.InjectToWorld(ref builder);
             UpdateInputJumpSystem.InjectToWorld(ref builder, dclInput.Player.Jump);
 

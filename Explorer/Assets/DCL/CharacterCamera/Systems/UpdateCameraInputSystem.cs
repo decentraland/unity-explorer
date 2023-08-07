@@ -2,8 +2,8 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.CharacterCamera.Components;
-using ECS.Input;
-using ECS.Input.Systems;
+using DCL.Input;
+using DCL.Input.Systems;
 using UnityEngine;
 
 namespace DCL.CharacterCamera.Systems
@@ -12,10 +12,12 @@ namespace DCL.CharacterCamera.Systems
     public partial class UpdateCameraInputSystem : UpdateInputSystem<CameraInput, CameraComponent>
     {
         private readonly DCLInput.CameraActions cameraActions;
+        private readonly DCLInput.FreeCameraActions freeCameraActions;
 
         internal UpdateCameraInputSystem(World world, DCLInput dclInput) : base(world)
         {
             cameraActions = dclInput.Camera;
+            freeCameraActions = dclInput.FreeCamera;
         }
 
         protected override void Update(float t)
@@ -32,7 +34,9 @@ namespace DCL.CharacterCamera.Systems
             inputToUpdate.ZoomOut = cameraActions.Zoom.ReadValue<Vector2>().y < 0
                                     || cameraActions.ZoomOut.WasPressedThisFrame();
 
-            inputToUpdate.Axes = cameraActions.Drag.ReadValue<Vector2>();
+            inputToUpdate.POV = cameraActions.Drag.ReadValue<Vector2>();
+
+            inputToUpdate.FreeMovement = freeCameraActions.Movement.ReadValue<Vector2>();
         }
     }
 }
