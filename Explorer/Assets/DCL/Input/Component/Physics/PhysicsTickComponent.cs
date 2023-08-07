@@ -1,4 +1,4 @@
-namespace ECS.Input.Component.Physics
+namespace DCL.Input.Component
 {
     public struct PhysicsTickComponent
     {

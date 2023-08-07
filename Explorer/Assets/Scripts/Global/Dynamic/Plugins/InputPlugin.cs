@@ -2,9 +2,8 @@ using Arch.Core;
 using Arch.SystemGroups;
 using DCL.CharacterCamera.Systems;
 using DCL.CharacterMotion.Systems;
-using ECS.Input.Component;
-using ECS.Input.Systems;
-using ECS.Input.Systems.Physics;
+using DCL.Input.Component;
+using DCL.Input.Systems;
 
 namespace Global.Dynamic.Plugins
 {

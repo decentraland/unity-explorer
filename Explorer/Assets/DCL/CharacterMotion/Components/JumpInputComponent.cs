@@ -1,4 +1,4 @@
-﻿using ECS.Input.Component;
+﻿using DCL.Input.Component;
 
 namespace DCL.CharacterMotion.Components
 {

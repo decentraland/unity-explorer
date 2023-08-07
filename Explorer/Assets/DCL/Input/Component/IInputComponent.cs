@@ -1,4 +1,4 @@
-namespace ECS.Input.Component
+namespace DCL.Input.Component
 {
     public interface IInputComponent { }
 

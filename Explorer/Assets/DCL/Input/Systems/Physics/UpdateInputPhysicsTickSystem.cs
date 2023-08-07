@@ -2,10 +2,10 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Input.Component;
 using ECS.Abstract;
-using ECS.Input.Component.Physics;
 
-namespace ECS.Input.Systems.Physics
+namespace DCL.Input.Systems
 {
     [UpdateInGroup(typeof(PhysicsSystemGroup))]
     public partial class UpdateInputPhysicsTickSystem : BaseUnityLoopSystem

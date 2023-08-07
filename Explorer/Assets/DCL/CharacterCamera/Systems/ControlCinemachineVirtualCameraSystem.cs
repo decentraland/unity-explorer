@@ -3,10 +3,9 @@ using Arch.System;
 using Arch.SystemGroups;
 using Cinemachine;
 using DCL.CharacterCamera.Components;
-using DCL.CharacterCamera.Settings;
+using DCL.Input;
+using DCL.Input.Component;
 using ECS.Abstract;
-using ECS.Input;
-using ECS.Input.Component;
 using System.Collections.Generic;
 using UnityEngine;
 

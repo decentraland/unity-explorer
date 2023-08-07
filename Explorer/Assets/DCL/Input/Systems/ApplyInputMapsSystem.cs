@@ -1,12 +1,12 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Input.Component;
 using ECS.Abstract;
-using ECS.Input.Component;
 using UnityEngine.InputSystem;
 using Utility;
 
-namespace ECS.Input.Systems
+namespace DCL.Input.Systems
 {
     /// <summary>
     ///     Controls activity of input action maps based on <see cref="InputMapComponent" />

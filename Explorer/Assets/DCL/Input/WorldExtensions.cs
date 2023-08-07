@@ -1,9 +1,8 @@
 ﻿using Arch.Core;
+using DCL.Input.Component;
 using ECS.Abstract;
-using ECS.Input.Component;
-using ECS.Input.Component.Physics;
 
-namespace ECS.Input
+namespace DCL.Input
 {
     public static class WorldExtensions
     {

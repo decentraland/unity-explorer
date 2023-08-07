@@ -2,7 +2,7 @@
 using Arch.SystemGroups.DefaultSystemGroups;
 using Diagnostics.ReportsHandling;
 
-namespace ECS.Input
+namespace DCL.Input
 {
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     [LogCategory(ReportCategory.INPUT)]

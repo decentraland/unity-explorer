@@ -1,10 +1,10 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using ECS.Input.Component;
+using DCL.Input.Component;
 using UnityEngine.InputSystem;
 
-namespace ECS.Input.Systems
+namespace DCL.Input.Systems
 {
     [UpdateInGroup(typeof(InputGroup))]
     public partial class UpdateInputButtonSystem<T, TQueryComponent> : UpdateInputSystem<T, TQueryComponent> where T: struct, IKeyComponent

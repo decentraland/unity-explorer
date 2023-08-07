@@ -1,9 +1,8 @@
 using Arch.Core;
-using Arch.SystemGroups.Metadata;
+using DCL.Input.Component;
 using ECS.Abstract;
-using ECS.Input.Component;
 
-namespace ECS.Input.Systems
+namespace DCL.Input.Systems
 {
     public abstract class UpdateInputSystem<T, TQueryComponent> : BaseUnityLoopSystem where T: struct, IInputComponent
     {

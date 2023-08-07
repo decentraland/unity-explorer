@@ -3,8 +3,8 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
-using ECS.Input;
-using ECS.Input.Systems;
+using DCL.Input;
+using DCL.Input.Systems;
 using UnityEngine;
 using UnityEngine.InputSystem;
 

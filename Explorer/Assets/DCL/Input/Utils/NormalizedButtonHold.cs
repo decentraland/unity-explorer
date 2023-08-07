@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace ECS.Input.Utils
+namespace DCL.Input.Utils
 {
     public class NormalizedButtonPressListener
     {

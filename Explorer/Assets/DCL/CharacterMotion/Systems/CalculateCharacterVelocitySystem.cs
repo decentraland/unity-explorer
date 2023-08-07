@@ -5,9 +5,9 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
+using DCL.Input;
+using DCL.Input.Systems;
 using ECS.Abstract;
-using ECS.Input;
-using ECS.Input.Systems.Physics;
 
 namespace DCL.CharacterMotion.Systems
 {

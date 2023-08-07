@@ -1,4 +1,4 @@
-using ECS.Input.Component;
+using DCL.Input.Component;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.Components

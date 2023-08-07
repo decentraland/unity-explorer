@@ -2,8 +2,8 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.CharacterCamera.Components;
-using ECS.Input;
-using ECS.Input.Systems;
+using DCL.Input;
+using DCL.Input.Systems;
 using UnityEngine;
 
 namespace DCL.CharacterCamera.Systems

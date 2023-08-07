@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Utility;
 
-namespace ECS.Input.Component
+namespace DCL.Input.Component
 {
     public struct InputMapComponent
     {
