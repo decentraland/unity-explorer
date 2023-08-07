@@ -1,9 +1,9 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using DCL.Character;
-using ECS.CharacterMotion.Components;
-using ECS.CharacterMotion.Settings;
-using ECS.CharacterMotion.Systems;
+using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Settings;
+using DCL.CharacterMotion.Systems;
 using UnityEngine;
 
 namespace Global.Dynamic.Plugins
