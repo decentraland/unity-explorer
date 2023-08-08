@@ -1,8 +1,8 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Character;
 using DCL.CharacterCamera.Settings;
+using DCL.CharacterMotion.Settings;
 using Diagnostics.ReportsHandling;
-using ECS.CharacterMotion.Settings;
 using ECS.Prioritization;
 using System.Collections.Generic;
 using System.Threading;
@@ -36,9 +36,20 @@ namespace Global.Dynamic
         private SceneSharedContainer sceneSharedContainer;
         private StaticContainer staticContainer;
 
+        [SerializeField] private RealmLauncher realmLauncher;
+        [SerializeField] private string[] realms;
+
         private void Awake()
         {
-            InitializeAsync(destroyCancellationToken).Forget();
+            realmLauncher.Initialize(realms);
+            Install();
+
+            realmLauncher.OnRealmSelected += SetRealm;
+        }
+
+        private void SetRealm(string selectedRealm)
+        {
+            ChangeRealm(destroyCancellationToken, selectedRealm).Forget();
         }
 
         private void OnDestroy()
@@ -51,19 +62,23 @@ namespace Global.Dynamic
                 await dynamicWorldContainer.RealmController.DisposeGlobalWorld(globalWorld).SuppressCancellationThrow();
             }
 
+            realmLauncher.OnRealmSelected -= SetRealm;
             DisposeAsync().Forget();
         }
 
-        private async UniTask InitializeAsync(CancellationToken ct)
+        private async UniTask ChangeRealm(CancellationToken ct, string selectedRealm)
         {
-            Install();
+            if (globalWorld != null)
+                await dynamicWorldContainer.RealmController.UnloadCurrentRealm(globalWorld);
 
-            Vector3 cameraPosition = ParcelMathHelper.GetPositionByParcelPosition(StartPosition);
-            cameraPosition.y += 1f;
-            character.transform.position = cameraPosition;
+            await UniTask.SwitchToMainThread();
 
-            globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory, dynamicWorldContainer.EmptyScenesWorldFactory, character);
-            await dynamicWorldContainer.RealmController.SetRealm(globalWorld, "https://sdk-team-cdn.decentraland.org/ipfs/streaming-world-main", destroyCancellationToken);
+            Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(StartPosition);
+            characterPos.y = 1f;
+
+            character.Controller.Move(characterPos - character.Transform.position);
+
+            await dynamicWorldContainer.RealmController.SetRealm(globalWorld, selectedRealm, ct);
         }
 
         internal void Install()
@@ -81,6 +96,8 @@ namespace Global.Dynamic
                 character,
                 StaticLoadPositions,
                 SceneLoadRadius);
+
+            globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory, dynamicWorldContainer.EmptyScenesWorldFactory, character);
 
             Profiler.EndSample();
         }
