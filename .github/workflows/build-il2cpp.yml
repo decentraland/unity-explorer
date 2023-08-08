@@ -1,4 +1,4 @@
-name: Unity Build
+name: Unity Build IL2CPP
 
 on:
   pull_request: {}
@@ -42,7 +42,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: Explorer/Library
-          key: Library-Explorer-${{ matrix.targetPlatform }}
+          key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
 
       # Configure test runner
       - uses: game-ci/unity-builder@v2.2.0
