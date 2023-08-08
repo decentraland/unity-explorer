@@ -2125,6 +2125,14 @@ PrefabInstance:
       value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 1829658356799049534, guid: 654e496ed12f12e4f80243ab9f1d97c7, type: 3}
+      propertyPath: m_XAxis.m_MaxSpeed
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1829658356799049534, guid: 654e496ed12f12e4f80243ab9f1d97c7, type: 3}
+      propertyPath: m_YAxis.m_MaxSpeed
+      value: 0.002
+      objectReference: {fileID: 0}
+    - target: {fileID: 1829658356799049534, guid: 654e496ed12f12e4f80243ab9f1d97c7, type: 3}
       propertyPath: m_Orbits.Array.data[0].m_Height
       value: 12
       objectReference: {fileID: 0}
@@ -2190,15 +2198,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4750751710181290529, guid: 654e496ed12f12e4f80243ab9f1d97c7, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.20095326
+      value: -0.20095327
       objectReference: {fileID: 0}
     - target: {fileID: 4750751710181290529, guid: 654e496ed12f12e4f80243ab9f1d97c7, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.15055165
+      value: 0.15055162
       objectReference: {fileID: 0}
     - target: {fileID: 4750751710181290529, guid: 654e496ed12f12e4f80243ab9f1d97c7, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.03127149
+      value: 0.031271487
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
