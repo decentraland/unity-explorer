@@ -40,20 +40,26 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         [All(typeof(RealmComponent))]
         private void CreatePointersWithIncreasingRadius(ref FixedScenePointers fixedScenePointers, ref ProcessesScenePointers processesScenePointers)
         {
-            if (!parcelMathJobifiedHelper.JobStarted) return;
-
-            ref readonly NativeArray<ParcelMathJobifiedHelper.ParcelInfo> flatArray = ref parcelMathJobifiedHelper.FinishParcelsRingSplit();
+            if (parcelMathJobifiedHelper.JobStarted)
+            {
+                parcelMathJobifiedHelper.Complete();
+                fixedScenePointers.EmptyParcelsLastProcessedIndex = 0;
+            }
 
             if (!fixedScenePointers.AllPromisesResolved) return;
+
+            ref readonly NativeArray<ParcelMathJobifiedHelper.ParcelInfo> flatArray = ref parcelMathJobifiedHelper.LastSplit;
 
             var pointersCreated = 0;
 
             // just create empty definitions in rings
-            for (var i = 0; i < flatArray.Length && pointersCreated < realmPartitionSettings.ScenesDefinitionsRequestBatchSize; i++)
+            // we save the index of the last processed parcel so we can continue from there next time as we defer it
+            for (; fixedScenePointers.EmptyParcelsLastProcessedIndex < flatArray.Length && pointersCreated < realmPartitionSettings.ScenesDefinitionsRequestBatchSize; fixedScenePointers.EmptyParcelsLastProcessedIndex++)
             {
-                ParcelMathJobifiedHelper.ParcelInfo parcelInfo = flatArray[i];
+                ParcelMathJobifiedHelper.ParcelInfo parcelInfo = flatArray[fixedScenePointers.EmptyParcelsLastProcessedIndex];
 
-                if (!parcelInfo.AlreadyProcessed)
+                // we need to check it again as parcelInfo.AlreadyProcessed corresponds to the moment of splitting
+                if (!processesScenePointers.Value.Contains(parcelInfo.Parcel))
                 {
                     World.Create(new SceneDefinitionComponent(parcelInfo.Parcel.ToVector2Int()));
                     pointersCreated++;

@@ -40,6 +40,9 @@ namespace Diagnostics.ReportsHandling
 
             // Prioritisation
             { ReportCategory.PRIORITIZATION, ColorUtility.ToHtmlStringRGB(new Color(0.2f, 0.92f, 0.69f)) },
+
+            { ReportCategory.MOTION, ColorUtility.ToHtmlStringRGB(new Color(0.792f, 0.463f, 0.812f)) },
+            { ReportCategory.INPUT, ColorUtility.ToHtmlStringRGB(new Color(0.776f, 0.851f, 0.357f)) },
         };
 
         // Redirect Logs to the default Unity logger

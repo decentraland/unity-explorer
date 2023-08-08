@@ -29,6 +29,8 @@ namespace ECS.Profiling
 
         private void Start()
         {
+            OpenProfilerWindow(); // Open on start
+
             openButton.onClick.AddListener(OpenProfilerWindow);
             closeButton.onClick.AddListener(CloseProfilerWindow);
         }
