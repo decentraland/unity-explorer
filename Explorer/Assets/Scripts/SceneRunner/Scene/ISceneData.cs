@@ -14,6 +14,11 @@ namespace SceneRunner.Scene
 
         SceneAssetBundleManifest AssetBundleManifest { get; }
 
+        /// <summary>
+        /// Main.crdt file that should be applied first before launching the scene
+        /// </summary>
+        StaticSceneMessages StaticSceneMessages { get; }
+
         bool HasRequiredPermission(string permission);
 
         /// <summary>

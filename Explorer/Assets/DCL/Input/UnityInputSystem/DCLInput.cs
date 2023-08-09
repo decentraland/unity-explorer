@@ -277,6 +277,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""DropPlayer"",
+                    ""type"": ""Button"",
+                    ""id"": ""7c537738-3d75-4faa-b9d5-d26f19cbc6e3"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -334,6 +343,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""Movement"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""6eedd85b-6875-43a8-87e9-abfae67d1f9c"",
+                    ""path"": ""<Keyboard>/#(G)"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""DropPlayer"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -361,6 +381,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         // FreeCamera
         m_FreeCamera = asset.FindActionMap("FreeCamera", throwIfNotFound: true);
         m_FreeCamera_Movement = m_FreeCamera.FindAction("Movement", throwIfNotFound: true);
+        m_FreeCamera_DropPlayer = m_FreeCamera.FindAction("DropPlayer", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -563,11 +584,13 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputActionMap m_FreeCamera;
     private List<IFreeCameraActions> m_FreeCameraActionsCallbackInterfaces = new List<IFreeCameraActions>();
     private readonly InputAction m_FreeCamera_Movement;
+    private readonly InputAction m_FreeCamera_DropPlayer;
     public struct FreeCameraActions
     {
         private @DCLInput m_Wrapper;
         public FreeCameraActions(@DCLInput wrapper) { m_Wrapper = wrapper; }
         public InputAction @Movement => m_Wrapper.m_FreeCamera_Movement;
+        public InputAction @DropPlayer => m_Wrapper.m_FreeCamera_DropPlayer;
         public InputActionMap Get() { return m_Wrapper.m_FreeCamera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -580,6 +603,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Movement.started += instance.OnMovement;
             @Movement.performed += instance.OnMovement;
             @Movement.canceled += instance.OnMovement;
+            @DropPlayer.started += instance.OnDropPlayer;
+            @DropPlayer.performed += instance.OnDropPlayer;
+            @DropPlayer.canceled += instance.OnDropPlayer;
         }
 
         private void UnregisterCallbacks(IFreeCameraActions instance)
@@ -587,6 +613,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Movement.started -= instance.OnMovement;
             @Movement.performed -= instance.OnMovement;
             @Movement.canceled -= instance.OnMovement;
+            @DropPlayer.started -= instance.OnDropPlayer;
+            @DropPlayer.performed -= instance.OnDropPlayer;
+            @DropPlayer.canceled -= instance.OnDropPlayer;
         }
 
         public void RemoveCallbacks(IFreeCameraActions instance)
@@ -630,5 +659,6 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     public interface IFreeCameraActions
     {
         void OnMovement(InputAction.CallbackContext context);
+        void OnDropPlayer(InputAction.CallbackContext context);
     }
 }
