@@ -77,6 +77,10 @@ namespace SceneRunner
             if (sceneStateProvider.State != SceneState.NotStarted)
                 throw new ThreadStateException($"{nameof(StartUpdateLoop)} is already started!");
 
+            // Process "main.crdt" first
+            if (SceneData.StaticSceneMessages.Data.Length > 0)
+                runtimeInstance.ApplyStaticMessages(SceneData.StaticSceneMessages.Data);
+
             sceneStateProvider.State = SceneState.Running;
 
             SetTargetFPS(targetFPS);
