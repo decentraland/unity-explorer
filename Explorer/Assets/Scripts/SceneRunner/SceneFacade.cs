@@ -29,8 +29,6 @@ namespace SceneRunner
 
         private int intervalMS;
 
-        private readonly UniTaskCompletionSource completionSource;
-
         public SceneFacade(
             ISceneRuntime runtimeInstance,
             ECSWorldFacade ecsWorldFacade,
@@ -53,8 +51,6 @@ namespace SceneRunner
             this.sceneExceptionsHandler = sceneExceptionsHandler;
             this.sceneStateProvider = sceneStateProvider;
             SceneData = sceneData;
-
-            completionSource = new UniTaskCompletionSource();
         }
 
         public ISceneData SceneData { get; }
@@ -97,11 +93,10 @@ namespace SceneRunner
             {
                 while (true)
                 {
-                    if (ct.IsCancellationRequested)
-                    {
-                        completionSource.TrySetCanceled();
+                    // 1. 'ct' is an external cancellation token
+                    // 2. don't try to run the update loop if DisposeAsync was already called
+                    if (ct.IsCancellationRequested || sceneStateProvider.State is SceneState.Disposing or SceneState.Disposed)
                         break;
-                    }
 
                     stopWatch.Restart();
 
@@ -125,7 +120,7 @@ namespace SceneRunner
                     deltaTime = stopWatch.ElapsedMilliseconds / 1000f;
                 }
             }
-            catch (OperationCanceledException) { completionSource.TrySetCanceled(); }
+            catch (OperationCanceledException) { }
         }
 
         private async ValueTask<bool> IdleWhileRunning(CancellationToken ct)
@@ -133,10 +128,7 @@ namespace SceneRunner
             bool TryComplete()
             {
                 if (sceneStateProvider.State != SceneState.Running)
-                {
-                    completionSource.TrySetResult();
                     return true;
-                }
 
                 return false;
             }
@@ -177,7 +169,6 @@ namespace SceneRunner
             // TODO do it better
             runtimeInstance.SetIsDisposing();
 
-            completionSource.TrySetCanceled();
             await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
 
             runtimeInstance.Dispose();
