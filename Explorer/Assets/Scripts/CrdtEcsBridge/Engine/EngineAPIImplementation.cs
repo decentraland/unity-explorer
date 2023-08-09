@@ -199,7 +199,8 @@ namespace CrdtEcsBridge.Engine
             {
                 // Create CRDT Messages from the current state
                 // we know exactly how big the array should be
-                ProcessedCRDTMessage[] processedMessages = sharedPoolsProvider.GetSerializationCrdtMessagesPool(crdtProtocol.GetMessagesCount());
+                var messagesCount = crdtProtocol.GetMessagesCount();
+                ProcessedCRDTMessage[] processedMessages = sharedPoolsProvider.GetSerializationCrdtMessagesPool(messagesCount);
 
                 int currentStatePayloadLength = crdtProtocol.CreateMessagesFromTheCurrentState(processedMessages);
 
@@ -215,9 +216,9 @@ namespace CrdtEcsBridge.Engine
                 lastSerializationBuffer = sharedPoolsProvider.GetSerializedStateBytesPool(totalPayloadLength);
 
                 // Serialize the current state
-                Span<byte> currentStateSpan = lastSerializationBuffer.AsSpan().Slice(currentStatePayloadLength);
+                Span<byte> currentStateSpan = lastSerializationBuffer.AsSpan()[..currentStatePayloadLength];
 
-                for (var i = 0; i < processedMessages.Length; i++)
+                for (var i = 0; i < messagesCount; i++)
                     crdtSerializer.Serialize(ref currentStateSpan, in processedMessages[i]);
 
                 // Messages are serialized, we no longer need them in the managed form

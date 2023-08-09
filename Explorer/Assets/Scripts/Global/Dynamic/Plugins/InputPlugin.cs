@@ -28,6 +28,8 @@ namespace Global.Dynamic.Plugins
             UpdateInputMovementSystem.InjectToWorld(ref builder, dclInput);
             UpdateCameraInputSystem.InjectToWorld(ref builder, dclInput);
 
+            DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, dclInput.FreeCamera.DropPlayer);
+
             // UpdateInputButtonSystem<PrimaryKey>.InjectToWorld(ref builder, dclInput.Player.PrimaryKey);
         }
     }
