@@ -33,6 +33,7 @@ namespace SceneRunner.EmptyScene
         public Vector3 BasePosition { get; }
 
         public SceneAssetBundleManifest AssetBundleManifest => SceneAssetBundleManifest.NULL;
+        public StaticSceneMessages StaticSceneMessages => StaticSceneMessages.EMPTY;
 
         public bool HasRequiredPermission(string permission) =>
             throw new NotImplementedException();
