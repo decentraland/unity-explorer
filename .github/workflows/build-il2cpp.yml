@@ -45,7 +45,7 @@ jobs:
             Explorer/Library
             !Explorer/Library/Bee/**
             !Explorer/Library/BuildPlayerData/**
-          key: Library-Explorer-${{ matrix.targetPlatform }}
+          key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
 
       # Configure test runner
       - uses: game-ci/unity-builder@v2.2.0
