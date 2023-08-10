@@ -41,7 +41,10 @@ jobs:
       - name: Restore Library cache
         uses: actions/cache@v3
         with:
-          path: Explorer/Library
+          path: | 
+            Explorer/Library
+            !Explorer/Library/Bee/**
+            !Explorer/Library/BuildPlayerData/**
           key: Library-Explorer-${{ matrix.targetPlatform }}
 
       # Configure test runner
