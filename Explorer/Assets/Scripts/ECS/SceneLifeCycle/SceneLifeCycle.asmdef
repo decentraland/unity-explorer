@@ -17,7 +17,9 @@
     "ComponentsPooling",
     "Unity.Collections",
     "Unity.Mathematics",
-    "CRDT"
+    "CRDT",
+    "CharacterCamera",
+    "CharacterMotion"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
