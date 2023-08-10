@@ -61,41 +61,41 @@ static const float kSamples = 2.0; // THIS IS UNROLLED MANUALLY, DON'T TOUCH
     #endif
 #endif
 
-float scale(float inCos)
+float scale(float _fInCos)
 {
-    float x = 1.0 - inCos;
-    return 0.25 * exp(-0.00287 + x*(0.459 + x*(3.83 + x*(-6.80 + x*5.25))));
+    float x = 1.0 - _fInCos;
+    return 0.25f * exp(-0.00287f + x * (0.459f + x * (3.83f + x * (-6.80f + x * 5.25f))));
 }
 
 // Calculates the Rayleigh phase function
-half getRayleighPhase(half eyeCos2)
+half getRayleighPhase(half _fEyeCos2)
 {
-    return 0.75 + 0.75*eyeCos2;
+    return 0.75 + 0.75 * _fEyeCos2;
 }
-half getRayleighPhase(half3 light, half3 ray)
+half getRayleighPhase(half3 _vLight, half3 _vRay)
 {
-    half eyeCos = dot(light, ray);
-    return getRayleighPhase(eyeCos * eyeCos);
+    half fEyeCos = dot(_vLight, _vRay);
+    return getRayleighPhase(fEyeCos * fEyeCos);
 }
 
 // Calculates the Mie phase function
-half getMiePhase(half eyeCos, half eyeCos2, float fSunSize)
+half getMiePhase(half _fEyeCos, half _fEyeCos2, float _fSunSize)
 {
-    half temp = 1.0 + MIE_G2 - 2.0 * MIE_G * eyeCos;
-    temp = pow(temp, pow(fSunSize,0.65) * 10);
-    temp = max(temp,1.0e-4); // prevent division by zero, esp. in half precision
-    temp = 1.5 * ((1.0 - MIE_G2) / (2.0 + MIE_G2)) * (1.0 + eyeCos2) / temp;
+    half fTemp = 1.0f + MIE_G2 - 2.0f * MIE_G * _fEyeCos;
+    fTemp = pow(fTemp, pow(_fSunSize, 0.65f) * 10.0f);
+    fTemp = max(fTemp,1.0e-4); // prevent division by zero, esp. in half precision
+    fTemp = 1.5f * ((1.0f - MIE_G2) / (2.0f + MIE_G2)) * (1.0f + _fEyeCos2) / fTemp;
     #if defined(UNITY_COLORSPACE_GAMMA) && SKYBOX_COLOR_IN_TARGET_COLOR_SPACE
-        temp = pow(temp, .454545);
+        fTemp = pow(fTemp, 0.454545f);
     #endif
-    return temp;
+    return fTemp;
 }
 
 // Calculates the sun shape
-half calcSunAttenuation(half3 lightPos, half3 ray, float fSunSize, float fSunSizeConvergence)
+half calcSunAttenuation(half3 _vLightPos, half3 _vRay, float _fSunSize, float _fSunSizeConvergence)
 {
-    half focusedEyeCos = pow(saturate(dot(lightPos, ray)), fSunSizeConvergence);
-    return getMiePhase(-focusedEyeCos, focusedEyeCos * focusedEyeCos, fSunSize);
+    half fFocusedEyeCos = pow(saturate(dot(_vLightPos, _vRay)), _fSunSizeConvergence);
+    return getMiePhase(-fFocusedEyeCos, fFocusedEyeCos * fFocusedEyeCos, _fSunSize);
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -107,169 +107,175 @@ float4 _SkyTint;
 float _AtmosphereThickness;
 float4 _GroundColor;
 float _Exposure;
+float4 _SunPos;
+float4 _SunCol;
 
 float4 sk_frag(sk_v2f IN) : SV_Target
 {
-    float3 vSunPos = normalize(float3(-0.36f, -0.4f, 0.9f));
-    float3 kSkyTintInGammaSpace = COLOR_2_GAMMA(_SkyTint); // convert tint from Linear back to Gamma
-    float3 kScatteringWavelength = lerp (   kDefaultScatteringWavelength-kVariableRangeForScatteringWavelength,
+    float3 vSunPos = normalize(_SunPos.xyz);
+    float3 vSunPos_Other = vSunPos;
+    //vSunPos_Other = vSunPos * 1000000;
+    //vSunPos_Other.y = 1.0 - vSunPos_Other.y;
+    // vSunPos = normalize(_WorldSpaceLightPos0.xyz);
+    // vSunPos_Other = normalize(_WorldSpaceLightPos0.xyz);
+    const float3 vSkyTintInGammaSpace = COLOR_2_GAMMA(_SkyTint); // convert tint from Linear back to Gamma
+    const float3 vScatteringWavelength = lerp (   kDefaultScatteringWavelength-kVariableRangeForScatteringWavelength,
                                             kDefaultScatteringWavelength+kVariableRangeForScatteringWavelength,
-                                            half3(1,1,1) - kSkyTintInGammaSpace); // using Tint in sRGB gamma allows for more visually linear interpolation and to keep (.5) at (128, gray in sRGB) point
-    float3 kInvWavelength = 1.0 / pow(kScatteringWavelength, 4);
+                                            half3(1,1,1) - vSkyTintInGammaSpace); // using Tint in sRGB gamma allows for more visually linear interpolation and to keep (.5) at (128, gray in sRGB) point
+    const float3 vInvWavelength = 1.0 / pow(vScatteringWavelength, 4);
 
-    float kKrESun = kRAYLEIGH * kSUN_BRIGHTNESS;
-    float kKr4PI = kRAYLEIGH * 4.0 * 3.14159265;
+    const float fKrESun = kRAYLEIGH * kSUN_BRIGHTNESS;
+    const float fKr4PI = kRAYLEIGH * 4.0 * 3.14159265;
 
     // The camera's current position
-    float3 cameraPos = float3(0, kInnerRadius + kCameraHeight, 0);    
+    float3 vCameraPos = float3(0, kInnerRadius + kCameraHeight, 0);
+
+    float fFar = 0.0;
+    half3 vIn, vOut;
 
     // Get the ray from the camera to the fragment and its length (which is the far point of the ray passing through the atmosphere)
-    float3 eyeRay = normalize(IN.direction);
-
-    float far = 0.0;
-    half3 cIn, cOut;
-
-    if(eyeRay.y >= 0.0) // Sky
+    float3 vEyeRay = normalize(IN.direction);
+    float3 vEyeRay2 = vEyeRay;
+    //vEyeRay2.y = 1.0 - vEyeRay2.y;
+    if(vEyeRay2.y >= 0.0) // Sky
     {
+        //vEyeRay2.y = 1.0 - vEyeRay2.y;
+        float fUp = vEyeRay2.y;
         // Calculate the length of the "atmosphere"
-        far = sqrt(kOuterRadius2 + kInnerRadius2 * eyeRay.y * eyeRay.y - kInnerRadius2) - kInnerRadius * eyeRay.y;
+        fFar = sqrt(kOuterRadius2 + kInnerRadius2 * fUp * fUp - kInnerRadius2) - kInnerRadius * fUp;
 
-        float3 pos = cameraPos + far * eyeRay;
+        float3 vPos = vCameraPos + fFar * vEyeRay2;
 
         // Calculate the ray's starting position, then calculate its scattering offset
-        float height = kInnerRadius + kCameraHeight;
-        float depth = exp(kScaleOverScaleDepth * (-kCameraHeight));
-        float startAngle = dot(eyeRay, cameraPos) / height;
-        float startOffset = depth*scale(startAngle);
-
+        float fStartHeight = kInnerRadius + kCameraHeight;
+        float fStartDepth = exp(kScaleOverScaleDepth * (-kCameraHeight));
+        float fStartAngle = dot(vEyeRay2, vCameraPos) / fStartHeight;
+        float fStartOffset = fStartDepth * scale(fStartAngle);
 
         // Initialize the scattering loop variables
-        float sampleLength = far / kSamples;
-        float scaledLength = sampleLength * kScale;
-        float3 sampleRay = eyeRay * sampleLength;
-        float3 samplePoint = cameraPos + sampleRay * 0.5;
+        float fSampleLength = fFar / kSamples;
+        float fScaledLength = fSampleLength * kScale;
+        float3 vSampleRay = vEyeRay2 * fSampleLength;
+        float3 vSamplePoint = vCameraPos + vSampleRay * 0.5;
 
         // Now loop through the sample rays
-        float3 frontColor = float3(0.0, 0.0, 0.0);
+        float3 vFrontColor = float3(0.0, 0.0, 0.0);
         // Weird workaround: WP8 and desktop FL_9_3 do not like the for loop here
         // (but an almost identical loop is perfectly fine in the ground calculations below)
         // Just unrolling this manually seems to make everything fine again.
         // for(int i=0; i<int(kSamples); i++)
         {
-            float height = length(samplePoint);
-            float depth = exp(kScaleOverScaleDepth * (kInnerRadius - height));
-            float lightAngle = dot(_WorldSpaceLightPos0.xyz, samplePoint) / height;
-            float cameraAngle = dot(eyeRay, samplePoint) / height;
-            float scatter = (startOffset + depth*(scale(lightAngle) - scale(cameraAngle)));
-            float3 attenuate = exp(-clamp(scatter, 0.0, kMAX_SCATTER) * (kInvWavelength * kKr4PI + kKm4PI));
+            float fHeight = length(vSamplePoint);
+            float fDepth = exp(kScaleOverScaleDepth * (kInnerRadius - fHeight));
+            float fLightAngle = dot(vSunPos_Other.xyz, vSamplePoint) / fHeight;
+            float fCameraAngle = dot(vEyeRay2, vSamplePoint) / fHeight;
+            float fScatter = 1.0f;//(fStartOffset + fDepth*(scale(fLightAngle) - scale(fCameraAngle)));
+            float3 vAttenuate = exp(-clamp(fScatter, 0.0, kMAX_SCATTER) * (vInvWavelength * fKr4PI + kKm4PI));
 
-            float fDepthScaledByLength = depth * scaledLength;
-            frontColor += attenuate * fDepthScaledByLength;
-            samplePoint += sampleRay;
+            float fDepthScaledByLength = fDepth * fScaledLength;
+            vFrontColor += vAttenuate;// * fDepthScaledByLength;
+            vSamplePoint += vSampleRay;
         }
         {
-            float height = length(samplePoint);
-            float depth = exp(kScaleOverScaleDepth * (kInnerRadius - height));
-            float lightAngle = dot(_WorldSpaceLightPos0.xyz, samplePoint) / height;
-            float cameraAngle = dot(eyeRay, samplePoint) / height;
-            float scatter = (startOffset + depth*(scale(lightAngle) - scale(cameraAngle)));
-            float3 attenuate = exp(-clamp(scatter, 0.0, kMAX_SCATTER) * (kInvWavelength * kKr4PI + kKm4PI));
+            float fHeight = length(vSamplePoint);
+            float fDepth = exp(kScaleOverScaleDepth * (kInnerRadius - fHeight));
+            float fLightAngle = dot(vSunPos_Other.xyz, vSamplePoint) / fHeight;
+            float fCameraAngle = dot(vEyeRay2, vSamplePoint) / fHeight;
+            float fScatter = (fStartOffset + fDepth*(scale(fLightAngle) - scale(fCameraAngle)));
+            float3 vAttenuate = exp(-clamp(fScatter, 0.0, kMAX_SCATTER) * (vInvWavelength * fKr4PI + kKm4PI));
 
-            float fDepthScaledByLength = depth * scaledLength;
-            frontColor += attenuate * fDepthScaledByLength;
-            samplePoint += sampleRay;
+            float fDepthScaledByLength = fDepth * fScaledLength;
+            vFrontColor += vAttenuate * fDepthScaledByLength;
+            vSamplePoint += vSampleRay;
         }
 
         // Finally, scale the Mie and Rayleigh colors and set up the varying variables for the pixel shader
-        cIn = frontColor * (kInvWavelength * kKrESun);
-        cOut = frontColor * kKmESun;
+        vIn = vFrontColor * (vInvWavelength * fKrESun);
+        vOut = vFrontColor * kKmESun;
     }
     else // Ground
     {
-        far = (-kCameraHeight) / (min(-0.001, eyeRay.y));
+        fFar = (-kCameraHeight) / (min(-0.001, vEyeRay.y));
 
-        float3 pos = cameraPos + far * eyeRay;
+        float3 vPos = vCameraPos + fFar * vEyeRay;
 
         // Calculate the ray's starting position, then calculate its scattering offset
-        float depth = exp((-kCameraHeight) * (1.0/kScaleDepth));
-        float cameraAngle = dot(-eyeRay, pos);
-        float lightAngle = dot(_WorldSpaceLightPos0.xyz, pos);
-        float cameraScale = scale(cameraAngle);
-        float lightScale = scale(lightAngle);
-        float cameraOffset = depth*cameraScale;
-        float temp = (lightScale + cameraScale);
+        float fStartDepth = exp((-kCameraHeight) * (1.0/kScaleDepth));
+        float fCameraAngle = dot(-vEyeRay, vPos);
+        float fLightAngle = dot(vSunPos_Other.xyz, vPos);
+        float fCameraScale = scale(fCameraAngle);
+        float fLightScale = scale(fLightAngle);
+        float fCameraOffset = fStartDepth*fCameraScale;
+        float fTemp = (fLightScale + fCameraScale);
 
         // Initialize the scattering loop variables
-        float sampleLength = far / kSamples;
-        float scaledLength = sampleLength * kScale;
-        float3 sampleRay = eyeRay * sampleLength;
-        float3 samplePoint = cameraPos + sampleRay * 0.5;
+        float fSampleLength = fFar / kSamples;
+        float fScaledLength = fSampleLength * kScale;
+        float3 vSampleRay = vEyeRay * fSampleLength;
+        float3 vSamplePoint = vCameraPos + vSampleRay * 0.5;
 
         // Now loop through the sample rays
-        float3 frontColor = float3(0.0, 0.0, 0.0);
-        float3 attenuate;
+        float3 vFrontColor = float3(0.0, 0.0, 0.0);
+        float3 vAttenuate;
         // for(int i=0; i<int(kSamples); i++) // Loop removed because we kept hitting SM2.0 temp variable limits. Doesn't affect the image too much.
         {
-            float height = length(samplePoint);
-            float depth = exp(kScaleOverScaleDepth * (kInnerRadius - height));
-            float scatter = depth*temp - cameraOffset;
-            attenuate = exp(-clamp(scatter, 0.0, kMAX_SCATTER) * (kInvWavelength * kKr4PI + kKm4PI));
-            frontColor += attenuate * (depth * scaledLength);
-            samplePoint += sampleRay;
+            float fHeight = length(vSamplePoint);
+            float fDepth = exp(kScaleOverScaleDepth * (kInnerRadius - fHeight));
+            float fScatter = 0.0f;//fDepth*fTemp - fCameraOffset;
+            vAttenuate = exp(-clamp(fScatter, 0.0, kMAX_SCATTER) * (vInvWavelength * fKr4PI + kKm4PI));
+            vFrontColor += vAttenuate * (fDepth * fScaledLength);
+            vSamplePoint += vSampleRay;
         }
 
-        cIn = frontColor * (kInvWavelength * kKrESun + kKmESun);
-        cOut = clamp(attenuate, 0.0, 1.0);
+        vIn = vFrontColor * (vInvWavelength * fKrESun + fKrESun);
+        vOut = clamp(vAttenuate, 0.0, 1.0);
     }
 
     // if we want to calculate color in vprog:
     // 1. in case of linear: multiply by _Exposure in here (even in case of lerp it will be common multiplier, so we can skip mul in fshader)
     // 2. in case of gamma and SKYBOX_COLOR_IN_TARGET_COLOR_SPACE: do sqrt right away instead of doing that in fshader
     //cIn = float3(1.0, 1.0, 1.0) * 0.5;
-    float3 groundColor = _Exposure * (cIn + COLOR_2_LINEAR(_GroundColor) * cOut);
-    float3 skyColor    = _Exposure * (cIn * getRayleighPhase(vSunPos.xyz, -eyeRay));
-    //groundColor = (_GroundColor.xyz);
-    //skyColor    = (_SkyTint.xyz);
+    float3 vGroundColor = _Exposure * (vIn + COLOR_2_LINEAR(_GroundColor) * vOut);
+    float3 vSkyColor    = _Exposure * (vIn * getRayleighPhase(vSunPos.xyz, -vEyeRay));
+    //vGroundColor = (_GroundColor.xyz);
+    //vSkyColor    = (_SkyTint.xyz);
 
     // The sun should have a stable intensity in its course in the sky. Moreover it should match the highlight of a purely specular material.
     // This matching was done using the standard shader BRDF1 on the 5/31/2017
     // Finally we want the sun to be always bright even in LDR thus the normalization of the lightColor for low intensity.
-    float3 vSunColour = _LightColor0.xyz;
-    vSunColour = float3(1.0, 1.0, 1.0);
-    half lightColorIntensity = clamp(length(vSunColour), 0.25, 1);
-    float3 vSunColour_Intensity    = kHDSundiskIntensityFactor * saturate(cOut) * vSunColour / lightColorIntensity;
+    float3 vSunColour = _SunCol.xyz;
+    //vSunColour = float3(1.0, 1.0, 1.0);
+    half fLightColorIntensity = clamp(length(vSunColour), 0.25, 1);
+    float3 vSunColour_Intensity    = kHDSundiskIntensityFactor * saturate(vOut) * vSunColour / fLightColorIntensity;
 
     #if defined(UNITY_COLORSPACE_GAMMA) && SKYBOX_COLOR_IN_TARGET_COLOR_SPACE
-        groundColor = sqrt(groundColor);
-        skyColor    = sqrt(skyColor);
+        vGroundColor = sqrt(vGroundColor);
+        vSkyColor    = sqrt(vSkyColor);
         vSunColour_Intensity    = sqrt(vSunColour_Intensity);
     #endif
 
-    half3 col = half3(0.0, 0.0, 0.0);
-    float3 ray = normalize(IN.direction);
-    half y = ray.y / SKY_GROUND_THRESHOLD;
-    y = -y;
+    half y = vEyeRay.y;// / SKY_GROUND_THRESHOLD;
+    //y = -y;
+    half3 vCol = lerp(vSkyColor, vGroundColor, saturate(-y));
 
-    // if we did precalculate color in vprog: just do lerp between them
-    col = lerp(skyColor, groundColor, saturate(y));
-
-    //if(y < 0.0)
+    if(y > 0.0)
     {
-        col += vSunColour_Intensity * calcSunAttenuation(vSunPos.xyz, -ray, _SunSize, _SunSizeConvergence);
-    }
+        vCol += vSunColour_Intensity * calcSunAttenuation(vSunPos.xyz, -vEyeRay, _SunSize, _SunSizeConvergence);
+        //vCol += calcSunAttenuation(vSunPos.xyz, -vEyeRay, _SunSize, _SunSizeConvergence);
 
-    float LdotV =pow(saturate(dot(vSunPos.xyz, -ray)), 10);
-    if(LdotV >= 0.99f)
-    {
-        col += float3(1.0, 1.0, 1.0);
+        float fLdotV =pow(saturate(dot(vSunPos.xyz, -vEyeRay)), 10);
+        if(fLdotV >= 0.99f)
+        {
+            vCol += vSunColour.xyz;
+        }
     }
 
     #if defined(UNITY_COLORSPACE_GAMMA) && !SKYBOX_COLOR_IN_TARGET_COLOR_SPACE
-        col = LINEAR_2_OUTPUT(col);
+        vCol = LINEAR_2_OUTPUT(vCol);
     #endif
 
     //return half4(IN.direction, 1.0);
-    return half4(col,1.0);
+    return half4(vCol, 1.0);
 }
 
 #endif // DCL_SKYBOX_FRAGMENT_INCLUDED

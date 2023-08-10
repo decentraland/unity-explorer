@@ -30,6 +30,8 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         RTHandle m_SkyBoxCubeMap_RTHandle;
 
         private static readonly int s_ParamsID = Shader.PropertyToID("_CurrentCubeFace");
+        private static readonly int s_SunPosID = Shader.PropertyToID("_SunPos");
+        private static readonly int s_SunColID = Shader.PropertyToID("_SunColour");
 
         // Constants
         private const string k_SkyBoxCubemapTextureName = "_SkyBox_Cubemap_Texture";
@@ -64,7 +66,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
 
         internal void Setup(ProceduralSkyBoxSettings_Generate _featureSettings, Material _material, RTHandle _RTHandle)
         {
-            Debug.Log("DCL_RenderPass_GenerateSkyBox::Setup");
+            //Debug.Log("DCL_RenderPass_GenerateSkyBox::Setup");
             this.m_Material_Generate = _material;
             this.m_Settings_Generate = _featureSettings;
             this.m_SkyBoxCubeMap_RTHandle = _RTHandle;
@@ -79,7 +81,10 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         // The render pipeline will ensure target setup and clearing happens in a performant manner.
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
-            Debug.Log("DCL_RenderPass_GenerateSkyBox::OnCameraSetup");
+            //Debug.Log("DCL_RenderPass_GenerateSkyBox::OnCameraSetup");
+            //SunPos
+            m_Material_Generate.SetVector(s_SunPosID, this.m_Settings_Generate.SunPos);
+            m_Material_Generate.SetVector(s_SunColID, this.m_Settings_Generate.SunColour);
         }
 
         //delegate RTHandle CreateBufferRTHandle_Method(RTHandleSystem _RTHandleSystem, int _nBufferId);
@@ -95,7 +100,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
 
         public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
         {
-            Debug.Log("DCL_RenderPass_GenerateSkyBox::Configure");
+            //Debug.Log("DCL_RenderPass_GenerateSkyBox::Configure");
 
             // Configure targets and clear color
             ConfigureTarget(this.m_SkyBoxCubeMap_RTHandle);
@@ -107,7 +112,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         // You don't have to call ScriptableRenderContext.submit, the render pipeline will call it at specific points in the pipeline.
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
-            Debug.Log("DCL_RenderPass_GenerateSkyBox::Execute");
+            //Debug.Log("DCL_RenderPass_GenerateSkyBox::Execute");
             if (this.m_Material_Generate == null)
             {
                 Debug.LogErrorFormat("{0}.Execute(): Missing material. DCL_RenderPass_GenerateSkyBox pass will not execute. Check for missing reference in the renderer resources.", GetType().Name);
@@ -152,12 +157,12 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         // Cleanup any allocated resources that were created during the execution of this render pass.
         public override void OnCameraCleanup(CommandBuffer cmd)
         {
-            Debug.Log("DCL_RenderPass_GenerateSkyBox::OnCameraCleanup");
+            //Debug.Log("DCL_RenderPass_GenerateSkyBox::OnCameraCleanup");
         }
 
         public void dispose()
         {
-            Debug.Log("DCL_RenderPass_GenerateSkyBox::dispose");
+            //Debug.Log("DCL_RenderPass_GenerateSkyBox::dispose");
             this.m_SkyBoxCubeMap_RTHandle?.Release();
         }
 

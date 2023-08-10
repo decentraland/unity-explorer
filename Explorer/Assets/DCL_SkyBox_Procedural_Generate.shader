@@ -8,6 +8,8 @@ Shader "CustomRenderTexture/SkyBox_Procedural_Generate"
         _SunSizeConvergence("Sun Size Convergence", Range(1,10)) = 5
         _AtmosphereThickness ("Atmosphere Thickness", Range(0,5)) = 1.0
         _Exposure("Exposure", Range(0, 8)) = 1.3
+        _SunPos("Sun Position", Vector) = (-0.36, -0.4, 0.9, 1.0)
+        _SunCol("Sun Colour", Vector) = (1.0, 1.0, 1.0, 1.0)
     }
 
     HLSLINCLUDE

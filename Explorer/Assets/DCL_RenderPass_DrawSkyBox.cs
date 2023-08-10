@@ -29,12 +29,12 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
 
         internal DCL_RenderPass_DrawSkyBox()
         {
-            Debug.Log("DCL_RenderPass_DrawSkyBox::Constructor");
+            //Debug.Log("DCL_RenderPass_DrawSkyBox::Constructor");
         }
 
         internal void Setup(ProceduralSkyBoxSettings_Draw _featureSettings, Material _material, RTHandle _cameraColorTarget, RTHandle _cameraDepthTarget, RTHandle _SkyBox_Cubemap_Texture)
         {
-            Debug.Log("DCL_RenderPass_DrawSkyBox::Setup");
+            //Debug.Log("DCL_RenderPass_DrawSkyBox::Setup");
             this.m_Material_Draw = _material;
             this.m_Settings_Draw = _featureSettings;
             this.m_cameraColorTarget_RTHandle = _cameraColorTarget;
@@ -51,14 +51,14 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         // The render pipeline will ensure target setup and clearing happens in a performant manner.
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
-            Debug.Log("DCL_RenderPass_DrawSkyBox::OnCameraSetup");
+            //Debug.Log("DCL_RenderPass_DrawSkyBox::OnCameraSetup");
             // ConfigureTarget(this.m_cameraColorTarget_RTHandle, renderingData.cameraData.renderer.cameraDepthTargetHandle);
             // ConfigureClear(ClearFlag.None, Color.white);
         }
 
         public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
         {
-            Debug.Log("DCL_RenderPass_DrawSkyBox::Configure");
+            //Debug.Log("DCL_RenderPass_DrawSkyBox::Configure");
 
             //ConfigureTarget(this.m_cameraColorTarget_RTHandle, m_Renderer.cameraDepthTargetHandle);
             ConfigureClear(ClearFlag.None, Color.white);
@@ -74,7 +74,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         // You don't have to call ScriptableRenderContext.submit, the render pipeline will call it at specific points in the pipeline.
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
-            Debug.Log("DCL_RenderPass_DrawSkyBox::Execute");
+            //Debug.Log("DCL_RenderPass_DrawSkyBox::Execute");
             if (this.m_Material_Draw == null)
             {
                 Debug.LogErrorFormat("{0}.Execute(): Missing material. DCL_RenderPass_DrawSkyBox pass will not execute. Check for missing reference in the renderer resources.", GetType().Name);
@@ -100,12 +100,12 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         // Cleanup any allocated resources that were created during the execution of this render pass.
         public override void OnCameraCleanup(CommandBuffer cmd)
         {
-            Debug.Log("DCL_RenderPass_DrawSkyBox::OnCameraCleanup");
+            //Debug.Log("DCL_RenderPass_DrawSkyBox::OnCameraCleanup");
         }
 
         public void dispose()
         {
-            Debug.Log("DCL_RenderPass_DrawSkyBox::dispose");
+            //Debug.Log("DCL_RenderPass_DrawSkyBox::dispose");
             this.m_SkyBoxCubeMap_RTHandle?.Release();
         }
 

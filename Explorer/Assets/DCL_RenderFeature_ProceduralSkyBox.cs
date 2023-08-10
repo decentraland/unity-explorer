@@ -16,6 +16,8 @@ internal class ProceduralSkyBoxSettings_Generate
     [SerializeField] internal Color GroundColor = new Color(0.369f, 0.349f, 0.341f, 1.0f);
     [SerializeField] internal Color SkyTint = new Color(0.5f, 0.5f, 0.5f, 1.0f);
     [SerializeField] internal float Exposure = 1.3f;
+    [SerializeField] internal Vector4 SunPos = new Vector4(-0.04f, -0.02f, 0.0f, 1.0f);
+    [SerializeField] internal Vector4 SunColour = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 [Serializable]
@@ -63,7 +65,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
 
     public override void Create()
     {
-        Debug.Log("DCL_RenderFeature_ProceduralSkyBox::Create");
+        //Debug.Log("DCL_RenderFeature_ProceduralSkyBox::Create");
         // Create the Generate Pass...
         if (m_GeneratePass == null)
         {
@@ -86,7 +88,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
     // This method is called when setting up the renderer once per-camera.
     public override void AddRenderPasses(ScriptableRenderer _renderer, ref RenderingData _renderingData)
     {
-        Debug.Log("DCL_RenderFeature_ProceduralSkyBox::AddRenderPasses");
+        //Debug.Log("DCL_RenderFeature_ProceduralSkyBox::AddRenderPasses");
         if (!GetMaterial_Generate())
         {
             Debug.LogErrorFormat("{0}.AddRenderPasses(): Missing material. {1} render pass will not be added. Check for missing reference in the renderer resources.", GetType().Name, name);
@@ -114,7 +116,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
 
     public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
     {
-        Debug.Log("DCL_RenderFeature_ProceduralSkyBox::SetupRenderPasses");
+        //Debug.Log("DCL_RenderFeature_ProceduralSkyBox::SetupRenderPasses");
         RenderTextureDescriptor desc = new RenderTextureDescriptor();
         desc.autoGenerateMips = false;
         desc.bindMS = false;
@@ -145,7 +147,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
 
     protected override void Dispose(bool disposing)
     {
-        Debug.Log("DCL_RenderFeature_ProceduralSkyBox::Dispose");
+        //Debug.Log("DCL_RenderFeature_ProceduralSkyBox::Dispose");
         m_SkyBoxCubeMap_RTHandle?.Release();
         m_GeneratePass?.dispose();
         m_DrawPass?.dispose();
@@ -155,7 +157,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
 
     public override void OnCameraPreCull(ScriptableRenderer renderer, in CameraData cameraData)
     {
-        Debug.Log("DCL_RenderFeature_ProceduralSkyBox::OnCameraPreCull");
+        //Debug.Log("DCL_RenderFeature_ProceduralSkyBox::OnCameraPreCull");
     }
 
     // public bool isActive { get; }
@@ -169,16 +171,16 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
 
     private bool GetMaterial_Generate()
     {
-        Debug.Log("DCL_RenderFeature_ProceduralSkyBox::GetMaterial_Generate");
+        //Debug.Log("DCL_RenderFeature_ProceduralSkyBox::GetMaterial_Generate");
         if (m_Material_Generate != null)
         {
-            Debug.Log("DCL_RenderFeature_ProceduralSkyBox::GetMaterial_Generate == return true");
+            //Debug.Log("DCL_RenderFeature_ProceduralSkyBox::GetMaterial_Generate == return true");
             return true;
         }
 
         if (m_Shader_Generate == null)
         {
-            Debug.Log("DCL_RenderFeature_ProceduralSkyBox::GetMaterial_Generate == Find shader");
+            //Debug.Log("DCL_RenderFeature_ProceduralSkyBox::GetMaterial_Generate == Find shader");
             m_Shader_Generate = Shader.Find(k_ShaderName_Generate);
             if (m_Shader_Generate == null)
             {
@@ -194,16 +196,16 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
 
     private bool GetMaterial_Draw()
     {
-        Debug.Log("DCL_RenderFeature_ProceduralSkyBox::GetMaterial_Draw");
+        //Debug.Log("DCL_RenderFeature_ProceduralSkyBox::GetMaterial_Draw");
         if (m_Material_Draw != null)
         {
-            Debug.Log("DCL_RenderFeature_ProceduralSkyBox::GetMaterial_Draw == return true");
+            //Debug.Log("DCL_RenderFeature_ProceduralSkyBox::GetMaterial_Draw == return true");
             return true;
         }
 
         if (m_Shader_Draw == null)
         {
-            Debug.Log("DCL_RenderFeature_ProceduralSkyBox::GetMaterial_Draw == Find shader");
+            //Debug.Log("DCL_RenderFeature_ProceduralSkyBox::GetMaterial_Draw == Find shader");
             m_Shader_Draw = Shader.Find(k_ShaderName_Draw);
             if (m_Shader_Draw == null)
             {
