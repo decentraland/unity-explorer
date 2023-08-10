@@ -46,13 +46,7 @@ jobs:
             !Explorer/Library/Bee/**
             !Explorer/Library/BuildPlayerData/**
           key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
-      # Return Unity License Manually
-      - name: Unity Return License
-        uses: game-ci/unity-return-license@v2.0.0
-        env:
-          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+
       # Configure test runner
       - uses: game-ci/unity-builder@v2.2.0
         id: build
