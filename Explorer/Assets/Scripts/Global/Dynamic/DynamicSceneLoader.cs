@@ -1,4 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Character;
+using DCL.CharacterCamera.Settings;
+using DCL.CharacterMotion.Settings;
 using Diagnostics.ReportsHandling;
 using ECS.Prioritization;
 using System.Collections.Generic;
@@ -15,12 +18,14 @@ namespace Global.Dynamic
     /// </summary>
     public class DynamicSceneLoader : MonoBehaviour
     {
-        [SerializeField] private Camera camera;
+        [SerializeField] private CharacterObject character;
+        [SerializeField] private CinemachinePreset camera;
         [SerializeField] private Vector2Int StartPosition;
         [SerializeField] private int SceneLoadRadius = 4;
         [SerializeField] private ReportsHandlingSettings reportsHandlingSettings;
         [SerializeField] private RealmPartitionSettingsAsset realmPartitionSettingsAsset;
         [SerializeField] private PartitionSettingsAsset partitionSettingsAsset;
+        [SerializeField] private CharacterControllerSettings characterControllerSettings;
 
         // If it's 0, it will load every parcel in the range
         [SerializeField] private List<int2> StaticLoadPositions;
@@ -31,9 +36,20 @@ namespace Global.Dynamic
         private SceneSharedContainer sceneSharedContainer;
         private StaticContainer staticContainer;
 
+        [SerializeField] private RealmLauncher realmLauncher;
+        [SerializeField] private string[] realms;
+
         private void Awake()
         {
-            InitializeAsync(destroyCancellationToken).Forget();
+            realmLauncher.Initialize(realms);
+            Install();
+
+            realmLauncher.OnRealmSelected += SetRealm;
+        }
+
+        private void SetRealm(string selectedRealm)
+        {
+            ChangeRealm(destroyCancellationToken, selectedRealm).Forget();
         }
 
         private void OnDestroy()
@@ -46,19 +62,23 @@ namespace Global.Dynamic
                 await dynamicWorldContainer.RealmController.DisposeGlobalWorld(globalWorld).SuppressCancellationThrow();
             }
 
+            realmLauncher.OnRealmSelected -= SetRealm;
             DisposeAsync().Forget();
         }
 
-        private async UniTask InitializeAsync(CancellationToken ct)
+        private async UniTask ChangeRealm(CancellationToken ct, string selectedRealm)
         {
-            Install();
+            if (globalWorld != null)
+                await dynamicWorldContainer.RealmController.UnloadCurrentRealm(globalWorld);
 
-            Vector3 cameraPosition = ParcelMathHelper.GetPositionByParcelPosition(StartPosition);
-            cameraPosition.y += 8.0f;
-            camera.transform.position = cameraPosition;
+            await UniTask.SwitchToMainThread();
 
-            globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory, dynamicWorldContainer.EmptyScenesWorldFactory, camera);
-            await dynamicWorldContainer.RealmController.SetRealm(globalWorld, "https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main", destroyCancellationToken);
+            Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(StartPosition);
+            characterPos.y = 1f;
+
+            character.Controller.Move(characterPos - character.Transform.position);
+
+            await dynamicWorldContainer.RealmController.SetRealm(globalWorld, selectedRealm, ct);
         }
 
         internal void Install()
@@ -67,7 +87,17 @@ namespace Global.Dynamic
 
             staticContainer = StaticContainer.Create(partitionSettingsAsset, reportsHandlingSettings);
             sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
-            dynamicWorldContainer = DynamicWorldContainer.Create(in staticContainer, realmPartitionSettingsAsset, StaticLoadPositions, SceneLoadRadius);
+
+            dynamicWorldContainer = DynamicWorldContainer.Create(
+                in staticContainer,
+                realmPartitionSettingsAsset,
+                camera,
+                characterControllerSettings,
+                character,
+                StaticLoadPositions,
+                SceneLoadRadius);
+
+            globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory, dynamicWorldContainer.EmptyScenesWorldFactory, character);
 
             Profiler.EndSample();
         }
