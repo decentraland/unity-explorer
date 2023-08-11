@@ -4,17 +4,10 @@
 #include "UnityCG.cginc"
 #include "Lighting.cginc"
 
-uniform half _Exposure;     // HDR exposure
-uniform half3 _GroundColor;
-uniform half _SunSize;
-uniform half _SunSizeConvergence;
-uniform half3 _SkyTint;
-uniform half _AtmosphereThickness;
-
 samplerCUBE _SkyBox_Cubemap_Texture;
 half4 _Tex_HDR;
 half4 _Tint;
-//half _Exposure;
+half _Exposure; // HDR exposure
 float _Rotation;
 
 float3 RotateAroundYInDegrees (float3 vertex, float degrees)
@@ -44,10 +37,9 @@ v2f vert (appdata_t v)
     UNITY_SETUP_INSTANCE_ID(v);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
     float3 rotated = RotateAroundYInDegrees(v.vertex, _Rotation);
-    //float3 rotated = RotateAroundYInDegrees(v.vertex, 45.0f);
     o.vertex = UnityObjectToClipPos(v.vertex);
     o.vertex.z = 0.0f;
-    o.texcoord = v.vertex;//normalize(mul(UNITY_MATRIX_I_V, normalize(v.vertex) ).xyz);
+    o.texcoord = v.vertex;
     return o;
 }
 

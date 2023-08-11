@@ -8,20 +8,6 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
 {
     public class DCL_RenderPass_GenerateSkyBox : ScriptableRenderPass
     {
-        // public static RTHandle k_CameraTarget
-        // public Color clearColor { get; }
-        // public ClearFlag clearFlag { get; }
-        // public RTHandle colorAttachmentHandle { get; }
-        // public RTHandle[] colorAttachmentHandles { get; }
-        // public RenderBufferStoreAction[] colorStoreActions { get; }
-        // public RTHandle depthAttachmentHandle { get; }
-        // public RenderBufferStoreAction depthStoreAction { get; }
-        // public ScriptableRenderPassInput input { get; }
-        // protected ProfilingSampler profilingSampler { get; set; }
-        // public RenderPassEvent renderPassEvent { get; set; }
-
-        // Camera m_Camera;
-
         const string profilerTag = "Custom Pass: GenerateSkyBox";
         private Material m_Material_Generate;
         private ProceduralSkyBoxSettings_Generate m_Settings_Generate;
@@ -66,12 +52,9 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
 
         internal void Setup(ProceduralSkyBoxSettings_Generate _featureSettings, Material _material, RTHandle _RTHandle)
         {
-            //Debug.Log("DCL_RenderPass_GenerateSkyBox::Setup");
             this.m_Material_Generate = _material;
             this.m_Settings_Generate = _featureSettings;
             this.m_SkyBoxCubeMap_RTHandle = _RTHandle;
-
-            //ConfigureInput(ScriptableRenderPassInput.Color);
         }
 
         // This method is called before executing the render pass.
@@ -81,27 +64,14 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         // The render pipeline will ensure target setup and clearing happens in a performant manner.
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
-            //Debug.Log("DCL_RenderPass_GenerateSkyBox::OnCameraSetup");
-            //SunPos
             m_Material_Generate.SetVector(s_SunPosID, this.m_Settings_Generate.SunPos);
             m_Material_Generate.SetVector(s_SunColID, this.m_Settings_Generate.SunColour);
         }
 
-        //delegate RTHandle CreateBufferRTHandle_Method(RTHandleSystem _RTHandleSystem, int _nBufferId);
 
-        // public RTHandle CreateBufferRTHandle(RTHandleSystem _RTHandleSystem, int _nBufferId)
-        // {
-        //     Debug.Log("DCL_RenderPass_GenerateSkyBox::BufferRTHandle");
-        //     //RTHandle testHandle = new RTHandle();
-        //     Texture myTexture;
-        //     RTHandle myRTHandle = _RTHandleSystem.Alloc(myTexture);
-        //     return myRTHandle;
-        // }
 
         public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
         {
-            //Debug.Log("DCL_RenderPass_GenerateSkyBox::Configure");
-
             // Configure targets and clear color
             ConfigureTarget(this.m_SkyBoxCubeMap_RTHandle);
         }
@@ -112,7 +82,6 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         // You don't have to call ScriptableRenderContext.submit, the render pipeline will call it at specific points in the pipeline.
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
-            //Debug.Log("DCL_RenderPass_GenerateSkyBox::Execute");
             if (this.m_Material_Generate == null)
             {
                 Debug.LogErrorFormat("{0}.Execute(): Missing material. DCL_RenderPass_GenerateSkyBox pass will not execute. Check for missing reference in the renderer resources.", GetType().Name);
@@ -122,7 +91,6 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             CommandBuffer cmd = CommandBufferPool.Get();
             using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
             {
-                //MaterialPropertyBlock properties
                 CoreUtils.ClearCubemap(cmd, this.m_SkyBoxCubeMap_RTHandle.rt , Color.blue, clearMips : false);
 
                 cmd.SetGlobalVector(s_ParamsID, new Vector4(0.0f, 0.0f, 0.0f, 0.0f));
@@ -157,31 +125,12 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         // Cleanup any allocated resources that were created during the execution of this render pass.
         public override void OnCameraCleanup(CommandBuffer cmd)
         {
-            //Debug.Log("DCL_RenderPass_GenerateSkyBox::OnCameraCleanup");
+
         }
 
         public void dispose()
         {
-            //Debug.Log("DCL_RenderPass_GenerateSkyBox::dispose");
             this.m_SkyBoxCubeMap_RTHandle?.Release();
         }
-
-        // public void Blit(CommandBuffer cmd, RTHandle source, RTHandle destination, Material material = null, int passIndex = 0) {}
-        // public void Blit(CommandBuffer cmd, ref RenderingData data, Material material, int passIndex = 0) {}
-        // public void Blit(CommandBuffer cmd, ref RenderingData data, RTHandle source, Material material, int passIndex = 0) {}
-        // public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor) {}
-        // public void ConfigureClear(ClearFlag clearFlag, Color clearColor) {}
-        // public void ConfigureColorStoreAction(RenderBufferStoreAction storeAction, uint attachmentIndex = 0U) {}
-        // public void ConfigureColorStoreActions(RenderBufferStoreAction[] storeActions) {}
-        // public void ConfigureDepthStoreAction(RenderBufferStoreAction storeAction) {}
-        // public void ConfigureInput(ScriptableRenderPassInput passInput) {}
-        // public void ConfigureTarget(RTHandle colorAttachment) {}
-        // public void ConfigureTarget(RTHandle colorAttachment, RTHandle depthAttachment) {}
-        // public void ConfigureTarget(RTHandle[] colorAttachments) {}
-        // public void ConfigureTarget(RTHandle[] colorAttachments, RTHandle depthAttachment) {}
-        // public DrawingSettings CreateDrawingSettings(List<ShaderTagId> shaderTagIdList, ref RenderingData renderingData, SortingCriteria sortingCriteria) {}
-        // public DrawingSettings CreateDrawingSettings(ShaderTagId shaderTagId, ref RenderingData renderingData, SortingCriteria sortingCriteria) {}
-        // public override void OnFinishCameraStackRendering(CommandBuffer cmd) {}
-        // public void ResetTarget() {}
     }
 }

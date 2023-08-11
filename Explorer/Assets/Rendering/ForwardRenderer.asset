@@ -76,15 +76,7 @@ MonoBehaviour:
     GroundColor: {r: 0.36862746, g: 0.3921569, b: 0.25882354, a: 1}
     SkyTint: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     Exposure: 1.3
-    SunPos: {x: -1308.63, y: -124.68, z: -150.9, w: 1}
+    SunPos: {x: 1.3, y: 0.73, z: 0, w: 28.8}
     SunColour: {x: 1, y: 0, z: 0, w: 1}
-  m_Settings_Draw:
-    SunDisk: 2
-    SunSize: 1
-    SunSizeConvergence: 5
-    AtmosphereThickness: 1
-    GroundColor: {r: 0.369, g: 0.349, b: 0.341, a: 1}
-    SkyTint: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-    Exposure: 1.3
   m_Shader_Generate: {fileID: 4800000, guid: 138e7c6a6ae001a4da172edc483d11e3, type: 3}
   m_Shader_Draw: {fileID: 4800000, guid: 1aae375793279384ab455fe4f2b0a475, type: 3}

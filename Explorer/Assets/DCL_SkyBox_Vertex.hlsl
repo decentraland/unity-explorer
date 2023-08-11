@@ -4,46 +4,55 @@
 // Includes
 #include "Assets/DCL_SkyBox_Data.hlsl"
 
-// float4 _CurrentCubeFace;
-// #define _Current_CubeFace _CurrentCubeFace.x
-// static const int _CubeFaceSTUFF = 5;
-// #define _Current_CubeFace _CubeFaceSTUFF
-
+// Due to an issue on AMD GPUs this doesn't work as expected so instead we moved to
+// a shader variant system. If fixed or work around from Unity is created then
+// switch to this look up to reduce shader variants
+// https://support.unity.com/hc/requests/1621458
+/*
+float4 _CurrentCubeFace;
+#define _Current_CubeFace _CurrentCubeFace.x
+*/
 
 float3 ComputeCubeDirection(float2 globalTexcoord)
 {
     float2 xy = (globalTexcoord * 2.0) - 1.0;
-    //return float3(-xy.x, -xy.y, -1.0);
-    //float3 direction = float3(-xy.x, -xy.y, -1.0);
 
-    // if(_Current_CubeFace == 0.0f)
-    // {
-    //     direction = (float3(1.0, -xy.y, -xy.x));
-    // }
-    // else if(_Current_CubeFace == 1.0f)
-    // {
-    //     direction = (float3(-1.0, -xy.y, xy.x));
-    // }
-    // else if(_Current_CubeFace == 2.0f)
-    // {
-    //     direction = (float3(xy.x, 1.0, xy.y));
-    // }
-    // else if(_Current_CubeFace == 3.0f)
-    // {
-    //     direction = (float3(xy.x, -1.0, -xy.y));
-    // }
-    // else if(_Current_CubeFace == 4.0f)
-    // {
-    //     direction = (float3(xy.x, -xy.y, 1.0));
-    // }
-    // else if(_Current_CubeFace == 5.0f)
-    // {
-    //     direction = (float3(-xy.x, -xy.y, -1.0));
-    // }
-    // else
-    // {
-    //     direction = float3(0, 0, 0);
-    // }
+    // Due to an issue on AMD GPUs this doesn't work as expected so instead we moved to
+    // a shader variant system. If fixed or work around from Unity is created then
+    // switch to this look up to reduce shader variants
+    // https://support.unity.com/hc/requests/1621458
+    /*
+    float3 direction;
+
+    if(_Current_CubeFace == 0.0f)
+    {
+        direction = (float3(1.0, -xy.y, -xy.x));
+    }
+    else if(_Current_CubeFace == 1.0f)
+    {
+        direction = (float3(-1.0, -xy.y, xy.x));
+    }
+    else if(_Current_CubeFace == 2.0f)
+    {
+        direction = (float3(xy.x, 1.0, xy.y));
+    }
+    else if(_Current_CubeFace == 3.0f)
+    {
+        direction = (float3(xy.x, -1.0, -xy.y));
+    }
+    else if(_Current_CubeFace == 4.0f)
+    {
+        direction = (float3(xy.x, -xy.y, 1.0));
+    }
+    else if(_Current_CubeFace == 5.0f)
+    {
+        direction = (float3(-xy.x, -xy.y, -1.0));
+    }
+    else
+    {
+        direction = float3(0, 0, 0);
+    }
+    */
 
     #if defined(_CUBEMAP_FACE_RIGHT)
         return float3(1.0, -xy.y, -xy.x);

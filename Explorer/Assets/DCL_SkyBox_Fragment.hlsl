@@ -98,6 +98,23 @@ half calcSunAttenuation(half3 _vLightPos, half3 _vRay, float _fSunSize, float _f
     return getMiePhase(-fFocusedEyeCos, fFocusedEyeCos * fFocusedEyeCos, _fSunSize);
 }
 
+#define PI 3.14159f
+
+float3 LatlongToDirectionCoordinate(float2 coord)
+{
+    float theta = coord.y * PI;
+    float phi = (coord.x * 2.f * PI - PI*0.5f);
+
+    float cosTheta = cos(theta);
+    float sinTheta = sqrt(1.0 - min(1.0, cosTheta*cosTheta));
+    float cosPhi = cos(phi);
+    float sinPhi = sin(phi);
+
+    float3 direction = float3(sinTheta*cosPhi, cosTheta, sinTheta*sinPhi);
+    direction.xy *= -1.0;
+    return direction;
+}
+
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
@@ -112,16 +129,13 @@ float4 _SunCol;
 
 float4 sk_frag(sk_v2f IN) : SV_Target
 {
-    float3 vSunPos = normalize(_SunPos.xyz);
+    float3 vSunPos = LatlongToDirectionCoordinate(normalize(_SunPos.xy));
     float3 vSunPos_Other = vSunPos;
-    //vSunPos_Other = vSunPos * 1000000;
-    //vSunPos_Other.y = 1.0 - vSunPos_Other.y;
-    // vSunPos = normalize(_WorldSpaceLightPos0.xyz);
-    // vSunPos_Other = normalize(_WorldSpaceLightPos0.xyz);
+
     const float3 vSkyTintInGammaSpace = COLOR_2_GAMMA(_SkyTint); // convert tint from Linear back to Gamma
-    const float3 vScatteringWavelength = lerp (   kDefaultScatteringWavelength-kVariableRangeForScatteringWavelength,
-                                            kDefaultScatteringWavelength+kVariableRangeForScatteringWavelength,
-                                            half3(1,1,1) - vSkyTintInGammaSpace); // using Tint in sRGB gamma allows for more visually linear interpolation and to keep (.5) at (128, gray in sRGB) point
+    const float3 vScatteringWavelength = lerp ( kDefaultScatteringWavelength-kVariableRangeForScatteringWavelength,
+                                                kDefaultScatteringWavelength+kVariableRangeForScatteringWavelength,
+                                                half3(1,1,1) - vSkyTintInGammaSpace); // using Tint in sRGB gamma allows for more visually linear interpolation and to keep (.5) at (128, gray in sRGB) point
     const float3 vInvWavelength = 1.0 / pow(vScatteringWavelength, 4);
 
     const float fKrESun = kRAYLEIGH * kSUN_BRIGHTNESS;
@@ -135,27 +149,24 @@ float4 sk_frag(sk_v2f IN) : SV_Target
 
     // Get the ray from the camera to the fragment and its length (which is the far point of the ray passing through the atmosphere)
     float3 vEyeRay = normalize(IN.direction);
-    float3 vEyeRay2 = vEyeRay;
-    //vEyeRay2.y = 1.0 - vEyeRay2.y;
-    if(vEyeRay2.y >= 0.0) // Sky
+    if(vEyeRay.y >= 0.0) // Sky
     {
-        //vEyeRay2.y = 1.0 - vEyeRay2.y;
-        float fUp = vEyeRay2.y;
+        float fUp = vEyeRay.y;
         // Calculate the length of the "atmosphere"
         fFar = sqrt(kOuterRadius2 + kInnerRadius2 * fUp * fUp - kInnerRadius2) - kInnerRadius * fUp;
 
-        float3 vPos = vCameraPos + fFar * vEyeRay2;
+        float3 vPos = vCameraPos + fFar * vEyeRay;
 
         // Calculate the ray's starting position, then calculate its scattering offset
         float fStartHeight = kInnerRadius + kCameraHeight;
         float fStartDepth = exp(kScaleOverScaleDepth * (-kCameraHeight));
-        float fStartAngle = dot(vEyeRay2, vCameraPos) / fStartHeight;
+        float fStartAngle = dot(vEyeRay, vCameraPos) / fStartHeight;
         float fStartOffset = fStartDepth * scale(fStartAngle);
 
         // Initialize the scattering loop variables
         float fSampleLength = fFar / kSamples;
         float fScaledLength = fSampleLength * kScale;
-        float3 vSampleRay = vEyeRay2 * fSampleLength;
+        float3 vSampleRay = vEyeRay * fSampleLength;
         float3 vSamplePoint = vCameraPos + vSampleRay * 0.5;
 
         // Now loop through the sample rays
@@ -168,20 +179,20 @@ float4 sk_frag(sk_v2f IN) : SV_Target
             float fHeight = length(vSamplePoint);
             float fDepth = exp(kScaleOverScaleDepth * (kInnerRadius - fHeight));
             float fLightAngle = dot(vSunPos_Other.xyz, vSamplePoint) / fHeight;
-            float fCameraAngle = dot(vEyeRay2, vSamplePoint) / fHeight;
-            float fScatter = 1.0f;//(fStartOffset + fDepth*(scale(fLightAngle) - scale(fCameraAngle)));
+            float fCameraAngle = dot(vEyeRay, vSamplePoint) / fHeight;
+            float fScatter = (fStartOffset + fDepth * (scale(fLightAngle) - scale(fCameraAngle)));
             float3 vAttenuate = exp(-clamp(fScatter, 0.0, kMAX_SCATTER) * (vInvWavelength * fKr4PI + kKm4PI));
 
             float fDepthScaledByLength = fDepth * fScaledLength;
-            vFrontColor += vAttenuate;// * fDepthScaledByLength;
+            vFrontColor += vAttenuate * fDepthScaledByLength;
             vSamplePoint += vSampleRay;
         }
         {
             float fHeight = length(vSamplePoint);
             float fDepth = exp(kScaleOverScaleDepth * (kInnerRadius - fHeight));
             float fLightAngle = dot(vSunPos_Other.xyz, vSamplePoint) / fHeight;
-            float fCameraAngle = dot(vEyeRay2, vSamplePoint) / fHeight;
-            float fScatter = (fStartOffset + fDepth*(scale(fLightAngle) - scale(fCameraAngle)));
+            float fCameraAngle = dot(vEyeRay, vSamplePoint) / fHeight;
+            float fScatter = (fStartOffset + fDepth * (scale(fLightAngle) - scale(fCameraAngle)));
             float3 vAttenuate = exp(-clamp(fScatter, 0.0, kMAX_SCATTER) * (vInvWavelength * fKr4PI + kKm4PI));
 
             float fDepthScaledByLength = fDepth * fScaledLength;
@@ -221,7 +232,7 @@ float4 sk_frag(sk_v2f IN) : SV_Target
         {
             float fHeight = length(vSamplePoint);
             float fDepth = exp(kScaleOverScaleDepth * (kInnerRadius - fHeight));
-            float fScatter = 0.0f;//fDepth*fTemp - fCameraOffset;
+            float fScatter = fDepth*fTemp - fCameraOffset;
             vAttenuate = exp(-clamp(fScatter, 0.0, kMAX_SCATTER) * (vInvWavelength * fKr4PI + kKm4PI));
             vFrontColor += vAttenuate * (fDepth * fScaledLength);
             vSamplePoint += vSampleRay;
@@ -234,17 +245,13 @@ float4 sk_frag(sk_v2f IN) : SV_Target
     // if we want to calculate color in vprog:
     // 1. in case of linear: multiply by _Exposure in here (even in case of lerp it will be common multiplier, so we can skip mul in fshader)
     // 2. in case of gamma and SKYBOX_COLOR_IN_TARGET_COLOR_SPACE: do sqrt right away instead of doing that in fshader
-    //cIn = float3(1.0, 1.0, 1.0) * 0.5;
     float3 vGroundColor = _Exposure * (vIn + COLOR_2_LINEAR(_GroundColor) * vOut);
     float3 vSkyColor    = _Exposure * (vIn * getRayleighPhase(vSunPos.xyz, -vEyeRay));
-    //vGroundColor = (_GroundColor.xyz);
-    //vSkyColor    = (_SkyTint.xyz);
 
     // The sun should have a stable intensity in its course in the sky. Moreover it should match the highlight of a purely specular material.
     // This matching was done using the standard shader BRDF1 on the 5/31/2017
     // Finally we want the sun to be always bright even in LDR thus the normalization of the lightColor for low intensity.
     float3 vSunColour = _SunCol.xyz;
-    //vSunColour = float3(1.0, 1.0, 1.0);
     half fLightColorIntensity = clamp(length(vSunColour), 0.25, 1);
     float3 vSunColour_Intensity    = kHDSundiskIntensityFactor * saturate(vOut) * vSunColour / fLightColorIntensity;
 
@@ -254,14 +261,12 @@ float4 sk_frag(sk_v2f IN) : SV_Target
         vSunColour_Intensity    = sqrt(vSunColour_Intensity);
     #endif
 
-    half y = vEyeRay.y;// / SKY_GROUND_THRESHOLD;
-    //y = -y;
+    half y = vEyeRay.y; // / SKY_GROUND_THRESHOLD;
     half3 vCol = lerp(vSkyColor, vGroundColor, saturate(-y));
 
     if(y > 0.0)
     {
         vCol += vSunColour_Intensity * calcSunAttenuation(vSunPos.xyz, -vEyeRay, _SunSize, _SunSizeConvergence);
-        //vCol += calcSunAttenuation(vSunPos.xyz, -vEyeRay, _SunSize, _SunSizeConvergence);
 
         float fLdotV =pow(saturate(dot(vSunPos.xyz, -vEyeRay)), 10);
         if(fLdotV >= 0.99f)
@@ -274,7 +279,6 @@ float4 sk_frag(sk_v2f IN) : SV_Target
         vCol = LINEAR_2_OUTPUT(vCol);
     #endif
 
-    //return half4(IN.direction, 1.0);
     return half4(vCol, 1.0);
 }
 

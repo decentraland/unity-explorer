@@ -29,8 +29,6 @@ Shader "Skybox/DCL_SkyBox_Procedural_Draw"
             ZTest LEqual
             ZWrite Off
             Cull Off
-            //Blend One SrcAlpha, Zero One
-            //BlendOp Add, Add
 
             HLSLPROGRAM
                 #pragma vertex vert
@@ -47,8 +45,6 @@ Shader "Skybox/DCL_SkyBox_Procedural_Draw"
             ZTest Less
             ZWrite Off
             Cull Off
-            //Blend One SrcAlpha, Zero One
-            //BlendOp Add, Add
 
             HLSLPROGRAM
                 #pragma vertex vert
@@ -59,5 +55,4 @@ Shader "Skybox/DCL_SkyBox_Procedural_Draw"
     }
 
     Fallback Off
-    //CustomEditor "SkyboxProceduralShaderGUI"
 }
