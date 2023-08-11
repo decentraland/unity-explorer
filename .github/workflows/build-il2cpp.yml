@@ -50,6 +50,13 @@ jobs:
       # Return license
       - name: Unity - Return License - Kuruk Mod
         uses: kuruk-mm/unity-return-license@0.1
+        env:
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: Explorer
+          targetPlatform: ${{ matrix.targetPlatform }}
 
       # Configure test runner
       - uses: game-ci/unity-builder@v2.2.0
