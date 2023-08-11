@@ -47,6 +47,10 @@ jobs:
             !Explorer/Library/BuildPlayerData/**
           key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
 
+      # Return license
+      - name: Unity - Return License - Kuruk Mod
+        uses: kuruk-mm/unity-return-license@0.1
+
       # Configure test runner
       - uses: game-ci/unity-builder@v2.2.0
         id: build
