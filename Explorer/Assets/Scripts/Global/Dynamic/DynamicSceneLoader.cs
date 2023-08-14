@@ -93,6 +93,7 @@ namespace Global.Dynamic
                         anyFailure = true;
                 }
 
+                await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePlugin(gp, ct).ContinueWith(OnPluginInitialized)));
                 await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePlugin(gp, ct).ContinueWith(OnPluginInitialized)));
 
                 if (anyFailure)

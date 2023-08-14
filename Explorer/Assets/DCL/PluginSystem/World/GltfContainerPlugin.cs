@@ -1,6 +1,6 @@
-using Arch.Core;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
+using DCL.PluginSystem.World.Dependencies;
 using Diagnostics.ReportsHandling;
 using ECS.ComponentsPooling;
 using ECS.LifeCycle;
@@ -9,12 +9,11 @@ using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Systems;
 using ECS.Unity.GLTFContainer.Systems;
-using SceneRunner.EmptyScene;
 using System.Collections.Generic;
 
-namespace SceneRunner.ECSWorld.Plugins
+namespace DCL.PluginSystem.World
 {
-    public class GltfContainerPlugin : IECSWorldPlugin
+    public class GltfContainerPlugin : IDCLWorldPluginWithoutSettings
     {
         private readonly GltfContainerAssetsCache assetsCache;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
@@ -29,7 +28,7 @@ namespace SceneRunner.ECSWorld.Plugins
             capBudgetProvider = singletonSharedDependencies.FrameTimeCapBudgetProvider;
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder,
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
             in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
             // Asset loading
@@ -52,7 +51,7 @@ namespace SceneRunner.ECSWorld.Plugins
             finalizeWorldSystems.Add(cleanUpGltfContainerSystem);
         }
 
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<World> builder, in EmptyScenesWorldSharedDependencies dependencies)
+        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies)
         {
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);

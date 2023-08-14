@@ -1,22 +1,23 @@
-﻿using Arch.Core;
-using Arch.SystemGroups;
+﻿using Arch.SystemGroups;
+using DCL.PluginSystem.World.Dependencies;
 using ECS.LifeCycle;
-using SceneRunner.EmptyScene;
 using System.Collections.Generic;
 
-namespace SceneRunner.ECSWorld.Plugins
+namespace DCL.PluginSystem.World
 {
+    public interface IDCLWorldPlugin<in TSettings> : IDCLWorldPlugin, IDCLPlugin<TSettings> where TSettings: IDCLPluginSettings, new() { }
+
     /// <summary>
     ///     Encapsulation to register dependencies and systems of the particular isolated functionality.
     ///     These dependencies are not shared with other plugins
     /// </summary>
-    public interface IECSWorldPlugin
+    public interface IDCLWorldPlugin : IDCLPlugin
     {
         /// <summary>
         ///     Create dependencies and systems that should exist per scene
         /// </summary>
         void InjectToWorld(
-            ref ArchSystemsWorldBuilder<World> builder,
+            ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
             in ECSWorldInstanceSharedDependencies sharedDependencies,
             in PersistentEntities persistentEntities,
             List<IFinalizeWorldSystem> finalizeWorldSystems);
@@ -25,7 +26,7 @@ namespace SceneRunner.ECSWorld.Plugins
         ///     Creates a subset of systems that should run in the empty scenes world that exists in a single instance
         /// </summary>
         void InjectToEmptySceneWorld(
-            ref ArchSystemsWorldBuilder<World> builder,
+            ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
             in EmptyScenesWorldSharedDependencies dependencies);
     }
 }

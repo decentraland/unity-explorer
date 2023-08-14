@@ -1,5 +1,4 @@
-﻿using Arch.Core;
-using Arch.SystemGroups;
+﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
@@ -28,9 +27,9 @@ namespace DCL.PluginSystem.Global
             this.settings = await assetsProvisioner.ProvideMainAsset(settings.controllerSettings, ct);
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            World world = builder.World;
+            Arch.Core.World world = builder.World;
 
             // Add Motion components
             world.Add(arguments.PlayerEntity,

@@ -1,4 +1,3 @@
-using Arch.Core;
 using Arch.SystemGroups;
 using DCL.CharacterCamera.Systems;
 using DCL.CharacterMotion.Systems;
@@ -17,7 +16,7 @@ namespace DCL.PluginSystem.Global
             dclInput.Enable();
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             builder.World.Create(new InputMapComponent((InputMapComponent.Kind)(~0)));
 

@@ -4,14 +4,14 @@ using DCL.AssetsProvision;
 using DCL.Character;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.PluginSystem.World;
+using DCL.PluginSystem.World.Dependencies;
 using Diagnostics;
 using Diagnostics.ReportsHandling;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.Profiling;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
-using SceneRunner.ECSWorld;
-using SceneRunner.ECSWorld.Plugins;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -36,7 +36,7 @@ namespace Global
 
         public CameraSamplingData CameraSamplingData { get; private set; }
 
-        public IReadOnlyList<IECSWorldPlugin> ECSWorldPlugins { get; private set; }
+        public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; }
 
         public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
 
@@ -102,7 +102,7 @@ namespace Global
             container.CameraSamplingData = new CameraSamplingData();
             container.ProfilingProvider = profilingProvider;
 
-            container.ECSWorldPlugins = new IECSWorldPlugin[]
+            container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
                 new TransformsPlugin(sharedDependencies),
                 new MaterialsPlugin(sharedDependencies),

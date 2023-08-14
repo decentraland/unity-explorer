@@ -4,7 +4,7 @@ using SceneRunner.Scene;
 using System.Collections.Generic;
 using Utility.Multithreading;
 
-namespace SceneRunner.EmptyScene
+namespace DCL.PluginSystem.World.Dependencies
 {
     public readonly struct EmptyScenesWorldSharedDependencies
     {

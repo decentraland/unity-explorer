@@ -1,19 +1,18 @@
-﻿using Arch.Core;
-using Arch.SystemGroups;
+﻿using Arch.SystemGroups;
+using DCL.PluginSystem.World.Dependencies;
 using ECS.ComponentsPooling;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using ECS.Unity.Systems;
 using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
-using SceneRunner.EmptyScene;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 
-namespace SceneRunner.ECSWorld.Plugins
+namespace DCL.PluginSystem.World
 {
-    public class TransformsPlugin : IECSWorldPlugin
+    public class TransformsPlugin : IDCLWorldPluginWithoutSettings
     {
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
 
@@ -22,7 +21,7 @@ namespace SceneRunner.ECSWorld.Plugins
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
             // We create the scene root transform
             Transform sceneRootTransform = componentPoolsRegistry.GetReferenceTypePool<Transform>().Get();
@@ -48,7 +47,7 @@ namespace SceneRunner.ECSWorld.Plugins
             finalizeWorldSystems.Add(releaseTransformSystem);
         }
 
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<World> builder, in EmptyScenesWorldSharedDependencies dependencies)
+        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies)
         {
             UpdateTransformSystem.InjectToWorld(ref builder);
             InstantiateTransformSystem.InjectToWorld(ref builder, componentPoolsRegistry);

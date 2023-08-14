@@ -16,6 +16,7 @@ namespace Global.Static
     {
         [SerializeField] private SceneLauncher sceneLauncher;
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer;
+        [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer;
 
         private ISceneFacade sceneFacade;
 
@@ -36,7 +37,7 @@ namespace Global.Static
             try
             {
                 SceneSharedContainer sceneSharedContainer;
-                (staticContainer, sceneSharedContainer) = await Install(globalPluginSettingsContainer, ct);
+                (staticContainer, sceneSharedContainer) = await Install(globalPluginSettingsContainer, scenePluginSettingsContainer, ct);
                 sceneLauncher.Initialize(sceneSharedContainer, destroyCancellationToken);
             }
             catch (OperationCanceledException) { }
@@ -48,13 +49,18 @@ namespace Global.Static
             }
         }
 
-        public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> Install(IPluginSettingsContainer settingsContainer, CancellationToken ct)
+        public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> Install(
+            IPluginSettingsContainer globalSettingsContainer,
+            IPluginSettingsContainer sceneSettingsContainer,
+            CancellationToken ct)
         {
             // First load the common global plugin
-            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.Create(settingsContainer, ct);
+            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.Create(globalSettingsContainer, ct);
 
             if (!isLoaded)
                 PrintGameIsDead();
+
+            await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePlugin(gp, ct)));
 
             var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
 

@@ -5,7 +5,7 @@ using ECS.ComponentsPooling;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 
-namespace SceneRunner.ECSWorld
+namespace DCL.PluginSystem.World.Dependencies
 {
     public readonly struct ECSWorldSingletonSharedDependencies
     {

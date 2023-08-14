@@ -1,5 +1,4 @@
-﻿using Arch.Core;
-using Arch.SystemGroups;
+﻿using Arch.SystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
@@ -43,9 +42,9 @@ namespace DCL.PluginSystem.Global
             providedCinemachinePreset.Dispose();
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            World world = builder.World;
+            Arch.Core.World world = builder.World;
 
             // Initialize Camera to follow the player
             PlayerComponent playerFocus = world.Get<PlayerComponent>(arguments.PlayerEntity);

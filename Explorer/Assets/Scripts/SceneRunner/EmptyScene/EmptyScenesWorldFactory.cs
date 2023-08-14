@@ -2,13 +2,13 @@
 using Arch.SystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components;
+using DCL.PluginSystem.World;
+using DCL.PluginSystem.World.Dependencies;
 using ECS.Groups;
 using ECS.LifeCycle.Systems;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.Unity.Systems;
 using ECS.Unity.Transforms.Components;
-using SceneRunner.ECSWorld;
-using SceneRunner.ECSWorld.Plugins;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
@@ -23,11 +23,11 @@ namespace SceneRunner.EmptyScene
     public class EmptyScenesWorldFactory : IEmptyScenesWorldFactory
     {
         private readonly ECSWorldSingletonSharedDependencies sharedDependencies;
-        private readonly IReadOnlyList<IECSWorldPlugin> ecsWorldPlugins;
+        private readonly IReadOnlyList<IDCLWorldPlugin> ecsWorldPlugins;
 
         public EmptyScenesWorldFactory(
             ECSWorldSingletonSharedDependencies sharedDependencies,
-            IReadOnlyList<IECSWorldPlugin> ecsWorldPlugins)
+            IReadOnlyList<IDCLWorldPlugin> ecsWorldPlugins)
         {
             this.sharedDependencies = sharedDependencies;
             this.ecsWorldPlugins = ecsWorldPlugins;

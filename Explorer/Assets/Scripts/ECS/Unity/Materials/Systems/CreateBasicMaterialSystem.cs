@@ -16,8 +16,8 @@ namespace ECS.Unity.Materials.Systems
     public partial class CreateBasicMaterialSystem : CreateMaterialSystemBase
     {
         public const string MATERIAL_PATH = "BasicShapeMaterial";
-        private readonly IConcurrentBudgetProvider capFrameBudgetProvider;
 
+        private readonly IConcurrentBudgetProvider capFrameBudgetProvider;
 
         internal CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool, IConcurrentBudgetProvider capFrameBudgetProvider) : base(world, materialsPool)
         {

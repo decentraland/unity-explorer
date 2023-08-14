@@ -1,5 +1,4 @@
-﻿using Arch.Core;
-using Arch.SystemGroups;
+﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using ECS.Profiling;
@@ -33,7 +32,7 @@ namespace DCL.PluginSystem.Global
             profilingView.Dispose();
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             ProfilingSystem.InjectToWorld(ref builder, profilingProvider, profilingView.Value);
         }

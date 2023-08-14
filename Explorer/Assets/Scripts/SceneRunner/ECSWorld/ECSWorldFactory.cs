@@ -2,6 +2,8 @@ using Arch.Core;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.UpdateGate;
+using DCL.PluginSystem.World;
+using DCL.PluginSystem.World.Dependencies;
 using ECS.ComponentsPooling;
 using ECS.ComponentsPooling.Systems;
 using ECS.Groups;
@@ -11,7 +13,6 @@ using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.Unity.Systems;
-using SceneRunner.ECSWorld.Plugins;
 using System.Collections.Generic;
 
 namespace SceneRunner.ECSWorld
@@ -21,10 +22,10 @@ namespace SceneRunner.ECSWorld
         private readonly ECSWorldSingletonSharedDependencies singletonDependencies;
         private readonly IPartitionSettings partitionSettings;
         private readonly IReadOnlyCameraSamplingData cameraSamplingData;
-        private readonly IReadOnlyList<IECSWorldPlugin> plugins;
+        private readonly IReadOnlyList<IDCLWorldPlugin> plugins;
 
         public ECSWorldFactory(ECSWorldSingletonSharedDependencies sharedDependencies,
-            IPartitionSettings partitionSettings, IReadOnlyCameraSamplingData cameraSamplingData, IReadOnlyList<IECSWorldPlugin> plugins)
+            IPartitionSettings partitionSettings, IReadOnlyCameraSamplingData cameraSamplingData, IReadOnlyList<IDCLWorldPlugin> plugins)
         {
             this.plugins = plugins;
             singletonDependencies = sharedDependencies;
@@ -59,7 +60,7 @@ namespace SceneRunner.ECSWorld
 
             var finalizeWorldSystems = new List<IFinalizeWorldSystem>(32);
 
-            foreach (IECSWorldPlugin worldPlugin in plugins)
+            foreach (IDCLWorldPlugin worldPlugin in plugins)
                 worldPlugin.InjectToWorld(ref builder, in sharedDependencies, in persistentEntities, finalizeWorldSystems);
 
             // Prioritization

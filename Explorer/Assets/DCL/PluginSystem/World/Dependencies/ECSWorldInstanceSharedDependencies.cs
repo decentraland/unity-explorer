@@ -6,7 +6,7 @@ using SceneRunner.Scene.ExceptionsHandling;
 using System.Collections.Generic;
 using Utility.Multithreading;
 
-namespace SceneRunner.ECSWorld
+namespace DCL.PluginSystem.World.Dependencies
 {
     public readonly struct ECSWorldInstanceSharedDependencies
     {

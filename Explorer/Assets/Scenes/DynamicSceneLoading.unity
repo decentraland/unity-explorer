@@ -245,7 +245,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
-  scenePluginSettingsContainer: {fileID: 0}
+  scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
   StartPosition: {x: -13, y: -6}
   SceneLoadRadius: 4
   StaticLoadPositions: []
