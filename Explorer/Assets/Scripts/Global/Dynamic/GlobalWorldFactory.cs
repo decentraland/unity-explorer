@@ -48,7 +48,6 @@ namespace Global.Dynamic
         private readonly IPartitionSettings partitionSettings;
         private readonly IRealmPartitionSettings realmPartitionSettings;
         private readonly RealmSamplingData realmSamplingData;
-        private readonly IProfilingProvider profilingProvider;
         private readonly IReadOnlyList<IDCLGlobalPlugin> globalPlugins;
 
         public GlobalWorldFactory(in StaticContainer staticContainer, IRealmPartitionSettings realmPartitionSettings,
@@ -60,7 +59,6 @@ namespace Global.Dynamic
             this.realmPartitionSettings = realmPartitionSettings;
             this.cameraSamplingData = cameraSamplingData;
             this.realmSamplingData = realmSamplingData;
-            this.profilingProvider = staticContainer.ProfilingProvider;
             this.globalPlugins = globalPlugins;
         }
 
@@ -114,8 +112,6 @@ namespace Global.Dynamic
             PartitionSceneEntitiesSystem.InjectToWorld(ref builder, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>(), partitionSettings, cameraSamplingData);
             CheckCameraQualifiedForRepartitioningSystem.InjectToWorld(ref builder, partitionSettings);
             SortWorldsAggregateSystem.InjectToWorld(ref builder, partitionedWorldsAggregateFactory, realmPartitionSettings);
-
-            ProfilingSystem.InjectToWorld(ref builder, profilingProvider);
 
             var pluginArgs = new GlobalPluginArguments(playerEntity);
 

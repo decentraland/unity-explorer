@@ -16,6 +16,7 @@ MonoBehaviour:
   - rid: 6784895265395441664
   - rid: 6784895265412481024
   - rid: 6784895265412481025
+  - rid: 6784895267130048514
   references:
     version: 2
     RefIds:
@@ -27,6 +28,7 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <StartYPosition>k__BackingField: 1
         <ReportHandlingSettings>k__BackingField:
           m_AssetGUID: c9893189605d84349b03f89a01d6abca
           m_SubObjectName: 
@@ -55,6 +57,14 @@ MonoBehaviour:
       data:
         <controllerSettings>k__BackingField:
           m_AssetGUID: df2e68b45160aee4eaaf2475e21525e4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 6784895267130048514
+      type: {class: ProfilingPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <profilingViewRef>k__BackingField:
+          m_AssetGUID: 03608bfcd31894b8daf215b6e82338bf
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

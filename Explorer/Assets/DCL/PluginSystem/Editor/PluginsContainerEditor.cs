@@ -35,7 +35,7 @@ namespace DCL.PluginSystem.Editor
                     if (type == typeof(NoExposedPluginSettings)) continue;
                     if (targetObj.settings.Find(x => x.GetType() == type) != null) continue;
 
-                    menu.AddItem(new GUIContent(type.Name), false, () =>
+                    menu.AddItem(new GUIContent(type.FullName), false, () =>
                     {
                         object newSettings = Activator.CreateInstance(type);
                         settings.arraySize++;

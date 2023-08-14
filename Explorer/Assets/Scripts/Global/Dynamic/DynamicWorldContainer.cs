@@ -27,6 +27,7 @@ namespace Global.Dynamic
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterObject),
                 new InputPlugin(),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, staticContainer.CameraSamplingData),
+                new ProfilingPlugin(staticContainer.AssetsProvisioner, staticContainer.ProfilingProvider)
             };
 
             return new DynamicWorldContainer
