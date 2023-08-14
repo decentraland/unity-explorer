@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using Cysharp.Threading.Tasks;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -10,6 +11,7 @@ using ECS.Unity.Materials.Systems;
 using ECS.Unity.Textures.Components;
 using NSubstitute;
 using NUnit.Framework;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
@@ -22,12 +24,12 @@ namespace ECS.Unity.Materials.Tests
         private Material basicMat;
 
         [SetUp]
-        public async void SetUp()
+        public async Task SetUp()
         {
             AsyncOperationHandle<Material> loadMaterialTask = Addressables.LoadAssetAsync<Material>("BasicShapeMaterial");
             await loadMaterialTask.Task;
-
             basicMat = loadMaterialTask.Result;
+
             IObjectPool<Material> pool = Substitute.For<IObjectPool<Material>>();
             pool.Get().Returns(_ => new Material(basicMat));
 
@@ -38,8 +40,11 @@ namespace ECS.Unity.Materials.Tests
         }
 
         [Test]
-        public void ConstructMaterial()
+        public async Task ConstructMaterial()
         {
+            // For some reason SetUp is not awaited, probably a Unity's bug
+            await UniTask.WaitUntil(() => system != null);
+
             MaterialComponent component = CreateMaterialComponent();
 
             component.Status = MaterialComponent.LifeCycle.LoadingInProgress;
@@ -58,8 +63,11 @@ namespace ECS.Unity.Materials.Tests
         }
 
         [Test]
-        public void NotConstructMaterialIfTexturesLoadingNotFinished()
+        public async Task NotConstructMaterialIfTexturesLoadingNotFinished()
         {
+            // For some reason SetUp is not awaited, probably a Unity's bug
+            await UniTask.WaitUntil(() => system != null);
+
             MaterialComponent component = CreateMaterialComponent();
 
             component.Status = MaterialComponent.LifeCycle.LoadingInProgress;
