@@ -1,47 +1,70 @@
-﻿using Diagnostics.ReportsHandling;
-using Global.Dynamic;
+﻿using Cysharp.Threading.Tasks;
+using DCL.PluginSystem;
+using Diagnostics.ReportsHandling;
 using SceneRunner.Scene;
+using System;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using UnityEngine;
-using UnityEngine.Profiling;
 
 namespace Global.Static
 {
     /// <summary>
-    /// An entry point to install and resolve all dependencies
+    ///     An entry point to install and resolve all dependencies
     /// </summary>
     public class StaticSceneLauncher : MonoBehaviour
     {
         [SerializeField] private SceneLauncher sceneLauncher;
-        [SerializeField] private ReportsHandlingSettings reportsHandlingSettings;
-
-        public SceneSharedContainer SceneSharedContainer { get; private set; }
+        [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer;
 
         private ISceneFacade sceneFacade;
 
+        private StaticContainer staticContainer;
+
         private void Awake()
         {
-            SceneSharedContainer = Install(reportsHandlingSettings);
-        }
-
-        private void Start()
-        {
-            sceneLauncher.Initialize(SceneSharedContainer, destroyCancellationToken);
+            InitializationFlow(destroyCancellationToken).Forget();
         }
 
         private void OnDestroy()
         {
-            SceneSharedContainer?.Dispose();
+            staticContainer?.Dispose();
         }
 
-        public static SceneSharedContainer Install(IReportsHandlingSettings reportsHandlingSettings)
+        public async UniTask InitializationFlow(CancellationToken ct)
         {
-            Profiler.BeginSample($"{nameof(DynamicSceneLoader)}.Install");
+            try
+            {
+                SceneSharedContainer sceneSharedContainer;
+                (staticContainer, sceneSharedContainer) = await Install(globalPluginSettingsContainer, ct);
+                sceneLauncher.Initialize(sceneSharedContainer, destroyCancellationToken);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception)
+            {
+                // unhandled exception
+                PrintGameIsDead();
+                throw;
+            }
+        }
 
-            var staticContainer = StaticContainer.Create(new NoPartitionSettings(), reportsHandlingSettings);
+        public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> Install(IPluginSettingsContainer settingsContainer, CancellationToken ct)
+        {
+            // First load the common global plugin
+            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.Create(settingsContainer, ct);
+
+            if (!isLoaded)
+                PrintGameIsDead();
+
             var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
 
-            Profiler.EndSample();
-            return sceneSharedContainer;
+            return (staticContainer, sceneSharedContainer);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void PrintGameIsDead()
+        {
+            ReportHub.LogError(ReportCategory.ENGINE, "Initialization Failed! Game is irrecoverably dead!");
         }
     }
 }

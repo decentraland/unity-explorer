@@ -3,7 +3,6 @@ using CrdtEcsBridge.Engine;
 using SceneRunner;
 using SceneRunner.ECSWorld;
 using SceneRuntime.Factory;
-using System;
 
 namespace Global
 {
@@ -11,11 +10,9 @@ namespace Global
     ///     Holds dependencies shared between all scene instances. <br />
     ///     Consider breaking down this class as much as needed if the number of dependencies grows
     /// </summary>
-    public class SceneSharedContainer : IDisposable
+    public class SceneSharedContainer
     {
         public ISceneFactory SceneFactory { get; private set; }
-
-        public void Dispose() { }
 
         public static SceneSharedContainer Create(in StaticContainer staticContainer)
         {

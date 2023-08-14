@@ -1,9 +1,5 @@
-﻿using DCL.Character;
-using DCL.CharacterCamera.Components;
-using DCL.CharacterMotion.Settings;
-using ECS.Prioritization;
+﻿using DCL.PluginSystem.Global;
 using ECS.Prioritization.Components;
-using Global.Dynamic.Plugins;
 using SceneRunner.EmptyScene;
 using System.Collections.Generic;
 using Unity.Mathematics;
@@ -18,26 +14,27 @@ namespace Global.Dynamic
 
         public EmptyScenesWorldFactory EmptyScenesWorldFactory { get; private set; }
 
+        public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; }
+
         public static DynamicWorldContainer Create(
             in StaticContainer staticContainer,
-            IRealmPartitionSettings realmPartitionSettings,
-            ICinemachinePreset cinemachinePreset,
-            ICharacterControllerSettings characterControllerSettings,
-            ICharacterObject characterObject,
             IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius)
         {
             var realmSamplingData = new RealmSamplingData();
 
+            var globalPlugins = new IDCLGlobalPlugin[]
+            {
+                new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterObject),
+                new InputPlugin(),
+                new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, staticContainer.CameraSamplingData),
+            };
+
             return new DynamicWorldContainer
             {
                 RealmController = new RealmController(sceneLoadRadius, staticLoadPositions),
-                GlobalWorldFactory = new GlobalWorldFactory(in staticContainer, realmPartitionSettings,
-                    staticContainer.CameraSamplingData, realmSamplingData, new IECSGlobalPlugin[]
-                    {
-                        new CharacterMotionPlugin(characterControllerSettings, characterObject),
-                        new InputPlugin(),
-                        new CharacterCameraPlugin(cinemachinePreset, realmSamplingData, staticContainer.CameraSamplingData),
-                    }),
+                GlobalWorldFactory = new GlobalWorldFactory(in staticContainer, staticContainer.RealmPartitionSettings,
+                    staticContainer.CameraSamplingData, realmSamplingData, globalPlugins),
+                GlobalPlugins = globalPlugins,
                 EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins),
             };
         }

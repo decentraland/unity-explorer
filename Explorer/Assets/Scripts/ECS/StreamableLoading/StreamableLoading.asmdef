@@ -11,7 +11,8 @@
     "Unity.Collections",
     "Diagnostics",
     "Prioritization",
-    "Profiling"
+    "Profiling",
+    "AssetsProvision"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
