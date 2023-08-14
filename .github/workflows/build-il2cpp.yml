@@ -6,6 +6,10 @@ on:
 
 jobs:
   build:
+    concurrency: 
+      group: build-il2cpp
+      cancel-in-progress: false
+
     strategy:
       max-parallel: 1
       matrix:
