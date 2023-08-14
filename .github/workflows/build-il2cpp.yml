@@ -48,7 +48,7 @@ jobs:
           key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
 
       # Configure test runner
-      - uses: kuruk-mm/unity-builder@0.2
+      - uses: kuruk-mm/unity-builder@0.3
         id: build
         env:
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
