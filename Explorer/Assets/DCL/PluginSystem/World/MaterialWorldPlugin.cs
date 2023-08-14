@@ -11,7 +11,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Utility;
 
@@ -22,12 +21,6 @@ namespace DCL.PluginSystem.World
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
-            [Serializable]
-            public class MaterialRef : AssetReferenceT<Material>
-            {
-                public MaterialRef(string guid) : base(guid) { }
-            }
-
             [field: Header(nameof(MaterialsPlugin) + "." + nameof(Settings))]
             [field: Space]
             [field: SerializeField]
@@ -40,10 +33,10 @@ namespace DCL.PluginSystem.World
             public int PoolMaxSize { get; private set; } = 2048;
 
             [field: SerializeField]
-            public MaterialRef basicMaterial;
+            public AssetReferenceMaterial basicMaterial;
 
             [field: SerializeField]
-            public MaterialRef pbrMaterial;
+            public AssetReferenceMaterial pbrMaterial;
         }
 
         // private const int CACHE_CAPACITY = 512;
