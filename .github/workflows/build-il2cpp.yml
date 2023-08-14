@@ -13,7 +13,7 @@ jobs:
           - targetPlatform: StandaloneWindows64
             dockerImage: windows-2019
           - targetPlatform: StandaloneOSX
-            dockerImage: macos-latest
+            dockerImage: macos-latest-xl
 
 
     name: Build
