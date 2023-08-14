@@ -11,6 +11,7 @@ using DCL.CharacterCamera.Settings;
 using DCL.CharacterCamera.Systems;
 using ECS.Prioritization.Components;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.PluginSystem.Global
 {
@@ -34,7 +35,7 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask Initialize(CharacterCameraSettings settings, CancellationToken ct)
         {
-            providedCinemachinePreset = await assetsProvisioner.ProvideInstance(settings.cinemachinePreset, ct: ct);
+            providedCinemachinePreset = await assetsProvisioner.ProvideInstance(settings.cinemachinePreset, Vector3.zero, Quaternion.identity, ct: ct);
         }
 
         public void Dispose()
