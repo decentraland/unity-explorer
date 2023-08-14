@@ -11,7 +11,9 @@ using ECS.Unity.Textures.Components;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace ECS.Unity.Materials.Tests
 {
@@ -20,9 +22,12 @@ namespace ECS.Unity.Materials.Tests
         private Material pbrMat;
 
         [SetUp]
-        public void SetUp()
+        public async void SetUp()
         {
-            pbrMat = Resources.Load<Material>(CreatePBRMaterialSystem.MATERIAL_PATH);
+            AsyncOperationHandle<Material> loadMaterialTask = Addressables.LoadAssetAsync<Material>("ShapeMaterial");
+            await loadMaterialTask.Task;
+            pbrMat = loadMaterialTask.Result;
+
             IObjectPool<Material> pool = Substitute.For<IObjectPool<Material>>();
             pool.Get().Returns(_ => new Material(pbrMat));
 

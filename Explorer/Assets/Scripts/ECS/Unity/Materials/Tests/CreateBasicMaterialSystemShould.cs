@@ -11,7 +11,9 @@ using ECS.Unity.Textures.Components;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace ECS.Unity.Materials.Tests
 {
@@ -20,9 +22,12 @@ namespace ECS.Unity.Materials.Tests
         private Material basicMat;
 
         [SetUp]
-        public void SetUp()
+        public async void SetUp()
         {
-            basicMat = Resources.Load<Material>(CreateBasicMaterialSystem.MATERIAL_PATH);
+            AsyncOperationHandle<Material> loadMaterialTask = Addressables.LoadAssetAsync<Material>("BasicShapeMaterial");
+            await loadMaterialTask.Task;
+
+            basicMat = loadMaterialTask.Result;
             IObjectPool<Material> pool = Substitute.For<IObjectPool<Material>>();
             pool.Get().Returns(_ => new Material(basicMat));
 

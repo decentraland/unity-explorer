@@ -80,7 +80,8 @@ namespace Global
             var profilingProvider = new ProfilingProvider();
 
             var container = new StaticContainer();
-            container.AssetsProvisioner = new AddressablesProvisioner();
+            var addressablesProvisioner = new AddressablesProvisioner();
+            container.AssetsProvisioner = addressablesProvisioner;
 
             (_, bool result) = await settingsContainer.InitializePlugin(container, ct);
 
@@ -105,7 +106,7 @@ namespace Global
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
                 new TransformsPlugin(sharedDependencies),
-                new MaterialsPlugin(sharedDependencies),
+                new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
                 new PrimitiveCollidersPlugin(sharedDependencies),
                 new TexturesLoadingPlugin(),
                 new PrimitivesRenderingPlugin(sharedDependencies),

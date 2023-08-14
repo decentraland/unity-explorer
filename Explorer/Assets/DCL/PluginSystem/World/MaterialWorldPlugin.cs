@@ -1,5 +1,6 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
@@ -10,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Utility;
 
@@ -20,6 +22,12 @@ namespace DCL.PluginSystem.World
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
+            [Serializable]
+            public class MaterialRef : AssetReferenceT<Material>
+            {
+                public MaterialRef(string guid) : base(guid) { }
+            }
+
             [field: Header(nameof(MaterialsPlugin) + "." + nameof(Settings))]
             [field: Space]
             [field: SerializeField]
@@ -30,12 +38,19 @@ namespace DCL.PluginSystem.World
 
             [field: SerializeField]
             public int PoolMaxSize { get; private set; } = 2048;
+
+            [field: SerializeField]
+            public MaterialRef basicMaterial;
+
+            [field: SerializeField]
+            public MaterialRef pbrMaterial;
         }
 
         // private const int CACHE_CAPACITY = 512;
         // private readonly IMaterialsCache materialsCache;
 
         private readonly IConcurrentBudgetProvider capFrameTimeBudgetProvider;
+        private readonly IAssetsProvisioner assetsProvisioner;
 
         private IObjectPool<Material> basicMatPool;
         private IObjectPool<Material> pbrMatPool;
@@ -44,26 +59,25 @@ namespace DCL.PluginSystem.World
 
         private int loadingAttemptsCount;
 
-        public MaterialsPlugin(ECSWorldSingletonSharedDependencies sharedDependencies)
+        public MaterialsPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IAssetsProvisioner assetsProvisioner)
         {
             capFrameTimeBudgetProvider = sharedDependencies.FrameTimeCapBudgetProvider;
+            this.assetsProvisioner = assetsProvisioner;
 
             // materialsCache = new MaterialsCappedCache(CACHE_CAPACITY, (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); });
         }
 
-        public UniTask Initialize(Settings settings, CancellationToken ct)
+        public async UniTask Initialize(Settings settings, CancellationToken ct)
         {
-            Material basicMatReference = Resources.Load<Material>(CreateBasicMaterialSystem.MATERIAL_PATH);
-            Material pbrMaterialReference = Resources.Load<Material>(CreatePBRMaterialSystem.MATERIAL_PATH);
+            ProvidedAsset<Material> basicMatReference = await assetsProvisioner.ProvideMainAsset(settings.basicMaterial, ct: ct);
+            ProvidedAsset<Material> pbrMaterialReference = await assetsProvisioner.ProvideMainAsset(settings.pbrMaterial, ct: ct);
 
-            basicMatPool = new ObjectPool<Material>(() => new Material(basicMatReference), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
-            pbrMatPool = new ObjectPool<Material>(() => new Material(pbrMaterialReference), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
+            basicMatPool = new ObjectPool<Material>(() => new Material(basicMatReference.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
+            pbrMatPool = new ObjectPool<Material>(() => new Material(pbrMaterialReference.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
 
             destroyMaterial = (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); };
 
             loadingAttemptsCount = settings.LoadingAttemptsCount;
-
-            return UniTask.CompletedTask;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
