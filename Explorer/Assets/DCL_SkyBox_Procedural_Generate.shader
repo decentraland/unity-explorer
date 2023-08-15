@@ -34,7 +34,7 @@ Shader "CustomRenderTexture/SkyBox_Procedural_Generate"
 
             HLSLPROGRAM
                 #pragma multi_compile _CUBEMAP_FACE_RIGHT // shader variant approach to fix Unity Issue: 1621458
-                #pragma target 5.0
+                #pragma target 3.0
                 #pragma vertex sk_vert
                 #pragma fragment sk_frag             
             ENDHLSL
@@ -47,7 +47,7 @@ Shader "CustomRenderTexture/SkyBox_Procedural_Generate"
 
             HLSLPROGRAM
                 #pragma multi_compile _CUBEMAP_FACE_LEFT // shader variant approach to fix Unity Issue: 1621458
-                #pragma target 5.0
+                #pragma target 3.0
                 #pragma vertex sk_vert
                 #pragma fragment sk_frag          
             ENDHLSL
@@ -60,7 +60,7 @@ Shader "CustomRenderTexture/SkyBox_Procedural_Generate"
 
             HLSLPROGRAM
                 #pragma multi_compile _CUBEMAP_FACE_UP // shader variant approach to fix Unity Issue: 1621458
-                #pragma target 5.0
+                #pragma target 3.0
                 #pragma vertex sk_vert
                 #pragma fragment sk_frag
             ENDHLSL
@@ -74,7 +74,7 @@ Shader "CustomRenderTexture/SkyBox_Procedural_Generate"
             HLSLPROGRAM
 
                 #pragma multi_compile _CUBEMAP_FACE_DOWN // shader variant approach to fix Unity Issue: 1621458
-                #pragma target 5.0
+                #pragma target 3.0
                 #pragma vertex sk_vert
                 #pragma fragment sk_frag
             ENDHLSL
@@ -87,7 +87,7 @@ Shader "CustomRenderTexture/SkyBox_Procedural_Generate"
 
             HLSLPROGRAM
                 #pragma multi_compile _CUBEMAP_FACE_FRONT // shader variant approach to fix Unity Issue: 1621458
-                #pragma target 5.0
+                #pragma target 3.0
                 #pragma vertex sk_vert
                 #pragma fragment sk_frag
             ENDHLSL
@@ -100,7 +100,7 @@ Shader "CustomRenderTexture/SkyBox_Procedural_Generate"
 
             HLSLPROGRAM
                 #pragma multi_compile _CUBEMAP_FACE_BACK // shader variant approach to fix Unity Issue: 1621458
-                #pragma target 5.0
+                #pragma target 3.0
                 #pragma vertex sk_vert
                 #pragma fragment sk_frag
             ENDHLSL

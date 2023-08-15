@@ -3,23 +3,26 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using Diagnostics.ReportsHandling;
 
 public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeature
 {
     public class DCL_RenderPass_DrawSkyBox : ScriptableRenderPass
     {
+        // Debug
+        private ReportData m_ReportData = new ReportData("DCL_RenderPass_GenerateSkyBox", ReportHint.SessionStatic);
+
         //public static RTHandle k_CameraTarget
-        const string profilerTag = "Custom Pass: DrawSkyBox";
+        private const string PROFILER_TAG = "Custom Pass: DrawSkyBox";
         private Material m_Material_Draw;
         private ProceduralSkyBoxSettings_Draw m_Settings_Draw;
-        RTHandle m_SkyBoxCubeMap_RTHandle;
-        RTHandle m_cameraColorTarget_RTHandle;
-        RTHandle m_cameraDepthTarget_RTHandle;
-        //private ScriptableRenderer m_Renderer = null;
-        Mesh m_cubeMesh = null;
+        private RTHandle m_SkyBoxCubeMap_RTHandle;
+        private RTHandle m_cameraColorTarget_RTHandle;
+        private RTHandle m_cameraDepthTarget_RTHandle;
+        private Mesh m_cubeMesh = null;
 
-        private const string k_SkyBoxCubemapTextureName = "_SkyBox_Cubemap_Texture";
-        private static readonly int s_SkyBoxCubemapTextureID = Shader.PropertyToID(k_SkyBoxCubemapTextureName);
+        private const string SKYBOX_CUBEMAP_TEXTURE_NAME = "_SkyBox_Cubemap_Texture";
+        private static readonly int s_SkyBoxCubemapTextureID = Shader.PropertyToID(SKYBOX_CUBEMAP_TEXTURE_NAME);
 
         private enum ShaderPasses
         {
@@ -29,7 +32,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
 
         internal DCL_RenderPass_DrawSkyBox()
         {
-
+            MakeCube();
         }
 
         internal void Setup(ProceduralSkyBoxSettings_Draw _featureSettings, Material _material, RTHandle _cameraColorTarget, RTHandle _cameraDepthTarget, RTHandle _SkyBox_Cubemap_Texture)
@@ -54,7 +57,6 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
         {
             ConfigureClear(ClearFlag.None, Color.white);
-            MakeCube();
         }
 
         // Here you can implement the rendering logic.
@@ -65,16 +67,17 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         {
             if (this.m_Material_Draw == null)
             {
-                Debug.LogErrorFormat("{0}.Execute(): Missing material. DCL_RenderPass_DrawSkyBox pass will not execute. Check for missing reference in the renderer resources.", GetType().Name);
+                ReportHub.LogError(this.m_ReportData, $"{GetType().Name}.Execute(): Missing material. DCL_RenderPass_DrawSkyBox pass will not execute. Check for missing reference in the renderer resources.");
                 return;
             }
 
             CommandBuffer cmd = CommandBufferPool.Get();
-            using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
+            using (new ProfilingScope(cmd, new ProfilingSampler(PROFILER_TAG)))
             {
                 CoreUtils.SetRenderTarget(cmd, this.m_cameraColorTarget_RTHandle, this.m_cameraDepthTarget_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.Unknown, depthSlice: -1);
                 cmd.SetGlobalTexture(s_SkyBoxCubemapTextureID, this.m_SkyBoxCubeMap_RTHandle);
-                cmd.DrawMesh(m_cubeMesh, Matrix4x4.identity, m_Material_Draw, submeshIndex: 0, shaderPass: 0, properties: null);
+                //cmd.DrawMesh(m_cubeMesh, Matrix4x4.identity, m_Material_Draw, submeshIndex: 0, (int)ShaderPasses.Scenery, properties: null);
+                cmd.DrawMesh(m_cubeMesh, Matrix4x4.identity, m_Material_Draw, submeshIndex: 0, (int)ShaderPasses.Sky, properties: null);
             }
 
             context.ExecuteCommandBuffer(cmd);

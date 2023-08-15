@@ -42,7 +42,7 @@ Shader "Skybox/DCL_SkyBox_Procedural_Draw"
         {
             Name "SkyBox_Procedural_Draw_SkyBox"
 
-            ZTest Less
+            ZTest LEqual
             ZWrite Off
             Cull Off
 
