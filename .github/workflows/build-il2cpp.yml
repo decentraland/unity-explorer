@@ -15,7 +15,7 @@ jobs:
       matrix:
         include:
           - targetPlatform: StandaloneWindows64
-            dockerImage: windows-latest
+            dockerImage: windows-2019
           - targetPlatform: StandaloneOSX
             dockerImage: macos-latest-xl
 
