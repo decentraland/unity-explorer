@@ -2,7 +2,7 @@
 #define DCL_SKYBOX_VERTEX_INCLUDED
 
 // Includes
-#include "Assets/DCL_SkyBox_Data.hlsl"
+#include "Assets/DCL/Rendering/SkyBox/DCL_SkyBox_Data.hlsl"
 
 // Due to an issue on AMD GPUs this doesn't work as expected so instead we moved to
 // a shader variant system. If fixed or work around from Unity is created then

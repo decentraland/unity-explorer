@@ -14,8 +14,8 @@ Shader "CustomRenderTexture/SkyBox_Procedural_Generate"
 
     HLSLINCLUDE
         #pragma editor_sync_compilation
-        #include "Assets/DCL_SkyBox_Vertex.hlsl"
-        #include "Assets/DCL_SkyBox_Fragment.hlsl"
+        #include "Assets/DCL/Rendering/SkyBox/DCL_SkyBox_Vertex.hlsl"
+        #include "Assets/DCL/Rendering/SkyBox/DCL_SkyBox_Fragment.hlsl"
     ENDHLSL
 
     SubShader

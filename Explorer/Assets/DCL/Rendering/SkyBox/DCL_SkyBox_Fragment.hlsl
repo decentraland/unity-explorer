@@ -2,7 +2,7 @@
 #define DCL_SKYBOX_FRAGMENT_INCLUDED
 
 // Includes
-#include "Assets/DCL_SkyBox_Data.hlsl"
+#include "Assets/DCL/Rendering/SkyBox/DCL_SkyBox_Data.hlsl"
 #include "UnityLightingCommon.cginc"
 
 #if defined(UNITY_COLORSPACE_GAMMA)

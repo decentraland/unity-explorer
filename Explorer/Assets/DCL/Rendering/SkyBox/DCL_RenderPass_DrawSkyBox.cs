@@ -77,7 +77,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
                 CoreUtils.SetRenderTarget(cmd, this.m_cameraColorTarget_RTHandle, this.m_cameraDepthTarget_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.Unknown, depthSlice: -1);
                 cmd.SetGlobalTexture(s_SkyBoxCubemapTextureID, this.m_SkyBoxCubeMap_RTHandle);
                 //cmd.DrawMesh(m_cubeMesh, Matrix4x4.identity, m_Material_Draw, submeshIndex: 0, (int)ShaderPasses.Scenery, properties: null);
-                cmd.DrawMesh(m_cubeMesh, Matrix4x4.identity, m_Material_Draw, submeshIndex: 0, (int)ShaderPasses.Sky, properties: null);
+                cmd.DrawMesh(GetCube(), Matrix4x4.identity, m_Material_Draw, submeshIndex: 0, (int)ShaderPasses.Sky, properties: null);
             }
 
             context.ExecuteCommandBuffer(cmd);
@@ -93,6 +93,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         public void dispose()
         {
             this.m_SkyBoxCubeMap_RTHandle?.Release();
+            this.m_cubeMesh = null;
         }
 
         private Vector3[] GetVertices()
@@ -103,7 +104,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             Vector3 vertice_0 = new Vector3 (-cubeLength * .5f, -cubeWidth * .5f, cubeHeight * .5f);
             Vector3 vertice_1 = new Vector3 (cubeLength * .5f, -cubeWidth * .5f, cubeHeight * .5f);
             Vector3 vertice_2 = new Vector3 (cubeLength * .5f, -cubeWidth * .5f, -cubeHeight * .5f);
-            Vector3 vertice_3 = new Vector3 (-cubeLength * .5f, -cubeWidth * .5f, -cubeHeight * .5f);    
+            Vector3 vertice_3 = new Vector3 (-cubeLength * .5f, -cubeWidth * .5f, -cubeHeight * .5f);
             Vector3 vertice_4 = new Vector3 (-cubeLength * .5f, cubeWidth * .5f, cubeHeight * .5f);
             Vector3 vertice_5 = new Vector3 (cubeLength * .5f, cubeWidth * .5f, cubeHeight * .5f);
             Vector3 vertice_6 = new Vector3 (cubeLength * .5f, cubeWidth * .5f, -cubeHeight * .5f);
@@ -123,7 +124,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             // Top Polygon
             vertice_7, vertice_6, vertice_5, vertice_4
             };
-            
+
             return vertices;
         }
 
@@ -135,24 +136,24 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             Vector3 back = Vector3.back;
             Vector3 left = Vector3.left;
             Vector3 right = Vector3.right;
-        
+
             Vector3[] normales = new Vector3[]
             {
                 // Bottom Side Render
                 down, down, down, down,
-                
+
                 // LEFT Side Render
                 left, left, left, left,
-                
+
                 // FRONT Side Render
                 front, front, front, front,
-                
+
                 // BACK Side Render
                 back, back, back, back,
-                
+
                 // RIGTH Side Render
                 right, right, right, right,
-                
+
                 // UP Side Render
                 up, up, up, up
             };
@@ -191,7 +192,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             {
                 // Cube Bottom Side Triangles
                 3, 1, 0,
-                3, 2, 1,    
+                3, 2, 1,
                 // Cube Left Side Triangles
                 3 + 4 * 1, 1 + 4 * 1, 0 + 4 * 1,
                 3 + 4 * 1, 2 + 4 * 1, 1 + 4 * 1,
@@ -225,6 +226,12 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
                 this.m_cubeMesh.RecalculateNormals();
                 this.m_cubeMesh.Optimize();
             }
+        }
+
+        private Mesh GetCube()
+        {
+            MakeCube();
+            return this.m_cubeMesh;
         }
     }
 }

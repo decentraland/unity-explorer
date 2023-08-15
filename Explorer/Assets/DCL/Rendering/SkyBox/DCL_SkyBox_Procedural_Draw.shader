@@ -2,7 +2,7 @@ Shader "Skybox/DCL_SkyBox_Procedural_Draw"
 {
     HLSLINCLUDE
         #pragma editor_sync_compilation
-        #include "Assets/DCL_SkyBox_Procedural_Draw.hlsl"
+        #include "Assets/DCL/Rendering/SkyBox/DCL_SkyBox_Procedural_Draw.hlsl"
     ENDHLSL
 
     Properties
