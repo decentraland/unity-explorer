@@ -15,7 +15,7 @@ jobs:
       matrix:
         include:
           - targetPlatform: StandaloneWindows64
-            dockerImage: windows-2019
+            dockerImage: windows-latest
           - targetPlatform: StandaloneOSX
             dockerImage: macos-latest-xl
 
@@ -54,6 +54,7 @@ jobs:
       # Configure test runner
       - uses: kuruk-mm/unity-builder@0.5
         id: build
+        timeout-minutes: 120
         env:
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
