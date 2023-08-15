@@ -2,7 +2,6 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using ECS.Abstract;
-using UnityEngine;
 
 namespace ECS.Profiling.Systems
 {
@@ -14,10 +13,10 @@ namespace ECS.Profiling.Systems
 
         private float lastTimeSinceMetricsUpdate;
 
-        public ProfilingSystem(World world, IProfilingProvider profilingProvider) : base(world)
+        internal ProfilingSystem(World world, IProfilingProvider profilingProvider, ProfilingView profilingView) : base(world)
         {
             this.profilingProvider = profilingProvider;
-            profilerView = Object.Instantiate(Resources.Load<ProfilingView>("ProfilerView"));
+            this.profilerView = profilingView;
         }
 
         protected override void Update(float t)
