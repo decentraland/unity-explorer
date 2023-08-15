@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using Cysharp.Threading.Tasks;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -11,11 +10,9 @@ using ECS.Unity.Materials.Systems;
 using ECS.Unity.Textures.Components;
 using NSubstitute;
 using NUnit.Framework;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
-using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace ECS.Unity.Materials.Tests
 {
@@ -24,11 +21,9 @@ namespace ECS.Unity.Materials.Tests
         private Material pbrMat;
 
         [SetUp]
-        public async Task SetUp()
+        public void SetUp()
         {
-            AsyncOperationHandle<Material> loadMaterialTask = Addressables.LoadAssetAsync<Material>("ShapeMaterial");
-            await loadMaterialTask.Task;
-            pbrMat = loadMaterialTask.Result;
+            pbrMat = Addressables.LoadAssetAsync<Material>("ShapeMaterial").WaitForCompletion();
 
             IObjectPool<Material> pool = Substitute.For<IObjectPool<Material>>();
             pool.Get().Returns(_ => new Material(pbrMat));
@@ -41,11 +36,8 @@ namespace ECS.Unity.Materials.Tests
         }
 
         [Test]
-        public async Task ConstructMaterial()
+        public void ConstructMaterial()
         {
-            // For some reason SetUp is not awaited, probably a Unity's bug
-            await UniTask.WaitUntil(() => system != null);
-
             MaterialComponent component = CreateMaterialComponent();
 
             component.Status = MaterialComponent.LifeCycle.LoadingInProgress;
@@ -67,11 +59,8 @@ namespace ECS.Unity.Materials.Tests
         }
 
         [Test]
-        public async Task NotConstructMaterialIfTexturesLoadingNotFinished()
+        public void NotConstructMaterialIfTexturesLoadingNotFinished()
         {
-            // For some reason SetUp is not awaited, probably a Unity's bug
-            await UniTask.WaitUntil(() => system != null);
-
             MaterialComponent component = CreateMaterialComponent();
 
             component.Status = MaterialComponent.LifeCycle.LoadingInProgress;
