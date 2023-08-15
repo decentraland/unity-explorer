@@ -19,7 +19,8 @@
     "Unity.Mathematics",
     "CRDT",
     "CharacterCamera",
-    "CharacterMotion"
+    "CharacterMotion",
+    "AssetsProvision"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

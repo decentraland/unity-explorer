@@ -16,10 +16,6 @@ namespace ECS.Unity.Materials.Systems
     [UpdateAfter(typeof(StartMaterialsLoadingSystem))]
     public partial class CreatePBRMaterialSystem : CreateMaterialSystemBase
     {
-        /// <summary>
-        ///     The path from the shared package
-        /// </summary>
-        public const string MATERIAL_PATH = "ShapeMaterial";
         private readonly IConcurrentBudgetProvider capFrameBudgetProvider;
 
         internal CreatePBRMaterialSystem(World world, IObjectPool<Material> materialsPool,

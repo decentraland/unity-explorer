@@ -48,6 +48,10 @@ namespace CrdtEcsBridge.UpdateGate
 
         public void Open()
         {
+            // Already disposed
+            if (openGroups == null)
+                return;
+
             // Synchronization is required as Open is called from the scene thread
             lock (openGroups)
             {
