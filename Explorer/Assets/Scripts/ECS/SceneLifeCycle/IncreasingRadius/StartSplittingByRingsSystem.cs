@@ -5,8 +5,8 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
-using ECS.Prioritization.Systems;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.Systems;
 using Utility;
 
 namespace ECS.SceneLifeCycle.IncreasingRadius

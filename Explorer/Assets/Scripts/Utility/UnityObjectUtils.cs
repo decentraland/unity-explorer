@@ -4,19 +4,21 @@ namespace Utility
 {
     public static class UnityObjectUtils
     {
+        private static bool isQuitting;
+
         [RuntimeInitializeOnLoadMethod]
         private static void StartTrackingApplicationStatus()
         {
             void SetQuitting()
             {
-                IsQuitting = true;
+                isQuitting = true;
                 Application.quitting -= SetQuitting;
             }
 
             Application.quitting += SetQuitting;
         }
 
-        public static bool IsQuitting { get; private set; }
+        public static bool IsQuitting => Application.isPlaying && isQuitting;
 
         /// <summary>
         ///     Tries to destroy Game Object based on the current state of the Application

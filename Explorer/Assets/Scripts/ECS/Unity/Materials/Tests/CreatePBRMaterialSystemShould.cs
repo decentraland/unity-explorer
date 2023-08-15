@@ -2,6 +2,7 @@
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using ECS.Unity.Materials.Components;
@@ -25,7 +26,10 @@ namespace ECS.Unity.Materials.Tests
             IObjectPool<Material> pool = Substitute.For<IObjectPool<Material>>();
             pool.Get().Returns(_ => new Material(pbrMat));
 
-            system = new CreatePBRMaterialSystem(world, pool);
+            IConcurrentBudgetProvider frameTimeBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+            frameTimeBudgetProvider.TrySpendBudget().Returns(true);
+
+            system = new CreatePBRMaterialSystem(world, pool, frameTimeBudgetProvider);
             system.Initialize();
         }
 

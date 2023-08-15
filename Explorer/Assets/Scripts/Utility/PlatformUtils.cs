@@ -9,9 +9,9 @@ public static class PlatformUtils
     {
         if (platformSuffix == null)
         {
-            if (Application.isEditor || Application.platform == RuntimePlatform.WindowsPlayer)
+            if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.WindowsPlayer)
                 platformSuffix = "_windows";
-            else if (Application.platform == RuntimePlatform.OSXPlayer)
+            else if (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)
                 platformSuffix = "_mac";
             else if (Application.platform == RuntimePlatform.LinuxPlayer)
                 platformSuffix = "_linux";

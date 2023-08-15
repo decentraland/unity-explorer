@@ -2,7 +2,6 @@ using Diagnostics;
 using Ipfs;
 using JetBrains.Annotations;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 
@@ -10,52 +9,25 @@ namespace SceneRunner.Scene
 {
     public class SceneData : ISceneData
     {
-        private readonly Dictionary<string, string> fileToHash;
-
-        private readonly IIpfsRealm ipfsRealm;
-
+        private readonly ISceneContent sceneContent;
         private readonly IpfsTypes.SceneEntityDefinition sceneDefinition;
 
-        private readonly string customContentBaseUrl;
-
-        private readonly bool supportHashes;
-
-        private readonly Dictionary<string, (bool success, string url)> resolvedContentURLs;
-
-        private string GetContentBaseUrl() =>
-            customContentBaseUrl ?? ipfsRealm.ContentBaseUrl;
-
         public SceneData(
-            IIpfsRealm ipfsRealm,
+            ISceneContent sceneContent,
             IpfsTypes.SceneEntityDefinition sceneDefinition,
-            bool supportHashes,
             [NotNull] SceneAssetBundleManifest assetBundleManifest,
             Vector2Int baseParcel,
-            string customContentBaseUrl = null)
+            StaticSceneMessages staticSceneMessages)
         {
-            this.ipfsRealm = ipfsRealm;
+            this.sceneContent = sceneContent;
             this.sceneDefinition = sceneDefinition;
-            this.supportHashes = supportHashes;
-            this.customContentBaseUrl = customContentBaseUrl;
             AssetBundleManifest = assetBundleManifest;
-
-            if (!supportHashes)
-            {
-                resolvedContentURLs = new Dictionary<string, (bool success, string url)>(StringComparer.OrdinalIgnoreCase);
-                SceneShortInfo = new SceneShortInfo(Vector2Int.zero, sceneDefinition.id);
-                return;
-            }
-
-            fileToHash = new Dictionary<string, string>(sceneDefinition.content.Count, StringComparer.OrdinalIgnoreCase);
-
-            foreach (IpfsTypes.ContentDefinition contentDefinition in sceneDefinition.content) fileToHash[contentDefinition.file] = contentDefinition.hash;
-
+            StaticSceneMessages = staticSceneMessages;
             SceneShortInfo = new SceneShortInfo(baseParcel, sceneDefinition.id);
             BasePosition = ParcelMathHelper.GetPositionByParcelPosition(SceneShortInfo.BaseParcel);
-
-            resolvedContentURLs = new Dictionary<string, (bool success, string url)>(fileToHash.Count, StringComparer.OrdinalIgnoreCase);
         }
 
+        public StaticSceneMessages StaticSceneMessages { get; }
         public SceneShortInfo SceneShortInfo { get; }
         public Vector3 BasePosition { get; }
         public SceneAssetBundleManifest AssetBundleManifest { get; }
@@ -77,43 +49,11 @@ namespace SceneRunner.Scene
         public bool TryGetMainScriptUrl(out string result) =>
             TryGetContentUrl(sceneDefinition.metadata.main, out result);
 
-        public bool TryGetContentUrl(string url, out string result)
-        {
-            if (resolvedContentURLs.TryGetValue(url, out (bool success, string url) cachedResult))
-            {
-                result = cachedResult.url;
-                return cachedResult.success;
-            }
+        public bool TryGetContentUrl(string url, out string result) =>
+            sceneContent.TryGetContentUrl(url, out result);
 
-            if (supportHashes)
-            {
-                if (fileToHash.TryGetValue(url, out string hash))
-                {
-                    result = GetContentBaseUrl() + hash;
-                    resolvedContentURLs[url] = (true, result);
-                    return true;
-                }
-
-                Debug.LogError($"{nameof(SceneData)}: {url} not found in {nameof(fileToHash)}");
-
-                result = string.Empty;
-                resolvedContentURLs[url] = (false, result);
-                return false;
-            }
-
-            result = ipfsRealm.ContentBaseUrl + url;
-            resolvedContentURLs[url] = (true, result);
-            return true;
-        }
-
-        public bool TryGetHash(string name, out string hash)
-        {
-            if (supportHashes)
-                return fileToHash.TryGetValue(name, out hash);
-
-            hash = name;
-            return true;
-        }
+        public bool TryGetHash(string name, out string hash) =>
+            sceneContent.TryGetHash(name, out hash);
 
         public bool TryGetMediaUrl(string url, out string result)
         {

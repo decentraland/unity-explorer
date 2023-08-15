@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.Transforms.Components;
@@ -19,10 +20,12 @@ namespace ECS.Unity.GLTFContainer.Systems
     public partial class FinalizeGltfContainerLoadingSystem : BaseUnityLoopSystem
     {
         private readonly Entity sceneRoot;
+        private readonly IConcurrentBudgetProvider capBudget;
 
-        public FinalizeGltfContainerLoadingSystem(World world, Entity sceneRoot) : base(world)
+        public FinalizeGltfContainerLoadingSystem(World world, Entity sceneRoot, IConcurrentBudgetProvider capBudget) : base(world)
         {
             this.sceneRoot = sceneRoot;
+            this.capBudget = capBudget;
         }
 
         protected override void Update(float t)
@@ -49,6 +52,9 @@ namespace ECS.Unity.GLTFContainer.Systems
         [All(typeof(PBGltfContainer))]
         private void FinalizeLoading(ref GltfContainerComponent component, ref TransformComponent transformComponent)
         {
+            if (!capBudget.TrySpendBudget())
+                return;
+
             // Try consume removes the entity if the loading is finished
             if (component.State.Value == LoadingState.Loading
                 && component.Promise.TryConsume(World, out StreamableLoadingResult<GltfContainerAsset> result))

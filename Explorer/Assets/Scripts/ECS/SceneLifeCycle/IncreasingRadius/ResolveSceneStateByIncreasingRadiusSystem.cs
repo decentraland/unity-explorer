@@ -131,7 +131,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 }
             }
 
-            orderedData.Sort(static (p1, p2) => p1.PartitionComponent.CompareTo(p2.PartitionComponent));
+            // Raw Distance will give more stable results in terms of scenes loading order, especially in cases
+            // when a wide range falls into the same bucket
+            orderedData.Sort(static (p1, p2) => DistanceBasedComparer.INSTANCE.Compare(p1.PartitionComponent, p2.PartitionComponent));
 
             IIpfsRealm ipfsRealm = realmComponent.Ipfs;
 

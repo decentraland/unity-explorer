@@ -13,6 +13,7 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Utility;
 
 namespace ECS.SceneLifeCycle.Tests
 {
@@ -43,7 +44,7 @@ namespace ECS.SceneLifeCycle.Tests
             {
                 world.Create(new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition(),
                     new Vector2Int[] { new (0, 0), new (0, 1), new (1, 0), new (2, 0), new (2, 1), new (3, 0), new (3, 1) },
-                    new IpfsTypes.IpfsPath()), new PartitionComponent { Bucket = (byte)i });
+                    new IpfsTypes.IpfsPath()), new PartitionComponent { Bucket = (byte)i, RawSqrDistance = ParcelMathHelper.SQR_PARCEL_SIZE * i });
             }
 
             system.Update(0f);

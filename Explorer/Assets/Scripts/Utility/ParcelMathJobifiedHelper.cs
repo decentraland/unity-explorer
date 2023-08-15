@@ -22,6 +22,8 @@ namespace Utility
 
         public bool JobStarted { get; private set; }
 
+        public ref readonly NativeArray<ParcelInfo> LastSplit => ref rings;
+
         private void EnsureRingsArraySize(int maxRadius)
         {
             if (rings.Length != maxRadius)
@@ -68,7 +70,10 @@ namespace Utility
                 ? rings.Slice(0, 1)
                 : rings.Slice((4 * (radius - 1) * radius) + 1, 8 * radius);
 
-        public void Clear()
+        /// <summary>
+        ///     Graceful complete if the job started
+        /// </summary>
+        public void Complete()
         {
             if (JobStarted)
                 jobHandle.Complete();

@@ -13,6 +13,6 @@ module.exports.sendBatch = async function() {
 module.exports.crdtGetState = async function() {
     const data = new Uint8Array(UnityEngineApi.CrdtGetState())
     return {
-        data
+        data: [data]
     };
 }

@@ -1,4 +1,4 @@
-﻿using CrdtEcsBridge.Components.Special;
+﻿using DCL.CharacterCamera;
 using ECS.Prioritization.Components;
 using System.Collections.Generic;
 using UnityEngine;

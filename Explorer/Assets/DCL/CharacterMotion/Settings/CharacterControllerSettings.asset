@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 355a79a57f074a269424516ca6de7156, type: 3}
+  m_Name: CharacterControllerSettings
+  m_EditorClassIdentifier: 
+  <WalkSpeed>k__BackingField: 3.6
+  <RunSpeed>k__BackingField: 7
+  <GroundAcceleration>k__BackingField: 40
+  <AirAcceleration>k__BackingField: 10
+  <RotationAngularSpeed>k__BackingField: 10
+  <Gravity>k__BackingField: -9.8
+  <JumpHeight>k__BackingField: {x: 1.5, y: 2}
+  <AirDrag>k__BackingField: 0
+  <HoldJumpTime>k__BackingField: 0.5

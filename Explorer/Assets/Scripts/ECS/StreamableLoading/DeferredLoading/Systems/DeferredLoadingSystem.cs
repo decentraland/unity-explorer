@@ -1,5 +1,6 @@
 using Arch.Core;
 using ECS.Abstract;
+using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
@@ -64,7 +65,7 @@ namespace ECS.StreamableLoading.DeferredLoading
 
             if (loadingIntentions.Count == 0) return;
 
-            loadingIntentions.Sort(static (p1, p2) => p1.PartitionComponent.CompareTo(p2.PartitionComponent));
+            loadingIntentions.Sort(static (p1, p2) => BucketBasedComparer.INSTANCE.Compare(p1.PartitionComponent, p2.PartitionComponent));
             AnalyzeBudget();
         }
 

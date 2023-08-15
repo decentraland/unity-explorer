@@ -74,8 +74,6 @@ namespace Global.Dynamic
             Entity realmEntity = world.Create(realmComp,
                 new ParcelsInRange(new HashSet<int2>(100), sceneLoadRadius), ProcessesScenePointers.Create());
 
-            ComplimentWithStaticPointers(world, realmEntity);
-
             if (!ComplimentWithStaticPointers(world, realmEntity) && !realmComp.ScenesAreFixed)
                 ComplimentWithVolatilePointers(world, realmEntity);
 

@@ -1,0 +1,19 @@
+{
+    "name": "DCL.Input",
+    "rootNamespace": "",
+    "references": [
+        "GUID:75469ad4d38634e559750d17036d5f7c",
+        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+        "GUID:101b8b6ebaf64668909b49c4b7a1420d",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ECS.Prioritization.Components
+﻿namespace ECS.Prioritization.Components
 {
     /// <summary>
     ///     A read-only way to transfer and sync partition data between scenes and promises.
@@ -9,7 +7,7 @@ namespace ECS.Prioritization.Components
     ///         Using the interface means that the value is inherited from the upstream system
     ///     </para>
     /// </summary>
-    public interface IPartitionComponent : IComparable<IPartitionComponent>
+    public interface IPartitionComponent
     {
         /// <summary>
         ///     Each entity falls into one of the buckets within the predefined range of values.

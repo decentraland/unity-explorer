@@ -2,6 +2,7 @@
 using Diagnostics.ReportsHandling;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.TestSuite;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Asset.Systems;
@@ -16,15 +17,14 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
     [TestFixture]
     public class CreateGltfAssetFromAssetBundleSystemShould : UnitySystemTestBase<CreateGltfAssetFromAssetBundleSystem>
     {
-        private IGltfContainerInstantiationThrottler throttler;
-
         private readonly GltfContainerTestResources resources = new ();
 
         [SetUp]
         public void SetUp()
         {
-            system = new CreateGltfAssetFromAssetBundleSystem(world, throttler = Substitute.For<IGltfContainerInstantiationThrottler>());
-            throttler.Acquire(Arg.Any<int>()).Returns(true);
+            IConcurrentBudgetProvider budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+            budgetProvider.TrySpendBudget().Returns(true);
+            system = new CreateGltfAssetFromAssetBundleSystem(world, budgetProvider);
         }
 
         [TearDown]
@@ -82,31 +82,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         }
 
         [Test]
-        public async Task SkipIfThrottled()
-        {
-            throttler.Acquire(Arg.Any<int>()).Returns(false);
-
-            StreamableLoadingResult<AssetBundleData> ab = await resources.LoadAssetBundle(GltfContainerTestResources.SIMPLE_RENDERER);
-
-            Entity e = world.Create(new GetGltfContainerAssetIntention(GltfContainerTestResources.SIMPLE_RENDERER, new CancellationTokenSource()), ab);
-
-            system.Update(0);
-
-            Assert.That(world.TryGet(e, out StreamableLoadingResult<GltfContainerAsset> result), Is.False);
-        }
-
-        [Test]
-        public void ResetThrottler()
-        {
-            system.BeforeUpdate(0);
-            throttler.Received().Reset();
-        }
-
-        [Test]
         public async Task DoNothingIfCancelled()
         {
-            throttler.Acquire(Arg.Any<int>()).Returns(false);
-
             StreamableLoadingResult<AssetBundleData> ab = await resources.LoadAssetBundle(GltfContainerTestResources.SIMPLE_RENDERER);
 
             var canceledSource = new CancellationTokenSource();

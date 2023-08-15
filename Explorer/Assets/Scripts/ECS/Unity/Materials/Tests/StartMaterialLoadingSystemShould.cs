@@ -3,6 +3,7 @@ using Decentraland.Common;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using ECS.Unity.Materials.Components;
@@ -36,9 +37,12 @@ namespace ECS.Unity.Materials.Tests
         [SetUp]
         public void SetUp()
         {
+            IConcurrentBudgetProvider concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+            concurrentBudgetProvider.TrySpendBudget().Returns(true);
+
             system = new StartMaterialsLoadingSystem(world,
                 destroyMaterial = Substitute.For<DestroyMaterial>(),
-                sceneData = Substitute.For<ISceneData>(), ATTEMPTS_COUNT);
+                sceneData = Substitute.For<ISceneData>(), ATTEMPTS_COUNT, concurrentBudgetProvider);
 
             sceneData.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<string>())
                      .Returns(c =>

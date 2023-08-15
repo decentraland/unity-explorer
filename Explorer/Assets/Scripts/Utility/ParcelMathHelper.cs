@@ -25,6 +25,8 @@ namespace Utility
 
         public const float PARCEL_SIZE = 16.0f;
 
+        public const float SQR_PARCEL_SIZE = PARCEL_SIZE * PARCEL_SIZE;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2 ToInt2(this Vector2Int vector2Int) =>
             new (vector2Int.x, vector2Int.y);

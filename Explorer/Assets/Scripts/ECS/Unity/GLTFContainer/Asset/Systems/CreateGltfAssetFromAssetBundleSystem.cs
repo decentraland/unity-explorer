@@ -6,6 +6,7 @@ using ECS.Abstract;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
 using System.Collections.Generic;
@@ -23,19 +24,10 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     [LogCategory(ReportCategory.GLTF_CONTAINER)]
     public partial class CreateGltfAssetFromAssetBundleSystem : BaseUnityLoopSystem
     {
-        /// <summary>
-        ///     TODO Temporary throttler to increase performance before we introduce the proper prioritisation mechanism
-        /// </summary>
-        private readonly IGltfContainerInstantiationThrottler instantiationThrottler;
-
-        internal CreateGltfAssetFromAssetBundleSystem(World world, IGltfContainerInstantiationThrottler throttler) : base(world)
+        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
+        internal CreateGltfAssetFromAssetBundleSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider) : base(world)
         {
-            instantiationThrottler = throttler;
-        }
-
-        public override void BeforeUpdate(in float t)
-        {
-            instantiationThrottler.Reset();
+            this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
         }
 
         protected override void Update(float t)
@@ -50,6 +42,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         [None(typeof(StreamableLoadingResult<GltfContainerAsset>))]
         private void ConvertFromAssetBundle(in Entity entity, ref GetGltfContainerAssetIntention assetIntention, ref StreamableLoadingResult<AssetBundleData> assetBundleResult)
         {
+            if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
+                return;
+
             if (assetIntention.CancellationTokenSource.IsCancellationRequested)
 
                 // Don't care anymore, the entity will be deleted in the system that created this promise
@@ -64,17 +59,12 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             AssetBundleData assetBundleData = assetBundleResult.Asset;
 
-            // if asset bundle has no game objects we can't process it further but the promise should be resolved
-            if (assetBundleData.GameObjectNodes.Count == 0)
+            // if asset bundle has no game object we can't process it further but the promise should be resolved
+            if (assetBundleData.GameObject == null)
             {
                 World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(CreateException(new MissingGltfAssetsException(assetBundleData.AssetBundle.name))));
                 return;
             }
-
-            if (!instantiationThrottler.Acquire(assetBundleData.GameObjectNodes.Count))
-
-                // delay to the next frame, it will be grabbed by this system again
-                return;
 
             // Create a new container root
             // It will be cached and pooled
@@ -87,37 +77,33 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             var result = GltfContainerAsset.Create(container);
 
-            for (var i = 0; i < assetBundleData.GameObjectNodes.Count; i++)
+            GameObject instance = Object.Instantiate(assetBundleData.GameObject, containerTransform);
+
+            // Collect all renderers, they are needed for Visibility system
+            using (PoolExtensions.Scope<List<Renderer>> instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())
             {
-                GameObject go = assetBundleData.GameObjectNodes[i];
-                GameObject instance = Object.Instantiate(go, containerTransform);
+                instance.GetComponentsInChildren(true, instanceRenderers.Value);
+                result.Renderers.AddRange(instanceRenderers.Value);
+            }
 
-                // Collect all renderers, they are needed for Visibility system
-                using (PoolExtensions.Scope<List<Renderer>> instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())
-                {
-                    instance.GetComponentsInChildren(true, instanceRenderers.Value);
-                    result.Renderers.AddRange(instanceRenderers.Value);
-                }
+            // Collect colliders and mesh filters
+            // Colliders are created/fetched disabled as its layer is controlled by another system
 
-                // Collect colliders and mesh filters
-                // Colliders are created/fetched disabled as its layer is controlled by another system
+            using PoolExtensions.Scope<List<MeshFilter>> meshFilterScope = GltfContainerAsset.MESH_FILTERS_POOL.AutoScope();
 
-                using PoolExtensions.Scope<List<MeshFilter>> meshFilterScope = GltfContainerAsset.MESH_FILTERS_POOL.AutoScope();
+            List<MeshFilter> list = meshFilterScope.Value;
+            instance.GetComponentsInChildren(true, list);
 
-                List<MeshFilter> list = meshFilterScope.Value;
-                instance.GetComponentsInChildren(true, list);
+            for (var j = 0; j < list.Count; j++)
+            {
+                MeshFilter meshFilter = list[j];
 
-                for (var j = 0; j < list.Count; j++)
-                {
-                    MeshFilter meshFilter = list[j];
+                GameObject meshFilterGameObject = meshFilter.gameObject;
 
-                    GameObject meshFilterGameObject = meshFilter.gameObject;
+                // gather invisible colliders
+                CreateInvisibleColliders(result.InvisibleColliders, meshFilterGameObject, meshFilter);
 
-                    // gather invisible colliders
-                    CreateInvisibleColliders(result.InvisibleColliders, meshFilterGameObject, meshFilter);
-
-                    FilterVisibleColliderCandidate(result.VisibleColliderMeshes, meshFilter);
-                }
+                FilterVisibleColliderCandidate(result.VisibleColliderMeshes, meshFilter);
             }
 
             World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));

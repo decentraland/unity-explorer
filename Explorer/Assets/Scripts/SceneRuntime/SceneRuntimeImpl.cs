@@ -6,7 +6,9 @@ using Microsoft.ClearScript.V8;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis;
 using SceneRuntime.Apis.Modules;
+using System;
 using System.Collections.Generic;
+using UnityEngine.Assertions;
 
 namespace SceneRuntime
 {
@@ -82,6 +84,14 @@ namespace SceneRuntime
             resetableSource.Reset();
             updateFunc.InvokeAsFunction(dt);
             return resetableSource.Task;
+        }
+
+        public void ApplyStaticMessages(ReadOnlyMemory<byte> data)
+        {
+            var result = engineApi.api.CrdtSendToRenderer(data);
+
+            // Initial messages are not expected to return anything
+            Assert.IsTrue(result.Count == 0);
         }
 
         public void Dispose()

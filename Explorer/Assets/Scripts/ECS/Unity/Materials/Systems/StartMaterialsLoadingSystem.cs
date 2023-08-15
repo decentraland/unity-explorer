@@ -6,6 +6,7 @@ using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Components.Defaults;
@@ -27,12 +28,14 @@ namespace ECS.Unity.Materials.Systems
         private readonly DestroyMaterial destroyMaterial;
         private readonly ISceneData sceneData;
         private readonly int attemptsCount;
+        private IConcurrentBudgetProvider capFrameTimeBudgetProvider;
 
-        public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData, int attemptsCount) : base(world)
+        public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData, int attemptsCount, IConcurrentBudgetProvider capFrameTimeBudgetProvider) : base(world)
         {
             this.destroyMaterial = destroyMaterial;
             this.sceneData = sceneData;
             this.attemptsCount = attemptsCount;
+            this.capFrameTimeBudgetProvider = capFrameTimeBudgetProvider;
         }
 
         protected override void Update(float t)
@@ -71,6 +74,9 @@ namespace ECS.Unity.Materials.Systems
         [None(typeof(MaterialComponent))]
         private void CreateMaterialComponent(in Entity entity, ref PBMaterial material, ref PartitionComponent partitionComponent)
         {
+            if (!capFrameTimeBudgetProvider.TrySpendBudget())
+                return;
+
             var materialComponent = new MaterialComponent(CreateMaterialData(ref material));
             CreateGetTexturePromises(ref materialComponent, ref partitionComponent);
             materialComponent.Status = MaterialComponent.LifeCycle.LoadingInProgress;

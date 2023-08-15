@@ -12,6 +12,8 @@ namespace SceneRuntime
 
         UniTask UpdateScene(float dt);
 
+        void ApplyStaticMessages(ReadOnlyMemory<byte> data);
+
         void SetIsDisposing();
     }
 }

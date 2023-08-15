@@ -10,7 +10,8 @@
     "SceneRunner.Scene",
     "Unity.Collections",
     "Diagnostics",
-    "Prioritization"
+    "Prioritization",
+    "Profiling"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

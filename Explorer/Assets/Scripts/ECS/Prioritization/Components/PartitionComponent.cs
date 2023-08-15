@@ -36,14 +36,6 @@ namespace ECS.Prioritization.Components
         /// </summary>
         public bool IsBehind { get; set; }
 
-        public int CompareTo(IPartitionComponent other)
-        {
-            // First compare by bucket so the ordering will look like this:
-            // [0 Front; 0 Behind; 1 Front; 1 Behind; ..]
-            int bucketComparison = Bucket.CompareTo(other.Bucket);
-            return bucketComparison != 0 ? bucketComparison : IsBehind.CompareTo(other.IsBehind);
-        }
-
         public bool Equals(IPartitionComponent other) =>
             Bucket == other.Bucket && IsBehind == other.IsBehind;
 

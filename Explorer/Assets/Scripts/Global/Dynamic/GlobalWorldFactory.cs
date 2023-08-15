@@ -1,11 +1,17 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using CrdtEcsBridge.Components.Special;
+using CRDT;
+using CrdtEcsBridge.Components;
+using DCL.Character;
+using DCL.Character.Components;
 using ECS.ComponentsPooling;
 using ECS.LifeCycle;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.Prioritization.Systems;
+using ECS.Profiling;
+using ECS.Profiling.Systems;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.DeferredLoading;
 using ECS.SceneLifeCycle.IncreasingRadius;
@@ -14,10 +20,12 @@ using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Transforms.Components;
+using Global.Dynamic.Plugins;
 using Ipfs;
 using SceneRunner;
 using SceneRunner.EmptyScene;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -41,9 +49,11 @@ namespace Global.Dynamic
         private readonly IPartitionSettings partitionSettings;
         private readonly IRealmPartitionSettings realmPartitionSettings;
         private readonly RealmSamplingData realmSamplingData;
+        private readonly IProfilingProvider profilingProvider;
+        private readonly IReadOnlyList<IECSGlobalPlugin> globalPlugins;
 
         public GlobalWorldFactory(in StaticContainer staticContainer, IRealmPartitionSettings realmPartitionSettings,
-            CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData)
+            CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData, IReadOnlyList<IECSGlobalPlugin> globalPlugins)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -51,9 +61,11 @@ namespace Global.Dynamic
             this.realmPartitionSettings = realmPartitionSettings;
             this.cameraSamplingData = cameraSamplingData;
             this.realmSamplingData = realmSamplingData;
+            this.profilingProvider = staticContainer.ProfilingProvider;
+            this.globalPlugins = globalPlugins;
         }
 
-        public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory, Camera unityCamera)
+        public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory, ICharacterObject characterObject)
         {
             var world = World.Create();
 
@@ -62,7 +74,10 @@ namespace Global.Dynamic
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
 
-            Entity playerEntity = world.Create(new PlayerComponent(), new TransformComponent { Transform = unityCamera.transform }, new CameraComponent(unityCamera), cameraSamplingData);
+            Entity playerEntity = world.Create(
+                new CRDTEntity(SpecialEntititiesID.PLAYER_ENTITY),
+                new PlayerComponent(characterObject.CameraFocus),
+                new TransformComponent { Transform = characterObject.Transform });
 
             // Asset Bundle Manifest
             const string ASSET_BUNDLES_URL = "https://ab-cdn.decentraland.org/";
@@ -100,6 +115,13 @@ namespace Global.Dynamic
             PartitionSceneEntitiesSystem.InjectToWorld(ref builder, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>(), partitionSettings, cameraSamplingData);
             CheckCameraQualifiedForRepartitioningSystem.InjectToWorld(ref builder, partitionSettings);
             SortWorldsAggregateSystem.InjectToWorld(ref builder, partitionedWorldsAggregateFactory, realmPartitionSettings);
+
+            ProfilingSystem.InjectToWorld(ref builder, profilingProvider);
+
+            var pluginArgs = new GlobalPluginArguments(playerEntity);
+
+            for (var i = 0; i < globalPlugins.Count; i++)
+                globalPlugins[i].InjectToWorld(ref builder, pluginArgs);
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
                 { new ReleaseRealmPooledComponentSystem(componentPoolsRegistry) };

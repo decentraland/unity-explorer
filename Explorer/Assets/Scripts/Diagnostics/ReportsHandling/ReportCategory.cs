@@ -86,6 +86,16 @@
         public const string PRIORITIZATION = nameof(PRIORITIZATION);
 
         /// <summary>
+        ///     Everything related to the player's motion
+        /// </summary>
+        public const string MOTION = nameof(MOTION);
+
+        /// <summary>
+        ///     Input
+        /// </summary>
+        public const string INPUT = nameof(INPUT);
+
+        /// <summary>
         ///     Everything related to editor specific functionality (like tools)
         /// </summary>
         public const string EDITOR = nameof(EDITOR);
