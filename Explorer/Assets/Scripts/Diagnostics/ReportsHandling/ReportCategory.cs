@@ -6,6 +6,11 @@
     public static class ReportCategory
     {
         /// <summary>
+        ///     Everything connected to raw assets and addressables
+        /// </summary>
+        public const string ASSETS_PROVISION = nameof(ASSETS_PROVISION);
+
+        /// <summary>
         ///     Non-granular engine category
         /// </summary>
         public const string ENGINE = nameof(ENGINE);

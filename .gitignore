@@ -59,3 +59,10 @@ sysinfo.txt
 crashlytics-build.properties
 
 Explorer/UserSettings/Layouts
+
+# Addressables temporary data
+Explorer/Assets/AddressableAssetsData/Windows/**
+Explorer/Assets/AddressableAssetsData/Windows/*.meta
+Explorer/Assets/AddressableAssetsData/Windows.meta
+Explorer/Assets/AddressableAssetsData/ProfileDataSourceSettings.asset
+Explorer/Assets/AddressableAssetsData/ProfileDataSourceSettings.asset.meta
