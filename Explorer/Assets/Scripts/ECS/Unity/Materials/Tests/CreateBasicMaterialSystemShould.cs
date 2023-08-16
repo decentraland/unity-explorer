@@ -10,6 +10,7 @@ using ECS.Unity.Materials.Systems;
 using ECS.Unity.Textures.Components;
 using NSubstitute;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -22,7 +23,8 @@ namespace ECS.Unity.Materials.Tests
         [SetUp]
         public void SetUp()
         {
-            basicMat = Resources.Load<Material>(CreateBasicMaterialSystem.MATERIAL_PATH);
+            basicMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Scripts/ECS/Unity/Materials/MaterialReference/BasicShapeMaterial.mat");
+
             IObjectPool<Material> pool = Substitute.For<IObjectPool<Material>>();
             pool.Get().Returns(_ => new Material(basicMat));
 

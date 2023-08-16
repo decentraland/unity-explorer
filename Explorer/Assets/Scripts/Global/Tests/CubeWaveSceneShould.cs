@@ -2,9 +2,7 @@ using Arch.Core;
 using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
-using Diagnostics.ReportsHandling;
 using ECS.Prioritization.Components;
-using Global.Static;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner;
@@ -14,7 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace Global.Editor
+namespace Global.Tests
 {
     /*
      https://github.com/decentraland/sdk7-goerli-plaza/blob/main/cube-wave-16x16/src/index.ts
@@ -68,28 +66,22 @@ namespace Global.Editor
     public class CubeWaveSceneShould
     {
         private SceneSharedContainer sceneSharedContainer;
+        private StaticContainer staticContainer;
         private ISceneFacade sceneFacade;
         private const string PATH = "cube-wave-16x16";
 
         [SetUp]
-        public void SetUp()
+        public async Task SetUp()
         {
-            IReportsHandlingSettings reportSettings = Substitute.For<IReportsHandlingSettings>();
-
-            reportSettings.GetMatrix(Arg.Any<ReportHandler>())
-                          .Returns(_ =>
-                           {
-                               ICategorySeverityMatrix matrix = Substitute.For<ICategorySeverityMatrix>();
-                               matrix.IsEnabled(Arg.Any<string>(), Arg.Any<LogType>()).Returns(false);
-                               return matrix;
-                           });
-
-            sceneSharedContainer = StaticSceneLauncher.Install(reportSettings);
+            (staticContainer, sceneSharedContainer) = await IntegrationTestsSuite.CreateStaticContainer();
         }
 
         [Test]
         public async Task EmitECSComponents()
         {
+            // For some reason SetUp is not awaited, probably a Unity's bug
+            await UniTask.WaitUntil(() => sceneSharedContainer != null && staticContainer != null);
+
             // It will switch to the background thread and assign SynchronizationContext
             sceneFacade = await sceneSharedContainer.SceneFactory.CreateSceneFromStreamableDirectory(PATH, Substitute.For<IPartitionComponent>(), CancellationToken.None);
 
@@ -138,6 +130,8 @@ namespace Global.Editor
         {
             if (sceneFacade != null)
                 await sceneFacade.DisposeAsync();
+
+            staticContainer?.Dispose();
         }
     }
 }

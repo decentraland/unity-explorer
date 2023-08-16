@@ -14,6 +14,8 @@ namespace Diagnostics.ReportsHandling
 
         private static readonly Dictionary<string, string> CATEGORY_COLORS = new ()
         {
+            { ReportCategory.ASSETS_PROVISION, ColorUtility.ToHtmlStringRGB(new Color(0.616f, 0.875f, 0.89f)) },
+
             // Engine uses whitish tones
             { ReportCategory.ENGINE, ColorUtility.ToHtmlStringRGB(new Color(219f / 255, 214f / 255, 200f / 255)) },
             { ReportCategory.CRDT, ColorUtility.ToHtmlStringRGB(new Color(130f / 255, 148f / 255, 135f / 255)) },
