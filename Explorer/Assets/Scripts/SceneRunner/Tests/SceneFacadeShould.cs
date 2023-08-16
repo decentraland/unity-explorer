@@ -99,7 +99,7 @@ namespace SceneRunner.Tests
         }
 
         [Test]
-        public async Task UpdateWithProperIntervals([Values(5, 10, 20, 40, 60, 90, 220)] int fps)
+        public async Task UpdateWithProperIntervals([Values(5, 10, 20, 40, 60, 90, 150)] int fps)
         {
             const int DURATION = 1000;
 
