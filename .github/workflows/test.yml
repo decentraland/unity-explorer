@@ -13,13 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Create LFS file list
         run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
 
       - name: Restore LFS cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: lfs-cache
         with:
           path: .git/lfs
@@ -32,7 +32,7 @@ jobs:
           git reset --hard
 
       - name: Restore Library cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: Explorer/Library
           key: Library-Explorer-Windows
@@ -40,6 +40,7 @@ jobs:
       # Configure test runner
       - uses: game-ci/unity-test-runner@v2
         id: testRunner
+        timeout-minutes: 60
         with:
           projectPath: Explorer
           testMode: all
@@ -69,8 +70,9 @@ jobs:
           reporter: jest-junit
 
       # Upload artifact
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         if: always()
         with:
           name: Test results (play mode & edit mode)
           path: ${{ steps.testRunner.outputs.artifactsPath }}
+          if-no-files-found: error

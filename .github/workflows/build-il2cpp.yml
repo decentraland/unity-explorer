@@ -1,0 +1,74 @@
+name: Unity Build IL2CPP
+
+on:
+  pull_request: {}
+  push: { branches: [main] }
+
+jobs:
+  build:
+    concurrency: 
+      group: build-il2cpp
+      cancel-in-progress: false
+
+    strategy:
+      max-parallel: 1
+      matrix:
+        include:
+          - targetPlatform: StandaloneWindows64
+            dockerImage: windows-2019
+          - targetPlatform: StandaloneOSX
+            dockerImage: macos-latest-xl
+
+
+    name: Build
+    runs-on: ${{ matrix.dockerImage }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Create LFS file list
+        run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+
+      - name: Restore LFS cache
+        uses: actions/cache@v3
+        id: lfs-cache
+        with:
+          path: .git/lfs
+          key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}
+
+      - name: Git LFS Pull
+        run: |
+          git lfs pull
+          git add .
+          git reset --hard
+
+      - name: Restore Library cache
+        uses: actions/cache@v3
+        with:
+          path: | 
+            Explorer/Library
+            !Explorer/Library/Bee/**
+            !Explorer/Library/BuildPlayerData/**
+          key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
+
+      # Configure test runner
+      - uses: kuruk-mm/unity-builder@0.8
+        id: build
+        timeout-minutes: 120
+        env:
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: Explorer
+          targetPlatform: ${{ matrix.targetPlatform }}
+
+      # Upload artifact
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Build-${{ matrix.targetPlatform }}
+          path: |
+            build
+            !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
+            !build/**/*_BurstDebugInformation_DoNotShip
+          if-no-files-found: error
