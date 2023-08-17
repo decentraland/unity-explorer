@@ -1,0 +1,70 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e7669db769f7224e94ce1be19e8677e, type: 3}
+  m_Name: Global Plugins Settings
+  m_EditorClassIdentifier: 
+  settings:
+  - rid: 6784895264912310272
+  - rid: 6784895265412481026
+  - rid: 6784895265412481027
+  - rid: 6784895267130048513
+  references:
+    version: 2
+    RefIds:
+    - rid: 6784895264912310272
+      type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <CharacterObject>k__BackingField:
+          m_AssetGUID: 0eecf14978c1aa74381023946dde5c78
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <StartYPosition>k__BackingField: 1
+        <ReportHandlingSettings>k__BackingField:
+          m_AssetGUID: 6c1c35a66af59874a8373ebcd51572a4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <PartitionSettings>k__BackingField:
+          m_AssetGUID: 8d266ff458e71f2439f9c30bd7e68d4a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <RealmPartitionSettings>k__BackingField:
+          m_AssetGUID: 7899019423f09d049a8463a0751037a5
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 6784895265412481026
+      type: {class: CharacterCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <cinemachinePreset>k__BackingField:
+          m_AssetGUID: 654e496ed12f12e4f80243ab9f1d97c7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 6784895265412481027
+      type: {class: CharacterMotionSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <controllerSettings>k__BackingField:
+          m_AssetGUID: df2e68b45160aee4eaaf2475e21525e4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 6784895267130048513
+      type: {class: ProfilingPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <profilingViewRef>k__BackingField:
+          m_AssetGUID: 03608bfcd31894b8daf215b6e82338bf
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0

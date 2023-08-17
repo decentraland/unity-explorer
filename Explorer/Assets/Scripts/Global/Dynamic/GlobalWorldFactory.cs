@@ -4,6 +4,7 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using DCL.Character;
 using DCL.Character.Components;
+using DCL.PluginSystem.Global;
 using ECS.ComponentsPooling;
 using ECS.LifeCycle;
 using ECS.Prioritization;
@@ -11,7 +12,6 @@ using ECS.Prioritization.Components;
 using ECS.Prioritization.Systems;
 using ECS.Profiling;
 using ECS.Profiling.Systems;
-using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.DeferredLoading;
 using ECS.SceneLifeCycle.IncreasingRadius;
@@ -20,7 +20,6 @@ using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Transforms.Components;
-using Global.Dynamic.Plugins;
 using Ipfs;
 using SceneRunner;
 using SceneRunner.EmptyScene;
@@ -49,11 +48,10 @@ namespace Global.Dynamic
         private readonly IPartitionSettings partitionSettings;
         private readonly IRealmPartitionSettings realmPartitionSettings;
         private readonly RealmSamplingData realmSamplingData;
-        private readonly IProfilingProvider profilingProvider;
-        private readonly IReadOnlyList<IECSGlobalPlugin> globalPlugins;
+        private readonly IReadOnlyList<IDCLGlobalPlugin> globalPlugins;
 
         public GlobalWorldFactory(in StaticContainer staticContainer, IRealmPartitionSettings realmPartitionSettings,
-            CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData, IReadOnlyList<IECSGlobalPlugin> globalPlugins)
+            CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData, IReadOnlyList<IDCLGlobalPlugin> globalPlugins)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -61,7 +59,6 @@ namespace Global.Dynamic
             this.realmPartitionSettings = realmPartitionSettings;
             this.cameraSamplingData = cameraSamplingData;
             this.realmSamplingData = realmSamplingData;
-            this.profilingProvider = staticContainer.ProfilingProvider;
             this.globalPlugins = globalPlugins;
         }
 
@@ -115,8 +112,6 @@ namespace Global.Dynamic
             PartitionSceneEntitiesSystem.InjectToWorld(ref builder, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>(), partitionSettings, cameraSamplingData);
             CheckCameraQualifiedForRepartitioningSystem.InjectToWorld(ref builder, partitionSettings);
             SortWorldsAggregateSystem.InjectToWorld(ref builder, partitionedWorldsAggregateFactory, realmPartitionSettings);
-
-            ProfilingSystem.InjectToWorld(ref builder, profilingProvider);
 
             var pluginArgs = new GlobalPluginArguments(playerEntity);
 

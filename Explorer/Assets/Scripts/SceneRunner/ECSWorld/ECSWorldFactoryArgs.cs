@@ -1,4 +1,5 @@
 ﻿using CrdtEcsBridge.UpdateGate;
+using DCL.PluginSystem.World.Dependencies;
 using ECS.Prioritization.Components;
 using SceneRunner.Scene;
 

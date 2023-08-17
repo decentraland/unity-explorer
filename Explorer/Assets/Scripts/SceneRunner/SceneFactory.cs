@@ -12,6 +12,7 @@ using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using DCL.PluginSystem.World.Dependencies;
 using ECS.Prioritization.Components;
 using Ipfs;
 using SceneRunner.ECSWorld;
@@ -66,7 +67,7 @@ namespace SceneRunner
                 main = mainScenePath,
             };
 
-            var sceneData = new SceneData(new LocalIpfsRealm(baseUrl), sceneDefinition, false, SceneAssetBundleManifest.NULL, Vector2Int.zero);
+            var sceneData = new SceneData(new SceneNonHashedContent(baseUrl), sceneDefinition, SceneAssetBundleManifest.NULL, Vector2Int.zero, StaticSceneMessages.EMPTY);
 
             return await CreateScene(sceneData, partitionProvider, ct);
         }
@@ -90,7 +91,7 @@ namespace SceneRunner
                 metadata = sceneMetadata,
             };
 
-            var sceneData = new SceneData(new LocalIpfsRealm(fullPath), sceneDefinition, false, SceneAssetBundleManifest.NULL, Vector2Int.zero);
+            var sceneData = new SceneData(new SceneNonHashedContent(fullPath), sceneDefinition, SceneAssetBundleManifest.NULL, Vector2Int.zero, StaticSceneMessages.EMPTY);
 
             return await CreateScene(sceneData, partitionProvider, ct);
         }

@@ -1,0 +1,23 @@
+using Cysharp.Threading.Tasks;
+using System;
+using System.Threading;
+
+namespace DCL.PluginSystem
+{
+    public interface IDCLPlugin : IDisposable
+    {
+        // Add the reference to IAssetProvisioner to load from addressables
+        UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct);
+    }
+
+    /// <summary>
+    ///     Represents a plugin that can be injected into the ECS world
+    /// </summary>
+    public interface IDCLPlugin<in T> : IDCLPlugin where T: IDCLPluginSettings, new()
+    {
+        UniTask IDCLPlugin.Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
+            Initialize(container.GetSettings<T>(), ct);
+
+        UniTask Initialize(T settings, CancellationToken ct);
+    }
+}

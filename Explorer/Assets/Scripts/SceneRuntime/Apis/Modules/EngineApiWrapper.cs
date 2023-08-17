@@ -9,7 +9,8 @@ namespace SceneRuntime.Apis.Modules
 {
     public class EngineApiWrapper : IDisposable
     {
-        private readonly IEngineApi api;
+        internal readonly IEngineApi api;
+
         private readonly IInstancePoolsProvider instancePoolsProvider;
         private readonly ISceneExceptionsHandler exceptionsHandler;
 
