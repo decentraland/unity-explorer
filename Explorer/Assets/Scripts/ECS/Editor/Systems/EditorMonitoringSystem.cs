@@ -11,11 +11,11 @@ namespace ECS.Editor.Systems
     public partial class EditorMonitoringSystem : BaseUnityLoopSystem
     {
         private World world { get; }
-        private IEditorSceneMonitor sceneMonitor { get; }
+        private IEcsMonitor sceneMonitor { get; }
 
         private string originScene { get; }
 
-        public EditorMonitoringSystem(World world, string originScene, IEditorSceneMonitor monitor) : base(world)
+        public EditorMonitoringSystem(World world, string originScene, IEcsMonitor monitor) : base(world)
         {
             this.world = world;
             this.originScene = originScene;

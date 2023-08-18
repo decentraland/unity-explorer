@@ -6,7 +6,7 @@ namespace ECS.Editor
 {
     public delegate void OnUpdateEventHandler();
 
-    public interface IEditorSceneMonitor
+    public interface IEcsMonitor
     {
         /// <summary>
         /// Registers a scene to be monitored by the editor

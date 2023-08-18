@@ -1,7 +1,0 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/Scripts/ECS/Editor/GUI/Windows/HierarchyEditorWindow.uss?fileID=7433441132597879392&amp;guid=ff22ea2fef68f3244aab340bb511a7f9&amp;type=3#HierarchyEditorWindow" />
-    <ui:TwoPaneSplitView view-data-key="main-split-view" focusable="false" name="TwoPaneSplitView" orientation="Horizontal" fixed-pane-initial-dimension="206">
-        <ui:TreeView view-data-key="world-entity-tree" focusable="true" name="TreeView" style="width: 135px; min-width: 150px; background-color: rgba(233, 43, 43, 0);" />
-        <ui:ListView view-data-key="component-list" focusable="true" style="background-color: rgba(250, 181, 41, 0);" />
-    </ui:TwoPaneSplitView>
-</ui:UXML>

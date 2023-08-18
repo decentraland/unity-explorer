@@ -11,11 +11,11 @@ namespace SceneRunner.ECSWorld.Plugins.Editor
 {
     public class EditorPlugin : IECSWorldPlugin
     {
-        private readonly IEditorSceneMonitor sceneMonitor;
+        private readonly IEcsMonitor sceneMonitor;
 
         public EditorPlugin()
         {
-            this.sceneMonitor = EditorSceneMonitor.Instance;
+            this.sceneMonitor = EcsMonitor.Instance;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
