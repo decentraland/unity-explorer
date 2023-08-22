@@ -34,12 +34,12 @@ public class Avatar_CelShading : MonoBehaviour
 
     private void SetTextureArrayID(string colorPropertyName, int _nTextureArrayID)
     {
-        Renderer renderer = GetComponent<Renderer>();
-        renderer.GetPropertyBlock(_propertyBlock); // Get previously set values. They will reset otherwise
+        Renderer meshRenderer = GetComponent<Renderer>();
+        meshRenderer.GetPropertyBlock(_propertyBlock); // Get previously set values. They will reset otherwise
         _propertyBlock.SetInt(colorPropertyName, _nTextureArrayID);
-        renderer.SetPropertyBlock(_propertyBlock);
+        meshRenderer.SetPropertyBlock(_propertyBlock);
 
         if(TextureArrayCreator.Instance)
-            renderer.material.SetTexture("_MainTex", TextureArrayCreator.Instance.Texture2DArray);
+            meshRenderer.material.SetTexture("_MainTex", TextureArrayCreator.Instance.Texture2DArray);
     }
 }
