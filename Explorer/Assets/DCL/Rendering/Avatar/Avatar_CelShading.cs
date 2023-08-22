@@ -19,7 +19,7 @@ public class Avatar_CelShading : MonoBehaviour
     }
 
     // Start is called before the first frame update
-    void Start()
+    void Update()
     {
         SetColor("_BaseColor", col_MatPropBlock);
         SetTextureArrayID("_TextureArrayID", nTextureArrayID);
