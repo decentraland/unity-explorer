@@ -21,15 +21,6 @@ public class Avatar_CelShading : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-    }
-
-    void OnEnable()
-    {
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
         SetColor("_BaseColor", col_MatPropBlock);
         SetTextureArrayID("_TextureArrayID", nTextureArrayID);
     }
@@ -43,8 +34,12 @@ public class Avatar_CelShading : MonoBehaviour
 
     private void SetTextureArrayID(string colorPropertyName, int _nTextureArrayID)
     {
-        this.GetComponent<Renderer>().GetPropertyBlock(_propertyBlock); // Get previously set values. They will reset otherwise
+        Renderer renderer = GetComponent<Renderer>();
+        renderer.GetPropertyBlock(_propertyBlock); // Get previously set values. They will reset otherwise
         _propertyBlock.SetInt(colorPropertyName, _nTextureArrayID);
-        this.GetComponent<Renderer>().SetPropertyBlock(_propertyBlock);
+        renderer.SetPropertyBlock(_propertyBlock);
+
+        if(TextureArrayCreator.Instance)
+            renderer.material.SetTexture("_MainTex", TextureArrayCreator.Instance.Texture2DArray);
     }
 }
