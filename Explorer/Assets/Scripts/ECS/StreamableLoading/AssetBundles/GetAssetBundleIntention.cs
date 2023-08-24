@@ -3,7 +3,6 @@ using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Threading;
 using UnityEngine;
-using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
