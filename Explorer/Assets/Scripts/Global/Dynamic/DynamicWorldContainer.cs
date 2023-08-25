@@ -1,4 +1,5 @@
-﻿using DCL.PluginSystem.Global;
+﻿using DCL.AvatarRendering.Wearables;
+using DCL.PluginSystem.Global;
 using ECS.Prioritization.Components;
 using SceneRunner.EmptyScene;
 using System.Collections.Generic;
@@ -27,7 +28,8 @@ namespace Global.Dynamic
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterObject),
                 new InputPlugin(),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, staticContainer.CameraSamplingData),
-                new ProfilingPlugin(staticContainer.AssetsProvisioner, staticContainer.ProfilingProvider)
+                new ProfilingPlugin(staticContainer.AssetsProvisioner, staticContainer.ProfilingProvider),
+                new WearablePlugin(),
             };
 
             return new DynamicWorldContainer

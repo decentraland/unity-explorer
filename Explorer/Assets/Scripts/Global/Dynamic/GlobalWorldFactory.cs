@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.Character;
 using DCL.Character.Components;
 using DCL.PluginSystem.Global;
@@ -10,8 +11,6 @@ using ECS.LifeCycle;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.Prioritization.Systems;
-using ECS.Profiling;
-using ECS.Profiling.Systems;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.DeferredLoading;
 using ECS.SceneLifeCycle.IncreasingRadius;
@@ -74,7 +73,30 @@ namespace Global.Dynamic
             Entity playerEntity = world.Create(
                 new CRDTEntity(SpecialEntititiesID.PLAYER_ENTITY),
                 new PlayerComponent(characterObject.CameraFocus),
-                new TransformComponent { Transform = characterObject.Transform });
+                new TransformComponent { Transform = characterObject.Transform }
+            );
+
+            world.Create(new WearableComponent
+                { urn = "urn:decentraland:off-chain:base-avatars:BaseMale" });
+
+            world.Create(new WearableComponent
+                { urn = "urn:decentraland:off-chain:base-avatars:black_glove" });
+
+            world.Create(new WearableComponent
+                { urn = "urn:decentraland:off-chain:base-avatars:m_sweater_02" });
+
+            world.Create(new WearableComponent
+                { urn = "urn:decentraland:off-chain:base-avatars:cool_hair" });
+
+            //world.Create(new WearableComponent() { urn = "urn:decentraland:off-chain:base-avatars:citycomfortableshoes" });
+            //world.Create(new WearableComponent() { urn = "urn:decentraland:matic:collections-v2:0x7b207598a9167e8d993251e990aea23c29203ca3:0" });
+            //world.Create(new WearableComponent() { urn = "urn:decentraland:matic:collections-v2:0x26ea2f6a7273a2f28b410406d1c13ff7d4c9a162:5" });
+            //world.Create(new WearableComponent() { urn = "urn:decentraland:matic:collections-v2:0x167d6b63511a7b5062d1f7b07722fccbbffb5105:2" });
+            //world.Create(new WearableComponent() { urn = "urn:decentraland:matic:collections-v2:0x94f128b1f2bd7fdc786b005652569267cd9268fa:1" });
+            //world.Create(new WearableComponent() { urn = "urn:decentraland:off-chain:base-avatars:Espadrilles" });
+            //world.Create(new WearableComponent() { urn = "urn:decentraland:off-chain:base-avatars:beard" });
+            //world.Create(new WearableComponent() { urn = "urn:decentraland:off-chain:base-avatars:eyebrows_00" });
+            //world.Create(new WearableComponent() { urn = "urn:decentraland:off-chain:base-avatars:eyes_00" });
 
             // Asset Bundle Manifest
             const string ASSET_BUNDLES_URL = "https://ab-cdn.decentraland.org/";
