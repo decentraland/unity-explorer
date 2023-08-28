@@ -79,6 +79,7 @@ namespace Ipfs
         {
             public string main;
             public SceneMetadataScene scene;
+            public string runtimeVersion;
         }
 
         [Serializable]

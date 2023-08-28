@@ -90,5 +90,8 @@ namespace SceneRunner.Scene
 
             return false;
         }
+
+        public bool IsSdk7() =>
+            sceneDefinition.metadata.runtimeVersion == "7";
     }
 }

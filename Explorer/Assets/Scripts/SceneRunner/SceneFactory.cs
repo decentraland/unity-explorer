@@ -121,8 +121,15 @@ namespace SceneRunner
             ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(instanceDependencies, systemGroupThrottler, partitionProvider, sceneStateProvider));
             ecsWorldFacade.Initialize();
 
-            // Create an instance of Scene Runtime on the thread pool
-            sceneData.TryGetMainScriptUrl(out string sceneCodeUrl);
+            string sceneCodeUrl;
+
+            if (!sceneData.IsSdk7()) { sceneCodeUrl = $"file://{Application.streamingAssetsPath}/Js/Sdk7AdapterLayer.js"; }
+            else
+            {
+                // Create an instance of Scene Runtime on the thread pool
+                sceneData.TryGetMainScriptUrl(out sceneCodeUrl);
+            }
+
             SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPath(sceneCodeUrl, instancePoolsProvider, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool);
 
             ct.ThrowIfCancellationRequested();
@@ -141,6 +148,9 @@ namespace SceneRunner
                 ecsMutexSync);
 
             sceneRuntime.RegisterEngineApi(engineAPI);
+
+            var runtimeImplementation = new RuntimeImplementation(sceneData);
+            sceneRuntime.RegisterRuntime(runtimeImplementation);
 
             return new SceneFacade(
                 sceneRuntime,

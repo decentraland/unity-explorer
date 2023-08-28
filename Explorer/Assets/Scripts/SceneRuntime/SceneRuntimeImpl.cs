@@ -29,6 +29,8 @@ namespace SceneRuntime
 
         private EngineApiWrapper engineApi;
 
+        private RuntimeWrapper runtimeWrapper;
+
         public SceneRuntimeImpl(string sourceCode, string jsInitCode, Dictionary<string, string> jsModules, IInstancePoolsProvider instancePoolsProvider)
         {
             this.instancePoolsProvider = instancePoolsProvider;
@@ -69,6 +71,11 @@ namespace SceneRuntime
         public void RegisterEngineApi(IEngineApi api)
         {
             engine.AddHostObject("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, new RethrowSceneExceptionsHandler()));
+        }
+
+        public void RegisterRuntime(IRuntime api)
+        {
+            engine.AddHostObject("UnityRuntime", runtimeWrapper = new RuntimeWrapper(api, new RethrowSceneExceptionsHandler()));
         }
 
         public void SetIsDisposing()
