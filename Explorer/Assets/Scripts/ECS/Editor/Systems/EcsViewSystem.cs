@@ -7,15 +7,16 @@ using ECS.Abstract;
 namespace ECS.Editor.Systems
 {
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
+    [UpdateAfter(typeof(EcsMonitoringSystem))]
     [LogCategory(ReportCategory.EDITOR)]
-    public partial class EditorMonitoringSystem : BaseUnityLoopSystem
+    public partial class EcsViewSystem : BaseUnityLoopSystem
     {
         private World world { get; }
         private IEcsMonitor sceneMonitor { get; }
 
         private string originScene { get; }
 
-        public EditorMonitoringSystem(World world, string originScene, IEcsMonitor monitor) : base(world)
+        public EcsViewSystem(World world, string originScene, IEcsMonitor monitor) : base(world)
         {
             this.world = world;
             this.originScene = originScene;
