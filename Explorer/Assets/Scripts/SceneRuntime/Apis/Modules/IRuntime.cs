@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using Microsoft.ClearScript.JavaScript;
 using System;
 
 namespace SceneRuntime.Apis.Modules
@@ -11,6 +12,6 @@ namespace SceneRuntime.Apis.Modules
     {
         /// <param name="dataMemory"></param>
         /// <returns>A contiguous byte array of the CRDT Message representing the outgoing messages</returns>
-        public UniTask<ScriptableByteArray> ReadFile(string fileName);
+        public UniTask<ITypedArray<byte>> ReadFile(string fileName);
     }
 }

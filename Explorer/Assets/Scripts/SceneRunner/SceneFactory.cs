@@ -149,7 +149,7 @@ namespace SceneRunner
 
             sceneRuntime.RegisterEngineApi(engineAPI);
 
-            var runtimeImplementation = new RuntimeImplementation(sceneData);
+            var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData);
             sceneRuntime.RegisterRuntime(runtimeImplementation);
 
             return new SceneFacade(

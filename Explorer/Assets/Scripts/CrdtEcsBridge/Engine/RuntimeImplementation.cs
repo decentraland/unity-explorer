@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
+using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
+using SceneRuntime;
 using SceneRuntime.Apis.Modules;
 using System;
 using System.Text;
@@ -14,14 +16,16 @@ namespace CrdtEcsBridge.Engine
     /// </summary>
     public class RuntimeImplementation : IRuntime
     {
+        private readonly IJSOperations jsOperations;
         private readonly ISceneData sceneData;
 
-        public RuntimeImplementation(ISceneData sceneData)
+        public RuntimeImplementation(IJSOperations jsOperations, ISceneData sceneData)
         {
+            this.jsOperations = jsOperations;
             this.sceneData = sceneData;
         }
 
-        public async UniTask<ScriptableByteArray> ReadFile(string fileName)
+        public async UniTask<ITypedArray<byte>> ReadFile(string fileName)
         {
             sceneData.TryGetContentUrl(fileName, out string url);
 
@@ -32,10 +36,15 @@ namespace CrdtEcsBridge.Engine
 
             byte[] bytes = Encoding.ASCII.GetBytes(request.downloadHandler.text);
 
-            var result = new ScriptableByteArray(new ArraySegment<byte>(bytes));
             await UniTask.SwitchToThreadPool();
 
-            return result;
+            // create script byte array
+            var array = jsOperations.CreateUint8Array(bytes.Length);
+
+            // transfer data to script byte array
+            array.Write(bytes, 0, Convert.ToUInt64(bytes.Length), 0);
+
+            return array;
         }
 
         public void Dispose() { }

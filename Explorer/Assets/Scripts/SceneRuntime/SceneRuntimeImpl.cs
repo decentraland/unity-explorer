@@ -13,7 +13,7 @@ using UnityEngine.Assertions;
 namespace SceneRuntime
 {
     // Avoid the same name for Namespace and Class
-    public class SceneRuntimeImpl : ISceneRuntime
+    public class SceneRuntimeImpl : ISceneRuntime, IJSOperations
     {
         private readonly IInstancePoolsProvider instancePoolsProvider;
         internal readonly V8ScriptEngine engine;
@@ -106,5 +106,8 @@ namespace SceneRuntime
             engineApi?.Dispose();
             engine.Dispose();
         }
+
+        public ITypedArray<byte> CreateUint8Array(int length) =>
+            (ITypedArray<byte>)engine.Evaluate(@"(function () { return new Uint8Array(" + length + "); })()");
     }
 }
