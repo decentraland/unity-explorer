@@ -14,6 +14,7 @@ using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.Prioritization.Components;
+using ECS.Editor.Systems;
 using Ipfs;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;

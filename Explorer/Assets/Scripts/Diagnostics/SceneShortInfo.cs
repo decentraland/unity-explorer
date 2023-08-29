@@ -15,5 +15,8 @@ namespace Diagnostics
             BaseParcel = baseParcel;
             Name = name;
         }
+
+        public override string ToString() =>
+            $"{Name} @ {BaseParcel}";
     }
 }

@@ -12,6 +12,10 @@ using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.Profiling;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
+using SceneRunner.ECSWorld;
+using SceneRunner.ECSWorld.Plugins;
+using SceneRunner.ECSWorld.Plugins.Editor;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -112,7 +116,10 @@ namespace Global
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AssetBundlesPlugin(container.ReportHandlingSettings),
-                new GltfContainerPlugin(sharedDependencies),
+                new GltfContainerPlugin(sharedDependencies)
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+               ,new EditorPlugin()
+#endif
             };
 
             return (container, true);
