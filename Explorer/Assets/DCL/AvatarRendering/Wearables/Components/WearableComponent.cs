@@ -11,21 +11,22 @@ namespace DCL.AvatarRendering.Wearables.Components
     [Serializable]
     public struct WearableComponent
     {
-        //LOADING
-        public enum LifeCycle : byte
+        public enum AssetBundleLifeCycle : byte
         {
-            LoadingNotStarted = 0,
-            LoadingDefinition = 1,
-            LoadingAssetBundle = 3,
-            LoadingFinished = 4,
+            AssetBundleNotLoaded = 0,
+            AssetBundleManifestLoading = 1,
+            AssetBundleLoading = 2,
+            AssetBundleLoaded = 3,
         }
 
         /// <summary>
         ///     The current status of the Wearable loading
         /// </summary>
-        public LifeCycle Status;
+        public AssetBundleLifeCycle AssetBundleStatus;
 
+        public AssetPromise<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention> wearableAssetBundleManifestPromise;
         public AssetPromise<AssetBundleData, GetWearableAssetBundleIntention> wearableAssetBundlePromise;
+
 
         //CONTENT
         public WearableContent wearableContent;
@@ -39,8 +40,6 @@ namespace DCL.AvatarRendering.Wearables.Components
         public i18n[] i18n;
         public string thumbnailHash;
         public Sprite thumbnailSprite;
-
-        public SceneAssetBundleManifest AssetBundleManifest;
 
         public string GetMainFileHash()
         {

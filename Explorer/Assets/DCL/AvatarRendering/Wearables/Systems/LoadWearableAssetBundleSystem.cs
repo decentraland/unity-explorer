@@ -33,6 +33,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             = new (() => new AssetBundleMetadata(), maxSize: 100);
 
         private readonly AssetBundleLoadingMutex loadingMutex;
+        private string ASSET_BUNDLE_URL;
 
         internal LoadWearableAssetBundleSystem(World world,
             IStreamableCache<AssetBundleData, GetWearableAssetBundleIntention> cache,
@@ -60,7 +61,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 // Construct dependency promises and wait for them
                 // Switch to main thread to create dependency promises
                 await UniTask.SwitchToMainThread();
-
                 // WhenAll uses pool under the hood
                 await UniTask.WhenAll(reusableMetadata.Value.dependencies.Select(hash => WaitForDependency(assetBundleManifest, hash, partition, ct)));
             }
@@ -70,6 +70,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             AssetBundle assetBundle;
 
+            Debug.Log("AAAA " + intention.CommonArguments.URL + " " + intention.cacheHash.Value);
             using (UnityWebRequest webRequest = intention.cacheHash.HasValue
                        ? UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL, intention.cacheHash.Value)
                        : UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL))
@@ -102,7 +103,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             AssetBundleMetrics? metrics = metricsFile != null ? JsonUtility.FromJson<AssetBundleMetrics>(metricsFile.text) : null;
 
-            await LoadDependencies(intention.AssetBundleManifest, partition, assetBundle, ct);
+            await LoadDependencies(intention.WearableAssetBundleManifest, partition, assetBundle, ct);
 
             await UniTask.SwitchToMainThread();
             ct.ThrowIfCancellationRequested();
@@ -152,5 +153,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private static TextAsset GetMetadata(AssetBundle assetBundle) =>
             assetBundle.LoadAsset<TextAsset>(METADATA_FILENAME);
+
+
     }
 }

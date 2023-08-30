@@ -8,6 +8,7 @@ using ECS.Abstract;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
+using SceneRunner.Scene;
 using System;
 using Utility;
 
@@ -52,7 +53,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 ca.CurrentSource = AssetSource.EMBEDDED;
                 ca.URL = GetStreamingAssetsUrl(assetBundleIntention.Hash);
                 assetBundleIntention.CommonArguments = ca;
-                assetBundleIntention.cacheHash = assetBundleIntention.AssetBundleManifest.ComputeHash(assetBundleIntention.Hash);
+                assetBundleIntention.cacheHash = assetBundleIntention.WearableAssetBundleManifest.ComputeHash(assetBundleIntention.Hash);
                 return;
             }
 
@@ -60,7 +61,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.WEB))
             {
                 // If Hash is already provided just use it, otherwise resolve by the content provider
-                if (!assetBundleIntention.AssetBundleManifest.Contains(assetBundleIntention.Hash))
+                if (!assetBundleIntention.WearableAssetBundleManifest.Contains(assetBundleIntention.Hash))
                 {
                     // Add the failure to the entity
                     World.Add(entity, new StreamableLoadingResult<AssetBundleData>
@@ -73,9 +74,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 ca.Attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT;
                 ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
                 ca.CurrentSource = AssetSource.WEB;
-                ca.URL = assetBundleIntention.AssetBundleManifest.GetAssetBundleURL(assetBundleIntention.Hash);
+                ca.URL = assetBundleIntention.WearableAssetBundleManifest.GetAssetBundleURL(assetBundleIntention.Hash);
                 assetBundleIntention.CommonArguments = ca;
-                assetBundleIntention.cacheHash = assetBundleIntention.AssetBundleManifest.ComputeHash(assetBundleIntention.Hash);
+                assetBundleIntention.cacheHash = assetBundleIntention.WearableAssetBundleManifest.ComputeHash(assetBundleIntention.Hash);
             }
         }
 

@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
+using SceneRunner.Scene;
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {
@@ -12,7 +13,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
     ///     Weighs definitions and scenes loading against each other according to their partition
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateAfter(typeof(PrepareWearableAssetBundleLoadingParametersSystem))]
+    [UpdateBefore(typeof(LoadWearableSystem))]
+    [UpdateBefore(typeof(LoadWearableAssetBundleManifestSystem))]
+    [UpdateBefore(typeof(LoadWearableAssetBundleSystem))]
     [UpdateBefore(typeof(LoadWearablesByPointersSystem))]
+    [UpdateBefore(typeof(LoadWearablesByParamSystem))]
     public partial class WearableDeferredLoadingSystem : DeferredLoadingSystem
     {
         private static readonly QueryDescription[] COMPONENT_HANDLERS;
@@ -22,8 +28,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
             COMPONENT_HANDLERS = new[]
             {
                 CreateQuery<GetWearableByPointersIntention, WearableDTO[]>(),
+                CreateQuery<GetWearableByParamIntention, WearableDTO[]>(),
+                CreateQuery<GetWearableAssetBundleManifestIntention, SceneAssetBundleManifest>(),
                 CreateQuery<GetWearableAssetBundleIntention, AssetBundleData>(),
-                CreateQuery<GetWearableByParamIntention, BaseWearablesListResponse>(),
             };
         }
 

@@ -46,15 +46,14 @@ public struct GetWearableAssetBundleIntention : ILoadingIntention, IEquatable<Ge
     public CommonLoadingArguments CommonArguments { get; set; }
 
     public string Hash;
-    public SceneAssetBundleManifest AssetBundleManifest;
     internal Hash128? cacheHash;
+    //TODO: Not completely happy to keep it here
+    public SceneAssetBundleManifest WearableAssetBundleManifest;
 
     private GetWearableAssetBundleIntention(SceneAssetBundleManifest assetBundleManifest, string hash = null, AssetSource permittedSources = AssetSource.ALL)
     {
         Hash = hash;
-
-        AssetBundleManifest = assetBundleManifest;
-
+        WearableAssetBundleManifest = assetBundleManifest;
         // Don't resolve URL here
         CommonArguments = new CommonLoadingArguments(string.Empty, permittedSources: permittedSources);
         cacheHash = null;
@@ -71,6 +70,24 @@ public struct GetWearableAssetBundleIntention : ILoadingIntention, IEquatable<Ge
 
     public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
-    public static GetWearableAssetBundleIntention FromHash(SceneAssetBundleManifest assetBundleManifest, string hash, AssetSource permittedSources = AssetSource.ALL) =>
-        new (assetBundleManifest, hash, permittedSources: permittedSources);
+    public static GetWearableAssetBundleIntention FromHash(SceneAssetBundleManifest sceneAssetBundleManifest, string hash, AssetSource permittedSources = AssetSource.ALL) =>
+        new (sceneAssetBundleManifest, hash, permittedSources: permittedSources);
+}
+
+public struct GetWearableAssetBundleManifestIntention : ILoadingIntention, IEquatable<GetWearableAssetBundleManifestIntention>
+{
+    public CommonLoadingArguments CommonArguments { get; set; }
+    public string Hash;
+
+
+    public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
+
+    public bool Equals(GetWearableAssetBundleManifestIntention other) =>
+        Hash == other.Hash && CommonArguments.Equals(other.CommonArguments);
+
+    public override bool Equals(object obj) =>
+        obj is GetWearableAssetBundleManifestIntention other && Equals(other);
+
+    public override int GetHashCode() =>
+        HashCode.Combine(Hash, CommonArguments);
 }

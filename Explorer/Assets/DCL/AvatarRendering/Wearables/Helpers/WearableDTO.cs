@@ -16,8 +16,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         public WearableMetadataDto metadata;
         public WearableContentDto[] content;
 
-        public SceneAssetBundleManifest AssetBundleManifest;
-
         public WearableComponent ToWearableItem(string contentBaseUrl)
         {
             var wearableComponent = new WearableComponent
@@ -38,7 +36,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 hash = id,
                 rarity = metadata.rarity,
                 thumbnailHash = GetContentHashByFileName(metadata.thumbnail),
-                AssetBundleManifest = AssetBundleManifest,
             };
 
             for (var i = 0; i < metadata.data.representations.Length; i++)

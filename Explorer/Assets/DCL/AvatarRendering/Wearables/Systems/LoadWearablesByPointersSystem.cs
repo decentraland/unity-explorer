@@ -36,14 +36,14 @@ namespace DCL.AvatarRendering.Wearables.Systems
             //TODO: Failure flow
             var finalTargetList = new List<WearableDTO>();
 
-            int numberOfPartialRequests = (intention.Pointers.Count + MAX_WEARABLES_PER_REQUEST - 1) / MAX_WEARABLES_PER_REQUEST;
+            int numberOfPartialRequests = (intention.Pointers.Length + MAX_WEARABLES_PER_REQUEST - 1) / MAX_WEARABLES_PER_REQUEST;
 
             for (var i = 0; i < numberOfPartialRequests; i++)
             {
                 await UniTask.SwitchToMainThread();
 
-                int numberOfWearablesToRequest = intention.Pointers.Count < MAX_WEARABLES_PER_REQUEST
-                    ? intention.Pointers.Count
+                int numberOfWearablesToRequest = intention.Pointers.Length < MAX_WEARABLES_PER_REQUEST
+                    ? intention.Pointers.Length
                     : MAX_WEARABLES_PER_REQUEST;
 
                 //TODO: Avoid Linq here
@@ -87,33 +87,5 @@ namespace DCL.AvatarRendering.Wearables.Systems
             return partialTargetList;
         }
 
-        /*private async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifest(string sceneId, string reportCategory, CancellationToken ct)
-        {
-            //await UniTask.SwitchToMainThread();
-            //SceneAssetBundleManifest assetBundleManifest = await LoadAssetBundleManifest(result.id, "WearableLoading", ct);
-            //result.AssetBundleManifest = assetBundleManifest;
-
-
-            var subIntent = new SubIntention(new CommonLoadingArguments($"{ASSET_BUNDLE_URL}manifest/{sceneId}{PlatformUtils.GetPlatform()}.json"));
-
-            // Repeat loop for this request only
-            async UniTask<StreamableLoadingResult<string>> InnerFlow(SubIntention subIntention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
-            {
-                using UnityWebRequest wr = await UnityWebRequest.Get(subIntention.CommonArguments.URL).SendWebRequest().WithCancellation(ct);
-                return new StreamableLoadingResult<string>(wr.downloadHandler.text);
-            }
-
-            StreamableLoadingResult<string> result = (await subIntent.RepeatLoop(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, InnerFlow, reportCategory, ct)).Denullify();
-
-            if (result.Succeeded)
-            {
-                await UniTask.SwitchToThreadPool();
-                return new SceneAssetBundleManifest(ASSET_BUNDLE_URL, JsonUtility.FromJson<SceneAbDto>(result.Asset));
-            }
-
-            // Don't block the scene if the loading manifest failed, just use NULL
-            ReportHub.LogError(new ReportData(reportCategory, ReportHint.SessionStatic), $"Asset Bundles Manifest is not loaded for scene {sceneId}");
-            return SceneAssetBundleManifest.NULL;
-        }*/
     }
 }
