@@ -30,6 +30,7 @@ namespace Global.Dynamic
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, staticContainer.CameraSamplingData),
                 new ProfilingPlugin(staticContainer.AssetsProvisioner, staticContainer.ProfilingProvider),
                 new WearablePlugin(),
+                new AvatarShapePlugin(),
             };
 
             return new DynamicWorldContainer

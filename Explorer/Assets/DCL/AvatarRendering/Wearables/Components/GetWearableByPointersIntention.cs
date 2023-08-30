@@ -5,20 +5,40 @@ using System;
 using System.Threading;
 using UnityEngine;
 
-public struct GetWearableIntention : ILoadingIntention, IEquatable<GetWearableIntention>
+public struct GetWearableByPointersIntention : ILoadingIntention, IEquatable<GetWearableByPointersIntention>
 {
     public CancellationTokenSource CancellationTokenSource { get; }
     public CommonLoadingArguments CommonArguments { get; set; }
-    public string Pointer;
+    public string[] Pointers;
 
-    public bool Equals(GetWearableIntention other) =>
-        Equals(Pointer, other.Pointer) && Equals(CancellationTokenSource, other.CancellationTokenSource) && CommonArguments.Equals(other.CommonArguments);
+    public bool Equals(GetWearableByPointersIntention other) =>
+        Equals(Pointers, other.Pointers) && Equals(CancellationTokenSource, other.CancellationTokenSource) && CommonArguments.Equals(other.CommonArguments);
 
     public override bool Equals(object obj) =>
-        obj is GetWearableIntention other && Equals(other);
+        obj is GetWearableByPointersIntention other && Equals(other);
 
     public override int GetHashCode() =>
-        HashCode.Combine(Pointer, CancellationTokenSource, CommonArguments);
+        HashCode.Combine(Pointers, CancellationTokenSource, CommonArguments);
+}
+
+public struct GetWearableByParamIntention : ILoadingIntention, IEquatable<GetWearableByParamIntention>
+{
+    public CancellationTokenSource CancellationTokenSource { get; }
+    public CommonLoadingArguments CommonArguments { get; set; }
+
+    //ValidParams: pageNum, pageSize, includeEntities (bool), rarity, categofy, name, orderBy, direction,
+    //collectionType (base-wearable, on-chain, third-party), thirdPartyCollectionId
+    public (string, string)[] Params;
+    public string UserID;
+
+    public bool Equals(GetWearableByParamIntention other) =>
+        Equals(Params, other.Params) && UserID == other.UserID && Equals(CancellationTokenSource, other.CancellationTokenSource) && CommonArguments.Equals(other.CommonArguments);
+
+    public override bool Equals(object obj) =>
+        obj is GetWearableByParamIntention other && Equals(other);
+
+    public override int GetHashCode() =>
+        HashCode.Combine(Params, UserID, CancellationTokenSource, CommonArguments);
 }
 
 public struct GetWearableAssetBundleIntention : ILoadingIntention, IEquatable<GetWearableAssetBundleIntention>

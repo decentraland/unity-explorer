@@ -12,7 +12,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
     ///     Weighs definitions and scenes loading against each other according to their partition
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateBefore(typeof(LoadWearablesDTOSystem))]
+    [UpdateBefore(typeof(LoadWearablesByPointersSystem))]
     public partial class WearableDeferredLoadingSystem : DeferredLoadingSystem
     {
         private static readonly QueryDescription[] COMPONENT_HANDLERS;
@@ -21,8 +21,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             COMPONENT_HANDLERS = new[]
             {
-                CreateQuery<GetWearableIntention, WearableDTO>(),
+                CreateQuery<GetWearableByPointersIntention, WearableDTO[]>(),
                 CreateQuery<GetWearableAssetBundleIntention, AssetBundleData>(),
+                CreateQuery<GetWearableByParamIntention, BaseWearablesListResponse>(),
             };
         }
 

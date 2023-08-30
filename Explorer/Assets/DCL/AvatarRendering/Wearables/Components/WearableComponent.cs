@@ -25,7 +25,6 @@ namespace DCL.AvatarRendering.Wearables.Components
         /// </summary>
         public LifeCycle Status;
 
-        public AssetPromise<WearableDTO, GetWearableIntention> wearableDTOPromise;
         public AssetPromise<AssetBundleData, GetWearableAssetBundleIntention> wearableAssetBundlePromise;
 
         //CONTENT

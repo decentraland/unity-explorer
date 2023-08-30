@@ -9,8 +9,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
-using SceneRunner.Scene;
-using UnityEngine;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {
@@ -21,38 +20,84 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private readonly string WEARABLE_CONTENT_BASE_URL;
         private string WEARABLE_CONTENT_ASSET_BUNDLE_URL;
 
+        private SingleInstanceEntity wearableCatalog;
+
+        //TODO: Integrate the instantiation budget provider
+        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
+
         public LoadWearableSystem(World world) : base(world)
         {
             WEARABLE_DEFINITION_URL = "https://peer.decentraland.org/content/entities/active";
             WEARABLE_CONTENT_BASE_URL = "";
         }
 
+        public override void Initialize()
+        {
+            base.Initialize();
+            wearableCatalog = World.CacheWearableCatalog();
+
+            //Request base wearables
+            /*AssetPromise<BaseWearablesListResponse, GetBaseWearableIntention>.Create(World,
+                new GetBaseWearableIntention()
+                {
+                    CommonArguments = new CommonLoadingArguments("https://peer.decentraland.org/content/entities/active/collections/urn:decentraland:off-chain:base-avatars"),
+                }, PartitionComponent.TOP_PRIORITY);*/
+        }
+
         protected override void Update(float t)
         {
             //TODO: Im request Definition, Manifest and AB for every wearable. How can we avoid this?
-            StartWearableLoadQuery(World);
-            ParseWearableDTOQuery(World);
-            DownloadWearableABQuery(World);
+            CreateWearableByParamRequestQuery(World);
+
+            //CreateWearableByPointerRequestQuery(World);
+
+            CreateWearableComponentFromResultQuery(World);
+
+            //StartWearableLoadQuery(World);
+            //ParseWearableDTOQuery(World);
+            //DownloadWearableABQuery(World);
         }
 
         [Query]
-        private void StartWearableLoad(ref WearableComponent wearableComponent)
+        private void CreateWearableByParamRequest(ref GetWearableByParamIntention wearableByParamIntention)
+        {
+            AssetPromise<WearableDTO, GetWearableByParamIntention>.Create(World,
+                wearableByParamIntention, PartitionComponent.TOP_PRIORITY);
+        }
+
+        /*[Query]
+        private void StartWearableLoad(in Entity entity, ref GetWearableByPointersIntention wearableComponent)
         {
             if (wearableComponent.Status == WearableComponent.LifeCycle.LoadingNotStarted)
             {
-                wearableComponent.wearableDTOPromise =
-                    AssetPromise<WearableDTO, GetWearableIntention>.Create(World,
-                        new GetWearableIntention
+                    AssetPromise<WearableDTO, GetWearableByPointersIntention>.Create(World,
+                        new GetWearableByPointersIntention
                         {
                             CommonArguments = new CommonLoadingArguments(WEARABLE_DEFINITION_URL),
-                            Pointer = wearableComponent.urn,
+                            Pointers = new List<string>(),
                         }, PartitionComponent.TOP_PRIORITY);
-
                 wearableComponent.Status = WearableComponent.LifeCycle.LoadingDefinition;
+                wearableCatalog.GetWearableCatalog(World).catalog.Add(wearableComponent.urn, World.Reference(entity));
+            }
+        }*/
+
+
+        [Query]
+        private void CreateWearableComponentFromResult(in Entity entity, ref StreamableLoadingResult<WearableDTO[]> wearableDTOResult)
+        {
+            // If the result failed, the result will be handled and entity destroyed by the system that requested the wearables
+            if (!wearableDTOResult.Succeeded)
+                return;
+
+            foreach (WearableDTO assetEntity in wearableDTOResult.Asset)
+            {
+                WearableComponent wearableComponent = assetEntity.ToWearableItem(WEARABLE_CONTENT_BASE_URL);
+                Entity wearableEntity = World.Create(wearableComponent);
+                wearableCatalog.GetWearableCatalog(World).catalog.Add(wearableComponent.urn, World.Reference(wearableEntity));
             }
         }
 
-        [Query]
+        /*[Query]
         private void ParseWearableDTO(ref WearableComponent wearableComponent)
         {
             if (wearableComponent.Status == WearableComponent.LifeCycle.LoadingDefinition)
@@ -78,18 +123,18 @@ namespace DCL.AvatarRendering.Wearables.Systems
                         wearableComponent.Status = WearableComponent.LifeCycle.LoadingFinished;
                     }
                 }
-        }
+        }*/
 
         [Query]
-        private void DownloadWearableAB(ref WearableComponent wearableComponent)
+        private void DownloadWearableAB(in Entity entity, ref WearableComponent wearableComponent)
         {
             if (wearableComponent.Status == WearableComponent.LifeCycle.LoadingAssetBundle)
 
                 //TODO: Handle failures request
                 if (wearableComponent.wearableAssetBundlePromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> assetBundleData))
                 {
-                    Object.Instantiate(assetBundleData.Asset.GameObject);
                     wearableComponent.Status = WearableComponent.LifeCycle.LoadingFinished;
+                    World.Add(entity, assetBundleData.Asset);
                 }
         }
     }

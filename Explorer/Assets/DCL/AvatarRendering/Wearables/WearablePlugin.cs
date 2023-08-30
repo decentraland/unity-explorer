@@ -1,6 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
 using DCL.PluginSystem.Global;
 using ECS.StreamableLoading.AssetBundles;
@@ -13,7 +13,6 @@ namespace DCL.AvatarRendering.Wearables
 {
     public class WearablePlugin : IDCLGlobalPluginWithoutSettings
     {
-        private readonly WearableDTOCache wearableDTOCache;
         public static readonly string STREAMING_ASSETS_URL =
 #if UNITY_EDITOR || UNITY_STANDALONE
             $"file://{Application.streamingAssetsPath}/AssetBundles/";
@@ -22,11 +21,11 @@ namespace DCL.AvatarRendering.Wearables
 #endif
 
         public readonly string AB_ASSETS_URL = "https://ab-cdn.decentraland.org/";
+        public readonly string EXPLORER_LAMBDA_URL = "https://peer-ec1.decentraland.org/explorer/";
+        public readonly string CONTENT_URL = "https://peer-ec1.decentraland.org/content";
 
         public WearablePlugin()
         {
-            //TODO: Rethink the cache system
-            wearableDTOCache = new WearableDTOCache();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
@@ -38,7 +37,8 @@ namespace DCL.AvatarRendering.Wearables
             LoadWearableSystem.InjectToWorld(ref builder);
             WearableDeferredLoadingSystem.InjectToWorld(ref builder, new ConcurrentLoadingBudgetProvider(50));
 
-            LoadWearablesDTOSystem.InjectToWorld(ref builder, wearableDTOCache, mutexSync, AB_ASSETS_URL);
+            LoadWearablesByParamSystem.InjectToWorld(ref builder, new NoCache<WearableDTO[], GetWearableByParamIntention>(), mutexSync);
+            LoadWearablesByPointersSystem.InjectToWorld(ref builder, new NoCache<WearableDTO[], GetWearableByPointersIntention>(), mutexSync);
             PrepareWearableAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL);
 
             LoadWearableAssetBundleSystem.InjectToWorld(ref builder, new NoCache<AssetBundleData, GetWearableAssetBundleIntention>(),

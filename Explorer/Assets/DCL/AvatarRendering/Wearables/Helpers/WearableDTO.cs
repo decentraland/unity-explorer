@@ -5,7 +5,7 @@ using System;
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
     [Serializable]
-    public class WearableDTO
+    public struct WearableDTO
     {
         public string version;
         public string id;
@@ -13,36 +13,37 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         public string[] pointers;
         public long timestamp;
 
-        public EntityDto.MetadataDto metadata;
-        public EntityDto.ContentDto[] content;
+        public WearableMetadataDto metadata;
+        public WearableContentDto[] content;
 
         public SceneAssetBundleManifest AssetBundleManifest;
 
-        public void ToWearableItem(ref WearableComponent wearableComponent, string contentBaseUrl)
+        public WearableComponent ToWearableItem(string contentBaseUrl)
         {
-            //id = metadata.id,
-
-            wearableComponent.wearableContent = new WearableContent
+            var wearableComponent = new WearableComponent
             {
-                representations = new WearableRepresentation[metadata.data.representations.Length],
-                category = metadata.data.category,
-                hides = metadata.data.hides,
-                replaces = metadata.data.replaces,
-                tags = metadata.data.tags,
-                removesDefaultHiding = metadata.data.removesDefaultHiding,
+                urn = metadata.id,
+                wearableContent = new WearableContent
+                {
+                    representations = new WearableRepresentation[metadata.data.representations.Length],
+                    category = metadata.data.category,
+                    hides = metadata.data.hides,
+                    replaces = metadata.data.replaces,
+                    tags = metadata.data.tags,
+                    removesDefaultHiding = metadata.data.removesDefaultHiding,
+                },
+                baseUrl = contentBaseUrl,
+                description = metadata.description,
+                i18n = metadata.i18n,
+                hash = id,
+                rarity = metadata.rarity,
+                thumbnailHash = GetContentHashByFileName(metadata.thumbnail),
+                AssetBundleManifest = AssetBundleManifest,
             };
-
-            wearableComponent.baseUrl = contentBaseUrl;
-            wearableComponent.description = metadata.description;
-            wearableComponent.i18n = metadata.i18n;
-            wearableComponent.hash = id;
-            wearableComponent.rarity = metadata.rarity;
-            wearableComponent.thumbnailHash = GetContentHashByFileName(metadata.thumbnail);
-            wearableComponent.AssetBundleManifest = AssetBundleManifest;
 
             for (var i = 0; i < metadata.data.representations.Length; i++)
             {
-                EntityDto.MetadataDto.Representation representation = metadata.data.representations[i];
+                WearableMetadataDto.Representation representation = metadata.data.representations[i];
 
                 wearableComponent.wearableContent.representations[i] = new WearableRepresentation
                 {
@@ -66,11 +67,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     };
                 }
             }
+
+            return wearableComponent;
         }
 
         public string GetContentHashByFileName(string fileName)
         {
-            foreach (EntityDto.ContentDto dto in content)
+            foreach (WearableContentDto dto in content)
                 if (dto.file == fileName)
                     return dto.hash;
 
@@ -79,47 +82,51 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     }
 
     [Serializable]
-    public class EntityDto
+    public struct WearableContentDto
     {
+        public string file;
+        public string hash;
+    }
+
+    [Serializable]
+    public struct WearableMetadataDto
+    {
+        public DataDto data;
+        public string id;
+
+        public i18n[] i18n;
+        public string thumbnail;
+
+        public string rarity;
+        public string description;
+
         [Serializable]
-        public class ContentDto
+        public class Representation
         {
-            public string file;
-            public string hash;
+            public string[] bodyShapes;
+            public string mainFile;
+            public string[] contents;
+            public string[] overrideHides;
+            public string[] overrideReplaces;
         }
 
         [Serializable]
-        public class MetadataDto
+        public class DataDto
         {
-            public DataDto data;
-            public string id;
-
-            public i18n[] i18n;
-            public string thumbnail;
-
-            public string rarity;
-            public string description;
-
-            [Serializable]
-            public class Representation
-            {
-                public string[] bodyShapes;
-                public string mainFile;
-                public string[] contents;
-                public string[] overrideHides;
-                public string[] overrideReplaces;
-            }
-
-            [Serializable]
-            public class DataDto
-            {
-                public Representation[] representations;
-                public string category;
-                public string[] tags;
-                public string[] replaces;
-                public string[] hides;
-                public string[] removesDefaultHiding;
-            }
+            public Representation[] representations;
+            public string category;
+            public string[] tags;
+            public string[] replaces;
+            public string[] hides;
+            public string[] removesDefaultHiding;
         }
+    }
+
+    //TODO: Response when requested OwnedWearables
+    [Serializable]
+    public struct BaseWearablesListResponse
+    {
+        public WearableDTO[] entities;
+        public int total;
     }
 }
