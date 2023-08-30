@@ -70,9 +70,6 @@ namespace SceneRuntime.Factory
         private UniTask<string> GetJsInitSourceCode(CancellationToken ct) =>
             LoadJavaScriptSourceCode($"file://{Application.streamingAssetsPath}/Js/Init.js", ct);
 
-        public UniTask<string> GetJsSdk7AdaptionLayer(CancellationToken ct) =>
-            LoadJavaScriptSourceCode("https://renderer-artifacts.decentraland.org/sdk7-adaption-layer/main/index.js", ct);
-
         private async UniTask AddModule(string moduleName, IDictionary<string, string> moduleDictionary, CancellationToken ct) =>
             moduleDictionary.Add(moduleName, WrapInModuleCommonJs(await LoadJavaScriptSourceCode($"file://{Application.streamingAssetsPath}/Js/Modules/{moduleName}", ct)));
 

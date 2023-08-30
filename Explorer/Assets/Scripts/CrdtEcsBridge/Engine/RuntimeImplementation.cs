@@ -30,19 +30,20 @@ namespace CrdtEcsBridge.Engine
             sceneData.TryGetContentUrl(fileName, out string url);
 
             await UniTask.SwitchToMainThread(); // TODO(Mateo): I don't know how to do this better
+
             var request = UnityWebRequest.Get(url);
 
             await request.SendWebRequest();
 
-            byte[] bytes = Encoding.ASCII.GetBytes(request.downloadHandler.text);
+            byte[] data = Encoding.ASCII.GetBytes(request.downloadHandler.text);
 
-            await UniTask.SwitchToThreadPool();
+            await UniTask.SwitchToThreadPool(); // TODO(Mateo): I don't know how to do this better
 
             // create script byte array
-            var array = jsOperations.CreateUint8Array(bytes.Length);
+            var array = jsOperations.CreateUint8Array(data.Length);
 
             // transfer data to script byte array
-            array.Write(bytes, 0, Convert.ToUInt64(bytes.Length), 0);
+            array.Write(data, 0, Convert.ToUInt64(data.Length), 0);
 
             return array;
         }

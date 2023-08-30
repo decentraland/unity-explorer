@@ -123,7 +123,11 @@ namespace SceneRunner
 
             string sceneCodeUrl;
 
-            if (!sceneData.IsSdk7()) { sceneCodeUrl = $"file://{Application.streamingAssetsPath}/Js/Sdk7AdapterLayer.js"; }
+            if (!sceneData.IsSdk7())
+            {
+                //sceneCodeUrl = $"file://{Application.streamingAssetsPath}/Js/Sdk7AdapterLayer.js";
+                sceneCodeUrl = "https://renderer-artifacts.decentraland.org/sdk7-adaption-layer/main/index.js";
+            }
             else
             {
                 // Create an instance of Scene Runtime on the thread pool

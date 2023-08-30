@@ -46,8 +46,8 @@ namespace ECS.StreamableLoading.Common.Systems
                     }
                     else
                     {
-                        ReportHub.Log(reportCategory, $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()}.\n"
-                                                      + $"Trying sources: {intention.CommonArguments.PermittedSources}");
+                        ReportHub.LogError(reportCategory, $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()}.\n"
+                                                           + $"Trying sources: {intention.CommonArguments.PermittedSources} attemptCount {attemptCount} url: {intention.CommonArguments.URL}");
                     }
 
                     // Decide if we can repeat or not
