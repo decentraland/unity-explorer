@@ -8,7 +8,6 @@ using ECS.Abstract;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
-using SceneRunner.Scene;
 using System;
 using Utility;
 
@@ -60,6 +59,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             // Second priority
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.WEB))
             {
+                //TODO: Comparison are failing due to hash caps lock?
                 // If Hash is already provided just use it, otherwise resolve by the content provider
                 if (!assetBundleIntention.WearableAssetBundleManifest.Contains(assetBundleIntention.Hash))
                 {

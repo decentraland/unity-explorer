@@ -74,18 +74,40 @@ namespace Global.Dynamic
             Entity playerEntity = world.Create(
                 new CRDTEntity(SpecialEntititiesID.PLAYER_ENTITY),
                 new PlayerComponent(characterObject.CameraFocus),
-                new TransformComponent { Transform = characterObject.Transform },
-                new PBAvatarShape
-                {
-                    BodyShape = "urn:decentraland:off-chain:base-avatars:BaseMale",
-                    Wearables =
-                    {
-                        "urn:decentraland:off-chain:base-avatars:black_glove",
-                        "urn:decentraland:off-chain:base-avatars:m_sweater_02",
-                        "urn:decentraland:off-chain:base-avatars:cool_hair",
-                    },
-                }
+                new TransformComponent { Transform = characterObject.Transform }
             );
+
+            world.Create(new PBAvatarShape
+            {
+                BodyShape = "urn:decentraland:off-chain:base-avatars:BaseMale",
+                Wearables =
+                {
+                    //TODO: Fix broken material
+                    //"urn:decentraland:off-chain:base-avatars:black_glove",
+                    //TODO: Fix no asset bundle manifest
+                    //"urn:decentraland:off-chain:base-avatars:square_earring"
+                    "urn:decentraland:off-chain:base-avatars:green_hoodie",
+                    "urn:decentraland:off-chain:base-avatars:cool_hair",
+                    "urn:decentraland:off-chain:base-avatars:brown_pants",
+                    "urn:decentraland:off-chain:base-avatars:bun_shoes",
+                },
+            });
+
+            world.Create(new PBAvatarShape
+            {
+                BodyShape = "urn:decentraland:off-chain:base-avatars:BaseMale",
+                Wearables =
+                {
+                    //TODO: Fix broken material
+                    //"urn:decentraland:off-chain:base-avatars:black_glove",
+                    //TODO: Fix no asset bundle manifest
+                    //"urn:decentraland:off-chain:base-avatars:square_earring"
+                    "urn:decentraland:off-chain:base-avatars:light_green_shirt",
+                    "urn:decentraland:off-chain:base-avatars:keanu_hair",
+                    "urn:decentraland:off-chain:base-avatars:jean_shorts",
+                    "urn:decentraland:off-chain:base-avatars:sport_colored_shoes",
+                },
+            });
 
             //TODO: Avoid initializing dictionary here
             world.Create(new WearableCatalog

@@ -39,12 +39,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 await request.SendWebRequest().WithCancellation(ct);
                 if (request.result != UnityWebRequest.Result.Success)
-                {
                     return new StreamableLoadingResult<SceneAssetBundleManifest>(new Exception($"Failed to load asset bundle manifest for intention: {intention.Hash}"));
-                }
                 response = request.downloadHandler.text;
             }
-
 
             //Deserialize out of the main thread
             await UniTask.SwitchToThreadPool();

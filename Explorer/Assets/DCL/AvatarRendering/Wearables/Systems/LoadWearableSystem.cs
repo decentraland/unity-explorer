@@ -60,7 +60,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        private void FinalizeAssetBundleManifestLoading(ref WearableComponent wearableComponent)
+        private void FinalizeAssetBundleManifestLoading(in Entity entity, ref WearableComponent wearableComponent)
         {
             if (wearableComponent.AssetBundleStatus == WearableComponent.AssetBundleLifeCycle.AssetBundleManifestLoading &&
                 wearableComponent.wearableAssetBundleManifestPromise.TryConsume(World, out StreamableLoadingResult<SceneAssetBundleManifest> result))
@@ -68,6 +68,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 if (!result.Succeeded)
                 {
                     //TODO: Error flow, add a default asset bundle to avoid blocking the instantiation of the caller
+                    World.Add(entity, new AssetBundleData(null, null, null));
                     ReportHub.LogError(GetReportCategory(), $"Asset bundle manifest for wearable: {wearableComponent.hash} failed, loading default asset bundle");
                     wearableComponent.AssetBundleStatus = WearableComponent.AssetBundleLifeCycle.AssetBundleLoaded;
                 }
@@ -90,9 +91,14 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 && wearableComponent.wearableAssetBundlePromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
                 wearableComponent.AssetBundleStatus = WearableComponent.AssetBundleLifeCycle.AssetBundleLoaded;
+
                 if (!result.Succeeded)
+                {
                     //TODO: Error flow, add a default asset bundle to avoid blocking the instantiation of the caller
+                    World.Add(entity, new AssetBundleData(null, null, null));
                     ReportHub.LogError(GetReportCategory(), $"Asset bundle for wearable: {wearableComponent.hash} failed, loading default asset bundle");
+                }
+
                 else
                     World.Add(entity, result.Asset);
             }

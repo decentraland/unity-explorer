@@ -133,6 +133,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private async UniTask WaitForDependency(SceneAssetBundleManifest assetBundleManifest, string hash, IPartitionComponent partition, CancellationToken ct)
         {
+            //TODO: Remove this hack by fixing the asset bundle converter
+            hash = assetBundleManifest.GetCorrectCapsLock(hash);
+
             // Inherit partition from the parent promise
             var assetBundlePromise = AssetPromise<AssetBundleData, GetWearableAssetBundleIntention>.Create(World, GetWearableAssetBundleIntention.FromHash(assetBundleManifest, hash), partition);
 

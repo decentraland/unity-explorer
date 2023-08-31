@@ -70,6 +70,17 @@ namespace SceneRunner.Scene
         public bool Contains(string hash) =>
             convertedFiles.Contains(hash);
 
+        public string GetCorrectCapsLock(string hash)
+        {
+            foreach (string convertedFile in convertedFiles)
+            {
+                if (string.Compare(hash, convertedFile, StringComparison.OrdinalIgnoreCase) == 0)
+                    return convertedFile;
+            }
+
+            return hash;
+        }
+
         public string GetAssetBundleURL(string hash) =>
             $"{assetBundlesBaseUrl}{dto.Version}/{hash}";
     }

@@ -54,6 +54,7 @@ public struct GetWearableAssetBundleIntention : ILoadingIntention, IEquatable<Ge
     {
         Hash = hash;
         WearableAssetBundleManifest = assetBundleManifest;
+
         // Don't resolve URL here
         CommonArguments = new CommonLoadingArguments(string.Empty, permittedSources: permittedSources);
         cacheHash = null;

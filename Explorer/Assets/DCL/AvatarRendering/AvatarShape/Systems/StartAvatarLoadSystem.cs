@@ -19,11 +19,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(LoadWearableSystem))]
     [LogCategory(ReportCategory.AVATAR)]
-    public partial class LoadAvatarWearableSystem : BaseUnityLoopSystem
+    public partial class StartAvatarLoadSystem : BaseUnityLoopSystem
     {
         private SingleInstanceEntity wearableCatalog;
 
-        public LoadAvatarWearableSystem(World world) : base(world) { }
+        public StartAvatarLoadSystem(World world) : base(world) { }
 
         public override void Initialize()
         {
@@ -33,13 +33,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         protected override void Update(float t)
         {
-            StartAvatarWearableLoadQuery(World);
-            FinalizeAvatarWearableLoadQuery(World);
+            StartAvatarLoadQuery(World);
+            FinalizeAvatarLoadQuery(World);
         }
 
         [Query]
         [None(typeof(AvatarShapeComponent))]
-        private void StartAvatarWearableLoad(in Entity entity, ref PBAvatarShape pbAvatarShape)
+        private void StartAvatarLoad(in Entity entity, ref PBAvatarShape pbAvatarShape)
         {
             var avatarShapeComponent = new AvatarShapeComponent
             {
@@ -66,7 +66,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        private void FinalizeAvatarWearableLoad(ref PBAvatarShape pbAvatarShape, ref AvatarShapeComponent avatarShapeComponent)
+        private void FinalizeAvatarLoad(ref PBAvatarShape pbAvatarShape, ref AvatarShapeComponent avatarShapeComponent)
         {
             if (avatarShapeComponent.Status == AvatarShapeComponent.LifeCycle.LoadingWearables &&
                 avatarShapeComponent.WearablePromise.TryConsume(World, out StreamableLoadingResult<WearableDTO[]> result))
