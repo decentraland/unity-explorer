@@ -33,7 +33,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
             = new (() => new AssetBundleMetadata(), maxSize: 100);
 
         private readonly AssetBundleLoadingMutex loadingMutex;
-        private string ASSET_BUNDLE_URL;
 
         internal LoadWearableAssetBundleSystem(World world,
             IStreamableCache<AssetBundleData, GetWearableAssetBundleIntention> cache,
@@ -70,7 +69,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             AssetBundle assetBundle;
 
-            Debug.Log("AAAA " + intention.CommonArguments.URL + " " + intention.cacheHash.Value);
             using (UnityWebRequest webRequest = intention.cacheHash.HasValue
                        ? UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL, intention.cacheHash.Value)
                        : UnityWebRequestAssetBundle.GetAssetBundle(intention.CommonArguments.URL))

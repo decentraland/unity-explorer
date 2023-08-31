@@ -87,7 +87,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private void FinalizeAssetBundleLoading(in Entity entity, ref WearableComponent wearableComponent)
         {
             if (wearableComponent.AssetBundleStatus == WearableComponent.AssetBundleLifeCycle.AssetBundleLoading
-                && !wearableComponent.wearableAssetBundlePromise.IsConsumed
                 && wearableComponent.wearableAssetBundlePromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
                 wearableComponent.AssetBundleStatus = WearableComponent.AssetBundleLifeCycle.AssetBundleLoaded;

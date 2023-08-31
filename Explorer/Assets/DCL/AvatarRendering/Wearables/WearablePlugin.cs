@@ -1,5 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
 using DCL.PluginSystem.Global;
@@ -26,12 +27,6 @@ namespace DCL.AvatarRendering.Wearables
         public readonly string EXPLORER_LAMBDA_URL = "https://peer-ec1.decentraland.org/explorer/";
         public readonly string CONTENT_URL = "https://peer-ec1.decentraland.org/content";
 
-        private AssetBundleLoadingMutex assetBundleLoadingMutex;
-
-        public WearablePlugin()
-        {
-            assetBundleLoadingMutex = new AssetBundleLoadingMutex();
-        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
@@ -46,13 +41,7 @@ namespace DCL.AvatarRendering.Wearables
             LoadWearableSystem.InjectToWorld(ref builder, CONTENT_URL);
             LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(), mutexSync, AB_ASSETS_URL);
             PrepareWearableAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL);
-            LoadWearableAssetBundleSystem.InjectToWorld(ref builder, new NoCache<AssetBundleData, GetWearableAssetBundleIntention>(),
-                mutexSync, assetBundleLoadingMutex);
-
-
-
-
-
+            LoadWearableAssetBundleSystem.InjectToWorld(ref builder, new WearableAssetBundleCache(), mutexSync, new AssetBundleLoadingMutex());
         }
     }
 }
