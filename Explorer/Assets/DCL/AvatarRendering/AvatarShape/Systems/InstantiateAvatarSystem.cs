@@ -59,20 +59,36 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
                 AvatarBase avatarBase = avatarPoolRegistry.Get();
                 avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
-                //Instantiation and binding bones of avatar
+                avatarBase.transform.position = new Vector3(Random.Range(0, 20), 0, Random.Range(0, 20));
 
-                InstantiateWearable(World.Get<AssetBundleData>(avatarShapeComponent.BodyShape).GameObject, avatarBase.AvatarSkinnedMeshRenderer, avatarBase.transform);
+                //Instantiation and binding bones of avatar
+                GameObject bodyShape = InstantiateWearable(World.Get<AssetBundleData>(avatarShapeComponent.BodyShape).GameObject, avatarBase.AvatarSkinnedMeshRenderer, avatarBase.transform);
+                HideBodyParts(bodyShape);
+
                 for (var i = 0; i < avatarShapeComponent.Wearables.Length; i++)
                     InstantiateWearable(World.Get<AssetBundleData>(avatarShapeComponent.Wearables[i]).GameObject, avatarBase.AvatarSkinnedMeshRenderer, avatarBase.transform);
 
             }
         }
 
-        private void InstantiateWearable(GameObject objectToInstantiate, SkinnedMeshRenderer baseAvatar, Transform parentTransform)
+        //TODO: Do a proper hiding algorithm
+        private void HideBodyParts(GameObject bodyShape)
+        {
+            for (var i = 0; i < bodyShape.transform.childCount; i++)
+            {
+                bool turnOff = !(bodyShape.transform.GetChild(i).name.Contains("uBody_BaseMesh") ||
+                                 bodyShape.transform.GetChild(i).name.Contains("lBody_BaseMesh") ||
+                                 bodyShape.transform.GetChild(i).name.Contains("Feet_BaseMesh"));
+
+                bodyShape.transform.GetChild(i).gameObject.SetActive(turnOff);
+            }
+        }
+
+        private GameObject InstantiateWearable(GameObject objectToInstantiate, SkinnedMeshRenderer baseAvatar, Transform parentTransform)
         {
             //TODO: Delete this one the default wearable is added
             if (objectToInstantiate == null)
-                return;
+                return new GameObject();
 
             //TODO: Pooling and combining
             GameObject instantiatedWearabled = Object.Instantiate(objectToInstantiate, parentTransform);
@@ -82,6 +98,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 skinnedMeshRenderer.rootBone = baseAvatar.rootBone;
                 skinnedMeshRenderer.bones = baseAvatar.bones;
             }
+
+            return instantiatedWearabled;
         }
 
         private bool IsWearableReadyToInstantiate(ref WearableComponent wearableComponent)

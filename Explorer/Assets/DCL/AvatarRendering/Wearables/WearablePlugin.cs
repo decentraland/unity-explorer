@@ -24,7 +24,7 @@ namespace DCL.AvatarRendering.Wearables
 
         //Should be taken from the catalyst
         public readonly string AB_ASSETS_URL = "https://ab-cdn.decentraland.org/";
-        public readonly string EXPLORER_LAMBDA_URL = "https://peer-ec1.decentraland.org/explorer/";
+        public readonly string EXPLORER_LAMBDA_URL = "https://peer-ec1.decentraland.org/explorer";
         public readonly string CONTENT_URL = "https://peer-ec1.decentraland.org/content";
 
 
@@ -35,7 +35,7 @@ namespace DCL.AvatarRendering.Wearables
 
             WearableDeferredLoadingSystem.InjectToWorld(ref builder, new ConcurrentLoadingBudgetProvider(50));
 
-            LoadWearablesByParamSystem.InjectToWorld(ref builder, new NoCache<WearableDTO[], GetWearableByParamIntention>(), mutexSync);
+            LoadWearablesByParamSystem.InjectToWorld(ref builder, new NoCache<WearableDTO[], GetWearableByParamIntention>(), mutexSync, EXPLORER_LAMBDA_URL);
             LoadWearablesByPointersSystem.InjectToWorld(ref builder, new WearablesByPointersCache(), mutexSync);
 
             LoadWearableSystem.InjectToWorld(ref builder, CONTENT_URL);

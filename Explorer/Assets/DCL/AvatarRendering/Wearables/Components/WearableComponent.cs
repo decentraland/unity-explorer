@@ -1,4 +1,3 @@
-using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
@@ -43,6 +42,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public string GetMainFileHash()
         {
+            //TODO: Get main file hash depending on the representation
             string mainFileKey = wearableContent.representations[0].mainFile;
             foreach (WearableMappingPair wearableMappingPair in wearableContent.representations[0].contents)
             {

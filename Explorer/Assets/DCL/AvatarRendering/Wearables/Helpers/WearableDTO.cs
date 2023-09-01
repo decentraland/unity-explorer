@@ -1,6 +1,6 @@
 using DCL.AvatarRendering.Wearables.Components;
-using SceneRunner.Scene;
 using System;
+using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
@@ -119,11 +119,29 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         }
     }
 
-    //TODO: Response when requested OwnedWearables
     [Serializable]
-    public struct BaseWearablesListResponse
+    public struct LambdaResponse
     {
-        public WearableDTO[] entities;
-        public int total;
+        public List<LambdaResponseElementDto> elements;
+    }
+
+    [Serializable]
+    public struct LambdaResponseElementDto
+    {
+        public string type;
+        public string urn;
+        public string name;
+        public string category;
+        public WearableDTO entity;
+        public LambdaResponseIndividualDataDto[] individualData;
+    }
+
+    [Serializable]
+    public struct LambdaResponseIndividualDataDto
+    {
+        public string id;
+        public string tokenId;
+        public string transferredAt;
+        public string price;
     }
 }

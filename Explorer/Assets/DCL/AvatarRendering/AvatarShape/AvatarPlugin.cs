@@ -7,7 +7,7 @@ using DCL.PluginSystem.Global;
 using ECS.ComponentsPooling;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 
-public class AvatarShapePlugin : IDCLGlobalPluginWithoutSettings
+public class AvatarPlugin : IDCLGlobalPluginWithoutSettings
 {
     //TODO: Keep it as setting or load it through the pool?
     /*[Serializable]
@@ -28,7 +28,7 @@ public class AvatarShapePlugin : IDCLGlobalPluginWithoutSettings
     private readonly IConcurrentBudgetProvider frameTimeCapBudgetProvider;
     private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
 
-    public AvatarShapePlugin(IAssetsProvisioner assetsProvisioner, IConcurrentBudgetProvider frameTimeCapBudgetProvider, IComponentPool<AvatarBase> avatarPoolRegistry)
+    public AvatarPlugin(IAssetsProvisioner assetsProvisioner, IConcurrentBudgetProvider frameTimeCapBudgetProvider, IComponentPool<AvatarBase> avatarPoolRegistry)
     {
         this.frameTimeCapBudgetProvider = frameTimeCapBudgetProvider;
         this.avatarPoolRegistry = avatarPoolRegistry;
@@ -37,6 +37,7 @@ public class AvatarShapePlugin : IDCLGlobalPluginWithoutSettings
     {
         StartAvatarLoadSystem.InjectToWorld(ref builder);
         InstantiateAvatarSystem.InjectToWorld(ref builder, frameTimeCapBudgetProvider, avatarPoolRegistry);
+        InstantiateRandomAvatarsSystem.InjectToWorld(ref builder);
     }
 
 

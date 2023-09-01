@@ -9,6 +9,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using Newtonsoft.Json;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using UnityEngine.Networking;
@@ -20,15 +21,18 @@ namespace DCL.AvatarRendering.Wearables.Systems
     public partial class LoadWearablesByParamSystem : LoadSystemBase<WearableDTO[], GetWearableByParamIntention>
     {
         private readonly StringBuilder urlBuilder = new ();
+        private readonly string LAMBDA_URL;
 
-        public LoadWearablesByParamSystem(World world, IStreamableCache<WearableDTO[], GetWearableByParamIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync) { }
+        public LoadWearablesByParamSystem(World world, IStreamableCache<WearableDTO[], GetWearableByParamIntention> cache, MutexSync mutexSync, string lambdaURL) : base(world, cache, mutexSync)
+        {
+            LAMBDA_URL = lambdaURL;
+        }
 
         protected override async UniTask<StreamableLoadingResult<WearableDTO[]>> FlowInternal(GetWearableByParamIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            //TODO: Failure flow
             string response;
 
-            using (var request = UnityWebRequest.Get(BuildURL(intention.CommonArguments.URL, intention.Params)))
+            using (var request = UnityWebRequest.Get(BuildURL(LAMBDA_URL, intention.UserID, intention.Params)))
             {
                 await request.SendWebRequest().WithCancellation(ct);
                 response = request.downloadHandler.text;
@@ -36,16 +40,28 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             //Deserialize out of the main thread
             await UniTask.SwitchToThreadPool();
-            return new StreamableLoadingResult<WearableDTO[]>(JsonConvert.DeserializeObject<BaseWearablesListResponse>(response).entities);
+
+            //TODO: Keep this in mind, because not completely sure what we will need in the future
+            LambdaResponse lambdaResponse = JsonConvert.DeserializeObject<LambdaResponse>(response);
+            var wearableDtos = new WearableDTO[lambdaResponse.elements.Count()];
+
+            for (var i = 0; i < lambdaResponse.elements.Count; i++)
+                wearableDtos[i] = lambdaResponse.elements[i].entity;
+
+            return new StreamableLoadingResult<WearableDTO[]>(wearableDtos);
         }
 
-        private string BuildURL(string url, params (string paramName, string paramValue)[] urlEncodedParams)
+        private string BuildURL(string url, string userID, params (string paramName, string paramValue)[] urlEncodedParams)
         {
             urlBuilder.Clear();
             urlBuilder.Append(url);
 
             if (!urlBuilder.ToString().EndsWith('/'))
                 urlBuilder.Append('/');
+
+            urlBuilder.Append("/");
+            urlBuilder.Append(userID);
+            urlBuilder.Append("/wearables/");
 
             if (urlEncodedParams.Length > 0)
             {

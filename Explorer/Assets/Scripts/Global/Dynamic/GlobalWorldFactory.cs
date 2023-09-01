@@ -5,7 +5,6 @@ using CrdtEcsBridge.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Character;
 using DCL.Character.Components;
-using DCL.ECSComponents;
 using DCL.PluginSystem.Global;
 using ECS.ComponentsPooling;
 using ECS.LifeCycle;
@@ -77,7 +76,7 @@ namespace Global.Dynamic
                 new TransformComponent { Transform = characterObject.Transform }
             );
 
-            world.Create(new PBAvatarShape
+            /*world.Create(new PBAvatarShape
             {
                 BodyShape = "urn:decentraland:off-chain:base-avatars:BaseMale",
                 Wearables =
@@ -91,55 +90,7 @@ namespace Global.Dynamic
                     "urn:decentraland:off-chain:base-avatars:brown_pants",
                     "urn:decentraland:off-chain:base-avatars:bun_shoes",
                 },
-            });
-
-            world.Create(new PBAvatarShape
-            {
-                BodyShape = "urn:decentraland:off-chain:base-avatars:BaseMale",
-                Wearables =
-                {
-                    "urn:decentraland:off-chain:base-avatars:light_green_shirt",
-                    "urn:decentraland:off-chain:base-avatars:keanu_hair",
-                    "urn:decentraland:off-chain:base-avatars:jean_shorts",
-                    "urn:decentraland:off-chain:base-avatars:sport_colored_shoes",
-                },
-            });
-
-            world.Create(new PBAvatarShape
-            {
-                BodyShape = "urn:decentraland:off-chain:base-avatars:BaseMale",
-                Wearables =
-                {
-                    "urn:decentraland:off-chain:base-avatars:balbo_beard",
-                    "urn:decentraland:off-chain:base-avatars:baggy_pullover",
-                    "urn:decentraland:off-chain:base-avatars:keanu_hair",
-                    "urn:decentraland:off-chain:base-avatars:basketball_shorts",
-                    "urn:decentraland:off-chain:base-avatars:bear_slippers",
-                },
-            });
-
-            world.Create(new PBAvatarShape
-            {
-                BodyShape = "urn:decentraland:off-chain:base-avatars:BaseFemale",
-                Wearables =
-                {
-                    "urn:decentraland:off-chain:base-avatars:brown_sleveless_dress",
-                },
-            });
-
-            world.Create(new PBAvatarShape
-            {
-                BodyShape = "urn:decentraland:off-chain:base-avatars:BaseMale",
-                Wearables =
-                {
-                    "urn:decentraland:off-chain:base-avatars:bee_t_shirt",
-                    "urn:decentraland:off-chain:base-avatars:blue_bandana",
-                    "urn:decentraland:off-chain:base-avatars:brown_pants_02",
-                    "urn:decentraland:off-chain:base-avatars:bear_slippers",
-                },
-            });
-
-
+            });*/
 
             //TODO: Avoid initializing dictionary here
             world.Create(new WearableCatalog
