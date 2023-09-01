@@ -60,16 +60,17 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        private void FinalizeAssetBundleManifestLoading(in Entity entity, ref WearableComponent wearableComponent)
+        private void FinalizeAssetBundleManifestLoading(ref WearableComponent wearableComponent)
         {
             if (wearableComponent.AssetBundleStatus == WearableComponent.AssetBundleLifeCycle.AssetBundleManifestLoading &&
                 wearableComponent.wearableAssetBundleManifestPromise.TryConsume(World, out StreamableLoadingResult<SceneAssetBundleManifest> result))
             {
                 if (!result.Succeeded)
                 {
-                    //TODO: Error flow, add a default asset bundle to avoid blocking the instantiation of the caller
+                    //TODO: Error flow. Adding an empty asst bundle data to tell the caller that the default should be instantiated
+                    //Maybe change it with a new component?
                     wearableComponent.AssetBundleStatus = WearableComponent.AssetBundleLifeCycle.AssetBundleLoaded;
-                    World.Add(entity, new AssetBundleData(null, null, null));
+                    wearableComponent.AssetBundleData = new AssetBundleData(null, null, null);
                     ReportHub.LogError(GetReportCategory(), $"Asset bundle manifest for wearable: {wearableComponent.hash} failed, loading default asset bundle");
                 }
                 else
@@ -94,13 +95,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                 if (!result.Succeeded)
                 {
-                    //TODO: Error flow, add a default asset bundle to avoid blocking the instantiation of the caller
-                    World.Add(entity, new AssetBundleData(null, null, null));
+                    //TODO: Error flow. Adding an empty asst bundle data to tell the caller that the default should be instantiated
+                    //Maybe change it with a new component?
+                    wearableComponent.AssetBundleData = new AssetBundleData(null, null, null);
                     ReportHub.LogError(GetReportCategory(), $"Asset bundle for wearable: {wearableComponent.hash} failed, loading default asset bundle");
                 }
-
                 else
-                    World.Add(entity, result.Asset);
+                    wearableComponent.AssetBundleData = result.Asset;
             }
         }
 

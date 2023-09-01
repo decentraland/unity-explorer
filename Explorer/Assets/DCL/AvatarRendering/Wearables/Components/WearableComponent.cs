@@ -22,6 +22,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         ///     The current status of the Wearable loading
         /// </summary>
         public AssetBundleLifeCycle AssetBundleStatus;
+        public AssetBundleData AssetBundleData;
 
         public AssetPromise<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention> wearableAssetBundleManifestPromise;
         public AssetPromise<AssetBundleData, GetWearableAssetBundleIntention> wearableAssetBundlePromise;
@@ -43,6 +44,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         public string GetMainFileHash()
         {
             //TODO: Get main file hash depending on the representation
+            //int representationIndex = bodyShape.Equals(WearablesLiterals.BodyShapes.MALE) ? 0 : 1;
             string mainFileKey = wearableContent.representations[0].mainFile;
             foreach (WearableMappingPair wearableMappingPair in wearableContent.representations[0].contents)
             {

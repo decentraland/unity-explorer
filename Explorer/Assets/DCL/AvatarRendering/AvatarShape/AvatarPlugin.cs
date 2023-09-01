@@ -35,7 +35,7 @@ public class AvatarPlugin : IDCLGlobalPluginWithoutSettings
     }
     public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
     {
-        StartAvatarLoadSystem.InjectToWorld(ref builder);
+        CreateAvatarSystem.InjectToWorld(ref builder);
         InstantiateAvatarSystem.InjectToWorld(ref builder, frameTimeCapBudgetProvider, avatarPoolRegistry);
         InstantiateRandomAvatarsSystem.InjectToWorld(ref builder);
     }

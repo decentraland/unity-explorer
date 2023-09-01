@@ -76,22 +76,6 @@ namespace Global.Dynamic
                 new TransformComponent { Transform = characterObject.Transform }
             );
 
-            /*world.Create(new PBAvatarShape
-            {
-                BodyShape = "urn:decentraland:off-chain:base-avatars:BaseMale",
-                Wearables =
-                {
-                    //TODO: Fix broken material
-                    //"urn:decentraland:off-chain:base-avatars:black_glove",
-                    //TODO: Fix no asset bundle manifest
-                    //"urn:decentraland:off-chain:base-avatars:square_earring"
-                    "urn:decentraland:off-chain:base-avatars:green_hoodie",
-                    "urn:decentraland:off-chain:base-avatars:cool_hair",
-                    "urn:decentraland:off-chain:base-avatars:brown_pants",
-                    "urn:decentraland:off-chain:base-avatars:bun_shoes",
-                },
-            });*/
-
             //TODO: Avoid initializing dictionary here
             world.Create(new WearableCatalog
             {

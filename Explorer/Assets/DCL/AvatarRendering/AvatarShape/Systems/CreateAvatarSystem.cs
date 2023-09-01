@@ -19,11 +19,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(LoadWearableSystem))]
     [LogCategory(ReportCategory.AVATAR)]
-    public partial class StartAvatarLoadSystem : BaseUnityLoopSystem
+    public partial class CreateAvatarSystem : BaseUnityLoopSystem
     {
         private SingleInstanceEntity wearableCatalog;
 
-        public StartAvatarLoadSystem(World world) : base(world) { }
+        public CreateAvatarSystem(World world) : base(world) { }
 
         public override void Initialize()
         {
@@ -72,15 +72,33 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 avatarShapeComponent.WearablePromise.TryConsume(World, out StreamableLoadingResult<WearableDTO[]> result))
             {
                 if (!result.Succeeded)
+                {
+                    SetDefaultWearables(ref pbAvatarShape, ref avatarShapeComponent);
                     ReportHub.LogError(GetReportCategory(), "Error loading wearables for avatar: " + avatarShapeComponent.ID);
+                }
                 else
                     SetAvatarWearables(ref pbAvatarShape, ref avatarShapeComponent);
             }
         }
 
+        private void SetDefaultWearables(ref PBAvatarShape pbAvatarShape, ref AvatarShapeComponent avatarShape)
+        {
+            string defaultBodyShape = WearablesLiterals.BodyShapes.MALE;
+            string[] defaultWearables = WearablesLiterals.DefaultWearables.GetDefaultWearablesForBodyShape(defaultBodyShape);
+
+            avatarShape.BodyShapeUrn = defaultBodyShape;
+            avatarShape.BodyShape = GetEntityReference(defaultBodyShape);
+
+            for (var i = 0; i < pbAvatarShape.Wearables.Count; i++)
+                avatarShape.Wearables[i] = GetEntityReference(defaultWearables[i]);
+
+            avatarShape.Status = AvatarShapeComponent.LifeCycle.LoadingAssetBundles;
+        }
+
         private void SetAvatarWearables(ref PBAvatarShape pbAvatarShape, ref AvatarShapeComponent avatarShape)
         {
             avatarShape.BodyShape = GetEntityReference(pbAvatarShape.BodyShape);
+            avatarShape.BodyShapeUrn = pbAvatarShape.BodyShape;
             for (var i = 0; i < pbAvatarShape.Wearables.Count; i++)
                 avatarShape.Wearables[i] = GetEntityReference(pbAvatarShape.Wearables[i]);
 

@@ -39,6 +39,7 @@ namespace DCL.AvatarRendering.Wearables
             LoadWearablesByPointersSystem.InjectToWorld(ref builder, new WearablesByPointersCache(), mutexSync);
 
             LoadWearableSystem.InjectToWorld(ref builder, CONTENT_URL);
+            LoadDefaultWearablesSystem.InjectToWorld(ref builder);
             LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(), mutexSync, AB_ASSETS_URL);
             PrepareWearableAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL);
             LoadWearableAssetBundleSystem.InjectToWorld(ref builder, new WearableAssetBundleCache(), mutexSync, new AssetBundleLoadingMutex());

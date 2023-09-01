@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Wearables.Components;
 using Diagnostics.ReportsHandling;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;

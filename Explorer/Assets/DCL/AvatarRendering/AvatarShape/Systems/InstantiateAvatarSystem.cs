@@ -3,12 +3,13 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.ComponentsPooling;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
@@ -18,19 +19,27 @@ using UnityEngine;
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(StartAvatarLoadSystem))]
+    [UpdateAfter(typeof(CreateAvatarSystem))]
     [LogCategory(ReportCategory.AVATAR)]
     public partial class InstantiateAvatarSystem : BaseUnityLoopSystem
     {
 
         private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
         private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
+        private SingleInstanceEntity wearableCatalog;
+
 
         public InstantiateAvatarSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider,
             IComponentPool<AvatarBase> avatarPoolRegistry) : base(world)
         {
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
             this.avatarPoolRegistry = avatarPoolRegistry;
+        }
+
+        public override void Initialize()
+        {
+            base.Initialize();
+            wearableCatalog = World.CacheWearableCatalog();
         }
 
         protected override void Update(float t)
@@ -62,11 +71,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 avatarBase.transform.position = new Vector3(Random.Range(0, 20), 0, Random.Range(0, 20));
 
                 //Instantiation and binding bones of avatar
-                GameObject bodyShape = InstantiateWearable(World.Get<AssetBundleData>(avatarShapeComponent.BodyShape).GameObject, avatarBase.AvatarSkinnedMeshRenderer, avatarBase.transform);
+                GameObject bodyShape = InstantiateWearable(avatarShapeComponent.BodyShapeUrn, World.Get<WearableComponent>(avatarShapeComponent.BodyShape),
+                    avatarBase.AvatarSkinnedMeshRenderer, avatarBase.transform);
                 HideBodyParts(bodyShape);
 
                 for (var i = 0; i < avatarShapeComponent.Wearables.Length; i++)
-                    InstantiateWearable(World.Get<AssetBundleData>(avatarShapeComponent.Wearables[i]).GameObject, avatarBase.AvatarSkinnedMeshRenderer, avatarBase.transform);
+                    InstantiateWearable(avatarShapeComponent.BodyShapeUrn,
+                        World.Get<WearableComponent>(avatarShapeComponent.Wearables[i]), avatarBase.AvatarSkinnedMeshRenderer, avatarBase.transform);
 
             }
         }
@@ -84,11 +95,16 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             }
         }
 
-        private GameObject InstantiateWearable(GameObject objectToInstantiate, SkinnedMeshRenderer baseAvatar, Transform parentTransform)
+        private GameObject InstantiateWearable(string bodyShape, WearableComponent wearableComponent, SkinnedMeshRenderer baseAvatar, Transform parentTransform)
         {
-            //TODO: Delete this one the default wearable is added
+            GameObject objectToInstantiate = wearableComponent.AssetBundleData.GameObject;
+
+            //TODO: Instantiating default wearable
             if (objectToInstantiate == null)
-                return new GameObject();
+            {
+                string defaultUrn = WearablesLiterals.DefaultWearables.GetDefaultWearable(bodyShape, wearableComponent.wearableContent.category);
+                objectToInstantiate = World.Get<WearableComponent>(wearableCatalog.GetWearableCatalog(World).catalog[defaultUrn]).AssetBundleData.GameObject;
+            }
 
             //TODO: Pooling and combining
             GameObject instantiatedWearabled = Object.Instantiate(objectToInstantiate, parentTransform);

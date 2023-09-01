@@ -2,7 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
 using DCL.ECSComponents;
@@ -34,6 +34,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             (string, string)[] urlParams = { ("collectionType", "base-wearable"), ("pageSize", "300") };
 
             //TODO: Probably once again we need a prepare system to resolver the url
+            //Also, solve the boxing is required
             var promise = AssetPromise<WearableDTO[], GetWearableByParamIntention>.Create(World,
                 new GetWearableByParamIntention
                 {
@@ -43,7 +44,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 },
                 new PartitionComponent());
 
-            var randomAvatarConstructorComponent = new RandomAvatarConstructorComponent();
+            var randomAvatarConstructorComponent = new WearablePromiseContainerComponent();
             randomAvatarConstructorComponent.WearableRequestPromise = promise;
             World.Create(randomAvatarConstructorComponent);
         }
@@ -54,17 +55,17 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        private void CreateRandomAvatars(ref RandomAvatarConstructorComponent randomAvatarConstructorComponent)
+        private void CreateRandomAvatars(ref WearablePromiseContainerComponent wearablePromiseContainerComponent)
         {
-            if (!randomAvatarConstructorComponent.Done &&
-                randomAvatarConstructorComponent.WearableRequestPromise.TryConsume(World, out StreamableLoadingResult<WearableDTO[]> result))
+            if (!wearablePromiseContainerComponent.Done &&
+                wearablePromiseContainerComponent.WearableRequestPromise.TryConsume(World, out StreamableLoadingResult<WearableDTO[]> result))
             {
                 if (!result.Succeeded)
                     ReportHub.LogError(GetReportCategory(), "Base wearables could not be fetched");
                 else
                     GenerateRandomAvatars(result);
 
-                randomAvatarConstructorComponent.Done = true;
+                wearablePromiseContainerComponent.Done = true;
             }
         }
 
@@ -75,25 +76,38 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             var lower_body = new List<WearableDTO>();
             var feet = new List<WearableDTO>();
             var hair = new List<WearableDTO>();
+            var mouth = new List<WearableDTO>();
+            var eyes = new List<WearableDTO>();
+            var eyebros = new List<WearableDTO>();
+
 
             foreach (WearableDTO wearableDto in result.Asset)
             {
                 switch (wearableDto.metadata.data.category)
                 {
-                    case "body_shape":
+                    case WearablesLiterals.Categories.BODY_SHAPE:
                         body_shape.Add(wearableDto);
                         break;
-                    case "upper_body":
+                    case WearablesLiterals.Categories.UPPER_BODY:
                         upper_body.Add(wearableDto);
                         break;
-                    case "lower_body":
+                    case WearablesLiterals.Categories.LOWER_BODY:
                         lower_body.Add(wearableDto);
                         break;
-                    case "feet":
+                    case WearablesLiterals.Categories.FEET:
                         feet.Add(wearableDto);
                         break;
-                    case "hair":
+                    case WearablesLiterals.Categories.HAIR:
                         hair.Add(wearableDto);
+                        break;
+                    case WearablesLiterals.Categories.MOUTH:
+                        mouth.Add(wearableDto);
+                        break;
+                    case WearablesLiterals.Categories.EYES:
+                        eyes.Add(wearableDto);
+                        break;
+                    case WearablesLiterals.Categories.EYEBROWS:
+                        eyebros.Add(wearableDto);
                         break;
                 }
             }
@@ -109,6 +123,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                         lower_body[Random.Range(0, lower_body.Count)].metadata.id,
                         feet[Random.Range(0, feet.Count)].metadata.id,
                         hair[Random.Range(0, hair.Count)].metadata.id,
+                        mouth[Random.Range(0, mouth.Count)].metadata.id,
+                        eyes[Random.Range(0, eyes.Count)].metadata.id,
+                        eyebros[Random.Range(0, eyebros.Count)].metadata.id,
                     },
                 };
 

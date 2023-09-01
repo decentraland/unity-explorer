@@ -17,6 +17,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public LifeCycle Status;
 
         public string ID;
+
+        //TODO: can I remove the urn from here?
+        public string BodyShapeUrn;
         public EntityReference BodyShape;
         public EntityReference[] Wearables;
 

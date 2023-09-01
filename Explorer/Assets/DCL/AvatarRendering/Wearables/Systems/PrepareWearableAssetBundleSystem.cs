@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using AssetManagement;
+using DCL.AvatarRendering.Wearables.Components;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.StreamableLoading;
