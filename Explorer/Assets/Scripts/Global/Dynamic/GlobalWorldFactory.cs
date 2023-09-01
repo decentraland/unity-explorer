@@ -98,16 +98,48 @@ namespace Global.Dynamic
                 BodyShape = "urn:decentraland:off-chain:base-avatars:BaseMale",
                 Wearables =
                 {
-                    //TODO: Fix broken material
-                    //"urn:decentraland:off-chain:base-avatars:black_glove",
-                    //TODO: Fix no asset bundle manifest
-                    //"urn:decentraland:off-chain:base-avatars:square_earring"
                     "urn:decentraland:off-chain:base-avatars:light_green_shirt",
                     "urn:decentraland:off-chain:base-avatars:keanu_hair",
                     "urn:decentraland:off-chain:base-avatars:jean_shorts",
                     "urn:decentraland:off-chain:base-avatars:sport_colored_shoes",
                 },
             });
+
+            world.Create(new PBAvatarShape
+            {
+                BodyShape = "urn:decentraland:off-chain:base-avatars:BaseMale",
+                Wearables =
+                {
+                    "urn:decentraland:off-chain:base-avatars:balbo_beard",
+                    "urn:decentraland:off-chain:base-avatars:baggy_pullover",
+                    "urn:decentraland:off-chain:base-avatars:keanu_hair",
+                    "urn:decentraland:off-chain:base-avatars:basketball_shorts",
+                    "urn:decentraland:off-chain:base-avatars:bear_slippers",
+                },
+            });
+
+            world.Create(new PBAvatarShape
+            {
+                BodyShape = "urn:decentraland:off-chain:base-avatars:BaseFemale",
+                Wearables =
+                {
+                    "urn:decentraland:off-chain:base-avatars:brown_sleveless_dress",
+                },
+            });
+
+            world.Create(new PBAvatarShape
+            {
+                BodyShape = "urn:decentraland:off-chain:base-avatars:BaseMale",
+                Wearables =
+                {
+                    "urn:decentraland:off-chain:base-avatars:bee_t_shirt",
+                    "urn:decentraland:off-chain:base-avatars:blue_bandana",
+                    "urn:decentraland:off-chain:base-avatars:brown_pants_02",
+                    "urn:decentraland:off-chain:base-avatars:bear_slippers",
+                },
+            });
+
+
 
             //TODO: Avoid initializing dictionary here
             world.Create(new WearableCatalog

@@ -68,13 +68,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 if (!result.Succeeded)
                 {
                     //TODO: Error flow, add a default asset bundle to avoid blocking the instantiation of the caller
+                    wearableComponent.AssetBundleStatus = WearableComponent.AssetBundleLifeCycle.AssetBundleLoaded;
                     World.Add(entity, new AssetBundleData(null, null, null));
                     ReportHub.LogError(GetReportCategory(), $"Asset bundle manifest for wearable: {wearableComponent.hash} failed, loading default asset bundle");
-                    wearableComponent.AssetBundleStatus = WearableComponent.AssetBundleLifeCycle.AssetBundleLoaded;
                 }
                 else
                 {
-                    //TODO: I dont like the idea of adding the GetPlatform here, can it be moved to the PrepareSystem?
+                    //TODO: I dont like the idea of adding the GetPlatform here, maybe move it to a PrepareSystem?
                     wearableComponent.wearableAssetBundlePromise =
                         AssetPromise<AssetBundleData, GetWearableAssetBundleIntention>.Create(World,
                             GetWearableAssetBundleIntention.FromHash(result.Asset, wearableComponent.GetMainFileHash() + PlatformUtils.GetPlatform()),

@@ -33,7 +33,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         protected override async UniTask<StreamableLoadingResult<WearableDTO[]>> FlowInternal(GetWearableByPointersIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            //TODO: Failure flow
             var finalTargetList = new List<WearableDTO>();
 
             int numberOfPartialRequests = (intention.Pointers.Length + MAX_WEARABLES_PER_REQUEST - 1) / MAX_WEARABLES_PER_REQUEST;
@@ -46,7 +45,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     ? intention.Pointers.Length
                     : MAX_WEARABLES_PER_REQUEST;
 
-                //TODO: Avoid Linq here
+                //TODO: Avoid Linq here?
                 var wearablesToRequest = intention.Pointers.Take(numberOfWearablesToRequest).ToList();
                 List<WearableDTO> partialResult = await DoPartialRequest(intention.CommonArguments.URL, wearablesToRequest, ct);
                 finalTargetList.AddRange(partialResult);

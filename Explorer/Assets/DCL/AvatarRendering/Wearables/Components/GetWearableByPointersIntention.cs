@@ -48,9 +48,9 @@ public struct GetWearableAssetBundleIntention : ILoadingIntention, IEquatable<Ge
     public string Hash;
     internal Hash128? cacheHash;
     //TODO: Not completely happy to keep it here
-    public SceneAssetBundleManifest WearableAssetBundleManifest;
+    public readonly SceneAssetBundleManifest WearableAssetBundleManifest;
 
-    private GetWearableAssetBundleIntention(SceneAssetBundleManifest assetBundleManifest, string hash = null, AssetSource permittedSources = AssetSource.ALL)
+    private GetWearableAssetBundleIntention(SceneAssetBundleManifest assetBundleManifest, string hash = null, string name = null, AssetSource permittedSources = AssetSource.ALL)
     {
         Hash = hash;
         WearableAssetBundleManifest = assetBundleManifest;
@@ -67,7 +67,7 @@ public struct GetWearableAssetBundleIntention : ILoadingIntention, IEquatable<Ge
         obj is GetWearableAssetBundleIntention other && Equals(other);
 
     public override int GetHashCode() =>
-        HashCode.Combine(CancellationTokenSource, CommonArguments);
+        HashCode.Combine(WearableAssetBundleManifest, Hash, CancellationTokenSource, CommonArguments);
 
     public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 

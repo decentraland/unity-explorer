@@ -10,7 +10,6 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,7 +41,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             this.loadingMutex = loadingMutex;
         }
 
-        private async UniTask LoadDependencies(SceneAssetBundleManifest assetBundleManifest, IPartitionComponent partition, AssetBundle assetBundle, CancellationToken ct)
+        private async UniTask LoadDependencies(GetWearableAssetBundleIntention wearableAssetBundleIntention, IPartitionComponent partition, AssetBundle assetBundle, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
             string metadata;
@@ -61,7 +60,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 // Switch to main thread to create dependency promises
                 await UniTask.SwitchToMainThread();
                 // WhenAll uses pool under the hood
-                await UniTask.WhenAll(reusableMetadata.Value.dependencies.Select(hash => WaitForDependency(assetBundleManifest, hash, partition, ct)));
+                await UniTask.WhenAll(reusableMetadata.Value.dependencies.Select(hash => WaitForDependency(wearableAssetBundleIntention, hash, partition, ct)));
             }
         }
 
@@ -101,7 +100,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             AssetBundleMetrics? metrics = metricsFile != null ? JsonUtility.FromJson<AssetBundleMetrics>(metricsFile.text) : null;
 
-            await LoadDependencies(intention.WearableAssetBundleManifest, partition, assetBundle, ct);
+            await LoadDependencies(intention, partition, assetBundle, ct);
 
             await UniTask.SwitchToMainThread();
             ct.ThrowIfCancellationRequested();
@@ -131,13 +130,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
             return rootGameObject;
         }
 
-        private async UniTask WaitForDependency(SceneAssetBundleManifest assetBundleManifest, string hash, IPartitionComponent partition, CancellationToken ct)
+        private async UniTask WaitForDependency(GetWearableAssetBundleIntention assetBundleIntention, string hash, IPartitionComponent partition, CancellationToken ct)
         {
             //TODO: Remove this hack by fixing the asset bundle converter
-            hash = assetBundleManifest.GetCorrectCapsLock(hash);
+            hash = assetBundleIntention.WearableAssetBundleManifest.GetCorrectCapsLock(hash);
 
             // Inherit partition from the parent promise
-            var assetBundlePromise = AssetPromise<AssetBundleData, GetWearableAssetBundleIntention>.Create(World, GetWearableAssetBundleIntention.FromHash(assetBundleManifest, hash), partition);
+            var assetBundlePromise = AssetPromise<AssetBundleData, GetWearableAssetBundleIntention>.Create(World, GetWearableAssetBundleIntention.FromHash(assetBundleIntention.WearableAssetBundleManifest, hash), partition);
 
             try
             {

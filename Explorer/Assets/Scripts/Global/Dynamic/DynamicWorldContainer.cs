@@ -1,4 +1,5 @@
-﻿using DCL.AvatarRendering.Wearables;
+﻿using DCL.AvatarRendering.AvatarShape;
+using DCL.AvatarRendering.Wearables;
 using DCL.PluginSystem.Global;
 using ECS.Prioritization.Components;
 using SceneRunner.EmptyScene;
@@ -30,7 +31,7 @@ namespace Global.Dynamic
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, staticContainer.CameraSamplingData),
                 new ProfilingPlugin(staticContainer.AssetsProvisioner, staticContainer.ProfilingProvider),
                 new WearablePlugin(),
-                new AvatarShapePlugin(staticContainer.AssetsProvisioner),
+                new AvatarShapePlugin(staticContainer.AssetsProvisioner, staticContainer.SingletonSharedDependencies.FrameTimeCapBudgetProvider, staticContainer.ComponentsContainer.ComponentPoolsRegistry.GetReferenceTypePool<AvatarBase>()),
             };
 
             return new DynamicWorldContainer

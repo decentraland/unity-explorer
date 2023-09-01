@@ -44,13 +44,11 @@ namespace DCL.AvatarRendering.Wearables.Components
         public string GetMainFileHash()
         {
             string mainFileKey = wearableContent.representations[0].mainFile;
-
             foreach (WearableMappingPair wearableMappingPair in wearableContent.representations[0].contents)
             {
                 if (wearableMappingPair.key.Equals(mainFileKey))
                     return wearableMappingPair.hash;
             }
-
             return "";
         }
     }

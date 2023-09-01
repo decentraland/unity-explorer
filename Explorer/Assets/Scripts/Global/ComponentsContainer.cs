@@ -86,6 +86,9 @@ namespace Global
                 p.Bucket = byte.MaxValue;
                 p.RawSqrDistance = 0;
             }));
+
+            //Avatar renderers
+            yield return CreateComponentPool(AvatarPoolUtils.CreateAvatarContainer);
         }
     }
 }
