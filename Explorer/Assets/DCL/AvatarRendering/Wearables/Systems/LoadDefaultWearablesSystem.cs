@@ -63,6 +63,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             foreach (WearableDTO wearableDto in result)
             {
+                //TODO: Update the Wearable status so the AssetBundle is assigned when the Manifest completes
                 AssetPromise<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>.Create(World,
                     new GetWearableAssetBundleManifestIntention
                     {
