@@ -3,12 +3,13 @@ using UnityEngine;
 
 public class TextureArrayCreator : MonoBehaviour
 {
+    public Texture2D[] tex2D_BaseMap;
+    public Texture2D[] tex2D_AlphaTexture;
+    public Texture2D[] tex2D_MetallicGlossMap;
+    public Texture2D[] tex2D_BumpMap;
+    public Texture2D[] tex2D_EmissionMap;
 
-    [SerializeField]
-    private Texture2D[] ordinaryTextures;
-    private Texture2DArray texture2DArray;
-
-    public Texture2DArray Texture2DArray => texture2DArray;
+    public TextureArrayContainer m_TextureArrays;
     public static TextureArrayCreator Instance;
 
     void Awake()
@@ -19,26 +20,31 @@ public class TextureArrayCreator : MonoBehaviour
 
     private void CreateTextureArray()
     {
-        // Create Texture2DArray
-        texture2DArray = new
-            Texture2DArray(ordinaryTextures[0].width,
-                ordinaryTextures[0].height, ordinaryTextures.Length,
-                TextureFormat.RGBA32, true, false);
-
-        // Apply settings
-        texture2DArray.filterMode = FilterMode.Bilinear;
-        texture2DArray.wrapMode = TextureWrapMode.Repeat;
-
-        // Loop through ordinary textures and copy pixels to the
-        // Texture2DArray
-        for (var i = 0; i < ordinaryTextures.Length; i++)
+        m_TextureArrays = new TextureArrayContainer();
+        for (var i = 0; i < tex2D_BaseMap.Length; i++)
         {
-            texture2DArray.SetPixels(ordinaryTextures[i].GetPixels(0),
-                i, 0);
+            Graphics.CopyTexture(tex2D_BaseMap[i], srcElement: 0, srcMip: 0, m_TextureArrays.texture2DArray_BaseMap, dstElement: i, dstMip: 0);
         }
 
-        // Apply our changes
-        texture2DArray.Apply();
+        for (var i = 0; i < tex2D_AlphaTexture.Length; i++)
+        {
+            Graphics.CopyTexture(tex2D_AlphaTexture[i], srcElement: 0, srcMip: 0, m_TextureArrays.texture2DArray_AlphaTexture, dstElement: i, dstMip: 0);
+        }
+
+        for (var i = 0; i < tex2D_MetallicGlossMap.Length; i++)
+        {
+            Graphics.CopyTexture(tex2D_MetallicGlossMap[i], srcElement: 0, srcMip: 0, m_TextureArrays.texture2DArray_MetallicGlossMap, dstElement: i, dstMip: 0);
+        }
+
+        for (var i = 0; i < tex2D_BumpMap.Length; i++)
+        {
+            Graphics.CopyTexture(tex2D_BumpMap[i], srcElement: 0, srcMip: 0, m_TextureArrays.texture2DArray_BumpMap, dstElement: i, dstMip: 0);
+        }
+
+        for (var i = 0; i < tex2D_EmissionMap.Length; i++)
+        {
+            Graphics.CopyTexture(tex2D_EmissionMap[i], srcElement: 0, srcMip: 0, m_TextureArrays.texture2DArray_EmissionMap, dstElement: i, dstMip: 0);
+        }
     }
 
 }
