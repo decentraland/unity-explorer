@@ -204,6 +204,26 @@ MonoBehaviour:
       Severity: 4
     - Category: INPUT
       Severity: 1
+    - Category: AVATAR
+      Severity: 3
+    - Category: WEARABLE
+      Severity: 3
+    - Category: AVATAR
+      Severity: 2
+    - Category: WEARABLE
+      Severity: 2
+    - Category: AVATAR
+      Severity: 0
+    - Category: WEARABLE
+      Severity: 0
+    - Category: AVATAR
+      Severity: 4
+    - Category: WEARABLE
+      Severity: 4
+    - Category: AVATAR
+      Severity: 1
+    - Category: WEARABLE
+      Severity: 1
   sentryMatrix:
     entries:
     - Category: ENGINE

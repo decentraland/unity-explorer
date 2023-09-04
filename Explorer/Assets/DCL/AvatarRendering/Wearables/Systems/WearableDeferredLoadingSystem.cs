@@ -15,7 +15,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(PrepareWearableAssetBundleLoadingParametersSystem))]
-    [UpdateBefore(typeof(LoadWearableSystem))]
+    [UpdateBefore(typeof(PrepareWearableSystem))]
     [UpdateBefore(typeof(LoadWearableAssetBundleManifestSystem))]
     [UpdateBefore(typeof(LoadWearableAssetBundleSystem))]
     [UpdateBefore(typeof(LoadWearablesByPointersSystem))]

@@ -17,7 +17,7 @@ using UnityEngine;
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(LoadWearableSystem))]
+    [UpdateAfter(typeof(PrepareWearableSystem))]
     [LogCategory(ReportCategory.AVATAR)]
     public partial class InstantiateRandomAvatarsSystem : BaseUnityLoopSystem
     {
@@ -119,9 +119,12 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                         lower_body[Random.Range(0, lower_body.Count)].metadata.id,
                         feet[Random.Range(0, feet.Count)].metadata.id,
                         hair[Random.Range(0, hair.Count)].metadata.id,
-                        mouth[Random.Range(0, mouth.Count)].metadata.id,
-                        eyes[Random.Range(0, eyes.Count)].metadata.id,
-                        eyebros[Random.Range(0, eyebros.Count)].metadata.id,
+
+                        //TODO: We still dont have the default asset bundles for this ones
+                        //We should add them before using them
+                        //mouth[Random.Range(0, mouth.Count)].metadata.id,
+                        //eyes[Random.Range(0, eyes.Count)].metadata.id,
+                        //eyebros[Random.Range(0, eyebros.Count)].metadata.id,
                     },
                 };
                 World.Create(avatarShape);

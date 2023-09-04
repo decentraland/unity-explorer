@@ -30,8 +30,9 @@ namespace Global.Dynamic
                 new InputPlugin(),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, staticContainer.CameraSamplingData),
                 new ProfilingPlugin(staticContainer.AssetsProvisioner, staticContainer.ProfilingProvider),
-                new WearablePlugin(),
-                new AvatarPlugin(staticContainer.AssetsProvisioner, staticContainer.SingletonSharedDependencies.FrameTimeCapBudgetProvider, staticContainer.ComponentsContainer.ComponentPoolsRegistry.GetReferenceTypePool<AvatarBase>()),
+                new WearablePlugin("https://peer.decentraland.org", "/content/entities/active/"),
+                new AvatarPlugin(staticContainer.AssetsProvisioner, staticContainer.SingletonSharedDependencies.FrameTimeCapBudgetProvider,
+                    staticContainer.ComponentsContainer.ComponentPoolsRegistry.GetReferenceTypePool<AvatarBase>(), "https://peer.decentraland.org", "/content/entities/active/"),
             };
 
             return new DynamicWorldContainer

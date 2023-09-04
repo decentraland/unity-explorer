@@ -5,21 +5,16 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.ComponentsPooling;
-using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
-using SceneRunner.Scene;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(CreateAvatarSystem))]
+    [UpdateAfter(typeof(PrepareAvatarSystem))]
     [LogCategory(ReportCategory.AVATAR)]
     public partial class InstantiateAvatarSystem : BaseUnityLoopSystem
     {
@@ -27,7 +22,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
         private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
         private SingleInstanceEntity wearableCatalog;
-
 
         public InstantiateAvatarSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider,
             IComponentPool<AvatarBase> avatarPoolRegistry) : base(world)
@@ -57,11 +51,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             if (avatarShapeComponent.Status == AvatarShapeComponent.LifeCycle.LoadingAssetBundles)
             {
-                if (!IsWearableReadyToInstantiate(ref World.Get<WearableComponent>(avatarShapeComponent.BodyShape)))
+                if (!IsWearableReadyToInstantiate(avatarShapeComponent.BodyShapeUrn))
                     return;
 
-                foreach (EntityReference avatarShapeWearable in avatarShapeComponent.Wearables)
-                    if (!IsWearableReadyToInstantiate(ref World.Get<WearableComponent>(avatarShapeWearable)))
+                foreach (string avatarShapeWearable in avatarShapeComponent.WearablesUrn)
+                    if (!IsWearableReadyToInstantiate(avatarShapeWearable))
                         return;
 
                 avatarShapeComponent.Status = AvatarShapeComponent.LifeCycle.LoadingFinished;
@@ -71,13 +65,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 avatarBase.transform.position = new Vector3(Random.Range(0, 20), 0, Random.Range(0, 20));
 
                 //Instantiation and binding bones of avatar
-                GameObject bodyShape = InstantiateWearable(avatarShapeComponent.BodyShapeUrn, World.Get<WearableComponent>(avatarShapeComponent.BodyShape),
-                    avatarBase.AvatarSkinnedMeshRenderer, avatarBase.transform);
+                GameObject bodyShape = InstantiateWearable(avatarShapeComponent.BodyShapeUrn, avatarBase.AvatarSkinnedMeshRenderer, avatarBase.transform);
                 HideBodyParts(bodyShape);
 
-                for (var i = 0; i < avatarShapeComponent.Wearables.Length; i++)
-                    InstantiateWearable(avatarShapeComponent.BodyShapeUrn,
-                        World.Get<WearableComponent>(avatarShapeComponent.Wearables[i]), avatarBase.AvatarSkinnedMeshRenderer, avatarBase.transform);
+                for (var i = 0; i < avatarShapeComponent.WearablesUrn.Length; i++)
+                    InstantiateWearable(avatarShapeComponent.WearablesUrn[i], avatarBase.AvatarSkinnedMeshRenderer, avatarBase.transform);
 
             }
         }
@@ -94,16 +86,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             }
         }
 
-        private GameObject InstantiateWearable(string bodyShape, WearableComponent wearableComponent, SkinnedMeshRenderer baseAvatar, Transform parentTransform)
+        private GameObject InstantiateWearable(string wearableUrn, SkinnedMeshRenderer baseAvatar, Transform parentTransform)
         {
-            GameObject objectToInstantiate = wearableComponent.AssetBundleData.GameObject;
+            WearableComponent wearableComponent = World.Get<WearableComponent>(wearableCatalog.GetWearableCatalog(World).catalog[wearableUrn]);
 
-            //TODO: Instantiating default wearable
-            if (objectToInstantiate == null)
-            {
-                string defaultUrn = WearablesLiterals.DefaultWearables.GetDefaultWearable(bodyShape, wearableComponent.wearableContent.category);
-                objectToInstantiate = World.Get<WearableComponent>(wearableCatalog.GetWearableCatalog(World).catalog[defaultUrn]).AssetBundleData.GameObject;
-            }
+            GameObject objectToInstantiate = wearableComponent.AssetBundleData.GameObject;
 
             //TODO: Pooling and combining
             GameObject instantiatedWearabled = Object.Instantiate(objectToInstantiate, parentTransform);
@@ -117,25 +104,17 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             return instantiatedWearabled;
         }
 
-        private bool IsWearableReadyToInstantiate(ref WearableComponent wearableComponent)
+        private bool IsWearableReadyToInstantiate(string wearableComponentUrn)
         {
-            if (wearableComponent.AssetBundleStatus == WearableComponent.AssetBundleLifeCycle.AssetBundleLoaded) { return true; }
+            ref WearableComponent wearableComponent
+                = ref World.Get<WearableComponent>(wearableCatalog.GetWearableCatalog(World).catalog[wearableComponentUrn]);
+
+            if (wearableComponent.AssetBundleStatus == WearableComponent.AssetBundleLifeCycle.AssetBundleLoaded)
+                return true;
 
             if (wearableComponent.AssetBundleStatus == WearableComponent.AssetBundleLifeCycle.AssetBundleNotLoaded)
-            {
-                //TODO: Not completely happy to initialize the download of the asset bundle here.
-                //Also, the URL is resolved in the DownloadAssetBundleManifestSystem. Should a prepare system be done?
-                wearableComponent.wearableAssetBundleManifestPromise =
-                    AssetPromise<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>.Create(World,
-                        new GetWearableAssetBundleManifestIntention
-                        {
-                            CommonArguments = new CommonLoadingArguments(wearableComponent.hash),
-                            Hash = wearableComponent.hash,
-                        },
-                        PartitionComponent.TOP_PRIORITY);
+                wearableComponent.AssetBundleStatus = WearableComponent.AssetBundleLifeCycle.AssetBundleRequested;
 
-                wearableComponent.AssetBundleStatus = WearableComponent.AssetBundleLifeCycle.AssetBundleManifestLoading;
-            }
             return false;
         }
 

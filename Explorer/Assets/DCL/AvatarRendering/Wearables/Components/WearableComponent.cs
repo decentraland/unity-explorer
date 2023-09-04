@@ -13,9 +13,10 @@ namespace DCL.AvatarRendering.Wearables.Components
         public enum AssetBundleLifeCycle : byte
         {
             AssetBundleNotLoaded = 0,
-            AssetBundleManifestLoading = 1,
-            AssetBundleLoading = 2,
-            AssetBundleLoaded = 3,
+            AssetBundleRequested = 1,
+            AssetBundleManifestLoading = 2,
+            AssetBundleLoading = 3,
+            AssetBundleLoaded = 4,
         }
 
         /// <summary>

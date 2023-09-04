@@ -13,17 +13,22 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(LoadWearableSystem))]
+    [UpdateAfter(typeof(PrepareWearableSystem))]
     [LogCategory(ReportCategory.AVATAR)]
-    public partial class CreateAvatarSystem : BaseUnityLoopSystem
+    public partial class PrepareAvatarSystem : BaseUnityLoopSystem
     {
         private SingleInstanceEntity wearableCatalog;
+        private readonly string CATALYST_URL;
 
-        public CreateAvatarSystem(World world) : base(world) { }
+        public PrepareAvatarSystem(World world, string catalystURL) : base(world)
+        {
+            CATALYST_URL = catalystURL;
+        }
 
         public override void Initialize()
         {
@@ -44,8 +49,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             var avatarShapeComponent = new AvatarShapeComponent
             {
                 ID = pbAvatarShape.Id,
-                BodyShape = EntityReference.Null,
-                Wearables = new EntityReference[pbAvatarShape.Wearables.Count],
+                BodyShapeUrn = WearablesLiterals.BodyShapes.DEFAULT,
+                WearablesUrn = WearablesLiterals.DefaultWearables.GetDefaultWearablesForBodyShape(WearablesLiterals.BodyShapes.DEFAULT),
             };
             List<string> missingWearables;
 
@@ -57,8 +62,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     new GetWearableByPointersIntention
                     {
                         //TODO: Should a prepare system be done for the catalyst url?
-                        CommonArguments = new CommonLoadingArguments("https://peer.decentraland.org/content/entities/active/"),
+                        CommonArguments = new CommonLoadingArguments(CATALYST_URL),
                         Pointers = missingWearables.ToArray(),
+                        StartAssetBundlesDownload = true,
                     }, PartitionComponent.TOP_PRIORITY);
             }
             World.Add(entity, avatarShapeComponent);
@@ -70,36 +76,19 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             if (avatarShapeComponent.Status == AvatarShapeComponent.LifeCycle.LoadingWearables &&
                 avatarShapeComponent.WearablePromise.TryConsume(World, out StreamableLoadingResult<WearableDTO[]> result))
             {
-                if (!result.Succeeded)
-                {
-                    SetDefaultWearables(ref pbAvatarShape, ref avatarShapeComponent);
-                    ReportHub.LogError(GetReportCategory(), "Error loading wearables for avatar: " + avatarShapeComponent.ID);
-                }
-                else
+                if (result.Succeeded)
                     SetAvatarWearables(ref pbAvatarShape, ref avatarShapeComponent);
+                else
+                    ReportHub.LogError(GetReportCategory(), $"Error loading wearables for avatar: {avatarShapeComponent.ID}. Default wearables will be loaded");
+
+                avatarShapeComponent.Status = AvatarShapeComponent.LifeCycle.LoadingAssetBundles;
             }
-        }
-
-        private void SetDefaultWearables(ref PBAvatarShape pbAvatarShape, ref AvatarShapeComponent avatarShape)
-        {
-            string defaultBodyShape = WearablesLiterals.BodyShapes.MALE;
-            string[] defaultWearables = WearablesLiterals.DefaultWearables.GetDefaultWearablesForBodyShape(defaultBodyShape);
-
-            avatarShape.BodyShapeUrn = defaultBodyShape;
-            avatarShape.BodyShape = GetEntityReference(defaultBodyShape);
-
-            for (var i = 0; i < pbAvatarShape.Wearables.Count; i++)
-                avatarShape.Wearables[i] = GetEntityReference(defaultWearables[i]);
-
-            avatarShape.Status = AvatarShapeComponent.LifeCycle.LoadingAssetBundles;
         }
 
         private void SetAvatarWearables(ref PBAvatarShape pbAvatarShape, ref AvatarShapeComponent avatarShape)
         {
-            avatarShape.BodyShape = GetEntityReference(pbAvatarShape.BodyShape);
             avatarShape.BodyShapeUrn = pbAvatarShape.BodyShape;
-            for (var i = 0; i < pbAvatarShape.Wearables.Count; i++)
-                avatarShape.Wearables[i] = GetEntityReference(pbAvatarShape.Wearables[i]);
+            avatarShape.WearablesUrn = pbAvatarShape.Wearables.ToArray();
 
             avatarShape.Status = AvatarShapeComponent.LifeCycle.LoadingAssetBundles;
         }

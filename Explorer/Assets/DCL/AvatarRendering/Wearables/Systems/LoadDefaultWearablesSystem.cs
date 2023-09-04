@@ -1,5 +1,4 @@
 using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.Wearables.Components;
@@ -9,17 +8,22 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
-using SceneRunner.Scene;
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(LoadWearableSystem))]
+    [UpdateAfter(typeof(PrepareWearableSystem))]
     [LogCategory(ReportCategory.WEARABLE)]
     public partial class LoadDefaultWearablesSystem : BaseUnityLoopSystem
     {
-        //TODO: How can I wait for this system to end before starting another one?
-        public LoadDefaultWearablesSystem(World world) : base(world) { }
+        //TODO: How can I wait for this system to end?
+        //Also, if this system fails, the avatar will be stuck in a loading state forever
+        private readonly string CATALYST_URL;
+
+        public LoadDefaultWearablesSystem(World world, string catalystURL) : base(world)
+        {
+            CATALYST_URL = catalystURL;
+        }
 
         public override void Initialize()
         {
@@ -30,8 +34,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 new GetWearableByPointersIntention
                 {
                     //TODO: Should a prepare system be done for the catalyst url?
-                    CommonArguments = new CommonLoadingArguments("https://peer.decentraland.org/content/entities/active/"),
+                    CommonArguments = new CommonLoadingArguments(CATALYST_URL),
                     Pointers = WearablesLiterals.DefaultWearables.GetDefaultWearables(),
+                    StartAssetBundlesDownload = true,
                 }, PartitionComponent.TOP_PRIORITY);
 
             var wearablePromiseContainerComponent = new WearablePromiseContainerComponent();
@@ -41,34 +46,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         protected override void Update(float t)
         {
-            CompleteDefaultWearablePromiseQuery(World);
-        }
-
-        [Query]
-        public void CompleteDefaultWearablePromise(ref WearablePromiseContainerComponent promiseContainerComponent)
-        {
-            if (promiseContainerComponent.WearableByPointerRequestPromise.TryConsume(World, out StreamableLoadingResult<WearableDTO[]> result))
-            {
-                if (!result.Succeeded)
-                    ReportHub.LogError(GetReportCategory(), "Default wearables could not be fetched");
-                else
-                    GenerateAssetBundleRequest(result.Asset);
-            }
-        }
-
-        private void GenerateAssetBundleRequest(WearableDTO[] result)
-        {
-            foreach (WearableDTO wearableDto in result)
-            {
-                //TODO: Update the Wearable status so the AssetBundle is assigned when the Manifest completes
-                AssetPromise<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>.Create(World,
-                    new GetWearableAssetBundleManifestIntention
-                    {
-                        CommonArguments = new CommonLoadingArguments(wearableDto.id),
-                        Hash = wearableDto.id,
-                    },
-                    PartitionComponent.TOP_PRIORITY);
-            }
         }
     }
 }

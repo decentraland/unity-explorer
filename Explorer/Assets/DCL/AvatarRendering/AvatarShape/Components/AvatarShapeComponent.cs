@@ -1,4 +1,3 @@
-using Arch.Core;
 using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common;
 
@@ -18,10 +17,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public string ID;
 
-        //TODO: can I remove the urn from here?
         public string BodyShapeUrn;
-        public EntityReference BodyShape;
-        public EntityReference[] Wearables;
+        public string[] WearablesUrn;
 
         public AssetPromise<WearableDTO[], GetWearableByPointersIntention> WearablePromise;
     }

@@ -8,6 +8,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     public struct WearableDTO
     {
         public string version;
+
+        //hash
         public string id;
         public string type;
         public string[] pointers;
@@ -89,6 +91,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     public struct WearableMetadataDto
     {
         public DataDto data;
+
+        //urn
         public string id;
 
         public i18n[] i18n;

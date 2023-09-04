@@ -2,86 +2,108 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using AssetManagement;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
-using ECS.StreamableLoading;
+using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
-using System;
-using Utility;
+using SceneRunner.Scene;
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {
-    /// <summary>
-    ///     Prepares the Wearable Asset Bundle Parameters
-    /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateBefore(typeof(LoadWearableAssetBundleSystem))]
-    [LogCategory(ReportCategory.ASSET_BUNDLES)]
-    public partial class PrepareWearableAssetBundleLoadingParametersSystem : BaseUnityLoopSystem
+    [LogCategory(ReportCategory.WEARABLE)]
+    public partial class PrepareWearableAssetBundleSystem : BaseUnityLoopSystem
     {
-        private readonly string STREAMING_ASSETS_URL;
+        private SingleInstanceEntity wearableCatalog;
 
-        internal PrepareWearableAssetBundleLoadingParametersSystem(World world, string streamingAssetURL) : base(world)
+        public PrepareWearableAssetBundleSystem(World world) : base(world) { }
+
+        public override void Initialize()
         {
-            STREAMING_ASSETS_URL = streamingAssetURL;
+            base.Initialize();
+            wearableCatalog = World.CacheWearableCatalog();
         }
 
         protected override void Update(float t)
         {
-            PrepareCommonArgumentsQuery(World);
+            PrepareWearableAssetBundleManifestDownloadingQuery(World);
+            FinalizeAssetBundleManifestLoadingQuery(World);
+            FinalizeAssetBundleLoadingQuery(World);
         }
 
         [Query]
-        [None(typeof(StreamableLoadingResult<AssetBundleData>))]
-
-        // If loading is not started yet and there is no result
-        private void PrepareCommonArguments(in Entity entity, ref GetWearableAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
+        private void PrepareWearableAssetBundleManifestDownloading(ref WearableComponent wearableComponent)
         {
-            if (state.Value != StreamableLoadingState.Status.NotStarted) return;
-
-            // Remove not supported flags
-            assetBundleIntention.RemovePermittedSource(AssetSource.ADDRESSABLE); // addressables are not implemented
-
-            // First priority
-            if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.EMBEDDED))
+            if (wearableComponent.AssetBundleStatus == WearableComponent.AssetBundleLifeCycle.AssetBundleRequested)
             {
-                CommonLoadingArguments ca = assetBundleIntention.CommonArguments;
-                ca.Attempts = 1;
-                ca.CurrentSource = AssetSource.EMBEDDED;
-                ca.URL = GetStreamingAssetsUrl(assetBundleIntention.Hash);
-                assetBundleIntention.CommonArguments = ca;
-                assetBundleIntention.cacheHash = assetBundleIntention.WearableAssetBundleManifest.ComputeHash(assetBundleIntention.Hash);
-                return;
-            }
+                //TODO: The URL is resolved in the DownloadAssetBundleManifestSystem. Should a prepare system be done?
+                wearableComponent.wearableAssetBundleManifestPromise =
+                    AssetPromise<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>.Create(World,
+                        new GetWearableAssetBundleManifestIntention
+                        {
+                            CommonArguments = new CommonLoadingArguments(wearableComponent.hash),
+                            Hash = wearableComponent.hash,
+                        },
+                        PartitionComponent.TOP_PRIORITY);
 
-            // Second priority
-            if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.WEB))
-            {
-                //TODO: Comparison are failing due to hash caps lock?
-                // If Hash is already provided just use it, otherwise resolve by the content provider
-                if (!assetBundleIntention.WearableAssetBundleManifest.Contains(assetBundleIntention.Hash))
-                {
-                    // Add the failure to the entity
-                    World.Add(entity, new StreamableLoadingResult<AssetBundleData>
-                        (CreateException(new ArgumentException($"Asset Bundle {assetBundleIntention.Hash} not found in the manifest"))));
-
-                    return;
-                }
-
-                CommonLoadingArguments ca = assetBundleIntention.CommonArguments;
-                ca.Attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT;
-                ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
-                ca.CurrentSource = AssetSource.WEB;
-                ca.URL = assetBundleIntention.WearableAssetBundleManifest.GetAssetBundleURL(assetBundleIntention.Hash);
-                assetBundleIntention.CommonArguments = ca;
-                assetBundleIntention.cacheHash = assetBundleIntention.WearableAssetBundleManifest.ComputeHash(assetBundleIntention.Hash);
+                wearableComponent.AssetBundleStatus = WearableComponent.AssetBundleLifeCycle.AssetBundleManifestLoading;
             }
         }
 
-        private string GetStreamingAssetsUrl(string hash) =>
-            $"{STREAMING_ASSETS_URL}{hash}";
+
+
+        [Query]
+        private void FinalizeAssetBundleManifestLoading(ref WearableComponent wearableComponent)
+        {
+            if (wearableComponent.AssetBundleStatus == WearableComponent.AssetBundleLifeCycle.AssetBundleManifestLoading &&
+                wearableComponent.wearableAssetBundleManifestPromise.TryConsume(World, out StreamableLoadingResult<SceneAssetBundleManifest> result))
+            {
+                if (result.Succeeded)
+                {
+                    //TODO: I dont like the idea of adding the GetPlatform here, maybe move it to a PrepareSystem?
+                    wearableComponent.wearableAssetBundlePromise =
+                        AssetPromise<AssetBundleData, GetWearableAssetBundleIntention>.Create(World,
+                            GetWearableAssetBundleIntention.FromHash(result.Asset, wearableComponent.GetMainFileHash() + PlatformUtils.GetPlatform()),
+                            PartitionComponent.TOP_PRIORITY);
+
+                    wearableComponent.AssetBundleStatus = WearableComponent.AssetBundleLifeCycle.AssetBundleLoading;
+                }
+                else
+                {
+                    SetDefaultWearable(ref wearableComponent);
+                    wearableComponent.AssetBundleStatus = WearableComponent.AssetBundleLifeCycle.AssetBundleLoaded;
+                }
+            }
+        }
+
+        [Query]
+        private void FinalizeAssetBundleLoading(ref WearableComponent wearableComponent)
+        {
+            if (wearableComponent.AssetBundleStatus == WearableComponent.AssetBundleLifeCycle.AssetBundleLoading
+                && wearableComponent.wearableAssetBundlePromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
+            {
+                if (result.Succeeded)
+                    wearableComponent.AssetBundleData = result.Asset;
+                else
+                    SetDefaultWearable(ref wearableComponent);
+
+                wearableComponent.AssetBundleStatus = WearableComponent.AssetBundleLifeCycle.AssetBundleLoaded;
+            }
+        }
+
+        private void SetDefaultWearable(ref WearableComponent wearableComponent)
+        {
+            ReportHub.LogError(GetReportCategory(), $"Asset bundle for wearable: {wearableComponent.hash} failed, loading default asset bundle");
+
+            string defaultWearableUrn
+                = WearablesLiterals.DefaultWearables.GetDefaultWearable(WearablesLiterals.BodyShapes.DEFAULT, wearableComponent.wearableContent.category);
+
+            wearableComponent.AssetBundleData = World.Get<WearableComponent>(wearableCatalog.GetWearableCatalog(World).catalog[defaultWearableUrn]).AssetBundleData;
+        }
+
     }
 }

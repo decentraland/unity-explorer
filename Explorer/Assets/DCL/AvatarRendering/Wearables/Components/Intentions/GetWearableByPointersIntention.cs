@@ -7,6 +7,7 @@ public struct GetWearableByPointersIntention : IGetWearableIntention, IEquatable
 {
     public CancellationTokenSource CancellationTokenSource { get; }
     public CommonLoadingArguments CommonArguments { get; set; }
+    public bool StartAssetBundlesDownload { get; set; }
     public string[] Pointers;
 
     public bool Equals(GetWearableByPointersIntention other) =>
@@ -20,4 +21,5 @@ public struct GetWearableByPointersIntention : IGetWearableIntention, IEquatable
 
     public override int GetHashCode() =>
         HashCode.Combine(Pointers, CancellationTokenSource, CommonArguments);
+
 }

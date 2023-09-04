@@ -8,6 +8,7 @@ namespace DCL.AvatarRendering.Wearables.Components
     {
         public CancellationTokenSource CancellationTokenSource { get; }
         public CommonLoadingArguments CommonArguments { get; set; }
+        public bool StartAssetBundlesDownload { get; set; }
 
         //ValidParams: pageNum, pageSize, includeEntities (bool), rarity, categofy, name, orderBy, direction,
         //collectionType (base-wearable, on-chain, third-party), thirdPartyCollectionId
@@ -25,5 +26,6 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public override int GetHashCode() =>
             HashCode.Combine(Params, UserID, CancellationTokenSource, CommonArguments);
+
     }
 }
