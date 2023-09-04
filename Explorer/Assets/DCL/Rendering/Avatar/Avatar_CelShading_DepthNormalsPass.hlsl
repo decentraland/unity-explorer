@@ -32,7 +32,7 @@ Varyings DepthNormalsVertex(Attributes input)
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-    output.uv         = TRANSFORM_TEX(input.texcoord, _BaseMap);
+    //output.uv         = TRANSFORM_TEX(input.texcoord, _BaseMap);
     output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
 
     VertexNormalInputs normalInput = GetVertexNormalInputs(input.normal, input.tangentOS);

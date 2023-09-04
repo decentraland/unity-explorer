@@ -13,8 +13,8 @@
 #endif
 
 UNITY_INSTANCING_BUFFER_START(UnityPerMaterial)
-UNITY_DEFINE_INSTANCED_PROP(float4, _BaseMap_ST)
-UNITY_DEFINE_INSTANCED_PROP(float4, _DetailAlbedoMap_ST)
+// UNITY_DEFINE_INSTANCED_PROP(float4, _BaseMap_ST)
+// UNITY_DEFINE_INSTANCED_PROP(float4, _DetailAlbedoMap_ST)
 UNITY_DEFINE_INSTANCED_PROP(half4, _BaseColor)
 UNITY_DEFINE_INSTANCED_PROP(half4, _SpecColor)
 UNITY_DEFINE_INSTANCED_PROP(half4, _EmissionColor)
@@ -43,8 +43,8 @@ UNITY_DEFINE_INSTANCED_PROP(int, _BumpMapArr_ID)
 UNITY_DEFINE_INSTANCED_PROP(int, _EmissionMapArr_ID)
 UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 
-#define _BaseMap_ST UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseMap_ST)
-#define _DetailAlbedoMap_ST UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _DetailAlbedoMap_ST)
+// #define _BaseMap_ST UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseMap_ST)
+// #define _DetailAlbedoMap_ST UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _DetailAlbedoMap_ST)
 #define _BaseColor UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseColor)
 #define _SpecColor UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SpecColor)
 #define _EmissionColor UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _EmissionColor)

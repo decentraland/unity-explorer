@@ -54,7 +54,7 @@ Varyings ShadowPassVertex(Attributes input)
     Varyings output;
     UNITY_SETUP_INSTANCE_ID(input);
 
-    output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
+    //output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
     output.positionCS = GetShadowPositionHClip(input);
     return output;
 }
