@@ -36,7 +36,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             var wearablePromiseContainerComponent = new WearablePromiseContainerComponent();
             wearablePromiseContainerComponent.WearableByPointerRequestPromise = promise;
-            World.Create(wearablePromiseContainerComponent);
+            World.Add(promise.Entity, wearablePromiseContainerComponent);
         }
 
         protected override void Update(float t)
@@ -47,15 +47,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
         [Query]
         public void CompleteDefaultWearablePromise(ref WearablePromiseContainerComponent promiseContainerComponent)
         {
-            if (!promiseContainerComponent.Done &&
-                promiseContainerComponent.WearableByPointerRequestPromise.TryConsume(World, out StreamableLoadingResult<WearableDTO[]> result))
+            if (promiseContainerComponent.WearableByPointerRequestPromise.TryConsume(World, out StreamableLoadingResult<WearableDTO[]> result))
             {
                 if (!result.Succeeded)
                     ReportHub.LogError(GetReportCategory(), "Default wearables could not be fetched");
                 else
                     GenerateAssetBundleRequest(result.Asset);
-
-                promiseContainerComponent.Done = true;
             }
         }
 

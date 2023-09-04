@@ -34,7 +34,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             (string, string)[] urlParams = { ("collectionType", "base-wearable"), ("pageSize", "300") };
 
             //TODO: Probably once again we need a prepare system to resolver the url
-            //Also, solve the boxing is required
             var promise = AssetPromise<WearableDTO[], GetWearableByParamIntention>.Create(World,
                 new GetWearableByParamIntention
                 {
@@ -46,7 +45,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             var randomAvatarConstructorComponent = new WearablePromiseContainerComponent();
             randomAvatarConstructorComponent.WearableRequestPromise = promise;
-            World.Create(randomAvatarConstructorComponent);
+            World.Add(promise.Entity, randomAvatarConstructorComponent);
         }
 
         protected override void Update(float t)
@@ -57,15 +56,12 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         [Query]
         private void CreateRandomAvatars(ref WearablePromiseContainerComponent wearablePromiseContainerComponent)
         {
-            if (!wearablePromiseContainerComponent.Done &&
-                wearablePromiseContainerComponent.WearableRequestPromise.TryConsume(World, out StreamableLoadingResult<WearableDTO[]> result))
+            if (wearablePromiseContainerComponent.WearableRequestPromise.TryConsume(World, out StreamableLoadingResult<WearableDTO[]> result))
             {
                 if (!result.Succeeded)
                     ReportHub.LogError(GetReportCategory(), "Base wearables could not be fetched");
                 else
                     GenerateRandomAvatars(result);
-
-                wearablePromiseContainerComponent.Done = true;
             }
         }
 
@@ -128,7 +124,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                         eyebros[Random.Range(0, eyebros.Count)].metadata.id,
                     },
                 };
-
                 World.Create(avatarShape);
             }
         }

@@ -90,7 +90,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 bool turnOff = !(bodyShape.transform.GetChild(i).name.Contains("uBody_BaseMesh") ||
                                  bodyShape.transform.GetChild(i).name.Contains("lBody_BaseMesh") ||
                                  bodyShape.transform.GetChild(i).name.Contains("Feet_BaseMesh"));
-
                 bodyShape.transform.GetChild(i).gameObject.SetActive(turnOff);
             }
         }

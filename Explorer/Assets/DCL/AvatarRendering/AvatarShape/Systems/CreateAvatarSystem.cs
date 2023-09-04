@@ -61,7 +61,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                         Pointers = missingWearables.ToArray(),
                     }, PartitionComponent.TOP_PRIORITY);
             }
-
             World.Add(entity, avatarShapeComponent);
         }
 
