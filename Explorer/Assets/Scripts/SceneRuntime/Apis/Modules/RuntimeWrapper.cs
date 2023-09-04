@@ -1,10 +1,10 @@
-using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
-using UnityEngine.Profiling;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SceneRuntime.Apis.Modules
 {
@@ -14,10 +14,13 @@ namespace SceneRuntime.Apis.Modules
 
         private readonly ISceneExceptionsHandler exceptionsHandler;
 
+        private readonly CancellationTokenSource cancellationTokenSource;
+
         public RuntimeWrapper(IRuntime api, ISceneExceptionsHandler exceptionsHandler)
         {
             this.api = api;
             this.exceptionsHandler = exceptionsHandler;
+            cancellationTokenSource = new CancellationTokenSource();
         }
 
         [UsedImplicitly]
@@ -25,7 +28,7 @@ namespace SceneRuntime.Apis.Modules
         {
             try
             {
-                var res = api.ReadFile(fileName).AsTask();
+                Task<ITypedArray<byte>> res = api.ReadFile(fileName, cancellationTokenSource.Token).AsTask();
                 object promise = res.ToPromise();
                 return promise;
             }
@@ -42,6 +45,9 @@ namespace SceneRuntime.Apis.Modules
             // Dispose the engine API Implementation
             // It will dispose its buffers
             api.Dispose();
+
+            cancellationTokenSource.Cancel();
+            cancellationTokenSource.Dispose();
         }
     }
 }

@@ -105,9 +105,10 @@ namespace SceneRuntime
         {
             engineApi?.Dispose();
             engine.Dispose();
+            runtimeWrapper?.Dispose();
         }
 
         public ITypedArray<byte> CreateUint8Array(int length) =>
-            (ITypedArray<byte>)engine.Evaluate(@"(function () { return new Uint8Array(" + length + "); })()");
+            (ITypedArray<byte>)engine.Evaluate("(function () { return new Uint8Array(" + length + "); })()");
     }
 }
