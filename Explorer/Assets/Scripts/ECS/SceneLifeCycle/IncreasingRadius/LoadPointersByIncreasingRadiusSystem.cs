@@ -123,10 +123,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     IpfsTypes.SceneEntityDefinition scene = definitions[i];
                     if (scene.pointers.Count == 0) continue;
 
-                    CreateSceneEntity(scene, new IpfsTypes.IpfsPath(scene.id, string.Empty), out Vector2Int[] sceneParcels);
-
-                    for (var j = 0; j < sceneParcels.Length; j++)
-                        processesScenePointers.Value.Add(sceneParcels[j].ToInt2());
+                    TryCreateSceneEntity(scene, new IpfsTypes.IpfsPath(scene.id, string.Empty), processesScenePointers.Value);
                 }
 
                 // Empty parcels = parcels for which no scene pointers were retrieved
