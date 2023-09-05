@@ -64,8 +64,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 {
                     //TODO: Download Thumbnail
                     WearableComponent wearableComponent = assetEntity.ToWearableItem(WEARABLE_CONTENT_BASE_URL);
-                    wearableComponent.AssetBundleStatus = intention.StartAssetBundlesDownload ? WearableComponent.AssetBundleLifeCycle.AssetBundleRequested : WearableComponent.AssetBundleLifeCycle.AssetBundleNotLoaded;
                     Entity wearableEntity = World.Create(wearableComponent);
+
+                    if (intention.StartAssetBundlesDownload)
+                        World.Add<WearableComponentsHelper.GetWearableAssetBundleManifestFlag>(wearableEntity);
                     wearableCatalog.GetWearableCatalog(World).catalog.Add(wearableComponent.urn, World.Reference(wearableEntity));
                 }
             }

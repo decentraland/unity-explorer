@@ -1,5 +1,4 @@
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System;
 using UnityEngine;
@@ -10,24 +9,13 @@ namespace DCL.AvatarRendering.Wearables.Components
     [Serializable]
     public struct WearableComponent
     {
-        public enum AssetBundleLifeCycle : byte
-        {
-            AssetBundleNotLoaded = 0,
-            AssetBundleRequested = 1,
-            AssetBundleManifestLoading = 2,
-            AssetBundleLoading = 3,
-            AssetBundleLoaded = 4,
-        }
 
         /// <summary>
         ///     The current status of the Wearable loading
         /// </summary>
-        public AssetBundleLifeCycle AssetBundleStatus;
         public AssetBundleData AssetBundleData;
 
-        public AssetPromise<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention> wearableAssetBundleManifestPromise;
-        public AssetPromise<AssetBundleData, GetWearableAssetBundleIntention> wearableAssetBundlePromise;
-
+        public SceneAssetBundleManifest AssetBundleManifest;
 
         //CONTENT
         public WearableContent wearableContent;

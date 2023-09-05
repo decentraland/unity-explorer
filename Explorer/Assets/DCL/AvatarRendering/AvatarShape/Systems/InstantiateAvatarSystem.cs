@@ -106,14 +106,16 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private bool IsWearableReadyToInstantiate(string wearableComponentUrn)
         {
-            ref WearableComponent wearableComponent
-                = ref World.Get<WearableComponent>(wearableCatalog.GetWearableCatalog(World).catalog[wearableComponentUrn]);
+            Entity wearableEntityReference = wearableCatalog.GetWearableCatalog(World).catalog[wearableComponentUrn];
 
-            if (wearableComponent.AssetBundleStatus == WearableComponent.AssetBundleLifeCycle.AssetBundleLoaded)
+            ref WearableComponent wearableComponent
+                = ref World.Get<WearableComponent>(wearableEntityReference);
+
+            if (wearableComponent.AssetBundleData != null)
                 return true;
 
-            if (wearableComponent.AssetBundleStatus == WearableComponent.AssetBundleLifeCycle.AssetBundleNotLoaded)
-                wearableComponent.AssetBundleStatus = WearableComponent.AssetBundleLifeCycle.AssetBundleRequested;
+            if (!World.Has<WearableComponentsHelper.GetWearableAssetBundleManifestFlag>(wearableEntityReference))
+                World.Add<WearableComponentsHelper.GetWearableAssetBundleManifestFlag>(wearableEntityReference);
 
             return false;
         }

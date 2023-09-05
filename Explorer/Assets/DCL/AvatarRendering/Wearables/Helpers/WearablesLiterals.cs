@@ -73,6 +73,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
                 foreach (string bodyShape in BodyShapes.GetBodyShapes()) { defaultWearables.AddRange(GetDefaultWearablesForBodyShape(bodyShape)); }
 
+                defaultWearables.AddRange(BodyShapes.GetBodyShapes());
+
                 return defaultWearables.ToArray();
             }
             public static string GetDefaultWearable(string bodyShapeId, string category)

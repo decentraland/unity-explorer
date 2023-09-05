@@ -88,6 +88,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     ReportHub.LogError(GetReportCategory(), $"Error loading wearables for avatar: {avatarShapeComponent.ID}. Default wearables will be loaded");
 
                 World.Remove<GetAvatarWearableComponent>(entity);
+                World.Remove<Promise>(entity);
             }
         }
 

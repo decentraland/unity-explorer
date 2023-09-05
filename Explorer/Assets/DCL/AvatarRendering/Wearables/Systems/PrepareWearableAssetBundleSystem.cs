@@ -8,9 +8,11 @@ using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
+using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
+using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleIntention>;
+
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {
@@ -30,72 +32,86 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         protected override void Update(float t)
         {
-            PrepareWearableAssetBundleManifestDownloadingQuery(World);
+            PrepareWearableAssetBundleManifestLoadingQuery(World);
             FinalizeAssetBundleManifestLoadingQuery(World);
+            PrepareWearableAssetBundleLoadingQuery(World);
             FinalizeAssetBundleLoadingQuery(World);
         }
 
         [Query]
-        private void PrepareWearableAssetBundleManifestDownloading(ref WearableComponent wearableComponent)
+        [All(typeof(WearableComponentsHelper.GetWearableAssetBundleManifestFlag))]
+        [None(typeof(AssetBundleManifestPromise))]
+        private void PrepareWearableAssetBundleManifestLoading(in Entity entity, ref WearableComponent wearableComponent)
         {
-            if (wearableComponent.AssetBundleStatus == WearableComponent.AssetBundleLifeCycle.AssetBundleRequested)
-            {
-                //TODO: The URL is resolved in the DownloadAssetBundleManifestSystem. Should a prepare system be done?
-                wearableComponent.wearableAssetBundleManifestPromise =
-                    AssetPromise<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>.Create(World,
-                        new GetWearableAssetBundleManifestIntention
-                        {
-                            CommonArguments = new CommonLoadingArguments(wearableComponent.hash),
-                            Hash = wearableComponent.hash,
-                        },
-                        PartitionComponent.TOP_PRIORITY);
+            //TODO: The URL is resolved in the DownloadAssetBundleManifestSystem. Should a prepare system be done?
+            var assetPromise =
+                AssetBundleManifestPromise.Create(World,
+                    new GetWearableAssetBundleManifestIntention
+                    {
+                        CommonArguments = new CommonLoadingArguments(wearableComponent.hash),
+                        Hash = wearableComponent.hash,
+                    },
+                    PartitionComponent.TOP_PRIORITY);
 
-                wearableComponent.AssetBundleStatus = WearableComponent.AssetBundleLifeCycle.AssetBundleManifestLoading;
-            }
+            World.Add(entity, assetPromise);
         }
 
 
 
         [Query]
-        private void FinalizeAssetBundleManifestLoading(ref WearableComponent wearableComponent)
+        [All(typeof(WearableComponentsHelper.GetWearableAssetBundleManifestFlag))]
+        [None(typeof(WearableComponentsHelper.GetWearableAssetBundleFlag))]
+        private void FinalizeAssetBundleManifestLoading(in Entity entity, ref WearableComponent wearableComponent, ref AssetBundleManifestPromise promise)
         {
-            if (wearableComponent.AssetBundleStatus == WearableComponent.AssetBundleLifeCycle.AssetBundleManifestLoading &&
-                wearableComponent.wearableAssetBundleManifestPromise.TryConsume(World, out StreamableLoadingResult<SceneAssetBundleManifest> result))
+            if (promise.TryConsume(World, out StreamableLoadingResult<SceneAssetBundleManifest> result))
             {
                 if (result.Succeeded)
                 {
-                    //TODO: I dont like the idea of adding the GetPlatform here, maybe move it to a PrepareSystem?
-                    wearableComponent.wearableAssetBundlePromise =
-                        AssetPromise<AssetBundleData, GetWearableAssetBundleIntention>.Create(World,
-                            GetWearableAssetBundleIntention.FromHash(result.Asset, wearableComponent.GetMainFileHash() + PlatformUtils.GetPlatform()),
-                            PartitionComponent.TOP_PRIORITY);
-
-                    wearableComponent.AssetBundleStatus = WearableComponent.AssetBundleLifeCycle.AssetBundleLoading;
+                    wearableComponent.AssetBundleManifest = result.Asset;
+                    World.Add(entity, new WearableComponentsHelper.GetWearableAssetBundleFlag());
                 }
                 else
-                {
-                    SetDefaultWearable(ref wearableComponent);
-                    wearableComponent.AssetBundleStatus = WearableComponent.AssetBundleLifeCycle.AssetBundleLoaded;
-                }
+                    SetDefaultWearable(in entity, ref wearableComponent);
             }
         }
 
         [Query]
-        private void FinalizeAssetBundleLoading(ref WearableComponent wearableComponent)
+        [All(typeof(WearableComponentsHelper.GetWearableAssetBundleFlag))]
+        [None(typeof(AssetBundlePromise))]
+        private void PrepareWearableAssetBundleLoading(in Entity entity, ref WearableComponent wearableComponent)
         {
-            if (wearableComponent.AssetBundleStatus == WearableComponent.AssetBundleLifeCycle.AssetBundleLoading
-                && wearableComponent.wearableAssetBundlePromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
+            var assetBundlePromise =
+                AssetBundlePromise.Create(World,
+                    GetWearableAssetBundleIntention.FromHash(wearableComponent.AssetBundleManifest, wearableComponent.GetMainFileHash() + PlatformUtils.GetPlatform()),
+                    PartitionComponent.TOP_PRIORITY);
+
+            World.Add(entity, assetBundlePromise);
+        }
+
+        [Query]
+        [All(typeof(WearableComponentsHelper.GetWearableAssetBundleFlag))]
+        private void FinalizeAssetBundleLoading(in Entity entity, ref WearableComponent wearableComponent,
+            ref AssetBundlePromise promise)
+        {
+            if (promise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
                 if (result.Succeeded)
+                {
                     wearableComponent.AssetBundleData = result.Asset;
+                    CleanEntity(in entity);
+                }
                 else
-                    SetDefaultWearable(ref wearableComponent);
-
-                wearableComponent.AssetBundleStatus = WearableComponent.AssetBundleLifeCycle.AssetBundleLoaded;
+                    SetDefaultWearable(in entity, ref wearableComponent);
             }
         }
 
-        private void SetDefaultWearable(ref WearableComponent wearableComponent)
+        private void CleanEntity(in Entity entity)
+        {
+            World.Remove<WearableComponentsHelper.GetWearableAssetBundleFlag, WearableComponentsHelper.GetWearableAssetBundleManifestFlag,
+                AssetBundlePromise, AssetBundleManifestPromise>(entity);
+        }
+
+        private void SetDefaultWearable(in Entity entity, ref WearableComponent wearableComponent)
         {
             ReportHub.LogError(GetReportCategory(), $"Asset bundle for wearable: {wearableComponent.hash} failed, loading default asset bundle");
 
@@ -103,6 +119,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 = WearablesLiterals.DefaultWearables.GetDefaultWearable(WearablesLiterals.BodyShapes.DEFAULT, wearableComponent.wearableContent.category);
 
             wearableComponent.AssetBundleData = World.Get<WearableComponent>(wearableCatalog.GetWearableCatalog(World).catalog[defaultWearableUrn]).AssetBundleData;
+            CleanEntity(entity);
         }
 
     }
