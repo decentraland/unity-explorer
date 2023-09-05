@@ -10,8 +10,6 @@ using ECS.LifeCycle;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.Prioritization.Systems;
-using ECS.Profiling;
-using ECS.Profiling.Systems;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.DeferredLoading;
 using ECS.SceneLifeCycle.IncreasingRadius;
@@ -21,7 +19,6 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Transforms.Components;
 using Ipfs;
-using Realm;
 using SceneRunner;
 using SceneRunner.EmptyScene;
 using SceneRunner.Scene;
@@ -97,15 +94,15 @@ namespace Global.Dynamic
             LoadFixedPointersSystem.InjectToWorld(ref builder);
 
             // Archaic systems
-            LoadPointersByRadiusSystem.InjectToWorld(ref builder);
-            ResolveSceneStateByRadiusSystem.InjectToWorld(ref builder);
+            //LoadPointersByRadiusSystem.InjectToWorld(ref builder);
+            //ResolveSceneStateByRadiusSystem.InjectToWorld(ref builder);
 
             // are replace by increasing radius
-            //var jobsMathHelper = new ParcelMathJobifiedHelper();
-            //StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
-            //LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
-            //ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings);
-            //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
+            var jobsMathHelper = new ParcelMathJobifiedHelper();
+            StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
+            LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
+            ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings);
+            CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 
             ResolveStaticPointersSystem.InjectToWorld(ref builder);
             UnloadSceneSystem.InjectToWorld(ref builder);
