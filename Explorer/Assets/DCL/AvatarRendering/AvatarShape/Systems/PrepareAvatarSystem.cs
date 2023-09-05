@@ -44,7 +44,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         [Query]
         [None(typeof(AvatarShapeComponent))]
-        private void StartAvatarLoad(in Entity entity, ref PBAvatarShape pbAvatarShape)
+        private void StartAvatarLoad(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partition)
         {
             var avatarShapeComponent = new AvatarShapeComponent
             {
@@ -65,7 +65,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                         CommonArguments = new CommonLoadingArguments(CATALYST_URL),
                         Pointers = missingWearables.ToArray(),
                         StartAssetBundlesDownload = true,
-                    }, PartitionComponent.TOP_PRIORITY);
+                    }, partition);
             }
             World.Add(entity, avatarShapeComponent);
         }
