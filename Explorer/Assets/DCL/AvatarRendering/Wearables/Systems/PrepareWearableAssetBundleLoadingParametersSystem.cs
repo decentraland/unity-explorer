@@ -60,7 +60,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
             // Second priority
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.WEB))
             {
-                //TODO: Comparison are failing due to hash caps lock?
                 // If Hash is already provided just use it, otherwise resolve by the content provider
                 if (!assetBundleIntention.WearableAssetBundleManifest.Contains(assetBundleIntention.Hash))
                 {

@@ -56,7 +56,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             ProcessWearableRequestResult(intention, wearableDTOResult.Asset);
         }
 
-        private void ProcessWearableRequestResult(IGetWearableIntention intention, WearableDTO[] result)
+        private void ProcessWearableRequestResult<T>(T intention, WearableDTO[] result) where T: IGetWearableIntention
         {
             foreach (WearableDTO assetEntity in result)
             {

@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
@@ -29,8 +28,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             base.Initialize();
 
-            //TODO: Fix boxing allocation
-            var promise = AssetPromise<WearableDTO[], GetWearableByPointersIntention>.Create(World,
+            AssetPromise<WearableDTO[], GetWearableByPointersIntention>.Create(World,
                 new GetWearableByPointersIntention
                 {
                     //TODO: Should a prepare system be done for the catalyst url?
@@ -38,10 +36,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     Pointers = WearablesLiterals.DefaultWearables.GetDefaultWearables(),
                     StartAssetBundlesDownload = true,
                 }, PartitionComponent.TOP_PRIORITY);
-
-            var wearablePromiseContainerComponent = new WearablePromiseContainerComponent();
-            wearablePromiseContainerComponent.WearableByPointerRequestPromise = promise;
-            World.Add(promise.Entity, wearablePromiseContainerComponent);
         }
 
         protected override void Update(float t)

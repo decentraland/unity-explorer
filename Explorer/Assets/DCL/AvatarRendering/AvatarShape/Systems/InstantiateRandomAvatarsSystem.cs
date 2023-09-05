@@ -43,9 +43,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 },
                 new PartitionComponent());
 
-            var randomAvatarConstructorComponent = new WearablePromiseContainerComponent();
-            randomAvatarConstructorComponent.WearableRequestPromise = promise;
-            World.Add(promise.Entity, randomAvatarConstructorComponent);
+            World.Create(new GenerateRandomAvatarComponent(), promise);
         }
 
         protected override void Update(float t)
@@ -54,14 +52,17 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        private void CreateRandomAvatars(ref WearablePromiseContainerComponent wearablePromiseContainerComponent)
+        [All(typeof(GenerateRandomAvatarComponent))]
+        private void CreateRandomAvatars(in Entity entity, ref AssetPromise<WearableDTO[], GetWearableByParamIntention> wearablePromise)
         {
-            if (wearablePromiseContainerComponent.WearableRequestPromise.TryConsume(World, out StreamableLoadingResult<WearableDTO[]> result))
+            if (wearablePromise.TryConsume(World, out StreamableLoadingResult<WearableDTO[]> result))
             {
                 if (!result.Succeeded)
                     ReportHub.LogError(GetReportCategory(), "Base wearables could not be fetched");
                 else
                     GenerateRandomAvatars(result);
+
+                World.Destroy(entity);
             }
         }
 
@@ -131,4 +132,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             }
         }
     }
+
+    public struct GenerateRandomAvatarComponent { }
+
 }

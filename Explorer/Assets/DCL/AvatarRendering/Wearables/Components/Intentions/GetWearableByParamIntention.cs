@@ -10,7 +10,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         public CommonLoadingArguments CommonArguments { get; set; }
         public bool StartAssetBundlesDownload { get; set; }
 
-        //ValidParams: pageNum, pageSize, includeEntities (bool), rarity, categofy, name, orderBy, direction,
+        //ValidParams: pageNum, pageSize, includeEntities (bool), rarity, category, name, orderBy, direction,
         //collectionType (base-wearable, on-chain, third-party), thirdPartyCollectionId
         public (string, string)[] Params;
         public string UserID;
