@@ -9,10 +9,11 @@ using DCL.ECSComponents;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using UnityEngine;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearableDTO[], DCL.AvatarRendering.Wearables.Components.GetWearableByParamIntention>;
+
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -21,6 +22,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [LogCategory(ReportCategory.AVATAR)]
     public partial class InstantiateRandomAvatarsSystem : BaseUnityLoopSystem
     {
+        public struct GenerateRandomAvatarComponent { }
+
         private readonly int TOTAL_AVATARS_TO_INSTANTIATE;
 
         public InstantiateRandomAvatarsSystem(World world) : base(world)
@@ -34,7 +37,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             (string, string)[] urlParams = { ("collectionType", "base-wearable"), ("pageSize", "300") };
 
             //TODO: Probably once again we need a prepare system to resolver the url
-            var promise = AssetPromise<WearableDTO[], GetWearableByParamIntention>.Create(World,
+            var promise = Promise.Create(World,
                 new GetWearableByParamIntention
                 {
                     CommonArguments = new CommonLoadingArguments("DummyUser"),
@@ -53,7 +56,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         [Query]
         [All(typeof(GenerateRandomAvatarComponent))]
-        private void CreateRandomAvatars(in Entity entity, ref AssetPromise<WearableDTO[], GetWearableByParamIntention> wearablePromise)
+        private void CreateRandomAvatars(in Entity entity, ref Promise wearablePromise)
         {
             if (wearablePromise.TryConsume(World, out StreamableLoadingResult<WearableDTO[]> result))
             {
@@ -132,7 +135,4 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             }
         }
     }
-
-    public struct GenerateRandomAvatarComponent { }
-
 }

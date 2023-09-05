@@ -44,34 +44,34 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
+        [None(typeof(GetAvatarWearableComponent))]
         private void InstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent)
         {
+            if (!avatarShapeComponent.IsDirty)
+                return;
+
             if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
                 return;
 
-            if (avatarShapeComponent.Status == AvatarShapeComponent.LifeCycle.LoadingAssetBundles)
-            {
-                if (!IsWearableReadyToInstantiate(avatarShapeComponent.BodyShapeUrn))
+            if (!IsWearableReadyToInstantiate(avatarShapeComponent.BodyShapeUrn))
+                return;
+
+            foreach (string avatarShapeWearable in avatarShapeComponent.WearablesUrn)
+                if (!IsWearableReadyToInstantiate(avatarShapeWearable))
                     return;
 
-                foreach (string avatarShapeWearable in avatarShapeComponent.WearablesUrn)
-                    if (!IsWearableReadyToInstantiate(avatarShapeWearable))
-                        return;
+            AvatarBase avatarBase = avatarPoolRegistry.Get();
+            avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
+            avatarBase.transform.position = new Vector3(Random.Range(0, 20), 0, Random.Range(0, 20));
 
-                avatarShapeComponent.Status = AvatarShapeComponent.LifeCycle.LoadingFinished;
+            //Instantiation and binding bones of avatar
+            GameObject bodyShape = InstantiateWearable(avatarShapeComponent.BodyShapeUrn, avatarBase.AvatarSkinnedMeshRenderer, avatarBase.transform);
+            HideBodyParts(bodyShape);
 
-                AvatarBase avatarBase = avatarPoolRegistry.Get();
-                avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
-                avatarBase.transform.position = new Vector3(Random.Range(0, 20), 0, Random.Range(0, 20));
+            for (var i = 0; i < avatarShapeComponent.WearablesUrn.Length; i++)
+                InstantiateWearable(avatarShapeComponent.WearablesUrn[i], avatarBase.AvatarSkinnedMeshRenderer, avatarBase.transform);
 
-                //Instantiation and binding bones of avatar
-                GameObject bodyShape = InstantiateWearable(avatarShapeComponent.BodyShapeUrn, avatarBase.AvatarSkinnedMeshRenderer, avatarBase.transform);
-                HideBodyParts(bodyShape);
-
-                for (var i = 0; i < avatarShapeComponent.WearablesUrn.Length; i++)
-                    InstantiateWearable(avatarShapeComponent.WearablesUrn[i], avatarBase.AvatarSkinnedMeshRenderer, avatarBase.transform);
-
-            }
+            avatarShapeComponent.IsDirty = false;
         }
 
         //TODO: Do a proper hiding algorithm

@@ -10,10 +10,11 @@ using DCL.ECSComponents;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using System.Linq;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearableDTO[], GetWearableByPointersIntention>;
+
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -24,6 +25,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     {
         private SingleInstanceEntity wearableCatalog;
         private readonly string CATALYST_URL;
+
 
         public PrepareAvatarSystem(World world, string catalystURL) : base(world)
         {
@@ -51,6 +53,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 ID = pbAvatarShape.Id,
                 BodyShapeUrn = WearablesLiterals.BodyShapes.DEFAULT,
                 WearablesUrn = WearablesLiterals.DefaultWearables.GetDefaultWearablesForBodyShape(WearablesLiterals.BodyShapes.DEFAULT),
+                IsDirty = true,
             };
             List<string> missingWearables;
 
@@ -58,7 +61,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 SetAvatarWearables(ref pbAvatarShape, ref avatarShapeComponent);
             else
             {
-                avatarShapeComponent.WearablePromise = AssetPromise<WearableDTO[], GetWearableByPointersIntention>.Create(World,
+                var promise = Promise.Create(World,
                     new GetWearableByPointersIntention
                     {
                         //TODO: Should a prepare system be done for the catalyst url?
@@ -66,22 +69,25 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                         Pointers = missingWearables.ToArray(),
                         StartAssetBundlesDownload = true,
                     }, PartitionComponent.TOP_PRIORITY);
+
+                World.Add(entity, promise, new GetAvatarWearableComponent());
             }
             World.Add(entity, avatarShapeComponent);
         }
 
         [Query]
-        private void FinalizeAvatarLoad(ref PBAvatarShape pbAvatarShape, ref AvatarShapeComponent avatarShapeComponent)
+        [All(typeof(GetAvatarWearableComponent))]
+        private void FinalizeAvatarLoad(in Entity entity, ref PBAvatarShape pbAvatarShape, ref AvatarShapeComponent avatarShapeComponent,
+            ref Promise wearablePromise)
         {
-            if (avatarShapeComponent.Status == AvatarShapeComponent.LifeCycle.LoadingWearables &&
-                avatarShapeComponent.WearablePromise.TryConsume(World, out StreamableLoadingResult<WearableDTO[]> result))
+            if (wearablePromise.TryConsume(World, out StreamableLoadingResult<WearableDTO[]> result))
             {
                 if (result.Succeeded)
                     SetAvatarWearables(ref pbAvatarShape, ref avatarShapeComponent);
                 else
                     ReportHub.LogError(GetReportCategory(), $"Error loading wearables for avatar: {avatarShapeComponent.ID}. Default wearables will be loaded");
 
-                avatarShapeComponent.Status = AvatarShapeComponent.LifeCycle.LoadingAssetBundles;
+                World.Remove<GetAvatarWearableComponent>(entity);
             }
         }
 
@@ -89,8 +95,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             avatarShape.BodyShapeUrn = pbAvatarShape.BodyShape;
             avatarShape.WearablesUrn = pbAvatarShape.Wearables.ToArray();
-
-            avatarShape.Status = AvatarShapeComponent.LifeCycle.LoadingAssetBundles;
         }
 
         private bool AreWearablesReady(ref PBAvatarShape pbAvatarShape, out List<string> missingWearables)
