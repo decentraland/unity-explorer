@@ -11,6 +11,7 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -77,7 +78,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             var eyes = new List<WearableDTO>();
             var eyebros = new List<WearableDTO>();
 
-
             foreach (WearableDTO wearableDto in result.Asset)
             {
                 switch (wearableDto.metadata.data.category)
@@ -128,11 +128,16 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                         //eyebros[Random.Range(0, eyebros.Count)].metadata.id,
                     },
                 };
-                World.Create(avatarShape);
+
+                // Create a transform, normally it will be created either by JS Scene or by Comms
+                Transform transform = new GameObject($"RANDOM_AVATAR_{i}").transform;
+                transform.localPosition = new Vector3(Random.Range(0, 20), 0, Random.Range(0, 20));
+                var transformComp = new TransformComponent(transform);
+
+                World.Create(avatarShape, transformComp);
             }
         }
     }
 
     public struct GenerateRandomAvatarComponent { }
-
 }

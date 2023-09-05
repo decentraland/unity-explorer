@@ -9,7 +9,9 @@ using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.ComponentsPooling;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
+using ECS.Unity.Transforms.Components;
 using UnityEngine;
+using Utility;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -18,7 +20,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [LogCategory(ReportCategory.AVATAR)]
     public partial class InstantiateAvatarSystem : BaseUnityLoopSystem
     {
-
         private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
         private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
         private SingleInstanceEntity wearableCatalog;
@@ -44,7 +45,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        private void InstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent)
+        private void InstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent, ref TransformComponent transformComponent)
         {
             if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
                 return;
@@ -62,15 +63,18 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
                 AvatarBase avatarBase = avatarPoolRegistry.Get();
                 avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
-                avatarBase.transform.position = new Vector3(Random.Range(0, 20), 0, Random.Range(0, 20));
+
+                Transform avatarTransform = avatarBase.transform;
+
+                avatarTransform.SetParent(transformComponent.Transform, false);
+                avatarTransform.ResetLocalTRS();
 
                 //Instantiation and binding bones of avatar
-                GameObject bodyShape = InstantiateWearable(avatarShapeComponent.BodyShapeUrn, avatarBase.AvatarSkinnedMeshRenderer, avatarBase.transform);
+                GameObject bodyShape = InstantiateWearable(avatarShapeComponent.BodyShapeUrn, avatarBase.AvatarSkinnedMeshRenderer, avatarTransform);
                 HideBodyParts(bodyShape);
 
                 for (var i = 0; i < avatarShapeComponent.WearablesUrn.Length; i++)
-                    InstantiateWearable(avatarShapeComponent.WearablesUrn[i], avatarBase.AvatarSkinnedMeshRenderer, avatarBase.transform);
-
+                    InstantiateWearable(avatarShapeComponent.WearablesUrn[i], avatarBase.AvatarSkinnedMeshRenderer, avatarTransform);
             }
         }
 
@@ -82,6 +86,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 bool turnOff = !(bodyShape.transform.GetChild(i).name.Contains("uBody_BaseMesh") ||
                                  bodyShape.transform.GetChild(i).name.Contains("lBody_BaseMesh") ||
                                  bodyShape.transform.GetChild(i).name.Contains("Feet_BaseMesh"));
+
                 bodyShape.transform.GetChild(i).gameObject.SetActive(turnOff);
             }
         }
@@ -117,6 +122,5 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             return false;
         }
-
     }
 }
