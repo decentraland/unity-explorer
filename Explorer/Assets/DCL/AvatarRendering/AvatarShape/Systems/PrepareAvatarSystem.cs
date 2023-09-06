@@ -46,7 +46,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         [Query]
         [None(typeof(AvatarShapeComponent))]
-        private void StartAvatarLoad(in Entity entity, ref PBAvatarShape pbAvatarShape)
+        private void StartAvatarLoad(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partition)
         {
             var avatarShapeComponent = new AvatarShapeComponent
             {
@@ -58,7 +58,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             List<string> missingWearables;
 
             if (AreWearablesReady(ref pbAvatarShape, out missingWearables))
+            {
                 SetAvatarWearables(ref pbAvatarShape, ref avatarShapeComponent);
+                World.Add(entity, avatarShapeComponent);
+            }
             else
             {
                 var promise = Promise.Create(World,
@@ -68,15 +71,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                         CommonArguments = new CommonLoadingArguments(CATALYST_URL),
                         Pointers = missingWearables.ToArray(),
                         StartAssetBundlesDownload = true,
-                    }, PartitionComponent.TOP_PRIORITY);
+                    }, partition);
 
-                World.Add(entity, promise, new GetAvatarWearableComponent());
+                World.Add(entity, avatarShapeComponent, promise);
             }
-            World.Add(entity, avatarShapeComponent);
         }
 
         [Query]
-        [All(typeof(GetAvatarWearableComponent))]
         private void FinalizeAvatarLoad(in Entity entity, ref PBAvatarShape pbAvatarShape, ref AvatarShapeComponent avatarShapeComponent,
             ref Promise wearablePromise)
         {
@@ -87,7 +88,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 else
                     ReportHub.LogError(GetReportCategory(), $"Error loading wearables for avatar: {avatarShapeComponent.ID}. Default wearables will be loaded");
 
-                World.Remove<GetAvatarWearableComponent>(entity);
                 World.Remove<Promise>(entity);
             }
         }
