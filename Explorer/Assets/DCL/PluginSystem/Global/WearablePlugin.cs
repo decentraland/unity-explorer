@@ -44,13 +44,9 @@ namespace DCL.AvatarRendering.Wearables
             PrepareWearableSystem.InjectToWorld(ref builder, $"{CATALYST_URL}{CONTENT_URL}");
             PrepareWearableAssetBundleSystem.InjectToWorld(ref builder);
 
-            WearableDeferredLoadingSystem.InjectToWorld(ref builder, new ConcurrentLoadingBudgetProvider(50));
-
             LoadWearablesByParamSystem.InjectToWorld(ref builder, new NoCache<WearableDTO[], GetWearableByParamIntention>(), mutexSync, $"{CATALYST_URL}{EXPLORER_LAMBDA_URL}");
             LoadWearablesByPointersSystem.InjectToWorld(ref builder, new WearablesByPointersCache(), mutexSync);
             LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(), mutexSync, AB_ASSETS_URL);
-            PrepareWearableAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL);
-            LoadWearableAssetBundleSystem.InjectToWorld(ref builder, new WearableAssetBundleCache(), mutexSync, new AssetBundleLoadingMutex());
 
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, $"{CATALYST_URL}{ENTITIES_ACTIVE}");
         }

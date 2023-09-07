@@ -4,6 +4,7 @@ using DCL.PluginSystem.Global;
 using ECS.Prioritization.Components;
 using SceneRunner.EmptyScene;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Mathematics;
 
 namespace Global.Dynamic
@@ -24,7 +25,7 @@ namespace Global.Dynamic
         {
             var realmSamplingData = new RealmSamplingData();
 
-            var globalPlugins = new IDCLGlobalPlugin[]
+            var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterObject),
                 new InputPlugin(),
@@ -35,12 +36,14 @@ namespace Global.Dynamic
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry.GetReferenceTypePool<AvatarBase>(), "https://peer.decentraland.org", "/content/entities/active/"),
             };
 
+            globalPlugins.AddRange(staticContainer.SharedPlugins);
+
             return new DynamicWorldContainer
             {
                 RealmController = new RealmController(sceneLoadRadius, staticLoadPositions),
                 GlobalWorldFactory = new GlobalWorldFactory(in staticContainer, staticContainer.RealmPartitionSettings,
                     staticContainer.CameraSamplingData, realmSamplingData, globalPlugins),
-                GlobalPlugins = globalPlugins,
+                GlobalPlugins = globalPlugins.Concat(staticContainer.SharedPlugins).ToList(),
                 EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins),
             };
         }

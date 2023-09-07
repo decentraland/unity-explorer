@@ -37,14 +37,11 @@ public class AvatarPlugin : IDCLGlobalPluginWithoutSettings
         CATALYST_URL = catalystURL;
         ENTITIES_ACTIVE = entitiesActiveURL;
     }
+
     public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
     {
         PrepareAvatarSystem.InjectToWorld(ref builder, $"{CATALYST_URL}{ENTITIES_ACTIVE}");
         InstantiateAvatarSystem.InjectToWorld(ref builder, frameTimeCapBudgetProvider, avatarPoolRegistry);
         InstantiateRandomAvatarsSystem.InjectToWorld(ref builder);
     }
-
-
-
-
 }

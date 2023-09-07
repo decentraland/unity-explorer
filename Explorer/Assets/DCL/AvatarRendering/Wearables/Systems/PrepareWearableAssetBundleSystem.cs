@@ -11,8 +11,7 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
-using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleIntention>;
-
+using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {
@@ -56,8 +55,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
             World.Add(entity, assetPromise);
         }
 
-
-
         [Query]
         [All(typeof(WearableComponentsHelper.GetWearableAssetBundleManifestFlag))]
         [None(typeof(WearableComponentsHelper.GetWearableAssetBundleFlag))]
@@ -82,9 +79,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             var assetBundlePromise =
                 AssetBundlePromise.Create(World,
-                    GetWearableAssetBundleIntention.FromHash(wearableComponent.AssetBundleManifest, wearableComponent.GetMainFileHash() + PlatformUtils.GetPlatform()),
+                    GetAssetBundleIntention.FromHash(wearableComponent.GetMainFileHash() + PlatformUtils.GetPlatform()),
                     PartitionComponent.TOP_PRIORITY);
 
+            World.Add(assetBundlePromise.Entity, wearableComponent.AssetBundleManifest);
             World.Add(entity, assetBundlePromise);
         }
 
@@ -121,6 +119,5 @@ namespace DCL.AvatarRendering.Wearables.Systems
             wearableComponent.AssetBundleData = World.Get<WearableComponent>(wearableCatalog.GetWearableCatalog(World).catalog[defaultWearableUrn]).AssetBundleData;
             CleanEntity(entity);
         }
-
     }
 }

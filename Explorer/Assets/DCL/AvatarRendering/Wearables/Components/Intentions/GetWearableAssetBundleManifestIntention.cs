@@ -12,12 +12,12 @@ namespace DCL.AvatarRendering.Wearables.Components
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
         public bool Equals(GetWearableAssetBundleManifestIntention other) =>
-            Hash == other.Hash && CommonArguments.Equals(other.CommonArguments);
+            Hash == other.Hash;
 
         public override bool Equals(object obj) =>
             obj is GetWearableAssetBundleManifestIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(Hash, CommonArguments);
+            Hash.GetHashCode();
     }
 }

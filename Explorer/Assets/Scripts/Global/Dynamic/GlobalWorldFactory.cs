@@ -5,6 +5,7 @@ using CrdtEcsBridge.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Character;
 using DCL.Character.Components;
+using DCL.GlobalPartitioning;
 using DCL.PluginSystem.Global;
 using DCL.Systems;
 using ECS.ComponentsPooling;
@@ -13,7 +14,6 @@ using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.Prioritization.Systems;
 using ECS.SceneLifeCycle.Components;
-using ECS.SceneLifeCycle.DeferredLoading;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
@@ -96,7 +96,7 @@ namespace Global.Dynamic
                 new LoadEmptySceneSystemLogic(emptyScenesWorldFactory, componentPoolsRegistry, EMPTY_SCENES_MAPPINGS_URL),
                 sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex);
 
-            SceneLifeCycleDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider);
+            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider);
 
             CalculateParcelsInRangeSystem.InjectToWorld(ref builder, playerEntity);
             LoadStaticPointersSystem.InjectToWorld(ref builder);

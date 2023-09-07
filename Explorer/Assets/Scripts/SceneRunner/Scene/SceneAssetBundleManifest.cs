@@ -20,7 +20,7 @@ namespace SceneRunner.Scene
         {
             this.assetBundlesBaseUrl = assetBundlesBaseUrl;
             this.dto = dto;
-            convertedFiles = new HashSet<string>(dto.Files);
+            convertedFiles = new HashSet<string>(dto.Files, StringComparer.OrdinalIgnoreCase);
 
             versionHashPart = string.IsNullOrEmpty(dto.Version) ? ComputeVersionedHashPart(assetBundlesBaseUrl) : dto.Version;
         }
@@ -69,17 +69,6 @@ namespace SceneRunner.Scene
 
         public bool Contains(string hash) =>
             convertedFiles.Contains(hash);
-
-        public string GetCorrectCapsLock(string hash)
-        {
-            foreach (string convertedFile in convertedFiles)
-            {
-                if (string.Compare(hash, convertedFile, StringComparison.OrdinalIgnoreCase) == 0)
-                    return convertedFile;
-            }
-
-            return hash;
-        }
 
         public string GetAssetBundleURL(string hash) =>
             $"{assetBundlesBaseUrl}{dto.Version}/{hash}";

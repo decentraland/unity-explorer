@@ -3,39 +3,50 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.AvatarRendering.Wearables.Systems;
+using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
+using Ipfs;
 using SceneRunner.Scene;
 
-namespace DCL.AvatarRendering.Wearables.Systems
+namespace DCL.GlobalPartitioning
 {
     /// <summary>
-    ///     Weighs definitions and scenes loading against each other according to their partition
+    ///     Weighs asset, definitions and scenes loading against each other according to their partition in the global world
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(PrepareWearableAssetBundleLoadingParametersSystem))]
+    [UpdateAfter(typeof(PrepareGlobalAssetBundleLoadingParametersSystem))]
+    [UpdateBefore(typeof(LoadSceneDefinitionListSystem))]
+    [UpdateBefore(typeof(LoadSceneSystem))]
+    [UpdateBefore(typeof(LoadSceneDefinitionSystem))]
     [UpdateBefore(typeof(PrepareWearableSystem))]
     [UpdateBefore(typeof(LoadWearableAssetBundleManifestSystem))]
-    [UpdateBefore(typeof(LoadWearableAssetBundleSystem))]
+    [UpdateBefore(typeof(LoadGlobalAssetBundleSystem))]
     [UpdateBefore(typeof(LoadWearablesByPointersSystem))]
     [UpdateBefore(typeof(LoadWearablesByParamSystem))]
-    public partial class WearableDeferredLoadingSystem : DeferredLoadingSystem
+    public partial class GlobalDeferredLoadingSystem : DeferredLoadingSystem
     {
         private static readonly QueryDescription[] COMPONENT_HANDLERS;
 
-        static WearableDeferredLoadingSystem()
+        static GlobalDeferredLoadingSystem()
         {
             COMPONENT_HANDLERS = new[]
             {
+                CreateQuery<GetSceneDefinitionList, SceneDefinitions>(),
+                CreateQuery<GetSceneDefinition, IpfsTypes.SceneEntityDefinition>(),
+                CreateQuery<GetSceneFacadeIntention, ISceneFacade>(),
                 CreateQuery<GetWearableByPointersIntention, WearableDTO[]>(),
                 CreateQuery<GetWearableByParamIntention, WearableDTO[]>(),
                 CreateQuery<GetWearableAssetBundleManifestIntention, SceneAssetBundleManifest>(),
-                CreateQuery<GetWearableAssetBundleIntention, AssetBundleData>(),
+                CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
             };
         }
 
-        internal WearableDeferredLoadingSystem(World world, IConcurrentBudgetProvider concurrentLoadingBudgetProvider)
+        internal GlobalDeferredLoadingSystem(World world, IConcurrentBudgetProvider concurrentLoadingBudgetProvider)
             : base(world, COMPONENT_HANDLERS, concurrentLoadingBudgetProvider) { }
     }
 }
