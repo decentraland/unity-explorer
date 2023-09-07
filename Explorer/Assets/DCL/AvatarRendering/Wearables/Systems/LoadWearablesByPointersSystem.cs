@@ -19,19 +19,19 @@ using Utility.Multithreading;
 namespace DCL.AvatarRendering.Wearables.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    public partial class LoadWearablesByPointersSystem : LoadSystemBase<WearableDTO[], GetWearableByPointersIntention>
+    public partial class LoadWearablesByPointersSystem : LoadSystemBase<WearableDTO[], GetWearableDTOByPointersIntention>
     {
         // When the number of wearables to request is greater than MAX_WEARABLES_PER_REQUEST, we split the request into several smaller ones.
         // In this way we avoid to send a very long url string that would fail due to the web request size limitations.
         private readonly int MAX_WEARABLES_PER_REQUEST;
         private readonly StringBuilder bodyBuilder = new ();
 
-        public LoadWearablesByPointersSystem(World world, IStreamableCache<WearableDTO[], GetWearableByPointersIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync)
+        public LoadWearablesByPointersSystem(World world, IStreamableCache<WearableDTO[], GetWearableDTOByPointersIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync)
         {
             MAX_WEARABLES_PER_REQUEST = 200;
         }
 
-        protected override async UniTask<StreamableLoadingResult<WearableDTO[]>> FlowInternal(GetWearableByPointersIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<WearableDTO[]>> FlowInternal(GetWearableDTOByPointersIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             var finalTargetList = new List<WearableDTO>();
 

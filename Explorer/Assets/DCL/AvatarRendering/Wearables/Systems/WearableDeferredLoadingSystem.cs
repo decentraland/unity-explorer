@@ -26,8 +26,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             COMPONENT_HANDLERS = new[]
             {
-                CreateQuery<GetWearableByPointersIntention, WearableDTO[]>(),
-                CreateQuery<GetWearableByParamIntention, WearableDTO[]>(),
+                CreateQuery<GetWearableDTOByPointersIntention, WearableDTO[]>(),
+                CreateQuery<GetWearableDTOByParamIntention, WearableDTO[]>(),
                 CreateQuery<GetWearableAssetBundleManifestIntention, SceneAssetBundleManifest>(),
                 CreateQuery<GetWearableAssetBundleIntention, AssetBundleData>(),
             };

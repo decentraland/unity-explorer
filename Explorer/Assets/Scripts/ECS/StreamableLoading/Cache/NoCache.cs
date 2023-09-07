@@ -41,6 +41,12 @@ namespace ECS.StreamableLoading.Cache
                 base.RemoveOngoingRequest(key);
         }
 
+        void IStreamableCache<TAsset, TLoadingIntention>.AddOngoingRequest(string key, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> ongoingRequest)
+        {
+            if (useOngoingRequestCache)
+                base.AddOngoingRequest(key, ongoingRequest);
+        }
+
         bool IStreamableCache<TAsset, TLoadingIntention>.TryGet(in TLoadingIntention key, out TAsset asset)
         {
             asset = default(TAsset);

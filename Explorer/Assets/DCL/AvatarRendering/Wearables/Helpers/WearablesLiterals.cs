@@ -10,11 +10,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             public const string FEMALE = "urn:decentraland:off-chain:base-avatars:BaseFemale";
             public const string MALE = "urn:decentraland:off-chain:base-avatars:BaseMale";
+            public static string[] BodyShapesList = { MALE, FEMALE };
 
-            public static IEnumerable<string> GetBodyShapes()
-            {
-                return new[] { MALE, FEMALE };
-            }
         }
 
         public static class Categories
@@ -69,16 +66,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public static string[] GetDefaultWearablesForBodyShape(string bodyShapeId) =>
                 defaultWearables.Where(x => x.Key.Item1 == bodyShapeId).Select(x => x.Value).ToArray();
 
-            public static string[] GetDefaultWearables()
-            {
-                var defaultWearables = new List<string>();
-
-                foreach (string bodyShape in BodyShapes.GetBodyShapes()) { defaultWearables.AddRange(GetDefaultWearablesForBodyShape(bodyShape)); }
-
-                defaultWearables.AddRange(BodyShapes.GetBodyShapes());
-
-                return defaultWearables.ToArray();
-            }
             public static string GetDefaultWearable(string bodyShapeId, string category)
             {
                 if (!defaultWearables.ContainsKey((bodyShapeId, category)))

@@ -2,7 +2,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 {
     public struct AvatarShapeComponent
     {
-        public bool IsDirty;
         public string ID;
         public string BodyShape;
 
@@ -10,7 +9,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         {
             ID = id;
             BodyShape = bodyShape;
-            IsDirty = true;
         }
     }
 }

@@ -24,9 +24,11 @@ namespace DCL.AvatarRendering.Wearables.Components
         public Wearable(string urn)
         {
             this.urn = urn;
+            IsLoading = true;
+
             AssetBundleData = new Dictionary<string, StreamableLoadingResult<AssetBundleData>?>();
 
-            foreach (string bodyShape in WearablesLiterals.BodyShapes.GetBodyShapes()) { AssetBundleData.Add(bodyShape, null); }
+            foreach (string bodyShape in WearablesLiterals.BodyShapes.BodyShapesList) { AssetBundleData.Add(bodyShape, null); }
         }
 
         //TODO: Make this method better
@@ -64,6 +66,23 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public string GetCategory() =>
             WearableDTO.Asset.metadata.data.category;
+
+        public bool IsUnisex() =>
+            WearableDTO.Asset.metadata.data.representations.Length > 1;
+
+        public bool IsCompatibleWithBodyShape(string bodyShape)
+        {
+            foreach (WearableDTO.WearableMetadataDto.Representation dataRepresentation in WearableDTO.Asset.metadata.data.representations)
+            {
+                if (dataRepresentation.bodyShapes.Contains(bodyShape))
+                    return true;
+            }
+
+            return false;
+        }
+
+        public bool IsBodyShape() =>
+            GetCategory().Equals(WearablesLiterals.Categories.BODY_SHAPE);
     }
 
 }

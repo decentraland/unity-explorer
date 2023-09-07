@@ -3,14 +3,14 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.ECSComponents;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using System.Collections.Generic;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearableDTO[], GetWearableByPointersIntention>;
+using System.Linq;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearableDTO[], GetWearableDTOByPointersIntention>;
 
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
@@ -37,20 +37,18 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         [None(typeof(AvatarShapeComponent))]
         private void StartAvatarLoad(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partition)
         {
-            var wearables = new List<string>();
-            wearables.Add(WearablesLiterals.BodyShapes.MALE);
-            wearables.AddRange(pbAvatarShape.Wearables);
+            //TODO: Is this OK?
+            string[] wearablesToLoad = new List<string> { pbAvatarShape.BodyShape }
+                                      .Concat(pbAvatarShape.Wearables)
+                                      .ToArray();
 
-            World.Add(entity, new GetWearableByPointersIntention
+            World.Add(entity, new GetWearablesByPointersIntention
                 {
-                    Pointers = wearables.ToArray(),
-                    results = new Wearable[wearables.Count],
+                    Pointers = wearablesToLoad,
                     BodyShape = pbAvatarShape.BodyShape,
                 }, partition,
                 new AvatarShapeComponent(pbAvatarShape.Id, pbAvatarShape.BodyShape));
         }
-
-
 
     }
 }

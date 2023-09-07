@@ -4,10 +4,10 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Components.Intentions;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.ComponentsPooling;
-using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Transforms.Components;
 using UnityEngine;
@@ -37,12 +37,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        public void InstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent, ref TransformComponent transformComponent,
-            ref StreamableLoadingResult<Wearable[]> wearableResult)
+        public void InstantiateAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref TransformComponent transformComponent, ref Wearable[] wearableResult)
         {
-            if (!avatarShapeComponent.IsDirty)
-                return;
-
             if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
                 return;
 
@@ -54,13 +50,18 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarTransform.SetParent(transformComponent.Transform, false);
             avatarTransform.ResetLocalTRS();
 
-            foreach (Wearable wearable in wearableResult.Asset)
-                InstantiateWearable(wearable.AssetBundleData[avatarShapeComponent.BodyShape].Value.Asset.GameObject, avatarBase.AvatarSkinnedMeshRenderer, avatarTransform);
+            foreach (Wearable wearable in wearableResult)
+            {
+                GameObject instantiateWearable = InstantiateWearable(wearable.AssetBundleData[avatarShapeComponent.BodyShape].Value.Asset.GameObject, avatarBase.AvatarSkinnedMeshRenderer, avatarTransform);
 
-            avatarShapeComponent.IsDirty = false;
+                //TODO: Do a proper hiding algorithm
+                if (wearable.IsBodyShape())
+                    HideBodyParts(instantiateWearable);
+            }
+
+            World.Remove<Wearable[], GetWearablesByPointersIntention>(entity);
         }
 
-        //TODO: Do a proper hiding algorithm
         private void HideBodyParts(GameObject bodyShape)
         {
             for (var i = 0; i < bodyShape.transform.childCount; i++)
@@ -73,16 +74,18 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             }
         }
 
-        private void InstantiateWearable(GameObject wearableToInstantiate, SkinnedMeshRenderer baseAvatar, Transform parentTransform)
+        private GameObject InstantiateWearable(GameObject wearableToInstantiate, SkinnedMeshRenderer baseAvatar, Transform parentTransform)
         {
             //TODO: Pooling and combining
-            GameObject instantiatedWearabled = Object.Instantiate(wearableToInstantiate, parentTransform);
+            GameObject instantiatedWearable = Object.Instantiate(wearableToInstantiate, parentTransform);
 
-            foreach (SkinnedMeshRenderer skinnedMeshRenderer in instantiatedWearabled.GetComponentsInChildren<SkinnedMeshRenderer>())
+            foreach (SkinnedMeshRenderer skinnedMeshRenderer in instantiatedWearable.GetComponentsInChildren<SkinnedMeshRenderer>())
             {
                 skinnedMeshRenderer.rootBone = baseAvatar.rootBone;
                 skinnedMeshRenderer.bones = baseAvatar.bones;
             }
+
+            return instantiatedWearable;
         }
 
     }
