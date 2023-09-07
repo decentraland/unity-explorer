@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.AvatarRendering.Wearables.Systems;
 using DCL.ECSComponents;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
@@ -15,17 +14,18 @@ using System.Collections.Generic;
 using UnityEngine;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearableDTO[], DCL.AvatarRendering.Wearables.Components.GetWearableByParamIntention>;
 
-
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
+    //Temporary class to load default wearables and create random avatars from it.
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(PrepareWearableSystem))]
     [LogCategory(ReportCategory.AVATAR)]
     public partial class InstantiateRandomAvatarsSystem : BaseUnityLoopSystem
     {
-        public struct GenerateRandomAvatarComponent { }
 
         private readonly int TOTAL_AVATARS_TO_INSTANTIATE;
+
+        //TODO: Used to avoid getting results from another system
+        public struct InstantiatingRandomAvatarFlag { }
 
         public InstantiateRandomAvatarsSystem(World world) : base(world)
         {
@@ -35,79 +35,76 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         public override void Initialize()
         {
             base.Initialize();
-            (string, string)[] urlParams = { ("collectionType", "base-wearable"), ("pageSize", "300") };
 
-            //TODO: Probably once again we need a prepare system to resolver the url
-            var promise = Promise.Create(World,
-                new GetWearableByParamIntention
-                {
-                    CommonArguments = new CommonLoadingArguments("DummyUser"),
-                    Params = urlParams,
-                    UserID = "DummyUser",
-                },
-                new PartitionComponent());
+            var defaultMaleWearables = new List<string>();
+            defaultMaleWearables.Add(WearablesLiterals.BodyShapes.MALE);
+            defaultMaleWearables.AddRange(WearablesLiterals.DefaultWearables.GetDefaultWearablesForBodyShape(WearablesLiterals.BodyShapes.MALE));
 
-            World.Create(new GenerateRandomAvatarComponent(), promise);
+            //TODO: Securing DefaultWearables
+            //We will use the male body shape as reference; but we should do this for male and then for female
+            World.Create(new GetWearableByPointersIntention
+            {
+                Pointers = defaultMaleWearables.ToArray(),
+                results = new Wearable[defaultMaleWearables.Count],
+                BodyShape = WearablesLiterals.BodyShapes.MALE,
+            }, PartitionComponent.TOP_PRIORITY, new InstantiatingRandomAvatarFlag());
         }
 
         protected override void Update(float t)
         {
-            CreateRandomAvatarsQuery(World);
+            FinalizeRandomAvatarsQuery(World);
         }
 
         [Query]
-        [All(typeof(GenerateRandomAvatarComponent))]
-        private void CreateRandomAvatars(in Entity entity, ref Promise wearablePromise)
+        [All(typeof(InstantiatingRandomAvatarFlag))]
+        private void FinalizeRandomAvatars(in Entity entity, ref StreamableLoadingResult<Wearable[]> defaultWearablesLoaded)
         {
-            if (wearablePromise.TryConsume(World, out StreamableLoadingResult<WearableDTO[]> result))
-            {
-                if (!result.Succeeded)
-                    ReportHub.LogError(GetReportCategory(), "Base wearables could not be fetched");
-                else
-                    GenerateRandomAvatars(result);
+            if (!defaultWearablesLoaded.Succeeded)
+                ReportHub.LogError(GetReportCategory(), "Base wearables could not be fetched, we are in an irrecoverable state");
+            else
+                GenerateRandomAvatars(defaultWearablesLoaded.Asset);
 
-                World.Destroy(entity);
-            }
+            World.Destroy(entity);
         }
 
-        private void GenerateRandomAvatars(StreamableLoadingResult<WearableDTO[]> result)
+        private void GenerateRandomAvatars(Wearable[] defaultWearables)
         {
-            var body_shape = new List<WearableDTO>();
-            var upper_body = new List<WearableDTO>();
-            var lower_body = new List<WearableDTO>();
-            var feet = new List<WearableDTO>();
-            var hair = new List<WearableDTO>();
-            var mouth = new List<WearableDTO>();
-            var eyes = new List<WearableDTO>();
-            var eyebros = new List<WearableDTO>();
+            var body_shape = new List<Wearable>();
+            var upper_body = new List<Wearable>();
+            var lower_body = new List<Wearable>();
+            var feet = new List<Wearable>();
+            var hair = new List<Wearable>();
+            var mouth = new List<Wearable>();
+            var eyes = new List<Wearable>();
+            var eyebros = new List<Wearable>();
 
-            foreach (WearableDTO wearableDto in result.Asset)
+            foreach (Wearable wearable in defaultWearables)
             {
-                switch (wearableDto.metadata.data.category)
+                switch (wearable.GetCategory())
                 {
                     case WearablesLiterals.Categories.BODY_SHAPE:
-                        body_shape.Add(wearableDto);
+                        body_shape.Add(wearable);
                         break;
                     case WearablesLiterals.Categories.UPPER_BODY:
-                        upper_body.Add(wearableDto);
+                        upper_body.Add(wearable);
                         break;
                     case WearablesLiterals.Categories.LOWER_BODY:
-                        lower_body.Add(wearableDto);
+                        lower_body.Add(wearable);
                         break;
                     case WearablesLiterals.Categories.FEET:
-                        feet.Add(wearableDto);
+                        feet.Add(wearable);
                         break;
                     case WearablesLiterals.Categories.HAIR:
-                        hair.Add(wearableDto);
+                        hair.Add(wearable);
                         break;
                     case WearablesLiterals.Categories.MOUTH:
-                        mouth.Add(wearableDto);
+                        mouth.Add(wearable);
                         break;
                     case WearablesLiterals.Categories.EYES:
-                        eyes.Add(wearableDto);
+                        eyes.Add(wearable);
                         break;
                     case WearablesLiterals.Categories.EYEBROWS:
-                        eyebros.Add(wearableDto);
+                        eyebros.Add(wearable);
                         break;
                 }
             }
@@ -116,13 +113,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             {
                 var avatarShape = new PBAvatarShape
                 {
-                    BodyShape = body_shape[Random.Range(0, body_shape.Count)].metadata.id,
+                    BodyShape = body_shape[Random.Range(0, body_shape.Count)].GetUrn(),
                     Wearables =
                     {
-                        upper_body[Random.Range(0, upper_body.Count)].metadata.id,
-                        lower_body[Random.Range(0, lower_body.Count)].metadata.id,
-                        feet[Random.Range(0, feet.Count)].metadata.id,
-                        hair[Random.Range(0, hair.Count)].metadata.id,
+                        upper_body[Random.Range(0, upper_body.Count)].GetUrn(),
+                        lower_body[Random.Range(0, lower_body.Count)].GetUrn(),
+                        feet[Random.Range(0, feet.Count)].GetUrn(),
+                        hair[Random.Range(0, hair.Count)].GetUrn(),
 
                         //TODO: We still dont have the default asset bundles for this ones
                         //We should add them before using them

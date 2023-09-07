@@ -43,7 +43,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             await UniTask.SwitchToThreadPool();
 
             //TODO: Keep this in mind, because not completely sure what we will need in the future
-            LambdaResponse lambdaResponse = JsonConvert.DeserializeObject<LambdaResponse>(response);
+            WearableDTO.LambdaResponse lambdaResponse = JsonConvert.DeserializeObject<WearableDTO.LambdaResponse>(response);
             var wearableDtos = new WearableDTO[lambdaResponse.elements.Count()];
 
             for (var i = 0; i < lambdaResponse.elements.Count; i++)

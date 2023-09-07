@@ -1,15 +1,6 @@
-using Arch.Core;
-using Arch.System;
-using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
-using Diagnostics.ReportsHandling;
-using ECS.Abstract;
-using ECS.StreamableLoading.Common.Components;
-
 namespace DCL.AvatarRendering.Wearables.Systems
 {
+    /*
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.WEARABLE)]
     public partial class PrepareWearableSystem : BaseUnityLoopSystem
@@ -56,22 +47,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
             ProcessWearableRequestResult(intention, wearableDTOResult.Asset);
         }
 
-        private void ProcessWearableRequestResult<T>(T intention, WearableDTO[] result) where T: IGetWearableIntention
-        {
-            foreach (WearableDTO assetEntity in result)
-            {
-                if (!wearableCatalog.GetWearableCatalog(World).catalog.ContainsKey(assetEntity.metadata.id))
-                {
-                    //TODO: Download Thumbnail
-                    WearableComponent wearableComponent = assetEntity.ToWearableItem(WEARABLE_CONTENT_BASE_URL);
-                    Entity wearableEntity = World.Create(wearableComponent);
-
-                    if (intention.StartAssetBundlesDownload)
-                        World.Add<WearableComponentsHelper.GetWearableAssetBundleManifestFlag>(wearableEntity);
-                    wearableCatalog.GetWearableCatalog(World).catalog.Add(wearableComponent.urn, World.Reference(wearableEntity));
-                }
-            }
-        }
-
     }
+    */
 }

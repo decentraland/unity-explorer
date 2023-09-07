@@ -8,6 +8,7 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using UnityEngine;
 using Utility.Multithreading;
 
@@ -41,18 +42,19 @@ namespace DCL.AvatarRendering.Wearables
             // not synced by mutex, for compatibility only
             var mutexSync = new MutexSync();
 
-            PrepareWearableSystem.InjectToWorld(ref builder, $"{CATALYST_URL}{CONTENT_URL}");
-            PrepareWearableAssetBundleSystem.InjectToWorld(ref builder);
+            //PrepareWearableSystem.InjectToWorld(ref builder, $"{CATALYST_URL}{CONTENT_URL}");
+            //PrepareWearableAssetBundleSystem.InjectToWorld(ref builder);
 
             WearableDeferredLoadingSystem.InjectToWorld(ref builder, new ConcurrentLoadingBudgetProvider(50));
+            WearablePromiseSystem.InjectToWorld(ref builder, new Dictionary<string, Wearable>(), $"{CATALYST_URL}{ENTITIES_ACTIVE}");
 
-            LoadWearablesByParamSystem.InjectToWorld(ref builder, new NoCache<WearableDTO[], GetWearableByParamIntention>(), mutexSync, $"{CATALYST_URL}{EXPLORER_LAMBDA_URL}");
-            LoadWearablesByPointersSystem.InjectToWorld(ref builder, new WearablesByPointersCache(), mutexSync);
-            LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(), mutexSync, AB_ASSETS_URL);
+            LoadWearablesByParamSystem.InjectToWorld(ref builder, new NoCache<WearableDTO[], GetWearableByParamIntention>(false), mutexSync, $"{CATALYST_URL}{EXPLORER_LAMBDA_URL}");
+            LoadWearablesByPointersSystem.InjectToWorld(ref builder, new NoCache<WearableDTO[], GetWearableByPointersIntention>(false), mutexSync);
+            LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(false), mutexSync, AB_ASSETS_URL);
             PrepareWearableAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL);
             LoadWearableAssetBundleSystem.InjectToWorld(ref builder, new WearableAssetBundleCache(), mutexSync, new AssetBundleLoadingMutex());
 
-            LoadDefaultWearablesSystem.InjectToWorld(ref builder, $"{CATALYST_URL}{ENTITIES_ACTIVE}");
+            //LoadDefaultWearablesSystem.InjectToWorld(ref builder, $"{CATALYST_URL}{ENTITIES_ACTIVE}");
         }
     }
 }

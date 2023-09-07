@@ -77,12 +77,6 @@ namespace Global.Dynamic
                 new TransformComponent { Transform = characterObject.Transform }
             );
 
-            //TODO: Avoid initializing dictionary here
-            world.Create(new WearableCatalog
-            {
-                catalog = new Dictionary<string, EntityReference>(),
-            });
-
             // Asset Bundle Manifest
             const string ASSET_BUNDLES_URL = "https://ab-cdn.decentraland.org/";
 

@@ -137,7 +137,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             hash = assetBundleIntention.WearableAssetBundleManifest.GetCorrectCapsLock(hash);
 
             // Inherit partition from the parent promise
-            var assetBundlePromise = AssetPromise<AssetBundleData, GetWearableAssetBundleIntention>.Create(World, GetWearableAssetBundleIntention.FromHash(assetBundleIntention.WearableAssetBundleManifest, hash), partition);
+            var assetBundlePromise = AssetPromise<AssetBundleData, GetWearableAssetBundleIntention>.Create(World, GetWearableAssetBundleIntention.FromHash(assetBundleIntention.WearableAssetBundleManifest, hash, assetBundleIntention.BodyShape), partition);
 
             try
             {

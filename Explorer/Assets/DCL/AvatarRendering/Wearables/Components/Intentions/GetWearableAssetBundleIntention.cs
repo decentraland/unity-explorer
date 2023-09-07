@@ -12,14 +12,16 @@ namespace DCL.AvatarRendering.Wearables.Components
         public CommonLoadingArguments CommonArguments { get; set; }
 
         public string Hash;
+        public string BodyShape;
         internal Hash128? cacheHash;
 
         //TODO: Not completely happy to keep it here
         public readonly SceneAssetBundleManifest WearableAssetBundleManifest;
 
-        private GetWearableAssetBundleIntention(SceneAssetBundleManifest assetBundleManifest, string hash = null, string name = null, AssetSource permittedSources = AssetSource.ALL)
+        private GetWearableAssetBundleIntention(SceneAssetBundleManifest assetBundleManifest, string hash, string bodyShape, AssetSource permittedSources = AssetSource.ALL)
         {
             Hash = hash;
+            BodyShape = bodyShape;
             WearableAssetBundleManifest = assetBundleManifest;
 
             // Don't resolve URL here
@@ -28,7 +30,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         }
 
         public bool Equals(GetWearableAssetBundleIntention other) =>
-            Equals(CancellationTokenSource, other.CancellationTokenSource) && CommonArguments.Equals(other.CommonArguments);
+            Equals(CancellationTokenSource, other.CancellationTokenSource);
 
         public override bool Equals(object obj) =>
             obj is GetWearableAssetBundleIntention other && Equals(other);
@@ -38,7 +40,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
-        public static GetWearableAssetBundleIntention FromHash(SceneAssetBundleManifest sceneAssetBundleManifest, string hash, AssetSource permittedSources = AssetSource.ALL) =>
-            new (sceneAssetBundleManifest, hash, permittedSources: permittedSources);
+        public static GetWearableAssetBundleIntention FromHash(SceneAssetBundleManifest sceneAssetBundleManifest, string hash, string bodyShape, AssetSource permittedSources = AssetSource.ALL) =>
+            new (sceneAssetBundleManifest, hash, bodyShape, permittedSources: permittedSources);
     }
 }
