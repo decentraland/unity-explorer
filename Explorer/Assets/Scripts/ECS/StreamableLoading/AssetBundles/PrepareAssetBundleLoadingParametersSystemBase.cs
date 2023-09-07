@@ -1,9 +1,7 @@
 ﻿using Arch.Core;
-using Arch.System;
 using AssetManagement;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
-using SceneRunner.Scene;
 using System;
 using Utility;
 
@@ -20,8 +18,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         protected abstract bool TryResolveHash(ref GetAssetBundleIntention assetBundleIntention);
 
-        protected void PrepareCommonArguments([Data] SceneAssetBundleManifest assetBundleManifest, in Entity entity,
-            ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
+        protected void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
         {
             if (state.Value != StreamableLoadingState.Status.NotStarted) return;
 
@@ -57,7 +54,7 @@ namespace ECS.StreamableLoading.AssetBundles
             // Second priority
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.WEB))
             {
-                if (!assetBundleManifest.Contains(assetBundleIntention.Hash))
+                if (!assetBundleIntention.Manifest.Contains(assetBundleIntention.Hash))
                 {
                     // Add the failure to the entity
                     World.Add(entity, new StreamableLoadingResult<AssetBundleData>
@@ -70,9 +67,9 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.Attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT;
                 ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
                 ca.CurrentSource = AssetSource.WEB;
-                ca.URL = assetBundleManifest.GetAssetBundleURL(assetBundleIntention.Hash);
+                ca.URL = assetBundleIntention.Manifest.GetAssetBundleURL(assetBundleIntention.Hash);
                 assetBundleIntention.CommonArguments = ca;
-                assetBundleIntention.cacheHash = assetBundleManifest.ComputeHash(assetBundleIntention.Hash);
+                assetBundleIntention.cacheHash = assetBundleIntention.Manifest.ComputeHash(assetBundleIntention.Hash);
             }
         }
 

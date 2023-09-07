@@ -31,9 +31,10 @@ namespace ECS.StreamableLoading.AssetBundles
         [None(typeof(StreamableLoadingResult<AssetBundleData>))]
 
         // If loading is not started yet and there is no result
-        private void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
+        private new void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
         {
-            PrepareCommonArguments(sceneData.AssetBundleManifest, in entity, ref assetBundleIntention, ref state);
+            assetBundleIntention.Manifest = sceneData.AssetBundleManifest;
+            base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
         }
 
         protected override bool TryResolveHash(ref GetAssetBundleIntention assetBundleIntention) =>

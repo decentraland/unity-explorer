@@ -17,6 +17,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.WEARABLE)]
+    [UpdateBefore(typeof(PrepareGlobalAssetBundleLoadingParametersSystem))]
     public partial class PrepareWearableAssetBundleSystem : BaseUnityLoopSystem
     {
         private SingleInstanceEntity wearableCatalog;
@@ -79,10 +80,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             var assetBundlePromise =
                 AssetBundlePromise.Create(World,
-                    GetAssetBundleIntention.FromHash(wearableComponent.GetMainFileHash() + PlatformUtils.GetPlatform()),
+                    GetAssetBundleIntention.FromHash(wearableComponent.GetMainFileHash() + PlatformUtils.GetPlatform(), manifest: wearableComponent.AssetBundleManifest),
                     PartitionComponent.TOP_PRIORITY);
 
-            World.Add(assetBundlePromise.Entity, wearableComponent.AssetBundleManifest);
             World.Add(entity, assetBundlePromise);
         }
 

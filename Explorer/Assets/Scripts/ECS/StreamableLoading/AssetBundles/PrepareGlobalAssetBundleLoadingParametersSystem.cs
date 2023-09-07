@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Diagnostics.ReportsHandling;
 using ECS.StreamableLoading.Common.Components;
-using SceneRunner.Scene;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
@@ -16,7 +15,7 @@ namespace ECS.StreamableLoading.AssetBundles
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class PrepareGlobalAssetBundleLoadingParametersSystem : PrepareAssetBundleLoadingParametersSystemBase
     {
-        public PrepareGlobalAssetBundleLoadingParametersSystem(World world, string streamingAssetURL) : base(world, streamingAssetURL) { }
+        internal PrepareGlobalAssetBundleLoadingParametersSystem(World world, string streamingAssetURL) : base(world, streamingAssetURL) { }
 
         protected override void Update(float t)
         {
@@ -27,10 +26,9 @@ namespace ECS.StreamableLoading.AssetBundles
         [None(typeof(StreamableLoadingResult<AssetBundleData>))]
 
         // Provides a unique asset bundle manifest for each entity containing an asset bundle
-        private void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state,
-            ref SceneAssetBundleManifest assetBundleManifest)
+        private new void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
         {
-            PrepareCommonArguments(assetBundleManifest, in entity, ref assetBundleIntention, ref state);
+            base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
         }
 
         /// <summary>

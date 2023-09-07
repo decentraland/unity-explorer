@@ -1,5 +1,6 @@
 ﻿using AssetManagement;
 using ECS.StreamableLoading.Common.Components;
+using SceneRunner.Scene;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -17,6 +18,8 @@ namespace ECS.StreamableLoading.AssetBundles
         /// </summary>
         public readonly string Name;
 
+        public SceneAssetBundleManifest Manifest;
+
         /// <summary>
         ///     Sanitized hash used by Unity's Caching system,
         /// </summary>
@@ -25,7 +28,7 @@ namespace ECS.StreamableLoading.AssetBundles
         /// <param name="hash">Hash of the asset, if it is provided manifest is not checked</param>
         /// <param name="name">Name is resolved into Hash before loading by the manifest</param>
         /// <param name="permittedSources">Sources from which systems will try to load</param>
-        private GetAssetBundleIntention(string name = null, string hash = null, AssetSource permittedSources = AssetSource.ALL)
+        private GetAssetBundleIntention(string name = null, string hash = null, AssetSource permittedSources = AssetSource.ALL, SceneAssetBundleManifest assetBundleManifest = null)
         {
             Name = name;
             Hash = hash;
@@ -34,6 +37,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             CommonArguments = new CommonLoadingArguments(string.Empty, permittedSources: permittedSources);
             cacheHash = null;
+            Manifest = assetBundleManifest;
         }
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
@@ -41,8 +45,8 @@ namespace ECS.StreamableLoading.AssetBundles
         public static GetAssetBundleIntention FromName(string name, AssetSource permittedSources = AssetSource.ALL) =>
             new (name: name, permittedSources: permittedSources);
 
-        public static GetAssetBundleIntention FromHash(string hash, AssetSource permittedSources = AssetSource.ALL) =>
-            new (hash: hash, permittedSources: permittedSources);
+        public static GetAssetBundleIntention FromHash(string hash, AssetSource permittedSources = AssetSource.ALL, SceneAssetBundleManifest manifest = null) =>
+            new (hash: hash, permittedSources: permittedSources, assetBundleManifest: manifest);
 
         public bool Equals(GetAssetBundleIntention other) =>
             Hash == other.Hash || Name == other.Name;
