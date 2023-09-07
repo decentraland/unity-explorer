@@ -67,6 +67,17 @@ namespace SceneRunner.Scene
             fixed (char* ptr = hashBuilder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * hashBuilder.Length)); }
         }
 
+        public string FixCapitalization(string hash)
+        {
+            foreach (string convertedFile in convertedFiles)
+            {
+                if (string.Compare(hash, convertedFile, StringComparison.OrdinalIgnoreCase) == 0)
+                    return convertedFile;
+            }
+
+            return hash;
+        }
+
         public bool Contains(string hash) =>
             convertedFiles.Contains(hash);
 

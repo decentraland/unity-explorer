@@ -28,6 +28,9 @@ namespace ECS.StreamableLoading.AssetBundles
         // Provides a unique asset bundle manifest for each entity containing an asset bundle
         private new void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
         {
+            // TODO hack, fix Asset Bundle Converter
+            assetBundleIntention.Hash = assetBundleIntention.Manifest.FixCapitalization(assetBundleIntention.Hash);
+
             base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
         }
 
