@@ -3,11 +3,13 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.ECSComponents;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common;
 using System.Collections.Generic;
 using System.Linq;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearableDTO[], GetWearableDTOByPointersIntention>;
@@ -18,12 +20,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [LogCategory(ReportCategory.AVATAR)]
     public partial class PrepareAvatarSystem : BaseUnityLoopSystem
     {
-        private readonly string CATALYST_URL;
-
-        public PrepareAvatarSystem(World world, string catalystURL) : base(world)
-        {
-            CATALYST_URL = catalystURL;
-        }
+        public PrepareAvatarSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
@@ -41,12 +38,14 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                                       .Concat(pbAvatarShape.Wearables)
                                       .ToArray();
 
-            World.Add(entity, new GetWearablesByPointersIntention
+            var werablePromise = AssetPromise<Wearable[], GetWearablesByPointersIntention>.Create(World,
+                new GetWearablesByPointersIntention
                 {
                     Pointers = wearablesToLoad,
                     BodyShape = pbAvatarShape,
-                }, partition,
-                new AvatarShapeComponent(pbAvatarShape.Id, pbAvatarShape));
+                }, partition);
+
+            World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Id, pbAvatarShape, werablePromise));
         }
     }
 }

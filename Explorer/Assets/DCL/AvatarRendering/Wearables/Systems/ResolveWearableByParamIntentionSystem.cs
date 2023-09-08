@@ -5,12 +5,13 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
-using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {
@@ -30,11 +31,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
             FinalizeWearableDTOQuery(World);
         }
 
-        //TODO: Why cant I use IPartitionComponent here?
         [Query]
         [None(typeof(AssetPromise<WearableDTO[], GetWearableDTOByParamIntention>))]
-        public void ResolveWearablePromise(in Entity entity, ref GetWearableByParamIntention intention, ref PartitionComponent partitionComponent)
+        public void ResolveWearablePromise(in Entity entity, ref GetWearableByParamIntention intention, ref IPartitionComponent partitionComponent)
         {
+            Debug.Log("BBBBBB");
             var promise = AssetPromise<WearableDTO[], GetWearableDTOByParamIntention>.Create(World,
                 new GetWearableDTOByParamIntention
                 {
@@ -47,20 +48,19 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        [None(typeof(Wearable[]))]
+        [None(typeof(StreamableLoadingResult<Wearable[]>))]
         public void FinalizeWearableDTO(in Entity entity, ref AssetPromise<WearableDTO[], GetWearableDTOByParamIntention> promise)
         {
             if (promise.TryConsume(World, out StreamableLoadingResult<WearableDTO[]> promiseResult))
             {
                 if (!promiseResult.Succeeded)
-                    ReportHub.Log(GetReportCategory(), $"Wearable by param request failed for params {promise.LoadingIntention.Params}");
+                    World.Add(entity, new StreamableLoadingResult<Wearable[]>(new Exception($"Wearable by param request failed for params {promise.LoadingIntention.Params}")));
                 else
                 {
+                    //TODO: POOL!!!!
                     var newWearables = new List<Wearable>();
-
                     foreach (WearableDTO assetEntity in promiseResult.Asset)
                     {
-                        //TODO: POOL!!!!
                         //TODO: Download Thumbnail
                         if (!wearableCatalog.ContainsKey(assetEntity.metadata.id))
                         {
@@ -71,7 +71,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                         }
                     }
 
-                    World.Add(entity, newWearables.ToArray());
+                    World.Add(entity, new StreamableLoadingResult<Wearable[]>(newWearables.ToArray()));
                 }
             }
         }

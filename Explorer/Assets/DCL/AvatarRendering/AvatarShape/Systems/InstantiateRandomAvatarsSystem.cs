@@ -8,11 +8,14 @@ using DCL.ECSComponents;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearableDTO[], DCL.AvatarRendering.Wearables.Components.GetWearableDTOByParamIntention>;
+using PointerPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.Wearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
+using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.Wearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
+
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -25,9 +28,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         public class DefaultWearableRequest
         {
-            public EntityReference MaleReference;
-            public EntityReference FemaleReference;
-            public EntityReference BaseWearablesReference;
+            public PointerPromise MalePromise;
+            public PointerPromise FemalePromise;
+            public ParamPromise BaseWearablesPromise;
 
             public bool FinishedState;
         }
@@ -52,23 +55,23 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                                              .Concat(WearablesLiterals.DefaultWearables.GetDefaultWearablesForBodyShape(WearablesLiterals.BodyShape.FEMALE))
                                              .ToArray();
 
-            defaultWearableRequest.MaleReference = World.Reference(World.Create(new GetWearablesByPointersIntention
+            defaultWearableRequest.MalePromise = PointerPromise.Create(World, new GetWearablesByPointersIntention
             {
                 Pointers = defaultMaleWearables.ToArray(),
                 BodyShape = WearablesLiterals.BodyShape.MALE,
-            }, PartitionComponent.TOP_PRIORITY));
+            }, PartitionComponent.TOP_PRIORITY);
 
-            defaultWearableRequest.FemaleReference = World.Reference(World.Create(new GetWearablesByPointersIntention
+            defaultWearableRequest.FemalePromise = PointerPromise.Create(World, new GetWearablesByPointersIntention
             {
                 Pointers = defaultFemaleWearables.ToArray(),
                 BodyShape = WearablesLiterals.BodyShape.FEMALE,
-            }, PartitionComponent.TOP_PRIORITY));
+            }, PartitionComponent.TOP_PRIORITY);
 
-            defaultWearableRequest.BaseWearablesReference = World.Reference(World.Create(new GetWearableByParamIntention
+            defaultWearableRequest.BaseWearablesPromise = ParamPromise.Create(World, new GetWearableByParamIntention
             {
                 Params = new[] { ("collectionType", "base-wearable"), ("pageSize", "300") },
                 UserID = "DummyUser",
-            }, PartitionComponent.TOP_PRIORITY));
+            }, PartitionComponent.TOP_PRIORITY);
         }
 
         protected override void Update(float t)
@@ -76,17 +79,18 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             if (defaultWearableRequest.FinishedState)
                 return;
 
-            Debug.Log("A " + World.Has<Wearable[]>(defaultWearableRequest.MaleReference));
-            Debug.Log("B " + World.Has<Wearable[]>(defaultWearableRequest.FemaleReference));
-            Debug.Log("C " + World.Has<Wearable[]>(defaultWearableRequest.BaseWearablesReference));
-
-            if (!World.Has<Wearable[]>(defaultWearableRequest.MaleReference) ||
-                !World.Has<Wearable[]>(defaultWearableRequest.FemaleReference) ||
-                !World.Has<Wearable[]>(defaultWearableRequest.BaseWearablesReference))
-                return;
-
-            GenerateRandomAvatars(World.Get<Wearable[]>(defaultWearableRequest.BaseWearablesReference));
-            defaultWearableRequest.FinishedState = true;
+            if (defaultWearableRequest.MalePromise.TryGetResult(World, out StreamableLoadingResult<Wearable[]> maleResult) &&
+                defaultWearableRequest.FemalePromise.TryGetResult(World, out StreamableLoadingResult<Wearable[]> femaleResult) &&
+                defaultWearableRequest.BaseWearablesPromise.TryGetResult(World, out StreamableLoadingResult<Wearable[]> baseWearables))
+            {
+                if (baseWearables.Succeeded)
+                {
+                    GenerateRandomAvatars(baseWearables.Asset);
+                    defaultWearableRequest.FinishedState = true;
+                }
+                else
+                    ReportHub.LogError(GetReportCategory(), "Base wearables could't be loaded!");
+            }
         }
 
         private void GenerateRandomAvatars(Wearable[] defaultWearables)

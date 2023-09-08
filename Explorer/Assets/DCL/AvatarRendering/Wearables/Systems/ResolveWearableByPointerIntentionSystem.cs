@@ -13,6 +13,7 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System.Collections.Generic;
+using System.Linq;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
@@ -40,74 +41,45 @@ namespace DCL.AvatarRendering.Wearables.Systems
             FinalizeAssetBundleLoadingQuery(World);
         }
 
+
         [Query]
-        [None(typeof(Wearable[]))]
-        public void ResolveWearablePromise(in Entity entity, ref GetWearablesByPointersIntention wearablesByPointersIntention, ref PartitionComponent partitionComponent)
+        [None(typeof(StreamableLoadingResult<Wearable[]>))]
+        public void ResolveWearablePromise(in Entity entity, ref GetWearablesByPointersIntention wearablesByPointersIntention, ref IPartitionComponent partitionComponent)
         {
-            var resolvedWearables = new List<Wearable>();
-            var missingPointers = new List<string>();
+            var resolvedWearables = new HashSet<Wearable>();
+            var missingPointers = new HashSet<string>();
 
-            for (var index = 0; index < wearablesByPointersIntention.Pointers.Length; index++)
+            foreach (string loadingIntentionPointer in wearablesByPointersIntention.Pointers)
             {
-                string loadingIntentionPointer = wearablesByPointersIntention.Pointers[index];
-
                 if (!wearableCatalog.TryGetValue(loadingIntentionPointer, out Wearable component))
                 {
                     wearableCatalog.Add(loadingIntentionPointer, new Wearable(loadingIntentionPointer));
                     missingPointers.Add(loadingIntentionPointer);
+                    continue;
                 }
-                else
+
+                if (component.IsLoading) continue;
+
+                if (component.AssetBundleData[wearablesByPointersIntention.BodyShape] is { Succeeded: true })
                 {
-                    if (component.IsLoading)
-                        continue;
-
-                    if (component.AssetBundleData[wearablesByPointersIntention.BodyShape] is { Succeeded: true })
-                        resolvedWearables.Add(component);
-                    else if (component.ManifestResult == null)
-                    {
-                        var promise = AssetBundleManifestPromise.Create(World,
-                            new GetWearableAssetBundleManifestIntention
-                            {
-                                Hash = component.GetHash(),
-
-                                //TODO: Resolving a url here to avoid the irrecoverable issue failure
-                                CommonArguments = new CommonLoadingArguments(component.GetHash()),
-                            },
-                            partitionComponent);
-
-                        component.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>();
-                        component.IsLoading = true;
-                        World.Create(promise, component, wearablesByPointersIntention.BodyShape);
-                    }
-                    else if (component.AssetBundleData[wearablesByPointersIntention.BodyShape] == null && component.ManifestResult.Value.Asset != null)
-                    {
-                        var promise = AssetBundlePromise.Create(World,
-                            GetAssetBundleIntention.FromHash(component.GetMainFileHash(wearablesByPointersIntention.BodyShape) + PlatformUtils.GetPlatform(), manifest: component.ManifestResult.Value.Asset),
-                            partitionComponent);
-
-                        component.IsLoading = true;
-                        World.Create(promise, component, wearablesByPointersIntention.BodyShape);
-                    }
+                    resolvedWearables.Add(component);
+                    continue;
                 }
+
+                HandleUnresolvedComponent(component, wearablesByPointersIntention, partitionComponent);
             }
 
             if (missingPointers.Count > 0)
             {
-                var wearableDtoByPointersIntention
-                    = new GetWearableDTOByPointersIntention
-                    {
-                        Pointers = missingPointers.ToArray(),
-                        CommonArguments = new CommonLoadingArguments(WEARABLE_ENTITIES_URL),
-                    };
-
-                var promise = AssetPromise<WearableDTO[], GetWearableDTOByPointersIntention>.Create(World, wearableDtoByPointersIntention, partitionComponent);
-                World.Create(promise, wearablesByPointersIntention.BodyShape);
+                CreateMissingPointersPromise(missingPointers, wearablesByPointersIntention, partitionComponent);
                 return;
             }
 
             if (resolvedWearables.Count == wearablesByPointersIntention.Pointers.Length)
-                World.Add(entity, resolvedWearables.ToArray());
+                World.Add(entity, new StreamableLoadingResult<Wearable[]>(resolvedWearables.ToArray()));
         }
+
+
 
         [Query]
         public void FinalizeWearableDTO(in Entity entity, ref AssetPromise<WearableDTO[], GetWearableDTOByPointersIntention> promise, ref WearablesLiterals.BodyShape bodyShape)
@@ -166,6 +138,48 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 wearable.IsLoading = false;
                 World.Destroy(entity);
             }
+        }
+
+        private void HandleUnresolvedComponent(Wearable component, GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
+        {
+            if (component.ManifestResult == null)
+            {
+                var promise = AssetBundleManifestPromise.Create(World,
+                    new GetWearableAssetBundleManifestIntention
+                    {
+                        Hash = component.GetHash(),
+
+                        //TODO: Resolving a url here to avoid the irrecoverable issue failure
+                        CommonArguments = new CommonLoadingArguments(component.GetHash()),
+                    },
+                    partitionComponent);
+
+                component.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>();
+                component.IsLoading = true;
+                World.Create(promise, component, intention.BodyShape);
+            }
+
+            if (component.AssetBundleData[intention.BodyShape] == null && component.ManifestResult.Value.Asset != null)
+            {
+                var promise = AssetBundlePromise.Create(World,
+                    GetAssetBundleIntention.FromHash(component.GetMainFileHash(intention.BodyShape) + PlatformUtils.GetPlatform(), manifest: component.ManifestResult.Value.Asset),
+                    partitionComponent);
+
+                component.IsLoading = true;
+                World.Create(promise, component, intention.BodyShape);
+            }
+        }
+
+        private void CreateMissingPointersPromise(HashSet<string> missingPointers, GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
+        {
+            var wearableDtoByPointersIntention = new GetWearableDTOByPointersIntention
+            {
+                Pointers = missingPointers.ToArray(),
+                CommonArguments = new CommonLoadingArguments(WEARABLE_ENTITIES_URL),
+            };
+
+            var promise = AssetPromise<WearableDTO[], GetWearableDTOByPointersIntention>.Create(World, wearableDtoByPointersIntention, partitionComponent);
+            World.Create(promise, intention.BodyShape);
         }
 
         private void SetDefaultWearables(Wearable wearable, in WearablesLiterals.BodyShape bodyShape)

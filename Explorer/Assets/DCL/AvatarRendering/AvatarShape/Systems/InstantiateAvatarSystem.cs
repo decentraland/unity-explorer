@@ -4,10 +4,10 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Components.Intentions;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.ComponentsPooling;
+using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Transforms.Components;
 using UnityEngine;
@@ -35,11 +35,17 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             InstantiateAvatarQuery(World);
         }
 
+
         [Query]
-        public void InstantiateAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref TransformComponent transformComponent, ref Wearable[] wearableResult)
+        public void InstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent, ref TransformComponent transformComponent)
         {
+            if (!avatarShapeComponent.IsDirty)
+                return;
+
             if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
                 return;
+
+            if (!avatarShapeComponent.WearablePromise.TryConsume(World, out StreamableLoadingResult<Wearable[]> wearablesResult)) return;
 
             AvatarBase avatarBase = avatarPoolRegistry.Get();
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
@@ -49,7 +55,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarTransform.SetParent(transformComponent.Transform, false);
             avatarTransform.ResetLocalTRS();
 
-            foreach (Wearable wearable in wearableResult)
+            foreach (Wearable wearable in wearablesResult.Asset)
             {
                 GameObject instantiateWearable = InstantiateWearable(wearable.AssetBundleData[avatarShapeComponent.BodyShape].Value.Asset.GameObject, avatarBase.AvatarSkinnedMeshRenderer, avatarTransform);
 
@@ -58,7 +64,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     HideBodyParts(instantiateWearable);
             }
 
-            World.Remove<Wearable[], GetWearablesByPointersIntention>(entity);
+            avatarShapeComponent.IsDirty = false;
         }
 
         private void HideBodyParts(GameObject bodyShape)

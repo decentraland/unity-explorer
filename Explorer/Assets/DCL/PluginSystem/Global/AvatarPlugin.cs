@@ -27,20 +27,16 @@ public class AvatarPlugin : IDCLGlobalPluginWithoutSettings
 
     private readonly IConcurrentBudgetProvider frameTimeCapBudgetProvider;
     private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
-    private readonly string CATALYST_URL;
-    private readonly string ENTITIES_ACTIVE;
 
     public AvatarPlugin(IAssetsProvisioner assetsProvisioner, IConcurrentBudgetProvider frameTimeCapBudgetProvider, IComponentPool<AvatarBase> avatarPoolRegistry, string catalystURL, string entitiesActiveURL)
     {
         this.frameTimeCapBudgetProvider = frameTimeCapBudgetProvider;
         this.avatarPoolRegistry = avatarPoolRegistry;
-        CATALYST_URL = catalystURL;
-        ENTITIES_ACTIVE = entitiesActiveURL;
     }
 
     public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
     {
-        PrepareAvatarSystem.InjectToWorld(ref builder, $"{CATALYST_URL}{ENTITIES_ACTIVE}");
+        PrepareAvatarSystem.InjectToWorld(ref builder);
         InstantiateAvatarSystem.InjectToWorld(ref builder, frameTimeCapBudgetProvider, avatarPoolRegistry);
         InstantiateRandomAvatarsSystem.InjectToWorld(ref builder);
     }
