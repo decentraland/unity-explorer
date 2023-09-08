@@ -14,7 +14,6 @@ using UnityEngine;
 using Utility;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearableDTO[], GetWearableByPointersIntention>;
 
-
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
@@ -63,7 +62,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 if (!IsWearableReadyToInstantiate(avatarShapeWearable))
                     return;
 
-
             AvatarBase avatarBase = avatarPoolRegistry.Get();
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
 
@@ -103,6 +101,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             //TODO: Pooling and combining
             GameObject instantiatedWearabled = Object.Instantiate(objectToInstantiate, parentTransform);
+            instantiatedWearabled.transform.ResetLocalTRS();
 
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in instantiatedWearabled.GetComponentsInChildren<SkinnedMeshRenderer>())
             {
@@ -128,6 +127,5 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             return false;
         }
-
     }
 }
