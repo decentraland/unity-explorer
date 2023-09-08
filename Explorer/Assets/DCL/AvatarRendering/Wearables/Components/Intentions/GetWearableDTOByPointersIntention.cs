@@ -1,23 +1,21 @@
-using DCL.AvatarRendering.Wearables.Components;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Threading;
 
-public struct GetWearableByPointersIntention : IGetWearableIntention, IEquatable<GetWearableByPointersIntention>
+public struct GetWearableDTOByPointersIntention : IEquatable<GetWearableDTOByPointersIntention>, ILoadingIntention
 {
     public CancellationTokenSource CancellationTokenSource { get; }
     public CommonLoadingArguments CommonArguments { get; set; }
-    public bool StartAssetBundlesDownload { get; set; }
-    public string[] Pointers;
 
-    public bool Equals(GetWearableByPointersIntention other) =>
+    //TODO: Pool array
+    public string[] Pointers;
+    public string BodyShape;
+
+    public bool Equals(GetWearableDTOByPointersIntention other) =>
         Equals(Pointers, other.Pointers) && Equals(CancellationTokenSource, other.CancellationTokenSource) && CommonArguments.Equals(other.CommonArguments);
 
-    public bool Equals(IGetWearableIntention other) =>
-        Equals(CancellationTokenSource, other.CancellationTokenSource) && CommonArguments.Equals(other.CommonArguments);
-
     public override bool Equals(object obj) =>
-        obj is GetWearableByPointersIntention other && Equals(other);
+        obj is GetWearableDTOByPointersIntention other && Equals(other);
 
     public override int GetHashCode() =>
         HashCode.Combine(Pointers, CancellationTokenSource, CommonArguments);

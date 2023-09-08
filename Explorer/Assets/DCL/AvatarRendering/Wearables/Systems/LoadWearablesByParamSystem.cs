@@ -19,17 +19,17 @@ using Utility.Multithreading;
 namespace DCL.AvatarRendering.Wearables.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    public partial class LoadWearablesByParamSystem : LoadSystemBase<WearableDTO[], GetWearableByParamIntention>
+    public partial class LoadWearablesByParamSystem : LoadSystemBase<WearableDTO[], GetWearableDTOByParamIntention>
     {
         private readonly StringBuilder urlBuilder = new ();
         private readonly string LAMBDA_URL;
 
-        public LoadWearablesByParamSystem(World world, IStreamableCache<WearableDTO[], GetWearableByParamIntention> cache, MutexSync mutexSync, string lambdaURL) : base(world, cache, mutexSync)
+        public LoadWearablesByParamSystem(World world, IStreamableCache<WearableDTO[], GetWearableDTOByParamIntention> cache, MutexSync mutexSync, string lambdaURL) : base(world, cache, mutexSync)
         {
             LAMBDA_URL = lambdaURL;
         }
 
-        protected override async UniTask<StreamableLoadingResult<WearableDTO[]>> FlowInternal(GetWearableByParamIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<WearableDTO[]>> FlowInternal(GetWearableDTOByParamIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             string response;
 
@@ -43,7 +43,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             await UniTask.SwitchToThreadPool();
 
             //TODO: Keep this in mind, because not completely sure what we will need in the future
-            LambdaResponse lambdaResponse = JsonConvert.DeserializeObject<LambdaResponse>(response);
+            WearableDTO.LambdaResponse lambdaResponse = JsonConvert.DeserializeObject<WearableDTO.LambdaResponse>(response);
             var wearableDtos = new WearableDTO[lambdaResponse.elements.Count()];
 
             for (var i = 0; i < lambdaResponse.elements.Count; i++)

@@ -10,7 +10,12 @@ namespace ECS.StreamableLoading.Cache
         ///     Resolves the problem of having multiple requests to the same URL at a time,
         ///     should be shared across multiple scenes as their assets can be shared as well
         /// </summary>
-        IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>> OngoingRequests { get; }
+        bool TryGetOngoingRequest(string key, out UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> ongoingRequest);
+
+        void AddOngoingRequest(string key, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> ongoingRequest);
+
+        void RemoveOngoingRequest(string key);
+
 
         /// <summary>
         ///     Get the asset for referencing, it should be called one time and saved in the component,

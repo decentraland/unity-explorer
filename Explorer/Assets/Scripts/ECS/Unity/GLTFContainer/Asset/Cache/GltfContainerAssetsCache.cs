@@ -30,7 +30,14 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             parentContainer = parentContainerGo.transform;
         }
 
-        public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>> OngoingRequests => throw new NotImplementedException($"{nameof(GltfContainerAssetsCache)} doesn't support web requests directly");
+        public bool TryGetOngoingRequest(string key, out UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?> ongoingRequest) =>
+            throw new NotImplementedException($"{nameof(GltfContainerAssetsCache)} doesn't support web requests directly");
+
+        public void AddOngoingRequest(string key, UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?> ongoingRequest) =>
+            throw new NotImplementedException($"{nameof(GltfContainerAssetsCache)} doesn't support web requests directly");
+
+        public void RemoveOngoingRequest(string key) =>
+            throw new NotImplementedException($"{nameof(GltfContainerAssetsCache)} doesn't support web requests directly");
 
         public bool TryGet(in string key, out GltfContainerAsset asset)
         {

@@ -11,6 +11,17 @@ namespace ECS.StreamableLoading.Cache
             OngoingRequests = new Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>(256);
         }
 
-        public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>> OngoingRequests { get; }
+        public bool TryGetOngoingRequest(string key, out UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> ongoingRequest) =>
+            OngoingRequests.TryGetValue(key, out ongoingRequest);
+
+        public void AddOngoingRequest(string key, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> ongoingRequest) =>
+            OngoingRequests.Add(key, ongoingRequest);
+
+        public void RemoveOngoingRequest(string key) =>
+            OngoingRequests.Remove(key);
+
+        private IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>> OngoingRequests { get; }
+
+
     }
 }

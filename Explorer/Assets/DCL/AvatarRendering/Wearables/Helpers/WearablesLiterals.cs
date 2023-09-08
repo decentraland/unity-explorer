@@ -5,16 +5,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public static class WearablesLiterals
     {
+        //TODO: Change to enum
         public static class BodyShapes
         {
             public const string FEMALE = "urn:decentraland:off-chain:base-avatars:BaseFemale";
             public const string MALE = "urn:decentraland:off-chain:base-avatars:BaseMale";
-            public const string DEFAULT = MALE;
+            public static string[] BodyShapesList = { MALE, FEMALE };
 
-            public static IEnumerable<string> GetBodyShapes()
-            {
-                return new[] { MALE, FEMALE };
-            }
         }
 
         public static class Categories
@@ -44,20 +41,22 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public static class DefaultWearables
         {
+            //TODO: Commented wearables that Im not sure we have default ABs
             public static readonly IReadOnlyDictionary<(string, string), string> defaultWearables = new Dictionary<(string, string), string>
             {
-                { (BodyShapes.MALE, Categories.EYES), "urn:decentraland:off-chain:base-avatars:eyes_00" },
-                { (BodyShapes.MALE, Categories.EYEBROWS), "urn:decentraland:off-chain:base-avatars:eyebrows_00" },
-                { (BodyShapes.MALE, Categories.MOUTH), "urn:decentraland:off-chain:base-avatars:mouth_00" },
+                //{ (BodyShapes.MALE, Categories.EYES), "urn:decentraland:off-chain:base-avatars:eyes_00" },
+                //{ (BodyShapes.MALE, Categories.EYEBROWS), "urn:decentraland:off-chain:base-avatars:eyebrows_00" },
+                //{ (BodyShapes.MALE, Categories.MOUTH), "urn:decentraland:off-chain:base-avatars:mouth_00" },
                 { (BodyShapes.MALE, Categories.HAIR), "urn:decentraland:off-chain:base-avatars:casual_hair_01" },
-                { (BodyShapes.MALE, Categories.FACIAL), "urn:decentraland:off-chain:base-avatars:beard" },
+
+                //{ (BodyShapes.MALE, Categories.FACIAL), "urn:decentraland:off-chain:base-avatars:beard" },
                 { (BodyShapes.MALE, Categories.UPPER_BODY), "urn:decentraland:off-chain:base-avatars:green_hoodie" },
                 { (BodyShapes.MALE, Categories.LOWER_BODY), "urn:decentraland:off-chain:base-avatars:brown_pants" },
                 { (BodyShapes.MALE, Categories.FEET), "urn:decentraland:off-chain:base-avatars:sneakers" },
 
-                { (BodyShapes.FEMALE, Categories.EYES), "urn:decentraland:off-chain:base-avatars:f_eyes_00" },
-                { (BodyShapes.FEMALE, Categories.EYEBROWS), "urn:decentraland:off-chain:base-avatars:f_eyebrows_00" },
-                { (BodyShapes.FEMALE, Categories.MOUTH), "urn:decentraland:off-chain:base-avatars:f_mouth_00" },
+                //{ (BodyShapes.FEMALE, Categories.EYES), "urn:decentraland:off-chain:base-avatars:f_eyes_00" },
+                //{ (BodyShapes.FEMALE, Categories.EYEBROWS), "urn:decentraland:off-chain:base-avatars:f_eyebrows_00" },
+                //{ (BodyShapes.FEMALE, Categories.MOUTH), "urn:decentraland:off-chain:base-avatars:f_mouth_00" },
                 { (BodyShapes.FEMALE, Categories.HAIR), "urn:decentraland:off-chain:base-avatars:standard_hair" },
                 { (BodyShapes.FEMALE, Categories.UPPER_BODY), "urn:decentraland:off-chain:base-avatars:f_sweater" },
                 { (BodyShapes.FEMALE, Categories.LOWER_BODY), "urn:decentraland:off-chain:base-avatars:f_jeans" },
@@ -67,16 +66,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public static string[] GetDefaultWearablesForBodyShape(string bodyShapeId) =>
                 defaultWearables.Where(x => x.Key.Item1 == bodyShapeId).Select(x => x.Value).ToArray();
 
-            public static string[] GetDefaultWearables()
-            {
-                var defaultWearables = new List<string>();
-
-                foreach (string bodyShape in BodyShapes.GetBodyShapes()) { defaultWearables.AddRange(GetDefaultWearablesForBodyShape(bodyShape)); }
-
-                defaultWearables.AddRange(BodyShapes.GetBodyShapes());
-
-                return defaultWearables.ToArray();
-            }
             public static string GetDefaultWearable(string bodyShapeId, string category)
             {
                 if (!defaultWearables.ContainsKey((bodyShapeId, category)))

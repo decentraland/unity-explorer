@@ -3,8 +3,8 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Components.Intentions;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.ComponentsPooling;
@@ -12,7 +12,6 @@ using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Transforms.Components;
 using UnityEngine;
 using Utility;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearableDTO[], GetWearableByPointersIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -23,7 +22,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     {
         private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
         private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
-        private SingleInstanceEntity wearableCatalog;
 
         public InstantiateAvatarSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider,
             IComponentPool<AvatarBase> avatarPoolRegistry) : base(world)
@@ -32,35 +30,17 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             this.avatarPoolRegistry = avatarPoolRegistry;
         }
 
-        public override void Initialize()
-        {
-            base.Initialize();
-            wearableCatalog = World.CacheWearableCatalog();
-        }
 
         protected override void Update(float t)
         {
-            //TODO: Release flow
-            //TODO: Cancel flow
             InstantiateAvatarQuery(World);
         }
 
         [Query]
-        [None(typeof(Promise))]
-        private void InstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent, ref TransformComponent transformComponent)
+        public void InstantiateAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref TransformComponent transformComponent, ref Wearable[] wearableResult)
         {
-            if (!avatarShapeComponent.IsDirty)
-                return;
-
             if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
                 return;
-
-            if (!IsWearableReadyToInstantiate(avatarShapeComponent.BodyShapeUrn))
-                return;
-
-            foreach (string avatarShapeWearable in avatarShapeComponent.WearablesUrn)
-                if (!IsWearableReadyToInstantiate(avatarShapeWearable))
-                    return;
 
             AvatarBase avatarBase = avatarPoolRegistry.Get();
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
@@ -70,17 +50,18 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarTransform.SetParent(transformComponent.Transform, false);
             avatarTransform.ResetLocalTRS();
 
-            //Instantiation and binding bones of avatar
-            GameObject bodyShape = InstantiateWearable(avatarShapeComponent.BodyShapeUrn, avatarBase.AvatarSkinnedMeshRenderer, avatarTransform);
-            HideBodyParts(bodyShape);
+            foreach (Wearable wearable in wearableResult)
+            {
+                GameObject instantiateWearable = InstantiateWearable(wearable.AssetBundleData[avatarShapeComponent.BodyShape].Value.Asset.GameObject, avatarBase.AvatarSkinnedMeshRenderer, avatarTransform);
 
-            for (var i = 0; i < avatarShapeComponent.WearablesUrn.Length; i++)
-                InstantiateWearable(avatarShapeComponent.WearablesUrn[i], avatarBase.AvatarSkinnedMeshRenderer, avatarTransform);
+                //TODO: Do a proper hiding algorithm
+                if (wearable.IsBodyShape())
+                    HideBodyParts(instantiateWearable);
+            }
 
-            avatarShapeComponent.IsDirty = false;
+            World.Remove<Wearable[], GetWearablesByPointersIntention>(entity);
         }
 
-        //TODO: Do a proper hiding algorithm
         private void HideBodyParts(GameObject bodyShape)
         {
             for (var i = 0; i < bodyShape.transform.childCount; i++)
@@ -93,39 +74,19 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             }
         }
 
-        private GameObject InstantiateWearable(string wearableUrn, SkinnedMeshRenderer baseAvatar, Transform parentTransform)
+        private GameObject InstantiateWearable(GameObject wearableToInstantiate, SkinnedMeshRenderer baseAvatar, Transform parentTransform)
         {
-            WearableComponent wearableComponent = World.Get<WearableComponent>(wearableCatalog.GetWearableCatalog(World).catalog[wearableUrn]);
-
-            GameObject objectToInstantiate = wearableComponent.AssetBundleData.GameObject;
-
             //TODO: Pooling and combining
-            GameObject instantiatedWearabled = Object.Instantiate(objectToInstantiate, parentTransform);
-            instantiatedWearabled.transform.ResetLocalTRS();
+            GameObject instantiatedWearable = Object.Instantiate(wearableToInstantiate, parentTransform);
 
-            foreach (SkinnedMeshRenderer skinnedMeshRenderer in instantiatedWearabled.GetComponentsInChildren<SkinnedMeshRenderer>())
+            foreach (SkinnedMeshRenderer skinnedMeshRenderer in instantiatedWearable.GetComponentsInChildren<SkinnedMeshRenderer>())
             {
                 skinnedMeshRenderer.rootBone = baseAvatar.rootBone;
                 skinnedMeshRenderer.bones = baseAvatar.bones;
             }
 
-            return instantiatedWearabled;
+            return instantiatedWearable;
         }
 
-        private bool IsWearableReadyToInstantiate(string wearableComponentUrn)
-        {
-            Entity wearableEntityReference = wearableCatalog.GetWearableCatalog(World).catalog[wearableComponentUrn];
-
-            ref WearableComponent wearableComponent
-                = ref World.Get<WearableComponent>(wearableEntityReference);
-
-            if (wearableComponent.AssetBundleData != null)
-                return true;
-
-            if (!World.Has<WearableComponentsHelper.GetWearableAssetBundleManifestFlag>(wearableEntityReference))
-                World.Add<WearableComponentsHelper.GetWearableAssetBundleManifestFlag>(wearableEntityReference);
-
-            return false;
-        }
     }
 }

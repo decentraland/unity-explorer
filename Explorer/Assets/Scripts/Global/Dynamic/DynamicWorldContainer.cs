@@ -31,6 +31,8 @@ namespace Global.Dynamic
                 new InputPlugin(),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, staticContainer.CameraSamplingData),
                 new ProfilingPlugin(staticContainer.AssetsProvisioner, staticContainer.ProfilingProvider),
+
+                //TODO: Remove this hardcoded url after the realm has been connected to get the catalyst url
                 new WearablePlugin("https://peer.decentraland.org", "/content/entities/active/"),
                 new AvatarPlugin(staticContainer.AssetsProvisioner, staticContainer.SingletonSharedDependencies.FrameTimeCapBudgetProvider,
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry.GetReferenceTypePool<AvatarBase>(), "https://peer.decentraland.org", "/content/entities/active/"),

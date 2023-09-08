@@ -102,6 +102,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 return;
 
             // If the given URL failed irrecoverably just return the failure
+            //TODO: Need to replace the irrecoverable failure url as with the ongoing requests cache
             if (irrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset> failure))
             {
                 FinalizeLoading(entity, intention, failure, currentSource);
@@ -124,7 +125,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 var requestIsNotFulfilled = true;
 
                 // if the request is cached wait for it
-                if (cache.OngoingRequests.TryGetValue(intention.CommonArguments.URL, out UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> cachedSource))
+                if (cache.TryGetOngoingRequest(intention.CommonArguments.URL, out UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> cachedSource))
                 {
                     // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
                     acquiredBudget.Release();
@@ -200,7 +201,7 @@ namespace ECS.StreamableLoading.Common.Systems
         private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlow(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             var source = new UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
-            cache.OngoingRequests[intention.CommonArguments.URL] = source;
+            cache.AddOngoingRequest(intention.CommonArguments.URL, source);
 
             try
             {
@@ -236,7 +237,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 // If we don't switch to the main thread in finally we are in trouble because of
                 // race conditions in non-concurrent collections
                 await UniTask.SwitchToMainThread();
-                cache.OngoingRequests.Remove(intention.CommonArguments.URL);
+                cache.RemoveOngoingRequest(intention.CommonArguments.URL);
             }
         }
 
