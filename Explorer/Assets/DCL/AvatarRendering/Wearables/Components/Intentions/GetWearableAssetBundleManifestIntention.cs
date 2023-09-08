@@ -9,9 +9,6 @@ namespace DCL.AvatarRendering.Wearables.Components
         public CommonLoadingArguments CommonArguments { get; set; }
         public string Hash;
 
-        //TODO: Maybe we dont need this here
-        public string BodyShape;
-
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
         public bool Equals(GetWearableAssetBundleManifestIntention other) =>

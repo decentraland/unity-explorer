@@ -3,7 +3,6 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 //Removed all references to EmoteData in WearableItem
@@ -12,11 +11,10 @@ namespace DCL.AvatarRendering.Wearables.Components
     [Serializable]
     public class Wearable
     {
-
         public string urn; // urn
 
         public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult;
-        public Dictionary<string, StreamableLoadingResult<AssetBundleData>?> AssetBundleData;
+        public StreamableLoadingResult<AssetBundleData>?[] AssetBundleData;
         public StreamableLoadingResult<WearableDTO> WearableDTO;
 
         public bool IsLoading;
@@ -26,9 +24,10 @@ namespace DCL.AvatarRendering.Wearables.Components
             this.urn = urn;
             IsLoading = true;
 
-            AssetBundleData = new Dictionary<string, StreamableLoadingResult<AssetBundleData>?>();
+            AssetBundleData = new StreamableLoadingResult<AssetBundleData>?[WearablesLiterals.BodyShape.COUNT];
 
-            foreach (string bodyShape in WearablesLiterals.BodyShapes.BodyShapesList) { AssetBundleData.Add(bodyShape, null); }
+            for (var i = 0; i < AssetBundleData.Length; i++)
+                AssetBundleData[i] = null;
         }
 
         //TODO: Make this method better
@@ -84,5 +83,4 @@ namespace DCL.AvatarRendering.Wearables.Components
         public bool IsBodyShape() =>
             GetCategory().Equals(WearablesLiterals.Categories.BODY_SHAPE);
     }
-
 }

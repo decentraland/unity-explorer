@@ -21,7 +21,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [LogCategory(ReportCategory.AVATAR)]
     public partial class InstantiateRandomAvatarsSystem : BaseUnityLoopSystem
     {
-
         private readonly int TOTAL_AVATARS_TO_INSTANTIATE;
 
         public class DefaultWearableRequest
@@ -45,24 +44,24 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             base.Initialize();
 
-            string[] defaultMaleWearables = new List<string> { WearablesLiterals.BodyShapes.MALE }
-                                           .Concat(WearablesLiterals.DefaultWearables.GetDefaultWearablesForBodyShape(WearablesLiterals.BodyShapes.MALE))
+            string[] defaultMaleWearables = new List<string> { WearablesLiterals.BodyShape.MALE }
+                                           .Concat(WearablesLiterals.DefaultWearables.GetDefaultWearablesForBodyShape(WearablesLiterals.BodyShape.MALE))
                                            .ToArray();
 
-            string[] defaultFemaleWearables = new List<string> { WearablesLiterals.BodyShapes.FEMALE }
-                                             .Concat(WearablesLiterals.DefaultWearables.GetDefaultWearablesForBodyShape(WearablesLiterals.BodyShapes.FEMALE))
+            string[] defaultFemaleWearables = new List<string> { WearablesLiterals.BodyShape.FEMALE }
+                                             .Concat(WearablesLiterals.DefaultWearables.GetDefaultWearablesForBodyShape(WearablesLiterals.BodyShape.FEMALE))
                                              .ToArray();
 
             defaultWearableRequest.MaleReference = World.Reference(World.Create(new GetWearablesByPointersIntention
             {
                 Pointers = defaultMaleWearables.ToArray(),
-                BodyShape = WearablesLiterals.BodyShapes.MALE,
+                BodyShape = WearablesLiterals.BodyShape.MALE,
             }, PartitionComponent.TOP_PRIORITY));
 
             defaultWearableRequest.FemaleReference = World.Reference(World.Create(new GetWearablesByPointersIntention
             {
                 Pointers = defaultFemaleWearables.ToArray(),
-                BodyShape = WearablesLiterals.BodyShapes.FEMALE,
+                BodyShape = WearablesLiterals.BodyShape.FEMALE,
             }, PartitionComponent.TOP_PRIORITY));
 
             defaultWearableRequest.BaseWearablesReference = World.Reference(World.Create(new GetWearableByParamIntention
@@ -92,8 +91,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private void GenerateRandomAvatars(Wearable[] defaultWearables)
         {
-            var male = new AvatarRandomizerHelper(WearablesLiterals.BodyShapes.MALE);
-            var female = new AvatarRandomizerHelper(WearablesLiterals.BodyShapes.FEMALE);
+            var male = new AvatarRandomizerHelper(WearablesLiterals.BodyShape.MALE);
+            var female = new AvatarRandomizerHelper(WearablesLiterals.BodyShape.FEMALE);
 
             foreach (Wearable wearable in defaultWearables)
             {

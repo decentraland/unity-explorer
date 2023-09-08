@@ -12,7 +12,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearableDTO[], GetWearableDTOByPointersIntention>;
 
-
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
@@ -45,10 +44,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             World.Add(entity, new GetWearablesByPointersIntention
                 {
                     Pointers = wearablesToLoad,
-                    BodyShape = pbAvatarShape.BodyShape,
+                    BodyShape = pbAvatarShape,
                 }, partition,
-                new AvatarShapeComponent(pbAvatarShape.Id, pbAvatarShape.BodyShape));
+                new AvatarShapeComponent(pbAvatarShape.Id, pbAvatarShape));
         }
-
     }
 }

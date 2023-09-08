@@ -9,7 +9,6 @@ public struct GetWearableDTOByPointersIntention : IEquatable<GetWearableDTOByPoi
 
     //TODO: Pool array
     public string[] Pointers;
-    public string BodyShape;
 
     public bool Equals(GetWearableDTOByPointersIntention other) =>
         Equals(Pointers, other.Pointers) && Equals(CancellationTokenSource, other.CancellationTokenSource) && CommonArguments.Equals(other.CommonArguments);
@@ -19,5 +18,4 @@ public struct GetWearableDTOByPointersIntention : IEquatable<GetWearableDTOByPoi
 
     public override int GetHashCode() =>
         HashCode.Combine(Pointers, CancellationTokenSource, CommonArguments);
-
 }
