@@ -30,7 +30,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             this.avatarPoolRegistry = avatarPoolRegistry;
         }
 
-
         protected override void Update(float t)
         {
             InstantiateAvatarQuery(World);
@@ -78,6 +77,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             //TODO: Pooling and combining
             GameObject instantiatedWearable = Object.Instantiate(wearableToInstantiate, parentTransform);
+            instantiatedWearable.transform.ResetLocalTRS();
 
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in instantiatedWearable.GetComponentsInChildren<SkinnedMeshRenderer>())
             {
@@ -87,6 +87,5 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             return instantiatedWearable;
         }
-
     }
 }
