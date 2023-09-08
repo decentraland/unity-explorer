@@ -23,7 +23,6 @@ namespace DCL.GlobalPartitioning
     [UpdateBefore(typeof(LoadSceneDefinitionListSystem))]
     [UpdateBefore(typeof(LoadSceneSystem))]
     [UpdateBefore(typeof(LoadSceneDefinitionSystem))]
-    [UpdateBefore(typeof(PrepareWearableSystem))]
     [UpdateBefore(typeof(LoadWearableAssetBundleManifestSystem))]
     [UpdateBefore(typeof(LoadGlobalAssetBundleSystem))]
     [UpdateBefore(typeof(LoadWearablesByPointersSystem))]
