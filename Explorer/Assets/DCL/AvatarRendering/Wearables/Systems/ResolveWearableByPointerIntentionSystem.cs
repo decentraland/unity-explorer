@@ -13,7 +13,7 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System.Collections.Generic;
-using System.Linq;
+using UnityEngine.Pool;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
@@ -46,11 +46,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
         [None(typeof(StreamableLoadingResult<Wearable[]>))]
         public void ResolveWearablePromise(in Entity entity, ref GetWearablesByPointersIntention wearablesByPointersIntention, ref IPartitionComponent partitionComponent)
         {
-            var resolvedWearables = new HashSet<Wearable>();
-            var missingPointers = new HashSet<string>();
+            List<string> missingPointers = ListPool<string>.Get();
+            var successfulResults = 0;
 
-            foreach (string loadingIntentionPointer in wearablesByPointersIntention.Pointers)
+            for (var index = 0; index < wearablesByPointersIntention.Pointers.Count; index++)
             {
+                string loadingIntentionPointer = wearablesByPointersIntention.Pointers[index];
+
                 if (!wearableCatalog.TryGetValue(loadingIntentionPointer, out Wearable component))
                 {
                     wearableCatalog.Add(loadingIntentionPointer, new Wearable(loadingIntentionPointer));
@@ -60,13 +62,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                 if (component.IsLoading) continue;
 
+                HandleUnresolvedComponent(component, wearablesByPointersIntention, partitionComponent);
+
                 if (component.AssetBundleData[wearablesByPointersIntention.BodyShape] is { Succeeded: true })
                 {
-                    resolvedWearables.Add(component);
-                    continue;
+                    successfulResults++;
+                    wearablesByPointersIntention.Results[index] = component;
                 }
-
-                HandleUnresolvedComponent(component, wearablesByPointersIntention, partitionComponent);
             }
 
             if (missingPointers.Count > 0)
@@ -75,8 +77,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 return;
             }
 
-            if (resolvedWearables.Count == wearablesByPointersIntention.Pointers.Length)
-                World.Add(entity, new StreamableLoadingResult<Wearable[]>(resolvedWearables.ToArray()));
+            //If there are no missing pointers, we release the list
+            ListPool<string>.Release(missingPointers);
+
+            if (successfulResults == wearablesByPointersIntention.Pointers.Count)
+                World.Add(entity, new StreamableLoadingResult<Wearable[]>(wearablesByPointersIntention.Results));
         }
 
 
@@ -106,6 +111,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     }
                 }
 
+                ListPool<string>.Release(promise.LoadingIntention.Pointers);
                 World.Destroy(entity);
             }
         }
@@ -170,11 +176,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
             }
         }
 
-        private void CreateMissingPointersPromise(HashSet<string> missingPointers, GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
+        private void CreateMissingPointersPromise(List<string> missingPointers, GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
             var wearableDtoByPointersIntention = new GetWearableDTOByPointersIntention
             {
-                Pointers = missingPointers.ToArray(),
+                Pointers = missingPointers,
                 CommonArguments = new CommonLoadingArguments(WEARABLE_ENTITIES_URL),
             };
 

@@ -11,7 +11,6 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {
@@ -35,21 +34,16 @@ namespace DCL.AvatarRendering.Wearables.Systems
         [None(typeof(AssetPromise<WearableDTO[], GetWearableDTOByParamIntention>))]
         public void ResolveWearablePromise(in Entity entity, ref GetWearableByParamIntention intention, ref IPartitionComponent partitionComponent)
         {
-            Debug.Log("BBBBBB");
             var promise = AssetPromise<WearableDTO[], GetWearableDTOByParamIntention>.Create(World,
-                new GetWearableDTOByParamIntention
-                {
-                    CommonArguments = new CommonLoadingArguments("DummyUser"),
-                    Params = intention.Params,
-                    UserID = intention.UserID,
-                }, partitionComponent);
+                GetWearableDTOByParamIntention.FromParamIntention(intention),
+                partitionComponent);
 
             World.Add(entity, promise);
         }
 
         [Query]
-        [None(typeof(StreamableLoadingResult<Wearable[]>))]
-        public void FinalizeWearableDTO(in Entity entity, ref AssetPromise<WearableDTO[], GetWearableDTOByParamIntention> promise)
+        [None(typeof(StreamableLoadingResult<List<Wearable>>))]
+        public void FinalizeWearableDTO(in Entity entity, ref GetWearableByParamIntention originalIntention, ref AssetPromise<WearableDTO[], GetWearableDTOByParamIntention> promise)
         {
             if (promise.TryConsume(World, out StreamableLoadingResult<WearableDTO[]> promiseResult))
             {
@@ -57,21 +51,20 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     World.Add(entity, new StreamableLoadingResult<Wearable[]>(new Exception($"Wearable by param request failed for params {promise.LoadingIntention.Params}")));
                 else
                 {
-                    //TODO: POOL!!!!
-                    var newWearables = new List<Wearable>();
-                    foreach (WearableDTO assetEntity in promiseResult.Asset)
+                    foreach (WearableDTO wearableDto in promiseResult.Asset)
                     {
-                        //TODO: Download Thumbnail
-                        if (!wearableCatalog.ContainsKey(assetEntity.metadata.id))
+                        if (wearableCatalog.TryGetValue(wearableDto.metadata.id, out Wearable result))
+                            originalIntention.Results.Add(result);
+                        else
                         {
-                            var wearable = new Wearable(assetEntity.metadata.id);
-                            wearable.WearableDTO = new StreamableLoadingResult<WearableDTO>(assetEntity);
+                            var wearable = new Wearable(wearableDto.metadata.id);
+                            wearable.WearableDTO = new StreamableLoadingResult<WearableDTO>(wearableDto);
                             wearable.IsLoading = false;
-                            newWearables.Add(wearable);
+                            originalIntention.Results.Add(wearable);
                         }
                     }
 
-                    World.Add(entity, new StreamableLoadingResult<Wearable[]>(newWearables.ToArray()));
+                    World.Add(entity, new StreamableLoadingResult<List<Wearable>>(originalIntention.Results));
                 }
             }
         }

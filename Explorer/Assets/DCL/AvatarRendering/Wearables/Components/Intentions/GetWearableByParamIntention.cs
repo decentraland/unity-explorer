@@ -1,5 +1,6 @@
 ﻿using ECS.StreamableLoading.Common.Components;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace DCL.AvatarRendering.Wearables.Components.Intentions
@@ -8,6 +9,9 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
     {
         public (string, string)[] Params;
         public string UserID;
+
+        //Used for pooling. Its the responsibility of the consumer to rent and release
+        public List<Wearable> Results;
         public CancellationTokenSource CancellationTokenSource { get; }
 
         public bool Equals(GetWearableByParamIntention other) =>

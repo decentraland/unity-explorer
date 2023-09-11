@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
 using DCL.PluginSystem.Global;
