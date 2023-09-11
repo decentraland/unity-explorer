@@ -13,13 +13,25 @@ public class Avatar_CelShading : MonoBehaviour
     public int _BumpMapArr_ID = 0;
     public int _EmissionMapArr_ID = 0;
 
+    static int _BaseMapArr_ShaderID = Shader.PropertyToID("_BaseMapArr_ID");
+    static int _AlphaTextureArr_ShaderID = Shader.PropertyToID("_AlphaTextureArr_ID");
+    static int _MetallicGlossMapArr_ShaderID = Shader.PropertyToID("_MetallicGlossMapArr_ID");
+    static int _BumpMapArr_ShaderID = Shader.PropertyToID("_BumpMapArr_ID");
+    static int _EmissionMapArr_ShaderID = Shader.PropertyToID("_EmissionMapArr_ID");
+
     private void Awake()
     {
         // Make sure to initialize it.
         // Usually it needs to be initialized only once.
         _propertyBlock = new MaterialPropertyBlock();
-        SetColor("_BaseColor", col_MatPropBlock);
+        //SetColor("_BaseColor", col_MatPropBlock);
         SetTextureArrayID();
+
+        this.GetComponent<MeshRenderer>().material.SetInteger(_BaseMapArr_ShaderID, _BaseMapArr_ID);
+        this.GetComponent<MeshRenderer>().material.SetInteger(_AlphaTextureArr_ShaderID, _AlphaTextureArr_ID);
+        this.GetComponent<MeshRenderer>().material.SetInteger(_MetallicGlossMapArr_ShaderID, _MetallicGlossMapArr_ID);
+        this.GetComponent<MeshRenderer>().material.SetInteger(_BumpMapArr_ShaderID, _BumpMapArr_ID);
+        this.GetComponent<MeshRenderer>().material.SetInteger(_EmissionMapArr_ShaderID, _EmissionMapArr_ID);
     }
 
     // Start is called before the first frame update
@@ -30,20 +42,21 @@ public class Avatar_CelShading : MonoBehaviour
 
     private void SetColor(string colorPropertyName, Color color)
     {
-        this.GetComponent<Renderer>().GetPropertyBlock(_propertyBlock); // Get previously set values. They will reset otherwise
-        _propertyBlock.SetColor(colorPropertyName, color);
-        this.GetComponent<Renderer>().SetPropertyBlock(_propertyBlock);
+        // this.GetComponent<Renderer>().GetPropertyBlock(_propertyBlock); // Get previously set values. They will reset otherwise
+        // _propertyBlock.SetColor(colorPropertyName, color);
+        // this.GetComponent<Renderer>().SetPropertyBlock(_propertyBlock);
     }
 
     private void SetTextureArrayID()
     {
-        this.GetComponent<Renderer>().GetPropertyBlock(_propertyBlock); // Get previously set values. They will reset otherwise
-        _propertyBlock.SetInteger("_BaseMapArr_ID", _BaseMapArr_ID);
-        _propertyBlock.SetInteger("_AlphaTextureArr_ID", _AlphaTextureArr_ID);
-        _propertyBlock.SetInteger("_MetallicGlossMapArr_ID", _MetallicGlossMapArr_ID);
-        _propertyBlock.SetInteger("_BumpMapArr_ID", _BumpMapArr_ID);
-        _propertyBlock.SetInteger("_EmissionMapArr_ID", _EmissionMapArr_ID);
-        this.GetComponent<Renderer>().SetPropertyBlock(_propertyBlock);
+
+        // this.GetComponent<Renderer>().GetPropertyBlock(_propertyBlock); // Get previously set values. They will reset otherwise
+        // _propertyBlock.SetInteger("_BaseMapArr_ID", _BaseMapArr_ID);
+        // _propertyBlock.SetInteger("_AlphaTextureArr_ID", _AlphaTextureArr_ID);
+        // _propertyBlock.SetInteger("_MetallicGlossMapArr_ID", _MetallicGlossMapArr_ID);
+        // _propertyBlock.SetInteger("_BumpMapArr_ID", _BumpMapArr_ID);
+        // _propertyBlock.SetInteger("_EmissionMapArr_ID", _EmissionMapArr_ID);
+        // this.GetComponent<Renderer>().SetPropertyBlock(_propertyBlock);
 
         if(TextureArrayCreator.Instance)
         {
