@@ -1,11 +1,11 @@
-using DCL.AvatarRendering.Wearables.Components.Intentions;
 using ECS.StreamableLoading.Common.Components;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 
-namespace DCL.AvatarRendering.Wearables.Components
+namespace DCL.AvatarRendering.Wearables.Components.Intentions
 {
-    public struct GetWearableDTOByParamIntention : IEquatable<GetWearableDTOByParamIntention>, ILoadingIntention
+    public struct GetWearableyParamIntention : IEquatable<GetWearableyParamIntention>, ILoadingIntention
     {
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
@@ -16,24 +16,25 @@ namespace DCL.AvatarRendering.Wearables.Components
         public (string, string)[] Params;
         public string UserID;
 
-        public GetWearableDTOByParamIntention((string, string)[] requestParams, string userID)
+        //Used for pooling
+        public List<Wearable> Results;
+
+        public GetWearableyParamIntention((string, string)[] requestParams, string userID, List<Wearable> results)
         {
             Params = requestParams;
             UserID = userID;
-            CommonArguments = new CommonLoadingArguments(string.Empty);
+            Results = results;
+            CommonArguments = new CommonLoadingArguments(string.Empty, cancellationTokenSource: new CancellationTokenSource());
         }
 
-        public bool Equals(GetWearableDTOByParamIntention other) =>
+        public bool Equals(GetWearableyParamIntention other) =>
             Equals(Params, other.Params) && UserID == other.UserID;
 
         public override bool Equals(object obj) =>
-            obj is GetWearableDTOByParamIntention other && Equals(other);
+            obj is GetWearableyParamIntention other && Equals(other);
 
         public override int GetHashCode() =>
             HashCode.Combine(Params, UserID, CancellationTokenSource, CommonArguments);
-
-        public static GetWearableDTOByParamIntention FromParamIntention(GetWearableByParamIntention getWearableByParamIntention) =>
-            new (getWearableByParamIntention.Params, getWearableByParamIntention.UserID);
 
     }
 }

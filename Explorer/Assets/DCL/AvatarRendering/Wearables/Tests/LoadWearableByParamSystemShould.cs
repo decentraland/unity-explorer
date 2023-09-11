@@ -1,0 +1,57 @@
+using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Components.Intentions;
+using DCL.AvatarRendering.Wearables.Systems;
+using ECS.StreamableLoading.Tests;
+using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using UnityEngine;
+using Utility.Multithreading;
+using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.Wearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableyParamIntention>;
+
+namespace DCL.AvatarRendering.Wearables.Tests
+{
+    [TestFixture]
+    public class LoadWearableByParamSystemShould : LoadSystemBaseShould<LoadWearablesByParamSystem, Wearable[], GetWearableyParamIntention>
+    {
+        private Dictionary<string, Wearable> wearableCatalog;
+        private readonly string existingURN = "urn:decentraland:off-chain:base-avatars:aviatorstyle";
+        private readonly string successURL = $"file://{Application.dataPath}/../TestResources/Wearables/SuccessUserParam";
+        private string failPath => $"file://{Application.dataPath}/../TestResources/Wearables/non_existing";
+        private string wrongTypePath => $"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}";
+
+        protected override LoadWearablesByParamSystem CreateSystem()
+        {
+            wearableCatalog = new Dictionary<string, Wearable>();
+            return new LoadWearablesByParamSystem(world, cache, new MutexSync(), "", "", wearableCatalog);
+        }
+
+        protected override void AssertSuccess(Wearable[] asset)
+        {
+            base.AssertSuccess(asset);
+
+            foreach (string wearableCatalogKey in wearableCatalog.Keys)
+                Debug.Log(wearableCatalogKey);
+
+            Assert.AreEqual(wearableCatalog.Count, 1);
+            Assert.NotNull(wearableCatalog[existingURN]);
+        }
+
+        [Test]
+        public async Task ConcludeSuccessOnExistingWearable()
+        {
+            wearableCatalog.Add(existingURN, new Wearable(existingURN));
+            await ConcludeSuccess();
+        }
+
+        protected override GetWearableyParamIntention CreateSuccessIntention() =>
+            new (Array.Empty<(string, string)>(), successURL, new List<Wearable>());
+
+        protected override GetWearableyParamIntention CreateNotFoundIntention() =>
+            new (Array.Empty<(string, string)>(), failPath, new List<Wearable>());
+
+        protected override GetWearableyParamIntention CreateWrongTypeIntention() =>
+            new (Array.Empty<(string, string)>(), wrongTypePath, new List<Wearable>());
+    }
+}

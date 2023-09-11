@@ -21,13 +21,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateBefore(typeof(PrepareGlobalAssetBundleLoadingParametersSystem))]
-    public partial class ResolveWearableByPointerIntentionSystem : BaseUnityLoopSystem
+    public partial class ResolveWearableByPointerSystem : BaseUnityLoopSystem
     {
         private readonly Dictionary<string, Wearable> wearableCatalog;
         private string WEARABLE_CONTENT_BASE_URL;
         private readonly string WEARABLE_ENTITIES_URL;
 
-        public ResolveWearableByPointerIntentionSystem(World world, Dictionary<string, Wearable> wearableCatalog, string wearableEntitiesURL) : base(world)
+        public ResolveWearableByPointerSystem(World world, Dictionary<string, Wearable> wearableCatalog, string wearableEntitiesURL) : base(world)
         {
             this.wearableCatalog = wearableCatalog;
             WEARABLE_ENTITIES_URL = wearableEntitiesURL;
@@ -89,6 +89,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
         [Query]
         public void FinalizeWearableDTO(in Entity entity, ref AssetPromise<WearableDTO[], GetWearableDTOByPointersIntention> promise, ref WearablesLiterals.BodyShape bodyShape)
         {
+            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
+            {
+                promise.ForgetLoading(World);
+                World.Destroy(entity);
+            }
+
             if (promise.TryConsume(World, out StreamableLoadingResult<WearableDTO[]> promiseResult))
             {
                 if (!promiseResult.Succeeded)
@@ -119,6 +125,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
         [Query]
         private void FinalizeAssetBundleManifestLoading(in Entity entity, ref AssetBundleManifestPromise promise, ref Wearable wearable, ref WearablesLiterals.BodyShape bodyShape)
         {
+            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
+            {
+                promise.ForgetLoading(World);
+                World.Destroy(entity);
+            }
+
             if (promise.TryConsume(World, out StreamableLoadingResult<SceneAssetBundleManifest> result))
             {
                 if (result.Succeeded)
@@ -134,6 +146,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
         [Query]
         private void FinalizeAssetBundleLoading(in Entity entity, ref AssetBundlePromise promise, ref Wearable wearable, ref WearablesLiterals.BodyShape bodyShape)
         {
+            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
+            {
+                promise.ForgetLoading(World);
+                World.Destroy(entity);
+            }
+
             if (promise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
                 if (result.Succeeded)
@@ -155,8 +173,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     {
                         Hash = component.GetHash(),
 
-                        //TODO: Resolving a url here to avoid the irrecoverable issue failure
-                        CommonArguments = new CommonLoadingArguments(component.GetHash()),
+                        //TODO: Is it okay to use the original cancellation token source?
+                        CommonArguments = new CommonLoadingArguments(component.GetHash(), cancellationTokenSource: intention.CancellationTokenSource),
                     },
                     partitionComponent);
 
@@ -168,7 +186,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             if (component.AssetBundleData[intention.BodyShape] == null && component.ManifestResult.Value.Asset != null)
             {
                 var promise = AssetBundlePromise.Create(World,
-                    GetAssetBundleIntention.FromHash(component.GetMainFileHash(intention.BodyShape) + PlatformUtils.GetPlatform(), manifest: component.ManifestResult.Value.Asset),
+                    GetAssetBundleIntention.FromHash(component.GetMainFileHash(intention.BodyShape) + PlatformUtils.GetPlatform(), manifest: component.ManifestResult.Value.Asset, cancellationTokenSource: intention.CancellationTokenSource),
                     partitionComponent);
 
                 component.IsLoading = true;
@@ -181,7 +199,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             var wearableDtoByPointersIntention = new GetWearableDTOByPointersIntention
             {
                 Pointers = missingPointers,
-                CommonArguments = new CommonLoadingArguments(WEARABLE_ENTITIES_URL),
+                CommonArguments = new CommonLoadingArguments(WEARABLE_ENTITIES_URL, cancellationTokenSource: intention.CancellationTokenSource),
             };
 
             var promise = AssetPromise<WearableDTO[], GetWearableDTOByPointersIntention>.Create(World, wearableDtoByPointersIntention, partitionComponent);

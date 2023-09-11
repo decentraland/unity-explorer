@@ -17,68 +17,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         public WearableMetadataDto metadata;
         public WearableContentDto[] content;
 
-        /*public Wearable ToWearableItem(string contentBaseUrl)
-        {
-            var wearableComponent = new Wearable
-            {
-                urn = metadata.id,
-                wearableContent = new WearableContent
-                {
-                    representations = new WearableRepresentation[metadata.data.representations.Length],
-                    category = metadata.data.category,
-                    hides = metadata.data.hides,
-                    replaces = metadata.data.replaces,
-                    tags = metadata.data.tags,
-                    removesDefaultHiding = metadata.data.removesDefaultHiding,
-                },
-                baseUrl = contentBaseUrl,
-                description = metadata.description,
-                i18n = metadata.i18n,
-                hash = id,
-                rarity = metadata.rarity,
-                thumbnailHash = GetContentHashByFileName(metadata.thumbnail),
-            };
-
-            for (var i = 0; i < metadata.data.representations.Length; i++)
-            {
-                WearableMetadataDto.Representation representation = metadata.data.representations[i];
-
-                wearableComponent.wearableContent.representations[i] = new WearableRepresentation
-                {
-                    bodyShapes = representation.bodyShapes,
-                    mainFile = representation.mainFile,
-                    overrideHides = representation.overrideHides,
-                    overrideReplaces = representation.overrideReplaces,
-                    contents = new WearableMappingPair[representation.contents.Length],
-                };
-
-                for (var z = 0; z < representation.contents.Length; z++)
-                {
-                    string fileName = representation.contents[z];
-                    string hash = GetContentHashByFileName(fileName);
-
-                    wearableComponent.wearableContent.representations[i].contents[z] = new WearableMappingPair
-                    {
-                        url = $"{contentBaseUrl}/{hash}",
-                        hash = hash,
-                        key = fileName,
-                    };
-                }
-            }
-
-            return wearableComponent;
-        }
-
-        public string GetContentHashByFileName(string fileName)
-        {
-            foreach (WearableContentDto dto in content)
-                if (dto.file == fileName)
-                    return dto.hash;
-
-            return null;
-        }
-    }*/
-
         [Serializable]
         public struct WearableContentDto
         {

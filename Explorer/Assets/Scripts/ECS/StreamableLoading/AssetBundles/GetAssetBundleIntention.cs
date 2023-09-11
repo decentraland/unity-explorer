@@ -28,14 +28,14 @@ namespace ECS.StreamableLoading.AssetBundles
         /// <param name="hash">Hash of the asset, if it is provided manifest is not checked</param>
         /// <param name="name">Name is resolved into Hash before loading by the manifest</param>
         /// <param name="permittedSources">Sources from which systems will try to load</param>
-        private GetAssetBundleIntention(string name = null, string hash = null, AssetSource permittedSources = AssetSource.ALL, SceneAssetBundleManifest assetBundleManifest = null)
+        private GetAssetBundleIntention(string name = null, string hash = null, AssetSource permittedSources = AssetSource.ALL, SceneAssetBundleManifest assetBundleManifest = null, CancellationTokenSource cancellationTokenSource = null)
         {
             Name = name;
             Hash = hash;
 
             // Don't resolve URL here
 
-            CommonArguments = new CommonLoadingArguments(string.Empty, permittedSources: permittedSources);
+            CommonArguments = new CommonLoadingArguments(string.Empty, permittedSources: permittedSources, cancellationTokenSource: cancellationTokenSource);
             cacheHash = null;
             Manifest = assetBundleManifest;
         }
@@ -47,6 +47,9 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public static GetAssetBundleIntention FromHash(string hash, AssetSource permittedSources = AssetSource.ALL, SceneAssetBundleManifest manifest = null) =>
             new (hash: hash, permittedSources: permittedSources, assetBundleManifest: manifest);
+
+        public static GetAssetBundleIntention FromHash(string hash, CancellationTokenSource cancellationTokenSource, AssetSource permittedSources = AssetSource.ALL, SceneAssetBundleManifest manifest = null) =>
+            new (hash: hash, permittedSources: permittedSources, assetBundleManifest: manifest, cancellationTokenSource: cancellationTokenSource);
 
         public bool Equals(GetAssetBundleIntention other) =>
             Hash == other.Hash || Name == other.Name;

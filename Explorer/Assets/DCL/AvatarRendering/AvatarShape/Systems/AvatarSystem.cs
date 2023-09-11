@@ -9,8 +9,8 @@ using DCL.ECSComponents;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.ComponentsPooling;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Transforms.Components;
@@ -19,7 +19,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearableDTO[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableDTOByPointersIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.Wearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -39,31 +39,43 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         protected override void Update(float t)
         {
-            //TODO: Release flow
-            //TODO: Cancel flow
             StartAvatarLoadQuery(World);
+            UpdateAvatarQuery(World);
             InstantiateAvatarQuery(World);
+            DestroyAvatarQuery(World);
         }
 
         [Query]
         [None(typeof(AvatarShapeComponent))]
         private void StartAvatarLoad(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partition)
         {
+            Promise wearablePromise = CreateWearablePromise(pbAvatarShape, partition);
+            pbAvatarShape.IsDirty = false;
+            World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Id, pbAvatarShape, wearablePromise));
+        }
+
+        private Promise CreateWearablePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition)
+        {
             List<string> pointers = ListPool<string>.Get();
             pointers.Add(pbAvatarShape.BodyShape);
             pointers.AddRange(pbAvatarShape.Wearables);
 
             Wearable[] results = ArrayPool<Wearable>.Shared.Rent(pointers.Count);
+            return Promise.Create(World, new GetWearablesByPointersIntention(pointers, results, pbAvatarShape), partition);
+        }
 
-            var werablePromise = AssetPromise<Wearable[], GetWearablesByPointersIntention>.Create(World,
-                new GetWearablesByPointersIntention
-                {
-                    Pointers = pointers,
-                    BodyShape = pbAvatarShape,
-                    Results = results,
-                }, partition);
+        [Query]
+        private void UpdateAvatar(ref PBAvatarShape pbAvatarShape, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
+        {
+            if (!pbAvatarShape.IsDirty)
+                return;
 
-            World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Id, pbAvatarShape, werablePromise));
+            if (!avatarShapeComponent.WearablePromise.IsConsumed)
+                avatarShapeComponent.WearablePromise.ForgetLoading(World);
+
+            Promise newPromise = CreateWearablePromise(pbAvatarShape, partition);
+            avatarShapeComponent.WearablePromise = newPromise;
+            pbAvatarShape.IsDirty = false;
         }
 
         [Query]
@@ -77,30 +89,50 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             if (!avatarShapeComponent.WearablePromise.TryConsume(World, out StreamableLoadingResult<Wearable[]> wearablesResult)) return;
 
-            AvatarBase avatarBase = avatarPoolRegistry.Get();
+            AvatarBase avatarBase = avatarShapeComponent.Base ?? avatarPoolRegistry.Get();
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
 
             Transform avatarTransform = avatarBase.transform;
-
             avatarTransform.SetParent(transformComponent.Transform, false);
             avatarTransform.ResetLocalTRS();
 
+            ClearWearables(avatarShapeComponent.InstantiatedWearables);
             //Using Pointer size for counter, since we dont know the size of the results array
             //because it was pooled
             for (var i = 0; i < avatarShapeComponent.WearablePromise.LoadingIntention.Pointers.Count; i++)
             {
                 Wearable resultWearable = wearablesResult.Asset[i];
-
                 GameObject instantiateWearable = InstantiateWearable(resultWearable.AssetBundleData[avatarShapeComponent.BodyShape].Value.Asset.GameObject, avatarBase.AvatarSkinnedMeshRenderer, avatarTransform);
 
                 //TODO: Do a proper hiding algorithm
                 if (resultWearable.IsBodyShape())
                     HideBodyParts(instantiateWearable);
+
+                avatarShapeComponent.InstantiatedWearables.Add(instantiateWearable);
             }
 
             ListPool<string>.Release(avatarShapeComponent.WearablePromise.LoadingIntention.Pointers);
             ArrayPool<Wearable>.Shared.Return(avatarShapeComponent.WearablePromise.LoadingIntention.Results);
             avatarShapeComponent.IsDirty = false;
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void DestroyAvatar(ref AvatarShapeComponent avatarShapeComponent)
+        {
+            if (avatarShapeComponent.Base != null)
+                avatarPoolRegistry.Release(avatarShapeComponent.Base);
+
+            ClearWearables(avatarShapeComponent.InstantiatedWearables);
+        }
+
+        private void ClearWearables(List<GameObject> instantiatedWearables)
+        {
+            //TODO: Pooling of wearables
+            foreach (GameObject instantiatedWearable in instantiatedWearables)
+                Object.Destroy(instantiatedWearable);
+
+            instantiatedWearables.Clear();
         }
 
         private void HideBodyParts(GameObject bodyShape)
@@ -117,7 +149,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private GameObject InstantiateWearable(GameObject wearableToInstantiate, SkinnedMeshRenderer baseAvatar, Transform parentTransform)
         {
-            //TODO: Pooling and combining
+            //TODO: Pooling and combining of wearables
             GameObject instantiatedWearable = Object.Instantiate(wearableToInstantiate, parentTransform);
             instantiatedWearable.transform.ResetLocalTRS();
 

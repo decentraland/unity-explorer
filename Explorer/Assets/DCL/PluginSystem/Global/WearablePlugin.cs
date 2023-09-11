@@ -27,8 +27,10 @@ namespace DCL.AvatarRendering.Wearables
         //Should be taken from the catalyst
         private readonly string CATALYST_URL;
         private readonly string ENTITIES_ACTIVE;
-        private readonly string EXPLORER_LAMBDA_URL = "/explorer";
-        private readonly string CONTENT_URL = "/content";
+        private readonly string EXPLORER_LAMBDA_URL = "/explorer/";
+        private readonly string CONTENT_URL = "/content/";
+        private readonly string WEARABLES_COMPLEMENT_URL = "/wearables/";
+
 
         //TODO: Create a cache for the catalog
         private readonly Dictionary<string, Wearable> wearableCatalog;
@@ -45,14 +47,13 @@ namespace DCL.AvatarRendering.Wearables
             // not synced by mutex, for compatibility only
             var mutexSync = new MutexSync();
 
-            ResolveWearableByPointerIntentionSystem.InjectToWorld(ref builder, wearableCatalog, $"{CATALYST_URL}{ENTITIES_ACTIVE}");
-            ResolveWearableByParamIntentionSystem.InjectToWorld(ref builder, wearableCatalog);
+            ResolveWearableByPointerSystem.InjectToWorld(ref builder, wearableCatalog, $"{CATALYST_URL}{ENTITIES_ACTIVE}");
 
-            LoadWearablesByParamSystem.InjectToWorld(ref builder, new NoCache<WearableDTO[], GetWearableDTOByParamIntention>(false, false), mutexSync, $"{CATALYST_URL}{EXPLORER_LAMBDA_URL}");
+            //ResolveWearableByParamSystem.InjectToWorld(ref builder, wearableCatalog);
+
+            LoadWearablesByParamSystem.InjectToWorld(ref builder, new NoCache<Wearable[], GetWearableyParamIntention>(false, false), mutexSync, $"{CATALYST_URL}{EXPLORER_LAMBDA_URL}", WEARABLES_COMPLEMENT_URL, wearableCatalog);
             LoadWearablesByPointersSystem.InjectToWorld(ref builder, new NoCache<WearableDTO[], GetWearableDTOByPointersIntention>(false, false), mutexSync);
             LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(false, true), mutexSync, AB_ASSETS_URL);
-
-            //LoadDefaultWearablesSystem.InjectToWorld(ref builder, $"{CATALYST_URL}{ENTITIES_ACTIVE}");
         }
     }
 }

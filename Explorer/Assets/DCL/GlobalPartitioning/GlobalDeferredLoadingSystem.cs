@@ -40,7 +40,7 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetSceneDefinition, IpfsTypes.SceneEntityDefinition>(),
                 CreateQuery<GetSceneFacadeIntention, ISceneFacade>(),
                 CreateQuery<GetWearableDTOByPointersIntention, WearableDTO[]>(),
-                CreateQuery<GetWearableDTOByParamIntention, WearableDTO[]>(),
+                CreateQuery<GetWearableyParamIntention, Wearable[]>(),
                 CreateQuery<GetWearableAssetBundleManifestIntention, SceneAssetBundleManifest>(),
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
             };
