@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
+using UnityEngine.Pool;
 
 namespace ECS.StreamableLoading.Cache
 {
@@ -9,42 +10,30 @@ namespace ECS.StreamableLoading.Cache
     /// </summary>
     /// <typeparam name="TAsset"></typeparam>
     /// <typeparam name="TLoadingIntention"></typeparam>
-    public class NoCache<TAsset, TLoadingIntention> : OngoingRequestsCacheBase<TAsset>, IStreamableCache<TAsset, TLoadingIntention> where TLoadingIntention: struct, ILoadingIntention
+    public class NoCache<TAsset, TLoadingIntention> : IStreamableCache<TAsset, TLoadingIntention> where TLoadingIntention: struct, ILoadingIntention
     {
-        public static readonly NoCache<TAsset, TLoadingIntention> INSTANCE = new (false);
+        public static readonly NoCache<TAsset, TLoadingIntention> INSTANCE = new (false, false);
 
-        bool IEqualityComparer<TLoadingIntention>.Equals(TLoadingIntention x, TLoadingIntention y) =>
-            EqualityComparer<TLoadingIntention>.Default.Equals(x, y);
-
-        int IEqualityComparer<TLoadingIntention>.GetHashCode(TLoadingIntention obj) =>
-            EqualityComparer<TLoadingIntention>.Default.GetHashCode(obj);
+        public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>> OngoingRequests { get; }
+        public IDictionary<string, StreamableLoadingResult<TAsset>> IrrecoverableFailures { get; }
 
         private readonly bool useOngoingRequestCache;
+        private readonly bool useIrrecoverableFailureCache;
 
-        public NoCache(bool useOngoingRequestCache)
+        public NoCache(bool useOngoingRequestCache, bool useIrrecoverableFailureCache)
         {
             this.useOngoingRequestCache = useOngoingRequestCache;
-        }
+            this.useIrrecoverableFailureCache = useIrrecoverableFailureCache;
 
-        bool IStreamableCache<TAsset, TLoadingIntention>.TryGetOngoingRequest(string key, out UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> ongoingRequest)
-        {
             if (useOngoingRequestCache)
-                return base.TryGetOngoingRequest(key, out ongoingRequest);
+                OngoingRequests = DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>.Get();
+            else
+                OngoingRequests = new FakeDictionaryCache<UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>();
 
-            ongoingRequest = null;
-            return false;
-        }
-
-        void IStreamableCache<TAsset, TLoadingIntention>.RemoveOngoingRequest(string key)
-        {
-            if (useOngoingRequestCache)
-                base.RemoveOngoingRequest(key);
-        }
-
-        void IStreamableCache<TAsset, TLoadingIntention>.AddOngoingRequest(string key, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> ongoingRequest)
-        {
-            if (useOngoingRequestCache)
-                base.AddOngoingRequest(key, ongoingRequest);
+            if (useIrrecoverableFailureCache)
+                IrrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<TAsset>>.Get();
+            else
+                IrrecoverableFailures = new FakeDictionaryCache<StreamableLoadingResult<TAsset>>();
         }
 
         bool IStreamableCache<TAsset, TLoadingIntention>.TryGet(in TLoadingIntention key, out TAsset asset)
@@ -56,5 +45,20 @@ namespace ECS.StreamableLoading.Cache
         void IStreamableCache<TAsset, TLoadingIntention>.Add(in TLoadingIntention key, TAsset asset) { }
 
         void IStreamableCache<TAsset, TLoadingIntention>.Dereference(in TLoadingIntention key, TAsset asset) { }
+
+        bool IEqualityComparer<TLoadingIntention>.Equals(TLoadingIntention x, TLoadingIntention y) =>
+            EqualityComparer<TLoadingIntention>.Default.Equals(x, y);
+
+        int IEqualityComparer<TLoadingIntention>.GetHashCode(TLoadingIntention obj) =>
+            EqualityComparer<TLoadingIntention>.Default.GetHashCode(obj);
+
+        public void Dispose()
+        {
+            if (useOngoingRequestCache)
+                DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>.Release(OngoingRequests as Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>);
+
+            if (useIrrecoverableFailureCache)
+                DictionaryPool<string, StreamableLoadingResult<TAsset>>.Release(IrrecoverableFailures as Dictionary<string, StreamableLoadingResult<TAsset>>);
+        }
     }
 }

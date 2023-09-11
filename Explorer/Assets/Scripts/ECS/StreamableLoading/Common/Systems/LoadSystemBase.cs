@@ -8,10 +8,8 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using UnityEngine.Pool;
 using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.Common.Systems
@@ -32,8 +30,6 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, TIntention> cachedInternalFlowDelegate;
 
-        private readonly Dictionary<string, StreamableLoadingResult<TAsset>> irrecoverableFailures;
-
         // asynchronous operations run independently on Update that is already synchronized
         // so they require explicit synchronisation
         private readonly MutexSync mutexSync;
@@ -47,7 +43,6 @@ namespace ECS.StreamableLoading.Common.Systems
             this.cache = cache;
             this.mutexSync = mutexSync;
             query = World.Query(in CREATE_WEB_REQUEST);
-            irrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<TAsset>>.Get();
 
             cachedInternalFlowDelegate = FlowInternal;
         }
@@ -62,7 +57,7 @@ namespace ECS.StreamableLoading.Common.Systems
             cancellationTokenSource.Cancel();
             cancellationTokenSource.Dispose();
 
-            DictionaryPool<string, StreamableLoadingResult<TAsset>>.Release(irrecoverableFailures);
+            cache.Dispose();
         }
 
         protected override void Update(float t)
@@ -102,8 +97,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 return;
 
             // If the given URL failed irrecoverably just return the failure
-            //TODO: Need to replace the irrecoverable failure url as with the ongoing requests cache
-            if (irrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset> failure))
+            if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset> failure))
             {
                 FinalizeLoading(entity, intention, failure, currentSource);
                 return;
@@ -125,7 +119,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 var requestIsNotFulfilled = true;
 
                 // if the request is cached wait for it
-                if (cache.TryGetOngoingRequest(intention.CommonArguments.URL, out UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> cachedSource))
+                if (cache.OngoingRequests.TryGetValue(intention.CommonArguments.URL, out UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> cachedSource))
                 {
                     // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
                     acquiredBudget.Release();
@@ -201,7 +195,7 @@ namespace ECS.StreamableLoading.Common.Systems
         private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlow(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             var source = new UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
-            cache.AddOngoingRequest(intention.CommonArguments.URL, source);
+            cache.OngoingRequests.Add(intention.CommonArguments.URL, source);
 
             try
             {
@@ -237,7 +231,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 // If we don't switch to the main thread in finally we are in trouble because of
                 // race conditions in non-concurrent collections
                 await UniTask.SwitchToMainThread();
-                cache.RemoveOngoingRequest(intention.CommonArguments.URL);
+                cache.OngoingRequests.Remove(intention.CommonArguments.URL);
             }
         }
 
@@ -249,7 +243,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention, StreamableLoadingResult<TAsset> failure)
         {
-            irrecoverableFailures[intention.CommonArguments.URL] = failure;
+            cache.IrrecoverableFailures.Add(intention.CommonArguments.URL, failure);
             return failure;
         }
 

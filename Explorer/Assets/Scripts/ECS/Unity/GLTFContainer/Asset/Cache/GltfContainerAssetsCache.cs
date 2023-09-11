@@ -1,10 +1,12 @@
 ﻿using Cysharp.Threading.Tasks;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility;
 
 namespace ECS.Unity.GLTFContainer.Asset.Cache
@@ -21,6 +23,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
         private readonly Transform parentContainer;
 
+        public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>> OngoingRequests { get; }
+        public IDictionary<string, StreamableLoadingResult<GltfContainerAsset>> IrrecoverableFailures { get; }
+
         public GltfContainerAssetsCache(int maxSize)
         {
             this.maxSize = Mathf.Min(500, maxSize);
@@ -28,16 +33,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             var parentContainerGo = new GameObject($"POOL_CONTAINER_{nameof(GltfContainerAsset)}");
             parentContainerGo.SetActive(false);
             parentContainer = parentContainerGo.transform;
+
+            OngoingRequests = new FakeDictionaryCache<UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>>();
+            IrrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<GltfContainerAsset>>.Get();
         }
 
-        public bool TryGetOngoingRequest(string key, out UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?> ongoingRequest) =>
-            throw new NotImplementedException($"{nameof(GltfContainerAssetsCache)} doesn't support web requests directly");
-
-        public void AddOngoingRequest(string key, UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?> ongoingRequest) =>
-            throw new NotImplementedException($"{nameof(GltfContainerAssetsCache)} doesn't support web requests directly");
-
-        public void RemoveOngoingRequest(string key) =>
-            throw new NotImplementedException($"{nameof(GltfContainerAssetsCache)} doesn't support web requests directly");
 
         public bool TryGet(in string key, out GltfContainerAsset asset)
         {
@@ -78,5 +78,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
         int IEqualityComparer<string>.GetHashCode(string obj) =>
             obj.GetHashCode(StringComparison.OrdinalIgnoreCase);
+
+        public void Dispose() =>
+            DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Release(IrrecoverableFailures as Dictionary<string, StreamableLoadingResult<AssetBundleData>>);
     }
 }
