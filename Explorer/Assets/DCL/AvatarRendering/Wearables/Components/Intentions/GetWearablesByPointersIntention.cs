@@ -10,11 +10,19 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
     public struct GetWearablesByPointersIntention : IAssetIntention, IEquatable<GetWearablesByPointersIntention>
     {
         public List<string> Pointers;
-        public Wearable[] Results;
+        public IWearable[] Results;
         public WearablesLiterals.BodyShape BodyShape;
         public CancellationTokenSource CancellationTokenSource { get; }
 
-        public GetWearablesByPointersIntention(List<string> pointers, Wearable[] result, PBAvatarShape bodyShape)
+        public GetWearablesByPointersIntention(List<string> pointers, IWearable[] result, PBAvatarShape bodyShape)
+        {
+            Pointers = pointers;
+            Results = result;
+            BodyShape = bodyShape;
+            CancellationTokenSource = new CancellationTokenSource();
+        }
+
+        public GetWearablesByPointersIntention(List<string> pointers, IWearable[] result, WearablesLiterals.BodyShape bodyShape)
         {
             Pointers = pointers;
             Results = result;

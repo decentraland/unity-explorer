@@ -24,13 +24,13 @@ namespace DCL.AvatarRendering.Wearables
         private readonly URLDomain assetBundleURL;
 
         //TODO: Create a cache for the catalog
-        private readonly Dictionary<string, Wearable> wearableCatalog;
+        private readonly Dictionary<string, IWearable> wearableCatalog;
 
         public WearablePlugin(IRealmData realmData, URLDomain assetBundleURL)
         {
             this.realmData = realmData;
             this.assetBundleURL = assetBundleURL;
-            wearableCatalog = new Dictionary<string, Wearable>();
+            wearableCatalog = new Dictionary<string, IWearable>();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
@@ -43,7 +43,7 @@ namespace DCL.AvatarRendering.Wearables
             //ResolveWearableByParamSystem.InjectToWorld(ref builder, wearableCatalog);
 
             LoadWearablesByParamSystem.InjectToWorld(ref builder, new NoCache<Wearable[], GetWearableyParamIntention>(false, false), realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, wearableCatalog, mutexSync);
-            LoadWearablesByPointersSystem.InjectToWorld(ref builder, new NoCache<WearableDTO[], GetWearableDTOByPointersIntention>(false, false), mutexSync);
+            LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, new NoCache<WearableDTO[], GetWearableDTOByPointersIntention>(false, false), mutexSync);
             LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(false, true), mutexSync, assetBundleURL);
         }
     }

@@ -18,9 +18,9 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
         public string UserID;
 
         //Used for pooling
-        public List<Wearable> Results;
+        public List<IWearable> Results;
 
-        public GetWearableyParamIntention((string, string)[] requestParams, string userID, List<Wearable> results)
+        public GetWearableyParamIntention((string, string)[] requestParams, string userID, List<IWearable> results)
         {
             Params = requestParams;
             UserID = userID;

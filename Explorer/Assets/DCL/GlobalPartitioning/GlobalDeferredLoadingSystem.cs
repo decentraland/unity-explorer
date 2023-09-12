@@ -26,7 +26,7 @@ namespace DCL.GlobalPartitioning
     [UpdateBefore(typeof(LoadSceneDefinitionSystem))]
     [UpdateBefore(typeof(LoadWearableAssetBundleManifestSystem))]
     [UpdateBefore(typeof(LoadGlobalAssetBundleSystem))]
-    [UpdateBefore(typeof(LoadWearablesByPointersSystem))]
+    [UpdateBefore(typeof(LoadWearablesDTOByPointersSystem))]
     [UpdateBefore(typeof(LoadWearablesByParamSystem))]
     public partial class GlobalDeferredLoadingSystem : DeferredLoadingSystem
     {
@@ -40,7 +40,7 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetSceneDefinition, IpfsTypes.SceneEntityDefinition>(),
                 CreateQuery<GetSceneFacadeIntention, ISceneFacade>(),
                 CreateQuery<GetWearableDTOByPointersIntention, WearableDTO[]>(),
-                CreateQuery<GetWearableyParamIntention, Wearable[]>(),
+                CreateQuery<GetWearableyParamIntention, IWearable[]>(),
                 CreateQuery<GetWearableAssetBundleManifestIntention, SceneAssetBundleManifest>(),
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
             };
