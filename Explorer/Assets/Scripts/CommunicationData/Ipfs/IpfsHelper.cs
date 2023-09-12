@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using System;
 using UnityEngine;
 
@@ -60,7 +61,7 @@ namespace Ipfs
                 baseUrl = string.Empty;
             }
 
-            return new IpfsTypes.IpfsPath(entityId, baseUrl);
+            return new IpfsTypes.IpfsPath(entityId, URLDomain.FromString(baseUrl));
         }
     }
 }

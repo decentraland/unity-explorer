@@ -1,11 +1,12 @@
 ﻿using AssetManagement;
+using CommunicationData.URLHelpers;
 using System.Threading;
 
 namespace ECS.StreamableLoading.Common.Components
 {
     public struct CommonLoadingArguments
     {
-        public string URL;
+        public URLAddress URL;
         public int Attempts;
         public int Timeout;
 
@@ -24,7 +25,7 @@ namespace ECS.StreamableLoading.Common.Components
 
         public readonly CancellationTokenSource CancellationTokenSource;
 
-        public CommonLoadingArguments(string url,
+        public CommonLoadingArguments(URLAddress url,
             int timeout = StreamableLoadingDefaults.TIMEOUT,
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
             AssetSource permittedSources = AssetSource.WEB,

@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using CommunicationData.URLHelpers;
 using CRDT;
 using CRDT.Deserializer;
 using CRDT.Memory;
@@ -60,7 +61,7 @@ namespace SceneRunner
 
             int lastSlash = jsCodeUrl.LastIndexOf("/", StringComparison.Ordinal);
             string mainScenePath = jsCodeUrl.Substring(lastSlash + 1);
-            string baseUrl = jsCodeUrl.Substring(0, lastSlash + 1);
+            var baseUrl = URLDomain.FromString(jsCodeUrl.Substring(0, lastSlash + 1));
 
             sceneDefinition.metadata = new IpfsTypes.SceneMetadata
             {
@@ -76,9 +77,9 @@ namespace SceneRunner
         {
             const string SCENE_JSON_FILE_NAME = "scene.json";
 
-            var fullPath = $"file://{Application.streamingAssetsPath}/Scenes/{directoryName}/";
+            var fullPath = URLDomain.FromString($"file://{Application.streamingAssetsPath}/Scenes/{directoryName}/");
 
-            string rawSceneJsonPath = fullPath + SCENE_JSON_FILE_NAME;
+            string rawSceneJsonPath = fullPath.Value + SCENE_JSON_FILE_NAME;
 
             using var request = UnityWebRequest.Get(rawSceneJsonPath);
             await request.SendWebRequest().WithCancellation(ct);
@@ -122,7 +123,7 @@ namespace SceneRunner
             ecsWorldFacade.Initialize();
 
             // Create an instance of Scene Runtime on the thread pool
-            sceneData.TryGetMainScriptUrl(out string sceneCodeUrl);
+            sceneData.TryGetMainScriptUrl(out URLAddress sceneCodeUrl);
             SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPath(sceneCodeUrl, instancePoolsProvider, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool);
 
             ct.ThrowIfCancellationRequested();

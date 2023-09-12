@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
@@ -50,7 +51,7 @@ namespace SceneRuntime.Factory
         /// <summary>
         /// Must be called on the main thread
         /// </summary>
-        public async UniTask<SceneRuntimeImpl> CreateByPath(string path,
+        public async UniTask<SceneRuntimeImpl> CreateByPath(URLAddress path,
             IInstancePoolsProvider instancePoolsProvider,
             CancellationToken ct,
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)

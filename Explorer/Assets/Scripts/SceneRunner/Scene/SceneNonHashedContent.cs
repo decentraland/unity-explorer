@@ -1,29 +1,30 @@
-﻿using System;
+﻿using CommunicationData.URLHelpers;
+using System;
 using System.Collections.Generic;
 
 namespace SceneRunner.Scene
 {
     public class SceneNonHashedContent : ISceneContent
     {
-        private readonly string contentBaseUrl;
-        private readonly Dictionary<string, (bool success, string url)> resolvedContentURLs;
+        private readonly URLDomain contentBaseUrl;
+        private readonly Dictionary<string, (bool success, URLAddress url)> resolvedContentURLs;
 
-        public SceneNonHashedContent(string contentBaseUrl)
+        public SceneNonHashedContent(URLDomain contentBaseUrl)
         {
-            resolvedContentURLs = new Dictionary<string, (bool success, string url)>(StringComparer.OrdinalIgnoreCase);
+            resolvedContentURLs = new Dictionary<string, (bool success, URLAddress url)>(StringComparer.OrdinalIgnoreCase);
             this.contentBaseUrl = contentBaseUrl;
         }
 
-        public bool TryGetContentUrl(string url, out string result)
+        public bool TryGetContentUrl(string contentPath, out URLAddress result)
         {
-            if (resolvedContentURLs.TryGetValue(url, out (bool success, string url) cachedResult))
+            if (resolvedContentURLs.TryGetValue(contentPath, out (bool success, URLAddress url) cachedResult))
             {
                 result = cachedResult.url;
                 return cachedResult.success;
             }
 
-            result = contentBaseUrl + url;
-            resolvedContentURLs[url] = (true, result);
+            result = contentBaseUrl.Append(URLPath.FromString(contentPath));
+            resolvedContentURLs[contentPath] = (true, result);
             return true;
         }
 

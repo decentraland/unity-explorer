@@ -1,19 +1,20 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
+using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
-using Newtonsoft.Json;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Networking;
 using Utility.Multithreading;
 
@@ -22,26 +23,30 @@ namespace DCL.AvatarRendering.Wearables.Systems
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class LoadWearablesByParamSystem : LoadSystemBase<Wearable[], GetWearableyParamIntention>
     {
+        private readonly URLSubdirectory lambdaSubdirectory;
 
-        private readonly StringBuilder urlBuilder = new ();
-        private readonly string LAMBDA_URL;
-        private readonly string WEARABLES_COMPLEMENT_URL;
+        private readonly IRealmData realmData;
+        private readonly URLBuilder urlBuilder = new ();
+        private readonly URLSubdirectory wearablesSubdirectory;
 
         internal Dictionary<string, Wearable> wearableCatalog;
 
-        public LoadWearablesByParamSystem(World world, IStreamableCache<Wearable[], GetWearableyParamIntention> cache, MutexSync mutexSync,
-            string lambdaURL, string wearablesComplementURL, Dictionary<string, Wearable> wearableCatalog) : base(world, cache, mutexSync)
+        public LoadWearablesByParamSystem(
+            World world, IStreamableCache<Wearable[], GetWearableyParamIntention> cache, IRealmData realmData,
+            URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory, Dictionary<string, Wearable> wearableCatalog,
+            MutexSync mutexSync) : base(world, cache, mutexSync)
         {
-            LAMBDA_URL = lambdaURL;
+            this.realmData = realmData;
+            this.lambdaSubdirectory = lambdaSubdirectory;
             this.wearableCatalog = wearableCatalog;
-            WEARABLES_COMPLEMENT_URL = wearablesComplementURL;
+            this.wearablesSubdirectory = wearablesSubdirectory;
         }
 
         protected override async UniTask<StreamableLoadingResult<Wearable[]>> FlowInternal(GetWearableyParamIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             string response;
 
-            using (var request = UnityWebRequest.Get(BuildURL(LAMBDA_URL, intention.UserID, intention.Params)))
+            using (var request = UnityWebRequest.Get(BuildURL(intention.UserID, intention.Params)))
             {
                 await request.SendWebRequest().WithCancellation(ct);
                 response = request.downloadHandler.text;
@@ -51,7 +56,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
             await UniTask.SwitchToThreadPool();
 
             //TODO: Keep this in mind, because not completely sure what we will need in the future
-            WearableDTO.LambdaResponse lambdaResponse = JsonConvert.DeserializeObject<WearableDTO.LambdaResponse>(response);
+            WearableDTO.LambdaResponse lambdaResponse = JsonUtility.FromJson<WearableDTO.LambdaResponse>(response);
+
             for (var i = 0; i < lambdaResponse.elements.Count; i++)
             {
                 WearableDTO wearableDto = lambdaResponse.elements[i].entity;
@@ -71,27 +77,19 @@ namespace DCL.AvatarRendering.Wearables.Systems
             return new StreamableLoadingResult<Wearable[]>(intention.Results.ToArray());
         }
 
-        private string BuildURL(string url, string userID, params (string paramName, string paramValue)[] urlEncodedParams)
+        private string BuildURL(string userID, (string paramName, string paramValue)[] urlEncodedParams)
         {
             urlBuilder.Clear();
-            urlBuilder.Append(url);
-            urlBuilder.Append(userID);
-            urlBuilder.Append(WEARABLES_COMPLEMENT_URL);
+
+            urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl)
+                      .AppendSubDirectory(lambdaSubdirectory)
+                      .AppendSubDirectory(URLSubdirectory.FromString(userID))
+                      .AppendSubDirectory(wearablesSubdirectory);
 
             if (urlEncodedParams.Length > 0)
             {
-                urlBuilder.Append(url.Contains('?') ? '&' : '?');
-
                 for (var i = 0; i < urlEncodedParams.Length; i++)
-                {
-                    (string paramName, string paramValue) param = urlEncodedParams[i];
-                    urlBuilder.Append(param.paramName);
-                    urlBuilder.Append('=');
-                    urlBuilder.Append(param.paramValue);
-
-                    if (i < urlEncodedParams.Length - 1)
-                        urlBuilder.Append('&');
-                }
+                    urlBuilder.AppendParameter(urlEncodedParams[i]);
             }
 
             return urlBuilder.ToString();

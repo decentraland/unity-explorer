@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CommunicationData.URLHelpers;
+using System;
 using System.Collections.Generic;
 
 namespace Ipfs
@@ -8,15 +9,15 @@ namespace Ipfs
     /// </summary>
     public class LocalIpfsRealm : IIpfsRealm
     {
-        public LocalIpfsRealm(string fullPath)
+        public LocalIpfsRealm(URLDomain fullPath)
         {
             CatalystBaseUrl = fullPath;
             ContentBaseUrl = fullPath;
         }
 
-        public string CatalystBaseUrl { get; }
-        public string ContentBaseUrl { get; }
+        public URLDomain CatalystBaseUrl { get; }
+        public URLDomain ContentBaseUrl { get; }
         public IReadOnlyList<string> SceneUrns => Array.Empty<string>();
-        public string EntitiesActiveEndpoint => string.Empty;
+        public URLDomain EntitiesActiveEndpoint => URLDomain.EMPTY;
     }
 }

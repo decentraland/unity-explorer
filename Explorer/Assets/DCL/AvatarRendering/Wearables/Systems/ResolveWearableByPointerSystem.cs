@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using Diagnostics.ReportsHandling;
+using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
@@ -24,13 +25,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
     public partial class ResolveWearableByPointerSystem : BaseUnityLoopSystem
     {
         private readonly Dictionary<string, Wearable> wearableCatalog;
-        private string WEARABLE_CONTENT_BASE_URL;
-        private readonly string WEARABLE_ENTITIES_URL;
+        private readonly IRealmData realmData;
 
-        public ResolveWearableByPointerSystem(World world, Dictionary<string, Wearable> wearableCatalog, string wearableEntitiesURL) : base(world)
+        public ResolveWearableByPointerSystem(World world, Dictionary<string, Wearable> wearableCatalog, IRealmData realmData) : base(world)
         {
             this.wearableCatalog = wearableCatalog;
-            WEARABLE_ENTITIES_URL = wearableEntitiesURL;
+            this.realmData = realmData;
         }
 
         protected override void Update(float t)
@@ -40,7 +40,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
             FinalizeAssetBundleManifestLoadingQuery(World);
             FinalizeAssetBundleLoadingQuery(World);
         }
-
 
         [Query]
         [None(typeof(StreamableLoadingResult<Wearable[]>))]
@@ -83,8 +82,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
             if (successfulResults == wearablesByPointersIntention.Pointers.Count)
                 World.Add(entity, new StreamableLoadingResult<Wearable[]>(wearablesByPointersIntention.Results));
         }
-
-
 
         [Query]
         public void FinalizeWearableDTO(in Entity entity, ref AssetPromise<WearableDTO[], GetWearableDTOByPointersIntention> promise, ref WearablesLiterals.BodyShape bodyShape)
@@ -199,7 +196,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             var wearableDtoByPointersIntention = new GetWearableDTOByPointersIntention
             {
                 Pointers = missingPointers,
-                CommonArguments = new CommonLoadingArguments(WEARABLE_ENTITIES_URL, cancellationTokenSource: intention.CancellationTokenSource),
+                CommonArguments = new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint.Value, cancellationTokenSource: intention.CancellationTokenSource),
             };
 
             var promise = AssetPromise<WearableDTO[], GetWearableDTOByPointersIntention>.Create(World, wearableDtoByPointersIntention, partitionComponent);

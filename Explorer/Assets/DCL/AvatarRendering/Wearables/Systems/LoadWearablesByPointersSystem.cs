@@ -24,13 +24,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
     {
         // When the number of wearables to request is greater than MAX_WEARABLES_PER_REQUEST, we split the request into several smaller ones.
         // In this way we avoid to send a very long url string that would fail due to the web request size limitations.
-        private readonly int MAX_WEARABLES_PER_REQUEST;
+        private const int MAX_WEARABLES_PER_REQUEST = 200;
+
         private readonly StringBuilder bodyBuilder = new ();
 
-        public LoadWearablesByPointersSystem(World world, IStreamableCache<WearableDTO[], GetWearableDTOByPointersIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync)
-        {
-            MAX_WEARABLES_PER_REQUEST = 200;
-        }
+        internal LoadWearablesByPointersSystem(World world, IStreamableCache<WearableDTO[], GetWearableDTOByPointersIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync) { }
 
         protected override async UniTask<StreamableLoadingResult<WearableDTO[]>> FlowInternal(GetWearableDTOByPointersIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
@@ -86,6 +84,5 @@ namespace DCL.AvatarRendering.Wearables.Systems
             JsonConvert.PopulateObject(response, partialTargetList);
             return partialTargetList;
         }
-
     }
 }

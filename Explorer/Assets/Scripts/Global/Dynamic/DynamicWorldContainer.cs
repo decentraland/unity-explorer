@@ -1,6 +1,7 @@
 ﻿using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.Wearables;
 using DCL.PluginSystem.Global;
+using ECS;
 using ECS.Prioritization.Components;
 using SceneRunner.EmptyScene;
 using System.Collections.Generic;
@@ -24,6 +25,7 @@ namespace Global.Dynamic
             IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius)
         {
             var realmSamplingData = new RealmSamplingData();
+            var realmData = new RealmData();
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -33,16 +35,16 @@ namespace Global.Dynamic
                 new ProfilingPlugin(staticContainer.AssetsProvisioner, staticContainer.ProfilingProvider),
 
                 //TODO: Remove this hardcoded url after the realm has been connected to get the catalyst url
-                new WearablePlugin("https://peer.decentraland.org", "/content/entities/active/"),
-                new AvatarPlugin(staticContainer.AssetsProvisioner, staticContainer.SingletonSharedDependencies.FrameTimeCapBudgetProvider,
-                    staticContainer.ComponentsContainer.ComponentPoolsRegistry.GetReferenceTypePool<AvatarBase>(), "https://peer.decentraland.org", "/content/entities/active/"),
+                new WearablePlugin(realmData),
+                new AvatarPlugin(staticContainer.SingletonSharedDependencies.FrameTimeCapBudgetProvider,
+                    staticContainer.ComponentsContainer.ComponentPoolsRegistry.GetReferenceTypePool<AvatarBase>()),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
             return new DynamicWorldContainer
             {
-                RealmController = new RealmController(sceneLoadRadius, staticLoadPositions),
+                RealmController = new RealmController(sceneLoadRadius, staticLoadPositions, realmData),
                 GlobalWorldFactory = new GlobalWorldFactory(in staticContainer, staticContainer.RealmPartitionSettings,
                     staticContainer.CameraSamplingData, realmSamplingData, globalPlugins),
                 GlobalPlugins = globalPlugins.Concat(staticContainer.SharedPlugins).ToList(),

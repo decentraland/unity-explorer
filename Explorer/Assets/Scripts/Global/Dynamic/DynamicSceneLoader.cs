@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using Diagnostics.ReportsHandling;
@@ -141,7 +142,7 @@ namespace Global.Dynamic
 
             globalContainer.CharacterObject.Controller.Move(characterPos - globalContainer.CharacterObject.Transform.position);
 
-            await dynamicWorldContainer.RealmController.SetRealm(globalWorld, selectedRealm, ct);
+            await dynamicWorldContainer.RealmController.SetRealm(globalWorld, URLDomain.FromString(selectedRealm), ct);
         }
     }
 }

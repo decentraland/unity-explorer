@@ -22,32 +22,32 @@ namespace DCL.AvatarRendering.Wearables.Systems
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class LoadWearableAssetBundleManifestSystem : LoadSystemBase<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>
     {
-
-        private string ASSET_BUNDLE_URL;
+        private readonly string assetBundleURL;
 
         internal LoadWearableAssetBundleManifestSystem(World world,
             IStreamableCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention> cache,
             MutexSync mutexSync, string assetBundleURL) : base(world, cache, mutexSync)
         {
-            ASSET_BUNDLE_URL = assetBundleURL;
+            this.assetBundleURL = assetBundleURL;
         }
 
         protected override async UniTask<StreamableLoadingResult<SceneAssetBundleManifest>> FlowInternal(GetWearableAssetBundleManifestIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             string response;
 
-            using (var request = UnityWebRequest.Get(($"{ASSET_BUNDLE_URL}manifest/{intention.Hash}{PlatformUtils.GetPlatform()}.json")))
+            using (var request = UnityWebRequest.Get($"{assetBundleURL}manifest/{intention.Hash}{PlatformUtils.GetPlatform()}.json"))
             {
                 await request.SendWebRequest().WithCancellation(ct);
+
                 if (request.result != UnityWebRequest.Result.Success)
                     return new StreamableLoadingResult<SceneAssetBundleManifest>(new Exception($"Failed to load asset bundle manifest for intention: {intention.Hash}"));
+
                 response = request.downloadHandler.text;
             }
 
             //Deserialize out of the main thread
             await UniTask.SwitchToThreadPool();
-            return new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(ASSET_BUNDLE_URL, JsonUtility.FromJson<SceneAbDto>(response)));
+            return new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(assetBundleURL, JsonUtility.FromJson<SceneAbDto>(response)));
         }
-
     }
 }

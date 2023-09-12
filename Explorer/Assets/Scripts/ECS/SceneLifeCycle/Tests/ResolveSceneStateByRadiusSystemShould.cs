@@ -23,7 +23,7 @@ namespace ECS.SceneLifeCycle.Tests
         public void SetUp()
         {
             system = new ResolveSceneStateByRadiusSystem(world);
-            realmComponent = new RealmComponent(new TestIpfsRealm());
+            realmComponent = new RealmComponent(new RealmData(new TestIpfsRealm()));
         }
 
         [Test]

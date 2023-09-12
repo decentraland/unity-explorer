@@ -1,7 +1,10 @@
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Systems;
+using ECS;
 using ECS.StreamableLoading.Tests;
+using Ipfs;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -24,7 +27,9 @@ namespace DCL.AvatarRendering.Wearables.Tests
         protected override LoadWearablesByParamSystem CreateSystem()
         {
             wearableCatalog = new Dictionary<string, Wearable>();
-            return new LoadWearablesByParamSystem(world, cache, new MutexSync(), "", "", wearableCatalog);
+
+            return new LoadWearablesByParamSystem(world, cache, new RealmData(new IpfsRealm(URLDomain.EMPTY)),
+                URLSubdirectory.EMPTY, URLSubdirectory.EMPTY, wearableCatalog, new MutexSync());
         }
 
         protected override void AssertSuccess(Wearable[] asset)

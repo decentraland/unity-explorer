@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -106,24 +107,22 @@ namespace Ipfs
         public readonly struct IpfsPath
         {
             public readonly string EntityId;
-            public readonly string BaseUrl;
+            public readonly URLDomain BaseUrl;
 
-            public IpfsPath(string entityId, string baseUrl)
+            public IpfsPath(string entityId, URLDomain baseUrl)
             {
                 EntityId = entityId;
                 BaseUrl = baseUrl;
             }
 
-            public string GetUrl(string defaultContentUrl)
+            public URLAddress GetUrl(URLDomain defaultContentUrl)
             {
-                if (BaseUrl.Length > 0)
-                    return BaseUrl + EntityId;
-
-                return defaultContentUrl + EntityId;
+                var entityAsPath = URLPath.FromString(EntityId);
+                return URLBuilder.Combine(!BaseUrl.IsEmpty ? BaseUrl : defaultContentUrl, entityAsPath);
             }
 
             public override string ToString() =>
-                $"IpfsPath (EntityId: {EntityId}, BaseUrl: {BaseUrl})";
+                $"IpfsPath (EntityId: {EntityId}, BaseUrl: {BaseUrl.Value})";
         }
     }
 }

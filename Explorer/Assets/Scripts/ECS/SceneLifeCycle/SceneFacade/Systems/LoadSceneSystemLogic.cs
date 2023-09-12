@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using Diagnostics.ReportsHandling;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
@@ -29,7 +30,7 @@ namespace ECS.SceneLifeCycle.Systems
             // Warning! Obscure Logic!
             // Each scene can override the content base url, so we need to check if the scene definition has a base url
             // and if it does, we use it, otherwise we use the realm's base url
-            string contentBaseUrl = string.IsNullOrEmpty(intention.IpfsPath.BaseUrl)
+            URLDomain contentBaseUrl = intention.IpfsPath.BaseUrl.IsEmpty
                 ? intention.IpfsRealm.ContentBaseUrl
                 : intention.IpfsPath.BaseUrl;
 
@@ -57,7 +58,7 @@ namespace ECS.SceneLifeCycle.Systems
             const string NAME = "main.crdt";
 
             // if scene does not contain main.crdt, do nothing
-            if (!sceneContent.TryGetContentUrl(NAME, out string url))
+            if (!sceneContent.TryGetContentUrl(NAME, out URLAddress url))
                 return ReadOnlyMemory<byte>.Empty;
 
             var subIntent = new SubIntention(new CommonLoadingArguments(url));
@@ -104,7 +105,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             const string NAME = "scene.json";
 
-            if (!sceneContent.TryGetContentUrl(NAME, out string sceneJsonUrl))
+            if (!sceneContent.TryGetContentUrl(NAME, out URLAddress sceneJsonUrl))
                 throw new ArgumentException("scene.json does not exist in the content");
 
             var subIntent = new SubIntention(new CommonLoadingArguments(sceneJsonUrl));

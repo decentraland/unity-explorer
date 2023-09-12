@@ -1,4 +1,5 @@
-﻿using DCL.ECSComponents;
+﻿using CommunicationData.URLHelpers;
+using DCL.ECSComponents;
 using Decentraland.Common;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -44,7 +45,7 @@ namespace ECS.Unity.Materials.Tests
                 destroyMaterial = Substitute.For<DestroyMaterial>(),
                 sceneData = Substitute.For<ISceneData>(), ATTEMPTS_COUNT, concurrentBudgetProvider);
 
-            sceneData.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<string>())
+            sceneData.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<URLAddress>())
                      .Returns(c =>
                       {
                           c[1] = c.ArgAt<string>(0);

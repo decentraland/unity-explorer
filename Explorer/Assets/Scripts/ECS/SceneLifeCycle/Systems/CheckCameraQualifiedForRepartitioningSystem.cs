@@ -7,7 +7,6 @@ using DCL.CharacterMotion.Systems;
 using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle.Components;
 
 namespace ECS.SceneLifeCycle.Systems
 {

@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using System;
 using System.Collections.Generic;
 
@@ -5,17 +6,17 @@ namespace Ipfs
 {
     public interface IIpfsRealm
     {
-        public string CatalystBaseUrl { get; }
-        public string ContentBaseUrl { get; }
+        public URLDomain CatalystBaseUrl { get; }
+        public URLDomain ContentBaseUrl { get; }
         public IReadOnlyList<string> SceneUrns { get; }
-        public string EntitiesActiveEndpoint { get; }
+        public URLDomain EntitiesActiveEndpoint { get; }
     }
 
     public class IpfsRealm : IIpfsRealm, IEquatable<IpfsRealm>
     {
         private readonly List<string> sceneUrns;
 
-        public IpfsRealm(string realmName, IpfsTypes.ServerAbout serverAbout = null)
+        public IpfsRealm(URLDomain realmName, IpfsTypes.ServerAbout serverAbout = null)
         {
             // TODO: realmName resolution, for now just accepts custom realm paths...
             CatalystBaseUrl = realmName;
@@ -23,24 +24,19 @@ namespace Ipfs
             if (serverAbout != null)
             {
                 sceneUrns = serverAbout.configurations.scenesUrn;
-                ContentBaseUrl = serverAbout.content.publicUrl;
-
-                if (!ContentBaseUrl.EndsWith("/"))
-                    ContentBaseUrl += "/";
-
-                EntitiesActiveEndpoint = ContentBaseUrl + "entities/active";
+                ContentBaseUrl = URLDomain.FromString(serverAbout.content.publicUrl);
+                EntitiesActiveEndpoint = URLBuilder.Combine(ContentBaseUrl, URLSubdirectory.FromString("entities/active"));
             }
             else
             {
-                ContentBaseUrl = CatalystBaseUrl + "content/contents/";
-                EntitiesActiveEndpoint = CatalystBaseUrl + "content/entities/active";
+                ContentBaseUrl = URLBuilder.Combine(CatalystBaseUrl, URLSubdirectory.FromString("content/contents/"));
+                EntitiesActiveEndpoint = URLBuilder.Combine(CatalystBaseUrl, URLSubdirectory.FromString("content/entities/active"));
             }
         }
 
-        public string CatalystBaseUrl { get; }
-        public string ContentBaseUrl { get; }
-
-        public string EntitiesActiveEndpoint { get; }
+        public URLDomain CatalystBaseUrl { get; }
+        public URLDomain ContentBaseUrl { get; }
+        public URLDomain EntitiesActiveEndpoint { get; }
 
         public IReadOnlyList<string> SceneUrns => sceneUrns;
 
@@ -60,6 +56,6 @@ namespace Ipfs
         }
 
         public override int GetHashCode() =>
-            CatalystBaseUrl != null ? CatalystBaseUrl.GetHashCode() : 0;
+            ContentBaseUrl.GetHashCode();
     }
 }

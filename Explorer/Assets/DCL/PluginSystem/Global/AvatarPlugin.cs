@@ -1,6 +1,5 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.PluginSystem.Global;
@@ -28,7 +27,7 @@ public class AvatarPlugin : IDCLGlobalPluginWithoutSettings
     private readonly IConcurrentBudgetProvider frameTimeCapBudgetProvider;
     private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
 
-    public AvatarPlugin(IAssetsProvisioner assetsProvisioner, IConcurrentBudgetProvider frameTimeCapBudgetProvider, IComponentPool<AvatarBase> avatarPoolRegistry, string catalystURL, string entitiesActiveURL)
+    public AvatarPlugin(IConcurrentBudgetProvider frameTimeCapBudgetProvider, IComponentPool<AvatarBase> avatarPoolRegistry)
     {
         this.frameTimeCapBudgetProvider = frameTimeCapBudgetProvider;
         this.avatarPoolRegistry = avatarPoolRegistry;

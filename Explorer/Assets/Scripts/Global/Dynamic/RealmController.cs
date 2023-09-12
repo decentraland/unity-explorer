@@ -1,6 +1,8 @@
 ﻿using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using Diagnostics.ReportsHandling;
+using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -34,17 +36,19 @@ namespace Global.Dynamic
 
         private readonly int sceneLoadRadius;
         private readonly IReadOnlyList<int2> staticLoadPositions;
+        private readonly RealmData realmData;
 
-        public RealmController(int sceneLoadRadius, IReadOnlyList<int2> staticLoadPositions)
+        public RealmController(int sceneLoadRadius, IReadOnlyList<int2> staticLoadPositions, RealmData realmData)
         {
             this.sceneLoadRadius = sceneLoadRadius;
             this.staticLoadPositions = staticLoadPositions;
+            this.realmData = realmData;
         }
 
         /// <summary>
         ///     it is an async process so it should be executed before ECS kicks in
         /// </summary>
-        public async UniTask SetRealm(GlobalWorld globalWorld, string realm, CancellationToken ct)
+        public async UniTask SetRealm(GlobalWorld globalWorld, URLDomain realm, CancellationToken ct)
         {
             World world = globalWorld.EcsWorld;
 
@@ -68,8 +72,10 @@ namespace Global.Dynamic
             var intent = new SubIntention(new CommonLoadingArguments(realm + "/about"));
             IpfsTypes.ServerAbout result = (await intent.RepeatLoop(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateServerAboutRequest, ReportCategory.REALM, ct)).UnwrapAndRethrow();
 
+            realmData.Reconfigure(new IpfsRealm(realm, result));
+
             // Add the realm component
-            var realmComp = new RealmComponent(new IpfsRealm(realm, result));
+            var realmComp = new RealmComponent(realmData);
 
             Entity realmEntity = world.Create(realmComp,
                 new ParcelsInRange(new HashSet<int2>(100), sceneLoadRadius), ProcessesScenePointers.Create());

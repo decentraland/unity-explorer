@@ -2,7 +2,6 @@
 using DCL.CharacterCamera;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Systems;
 using ECS.TestSuite;
 using NSubstitute;
