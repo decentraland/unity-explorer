@@ -82,7 +82,6 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         }
 
         [Test]
-        [RequiresPlayMode]
         public void CancelAvatarLoad()
         {
             Entity entityReference = world.Create(pbAvatarShape, PartitionComponent.TOP_PRIORITY, new TransformComponent());
@@ -100,6 +99,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         }
 
         [Test]
+        [RequiresPlayMode]
         public void DestroyAvatar()
         {
             //Instantiate the avatar
