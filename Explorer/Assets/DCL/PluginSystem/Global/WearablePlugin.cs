@@ -51,7 +51,7 @@ namespace DCL.AvatarRendering.Wearables
 
             LoadWearablesByParamSystem.InjectToWorld(ref builder, new NoCache<IWearable[], GetWearableyParamIntention>(false, false), mutexSync, $"{CATALYST_URL}{EXPLORER_LAMBDA_URL}", WEARABLES_COMPLEMENT_URL, wearableCatalog);
             LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, new NoCache<WearableDTO[], GetWearableDTOByPointersIntention>(false, false), mutexSync);
-            LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(false, true), mutexSync, AB_ASSETS_URL);
+            LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(true, true), mutexSync, AB_ASSETS_URL);
         }
     }
 }
