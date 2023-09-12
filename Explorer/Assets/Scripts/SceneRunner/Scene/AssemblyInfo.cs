@@ -1,7 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("DCL.Plugins")]
-[assembly: InternalsVisibleTo("Global.Tests")]
 [assembly: InternalsVisibleTo("DCL.Tests")]
 [assembly: InternalsVisibleTo("Containers.Tests")]
 [assembly: InternalsVisibleTo("StreamableLoading.Tests")]
