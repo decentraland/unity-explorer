@@ -19,8 +19,6 @@ namespace ECS.StreamableLoading.Common.Components
         /// </summary>
         public AssetSource CurrentSource;
 
-        //public DeferredLoadingState DeferredLoadingState;
-
         public CancellationToken CancellationToken => CancellationTokenSource.Token;
 
         public readonly CancellationTokenSource CancellationTokenSource;
