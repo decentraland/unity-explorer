@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components;
 using Diagnostics.ReportsHandling;
@@ -22,11 +23,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class LoadWearableAssetBundleManifestSystem : LoadSystemBase<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>
     {
-        private readonly string assetBundleURL;
+        private readonly URLDomain assetBundleURL;
 
         internal LoadWearableAssetBundleManifestSystem(World world,
             IStreamableCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention> cache,
-            MutexSync mutexSync, string assetBundleURL) : base(world, cache, mutexSync)
+            MutexSync mutexSync, URLDomain assetBundleURL) : base(world, cache, mutexSync)
         {
             this.assetBundleURL = assetBundleURL;
         }

@@ -1,4 +1,5 @@
 ﻿using AssetManagement;
+using CommunicationData.URLHelpers;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
@@ -35,7 +36,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             // Don't resolve URL here
 
-            CommonArguments = new CommonLoadingArguments(string.Empty, permittedSources: permittedSources, cancellationTokenSource: cancellationTokenSource);
+            CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY, permittedSources: permittedSources, cancellationTokenSource: cancellationTokenSource);
             cacheHash = null;
             Manifest = assetBundleManifest;
         }

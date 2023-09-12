@@ -1,8 +1,8 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components;
-using DCL.AvatarRendering.Wearables.Components;
 using DCL.Character;
 using DCL.Character.Components;
 using DCL.GlobalPartitioning;
@@ -48,10 +48,13 @@ namespace Global.Dynamic
         private readonly IPartitionSettings partitionSettings;
         private readonly IRealmPartitionSettings realmPartitionSettings;
         private readonly RealmSamplingData realmSamplingData;
+        private readonly URLDomain assetBundlesURL;
         private readonly IReadOnlyList<IDCLGlobalPlugin> globalPlugins;
 
         public GlobalWorldFactory(in StaticContainer staticContainer, IRealmPartitionSettings realmPartitionSettings,
-            CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData, IReadOnlyList<IDCLGlobalPlugin> globalPlugins)
+            CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
+            URLDomain assetBundlesURL,
+            IReadOnlyList<IDCLGlobalPlugin> globalPlugins)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -59,6 +62,7 @@ namespace Global.Dynamic
             this.realmPartitionSettings = realmPartitionSettings;
             this.cameraSamplingData = cameraSamplingData;
             this.realmSamplingData = realmSamplingData;
+            this.assetBundlesURL = assetBundlesURL;
             this.globalPlugins = globalPlugins;
         }
 
@@ -77,16 +81,13 @@ namespace Global.Dynamic
                 new TransformComponent { Transform = characterObject.Transform }
             );
 
-            // Asset Bundle Manifest
-            const string ASSET_BUNDLES_URL = "https://ab-cdn.decentraland.org/";
-
             IConcurrentBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(100);
 
             LoadSceneDefinitionListSystem.InjectToWorld(ref builder, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
             LoadSceneDefinitionSystem.InjectToWorld(ref builder, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
 
             LoadSceneSystem.InjectToWorld(ref builder,
-                new LoadSceneSystemLogic(ASSET_BUNDLES_URL),
+                new LoadSceneSystemLogic(assetBundlesURL),
                 new LoadEmptySceneSystemLogic(emptyScenesWorldFactory, componentPoolsRegistry, EMPTY_SCENES_MAPPINGS_URL),
                 sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex);
 

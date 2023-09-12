@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using Diagnostics.ReportsHandling;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
@@ -17,7 +18,7 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         private readonly ISceneData sceneData;
 
-        internal PrepareAssetBundleLoadingParametersSystem(World world, ISceneData sceneData, string streamingAssetURL) : base(world, streamingAssetURL)
+        internal PrepareAssetBundleLoadingParametersSystem(World world, ISceneData sceneData, URLDomain streamingAssetURL) : base(world, streamingAssetURL)
         {
             this.sceneData = sceneData;
         }

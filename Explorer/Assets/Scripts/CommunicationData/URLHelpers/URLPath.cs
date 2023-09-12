@@ -10,7 +10,7 @@
     {
         public readonly string Value;
 
-        internal URLPath(string value)
+        public URLPath(string value)
         {
             Value = value;
         }

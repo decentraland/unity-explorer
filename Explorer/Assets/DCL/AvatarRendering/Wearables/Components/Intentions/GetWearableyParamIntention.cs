@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
@@ -24,7 +25,7 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
             Params = requestParams;
             UserID = userID;
             Results = results;
-            CommonArguments = new CommonLoadingArguments(string.Empty, cancellationTokenSource: new CancellationTokenSource());
+            CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY, cancellationTokenSource: new CancellationTokenSource());
         }
 
         public bool Equals(GetWearableyParamIntention other) =>
@@ -35,6 +36,5 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
 
         public override int GetHashCode() =>
             HashCode.Combine(Params, UserID, CancellationTokenSource, CommonArguments);
-
     }
 }

@@ -60,7 +60,7 @@ namespace SceneRunner.Scene
         {
             if (string.IsNullOrEmpty(url))
             {
-                result = string.Empty;
+                result = URLAddress.EMPTY;
                 return false;
             }
 
@@ -70,11 +70,11 @@ namespace SceneRunner.Scene
 
             if (HasRequiredPermission(ScenePermissionNames.ALLOW_MEDIA_HOSTNAMES) && IsUrlDomainAllowed(url))
             {
-                result = url;
+                result = URLAddress.FromString(url);
                 return true;
             }
 
-            result = string.Empty;
+            result = URLAddress.EMPTY;
             return false;
         }
 

@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using CommunicationData.URLHelpers;
 using Diagnostics.ReportsHandling;
 using ECS.StreamableLoading.Common.Components;
 
@@ -15,7 +16,7 @@ namespace ECS.StreamableLoading.AssetBundles
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class PrepareGlobalAssetBundleLoadingParametersSystem : PrepareAssetBundleLoadingParametersSystemBase
     {
-        internal PrepareGlobalAssetBundleLoadingParametersSystem(World world, string streamingAssetURL) : base(world, streamingAssetURL) { }
+        internal PrepareGlobalAssetBundleLoadingParametersSystem(World world, URLDomain streamingAssetURL) : base(world, streamingAssetURL) { }
 
         protected override void Update(float t)
         {

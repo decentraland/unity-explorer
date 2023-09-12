@@ -37,5 +37,13 @@ namespace ECS.StreamableLoading.Common.Components
             CurrentSource = currentSource;
             CancellationTokenSource = cancellationTokenSource ?? new CancellationTokenSource();
         }
+
+        public CommonLoadingArguments(string url,
+            int timeout = StreamableLoadingDefaults.TIMEOUT,
+            int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
+            AssetSource permittedSources = AssetSource.WEB,
+            AssetSource currentSource = AssetSource.WEB,
+            CancellationTokenSource cancellationTokenSource = null) :
+            this(URLAddress.FromString(url), timeout, attempts, permittedSources, currentSource, cancellationTokenSource) { }
     }
 }

@@ -1,4 +1,5 @@
-﻿using DCL.AvatarRendering.AvatarShape;
+﻿using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.Wearables;
 using DCL.PluginSystem.Global;
 using ECS;
@@ -12,6 +13,8 @@ namespace Global.Dynamic
 {
     public class DynamicWorldContainer
     {
+        private static readonly URLDomain ASSET_BUNDLES_URL = URLDomain.FromString("https://ab-cdn.decentraland.org/");
+
         public IRealmController RealmController { get; private set; }
 
         public GlobalWorldFactory GlobalWorldFactory { get; private set; }
@@ -35,7 +38,7 @@ namespace Global.Dynamic
                 new ProfilingPlugin(staticContainer.AssetsProvisioner, staticContainer.ProfilingProvider),
 
                 //TODO: Remove this hardcoded url after the realm has been connected to get the catalyst url
-                new WearablePlugin(realmData),
+                new WearablePlugin(realmData, ASSET_BUNDLES_URL),
                 new AvatarPlugin(staticContainer.SingletonSharedDependencies.FrameTimeCapBudgetProvider,
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry.GetReferenceTypePool<AvatarBase>()),
             };
@@ -46,7 +49,7 @@ namespace Global.Dynamic
             {
                 RealmController = new RealmController(sceneLoadRadius, staticLoadPositions, realmData),
                 GlobalWorldFactory = new GlobalWorldFactory(in staticContainer, staticContainer.RealmPartitionSettings,
-                    staticContainer.CameraSamplingData, realmSamplingData, globalPlugins),
+                    staticContainer.CameraSamplingData, realmSamplingData, ASSET_BUNDLES_URL, globalPlugins),
                 GlobalPlugins = globalPlugins.Concat(staticContainer.SharedPlugins).ToList(),
                 EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins),
             };

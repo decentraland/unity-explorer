@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
 using NSubstitute;
@@ -49,7 +50,7 @@ namespace SceneRuntime.Factory.Tests
             {
                 // Arrange
                 var factory = new SceneRuntimeFactory();
-                var path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
+                var path = URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
 
                 // Act
                 var engineApi = Substitute.For<IEngineApi>();

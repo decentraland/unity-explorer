@@ -29,7 +29,7 @@ namespace ECS.Unity.Textures.Components.Defaults
                     return self.AvatarTexture.TryGetTextureUrl(out url);
                 case TextureUnion.TexOneofCase.VideoTexture:
                     // Not implemented - just ignore to not break the loop
-                    url = string.Empty;
+                    url = URLAddress.EMPTY;
                     return false;
                 case TextureUnion.TexOneofCase.Texture:
                 default:
@@ -85,7 +85,7 @@ namespace ECS.Unity.Textures.Components.Defaults
         public static bool TryGetTextureUrl(this AvatarTexture self, out URLAddress url)
         {
             // Not implemented
-            url = string.Empty;
+            url = URLAddress.EMPTY;
             return false;
         }
 

@@ -16,21 +16,20 @@ namespace DCL.AvatarRendering.Wearables
 {
     public class WearablePlugin : IDCLGlobalPluginWithoutSettings
     {
-        private const string AB_ASSETS_URL = "https://ab-cdn.decentraland.org/";
-
         //Should be taken from the catalyst
         private static readonly URLSubdirectory EXPLORER_SUBDIRECTORY = URLSubdirectory.FromString("/explorer/");
-        private static readonly URLSubdirectory CONTENT_URL = URLSubdirectory.FromString("/content/");
         private static readonly URLSubdirectory WEARABLES_COMPLEMENT_URL = URLSubdirectory.FromString("/wearables/");
 
         private readonly IRealmData realmData;
+        private readonly URLDomain assetBundleURL;
 
         //TODO: Create a cache for the catalog
         private readonly Dictionary<string, Wearable> wearableCatalog;
 
-        public WearablePlugin(IRealmData realmData)
+        public WearablePlugin(IRealmData realmData, URLDomain assetBundleURL)
         {
             this.realmData = realmData;
+            this.assetBundleURL = assetBundleURL;
             wearableCatalog = new Dictionary<string, Wearable>();
         }
 
@@ -45,7 +44,7 @@ namespace DCL.AvatarRendering.Wearables
 
             LoadWearablesByParamSystem.InjectToWorld(ref builder, new NoCache<Wearable[], GetWearableyParamIntention>(false, false), realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, wearableCatalog, mutexSync);
             LoadWearablesByPointersSystem.InjectToWorld(ref builder, new NoCache<WearableDTO[], GetWearableDTOByPointersIntention>(false, false), mutexSync);
-            LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(false, true), mutexSync, AB_ASSETS_URL);
+            LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(false, true), mutexSync, assetBundleURL);
         }
     }
 }

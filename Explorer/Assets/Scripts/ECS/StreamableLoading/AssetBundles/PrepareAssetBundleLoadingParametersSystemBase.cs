@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using AssetManagement;
+using CommunicationData.URLHelpers;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using System;
@@ -9,9 +10,9 @@ namespace ECS.StreamableLoading.AssetBundles
 {
     public abstract class PrepareAssetBundleLoadingParametersSystemBase : BaseUnityLoopSystem
     {
-        private readonly string streamingAssetURL;
+        private readonly URLDomain streamingAssetURL;
 
-        protected PrepareAssetBundleLoadingParametersSystemBase(World world, string streamingAssetURL) : base(world)
+        protected PrepareAssetBundleLoadingParametersSystemBase(World world, URLDomain streamingAssetURL) : base(world)
         {
             this.streamingAssetURL = streamingAssetURL;
         }
@@ -73,7 +74,7 @@ namespace ECS.StreamableLoading.AssetBundles
             }
         }
 
-        private string GetStreamingAssetsUrl(string hash) =>
-            $"{streamingAssetURL}{hash}";
+        private URLAddress GetStreamingAssetsUrl(string hash) =>
+            streamingAssetURL.Append(URLPath.FromString(hash));
     }
 }

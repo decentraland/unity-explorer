@@ -69,7 +69,7 @@ namespace Global.Dynamic
                 return new StreamableLoadingResult<IpfsTypes.ServerAbout>(serverAbout);
             }
 
-            var intent = new SubIntention(new CommonLoadingArguments(realm + "/about"));
+            var intent = new SubIntention(new CommonLoadingArguments(realm.Append(new URLPath("/about"))));
             IpfsTypes.ServerAbout result = (await intent.RepeatLoop(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateServerAboutRequest, ReportCategory.REALM, ct)).UnwrapAndRethrow();
 
             realmData.Reconfigure(new IpfsRealm(realm, result));

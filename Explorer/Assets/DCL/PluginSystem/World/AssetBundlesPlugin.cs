@@ -1,4 +1,5 @@
 ﻿using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
@@ -15,12 +16,14 @@ namespace DCL.PluginSystem.World
 {
     public class AssetBundlesPlugin : IDCLWorldPluginWithoutSettings, IDCLGlobalPluginWithoutSettings
     {
-        public static readonly string STREAMING_ASSETS_URL =
+        public static readonly URLDomain STREAMING_ASSETS_URL =
+            URLDomain.FromString(
 #if UNITY_EDITOR || UNITY_STANDALONE
-            $"file://{Application.streamingAssetsPath}/AssetBundles/";
+                $"file://{Application.streamingAssetsPath}/AssetBundles/"
 #else
-            return $"{Application.streamingAssetsPath}/AssetBundles/";
+            $"{Application.streamingAssetsPath}/AssetBundles/"
 #endif
+            );
 
         private readonly IReportsHandlingSettings reportsHandlingSettings;
 
