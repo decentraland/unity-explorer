@@ -125,7 +125,6 @@ namespace SceneRunner
 
             if (!sceneData.IsSdk7())
             {
-                //sceneCodeUrl = $"file://{Application.streamingAssetsPath}/Js/Sdk7AdapterLayer.js";
                 sceneCodeUrl = "https://renderer-artifacts.decentraland.org/sdk7-adaption-layer/main/index.js";
             }
             else
