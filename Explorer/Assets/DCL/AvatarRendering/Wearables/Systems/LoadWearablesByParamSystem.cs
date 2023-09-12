@@ -20,24 +20,24 @@ using Utility.Multithreading;
 namespace DCL.AvatarRendering.Wearables.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    public partial class LoadWearablesByParamSystem : LoadSystemBase<Wearable[], GetWearableyParamIntention>
+    public partial class LoadWearablesByParamSystem : LoadSystemBase<IWearable[], GetWearableyParamIntention>
     {
 
         private readonly StringBuilder urlBuilder = new ();
         private readonly string LAMBDA_URL;
         private readonly string WEARABLES_COMPLEMENT_URL;
 
-        internal Dictionary<string, Wearable> wearableCatalog;
+        internal Dictionary<string, IWearable> wearableCatalog;
 
-        public LoadWearablesByParamSystem(World world, IStreamableCache<Wearable[], GetWearableyParamIntention> cache, MutexSync mutexSync,
-            string lambdaURL, string wearablesComplementURL, Dictionary<string, Wearable> wearableCatalog) : base(world, cache, mutexSync)
+        public LoadWearablesByParamSystem(World world, IStreamableCache<IWearable[], GetWearableyParamIntention> cache, MutexSync mutexSync,
+            string lambdaURL, string wearablesComplementURL, Dictionary<string, IWearable> wearableCatalog) : base(world, cache, mutexSync)
         {
             LAMBDA_URL = lambdaURL;
             this.wearableCatalog = wearableCatalog;
             WEARABLES_COMPLEMENT_URL = wearablesComplementURL;
         }
 
-        protected override async UniTask<StreamableLoadingResult<Wearable[]>> FlowInternal(GetWearableyParamIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<IWearable[]>> FlowInternal(GetWearableyParamIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             string response;
 
@@ -56,11 +56,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 WearableDTO wearableDto = lambdaResponse.elements[i].entity;
 
-                if (wearableCatalog.TryGetValue(wearableDto.metadata.id, out Wearable result))
+                if (wearableCatalog.TryGetValue(wearableDto.metadata.id, out IWearable result))
                     intention.Results.Add(result);
                 else
                 {
-                    var wearable = new Wearable(wearableDto.metadata.id);
+                    var wearable = new Wearable();
                     wearable.WearableDTO = new StreamableLoadingResult<WearableDTO>(wearableDto);
                     wearable.IsLoading = false;
                     wearableCatalog.Add(wearable.GetUrn(), wearable);
@@ -68,7 +68,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 }
             }
 
-            return new StreamableLoadingResult<Wearable[]>(intention.Results.ToArray());
+            return new StreamableLoadingResult<IWearable[]>(intention.Results.ToArray());
         }
 
         private string BuildURL(string url, string userID, params (string paramName, string paramValue)[] urlEncodedParams)

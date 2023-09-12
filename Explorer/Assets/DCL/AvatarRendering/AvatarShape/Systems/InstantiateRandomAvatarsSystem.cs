@@ -13,8 +13,8 @@ using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using PointerPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.Wearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
-using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.Wearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableyParamIntention>;
+using PointerPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
+using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableyParamIntention>;
 
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
@@ -55,22 +55,16 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                                         .Concat(WearablesLiterals.DefaultWearables.GetDefaultWearablesForBodyShape(WearablesLiterals.BodyShape.FEMALE))
                                         .ToList();
 
-            defaultWearableRequest.MalePromise = PointerPromise.Create(World, new GetWearablesByPointersIntention
-            {
-                Pointers = defaultMaleWearables,
-                BodyShape = WearablesLiterals.BodyShape.MALE,
-                Results = new Wearable[defaultMaleWearables.Count],
-            }, PartitionComponent.TOP_PRIORITY);
+            defaultWearableRequest.MalePromise = PointerPromise.Create(World,
+                new GetWearablesByPointersIntention(defaultMaleWearables, new Wearable[defaultMaleWearables.Count], WearablesLiterals.BodyShape.MALE),
+                PartitionComponent.TOP_PRIORITY);
 
-            defaultWearableRequest.FemalePromise = PointerPromise.Create(World, new GetWearablesByPointersIntention
-            {
-                Pointers = defaultFemaleWearables,
-                BodyShape = WearablesLiterals.BodyShape.FEMALE,
-                Results = new Wearable[defaultFemaleWearables.Count],
-            }, PartitionComponent.TOP_PRIORITY);
+            defaultWearableRequest.FemalePromise = PointerPromise.Create(World,
+                new GetWearablesByPointersIntention(defaultFemaleWearables, new Wearable[defaultFemaleWearables.Count], WearablesLiterals.BodyShape.FEMALE),
+                PartitionComponent.TOP_PRIORITY);
 
             defaultWearableRequest.BaseWearablesPromise = ParamPromise.Create(World,
-                new GetWearableyParamIntention(new[] { ("collectionType", "base-wearable"), ("pageSize", "300") }, "DummyUser", new List<Wearable>()),
+                new GetWearableyParamIntention(new[] { ("collectionType", "base-wearable"), ("pageSize", "300") }, "DummyUser", new List<IWearable>()),
                 PartitionComponent.TOP_PRIORITY);
         }
 
@@ -79,9 +73,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             if (defaultWearableRequest.FinishedState)
                 return;
 
-            if (defaultWearableRequest.MalePromise.TryGetResult(World, out StreamableLoadingResult<Wearable[]> maleResult) &&
-                defaultWearableRequest.FemalePromise.TryGetResult(World, out StreamableLoadingResult<Wearable[]> femaleResult) &&
-                defaultWearableRequest.BaseWearablesPromise.TryConsume(World, out StreamableLoadingResult<Wearable[]> baseWearables))
+            if (defaultWearableRequest.MalePromise.TryGetResult(World, out StreamableLoadingResult<IWearable[]> maleResult) &&
+                defaultWearableRequest.FemalePromise.TryGetResult(World, out StreamableLoadingResult<IWearable[]> femaleResult) &&
+                defaultWearableRequest.BaseWearablesPromise.TryConsume(World, out StreamableLoadingResult<IWearable[]> baseWearables))
             {
                 if (baseWearables.Succeeded)
                     GenerateRandomAvatars(baseWearables.Asset);
@@ -92,7 +86,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             }
         }
 
-        private void GenerateRandomAvatars(Wearable[] defaultWearables)
+        private void GenerateRandomAvatars(IWearable[] defaultWearables)
         {
             var male = new AvatarRandomizerHelper(WearablesLiterals.BodyShape.MALE);
             var female = new AvatarRandomizerHelper(WearablesLiterals.BodyShape.FEMALE);

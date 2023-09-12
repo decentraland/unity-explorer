@@ -19,7 +19,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.Wearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -60,7 +60,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             pointers.Add(pbAvatarShape.BodyShape);
             pointers.AddRange(pbAvatarShape.Wearables);
 
-            Wearable[] results = ArrayPool<Wearable>.Shared.Rent(pointers.Count);
+            IWearable[] results = ArrayPool<IWearable>.Shared.Rent(pointers.Count);
             return Promise.Create(World, new GetWearablesByPointersIntention(pointers, results, pbAvatarShape), partition);
         }
 
@@ -87,7 +87,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
                 return;
 
-            if (!avatarShapeComponent.WearablePromise.TryConsume(World, out StreamableLoadingResult<Wearable[]> wearablesResult)) return;
+            if (!avatarShapeComponent.WearablePromise.TryConsume(World, out StreamableLoadingResult<IWearable[]> wearablesResult)) return;
 
             AvatarBase avatarBase = avatarShapeComponent.Base ?? avatarPoolRegistry.Get();
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
@@ -101,7 +101,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             //because it was pooled
             for (var i = 0; i < avatarShapeComponent.WearablePromise.LoadingIntention.Pointers.Count; i++)
             {
-                Wearable resultWearable = wearablesResult.Asset[i];
+                IWearable resultWearable = wearablesResult.Asset[i];
                 GameObject instantiateWearable = InstantiateWearable(resultWearable.AssetBundleData[avatarShapeComponent.BodyShape].Value.Asset.GameObject, avatarBase.AvatarSkinnedMeshRenderer, avatarTransform);
 
                 //TODO: Do a proper hiding algorithm
@@ -112,7 +112,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             }
 
             ListPool<string>.Release(avatarShapeComponent.WearablePromise.LoadingIntention.Pointers);
-            ArrayPool<Wearable>.Shared.Return(avatarShapeComponent.WearablePromise.LoadingIntention.Results);
+            ArrayPool<IWearable>.Shared.Return(avatarShapeComponent.WearablePromise.LoadingIntention.Results);
             avatarShapeComponent.IsDirty = false;
         }
 

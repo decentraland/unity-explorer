@@ -9,19 +9,15 @@ using System.Linq;
 namespace DCL.AvatarRendering.Wearables.Components
 {
     [Serializable]
-    public class Wearable
+    public class Wearable : IWearable
     {
-        public string urn; // urn
+        public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
+        public StreamableLoadingResult<AssetBundleData>?[] AssetBundleData { get; set; }
+        public StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }
+        public bool IsLoading { get; set; }
 
-        public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult;
-        public StreamableLoadingResult<AssetBundleData>?[] AssetBundleData;
-        public StreamableLoadingResult<WearableDTO> WearableDTO;
-
-        public bool IsLoading;
-
-        public Wearable(string urn)
+        public Wearable()
         {
-            this.urn = urn;
             IsLoading = true;
 
             AssetBundleData = new StreamableLoadingResult<AssetBundleData>?[WearablesLiterals.BodyShape.COUNT];
@@ -82,5 +78,6 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public bool IsBodyShape() =>
             GetCategory().Equals(WearablesLiterals.Categories.BODY_SHAPE);
+
     }
 }
