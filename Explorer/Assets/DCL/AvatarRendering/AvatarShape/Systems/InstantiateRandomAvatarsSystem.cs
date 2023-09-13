@@ -14,8 +14,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using PointerPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
-using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableyParamIntention>;
-
+using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -56,15 +55,15 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                                         .ToList();
 
             defaultWearableRequest.MalePromise = PointerPromise.Create(World,
-                new GetWearablesByPointersIntention(defaultMaleWearables, new Wearable[defaultMaleWearables.Count], WearablesLiterals.BodyShape.MALE),
+                new GetWearablesByPointersIntention(defaultMaleWearables, new IWearable[defaultMaleWearables.Count], WearablesLiterals.BodyShape.MALE),
                 PartitionComponent.TOP_PRIORITY);
 
             defaultWearableRequest.FemalePromise = PointerPromise.Create(World,
-                new GetWearablesByPointersIntention(defaultFemaleWearables, new Wearable[defaultFemaleWearables.Count], WearablesLiterals.BodyShape.FEMALE),
+                new GetWearablesByPointersIntention(defaultFemaleWearables, new IWearable[defaultFemaleWearables.Count], WearablesLiterals.BodyShape.FEMALE),
                 PartitionComponent.TOP_PRIORITY);
 
             defaultWearableRequest.BaseWearablesPromise = ParamPromise.Create(World,
-                new GetWearableyParamIntention(new[] { ("collectionType", "base-wearable"), ("pageSize", "300") }, "DummyUser", new List<IWearable>()),
+                new GetWearableByParamIntention(new[] { ("collectionType", "base-wearable"), ("pageSize", "300") }, "DummyUser", new List<IWearable>()),
                 PartitionComponent.TOP_PRIORITY);
         }
 
@@ -91,7 +90,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             var male = new AvatarRandomizerHelper(WearablesLiterals.BodyShape.MALE);
             var female = new AvatarRandomizerHelper(WearablesLiterals.BodyShape.FEMALE);
 
-            foreach (Wearable wearable in defaultWearables)
+            foreach (IWearable wearable in defaultWearables)
             {
                 male.AddWearable(wearable);
                 female.AddWearable(wearable);
@@ -159,7 +158,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             };
         }
 
-        public void AddWearable(Wearable wearable)
+        public void AddWearable(IWearable wearable)
         {
             if (!wearable.IsCompatibleWithBodyShape(BodyShape))
                 return;

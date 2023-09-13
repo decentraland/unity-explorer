@@ -1,12 +1,15 @@
 using Arch.Core;
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
+using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
+using Ipfs;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
@@ -42,10 +45,10 @@ namespace DCL.AvatarRendering.Wearables.Tests
             mockedAB = new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(null, null, null));
             mockedDefaultAB = new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(null, null, null));
 
-            mockedABManifest = new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest("", new SceneAbDto
+            mockedABManifest = new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(URLDomain.EMPTY, new SceneAbDto
                 { version = "0" }));
 
-            system = new ResolveWearableByPointerSystem(world, wearableCatalog, "");
+            system = new ResolveWearableByPointerSystem(world, wearableCatalog, new RealmData(new IpfsRealm(URLDomain.EMPTY)));
         }
 
         private IWearable CreateMockWearable(string urn, bool isUnisex, bool isDefaultWearable)

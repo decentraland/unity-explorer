@@ -38,6 +38,9 @@ namespace ECS.StreamableLoading.Common.Components
             CancellationTokenSource = cancellationTokenSource ?? new CancellationTokenSource();
         }
 
+        /// <summary>
+        ///     Use URLAddress instead of string
+        /// </summary>
         public CommonLoadingArguments(string url,
             int timeout = StreamableLoadingDefaults.TIMEOUT,
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,

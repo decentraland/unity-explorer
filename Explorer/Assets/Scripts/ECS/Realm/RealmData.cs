@@ -8,8 +8,6 @@ namespace ECS
     /// </summary>
     public class RealmData : IRealmData
     {
-        private bool configured;
-
         private IIpfsRealm ipfs;
         private bool scenesAreFixed;
 
@@ -22,6 +20,8 @@ namespace ECS
         {
             Reconfigure(ipfsRealm);
         }
+
+        public bool Configured { get; private set; }
 
         public IIpfsRealm Ipfs
         {
@@ -43,15 +43,24 @@ namespace ECS
 
         public void Reconfigure(IIpfsRealm ipfsRealm)
         {
-            configured = true;
+            Configured = true;
 
             scenesAreFixed = ipfsRealm.SceneUrns is { Count: > 0 };
             ipfs = ipfsRealm;
         }
 
+        /// <summary>
+        ///     Make the data invalid (forbidding access to the URLs)
+        /// </summary>
+        public void Invalidate()
+        {
+            Configured = false;
+            ipfs = null;
+        }
+
         private void Validate()
         {
-            if (!configured)
+            if (!Configured)
                 throw new InvalidOperationException("RealmData has not been configured");
         }
     }

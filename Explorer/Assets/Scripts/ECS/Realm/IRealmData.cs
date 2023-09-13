@@ -13,5 +13,10 @@ namespace ECS
         ///     Indicates that the realm contains a fixed number of scenes
         /// </summary>
         bool ScenesAreFixed { get; }
+
+        /// <summary>
+        ///     Whether the data was set at least once
+        /// </summary>
+        bool Configured { get; }
     }
 }

@@ -8,6 +8,7 @@ namespace Ipfs
     {
         public URLDomain CatalystBaseUrl { get; }
         public URLDomain ContentBaseUrl { get; }
+        public URLDomain LambdasBaseUrl { get; }
         public IReadOnlyList<string> SceneUrns { get; }
         public URLDomain EntitiesActiveEndpoint { get; }
     }
@@ -25,6 +26,7 @@ namespace Ipfs
             {
                 sceneUrns = serverAbout.configurations.scenesUrn;
                 ContentBaseUrl = URLDomain.FromString(serverAbout.content.publicUrl);
+                LambdasBaseUrl = URLDomain.FromString(serverAbout.lambdas.publicUrl);
                 EntitiesActiveEndpoint = URLBuilder.Combine(ContentBaseUrl, URLSubdirectory.FromString("entities/active"));
             }
             else
@@ -36,6 +38,7 @@ namespace Ipfs
 
         public URLDomain CatalystBaseUrl { get; }
         public URLDomain ContentBaseUrl { get; }
+        public URLDomain LambdasBaseUrl { get; }
         public URLDomain EntitiesActiveEndpoint { get; }
 
         public IReadOnlyList<string> SceneUrns => sceneUrns;

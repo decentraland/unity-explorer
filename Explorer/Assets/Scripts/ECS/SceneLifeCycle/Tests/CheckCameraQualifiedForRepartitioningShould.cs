@@ -1,9 +1,11 @@
 ﻿using Arch.Core;
+using CommunicationData.URLHelpers;
 using DCL.CharacterCamera;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Systems;
 using ECS.TestSuite;
+using Ipfs;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
@@ -18,9 +20,10 @@ namespace ECS.SceneLifeCycle.Tests
         public void SetUp()
         {
             partitionSettings = Substitute.For<IPartitionSettings>();
-            system = new CheckCameraQualifiedForRepartitioningSystem(world, partitionSettings);
+            var realmData = new RealmData(new IpfsRealm(URLDomain.EMPTY));
+            system = new CheckCameraQualifiedForRepartitioningSystem(world, partitionSettings, realmData);
 
-            world.Create(new RealmComponent());
+            world.Create(new RealmComponent(realmData));
         }
 
         [Test]

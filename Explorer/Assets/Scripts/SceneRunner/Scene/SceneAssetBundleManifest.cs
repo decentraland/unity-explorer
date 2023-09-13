@@ -83,6 +83,6 @@ namespace SceneRunner.Scene
             convertedFiles.Contains(hash);
 
         public URLAddress GetAssetBundleURL(string hash) =>
-            assetBundlesBaseUrl.Append(new URLPath($"{dto.Version}/{hash})"));
+            assetBundlesBaseUrl.Append(new URLPath($"{dto.Version}/{hash}"));
     }
 }

@@ -118,6 +118,8 @@ namespace Global.Dynamic
 
             globalWorld.Clear();
 
+            realmData.Invalidate();
+
             await UniTask.WhenAll(allScenes.Select(s => s.DisposeAsync()));
 
             // Collect garbage, good moment to do it

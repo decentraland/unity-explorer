@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace DCL.AvatarRendering.Wearables.Components.Intentions
 {
-    public struct GetWearableyParamIntention : IEquatable<GetWearableyParamIntention>, ILoadingIntention
+    public struct GetWearableByParamIntention : IEquatable<GetWearableByParamIntention>, ILoadingIntention
     {
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
@@ -20,7 +20,7 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
         //Used for pooling
         public List<IWearable> Results;
 
-        public GetWearableyParamIntention((string, string)[] requestParams, string userID, List<IWearable> results)
+        public GetWearableByParamIntention((string, string)[] requestParams, string userID, List<IWearable> results)
         {
             Params = requestParams;
             UserID = userID;
@@ -28,11 +28,11 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
             CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY, cancellationTokenSource: new CancellationTokenSource());
         }
 
-        public bool Equals(GetWearableyParamIntention other) =>
+        public bool Equals(GetWearableByParamIntention other) =>
             Equals(Params, other.Params) && UserID == other.UserID;
 
         public override bool Equals(object obj) =>
-            obj is GetWearableyParamIntention other && Equals(other);
+            obj is GetWearableByParamIntention other && Equals(other);
 
         public override int GetHashCode() =>
             HashCode.Combine(Params, UserID, CancellationTokenSource, CommonArguments);

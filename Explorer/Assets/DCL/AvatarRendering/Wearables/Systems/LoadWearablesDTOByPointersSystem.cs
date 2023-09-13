@@ -28,7 +28,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private readonly StringBuilder bodyBuilder = new ();
 
-        internal LoadWearablesByPointersSystem(World world, IStreamableCache<WearableDTO[], GetWearableDTOByPointersIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync) { }
+        internal LoadWearablesDTOByPointersSystem(World world, IStreamableCache<WearableDTO[], GetWearableDTOByPointersIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync) { }
 
         protected override async UniTask<StreamableLoadingResult<WearableDTO[]>> FlowInternal(GetWearableDTOByPointersIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
@@ -38,8 +38,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             for (var i = 0; i < numberOfPartialRequests; i++)
             {
-                await UniTask.SwitchToMainThread();
-
                 int numberOfWearablesToRequest = intention.Pointers.Count < MAX_WEARABLES_PER_REQUEST
                     ? intention.Pointers.Count
                     : MAX_WEARABLES_PER_REQUEST;
@@ -71,6 +69,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             bodyBuilder.Append("]}");
 
+            await UniTask.SwitchToMainThread();
             string response;
 
             using (var request = UnityWebRequest.Post(url, bodyBuilder.ToString(), "application/json"))
@@ -80,6 +79,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             }
 
             await UniTask.SwitchToThreadPool();
+
             var partialTargetList = new List<WearableDTO>();
             JsonConvert.PopulateObject(response, partialTargetList);
             return partialTargetList;

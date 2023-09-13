@@ -36,6 +36,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         protected override void Update(float t)
         {
+            // Wait until the realm is configured
+            if (!realmData.Configured) return;
+
             ResolveWearablePromiseQuery(World);
             FinalizeWearableDTOQuery(World);
             FinalizeAssetBundleManifestLoadingQuery(World);
@@ -44,7 +47,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         [Query]
         [None(typeof(StreamableLoadingResult<IWearable[]>))]
-        public void ResolveWearablePromise(in Entity entity, ref GetWearablesByPointersIntention wearablesByPointersIntention, ref IPartitionComponent partitionComponent)
+        private void ResolveWearablePromise(in Entity entity, ref GetWearablesByPointersIntention wearablesByPointersIntention, ref IPartitionComponent partitionComponent)
         {
             if (wearablesByPointersIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -91,7 +94,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        public void FinalizeWearableDTO(in Entity entity, ref AssetPromise<WearableDTO[], GetWearableDTOByPointersIntention> promise, ref WearablesLiterals.BodyShape bodyShape)
+        private void FinalizeWearableDTO(in Entity entity, ref AssetPromise<WearableDTO[], GetWearableDTOByPointersIntention> promise, ref WearablesLiterals.BodyShape bodyShape)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -121,6 +124,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                         component.IsLoading = false;
                     }
                 }
+
                 ListPool<string>.Release(promise.LoadingIntention.Pointers);
                 World.Destroy(entity);
             }
@@ -178,6 +182,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     new GetWearableAssetBundleManifestIntention
                     {
                         Hash = component.GetHash(),
+
                         //TODO: Is it okay to use the original cancellation token source?
                         CommonArguments = new CommonLoadingArguments(component.GetHash(), cancellationTokenSource: intention.CancellationTokenSource),
                     },
@@ -208,7 +213,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             var wearableDtoByPointersIntention = new GetWearableDTOByPointersIntention
             {
                 Pointers = missingPointers,
-                CommonArguments = new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint.Value, cancellationTokenSource: intention.CancellationTokenSource),
+                CommonArguments = new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint, cancellationTokenSource: intention.CancellationTokenSource),
             };
 
             var promise = AssetPromise<WearableDTO[], GetWearableDTOByPointersIntention>.Create(World, wearableDtoByPointersIntention, partitionComponent);

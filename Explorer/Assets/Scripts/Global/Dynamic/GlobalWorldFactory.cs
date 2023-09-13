@@ -8,6 +8,7 @@ using DCL.Character.Components;
 using DCL.GlobalPartitioning;
 using DCL.PluginSystem.Global;
 using DCL.Systems;
+using ECS;
 using ECS.ComponentsPooling;
 using ECS.LifeCycle;
 using ECS.Prioritization;
@@ -48,13 +49,13 @@ namespace Global.Dynamic
         private readonly IPartitionSettings partitionSettings;
         private readonly IRealmPartitionSettings realmPartitionSettings;
         private readonly RealmSamplingData realmSamplingData;
+        private readonly IRealmData realmData;
         private readonly URLDomain assetBundlesURL;
         private readonly IReadOnlyList<IDCLGlobalPlugin> globalPlugins;
 
         public GlobalWorldFactory(in StaticContainer staticContainer, IRealmPartitionSettings realmPartitionSettings,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
-            URLDomain assetBundlesURL,
-            IReadOnlyList<IDCLGlobalPlugin> globalPlugins)
+            URLDomain assetBundlesURL, IRealmData realmData, IReadOnlyList<IDCLGlobalPlugin> globalPlugins)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -64,6 +65,7 @@ namespace Global.Dynamic
             this.realmSamplingData = realmSamplingData;
             this.assetBundlesURL = assetBundlesURL;
             this.globalPlugins = globalPlugins;
+            this.realmData = realmData;
         }
 
         public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory, ICharacterObject characterObject)
@@ -115,7 +117,7 @@ namespace Global.Dynamic
             PartitionSceneEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData);
             PartitionGlobalAssetEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData);
 
-            CheckCameraQualifiedForRepartitioningSystem.InjectToWorld(ref builder, partitionSettings);
+            CheckCameraQualifiedForRepartitioningSystem.InjectToWorld(ref builder, partitionSettings, realmData);
             SortWorldsAggregateSystem.InjectToWorld(ref builder, partitionedWorldsAggregateFactory, realmPartitionSettings);
 
             var pluginArgs = new GlobalPluginArguments(playerEntity);

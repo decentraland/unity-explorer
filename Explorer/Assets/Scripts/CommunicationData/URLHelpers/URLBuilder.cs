@@ -5,9 +5,9 @@ namespace CommunicationData.URLHelpers
 {
     public class URLBuilder
     {
-        private readonly StringBuilder stringBuilder;
+        private readonly StringBuilder stringBuilder = new ();
 
-        private bool endsWithSlash => stringBuilder[^1] == '/';
+        private bool endsWithSlash => stringBuilder.Length > 0 && stringBuilder[^1] == '/';
 
         private byte parametersCount;
 
@@ -25,6 +25,34 @@ namespace CommunicationData.URLHelpers
 
             URLDomain = domain;
             AppendWithoutQuestionMark(domain.Value);
+
+            return this;
+        }
+
+        /// <summary>
+        ///     Set the full domain of the URL, must be called first
+        /// </summary>
+        /// <exception cref="InvalidOperationException"></exception>
+        public URLBuilder AppendDomainWithReplacedPath(in URLDomain domain, in URLSubdirectory newPath)
+        {
+            if (URLDomain != null)
+                throw new InvalidOperationException("Domain already set");
+
+            URLDomain = domain;
+
+            ReadOnlySpan<char> valueSpan = domain.Value.AsSpan();
+
+            // Remove last slash if present
+            if (valueSpan.EndsWith("/"))
+                valueSpan = valueSpan[..^1];
+
+            int slashIndex = valueSpan.LastIndexOf("/");
+
+            if (slashIndex != -1)
+                valueSpan = valueSpan[..slashIndex];
+
+            AppendWithoutQuestionMark(valueSpan);
+            AppendSubDirectory(in newPath);
 
             return this;
         }
@@ -68,12 +96,9 @@ namespace CommunicationData.URLHelpers
             return this;
         }
 
-        private void AppendWithoutQuestionMark(string value)
+        private void AppendWithoutQuestionMark(ReadOnlySpan<char> value)
         {
-            if (value.EndsWith("&"))
-                stringBuilder.Append(value.AsSpan()[..^1]);
-            else
-                stringBuilder.Append(value);
+            stringBuilder.Append(value.EndsWith("&") ? value[..^1] : value);
         }
 
         /// <summary>

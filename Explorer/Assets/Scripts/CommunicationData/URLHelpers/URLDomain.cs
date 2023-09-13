@@ -52,5 +52,8 @@ namespace CommunicationData.URLHelpers
 
         public static bool operator !=(URLDomain left, URLDomain right) =>
             !left.Equals(right);
+
+        public override string ToString() =>
+            Value;
     }
 }

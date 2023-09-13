@@ -25,6 +25,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
     {
         private readonly URLDomain assetBundleURL;
 
+        private readonly URLBuilder urlBuilder = new ();
+
         internal LoadWearableAssetBundleManifestSystem(World world,
             IStreamableCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention> cache,
             MutexSync mutexSync, URLDomain assetBundleURL) : base(world, cache, mutexSync)
@@ -34,9 +36,15 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         protected override async UniTask<StreamableLoadingResult<SceneAssetBundleManifest>> FlowInternal(GetWearableAssetBundleManifestIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
+            urlBuilder.Clear();
+
+            urlBuilder.AppendDomain(assetBundleURL)
+                      .AppendSubDirectory(URLSubdirectory.FromString("manifest"))
+                      .AppendPath(URLPath.FromString($"{intention.Hash}{PlatformUtils.GetPlatform()}.json"));
+
             string response;
 
-            using (var request = UnityWebRequest.Get($"{assetBundleURL}manifest/{intention.Hash}{PlatformUtils.GetPlatform()}.json"))
+            using (var request = UnityWebRequest.Get(urlBuilder.ToString()))
             {
                 await request.SendWebRequest().WithCancellation(ct);
 

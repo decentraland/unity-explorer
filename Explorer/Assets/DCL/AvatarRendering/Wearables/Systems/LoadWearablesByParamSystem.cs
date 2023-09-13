@@ -12,6 +12,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -21,7 +22,7 @@ using Utility.Multithreading;
 namespace DCL.AvatarRendering.Wearables.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    public partial class LoadWearablesByParamSystem : LoadSystemBase<IWearable[], GetWearableyParamIntention>
+    public partial class LoadWearablesByParamSystem : LoadSystemBase<IWearable[], GetWearableByParamIntention>
     {
         private readonly URLSubdirectory lambdaSubdirectory;
 
@@ -31,8 +32,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         internal Dictionary<string, IWearable> wearableCatalog;
 
+        private readonly Func<bool> isRealmDataReady;
+
         public LoadWearablesByParamSystem(
-            World world, IStreamableCache<IWearable[], GetWearableyParamIntention> cache, IRealmData realmData,
+            World world, IStreamableCache<IWearable[], GetWearableByParamIntention> cache, IRealmData realmData,
             URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory, Dictionary<string, IWearable> wearableCatalog,
             MutexSync mutexSync) : base(world, cache, mutexSync)
         {
@@ -40,10 +43,14 @@ namespace DCL.AvatarRendering.Wearables.Systems
             this.lambdaSubdirectory = lambdaSubdirectory;
             this.wearableCatalog = wearableCatalog;
             this.wearablesSubdirectory = wearablesSubdirectory;
+
+            isRealmDataReady = () => realmData.Configured;
         }
 
-        protected override async UniTask<StreamableLoadingResult<IWearable[]>> FlowInternal(GetWearableyParamIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<IWearable[]>> FlowInternal(GetWearableByParamIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
+            await UniTask.WaitUntil(isRealmDataReady, cancellationToken: ct);
+
             string response;
 
             using (var request = UnityWebRequest.Get(BuildURL(intention.UserID, intention.Params)))
@@ -81,8 +88,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             urlBuilder.Clear();
 
-            urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl)
-                      .AppendSubDirectory(lambdaSubdirectory)
+            urlBuilder.AppendDomainWithReplacedPath(realmData.Ipfs.LambdasBaseUrl, lambdaSubdirectory)
                       .AppendSubDirectory(URLSubdirectory.FromString(userID))
                       .AppendSubDirectory(wearablesSubdirectory);
 
