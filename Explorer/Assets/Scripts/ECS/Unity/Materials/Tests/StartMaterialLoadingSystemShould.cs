@@ -48,7 +48,7 @@ namespace ECS.Unity.Materials.Tests
             sceneData.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<URLAddress>())
                      .Returns(c =>
                       {
-                          c[1] = c.ArgAt<string>(0);
+                          c[1] = URLAddress.FromString(c.ArgAt<string>(0));
                           return true;
                       });
         }

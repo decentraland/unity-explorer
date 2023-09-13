@@ -13,7 +13,7 @@ namespace ECS.SceneLifeCycle.Tests
             IpfsTypes.IpfsPath ipfsPath = IpfsHelper.ParseUrn(URN);
 
             Assert.AreEqual("bafkreidnrsziglqgwwdsvtyrdfltiobpymk3png56xieemixlprqbw5gru", ipfsPath.EntityId);
-            Assert.AreEqual("https://sdk-team-cdn.decentraland.org/ipfs/", ipfsPath.BaseUrl);
+            Assert.AreEqual("https://sdk-team-cdn.decentraland.org/ipfs/", ipfsPath.BaseUrl.ToString());
         }
     }
 }
