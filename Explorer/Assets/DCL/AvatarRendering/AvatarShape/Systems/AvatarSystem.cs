@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.GPUSkinning;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.ECSComponents;
@@ -43,6 +44,20 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             UpdateAvatarQuery(World);
             InstantiateAvatarQuery(World);
             DestroyAvatarQuery(World);
+            UpdateAvatarBonesQuery(World);
+        }
+
+        [Query]
+        private void UpdateAvatarBones(ref AvatarShapeComponent avatarShapeComponent)
+        {
+            if (avatarShapeComponent.IsDirty)
+                return;
+
+            for (var i = 0; i < avatarShapeComponent.Bones.Length; i++)
+                avatarShapeComponent.BoneMatrices[i] = avatarShapeComponent.Bones[i].localToWorldMatrix;
+
+            foreach (SimpleGPUSkinning gpuSkinnedRenderer in avatarShapeComponent.gpuSkinningComponent)
+                gpuSkinnedRenderer.UpdateSkin(avatarShapeComponent.BoneMatrices);
         }
 
         [Query]
@@ -92,6 +107,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             AvatarBase avatarBase = avatarShapeComponent.Base ?? avatarPoolRegistry.Get();
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
 
+            avatarShapeComponent.Base = avatarBase;
+            avatarShapeComponent.Bones = avatarBase.AvatarSkinnedMeshRenderer.bones;
+            avatarShapeComponent.BoneMatrices = new Matrix4x4[avatarShapeComponent.Base.AvatarSkinnedMeshRenderer.bones.Length];
+
             Transform avatarTransform = avatarBase.transform;
             avatarTransform.SetParent(transformComponent.Transform, false);
             avatarTransform.ResetLocalTRS();
@@ -102,13 +121,12 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             for (var i = 0; i < avatarShapeComponent.WearablePromise.LoadingIntention.Pointers.Count; i++)
             {
                 IWearable resultWearable = wearablesResult.Asset[i];
-                GameObject instantiateWearable = InstantiateWearable(resultWearable.AssetBundleData[avatarShapeComponent.BodyShape].Value.Asset.GameObject, avatarBase.AvatarSkinnedMeshRenderer, avatarTransform);
+                GameObject instantiateWearable = InstantiateWearable(ref avatarShapeComponent, resultWearable.AssetBundleData[avatarShapeComponent.BodyShape].Value.Asset.GameObject, avatarBase.AvatarSkinnedMeshRenderer, avatarTransform);
 
                 //TODO: Do a proper hiding algorithm
                 if (resultWearable.IsBodyShape())
                     HideBodyParts(instantiateWearable);
 
-                avatarShapeComponent.InstantiatedWearables.Add(instantiateWearable);
             }
 
             ListPool<string>.Release(avatarShapeComponent.WearablePromise.LoadingIntention.Pointers);
@@ -147,19 +165,17 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             }
         }
 
-        private GameObject InstantiateWearable(GameObject wearableToInstantiate, SkinnedMeshRenderer baseAvatar, Transform parentTransform)
+        private GameObject InstantiateWearable(ref AvatarShapeComponent avatarShapeComponent, GameObject wearableToInstantiate, SkinnedMeshRenderer baseAvatar, Transform parentTransform)
         {
             //TODO: Pooling and combining of wearables
             GameObject instantiatedWearable = Object.Instantiate(wearableToInstantiate, parentTransform);
             instantiatedWearable.transform.ResetLocalTRS();
 
-            foreach (SkinnedMeshRenderer skinnedMeshRenderer in instantiatedWearable.GetComponentsInChildren<SkinnedMeshRenderer>())
-            {
-                skinnedMeshRenderer.rootBone = baseAvatar.rootBone;
-                skinnedMeshRenderer.bones = baseAvatar.bones;
-            }
+            avatarShapeComponent.gpuSkinningComponent.AddRange(GPUSkinningComponent.DoSkinning(instantiatedWearable));
+            avatarShapeComponent.InstantiatedWearables.Add(instantiatedWearable);
 
             return instantiatedWearable;
         }
+
     }
 }

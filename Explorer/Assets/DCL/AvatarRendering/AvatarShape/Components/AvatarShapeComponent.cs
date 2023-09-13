@@ -1,4 +1,5 @@
 using DCL.AvatarRendering.Wearables.Helpers;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
@@ -13,8 +14,13 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public Promise WearablePromise;
 
-        public readonly AvatarBase Base;
+        public AvatarBase Base;
         public List<GameObject> InstantiatedWearables;
+        public List<SimpleGPUSkinning> gpuSkinningComponent;
+
+        public Matrix4x4[] BoneMatrices;
+        public Transform[] Bones;
+
 
         public AvatarShapeComponent(string id, WearablesLiterals.BodyShape bodyShape, Promise wearablePromise)
         {
@@ -24,6 +30,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             WearablePromise = wearablePromise;
             Base = null;
             InstantiatedWearables = new List<GameObject>();
+            gpuSkinningComponent = new List<SimpleGPUSkinning>();
+            Bones = Array.Empty<Transform>();
+            BoneMatrices = Array.Empty<Matrix4x4>();
         }
     }
 }
