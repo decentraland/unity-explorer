@@ -81,6 +81,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 else
                     ReportHub.LogError(GetReportCategory(), "Base wearables could't be loaded!");
 
+                defaultWearableRequest.MalePromise.Consume(World);
+                defaultWearableRequest.FemalePromise.Consume(World);
+
                 defaultWearableRequest.FinishedState = true;
             }
         }
