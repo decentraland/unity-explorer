@@ -169,6 +169,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (result.Value.Succeeded)
                     ReportHub.Log(GetReportCategory(), $"{intention}'s successfully loaded from {source}");
             }
+            else if (intention.CancellationTokenSource.IsCancellationRequested) { World.Destroy(entity); }
             else
             {
                 // Indicate that it should be reevaluated
