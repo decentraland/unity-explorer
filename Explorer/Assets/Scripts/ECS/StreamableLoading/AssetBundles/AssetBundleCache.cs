@@ -28,8 +28,6 @@ namespace ECS.StreamableLoading.AssetBundles
         public int GetHashCode(GetAssetBundleIntention obj) =>
             obj.Hash.GetHashCode();
 
-
-
         public bool TryGet(in GetAssetBundleIntention key, out AssetBundleData asset) =>
             cache.TryGetValue(key, out asset);
 
@@ -40,10 +38,17 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public void Dereference(in GetAssetBundleIntention key, AssetBundleData asset) { }
 
+        private bool disposed { get; set; }
+
         public void Dispose()
         {
+            if (disposed)
+                return;
+
             DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Release(IrrecoverableFailures as Dictionary<string, StreamableLoadingResult<AssetBundleData>>);
             DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>.Release(OngoingRequests as Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>);
+
+            disposed = true;
         }
     }
 }

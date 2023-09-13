@@ -20,6 +20,7 @@ namespace ECS.StreamableLoading.Cache
         private readonly bool useOngoingRequestCache;
         private readonly bool useIrrecoverableFailureCache;
 
+
         public NoCache(bool useOngoingRequestCache, bool useIrrecoverableFailureCache)
         {
             this.useOngoingRequestCache = useOngoingRequestCache;
@@ -36,15 +37,15 @@ namespace ECS.StreamableLoading.Cache
                 IrrecoverableFailures = new FakeDictionaryCache<StreamableLoadingResult<TAsset>>();
         }
 
-        bool IStreamableCache<TAsset, TLoadingIntention>.TryGet(in TLoadingIntention key, out TAsset asset)
+        public bool TryGet(in TLoadingIntention key, out TAsset asset)
         {
             asset = default(TAsset);
             return false;
         }
 
-        void IStreamableCache<TAsset, TLoadingIntention>.Add(in TLoadingIntention key, TAsset asset) { }
+        public void Add(in TLoadingIntention key, TAsset asset) { }
 
-        void IStreamableCache<TAsset, TLoadingIntention>.Dereference(in TLoadingIntention key, TAsset asset) { }
+        public void Dereference(in TLoadingIntention key, TAsset asset) { }
 
         bool IEqualityComparer<TLoadingIntention>.Equals(TLoadingIntention x, TLoadingIntention y) =>
             EqualityComparer<TLoadingIntention>.Default.Equals(x, y);
@@ -52,13 +53,19 @@ namespace ECS.StreamableLoading.Cache
         int IEqualityComparer<TLoadingIntention>.GetHashCode(TLoadingIntention obj) =>
             EqualityComparer<TLoadingIntention>.Default.GetHashCode(obj);
 
+        private bool disposed { get; set; }
+
         public void Dispose()
         {
+            if (disposed)
+                return;
+
             if (useOngoingRequestCache)
                 DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>.Release(OngoingRequests as Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>);
-
             if (useIrrecoverableFailureCache)
                 DictionaryPool<string, StreamableLoadingResult<TAsset>>.Release(IrrecoverableFailures as Dictionary<string, StreamableLoadingResult<TAsset>>);
+
+            disposed = true;
         }
     }
 }
