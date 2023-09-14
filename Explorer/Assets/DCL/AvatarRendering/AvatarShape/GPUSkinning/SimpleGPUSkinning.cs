@@ -1,13 +1,13 @@
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class SimpleGPUSkinning
 {
-    public Transform[] bones;
     public Renderer meshRenderer;
     public Material skinningMaterial;
 
-    private Matrix4x4[] boneMatrices;
+    private float4x4[] boneMatrices;
     private static readonly int BONE_MATRICES = Shader.PropertyToID("_Matrices");
     private static readonly int BIND_POSES = Shader.PropertyToID("_BindPoses");
     private static readonly int RENDERER_WORLD_INVERSE = Shader.PropertyToID("_WorldInverse");

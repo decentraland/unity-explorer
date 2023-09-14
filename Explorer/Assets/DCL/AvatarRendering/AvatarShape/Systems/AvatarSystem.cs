@@ -53,14 +53,12 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             if (avatarShapeComponent.IsDirty)
                 return;
 
-            for (var i = 0; i < avatarShapeComponent.Bones.Length; i++)
-                avatarShapeComponent.BoneMatrices[i] = avatarShapeComponent.Bones[i].localToWorldMatrix;
-
-            Matrix4x4 worldToLocalMatrix = avatarShapeComponent.Base.transform.worldToLocalMatrix;
+            avatarShapeComponent.DoBoneMatrixCalculation();
 
             foreach (SimpleGPUSkinning gpuSkinnedRenderer in avatarShapeComponent.gpuSkinningComponent)
-                gpuSkinnedRenderer.UpdateSkin(avatarShapeComponent.BoneMatrices, worldToLocalMatrix);
+                gpuSkinnedRenderer.UpdateSkin(avatarShapeComponent.boneSharedArray, avatarShapeComponent.matrixCache);
         }
+
 
         [Query]
         [None(typeof(AvatarShapeComponent))]
@@ -110,8 +108,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
 
             avatarShapeComponent.Base = avatarBase;
-            avatarShapeComponent.Bones = avatarBase.AvatarSkinnedMeshRenderer.bones;
-            avatarShapeComponent.BoneMatrices = new Matrix4x4[avatarShapeComponent.Base.AvatarSkinnedMeshRenderer.bones.Length];
+            avatarShapeComponent.SetMatrixValues();
 
             Transform avatarTransform = avatarBase.transform;
             avatarTransform.SetParent(transformComponent.Transform, false);
