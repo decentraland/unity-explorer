@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public class SimpleGPUSkinning
@@ -14,6 +13,8 @@ public class SimpleGPUSkinning
     private static readonly int RENDERER_WORLD_INVERSE = Shader.PropertyToID("_WorldInverse");
 
     private static readonly HashSet<Mesh> processedBindPoses = new ();
+
+    private readonly MaterialPropertyBlock propertyBlock = new ();
 
     /// <summary>
     ///     This must be done once per SkinnedMeshRenderer before animating.
@@ -63,10 +64,16 @@ public class SimpleGPUSkinning
         meshRenderer = go.AddComponent<MeshRenderer>();
 
         skinningMaterial = new Material(Resources.Load<Material>("GPUSkinningMaterial"));
-        skinningMaterial.SetTexture("_MainTex", skr.sharedMaterial.mainTexture);
-        skinningMaterial.SetMatrixArray(BIND_POSES, skr.sharedMesh.bindposes.ToArray());
+
+        Texture tex = skr.sharedMaterial.mainTexture;
+
+        if (tex)
+            propertyBlock.SetTexture("_MainTex", tex);
+
+        propertyBlock.SetMatrixArray(BIND_POSES, skr.sharedMesh.bindposes);
 
         meshRenderer.sharedMaterial = skinningMaterial;
+        meshRenderer.SetPropertyBlock(propertyBlock);
 
         Object.Destroy(skr);
     }
