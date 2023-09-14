@@ -14,8 +14,6 @@ public class SimpleGPUSkinning
 
     private static readonly HashSet<Mesh> processedBindPoses = new ();
 
-    private readonly MaterialPropertyBlock propertyBlock = new ();
-
     /// <summary>
     ///     This must be done once per SkinnedMeshRenderer before animating.
     /// </summary>
@@ -68,12 +66,11 @@ public class SimpleGPUSkinning
         Texture tex = skr.sharedMaterial.mainTexture;
 
         if (tex)
-            propertyBlock.SetTexture("_MainTex", tex);
+            skinningMaterial.SetTexture("_MainTex", tex);
 
-        propertyBlock.SetMatrixArray(BIND_POSES, skr.sharedMesh.bindposes);
+        skinningMaterial.SetMatrixArray(BIND_POSES, skr.sharedMesh.bindposes);
 
         meshRenderer.sharedMaterial = skinningMaterial;
-        meshRenderer.SetPropertyBlock(propertyBlock);
 
         Object.Destroy(skr);
     }
