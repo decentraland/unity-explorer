@@ -56,8 +56,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             for (var i = 0; i < avatarShapeComponent.Bones.Length; i++)
                 avatarShapeComponent.BoneMatrices[i] = avatarShapeComponent.Bones[i].localToWorldMatrix;
 
+            Matrix4x4 worldToLocalMatrix = avatarShapeComponent.Base.transform.worldToLocalMatrix;
+
             foreach (SimpleGPUSkinning gpuSkinnedRenderer in avatarShapeComponent.gpuSkinningComponent)
-                gpuSkinnedRenderer.UpdateSkin(avatarShapeComponent.BoneMatrices);
+                gpuSkinnedRenderer.UpdateSkin(avatarShapeComponent.BoneMatrices, worldToLocalMatrix);
         }
 
         [Query]
@@ -116,6 +118,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarTransform.ResetLocalTRS();
 
             ClearWearables(avatarShapeComponent.InstantiatedWearables);
+
             //Using Pointer size for counter, since we dont know the size of the results array
             //because it was pooled
             for (var i = 0; i < avatarShapeComponent.WearablePromise.LoadingIntention.Pointers.Count; i++)
@@ -126,7 +129,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 //TODO: Do a proper hiding algorithm
                 if (resultWearable.IsBodyShape())
                     HideBodyParts(instantiateWearable);
-
             }
 
             ListPool<string>.Release(avatarShapeComponent.WearablePromise.LoadingIntention.Pointers);
@@ -176,6 +178,5 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             return instantiatedWearable;
         }
-
     }
 }

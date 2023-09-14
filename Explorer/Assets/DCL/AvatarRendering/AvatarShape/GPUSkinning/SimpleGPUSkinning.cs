@@ -75,9 +75,9 @@ public class SimpleGPUSkinning
         Object.Destroy(skr);
     }
 
-    public void UpdateSkin(Matrix4x4[] bonesMatrices)
+    public void UpdateSkin(Matrix4x4[] bonesMatrices, Matrix4x4 worldToLocalMatrix)
     {
-        skinningMaterial.SetMatrix(RENDERER_WORLD_INVERSE, meshRenderer.worldToLocalMatrix);
+        skinningMaterial.SetMatrix(RENDERER_WORLD_INVERSE, worldToLocalMatrix);
         skinningMaterial.SetMatrixArray(BONE_MATRICES, bonesMatrices);
     }
 }
