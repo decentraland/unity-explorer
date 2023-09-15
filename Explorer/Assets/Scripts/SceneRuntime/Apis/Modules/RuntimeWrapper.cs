@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
+using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
@@ -26,12 +27,7 @@ namespace SceneRuntime.Apis.Modules
         [UsedImplicitly]
         public object ReadFile(string fileName)
         {
-            try
-            {
-                Task<ITypedArray<byte>> res = api.ReadFile(fileName, cancellationTokenSource.Token).AsTask();
-                object promise = res.ToPromise();
-                return promise;
-            }
+            try { return api.ReadFile(fileName, cancellationTokenSource.Token).AsTask().ToPromise(); }
             catch (Exception e)
             {
                 // Report an uncategorized exception

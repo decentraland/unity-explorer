@@ -9,13 +9,10 @@ module.exports.getWorldTime = async function(message) {
 }
 
 module.exports.readFile = async function(message) {
-    console.log('JSMODULE: readFile')
-    const data = await UnityRuntime.ReadFile(message.fileName)
-
-    console.log(`data: ${data.length}`)
+    const { content, hash } = await UnityRuntime.ReadFile(message.fileName)
     return {
-        content: data,
-        hash: '' // TODO: Get the hash from the read file
+        hash,
+        content,
     };
 }
 

@@ -13,7 +13,7 @@ using UnityEngine.Assertions;
 namespace SceneRuntime
 {
     // Avoid the same name for Namespace and Class
-    public class SceneRuntimeImpl : ISceneRuntime, IJSOperations
+    public class SceneRuntimeImpl : ISceneRuntime, IJsOperations
     {
         private readonly IInstancePoolsProvider instancePoolsProvider;
         internal readonly V8ScriptEngine engine;

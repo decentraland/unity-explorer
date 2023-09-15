@@ -4,10 +4,12 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
+using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules;
+using System.Collections.Generic;
 using System.Threading;
 using Unity.Collections;
 using UnityEngine.Networking;
@@ -20,18 +22,19 @@ namespace CrdtEcsBridge.Engine
     /// </summary>
     public class RuntimeImplementation : IRuntime
     {
-        private readonly IJSOperations jsOperations;
+        private readonly IJsOperations jsOperations;
         private readonly ISceneData sceneData;
 
-        public RuntimeImplementation(IJSOperations jsOperations, ISceneData sceneData)
+        public RuntimeImplementation(IJsOperations jsOperations, ISceneData sceneData)
         {
             this.jsOperations = jsOperations;
             this.sceneData = sceneData;
         }
 
-        public async UniTask<ITypedArray<byte>> ReadFile(string fileName, CancellationToken ct)
+        public async UniTask<IRuntime.ReadFileResponse> ReadFile(string fileName, CancellationToken ct)
         {
             sceneData.TryGetContentUrl(fileName, out string url);
+            sceneData.TryGetHash(fileName, out string hash);
 
             await UniTask.SwitchToMainThread();
 
@@ -51,7 +54,13 @@ namespace CrdtEcsBridge.Engine
             }
 
             var intent = new SubIntention(new CommonLoadingArguments(url));
-            return (await intent.RepeatLoop(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateFileRequest, ReportCategory.ENGINE, ct)).UnwrapAndRethrow();
+            var content = (await intent.RepeatLoop(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateFileRequest, ReportCategory.ENGINE, ct)).UnwrapAndRethrow();
+
+            return new IRuntime.ReadFileResponse()
+            {
+                content = content,
+                hash = hash,
+            };
         }
 
         public void Dispose() { }

@@ -3,7 +3,7 @@ using System;
 
 namespace SceneRuntime
 {
-    public interface IJSOperations : IDisposable
+    public interface IJsOperations : IDisposable
     {
         ITypedArray<byte> CreateUint8Array(int bytes);
     }

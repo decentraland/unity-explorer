@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using Microsoft.ClearScript.JavaScript;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace SceneRuntime.Apis.Modules
@@ -11,7 +12,12 @@ namespace SceneRuntime.Apis.Modules
     /// </summary>
     public interface IRuntime : IDisposable
     {
-        /// <returns>A contiguous byte array of the CRDT Message representing the outgoing messages</returns>
-        public UniTask<ITypedArray<byte>> ReadFile(string fileName, CancellationToken ct);
+        public struct ReadFileResponse
+        {
+            public ITypedArray<byte> content;
+            public string hash;
+        }
+
+        public UniTask<ReadFileResponse> ReadFile(string fileName, CancellationToken ct);
     }
 }
