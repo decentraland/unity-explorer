@@ -13,7 +13,7 @@ using UnityEngine.Assertions;
 namespace SceneRuntime
 {
     // Avoid the same name for Namespace and Class
-    public class SceneRuntimeImpl : ISceneRuntime
+    public class SceneRuntimeImpl : ISceneRuntime, IJsOperations
     {
         private readonly IInstancePoolsProvider instancePoolsProvider;
         internal readonly V8ScriptEngine engine;
@@ -28,6 +28,8 @@ namespace SceneRuntime
         private readonly TaskResolverResetable resetableSource;
 
         private EngineApiWrapper engineApi;
+
+        private RuntimeWrapper runtimeWrapper;
 
         public SceneRuntimeImpl(string sourceCode, string jsInitCode, Dictionary<string, string> jsModules, IInstancePoolsProvider instancePoolsProvider)
         {
@@ -71,6 +73,11 @@ namespace SceneRuntime
             engine.AddHostObject("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, new RethrowSceneExceptionsHandler()));
         }
 
+        public void RegisterRuntime(IRuntime api)
+        {
+            engine.AddHostObject("UnityRuntime", runtimeWrapper = new RuntimeWrapper(api, new RethrowSceneExceptionsHandler()));
+        }
+
         public void SetIsDisposing()
         {
             engineApi?.SetIsDisposing();
@@ -98,6 +105,10 @@ namespace SceneRuntime
         {
             engineApi?.Dispose();
             engine.Dispose();
+            runtimeWrapper?.Dispose();
         }
+
+        public ITypedArray<byte> CreateUint8Array(int length) =>
+            (ITypedArray<byte>)engine.Evaluate("(function () { return new Uint8Array(" + length + "); })()");
     }
 }
