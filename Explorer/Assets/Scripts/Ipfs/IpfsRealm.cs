@@ -29,6 +29,8 @@ namespace Ipfs
                     ContentBaseUrl += "/";
 
                 EntitiesActiveEndpoint = ContentBaseUrl + "entities/active";
+
+                ContentBaseUrl += "contents/";
             }
             else
             {

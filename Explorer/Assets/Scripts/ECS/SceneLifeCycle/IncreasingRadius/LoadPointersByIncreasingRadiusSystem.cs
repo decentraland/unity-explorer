@@ -27,6 +27,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private readonly ParcelMathJobifiedHelper parcelMathJobifiedHelper;
         private readonly IRealmPartitionSettings realmPartitionSettings;
 
+        private bool splitIsPending;
+
         internal LoadPointersByIncreasingRadiusSystem(World world,
             ParcelMathJobifiedHelper parcelMathJobifiedHelper,
             IRealmPartitionSettings realmPartitionSettings) : base(world)
@@ -38,6 +40,14 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         protected override void Update(float t)
         {
             // VolatileScenePointers should be created from RealmController
+
+            // job started means that there was a new split initiated (dirty state)
+            if (parcelMathJobifiedHelper.JobStarted)
+            {
+                // no matter what finish the current split
+                parcelMathJobifiedHelper.Complete();
+                splitIsPending = true;
+            }
 
             ResolveActivePromiseQuery(World);
             StartLoadingFromVolatilePointersQuery(World);
@@ -51,7 +61,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         [None(typeof(FixedScenePointers))]
         private void StartLoadingFromVolatilePointers(ref RealmComponent realm, ref VolatileScenePointers volatileScenePointers)
         {
-            if (!parcelMathJobifiedHelper.JobStarted) return;
+            if (!splitIsPending) return;
 
             // maintain one bulk request at a time
             if (volatileScenePointers.ActivePromise != null) return;
@@ -59,14 +69,30 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             // Take up to <ScenesDefinitionsRequestBatchSize> closest pointers that were not processed yet
             List<int2> input = volatileScenePointers.InputReusableList;
 
-            ref readonly NativeArray<ParcelMathJobifiedHelper.ParcelInfo> flatArray = ref parcelMathJobifiedHelper.FinishParcelsRingSplit();
+            ref readonly NativeArray<ParcelMathJobifiedHelper.ParcelInfo> flatArray = ref parcelMathJobifiedHelper.LastSplit;
+            int i;
 
-            for (var i = 0; i < flatArray.Length; i++)
+            for (i = 0; i < flatArray.Length; i++)
             {
                 ParcelMathJobifiedHelper.ParcelInfo parcelInfo = flatArray[i];
 
-                if (input.Count < realmPartitionSettings.ScenesDefinitionsRequestBatchSize && !parcelInfo.AlreadyProcessed)
+                if (parcelInfo.AlreadyProcessed)
+                    continue;
+
+                if (input.Count < realmPartitionSettings.ScenesDefinitionsRequestBatchSize)
                     input.Add(parcelInfo.Parcel);
+            }
+
+            // Detect if we have other unprocessed parcels in the current split
+            splitIsPending = false;
+
+            for (; i < flatArray.Length; i++)
+            {
+                if (!flatArray[i].AlreadyProcessed)
+                {
+                    splitIsPending = true;
+                    break;
+                }
             }
 
             if (input.Count == 0) return;
@@ -97,10 +123,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     IpfsTypes.SceneEntityDefinition scene = definitions[i];
                     if (scene.pointers.Count == 0) continue;
 
-                    CreateSceneEntity(scene, new IpfsTypes.IpfsPath(scene.id, string.Empty), out Vector2Int[] sceneParcels);
-
-                    for (var j = 0; j < sceneParcels.Length; j++)
-                        processesScenePointers.Value.Add(sceneParcels[j].ToInt2());
+                    TryCreateSceneEntity(scene, new IpfsTypes.IpfsPath(scene.id, string.Empty), processesScenePointers.Value);
                 }
 
                 // Empty parcels = parcels for which no scene pointers were retrieved

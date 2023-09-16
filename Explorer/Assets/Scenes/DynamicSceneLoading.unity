@@ -246,13 +246,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
-  StartPosition: {x: -13, y: -6}
+  StartPosition: {x: 0, y: 0}
   SceneLoadRadius: 4
   StaticLoadPositions: []
   realmLauncher: {fileID: 234607244}
   realms:
   - https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main
   - https://sdk-team-cdn.decentraland.org/ipfs/streaming-world-main
+  - https://sdk-test-scenes.decentraland.zone
+  - https://peer.decentraland.org
 --- !u!114 &234607244
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1832,11 +1834,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 6261767294566073009, guid: 402338b75b99c91409764700d1f00a6d, type: 3}
       propertyPath: m_LocalScale.x
-      value: 250
+      value: 500
       objectReference: {fileID: 0}
     - target: {fileID: 6261767294566073009, guid: 402338b75b99c91409764700d1f00a6d, type: 3}
       propertyPath: m_LocalScale.z
-      value: 250
+      value: 500
       objectReference: {fileID: 0}
     - target: {fileID: 8849659727847101794, guid: 402338b75b99c91409764700d1f00a6d, type: 3}
       propertyPath: m_Name
@@ -1844,11 +1846,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8887605237264433693, guid: 402338b75b99c91409764700d1f00a6d, type: 3}
       propertyPath: m_LocalScale.x
-      value: 250
+      value: 500
       objectReference: {fileID: 0}
     - target: {fileID: 8887605237264433693, guid: 402338b75b99c91409764700d1f00a6d, type: 3}
       propertyPath: m_LocalScale.z
-      value: 250
+      value: 500
       objectReference: {fileID: 0}
     - target: {fileID: 8982288525742465179, guid: 402338b75b99c91409764700d1f00a6d, type: 3}
       propertyPath: m_RootOrder

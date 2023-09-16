@@ -51,8 +51,7 @@ jobs:
             !Explorer/Library/BuildPlayerData/**
           key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
 
-      # Configure test runner
-      - uses: kuruk-mm/unity-builder@0.8
+      - uses: kuruk-mm/unity-builder@0.9
         id: build
         timeout-minutes: 120
         env:

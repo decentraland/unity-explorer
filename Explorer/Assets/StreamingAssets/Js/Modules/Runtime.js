@@ -9,8 +9,11 @@ module.exports.getWorldTime = async function(message) {
 }
 
 module.exports.readFile = async function(message) {
-    console.log('JSMODULE: readFile')
-    return {};
+    const { content, hash } = await UnityRuntime.ReadFile(message.fileName)
+    return {
+        hash,
+        content,
+    };
 }
 
 module.exports.getSceneInformation = async function(message) {

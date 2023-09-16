@@ -32,7 +32,7 @@ namespace CrdtEcsBridge.ComponentWriter
             if (!TryGetComponentBridge<T>(out SDKComponentBridge componentBridge)) return;
 
             IMemoryOwner<byte> memory = memoryAllocator.GetMemoryBuffer(model.CalculateSize());
-            componentBridge.Serializer.SerializeInto(model, memoryAllocator.GetMemoryBuffer(model.CalculateSize()).Memory.Span);
+            componentBridge.Serializer.SerializeInto(model, memory.Memory.Span);
             ProcessMessage(crdtProtocol.CreatePutMessage(crdtID, componentBridge.Id, memory));
         }
 
@@ -52,7 +52,7 @@ namespace CrdtEcsBridge.ComponentWriter
             if (!TryGetComponentBridge<T>(out SDKComponentBridge componentBridge)) return;
 
             IMemoryOwner<byte> memory = memoryAllocator.GetMemoryBuffer(model.CalculateSize());
-            componentBridge.Serializer.SerializeInto(model, memoryAllocator.GetMemoryBuffer(model.CalculateSize()).Memory.Span);
+            componentBridge.Serializer.SerializeInto(model, memory.Memory.Span);
             ProcessMessage(crdtProtocol.CreateAppendMessage(crdtID, componentBridge.Id, memory));
         }
 
