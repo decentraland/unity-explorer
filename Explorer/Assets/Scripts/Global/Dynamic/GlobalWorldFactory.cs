@@ -10,8 +10,6 @@ using ECS.LifeCycle;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.Prioritization.Systems;
-using ECS.Profiling;
-using ECS.Profiling.Systems;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.DeferredLoading;
 using ECS.SceneLifeCycle.IncreasingRadius;
@@ -96,8 +94,9 @@ namespace Global.Dynamic
             LoadFixedPointersSystem.InjectToWorld(ref builder);
 
             // Archaic systems
-            // LoadPointersByRadiusSystem.InjectToWorld(ref builder);
-            // ResolveSceneStateByRadiusSystem.InjectToWorld(ref builder);
+            //LoadPointersByRadiusSystem.InjectToWorld(ref builder);
+            //ResolveSceneStateByRadiusSystem.InjectToWorld(ref builder);
+
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
