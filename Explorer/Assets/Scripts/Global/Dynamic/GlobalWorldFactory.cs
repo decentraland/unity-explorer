@@ -15,20 +15,16 @@ using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.Prioritization.Systems;
 using ECS.SceneLifeCycle.Components;
-using ECS.SceneLifeCycle.IncreasingRadius;
-using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Transforms.Components;
-using Ipfs;
 using SceneRunner;
 using SceneRunner.EmptyScene;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using Utility;
 using Utility.Multithreading;
 
 namespace Global.Dynamic
@@ -85,8 +81,8 @@ namespace Global.Dynamic
 
             IConcurrentBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(100);
 
-            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
-            LoadSceneDefinitionSystem.InjectToWorld(ref builder, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
+            //LoadSceneDefinitionListSystem.InjectToWorld(ref builder, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
+            //LoadSceneDefinitionSystem.InjectToWorld(ref builder, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
 
             LoadSceneSystem.InjectToWorld(ref builder,
                 new LoadSceneSystemLogic(assetBundlesURL),
@@ -103,11 +99,11 @@ namespace Global.Dynamic
             // LoadPointersByRadiusSystem.InjectToWorld(ref builder);
             // ResolveSceneStateByRadiusSystem.InjectToWorld(ref builder);
             // are replace by increasing radius
-            var jobsMathHelper = new ParcelMathJobifiedHelper();
+            /*var jobsMathHelper = new ParcelMathJobifiedHelper();
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
             ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings);
-            CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
+            CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);*/
 
             ResolveStaticPointersSystem.InjectToWorld(ref builder);
             UnloadSceneSystem.InjectToWorld(ref builder);

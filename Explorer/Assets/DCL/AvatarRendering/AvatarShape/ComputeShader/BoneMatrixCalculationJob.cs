@@ -10,12 +10,12 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     public struct BoneMatrixCalculationJob : IJobParallelForTransform
     {
         public NativeArray<float4x4> BonesMatricesResult;
-        public NativeArray<float4x4> BindPoses;
-        public float4x4 AvatarTransform;
+        public NativeArray<Matrix4x4> BindPoses;
+        public Matrix4x4 AvatarTransform;
 
         public void Execute(int index, TransformAccess transform)
         {
-            BonesMatricesResult[index] = (Matrix4x4)AvatarTransform * transform.localToWorldMatrix * (Matrix4x4)BindPoses[index];
+            BonesMatricesResult[index] = AvatarTransform * transform.localToWorldMatrix * BindPoses[index];
         }
     }
 }

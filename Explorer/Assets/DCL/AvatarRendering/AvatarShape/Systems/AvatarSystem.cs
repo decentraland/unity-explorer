@@ -55,7 +55,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             foreach (SimpleComputeShaderSkinning gpuSkinnedRenderer in avatarShapeComponent.gpuSkinningComponent)
             {
-                gpuSkinnedRenderer.DoBoneMatrixCalculation();
+                gpuSkinnedRenderer.DoBoneMatrixCalculation(avatarShapeComponent.Base.AvatarSkinnedMeshRenderer.gameObject.transform,
+                    avatarShapeComponent.Base.AvatarSkinnedMeshRenderer.bones);
                 gpuSkinnedRenderer.ComputeSkinning();
             }
         }
