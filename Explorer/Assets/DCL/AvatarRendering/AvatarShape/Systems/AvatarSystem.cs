@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.AvatarShape.GPUSkinning;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.ECSComponents;
@@ -53,12 +52,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             if (avatarShapeComponent.IsDirty)
                 return;
 
-            foreach (SimpleComputeShaderSkinning gpuSkinnedRenderer in avatarShapeComponent.gpuSkinningComponent)
-            {
-                gpuSkinnedRenderer.ComputeSkinning(avatarShapeComponent.CompleteBoneMatrixCalculations());
-            }
+            avatarShapeComponent.CombinedMeshGpuSkinningComponent.ComputeSkinning(avatarShapeComponent.CompleteBoneMatrixCalculations());
         }
-
 
         [Query]
         [None(typeof(AvatarShapeComponent))]
@@ -128,6 +123,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     HideBodyParts(instantiateWearable);
             }
 
+            avatarShapeComponent.CombinedMeshGpuSkinningComponent = new SimpleComputeShaderSkinning();
+            avatarShapeComponent.CombinedMeshGpuSkinningComponent.Initialize(avatarShapeComponent.InstantiatedWearables, avatarShapeComponent.Base.AvatarSkinnedMeshRenderer.bones);
+
             ListPool<string>.Release(avatarShapeComponent.WearablePromise.LoadingIntention.Pointers);
             ArrayPool<IWearable>.Shared.Return(avatarShapeComponent.WearablePromise.LoadingIntention.Results);
             avatarShapeComponent.IsDirty = false;
@@ -170,8 +168,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             GameObject instantiatedWearable = Object.Instantiate(wearableToInstantiate, parentTransform);
             instantiatedWearable.transform.ResetLocalTRS();
 
-            avatarShapeComponent.gpuSkinningComponent.AddRange(GPUSkinningComponent.DoSkinningCompute(instantiatedWearable, baseAvatar.bones, parentTransform));
+            //avatarShapeComponent.gpuSkinningComponent.AddRange(GPUSkinningComponent.DoSkinningCompute(instantiatedWearable, baseAvatar.bones, parentTransform));
             avatarShapeComponent.InstantiatedWearables.Add(instantiatedWearable);
+
 
             return instantiatedWearable;
         }

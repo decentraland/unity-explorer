@@ -20,7 +20,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public AvatarBase Base;
         public List<GameObject> InstantiatedWearables;
-        public List<SimpleComputeShaderSkinning> gpuSkinningComponent;
+        public SimpleComputeShaderSkinning CombinedMeshGpuSkinningComponent;
+
 
         public TransformAccessArray Bones;
         public BoneMatrixCalculationJob job;
@@ -34,10 +35,10 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             WearablePromise = wearablePromise;
             Base = null;
             InstantiatedWearables = new List<GameObject>();
-            gpuSkinningComponent = new List<SimpleComputeShaderSkinning>();
             Bones = default(TransformAccessArray);
             job = default(BoneMatrixCalculationJob);
             handle = default(JobHandle);
+            CombinedMeshGpuSkinningComponent = null;
         }
 
         public void SetupBurstJob(Transform avatarBaseTransform, Transform[] bones)

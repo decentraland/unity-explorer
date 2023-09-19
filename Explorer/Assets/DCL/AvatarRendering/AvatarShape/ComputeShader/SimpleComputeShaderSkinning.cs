@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Unity.Collections;
@@ -14,15 +15,17 @@ public class SimpleComputeShaderSkinning
     private ComputeBuffer sourceSkin;
     private ComputeBuffer meshVertsOut;
     private ComputeBuffer mBones;
+    private ComputeBuffer bindPoses;
+    private ComputeBuffer bindPosesIndex;
+
 
     private Matrix4x4[] boneMatrices;
 
     private int vertCount;
 
-    private GameObject go;
-    private MeshFilter filter;
-    private MeshRenderer meshRenderer;
-
+    //private GameObject go;
+    //private MeshFilter filter;
+    //private MeshRenderer meshRenderer;
 
 
 
@@ -51,8 +54,7 @@ public class SimpleComputeShaderSkinning
     public void ComputeSkinning(NativeArray<float4x4> bonesResult)
     {
         mBones.SetData(bonesResult);
-        cs.GetKernelThreadGroupSizes(kernel, out uint x, out uint y, out uint z);
-        cs.Dispatch(kernel, (int)x, (int)y, (int)z);
+        cs.Dispatch(kernel, (vertCount / 64) + 1, 1, 1);
 
         //meshVertsOut.GetData(vertOutArray);
         //for (var index = 0; index < vertOutArray.Length; index++)
@@ -60,39 +62,110 @@ public class SimpleComputeShaderSkinning
         //filter.mesh.vertices = verticesForMesh;
     }
 
-    public void Initialize(SkinnedMeshRenderer skin, Transform[] bones, Transform avatarBaseTransform)
+    public void Initialize(List<GameObject> gameObjects, Transform[] bones)
     {
-        SetupComputeShader(skin, bones);
-        SetupMesh(skin);
-        SetupMaterial();
+        var totalVertsIn = new List<SVertInVBO>();
+        var totalSkinIn = new List<SVertInSkin>();
+        var bindPosesMatrix = new List<Matrix4x4>();
+        var bindPosesIndexList = new List<int>();
+        var amountOfSkinnedMeshRenderer = 0;
 
-        //SetupBurstJob(avatarBaseTransform, bones);
+        foreach (GameObject gameObject in gameObjects)
+        {
+            foreach (SkinnedMeshRenderer skinnedMeshRenderer in gameObject.GetComponentsInChildren<SkinnedMeshRenderer>())
+            {
+                Mesh mesh = skinnedMeshRenderer.sharedMesh;
+                bindPosesMatrix.AddRange(mesh.bindposes);
+                int currentVertexCount = mesh.vertexCount;
 
+                for (var i = 0; i < currentVertexCount; i++)
+                {
+                    bindPosesIndexList.Add(62 * amountOfSkinnedMeshRenderer);
 
-        //vertOutArray = new SVertOut[vertCount];
-        //verticesForMesh = new Vector3[vertCount];
+                    totalVertsIn.Add(new SVertInVBO
+                    {
+                        pos = mesh.vertices[i],
+                        norm = mesh.normals[i],
+                    });
+
+                    totalSkinIn.Add(new SVertInSkin
+                    {
+                        weight0 = mesh.boneWeights[i].weight0,
+                        weight1 = mesh.boneWeights[i].weight1,
+                        weight2 = mesh.boneWeights[i].weight2,
+                        weight3 = mesh.boneWeights[i].weight3,
+                        index0 = mesh.boneWeights[i].boneIndex0,
+                        index1 = mesh.boneWeights[i].boneIndex1,
+                        index2 = mesh.boneWeights[i].boneIndex2,
+                        index3 = mesh.boneWeights[i].boneIndex3,
+                    });
+                }
+
+                vertCount += skinnedMeshRenderer.sharedMesh.vertexCount;
+                amountOfSkinnedMeshRenderer++;
+            }
+        }
+
+        sourceVBO = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(SVertInVBO)));
+        sourceVBO.SetData(totalVertsIn.ToArray());
+        sourceSkin = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(SVertInSkin)));
+        sourceSkin.SetData(totalSkinIn.ToArray());
+        bindPoses = new ComputeBuffer(bindPosesMatrix.Count, Marshal.SizeOf(typeof(Matrix4x4)));
+        bindPoses.SetData(bindPosesMatrix.ToArray());
+        bindPosesIndex = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(int)));
+        bindPosesIndex.SetData(bindPosesIndexList.ToArray());
+
+        meshVertsOut = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(SVertOut)));
+        mBones = new ComputeBuffer(bones.Length, Marshal.SizeOf(typeof(Matrix4x4)));
+        boneMatrices = new Matrix4x4[bones.Length];
+        mBones.SetData(boneMatrices);
+
+        cs = Object.Instantiate(Resources.Load<ComputeShader>("Skinning"));
+        kernel = cs.FindKernel("main");
+        cs.SetInt(Shader.PropertyToID("g_VertCount"), vertCount);
+        cs.SetBuffer(kernel, Shader.PropertyToID("g_SourceVBO"), sourceVBO);
+        cs.SetBuffer(kernel, Shader.PropertyToID("g_SourceSkin"), sourceSkin);
+        cs.SetBuffer(kernel, Shader.PropertyToID("g_BindPoses"), bindPoses);
+        cs.SetBuffer(kernel, Shader.PropertyToID("g_BindPosesIndex"), bindPosesIndex);
+        cs.SetBuffer(kernel, Shader.PropertyToID("g_mBones"), mBones);
+        cs.SetBuffer(kernel, Shader.PropertyToID("g_MeshVertsOut"), meshVertsOut);
+
+        var auxVertCounter = 0;
+
+        foreach (GameObject gameObject in gameObjects)
+        {
+            foreach (SkinnedMeshRenderer skinnedMeshRenderer in gameObject.GetComponentsInChildren<SkinnedMeshRenderer>())
+            {
+                int currentVertexCount = skinnedMeshRenderer.sharedMesh.vertexCount;
+                MeshRenderer renderer = SetupMesh(skinnedMeshRenderer);
+                SetupMaterial(renderer, auxVertCounter);
+                auxVertCounter += currentVertexCount;
+            }
+        }
 
 
     }
 
-    private void SetupMesh(SkinnedMeshRenderer skin)
+    private MeshRenderer SetupMesh(SkinnedMeshRenderer skin)
     {
         //Creating mesh renderer and setting propierties
-        go = skin.gameObject;
-        filter = go.AddComponent<MeshFilter>();
-        meshRenderer = go.AddComponent<MeshRenderer>();
+        GameObject go = skin.gameObject;
+        MeshFilter filter = go.AddComponent<MeshFilter>();
+        MeshRenderer meshRenderer = go.AddComponent<MeshRenderer>();
         filter.mesh = skin.sharedMesh;
         meshRenderer.material = skin.material;
         Object.Destroy(skin);
+        return meshRenderer;
     }
 
-    private void SetupMaterial()
+    private void SetupMaterial(MeshRenderer meshRenderer, int startIndex)
     {
         var vertOutMaterial = new Material(Resources.Load<Material>("VertOutMaterial"));
         vertOutMaterial.mainTexture = meshRenderer.material.mainTexture;
         var mpb = new MaterialPropertyBlock();
         meshRenderer.GetPropertyBlock(mpb);
         mpb.SetBuffer("_VertIn", meshVertsOut);
+        mpb.SetInt("_startIndex", startIndex);
         meshRenderer.SetPropertyBlock(mpb);
         meshRenderer.material = vertOutMaterial;
     }
