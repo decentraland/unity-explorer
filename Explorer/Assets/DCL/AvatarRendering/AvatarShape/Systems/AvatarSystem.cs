@@ -168,10 +168,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             GameObject instantiatedWearable = Object.Instantiate(wearableToInstantiate, parentTransform);
             instantiatedWearable.transform.ResetLocalTRS();
 
-            //avatarShapeComponent.gpuSkinningComponent.AddRange(GPUSkinningComponent.DoSkinningCompute(instantiatedWearable, baseAvatar.bones, parentTransform));
             avatarShapeComponent.InstantiatedWearables.Add(instantiatedWearable);
-
-
             return instantiatedWearable;
         }
     }

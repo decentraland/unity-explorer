@@ -48,24 +48,12 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             job = new BoneMatrixCalculationJob
             {
                 BonesMatricesResult = new NativeArray<float4x4>(bones.Length, Allocator.Persistent),
-
-                //BindPoses = new NativeArray<Matrix4x4>(filter.mesh.bindposes, Allocator.Persistent),
                 AvatarTransform = avatarBaseTransform.worldToLocalMatrix,
             };
         }
 
         public void ScheduleBoneMatrixCalculation()
         {
-            /*for (var i = 0; i < boneMatrices.Length; i++)
-                boneMatrices[i] = go.transform.worldToLocalMatrix * bones[i].localToWorldMatrix * bindPoses[i];
-            mBones.SetData(boneMatrices);*/
-            /*Bones = new TransformAccessArray(bones);
-            job = new BoneMatrixCalculationJob
-            {
-                BonesMatricesResult = new NativeArray<float4x4>(bones.Length, Allocator.Persistent),
-                BindPoses = new SharedArray<Matrix4x4, float4x4>(filter.mesh.bindposes),
-                AvatarTransform = avatarBaseTransform.worldToLocalMatrix,
-            };*/
             handle = job.Schedule(Bones);
         }
 

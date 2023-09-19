@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using Utility;
 
 public class SimpleComputeShaderSkinning
 {
@@ -18,15 +18,8 @@ public class SimpleComputeShaderSkinning
     private ComputeBuffer bindPoses;
     private ComputeBuffer bindPosesIndex;
 
-
-    private Matrix4x4[] boneMatrices;
-
     private int vertCount;
-
-    //private GameObject go;
-    //private MeshFilter filter;
-    //private MeshRenderer meshRenderer;
-
+    private int kernel;
 
 
     private struct SVertInVBO
@@ -49,20 +42,20 @@ public class SimpleComputeShaderSkinning
         public int index0, index1, index2, index3;
     }
 
-    private int kernel;
 
     public void ComputeSkinning(NativeArray<float4x4> bonesResult)
     {
         mBones.SetData(bonesResult);
         cs.Dispatch(kernel, (vertCount / 64) + 1, 1, 1);
-
-        //meshVertsOut.GetData(vertOutArray);
-        //for (var index = 0; index < vertOutArray.Length; index++)
-        //    verticesForMesh[index] = vertOutArray[index].pos;
-        //filter.mesh.vertices = verticesForMesh;
     }
 
     public void Initialize(List<GameObject> gameObjects, Transform[] bones)
+    {
+        SetupComputeShader(gameObjects, bones);
+        SetupMeshRenderer(gameObjects);
+    }
+
+    private void SetupComputeShader(List<GameObject> gameObjects, Transform[] bones)
     {
         var totalVertsIn = new List<SVertInVBO>();
         var totalSkinIn = new List<SVertInSkin>();
@@ -72,12 +65,27 @@ public class SimpleComputeShaderSkinning
 
         foreach (GameObject gameObject in gameObjects)
         {
+            Transform rootTransform = gameObject.transform;
+
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in gameObject.GetComponentsInChildren<SkinnedMeshRenderer>())
             {
+                // Make sure that Transform is uniform with the root
+                // Non-uniform does not make sense as skin relatively to the base avatar
+                // so we just waste calculations on transformation matrices
+                Transform currentTransform = skinnedMeshRenderer.transform;
+
+                while (currentTransform != rootTransform)
+                {
+                    currentTransform.ResetLocalTRS();
+                    currentTransform = currentTransform.parent;
+                }
+
+
                 Mesh mesh = skinnedMeshRenderer.sharedMesh;
                 bindPosesMatrix.AddRange(mesh.bindposes);
                 int currentVertexCount = mesh.vertexCount;
 
+                //Setup vertex index for current wearable
                 for (var i = 0; i < currentVertexCount; i++)
                 {
                     bindPosesIndexList.Add(62 * amountOfSkinnedMeshRenderer);
@@ -117,8 +125,7 @@ public class SimpleComputeShaderSkinning
 
         meshVertsOut = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(SVertOut)));
         mBones = new ComputeBuffer(bones.Length, Marshal.SizeOf(typeof(Matrix4x4)));
-        boneMatrices = new Matrix4x4[bones.Length];
-        mBones.SetData(boneMatrices);
+        mBones.SetData(new Matrix4x4[bones.Length]);
 
         cs = Object.Instantiate(Resources.Load<ComputeShader>("Skinning"));
         kernel = cs.FindKernel("main");
@@ -129,7 +136,10 @@ public class SimpleComputeShaderSkinning
         cs.SetBuffer(kernel, Shader.PropertyToID("g_BindPosesIndex"), bindPosesIndex);
         cs.SetBuffer(kernel, Shader.PropertyToID("g_mBones"), mBones);
         cs.SetBuffer(kernel, Shader.PropertyToID("g_MeshVertsOut"), meshVertsOut);
+    }
 
+    private void SetupMeshRenderer(List<GameObject> gameObjects)
+    {
         var auxVertCounter = 0;
 
         foreach (GameObject gameObject in gameObjects)
@@ -142,13 +152,10 @@ public class SimpleComputeShaderSkinning
                 auxVertCounter += currentVertexCount;
             }
         }
-
-
     }
 
     private MeshRenderer SetupMesh(SkinnedMeshRenderer skin)
     {
-        //Creating mesh renderer and setting propierties
         GameObject go = skin.gameObject;
         MeshFilter filter = go.AddComponent<MeshFilter>();
         MeshRenderer meshRenderer = go.AddComponent<MeshRenderer>();
@@ -168,53 +175,6 @@ public class SimpleComputeShaderSkinning
         mpb.SetInt("_startIndex", startIndex);
         meshRenderer.SetPropertyBlock(mpb);
         meshRenderer.material = vertOutMaterial;
-    }
-
-    private void SetupComputeShader(SkinnedMeshRenderer skin, Transform[] bones)
-    {
-        cs = Object.Instantiate(Resources.Load<ComputeShader>("Skinning"));
-        Mesh mesh = skin.sharedMesh;
-        vertCount = mesh.vertexCount;
-
-        SVertInVBO[] inVBO = Enumerable.Range(0, vertCount)
-                                       .Select(
-                                            idx => new SVertInVBO
-                                            {
-                                                pos = mesh.vertices[idx],
-                                                norm = mesh.normals[idx],
-                                            })
-                                       .ToArray();
-
-        sourceVBO = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(SVertInVBO)));
-        sourceVBO.SetData(inVBO);
-
-        SVertInSkin[] inSkin = mesh.boneWeights.Select(
-                                        w => new SVertInSkin
-                                        {
-                                            weight0 = w.weight0,
-                                            weight1 = w.weight1,
-                                            weight2 = w.weight2,
-                                            weight3 = w.weight3,
-                                            index0 = w.boneIndex0,
-                                            index1 = w.boneIndex1,
-                                            index2 = w.boneIndex2,
-                                            index3 = w.boneIndex3,
-                                        })
-                                   .ToArray();
-
-        sourceSkin = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(SVertInSkin)));
-        sourceSkin.SetData(inSkin);
-        meshVertsOut = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(SVertOut)));
-        mBones = new ComputeBuffer(bones.Length, Marshal.SizeOf(typeof(Matrix4x4)));
-        boneMatrices = new Matrix4x4[bones.Length];
-        mBones.SetData(boneMatrices);
-
-        kernel = cs.FindKernel("main");
-        cs.SetInt(Shader.PropertyToID("g_VertCount"), vertCount);
-        cs.SetBuffer(kernel, Shader.PropertyToID("g_SourceVBO"), sourceVBO);
-        cs.SetBuffer(kernel, Shader.PropertyToID("g_SourceSkin"), sourceSkin);
-        cs.SetBuffer(kernel, Shader.PropertyToID("g_mBones"), mBones);
-        cs.SetBuffer(kernel, Shader.PropertyToID("g_MeshVertsOut"), meshVertsOut);
     }
 
 
