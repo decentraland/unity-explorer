@@ -1,6 +1,11 @@
+using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.Wearables.Helpers;
 using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Jobs;
+using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Jobs;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
@@ -17,6 +22,10 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public List<GameObject> InstantiatedWearables;
         public List<SimpleComputeShaderSkinning> gpuSkinningComponent;
 
+        public TransformAccessArray Bones;
+        public BoneMatrixCalculationJob job;
+        public JobHandle handle;
+
         public AvatarShapeComponent(string id, WearablesLiterals.BodyShape bodyShape, Promise wearablePromise)
         {
             ID = id;
@@ -26,6 +35,43 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             Base = null;
             InstantiatedWearables = new List<GameObject>();
             gpuSkinningComponent = new List<SimpleComputeShaderSkinning>();
+            Bones = default(TransformAccessArray);
+            job = default(BoneMatrixCalculationJob);
+            handle = default(JobHandle);
+        }
+
+        public void SetupBurstJob(Transform avatarBaseTransform, Transform[] bones)
+        {
+            Bones = new TransformAccessArray(bones);
+
+            job = new BoneMatrixCalculationJob
+            {
+                BonesMatricesResult = new NativeArray<float4x4>(bones.Length, Allocator.Persistent),
+
+                //BindPoses = new NativeArray<Matrix4x4>(filter.mesh.bindposes, Allocator.Persistent),
+                AvatarTransform = avatarBaseTransform.worldToLocalMatrix,
+            };
+        }
+
+        public void ScheduleBoneMatrixCalculation()
+        {
+            /*for (var i = 0; i < boneMatrices.Length; i++)
+                boneMatrices[i] = go.transform.worldToLocalMatrix * bones[i].localToWorldMatrix * bindPoses[i];
+            mBones.SetData(boneMatrices);*/
+            /*Bones = new TransformAccessArray(bones);
+            job = new BoneMatrixCalculationJob
+            {
+                BonesMatricesResult = new NativeArray<float4x4>(bones.Length, Allocator.Persistent),
+                BindPoses = new SharedArray<Matrix4x4, float4x4>(filter.mesh.bindposes),
+                AvatarTransform = avatarBaseTransform.worldToLocalMatrix,
+            };*/
+            handle = job.Schedule(Bones);
+        }
+
+        public NativeArray<float4x4> CompleteBoneMatrixCalculations()
+        {
+            handle.Complete();
+            return job.BonesMatricesResult;
         }
 
     }

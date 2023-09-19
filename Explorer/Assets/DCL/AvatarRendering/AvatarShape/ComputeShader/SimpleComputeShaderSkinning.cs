@@ -1,11 +1,8 @@
-using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Unity.Collections;
-using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Jobs;
 
 public class SimpleComputeShaderSkinning
 {
@@ -26,8 +23,7 @@ public class SimpleComputeShaderSkinning
     private MeshFilter filter;
     private MeshRenderer meshRenderer;
 
-    public TransformAccessArray Bones;
-    public BoneMatrixCalculationJob job;
+
 
 
     private struct SVertInVBO
@@ -52,11 +48,11 @@ public class SimpleComputeShaderSkinning
 
     private int kernel;
 
-
-
-    public void ComputeSkinning()
+    public void ComputeSkinning(NativeArray<float4x4> bonesResult)
     {
-        cs.Dispatch(kernel, (vertCount / 64) + 1, 1, 1);
+        mBones.SetData(bonesResult);
+        cs.GetKernelThreadGroupSizes(kernel, out uint x, out uint y, out uint z);
+        cs.Dispatch(kernel, (int)x, (int)y, (int)z);
 
         //meshVertsOut.GetData(vertOutArray);
         //for (var index = 0; index < vertOutArray.Length; index++)
@@ -69,7 +65,8 @@ public class SimpleComputeShaderSkinning
         SetupComputeShader(skin, bones);
         SetupMesh(skin);
         SetupMaterial();
-        SetupBurstJob(avatarBaseTransform, bones);
+
+        //SetupBurstJob(avatarBaseTransform, bones);
 
 
         //vertOutArray = new SVertOut[vertCount];
@@ -136,41 +133,16 @@ public class SimpleComputeShaderSkinning
         sourceSkin.SetData(inSkin);
         meshVertsOut = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(SVertOut)));
         mBones = new ComputeBuffer(bones.Length, Marshal.SizeOf(typeof(Matrix4x4)));
+        boneMatrices = new Matrix4x4[bones.Length];
+        mBones.SetData(boneMatrices);
 
         kernel = cs.FindKernel("main");
-        cs.SetInt("g_VertCount", vertCount);
-        cs.SetBuffer(kernel, "g_SourceVBO", sourceVBO);
-        cs.SetBuffer(kernel, "g_SourceSkin", sourceSkin);
-        cs.SetBuffer(kernel, "g_mBones", mBones);
-        cs.SetBuffer(kernel, "g_MeshVertsOut", meshVertsOut);
+        cs.SetInt(Shader.PropertyToID("g_VertCount"), vertCount);
+        cs.SetBuffer(kernel, Shader.PropertyToID("g_SourceVBO"), sourceVBO);
+        cs.SetBuffer(kernel, Shader.PropertyToID("g_SourceSkin"), sourceSkin);
+        cs.SetBuffer(kernel, Shader.PropertyToID("g_mBones"), mBones);
+        cs.SetBuffer(kernel, Shader.PropertyToID("g_MeshVertsOut"), meshVertsOut);
     }
 
-    private void SetupBurstJob(Transform avatarBaseTransform, Transform[] bones)
-    {
-        Bones = new TransformAccessArray(bones);
 
-        job = new BoneMatrixCalculationJob
-        {
-            BonesMatricesResult = new NativeArray<float4x4>(bones.Length, Allocator.Persistent),
-            BindPoses = new NativeArray<Matrix4x4>(filter.mesh.bindposes, Allocator.Persistent),
-            AvatarTransform = avatarBaseTransform.worldToLocalMatrix,
-        };
-    }
-
-    public void DoBoneMatrixCalculation(Transform avatarBaseTransform, Transform[] bones)
-    {
-        /*for (var i = 0; i < boneMatrices.Length; i++)
-            boneMatrices[i] = go.transform.worldToLocalMatrix * bones[i].localToWorldMatrix * bindPoses[i];
-        mBones.SetData(boneMatrices);*/
-        /*Bones = new TransformAccessArray(bones);
-        job = new BoneMatrixCalculationJob
-        {
-            BonesMatricesResult = new NativeArray<float4x4>(bones.Length, Allocator.Persistent),
-            BindPoses = new SharedArray<Matrix4x4, float4x4>(filter.mesh.bindposes),
-            AvatarTransform = avatarBaseTransform.worldToLocalMatrix,
-        };*/
-        JobHandle handle = job.Schedule(Bones);
-        handle.Complete();
-        mBones.SetData(job.BonesMatricesResult);
-    }
 }

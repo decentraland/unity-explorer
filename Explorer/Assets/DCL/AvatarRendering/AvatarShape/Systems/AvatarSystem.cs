@@ -55,9 +55,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             foreach (SimpleComputeShaderSkinning gpuSkinnedRenderer in avatarShapeComponent.gpuSkinningComponent)
             {
-                gpuSkinnedRenderer.DoBoneMatrixCalculation(avatarShapeComponent.Base.AvatarSkinnedMeshRenderer.gameObject.transform,
-                    avatarShapeComponent.Base.AvatarSkinnedMeshRenderer.bones);
-                gpuSkinnedRenderer.ComputeSkinning();
+                gpuSkinnedRenderer.ComputeSkinning(avatarShapeComponent.CompleteBoneMatrixCalculations());
             }
         }
 
@@ -110,6 +108,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
 
             avatarShapeComponent.Base = avatarBase;
+            avatarShapeComponent.SetupBurstJob(avatarShapeComponent.Base.transform, avatarShapeComponent.Base.AvatarSkinnedMeshRenderer.bones);
 
             Transform avatarTransform = avatarBase.transform;
             avatarTransform.SetParent(transformComponent.Transform, false);

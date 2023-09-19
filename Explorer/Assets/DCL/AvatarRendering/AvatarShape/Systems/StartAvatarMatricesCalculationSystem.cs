@@ -1,0 +1,37 @@
+using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.Systems;
+using ECS.Abstract;
+using UnityEngine.PlayerLoop;
+
+namespace DCL.AvatarRendering.AvatarShape.GPUSkinning
+{
+    /// <summary>
+    ///     TODO Inject it right after <see cref="PreLateUpdate.LegacyAnimationUpdate" />.
+    ///     It is crucial to schedule it as early as possible to give Unity some space to decide
+    ///     how to distribute workload
+    /// </summary>
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateBefore(typeof(AvatarSystem))]
+    public partial class StartAvatarMatricesCalculationSystem : BaseUnityLoopSystem
+    {
+        internal StartAvatarMatricesCalculationSystem(World world) : base(world) { }
+
+        protected override void Update(float t)
+        {
+            ExecuteQuery(World);
+        }
+
+        [Query]
+        private void Execute(ref AvatarShapeComponent avatarShapeComponent)
+        {
+            if (avatarShapeComponent.IsDirty)
+                return;
+
+            avatarShapeComponent.ScheduleBoneMatrixCalculation();
+        }
+    }
+}

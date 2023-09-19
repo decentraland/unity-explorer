@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using DCL.AvatarRendering.AvatarShape;
+using DCL.AvatarRendering.AvatarShape.GPUSkinning;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.PluginSystem.Global;
 using ECS.ComponentsPooling;
@@ -37,5 +38,6 @@ public class AvatarPlugin : IDCLGlobalPluginWithoutSettings
     {
         AvatarSystem.InjectToWorld(ref builder, frameTimeCapBudgetProvider, avatarPoolRegistry);
         InstantiateRandomAvatarsSystem.InjectToWorld(ref builder);
+        StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder);
     }
 }

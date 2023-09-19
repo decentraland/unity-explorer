@@ -8,7 +8,6 @@
 #include "HLSLSupport.cginc"
 
 uint g_VertCount;
-SAMPLER_UNIFORM StructuredBuffer<float4x4> g_mBones;
 
 struct SVertInVBO
 {
@@ -16,7 +15,6 @@ struct SVertInVBO
     float3 norm;
     float4 tang;
 };
-SAMPLER_UNIFORM StructuredBuffer<SVertInVBO> g_SourceVBO;
 
 
 struct SVertInSkin
@@ -24,8 +22,6 @@ struct SVertInSkin
     float weight0,weight1,weight2,weight3;
     int index0,index1,index2,index3;
 };
-SAMPLER_UNIFORM StructuredBuffer<SVertInSkin> g_SourceSkin;
-
 
 struct SVertOut
 {
@@ -33,11 +29,13 @@ struct SVertOut
     float3 norm;
     float4 tang;
 };
-SAMPLER_UNIFORM RWStructuredBuffer<SVertOut> g_MeshVertsOut;
 
-#define NR_THREADS  64
+StructuredBuffer<SVertInVBO> g_SourceVBO;
+StructuredBuffer<SVertInSkin> g_SourceSkin;
+RWStructuredBuffer<SVertOut> g_MeshVertsOut;
+StructuredBuffer<float4x4> g_mBones;
 
-[numthreads(NR_THREADS, 1, 1)]
+[numthreads(64,1,1)]
 void main(uint3 threadID : SV_DispatchThreadID)
 {
     const uint t = threadID.x;
