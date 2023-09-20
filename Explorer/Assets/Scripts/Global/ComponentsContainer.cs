@@ -1,4 +1,5 @@
 using CrdtEcsBridge.Components;
+using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.Components.Transform;
 using DCL.ECS7;
 using DCL.ECSComponents;
@@ -10,11 +11,12 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Utility;
+using RaycastHit = DCL.ECSComponents.RaycastHit;
 
 namespace Global
 {
     /// <summary>
-    /// Registers all components that should exist in the ECS
+    ///     Registers all components that should exist in the ECS
     /// </summary>
     public struct ComponentsContainer
     {
@@ -26,6 +28,9 @@ namespace Global
         {
             var sdkComponentsRegistry = new SDKComponentsRegistry();
 
+            // SDK RaycastHit (used only as an element in the list)
+            var raycastHitPool = new ComponentPool<RaycastHit>(defaultCapacity: 100, onGet: c => c.Reset());
+
             // Add all SDK components here
             sdkComponentsRegistry
                .Add(SDKComponentBuilder<SDKTransform>.Create(ComponentID.TRANSFORM).WithPool(SDKComponentBuilderExtensions.SetAsDirty).WithCustomSerializer(new SDKTransformSerializer()).Build())
@@ -34,8 +39,22 @@ namespace Global
                .Add(SDKComponentBuilder<PBMeshRenderer>.Create(ComponentID.MESH_RENDERER).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBTextShape>.Create(ComponentID.TEXT_SHAPE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBMaterial>.Create(ComponentID.MATERIAL).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBRaycast>.Create(ComponentID.RAYCAST).AsProtobufComponent())
+
+                // Special logic for pooling/releasing PBRaycastResult
+               .Add(SDKComponentBuilder<PBRaycastResult>.Create(ComponentID.RAYCAST_RESULT)
+                                                        .WithProtobufSerializer()
+                                                        .WithPool(onGet: raycastHitResult => raycastHitResult.Reset(),
+                                                             onRelease: raycastHitResult =>
+                                                             {
+                                                                 // Return hits to their own pool
+                                                                 for (var i = 0; i < raycastHitResult.Hits.Count; i++)
+                                                                     raycastHitPool.Release(raycastHitResult.Hits[i]);
+                                                             })
+                                                        .Build())
                .Add(SDKComponentBuilder<PBPointerEvents>.Create(ComponentID.POINTER_EVENTS).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBBillboard>.Create(ComponentID.BILLBOARD).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBEngineInfo>.Create(ComponentID.ENGINE_INFO).AsProtobufResult())
                .Add(SDKComponentBuilder<PBVisibilityComponent>.Create(ComponentID.VISIBILITY_COMPONENT).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBGltfContainerLoadingState>.Create(ComponentID.GLTF_CONTAINER_LOADING_STATE).AsProtobufComponent());
 
@@ -46,6 +65,7 @@ namespace Global
                 // merge SDK components with Non-SDK
                 sdkComponentsRegistry.SdkComponents
                                      .Select(c => (c.ComponentType, c.Pool))
+                                     .Append((typeof(RaycastHit), raycastHitPool))
                                      .Concat(GetMiscComponents())
                                      .Concat(GetPrimitivesMeshesDictionary())
                                      .ToDictionary(x => x.Item1, x => x.Item2));

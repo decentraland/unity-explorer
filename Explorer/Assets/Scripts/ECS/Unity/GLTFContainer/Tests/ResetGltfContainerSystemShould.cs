@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using DCL.ECSComponents;
+using DCL.Interaction.Utility;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
@@ -10,6 +11,7 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
 using NSubstitute;
 using NUnit.Framework;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
@@ -18,11 +20,14 @@ namespace ECS.Unity.GLTFContainer.Tests
     public class ResetGltfContainerSystemShould : UnitySystemTestBase<ResetGltfContainerSystem>
     {
         private IStreamableCache<GltfContainerAsset, string> cache;
+        private IEntityCollidersSceneCache entityCollidersSceneCache;
 
         [SetUp]
         public void SetUp()
         {
-            system = new ResetGltfContainerSystem(world, cache = Substitute.For<IStreamableCache<GltfContainerAsset, string>>());
+            system = new ResetGltfContainerSystem(world,
+                cache = Substitute.For<IStreamableCache<GltfContainerAsset, string>>(),
+                entityCollidersSceneCache = Substitute.For<IEntityCollidersSceneCache>());
         }
 
         [Test]
@@ -43,6 +48,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             Assert.That(component.Promise, Is.EqualTo(AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.NULL));
 
             cache.Received(1).Dereference("1", Arg.Any<GltfContainerAsset>());
+            entityCollidersSceneCache.Received().Remove(Arg.Any<IEnumerable<Collider>>());
         }
 
         [Test]
@@ -59,6 +65,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             Assert.That(world.Has<GltfContainerComponent>(entity), Is.False);
             Assert.That(c.Promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested, Is.True);
+            entityCollidersSceneCache.Received().Remove(Arg.Any<IEnumerable<Collider>>());
         }
     }
 }

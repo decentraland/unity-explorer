@@ -4,6 +4,7 @@ using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using DCL.Interaction.Utility;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -12,6 +13,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace SceneRunner
 {
@@ -25,6 +27,7 @@ namespace SceneRunner
         internal readonly IInstancePoolsProvider instancePoolsProvider;
         internal readonly ICRDTMemoryAllocator crdtMemoryAllocator;
         internal readonly ISceneExceptionsHandler sceneExceptionsHandler;
+        internal readonly IEntityCollidersSceneCache entityCollidersSceneCache;
         private readonly ISceneStateProvider sceneStateProvider;
 
         private int intervalMS;
@@ -39,6 +42,7 @@ namespace SceneRunner
             ICRDTMemoryAllocator crdtMemoryAllocator,
             ISceneExceptionsHandler sceneExceptionsHandler,
             ISceneStateProvider sceneStateProvider,
+            IEntityCollidersSceneCache entityCollidersSceneCache,
             ISceneData sceneData)
         {
             this.runtimeInstance = runtimeInstance;
@@ -50,6 +54,7 @@ namespace SceneRunner
             this.crdtMemoryAllocator = crdtMemoryAllocator;
             this.sceneExceptionsHandler = sceneExceptionsHandler;
             this.sceneStateProvider = sceneStateProvider;
+            this.entityCollidersSceneCache = entityCollidersSceneCache;
             SceneData = sceneData;
         }
 
@@ -77,7 +82,7 @@ namespace SceneRunner
             if (SceneData.StaticSceneMessages.Data.Length > 0)
                 runtimeInstance.ApplyStaticMessages(SceneData.StaticSceneMessages.Data);
 
-            sceneStateProvider.State = SceneState.Running;
+            sceneStateProvider.SetRunning(new SceneEngineStartInfo(Time.realtimeSinceStartup, Time.frameCount));
 
             SetTargetFPS(targetFPS);
 
@@ -102,6 +107,7 @@ namespace SceneRunner
 
                     // We can't guarantee that the thread is preserved between updates
                     await runtimeInstance.UpdateScene(deltaTime);
+                    sceneStateProvider.TickNumber++;
 
                     AssertIsNotMainThread(nameof(SceneRuntimeImpl.UpdateScene));
 
@@ -179,6 +185,7 @@ namespace SceneRunner
             instancePoolsProvider.Dispose();
             crdtMemoryAllocator.Dispose();
             sceneExceptionsHandler.Dispose();
+            entityCollidersSceneCache.Dispose();
 
             sceneStateProvider.State = SceneState.Disposed;
         }

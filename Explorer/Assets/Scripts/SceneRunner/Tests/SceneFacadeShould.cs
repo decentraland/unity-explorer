@@ -9,6 +9,7 @@ using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using DCL.Interaction.Utility;
 using ECS.LifeCycle;
 using ECS.Prioritization.Components;
 using NSubstitute;
@@ -115,6 +116,7 @@ namespace SceneRunner.Tests
                 Substitute.For<ICRDTMemoryAllocator>(),
                 Substitute.For<ISceneExceptionsHandler>(),
                 new SceneStateProvider(),
+                Substitute.For<IEntityCollidersSceneCache>(),
                 Substitute.For<ISceneData>()
             );
 
@@ -201,6 +203,7 @@ namespace SceneRunner.Tests
                 Substitute.For<ICRDTMemoryAllocator>(),
                 Substitute.For<ISceneExceptionsHandler>(),
                 new SceneStateProvider(),
+                Substitute.For<IEntityCollidersSceneCache>(),
                 Substitute.For<ISceneData>()
             );
 

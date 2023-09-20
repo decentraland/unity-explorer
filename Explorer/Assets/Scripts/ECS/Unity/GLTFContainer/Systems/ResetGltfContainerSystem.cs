@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
+using DCL.Interaction.Utility;
 using ECS.Abstract;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
@@ -22,10 +23,12 @@ namespace ECS.Unity.GLTFContainer.Systems
     public partial class ResetGltfContainerSystem : BaseUnityLoopSystem
     {
         private readonly IStreamableCache<GltfContainerAsset, string> cache;
+        private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
 
-        internal ResetGltfContainerSystem(World world, IStreamableCache<GltfContainerAsset, string> cache) : base(world)
+        internal ResetGltfContainerSystem(World world, IStreamableCache<GltfContainerAsset, string> cache, IEntityCollidersSceneCache entityCollidersSceneCache) : base(world)
         {
             this.cache = cache;
+            this.entityCollidersSceneCache = entityCollidersSceneCache;
         }
 
         protected override void Update(float t)
@@ -47,7 +50,10 @@ namespace ECS.Unity.GLTFContainer.Systems
         private void TryReleaseAsset(ref GltfContainerComponent component)
         {
             if (component.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
+            {
                 cache.Dereference(component.Source, result.Asset);
+                entityCollidersSceneCache.Remove(result.Asset);
+            }
         }
 
         [Query]

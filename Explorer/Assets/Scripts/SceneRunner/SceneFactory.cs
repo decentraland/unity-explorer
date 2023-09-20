@@ -12,6 +12,7 @@ using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using DCL.Interaction.Utility;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.Prioritization.Components;
 using Ipfs;
@@ -112,11 +113,12 @@ namespace SceneRunner
             var crdtDeserializer = new CRDTDeserializer(crdtMemoryAllocator);
             var ecsToCrdtWriter = new ECSToCRDTWriter(crdtProtocol, outgoingCrtdMessagesProvider, sdkComponentsRegistry, crdtMemoryAllocator);
             var systemGroupThrottler = new SystemGroupsUpdateGate();
+            var entityCollidersCache = EntityCollidersSceneCache.Create();
             var sceneStateProvider = new SceneStateProvider();
             var exceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider, sceneData.SceneShortInfo);
 
             /* Pass dependencies here if they are needed by the systems */
-            var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, ecsToCrdtWriter, entitiesMap, exceptionsHandler, ecsMutexSync);
+            var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, ecsToCrdtWriter, entitiesMap, exceptionsHandler, entityCollidersCache, sceneStateProvider, ecsMutexSync);
 
             ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(instanceDependencies, systemGroupThrottler, partitionProvider, sceneStateProvider));
             ecsWorldFacade.Initialize();
@@ -124,9 +126,7 @@ namespace SceneRunner
             string sceneCodeUrl;
 
             if (!sceneData.IsSdk7())
-            {
                 sceneCodeUrl = "https://renderer-artifacts.decentraland.org/sdk7-adaption-layer/main/index.js";
-            }
             else
             {
                 // Create an instance of Scene Runtime on the thread pool
@@ -165,6 +165,7 @@ namespace SceneRunner
                 crdtMemoryAllocator,
                 exceptionsHandler,
                 sceneStateProvider,
+                entityCollidersCache,
                 sceneData);
         }
     }

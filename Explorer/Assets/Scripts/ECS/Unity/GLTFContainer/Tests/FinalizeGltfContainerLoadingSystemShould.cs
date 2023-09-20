@@ -1,13 +1,13 @@
 ﻿using Arch.Core;
 using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
+using DCL.Interaction.Utility;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.TestSuite;
-using ECS.Unity.GLTFContainer.Asset;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Asset.Systems;
 using ECS.Unity.GLTFContainer.Asset.Tests;
@@ -37,7 +37,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             AddTransformToEntity(sceneRoot);
             IConcurrentBudgetProvider concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
             concurrentBudgetProvider.TrySpendBudget().Returns(true);
-            system = new FinalizeGltfContainerLoadingSystem(world, world.Reference(sceneRoot), concurrentBudgetProvider);
+            system = new FinalizeGltfContainerLoadingSystem(world, world.Reference(sceneRoot), concurrentBudgetProvider, NullEntityCollidersSceneCache.INSTANCE);
             IConcurrentBudgetProvider budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
             budgetProvider.TrySpendBudget().Returns(true);
             createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budgetProvider);

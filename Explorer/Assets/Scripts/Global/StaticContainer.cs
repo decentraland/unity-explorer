@@ -113,6 +113,7 @@ namespace Global
                 new VisibilityPlugin(),
                 new AssetBundlesPlugin(container.ReportHandlingSettings),
                 new GltfContainerPlugin(sharedDependencies),
+                new InteractionPlugin(sharedDependencies, profilingProvider),
             };
 
             return (container, true);

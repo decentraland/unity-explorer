@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using DCL.ECSComponents;
+using DCL.Interaction.Utility;
 using ECS.ComponentsPooling;
 using ECS.TestSuite;
 using ECS.Unity.PrimitiveColliders.Components;
@@ -15,6 +16,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
     public class InstantiatePrimitiveColliderSystemShould : UnitySystemTestBase<InstantiatePrimitiveColliderSystem>
     {
         private IComponentPoolsRegistry poolsRegistry;
+        private IEntityCollidersSceneCache entityCollidersSceneCache;
 
         private readonly Dictionary<PBMeshCollider.MeshOneofCase, ISetupCollider> setupColliders
             = new ()
@@ -45,7 +47,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
                     { typeof(SphereCollider), new UnityComponentPool<SphereCollider>(null) },
                 });
 
-            system = new InstantiatePrimitiveColliderSystem(world, poolsRegistry, setupColliders);
+            system = new InstantiatePrimitiveColliderSystem(world, poolsRegistry, entityCollidersSceneCache = Substitute.For<IEntityCollidersSceneCache>(), setupColliders);
 
             entity = world.Create();
             AddTransformToEntity(entity);
@@ -64,6 +66,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             Assert.AreEqual(expectedType, colliderComp.Collider.GetType());
             Assert.AreEqual(expectedType, colliderComp.ColliderType);
             setupColliders[input.MeshCase].Received(1).Execute(colliderComp.Collider, input);
+            entityCollidersSceneCache.Received(1).Associate(colliderComp.Collider, Arg.Any<ColliderEntityInfo>());
 
             Assert.AreEqual(input.MeshCase, colliderComp.SDKType);
         }
@@ -86,6 +89,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             Assert.AreEqual(expectedType, colliderComp.Collider.GetType());
             Assert.AreEqual(expectedType, colliderComp.ColliderType);
             setupColliders[input.MeshCase].Received(1).Execute(colliderComp.Collider, input);
+            entityCollidersSceneCache.Received(1).Associate(colliderComp.Collider, Arg.Any<ColliderEntityInfo>());
 
             Assert.AreEqual(input.MeshCase, colliderComp.SDKType);
         }
@@ -109,6 +113,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             Assert.AreEqual(expectedType, colliderComp.Collider.GetType());
             Assert.AreEqual(expectedType, colliderComp.ColliderType);
             setupColliders[input.MeshCase].Received(1).Execute(colliderComp.Collider, input);
+            entityCollidersSceneCache.Received(1).Associate(colliderComp.Collider, Arg.Any<ColliderEntityInfo>());
 
             Assert.AreEqual(input.MeshCase, colliderComp.SDKType);
         }

@@ -35,6 +35,10 @@ namespace Utility
         public static Vector2Int ToVector2Int(this int2 int2) =>
             new (int2.x, int2.y);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 GetSceneRelativePosition(Vector3 position, Vector3 scenePosition) =>
+            position - scenePosition;
+
         public static Vector3 GetPositionByParcelPosition(Vector2Int parcelPosition) =>
             new (parcelPosition.x * PARCEL_SIZE, 0.0f, parcelPosition.y * PARCEL_SIZE);
 
