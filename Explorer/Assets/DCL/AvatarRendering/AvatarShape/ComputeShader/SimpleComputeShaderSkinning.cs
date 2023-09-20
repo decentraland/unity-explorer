@@ -1,25 +1,21 @@
-using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using Utility;
-using Object = UnityEngine.Object;
 
 public class SimpleComputeShaderSkinning
 {
-    private int kernel;
+    private readonly int BONE_COUNT = 62;
+    private int boneCount;
     private ComputeShader cs;
-    private ComputeBuffer meshVertsOut;
+    private int kernel;
     private ComputeBuffer mBones;
+    private ComputeBuffer meshVertsOut;
+    private int skinnedMeshRendererCount;
 
     private int vertCount;
-    private int skinnedMeshRendererCount;
-    private int boneCount;
-
-    private readonly int BONE_COUNT = 62;
 
     public void ComputeSkinning(NativeArray<float4x4> bonesResult)
     {
@@ -38,10 +34,10 @@ public class SimpleComputeShaderSkinning
         SetupCounters(gameObjects);
 
         //Setting up pool arrays
-        NativeArray<Vector3> totalVertsIn = new NativeArray<Vector3>(vertCount, Allocator.Temp);
-        NativeArray<BoneWeight> totalSkinIn = new NativeArray<BoneWeight>(vertCount, Allocator.Temp);
-        NativeArray<int> bindPosesIndexList = new NativeArray<int>(vertCount, Allocator.Temp);
-        NativeArray<Matrix4x4> bindPosesMatrix = new NativeArray<Matrix4x4>(boneCount, Allocator.Temp);
+        var totalVertsIn = new NativeArray<Vector3>(vertCount, Allocator.Temp);
+        var totalSkinIn = new NativeArray<BoneWeight>(vertCount, Allocator.Temp);
+        var bindPosesIndexList = new NativeArray<int>(vertCount, Allocator.Temp);
+        var bindPosesMatrix = new NativeArray<Matrix4x4>(boneCount, Allocator.Temp);
 
         //Resetting vert counters for filling
         vertCount = 0;
@@ -50,6 +46,7 @@ public class SimpleComputeShaderSkinning
         foreach (GameObject gameObject in gameObjects)
         {
             Transform rootTransform = gameObject.transform;
+
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in gameObject.GetComponentsInChildren<SkinnedMeshRenderer>())
             {
                 ResetTransforms(skinnedMeshRenderer, rootTransform);
@@ -70,13 +67,13 @@ public class SimpleComputeShaderSkinning
     private void SetupBuffers(Transform[] bones, NativeArray<Vector3> totalVertsIn, NativeArray<BoneWeight> totalSkinIn,
         NativeArray<Matrix4x4> bindPosesMatrix, NativeArray<int> bindPosesIndexList)
     {
-        ComputeBuffer sourceVBO = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Constant);
+        var sourceVBO = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Constant);
         sourceVBO.SetData(totalVertsIn);
-        ComputeBuffer sourceSkin = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(BoneWeight)), ComputeBufferType.Constant);
+        var sourceSkin = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(BoneWeight)), ComputeBufferType.Constant);
         sourceSkin.SetData(totalSkinIn);
-        ComputeBuffer bindPoses = new ComputeBuffer(boneCount, Marshal.SizeOf(typeof(Matrix4x4)), ComputeBufferType.Constant);
+        var bindPoses = new ComputeBuffer(boneCount, Marshal.SizeOf(typeof(Matrix4x4)), ComputeBufferType.Constant);
         bindPoses.SetData(bindPosesMatrix);
-        ComputeBuffer bindPosesIndex = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(int)), ComputeBufferType.Constant);
+        var bindPosesIndex = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(int)), ComputeBufferType.Constant);
         bindPosesIndex.SetData(bindPosesIndexList);
         meshVertsOut = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(Vector3)));
         mBones = new ComputeBuffer(bones.Length, Marshal.SizeOf(typeof(Matrix4x4)));
@@ -97,25 +94,17 @@ public class SimpleComputeShaderSkinning
     {
         Mesh mesh = skinnedMeshRenderer.sharedMesh;
 
-        NativeArray<Matrix4x4>.Copy(mesh.bindposes, 0, bindPosesMatrix, BONE_COUNT * skinnedMeshRendererCount, mesh.bindposes.Length);
-        NativeArray<BoneWeight>.Copy(mesh.boneWeights, 0, totalSkinIn, vertCount, mesh.boneWeights.Length);
-        NativeArray<Vector3>.Copy(mesh.vertices, 0, totalVertsIn, vertCount, mesh.vertices.Length);
-
+        //TODO: Is it possible to remove this allocation?
+        NativeArray<Matrix4x4>.Copy(mesh.bindposes, 0, bindPosesMatrix, BONE_COUNT * skinnedMeshRendererCount, BONE_COUNT);
+        NativeArray<BoneWeight>.Copy(mesh.boneWeights, 0, totalSkinIn, vertCount, mesh.vertexCount);
+        NativeArray<Vector3>.Copy(mesh.vertices, 0, totalVertsIn, vertCount, mesh.vertexCount);
 
         Vector3[] vertices = mesh.vertices;
         Vector3[] normals = mesh.normals;
 
         //Setup vertex index for current wearable
         for (var i = 0; i < mesh.vertexCount; i++)
-        {
             bindPosesIndexList[vertCount + i] = BONE_COUNT * skinnedMeshRendererCount;
-
-            /*totalVertsIn[vertCount + i] = new VertInfo
-            {
-                pos = vertices[i],
-                norm = normals[i],
-            };*/
-        }
     }
 
     private static void ResetTransforms(SkinnedMeshRenderer skinnedMeshRenderer, Transform rootTransform)
@@ -182,6 +171,4 @@ public class SimpleComputeShaderSkinning
         meshRenderer.SetPropertyBlock(mpb);
         meshRenderer.material = vertOutMaterial;
     }
-
-
 }
