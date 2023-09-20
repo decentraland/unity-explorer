@@ -9,32 +9,18 @@
 
 uint g_VertCount;
 
-struct SVertInVBO
-{
-    float3 pos;
-    float3 norm;
-    float4 tang;
-};
-
-
-struct SVertInSkin
+struct BoneWeight
 {
     float weight0,weight1,weight2,weight3;
     int index0,index1,index2,index3;
 };
 
 
-struct SVertOut
-{
-    float3 pos;
-    float3 norm;
-    float4 tang;
-};
 
 #define NR_THREADS  64
 
 [numthreads(NR_THREADS, 1, 1)]
-void main(uint3 threadID : SV_DispatchThreadID, SAMPLER_UNIFORM StructuredBuffer<SVertInVBO> g_SourceVBO, SAMPLER_UNIFORM StructuredBuffer<SVertInSkin> g_SourceSkin, SAMPLER_UNIFORM RWStructuredBuffer<SVertOut> g_MeshVertsOut,
+void main(uint3 threadID : SV_DispatchThreadID, SAMPLER_UNIFORM StructuredBuffer<float3> g_SourceVBO, SAMPLER_UNIFORM StructuredBuffer<BoneWeight> g_SourceSkin, SAMPLER_UNIFORM RWStructuredBuffer<float3> g_MeshVertsOut,
             SAMPLER_UNIFORM StructuredBuffer<float4x4> g_mBones, SAMPLER_UNIFORM StructuredBuffer<float4x4> g_BindPoses, SAMPLER_UNIFORM StructuredBuffer<int> g_BindPosesIndex)
 {
     const uint t = threadID.x;
@@ -44,9 +30,8 @@ void main(uint3 threadID : SV_DispatchThreadID, SAMPLER_UNIFORM StructuredBuffer
         return;
     }
     
-    const SVertInVBO vert = g_SourceVBO[t];
-    SVertInSkin si = g_SourceSkin[t];           // get skinning info.
-    float3 vP = vert.pos.xyz;
+    BoneWeight si = g_SourceSkin[t];           // get skinning info.
+    float3 vP = g_SourceVBO[t].xyz;
     float3 vPacc = float3(0,0,0);
     
     const int baseIndex = g_BindPosesIndex[t];
@@ -56,5 +41,5 @@ void main(uint3 threadID : SV_DispatchThreadID, SAMPLER_UNIFORM StructuredBuffer
     vPacc += si.weight3 * mul(g_mBones[si.index3], mul(g_BindPoses[baseIndex+si.index3], float4(vP, 1))).xyz;
     
     vP = vPacc;
-    g_MeshVertsOut[t].pos.xyz = vP;
+    g_MeshVertsOut[t].xyz = vP;
 }
