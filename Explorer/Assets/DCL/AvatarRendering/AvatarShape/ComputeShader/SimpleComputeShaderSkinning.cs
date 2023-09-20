@@ -51,9 +51,8 @@ public class SimpleComputeShaderSkinning
         var bindPosesIndexList = new NativeArray<int>(vertCount, Allocator.Temp);
         var bindPosesMatrix = new NativeArray<Matrix4x4>(skinnedMeshRendererBoneCount, Allocator.Temp);
 
-        //Resetting vert counters for filling
-        vertCount = 0;
-        skinnedMeshRendererCount = 0;
+        int vertCounter = 0;
+        int skinnedMeshCounter = 0;
 
         foreach (GameObject gameObject in gameObjects)
         {
@@ -61,10 +60,11 @@ public class SimpleComputeShaderSkinning
 
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in gameObject.GetComponentsInChildren<SkinnedMeshRenderer>())
             {
+                int meshVertexCount = skinnedMeshRenderer.sharedMesh.vertexCount;
                 ResetTransforms(skinnedMeshRenderer, rootTransform);
-                FillMeshArray(skinnedMeshRenderer, bindPosesMatrix, bindPosesIndexList, totalVertsIn, totalNormalsIn, totalSkinIn);
-                vertCount += skinnedMeshRenderer.sharedMesh.vertexCount;
-                skinnedMeshRendererCount++;
+                FillMeshArray(skinnedMeshRenderer, bindPosesMatrix, bindPosesIndexList, totalVertsIn, totalNormalsIn, totalSkinIn, meshVertexCount, vertCounter, skinnedMeshCounter);
+                vertCounter += meshVertexCount;
+                skinnedMeshCounter++;
             }
         }
 
@@ -107,19 +107,20 @@ public class SimpleComputeShaderSkinning
     }
 
     private void FillMeshArray(SkinnedMeshRenderer skinnedMeshRenderer, NativeArray<Matrix4x4> bindPosesMatrix,
-        NativeArray<int> bindPosesIndexList, NativeArray<Vector3> totalVertsIn, NativeArray<Vector3> totalNormalsIn, NativeArray<BoneWeight> totalSkinIn)
+        NativeArray<int> bindPosesIndexList, NativeArray<Vector3> totalVertsIn, NativeArray<Vector3> totalNormalsIn, NativeArray<BoneWeight> totalSkinIn,
+        int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter)
     {
         Mesh mesh = skinnedMeshRenderer.sharedMesh;
 
         //TODO: Is it possible to remove this allocation?
-        NativeArray<Matrix4x4>.Copy(mesh.bindposes, 0, bindPosesMatrix, BONE_COUNT * skinnedMeshRendererCount, BONE_COUNT);
-        NativeArray<BoneWeight>.Copy(mesh.boneWeights, 0, totalSkinIn, vertCount, mesh.vertexCount);
-        NativeArray<Vector3>.Copy(mesh.vertices, 0, totalVertsIn, vertCount, mesh.vertexCount);
-        NativeArray<Vector3>.Copy(mesh.normals, 0, totalNormalsIn, vertCount, mesh.vertexCount);
+        NativeArray<Matrix4x4>.Copy(mesh.bindposes, 0, bindPosesMatrix, BONE_COUNT * skinnedMeshCounter, BONE_COUNT);
+        NativeArray<BoneWeight>.Copy(mesh.boneWeights, 0, totalSkinIn, vertexCounter, currentMeshVertexCount);
+        NativeArray<Vector3>.Copy(mesh.vertices, 0, totalVertsIn, vertexCounter, currentMeshVertexCount);
+        NativeArray<Vector3>.Copy(mesh.normals, 0, totalNormalsIn, vertexCounter, currentMeshVertexCount);
 
         //Setup vertex index for current wearable
         for (var i = 0; i < mesh.vertexCount; i++)
-            bindPosesIndexList[vertCount + i] = BONE_COUNT * skinnedMeshRendererCount;
+            bindPosesIndexList[vertexCounter + i] = BONE_COUNT * skinnedMeshCounter;
     }
 
     private static void ResetTransforms(SkinnedMeshRenderer skinnedMeshRenderer, Transform rootTransform)
