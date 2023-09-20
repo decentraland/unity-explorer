@@ -58,6 +58,9 @@ public class SimpleComputeShaderSkinning
 
     public void Initialize(List<GameObject> gameObjects, Transform[] bones)
     {
+        if (m_TextureArrays == null)
+            m_TextureArrays = new TextureArrayContainer();
+
         SetupComputeShader(gameObjects, bones);
         SetupMeshRenderer(gameObjects);
     }
@@ -129,6 +132,7 @@ public class SimpleComputeShaderSkinning
 
         Vector3[] vertices = mesh.vertices;
         Vector3[] normals = mesh.normals;
+        Vector4[] tangent = mesh.tangents;
         BoneWeight[] boneWeight = mesh.boneWeights;
 
         //Setup vertex index for current wearable
@@ -140,6 +144,8 @@ public class SimpleComputeShaderSkinning
             {
                 pos = vertices[i],
                 norm = normals[i],
+
+                //tang = tangent[i]
             };
 
             totalSkinIn[vertCount + i] = new SVertInSkin
@@ -211,15 +217,47 @@ public class SimpleComputeShaderSkinning
 
     private void SetupMaterial(MeshRenderer meshRenderer, int startIndex)
     {
-        var vertOutMaterial = new Material(Resources.Load<Material>("VertOutMaterial"));
-        vertOutMaterial.mainTexture = meshRenderer.material.mainTexture;
-        var mpb = new MaterialPropertyBlock();
+        var albedoTexture = (Texture2D)meshRenderer.material.mainTexture;
+        var vertOutMaterial = new Material(Resources.Load<Material>("Avatar_CelShading"));
+
+        if (albedoTexture != null)
+        {
+            if (albedoTexture.width.Equals(512))
+            {
+                Graphics.CopyTexture(albedoTexture, srcElement: 0, srcMip: 0, m_TextureArrays.texture2DArray_512_BaseMap, dstElement: m_TextureArrays.textureArrayCount_512_BaseMap, dstMip: 0);
+                vertOutMaterial.SetInteger(_BaseMapArr_ShaderID, m_TextureArrays.textureArrayCount_512_BaseMap);
+                vertOutMaterial.SetTexture("_BaseMapArr", m_TextureArrays.texture2DArray_512_BaseMap);
+                m_TextureArrays.textureArrayCount_512_BaseMap++;
+            }
+            else
+            {
+                Graphics.CopyTexture(albedoTexture, srcElement: 0, srcMip: 0, m_TextureArrays.texture2DArray_256_BaseMap, dstElement: m_TextureArrays.textureArrayCount_256_BaseMap, dstMip: 0);
+                vertOutMaterial.SetInteger(_BaseMapArr_ShaderID, m_TextureArrays.textureArrayCount_256_BaseMap);
+                vertOutMaterial.SetTexture("_BaseMapArr", m_TextureArrays.texture2DArray_256_BaseMap);
+                m_TextureArrays.textureArrayCount_256_BaseMap++;
+            }
+        }
+
+        vertOutMaterial.SetInt("_startIndex", startIndex);
+        vertOutMaterial.SetBuffer("_VertIn", meshVertsOut);
+
+        meshRenderer.material = vertOutMaterial;
+
+        /*var mpb = new MaterialPropertyBlock();
         meshRenderer.GetPropertyBlock(mpb);
         mpb.SetBuffer("_VertIn", meshVertsOut);
         mpb.SetInt("_startIndex", startIndex);
-        meshRenderer.SetPropertyBlock(mpb);
-        meshRenderer.material = vertOutMaterial;
+        meshRenderer.SetPropertyBlock(mpb);*/
     }
+
+    private static TextureArrayContainer m_TextureArrays;
+    private static int _BaseColour_ShaderID = Shader.PropertyToID("_BaseColor");
+    private static readonly int _BaseMapArr_ShaderID = Shader.PropertyToID("_BaseMapArr_ID");
+    private static int _AlphaTextureArr_ShaderID = Shader.PropertyToID("_AlphaTextureArr_ID");
+    private static int _MetallicGlossMapArr_ShaderID = Shader.PropertyToID("_MetallicGlossMapArr_ID");
+    private static int _BumpMapArr_ShaderID = Shader.PropertyToID("_BumpMapArr_ID");
+    private static int _EmissionMapArr_ShaderID = Shader.PropertyToID("_EmissionMapArr_ID");
+
 
 
 }

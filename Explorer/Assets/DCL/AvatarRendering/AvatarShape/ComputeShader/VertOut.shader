@@ -40,10 +40,11 @@ Shader "Unlit/VertOut"
           };
 
             StructuredBuffer<SVertOut> _VertIn;
+            int _startIndex;
+
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
-            int _startIndex;
 
             v2f vert (appdata v, uint vIdx : SV_VertexID)
             {

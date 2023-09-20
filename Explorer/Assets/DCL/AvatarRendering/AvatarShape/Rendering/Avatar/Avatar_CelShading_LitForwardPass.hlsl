@@ -10,8 +10,18 @@
 #define REQUIRES_WORLD_SPACE_TANGENT_INTERPOLATOR
 #endif
 
-// keep this file in sync with LitGBufferPass.hlsl
 
+struct SVertOut
+{
+    float3 pos;
+    float3 norm;
+    float4 tang;
+};
+
+StructuredBuffer<SVertOut> _VertIn;
+int _startIndex;
+
+// keep this file in sync with LitGBufferPass.hlsl
 struct Attributes
 {
     float4 positionOS   : POSITION;
@@ -99,7 +109,7 @@ void InitializeInputData(Varyings input, half3 normalTS, out InputData_Avatar in
 ///////////////////////////////////////////////////////////////////////////////
 
 // Used in Standard (Physically Based) shader
-Varyings LitPassVertex(Attributes input)
+Varyings LitPassVertex(Attributes input, uint vIdx : SV_VertexID)
 {
     Varyings output = (Varyings)0;
 
@@ -107,12 +117,12 @@ Varyings LitPassVertex(Attributes input)
     UNITY_TRANSFER_INSTANCE_ID(input, output);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-    VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
+    VertexPositionInputs vertexInput = GetVertexPositionInputs(_VertIn[_startIndex + vIdx].pos);
 
     // normalWS and tangentWS already normalize.
     // this is required to avoid skewing the direction during interpolation
     // also required for per-vertex lighting and SH evaluation
-    VertexNormalInputs normalInput = GetVertexNormalInputs(input.normalOS, input.tangentOS);
+    VertexNormalInputs normalInput = GetVertexNormalInputs(_VertIn[_startIndex + vIdx].norm, _VertIn[_startIndex + vIdx].tang);
 
     half3 viewDirWS = GetWorldSpaceViewDir(vertexInput.positionWS);
     half3 vertexLight = VertexLighting(vertexInput.positionWS, normalInput.normalWS);
