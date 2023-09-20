@@ -1,16 +1,19 @@
+using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using Utility;
+using Object = UnityEngine.Object;
 
 public class SimpleComputeShaderSkinning
 {
     private SVertOut[] vertOutArray;
     private Vector3[] verticesForMesh;
 
-    public ComputeShader cs;
+    private ComputeShader cs;
     private ComputeBuffer sourceVBO;
     private ComputeBuffer sourceSkin;
     private ComputeBuffer meshVertsOut;
@@ -19,7 +22,11 @@ public class SimpleComputeShaderSkinning
     private ComputeBuffer bindPosesIndex;
 
     private int vertCount;
+    private int skinnedMeshRendererCount;
+    private int boneCount;
     private int kernel;
+
+    private readonly int BONE_COUNT = 62;
 
 
     private struct SVertInVBO
@@ -57,75 +64,51 @@ public class SimpleComputeShaderSkinning
 
     private void SetupComputeShader(List<GameObject> gameObjects, Transform[] bones)
     {
-        var totalVertsIn = new List<SVertInVBO>();
-        var totalSkinIn = new List<SVertInSkin>();
-        var bindPosesMatrix = new List<Matrix4x4>();
-        var bindPosesIndexList = new List<int>();
-        var amountOfSkinnedMeshRenderer = 0;
+        SetupCounters(gameObjects);
+
+        //Setting up pool arrays
+        SVertInVBO[] totalVertsIn = ArrayPool<SVertInVBO>.Shared.Rent(vertCount);
+        SVertInSkin[] totalSkinIn = ArrayPool<SVertInSkin>.Shared.Rent(vertCount);
+        int[] bindPosesIndexList = ArrayPool<int>.Shared.Rent(vertCount);
+        Matrix4x4[] bindPosesMatrix = ArrayPool<Matrix4x4>.Shared.Rent(boneCount);
+
+        //Resetting vert counters for filling
+        vertCount = 0;
+        skinnedMeshRendererCount = 0;
 
         foreach (GameObject gameObject in gameObjects)
         {
             Transform rootTransform = gameObject.transform;
-
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in gameObject.GetComponentsInChildren<SkinnedMeshRenderer>())
             {
-                // Make sure that Transform is uniform with the root
-                // Non-uniform does not make sense as skin relatively to the base avatar
-                // so we just waste calculations on transformation matrices
-                Transform currentTransform = skinnedMeshRenderer.transform;
-
-                while (currentTransform != rootTransform)
-                {
-                    currentTransform.ResetLocalTRS();
-                    currentTransform = currentTransform.parent;
-                }
-
-
-                Mesh mesh = skinnedMeshRenderer.sharedMesh;
-                bindPosesMatrix.AddRange(mesh.bindposes);
-                int currentVertexCount = mesh.vertexCount;
-
-                //Setup vertex index for current wearable
-                for (var i = 0; i < currentVertexCount; i++)
-                {
-                    bindPosesIndexList.Add(62 * amountOfSkinnedMeshRenderer);
-
-                    totalVertsIn.Add(new SVertInVBO
-                    {
-                        pos = mesh.vertices[i],
-                        norm = mesh.normals[i],
-                    });
-
-                    totalSkinIn.Add(new SVertInSkin
-                    {
-                        weight0 = mesh.boneWeights[i].weight0,
-                        weight1 = mesh.boneWeights[i].weight1,
-                        weight2 = mesh.boneWeights[i].weight2,
-                        weight3 = mesh.boneWeights[i].weight3,
-                        index0 = mesh.boneWeights[i].boneIndex0,
-                        index1 = mesh.boneWeights[i].boneIndex1,
-                        index2 = mesh.boneWeights[i].boneIndex2,
-                        index3 = mesh.boneWeights[i].boneIndex3,
-                    });
-                }
-
+                ResetTransforms(skinnedMeshRenderer, rootTransform);
+                FillMeshArray(skinnedMeshRenderer, bindPosesMatrix, bindPosesIndexList, totalVertsIn, totalSkinIn);
                 vertCount += skinnedMeshRenderer.sharedMesh.vertexCount;
-                amountOfSkinnedMeshRenderer++;
+                skinnedMeshRendererCount++;
             }
         }
 
-        sourceVBO = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(SVertInVBO)));
-        sourceVBO.SetData(totalVertsIn.ToArray());
-        sourceSkin = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(SVertInSkin)));
-        sourceSkin.SetData(totalSkinIn.ToArray());
-        bindPoses = new ComputeBuffer(bindPosesMatrix.Count, Marshal.SizeOf(typeof(Matrix4x4)));
-        bindPoses.SetData(bindPosesMatrix.ToArray());
-        bindPosesIndex = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(int)));
-        bindPosesIndex.SetData(bindPosesIndexList.ToArray());
+        SetupBuffers(bones, totalVertsIn, totalSkinIn, bindPosesMatrix, bindPosesIndexList);
 
+        ArrayPool<SVertInVBO>.Shared.Return(totalVertsIn);
+        ArrayPool<SVertInSkin>.Shared.Return(totalSkinIn);
+        ArrayPool<int>.Shared.Return(bindPosesIndexList);
+        ArrayPool<Matrix4x4>.Shared.Return(bindPosesMatrix);
+    }
+
+    private void SetupBuffers(Transform[] bones, SVertInVBO[] totalVertsIn, SVertInSkin[] totalSkinIn,
+        Matrix4x4[] bindPosesMatrix, int[] bindPosesIndexList)
+    {
+        sourceVBO = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(SVertInVBO)));
+        sourceVBO.SetData(totalVertsIn[..vertCount]);
+        sourceSkin = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(SVertInSkin)));
+        sourceSkin.SetData(totalSkinIn[..vertCount]);
+        bindPoses = new ComputeBuffer(boneCount, Marshal.SizeOf(typeof(Matrix4x4)));
+        bindPoses.SetData(bindPosesMatrix[..boneCount]);
+        bindPosesIndex = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(int)));
+        bindPosesIndex.SetData(bindPosesIndexList[..vertCount]);
         meshVertsOut = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(SVertOut)));
         mBones = new ComputeBuffer(bones.Length, Marshal.SizeOf(typeof(Matrix4x4)));
-        mBones.SetData(new Matrix4x4[bones.Length]);
 
         cs = Object.Instantiate(Resources.Load<ComputeShader>("Skinning"));
         kernel = cs.FindKernel("main");
@@ -136,6 +119,67 @@ public class SimpleComputeShaderSkinning
         cs.SetBuffer(kernel, Shader.PropertyToID("g_BindPosesIndex"), bindPosesIndex);
         cs.SetBuffer(kernel, Shader.PropertyToID("g_mBones"), mBones);
         cs.SetBuffer(kernel, Shader.PropertyToID("g_MeshVertsOut"), meshVertsOut);
+    }
+
+    private void FillMeshArray(SkinnedMeshRenderer skinnedMeshRenderer, Matrix4x4[] bindPosesMatrix,
+        int[] bindPosesIndexList, SVertInVBO[] totalVertsIn, SVertInSkin[] totalSkinIn)
+    {
+        Mesh mesh = skinnedMeshRenderer.sharedMesh;
+        Array.Copy(mesh.bindposes, 0, bindPosesMatrix, BONE_COUNT * skinnedMeshRendererCount, mesh.bindposes.Length);
+
+        Vector3[] vertices = mesh.vertices;
+        Vector3[] normals = mesh.normals;
+        BoneWeight[] boneWeight = mesh.boneWeights;
+
+        //Setup vertex index for current wearable
+        for (var i = 0; i < mesh.vertexCount; i++)
+        {
+            bindPosesIndexList[vertCount + i] = BONE_COUNT * skinnedMeshRendererCount;
+
+            totalVertsIn[vertCount + i] = new SVertInVBO
+            {
+                pos = vertices[i],
+                norm = normals[i],
+            };
+
+            totalSkinIn[vertCount + i] = new SVertInSkin
+            {
+                weight0 = boneWeight[i].weight0,
+                weight1 = boneWeight[i].weight1,
+                weight2 = boneWeight[i].weight2,
+                weight3 = boneWeight[i].weight3,
+                index0 = boneWeight[i].boneIndex0,
+                index1 = boneWeight[i].boneIndex1,
+                index2 = boneWeight[i].boneIndex2,
+                index3 = boneWeight[i].boneIndex3,
+            };
+        }
+    }
+
+    private static void ResetTransforms(SkinnedMeshRenderer skinnedMeshRenderer, Transform rootTransform)
+    {
+        // Make sure that Transform is uniform with the root
+        // Non-uniform does not make sense as skin relatively to the base avatar
+        // so we just waste calculations on transformation matrices
+        Transform currentTransform = skinnedMeshRenderer.transform;
+
+        while (currentTransform != rootTransform)
+        {
+            currentTransform.ResetLocalTRS();
+            currentTransform = currentTransform.parent;
+        }
+    }
+
+    private void SetupCounters(List<GameObject> gameObjects)
+    {
+        foreach (GameObject gameObject in gameObjects)
+        foreach (SkinnedMeshRenderer skinnedMeshRenderer in gameObject.GetComponentsInChildren<SkinnedMeshRenderer>())
+        {
+            vertCount += skinnedMeshRenderer.sharedMesh.vertexCount;
+            skinnedMeshRendererCount++;
+        }
+
+        boneCount = skinnedMeshRendererCount * BONE_COUNT;
     }
 
     private void SetupMeshRenderer(List<GameObject> gameObjects)
