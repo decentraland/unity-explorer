@@ -30,11 +30,20 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
         private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
 
+        private readonly TextureArrayContainer textureArrays;
+        private readonly Material avatarMaterial;
+        private UnityEngine.ComputeShader skinningShader;
+
         public AvatarSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider,
             IComponentPool<AvatarBase> avatarPoolRegistry) : base(world)
         {
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
             this.avatarPoolRegistry = avatarPoolRegistry;
+
+            //TODO: This generates a MASSIVE hiccup. We could hide it behind the loading screen, but we should be careful
+            this.textureArrays = new TextureArrayContainer();
+            this.avatarMaterial = Resources.Load<Material>("Avatar_CelShading");
+            this.skinningShader = Resources.Load<UnityEngine.ComputeShader>("Skinning");
         }
 
         protected override void Update(float t)
@@ -124,7 +133,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             }
 
             avatarShapeComponent.CombinedMeshGpuSkinningComponent = new SimpleComputeShaderSkinning();
-            avatarShapeComponent.CombinedMeshGpuSkinningComponent.Initialize(avatarShapeComponent.InstantiatedWearables, avatarShapeComponent.Base.AvatarSkinnedMeshRenderer.bones);
+
+            avatarShapeComponent.CombinedMeshGpuSkinningComponent.Initialize(avatarShapeComponent.InstantiatedWearables, avatarShapeComponent.Base.AvatarSkinnedMeshRenderer.bones,
+                textureArrays, skinningShader, avatarMaterial);
 
             ListPool<string>.Release(avatarShapeComponent.WearablePromise.LoadingIntention.Pointers);
             ArrayPool<IWearable>.Shared.Return(avatarShapeComponent.WearablePromise.LoadingIntention.Results);
