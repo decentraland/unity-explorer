@@ -2,11 +2,11 @@ Shader "Custom/Avatar_CelShading"
 {
     Properties
     {
-        [HideInInspector] [PerRendererData] _BaseMapArr_ID ("BaseMap Array ID", Int) = 0
-        [HideInInspector] [PerRendererData] _AlphaTextureArr_ID ("AlphaTexture Array ID", Int) = 0
-        [HideInInspector] [PerRendererData] _MetallicGlossMapArr_ID ("MetallicGlossMap Array ID", Int) = 0
-        [HideInInspector] [PerRendererData] _BumpMapArr_ID ("BumpMap Array ID", Int) = 0
-        [HideInInspector] [PerRendererData] _EmissionMapArr_ID ("EmissionMap Array ID", Int) = 0
+        [HideInInspector] [PerRendererData] _BaseMapArr_ID ("BaseMap Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _AlphaTextureArr_ID ("AlphaTexture Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _MetallicGlossMapArr_ID ("MetallicGlossMap Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _BumpMapArr_ID ("BumpMap Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _EmissionMapArr_ID ("EmissionMap Array ID", Integer) = -1
         
         [HideInInspector] _BaseMapArr ("AlbedoArray", 2DArray) = "white" {}
         [HideInInspector] _AlphaTextureArr("Alpha Texture", 2DArray) = "white" {}
@@ -14,7 +14,18 @@ Shader "Custom/Avatar_CelShading"
         [HideInInspector] _BumpMapArr("Normal Map", 2DArray) = "bump" {}
         [HideInInspector] _EmissionMapArr("Emission", 2DArray) = "white" {}
         
+        _MatCap("MatCap Texture", 2D) = "white" {}
+        
         [PerRendererData] _BaseColor("Color", Color) = (0.5,0.5,0.5,1)
+        
+        _DiffuseRampInnerMin("Diffuse Ramp Inner Min", Range(0.0, 1.0)) = 0.0
+        _DiffuseRampInnerMax("Diffuse Ramp Inner Max", Range(0.0, 1.0)) = 1.0
+        _DiffuseRampOuterMin("Diffuse Ramp Outer Min", Range(0.0, 1.0)) = 0.0
+        _DiffuseRampOuterMax("Diffuse Ramp Outer Max", Range(0.0, 1.0)) = 1.0
+        _SpecularRampInnerMin("Specular Ramp Inner Min", Range(0.0, 1.0)) = 0.0
+        _SpecularRampInnerMax("Specular Ramp Inner Max", Range(0.0, 1.0)) = 1.0
+        _SpecularRampOuterMin("Specular Ramp Outer Min", Range(0.0, 1.0)) = 0.0
+        _SpecularRampOuterMax("Specular Ramp Outer Max", Range(0.0, 1.0)) = 1.0
 
         _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
 

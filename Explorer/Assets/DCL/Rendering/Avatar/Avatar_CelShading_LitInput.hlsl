@@ -41,6 +41,14 @@ UNITY_DEFINE_INSTANCED_PROP(int, _AlphaTextureArr_ID)
 UNITY_DEFINE_INSTANCED_PROP(int, _MetallicGlossMapArr_ID)
 UNITY_DEFINE_INSTANCED_PROP(int, _BumpMapArr_ID)
 UNITY_DEFINE_INSTANCED_PROP(int, _EmissionMapArr_ID)
+UNITY_DEFINE_INSTANCED_PROP(float, _DiffuseRampInnerMin)
+UNITY_DEFINE_INSTANCED_PROP(float, _DiffuseRampInnerMax)
+UNITY_DEFINE_INSTANCED_PROP(float, _DiffuseRampOuterMin)
+UNITY_DEFINE_INSTANCED_PROP(float, _DiffuseRampOuterMax)
+UNITY_DEFINE_INSTANCED_PROP(float, _SpecularRampInnerMin)
+UNITY_DEFINE_INSTANCED_PROP(float, _SpecularRampInnerMax)
+UNITY_DEFINE_INSTANCED_PROP(float, _SpecularRampOuterMin)
+UNITY_DEFINE_INSTANCED_PROP(float, _SpecularRampOuterMax)
 UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 
 // #define _BaseMap_ST UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseMap_ST)
@@ -70,7 +78,15 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 #define _AlphaTextureArr_ID UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _AlphaTextureArr_ID) 
 #define _MetallicGlossMapArr_ID UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _MetallicGlossMapArr_ID) 
 #define _BumpMapArr_ID UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BumpMapArr_ID) 
-#define _EmissionMapArr_ID UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _EmissionMapArr_ID) 
+#define _EmissionMapArr_ID UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _EmissionMapArr_ID)
+#define _DiffuseRampInnerMin UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _DiffuseRampInnerMin)
+#define _DiffuseRampInnerMax UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _DiffuseRampInnerMax)
+#define _DiffuseRampOuterMin UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _DiffuseRampOuterMin)
+#define _DiffuseRampOuterMax UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _DiffuseRampOuterMax)
+#define _SpecularRampInnerMin UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SpecularRampInnerMin)
+#define _SpecularRampInnerMax UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SpecularRampInnerMax)
+#define _SpecularRampOuterMin UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SpecularRampOuterMin)
+#define _SpecularRampOuterMax UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SpecularRampOuterMax)
 
 /////////////////////////
 // from SurfaceInput.hlsl
@@ -114,6 +130,7 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
     #define SAMPLE_DETAILALBEDO(uv, texArrayID)             DCL_SAMPLE_TEX2DARRAY(_DetailAlbedoMapArr, float3(uv, texArrayID))
     #define SAMPLE_DETAILNORMAL(uv, texArrayID)             DCL_SAMPLE_TEX2DARRAY(_DetailNormalMapArr, float3(uv, texArrayID))
     #define SAMPLE_CLEARCOAT(uv, texArrayID)                DCL_SAMPLE_TEX2DARRAY(_ClearCoatMapArr, float3(uv, texArrayID))
+    TEXTURE2D(_MatCap);       SAMPLER(sampler_MatCap);
 #else
     TEXTURE2D(_AlphaTexture);       SAMPLER(sampler_AlphaTexture);
     TEXTURE2D(_ParallaxMap);        SAMPLER(sampler_ParallaxMap);
@@ -555,6 +572,9 @@ half DirectBRDFSpecular_Avatar(BRDFData_Avatar brdfData, half3 normalWS, half3 l
     specularTerm = clamp(specularTerm, 0.0, 100.0); // Prevent FP16 overflow on mobiles
     #endif
 
+    half specularInner = smoothstep(_SpecularRampInnerMin, _SpecularRampInnerMax, specularTerm);
+    half specularOuter = smoothstep(_SpecularRampOuterMin, _SpecularRampOuterMax, specularTerm);
+    specularTerm = (specularInner * 0.5f) + (specularOuter * 0.5f);
     return specularTerm;
 }
 
@@ -566,16 +586,20 @@ half3 LightingPhysicallyBased_Avatar(   BRDFData_Avatar brdfData,
                                         half3 normalWS,
                                         half3 viewDirectionWS,
                                         half clearCoatMask,
+                                        half2 matCapUV,
                                         bool specularHighlightsOff)
 {
-    half NdotL = saturate(dot(normalWS, lightDirectionWS));
-    half3 radiance = lightColor * (lightAttenuation * NdotL);
+    half NdotL1 = smoothstep(_DiffuseRampInnerMin, _DiffuseRampInnerMax, saturate(dot(normalWS, lightDirectionWS)));
+    half NdotL2 = smoothstep(_DiffuseRampOuterMin, _DiffuseRampOuterMax, saturate(dot(normalWS, lightDirectionWS)));
+    half3 radiance1 = lightColor * (lightAttenuation * NdotL1);
+    half3 radiance2 = lightColor * (lightAttenuation * NdotL2);
+    half3 radiance = (radiance1 * 0.5f) + (radiance2 * 0.5f);
 
     half3 brdf = brdfData.diffuse;
     #ifndef _SPECULARHIGHLIGHTS_OFF
     [branch] if (!specularHighlightsOff)
     {
-        brdf += brdfData.specular * DirectBRDFSpecular_Avatar(brdfData, normalWS, lightDirectionWS, viewDirectionWS);
+        brdf += brdfData.specular * SAMPLE_TEXTURE2D(_MatCap, sampler_MatCap, matCapUV) * 5.0f * DirectBRDFSpecular_Avatar(brdfData, normalWS, lightDirectionWS, viewDirectionWS);
     }
     #endif // _SPECULARHIGHLIGHTS_OFF
 
@@ -702,7 +726,7 @@ half4 UniversalFragmentPBR_Avatar(InputData_Avatar inputData, SurfaceData_Avatar
     color += LightingPhysicallyBased_Avatar(brdfData, brdfDataClearCoat,
                                      mainLight.color, mainLight.direction, mainLight.distanceAttenuation * mainLight.shadowAttenuation,
                                      inputData.normalWS, inputData.viewDirectionWS,
-                                     surfaceData.clearCoatMask, specularHighlightsOff);
+                                     surfaceData.clearCoatMask, inputData.matCapUV, specularHighlightsOff);
 
     #ifdef _ADDITIONAL_LIGHTS
         uint pixelLightCount = GetAdditionalLightsCount();

@@ -14,6 +14,7 @@ struct InputData_Avatar // Copy & modified from InputData.hlsl
     float2  normalizedScreenSpaceUV;
     half4   shadowMask;
     half3x3 tangentToWorld;
+    float2  matCapUV;
 
     #if defined(DEBUG_DISPLAY)
     half2   dynamicLightmapUV;

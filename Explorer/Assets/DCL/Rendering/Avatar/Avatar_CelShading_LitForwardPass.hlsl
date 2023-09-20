@@ -47,6 +47,8 @@ struct Varyings
 	//NOTE(Brian): needed for FadeDithering
 	float4 positionSS               : TEXCOORD8;
 
+    float3 normalMS                 : TEXCOORD9;
+
 
     float4 positionCS               : SV_POSITION;
     UNITY_VERTEX_INPUT_INSTANCE_ID
@@ -74,6 +76,7 @@ void InitializeInputData(Varyings input, half3 normalTS, out InputData_Avatar in
 
     inputData.normalWS = NormalizeNormalPerPixel(inputData.normalWS);
     inputData.viewDirectionWS = viewDirWS;
+    
 
     #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
         inputData.shadowCoord = input.shadowCoord;
@@ -88,6 +91,7 @@ void InitializeInputData(Varyings input, half3 normalTS, out InputData_Avatar in
     inputData.bakedGI = SAMPLE_GI(input.lightmapUV, input.vertexSH, inputData.normalWS);
     inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
     inputData.shadowMask = SAMPLE_SHADOWMASK(input.lightmapUV);
+    inputData.matCapUV = mul(UNITY_MATRIX_V, input.normalMS).xy * 0.5 + float2(0.5, 0.5);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -148,6 +152,8 @@ Varyings LitPassVertex(Attributes input)
 
 	//NOTE(Brian): needed for FadeDithering
 	output.positionSS = ComputeScreenPos(vertexInput.positionCS);
+
+    output.normalMS = mul(UNITY_MATRIX_M, input.normalOS);
 
     return output;
 }
