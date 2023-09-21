@@ -13,7 +13,7 @@ namespace CrdtEcsBridge.Components.Special
         ///     Ensures reference type fields are initialized only once and reset to default values
         /// </summary>
         /// <param name="protoRaycastHit"></param>
-        public static void Reset(this RaycastHit protoRaycastHit)
+        public static RaycastHit Reset(this RaycastHit protoRaycastHit)
         {
             // Vectors in proto are reference types!
             protoRaycastHit.Position ??= new Vector3();
@@ -24,9 +24,10 @@ namespace CrdtEcsBridge.Components.Special
             Reset(protoRaycastHit.GlobalOrigin);
             protoRaycastHit.NormalHit ??= new Vector3();
             Reset(protoRaycastHit.NormalHit);
+            return protoRaycastHit;
         }
 
-        public static void Reset(this PBRaycastResult protoRaycastResult)
+        public static PBRaycastResult Reset(this PBRaycastResult protoRaycastResult)
         {
             // Can't pool Repeated Fields (no setter, readonly)
             protoRaycastResult.Hits.Clear();
@@ -35,6 +36,7 @@ namespace CrdtEcsBridge.Components.Special
             Reset(protoRaycastResult.Direction);
             protoRaycastResult.GlobalOrigin ??= new Vector3();
             Reset(protoRaycastResult.GlobalOrigin);
+            return protoRaycastResult;
         }
 
         public static void Reset(this Vector3 protoVector) =>

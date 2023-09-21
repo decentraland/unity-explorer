@@ -12,7 +12,7 @@ namespace DCL.Interaction.Raycast.Systems
 {
     [UpdateInGroup(typeof(RaycastGroup))]
     [ThrottlingEnabled] // as we react on Scene Changes
-    public class InitializeRaycastSystem : BaseUnityLoopSystem
+    public partial class InitializeRaycastSystem : BaseUnityLoopSystem
     {
         internal InitializeRaycastSystem(World world) : base(world) { }
 
@@ -38,7 +38,7 @@ namespace DCL.Interaction.Raycast.Systems
         {
             if (raycast.IsDirty)
             {
-                raycastComponent.Executed |= raycast.Continuous;
+                if (raycast.Continuous) raycastComponent.Executed = false;
                 raycast.IsDirty = false;
             }
         }

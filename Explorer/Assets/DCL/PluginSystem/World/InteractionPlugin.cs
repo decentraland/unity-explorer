@@ -1,6 +1,7 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
+using DCL.Interaction.Raycast.Systems;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.LifeCycle;
 using ECS.Profiling;

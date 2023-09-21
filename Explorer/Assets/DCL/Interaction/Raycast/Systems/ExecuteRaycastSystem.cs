@@ -29,7 +29,7 @@ namespace DCL.Interaction.Raycast.Systems
 {
     [UpdateInGroup(typeof(RaycastGroup))]
     [UpdateAfter(typeof(InitializeRaycastSystem))]
-    public class ExecuteRaycastSystem : BaseUnityLoopSystem
+    public partial class ExecuteRaycastSystem : BaseUnityLoopSystem
     {
         private static readonly RaycastHit[] SHARED_RAYCAST_HIT_ARRAY = new RaycastHit[10];
 
@@ -146,6 +146,8 @@ namespace DCL.Interaction.Raycast.Systems
             result.GlobalOrigin.Set(ray.origin);
             result.TickNumber = sceneStateProvider.TickNumber;
 
+            Array.Clear(SHARED_RAYCAST_HIT_ARRAY, 0, SHARED_RAYCAST_HIT_ARRAY.Length);
+
             // The range of Unity Layers is narrower than the range of SDK Layers
             // so we need to raycast against all (even if the query type is hit first) and then filter our each individual raycast hit
             int hitsCount = Physics.RaycastNonAlloc(ray, SHARED_RAYCAST_HIT_ARRAY, sdkComponent.MaxDistance, collisionMask);
@@ -153,10 +155,10 @@ namespace DCL.Interaction.Raycast.Systems
             switch (sdkComponent.QueryType)
             {
                 case RaycastQueryType.RqtHitFirst:
-                    SetClosestQualifiedHit(result, SHARED_RAYCAST_HIT_ARRAY.AsSpan(0, hitsCount), sdkCollisionMask, scenePos, transformComponent.Cached.WorldPosition);
+                    SetClosestQualifiedHit(result, SHARED_RAYCAST_HIT_ARRAY.AsSpan(0, hitsCount), sdkCollisionMask, scenePos, transformComponent.Cached.WorldPosition, ray.direction);
                     break;
                 case RaycastQueryType.RqtQueryAll:
-                    SetAllQualifiedHits(result, SHARED_RAYCAST_HIT_ARRAY.AsSpan(0, hitsCount), sdkCollisionMask, scenePos, transformComponent.Cached.WorldPosition);
+                    SetAllQualifiedHits(result, SHARED_RAYCAST_HIT_ARRAY.AsSpan(0, hitsCount), sdkCollisionMask, scenePos, transformComponent.Cached.WorldPosition, ray.direction);
                     break;
             }
 
@@ -165,7 +167,8 @@ namespace DCL.Interaction.Raycast.Systems
             ecsToCRDTWriter.PutMessage(crdtEntity, result);
         }
 
-        private void SetClosestQualifiedHit(PBRaycastResult raycastResult, Span<RaycastHit> hits, ColliderLayer collisionMask, Vector3 scenePos, Vector3 globalOrigin)
+        private void SetClosestQualifiedHit(PBRaycastResult raycastResult, Span<RaycastHit> hits, ColliderLayer collisionMask, Vector3 scenePos, Vector3 globalOrigin,
+            Vector3 rayDirection)
         {
             RaycastHit? closestQualifiedHit = null;
             CRDTEntity foundEntity = -1;
@@ -185,12 +188,13 @@ namespace DCL.Interaction.Raycast.Systems
             if (closestQualifiedHit != null)
             {
                 ECSComponents.RaycastHit sdkHit = raycastHitPool.Get();
-                sdkHit.FillSDKRaycastHit(scenePos, closestQualifiedHit.Value, foundEntity, globalOrigin);
+                sdkHit.FillSDKRaycastHit(scenePos, closestQualifiedHit.Value, foundEntity, globalOrigin, rayDirection);
                 raycastResult.Hits.Add(sdkHit);
             }
         }
 
-        private void SetAllQualifiedHits(PBRaycastResult raycastResult, Span<RaycastHit> hits, ColliderLayer collisionMask, Vector3 scenePos, Vector3 globalOrigin)
+        private void SetAllQualifiedHits(PBRaycastResult raycastResult, Span<RaycastHit> hits, ColliderLayer collisionMask, Vector3 scenePos, Vector3 globalOrigin,
+            Vector3 rayDirection)
         {
             for (var i = 0; i < hits.Length; i++)
             {
@@ -201,7 +205,7 @@ namespace DCL.Interaction.Raycast.Systems
                 if (!TryGetQualifiedEntity(collider, collisionMask, out CRDTEntity foundEntity)) continue;
 
                 ECSComponents.RaycastHit sdkHit = raycastHitPool.Get();
-                sdkHit.FillSDKRaycastHit(scenePos, hit, foundEntity, globalOrigin);
+                sdkHit.FillSDKRaycastHit(scenePos, hit, foundEntity, globalOrigin, rayDirection);
                 raycastResult.Hits.Add(sdkHit);
             }
         }

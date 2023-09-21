@@ -8,5 +8,5 @@ namespace DCL.Interaction.Raycast
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateAfter(typeof(ComponentInstantiationGroup))] // after all components are instantiated
     [UpdateAfter(typeof(InstantiateTransformSystem))] // after all transforms are instantiated
-    public class RaycastGroup { }
+    public partial class RaycastGroup { }
 }

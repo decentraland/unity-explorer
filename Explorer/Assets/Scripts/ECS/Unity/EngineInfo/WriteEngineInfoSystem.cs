@@ -14,7 +14,7 @@ using UnityEngine;
 namespace ECS.Unity.EngineInfo
 {
     [UpdateInGroup(typeof(SyncedInitializationSystemGroup))]
-    public class WriteEngineInfoSystem : BaseUnityLoopSystem
+    public partial class WriteEngineInfoSystem : BaseUnityLoopSystem
     {
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;

@@ -64,11 +64,12 @@ namespace DCL.Interaction.Utility
                 return false;
             }
 
-            ray = new Ray(rayOrigin, rayDirection);
+            ray = new Ray(rayOrigin, rayDirection.normalized);
             return true;
         }
 
-        internal static void FillSDKRaycastHit(this RaycastHit target, Vector3 sceneRootPosition, in UnityEngine.RaycastHit unityHit, CRDTEntity crdtEntity, Vector3 globalOrigin)
+        internal static void FillSDKRaycastHit(this RaycastHit target, Vector3 sceneRootPosition, in UnityEngine.RaycastHit unityHit, CRDTEntity crdtEntity, Vector3 globalOrigin,
+            Vector3 direction)
         {
             target.EntityId = (uint)crdtEntity.Id;
 
@@ -78,6 +79,7 @@ namespace DCL.Interaction.Utility
             target.GlobalOrigin.Set(globalOrigin);
             target.Position.Set(ParcelMathHelper.GetSceneRelativePosition(unityHit.point, sceneRootPosition));
             target.NormalHit.Set(unityHit.normal);
+            target.Direction.Set(direction);
         }
     }
 }
