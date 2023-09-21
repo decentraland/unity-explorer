@@ -81,14 +81,12 @@ namespace Global
 
         public static async UniTask<(StaticContainer container, bool success)> Create(IPluginSettingsContainer settingsContainer, CancellationToken ct)
         {
-            var addressablesProvisioner = new AddressablesProvisioner();
-
-            var componentsContainer = ComponentsContainer.Create(addressablesProvisioner);
+            var componentsContainer = ComponentsContainer.Create();
             var profilingProvider = new ProfilingProvider();
 
             var container = new StaticContainer();
+            var addressablesProvisioner = new AddressablesProvisioner();
             container.AssetsProvisioner = addressablesProvisioner;
-
 
             (_, bool result) = await settingsContainer.InitializePlugin(container, ct);
 

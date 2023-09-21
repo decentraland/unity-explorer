@@ -1,6 +1,5 @@
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Transform;
-using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.ECS7;
 using DCL.ECSComponents;
@@ -24,7 +23,7 @@ namespace Global
 
         public IComponentPoolsRegistry ComponentPoolsRegistry { get; private set; }
 
-        public static ComponentsContainer Create(AddressablesProvisioner addressablesProvisioner)
+        public static ComponentsContainer Create()
         {
             var sdkComponentsRegistry = new SDKComponentsRegistry();
 
@@ -50,7 +49,7 @@ namespace Global
                 // merge SDK components with Non-SDK
                 sdkComponentsRegistry.SdkComponents
                                      .Select(c => (c.ComponentType, c.Pool))
-                                     .Concat(GetMiscComponents(addressablesProvisioner))
+                                     .Concat(GetMiscComponents())
                                      .Concat(GetPrimitivesMeshesDictionary())
                                      .ToDictionary(x => x.Item1, x => x.Item2));
 
@@ -68,7 +67,7 @@ namespace Global
             yield return CreateExtraComponentPool<CylinderPrimitive>();
         }
 
-        private static IEnumerable<(Type type, IComponentPool pool)> GetMiscComponents(AddressablesProvisioner addressablesProvisioner)
+        private static IEnumerable<(Type type, IComponentPool pool)> GetMiscComponents()
         {
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
 
