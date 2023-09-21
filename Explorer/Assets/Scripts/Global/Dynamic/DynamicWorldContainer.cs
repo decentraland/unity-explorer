@@ -38,7 +38,7 @@ namespace Global.Dynamic
                 new ProfilingPlugin(staticContainer.AssetsProvisioner, staticContainer.ProfilingProvider),
 
                 new WearablePlugin(realmData, ASSET_BUNDLES_URL),
-                new AvatarPlugin(staticContainer.SingletonSharedDependencies.FrameTimeCapBudgetProvider,
+                new AvatarPlugin(staticContainer.AssetsProvisioner, staticContainer.SingletonSharedDependencies.FrameTimeCapBudgetProvider,
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry.GetReferenceTypePool<AvatarBase>()),
             };
 

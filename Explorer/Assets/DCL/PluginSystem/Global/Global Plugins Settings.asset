@@ -17,9 +17,18 @@ MonoBehaviour:
   - rid: 6784895265412481026
   - rid: 6784895265412481027
   - rid: 6784895267130048513
+  - rid: 2761372266084433920
   references:
     version: 2
     RefIds:
+    - rid: 2761372266084433920
+      type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        avatarBase:
+          m_AssetGUID: 8db46845fb5f52f44a71c2a0c2d92074
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 6784895264912310272
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
