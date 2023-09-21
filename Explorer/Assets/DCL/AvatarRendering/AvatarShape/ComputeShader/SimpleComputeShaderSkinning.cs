@@ -3,7 +3,6 @@ using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.UI;
 using Utility;
 
 public class SimpleComputeShaderSkinning
@@ -79,15 +78,16 @@ public class SimpleComputeShaderSkinning
     private void SetupBuffers(Transform[] bones, NativeArray<Vector3> vertsIn, NativeArray<Vector3> normsIn, NativeArray<BoneWeight> totalSkinIn,
         NativeArray<Matrix4x4> bindPosesMatrix, NativeArray<int> bindPosesIndexList, ComputeShader skinningShader)
     {
-        var vertexIn = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Constant);
+        //TODO: Find out why adding ComputeBufferType.Constant doesnt work in Windows, but it does in Mac
+        var vertexIn = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(Vector3)));
         vertexIn.SetData(vertsIn);
-        var normalsIn = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(Vector3)), ComputeBufferType.Constant);
+        var normalsIn = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(Vector3)));
         normalsIn.SetData(normsIn);
-        var sourceSkin = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(BoneWeight)), ComputeBufferType.Constant);
+        var sourceSkin = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(BoneWeight)));
         sourceSkin.SetData(totalSkinIn);
-        var bindPoses = new ComputeBuffer(skinnedMeshRendererBoneCount, Marshal.SizeOf(typeof(Matrix4x4)), ComputeBufferType.Constant);
+        var bindPoses = new ComputeBuffer(skinnedMeshRendererBoneCount, Marshal.SizeOf(typeof(Matrix4x4)));
         bindPoses.SetData(bindPosesMatrix);
-        var bindPosesIndex = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(int)), ComputeBufferType.Constant);
+        var bindPosesIndex = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(int)));
         bindPosesIndex.SetData(bindPosesIndexList);
         vertsOut = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(Vector3)));
         normalsOut = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(Vector3)));
