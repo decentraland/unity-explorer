@@ -9,7 +9,6 @@ using DCL.PluginSystem.Global;
 using ECS;
 using ECS.StreamableLoading.Cache;
 using SceneRunner.Scene;
-using System.Collections.Generic;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables
@@ -23,14 +22,13 @@ namespace DCL.AvatarRendering.Wearables
         private readonly IRealmData realmData;
         private readonly URLDomain assetBundleURL;
 
-        //TODO: Create a cache for the catalog
-        private readonly Dictionary<string, IWearable> wearableCatalog;
+        private readonly WearableCatalog wearableCatalog;
 
         public WearablePlugin(IRealmData realmData, URLDomain assetBundleURL)
         {
             this.realmData = realmData;
             this.assetBundleURL = assetBundleURL;
-            wearableCatalog = new Dictionary<string, IWearable>();
+            wearableCatalog = new WearableCatalog();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
