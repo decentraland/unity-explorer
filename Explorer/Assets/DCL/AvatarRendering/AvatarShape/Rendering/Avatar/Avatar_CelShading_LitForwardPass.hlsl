@@ -11,13 +11,24 @@
 #endif
 
 
-StructuredBuffer<float3> _VertIn;
-StructuredBuffer<float3> _NormalsIn;
-int _startIndex;
+struct VertexInfo
+{
+    float3 position;
+    float3 normal;
+};
+
+StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
+
+/*#define MyData1 unity_DynamicLightmapST.x
+#define MyData2 unity_DynamicLightmapST.y
+#define MyData3 unity_DynamicLightmapST.z
+#define MyData4 unity_DynamicLightmapST.w*/
+
 
 // keep this file in sync with LitGBufferPass.hlsl
 struct Attributes
 {
+    uint    index       : SV_VertexID;
     float4 positionOS   : POSITION;
     float3 normalOS     : NORMAL;
     float4 tangentOS    : TANGENT;
@@ -103,7 +114,7 @@ void InitializeInputData(Varyings input, half3 normalTS, out InputData_Avatar in
 ///////////////////////////////////////////////////////////////////////////////
 
 // Used in Standard (Physically Based) shader
-Varyings LitPassVertex(Attributes input, uint vIdx : SV_VertexID)
+Varyings LitPassVertex(Attributes input)
 {
     Varyings output = (Varyings)0;
 
@@ -111,13 +122,22 @@ Varyings LitPassVertex(Attributes input, uint vIdx : SV_VertexID)
     UNITY_TRANSFER_INSTANCE_ID(input, output);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-    VertexPositionInputs vertexInput = GetVertexPositionInputs(_VertIn[_startIndex + vIdx].xyz);
+    /*VertexPositionInputs vertexInput = GetVertexPositionInputs(_GlobalAvatarBuffer[MyData1 + MyData2 + input.index].position.xyz);
 
     // normalWS and tangentWS already normalize.
     // this is required to avoid skewing the direction during interpolation
     // also required for per-vertex lighting and SH evaluation
     //TODO: Tangents
-    VertexNormalInputs normalInput = GetVertexNormalInputs(_NormalsIn[_startIndex + vIdx].xyz, input.tangentOS);
+    VertexNormalInputs normalInput = GetVertexNormalInputs(_GlobalAvatarBuffer[MyData1 + MyData2 + input.index].normal.xyz, input.tangentOS);*/
+
+    
+    VertexPositionInputs vertexInput = GetVertexPositionInputs(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
+
+    // normalWS and tangentWS already normalize.
+    // this is required to avoid skewing the direction during interpolation
+    // also required for per-vertex lighting and SH evaluation
+    //TODO: Tangents
+    VertexNormalInputs normalInput = GetVertexNormalInputs(input.normalOS, input.tangentOS);
 
     half3 viewDirWS = GetWorldSpaceViewDir(vertexInput.positionWS);
     half3 vertexLight = VertexLighting(vertexInput.positionWS, normalInput.normalWS);

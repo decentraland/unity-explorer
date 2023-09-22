@@ -38,7 +38,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         public InstantiateRandomAvatarsSystem(World world) : base(world)
         {
-            TOTAL_AVATARS_TO_INSTANTIATE = 100;
+            TOTAL_AVATARS_TO_INSTANTIATE = RandomAvatarNumberHolder.instance.amoutOfRandomAvatars;
             defaultWearableRequest = new DefaultWearableRequest();
         }
 
@@ -113,7 +113,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
                 // Create a transform, normally it will be created either by JS Scene or by Comms
                 Transform transform = new GameObject($"RANDOM_AVATAR_{i}").transform;
-                transform.localPosition = new Vector3(Random.Range(0, 20), 0, Random.Range(0, 20));
+                transform.localPosition = new Vector3(Random.Range(-208, -208 + 20), 0, Random.Range(-96, -96 + 20));
                 var transformComp = new TransformComponent(transform);
 
                 World.Create(avatarShape, transformComp);
