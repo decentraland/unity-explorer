@@ -97,8 +97,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarTransform.ResetLocalTRS();
 
             ClearWearables(avatarShapeComponent.InstantiatedWearables);
-            //Using Pointer size for counter, since we dont know the size of the results array
-            //because it was pooled
+
+            //Using Pointer size for counter, since we dont know the size of the results pooled array
             for (var i = 0; i < avatarShapeComponent.WearablePromise.LoadingIntention.Pointers.Count; i++)
             {
                 IWearable resultWearable = wearablesResult.Asset[i];

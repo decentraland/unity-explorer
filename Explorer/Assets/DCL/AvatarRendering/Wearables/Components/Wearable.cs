@@ -79,6 +79,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         public bool IsBodyShape() =>
             GetCategory().Equals(WearablesLiterals.Categories.BODY_SHAPE);
 
+        //TODO: Implement Dispose method
         public void Dispose() { }
 
     }
