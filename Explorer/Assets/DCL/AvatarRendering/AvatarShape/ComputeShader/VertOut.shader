@@ -32,23 +32,17 @@ Shader "Unlit/VertOut"
                 float4 vertex : SV_POSITION;
             };
 
-            struct SVertOut
-          {
-             float3 pos;
-             float3 norm;
-             float4 tang;
-          };
 
-            StructuredBuffer<SVertOut> _VertIn;
+            StructuredBuffer<float3> _VertIn;
+            int _startIndex;
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
-            int _startIndex;
 
             v2f vert (appdata v, uint vIdx : SV_VertexID)
             {
                v2f o;
-               o.vertex = UnityObjectToClipPos(_VertIn[_startIndex + vIdx].pos);
+               o.vertex = UnityObjectToClipPos(_VertIn[_startIndex + vIdx].xyz);
                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                return o;
              //v.vertex.xyz = UnityObjectToClipPosODS(_VertIn[vIdx].pos);

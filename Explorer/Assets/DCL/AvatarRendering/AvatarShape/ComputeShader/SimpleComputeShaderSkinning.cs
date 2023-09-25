@@ -4,43 +4,31 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using Utility;
+using Random = UnityEngine.Random;
 
 public class SimpleComputeShaderSkinning
 {
-    private SVertOut[] vertOutArray;
-    private Vector3[] verticesForMesh;
+    //Shader
+    private static int _BaseColour_ShaderID = Shader.PropertyToID("_BaseColor");
+    private static readonly int _BaseMapArr_ShaderID = Shader.PropertyToID("_BaseMapArr_ID");
+    private static readonly int _Last_Avatar_Vert_Count = Shader.PropertyToID("_lastAvatarVertCount");
+    private static readonly int _Last_Wearable_Vert_Count = Shader.PropertyToID("_lastWearableVertCount");
 
-    public ComputeShader cs;
-    private ComputeBuffer sourceVBO;
-    private ComputeBuffer sourceSkin;
-    private ComputeBuffer meshVertsOut;
-    private ComputeBuffer mBones;
-    private ComputeBuffer bindPoses;
-    private ComputeBuffer bindPosesIndex;
 
-    private int vertCount;
+    private static int _AlphaTextureArr_ShaderID = Shader.PropertyToID("_AlphaTextureArr_ID");
+    private static int _MetallicGlossMapArr_ShaderID = Shader.PropertyToID("_MetallicGlossMapArr_ID");
+    private static int _BumpMapArr_ShaderID = Shader.PropertyToID("_BumpMapArr_ID");
+    private static int _EmissionMapArr_ShaderID = Shader.PropertyToID("_EmissionMapArr_ID");
+
+    //Compute shader
+    private readonly int BONE_COUNT = 62;
+    private int skinnedMeshRendererBoneCount;
     private int kernel;
+    private int skinnedMeshRendererCount;
+    private int vertCount;
 
-
-    private struct SVertInVBO
-    {
-        public Vector3 pos;
-        public Vector3 norm;
-        public Vector4 tang;
-    }
-
-    private struct SVertOut
-    {
-        public Vector3 pos;
-        private Vector3 norm;
-        private Vector4 tang;
-    }
-
-    private struct SVertInSkin
-    {
-        public float weight0, weight1, weight2, weight3;
-        public int index0, index1, index2, index3;
-    }
+    private ComputeShader cs;
+    private ComputeBuffer mBones;
 
 
     public void ComputeSkinning(NativeArray<float4x4> bonesResult)
@@ -49,19 +37,27 @@ public class SimpleComputeShaderSkinning
         cs.Dispatch(kernel, (vertCount / 64) + 1, 1, 1);
     }
 
-    public void Initialize(List<GameObject> gameObjects, Transform[] bones)
+    public int Initialize(List<GameObject> gameObjects, Transform[] bones, TextureArrayContainer textureArrayContainer,
+        ComputeShader skinningShader, Material avatarMaterial, int lastAvatarVertCount)
     {
-        SetupComputeShader(gameObjects, bones);
-        SetupMeshRenderer(gameObjects);
+        SetupCounters(gameObjects);
+        SetupComputeShader(gameObjects, bones, skinningShader, lastAvatarVertCount);
+        SetupMeshRenderer(gameObjects, textureArrayContainer, avatarMaterial, lastAvatarVertCount);
+        return vertCount;
     }
 
-    private void SetupComputeShader(List<GameObject> gameObjects, Transform[] bones)
+    private void SetupComputeShader(List<GameObject> gameObjects, Transform[] bones, ComputeShader skinningShader, int lastAvatarVertCount)
     {
-        var totalVertsIn = new List<SVertInVBO>();
-        var totalSkinIn = new List<SVertInSkin>();
-        var bindPosesMatrix = new List<Matrix4x4>();
-        var bindPosesIndexList = new List<int>();
-        var amountOfSkinnedMeshRenderer = 0;
+
+        //Setting up pool arrays
+        var totalVertsIn = new NativeArray<Vector3>(vertCount, Allocator.Temp);
+        var totalNormalsIn = new NativeArray<Vector3>(vertCount, Allocator.Temp);
+        var totalSkinIn = new NativeArray<BoneWeight>(vertCount, Allocator.Temp);
+        var bindPosesIndexList = new NativeArray<int>(vertCount, Allocator.Temp);
+        var bindPosesMatrix = new NativeArray<Matrix4x4>(skinnedMeshRendererBoneCount, Allocator.Temp);
+
+        int vertCounter = 0;
+        int skinnedMeshCounter = 0;
 
         foreach (GameObject gameObject in gameObjects)
         {
@@ -69,76 +65,90 @@ public class SimpleComputeShaderSkinning
 
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in gameObject.GetComponentsInChildren<SkinnedMeshRenderer>())
             {
-                // Make sure that Transform is uniform with the root
-                // Non-uniform does not make sense as skin relatively to the base avatar
-                // so we just waste calculations on transformation matrices
-                Transform currentTransform = skinnedMeshRenderer.transform;
-
-                while (currentTransform != rootTransform)
-                {
-                    currentTransform.ResetLocalTRS();
-                    currentTransform = currentTransform.parent;
-                }
-
-
-                Mesh mesh = skinnedMeshRenderer.sharedMesh;
-                bindPosesMatrix.AddRange(mesh.bindposes);
-                int currentVertexCount = mesh.vertexCount;
-
-                //Setup vertex index for current wearable
-                for (var i = 0; i < currentVertexCount; i++)
-                {
-                    bindPosesIndexList.Add(62 * amountOfSkinnedMeshRenderer);
-
-                    totalVertsIn.Add(new SVertInVBO
-                    {
-                        pos = mesh.vertices[i],
-                        norm = mesh.normals[i],
-                    });
-
-                    totalSkinIn.Add(new SVertInSkin
-                    {
-                        weight0 = mesh.boneWeights[i].weight0,
-                        weight1 = mesh.boneWeights[i].weight1,
-                        weight2 = mesh.boneWeights[i].weight2,
-                        weight3 = mesh.boneWeights[i].weight3,
-                        index0 = mesh.boneWeights[i].boneIndex0,
-                        index1 = mesh.boneWeights[i].boneIndex1,
-                        index2 = mesh.boneWeights[i].boneIndex2,
-                        index3 = mesh.boneWeights[i].boneIndex3,
-                    });
-                }
-
-                vertCount += skinnedMeshRenderer.sharedMesh.vertexCount;
-                amountOfSkinnedMeshRenderer++;
+                int meshVertexCount = skinnedMeshRenderer.sharedMesh.vertexCount;
+                ResetTransforms(skinnedMeshRenderer, rootTransform);
+                FillMeshArray(skinnedMeshRenderer, bindPosesMatrix, bindPosesIndexList, totalVertsIn, totalNormalsIn, totalSkinIn, meshVertexCount, vertCounter, skinnedMeshCounter);
+                vertCounter += meshVertexCount;
+                skinnedMeshCounter++;
             }
         }
 
-        sourceVBO = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(SVertInVBO)));
-        sourceVBO.SetData(totalVertsIn.ToArray());
-        sourceSkin = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(SVertInSkin)));
-        sourceSkin.SetData(totalSkinIn.ToArray());
-        bindPoses = new ComputeBuffer(bindPosesMatrix.Count, Marshal.SizeOf(typeof(Matrix4x4)));
-        bindPoses.SetData(bindPosesMatrix.ToArray());
-        bindPosesIndex = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(int)));
-        bindPosesIndex.SetData(bindPosesIndexList.ToArray());
+        SetupBuffers(bones, totalVertsIn, totalNormalsIn, totalSkinIn, bindPosesMatrix, bindPosesIndexList, skinningShader, lastAvatarVertCount);
 
-        meshVertsOut = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(SVertOut)));
+    }
+
+    private void SetupBuffers(Transform[] bones, NativeArray<Vector3> vertsIn, NativeArray<Vector3> normsIn, NativeArray<BoneWeight> totalSkinIn,
+        NativeArray<Matrix4x4> bindPosesMatrix, NativeArray<int> bindPosesIndexList, ComputeShader skinningShader, int lastAvatarVertCount)
+    {
+        //TODO: Find out why adding ComputeBufferType.Constant doesnt work in Windows, but it does in Mac
+        var vertexIn = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(Vector3)));
+        vertexIn.SetData(vertsIn);
+        var normalsIn = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(Vector3)));
+        normalsIn.SetData(normsIn);
+        var sourceSkin = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(BoneWeight)));
+        sourceSkin.SetData(totalSkinIn);
+        var bindPoses = new ComputeBuffer(skinnedMeshRendererBoneCount, Marshal.SizeOf(typeof(Matrix4x4)));
+        bindPoses.SetData(bindPosesMatrix);
+        var bindPosesIndex = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(int)));
+        bindPosesIndex.SetData(bindPosesIndexList);
         mBones = new ComputeBuffer(bones.Length, Marshal.SizeOf(typeof(Matrix4x4)));
-        mBones.SetData(new Matrix4x4[bones.Length]);
 
-        cs = Object.Instantiate(Resources.Load<ComputeShader>("Skinning"));
+        cs = Object.Instantiate(skinningShader);
         kernel = cs.FindKernel("main");
         cs.SetInt(Shader.PropertyToID("g_VertCount"), vertCount);
-        cs.SetBuffer(kernel, Shader.PropertyToID("g_SourceVBO"), sourceVBO);
+        cs.SetInt(Shader.PropertyToID("_lastAvatarVertCount"), lastAvatarVertCount);
+        cs.SetBuffer(kernel, Shader.PropertyToID("g_VertsIn"), vertexIn);
+        cs.SetBuffer(kernel, Shader.PropertyToID("g_NormalsIn"), normalsIn);
         cs.SetBuffer(kernel, Shader.PropertyToID("g_SourceSkin"), sourceSkin);
         cs.SetBuffer(kernel, Shader.PropertyToID("g_BindPoses"), bindPoses);
         cs.SetBuffer(kernel, Shader.PropertyToID("g_BindPosesIndex"), bindPosesIndex);
         cs.SetBuffer(kernel, Shader.PropertyToID("g_mBones"), mBones);
-        cs.SetBuffer(kernel, Shader.PropertyToID("g_MeshVertsOut"), meshVertsOut);
     }
 
-    private void SetupMeshRenderer(List<GameObject> gameObjects)
+    private void FillMeshArray(SkinnedMeshRenderer skinnedMeshRenderer, NativeArray<Matrix4x4> bindPosesMatrix,
+        NativeArray<int> bindPosesIndexList, NativeArray<Vector3> totalVertsIn, NativeArray<Vector3> totalNormalsIn, NativeArray<BoneWeight> totalSkinIn,
+        int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter)
+    {
+        Mesh mesh = skinnedMeshRenderer.sharedMesh;
+
+        //TODO: Is it possible to remove this allocation?
+        NativeArray<Matrix4x4>.Copy(mesh.bindposes, 0, bindPosesMatrix, BONE_COUNT * skinnedMeshCounter, BONE_COUNT);
+        NativeArray<BoneWeight>.Copy(mesh.boneWeights, 0, totalSkinIn, vertexCounter, currentMeshVertexCount);
+        NativeArray<Vector3>.Copy(mesh.vertices, 0, totalVertsIn, vertexCounter, currentMeshVertexCount);
+        NativeArray<Vector3>.Copy(mesh.normals, 0, totalNormalsIn, vertexCounter, currentMeshVertexCount);
+
+        //Setup vertex index for current wearable
+        for (var i = 0; i < mesh.vertexCount; i++)
+            bindPosesIndexList[vertexCounter + i] = BONE_COUNT * skinnedMeshCounter;
+    }
+
+    private static void ResetTransforms(SkinnedMeshRenderer skinnedMeshRenderer, Transform rootTransform)
+    {
+        // Make sure that Transform is uniform with the root
+        // Non-uniform does not make sense as skin relatively to the base avatar
+        // so we just waste calculations on transformation matrices
+        Transform currentTransform = skinnedMeshRenderer.transform;
+
+        while (currentTransform != rootTransform)
+        {
+            currentTransform.ResetLocalTRS();
+            currentTransform = currentTransform.parent;
+        }
+    }
+
+    private void SetupCounters(List<GameObject> gameObjects)
+    {
+        foreach (GameObject gameObject in gameObjects)
+        foreach (SkinnedMeshRenderer skinnedMeshRenderer in gameObject.GetComponentsInChildren<SkinnedMeshRenderer>())
+        {
+            vertCount += skinnedMeshRenderer.sharedMesh.vertexCount;
+            skinnedMeshRendererCount++;
+        }
+
+        skinnedMeshRendererBoneCount = skinnedMeshRendererCount * BONE_COUNT;
+    }
+
+    private void SetupMeshRenderer(List<GameObject> gameObjects, TextureArrayContainer textureArrayContainer, Material avatarMaterial, int lastAvatarVertCount)
     {
         var auxVertCounter = 0;
 
@@ -148,7 +158,7 @@ public class SimpleComputeShaderSkinning
             {
                 int currentVertexCount = skinnedMeshRenderer.sharedMesh.vertexCount;
                 MeshRenderer renderer = SetupMesh(skinnedMeshRenderer);
-                SetupMaterial(renderer, auxVertCounter);
+                SetupMaterial(renderer, auxVertCounter, textureArrayContainer, avatarMaterial, lastAvatarVertCount);
                 auxVertCounter += currentVertexCount;
             }
         }
@@ -165,17 +175,36 @@ public class SimpleComputeShaderSkinning
         return meshRenderer;
     }
 
-    private void SetupMaterial(MeshRenderer meshRenderer, int startIndex)
+    private void SetupMaterial(MeshRenderer meshRenderer, int lastWearableVertCount, TextureArrayContainer m_TextureArrays, Material celShadingMaterial, int lastAvatarVertCount)
     {
-        var vertOutMaterial = new Material(Resources.Load<Material>("VertOutMaterial"));
-        vertOutMaterial.mainTexture = meshRenderer.material.mainTexture;
-        var mpb = new MaterialPropertyBlock();
-        meshRenderer.GetPropertyBlock(mpb);
-        mpb.SetBuffer("_VertIn", meshVertsOut);
-        mpb.SetInt("_startIndex", startIndex);
-        meshRenderer.SetPropertyBlock(mpb);
+        var albedoTexture = (Texture2D)meshRenderer.material.mainTexture;
+        var vertOutMaterial = new Material(celShadingMaterial);
+
+        if (albedoTexture != null)
+        {
+            if (albedoTexture.width.Equals(512))
+            {
+                Graphics.CopyTexture(albedoTexture, srcElement: 0, srcMip: 0, m_TextureArrays.texture2DArray_512_BaseMap, dstElement: m_TextureArrays.textureArrayCount_512_BaseMap, dstMip: 0);
+                vertOutMaterial.SetInteger(_BaseMapArr_ShaderID, m_TextureArrays.textureArrayCount_512_BaseMap);
+                vertOutMaterial.SetTexture("_BaseMapArr", m_TextureArrays.texture2DArray_512_BaseMap);
+                m_TextureArrays.textureArrayCount_512_BaseMap++;
+            }
+            else
+            {
+                Graphics.CopyTexture(albedoTexture, srcElement: 0, srcMip: 0, m_TextureArrays.texture2DArray_256_BaseMap, dstElement: m_TextureArrays.textureArrayCount_256_BaseMap, dstMip: 0);
+                vertOutMaterial.SetInteger(_BaseMapArr_ShaderID, m_TextureArrays.textureArrayCount_256_BaseMap);
+                vertOutMaterial.SetTexture("_BaseMapArr", m_TextureArrays.texture2DArray_256_BaseMap);
+                m_TextureArrays.textureArrayCount_256_BaseMap++;
+            }
+        }
+
+        //meshRenderer.realtimeLightmapIndex = 0; // turn on real-time lightmap
+        //meshRenderer.realtimeLightmapScaleOffset = new UnityEngine.Vector4(lastWearableVertCount, lastAvatarVertCount, 0,0);
+
+        vertOutMaterial.SetInteger(_Last_Wearable_Vert_Count, lastWearableVertCount);
+        vertOutMaterial.SetInteger(_Last_Avatar_Vert_Count, lastAvatarVertCount);
+        vertOutMaterial.SetColor("_BaseColor", Random.ColorHSV());
         meshRenderer.material = vertOutMaterial;
+
     }
-
-
 }

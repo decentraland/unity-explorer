@@ -54,6 +54,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public void ScheduleBoneMatrixCalculation()
         {
+            job.AvatarTransform = Base.transform.worldToLocalMatrix;
             handle = job.Schedule(Bones);
         }
 
