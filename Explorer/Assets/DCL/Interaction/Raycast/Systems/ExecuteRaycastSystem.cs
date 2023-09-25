@@ -231,7 +231,7 @@ namespace DCL.Interaction.Raycast.Systems
 
             if (!isQualified) return false;
 
-            foundEntity = entityInfo.Entity;
+            foundEntity = entityInfo.SDKEntity;
             return true;
         }
 

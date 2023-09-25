@@ -1,6 +1,7 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
+using DCL.Interaction.PlayerOriginated.Systems;
 using DCL.Interaction.Raycast.Systems;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.LifeCycle;
@@ -47,6 +48,12 @@ namespace DCL.PluginSystem.World
                 sceneDeps.EntitiesMap,
                 sceneDeps.EcsToCRDTWriter,
                 sceneDeps.SceneStateProvider);
+
+            WritePointerEventResultsSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot,
+                sceneDeps.EcsToCRDTWriter,
+                sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<RaycastHit>(),
+                sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<PBPointerEventsResult>(),
+                sceneDeps.SceneStateProvider);
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
@@ -59,10 +66,13 @@ namespace DCL.PluginSystem.World
             [field: Header(nameof(InteractionPlugin) + "." + nameof(Settings))]
             [field: Space]
             [field: SerializeField]
-            public byte RaycastBucketThreshold { get; set; } = 3;
+            public byte RaycastBucketThreshold { get; private set; } = 3;
 
             [field: SerializeField]
-            public float RaycastFrameBudgetMs { get; set; } = 3f;
+            public float RaycastFrameBudgetMs { get; private set; } = 3f;
+
+            [field: SerializeField]
+            public float PlayerOriginRaycastMaxDistance { get; private set; } = 200f;
         }
     }
 }

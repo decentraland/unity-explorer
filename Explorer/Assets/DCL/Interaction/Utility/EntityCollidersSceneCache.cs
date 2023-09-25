@@ -12,6 +12,8 @@ namespace DCL.Interaction.Utility
 
         private readonly Dictionary<Collider, ColliderEntityInfo> map = new (100);
 
+        private IEntityCollidersGlobalCache globalCache;
+
         private EntityCollidersSceneCache() { }
 
         public bool TryGetEntity(Collider collider, out ColliderEntityInfo entity) =>
@@ -20,18 +22,25 @@ namespace DCL.Interaction.Utility
         public void Associate(Collider collider, ColliderEntityInfo entityInfo)
         {
             map[collider] = entityInfo;
+            globalCache.Associate(collider, this, entityInfo);
         }
 
         public void Associate(IEnumerable<Collider> colliders, ColliderEntityInfo entityInfo)
         {
             foreach (Collider collider in colliders)
+            {
                 map[collider] = entityInfo;
+                globalCache.Associate(collider, this, entityInfo);
+            }
         }
 
         public void Remove(Collider collider)
         {
             if (collider)
+            {
                 map.Remove(collider);
+                globalCache.RemoveAssociation(collider);
+            }
         }
 
         public void Remove(IEnumerable<Collider> colliders)
@@ -42,10 +51,15 @@ namespace DCL.Interaction.Utility
 
         public void Dispose()
         {
+            globalCache.RemoveSceneInfo(this);
             POOL.Release(this);
         }
 
-        public static EntityCollidersSceneCache Create() =>
-            POOL.Get();
+        public static EntityCollidersSceneCache Create(IEntityCollidersGlobalCache globalCache)
+        {
+            EntityCollidersSceneCache cache = POOL.Get();
+            cache.globalCache = globalCache;
+            return cache;
+        }
     }
 }

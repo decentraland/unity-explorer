@@ -35,6 +35,7 @@ namespace SceneRunner
         private readonly ICRDTSerializer crdtSerializer;
         private readonly IECSWorldFactory ecsWorldFactory;
         private readonly IEntityFactory entityFactory;
+        private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly SceneRuntimeFactory sceneRuntimeFactory;
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
         private readonly ISharedPoolsProvider sharedPoolsProvider;
@@ -45,7 +46,8 @@ namespace SceneRunner
             ISharedPoolsProvider sharedPoolsProvider,
             ICRDTSerializer crdtSerializer,
             ISDKComponentsRegistry sdkComponentsRegistry,
-            IEntityFactory entityFactory)
+            IEntityFactory entityFactory,
+            IEntityCollidersGlobalCache entityCollidersGlobalCache)
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -53,6 +55,7 @@ namespace SceneRunner
             this.crdtSerializer = crdtSerializer;
             this.sdkComponentsRegistry = sdkComponentsRegistry;
             this.entityFactory = entityFactory;
+            this.entityCollidersGlobalCache = entityCollidersGlobalCache;
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromFile(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct)
@@ -113,15 +116,17 @@ namespace SceneRunner
             var crdtDeserializer = new CRDTDeserializer(crdtMemoryAllocator);
             var ecsToCrdtWriter = new ECSToCRDTWriter(crdtProtocol, outgoingCrtdMessagesProvider, sdkComponentsRegistry, crdtMemoryAllocator);
             var systemGroupThrottler = new SystemGroupsUpdateGate();
-            var entityCollidersCache = EntityCollidersSceneCache.Create();
+            var entityCollidersCache = EntityCollidersSceneCache.Create(entityCollidersGlobalCache);
             var sceneStateProvider = new SceneStateProvider();
             var exceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider, sceneData.SceneShortInfo);
 
             /* Pass dependencies here if they are needed by the systems */
             var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, ecsToCrdtWriter, entitiesMap, exceptionsHandler, entityCollidersCache, sceneStateProvider, ecsMutexSync);
 
-            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(instanceDependencies, systemGroupThrottler, partitionProvider, sceneStateProvider));
+            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(instanceDependencies, systemGroupThrottler, partitionProvider));
             ecsWorldFacade.Initialize();
+
+            entityCollidersGlobalCache.AddSceneInfo(entityCollidersCache, new SceneEcsExecutor(ecsWorldFacade.EcsWorld, ecsMutexSync));
 
             string sceneCodeUrl;
 

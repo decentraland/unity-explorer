@@ -252,7 +252,7 @@ namespace DCL.Interaction.Raycast.Tests
                 entityCollidersSceneCache.TryGetEntity(collider, out Arg.Any<ColliderEntityInfo>())
                                          .Returns(x =>
                                           {
-                                              x[1] = new ColliderEntityInfo(entity, mask);
+                                              x[1] = new ColliderEntityInfo(EntityReference.Null, entity, mask);
                                               return true;
                                           });
             }

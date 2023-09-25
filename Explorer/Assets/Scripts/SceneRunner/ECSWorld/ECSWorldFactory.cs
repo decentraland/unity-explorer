@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.UpdateGate;
+using DCL.ECSComponents;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.ComponentsPooling;
@@ -12,6 +13,7 @@ using ECS.LifeCycle.Systems;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.DeferredLoading;
+using ECS.Unity.EngineInfo;
 using ECS.Unity.Systems;
 using System.Collections.Generic;
 
@@ -53,10 +55,10 @@ namespace SceneRunner.ECSWorld
                 sharedDependencies.SceneExceptionsHandler);
 
             builder
-               .InjectCustomGroup(new SyncedInitializationSystemGroup(sharedDependencies.MutexSync, args.SceneStateProvider))
-               .InjectCustomGroup(new SyncedSimulationSystemGroup(sharedDependencies.MutexSync, args.SceneStateProvider))
-               .InjectCustomGroup(new SyncedPresentationSystemGroup(sharedDependencies.MutexSync, args.SceneStateProvider))
-               .InjectCustomGroup(new SyncedPostRenderingSystemGroup(sharedDependencies.MutexSync, args.SceneStateProvider));
+               .InjectCustomGroup(new SyncedInitializationSystemGroup(sharedDependencies.MutexSync, sharedDependencies.SceneStateProvider))
+               .InjectCustomGroup(new SyncedSimulationSystemGroup(sharedDependencies.MutexSync, sharedDependencies.SceneStateProvider))
+               .InjectCustomGroup(new SyncedPresentationSystemGroup(sharedDependencies.MutexSync, sharedDependencies.SceneStateProvider))
+               .InjectCustomGroup(new SyncedPostRenderingSystemGroup(sharedDependencies.MutexSync, sharedDependencies.SceneStateProvider));
 
             var finalizeWorldSystems = new List<IFinalizeWorldSystem>(32);
 
@@ -66,6 +68,7 @@ namespace SceneRunner.ECSWorld
             // Prioritization
             PartitionAssetEntitiesSystem.InjectToWorld(ref builder, partitionSettings, scenePartition, cameraSamplingData, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>(), sceneRootEntity);
             AssetsDeferredLoadingSystem.InjectToWorld(ref builder, singletonDependencies.LoadingBudgetProvider);
+            WriteEngineInfoSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter, componentPoolsRegistry.GetReferenceTypePool<PBEngineInfo>());
 
             DestroyEntitiesSystem.InjectToWorld(ref builder);
             finalizeWorldSystems.Add(ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry));

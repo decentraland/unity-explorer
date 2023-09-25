@@ -52,6 +52,14 @@ namespace Global
                                                                      raycastHitPool.Release(raycastHitResult.Hits[i]);
                                                              })
                                                         .Build())
+               .Add(SDKComponentBuilder<PBPointerEventsResult>.Create(ComponentID.POINTER_EVENTS_RESULT)
+                                                              .WithProtobufSerializer()
+                                                              .WithPool(onRelease: pointerEventsResult =>
+                                                               {
+                                                                   raycastHitPool.Release(pointerEventsResult.Hit);
+                                                                   pointerEventsResult.Hit = null;
+                                                               })
+                                                              .Build())
                .Add(SDKComponentBuilder<PBPointerEvents>.Create(ComponentID.POINTER_EVENTS).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBBillboard>.Create(ComponentID.BILLBOARD).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBEngineInfo>.Create(ComponentID.ENGINE_INFO).AsProtobufResult())

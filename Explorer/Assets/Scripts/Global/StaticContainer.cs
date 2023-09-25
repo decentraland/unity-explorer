@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
+using DCL.Interaction.Utility;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
@@ -41,6 +42,8 @@ namespace Global
         public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
 
         public IProfilingProvider ProfilingProvider { get; private set; }
+
+        public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
 
         public async UniTask Initialize(StaticSettings settings, CancellationToken ct)
         {
@@ -102,6 +105,7 @@ namespace Global
             container.SingletonSharedDependencies = sharedDependencies;
             container.CameraSamplingData = new CameraSamplingData();
             container.ProfilingProvider = profilingProvider;
+            container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {

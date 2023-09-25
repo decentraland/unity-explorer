@@ -21,11 +21,13 @@ namespace Global.Dynamic
             IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius)
         {
             var realmSamplingData = new RealmSamplingData();
+            var dclInput = new DCLInput();
 
             var globalPlugins = new IDCLGlobalPlugin[]
             {
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterObject),
-                new InputPlugin(),
+                new InputPlugin(dclInput),
+                new GlobalInteractionPlugin(dclInput, staticContainer.EntityCollidersGlobalCache),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, staticContainer.CameraSamplingData),
                 new ProfilingPlugin(staticContainer.AssetsProvisioner, staticContainer.ProfilingProvider)
             };

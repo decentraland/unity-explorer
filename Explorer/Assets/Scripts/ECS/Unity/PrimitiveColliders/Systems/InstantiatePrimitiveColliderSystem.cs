@@ -56,13 +56,14 @@ namespace ECS.Unity.PrimitiveColliders.Systems
         private void InstantiateNonExistingCollider(in Entity entity, ref CRDTEntity crdtEntity, ref PBMeshCollider sdkComponent, ref TransformComponent transform)
         {
             var component = new PrimitiveColliderComponent();
-            Instantiate(crdtEntity, setupColliderCases[sdkComponent.MeshCase], ref component, ref sdkComponent, ref transform);
+            Instantiate(entity, crdtEntity, setupColliderCases[sdkComponent.MeshCase], ref component, ref sdkComponent, ref transform);
             World.Add(entity, component);
         }
 
         [Query]
         [All(typeof(PBMeshCollider), typeof(SDKTransform), typeof(TransformComponent), typeof(PrimitiveColliderComponent))]
         private void TrySetupExistingCollider(
+            in Entity entity,
             ref CRDTEntity crdtEntity,
             ref PrimitiveColliderComponent primitiveColliderComponent,
             ref PBMeshCollider sdkComponent,
@@ -74,23 +75,23 @@ namespace ECS.Unity.PrimitiveColliders.Systems
 
             // Prevent calling an overloaded comparison from UnityEngine.Object
             if (ReferenceEquals(primitiveColliderComponent.Collider, null))
-                Instantiate(crdtEntity, setupCollider, ref primitiveColliderComponent, ref sdkComponent, ref transformComponent);
+                Instantiate(entity, crdtEntity, setupCollider, ref primitiveColliderComponent, ref sdkComponent, ref transformComponent);
             else
 
                 // Just a change of parameters
-                SetupCollider(crdtEntity, setupCollider, primitiveColliderComponent.Collider, sdkComponent);
+                SetupCollider(entity, crdtEntity, setupCollider, primitiveColliderComponent.Collider, sdkComponent);
 
             sdkComponent.IsDirty = false;
         }
 
-        private void SetupCollider(CRDTEntity sdkEntity, ISetupCollider setupCollider, Collider collider, in PBMeshCollider sdkComponent)
+        private void SetupCollider(in Entity entity, CRDTEntity sdkEntity, ISetupCollider setupCollider, Collider collider, in PBMeshCollider sdkComponent)
         {
             // Setup collider only if it's gonna be enabled, otherwise there is no reason to [re]generate a shape
-            if (SetColliderLayer(sdkEntity, collider, sdkComponent))
+            if (SetColliderLayer(entity, sdkEntity, collider, sdkComponent))
                 setupCollider.Execute(collider, sdkComponent);
         }
 
-        private bool SetColliderLayer(CRDTEntity sdkEntity, Collider collider, in PBMeshCollider sdkComponent)
+        private bool SetColliderLayer(in Entity entity, CRDTEntity sdkEntity, Collider collider, in PBMeshCollider sdkComponent)
         {
             ColliderLayer colliderLayer = sdkComponent.GetColliderLayer();
 
@@ -103,7 +104,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
 
             collider.enabled = enabled;
 
-            entityCollidersCache.Associate(collider, new ColliderEntityInfo(sdkEntity, colliderLayer));
+            entityCollidersCache.Associate(collider, new ColliderEntityInfo(World.Reference(entity), sdkEntity, colliderLayer));
 
             return enabled;
         }
@@ -111,7 +112,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
         /// <summary>
         ///     It is either called when there is no collider or collider was invalidated before (set to null)
         /// </summary>
-        private void Instantiate(CRDTEntity sdkEntity, ISetupCollider setupCollider, ref PrimitiveColliderComponent component, ref PBMeshCollider sdkComponent,
+        private void Instantiate(in Entity entity, CRDTEntity sdkEntity, ISetupCollider setupCollider, ref PrimitiveColliderComponent component, ref PBMeshCollider sdkComponent,
             ref TransformComponent transformComponent)
         {
             component.ColliderType = setupCollider.ColliderType;
@@ -119,7 +120,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
 
             var collider = (Collider)poolsRegistry.GetPool(setupCollider.ColliderType).Rent();
 
-            SetupCollider(sdkEntity, setupCollider, collider, in sdkComponent);
+            SetupCollider(entity, sdkEntity, setupCollider, collider, in sdkComponent);
 
             // Parent collider to the entity's transform
 

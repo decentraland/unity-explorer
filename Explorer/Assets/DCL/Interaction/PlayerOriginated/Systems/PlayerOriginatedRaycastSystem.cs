@@ -1,0 +1,78 @@
+﻿using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
+using CrdtEcsBridge.Physics;
+using DCL.CharacterCamera;
+using DCL.Interaction.PlayerOriginated.Components;
+using DCL.Interaction.Utility;
+using ECS.Abstract;
+using System.Runtime.CompilerServices;
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+namespace DCL.Interaction.PlayerOriginated.Systems
+{
+    /// <summary>
+    ///     <para>
+    ///         Raycasts from the player camera and prepares data that will be consumed by other systems
+    ///     </para>
+    ///     <para>
+    ///         Runs in the global world
+    ///     </para>
+    /// </summary>
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateAfter(typeof(CameraGroup))]
+    public partial class PlayerOriginatedRaycastSystem : BaseUnityLoopSystem
+    {
+        private readonly IEntityCollidersGlobalCache collidersGlobalCache;
+        private readonly float maxRaycastDistance;
+        private readonly PlayerInteractionEntity playerInteractionEntity;
+        private readonly InputAction pointInput;
+
+        internal PlayerOriginatedRaycastSystem(World world, InputAction pointInput,
+            IEntityCollidersGlobalCache collidersGlobalCache, PlayerInteractionEntity playerInteractionEntity,
+            float maxRaycastDistance) : base(world)
+        {
+            this.pointInput = pointInput;
+            this.collidersGlobalCache = collidersGlobalCache;
+            this.playerInteractionEntity = playerInteractionEntity;
+            this.maxRaycastDistance = maxRaycastDistance;
+        }
+
+        protected override void Update(float t)
+        {
+            RaycastFromCameraQuery(World);
+        }
+
+        [Query]
+        private void RaycastFromCamera(ref CameraComponent camera)
+        {
+            Ray ray = CreateRay(in camera);
+
+            // we are interested in one hit only
+
+            bool hasHit = Physics.Raycast(ray, out RaycastHit hitInfo, maxRaycastDistance, PhysicsLayers.PLAYER_ORIGIN_RAYCAST_MASK);
+            ref PlayerOriginRaycastResult raycastResult = ref playerInteractionEntity.PlayerOriginRaycastResult;
+
+            raycastResult.OriginRay = ray;
+
+            if (hasHit && collidersGlobalCache.TryGetEntity(hitInfo.collider, out GlobalColliderEntityInfo entityInfo))
+            {
+                raycastResult.UnityRaycastHit = hitInfo;
+                raycastResult.EntityInfo = entityInfo;
+            }
+            else
+            {
+                raycastResult.UnityRaycastHit = default(RaycastHit);
+                raycastResult.EntityInfo = null;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private Ray CreateRay(in CameraComponent cameraComponent) =>
+            cameraComponent.Camera.ScreenPointToRay(cameraComponent.CursorIsLocked
+                ? new Vector3(Screen.width / 2f, Screen.height / 2f, 0)
+                : pointInput.ReadValue<Vector2>());
+    }
+}

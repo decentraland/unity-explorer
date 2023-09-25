@@ -1,5 +1,6 @@
 using CRDT.Serializer;
 using CrdtEcsBridge.Engine;
+using DCL.Interaction.Utility;
 using DCL.PluginSystem.World.Dependencies;
 using SceneRunner;
 using SceneRunner.ECSWorld;
@@ -32,7 +33,8 @@ namespace Global
                     new SharedPoolsProvider(),
                     new CRDTSerializer(),
                     staticContainer.ComponentsContainer.SDKComponentsRegistry,
-                    sharedDependencies.EntityFactory
+                    sharedDependencies.EntityFactory,
+                    new EntityCollidersGlobalCache()
                 ),
             };
         }

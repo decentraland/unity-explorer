@@ -1,3 +1,4 @@
+using Arch.Core;
 using CRDT;
 using DCL.ECSComponents;
 
@@ -8,13 +9,15 @@ namespace DCL.Interaction.Utility
     /// </summary>
     public readonly struct ColliderEntityInfo
     {
-        public readonly CRDTEntity Entity;
+        public readonly EntityReference EntityReference;
+        public readonly CRDTEntity SDKEntity;
         public readonly ColliderLayer SDKLayer;
 
-        public ColliderEntityInfo(CRDTEntity entity, ColliderLayer sdkLayer)
+        public ColliderEntityInfo(EntityReference entityReference, CRDTEntity sdkEntity, ColliderLayer sdkLayer)
         {
-            Entity = entity;
+            SDKEntity = sdkEntity;
             SDKLayer = sdkLayer;
+            EntityReference = entityReference;
         }
     }
 }
