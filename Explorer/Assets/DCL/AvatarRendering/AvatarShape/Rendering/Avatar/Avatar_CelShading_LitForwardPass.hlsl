@@ -19,12 +19,6 @@ struct VertexInfo
 
 StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
 
-/*#define MyData1 unity_DynamicLightmapST.x
-#define MyData2 unity_DynamicLightmapST.y
-#define MyData3 unity_DynamicLightmapST.z
-#define MyData4 unity_DynamicLightmapST.w*/
-
-
 // keep this file in sync with LitGBufferPass.hlsl
 struct Attributes
 {
@@ -122,22 +116,13 @@ Varyings LitPassVertex(Attributes input)
     UNITY_TRANSFER_INSTANCE_ID(input, output);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-    /*VertexPositionInputs vertexInput = GetVertexPositionInputs(_GlobalAvatarBuffer[MyData1 + MyData2 + input.index].position.xyz);
-
-    // normalWS and tangentWS already normalize.
-    // this is required to avoid skewing the direction during interpolation
-    // also required for per-vertex lighting and SH evaluation
-    //TODO: Tangents
-    VertexNormalInputs normalInput = GetVertexNormalInputs(_GlobalAvatarBuffer[MyData1 + MyData2 + input.index].normal.xyz, input.tangentOS);*/
-
-    
     VertexPositionInputs vertexInput = GetVertexPositionInputs(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
 
     // normalWS and tangentWS already normalize.
     // this is required to avoid skewing the direction during interpolation
     // also required for per-vertex lighting and SH evaluation
     //TODO: Tangents
-    VertexNormalInputs normalInput = GetVertexNormalInputs(input.normalOS, input.tangentOS);
+    VertexNormalInputs normalInput = GetVertexNormalInputs(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz, input.tangentOS);
 
     half3 viewDirWS = GetWorldSpaceViewDir(vertexInput.positionWS);
     half3 vertexLight = VertexLighting(vertexInput.positionWS, normalInput.normalWS);

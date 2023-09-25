@@ -99,6 +99,12 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 female.AddWearable(wearable);
             }
 
+            int startXPosition = -208;
+            int startYPosition = -96;
+
+            var currentXCounter = 0;
+            var currentYCounter = 0;
+
             for (var i = 0; i < TOTAL_AVATARS_TO_INSTANTIATE; i++)
             {
                 AvatarRandomizerHelper currentRandomizer = i % 2 == 0 ? male : female;
@@ -113,8 +119,15 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
                 // Create a transform, normally it will be created either by JS Scene or by Comms
                 Transform transform = new GameObject($"RANDOM_AVATAR_{i}").transform;
-                transform.localPosition = new Vector3(Random.Range(-208, -208 + 20), 0, Random.Range(-96, -96 + 20));
+                transform.localPosition = new Vector3(startXPosition + currentXCounter, 0, startYPosition + currentYCounter);
                 var transformComp = new TransformComponent(transform);
+
+                if (currentXCounter == 20)
+                {
+                    currentXCounter = 0;
+                    currentYCounter++;
+                }
+                else { currentXCounter++; }
 
                 World.Create(avatarShape, transformComp);
             }

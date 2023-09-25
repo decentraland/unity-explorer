@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.ECSComponents;
@@ -123,6 +124,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             if (!avatarShapeComponent.WearablePromise.TryConsume(World, out StreamableLoadingResult<IWearable[]> wearablesResult)) return;
 
+            avatarShapeComponent.Clear();
+
             AvatarBase avatarBase = avatarShapeComponent.Base ?? avatarPoolRegistry.Get();
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
 
@@ -147,8 +150,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 if (resultWearable.IsBodyShape())
                     HideBodyParts(instantiateWearable);
             }
-
-            avatarShapeComponent.CombinedMeshGpuSkinningComponent = new SimpleComputeShaderSkinning();
 
             int newVertCount = avatarShapeComponent.CombinedMeshGpuSkinningComponent.Initialize(avatarShapeComponent.InstantiatedWearables, avatarShapeComponent.Base.AvatarSkinnedMeshRenderer.bones,
                 textureArrays, skinningShader, avatarMaterial, lastAvatarVertCount);
@@ -193,12 +194,18 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private GameObject InstantiateWearable(ref AvatarShapeComponent avatarShapeComponent, GameObject wearableToInstantiate, SkinnedMeshRenderer baseAvatar, Transform parentTransform)
         {
-            //TODO: Pooling and combining of wearables
+            //TODO: Pooling of wearables
             GameObject instantiatedWearable = Object.Instantiate(wearableToInstantiate, parentTransform);
             instantiatedWearable.transform.ResetLocalTRS();
 
             avatarShapeComponent.InstantiatedWearables.Add(instantiatedWearable);
             return instantiatedWearable;
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            vertexOutBuffer.Release();
         }
     }
 }
