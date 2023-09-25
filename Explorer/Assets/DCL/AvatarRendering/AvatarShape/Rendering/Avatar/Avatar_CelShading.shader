@@ -8,6 +8,9 @@ Shader "Custom/Avatar_CelShading"
         [HideInInspector] [PerRendererData] _BumpMapArr_ID ("BumpMap Array ID", Integer) = -1
         [HideInInspector] [PerRendererData] _EmissionMapArr_ID ("EmissionMap Array ID", Integer) = -1
         
+        [HideInInspector] [PerRendererData] _lastWearableVertCount ("Last wearable Vert Count", Integer) = -1
+        [HideInInspector] [PerRendererData] _lastAvatarVertCount ("Last avatar vert count", Integer) = -1
+        
         [HideInInspector] _BaseMapArr ("AlbedoArray", 2DArray) = "white" {}
         [HideInInspector] _AlphaTextureArr("Alpha Texture", 2DArray) = "white" {}
         [HideInInspector] _MetallicGlossMapArr("Metallic", 2DArray) = "white" {}
@@ -73,6 +76,7 @@ Shader "Custom/Avatar_CelShading"
 //        [HideInInspector][NoScaleOffset]unity_Lightmaps("unity_Lightmaps", 2DArray) = "" {}
 //        [HideInInspector][NoScaleOffset]unity_LightmapsInd("unity_LightmapsInd", 2DArray) = "" {}
         [HideInInspector][NoScaleOffset]unity_ShadowMasks("unity_ShadowMasks", 2DArray) = "" {}
+        
         
     }
 

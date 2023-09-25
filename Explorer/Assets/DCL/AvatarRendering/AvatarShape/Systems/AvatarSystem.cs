@@ -16,6 +16,7 @@ using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Transforms.Components;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -34,6 +35,16 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly Material avatarMaterial;
         private UnityEngine.ComputeShader skinningShader;
 
+        private readonly ComputeBuffer vertexOutBuffer;
+
+        private int lastAvatarVertCount;
+
+        public struct VertexInfo
+        {
+            public Vector3 position;
+            public Vector3 normal;
+        }
+
         public AvatarSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider,
             IComponentPool<AvatarBase> avatarPoolRegistry) : base(world)
         {
@@ -44,6 +55,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             this.textureArrays = new TextureArrayContainer();
             this.avatarMaterial = Resources.Load<Material>("Avatar_CelShading");
             this.skinningShader = Resources.Load<UnityEngine.ComputeShader>("Skinning");
+
+            //TODO: Looks like it needs to be released
+            vertexOutBuffer = new ComputeBuffer(500000, Marshal.SizeOf<VertexInfo>());
+            Shader.SetGlobalBuffer("_GlobalAvatarBuffer", vertexOutBuffer);
         }
 
         protected override void Update(float t)
@@ -125,6 +140,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             for (var i = 0; i < avatarShapeComponent.WearablePromise.LoadingIntention.Pointers.Count; i++)
             {
                 IWearable resultWearable = wearablesResult.Asset[i];
+
                 GameObject instantiateWearable = InstantiateWearable(ref avatarShapeComponent, resultWearable.AssetBundleData[avatarShapeComponent.BodyShape].Value.Asset.GameObject, avatarBase.AvatarSkinnedMeshRenderer, avatarTransform);
 
                 //TODO: Do a proper hiding algorithm
@@ -134,8 +150,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             avatarShapeComponent.CombinedMeshGpuSkinningComponent = new SimpleComputeShaderSkinning();
 
-            avatarShapeComponent.CombinedMeshGpuSkinningComponent.Initialize(avatarShapeComponent.InstantiatedWearables, avatarShapeComponent.Base.AvatarSkinnedMeshRenderer.bones,
-                textureArrays, skinningShader, avatarMaterial);
+            int newVertCount = avatarShapeComponent.CombinedMeshGpuSkinningComponent.Initialize(avatarShapeComponent.InstantiatedWearables, avatarShapeComponent.Base.AvatarSkinnedMeshRenderer.bones,
+                textureArrays, skinningShader, avatarMaterial, lastAvatarVertCount);
+
+            lastAvatarVertCount += newVertCount;
 
             ListPool<string>.Release(avatarShapeComponent.WearablePromise.LoadingIntention.Pointers);
             ArrayPool<IWearable>.Shared.Return(avatarShapeComponent.WearablePromise.LoadingIntention.Results);
