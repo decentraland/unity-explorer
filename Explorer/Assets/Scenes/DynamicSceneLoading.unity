@@ -279,7 +279,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c59f227706ae0074d89427edff9fb804, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  amoutOfRandomAvatars: 50
+  amoutOfRandomAvatars: 1000
 --- !u!1 &446244952
 GameObject:
   m_ObjectHideFlags: 0

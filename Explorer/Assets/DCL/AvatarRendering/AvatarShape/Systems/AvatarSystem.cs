@@ -58,7 +58,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             this.skinningShader = Resources.Load<UnityEngine.ComputeShader>("Skinning");
 
             //TODO: Looks like it needs to be released
-            vertexOutBuffer = new ComputeBuffer(500000, Marshal.SizeOf<VertexInfo>());
+            vertexOutBuffer = new ComputeBuffer(5000000, Marshal.SizeOf<VertexInfo>());
             Shader.SetGlobalBuffer("_GlobalAvatarBuffer", vertexOutBuffer);
         }
 
