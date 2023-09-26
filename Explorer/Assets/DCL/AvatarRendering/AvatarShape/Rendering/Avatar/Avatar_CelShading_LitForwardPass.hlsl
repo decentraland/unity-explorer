@@ -15,6 +15,7 @@ struct VertexInfo
 {
     float3 position;
     float3 normal;
+    float4 tangent;
 };
 
 StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
@@ -122,7 +123,7 @@ Varyings LitPassVertex(Attributes input)
     // this is required to avoid skewing the direction during interpolation
     // also required for per-vertex lighting and SH evaluation
     //TODO: Tangents
-    VertexNormalInputs normalInput = GetVertexNormalInputs(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz, input.tangentOS);
+    VertexNormalInputs normalInput = GetVertexNormalInputs(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz, _GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].tangent.xyzw);
 
     half3 viewDirWS = GetWorldSpaceViewDir(vertexInput.positionWS);
     half3 vertexLight = VertexLighting(vertexInput.positionWS, normalInput.normalWS);

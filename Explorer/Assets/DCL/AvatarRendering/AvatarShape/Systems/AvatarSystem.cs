@@ -44,6 +44,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             public Vector3 position;
             public Vector3 normal;
+            public Vector4 tangent;
+
         }
 
         public AvatarSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider,

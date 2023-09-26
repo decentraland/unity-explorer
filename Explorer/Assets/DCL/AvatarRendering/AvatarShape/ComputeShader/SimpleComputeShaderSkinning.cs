@@ -47,8 +47,13 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         private void SetupComputeShader(List<GameObject> gameObjects, Transform[] bones, UnityEngine.ComputeShader skinningShader, int lastAvatarVertCount)
         {
             //Setting up pool arrays
+            //var testArray = new NativeArray<float3>(1000, Allocator.Persistent);
+            //NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<float3>()
+
+
             var totalVertsIn = new NativeArray<Vector3>(vertCount, Allocator.Temp);
             var totalNormalsIn = new NativeArray<Vector3>(vertCount, Allocator.Temp);
+            var totalTangentsIn = new NativeArray<Vector4>(vertCount, Allocator.Temp);
             var totalSkinIn = new NativeArray<BoneWeight>(vertCount, Allocator.Temp);
             var bindPosesIndexList = new NativeArray<int>(vertCount, Allocator.Temp);
             var bindPosesMatrix = new NativeArray<Matrix4x4>(skinnedMeshRendererBoneCount, Allocator.Temp);
@@ -64,21 +69,23 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 {
                     int meshVertexCount = skinnedMeshRenderer.sharedMesh.vertexCount;
                     ResetTransforms(skinnedMeshRenderer, rootTransform);
-                    FillMeshArray(skinnedMeshRenderer, bindPosesMatrix, bindPosesIndexList, totalVertsIn, totalNormalsIn, totalSkinIn, meshVertexCount, vertCounter, skinnedMeshCounter);
+                    FillMeshArray(skinnedMeshRenderer, bindPosesMatrix, bindPosesIndexList, totalVertsIn, totalNormalsIn, totalTangentsIn, totalSkinIn, meshVertexCount, vertCounter, skinnedMeshCounter);
                     vertCounter += meshVertexCount;
                     skinnedMeshCounter++;
                 }
             }
 
-            SetupBuffers(bones, totalVertsIn, totalNormalsIn, totalSkinIn, bindPosesMatrix, bindPosesIndexList, skinningShader, lastAvatarVertCount);
+            SetupBuffers(bones, totalVertsIn, totalNormalsIn, totalTangentsIn, totalSkinIn, bindPosesMatrix, bindPosesIndexList, skinningShader, lastAvatarVertCount);
         }
 
-        private void SetupBuffers(Transform[] bones, NativeArray<Vector3> vertsIn, NativeArray<Vector3> normsIn, NativeArray<BoneWeight> totalSkinIn,
+        private void SetupBuffers(Transform[] bones, NativeArray<Vector3> vertsIn, NativeArray<Vector3> normsIn, NativeArray<Vector4> tangIn, NativeArray<BoneWeight> totalSkinIn,
             NativeArray<Matrix4x4> bindPosesMatrix, NativeArray<int> bindPosesIndexList, UnityEngine.ComputeShader skinningShader, int lastAvatarVertCount)
         {
             //TODO: Find out why adding ComputeBufferType.Constant doesnt work in Windows, but it does in Mac
             var vertexIn = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(Vector3)));
             vertexIn.SetData(vertsIn);
+            var tangentsIn = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(Vector4)));
+            tangentsIn.SetData(tangIn);
             var normalsIn = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(Vector3)));
             normalsIn.SetData(normsIn);
             var sourceSkin = new ComputeBuffer(vertCount, Marshal.SizeOf(typeof(BoneWeight)));
@@ -95,6 +102,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             cs.SetInt(ComputeShaderHelpers.LAST_AVATAR_VERT_COUNT_ID, lastAvatarVertCount);
             cs.SetBuffer(kernel, ComputeShaderHelpers.VERTS_IN_ID, vertexIn);
             cs.SetBuffer(kernel, ComputeShaderHelpers.NORMALS_IN_ID, normalsIn);
+            cs.SetBuffer(kernel, ComputeShaderHelpers.TANGENTS_IN_ID, tangentsIn);
             cs.SetBuffer(kernel, ComputeShaderHelpers.SOURCE_SKIN_ID, sourceSkin);
             cs.SetBuffer(kernel, ComputeShaderHelpers.BIND_POSE_ID, bindPoses);
             cs.SetBuffer(kernel, ComputeShaderHelpers.BIND_POSES_INDEX_ID, bindPosesIndex);
@@ -102,16 +110,19 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         }
 
         private void FillMeshArray(SkinnedMeshRenderer skinnedMeshRenderer, NativeArray<Matrix4x4> bindPosesMatrix,
-            NativeArray<int> bindPosesIndexList, NativeArray<Vector3> totalVertsIn, NativeArray<Vector3> totalNormalsIn, NativeArray<BoneWeight> totalSkinIn,
+            NativeArray<int> bindPosesIndexList, NativeArray<Vector3> totalVertsIn, NativeArray<Vector3> totalNormalsIn, NativeArray<Vector4> totalTangentsIn, NativeArray<BoneWeight> totalSkinIn,
             int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter)
         {
             Mesh mesh = skinnedMeshRenderer.sharedMesh;
 
-            //TODO: Is it possible to remove this allocation?
+            mesh.RecalculateTangents();
+
             NativeArray<Matrix4x4>.Copy(mesh.bindposes, 0, bindPosesMatrix, ComputeShaderHelpers.BONE_COUNT * skinnedMeshCounter, ComputeShaderHelpers.BONE_COUNT);
             NativeArray<BoneWeight>.Copy(mesh.boneWeights, 0, totalSkinIn, vertexCounter, currentMeshVertexCount);
             NativeArray<Vector3>.Copy(mesh.vertices, 0, totalVertsIn, vertexCounter, currentMeshVertexCount);
             NativeArray<Vector3>.Copy(mesh.normals, 0, totalNormalsIn, vertexCounter, currentMeshVertexCount);
+            NativeArray<Vector4>.Copy(mesh.tangents, 0, totalTangentsIn, vertexCounter, currentMeshVertexCount);
+
 
             //Setup vertex index for current wearable
             for (var i = 0; i < mesh.vertexCount; i++)
