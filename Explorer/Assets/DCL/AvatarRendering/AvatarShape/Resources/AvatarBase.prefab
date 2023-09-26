@@ -460,6 +460,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2198816967188641954}
   - component: {fileID: 354722304789800856}
+  - component: {fileID: 6301632583178881094}
   m_Layer: 0
   m_Name: AvatarBase
   m_TagString: Untagged
@@ -495,10 +496,62 @@ Animation:
   m_Animation: {fileID: 7400000, guid: 9776466c722cb644c914ee056b28d232, type: 2}
   m_Animations:
   - {fileID: 7400000, guid: 9776466c722cb644c914ee056b28d232, type: 2}
+  - {fileID: 7400000, guid: 242978181a79c04499b53a327d0721e4, type: 2}
+  - {fileID: 7400000, guid: 028a0db9f006b3d43872a8a775132f50, type: 2}
+  - {fileID: 7400000, guid: bf35d7b7a5396994f8af5e3110294a3e, type: 2}
+  - {fileID: 7400000, guid: 8edef29e96f4dfd44852f6ea12dc727f, type: 2}
+  - {fileID: 7400000, guid: 52fd82ee48d14c74cbdc8758ab21d7da, type: 2}
+  - {fileID: 7400000, guid: 2fad8f54ee263074eb6b24d6cbe2d6bc, type: 2}
+  - {fileID: 7400000, guid: 54d47e5c57f2d5e4bafb1d14f2eadd74, type: 2}
+  - {fileID: 7400000, guid: a3a9b07623dacb644b8dd43e7292bfac, type: 2}
+  - {fileID: 7400000, guid: a8e6862b3dd9c864c9360a781d78246d, type: 2}
+  - {fileID: 7400000, guid: ac4f9421465fcd146aff2e3502ad9bb8, type: 2}
+  - {fileID: 7400000, guid: 103ce3a5278d75741984ce1d44975221, type: 2}
+  - {fileID: 7400000, guid: 6f26ca7c20d023847a859a02ebb33a8a, type: 2}
+  - {fileID: 7400000, guid: acff13b48dfc5494d9afc6bce6b2b151, type: 2}
+  - {fileID: 7400000, guid: c9af9a4f116c2aa41ace6342efaaf24b, type: 2}
+  - {fileID: 7400000, guid: 4eb34aa512b23e54786151bcfd16f8e0, type: 2}
+  - {fileID: 7400000, guid: 957cfa48d907df244a7a345f4e5f0ecf, type: 2}
+  - {fileID: 7400000, guid: e9bedd11f5f0ed84094690cf96d59809, type: 2}
+  - {fileID: 7400000, guid: 90f5a2178143900459aee8f28efa300f, type: 2}
+  - {fileID: 7400000, guid: 81bc4420c38ddd94bb8597d5051f2fa1, type: 2}
   m_WrapMode: 0
-  m_PlayAutomatically: 1
+  m_PlayAutomatically: 0
   m_AnimatePhysics: 0
   m_CullingType: 0
+--- !u!114 &6301632583178881094
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2561918839770535189}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9017fc8e42f432844b5cc0d1447a1fcd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  AnimationClips:
+  - {fileID: 7400000, guid: 242978181a79c04499b53a327d0721e4, type: 2}
+  - {fileID: 7400000, guid: 028a0db9f006b3d43872a8a775132f50, type: 2}
+  - {fileID: 7400000, guid: bf35d7b7a5396994f8af5e3110294a3e, type: 2}
+  - {fileID: 7400000, guid: 8edef29e96f4dfd44852f6ea12dc727f, type: 2}
+  - {fileID: 7400000, guid: 52fd82ee48d14c74cbdc8758ab21d7da, type: 2}
+  - {fileID: 7400000, guid: 2fad8f54ee263074eb6b24d6cbe2d6bc, type: 2}
+  - {fileID: 7400000, guid: 54d47e5c57f2d5e4bafb1d14f2eadd74, type: 2}
+  - {fileID: 7400000, guid: a3a9b07623dacb644b8dd43e7292bfac, type: 2}
+  - {fileID: 7400000, guid: 9776466c722cb644c914ee056b28d232, type: 2}
+  - {fileID: 7400000, guid: a8e6862b3dd9c864c9360a781d78246d, type: 2}
+  - {fileID: 7400000, guid: ac4f9421465fcd146aff2e3502ad9bb8, type: 2}
+  - {fileID: 7400000, guid: 103ce3a5278d75741984ce1d44975221, type: 2}
+  - {fileID: 7400000, guid: 6f26ca7c20d023847a859a02ebb33a8a, type: 2}
+  - {fileID: 7400000, guid: acff13b48dfc5494d9afc6bce6b2b151, type: 2}
+  - {fileID: 7400000, guid: c9af9a4f116c2aa41ace6342efaaf24b, type: 2}
+  - {fileID: 7400000, guid: 4eb34aa512b23e54786151bcfd16f8e0, type: 2}
+  - {fileID: 7400000, guid: 957cfa48d907df244a7a345f4e5f0ecf, type: 2}
+  - {fileID: 7400000, guid: e9bedd11f5f0ed84094690cf96d59809, type: 2}
+  - {fileID: 7400000, guid: 90f5a2178143900459aee8f28efa300f, type: 2}
+  - {fileID: 7400000, guid: 81bc4420c38ddd94bb8597d5051f2fa1, type: 2}
 --- !u!1 &2660097177476898865
 GameObject:
   m_ObjectHideFlags: 0
