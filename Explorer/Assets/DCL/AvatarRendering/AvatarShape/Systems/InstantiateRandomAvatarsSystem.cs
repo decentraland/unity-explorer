@@ -109,15 +109,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             {
                 AvatarRandomizerHelper currentRandomizer = i % 2 == 0 ? male : female;
 
-                var avatarShape = new PBAvatarShape
-                {
-                    BodyShape = currentRandomizer.BodyShape,
-                };
+                var wearables = new List<string>();
 
                 foreach (string randomAvatarWearable in currentRandomizer.GetRandomAvatarWearables())
-                    avatarShape.Wearables.Add(randomAvatarWearable);
-
-
+                    wearables.Add(randomAvatarWearable);
 
                 if (currentXCounter == 20)
                 {
@@ -132,6 +127,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     Transform transform = new GameObject($"RANDOM_AVATAR_{i}").transform;
                     transform.localPosition = new Vector3(startXPosition + currentXCounter, 0, startYPosition + currentYCounter);
                     var transformComp = new TransformComponent(transform);
+
+                    var avatarShape = new PBAvatarShape
+                    {
+                        BodyShape = currentRandomizer.BodyShape,
+                        Name = j.ToString(),
+                        Wearables = { wearables.ToArray() },
+                    };
                     World.Create(avatarShape, transformComp);
                     currentXCounter++;
                 }

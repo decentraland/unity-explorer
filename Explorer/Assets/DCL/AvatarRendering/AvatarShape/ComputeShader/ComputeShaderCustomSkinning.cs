@@ -1,17 +1,15 @@
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
-using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using UnityEngine;
-using Utility;
 using Object = UnityEngine.Object;
 
 namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
-    public class SimpleComputeShaderSkinning : IDisposable
+    public class ComputeShaderCustomSkinning : CustomSkinning
     {
         private int skinnedMeshRendererBoneCount;
         private int kernel;
@@ -22,31 +20,28 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         private ComputeBuffer mBones;
 
         private readonly List<UsedTextureArraySlot> usedTextureArraySlots;
-        private TextureArrayContainer textureArrayContainer;
 
         private readonly NativeArray<byte> preallocatedArray;
 
-        private static bool setUpCompute = true;
 
-        public SimpleComputeShaderSkinning()
+        public ComputeShaderCustomSkinning()
         {
             usedTextureArraySlots = new List<UsedTextureArraySlot>();
             preallocatedArray = new NativeArray<byte>(100000 * 16 * 3, Allocator.Persistent);
         }
 
-        public void ComputeSkinning(NativeArray<float4x4> bonesResult)
+        public override void ComputeSkinning(NativeArray<float4x4> bonesResult)
         {
             mBones.SetData(bonesResult);
             cs.Dispatch(kernel, (vertCount / 64) + 1, 1, 1);
         }
 
-        public int Initialize(List<GameObject> gameObjects, Transform[] bones, TextureArrayContainer textureArrayContainer,
+        public override int Initialize(List<GameObject> gameObjects, Transform[] bones, TextureArrayContainer textureArrayContainer,
             UnityEngine.ComputeShader skinningShader, Material avatarMaterial, int lastAvatarVertCount, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer)
         {
             SetupCounters(gameObjects);
             SetupComputeShader(gameObjects, bones, skinningShader, lastAvatarVertCount);
             SetupMeshRenderer(gameObjects, textureArrayContainer, avatarMaterial, lastAvatarVertCount, baseAvatarSkinnedMeshRenderer);
-            setUpCompute = false;
             return vertCount;
         }
 
@@ -127,11 +122,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         {
             Mesh mesh = skinnedMeshRenderer.sharedMesh;
 
-            if (setUpCompute)
-            {
-                mesh.RecalculateTangents();
-                //mesh.RecalculateNormals();
-            }
+            mesh.RecalculateTangents();
+            //mesh.RecalculateNormals();
 
             NativeArray<Matrix4x4>.Copy(mesh.bindposes, 0, bindPosesMatrix, ComputeShaderHelpers.BONE_COUNT * skinnedMeshCounter, ComputeShaderHelpers.BONE_COUNT);
             NativeArray<BoneWeight>.Copy(mesh.boneWeights, 0, totalSkinIn, vertexCounter, currentMeshVertexCount);
@@ -139,24 +131,9 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             NativeArray<Vector3>.Copy(mesh.normals, 0, totalNormalsIn, vertexCounter, currentMeshVertexCount);
             NativeArray<Vector4>.Copy(mesh.tangents, 0, totalTangentsIn, vertexCounter, currentMeshVertexCount);
 
-
             //Setup vertex index for current wearable
             for (var i = 0; i < mesh.vertexCount; i++)
                 bindPosesIndexList[vertexCounter + i] = ComputeShaderHelpers.BONE_COUNT * skinnedMeshCounter;
-        }
-
-        private static void ResetTransforms(SkinnedMeshRenderer skinnedMeshRenderer, Transform rootTransform)
-        {
-            // Make sure that Transform is uniform with the root
-            // Non-uniform does not make sense as skin relatively to the base avatar
-            // so we just waste calculations on transformation matrices
-            Transform currentTransform = skinnedMeshRenderer.transform;
-
-            while (currentTransform != rootTransform)
-            {
-                currentTransform.ResetLocalTRS();
-                currentTransform = currentTransform.parent;
-            }
         }
 
         private void SetupCounters(List<GameObject> gameObjects)
@@ -189,27 +166,17 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         private Renderer SetupMesh(SkinnedMeshRenderer skin, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer)
         {
-            if (setUpCompute)
-            {
-                GameObject go = skin.gameObject;
-                MeshFilter filter = go.AddComponent<MeshFilter>();
-                MeshRenderer meshRenderer = go.AddComponent<MeshRenderer>();
-                filter.mesh = skin.sharedMesh;
-                meshRenderer.material = skin.material;
-                Object.Destroy(skin);
-                return meshRenderer;
-            }
-
-            skin.bones = baseAvatarSkinnedMeshRenderer.bones;
-            skin.rootBone = baseAvatarSkinnedMeshRenderer.rootBone;
-            return skin;
+            GameObject go = skin.gameObject;
+            MeshFilter filter = go.AddComponent<MeshFilter>();
+            MeshRenderer meshRenderer = go.AddComponent<MeshRenderer>();
+            filter.mesh = skin.sharedMesh;
+            meshRenderer.material = skin.material;
+            Object.Destroy(skin);
+            return meshRenderer;
         }
 
-        private void SetupMaterial(Renderer meshRenderer, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, Material celShadingMaterial, int lastAvatarVertCount)
+        protected override void SetupMaterial(Renderer meshRenderer, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, Material celShadingMaterial, int lastAvatarVertCount)
         {
-            if (this.textureArrayContainer == null)
-                this.textureArrayContainer = textureArrayContainer;
-
             var vertOutMaterial = new Material(celShadingMaterial);
 
             var albedoTexture = (Texture2D)meshRenderer.material.mainTexture;
@@ -228,21 +195,15 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
             //vertOutMaterial.SetColor(ComputeShaderHelpers._BaseColour_ShaderID, Color.red);
             meshRenderer.material = vertOutMaterial;
-
-            if (setUpCompute)
-            {
-                vertOutMaterial.SetInteger("_useCompute", 0);
-                vertOutMaterial.SetInteger(ComputeShaderHelpers.LAST_AVATAR_VERT_COUNT_ID, lastWearableVertCount);
-                vertOutMaterial.SetInteger(ComputeShaderHelpers.LAST_WEARABLE_VERT_COUNT_ID, lastAvatarVertCount);
-            }
-            else
-                vertOutMaterial.SetInteger("_useCompute", 1);
+            vertOutMaterial.SetInteger("_useCompute", 1);
+            vertOutMaterial.SetInteger(ComputeShaderHelpers.LAST_AVATAR_VERT_COUNT_ID, lastWearableVertCount);
+            vertOutMaterial.SetInteger(ComputeShaderHelpers.LAST_WEARABLE_VERT_COUNT_ID, lastAvatarVertCount);
         }
 
-        public void Dispose()
+        public new void Dispose()
         {
-            foreach (UsedTextureArraySlot usedTextureArraySlot in usedTextureArraySlots)
-                textureArrayContainer.FreeTexture(usedTextureArraySlot);
+            //foreach (UsedTextureArraySlot usedTextureArraySlot in usedTextureArraySlots)
+            //    textureArrayContainer.FreeTexture(usedTextureArraySlot);
 
             usedTextureArraySlots.Clear();
         }

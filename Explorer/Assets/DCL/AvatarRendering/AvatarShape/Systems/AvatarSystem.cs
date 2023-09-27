@@ -79,7 +79,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             if (avatarShapeComponent.IsDirty)
                 return;
 
-            avatarShapeComponent.CombinedMeshGpuSkinningComponent.ComputeSkinning(avatarShapeComponent.CompleteBoneMatrixCalculations());
+            avatarShapeComponent.skinningMethod.ComputeSkinning(avatarShapeComponent.CompleteBoneMatrixCalculations());
         }
 
         [Query]
@@ -88,7 +88,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             Promise wearablePromise = CreateWearablePromise(pbAvatarShape, partition);
             pbAvatarShape.IsDirty = false;
-            World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Id, pbAvatarShape, wearablePromise));
+            World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Name, pbAvatarShape.Id, pbAvatarShape, wearablePromise));
         }
 
         private Promise CreateWearablePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition)
@@ -153,7 +153,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     HideBodyParts(instantiateWearable);
             }
 
-            int newVertCount = avatarShapeComponent.CombinedMeshGpuSkinningComponent.Initialize(avatarShapeComponent.InstantiatedWearables, avatarShapeComponent.Base.AvatarSkinnedMeshRenderer.bones,
+            int newVertCount = avatarShapeComponent.skinningMethod.Initialize(avatarShapeComponent.InstantiatedWearables, avatarShapeComponent.Base.AvatarSkinnedMeshRenderer.bones,
                 textureArrays, skinningShader, avatarMaterial, lastAvatarVertCount, avatarBase.AvatarSkinnedMeshRenderer);
 
             lastAvatarVertCount += newVertCount;
