@@ -12,7 +12,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     {
         public abstract void ComputeSkinning(NativeArray<float4x4> bonesResult);
 
-        public abstract int Initialize(List<GameObject> gameObjects, Transform[] bones, TextureArrayContainer textureArrayContainer,
+        public abstract int Initialize(List<GameObject> gameObjects, TextureArrayContainer textureArrayContainer,
             UnityEngine.ComputeShader skinningShader, Material avatarMaterial, int lastAvatarVertCount, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer);
 
         protected abstract void SetupMaterial(Renderer meshRenderer, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, Material celShadingMaterial, int lastAvatarVertCount);

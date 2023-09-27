@@ -1,5 +1,4 @@
 ﻿using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
-using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -14,7 +13,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         }
 
-        public override int Initialize(List<GameObject> gameObjects, Transform[] bones, TextureArrayContainer textureArrayContainer, UnityEngine.ComputeShader skinningShader, Material avatarMaterial,
+        public override int Initialize(List<GameObject> gameObjects, TextureArrayContainer textureArrayContainer, UnityEngine.ComputeShader skinningShader, Material avatarMaterial,
             int lastAvatarVertCount, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer)
         {
             foreach (GameObject gameObject in gameObjects)

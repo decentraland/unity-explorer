@@ -38,7 +38,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             job = default(BoneMatrixCalculationJob);
             handle = default(JobHandle);
             if(name == "0")
-                skinningMethod = new ComputeShaderCustomSkinning();
+                skinningMethod = new ComputeShaderSkinning();
             else
                 skinningMethod = new UnityCustomSkinning();
         }

@@ -153,7 +153,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     HideBodyParts(instantiateWearable);
             }
 
-            int newVertCount = avatarShapeComponent.skinningMethod.Initialize(avatarShapeComponent.InstantiatedWearables, avatarShapeComponent.Base.AvatarSkinnedMeshRenderer.bones,
+            int newVertCount = avatarShapeComponent.skinningMethod.Initialize(avatarShapeComponent.InstantiatedWearables,
                 textureArrays, skinningShader, avatarMaterial, lastAvatarVertCount, avatarBase.AvatarSkinnedMeshRenderer);
 
             lastAvatarVertCount += newVertCount;
