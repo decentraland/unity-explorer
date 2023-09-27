@@ -9,10 +9,8 @@ public class RandomAnimationPlayer : MonoBehaviour
     {
         // Get the animator component
         animator = GetComponent<Animator>();
-
         // Get all available clips
         clips = animator.runtimeAnimatorController.animationClips;
-
         animator.Play(clips[Random.Range(0, clips.Length)].name);
     }
 

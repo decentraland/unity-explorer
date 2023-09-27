@@ -154,7 +154,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             }
 
             int newVertCount = avatarShapeComponent.CombinedMeshGpuSkinningComponent.Initialize(avatarShapeComponent.InstantiatedWearables, avatarShapeComponent.Base.AvatarSkinnedMeshRenderer.bones,
-                textureArrays, skinningShader, avatarMaterial, lastAvatarVertCount);
+                textureArrays, skinningShader, avatarMaterial, lastAvatarVertCount, avatarBase.AvatarSkinnedMeshRenderer);
 
             lastAvatarVertCount += newVertCount;
 

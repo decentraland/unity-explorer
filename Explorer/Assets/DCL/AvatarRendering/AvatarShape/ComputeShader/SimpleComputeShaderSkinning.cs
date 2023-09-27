@@ -3,11 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using UnityEngine;
 using Utility;
 using Object = UnityEngine.Object;
-using Random = UnityEngine.Random;
 
 namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
@@ -24,9 +24,14 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         private readonly List<UsedTextureArraySlot> usedTextureArraySlots;
         private TextureArrayContainer textureArrayContainer;
 
+        private readonly NativeArray<byte> preallocatedArray;
+
+        private static bool setUpCompute = true;
+
         public SimpleComputeShaderSkinning()
         {
             usedTextureArraySlots = new List<UsedTextureArraySlot>();
+            preallocatedArray = new NativeArray<byte>(100000 * 16 * 3, Allocator.Persistent);
         }
 
         public void ComputeSkinning(NativeArray<float4x4> bonesResult)
@@ -36,27 +41,34 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         }
 
         public int Initialize(List<GameObject> gameObjects, Transform[] bones, TextureArrayContainer textureArrayContainer,
-            UnityEngine.ComputeShader skinningShader, Material avatarMaterial, int lastAvatarVertCount)
+            UnityEngine.ComputeShader skinningShader, Material avatarMaterial, int lastAvatarVertCount, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer)
         {
             SetupCounters(gameObjects);
             SetupComputeShader(gameObjects, bones, skinningShader, lastAvatarVertCount);
-            SetupMeshRenderer(gameObjects, textureArrayContainer, avatarMaterial, lastAvatarVertCount);
+            SetupMeshRenderer(gameObjects, textureArrayContainer, avatarMaterial, lastAvatarVertCount, baseAvatarSkinnedMeshRenderer);
+            setUpCompute = false;
             return vertCount;
+        }
+
+        private unsafe NativeArray<T> SliceNativeArray<T>(int start, int size) where T: struct
+        {
+            int marshalSize = Marshal.SizeOf<T>();
+            NativeArray<T> newArray = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<T>(preallocatedArray.Slice(start * marshalSize, (start + size) * marshalSize).GetUnsafePtr(), size, Allocator.Temp);
+            NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref newArray, AtomicSafetyHandle.Create());
+            return newArray;
         }
 
         private void SetupComputeShader(List<GameObject> gameObjects, Transform[] bones, UnityEngine.ComputeShader skinningShader, int lastAvatarVertCount)
         {
             //Setting up pool arrays
-            //var testArray = new NativeArray<float3>(1000, Allocator.Persistent);
-            //NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<float3>()
+            NativeArray<Vector3> totalVertsIn = SliceNativeArray<Vector3>(0, vertCount);
+            NativeArray<Vector3> totalNormalsIn = SliceNativeArray<Vector3>(vertCount, vertCount);
+            NativeArray<Vector4> totalTangentsIn = SliceNativeArray<Vector4>(vertCount * 2, vertCount);
+            NativeArray<BoneWeight> totalSkinIn = SliceNativeArray<BoneWeight>(vertCount * 4, vertCount);
 
-
-            var totalVertsIn = new NativeArray<Vector3>(vertCount, Allocator.Temp);
-            var totalNormalsIn = new NativeArray<Vector3>(vertCount, Allocator.Temp);
-            var totalTangentsIn = new NativeArray<Vector4>(vertCount, Allocator.Temp);
-            var totalSkinIn = new NativeArray<BoneWeight>(vertCount, Allocator.Temp);
+            //var bindPosesIndexList = SliceNativeArray<int>(vertCount * 5, vertCount);
             var bindPosesIndexList = new NativeArray<int>(vertCount, Allocator.Temp);
-            var bindPosesMatrix = new NativeArray<Matrix4x4>(skinnedMeshRendererBoneCount, Allocator.Temp);
+            NativeArray<Matrix4x4> bindPosesMatrix = SliceNativeArray<Matrix4x4>(vertCount * 6, skinnedMeshRendererBoneCount);
 
             var vertCounter = 0;
             var skinnedMeshCounter = 0;
@@ -115,7 +127,12 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         {
             Mesh mesh = skinnedMeshRenderer.sharedMesh;
 
-            mesh.RecalculateTangents();
+            if (setUpCompute)
+            {
+                mesh.RecalculateTangents();
+
+                //mesh.RecalculateNormals();
+            }
 
             NativeArray<Matrix4x4>.Copy(mesh.bindposes, 0, bindPosesMatrix, ComputeShaderHelpers.BONE_COUNT * skinnedMeshCounter, ComputeShaderHelpers.BONE_COUNT);
             NativeArray<BoneWeight>.Copy(mesh.boneWeights, 0, totalSkinIn, vertexCounter, currentMeshVertexCount);
@@ -155,7 +172,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             skinnedMeshRendererBoneCount = skinnedMeshRendererCount * ComputeShaderHelpers.BONE_COUNT;
         }
 
-        private void SetupMeshRenderer(List<GameObject> gameObjects, TextureArrayContainer textureArrayContainer, Material avatarMaterial, int lastAvatarVertCount)
+        private void SetupMeshRenderer(List<GameObject> gameObjects, TextureArrayContainer textureArrayContainer, Material avatarMaterial, int lastAvatarVertCount, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer)
         {
             var auxVertCounter = 0;
 
@@ -164,25 +181,32 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 foreach (SkinnedMeshRenderer skinnedMeshRenderer in gameObject.GetComponentsInChildren<SkinnedMeshRenderer>())
                 {
                     int currentVertexCount = skinnedMeshRenderer.sharedMesh.vertexCount;
-                    MeshRenderer renderer = SetupMesh(skinnedMeshRenderer);
+                    Renderer renderer = SetupMesh(skinnedMeshRenderer, baseAvatarSkinnedMeshRenderer);
                     SetupMaterial(renderer, auxVertCounter, textureArrayContainer, avatarMaterial, lastAvatarVertCount);
                     auxVertCounter += currentVertexCount;
                 }
             }
         }
 
-        private MeshRenderer SetupMesh(SkinnedMeshRenderer skin)
+        private Renderer SetupMesh(SkinnedMeshRenderer skin, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer)
         {
-            GameObject go = skin.gameObject;
-            MeshFilter filter = go.AddComponent<MeshFilter>();
-            MeshRenderer meshRenderer = go.AddComponent<MeshRenderer>();
-            filter.mesh = skin.sharedMesh;
-            meshRenderer.material = skin.material;
-            Object.Destroy(skin);
-            return meshRenderer;
+            if (setUpCompute)
+            {
+                GameObject go = skin.gameObject;
+                MeshFilter filter = go.AddComponent<MeshFilter>();
+                MeshRenderer meshRenderer = go.AddComponent<MeshRenderer>();
+                filter.mesh = skin.sharedMesh;
+                meshRenderer.material = skin.material;
+                Object.Destroy(skin);
+                return meshRenderer;
+            }
+
+            skin.bones = baseAvatarSkinnedMeshRenderer.bones;
+            skin.rootBone = baseAvatarSkinnedMeshRenderer.rootBone;
+            return skin;
         }
 
-        private void SetupMaterial(MeshRenderer meshRenderer, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, Material celShadingMaterial, int lastAvatarVertCount)
+        private void SetupMaterial(Renderer meshRenderer, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, Material celShadingMaterial, int lastAvatarVertCount)
         {
             if (this.textureArrayContainer == null)
                 this.textureArrayContainer = textureArrayContainer;
@@ -203,10 +227,17 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                     vertOutMaterial.EnableKeyword(keyword);
             }
 
-            vertOutMaterial.SetInteger(ComputeShaderHelpers.LAST_AVATAR_VERT_COUNT_ID, lastWearableVertCount);
-            vertOutMaterial.SetInteger(ComputeShaderHelpers.LAST_WEARABLE_VERT_COUNT_ID, lastAvatarVertCount);
-            vertOutMaterial.SetColor(ComputeShaderHelpers._BaseColour_ShaderID, Random.ColorHSV());
+            vertOutMaterial.SetColor(ComputeShaderHelpers._BaseColour_ShaderID, Color.red);
             meshRenderer.material = vertOutMaterial;
+
+            if (setUpCompute)
+            {
+                vertOutMaterial.SetInteger("_useCompute", 0);
+                vertOutMaterial.SetInteger(ComputeShaderHelpers.LAST_AVATAR_VERT_COUNT_ID, lastWearableVertCount);
+                vertOutMaterial.SetInteger(ComputeShaderHelpers.LAST_WEARABLE_VERT_COUNT_ID, lastAvatarVertCount);
+            }
+            else
+                vertOutMaterial.SetInteger("_useCompute", 1);
         }
 
         public void Dispose()

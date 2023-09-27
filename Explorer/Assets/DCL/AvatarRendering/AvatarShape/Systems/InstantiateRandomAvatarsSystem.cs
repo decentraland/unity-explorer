@@ -117,10 +117,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 foreach (string randomAvatarWearable in currentRandomizer.GetRandomAvatarWearables())
                     avatarShape.Wearables.Add(randomAvatarWearable);
 
-                // Create a transform, normally it will be created either by JS Scene or by Comms
-                Transform transform = new GameObject($"RANDOM_AVATAR_{i}").transform;
-                transform.localPosition = new Vector3(startXPosition + currentXCounter, 0, startYPosition + currentYCounter);
-                var transformComp = new TransformComponent(transform);
+
 
                 if (currentXCounter == 20)
                 {
@@ -129,7 +126,14 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 }
                 else { currentXCounter++; }
 
-                World.Create(avatarShape, transformComp);
+                for (var j = 0; j < 2; j++)
+                {
+                    // Create a transform, normally it will be created either by JS Scene or by Comms
+                    Transform transform = new GameObject($"RANDOM_AVATAR_{i}").transform;
+                    transform.localPosition = new Vector3(startXPosition + currentXCounter, 0, startYPosition + currentYCounter);
+                    var transformComp = new TransformComponent(transform);
+                    World.Create(avatarShape, transformComp);
+                }
             }
         }
     }
