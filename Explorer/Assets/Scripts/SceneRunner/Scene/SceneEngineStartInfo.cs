@@ -1,3 +1,5 @@
+using System;
+
 namespace SceneRunner.Scene
 {
     /// <summary>
@@ -5,12 +7,15 @@ namespace SceneRunner.Scene
     /// </summary>
     public readonly struct SceneEngineStartInfo
     {
-        public readonly float Time;
+        /// <summary>
+        ///     We must use <see cref="DateTime" /> as unity API is not thread-safe
+        /// </summary>
+        public readonly DateTime Timestamp;
         public readonly int FrameNumber;
 
-        public SceneEngineStartInfo(float time, int frameNumber)
+        public SceneEngineStartInfo(DateTime timestamp, int frameNumber)
         {
-            Time = time;
+            Timestamp = timestamp;
             FrameNumber = frameNumber;
         }
     }

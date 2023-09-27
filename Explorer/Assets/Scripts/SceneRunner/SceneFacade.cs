@@ -13,7 +13,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEngine;
+using Utility.Multithreading;
 
 namespace SceneRunner
 {
@@ -82,7 +82,7 @@ namespace SceneRunner
             if (SceneData.StaticSceneMessages.Data.Length > 0)
                 runtimeInstance.ApplyStaticMessages(SceneData.StaticSceneMessages.Data);
 
-            sceneStateProvider.SetRunning(new SceneEngineStartInfo(Time.realtimeSinceStartup, Time.frameCount));
+            sceneStateProvider.SetRunning(new SceneEngineStartInfo(DateTime.Now, (int)MultithreadingUtility.FrameCount));
 
             SetTargetFPS(targetFPS);
 

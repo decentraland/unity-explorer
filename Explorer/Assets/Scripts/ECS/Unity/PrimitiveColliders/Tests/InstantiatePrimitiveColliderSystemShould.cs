@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using CRDT;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using ECS.ComponentsPooling;
@@ -49,7 +50,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
 
             system = new InstantiatePrimitiveColliderSystem(world, poolsRegistry, entityCollidersSceneCache = Substitute.For<IEntityCollidersSceneCache>(), setupColliders);
 
-            entity = world.Create();
+            entity = world.Create(new CRDTEntity(5));
             AddTransformToEntity(entity);
         }
 
@@ -104,6 +105,8 @@ namespace ECS.Unity.PrimitiveColliders.Tests
 
             foreach (ISetupCollider collider in setupColliders.Values)
                 collider.ClearReceivedCalls();
+
+            entityCollidersSceneCache.ClearReceivedCalls();
 
             input.IsDirty = true;
             system.Update(0);

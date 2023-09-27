@@ -9,7 +9,8 @@ using ECS.Abstract;
 using ECS.ComponentsPooling;
 using ECS.Groups;
 using SceneRunner.Scene;
-using UnityEngine;
+using System;
+using Utility.Multithreading;
 
 namespace ECS.Unity.EngineInfo
 {
@@ -43,8 +44,8 @@ namespace ECS.Unity.EngineInfo
         {
             PBEngineInfo c = pool.Get();
             c.TickNumber = sceneStateProvider.TickNumber;
-            c.FrameNumber = (uint)(Time.frameCount - sceneStateProvider.EngineStartInfo.FrameNumber);
-            c.TotalRuntime = Time.realtimeSinceStartup - sceneStateProvider.EngineStartInfo.Time;
+            c.FrameNumber = (uint)(MultithreadingUtility.FrameCount - sceneStateProvider.EngineStartInfo.FrameNumber);
+            c.TotalRuntime = (float)(DateTime.Now - sceneStateProvider.EngineStartInfo.Timestamp).TotalSeconds;
 
             ecsToCRDTWriter.PutMessage(sdkEntity, c);
         }
