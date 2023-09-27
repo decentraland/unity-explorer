@@ -133,6 +133,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     transform.localPosition = new Vector3(startXPosition + currentXCounter, 0, startYPosition + currentYCounter);
                     var transformComp = new TransformComponent(transform);
                     World.Create(avatarShape, transformComp);
+                    currentXCounter++;
                 }
             }
         }

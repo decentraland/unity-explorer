@@ -130,8 +130,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             if (setUpCompute)
             {
                 mesh.RecalculateTangents();
-
-                //mesh.RecalculateNormals();
+                mesh.RecalculateNormals();
             }
 
             NativeArray<Matrix4x4>.Copy(mesh.bindposes, 0, bindPosesMatrix, ComputeShaderHelpers.BONE_COUNT * skinnedMeshCounter, ComputeShaderHelpers.BONE_COUNT);
