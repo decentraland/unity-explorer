@@ -188,7 +188,8 @@ namespace DCL.Interaction.Raycast.Systems
             if (closestQualifiedHit != null)
             {
                 ECSComponents.RaycastHit sdkHit = raycastHitPool.Get();
-                sdkHit.FillSDKRaycastHit(scenePos, closestQualifiedHit.Value, foundEntity, globalOrigin, rayDirection);
+                RaycastHit qualifiedHit = closestQualifiedHit.Value;
+                sdkHit.FillSDKRaycastHit(scenePos, qualifiedHit, qualifiedHit.collider.name, foundEntity, globalOrigin, rayDirection);
                 raycastResult.Hits.Add(sdkHit);
             }
         }
@@ -205,7 +206,7 @@ namespace DCL.Interaction.Raycast.Systems
                 if (!TryGetQualifiedEntity(collider, collisionMask, out CRDTEntity foundEntity)) continue;
 
                 ECSComponents.RaycastHit sdkHit = raycastHitPool.Get();
-                sdkHit.FillSDKRaycastHit(scenePos, hit, foundEntity, globalOrigin, rayDirection);
+                sdkHit.FillSDKRaycastHit(scenePos, hit, hit.collider.name, foundEntity, globalOrigin, rayDirection);
                 raycastResult.Hits.Add(sdkHit);
             }
         }

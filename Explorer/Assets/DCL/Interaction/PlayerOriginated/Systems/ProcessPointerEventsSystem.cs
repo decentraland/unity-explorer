@@ -58,13 +58,13 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
                 InteractionInputUtils.AnyInputInfo anyInputInfo = sdkInputActionsMap.Values.GatherAnyInputInfo();
 
-                // Entity should be alive and contain PBPointerEvents component to be qualified
+                // External world access should be always synchronized (Global World calls into Scene World)
                 using (entityInfo.EcsExecutor.Sync.GetScope())
                 {
-                    // External world access should be always synchronized
                     World world = entityInfo.EcsExecutor.World;
                     EntityReference entityRef = entityInfo.ColliderEntityInfo.EntityReference;
 
+                    // Entity should be alive and contain PBPointerEvents component to be qualified
                     if (entityRef.IsAlive(world) && world.TryGet(entityRef, out PBPointerEvents pbPointerEvents))
                     {
                         hoverStateComponent.LastHitCollider = raycastResult.UnityRaycastHit.collider;

@@ -1,22 +1,62 @@
 using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.ECSComponents;
+using DCL.Interaction.HoverCanvas;
+using DCL.Interaction.HoverCanvas.Systems;
+using DCL.Interaction.HoverCanvas.UI;
 using DCL.Interaction.PlayerOriginated;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.PlayerOriginated.Systems;
 using DCL.Interaction.Utility;
+using System;
 using System.Collections.Generic;
+using System.Threading;
+using UnityEngine;
+using UnityEngine.UIElements;
+using Utility.UIToolkit;
 
 namespace DCL.PluginSystem.Global
 {
-    public class GlobalInteractionPlugin : IDCLGlobalPluginWithoutSettings
+    public class GlobalInteractionPlugin : IDCLGlobalPlugin<GlobalInteractionPlugin.Settings>
     {
+        [Serializable]
+        public class Settings : IDCLPluginSettings
+        {
+            [field: Header(nameof(GlobalInteractionPlugin))]
+            [field: Space]
+            [field: SerializeField] internal HoverCanvasSettings hoverCanvasSettings { get; private set; }
+        }
+
         private readonly DCLInput dclInput;
+        private readonly UIDocument canvas;
+        private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
 
-        public GlobalInteractionPlugin(DCLInput dclInput, IEntityCollidersGlobalCache entityCollidersGlobalCache)
+        private HoverCanvas hoverCanvas;
+        private Settings settings;
+
+        public GlobalInteractionPlugin(DCLInput dclInput,
+            UIDocument canvas,
+            IAssetsProvisioner assetsProvisioner,
+            IEntityCollidersGlobalCache entityCollidersGlobalCache)
         {
             this.dclInput = dclInput;
+            this.canvas = canvas;
+            this.assetsProvisioner = assetsProvisioner;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
+        }
+
+        public async UniTask Initialize(Settings settings, CancellationToken ct)
+        {
+            this.settings = settings;
+
+            hoverCanvas =
+                (await assetsProvisioner.ProvideMainAsset(settings.hoverCanvasSettings.HoverCanvasAsset, ct: ct))
+               .Value.InstantiateForElement<HoverCanvas>();
+
+            hoverCanvas.SetDisplayed(false);
+            canvas.rootVisualElement.Add(hoverCanvas);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -44,6 +84,10 @@ namespace DCL.PluginSystem.Global
                     { InputAction.IaAction6, playerInput.ActionButton6 },
                 },
                 entityCollidersGlobalCache);
+
+            ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
         }
+
+        public void Dispose() { }
     }
 }

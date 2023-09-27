@@ -72,7 +72,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Ray CreateRay(in CameraComponent cameraComponent) =>
             cameraComponent.Camera.ScreenPointToRay(cameraComponent.CursorIsLocked
-                ? new Vector3(Screen.width / 2f, Screen.height / 2f, 0)
+                ? new Vector3(cameraComponent.Camera.pixelWidth / 2f, cameraComponent.Camera.pixelHeight / 2f, 0)
                 : pointInput.ReadValue<Vector2>());
     }
 }

@@ -56,8 +56,13 @@ namespace DCL.Interaction.PlayerOriginated.Utility
             switch (entry.EventType)
             {
                 case PointerEventType.PetDown:
-                    if (entry.EventInfo.Button == ECSComponents.InputAction.IaAny && !anyInputInfo.AnyButtonWasPressedThisFrame)
-                        return;
+                    if (entry.EventInfo.Button == ECSComponents.InputAction.IaAny)
+                    {
+                        if (!anyInputInfo.AnyButtonWasPressedThisFrame)
+                            return;
+
+                        break;
+                    }
 
                     if (!sdkInputActionsMap.TryGetValue(entry.EventInfo.Button, out InputAction unityInputAction) || !unityInputAction.WasPressedThisFrame())
                         return;
@@ -65,8 +70,13 @@ namespace DCL.Interaction.PlayerOriginated.Utility
                     break;
 
                 case PointerEventType.PetUp:
-                    if (entry.EventInfo.Button == ECSComponents.InputAction.IaAny && !anyInputInfo.AnyButtonWasReleasedThisFrame)
-                        return;
+                    if (entry.EventInfo.Button == ECSComponents.InputAction.IaAny)
+                    {
+                        if (!anyInputInfo.AnyButtonWasReleasedThisFrame)
+                            return;
+
+                        break;
+                    }
 
                     if (!sdkInputActionsMap.TryGetValue(entry.EventInfo.Button, out unityInputAction) || !unityInputAction.WasReleasedThisFrame())
                         return;

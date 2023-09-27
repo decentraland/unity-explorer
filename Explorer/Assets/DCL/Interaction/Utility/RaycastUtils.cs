@@ -68,13 +68,14 @@ namespace DCL.Interaction.Utility
             return true;
         }
 
-        internal static void FillSDKRaycastHit(this RaycastHit target, Vector3 sceneRootPosition, in UnityEngine.RaycastHit unityHit, CRDTEntity crdtEntity, Vector3 globalOrigin,
+        internal static void FillSDKRaycastHit(this RaycastHit target, Vector3 sceneRootPosition, in UnityEngine.RaycastHit unityHit, string colliderName, CRDTEntity crdtEntity,
+            Vector3 globalOrigin,
             Vector3 direction)
         {
             target.EntityId = (uint)crdtEntity.Id;
 
             // There is no real value in passing MeshName
-            target.MeshName = unityHit.collider.name;
+            target.MeshName = colliderName;
             target.Length = unityHit.distance;
             target.GlobalOrigin.Set(globalOrigin);
             target.Position.Set(ParcelMathHelper.GetSceneRelativePosition(unityHit.point, sceneRootPosition));

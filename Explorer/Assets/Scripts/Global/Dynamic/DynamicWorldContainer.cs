@@ -3,6 +3,7 @@ using ECS.Prioritization.Components;
 using SceneRunner.EmptyScene;
 using System.Collections.Generic;
 using Unity.Mathematics;
+using UnityEngine.UIElements;
 
 namespace Global.Dynamic
 {
@@ -18,6 +19,7 @@ namespace Global.Dynamic
 
         public static DynamicWorldContainer Create(
             in StaticContainer staticContainer,
+            UIDocument rootUIDocument,
             IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius)
         {
             var realmSamplingData = new RealmSamplingData();
@@ -27,7 +29,7 @@ namespace Global.Dynamic
             {
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterObject),
                 new InputPlugin(dclInput),
-                new GlobalInteractionPlugin(dclInput, staticContainer.EntityCollidersGlobalCache),
+                new GlobalInteractionPlugin(dclInput, rootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, staticContainer.CameraSamplingData),
                 new ProfilingPlugin(staticContainer.AssetsProvisioner, staticContainer.ProfilingProvider)
             };

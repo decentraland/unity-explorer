@@ -65,7 +65,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
                 RaycastHit sdkHit = raycastHitPool.Get();
 
-                sdkHit.FillSDKRaycastHit(scenePosition, intent.RaycastHit,
+                sdkHit.FillSDKRaycastHit(scenePosition, intent.RaycastHit, string.Empty,
                     sdkEntity, intent.Ray.origin, intent.Ray.direction);
 
                 PBPointerEventsResult result = pointerEventsResultsPool.Get();
