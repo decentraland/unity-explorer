@@ -130,7 +130,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             if (setUpCompute)
             {
                 mesh.RecalculateTangents();
-                mesh.RecalculateNormals();
+                //mesh.RecalculateNormals();
             }
 
             NativeArray<Matrix4x4>.Copy(mesh.bindposes, 0, bindPosesMatrix, ComputeShaderHelpers.BONE_COUNT * skinnedMeshCounter, ComputeShaderHelpers.BONE_COUNT);
@@ -226,7 +226,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                     vertOutMaterial.EnableKeyword(keyword);
             }
 
-            vertOutMaterial.SetColor(ComputeShaderHelpers._BaseColour_ShaderID, Color.red);
+            //vertOutMaterial.SetColor(ComputeShaderHelpers._BaseColour_ShaderID, Color.red);
             meshRenderer.material = vertOutMaterial;
 
             if (setUpCompute)

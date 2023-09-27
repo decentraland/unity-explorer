@@ -186,7 +186,6 @@ half4 SampleAlbedoAlpha(float2 uv, TEXTURE2D_PARAM(albedoAlphaMap, sampler_albed
 half4 SampleMetallicSpecGloss(float2 uv, half albedoAlpha)
 {
     half4 specGloss;
-    #define _METALLICSPECGLOSSMAP
     #ifdef _METALLICSPECGLOSSMAP
         int nMetallicGlossMapArrID = _MetallicGlossMapArr_ID;
         specGloss = SAMPLE_METALLICSPECULAR(uv, nMetallicGlossMapArrID);
@@ -331,7 +330,6 @@ half3 ApplyDetailNormal(float2 detailUv, half3 normalTS, half detailMask)
 
 half3 SampleNormal(float2 uv, half scale = half(1.0))
 {
-    #define _NORMALMAP
     #ifdef _NORMALMAP
         int nBumpMapArrID = _BumpMapArr_ID;
         half4 n = SAMPLE_BUMP(uv, nBumpMapArrID);
@@ -464,7 +462,7 @@ inline void InitializeBRDFData_Avatar(half3 albedo, half metallic, half3 specula
 half3 EnvironmentBRDFSpecular_Avatar(BRDFData_Avatar brdfData, half fresnelTerm)
 {
     float surfaceReduction = 1.0 / (brdfData.roughness2 + 1.0);
-    return surfaceReduction * lerp(brdfData.specular, brdfData.grazingTerm, fresnelTerm);
+    return surfaceReduction * brdfData.specular;//lerp(brdfData.specular, brdfData.grazingTerm, fresnelTerm);
 }
 
 half3 EnvironmentBRDF_Avatar(BRDFData_Avatar brdfData, half3 indirectDiffuse, half3 indirectSpecular, half fresnelTerm)

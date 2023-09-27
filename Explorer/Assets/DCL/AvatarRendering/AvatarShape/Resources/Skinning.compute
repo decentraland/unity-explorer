@@ -55,10 +55,10 @@ void main(uint3 threadID : SV_DispatchThreadID,
     float3 vN = float3(0,0,0);
     vN = g_NormalsIn[t].xyz;
     float3 vNacc = float3(0,0,0);
-    vNacc += si.weight0*mul(  g_mBones[si.index0], mul(g_BindPoses[baseIndex+si.index0], float4(vN, 1))).xyz;
-    vNacc += si.weight1*mul(  g_mBones[si.index1], mul(g_BindPoses[baseIndex+si.index1], float4(vN, 1))).xyz;
-    vNacc += si.weight2*mul(  g_mBones[si.index2], mul(g_BindPoses[baseIndex+si.index2], float4(vN, 1))).xyz;
-    vNacc += si.weight3*mul(  g_mBones[si.index3], mul(g_BindPoses[baseIndex+si.index3], float4(vN, 1))).xyz;
+    vNacc += si.weight0*mul(  g_mBones[si.index0], mul(g_BindPoses[baseIndex+si.index0], float4(vN, 0))).xyz;
+    vNacc += si.weight1*mul(  g_mBones[si.index1], mul(g_BindPoses[baseIndex+si.index1], float4(vN, 0))).xyz;
+    vNacc += si.weight2*mul(  g_mBones[si.index2], mul(g_BindPoses[baseIndex+si.index2], float4(vN, 0))).xyz;
+    vNacc += si.weight3*mul(  g_mBones[si.index3], mul(g_BindPoses[baseIndex+si.index3], float4(vN, 0))).xyz;
     vN = vNacc;
     _GlobalAvatarBuffer[_lastAvatarVertCount + t].normal.xyz = vN;
 
@@ -69,10 +69,10 @@ void main(uint3 threadID : SV_DispatchThreadID,
     vT = g_TangentsIn[t].xyz;
     float3 vTacc = float3(0,0,0);
     
-    vTacc += si.weight0*mul((float3x3)g_mBones[si.index0], mul(g_BindPoses[baseIndex+si.index0], float4(vT, 1))).xyz;
-    vTacc += si.weight1*mul((float3x3)g_mBones[si.index1], mul(g_BindPoses[baseIndex+si.index1], float4(vT, 1))).xyz;
-    vTacc += si.weight2*mul((float3x3)g_mBones[si.index2], mul(g_BindPoses[baseIndex+si.index2], float4(vT, 1))).xyz;
-    vTacc += si.weight3*mul((float3x3)g_mBones[si.index3], mul(g_BindPoses[baseIndex+si.index3], float4(vT, 1))).xyz;
+    vTacc += si.weight0*mul((float3x3)g_mBones[si.index0], mul((float3x3)g_BindPoses[baseIndex+si.index0], vT)).xyz;
+    vTacc += si.weight1*mul((float3x3)g_mBones[si.index1], mul((float3x3)g_BindPoses[baseIndex+si.index1], vT)).xyz;
+    vTacc += si.weight2*mul((float3x3)g_mBones[si.index2], mul((float3x3)g_BindPoses[baseIndex+si.index2], vT)).xyz;
+    vTacc += si.weight3*mul((float3x3)g_mBones[si.index3], mul((float3x3)g_BindPoses[baseIndex+si.index3], vT)).xyz;
 
     vT = vTacc;
     _GlobalAvatarBuffer[_lastAvatarVertCount + t].tangent.xyzw = float4(vT.xyz,g_TangentsIn[t].w);
