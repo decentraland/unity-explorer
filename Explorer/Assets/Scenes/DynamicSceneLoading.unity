@@ -210,7 +210,6 @@ GameObject:
   - component: {fileID: 234607242}
   - component: {fileID: 234607243}
   - component: {fileID: 234607244}
-  - component: {fileID: 234607245}
   m_Layer: 0
   m_Name: EntryPoint
   m_TagString: Untagged
@@ -267,19 +266,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   realmPicker: {fileID: 2095941041}
---- !u!114 &234607245
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 234607240}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c59f227706ae0074d89427edff9fb804, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  amoutOfRandomAvatars: 1
 --- !u!1 &446244952
 GameObject:
   m_ObjectHideFlags: 0

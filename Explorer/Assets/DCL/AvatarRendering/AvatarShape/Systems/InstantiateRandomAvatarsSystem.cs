@@ -32,9 +32,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private readonly DefaultWearableRequest defaultWearableRequest;
 
-        public InstantiateRandomAvatarsSystem(World world) : base(world)
+        public InstantiateRandomAvatarsSystem(World world, int totalAvatarsToInstantiate) : base(world)
         {
-            TOTAL_AVATARS_TO_INSTANTIATE = RandomAvatarNumberHolder.instance.amoutOfRandomAvatars;
+            TOTAL_AVATARS_TO_INSTANTIATE = totalAvatarsToInstantiate;
             defaultWearableRequest = new DefaultWearableRequest();
         }
 
@@ -43,7 +43,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             base.Initialize();
 
             defaultWearableRequest.BaseWearablesPromise = ParamPromise.Create(World,
-                new GetWearableByParamIntention(new[] { ("collectionType", "base-wearable"), ("pageSize", "300") }, "DummyUser", new List<IWearable>()),
+                new GetWearableByParamIntention(new[] { ("collectionType", "base-wearable"), ("pageSize", "50") }, "DummyUser", new List<IWearable>()),
                 PartitionComponent.TOP_PRIORITY);
         }
 

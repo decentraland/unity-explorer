@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
@@ -39,11 +40,11 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         }
 
         public override int Initialize(List<GameObject> gameObjects, TextureArrayContainer textureArrayContainer,
-            UnityEngine.ComputeShader skinningShader, Material avatarMaterial, int lastAvatarVertCount, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer)
+            UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterialPool, int lastAvatarVertCount, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer)
         {
             SetupCounters(gameObjects);
             SetupComputeShader(gameObjects, skinningShader, lastAvatarVertCount);
-            SetupMeshRenderer(gameObjects, textureArrayContainer, avatarMaterial, lastAvatarVertCount, baseAvatarSkinnedMeshRenderer);
+            SetupMeshRenderer(gameObjects, textureArrayContainer, avatarMaterialPool, lastAvatarVertCount);
             return vertCount;
         }
 
@@ -142,7 +143,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             skinnedMeshRendererBoneCount = skinnedMeshRendererCount * ComputeShaderHelpers.BONE_COUNT;
         }
 
-        private void SetupMeshRenderer(List<GameObject> gameObjects, TextureArrayContainer textureArrayContainer, Material avatarMaterial, int lastAvatarVertCount, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer)
+        private void SetupMeshRenderer(List<GameObject> gameObjects, TextureArrayContainer textureArrayContainer, IObjectPool<Material> avatarMaterial, int lastAvatarVertCount)
         {
             var auxVertCounter = 0;
 
@@ -151,14 +152,14 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 foreach (SkinnedMeshRenderer skinnedMeshRenderer in gameObject.GetComponentsInChildren<SkinnedMeshRenderer>())
                 {
                     int currentVertexCount = skinnedMeshRenderer.sharedMesh.vertexCount;
-                    Renderer renderer = SetupMesh(skinnedMeshRenderer, baseAvatarSkinnedMeshRenderer);
+                    Renderer renderer = SetupMesh(skinnedMeshRenderer);
                     SetupMaterial(renderer, auxVertCounter, textureArrayContainer, avatarMaterial, lastAvatarVertCount);
                     auxVertCounter += currentVertexCount;
                 }
             }
         }
 
-        private Renderer SetupMesh(SkinnedMeshRenderer skin, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer)
+        private Renderer SetupMesh(SkinnedMeshRenderer skin)
         {
             GameObject go = skin.gameObject;
             MeshFilter filter = go.AddComponent<MeshFilter>();
@@ -169,29 +170,28 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return meshRenderer;
         }
 
-        protected override void SetupMaterial(Renderer meshRenderer, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, Material celShadingMaterial, int lastAvatarVertCount)
+        protected override void SetupMaterial(Renderer meshRenderer, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, IObjectPool<Material> celShadingMaterial, int lastAvatarVertCount)
         {
-            var vertOutMaterial = new Material(celShadingMaterial);
-
+            Material avatarMaterial = celShadingMaterial.Get();
             var albedoTexture = (Texture2D)meshRenderer.material.mainTexture;
 
             if (albedoTexture != null)
             {
-                UsedTextureArraySlot usedIndex = textureArrayContainer.SetTexture(vertOutMaterial, albedoTexture, ComputeShaderHelpers.TextureArrayType.ALBEDO);
+                UsedTextureArraySlot usedIndex = textureArrayContainer.SetTexture(avatarMaterial, albedoTexture, ComputeShaderHelpers.TextureArrayType.ALBEDO);
                 usedTextureArraySlots.Add(usedIndex);
             }
 
             foreach (string keyword in ComputeShaderHelpers.keywordsToCheck)
             {
                 if (meshRenderer.material.IsKeywordEnabled(keyword))
-                    vertOutMaterial.EnableKeyword(keyword);
+                    avatarMaterial.EnableKeyword(keyword);
             }
 
             //vertOutMaterial.SetColor(ComputeShaderHelpers._BaseColour_ShaderID, Color.red);
-            meshRenderer.material = vertOutMaterial;
-            vertOutMaterial.SetInteger("_useCompute", 1);
-            vertOutMaterial.SetInteger(ComputeShaderHelpers.LAST_AVATAR_VERT_COUNT_ID, lastWearableVertCount);
-            vertOutMaterial.SetInteger(ComputeShaderHelpers.LAST_WEARABLE_VERT_COUNT_ID, lastAvatarVertCount);
+            avatarMaterial.SetInteger("_useCompute", 1);
+            avatarMaterial.SetInteger(ComputeShaderHelpers.LAST_AVATAR_VERT_COUNT_ID, lastWearableVertCount);
+            avatarMaterial.SetInteger(ComputeShaderHelpers.LAST_WEARABLE_VERT_COUNT_ID, lastAvatarVertCount);
+            meshRenderer.material = avatarMaterial;
         }
 
         public new void Dispose()
