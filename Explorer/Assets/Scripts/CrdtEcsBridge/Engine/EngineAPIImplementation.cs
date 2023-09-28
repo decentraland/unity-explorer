@@ -175,13 +175,12 @@ namespace CrdtEcsBridge.Engine
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SerializeOutgoingCRDTMessages(IReadOnlyList<ProcessedCRDTMessage> outgoingMessages, Span<byte> span)
+        private void SerializeOutgoingCRDTMessages(IReadOnlyCollection<ProcessedCRDTMessage> outgoingMessages, Span<byte> span)
         {
-            for (var i = 0; i < outgoingMessages.Count; i++)
-            {
-                var processedCRDTMessage = outgoingMessages[i];
+            if (outgoingMessages.Count == 0) return;
+
+            foreach (ProcessedCRDTMessage processedCRDTMessage in outgoingMessages)
                 crdtSerializer.Serialize(ref span, in processedCRDTMessage);
-            }
         }
 
         public ArraySegment<byte> CrdtGetState()

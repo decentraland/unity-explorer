@@ -11,8 +11,9 @@ namespace DCL.Interaction.HoverCanvas.UI
         private List<HoverCanvasTooltipElement> tooltips;
 
         private bool initialized;
+        public int TooltipsCount => tooltips.Count;
 
-        private void Initialize()
+        public void Initialize()
         {
             if (initialized) return;
 

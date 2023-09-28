@@ -12,17 +12,17 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
     {
         private OutgoingCRDTMessagesSyncBlock syncBlock;
 
-        private List<ProcessedCRDTMessage> messages;
+        private Dictionary<OutgoingMessageKey, ProcessedCRDTMessage> messages;
         private Mutex mutex;
 
         [SetUp]
         public void SetUp()
         {
             syncBlock = new OutgoingCRDTMessagesSyncBlock(
-                messages = new List<ProcessedCRDTMessage>
+                messages = new Dictionary<OutgoingMessageKey, ProcessedCRDTMessage>
                 {
-                    new (new CRDTMessage(CRDTMessageType.PUT_COMPONENT, 100, 100, 0, EmptyMemoryOwner<byte>.EMPTY), 30),
-                    new (new CRDTMessage(CRDTMessageType.DELETE_ENTITY, 123, 0, 0, EmptyMemoryOwner<byte>.EMPTY), 60),
+                    { new OutgoingMessageKey(100, 100), new (new CRDTMessage(CRDTMessageType.PUT_COMPONENT, 100, 100, 0, EmptyMemoryOwner<byte>.EMPTY), 30) },
+                    { new OutgoingMessageKey(123, 0), new (new CRDTMessage(CRDTMessageType.DELETE_ENTITY, 123, 0, 0, EmptyMemoryOwner<byte>.EMPTY), 60) },
                 },
                 mutex = new Mutex()
             );

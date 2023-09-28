@@ -55,6 +55,7 @@ namespace DCL.PluginSystem.Global
                 (await assetsProvisioner.ProvideMainAsset(settings.hoverCanvasSettings.HoverCanvasAsset, ct: ct))
                .Value.InstantiateForElement<HoverCanvas>();
 
+            hoverCanvas.Initialize();
             hoverCanvas.SetDisplayed(false);
             canvas.rootVisualElement.Add(hoverCanvas);
         }
@@ -62,7 +63,7 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             var playerInteractionEntity = new PlayerInteractionEntity(
-                builder.World.Create(new PlayerOriginRaycastResult(), new HoverStateComponent(), new HoverFeedbackComponent()),
+                builder.World.Create(new PlayerOriginRaycastResult(), new HoverStateComponent(), new HoverFeedbackComponent(hoverCanvas.TooltipsCount)),
                 builder.World);
 
             PlayerOriginatedRaycastSystem.InjectToWorld(ref builder, dclInput.Camera.Point, entityCollidersGlobalCache,

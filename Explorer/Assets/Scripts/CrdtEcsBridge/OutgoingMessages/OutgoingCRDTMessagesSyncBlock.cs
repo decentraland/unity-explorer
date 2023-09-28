@@ -11,15 +11,15 @@ namespace CrdtEcsBridge.OutgoingMessages
     public readonly struct OutgoingCRDTMessagesSyncBlock : IDisposable
     {
         private readonly Mutex mutex;
-        private readonly List<ProcessedCRDTMessage> messages;
+        private readonly Dictionary<OutgoingMessageKey, ProcessedCRDTMessage> messages;
 
-        internal OutgoingCRDTMessagesSyncBlock(List<ProcessedCRDTMessage> messages, Mutex mutex)
+        internal OutgoingCRDTMessagesSyncBlock(Dictionary<OutgoingMessageKey, ProcessedCRDTMessage> messages, Mutex mutex)
         {
             this.messages = messages;
             this.mutex = mutex;
         }
 
-        public IReadOnlyList<ProcessedCRDTMessage> Messages => messages;
+        public IReadOnlyCollection<ProcessedCRDTMessage> Messages => messages.Values;
 
         /// <summary>
         /// Returns the total size of the payload of the outgoing CRDT Messages
@@ -28,8 +28,8 @@ namespace CrdtEcsBridge.OutgoingMessages
         {
             var length = 0;
 
-            for (var i = 0; i < messages.Count; i++)
-                length += messages[i].CRDTMessageDataLength;
+            foreach (ProcessedCRDTMessage processedCRDTMessage in messages.Values)
+                length += processedCRDTMessage.CRDTMessageDataLength;
 
             return length;
         }

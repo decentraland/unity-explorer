@@ -114,9 +114,14 @@ namespace CrdtEcsBridge.Engine.Tests
                                         .Returns(_ =>
                                          {
                                              mutex.WaitOne();
-                                             return new OutgoingCRDTMessagesSyncBlock(outgoingMessages, mutex);
+                                             return new OutgoingCRDTMessagesSyncBlock(ConvertToOutgoingMessagesDict(), mutex);
                                          });
         }
+
+        private Dictionary<OutgoingMessageKey, ProcessedCRDTMessage> ConvertToOutgoingMessagesDict() =>
+            outgoingMessages
+               .ToDictionary(x => new OutgoingMessageKey(x.message.EntityId, x.message.ComponentId),
+                    y => y);
 
         [Test]
         public void CallDeserializeBatch()

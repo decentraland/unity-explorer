@@ -28,11 +28,6 @@ namespace ECS.Unity.EngineInfo
             this.pool = pool;
         }
 
-        public override void Initialize()
-        {
-            PropagateToSceneQuery(World);
-        }
-
         protected override void Update(float t)
         {
             PropagateToSceneQuery(World);

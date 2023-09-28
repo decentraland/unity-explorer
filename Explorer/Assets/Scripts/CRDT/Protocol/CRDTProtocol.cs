@@ -172,10 +172,12 @@ namespace CRDT.Protocol
             switch (compareDataResult)
             {
                 case 0:
-                    // Right the same message, nothing to do
+                    // Right the same message, dispose the data
+                    message.Data.Dispose();
                     return new (CRDTStateReconciliationResult.NoChanges, CRDTReconciliationEffect.NoChanges);
                 case > 0:
-                    // Nothing to do
+                    // The stored message is newer, dispose the data
+                    message.Data.Dispose();
                     return new (CRDTStateReconciliationResult.StateOutdatedData, CRDTReconciliationEffect.NoChanges);
                 default:
                     UpdateLWWState(true, true, inner, in message, ref storedData);
@@ -235,6 +237,7 @@ namespace CRDT.Protocol
 
                     foreach (EntityComponentData entityComponentData in list)
                         entityComponentData.Data.Dispose();
+
                     list.Dispose();
                     componentsSet.Value.Remove(entityId);
                 }
@@ -262,8 +265,10 @@ namespace CRDT.Protocol
                         // instead of removing range, just clean -> it is much cheaper
                         foreach (EntityComponentData entityComponentData in existingSet)
                             entityComponentData.Data.Dispose();
+
                         existingSet.Clear();
                     }
+
                     existingSet.Add(newData);
                     crdtState.messagesCount++;
                     return true;
@@ -302,16 +307,20 @@ namespace CRDT.Protocol
                 {
                     foreach (EntityComponentData entityComponentData in inner)
                         entityComponentData.Data.Dispose();
+
                     inner.Dispose();
                 }
+
                 outer.Dispose();
             }
+
             crdtState.appendComponents.Dispose();
 
             foreach (var outer in crdtState.lwwComponents.Values)
             {
                 foreach (EntityComponentData inner in outer.Values)
                     inner.Data.Dispose();
+
                 outer.Dispose();
             }
 

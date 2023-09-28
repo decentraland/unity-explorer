@@ -102,7 +102,7 @@ namespace SceneRunner.Scene.ExceptionsHandling
         public void OnEngineException(Exception exception, string category)
         {
             sceneState.State = SceneState.EngineError;
-            ReportHub.LogException(exception, new ReportData(category));
+            ReportHub.LogException(exception, new ReportData(category, sceneShortInfo: sceneShortInfo));
         }
 
         public void OnJavaScriptException(string message)

@@ -1,4 +1,5 @@
 using CRDT.Protocol.Factory;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility.Pool;
@@ -8,24 +9,35 @@ namespace CrdtEcsBridge.OutgoingMessages
 {
     public class OutgoingCRTDMessagesProvider : IOutgoingCRTDMessagesProvider
     {
-        // All OutgoingCRTDMessagesProviders use this pool with a big initial capacity to prevent dynamic allocations
-        internal static readonly ThreadSafeListPool<ProcessedCRDTMessage> SHARED_POOL = new (64, PoolConstants.SCENES_COUNT);
-
-        private readonly List<ProcessedCRDTMessage> processedCRDTMessages;
-
-        private readonly Mutex mutex = new ();
-
-        public OutgoingCRTDMessagesProvider()
+        private class EqualityComparer : IEqualityComparer<OutgoingMessageKey>
         {
-            processedCRDTMessages = SHARED_POOL.Get();
+            public bool Equals(OutgoingMessageKey x, OutgoingMessageKey y) =>
+                x.Entity.Equals(y.Entity) && x.ComponentId == y.ComponentId;
+
+            public int GetHashCode(OutgoingMessageKey obj) =>
+                HashCode.Combine(obj.Entity, obj.ComponentId);
         }
 
-        internal IReadOnlyList<ProcessedCRDTMessage> ProcessedCRDTMessages => processedCRDTMessages;
+        // All OutgoingCRTDMessagesProviders use this pool with a big initial capacity to prevent dynamic allocations
+        internal static readonly ThreadSafeDictionaryPool<OutgoingMessageKey, ProcessedCRDTMessage> SHARED_POOL = new (64, PoolConstants.SCENES_COUNT, new EqualityComparer());
+
+        private readonly Dictionary<OutgoingMessageKey, ProcessedCRDTMessage> processedCRDTMessages = SHARED_POOL.Get();
+        private readonly Mutex mutex = new ();
+
+        internal IReadOnlyCollection<ProcessedCRDTMessage> ProcessedCRDTMessages => processedCRDTMessages.Values;
 
         public void AddMessage(ProcessedCRDTMessage processedCRDTMessage)
         {
             mutex.WaitOne();
-            processedCRDTMessages.Add(processedCRDTMessage);
+
+            // Prevent from writing multiple components representing the same entity and the same component Id
+            var key = new OutgoingMessageKey(processedCRDTMessage.message.EntityId, processedCRDTMessage.message.ComponentId);
+
+            if (processedCRDTMessages.TryGetValue(key, out ProcessedCRDTMessage oldMessage))
+                oldMessage.message.Data.Dispose();
+
+            // Override with the latest one
+            processedCRDTMessages[key] = processedCRDTMessage;
             mutex.ReleaseMutex();
         }
 
