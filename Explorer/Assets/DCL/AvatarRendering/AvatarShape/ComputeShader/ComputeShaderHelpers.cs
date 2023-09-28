@@ -6,11 +6,11 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     {
         public enum TextureArrayType
         {
-            ALBEDO,
-            ALPHA,
-            METALLIC,
-            BUMP,
-            EMMISSION,
+            ALBEDO = 0,
+            ALPHA = 1,
+            METALLIC = 2,
+            BUMP = 3,
+            EMMISSION = 4,
         }
 
         //TODO: Add this textures arrays to the material
