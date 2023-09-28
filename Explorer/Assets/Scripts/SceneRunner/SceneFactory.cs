@@ -69,6 +69,7 @@ namespace SceneRunner
             sceneDefinition.metadata = new IpfsTypes.SceneMetadata
             {
                 main = mainScenePath,
+                runtimeVersion = "7",
             };
 
             var sceneData = new SceneData(new SceneNonHashedContent(baseUrl), sceneDefinition, SceneAssetBundleManifest.NULL, Vector2Int.zero, StaticSceneMessages.EMPTY);
