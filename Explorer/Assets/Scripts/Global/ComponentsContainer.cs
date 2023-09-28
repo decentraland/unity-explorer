@@ -1,5 +1,6 @@
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Transform;
+using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.ECS7;
 using DCL.ECSComponents;
 using ECS.ComponentsPooling;

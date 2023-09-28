@@ -25,10 +25,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
     [UpdateBefore(typeof(PrepareGlobalAssetBundleLoadingParametersSystem))]
     public partial class ResolveWearableByPointerSystem : BaseUnityLoopSystem
     {
-        private readonly Dictionary<string, IWearable> wearableCatalog;
+        private readonly WearableCatalog wearableCatalog;
         private readonly IRealmData realmData;
 
-        public ResolveWearableByPointerSystem(World world, Dictionary<string, IWearable> wearableCatalog, IRealmData realmData) : base(world)
+        public ResolveWearableByPointerSystem(World world, WearableCatalog wearableCatalog, IRealmData realmData) : base(world)
         {
             this.wearableCatalog = wearableCatalog;
             this.realmData = realmData;
@@ -62,9 +62,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 string loadingIntentionPointer = wearablesByPointersIntention.Pointers[index];
 
-                if (!wearableCatalog.TryGetValue(loadingIntentionPointer, out IWearable component))
+                if (!wearableCatalog.TryGetWearable(loadingIntentionPointer, out IWearable component))
                 {
-                    wearableCatalog.Add(loadingIntentionPointer, new Wearable());
+                    wearableCatalog.AddEmptyWearable(loadingIntentionPointer);
                     missingPointers.Add(loadingIntentionPointer);
                     continue;
                 }
@@ -109,7 +109,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 {
                     foreach (string pointerID in promise.LoadingIntention.Pointers)
                     {
-                        IWearable component = wearableCatalog[pointerID];
+                        wearableCatalog.TryGetWearable(pointerID, out IWearable component);
                         SetDefaultWearables(component, in bodyShape);
                         component.IsLoading = false;
                     }
@@ -119,12 +119,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     foreach (WearableDTO assetEntity in promiseResult.Asset)
                     {
                         //TODO: Download Thumbnail
-                        IWearable component = wearableCatalog[assetEntity.metadata.id];
+                        wearableCatalog.TryGetWearable(assetEntity.metadata.id, out IWearable component);
                         component.WearableDTO = new StreamableLoadingResult<WearableDTO>(assetEntity);
                         component.IsLoading = false;
                     }
                 }
-
                 ListPool<string>.Release(promise.LoadingIntention.Pointers);
                 World.Destroy(entity);
             }
@@ -228,11 +227,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
             //Waiting for the default wearable should be moved to the default screen
             if (wearable.IsUnisex())
             {
-                wearable.AssetBundleData[WearablesLiterals.BodyShape.MALE] = wearableCatalog[WearablesLiterals.DefaultWearables.GetDefaultWearable(WearablesLiterals.BodyShape.MALE, wearable.GetCategory())].AssetBundleData[WearablesLiterals.BodyShape.MALE];
-                wearable.AssetBundleData[WearablesLiterals.BodyShape.FEMALE] = wearableCatalog[WearablesLiterals.DefaultWearables.GetDefaultWearable(WearablesLiterals.BodyShape.FEMALE, wearable.GetCategory())].AssetBundleData[WearablesLiterals.BodyShape.FEMALE];
+                wearable.AssetBundleData[WearablesLiterals.BodyShape.MALE] = wearableCatalog.GetDefaultWearable(WearablesLiterals.BodyShape.MALE, wearable.GetCategory()).AssetBundleData[WearablesLiterals.BodyShape.MALE];
+                wearable.AssetBundleData[WearablesLiterals.BodyShape.FEMALE] = wearableCatalog.GetDefaultWearable(WearablesLiterals.BodyShape.FEMALE, wearable.GetCategory()).AssetBundleData[WearablesLiterals.BodyShape.FEMALE];
             }
             else
-                wearable.AssetBundleData[bodyShape] = wearableCatalog[WearablesLiterals.DefaultWearables.GetDefaultWearable(bodyShape, wearable.GetCategory())].AssetBundleData[bodyShape];
+                wearable.AssetBundleData[bodyShape] = wearableCatalog.GetDefaultWearable(bodyShape, wearable.GetCategory()).AssetBundleData[bodyShape];
         }
 
         private void SetWearableResult(IWearable wearable, StreamableLoadingResult<AssetBundleData> result, in WearablesLiterals.BodyShape bodyShape)

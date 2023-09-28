@@ -2,10 +2,11 @@
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
+using System;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {
-    public interface IWearable
+    public interface IWearable : IDisposable
     {
         string GetMainFileHash(string bodyShape);
 

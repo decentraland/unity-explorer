@@ -16,7 +16,22 @@ MonoBehaviour:
   m_Data:
     m_SerializedData: []
   m_GUID: 1dd1efed42c2dcb48954101ce18c8946
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: 1b6579d7e91068e41872ba3a3eb66fdf
+    m_Address: Avatar_Male_Mesh
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8db46845fb5f52f44a71c2a0c2d92074
+    m_Address: AvatarBase
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9776466c722cb644c914ee056b28d232
+    m_Address: Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: fc8a9d2b539788c47a5b305639fa8b34, type: 2}
   m_SchemaSet:

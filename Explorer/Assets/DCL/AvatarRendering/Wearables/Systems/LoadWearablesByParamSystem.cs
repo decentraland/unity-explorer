@@ -13,7 +13,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -29,14 +28,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private readonly IRealmData realmData;
         private readonly URLBuilder urlBuilder = new ();
         private readonly URLSubdirectory wearablesSubdirectory;
-
-        internal Dictionary<string, IWearable> wearableCatalog;
+        private readonly WearableCatalog wearableCatalog;
 
         private readonly Func<bool> isRealmDataReady;
 
         public LoadWearablesByParamSystem(
             World world, IStreamableCache<IWearable[], GetWearableByParamIntention> cache, IRealmData realmData,
-            URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory, Dictionary<string, IWearable> wearableCatalog,
+            URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory, WearableCatalog wearableCatalog,
             MutexSync mutexSync) : base(world, cache, mutexSync)
         {
             this.realmData = realmData;
@@ -68,17 +66,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
             for (var i = 0; i < lambdaResponse.elements.Count; i++)
             {
                 WearableDTO wearableDto = lambdaResponse.elements[i].entity;
-
-                if (wearableCatalog.TryGetValue(wearableDto.metadata.id, out IWearable result))
-                    intention.Results.Add(result);
-                else
-                {
-                    var wearable = new Wearable();
-                    wearable.WearableDTO = new StreamableLoadingResult<WearableDTO>(wearableDto);
-                    wearable.IsLoading = false;
-                    wearableCatalog.Add(wearable.GetUrn(), wearable);
-                    intention.Results.Add(wearable);
-                }
+                wearableCatalog.AddWearableByDTO(wearableDto, out IWearable resultantWearable);
+                intention.Results.Add(resultantWearable);
             }
 
             return new StreamableLoadingResult<IWearable[]>(intention.Results.ToArray());
