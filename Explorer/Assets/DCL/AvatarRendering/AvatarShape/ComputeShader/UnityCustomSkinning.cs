@@ -49,6 +49,9 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                     wearableMaterial.EnableKeyword(keyword);
             }
 
+            // HACK: We currently aren't using normal maps so we're just creating shading issues by using this variant.
+            wearableMaterial.DisableKeyword("_NORMALMAP");
+
             //vertOutMaterial.SetColor(ComputeShaderHelpers._BaseColour_ShaderID, Color.red);
             wearableMaterial.SetInteger("_useCompute", 0);
             meshRenderer.material = wearableMaterial;

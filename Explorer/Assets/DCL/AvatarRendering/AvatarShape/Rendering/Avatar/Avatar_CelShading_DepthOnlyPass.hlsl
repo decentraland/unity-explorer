@@ -6,8 +6,17 @@
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl"
 #endif
 
+struct VertexInfo
+{
+    float3 position;
+    float3 normal;
+};
+
+StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
+
 struct Attributes
 {
+    uint   index            : SV_VertexID;
     float4 position     : POSITION;
     float2 texcoord     : TEXCOORD0;
     UNITY_VERTEX_INPUT_INSTANCE_ID
@@ -15,8 +24,8 @@ struct Attributes
 
 struct Varyings
 {
-    float2 uv           : TEXCOORD0;
     float4 positionCS   : SV_POSITION;
+    float2 uv           : TEXCOORD0;
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
 };
@@ -28,7 +37,7 @@ Varyings DepthOnlyVertex(Attributes input)
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
     //output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
-    output.positionCS = TransformObjectToHClip(input.position.xyz);
+    output.positionCS = TransformObjectToHClip(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
     return output;
 }
 
