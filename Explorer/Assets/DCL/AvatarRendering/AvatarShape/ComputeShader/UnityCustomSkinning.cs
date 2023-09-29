@@ -1,9 +1,9 @@
 ﻿using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
-using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
@@ -14,7 +14,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         }
 
-        public override int Initialize(List<GameObject> gameObjects, Transform[] bones, TextureArrayContainer textureArrayContainer, UnityEngine.ComputeShader skinningShader, Material avatarMaterial,
+        public override int Initialize(List<GameObject> gameObjects, TextureArrayContainer textureArrayContainer, UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterial,
             int lastAvatarVertCount, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer)
         {
             foreach (GameObject gameObject in gameObjects)
@@ -32,27 +32,29 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return 0;
         }
 
-        protected override void SetupMaterial(Renderer meshRenderer, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, Material celShadingMaterial, int lastAvatarVertCount)
+        protected override void SetupMaterial(Renderer meshRenderer, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, IObjectPool<Material> celShadingMaterial, int lastAvatarVertCount)
         {
-            var vertOutMaterial = new Material(celShadingMaterial);
-
+            Material wearableMaterial = celShadingMaterial.Get();
             var albedoTexture = (Texture2D)meshRenderer.material.mainTexture;
 
             if (albedoTexture != null)
             {
-                UsedTextureArraySlot usedIndex = textureArrayContainer.SetTexture(vertOutMaterial, albedoTexture, ComputeShaderHelpers.TextureArrayType.ALBEDO);
+                UsedTextureArraySlot usedIndex = textureArrayContainer.SetTexture(wearableMaterial, albedoTexture, ComputeShaderHelpers.TextureArrayType.ALBEDO);
                 //usedTextureArraySlots.Add(usedIndex);
             }
 
             foreach (string keyword in ComputeShaderHelpers.keywordsToCheck)
             {
                 if (meshRenderer.material.IsKeywordEnabled(keyword))
-                    vertOutMaterial.EnableKeyword(keyword);
+                    wearableMaterial.EnableKeyword(keyword);
             }
 
+            // HACK: We currently aren't using normal maps so we're just creating shading issues by using this variant.
+            wearableMaterial.DisableKeyword("_NORMALMAP");
+
             //vertOutMaterial.SetColor(ComputeShaderHelpers._BaseColour_ShaderID, Color.red);
-            meshRenderer.material = vertOutMaterial;
-            vertOutMaterial.SetInteger("_useCompute", 0);
+            wearableMaterial.SetInteger("_useCompute", 0);
+            meshRenderer.material = wearableMaterial;
         }
 
         public void Dispose()

@@ -33,8 +33,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
 
         private readonly TextureArrayContainer textureArrays;
-        private readonly Material avatarMaterial;
-        private UnityEngine.ComputeShader skinningShader;
+        private readonly IObjectPool<Material> avatarMaterialPool;
+        private readonly IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool;
 
         private readonly ComputeBuffer vertexOutBuffer;
 
@@ -49,15 +49,15 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         public AvatarSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider,
-            IComponentPool<AvatarBase> avatarPoolRegistry) : base(world)
+            IComponentPool<AvatarBase> avatarPoolRegistry, IObjectPool<Material> avatarMaterialPool, IObjectPool<UnityEngine.ComputeShader> computeShaderPool, TextureArrayContainer textureArrayContainer) : base(world)
         {
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
             this.avatarPoolRegistry = avatarPoolRegistry;
 
             //TODO: This generates a MASSIVE hiccup. We could hide it behind the loading screen, but we should be careful
-            this.textureArrays = new TextureArrayContainer();
-            this.avatarMaterial = Resources.Load<Material>("Avatar_CelShading");
-            this.skinningShader = Resources.Load<UnityEngine.ComputeShader>("Skinning");
+            textureArrays = textureArrayContainer;
+            this.avatarMaterialPool = avatarMaterialPool;
+            computeShaderSkinningPool = computeShaderPool;
 
             //TODO: Looks like it needs to be released
             vertexOutBuffer = new ComputeBuffer(5000000, Marshal.SizeOf<VertexInfo>());
@@ -153,8 +153,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     HideBodyParts(instantiateWearable);
             }
 
-            int newVertCount = avatarShapeComponent.skinningMethod.Initialize(avatarShapeComponent.InstantiatedWearables, avatarShapeComponent.Base.AvatarSkinnedMeshRenderer.bones,
-                textureArrays, skinningShader, avatarMaterial, lastAvatarVertCount, avatarBase.AvatarSkinnedMeshRenderer);
+            int newVertCount = avatarShapeComponent.skinningMethod.Initialize(avatarShapeComponent.InstantiatedWearables,
+                textureArrays, computeShaderSkinningPool.Get(), avatarMaterialPool, lastAvatarVertCount, avatarBase.AvatarSkinnedMeshRenderer);
 
             lastAvatarVertCount += newVertCount;
 

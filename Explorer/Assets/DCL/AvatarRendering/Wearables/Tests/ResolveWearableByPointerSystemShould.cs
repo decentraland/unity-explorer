@@ -26,7 +26,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
     [TestFixture]
     public class ResolveWearableByPointerSystemShould : UnitySystemTestBase<ResolveWearableByPointerSystem>
     {
-        private Dictionary<string, IWearable> wearableCatalog;
+        private WearableCatalog wearableCatalog;
         private readonly string testUrn = "urn:decentraland:off-chain:base-avatars:red_hoodie";
         private readonly string unisexTestUrn = "urn:decentraland:off-chain:base-avatars:red_hoodie_unisex";
         private readonly string defaultWearableUrn = "urn:decentraland:off-chain:base-avatars:green_hoodie";
@@ -38,9 +38,9 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [SetUp]
         public void Setup()
         {
-            wearableCatalog = new Dictionary<string, IWearable>();
+            wearableCatalog = new WearableCatalog();
             IWearable mockDefaultWearable = CreateMockWearable(defaultWearableUrn, false, true);
-            wearableCatalog.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
+            wearableCatalog.wearableDictionary.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
 
             mockedAB = new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(null, null, null));
             mockedDefaultAB = new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(null, null, null));
@@ -102,7 +102,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         public void ResolveWearable()
         {
             IWearable mockWearable = CreateMockWearable(testUrn, false, false);
-            wearableCatalog.Add(mockWearable.GetUrn(), mockWearable);
+            wearableCatalog.wearableDictionary.Add(mockWearable.GetUrn(), mockWearable);
 
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<string>
                 { testUrn }, new IWearable[1], WearablesLiterals.BodyShape.MALE);
@@ -121,7 +121,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         public void ResolveUnisexWearable()
         {
             IWearable mockUnisexWearable = CreateMockWearable(unisexTestUrn, false, true);
-            wearableCatalog.Add(mockUnisexWearable.GetUrn(), mockUnisexWearable);
+            wearableCatalog.wearableDictionary.Add(mockUnisexWearable.GetUrn(), mockUnisexWearable);
 
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<string>
                 { unisexTestUrn }, new IWearable[1], WearablesLiterals.BodyShape.MALE);
@@ -141,7 +141,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         public void ResolveDefaultWearableOnManifestFail()
         {
             IWearable mockWearable = CreateMockWearable(testUrn, false, false);
-            wearableCatalog.Add(mockWearable.GetUrn(), mockWearable);
+            wearableCatalog.wearableDictionary.Add(mockWearable.GetUrn(), mockWearable);
 
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<string>
                 { testUrn }, new IWearable[1], WearablesLiterals.BodyShape.MALE);
@@ -159,7 +159,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         public void ResolveDefaultWearableOnABFail()
         {
             IWearable mockWearable = CreateMockWearable(testUrn, false, false);
-            wearableCatalog.Add(mockWearable.GetUrn(), mockWearable);
+            wearableCatalog.wearableDictionary.Add(mockWearable.GetUrn(), mockWearable);
 
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<string>
                 { testUrn }, new IWearable[1], WearablesLiterals.BodyShape.MALE);

@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Networking;
 using Utility.Multithreading;
 
@@ -68,6 +69,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
             }
 
             bodyBuilder.Append("]}");
+
+            Debug.Log("AAAA " + bodyBuilder);
 
             await UniTask.SwitchToMainThread();
             string response;

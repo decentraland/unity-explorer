@@ -17,9 +17,43 @@ MonoBehaviour:
   - rid: 6784895265412481026
   - rid: 6784895265412481027
   - rid: 6784895267130048513
+  - rid: 2761372266084433920
+  - rid: 2761372420489084973
   references:
     version: 2
     RefIds:
+    - rid: 2761372266084433920
+      type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        avatarBase:
+          m_AssetGUID: 8db46845fb5f52f44a71c2a0c2d92074
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        celShadingMaterial:
+          m_AssetGUID: 19373184c73f36042a55739551bb8298
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        defaultMaterialCapacity: 100
+        computeShader:
+          m_AssetGUID: e8cf73ccd47a385498b71ec58534d03c
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <avatarInstantiatorViewRef>k__BackingField:
+          m_AssetGUID: fdc0ac72e84d9534eafd826d7fdfb22a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 2761372420489084973
+      type: {class: WearablePlugin/WearableSettings, ns: DCL.AvatarRendering.Wearables, asm: DCL.Plugins}
+      data:
+        defaultWearablesDefinition:
+          m_AssetGUID: 81ea8febf47eb484986af220584361dc
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 6784895264912310272
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

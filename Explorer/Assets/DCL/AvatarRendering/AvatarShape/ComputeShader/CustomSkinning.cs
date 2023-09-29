@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility;
 
 namespace DCL.AvatarRendering.AvatarShape.ComputeShader
@@ -12,10 +13,10 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     {
         public abstract void ComputeSkinning(NativeArray<float4x4> bonesResult);
 
-        public abstract int Initialize(List<GameObject> gameObjects, Transform[] bones, TextureArrayContainer textureArrayContainer,
-            UnityEngine.ComputeShader skinningShader, Material avatarMaterial, int lastAvatarVertCount, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer);
+        public abstract int Initialize(List<GameObject> gameObjects, TextureArrayContainer textureArrayContainer,
+            UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterial, int lastAvatarVertCount, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer);
 
-        protected abstract void SetupMaterial(Renderer meshRenderer, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, Material celShadingMaterial, int lastAvatarVertCount);
+        protected abstract void SetupMaterial(Renderer meshRenderer, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, IObjectPool<Material> avatarMaterialPool, int lastAvatarVertCount);
 
         protected void ResetTransforms(SkinnedMeshRenderer skinnedMeshRenderer, Transform rootTransform)
         {
