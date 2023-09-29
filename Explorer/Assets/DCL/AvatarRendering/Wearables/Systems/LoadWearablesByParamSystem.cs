@@ -26,7 +26,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private readonly URLSubdirectory lambdaSubdirectory;
 
         private readonly IRealmData realmData;
-        private readonly URLBuilder urlBuilder = new ();
+        private URLBuilder urlBuilder = new ();
         private readonly URLSubdirectory wearablesSubdirectory;
         private readonly WearableCatalog wearableCatalog;
 
@@ -75,7 +75,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private string BuildURL(string userID, (string paramName, string paramValue)[] urlEncodedParams)
         {
-            urlBuilder.Clear();
+            //TODO: Fix the clear
+            urlBuilder = new URLBuilder();
 
             urlBuilder.AppendDomainWithReplacedPath(realmData.Ipfs.LambdasBaseUrl, lambdaSubdirectory)
                       .AppendSubDirectory(URLSubdirectory.FromString(userID))

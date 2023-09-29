@@ -30,7 +30,6 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        totalRandomAvatarsToInstantiate: 100
         celShadingMaterial:
           m_AssetGUID: 19373184c73f36042a55739551bb8298
           m_SubObjectName: 
@@ -42,7 +41,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        defaultComputeShaderCapacity: 100
+        <avatarInstantiatorViewRef>k__BackingField:
+          m_AssetGUID: fdc0ac72e84d9534eafd826d7fdfb22a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 2761372420489084973
       type: {class: WearablePlugin/WearableSettings, ns: DCL.AvatarRendering.Wearables, asm: DCL.Plugins}
       data:

@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape;
+using DCL.AvatarRendering.AvatarShape.DemoScripts.UI;
 using DCL.AvatarRendering.AvatarShape.GPUSkinning;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
@@ -14,6 +15,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Utility;
+using Utility.Pool;
 using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
@@ -29,9 +31,6 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceGameObject avatarBase;
 
             [field: SerializeField]
-            public int totalRandomAvatarsToInstantiate;
-
-            [field: SerializeField]
             public AssetReferenceMaterial celShadingMaterial;
 
             [field: SerializeField]
@@ -40,20 +39,29 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField]
             public AssetReferenceComputeShader computeShader;
 
+            [Serializable]
+            public class AvatarInstantiatorViewRef : ComponentReference<AvatarInstantiatorView>
+            {
+                public AvatarInstantiatorViewRef(string guid) : base(guid) { }
+            }
+
+            [field: Header(nameof(AvatarPlugin) + ".Debug")]
+            [field: Space]
             [field: SerializeField]
-            public int defaultComputeShaderCapacity = 100;
+            public AvatarInstantiatorViewRef avatarInstantiatorViewRef { get; private set; }
+
         }
 
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IConcurrentBudgetProvider frameTimeCapBudgetProvider;
         private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
 
-
         private IObjectPool<Material> celShadingMaterialPool;
         private IObjectPool<ComputeShader> computeShaderPool;
         private readonly TextureArrayContainer textureArrayContainer;
 
-        private int totalAvatarsToInstantiate;
+        private ProvidedInstance<AvatarInstantiatorView> avatarInstantiatorView;
+
 
         public async UniTask Initialize(AvatarShapeSettings settings, CancellationToken ct)
         {
@@ -74,13 +82,14 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<ComputeShader> providedComputeShader = await assetsProvisioner.ProvideMainAsset(settings.computeShader, ct: ct);
             computeShaderPool = new ObjectPool<ComputeShader>(() => Object.Instantiate(providedComputeShader.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.defaultMaterialCapacity);
 
-            for (var i = 0; i < settings.defaultComputeShaderCapacity; i++)
+            for (var i = 0; i < PoolConstants.COMPUTE_SHADER_COUNT; i++)
             {
                 ComputeShader prewarmedShader = computeShaderPool.Get();
                 computeShaderPool.Release(prewarmedShader);
             }
 
-            totalAvatarsToInstantiate = settings.totalRandomAvatarsToInstantiate;
+            avatarInstantiatorView = await assetsProvisioner.ProvideInstance(settings.avatarInstantiatorViewRef, ct: ct);
+
         }
 
         public AvatarPlugin(IAssetsProvisioner assetsProvisioner, IConcurrentBudgetProvider frameTimeCapBudgetProvider, IComponentPool<AvatarBase> avatarPoolRegistry)
@@ -94,8 +103,10 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             AvatarSystem.InjectToWorld(ref builder, frameTimeCapBudgetProvider, avatarPoolRegistry, celShadingMaterialPool, computeShaderPool, textureArrayContainer);
-            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, totalAvatarsToInstantiate);
             StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder);
+
+            //Debug scripts
+            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, avatarInstantiatorView.Value);
         }
 
         public void Dispose() { }

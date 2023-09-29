@@ -1,9 +1,13 @@
 using Arch.Core;
+using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.AvatarShape.DemoScripts.Components;
+using DCL.AvatarRendering.AvatarShape.DemoScripts.UI;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.CharacterCamera;
 using DCL.ECSComponents;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
@@ -22,48 +26,63 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [LogCategory(ReportCategory.AVATAR)]
     public partial class InstantiateRandomAvatarsSystem : BaseUnityLoopSystem
     {
-        private readonly int TOTAL_AVATARS_TO_INSTANTIATE;
+        private readonly AvatarInstantiatorView view;
+        private SingleInstanceEntity camera;
 
-        public class DefaultWearableRequest
+        public InstantiateRandomAvatarsSystem(World world, AvatarInstantiatorView avatarInstantiatorView) : base(world)
         {
-            public ParamPromise BaseWearablesPromise;
-            public bool FinishedState;
-        }
-
-        private readonly DefaultWearableRequest defaultWearableRequest;
-
-        public InstantiateRandomAvatarsSystem(World world, int totalAvatarsToInstantiate) : base(world)
-        {
-            TOTAL_AVATARS_TO_INSTANTIATE = totalAvatarsToInstantiate;
-            defaultWearableRequest = new DefaultWearableRequest();
+            view = avatarInstantiatorView;
+            view.addRandomAvatarButton.onClick.AddListener(AddRandomAvatar);
         }
 
         public override void Initialize()
         {
-            base.Initialize();
+            camera = World.CacheCamera();
+        }
 
-            defaultWearableRequest.BaseWearablesPromise = ParamPromise.Create(World,
-                new GetWearableByParamIntention(new[] { ("collectionType", "base-wearable"), ("pageSize", "50") }, "DummyUser", new List<IWearable>()),
-                PartitionComponent.TOP_PRIORITY);
+        private void AddRandomAvatar()
+        {
+            World.Create(new AddRandomAvatarIntention
+            {
+                avatarsToInstantiate = view.GetAvatarsToInstantiate(),
+                addSkinnedMeshRendererAvatar = view.GetDoSkin(),
+            });
         }
 
         protected override void Update(float t)
         {
-            if (defaultWearableRequest.FinishedState)
-                return;
+            StartRandomAvatarInstantiationQuery(World);
+            FinalizeRandomAvatarInstantiationQuery(World, in camera.GetCameraComponent(World));
+        }
 
-            if (defaultWearableRequest.BaseWearablesPromise.TryConsume(World, out StreamableLoadingResult<IWearable[]> baseWearables))
+        [Query]
+        [None(typeof(RandomAvatarRequest))]
+        private void StartRandomAvatarInstantiation(in Entity entity, ref AddRandomAvatarIntention addRandomAvatarIntention)
+        {
+            var randomAvatarRequest = new RandomAvatarRequest();
+
+            randomAvatarRequest.BaseWearablesPromise = ParamPromise.Create(World,
+                new GetWearableByParamIntention(new[] { ("collectionType", "base-wearable"), ("pageSize", "50") }, "DummyUser", new List<IWearable>()),
+                PartitionComponent.TOP_PRIORITY);
+
+            World.Add(entity, randomAvatarRequest);
+        }
+
+        [Query]
+        private void FinalizeRandomAvatarInstantiation(in Entity entity, [Data] in CameraComponent cameraComponent, ref RandomAvatarRequest randomAvatarRequest, ref AddRandomAvatarIntention addRandomAvatarIntention)
+        {
+            if (randomAvatarRequest.BaseWearablesPromise.TryConsume(World, out StreamableLoadingResult<IWearable[]> baseWearables))
             {
                 if (baseWearables.Succeeded)
-                    GenerateRandomAvatars(baseWearables.Asset);
+                    GenerateRandomAvatars(baseWearables.Asset, addRandomAvatarIntention.avatarsToInstantiate, addRandomAvatarIntention.addSkinnedMeshRendererAvatar, cameraComponent.Camera.transform.position);
                 else
                     ReportHub.LogError(GetReportCategory(), "Base wearables could't be loaded!");
 
-                defaultWearableRequest.FinishedState = true;
+                World.Destroy(entity);
             }
         }
 
-        private void GenerateRandomAvatars(IWearable[] defaultWearables)
+        private void GenerateRandomAvatars(IWearable[] defaultWearables, int randomAvatarsToInstantiate, bool addSkinnedMeshRenderer, Vector3 cameraPosition)
         {
             var male = new AvatarRandomizerHelper(WearablesLiterals.BodyShape.MALE);
             var female = new AvatarRandomizerHelper(WearablesLiterals.BodyShape.FEMALE);
@@ -74,13 +93,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 female.AddWearable(wearable);
             }
 
-            int startXPosition = -208;
-            int startYPosition = -96;
+            float startXPosition = cameraPosition.x;
+            float startZPosition = cameraPosition.z;
 
             var currentXCounter = 0;
             var currentYCounter = 0;
 
-            for (var i = 0; i < TOTAL_AVATARS_TO_INSTANTIATE; i++)
+            for (var i = 0; i < randomAvatarsToInstantiate; i++)
             {
                 AvatarRandomizerHelper currentRandomizer = i % 2 == 0 ? male : female;
 
@@ -100,7 +119,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 {
                     // Create a transform, normally it will be created either by JS Scene or by Comms
                     Transform transform = new GameObject($"RANDOM_AVATAR_{i}").transform;
-                    transform.localPosition = new Vector3(startXPosition + currentXCounter, 0, startYPosition + currentYCounter);
+                    transform.localPosition = new Vector3(startXPosition + currentXCounter, 0, startZPosition + currentYCounter);
                     var transformComp = new TransformComponent(transform);
 
                     var avatarShape = new PBAvatarShape
@@ -114,6 +133,12 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     //currentXCounter++;
                 }
             }
+        }
+
+        public override void Dispose()
+        {
+            view.addRandomAvatarButton.onClick.RemoveAllListeners();
+            Object.Destroy(view.gameObject);
         }
     }
 
