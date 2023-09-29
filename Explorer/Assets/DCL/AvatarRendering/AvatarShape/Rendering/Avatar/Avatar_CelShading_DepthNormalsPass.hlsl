@@ -11,6 +11,7 @@ struct VertexInfo
 {
     float3 position;
     float3 normal;
+    float4 tangent;
 };
 
 StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
@@ -44,7 +45,7 @@ Varyings DepthNormalsVertex(Attributes input)
     //output.uv         = TRANSFORM_TEX(input.texcoord, _BaseMap);
     output.positionCS = TransformObjectToHClip(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
 
-    VertexNormalInputs normalInput = GetVertexNormalInputs(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz, input.tangentOS);
+    VertexNormalInputs normalInput = GetVertexNormalInputs(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz, _GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].tangent.xyzw);
     output.normalWS = NormalizeNormalPerVertex(normalInput.normalWS);
 
     return output;
