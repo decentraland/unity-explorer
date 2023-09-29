@@ -1,5 +1,5 @@
-#ifndef UNIVERSAL_LIT_INPUT_INCLUDED
-#define UNIVERSAL_LIT_INPUT_INCLUDED
+#ifndef AVATAR_CELSHADING_LITINPUT_INCLUDED
+#define AVATAR_CELSHADING_LITINPUT_INCLUDED
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 #include "InputData_Avatar.hlsl"
@@ -7,6 +7,7 @@
 #include "BRDFData_Avatar.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
 #include "Packages/com.decentraland.unity-shared-dependencies/Runtime/Shaders/URP/Constants.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
 
 #if defined(_DETAIL_MULX2) || defined(_DETAIL_SCALED)
 #define _DETAIL
@@ -758,4 +759,4 @@ half4 UniversalFragmentPBR_Avatar(InputData_Avatar inputData, SurfaceData_Avatar
     return half4(color, surfaceData.alpha);
 }
 
-#endif // UNIVERSAL_INPUT_SURFACE_PBR_INCLUDED
+#endif

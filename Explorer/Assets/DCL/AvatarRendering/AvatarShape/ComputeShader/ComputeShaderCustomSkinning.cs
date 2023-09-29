@@ -122,8 +122,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         {
             Mesh mesh = skinnedMeshRenderer.sharedMesh;
 
+            // HACK: We only need to do this if the avatar has _NORMALMAPS enabled on the material.
             mesh.RecalculateTangents();
-            //mesh.RecalculateNormals();
 
             NativeArray<Matrix4x4>.Copy(mesh.bindposes, 0, bindPosesMatrix, ComputeShaderHelpers.BONE_COUNT * skinnedMeshCounter, ComputeShaderHelpers.BONE_COUNT);
             NativeArray<BoneWeight>.Copy(mesh.boneWeights, 0, totalSkinIn, vertexCounter, currentMeshVertexCount);
@@ -192,6 +192,9 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 if (meshRenderer.material.IsKeywordEnabled(keyword))
                     vertOutMaterial.EnableKeyword(keyword);
             }
+
+            // HACK: We currently aren't using normal maps so we're just creating shading issues by using this variant.
+            vertOutMaterial.DisableKeyword("_NORMALMAP");
 
             //vertOutMaterial.SetColor(ComputeShaderHelpers._BaseColour_ShaderID, Color.red);
             meshRenderer.material = vertOutMaterial;

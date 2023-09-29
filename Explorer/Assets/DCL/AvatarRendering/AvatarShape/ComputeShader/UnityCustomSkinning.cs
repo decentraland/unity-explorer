@@ -50,6 +50,9 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                     vertOutMaterial.EnableKeyword(keyword);
             }
 
+            // HACK: We currently aren't using normal maps so we're just creating shading issues by using this variant.
+            vertOutMaterial.DisableKeyword("_NORMALMAP");
+
             //vertOutMaterial.SetColor(ComputeShaderHelpers._BaseColour_ShaderID, Color.red);
             meshRenderer.material = vertOutMaterial;
             vertOutMaterial.SetInteger("_useCompute", 0);
