@@ -460,7 +460,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2198816967188641954}
   - component: {fileID: 6654053651110562472}
-  - component: {fileID: 3641037780719645906}
   m_Layer: 0
   m_Name: AvatarBase
   m_TagString: Untagged
@@ -505,18 +504,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &3641037780719645906
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2561918839770535189}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9017fc8e42f432844b5cc0d1447a1fcd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &2660097177476898865
 GameObject:
   m_ObjectHideFlags: 0
@@ -2038,13 +2025,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8126905407514615045}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.696517, y: 0.50175726, z: 0.26988092}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2198816967188641954}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &9055752946258308431
 MonoBehaviour:
@@ -2059,6 +2046,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <AvatarSkinnedMeshRenderer>k__BackingField: {fileID: 918335364077391645}
+  avatarAnimator: {fileID: 6654053651110562472}
+  playerAnimator: {fileID: 9100000, guid: 3662049975e2d0549a312769ab17ad07, type: 2}
 --- !u!1 &8230367895675129645
 GameObject:
   m_ObjectHideFlags: 0

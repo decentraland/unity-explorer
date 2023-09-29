@@ -13,6 +13,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     public struct AvatarShapeComponent
     {
         public string ID;
+        public string Name;
+
         public WearablesLiterals.BodyShape BodyShape;
         public bool IsDirty;
 
@@ -29,6 +31,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public AvatarShapeComponent(string name, string id, WearablesLiterals.BodyShape bodyShape, Promise wearablePromise)
         {
             ID = id;
+            Name = name;
             BodyShape = bodyShape;
             IsDirty = true;
             WearablePromise = wearablePromise;
@@ -37,7 +40,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             Bones = default(TransformAccessArray);
             job = default(BoneMatrixCalculationJob);
             handle = default(JobHandle);
-            if(name == "0")
+
+            //TODO: Debug feature, remove when done
+            if (ID == "0")
                 skinningMethod = new ComputeShaderSkinning();
             else
                 skinningMethod = new UnityCustomSkinning();

@@ -138,7 +138,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 var avatarShape = new PBAvatarShape
                 {
                     BodyShape = currentRandomizer.BodyShape,
-                    Name = i.ToString(),
+                    Id = "0",
                     Wearables = { wearables.ToArray() },
                 };
                 World.Create(avatarShape, transformComp);

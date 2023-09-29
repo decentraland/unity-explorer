@@ -131,6 +131,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             AvatarBase avatarBase = avatarShapeComponent.Base ?? avatarPoolRegistry.Get();
             avatarBase.gameObject.name = $"Avatar {avatarShapeComponent.ID}";
 
+            //TODO: Debug stuff, remove after demo
+            avatarBase.SetAsMainPlayer(avatarShapeComponent.Name.Equals("Player"));
+
             avatarShapeComponent.Base = avatarBase;
             avatarShapeComponent.SetupBurstJob(avatarShapeComponent.Base.transform, avatarShapeComponent.Base.AvatarSkinnedMeshRenderer.bones);
 

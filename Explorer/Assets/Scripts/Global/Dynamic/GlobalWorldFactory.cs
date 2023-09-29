@@ -3,8 +3,10 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character;
 using DCL.Character.Components;
+using DCL.ECSComponents;
 using DCL.GlobalPartitioning;
 using DCL.PluginSystem.Global;
 using DCL.Systems;
@@ -76,7 +78,14 @@ namespace Global.Dynamic
             Entity playerEntity = world.Create(
                 new CRDTEntity(SpecialEntititiesID.PLAYER_ENTITY),
                 new PlayerComponent(characterObject.CameraFocus),
-                new TransformComponent { Transform = characterObject.Transform }
+                new TransformComponent { Transform = characterObject.Transform },
+                new PBAvatarShape
+                {
+                    BodyShape = WearablesLiterals.BodyShape.MALE,
+                    Wearables = { WearablesLiterals.DefaultWearables.GetDefaultWearablesForBodyShape(WearablesLiterals.BodyShape.MALE) },
+                    Name = "Player",
+                    Id = "0",
+                }
             );
 
             IConcurrentBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(100);
