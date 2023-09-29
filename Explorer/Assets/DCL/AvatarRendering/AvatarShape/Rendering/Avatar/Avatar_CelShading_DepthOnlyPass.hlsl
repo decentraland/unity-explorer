@@ -37,7 +37,11 @@ Varyings DepthOnlyVertex(Attributes input)
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
     //output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
-    output.positionCS = TransformObjectToHClip(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
+    if(_useCompute == 1)
+        output.positionCS = TransformObjectToHClip(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
+    else
+        output.positionCS = TransformObjectToHClip(input.position.xyz);
+    
     return output;
 }
 

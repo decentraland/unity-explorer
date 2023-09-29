@@ -38,8 +38,17 @@ struct Varyings
 
 float4 GetShadowPositionHClip(Attributes input)
 {
-    float3 positionWS = TransformObjectToWorld(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
-    float3 normalWS = TransformObjectToWorldNormal(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz);
+    float3 positionWS;
+    if(_useCompute == 1)
+        positionWS = TransformObjectToWorld(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
+    else
+        positionWS = TransformObjectToWorld(input.positionOS);
+
+    float3 normalWS;
+    if(_useCompute == 1)
+        normalWS = TransformObjectToWorldNormal(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz);
+    else
+        normalWS = TransformObjectToWorldNormal(input.normalOS);
 
     #if _CASTING_PUNCTUAL_LIGHT_SHADOW
         float3 lightDirectionWS = normalize(_LightPosition - positionWS);
