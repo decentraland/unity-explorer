@@ -142,6 +142,22 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     Wearables = { wearables.ToArray() },
                 };
                 World.Create(avatarShape, transformComp);
+
+                if (addSkinnedMeshRenderer)
+                {
+                    Transform transformSkinnedMesh = new GameObject($"RANDOM_AVATAR_{i}").transform;
+                    var transformCompSkinnedMesh = new TransformComponent(transformSkinnedMesh);
+                    transformCompSkinnedMesh.Transform.transform.position = transform.position + new Vector3(1, 0, 0);
+
+                    var avatarShapeSkinnedMesh = new PBAvatarShape
+                    {
+                        BodyShape = currentRandomizer.BodyShape,
+                        Id = "1",
+                        Wearables = { wearables.ToArray() },
+                    };
+
+                    World.Create(avatarShapeSkinnedMesh, transformCompSkinnedMesh);
+                }
             }
         }
 
