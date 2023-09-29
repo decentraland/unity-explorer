@@ -14,10 +14,14 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.Transforms.Components;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Object = UnityEngine.Object;
 using PointerPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
+using Random = UnityEngine.Random;
+using RaycastHit = UnityEngine.RaycastHit;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -96,6 +100,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             float startXPosition = cameraPosition.x;
             float startZPosition = cameraPosition.z;
 
+            //hacky spawn size
+            float density = 2.0f;
+            float spawnArea = (float)Math.Sqrt(randomAvatarsToInstantiate) * density;
+
             var currentXCounter = 0;
             var currentYCounter = 0;
 
@@ -103,35 +111,37 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             {
                 AvatarRandomizerHelper currentRandomizer = i % 2 == 0 ? male : female;
 
+                float halfSpawnArea = spawnArea / 2;
+                float randomX = Random.Range(-halfSpawnArea, halfSpawnArea);
+                float randomZ = Random.Range(-halfSpawnArea, halfSpawnArea);
+
                 var wearables = new List<string>();
 
                 foreach (string randomAvatarWearable in currentRandomizer.GetRandomAvatarWearables())
                     wearables.Add(randomAvatarWearable);
 
-                if (currentXCounter == 20)
-                {
-                    currentXCounter = 0;
-                    currentYCounter++;
+                // Create a transform, normally it will be created either by JS Scene or by Comms
+                Transform transform = new GameObject($"RANDOM_AVATAR_{i}").transform;
+
+                Vector3 pos  = new Vector3(startXPosition + randomX, 500, startZPosition + randomZ);
+                RaycastHit hitInfo = new RaycastHit();
+                float distance = 1000.0f;
+                if(Physics.Raycast(pos, Vector3.down, out hitInfo, distance)) {
+                    transform.localPosition = hitInfo.point;
                 }
-                else { currentXCounter++; }
-
-                for (var j = 0; j < 1; j++)
+                else
                 {
-                    // Create a transform, normally it will be created either by JS Scene or by Comms
-                    Transform transform = new GameObject($"RANDOM_AVATAR_{i}").transform;
-                    transform.localPosition = new Vector3(startXPosition + currentXCounter, 0, startZPosition + currentYCounter);
-                    var transformComp = new TransformComponent(transform);
-
-                    var avatarShape = new PBAvatarShape
-                    {
-                        BodyShape = currentRandomizer.BodyShape,
-                        Name = j.ToString(),
-                        Wearables = { wearables.ToArray() },
-                    };
-                    World.Create(avatarShape, transformComp);
-
-                    //currentXCounter++;
+                    transform.localPosition = new Vector3(pos.x, 0.0f, pos.z);
                 }
+                var transformComp = new TransformComponent(transform);
+
+                var avatarShape = new PBAvatarShape
+                {
+                    BodyShape = currentRandomizer.BodyShape,
+                    Name = i.ToString(),
+                    Wearables = { wearables.ToArray() },
+                };
+                World.Create(avatarShape, transformComp);
             }
         }
 
