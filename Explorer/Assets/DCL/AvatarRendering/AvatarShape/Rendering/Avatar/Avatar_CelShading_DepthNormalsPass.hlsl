@@ -7,12 +7,21 @@
 #endif
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RealtimeLights.hlsl"
 
+struct VertexInfo
+{
+    float3 position;
+    float3 normal;
+};
+
+StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
+
 struct Attributes
 {
-    float4 positionOS     : POSITION;
-    float4 tangentOS      : TANGENT;
-    float2 texcoord     : TEXCOORD0;
-    float3 normal       : NORMAL;
+    uint   index            : SV_VertexID;
+    float4 positionOS       : POSITION;
+    float4 tangentOS        : TANGENT;
+    float2 texcoord         : TEXCOORD0;
+    float3 normal           : NORMAL;
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
@@ -20,7 +29,7 @@ struct Varyings
 {
     float4 positionCS   : SV_POSITION;
     float2 uv           : TEXCOORD1;
-    float3 normalWS                 : TEXCOORD2;
+    float3 normalWS     : TEXCOORD2;
 
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
@@ -33,9 +42,9 @@ Varyings DepthNormalsVertex(Attributes input)
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
     //output.uv         = TRANSFORM_TEX(input.texcoord, _BaseMap);
-    output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+    output.positionCS = TransformObjectToHClip(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
 
-    VertexNormalInputs normalInput = GetVertexNormalInputs(input.normal, input.tangentOS);
+    VertexNormalInputs normalInput = GetVertexNormalInputs(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz, input.tangentOS);
     output.normalWS = NormalizeNormalPerVertex(normalInput.normalWS);
 
     return output;

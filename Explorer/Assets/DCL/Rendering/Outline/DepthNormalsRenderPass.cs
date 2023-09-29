@@ -1,0 +1,84 @@
+﻿using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+using UnityEngine.Experimental.Rendering;
+using Diagnostics.ReportsHandling;
+
+namespace DCL.Rendering.Avatar
+{
+    public partial class OutlineRendererFeature : ScriptableRendererFeature
+    {
+        public class DepthNormalsRenderPass : ScriptableRenderPass
+        {
+            private ReportData m_ReportData = new ReportData("DCL_RenderFeature_Outline_DepthNormalsPass", ReportHint.SessionStatic);
+            private const string profilerTag = "Custom Pass: DepthNormals";
+
+            private Material depthNormalsMaterial = null;
+            private RTHandle depthNormalsRTHandle_Colour = null;
+            private RTHandle depthNormalsRTHandle_Depth = null;
+            private RenderTextureDescriptor depthNormalsRTDescriptor_Colour;
+            private RenderTextureDescriptor depthNormalsRTDescriptor_Depth;
+
+            private FilteringSettings m_FilteringSettings;
+            //private RTHandle destinationHandle;
+            ShaderTagId m_ShaderTagId = new ShaderTagId("DepthNormals");
+
+            public DepthNormalsRenderPass() : base()
+            {
+                this.m_FilteringSettings = new FilteringSettings(RenderQueueRange.opaque);
+            }
+
+            public void Setup(Material _depthNormalsMaterial,
+                                RTHandle _depthNormalsRTHandle_Colour,
+                                RenderTextureDescriptor _depthNormalsRTDescriptor_Colour,
+                                RTHandle _depthNormalsRTHandle_Depth,
+                                RenderTextureDescriptor _depthNormalsRTDescriptor_Depth)
+            {
+                this.depthNormalsMaterial = _depthNormalsMaterial;
+                this.depthNormalsRTHandle_Colour = _depthNormalsRTHandle_Colour;
+                this.depthNormalsRTDescriptor_Colour = _depthNormalsRTDescriptor_Colour;
+                this.depthNormalsRTHandle_Depth = _depthNormalsRTHandle_Depth;
+                this.depthNormalsRTDescriptor_Depth = _depthNormalsRTDescriptor_Depth;
+            }
+
+            // Configure the pass by creating a temporary render texture and
+            // readying it for rendering
+            public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
+            {
+                ConfigureTarget(depthNormalsRTHandle_Colour, depthNormalsRTHandle_Depth);
+                ConfigureClear(ClearFlag.All, Color.black);
+            }
+
+            public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
+            {
+                CommandBuffer cmd = CommandBufferPool.Get("_DepthNormalsPass");
+                using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
+                {
+                    context.ExecuteCommandBuffer(cmd);
+                    cmd.Clear();
+
+                    //CoreUtils.SetRenderTarget(cmd, this.depthNormalsRTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.Unknown, depthSlice: -1);
+
+                    // Create the draw settings, which configures a new draw call to the GPU
+                    DrawingSettings drawSettings = CreateDrawingSettings(m_ShaderTagId, ref renderingData, renderingData.cameraData.defaultOpaqueSortFlags);
+                    // We cant to render all objects using our material
+                    //drawSettings.overrideMaterial = depthNormalsMaterial;
+                    context.DrawRenderers(renderingData.cullResults, ref drawSettings, ref m_FilteringSettings);
+                }
+                context.ExecuteCommandBuffer(cmd);
+                CommandBufferPool.Release(cmd);
+            }
+
+            public override void FrameCleanup(CommandBuffer cmd)
+            {
+
+            }
+
+            public void Dispose()
+            {
+                //this.depthNormalsRTHandle?.Release();
+            }
+        }
+    }
+}

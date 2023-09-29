@@ -43,6 +43,7 @@ UNITY_DEFINE_INSTANCED_PROP(int, _BumpMapArr_ID)
 UNITY_DEFINE_INSTANCED_PROP(int, _EmissionMapArr_ID)
 UNITY_DEFINE_INSTANCED_PROP(int, _lastWearableVertCount)
 UNITY_DEFINE_INSTANCED_PROP(int, _lastAvatarVertCount)
+UNITY_DEFINE_INSTANCED_PROP(int, _useCompute)
 UNITY_DEFINE_INSTANCED_PROP(float, _DiffuseRampInnerMin)
 UNITY_DEFINE_INSTANCED_PROP(float, _DiffuseRampInnerMax)
 UNITY_DEFINE_INSTANCED_PROP(float, _DiffuseRampOuterMin)
@@ -81,7 +82,8 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 #define _MetallicGlossMapArr_ID UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _MetallicGlossMapArr_ID) 
 #define _BumpMapArr_ID UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BumpMapArr_ID)
 #define _lastWearableVertCount UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _lastWearableVertCount) 
-#define _lastAvatarVertCount UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _lastAvatarVertCount) 
+#define _lastAvatarVertCount UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _lastAvatarVertCount)
+#define _useCompute UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _useCompute) 
 #define _EmissionMapArr_ID UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _EmissionMapArr_ID)
 #define _DiffuseRampInnerMin UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _DiffuseRampInnerMin)
 #define _DiffuseRampInnerMax UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _DiffuseRampInnerMax)
@@ -184,7 +186,6 @@ half4 SampleAlbedoAlpha(float2 uv, TEXTURE2D_PARAM(albedoAlphaMap, sampler_albed
 half4 SampleMetallicSpecGloss(float2 uv, half albedoAlpha)
 {
     half4 specGloss;
-    #define _METALLICSPECGLOSSMAP
     #ifdef _METALLICSPECGLOSSMAP
         int nMetallicGlossMapArrID = _MetallicGlossMapArr_ID;
         specGloss = SAMPLE_METALLICSPECULAR(uv, nMetallicGlossMapArrID);
@@ -329,7 +330,6 @@ half3 ApplyDetailNormal(float2 detailUv, half3 normalTS, half detailMask)
 
 half3 SampleNormal(float2 uv, half scale = half(1.0))
 {
-    #define _NORMALMAP
     #ifdef _NORMALMAP
         int nBumpMapArrID = _BumpMapArr_ID;
         half4 n = SAMPLE_BUMP(uv, nBumpMapArrID);
@@ -462,7 +462,7 @@ inline void InitializeBRDFData_Avatar(half3 albedo, half metallic, half3 specula
 half3 EnvironmentBRDFSpecular_Avatar(BRDFData_Avatar brdfData, half fresnelTerm)
 {
     float surfaceReduction = 1.0 / (brdfData.roughness2 + 1.0);
-    return surfaceReduction * lerp(brdfData.specular, brdfData.grazingTerm, fresnelTerm);
+    return surfaceReduction * brdfData.specular;//lerp(brdfData.specular, brdfData.grazingTerm, fresnelTerm);
 }
 
 half3 EnvironmentBRDF_Avatar(BRDFData_Avatar brdfData, half3 indirectDiffuse, half3 indirectSpecular, half fresnelTerm)

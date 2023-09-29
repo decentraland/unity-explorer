@@ -15,6 +15,7 @@ struct VertexInfo
 {
     float3 position;
     float3 normal;
+    float4 tangent;
 };
 
 StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
@@ -74,7 +75,7 @@ void InitializeInputData(Varyings input, half3 normalTS, out InputData_Avatar in
         inputData.positionWS = input.positionWS;
     #endif
 
-    half3 viewDirWS = SafeNormalize(input.viewDirWS);
+    const half3 viewDirWS = SafeNormalize(input.viewDirWS);
     #if defined(_NORMALMAP) || defined(_DETAIL)
         float sgn = input.tangentWS.w;      // should be either +1 or -1
         float3 bitangent = sgn * cross(input.normalWS.xyz, input.tangentWS.xyz);
@@ -116,13 +117,23 @@ Varyings LitPassVertex(Attributes input)
     UNITY_TRANSFER_INSTANCE_ID(input, output);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-    VertexPositionInputs vertexInput = GetVertexPositionInputs(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
-
+    VertexPositionInputs vertexInput;
+    VertexNormalInputs normalInput;
+    
+    if(_useCompute == 1)
+        vertexInput = GetVertexPositionInputs(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
+    else
+        vertexInput = GetVertexPositionInputs(input.positionOS);
+    
+    
     // normalWS and tangentWS already normalize.
     // this is required to avoid skewing the direction during interpolation
     // also required for per-vertex lighting and SH evaluation
     //TODO: Tangents
-    VertexNormalInputs normalInput = GetVertexNormalInputs(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz, input.tangentOS);
+    if(_useCompute == 1)
+        normalInput = GetVertexNormalInputs(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz, _GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].tangent.xyzw);
+    else
+        normalInput = GetVertexNormalInputs(input.normalOS,input.tangentOS.xyzw);
 
     half3 viewDirWS = GetWorldSpaceViewDir(vertexInput.positionWS);
     half3 vertexLight = VertexLighting(vertexInput.positionWS, normalInput.normalWS);
@@ -182,7 +193,8 @@ half4 LitPassFragment(Varyings input) : SV_Target
 
     half4 color = UniversalFragmentPBR_Avatar(inputData, surfaceData);
  
-    color.rgb = MixFog(color.rgb, inputData.fogCoord);    
+    //color.rgb = MixFog(color.rgb, inputData.fogCoord);
+    color.rgb = (input.normalWS + float3(1.0f, 1.0f, 1.0f)) * 0.5f;
     color.a = OutputAlpha(color.a, _Surface);    
 	color = fadeDithering(color, input.positionWS, input.positionSS);
     return color;

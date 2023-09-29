@@ -10,6 +10,8 @@ Shader "Custom/Avatar_CelShading"
         
         [HideInInspector] [PerRendererData] _lastWearableVertCount ("Last wearable Vert Count", Integer) = -1
         [HideInInspector] [PerRendererData] _lastAvatarVertCount ("Last avatar vert count", Integer) = -1
+        [HideInInspector] [PerRendererData] _useCompute ("Use Compute", Integer) = 0
+
         
         [HideInInspector] _BaseMapArr ("AlbedoArray", 2DArray) = "white" {}
         [HideInInspector] _AlphaTextureArr("Alpha Texture", 2DArray) = "white" {}

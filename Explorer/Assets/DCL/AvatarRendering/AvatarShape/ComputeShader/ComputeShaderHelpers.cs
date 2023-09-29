@@ -33,6 +33,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         public static readonly int LAST_WEARABLE_VERT_COUNT_ID = Shader.PropertyToID("_lastWearableVertCount");
         public static readonly int VERTS_IN_ID = Shader.PropertyToID("g_VertsIn");
         public static readonly int NORMALS_IN_ID = Shader.PropertyToID("g_NormalsIn");
+        public static readonly int TANGENTS_IN_ID = Shader.PropertyToID("g_TangentsIn");
         public static readonly int SOURCE_SKIN_ID = Shader.PropertyToID("g_SourceSkin");
         public static readonly int BIND_POSE_ID = Shader.PropertyToID("g_BindPoses");
         public static readonly int BIND_POSES_INDEX_ID = Shader.PropertyToID("g_BindPosesIndex");
