@@ -30,7 +30,7 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        totalRandomAvatarsToInstantiate: 5
+        totalRandomAvatarsToInstantiate: 100
         celShadingMaterial:
           m_AssetGUID: 19373184c73f36042a55739551bb8298
           m_SubObjectName: 

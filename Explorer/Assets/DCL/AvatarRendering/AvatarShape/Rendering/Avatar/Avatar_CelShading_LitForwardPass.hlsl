@@ -193,8 +193,8 @@ half4 LitPassFragment(Varyings input) : SV_Target
 
     half4 color = UniversalFragmentPBR_Avatar(inputData, surfaceData);
  
-    //color.rgb = MixFog(color.rgb, inputData.fogCoord);
-    color.rgb = (input.normalWS + float3(1.0f, 1.0f, 1.0f)) * 0.5f;
+    color.rgb = MixFog(color.rgb, inputData.fogCoord);
+    //color.rgb = (input.normalWS + float3(1.0f, 1.0f, 1.0f)) * 0.5f;
     color.a = OutputAlpha(color.a, _Surface);    
 	color = fadeDithering(color, input.positionWS, input.positionSS);
     return color;

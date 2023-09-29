@@ -69,7 +69,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public void Clear()
         {
             skinningMethod.Dispose();
-
             //TODO: Clear BurstJob and everything else that could be dirty
         }
 

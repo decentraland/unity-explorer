@@ -96,7 +96,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 }
                 else { currentXCounter++; }
 
-                for (var j = 0; j < 2; j++)
+                for (var j = 0; j < 1; j++)
                 {
                     // Create a transform, normally it will be created either by JS Scene or by Comms
                     Transform transform = new GameObject($"RANDOM_AVATAR_{i}").transform;
@@ -110,7 +110,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                         Wearables = { wearables.ToArray() },
                     };
                     World.Create(avatarShape, transformComp);
-                    currentXCounter++;
+
+                    //currentXCounter++;
                 }
             }
         }

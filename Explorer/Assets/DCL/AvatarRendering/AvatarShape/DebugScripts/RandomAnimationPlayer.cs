@@ -9,11 +9,11 @@ public class RandomAnimationPlayer : MonoBehaviour
     {
         // Get the animator component
         animator = GetComponent<Animator>();
+
         // Get all available clips
         clips = animator.runtimeAnimatorController.animationClips;
         string parentName = transform.parent.parent.name;
         int clipToPlay = int.Parse(parentName.Substring(parentName.Length - 1, 1)) % clips.Length;
         animator.Play(clips[clipToPlay].name);
     }
-
 }
