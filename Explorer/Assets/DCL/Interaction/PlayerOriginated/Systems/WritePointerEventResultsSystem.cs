@@ -1,12 +1,14 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
+using CrdtEcsBridge.Components;
+using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
+using Diagnostics.ReportsHandling;
 using ECS.Abstract;
-using ECS.ComponentsPooling;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
@@ -24,32 +26,47 @@ namespace DCL.Interaction.PlayerOriginated.Systems
     ///     </para>
     /// </summary>
     [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [LogCategory(ReportCategory.INPUT)]
     public partial class WritePointerEventResultsSystem : BaseUnityLoopSystem
     {
+        private static readonly PBPointerEventsResult SHARED_POINTER_EVENTS_RESULT = new ();
+        private static readonly RaycastHit SHARED_RAYCAST_HIT = new RaycastHit().Reset();
+
         private readonly Entity sceneRoot;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
-        private readonly IComponentPool<RaycastHit> raycastHitPool;
-        private readonly IComponentPool<PBPointerEventsResult> pointerEventsResultsPool;
-        private readonly ISceneStateProvider sceneStateProvider;
 
-        private uint counter;
+        private readonly ISceneStateProvider sceneStateProvider;
+        private readonly IGlobalInputEvents globalInputEvents;
+
+        //private uint counter;
 
         internal WritePointerEventResultsSystem(World world, Entity sceneRoot, IECSToCRDTWriter ecsToCRDTWriter,
-            IComponentPool<RaycastHit> raycastHitPool, IComponentPool<PBPointerEventsResult> pointerEventsResultsPool,
-            ISceneStateProvider sceneStateProvider) : base(world)
+            ISceneStateProvider sceneStateProvider, IGlobalInputEvents globalInputEvents) : base(world)
         {
             this.sceneRoot = sceneRoot;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
-            this.raycastHitPool = raycastHitPool;
-            this.pointerEventsResultsPool = pointerEventsResultsPool;
+
             this.sceneStateProvider = sceneStateProvider;
+            this.globalInputEvents = globalInputEvents;
         }
 
         protected override void Update(float t)
         {
             Vector3 scenePosition = World.Get<TransformComponent>(sceneRoot).Cached.WorldPosition;
-
             WriteResultsQuery(World, scenePosition);
+            WriteGlobalEvents();
+
+            //counter++;
+        }
+
+        private void WriteGlobalEvents()
+        {
+            // ReSharper disable once ForCanBeConvertedToForeach
+            for (var i = 0; i < globalInputEvents.Entries.Count; i++)
+            {
+                IGlobalInputEvents.Entry entry = globalInputEvents.Entries[i];
+                AppendMessage(SpecialEntititiesID.SCENE_ROOT_ENTITY, null, entry.InputAction, entry.PointerEventType);
+            }
         }
 
         [Query]
@@ -63,22 +80,25 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                 PBPointerEvents.Types.Entry entry = pbPointerEvents.PointerEvents[validIndex];
                 PBPointerEvents.Types.Info info = entry.EventInfo;
 
-                RaycastHit sdkHit = raycastHitPool.Get();
-
-                sdkHit.FillSDKRaycastHit(scenePosition, intent.RaycastHit, string.Empty,
+                SHARED_RAYCAST_HIT.FillSDKRaycastHit(scenePosition, intent.RaycastHit, string.Empty,
                     sdkEntity, intent.Ray.origin, intent.Ray.direction);
 
-                PBPointerEventsResult result = pointerEventsResultsPool.Get();
-                result.Hit = sdkHit;
-                result.Button = info.Button;
-                result.State = entry.EventType;
-                result.Timestamp = counter++;
-                result.TickNumber = sceneStateProvider.TickNumber;
-
-                ecsToCRDTWriter.AppendMessage(sdkEntity, result);
+                AppendMessage(sdkEntity, SHARED_RAYCAST_HIT, info.Button, entry.EventType);
             }
 
-            intent.ValidIndices.Clear();
+            pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Clear();
+        }
+
+        private void AppendMessage(CRDTEntity sdkEntity, RaycastHit sdkHit, InputAction button, PointerEventType eventType)
+        {
+            PBPointerEventsResult result = SHARED_POINTER_EVENTS_RESULT;
+            result.Hit = sdkHit;
+            result.Button = button;
+            result.State = eventType;
+            result.Timestamp = sceneStateProvider.TickNumber;
+            result.TickNumber = sceneStateProvider.TickNumber;
+
+            ecsToCRDTWriter.AppendMessage(sdkEntity, result);
         }
     }
 }

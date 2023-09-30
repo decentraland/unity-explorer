@@ -1,6 +1,7 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
+using DCL.Interaction.PlayerOriginated;
 using DCL.Interaction.PlayerOriginated.Systems;
 using DCL.Interaction.Raycast.Systems;
 using DCL.PluginSystem.World.Dependencies;
@@ -18,15 +19,17 @@ namespace DCL.PluginSystem.World
     public class InteractionPlugin : IDCLWorldPlugin<InteractionPlugin.Settings>
     {
         private readonly IProfilingProvider profilingProvider;
+        private readonly IGlobalInputEvents globalInputEvents;
         private readonly ECSWorldSingletonSharedDependencies sharedDependencies;
 
         private IConcurrentBudgetProvider raycastBudgetProvider;
         private Settings settings;
 
-        public InteractionPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IProfilingProvider profilingProvider)
+        public InteractionPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IProfilingProvider profilingProvider, IGlobalInputEvents globalInputEvents)
         {
             this.sharedDependencies = sharedDependencies;
             this.profilingProvider = profilingProvider;
+            this.globalInputEvents = globalInputEvents;
         }
 
         public UniTask Initialize(Settings settings, CancellationToken ct)
@@ -51,9 +54,8 @@ namespace DCL.PluginSystem.World
 
             WritePointerEventResultsSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot,
                 sceneDeps.EcsToCRDTWriter,
-                sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<RaycastHit>(),
-                sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<PBPointerEventsResult>(),
-                sceneDeps.SceneStateProvider);
+                sceneDeps.SceneStateProvider,
+                globalInputEvents);
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
@@ -73,6 +75,12 @@ namespace DCL.PluginSystem.World
 
             [field: SerializeField]
             public float PlayerOriginRaycastMaxDistance { get; private set; } = 200f;
+
+            /// <summary>
+            ///     Maximum scene bucket to which global input will be propagated.
+            /// </summary>
+            [field: SerializeField]
+            public int GlobalInputPropagationBucketThreshold { get; private set; } = 3;
         }
     }
 }

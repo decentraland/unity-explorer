@@ -1,6 +1,5 @@
 using CRDT.Serializer;
 using CrdtEcsBridge.Engine;
-using DCL.Interaction.Utility;
 using DCL.PluginSystem.World.Dependencies;
 using SceneRunner;
 using SceneRunner.ECSWorld;
@@ -19,10 +18,12 @@ namespace Global
         public static SceneSharedContainer Create(in StaticContainer staticContainer)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
+            ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 staticContainer.PartitionSettings,
-                staticContainer.CameraSamplingData,
+                exposedGlobalDataContainer.CameraSamplingData,
+                exposedGlobalDataContainer.ExposedCameraData,
                 staticContainer.ECSWorldPlugins);
 
             return new SceneSharedContainer
@@ -34,7 +35,7 @@ namespace Global
                     new CRDTSerializer(),
                     staticContainer.ComponentsContainer.SDKComponentsRegistry,
                     sharedDependencies.EntityFactory,
-                    new EntityCollidersGlobalCache()
+                    staticContainer.EntityCollidersGlobalCache
                 ),
             };
         }

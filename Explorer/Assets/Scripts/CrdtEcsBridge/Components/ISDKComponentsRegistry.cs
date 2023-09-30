@@ -9,6 +9,6 @@ namespace CrdtEcsBridge.Components
 
         bool TryGet(int id, out SDKComponentBridge sdkComponentBridge);
 
-        bool TryGet<T>(out SDKComponentBridge sdkComponentBridge) where T: IMessage<T>;
+        bool TryGet<T>(out SDKComponentBridge sdkComponentBridge) where T: IMessage;
     }
 }

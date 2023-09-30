@@ -10,7 +10,6 @@ using DCL.PluginSystem.World.Dependencies;
 using Diagnostics;
 using Diagnostics.ReportsHandling;
 using ECS.Prioritization;
-using ECS.Prioritization.Components;
 using ECS.Profiling;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System.Collections.Generic;
@@ -35,7 +34,7 @@ namespace Global
 
         public ComponentsContainer ComponentsContainer { get; private set; }
 
-        public CameraSamplingData CameraSamplingData { get; private set; }
+        public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
 
         public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; }
 
@@ -80,6 +79,7 @@ namespace Global
         public static async UniTask<(StaticContainer container, bool success)> Create(IPluginSettingsContainer settingsContainer, CancellationToken ct)
         {
             var componentsContainer = ComponentsContainer.Create();
+            var exposedGlobalDataContainer = ExposedGlobalDataContainer.Create();
             var profilingProvider = new ProfilingProvider();
 
             var container = new StaticContainer();
@@ -103,9 +103,9 @@ namespace Global
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
-            container.CameraSamplingData = new CameraSamplingData();
             container.ProfilingProvider = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
+            container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
@@ -117,7 +117,7 @@ namespace Global
                 new VisibilityPlugin(),
                 new AssetBundlesPlugin(container.ReportHandlingSettings),
                 new GltfContainerPlugin(sharedDependencies),
-                new InteractionPlugin(sharedDependencies, profilingProvider),
+                new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
             };
 
             return (container, true);

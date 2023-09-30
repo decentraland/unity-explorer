@@ -90,6 +90,21 @@ namespace DCL.Interaction.PlayerOriginated.Utility
             resultsIntent.ValidIndices.Add((byte)entryIndex);
         }
 
+        internal static void PrepareDefaultValues(this PBPointerEvents.Types.Info info)
+        {
+            if (!info.HasButton)
+                info.Button = ECSComponents.InputAction.IaAny;
+
+            if (!info.HasMaxDistance)
+                info.MaxDistance = 10f;
+
+            if (!info.HasShowFeedback)
+                info.ShowFeedback = true;
+
+            if (!info.HasHoverText)
+                info.HoverText = "Interact";
+        }
+
         public readonly struct AnyInputInfo
         {
             public readonly bool AnyButtonWasPressedThisFrame;

@@ -4,7 +4,6 @@ using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated.Systems;
-using ECS.ComponentsPooling;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
@@ -16,6 +15,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
     public class WritePointerEventResultsSystemShould : UnitySystemTestBase<WritePointerEventResultsSystem>
     {
         private IECSToCRDTWriter writer;
+        private IGlobalInputEvents globalInputEvents;
 
         [SetUp]
         public void SetUp()
@@ -23,20 +23,13 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Entity rootEntity = world.Create(new SceneRootComponent());
             AddTransformToEntity(rootEntity);
 
-            IComponentPool<RaycastHit> raycastHitPool = Substitute.For<IComponentPool<RaycastHit>>();
-            IComponentPool<PBPointerEventsResult> pointerEventsResultsPool = Substitute.For<IComponentPool<PBPointerEventsResult>>();
-
-            raycastHitPool.Get().Returns(_ => new RaycastHit().Reset());
-            pointerEventsResultsPool.Get().Returns(_ => new PBPointerEventsResult());
-
             ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.TickNumber.Returns(123u);
 
             system = new WritePointerEventResultsSystem(world, rootEntity,
                 writer = Substitute.For<IECSToCRDTWriter>(),
-                raycastHitPool,
-                pointerEventsResultsPool,
-                sceneStateProvider);
+                sceneStateProvider,
+                globalInputEvents = Substitute.For<IGlobalInputEvents>());
         }
 
         [Test]

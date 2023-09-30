@@ -6,6 +6,7 @@ using CrdtEcsBridge.Physics;
 using DCL.CharacterCamera;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
+using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -23,6 +24,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(CameraGroup))]
+    [LogCategory(ReportCategory.INPUT)]
     public partial class PlayerOriginatedRaycastSystem : BaseUnityLoopSystem
     {
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;

@@ -95,7 +95,7 @@ namespace SceneRuntime
 
         public void ApplyStaticMessages(ReadOnlyMemory<byte> data)
         {
-            var result = engineApi.api.CrdtSendToRenderer(data);
+            ArraySegment<byte> result = engineApi.api.CrdtSendToRenderer(data, false);
 
             // Initial messages are not expected to return anything
             Assert.IsTrue(result.Count == 0);

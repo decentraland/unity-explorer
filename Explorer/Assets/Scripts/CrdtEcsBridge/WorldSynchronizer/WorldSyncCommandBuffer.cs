@@ -218,6 +218,12 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
                     if (componentsBatch.Count == 0) continue;
 
+                    if (entity.Equals(SpecialEntititiesID.PLAYER_ENTITY) || entity.Equals(SpecialEntititiesID.CAMERA_ENTITY))
+                    {
+                        // Camera and player entities are not supported yet
+                        continue;
+                    }
+
                     if (!entitiesMap.TryGetValue(entity, out var realEntity))
                         entitiesMap[entity] = realEntity = entityFactory.Create(entity, world);
 

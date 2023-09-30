@@ -22,7 +22,7 @@ namespace SceneRunner
         internal readonly ISceneRuntime runtimeInstance;
         internal readonly ECSWorldFacade ecsWorldFacade;
         internal readonly ICRDTProtocol crdtProtocol;
-        internal readonly IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider;
+        internal readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
         internal readonly ICRDTWorldSynchronizer crdtWorldSynchronizer;
         internal readonly IInstancePoolsProvider instancePoolsProvider;
         internal readonly ICRDTMemoryAllocator crdtMemoryAllocator;
@@ -36,7 +36,7 @@ namespace SceneRunner
             ISceneRuntime runtimeInstance,
             ECSWorldFacade ecsWorldFacade,
             ICRDTProtocol crdtProtocol,
-            IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider,
+            IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
             ICRDTWorldSynchronizer crdtWorldSynchronizer,
             IInstancePoolsProvider instancePoolsProvider,
             ICRDTMemoryAllocator crdtMemoryAllocator,

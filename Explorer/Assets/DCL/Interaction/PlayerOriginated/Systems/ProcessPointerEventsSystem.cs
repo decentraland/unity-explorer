@@ -6,6 +6,7 @@ using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.PlayerOriginated.Utility;
 using DCL.Interaction.Utility;
+using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using System.Collections.Generic;
 
@@ -13,6 +14,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(PlayerOriginatedRaycastSystem))]
+    [LogCategory(ReportCategory.INPUT)]
     public partial class ProcessPointerEventsSystem : BaseUnityLoopSystem
     {
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
@@ -82,6 +84,8 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                         {
                             PBPointerEvents.Types.Entry pointerEvent = pbPointerEvents.PointerEvents[i];
                             PBPointerEvents.Types.Info info = pointerEvent.EventInfo;
+
+                            info.PrepareDefaultValues();
 
                             if (!InteractionInputUtils.IsQualifiedByDistance(raycastResult, info)) continue;
 

@@ -32,6 +32,7 @@ namespace DCL.PluginSystem.Global
         private readonly UIDocument canvas;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
+        private readonly GlobalInputEvents globalInputEvents;
 
         private HoverCanvas hoverCanvas;
         private Settings settings;
@@ -39,12 +40,14 @@ namespace DCL.PluginSystem.Global
         public GlobalInteractionPlugin(DCLInput dclInput,
             UIDocument canvas,
             IAssetsProvisioner assetsProvisioner,
-            IEntityCollidersGlobalCache entityCollidersGlobalCache)
+            IEntityCollidersGlobalCache entityCollidersGlobalCache,
+            GlobalInputEvents globalInputEvents)
         {
             this.dclInput = dclInput;
             this.canvas = canvas;
             this.assetsProvisioner = assetsProvisioner;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
+            this.globalInputEvents = globalInputEvents;
         }
 
         public async UniTask Initialize(Settings settings, CancellationToken ct)
@@ -72,21 +75,21 @@ namespace DCL.PluginSystem.Global
             DCLInput.PlayerActions playerInput = dclInput.Player;
 
             // TODO How to add FORWARD/BACKWARD/LEFT/RIGHT properly?
-            ProcessPointerEventsSystem.InjectToWorld(ref builder,
-                new Dictionary<InputAction, UnityEngine.InputSystem.InputAction>
-                {
-                    { InputAction.IaPointer, playerInput.Pointer },
-                    { InputAction.IaPrimary, playerInput.Primary },
-                    { InputAction.IaSecondary, playerInput.Secondary },
-                    { InputAction.IaJump, playerInput.Jump },
-                    { InputAction.IaAction3, playerInput.ActionButton3 },
-                    { InputAction.IaAction4, playerInput.ActionButton4 },
-                    { InputAction.IaAction5, playerInput.ActionButton5 },
-                    { InputAction.IaAction6, playerInput.ActionButton6 },
-                },
-                entityCollidersGlobalCache);
+            var actionsMap = new Dictionary<InputAction, UnityEngine.InputSystem.InputAction>
+            {
+                { InputAction.IaPointer, playerInput.Pointer },
+                { InputAction.IaPrimary, playerInput.Primary },
+                { InputAction.IaSecondary, playerInput.Secondary },
+                { InputAction.IaJump, playerInput.Jump },
+                { InputAction.IaAction3, playerInput.ActionButton3 },
+                { InputAction.IaAction4, playerInput.ActionButton4 },
+                { InputAction.IaAction5, playerInput.ActionButton5 },
+                { InputAction.IaAction6, playerInput.ActionButton6 },
+            };
 
+            ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache);
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
+            PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
         }
 
         public void Dispose() { }

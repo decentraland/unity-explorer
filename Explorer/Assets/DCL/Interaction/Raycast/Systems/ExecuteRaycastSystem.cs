@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
+using Utility.Pool;
 using RaycastHit = UnityEngine.RaycastHit;
 
 namespace DCL.Interaction.Raycast.Systems
@@ -140,7 +141,9 @@ namespace DCL.Interaction.Raycast.Systems
             ColliderLayer sdkCollisionMask = sdkComponent.GetCollisionMask();
             int collisionMask = PhysicsLayers.CreateUnityLayerMaskFromSDKMask(sdkCollisionMask);
 
-            PBRaycastResult result = raycastComponentPool.Get();
+            using PoolExtensions.Scope<PBRaycastResult> resultScope = raycastComponentPool.AutoScope();
+
+            PBRaycastResult result = resultScope.Value;
             result.Timestamp = sdkComponent.Timestamp;
             result.Direction.Set(ray.direction);
             result.GlobalOrigin.Set(ray.origin);

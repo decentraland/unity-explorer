@@ -20,7 +20,7 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
         {
             //Arrange
             ICRDTProtocol crdtProtocol = Substitute.For<ICRDTProtocol>();
-            IOutgoingCRTDMessagesProvider outgoingCRDTMessageProvider = Substitute.For<IOutgoingCRTDMessagesProvider>();
+            IOutgoingCRDTMessagesProvider outgoingCRDTMessageProvider = Substitute.For<IOutgoingCRDTMessagesProvider>();
 
             var sdkComponentRegistry = new SDKComponentsRegistry();
             sdkComponentRegistry.Add(SDKComponentBuilder<PBPointerEventsResult>.Create(ComponentID.POINTER_EVENTS_RESULT).AsProtobufComponent());
@@ -34,7 +34,7 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
 
             //Assert
             crdtProtocol.Received().CreateAppendMessage(crdtEntity, Arg.Any<int>(), Arg.Any<IMemoryOwner<byte>>());
-            outgoingCRDTMessageProvider.Received().AddMessage(Arg.Any<ProcessedCRDTMessage>());
+            outgoingCRDTMessageProvider.Received().AppendMessage(Arg.Any<ProcessedCRDTMessage>());
         }
 
         [Test]
@@ -42,7 +42,7 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
         {
             //Arrange
             ICRDTProtocol crdtProtocol = new CRDTProtocol();
-            IOutgoingCRTDMessagesProvider outgoingCRDTMessageProvider = Substitute.For<IOutgoingCRTDMessagesProvider>();
+            IOutgoingCRDTMessagesProvider outgoingCRDTMessageProvider = Substitute.For<IOutgoingCRDTMessagesProvider>();
 
             var sdkComponentRegistry = new SDKComponentsRegistry();
             sdkComponentRegistry.Add(SDKComponentBuilder<PBPointerEventsResult>.Create(ComponentID.POINTER_EVENTS_RESULT).AsProtobufComponent());

@@ -11,12 +11,12 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
 {
     public class OutgoingCRTDMessagesProviderShould
     {
-        private OutgoingCRTDMessagesProvider provider;
+        private OutgoingCRDTMessagesProvider provider;
 
         [SetUp]
         public void SetUp()
         {
-            provider = new OutgoingCRTDMessagesProvider();
+            provider = new OutgoingCRDTMessagesProvider();
         }
 
         [Test]
@@ -30,9 +30,9 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
                 new (new CRDTMessage(CRDTMessageType.DELETE_COMPONENT, 10, 20, 20, EmptyMemoryOwner<byte>.EMPTY), 77),
             };
 
-            for (var i = 0; i < messages.Count; i++) { provider.AddMessage(messages[i]); }
+            for (var i = 0; i < messages.Count; i++) { provider.AppendMessage(messages[i]); }
 
-            CollectionAssert.AreEqual(messages, provider.ProcessedCRDTMessages);
+            CollectionAssert.AreEqual(messages, provider.messages);
         }
 
         [Test]
@@ -59,7 +59,7 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
 
             Thread.Sleep(100);
 
-            for (var i = 0; i < messages.Count; i++) { provider.AddMessage(messages[i]); }
+            for (var i = 0; i < messages.Count; i++) { provider.AppendMessage(messages[i]); }
 
             watch.Stop();
 
@@ -77,11 +77,12 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
                 new (new CRDTMessage(CRDTMessageType.DELETE_COMPONENT, 10, 20, 20, EmptyMemoryOwner<byte>.EMPTY), 77),
             };
 
-            for (var i = 0; i < messages.Count; i++) { provider.AddMessage(messages[i]); }
+            for (var i = 0; i < messages.Count; i++) { provider.AppendMessage(messages[i]); }
 
             provider.Dispose();
 
-            Assert.GreaterOrEqual(OutgoingCRTDMessagesProvider.SHARED_POOL.CountInactive, 1);
+            Assert.GreaterOrEqual(OutgoingCRDTMessagesProvider.MESSAGES_SHARED_POOL.CountInactive, 1);
+            Assert.GreaterOrEqual(OutgoingCRDTMessagesProvider.INDICES_SHARED_POOL.CountInactive, 1);
         }
     }
 }

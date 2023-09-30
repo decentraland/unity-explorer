@@ -111,7 +111,7 @@ namespace SceneRunner
             // Per scene instance dependencies
             var ecsMutexSync = new MutexSync();
             var crdtProtocol = new CRDTProtocol();
-            var outgoingCrtdMessagesProvider = new OutgoingCRTDMessagesProvider();
+            var outgoingCrtdMessagesProvider = new OutgoingCRDTMessagesProvider();
             var instancePoolsProvider = InstancePoolsProvider.Create();
             var crdtMemoryAllocator = CRDTPooledMemoryAllocator.Create();
             var crdtDeserializer = new CRDTDeserializer(crdtMemoryAllocator);

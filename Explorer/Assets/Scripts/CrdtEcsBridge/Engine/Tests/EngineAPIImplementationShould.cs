@@ -33,7 +33,7 @@ namespace CrdtEcsBridge.Engine.Tests
         private ICRDTDeserializer crdtDeserializer;
         private ICRDTSerializer crdtSerializer;
         private ICRDTWorldSynchronizer crdtWorldSynchronizer;
-        private IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider;
+        private IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
         private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
 
         private EngineAPIImplementation engineAPIImplementation;
@@ -78,7 +78,7 @@ namespace CrdtEcsBridge.Engine.Tests
                 crdtDeserializer = Substitute.For<ICRDTDeserializer>(),
                 crdtSerializer = new CRDTSerializer(),
                 crdtWorldSynchronizer = Substitute.For<ICRDTWorldSynchronizer>(),
-                outgoingCrtdMessagesProvider = Substitute.For<IOutgoingCRTDMessagesProvider>(),
+                outgoingCrtdMessagesProvider = Substitute.For<IOutgoingCRDTMessagesProvider>(),
                 Substitute.For<ISystemGroupsUpdateGate>(),
                 new RethrowSceneExceptionsHandler(),
                 new MutexSync()
@@ -114,14 +114,9 @@ namespace CrdtEcsBridge.Engine.Tests
                                         .Returns(_ =>
                                          {
                                              mutex.WaitOne();
-                                             return new OutgoingCRDTMessagesSyncBlock(ConvertToOutgoingMessagesDict(), mutex);
+                                             return new OutgoingCRDTMessagesSyncBlock(outgoingMessages);
                                          });
         }
-
-        private Dictionary<OutgoingMessageKey, ProcessedCRDTMessage> ConvertToOutgoingMessagesDict() =>
-            outgoingMessages
-               .ToDictionary(x => new OutgoingMessageKey(x.message.EntityId, x.message.ComponentId),
-                    y => y);
 
         [Test]
         public void CallDeserializeBatch()

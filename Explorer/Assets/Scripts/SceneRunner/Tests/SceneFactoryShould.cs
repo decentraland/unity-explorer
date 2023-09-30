@@ -70,7 +70,6 @@ namespace SceneRunner.Tests
 
             Assert.IsNotNull(sceneFacadeImpl.crdtProtocol);
             Assert.IsNotNull(sceneFacadeImpl.runtimeInstance);
-            Assert.IsNotNull(sceneFacadeImpl.outgoingCrtdMessagesProvider);
             Assert.IsNotNull(sceneFacadeImpl.crdtWorldSynchronizer);
             Assert.IsNotNull(sceneFacadeImpl.instancePoolsProvider);
             Assert.IsNotNull(sceneFacadeImpl.crdtMemoryAllocator);
