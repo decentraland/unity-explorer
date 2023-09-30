@@ -33,7 +33,7 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
             ecsToCRDTWriter.AppendMessage(crdtEntity, new PBPointerEventsResult());
 
             //Assert
-            crdtProtocol.Received().CreateAppendMessage(crdtEntity, Arg.Any<int>(), Arg.Any<IMemoryOwner<byte>>());
+            crdtProtocol.Received().CreateAppendMessage(crdtEntity, Arg.Any<int>(), 0, Arg.Any<IMemoryOwner<byte>>());
             outgoingCRDTMessageProvider.Received().AppendMessage(Arg.Any<ProcessedCRDTMessage>());
         }
 

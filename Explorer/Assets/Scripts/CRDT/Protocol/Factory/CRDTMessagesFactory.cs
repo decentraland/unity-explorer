@@ -11,14 +11,14 @@ namespace CRDT.Protocol.Factory
     /// </summary>
     internal static class CRDTMessagesFactory
     {
-        public static ProcessedCRDTMessage CreateAppendMessage(this in CRDTProtocol.State state, CRDTEntity entity, int componentId, in IMemoryOwner<byte> data) =>
-            CreateMessage(in state, CRDTMessageType.APPEND_COMPONENT, entity, componentId, data);
+        public static ProcessedCRDTMessage CreateAppendMessage(CRDTEntity entity, int componentId, int timestamp, in IMemoryOwner<byte> data) =>
+            new (new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, entity, componentId, 0, data), CRDTMessageSerializationUtils.GetMessageDataLength(CRDTMessageType.APPEND_COMPONENT, in data));
 
         public static ProcessedCRDTMessage CreatePutMessage(this in CRDTProtocol.State state, CRDTEntity entity, int componentId, in IMemoryOwner<byte> data) =>
-            CreateMessage(in state, CRDTMessageType.PUT_COMPONENT, entity, componentId, data);
+            CreateLwwMessage(in state, CRDTMessageType.PUT_COMPONENT, entity, componentId, data);
 
         public static ProcessedCRDTMessage CreateDeleteMessage(this in CRDTProtocol.State state, CRDTEntity entity, int componentId) =>
-            CreateMessage(in state, CRDTMessageType.DELETE_COMPONENT, entity, componentId, EmptyMemoryOwner<byte>.EMPTY);
+            CreateLwwMessage(in state, CRDTMessageType.DELETE_COMPONENT, entity, componentId, EmptyMemoryOwner<byte>.EMPTY);
 
         /// <summary>
         /// Fills the array with messages corresponding to the current CRDT state
@@ -86,9 +86,11 @@ namespace CRDT.Protocol.Factory
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ProcessedCRDTMessage CreateMessage(in CRDTProtocol.State state, CRDTMessageType messageType, CRDTEntity entity, int componentId, in IMemoryOwner<byte> data)
+        private static ProcessedCRDTMessage CreateLwwMessage(in CRDTProtocol.State state, CRDTMessageType messageType, CRDTEntity entity, int componentId, in IMemoryOwner<byte> data)
         {
             var timestamp = 0;
+
+            // TODO non-synchronized may throw exceptions
             if (state.TryGetLWWComponentState(entity, componentId, out _, out _, out var storedData)) timestamp = storedData.Timestamp + 1;
             return new (new CRDTMessage(messageType, entity, componentId, timestamp, data), CRDTMessageSerializationUtils.GetMessageDataLength(messageType, in data));
         }

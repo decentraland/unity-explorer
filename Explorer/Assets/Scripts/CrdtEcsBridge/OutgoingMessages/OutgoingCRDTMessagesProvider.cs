@@ -49,12 +49,16 @@ namespace CrdtEcsBridge.OutgoingMessages
 
         public OutgoingCRDTMessagesSyncBlock GetSerializationSyncBlock()
         {
-            // Make a copy of the list and process it
-            // While we do it we must synchronize
-
             List<ProcessedCRDTMessage> listCopy = MESSAGES_SHARED_POOL.Get();
 
-            lock (messages) { listCopy.AddRange(messages); }
+            // Make a copy of the list and process it, clear the current list
+            // While we do it we must synchronize
+            lock (messages)
+            {
+                listCopy.AddRange(messages);
+                messages.Clear();
+                lwwMessageIndices.Clear();
+            }
 
             // A copy will be released on block.Dispose()
 

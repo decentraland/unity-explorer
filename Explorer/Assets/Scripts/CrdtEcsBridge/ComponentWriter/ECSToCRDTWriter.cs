@@ -46,13 +46,13 @@ namespace CrdtEcsBridge.ComponentWriter
             return true;
         }
 
-        public void AppendMessage<T>(CRDTEntity crdtID, T model) where T: IMessage
+        public void AppendMessage<T>(CRDTEntity crdtID, T model, int timestamp = 0) where T: IMessage
         {
             if (!TryGetComponentBridge<T>(out SDKComponentBridge componentBridge)) return;
 
             IMemoryOwner<byte> memory = memoryAllocator.GetMemoryBuffer(model.CalculateSize());
             componentBridge.Serializer.SerializeInto(model, memory.Memory.Span);
-            outgoingCRDTMessageProvider.AppendMessage(crdtProtocol.CreateAppendMessage(crdtID, componentBridge.Id, memory));
+            outgoingCRDTMessageProvider.AppendMessage(crdtProtocol.CreateAppendMessage(crdtID, componentBridge.Id, timestamp, memory));
         }
 
         public void DeleteMessage<T>(CRDTEntity crdtID) where T: IMessage

@@ -98,7 +98,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
             result.Timestamp = sceneStateProvider.TickNumber;
             result.TickNumber = sceneStateProvider.TickNumber;
 
-            ecsToCRDTWriter.AppendMessage(sdkEntity, result);
+            ecsToCRDTWriter.AppendMessage(sdkEntity, result, (int)result.Timestamp);
         }
     }
 }
