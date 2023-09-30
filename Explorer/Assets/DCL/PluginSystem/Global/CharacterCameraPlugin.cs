@@ -61,7 +61,7 @@ namespace DCL.PluginSystem.Global
 
             // Create a special camera entity
             world.Create(
-                new CRDTEntity(SpecialEntititiesID.CAMERA_ENTITY),
+                new CRDTEntity(SpecialEntitiesID.CAMERA_ENTITY),
                 new CameraComponent(cinemachinePreset.Brain.OutputCamera),
                 exposedCameraData,
                 cinemachinePreset,

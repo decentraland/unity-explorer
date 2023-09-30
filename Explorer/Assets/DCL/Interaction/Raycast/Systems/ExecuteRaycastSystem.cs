@@ -221,7 +221,7 @@ namespace DCL.Interaction.Raycast.Systems
             // Player is always qualified
             if (RaycastUtils.IsPlayer(collider))
             {
-                foundEntity = SpecialEntititiesID.PLAYER_ENTITY;
+                foundEntity = SpecialEntitiesID.PLAYER_ENTITY;
                 return true;
             }
 

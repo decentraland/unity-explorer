@@ -13,7 +13,7 @@ namespace DCL.PluginSystem.World.Dependencies
     {
         public readonly ISceneData SceneData;
         public readonly IECSToCRDTWriter EcsToCRDTWriter;
-        public readonly IReadOnlyDictionary<CRDTEntity, Entity> EntitiesMap;
+        public readonly Dictionary<CRDTEntity, Entity> EntitiesMap;
         public readonly ISceneExceptionsHandler SceneExceptionsHandler;
         public readonly IEntityCollidersSceneCache EntityCollidersSceneCache;
         public readonly ISceneStateProvider SceneStateProvider;
@@ -22,7 +22,7 @@ namespace DCL.PluginSystem.World.Dependencies
         public ECSWorldInstanceSharedDependencies(
             ISceneData sceneData,
             IECSToCRDTWriter ecsToCRDTWriter,
-            IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
+            Dictionary<CRDTEntity, Entity> entitiesMap,
             ISceneExceptionsHandler sceneExceptionsHandler,
             IEntityCollidersSceneCache entityCollidersSceneCache,
             ISceneStateProvider sceneStateProvider,

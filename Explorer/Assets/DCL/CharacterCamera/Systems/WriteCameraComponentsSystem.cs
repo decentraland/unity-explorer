@@ -48,9 +48,10 @@ namespace DCL.CharacterCamera.Systems
             SHARED_TRANSFORM.Position = ParcelMathHelper.GetSceneRelativePosition(exposedCameraData.WorldPosition, scenePosition);
             SHARED_TRANSFORM.Rotation = exposedCameraData.WorldRotation;
 
-            ecsToCrdtWriter.PutMessage(SpecialEntititiesID.CAMERA_ENTITY, SHARED_TRANSFORM);
-            ecsToCrdtWriter.PutMessage(SpecialEntititiesID.CAMERA_ENTITY, SHARED_CAMERA_MODE);
-            ecsToCrdtWriter.PutMessage(SpecialEntititiesID.CAMERA_ENTITY, SHARED_POINTER_LOCK);
+            // TODO Access to CRDT LWW components is not synchronized, bi-directional access causes concurrency exceptions
+            // ecsToCrdtWriter.PutMessage(SpecialEntititiesID.CAMERA_ENTITY, SHARED_TRANSFORM);
+            ecsToCrdtWriter.PutMessage(SpecialEntitiesID.CAMERA_ENTITY, SHARED_CAMERA_MODE);
+            ecsToCrdtWriter.PutMessage(SpecialEntitiesID.CAMERA_ENTITY, SHARED_POINTER_LOCK);
         }
     }
 }

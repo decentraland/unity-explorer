@@ -65,7 +65,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
             for (var i = 0; i < globalInputEvents.Entries.Count; i++)
             {
                 IGlobalInputEvents.Entry entry = globalInputEvents.Entries[i];
-                AppendMessage(SpecialEntititiesID.SCENE_ROOT_ENTITY, null, entry.InputAction, entry.PointerEventType);
+                AppendMessage(SpecialEntitiesID.SCENE_ROOT_ENTITY, null, entry.InputAction, entry.PointerEventType);
             }
         }
 
