@@ -14,7 +14,7 @@ namespace CrdtEcsBridge.OutgoingMessages
                 x.Entity.Equals(y.Entity) && x.ComponentId == y.ComponentId;
 
             public int GetHashCode(OutgoingMessageKey obj) =>
-                HashCode.Combine(obj.Entity, obj.ComponentId);
+                HashCode.Combine(obj.Entity.Id, obj.ComponentId);
         }
 
         internal static readonly ThreadSafeDictionaryPool<OutgoingMessageKey, int> INDICES_SHARED_POOL =
@@ -33,7 +33,11 @@ namespace CrdtEcsBridge.OutgoingMessages
                 var key = new OutgoingMessageKey(processedCRDTMessage.message.EntityId, processedCRDTMessage.message.ComponentId);
 
                 if (lwwMessageIndices.TryGetValue(key, out int lwwIndex))
+                {
+                    // Release previous message
+                    messages[lwwIndex].message.Data.Dispose();
                     messages[lwwIndex] = processedCRDTMessage;
+                }
                 else
                 {
                     lwwMessageIndices[key] = messages.Count;

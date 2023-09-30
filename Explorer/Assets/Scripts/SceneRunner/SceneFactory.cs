@@ -111,11 +111,11 @@ namespace SceneRunner
             // Per scene instance dependencies
             var ecsMutexSync = new MutexSync();
             var crdtProtocol = new CRDTProtocol();
-            var outgoingCrtdMessagesProvider = new OutgoingCRDTMessagesProvider();
+            var outgoingCRDTMessagesProvider = new OutgoingCRDTMessagesProvider();
             var instancePoolsProvider = InstancePoolsProvider.Create();
             var crdtMemoryAllocator = CRDTPooledMemoryAllocator.Create();
             var crdtDeserializer = new CRDTDeserializer(crdtMemoryAllocator);
-            var ecsToCrdtWriter = new ECSToCRDTWriter(crdtProtocol, outgoingCrtdMessagesProvider, sdkComponentsRegistry, crdtMemoryAllocator);
+            var ecsToCrdtWriter = new ECSToCRDTWriter(crdtProtocol, outgoingCRDTMessagesProvider, sdkComponentsRegistry, crdtMemoryAllocator);
             var systemGroupThrottler = new SystemGroupsUpdateGate();
             var entityCollidersCache = EntityCollidersSceneCache.Create(entityCollidersGlobalCache);
             var sceneStateProvider = new SceneStateProvider();
@@ -151,7 +151,7 @@ namespace SceneRunner
                 crdtDeserializer,
                 crdtSerializer,
                 crdtWorldSynchronizer,
-                outgoingCrtdMessagesProvider,
+                outgoingCRDTMessagesProvider,
                 systemGroupThrottler,
                 exceptionsHandler,
                 ecsMutexSync);
@@ -165,7 +165,7 @@ namespace SceneRunner
                 sceneRuntime,
                 ecsWorldFacade,
                 crdtProtocol,
-                outgoingCrtdMessagesProvider,
+                outgoingCRDTMessagesProvider,
                 crdtWorldSynchronizer,
                 instancePoolsProvider,
                 crdtMemoryAllocator,

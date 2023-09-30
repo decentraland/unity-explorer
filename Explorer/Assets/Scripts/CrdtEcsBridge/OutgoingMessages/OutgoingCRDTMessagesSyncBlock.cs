@@ -33,6 +33,9 @@ namespace CrdtEcsBridge.OutgoingMessages
         /// </summary>
         public void Dispose()
         {
+            for (var i = 0; i < messages.Count; i++)
+                messages[i].message.Data.Dispose();
+
             OutgoingCRDTMessagesProvider.MESSAGES_SHARED_POOL.Release(messages);
         }
     }
