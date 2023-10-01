@@ -1,4 +1,3 @@
-using UnityEditor.Animations;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape
@@ -12,17 +11,24 @@ namespace DCL.AvatarRendering.AvatarShape
         private Animator avatarAnimator;
 
         [SerializeField]
-        private AnimatorController playerAnimator;
+        private RuntimeAnimatorController playerAnimator;
+        [SerializeField]
+        private RuntimeAnimatorController randomAnimator;
 
+        //TODO: Debug stuff, remove after demo
         public void SetAsMainPlayer(bool isMainPlayer)
         {
             if (isMainPlayer)
             {
                 avatarAnimator.transform.localPosition = new Vector3(0, -1.1f, 0);
                 avatarAnimator.runtimeAnimatorController = playerAnimator;
+                avatarAnimator.gameObject.AddComponent<PlayerAnimatorController>();
             }
             else
-                avatarAnimator.gameObject.AddComponent<RandomAnimationPlayer>();
+            {
+                avatarAnimator.runtimeAnimatorController = randomAnimator;
+                avatarAnimator.gameObject.AddComponent<RandomAnimatorController>();
+            }
         }
     }
 }

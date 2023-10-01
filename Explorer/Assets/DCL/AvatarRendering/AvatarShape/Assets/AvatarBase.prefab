@@ -493,7 +493,7 @@ Animator:
   m_GameObject: {fileID: 2561918839770535189}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: aab64a77806b44a43b6f5d0da6de94c6, type: 2}
+  m_Controller: {fileID: 0}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -2031,7 +2031,7 @@ Transform:
   m_Children:
   - {fileID: 2198816967188641954}
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &9055752946258308431
 MonoBehaviour:
@@ -2048,6 +2048,7 @@ MonoBehaviour:
   <AvatarSkinnedMeshRenderer>k__BackingField: {fileID: 918335364077391645}
   avatarAnimator: {fileID: 6654053651110562472}
   playerAnimator: {fileID: 9100000, guid: 3662049975e2d0549a312769ab17ad07, type: 2}
+  randomAnimator: {fileID: 9100000, guid: aab64a77806b44a43b6f5d0da6de94c6, type: 2}
 --- !u!1 &8230367895675129645
 GameObject:
   m_ObjectHideFlags: 0
