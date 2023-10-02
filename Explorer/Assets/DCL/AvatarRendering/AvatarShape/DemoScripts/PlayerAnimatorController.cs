@@ -16,10 +16,13 @@ public class PlayerAnimatorController : MonoBehaviour
 
     private void Update()
     {
-        if (isJumping && !characterController.isGrounded)
+        //characterController.isGrounded is awful
+        bool isGrounded = characterController.velocity.y < 0.1f;
+
+        if (isJumping && !isGrounded)
             return;
 
-        if (!characterController.isGrounded && !isJumping)
+        if (!isGrounded && !isJumping)
         {
             playerAnimator.SetBool("isJumping", true);
             isJumping = true;
