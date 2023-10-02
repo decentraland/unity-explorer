@@ -39,6 +39,12 @@ namespace CrdtEcsBridge.Components.Special
             return protoRaycastResult;
         }
 
+        public static void Reset(this PBPointerEvents pbPointerEvents)
+        {
+            pbPointerEvents.PointerEvents.Clear();
+            pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Clear();
+        }
+
         public static void Reset(this Vector3 protoVector) =>
             protoVector.Set(UnityEngine.Vector3.zero);
 

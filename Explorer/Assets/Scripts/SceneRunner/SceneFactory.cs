@@ -34,7 +34,7 @@ namespace SceneRunner
     {
         private readonly ICRDTSerializer crdtSerializer;
         private readonly IECSWorldFactory ecsWorldFactory;
-        private readonly IEntityFactory entityFactory;
+        private readonly ISceneEntityFactory entityFactory;
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly SceneRuntimeFactory sceneRuntimeFactory;
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
@@ -46,7 +46,7 @@ namespace SceneRunner
             ISharedPoolsProvider sharedPoolsProvider,
             ICRDTSerializer crdtSerializer,
             ISDKComponentsRegistry sdkComponentsRegistry,
-            IEntityFactory entityFactory,
+            ISceneEntityFactory entityFactory,
             IEntityCollidersGlobalCache entityCollidersGlobalCache)
         {
             this.ecsWorldFactory = ecsWorldFactory;
@@ -139,7 +139,7 @@ namespace SceneRunner
                 sceneData.TryGetMainScriptUrl(out sceneCodeUrl);
             }
 
-            SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPath(sceneCodeUrl, instancePoolsProvider, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool);
+            SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPath(sceneCodeUrl, instancePoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool);
 
             ct.ThrowIfCancellationRequested();
 

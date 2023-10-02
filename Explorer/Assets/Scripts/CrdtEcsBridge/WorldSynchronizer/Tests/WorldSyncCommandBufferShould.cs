@@ -60,7 +60,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
 
         private ISDKComponentsRegistry sdkComponentsRegistry;
         private WorldSyncCommandBuffer worldSyncCommandBuffer;
-        private IEntityFactory entityFactory;
+        private ISceneEntityFactory entityFactory;
         private WorldSyncCommandBufferCollectionsPool collectionsPool;
 
         [SetUp]
@@ -102,7 +102,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                                       return true;
                                   });
 
-            entityFactory = Substitute.For<IEntityFactory>();
+            entityFactory = Substitute.For<ISceneEntityFactory>();
             entityFactory.Create(Arg.Any<CRDTEntity>(), Arg.Any<World>()).Returns(c => c.Arg<World>().Create());
 
             worldSyncCommandBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory, collectionsPool = WorldSyncCommandBufferCollectionsPool.Create());

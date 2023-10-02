@@ -120,10 +120,11 @@ namespace CrdtEcsBridge.Engine
 
             instancePoolsProvider.ReleaseDeserializationMessagesPool(messages);
 
+            ApplySyncCommandBuffer(worldSyncBuffer);
+
             if (returnData)
             {
                 int payloadLength = SerializeOutgoingCRDTMessages();
-                ApplySyncCommandBuffer(worldSyncBuffer);
                 return new ArraySegment<byte>(lastSerializationBuffer, 0, payloadLength);
             }
 

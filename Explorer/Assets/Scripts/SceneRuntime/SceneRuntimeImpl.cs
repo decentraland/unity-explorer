@@ -1,5 +1,6 @@
 using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
+using Diagnostics;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
@@ -31,7 +32,9 @@ namespace SceneRuntime
 
         private RuntimeWrapper runtimeWrapper;
 
-        public SceneRuntimeImpl(string sourceCode, string jsInitCode, Dictionary<string, string> jsModules, IInstancePoolsProvider instancePoolsProvider)
+        public SceneRuntimeImpl(string sourceCode, string jsInitCode,
+            Dictionary<string, string> jsModules, IInstancePoolsProvider instancePoolsProvider,
+            SceneShortInfo sceneShortInfo)
         {
             this.instancePoolsProvider = instancePoolsProvider;
             resetableSource = new TaskResolverResetable();
@@ -42,7 +45,7 @@ namespace SceneRuntime
             var sceneScript = engine.Compile(sourceCode);
 
             // Initialize init API
-            unityOpsApi = new UnityOpsApi(engine, moduleLoader, sceneScript);
+            unityOpsApi = new UnityOpsApi(engine, moduleLoader, sceneScript, sceneShortInfo);
             engine.AddHostObject("UnityOpsApi", unityOpsApi);
             engine.Execute(jsInitCode);
 

@@ -94,7 +94,7 @@ namespace Global
             var sharedDependencies = new ECSWorldSingletonSharedDependencies(
                 componentsContainer.ComponentPoolsRegistry,
                 container.ReportHandlingSettings,
-                new EntityFactory(),
+                new SceneEntityFactory(),
                 new PartitionedWorldsAggregate.Factory(),
                 new ConcurrentLoadingBudgetProvider(50),
                 new FrameTimeCapBudgetProvider(40, profilingProvider)

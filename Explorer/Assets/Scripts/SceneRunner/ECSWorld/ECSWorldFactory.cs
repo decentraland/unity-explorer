@@ -51,9 +51,10 @@ namespace SceneRunner.ECSWorld
 
             IComponentPoolsRegistry componentPoolsRegistry = singletonDependencies.ComponentPoolsRegistry;
 
-            Entity sceneRootEntity = singletonDependencies.EntityFactory.Create(SpecialEntititiesID.SCENE_ROOT_ENTITY, world);
-
+            Entity sceneRootEntity = world.Create(SpecialEntitiesID.SCENE_ROOT_ENTITY, world);
             var persistentEntities = new PersistentEntities(sceneRootEntity);
+
+            sharedDependencies.EntitiesMap[SpecialEntitiesID.SCENE_ROOT_ENTITY] = sceneRootEntity;
 
             // Create all systems and add them to the world
             var builder = new ArchSystemsWorldBuilder<World>(world, systemGroupsUpdateGate, systemGroupsUpdateGate,

@@ -69,7 +69,7 @@ namespace SceneRunner.Tests
             componentsRegistry = Substitute.For<ISDKComponentsRegistry>();
 
             sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry,
-                new EntityFactory(), new EntityCollidersGlobalCache());
+                new SceneEntityFactory(), new EntityCollidersGlobalCache());
         }
 
         [OneTimeTearDown]
