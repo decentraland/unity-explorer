@@ -12,7 +12,7 @@ namespace CRDT.Protocol.Factory
     internal static class CRDTMessagesFactory
     {
         public static ProcessedCRDTMessage CreateAppendMessage(CRDTEntity entity, int componentId, int timestamp, in IMemoryOwner<byte> data) =>
-            new (new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, entity, componentId, 0, data), CRDTMessageSerializationUtils.GetMessageDataLength(CRDTMessageType.APPEND_COMPONENT, in data));
+            new (new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, entity, componentId, timestamp, data), CRDTMessageSerializationUtils.GetMessageDataLength(CRDTMessageType.APPEND_COMPONENT, in data));
 
         public static ProcessedCRDTMessage CreatePutMessage(this in CRDTProtocol.State state, CRDTEntity entity, int componentId, in IMemoryOwner<byte> data) =>
             CreateLwwMessage(in state, CRDTMessageType.PUT_COMPONENT, entity, componentId, data);
