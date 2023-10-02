@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using CRDT;
+using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
@@ -8,6 +9,7 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace DCL.Interaction.PlayerOriginated.Tests
@@ -16,6 +18,8 @@ namespace DCL.Interaction.PlayerOriginated.Tests
     {
         private IECSToCRDTWriter writer;
         private IGlobalInputEvents globalInputEvents;
+
+        private readonly List<PBPointerEventsResult> results = new ();
 
         [SetUp]
         public void SetUp()
@@ -30,6 +34,42 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                 writer = Substitute.For<IECSToCRDTWriter>(),
                 sceneStateProvider,
                 globalInputEvents = Substitute.For<IGlobalInputEvents>());
+        }
+
+        [TearDown]
+        public void ClearResults()
+        {
+            results.Clear();
+        }
+
+        [Test]
+        public void WriteGlobalEvents()
+        {
+            writer.When(w => w.AppendMessage(SpecialEntitiesID.SCENE_ROOT_ENTITY, Arg.Any<PBPointerEventsResult>(), Arg.Any<int>()))
+                  .Do(info => results.Add(info.Arg<PBPointerEventsResult>().Clone()));
+
+            globalInputEvents.Entries.Returns(new List<IGlobalInputEvents.Entry>
+            {
+                new (InputAction.IaBackward, PointerEventType.PetUp),
+                new (InputAction.IaAction6, PointerEventType.PetDown),
+            });
+
+            system.Update(0);
+
+            Assert.That(results.Count, Is.EqualTo(2));
+            PBPointerEventsResult first = results[0];
+            Assert.That(first.Button, Is.EqualTo(InputAction.IaBackward));
+            Assert.That(first.State, Is.EqualTo(PointerEventType.PetUp));
+            Assert.That(first.TickNumber, Is.EqualTo(123u));
+            Assert.That(first.Timestamp, Is.EqualTo(123u));
+            Assert.That(first.Hit, Is.Null);
+
+            PBPointerEventsResult second = results[1];
+            Assert.That(second.Button, Is.EqualTo(InputAction.IaAction6));
+            Assert.That(second.State, Is.EqualTo(PointerEventType.PetDown));
+            Assert.That(second.TickNumber, Is.EqualTo(123u));
+            Assert.That(second.Timestamp, Is.EqualTo(123u));
+            Assert.That(second.Hit, Is.Null);
         }
 
         [Test]
@@ -52,6 +92,9 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             var sdkEntity = new CRDTEntity(100);
 
+            writer.When(w => w.AppendMessage(sdkEntity, Arg.Any<PBPointerEventsResult>(), Arg.Any<int>()))
+                  .Do(info => results.Add(info.Arg<PBPointerEventsResult>().Clone()));
+
             world.Create(sdkEntity, sdkEvents);
 
             system.Update(0);
@@ -62,14 +105,13 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             void AssertMessageAppended(int originalIndex, uint counter)
             {
                 PBPointerEvents.Types.Entry entry = sdkEvents.PointerEvents[originalIndex];
+                PBPointerEventsResult r = results[(int)counter];
 
-                writer.Received()
-                      .AppendMessage(sdkEntity, Arg.Is<PBPointerEventsResult>(t =>
-                           t.Button == entry.EventInfo.Button &&
-                           t.State == entry.EventType &&
-                           t.Timestamp == counter &&
-                           t.TickNumber == 123u &&
-                           t.Hit != null));
+                Assert.That(r.Button, Is.EqualTo(entry.EventInfo.Button));
+                Assert.That(r.State, Is.EqualTo(entry.EventType));
+                Assert.That(r.TickNumber, Is.EqualTo(123u));
+                Assert.That(r.Timestamp, Is.EqualTo(123u));
+                Assert.That(r.Hit, Is.Not.Null);
             }
 
             Assert.That(writer.ReceivedCalls().Count(), Is.EqualTo(2));

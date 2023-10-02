@@ -10,13 +10,13 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
     {
         private OutgoingCRDTMessagesSyncBlock syncBlock;
 
-        private Dictionary<OutgoingMessageKey, ProcessedCRDTMessage> messages;
+        private List<ProcessedCRDTMessage> messages;
 
         [SetUp]
         public void SetUp()
         {
             syncBlock = new OutgoingCRDTMessagesSyncBlock(
-                new List<ProcessedCRDTMessage>
+                messages = new List<ProcessedCRDTMessage>
                 {
                     new (new CRDTMessage(CRDTMessageType.PUT_COMPONENT, 100, 100, 0, EmptyMemoryOwner<byte>.EMPTY), 30),
                     new (new CRDTMessage(CRDTMessageType.DELETE_ENTITY, 123, 0, 0, EmptyMemoryOwner<byte>.EMPTY), 60),
