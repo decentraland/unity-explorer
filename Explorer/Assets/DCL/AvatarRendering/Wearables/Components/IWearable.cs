@@ -24,6 +24,8 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         bool IsLoading { get; set; }
 
+        string[] GetHidingList();
+
         StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
         StreamableLoadingResult<AssetBundleData>?[] AssetBundleData { get; set; }
         StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }

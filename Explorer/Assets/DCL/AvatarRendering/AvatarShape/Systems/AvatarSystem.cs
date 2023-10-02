@@ -143,11 +143,24 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             ClearWearables(avatarShapeComponent.InstantiatedWearables);
 
+            HashSet<string> hidingList = HashSetPool<string>.Get();
+
+            for (var i = 0; i < avatarShapeComponent.WearablePromise.LoadingIntention.Pointers.Count; i++)
+            {
+                IWearable resultWearable = wearablesResult.Asset[i];
+
+                foreach (string s in resultWearable.GetHidingList())
+                    hidingList.Add(s);
+            }
+
             //Using Pointer size for counter, since we dont know the size of the results array
             //because it was pooled
             for (var i = 0; i < avatarShapeComponent.WearablePromise.LoadingIntention.Pointers.Count; i++)
             {
                 IWearable resultWearable = wearablesResult.Asset[i];
+
+                if (hidingList.Contains(resultWearable.GetCategory()))
+                    continue;
 
                 GameObject instantiateWearable = InstantiateWearable(ref avatarShapeComponent, resultWearable.AssetBundleData[avatarShapeComponent.BodyShape].Value.Asset.GameObject, avatarBase.AvatarSkinnedMeshRenderer, avatarTransform);
 
@@ -155,6 +168,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 if (resultWearable.IsBodyShape())
                     HideBodyParts(instantiateWearable);
             }
+
+            HashSetPool<string>.Release(hidingList);
 
             int newVertCount = avatarShapeComponent.skinningMethod.Initialize(avatarShapeComponent.InstantiatedWearables,
                 textureArrays, computeShaderSkinningPool.Get(), avatarMaterialPool, lastAvatarVertCount, avatarBase.AvatarSkinnedMeshRenderer);
