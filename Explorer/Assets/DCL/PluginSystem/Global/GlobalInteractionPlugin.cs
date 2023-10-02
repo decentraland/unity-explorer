@@ -52,8 +52,9 @@ namespace DCL.PluginSystem.Global
                .Value.InstantiateForElement<HoverCanvas>();
 
             hoverCanvas.Initialize();
-            hoverCanvas.SetDisplayed(false);
+
             canvas.rootVisualElement.Add(hoverCanvas);
+            hoverCanvas.SetDisplayed(false);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
