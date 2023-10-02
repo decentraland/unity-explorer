@@ -1,9 +1,9 @@
 ﻿using Arch.Core;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Systems;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.ECSComponents;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -53,9 +53,9 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             IWearable mockWearable = Substitute.For<IWearable>();
 
             var AssetBundleData
-                = new StreamableLoadingResult<AssetBundleData>?[WearablesLiterals.BodyShape.COUNT];
+                = new StreamableLoadingResult<AssetBundleData>?[BodyShape.COUNT];
 
-            AssetBundleData[WearablesLiterals.BodyShape.MALE] = new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(null, null, new GameObject()));
+            AssetBundleData[BodyShape.MALE] = new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(null, null, new GameObject()));
 
             mockWearable.AssetBundleData.Returns(AssetBundleData);
             return mockWearable;

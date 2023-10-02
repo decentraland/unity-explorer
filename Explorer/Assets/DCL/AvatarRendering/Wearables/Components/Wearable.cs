@@ -20,7 +20,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         {
             IsLoading = true;
 
-            AssetBundleData = new StreamableLoadingResult<AssetBundleData>?[WearablesLiterals.BodyShape.COUNT];
+            AssetBundleData = new StreamableLoadingResult<AssetBundleData>?[BodyShape.COUNT];
 
             for (var i = 0; i < AssetBundleData.Length; i++)
                 AssetBundleData[i] = null;
@@ -85,7 +85,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         }
 
         public bool IsBodyShape() =>
-            GetCategory().Equals(WearablesLiterals.Categories.BODY_SHAPE);
+            GetCategory().Equals(WearablesConstants.Categories.BODY_SHAPE);
 
         //TODO: Implement Dispose method
         public void Dispose() { }

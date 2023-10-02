@@ -23,7 +23,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.Avatar
             resolutionDictionary.Add(512, new TextureArrayInfo(512, minArraySize));
         }
 
-        public UsedTextureArraySlot SetTexture(ComputeShaderHelpers.TextureArrayType type, Material material, Texture2D texture)
+        public UsedTextureArraySlot SetTexture(ComputeShaderConstants.TextureArrayType type, Material material, Texture2D texture)
         {
             //TODO: We are screwed with non squared textures
             int resolution = texture.width;

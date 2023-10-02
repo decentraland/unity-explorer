@@ -1,4 +1,5 @@
-﻿using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
+﻿using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -15,7 +16,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         }
 
         public override int Initialize(List<GameObject> gameObjects, TextureArrayContainer textureArrayContainer, UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterial,
-            int lastAvatarVertCount, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer)
+            int lastAvatarVertCount, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer, AvatarShapeComponent avatarShapeComponent)
         {
             foreach (GameObject gameObject in gameObjects)
             {
@@ -26,35 +27,38 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                     ResetTransforms(skinnedMeshRenderer, rootTransform);
                     skinnedMeshRenderer.bones = baseAvatarSkinnedMeshRenderer.bones;
                     skinnedMeshRenderer.rootBone = baseAvatarSkinnedMeshRenderer.rootBone;
-                    SetupMaterial(skinnedMeshRenderer,0,textureArrayContainer,avatarMaterial,0);
+                    SetupMaterial(skinnedMeshRenderer, 0, textureArrayContainer, avatarMaterial, 0, avatarShapeComponent);
                 }
             }
             return 0;
         }
 
-        protected override void SetupMaterial(Renderer meshRenderer, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, IObjectPool<Material> celShadingMaterial, int lastAvatarVertCount)
+        protected override void SetupMaterial(Renderer meshRenderer, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, IObjectPool<Material> celShadingMaterial, int lastAvatarVertCount,
+            AvatarShapeComponent avatarShapeComponent)
         {
-            Material wearableMaterial = celShadingMaterial.Get();
-            var albedoTexture = (Texture2D)meshRenderer.material.mainTexture;
+            Material avatarMaterial = celShadingMaterial.Get();
+            Material originalMaterial = meshRenderer.material;
+            var albedoTexture = (Texture2D)originalMaterial.mainTexture;
 
             if (albedoTexture != null)
             {
-                UsedTextureArraySlot usedIndex = textureArrayContainer.SetTexture(wearableMaterial, albedoTexture, ComputeShaderHelpers.TextureArrayType.ALBEDO);
+                UsedTextureArraySlot usedIndex = textureArrayContainer.SetTexture(avatarMaterial, albedoTexture, ComputeShaderConstants.TextureArrayType.ALBEDO);
                 //usedTextureArraySlots.Add(usedIndex);
             }
 
-            foreach (string keyword in ComputeShaderHelpers.keywordsToCheck)
+            foreach (string keyword in ComputeShaderConstants.keywordsToCheck)
             {
                 if (meshRenderer.material.IsKeywordEnabled(keyword))
-                    wearableMaterial.EnableKeyword(keyword);
+                    avatarMaterial.EnableKeyword(keyword);
             }
 
             // HACK: We currently aren't using normal maps so we're just creating shading issues by using this variant.
-            wearableMaterial.DisableKeyword("_NORMALMAP");
+            avatarMaterial.DisableKeyword("_NORMALMAP");
 
             //vertOutMaterial.SetColor(ComputeShaderHelpers._BaseColour_ShaderID, Color.red);
-            wearableMaterial.SetInteger("_useCompute", 0);
-            meshRenderer.material = wearableMaterial;
+            avatarMaterial.SetInteger("_useCompute", 0);
+            SetAvatarColors(avatarMaterial, originalMaterial, avatarShapeComponent);
+            meshRenderer.material = avatarMaterial;
         }
 
         public void Dispose()

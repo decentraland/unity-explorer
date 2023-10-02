@@ -52,25 +52,25 @@ namespace DCL.AvatarRendering
 
             switch (wearable.GetCategory())
             {
-                case WearablesLiterals.Categories.UPPER_BODY:
+                case WearablesConstants.Categories.UPPER_BODY:
                     upper_body.Add(wearable.GetUrn());
                     break;
-                case WearablesLiterals.Categories.LOWER_BODY:
+                case WearablesConstants.Categories.LOWER_BODY:
                     lower_body.Add(wearable.GetUrn());
                     break;
-                case WearablesLiterals.Categories.FEET:
+                case WearablesConstants.Categories.FEET:
                     feet.Add(wearable.GetUrn());
                     break;
-                case WearablesLiterals.Categories.HAIR:
+                case WearablesConstants.Categories.HAIR:
                     hair.Add(wearable.GetUrn());
                     break;
-                case WearablesLiterals.Categories.MOUTH:
+                case WearablesConstants.Categories.MOUTH:
                     mouth.Add(wearable.GetUrn());
                     break;
-                case WearablesLiterals.Categories.EYES:
+                case WearablesConstants.Categories.EYES:
                     eyes.Add(wearable.GetUrn());
                     break;
-                case WearablesLiterals.Categories.EYEBROWS:
+                case WearablesConstants.Categories.EYEBROWS:
                     eyebros.Add(wearable.GetUrn());
                     break;
             }

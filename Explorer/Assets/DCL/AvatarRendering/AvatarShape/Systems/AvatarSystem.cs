@@ -14,6 +14,7 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
+using ECS.Unity.ColorComponent;
 using ECS.Unity.Transforms.Components;
 using System.Buffers;
 using System.Collections.Generic;
@@ -88,7 +89,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             Promise wearablePromise = CreateWearablePromise(pbAvatarShape, partition);
             pbAvatarShape.IsDirty = false;
-            World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Name, pbAvatarShape.Id, pbAvatarShape, wearablePromise));
+            World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Name, pbAvatarShape.Id, pbAvatarShape, wearablePromise, pbAvatarShape.SkinColor.ToUnityColor(), pbAvatarShape.HairColor.ToUnityColor()));
         }
 
         private Promise CreateWearablePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition)
@@ -148,7 +149,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             for (var i = 0; i < avatarShapeComponent.WearablePromise.LoadingIntention.Pointers.Count; i++)
             {
                 IWearable resultWearable = wearablesResult.Asset[i];
-
                 foreach (string s in resultWearable.GetHidingList())
                     hidingList.Add(s);
             }
@@ -162,23 +162,36 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 if (hidingList.Contains(resultWearable.GetCategory()))
                     continue;
 
-                GameObject instantiateWearable = InstantiateWearable(ref avatarShapeComponent, resultWearable.AssetBundleData[avatarShapeComponent.BodyShape].Value.Asset.GameObject, avatarBase.AvatarSkinnedMeshRenderer, avatarTransform);
+                //TODO: Pooling of wearables
+                GameObject instantiatedWearable
+                    = Object.Instantiate(resultWearable.AssetBundleData[avatarShapeComponent.BodyShape].Value.Asset.GameObject, avatarTransform);
+
+                instantiatedWearable.transform.ResetLocalTRS();
+                avatarShapeComponent.InstantiatedWearables.Add(instantiatedWearable);
 
                 //TODO: Do a proper hiding algorithm
                 if (resultWearable.IsBodyShape())
-                    HideBodyParts(instantiateWearable);
+                    HideBodyParts(instantiatedWearable);
             }
 
             HashSetPool<string>.Release(hidingList);
 
             int newVertCount = avatarShapeComponent.skinningMethod.Initialize(avatarShapeComponent.InstantiatedWearables,
-                textureArrays, computeShaderSkinningPool.Get(), avatarMaterialPool, lastAvatarVertCount, avatarBase.AvatarSkinnedMeshRenderer);
-
+                textureArrays, computeShaderSkinningPool.Get(), avatarMaterialPool, lastAvatarVertCount, avatarBase.AvatarSkinnedMeshRenderer, avatarShapeComponent);
             lastAvatarVertCount += newVertCount;
 
             ListPool<string>.Release(avatarShapeComponent.WearablePromise.LoadingIntention.Pointers);
             ArrayPool<IWearable>.Shared.Return(avatarShapeComponent.WearablePromise.LoadingIntention.Results);
             avatarShapeComponent.IsDirty = false;
+        }
+
+        private void SetColor(GameObject instantiatedWearable, Color color)
+        {
+            for (var i = 0; i < instantiatedWearable.transform.childCount; i++)
+            {
+                if (instantiatedWearable.transform.GetChild(i).TryGetComponent(out MeshRenderer meshRenderer))
+                    meshRenderer.material.SetColor("_BaseColor", color);
+            }
         }
 
         [Query]
@@ -210,16 +223,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
                 bodyShape.transform.GetChild(i).gameObject.SetActive(turnOff);
             }
-        }
-
-        private GameObject InstantiateWearable(ref AvatarShapeComponent avatarShapeComponent, GameObject wearableToInstantiate, SkinnedMeshRenderer baseAvatar, Transform parentTransform)
-        {
-            //TODO: Pooling of wearables
-            GameObject instantiatedWearable = Object.Instantiate(wearableToInstantiate, parentTransform);
-            instantiatedWearable.transform.ResetLocalTRS();
-
-            avatarShapeComponent.InstantiatedWearables.Add(instantiatedWearable);
-            return instantiatedWearable;
         }
 
         public override void Dispose()

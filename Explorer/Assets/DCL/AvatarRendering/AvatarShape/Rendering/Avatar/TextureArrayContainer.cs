@@ -11,10 +11,10 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.Avatar
         public TextureArrayContainer()
         {
             textureArrayTypes = new TextureArray[1];
-            textureArrayTypes[(int)ComputeShaderHelpers.TextureArrayType.ALBEDO] = new TextureArray(textureArraySize, ComputeShaderHelpers._BaseMapArr_ShaderID, ComputeShaderHelpers._BaseMapArrTex_ShaderID);
+            textureArrayTypes[(int)ComputeShaderConstants.TextureArrayType.ALBEDO] = new TextureArray(textureArraySize, ComputeShaderConstants._BaseMapArr_ShaderID, ComputeShaderConstants._BaseMapArrTex_ShaderID);
         }
 
-        public UsedTextureArraySlot SetTexture(Material material, Texture2D texture, ComputeShaderHelpers.TextureArrayType type) =>
+        public UsedTextureArraySlot SetTexture(Material material, Texture2D texture, ComputeShaderConstants.TextureArrayType type) =>
             textureArrayTypes[(int)type].SetTexture(type, material, texture);
 
         public void FreeTexture(UsedTextureArraySlot usedTextureArraySlot)

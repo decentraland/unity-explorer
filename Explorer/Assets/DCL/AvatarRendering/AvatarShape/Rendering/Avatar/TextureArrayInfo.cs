@@ -27,7 +27,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.Avatar
         public void AddAFreeSlot(int index) =>
             freeSlots.Push(index);
 
-        public UsedTextureArraySlot GetNextFreeSlot(ComputeShaderHelpers.TextureArrayType type, int resolution)
+        public UsedTextureArraySlot GetNextFreeSlot(ComputeShaderConstants.TextureArrayType type, int resolution)
         {
             if (freeSlots.TryPop(out int freeSlot))
             {
@@ -67,13 +67,13 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.Avatar
 
     public struct UsedTextureArraySlot
     {
-        public ComputeShaderHelpers.TextureArrayType TextureArrayType;
+        public ComputeShaderConstants.TextureArrayType TextureArrayType;
         public int usedSlotIndex;
         public int usedArrayIndex;
         public Texture2DArray textureArray;
         public int resolution;
 
-        public UsedTextureArraySlot(ComputeShaderHelpers.TextureArrayType textureArrayType, int resolution, int usedSlotIndex, int usedArrayIndex, Texture2DArray textureArray)
+        public UsedTextureArraySlot(ComputeShaderConstants.TextureArrayType textureArrayType, int resolution, int usedSlotIndex, int usedArrayIndex, Texture2DArray textureArray)
         {
             TextureArrayType = textureArrayType;
             this.usedSlotIndex = usedSlotIndex;

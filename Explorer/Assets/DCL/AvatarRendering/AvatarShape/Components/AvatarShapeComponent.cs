@@ -1,5 +1,5 @@
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
-using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.AvatarRendering.Wearables;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
@@ -14,8 +14,10 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     {
         public string ID;
         public string Name;
+        public Color SkinColor;
+        public Color HairColor;
 
-        public WearablesLiterals.BodyShape BodyShape;
+        public BodyShape BodyShape;
         public bool IsDirty;
 
         public Promise WearablePromise;
@@ -28,7 +30,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private BoneMatrixCalculationJob job;
         private JobHandle handle;
 
-        public AvatarShapeComponent(string name, string id, WearablesLiterals.BodyShape bodyShape, Promise wearablePromise)
+        public AvatarShapeComponent(string name, string id, BodyShape bodyShape, Promise wearablePromise, Color skinColor,
+            Color hairColor)
         {
             ID = id;
             Name = name;
@@ -40,6 +43,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             Bones = default(TransformAccessArray);
             job = default(BoneMatrixCalculationJob);
             handle = default(JobHandle);
+            SkinColor = skinColor;
+            HairColor = hairColor;
 
             //TODO: Debug feature, remove when done
             if (ID == "0")

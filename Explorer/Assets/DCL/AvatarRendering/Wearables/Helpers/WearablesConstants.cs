@@ -1,55 +1,12 @@
-using DCL.ECSComponents;
-using System;
+using Decentraland.Common;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
-    public static class WearablesLiterals
+    public static class WearablesConstants
     {
-        public readonly struct BodyShape : IEquatable<BodyShape>
-        {
-            public const int COUNT = 2;
-
-            public readonly string Value;
-            public readonly int Index;
-
-            private BodyShape(string value, int index)
-            {
-                Value = value;
-                Index = index;
-            }
-
-            public static implicit operator string(BodyShape bodyShape) =>
-                bodyShape.Value;
-
-            public static implicit operator int(BodyShape bodyShape) =>
-                bodyShape.Index;
-
-            public static implicit operator BodyShape(PBAvatarShape pbAvatarShape)
-            {
-                if (pbAvatarShape.BodyShape == MALE.Value)
-                    return MALE;
-
-                if (pbAvatarShape.BodyShape == FEMALE.Value)
-                    return FEMALE;
-
-                throw new NotSupportedException($"Body shape {pbAvatarShape.BodyShape} not supported");
-            }
-
-            public static readonly BodyShape MALE = new ("urn:decentraland:off-chain:base-avatars:BaseMale", 0);
-            public static readonly BodyShape FEMALE = new ("urn:decentraland:off-chain:base-avatars:BaseFemale", 1);
-
-            public bool Equals(BodyShape other) =>
-                Value == other.Value && Index == other.Index;
-
-            public override bool Equals(object obj) =>
-                obj is BodyShape other && Equals(other);
-
-            public override int GetHashCode() =>
-                HashCode.Combine(Value, Index);
-        }
-
         public static class Categories
         {
             public const string BODY_SHAPE = "body_shape";
@@ -73,6 +30,38 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public const string HANDS = "hands";
             public const string HANDS_WEAR = "hands_wear";
             public const string HEAD = "head";
+        }
+
+        public static class DefaultColors
+        {
+            private static readonly Color[] DEFAULT_SKIN_COLORS
+                =
+                {
+                    new (0.55f, 0.33f, 0.14f),
+                    new (0.78f, 0.53f, 0.26f),
+                    new (0.88f, 0.67f, 0.41f),
+                    new (0.95f, 0.76f, 0.49f),
+                    new (1.00f, 0.86f, 0.67f),
+                };
+
+            private static Color GetRandomSkinColor() =>
+                DEFAULT_SKIN_COLORS[Random.Range(0, DEFAULT_SKIN_COLORS.Length)];
+
+            public static Color3 GetRandomSkinColor3()
+            {
+                Color randomColor = GetRandomSkinColor();
+
+                return new Color3
+                    { R = randomColor.r, G = randomColor.g, B = randomColor.b };
+            }
+
+            public static Color3 GetRandomHairColor3()
+            {
+                Color randomColor = Random.ColorHSV();
+
+                return new Color3
+                    { R = randomColor.r, G = randomColor.g, B = randomColor.b };
+            }
         }
 
         public static class DefaultWearables

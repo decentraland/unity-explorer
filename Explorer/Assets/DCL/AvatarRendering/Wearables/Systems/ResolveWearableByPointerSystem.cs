@@ -94,7 +94,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        private void FinalizeWearableDTO(in Entity entity, ref AssetPromise<WearableDTO[], GetWearableDTOByPointersIntention> promise, ref WearablesLiterals.BodyShape bodyShape)
+        private void FinalizeWearableDTO(in Entity entity, ref AssetPromise<WearableDTO[], GetWearableDTOByPointersIntention> promise, ref BodyShape bodyShape)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -130,7 +130,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        private void FinalizeAssetBundleManifestLoading(in Entity entity, ref AssetBundleManifestPromise promise, ref IWearable wearable, ref WearablesLiterals.BodyShape bodyShape)
+        private void FinalizeAssetBundleManifestLoading(in Entity entity, ref AssetBundleManifestPromise promise, ref IWearable wearable, ref BodyShape bodyShape)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -152,7 +152,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        private void FinalizeAssetBundleLoading(in Entity entity, ref AssetBundlePromise promise, ref IWearable wearable, ref WearablesLiterals.BodyShape bodyShape)
+        private void FinalizeAssetBundleLoading(in Entity entity, ref AssetBundlePromise promise, ref IWearable wearable, ref BodyShape bodyShape)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -219,7 +219,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             World.Create(promise, intention.BodyShape);
         }
 
-        private void SetDefaultWearables(IWearable wearable, in WearablesLiterals.BodyShape bodyShape)
+        private void SetDefaultWearables(IWearable wearable, in BodyShape bodyShape)
         {
             ReportHub.Log(GetReportCategory(), $"Request for wearable {wearable.GetHash()} failed, loading default wearable");
 
@@ -227,19 +227,19 @@ namespace DCL.AvatarRendering.Wearables.Systems
             //Waiting for the default wearable should be moved to the default screen
             if (wearable.IsUnisex())
             {
-                wearable.AssetBundleData[WearablesLiterals.BodyShape.MALE] = wearableCatalog.GetDefaultWearable(WearablesLiterals.BodyShape.MALE, wearable.GetCategory()).AssetBundleData[WearablesLiterals.BodyShape.MALE];
-                wearable.AssetBundleData[WearablesLiterals.BodyShape.FEMALE] = wearableCatalog.GetDefaultWearable(WearablesLiterals.BodyShape.FEMALE, wearable.GetCategory()).AssetBundleData[WearablesLiterals.BodyShape.FEMALE];
+                wearable.AssetBundleData[BodyShape.MALE] = wearableCatalog.GetDefaultWearable(BodyShape.MALE, wearable.GetCategory()).AssetBundleData[BodyShape.MALE];
+                wearable.AssetBundleData[BodyShape.FEMALE] = wearableCatalog.GetDefaultWearable(BodyShape.FEMALE, wearable.GetCategory()).AssetBundleData[BodyShape.FEMALE];
             }
             else
                 wearable.AssetBundleData[bodyShape] = wearableCatalog.GetDefaultWearable(bodyShape, wearable.GetCategory()).AssetBundleData[bodyShape];
         }
 
-        private void SetWearableResult(IWearable wearable, StreamableLoadingResult<AssetBundleData> result, in WearablesLiterals.BodyShape bodyShape)
+        private void SetWearableResult(IWearable wearable, StreamableLoadingResult<AssetBundleData> result, in BodyShape bodyShape)
         {
             if (wearable.IsUnisex())
             {
-                wearable.AssetBundleData[WearablesLiterals.BodyShape.MALE] = result;
-                wearable.AssetBundleData[WearablesLiterals.BodyShape.FEMALE] = result;
+                wearable.AssetBundleData[BodyShape.MALE] = result;
+                wearable.AssetBundleData[BodyShape.FEMALE] = result;
             }
             else
                 wearable.AssetBundleData[bodyShape] = result;

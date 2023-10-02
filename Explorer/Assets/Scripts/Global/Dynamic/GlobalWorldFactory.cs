@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character;
 using DCL.Character.Components;
@@ -81,10 +82,12 @@ namespace Global.Dynamic
                 new TransformComponent { Transform = characterObject.Transform },
                 new PBAvatarShape
                 {
-                    BodyShape = WearablesLiterals.BodyShape.MALE,
-                    Wearables = { WearablesLiterals.DefaultWearables.GetDefaultWearablesForBodyShape(WearablesLiterals.BodyShape.MALE) },
+                    BodyShape = BodyShape.MALE,
+                    Wearables = { WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE) },
                     Name = "Player",
                     Id = "0",
+                    SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor3(),
+                    HairColor = WearablesConstants.DefaultColors.GetRandomHairColor3(),
                 }
             );
 

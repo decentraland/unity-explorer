@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -40,11 +41,11 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         }
 
         public override int Initialize(List<GameObject> gameObjects, TextureArrayContainer textureArrayContainer,
-            UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterialPool, int lastAvatarVertCount, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer)
+            UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterialPool, int lastAvatarVertCount, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer, AvatarShapeComponent avatarShapeComponent)
         {
             SetupCounters(gameObjects);
             SetupComputeShader(gameObjects, skinningShader, lastAvatarVertCount);
-            SetupMeshRenderer(gameObjects, textureArrayContainer, avatarMaterialPool, lastAvatarVertCount);
+            SetupMeshRenderer(gameObjects, textureArrayContainer, avatarMaterialPool, lastAvatarVertCount, avatarShapeComponent);
             return vertCount;
         }
 
@@ -96,20 +97,20 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             sourceSkin.EndWrite<BoneWeight>(vertCount);
             bindPosesIndex.EndWrite<int>(vertCount);
             bindPoses.EndWrite<Matrix4x4>(skinnedMeshRendererBoneCount);
-            mBones = new ComputeBuffer(ComputeShaderHelpers.BONE_COUNT, Marshal.SizeOf(typeof(Matrix4x4)));
+            mBones = new ComputeBuffer(ComputeShaderConstants.BONE_COUNT, Marshal.SizeOf(typeof(Matrix4x4)));
 
 
             cs = Object.Instantiate(skinningShader);
-            kernel = cs.FindKernel(ComputeShaderHelpers.SKINNING_KERNEL_NAME);
-            cs.SetInt(ComputeShaderHelpers.VERT_COUNT_ID, vertCount);
-            cs.SetInt(ComputeShaderHelpers.LAST_AVATAR_VERT_COUNT_ID, lastAvatarVertCount);
-            cs.SetBuffer(kernel, ComputeShaderHelpers.VERTS_IN_ID, vertexIn);
-            cs.SetBuffer(kernel, ComputeShaderHelpers.NORMALS_IN_ID, normalsIn);
-            cs.SetBuffer(kernel, ComputeShaderHelpers.TANGENTS_IN_ID, tangentsIn);
-            cs.SetBuffer(kernel, ComputeShaderHelpers.SOURCE_SKIN_ID, sourceSkin);
-            cs.SetBuffer(kernel, ComputeShaderHelpers.BIND_POSE_ID, bindPoses);
-            cs.SetBuffer(kernel, ComputeShaderHelpers.BIND_POSES_INDEX_ID, bindPosesIndex);
-            cs.SetBuffer(kernel, ComputeShaderHelpers.BONES_ID, mBones);
+            kernel = cs.FindKernel(ComputeShaderConstants.SKINNING_KERNEL_NAME);
+            cs.SetInt(ComputeShaderConstants.VERT_COUNT_ID, vertCount);
+            cs.SetInt(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, lastAvatarVertCount);
+            cs.SetBuffer(kernel, ComputeShaderConstants.VERTS_IN_ID, vertexIn);
+            cs.SetBuffer(kernel, ComputeShaderConstants.NORMALS_IN_ID, normalsIn);
+            cs.SetBuffer(kernel, ComputeShaderConstants.TANGENTS_IN_ID, tangentsIn);
+            cs.SetBuffer(kernel, ComputeShaderConstants.SOURCE_SKIN_ID, sourceSkin);
+            cs.SetBuffer(kernel, ComputeShaderConstants.BIND_POSE_ID, bindPoses);
+            cs.SetBuffer(kernel, ComputeShaderConstants.BIND_POSES_INDEX_ID, bindPosesIndex);
+            cs.SetBuffer(kernel, ComputeShaderConstants.BONES_ID, mBones);
         }
 
         private void FillMeshArray(SkinnedMeshRenderer skinnedMeshRenderer, NativeArray<Matrix4x4> bindPosesMatrix,
@@ -121,7 +122,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             // HACK: We only need to do this if the avatar has _NORMALMAPS enabled on the material.
             mesh.RecalculateTangents();
 
-            NativeArray<Matrix4x4>.Copy(mesh.bindposes, 0, bindPosesMatrix, ComputeShaderHelpers.BONE_COUNT * skinnedMeshCounter, ComputeShaderHelpers.BONE_COUNT);
+            NativeArray<Matrix4x4>.Copy(mesh.bindposes, 0, bindPosesMatrix, ComputeShaderConstants.BONE_COUNT * skinnedMeshCounter, ComputeShaderConstants.BONE_COUNT);
             NativeArray<BoneWeight>.Copy(mesh.boneWeights, 0, totalSkinIn, vertexCounter, currentMeshVertexCount);
             NativeArray<Vector3>.Copy(mesh.vertices, 0, totalVertsIn, vertexCounter, currentMeshVertexCount);
             NativeArray<Vector3>.Copy(mesh.normals, 0, totalNormalsIn, vertexCounter, currentMeshVertexCount);
@@ -129,7 +130,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
             //Setup vertex index for current wearable
             for (var i = 0; i < mesh.vertexCount; i++)
-                bindPosesIndexList[vertexCounter + i] = ComputeShaderHelpers.BONE_COUNT * skinnedMeshCounter;
+                bindPosesIndexList[vertexCounter + i] = ComputeShaderConstants.BONE_COUNT * skinnedMeshCounter;
         }
 
         private void SetupCounters(List<GameObject> gameObjects)
@@ -141,10 +142,10 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 skinnedMeshRendererCount++;
             }
 
-            skinnedMeshRendererBoneCount = skinnedMeshRendererCount * ComputeShaderHelpers.BONE_COUNT;
+            skinnedMeshRendererBoneCount = skinnedMeshRendererCount * ComputeShaderConstants.BONE_COUNT;
         }
 
-        private void SetupMeshRenderer(List<GameObject> gameObjects, TextureArrayContainer textureArrayContainer, IObjectPool<Material> avatarMaterial, int lastAvatarVertCount)
+        private void SetupMeshRenderer(List<GameObject> gameObjects, TextureArrayContainer textureArrayContainer, IObjectPool<Material> avatarMaterial, int lastAvatarVertCount, AvatarShapeComponent avatarShapeComponent)
         {
             var auxVertCounter = 0;
 
@@ -154,7 +155,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 {
                     int currentVertexCount = skinnedMeshRenderer.sharedMesh.vertexCount;
                     Renderer renderer = SetupMesh(skinnedMeshRenderer);
-                    SetupMaterial(renderer, auxVertCounter, textureArrayContainer, avatarMaterial, lastAvatarVertCount);
+                    SetupMaterial(renderer, auxVertCounter, textureArrayContainer, avatarMaterial, lastAvatarVertCount, avatarShapeComponent);
                     auxVertCounter += currentVertexCount;
                 }
             }
@@ -171,18 +172,20 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return meshRenderer;
         }
 
-        protected override void SetupMaterial(Renderer meshRenderer, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, IObjectPool<Material> celShadingMaterial, int lastAvatarVertCount)
+        protected override void SetupMaterial(Renderer meshRenderer, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, IObjectPool<Material> celShadingMaterial, int lastAvatarVertCount,
+            AvatarShapeComponent avatarShapeComponent)
         {
             Material avatarMaterial = celShadingMaterial.Get();
-            var albedoTexture = (Texture2D)meshRenderer.material.mainTexture;
+            Material originalMaterial = meshRenderer.material;
+            var albedoTexture = (Texture2D)originalMaterial.mainTexture;
 
             if (albedoTexture != null)
             {
-                UsedTextureArraySlot usedIndex = textureArrayContainer.SetTexture(avatarMaterial, albedoTexture, ComputeShaderHelpers.TextureArrayType.ALBEDO);
+                UsedTextureArraySlot usedIndex = textureArrayContainer.SetTexture(avatarMaterial, albedoTexture, ComputeShaderConstants.TextureArrayType.ALBEDO);
                 usedTextureArraySlots.Add(usedIndex);
             }
 
-            foreach (string keyword in ComputeShaderHelpers.keywordsToCheck)
+            foreach (string keyword in ComputeShaderConstants.keywordsToCheck)
             {
                 if (meshRenderer.material.IsKeywordEnabled(keyword))
                     avatarMaterial.EnableKeyword(keyword);
@@ -193,8 +196,10 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
             //vertOutMaterial.SetColor(ComputeShaderHelpers._BaseColour_ShaderID, Color.red);
             avatarMaterial.SetInteger("_useCompute", 1);
-            avatarMaterial.SetInteger(ComputeShaderHelpers.LAST_AVATAR_VERT_COUNT_ID, lastWearableVertCount);
-            avatarMaterial.SetInteger(ComputeShaderHelpers.LAST_WEARABLE_VERT_COUNT_ID, lastAvatarVertCount);
+            avatarMaterial.SetInteger(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, lastWearableVertCount);
+            avatarMaterial.SetInteger(ComputeShaderConstants.LAST_WEARABLE_VERT_COUNT_ID, lastAvatarVertCount);
+
+            SetAvatarColors(avatarMaterial, originalMaterial, avatarShapeComponent);
             meshRenderer.material = avatarMaterial;
         }
 

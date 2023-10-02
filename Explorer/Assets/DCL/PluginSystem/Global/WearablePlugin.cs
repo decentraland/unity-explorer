@@ -52,7 +52,7 @@ namespace DCL.AvatarRendering.Wearables
             foreach (WearableDTO wearableDto in partialTargetList)
             {
                 wearableCatalog.AddWearableByDTO(wearableDto, out IWearable defaultWearable);
-                WearablesLiterals.BodyShape analyzedBodyShape = defaultWearable.IsCompatibleWithBodyShape(WearablesLiterals.BodyShape.MALE) ? WearablesLiterals.BodyShape.MALE : WearablesLiterals.BodyShape.FEMALE;
+                BodyShape analyzedBodyShape = defaultWearable.IsCompatibleWithBodyShape(BodyShape.MALE) ? BodyShape.MALE : BodyShape.FEMALE;
 
                 //Get main asset bundle
                 UnityWebRequest assetBundleWebRequest = UnityWebRequestAssetBundle.GetAssetBundle($"{Application.streamingAssetsPath}/AssetBundles/Wearables/{defaultWearable.GetMainFileHash(analyzedBodyShape)}{PlatformUtils.GetPlatform()}");
@@ -86,8 +86,8 @@ namespace DCL.AvatarRendering.Wearables
 
                 if (defaultWearable.IsUnisex())
                 {
-                    defaultWearable.AssetBundleData[WearablesLiterals.BodyShape.MALE] = assetBundleData;
-                    defaultWearable.AssetBundleData[WearablesLiterals.BodyShape.FEMALE] = assetBundleData;
+                    defaultWearable.AssetBundleData[BodyShape.MALE] = assetBundleData;
+                    defaultWearable.AssetBundleData[BodyShape.FEMALE] = assetBundleData;
                 }
                 else
                     defaultWearable.AssetBundleData[analyzedBodyShape] = assetBundleData;

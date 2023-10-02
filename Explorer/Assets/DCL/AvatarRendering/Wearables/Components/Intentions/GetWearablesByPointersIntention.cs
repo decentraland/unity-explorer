@@ -1,4 +1,3 @@
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.ECSComponents;
 using ECS.StreamableLoading.Common.Components;
 using System;
@@ -11,7 +10,7 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
     {
         public List<string> Pointers;
         public IWearable[] Results;
-        public WearablesLiterals.BodyShape BodyShape;
+        public BodyShape BodyShape;
         public CancellationTokenSource CancellationTokenSource { get; }
 
         public GetWearablesByPointersIntention(List<string> pointers, IWearable[] result, PBAvatarShape bodyShape)
@@ -22,7 +21,7 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
             CancellationTokenSource = new CancellationTokenSource();
         }
 
-        public GetWearablesByPointersIntention(List<string> pointers, IWearable[] result, WearablesLiterals.BodyShape bodyShape)
+        public GetWearablesByPointersIntention(List<string> pointers, IWearable[] result, BodyShape bodyShape)
         {
             Pointers = pointers;
             Results = result;

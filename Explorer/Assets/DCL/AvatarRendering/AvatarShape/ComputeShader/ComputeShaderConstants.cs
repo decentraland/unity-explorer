@@ -2,7 +2,7 @@
 
 namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
-    public class ComputeShaderHelpers
+    public class ComputeShaderConstants
     {
         public enum TextureArrayType
         {

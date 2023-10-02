@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.DemoScripts.Components;
 using DCL.AvatarRendering.AvatarShape.DemoScripts.UI;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -89,8 +90,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private void GenerateRandomAvatars(IWearable[] defaultWearables, int randomAvatarsToInstantiate, bool addSkinnedMeshRenderer, Vector3 cameraPosition)
         {
-            var male = new AvatarRandomizer(WearablesLiterals.BodyShape.MALE);
-            var female = new AvatarRandomizer(WearablesLiterals.BodyShape.FEMALE);
+            var male = new AvatarRandomizer(BodyShape.MALE);
+            var female = new AvatarRandomizer(BodyShape.FEMALE);
 
             foreach (IWearable wearable in defaultWearables)
             {
@@ -141,6 +142,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     BodyShape = currentRandomizer.BodyShape,
                     Id = "0",
                     Wearables = { wearables.ToArray() },
+                    SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor3(),
+                    HairColor = WearablesConstants.DefaultColors.GetRandomHairColor3(),
                 };
                 World.Create(avatarShape, transformComp);
 

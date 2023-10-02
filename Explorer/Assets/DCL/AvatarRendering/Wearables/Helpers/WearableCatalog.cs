@@ -45,8 +45,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return false;
         }
 
-        public IWearable GetDefaultWearable(WearablesLiterals.BodyShape bodyShape, string category) =>
-            wearableDictionary[WearablesLiterals.DefaultWearables.GetDefaultWearable(bodyShape, category)];
+        public IWearable GetDefaultWearable(BodyShape bodyShape, string category) =>
+            wearableDictionary[WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category)];
 
         public void Dispose()
         {
