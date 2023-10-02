@@ -20,6 +20,12 @@ namespace DCL.AvatarRendering.AvatarShape.DemoScripts.UI
         private Button closeButton;
 
         [SerializeField]
+        private TMP_Text avatarCount;
+
+        [SerializeField]
+        private TMP_Text avatarLimitWarning;
+
+        [SerializeField]
         private GameObject debugViewWindow;
 
         private void Start()
@@ -28,6 +34,7 @@ namespace DCL.AvatarRendering.AvatarShape.DemoScripts.UI
 
             openButton.onClick.AddListener(OpenProfilerWindow);
             closeButton.onClick.AddListener(CloseProfilerWindow);
+            avatarLimitWarning.gameObject.SetActive(false);
         }
 
         public int GetAvatarsToInstantiate() =>
@@ -46,6 +53,18 @@ namespace DCL.AvatarRendering.AvatarShape.DemoScripts.UI
         {
             openButton.gameObject.SetActive(false);
             debugViewWindow.gameObject.SetActive(true);
+        }
+
+        public void SetAvatarCount(int newCount)
+        {
+            avatarLimitWarning.gameObject.SetActive(false);
+            avatarCount.text = $"({newCount.ToString()})";
+        }
+
+        public void ShowMaxNumberWarning(int maxNumber)
+        {
+            avatarLimitWarning.text = $"You cannot instantiate more than {maxNumber} avatars";
+            avatarLimitWarning.gameObject.SetActive(true);
         }
     }
 }

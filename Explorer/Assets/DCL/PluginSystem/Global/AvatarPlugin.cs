@@ -7,6 +7,7 @@ using DCL.AvatarRendering.AvatarShape.GPUSkinning;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.AvatarRendering.AvatarShape.Systems;
+using ECS;
 using ECS.ComponentsPooling;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System;
@@ -61,6 +62,7 @@ namespace DCL.PluginSystem.Global
         private readonly TextureArrayContainer textureArrayContainer;
 
         private ProvidedInstance<AvatarInstantiatorView> avatarInstantiatorView;
+        private readonly IRealmData realmData;
 
 
         public async UniTask Initialize(AvatarShapeSettings settings, CancellationToken ct)
@@ -92,11 +94,12 @@ namespace DCL.PluginSystem.Global
 
         }
 
-        public AvatarPlugin(IAssetsProvisioner assetsProvisioner, IConcurrentBudgetProvider frameTimeCapBudgetProvider, IComponentPool<AvatarBase> avatarPoolRegistry)
+        public AvatarPlugin(IAssetsProvisioner assetsProvisioner, IConcurrentBudgetProvider frameTimeCapBudgetProvider, IComponentPool<AvatarBase> avatarPoolRegistry, IRealmData realmData)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudgetProvider = frameTimeCapBudgetProvider;
             this.avatarPoolRegistry = avatarPoolRegistry;
+            this.realmData = realmData;
             textureArrayContainer = new TextureArrayContainer();
         }
 
@@ -106,7 +109,7 @@ namespace DCL.PluginSystem.Global
             StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder);
 
             //Debug scripts
-            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, avatarInstantiatorView.Value);
+            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, avatarInstantiatorView.Value, realmData);
         }
 
         public void Dispose() { }

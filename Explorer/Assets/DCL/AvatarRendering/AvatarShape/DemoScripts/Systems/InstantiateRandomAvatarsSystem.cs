@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.DemoScripts.Components;
 using DCL.AvatarRendering.AvatarShape.DemoScripts.UI;
 using DCL.AvatarRendering.Wearables;
@@ -11,6 +12,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
 using Diagnostics.ReportsHandling;
+using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
@@ -23,11 +25,10 @@ using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRenderi
 using Random = UnityEngine.Random;
 using RaycastHit = UnityEngine.RaycastHit;
 
-namespace DCL.AvatarRendering { }
-
+//TODO: Class used for demo, should be removed or refactored for production code
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
-    //TODO: Temporary class to load default wearables and create random avatars from it.
+
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.AVATAR)]
     public partial class InstantiateRandomAvatarsSystem : BaseUnityLoopSystem
@@ -35,10 +36,22 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly AvatarInstantiatorView view;
         private SingleInstanceEntity camera;
 
-        public InstantiateRandomAvatarsSystem(World world, AvatarInstantiatorView avatarInstantiatorView) : base(world)
+        private int totalAvatarsInstantiated;
+        private readonly int MAX_AVATAR_NUMBER = 1000;
+
+        public InstantiateRandomAvatarsSystem(World world, AvatarInstantiatorView avatarInstantiatorView, IRealmData realmData) : base(world)
         {
             view = avatarInstantiatorView;
             view.addRandomAvatarButton.onClick.AddListener(AddRandomAvatar);
+            view.gameObject.SetActive(false);
+            totalAvatarsInstantiated = 1;
+            WaitForRealmDataAndEnableView(realmData);
+        }
+
+        private async UniTaskVoid WaitForRealmDataAndEnableView(IRealmData realmData)
+        {
+            await UniTask.WaitUntil(() => realmData.Configured);
+            view.gameObject.SetActive(true);
         }
 
         public override void Initialize()
@@ -48,11 +61,21 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private void AddRandomAvatar()
         {
+            int avatarsToInstantiate = view.GetAvatarsToInstantiate();
+
+            if (totalAvatarsInstantiated + avatarsToInstantiate >= MAX_AVATAR_NUMBER)
+            {
+                view.ShowMaxNumberWarning(MAX_AVATAR_NUMBER);
+                return;
+            }
+
+            totalAvatarsInstantiated += avatarsToInstantiate;
             World.Create(new AddRandomAvatarIntention
             {
-                avatarsToInstantiate = view.GetAvatarsToInstantiate(),
+                avatarsToInstantiate = avatarsToInstantiate,
                 addSkinnedMeshRendererAvatar = view.GetDoSkin(),
             });
+
         }
 
         protected override void Update(float t)
@@ -60,6 +83,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             StartRandomAvatarInstantiationQuery(World);
             FinalizeRandomAvatarInstantiationQuery(World, in camera.GetCameraComponent(World));
         }
+
 
         [Query]
         [None(typeof(RandomAvatarRequest))]
@@ -163,6 +187,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     World.Create(avatarShapeSkinnedMesh, transformCompSkinnedMesh);
                 }
             }
+
+            view.SetAvatarCount(totalAvatarsInstantiated);
         }
 
         public override void Dispose()
