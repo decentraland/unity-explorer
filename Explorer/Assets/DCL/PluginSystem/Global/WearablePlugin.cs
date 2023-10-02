@@ -55,7 +55,7 @@ namespace DCL.AvatarRendering.Wearables
                 BodyShape analyzedBodyShape = defaultWearable.IsCompatibleWithBodyShape(BodyShape.MALE) ? BodyShape.MALE : BodyShape.FEMALE;
 
                 //Get main asset bundle
-                UnityWebRequest assetBundleWebRequest = UnityWebRequestAssetBundle.GetAssetBundle($"{Application.streamingAssetsPath}/AssetBundles/Wearables/{defaultWearable.GetMainFileHash(analyzedBodyShape)}{PlatformUtils.GetPlatform()}");
+                UnityWebRequest assetBundleWebRequest = UnityWebRequestAssetBundle.GetAssetBundle($"file://{Application.streamingAssetsPath}/AssetBundles/Wearables/{defaultWearable.GetMainFileHash(analyzedBodyShape)}{PlatformUtils.GetPlatform()}");
                 await assetBundleWebRequest.SendWebRequest();
 
                 //Get dependencies
@@ -67,7 +67,7 @@ namespace DCL.AvatarRendering.Wearables
                 foreach (string dependency in assetBundleMetadata.dependencies)
                 {
                     UnityWebRequest dependencyWebRequest
-                        = UnityWebRequestAssetBundle.GetAssetBundle($"{Application.streamingAssetsPath}/AssetBundles/Wearables/{dependency}");
+                        = UnityWebRequestAssetBundle.GetAssetBundle($"file://{Application.streamingAssetsPath}/AssetBundles/Wearables/{dependency}");
 
                     await dependencyWebRequest.SendWebRequest();
                     assetBundlesDependencies.Add(DownloadHandlerAssetBundle.GetContent(dependencyWebRequest));
@@ -91,6 +91,9 @@ namespace DCL.AvatarRendering.Wearables
                 }
                 else
                     defaultWearable.AssetBundleData[analyzedBodyShape] = assetBundleData;
+
+                //DUMMY ASSET BUNDLE MANIFEST
+                defaultWearable.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>();
 
                 assetBundle.Unload(false);
 
