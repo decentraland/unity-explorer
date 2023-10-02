@@ -116,6 +116,42 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ActionForward"",
+                    ""type"": ""Button"",
+                    ""id"": ""3dd23b50-a76f-4a27-b6d2-25c06b5340c3"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ActionBackward"",
+                    ""type"": ""Button"",
+                    ""id"": ""d027a8f1-c35a-4f14-8785-53ebaadcdf23"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ActionRight"",
+                    ""type"": ""Button"",
+                    ""id"": ""bcd20f79-0370-4283-9bbd-152467c3eaed"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ActionLeft"",
+                    ""type"": ""Button"",
+                    ""id"": ""a3ed5c0d-172e-4ab9-a535-f8e98033e3e9"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -358,6 +394,94 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Pointer"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""dbdd9c9d-c776-4bdd-958f-96ce5eccef17"",
+                    ""path"": ""<Keyboard>/upArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ActionForward"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""df962852-559d-4c7c-a285-9fa992847b89"",
+                    ""path"": ""<Keyboard>/w"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ActionForward"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a5794370-37f2-492d-8ce4-30dde5ba14d0"",
+                    ""path"": ""<Keyboard>/downArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ActionBackward"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""7994cae8-79d3-4369-b834-3605f6511a0a"",
+                    ""path"": ""<Keyboard>/s"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ActionBackward"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""2e2fcd80-4f62-4030-9fb9-ceeb8f68e510"",
+                    ""path"": ""<Keyboard>/rightArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ActionRight"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d7fcbdc0-2318-4649-a57c-d9178bcb913d"",
+                    ""path"": ""<Keyboard>/d"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ActionRight"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""fb47fc3e-cf49-40c6-89c9-5597d235cf01"",
+                    ""path"": ""<Keyboard>/leftArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ActionLeft"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""5d47b62b-95d0-4ddc-900c-8ab2a3d33cf2"",
+                    ""path"": ""<Keyboard>/a"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ActionLeft"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -628,6 +752,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Player_ActionButton4 = m_Player.FindAction("ActionButton4", throwIfNotFound: true);
         m_Player_ActionButton5 = m_Player.FindAction("ActionButton5", throwIfNotFound: true);
         m_Player_ActionButton6 = m_Player.FindAction("ActionButton6", throwIfNotFound: true);
+        m_Player_ActionForward = m_Player.FindAction("ActionForward", throwIfNotFound: true);
+        m_Player_ActionBackward = m_Player.FindAction("ActionBackward", throwIfNotFound: true);
+        m_Player_ActionRight = m_Player.FindAction("ActionRight", throwIfNotFound: true);
+        m_Player_ActionLeft = m_Player.FindAction("ActionLeft", throwIfNotFound: true);
         // Camera
         m_Camera = asset.FindActionMap("Camera", throwIfNotFound: true);
         m_Camera_ZoomOut = m_Camera.FindAction("ZoomOut", throwIfNotFound: true);
@@ -710,6 +838,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_ActionButton4;
     private readonly InputAction m_Player_ActionButton5;
     private readonly InputAction m_Player_ActionButton6;
+    private readonly InputAction m_Player_ActionForward;
+    private readonly InputAction m_Player_ActionBackward;
+    private readonly InputAction m_Player_ActionRight;
+    private readonly InputAction m_Player_ActionLeft;
     public struct PlayerActions
     {
         private @DCLInput m_Wrapper;
@@ -724,6 +856,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ActionButton4 => m_Wrapper.m_Player_ActionButton4;
         public InputAction @ActionButton5 => m_Wrapper.m_Player_ActionButton5;
         public InputAction @ActionButton6 => m_Wrapper.m_Player_ActionButton6;
+        public InputAction @ActionForward => m_Wrapper.m_Player_ActionForward;
+        public InputAction @ActionBackward => m_Wrapper.m_Player_ActionBackward;
+        public InputAction @ActionRight => m_Wrapper.m_Player_ActionRight;
+        public InputAction @ActionLeft => m_Wrapper.m_Player_ActionLeft;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -763,6 +899,18 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ActionButton6.started += instance.OnActionButton6;
             @ActionButton6.performed += instance.OnActionButton6;
             @ActionButton6.canceled += instance.OnActionButton6;
+            @ActionForward.started += instance.OnActionForward;
+            @ActionForward.performed += instance.OnActionForward;
+            @ActionForward.canceled += instance.OnActionForward;
+            @ActionBackward.started += instance.OnActionBackward;
+            @ActionBackward.performed += instance.OnActionBackward;
+            @ActionBackward.canceled += instance.OnActionBackward;
+            @ActionRight.started += instance.OnActionRight;
+            @ActionRight.performed += instance.OnActionRight;
+            @ActionRight.canceled += instance.OnActionRight;
+            @ActionLeft.started += instance.OnActionLeft;
+            @ActionLeft.performed += instance.OnActionLeft;
+            @ActionLeft.canceled += instance.OnActionLeft;
         }
 
         private void UnregisterCallbacks(IPlayerActions instance)
@@ -797,6 +945,18 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ActionButton6.started -= instance.OnActionButton6;
             @ActionButton6.performed -= instance.OnActionButton6;
             @ActionButton6.canceled -= instance.OnActionButton6;
+            @ActionForward.started -= instance.OnActionForward;
+            @ActionForward.performed -= instance.OnActionForward;
+            @ActionForward.canceled -= instance.OnActionForward;
+            @ActionBackward.started -= instance.OnActionBackward;
+            @ActionBackward.performed -= instance.OnActionBackward;
+            @ActionBackward.canceled -= instance.OnActionBackward;
+            @ActionRight.started -= instance.OnActionRight;
+            @ActionRight.performed -= instance.OnActionRight;
+            @ActionRight.canceled -= instance.OnActionRight;
+            @ActionLeft.started -= instance.OnActionLeft;
+            @ActionLeft.performed -= instance.OnActionLeft;
+            @ActionLeft.canceled -= instance.OnActionLeft;
         }
 
         public void RemoveCallbacks(IPlayerActions instance)
@@ -967,6 +1127,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnActionButton4(InputAction.CallbackContext context);
         void OnActionButton5(InputAction.CallbackContext context);
         void OnActionButton6(InputAction.CallbackContext context);
+        void OnActionForward(InputAction.CallbackContext context);
+        void OnActionBackward(InputAction.CallbackContext context);
+        void OnActionRight(InputAction.CallbackContext context);
+        void OnActionLeft(InputAction.CallbackContext context);
     }
     public interface ICameraActions
     {

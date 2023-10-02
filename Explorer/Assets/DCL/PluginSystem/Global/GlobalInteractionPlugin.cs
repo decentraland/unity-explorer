@@ -20,17 +20,10 @@ namespace DCL.PluginSystem.Global
 {
     public class GlobalInteractionPlugin : IDCLGlobalPlugin<GlobalInteractionPlugin.Settings>
     {
-        [Serializable]
-        public class Settings : IDCLPluginSettings
-        {
-            [field: Header(nameof(GlobalInteractionPlugin))]
-            [field: Space]
-            [field: SerializeField] internal HoverCanvasSettings hoverCanvasSettings { get; private set; }
-        }
+        private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly UIDocument canvas;
 
         private readonly DCLInput dclInput;
-        private readonly UIDocument canvas;
-        private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly GlobalInputEvents globalInputEvents;
 
@@ -81,6 +74,10 @@ namespace DCL.PluginSystem.Global
                 { InputAction.IaPrimary, playerInput.Primary },
                 { InputAction.IaSecondary, playerInput.Secondary },
                 { InputAction.IaJump, playerInput.Jump },
+                { InputAction.IaForward, playerInput.ActionForward },
+                { InputAction.IaBackward, playerInput.ActionBackward },
+                { InputAction.IaRight, playerInput.ActionRight },
+                { InputAction.IaLeft, playerInput.ActionLeft },
                 { InputAction.IaAction3, playerInput.ActionButton3 },
                 { InputAction.IaAction4, playerInput.ActionButton4 },
                 { InputAction.IaAction5, playerInput.ActionButton5 },
@@ -93,5 +90,13 @@ namespace DCL.PluginSystem.Global
         }
 
         public void Dispose() { }
+
+        [Serializable]
+        public class Settings : IDCLPluginSettings
+        {
+            [field: Header(nameof(GlobalInteractionPlugin))]
+            [field: Space]
+            [field: SerializeField] internal HoverCanvasSettings hoverCanvasSettings { get; private set; }
+        }
     }
 }
