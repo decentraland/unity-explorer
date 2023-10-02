@@ -185,14 +185,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarShapeComponent.IsDirty = false;
         }
 
-        private void SetColor(GameObject instantiatedWearable, Color color)
-        {
-            for (var i = 0; i < instantiatedWearable.transform.childCount; i++)
-            {
-                if (instantiatedWearable.transform.GetChild(i).TryGetComponent(out MeshRenderer meshRenderer))
-                    meshRenderer.material.SetColor("_BaseColor", color);
-            }
-        }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
