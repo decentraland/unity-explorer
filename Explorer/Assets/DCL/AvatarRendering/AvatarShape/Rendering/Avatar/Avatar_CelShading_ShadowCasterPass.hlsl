@@ -17,6 +17,7 @@ struct VertexInfo
 {
     float3 position;
     float3 normal;
+    float4 tangent;
 };
 
 StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
