@@ -18,6 +18,7 @@
             struct v2f
             {
                 float4 pos : SV_POSITION;
+                float3 norm : NORMAL;
                 float4 nz : TEXCOORD0;
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -27,13 +28,15 @@
                 UNITY_SETUP_INSTANCE_ID(v);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
                 o.pos = UnityObjectToClipPos(v.vertex);
+                o.norm = COMPUTE_VIEW_NORMAL;
                 o.nz.xyz = COMPUTE_VIEW_NORMAL;
                 o.nz.w = COMPUTE_DEPTH_01;
                 return o;
             }
             fixed4 frag(v2f i) : SV_Target
             {
-                return EncodeDepthNormal (i.nz.w, i.nz.xyz);
+                float3 normalOutput = (i.norm.xyz + 1.0f) * 0.5f;
+                return float4( normalOutput, 1.0f);//EncodeDepthNormal (i.nz.w, i.nz.xyz);
             }
             ENDCG
         }

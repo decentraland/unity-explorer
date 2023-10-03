@@ -14,11 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Active: 1
   m_Settings:
-    OutlineThickness: 2
-    DepthSensitivity: 0.05
+    OutlineThickness: 1
+    DepthSensitivity: 0.02
     NormalsSensitivity: 3
-    ColorSensitivity: 5
-    OutlineColor: {r: 0.08235294, g: 0.08235294, b: 0.08235294, a: 0.2509804}
+    ColorSensitivity: 1
+    OutlineColor: {r: 0, g: 0, b: 0, a: 1}
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0

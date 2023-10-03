@@ -30,7 +30,7 @@ struct Varyings
 {
     float4 positionCS   : SV_POSITION;
     float2 uv           : TEXCOORD1;
-    float3 normalWS     : TEXCOORD2;
+    float4 normalWS     : TEXCOORD2;
 
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
@@ -54,9 +54,21 @@ Varyings DepthNormalsVertex(Attributes input)
     else
         normalInput = GetVertexNormalInputs(input.normal,input.tangentOS.xyzw);
     
-    output.normalWS = NormalizeNormalPerVertex(normalInput.normalWS);
+    output.normalWS.xyz = NormalizeNormalPerVertex(normalInput.normalWS);
+    output.normalWS.w = -(mul(UNITY_MATRIX_V, mul(unity_ObjectToWorld, float4(input.positionOS.xyz, 1.0))).z * _ProjectionParams.w);
 
     return output;
+}
+
+// Encoding/decoding view space normals into 2D 0..1 vector
+inline float2 EncodeViewNormalStereo( float3 n )
+{
+    float kScale = 1.7777;
+    float2 enc;
+    enc = n.xy / (n.z+1);
+    enc /= kScale;
+    enc = enc*0.5+0.5;
+    return enc;
 }
 
 void DepthNormalsFragment(
@@ -82,8 +94,9 @@ void DepthNormalsFragment(
     half3 packedNormalWS = PackFloat2To888(remappedOctNormalWS);      // values between [ 0,  1]
     outNormalWS = half4(packedNormalWS, 0.0);
     #else
-    float3 normalWS = NormalizeNormalPerPixel(input.normalWS);
-    outNormalWS = half4(normalWS, 0.0);
+    float3 normalWS = NormalizeNormalPerPixel(input.normalWS.xyz);
+    normalWS.xyz = (normalWS.xyz + 1) * 0.5f;
+    outNormalWS = half4(normalWS.xyz, input.normalWS.w);
     #endif
 
     #ifdef _WRITE_RENDERING_LAYERS

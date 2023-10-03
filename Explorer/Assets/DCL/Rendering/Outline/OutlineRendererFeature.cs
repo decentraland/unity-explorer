@@ -157,8 +157,15 @@ namespace DCL.Rendering.Avatar
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            renderer.EnqueuePass(this.depthNormalsRenderPass);
-            renderer.EnqueuePass(this.outlineRenderPass);
+            if (this.depthNormalsMaterial != null && this.m_ShaderDepthNormals != null && this.depthNormalsRTHandle_Colour != null)
+            {
+                renderer.EnqueuePass(this.depthNormalsRenderPass);
+            }
+
+            if (this.outlineMaterial != null && this.m_ShaderOutline != null && this.outlineRTHandle != null)
+            {
+                renderer.EnqueuePass(this.outlineRenderPass);
+            }
         }
 
         protected override void Dispose(bool disposing)
