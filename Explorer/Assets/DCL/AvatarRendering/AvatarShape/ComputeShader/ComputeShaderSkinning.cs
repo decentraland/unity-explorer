@@ -11,23 +11,16 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public class ComputeShaderSkinning : CustomSkinning
     {
+        private int vertCount;
         private int skinnedMeshRendererBoneCount;
         private int kernel;
-        private int skinnedMeshRendererCount;
-        private int vertCount;
 
         private UnityEngine.ComputeShader cs;
         private ComputeBuffer mBones;
+        private ComputeSkinningBufferContainer computeSkinningBufferContainer;
 
         private readonly List<UsedTextureArraySlot> usedTextureArraySlots;
 
-        //TODO: Find out why adding ComputeBufferType.Constant doesnt work in Windows, but it does in Mac
-        private ComputeBuffer vertexIn;
-        private ComputeBuffer tangentsIn;
-        private ComputeBuffer normalsIn;
-        private ComputeBuffer sourceSkin;
-        private ComputeBuffer bindPoses;
-        private ComputeBuffer bindPosesIndex;
 
         public ComputeShaderSkinning()
         {
@@ -56,24 +49,14 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return vertCount;
         }
 
-        //TODO: Pool this buffer
-        private ComputeBuffer CreateSubUpdateBuffer<T>(int size) where T: struct =>
-            new (size, Marshal.SizeOf(typeof(T)), ComputeBufferType.Structured, ComputeBufferMode.SubUpdates);
-
         private void SetupComputeShader(List<GameObject> gameObjects, UnityEngine.ComputeShader skinningShader, int lastAvatarVertCount)
         {
-            vertexIn = CreateSubUpdateBuffer<Vector3>(vertCount);
-            NativeArray<Vector3> totalVertsIn = vertexIn.BeginWrite<Vector3>(0, vertCount);
-            normalsIn = CreateSubUpdateBuffer<Vector3>(vertCount);
-            NativeArray<Vector3> totalNormalsIn = normalsIn.BeginWrite<Vector3>(0, vertCount);
-            tangentsIn = CreateSubUpdateBuffer<Vector4>(vertCount);
-            NativeArray<Vector4> totalTangentsIn = tangentsIn.BeginWrite<Vector4>(0, vertCount);
-            sourceSkin = CreateSubUpdateBuffer<BoneWeight>(vertCount);
-            NativeArray<BoneWeight> totalSkinIn = sourceSkin.BeginWrite<BoneWeight>(0, vertCount);
-            bindPosesIndex = CreateSubUpdateBuffer<int>(vertCount);
-            NativeArray<int> bindPosesIndexList = bindPosesIndex.BeginWrite<int>(0, vertCount);
-            bindPoses = CreateSubUpdateBuffer<Matrix4x4>(skinnedMeshRendererBoneCount);
-            NativeArray<Matrix4x4> bindPosesMatrix = bindPoses.BeginWrite<Matrix4x4>(0, skinnedMeshRendererBoneCount);
+#if UNITY_STANDALONE_WIN
+            computeSkinningBufferContainer = new ComputeSkinningBufferContainerWrite(vertCount, skinnedMeshRendererBoneCount);
+#else
+            computeSkinningBufferContainer = new ComputeSkinningBufferContainerSetData(vertCount, skinnedMeshRendererBoneCount);
+#endif
+            computeSkinningBufferContainer.StartWriting();
 
             var vertCounter = 0;
             var skinnedMeshCounter = 0;
@@ -86,7 +69,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 {
                     int meshVertexCount = skinnedMeshRenderer.sharedMesh.vertexCount;
                     ResetTransforms(skinnedMeshRenderer, rootTransform);
-                    FillMeshArray(skinnedMeshRenderer, bindPosesMatrix, bindPosesIndexList, totalVertsIn, totalNormalsIn, totalTangentsIn, totalSkinIn, meshVertexCount, vertCounter, skinnedMeshCounter);
+                    FillMeshArray(skinnedMeshRenderer, meshVertexCount, vertCounter, skinnedMeshCounter);
                     vertCounter += meshVertexCount;
                     skinnedMeshCounter++;
                 }
@@ -97,50 +80,30 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         private void SetupBuffers(UnityEngine.ComputeShader skinningShader, int lastAvatarVertCount)
         {
-            //TODO: Find out why adding ComputeBufferType.Constant doesnt work in Windows, but it does in Mac
-            vertexIn.EndWrite<Vector3>(vertCount);
-            normalsIn.EndWrite<Vector3>(vertCount);
-            tangentsIn.EndWrite<Vector4>(vertCount);
-            sourceSkin.EndWrite<BoneWeight>(vertCount);
-            bindPosesIndex.EndWrite<int>(vertCount);
-            bindPoses.EndWrite<Matrix4x4>(skinnedMeshRendererBoneCount);
+            computeSkinningBufferContainer.EndWriting();
             mBones = new ComputeBuffer(ComputeShaderConstants.BONE_COUNT, Marshal.SizeOf(typeof(float4x4)), ComputeBufferType.Structured, ComputeBufferMode.Dynamic);
 
-            cs = Object.Instantiate(skinningShader);
+            cs = skinningShader;
             kernel = cs.FindKernel(ComputeShaderConstants.SKINNING_KERNEL_NAME);
+            computeSkinningBufferContainer.SetBuffers(cs, kernel);
             cs.SetInt(ComputeShaderConstants.VERT_COUNT_ID, vertCount);
             cs.SetInt(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, lastAvatarVertCount);
-            cs.SetBuffer(kernel, ComputeShaderConstants.VERTS_IN_ID, vertexIn);
-            cs.SetBuffer(kernel, ComputeShaderConstants.NORMALS_IN_ID, normalsIn);
-            cs.SetBuffer(kernel, ComputeShaderConstants.TANGENTS_IN_ID, tangentsIn);
-            cs.SetBuffer(kernel, ComputeShaderConstants.SOURCE_SKIN_ID, sourceSkin);
-            cs.SetBuffer(kernel, ComputeShaderConstants.BIND_POSE_ID, bindPoses);
-            cs.SetBuffer(kernel, ComputeShaderConstants.BIND_POSES_INDEX_ID, bindPosesIndex);
             cs.SetBuffer(kernel, ComputeShaderConstants.BONES_ID, mBones);
         }
 
-        private void FillMeshArray(SkinnedMeshRenderer skinnedMeshRenderer, NativeArray<Matrix4x4> bindPosesMatrix,
-            NativeArray<int> bindPosesIndexList, NativeArray<Vector3> totalVertsIn, NativeArray<Vector3> totalNormalsIn, NativeArray<Vector4> totalTangentsIn, NativeArray<BoneWeight> totalSkinIn,
-            int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter)
+        private void FillMeshArray(SkinnedMeshRenderer skinnedMeshRenderer, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter)
         {
             Mesh mesh = skinnedMeshRenderer.sharedMesh;
 
             // HACK: We only need to do this if the avatar has _NORMALMAPS enabled on the material.
             mesh.RecalculateTangents();
 
-            NativeArray<Matrix4x4>.Copy(mesh.bindposes, 0, bindPosesMatrix, ComputeShaderConstants.BONE_COUNT * skinnedMeshCounter, ComputeShaderConstants.BONE_COUNT);
-            NativeArray<BoneWeight>.Copy(mesh.boneWeights, 0, totalSkinIn, vertexCounter, currentMeshVertexCount);
-            NativeArray<Vector3>.Copy(mesh.vertices, 0, totalVertsIn, vertexCounter, currentMeshVertexCount);
-            NativeArray<Vector3>.Copy(mesh.normals, 0, totalNormalsIn, vertexCounter, currentMeshVertexCount);
-            NativeArray<Vector4>.Copy(mesh.tangents, 0, totalTangentsIn, vertexCounter, currentMeshVertexCount);
-
-            //Setup vertex index for current wearable
-            for (var i = 0; i < mesh.vertexCount; i++)
-                bindPosesIndexList[vertexCounter + i] = ComputeShaderConstants.BONE_COUNT * skinnedMeshCounter;
+            computeSkinningBufferContainer.CopyAllBuffers(mesh, currentMeshVertexCount, vertexCounter, skinnedMeshCounter);
         }
 
         private void SetupCounters(List<GameObject> gameObjects)
         {
+            var skinnedMeshRendererCount = 0;
             foreach (GameObject gameObject in gameObjects)
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in gameObject.GetComponentsInChildren<SkinnedMeshRenderer>())
             {
@@ -216,6 +179,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             //    textureArrayContainer.FreeTexture(usedTextureArraySlot);
 
             usedTextureArraySlots.Clear();
+            computeSkinningBufferContainer.Dispose();
         }
     }
 }
