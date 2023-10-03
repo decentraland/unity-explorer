@@ -57,15 +57,10 @@ namespace DCL.Rendering.Avatar
                 CommandBuffer cmd = CommandBufferPool.Get("_DepthNormalsPass");
                 using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
                 {
-                    context.ExecuteCommandBuffer(cmd);
-                    cmd.Clear();
-
-                    //CoreUtils.SetRenderTarget(cmd, this.depthNormalsRTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.Unknown, depthSlice: -1);
-
                     // Create the draw settings, which configures a new draw call to the GPU
                     DrawingSettings drawSettings = CreateDrawingSettings(m_ShaderTagId, ref renderingData, renderingData.cameraData.defaultOpaqueSortFlags);
+
                     // We cant to render all objects using our material
-                    //drawSettings.overrideMaterial = depthNormalsMaterial;
                     uint outlineLayerMask = 0;
                     m_FilteringSettings.renderingLayerMask = 2;//((uint)1 << outlineLayerMask);
                     context.DrawRenderers(renderingData.cullResults, ref drawSettings, ref m_FilteringSettings);
