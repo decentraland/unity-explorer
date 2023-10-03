@@ -63,6 +63,7 @@ void Outline_float(float2 UV, float OutlineThickness, float DepthSensitivity, fl
         float3 normalFiniteDifference1 = normalSamples[3] - normalSamples[2];
         edgeNormal = sqrt(dot(normalFiniteDifference0, normalFiniteDifference0) + dot(normalFiniteDifference1, normalFiniteDifference1));
         edgeNormal = edgeNormal > (1/NormalsSensitivity) ? 1 : 0;
+        OutlineColor.a = 0.25f;
     }
 
     // Color
