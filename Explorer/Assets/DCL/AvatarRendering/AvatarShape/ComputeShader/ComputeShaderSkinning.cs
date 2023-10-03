@@ -51,6 +51,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         private void SetupComputeShader(List<GameObject> gameObjects, UnityEngine.ComputeShader skinningShader, int lastAvatarVertCount)
         {
+            //Note (Juani): Using too many BeginWrite in Mac caused a crash. So I ve set up this switch that changes the way in which we
+            //set up the buffers depending on the platform
 #if UNITY_STANDALONE_WIN
             computeSkinningBufferContainer = new ComputeSkinningBufferContainerWrite(vertCount, skinnedMeshRendererBoneCount);
 #else
