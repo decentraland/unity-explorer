@@ -36,15 +36,15 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         public override void ComputeSkinning(NativeArray<float4x4> bonesResult)
         {
-            NativeArray<float4x4> bonesIn = mBones.BeginWrite<float4x4>(0, ComputeShaderConstants.BONE_COUNT);
-            NativeArray<float4x4>.Copy(bonesResult, 0, bonesIn, 0, ComputeShaderConstants.BONE_COUNT);
-            mBones.EndWrite<float4x4>(ComputeShaderConstants.BONE_COUNT);
+            mBones.SetData(bonesResult);
             cs.Dispatch(kernel, (vertCount / 64) + 1, 1, 1);
 
-            //Note (Juani): SetData was slightly faster for me in my Windows Computer using DX11. However, Unity recommends using BeginWrite/EndWrite,
-            //so I ll use that one. If there is compalints of different Graphics API, this would be a first to check
+            //Note (Juani): According to Unity, BeginWrite/EndWrite works better than SetData. But we got inconsitent result using ComputeBufferMode.SubUpdates
+            //Ash machine (AMD) worked way worse than mine (NVidia). So, we are back to SetData with a ComputeBufferMode.Dynamic, which works well for both.
             //https://docs.unity3d.com/2020.1/Documentation/ScriptReference/ComputeBuffer.BeginWrite.html
-            //mBones.SetData(bonesResult);
+            /*NativeArray<float4x4> bonesIn = mBones.BeginWrite<float4x4>(0, ComputeShaderConstants.BONE_COUNT);
+            NativeArray<float4x4>.Copy(bonesResult, 0, bonesIn, 0, ComputeShaderConstants.BONE_COUNT);
+            mBones.EndWrite<float4x4>(ComputeShaderConstants.BONE_COUNT);*/
         }
 
         public override int Initialize(List<GameObject> gameObjects, TextureArrayContainer textureArrayContainer,
@@ -104,7 +104,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             sourceSkin.EndWrite<BoneWeight>(vertCount);
             bindPosesIndex.EndWrite<int>(vertCount);
             bindPoses.EndWrite<Matrix4x4>(skinnedMeshRendererBoneCount);
-            mBones = new ComputeBuffer(ComputeShaderConstants.BONE_COUNT, Marshal.SizeOf(typeof(float4x4)), ComputeBufferType.Structured, ComputeBufferMode.SubUpdates);
+            mBones = new ComputeBuffer(ComputeShaderConstants.BONE_COUNT, Marshal.SizeOf(typeof(float4x4)), ComputeBufferType.Structured, ComputeBufferMode.Dynamic);
 
             cs = Object.Instantiate(skinningShader);
             kernel = cs.FindKernel(ComputeShaderConstants.SKINNING_KERNEL_NAME);
