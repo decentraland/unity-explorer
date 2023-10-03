@@ -48,6 +48,8 @@ namespace DCL.Rendering.Avatar
             {
                 ConfigureTarget(depthNormalsRTHandle_Colour, depthNormalsRTHandle_Depth);
                 ConfigureClear(ClearFlag.All, Color.black);
+                ConfigureColorStoreAction(RenderBufferStoreAction.Resolve);
+                ConfigureDepthStoreAction(RenderBufferStoreAction.DontCare);
             }
 
             public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
@@ -64,6 +66,11 @@ namespace DCL.Rendering.Avatar
                     DrawingSettings drawSettings = CreateDrawingSettings(m_ShaderTagId, ref renderingData, renderingData.cameraData.defaultOpaqueSortFlags);
                     // We cant to render all objects using our material
                     //drawSettings.overrideMaterial = depthNormalsMaterial;
+                    uint outlineLayerMask = 0;
+                    m_FilteringSettings.renderingLayerMask = 2;//((uint)1 << outlineLayerMask);
+                    context.DrawRenderers(renderingData.cullResults, ref drawSettings, ref m_FilteringSettings);
+                    m_FilteringSettings.renderingLayerMask = 1;
+                    drawSettings.overrideMaterial = depthNormalsMaterial;
                     context.DrawRenderers(renderingData.cullResults, ref drawSettings, ref m_FilteringSettings);
                 }
                 context.ExecuteCommandBuffer(cmd);
@@ -77,7 +84,8 @@ namespace DCL.Rendering.Avatar
 
             public void Dispose()
             {
-                //this.depthNormalsRTHandle?.Release();
+                this.depthNormalsRTHandle_Colour?.Release();
+                this.depthNormalsRTHandle_Depth?.Release();
             }
         }
     }

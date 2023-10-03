@@ -29,25 +29,42 @@ void Outline_float(float2 UV, float OutlineThickness, float DepthSensitivity, fl
     uvSamples[2] = UV + float2(Texel.x * halfScaleCeil, -Texel.y * halfScaleFloor);
     uvSamples[3] = UV + float2(-Texel.x * halfScaleFloor, Texel.y * halfScaleCeil);
 
+    float depthSampling = 0.0f;
+    float normalSampling = 0.0f;
     for(int i = 0; i < 4 ; i++)
     {
         depthSamples[i] = UNITY_SAMPLE_TEX2D(_CameraDepthTexture, uvSamples[i]).r;
-        normalSamples[i] = DecodeNormal(UNITY_SAMPLE_TEX2D(_CameraDepthNormalsTexture, uvSamples[i]));
+        float4 depthNormOutput = UNITY_SAMPLE_TEX2D(_CameraDepthNormalsTexture, uvSamples[i]);
+        depthSampling += depthNormOutput.w;
+        normalSamples[i] = DecodeNormal(depthNormOutput.xyzw);
+        //normalSampling += ((depthNormOutput.r + depthNormOutput.g + depthNormOutput.b) / 3.0f);
         colorSamples[i] = UNITY_SAMPLE_TEX2D(_CameraColorTexture, uvSamples[i]);
     }
 
+    // if ((depthSampling * 0.25f) >= 0.9f)
+    //     OutlineColor.a = 0.0f;
+    
     // Depth
-    float depthFiniteDifference0 = depthSamples[1] - depthSamples[0];
-    float depthFiniteDifference1 = depthSamples[3] - depthSamples[2];
-    float edgeDepth = sqrt(pow(depthFiniteDifference0, 2) + pow(depthFiniteDifference1, 2)) * 100;
-    float depthThreshold = (1/DepthSensitivity) * depthSamples[0];
-    edgeDepth = edgeDepth > depthThreshold ? 1 : 0;
+    float edgeDepth = 0.0f;
+    if ((depthSampling * 0.25f) <= 0.9f)
+    {
+        float depthFiniteDifference0 = depthSamples[1] - depthSamples[0];
+        float depthFiniteDifference1 = depthSamples[3] - depthSamples[2];
+        edgeDepth = sqrt(pow(depthFiniteDifference0, 2) + pow(depthFiniteDifference1, 2)) * 100;
+        float depthThreshold = (1/DepthSensitivity) * depthSamples[0];
+        edgeDepth = edgeDepth > depthThreshold ? 1 : 0;
+    }
 
     // Normals
-    float3 normalFiniteDifference0 = normalSamples[1] - normalSamples[0];
-    float3 normalFiniteDifference1 = normalSamples[3] - normalSamples[2];
-    float edgeNormal = sqrt(dot(normalFiniteDifference0, normalFiniteDifference0) + dot(normalFiniteDifference1, normalFiniteDifference1));
-    edgeNormal = edgeNormal > (1/NormalsSensitivity) ? 1 : 0;
+    float edgeNormal = 0.0f;
+    if ((depthSampling * 0.25f) >= 0.9f)
+    {
+        float3 normalFiniteDifference0 = normalSamples[1] - normalSamples[0];
+        float3 normalFiniteDifference1 = normalSamples[3] - normalSamples[2];
+        edgeNormal = sqrt(dot(normalFiniteDifference0, normalFiniteDifference0) + dot(normalFiniteDifference1, normalFiniteDifference1));
+        edgeNormal = edgeNormal > (1/NormalsSensitivity) ? 1 : 0;
+        OutlineColor.a = 0.25f;
+    }
 
     // Color
     float3 colorFiniteDifference0 = colorSamples[1] - colorSamples[0];

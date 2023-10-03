@@ -125,7 +125,6 @@ Varyings LitPassVertex(Attributes input)
     else
         vertexInput = GetVertexPositionInputs(input.positionOS);
     
-    
     // normalWS and tangentWS already normalize.
     // this is required to avoid skewing the direction during interpolation
     // also required for per-vertex lighting and SH evaluation

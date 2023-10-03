@@ -106,7 +106,7 @@ namespace DCL.Rendering.Avatar
 
             public void Dispose()
             {
-
+                this.outlineRTHandle?.Release();
             }
         }
     }

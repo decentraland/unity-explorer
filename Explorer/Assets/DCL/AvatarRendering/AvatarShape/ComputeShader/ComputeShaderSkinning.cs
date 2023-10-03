@@ -161,6 +161,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 {
                     int currentVertexCount = skinnedMeshRenderer.sharedMesh.vertexCount;
                     Renderer renderer = SetupMesh(skinnedMeshRenderer);
+                    renderer.renderingLayerMask = 2;
                     SetupMaterial(renderer, auxVertCounter, textureArrayContainer, avatarMaterial, lastAvatarVertCount, avatarShapeComponent);
                     auxVertCounter += currentVertexCount;
                 }
