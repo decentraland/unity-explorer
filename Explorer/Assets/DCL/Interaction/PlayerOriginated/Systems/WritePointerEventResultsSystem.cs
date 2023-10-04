@@ -38,8 +38,6 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IGlobalInputEvents globalInputEvents;
 
-        //private uint counter;
-
         internal WritePointerEventResultsSystem(World world, Entity sceneRoot, IECSToCRDTWriter ecsToCRDTWriter,
             ISceneStateProvider sceneStateProvider, IGlobalInputEvents globalInputEvents) : base(world)
         {
@@ -55,8 +53,6 @@ namespace DCL.Interaction.PlayerOriginated.Systems
             Vector3 scenePosition = World.Get<TransformComponent>(sceneRoot).Cached.WorldPosition;
             WriteResultsQuery(World, scenePosition);
             WriteGlobalEvents();
-
-            //counter++;
         }
 
         private void WriteGlobalEvents()
