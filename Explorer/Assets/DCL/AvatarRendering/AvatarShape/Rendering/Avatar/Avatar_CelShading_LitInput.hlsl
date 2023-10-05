@@ -187,36 +187,20 @@ half4 SampleAlbedoAlpha(float2 uv, TEXTURE2D_PARAM(albedoAlphaMap, sampler_albed
 half4 SampleMetallicSpecGloss(float2 uv, half albedoAlpha)
 {
     half4 specGloss;
-    #ifdef _METALLICSPECGLOSSMAP
-        int nMetallicGlossMapArrID = _MetallicGlossMapArr_ID;
-        specGloss = SAMPLE_METALLICSPECULAR(uv, nMetallicGlossMapArrID);
-        
-         //GLTF Provides Metallic in B and Roughness in G
-        specGloss.a = 1.0 - specGloss.g; //Conversion to GLTF and from RoughnessToSmoothness
-        specGloss.rgb = specGloss.bbb; //Conversion to GLTF
+    int nMetallicGlossMapArrID = _MetallicGlossMapArr_ID;
+    specGloss = SAMPLE_METALLICSPECULAR(uv, nMetallicGlossMapArrID);
+    
+     //GLTF Provides Metallic in B and Roughness in G
+    specGloss.a = 1.0 - specGloss.g; //Conversion to GLTF and from RoughnessToSmoothness
+    specGloss.rgb = specGloss.bbb; //Conversion to GLTF
 
-        #ifdef _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-            specGloss.a = albedoAlpha * _Smoothness;
-        #else
-            specGloss.a *= _Smoothness;
-        #endif
-           
-        specGloss.rgb *= _Metallic.rrr;
-
-    #else // _METALLICSPECGLOSSMAP
-        #if _SPECULAR_SETUP
-            specGloss.rgb = _SpecColor.rgb;
-        #else
-            specGloss.rgb = _Metallic.rrr;
-        #endif
-
-        #ifdef _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-            specGloss.a = albedoAlpha * _Smoothness;
-        #else
-            specGloss.a = _Smoothness;
-        #endif
+    #ifdef _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+        specGloss.a = albedoAlpha * _Smoothness;
+    #else
+        specGloss.a *= _Smoothness;
     #endif
-
+       
+    specGloss.rgb *= _Metallic.rrr;
     return specGloss;
 }
 
