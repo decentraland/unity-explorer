@@ -10,14 +10,13 @@
 #define REQUIRES_WORLD_SPACE_TANGENT_INTERPOLATOR
 #endif
 
-
+// Skinning structure
 struct VertexInfo
 {
     float3 position;
     float3 normal;
     float4 tangent;
 };
-
 StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
 
 // keep this file in sync with LitGBufferPass.hlsl

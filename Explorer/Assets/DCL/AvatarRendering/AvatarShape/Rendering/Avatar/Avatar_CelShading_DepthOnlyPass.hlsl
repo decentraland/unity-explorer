@@ -6,13 +6,13 @@
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl"
 #endif
 
+// Skinning structure
 struct VertexInfo
 {
     float3 position;
     float3 normal;
     float4 tangent;
 };
-
 StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
 
 struct Attributes
