@@ -18,12 +18,11 @@ namespace DCL.Rendering.Avatar
             private Material outlineMaterial = null;
             private RTHandle outlineRTHandle = null;
             private RenderTextureDescriptor outlineRTDescriptor;
-
             private RTHandle depthNormalsRTHandle = null;
 
+            // Texture IDs for Outline Shader - defined in Outline.HLSL
             private const string OUTLINE_TEXTURE_NAME = "_OutlineTexture";
             private static readonly int s_OutlineTextureID = Shader.PropertyToID(OUTLINE_TEXTURE_NAME);
-
             private const string COLOUR_TEXTURE_NAME = "_CameraColorTexture";
             private static readonly int s_ColourTextureID = Shader.PropertyToID(COLOUR_TEXTURE_NAME);
             private const string DEPTH_TEXTURE_NAME = "_CameraDepthTexture";
@@ -31,14 +30,12 @@ namespace DCL.Rendering.Avatar
             private const string DEPTHNORMALS_TEXTURE_NAME = "_CameraDepthNormalsTexture";
             private static readonly int s_DepthNormalsTextureID = Shader.PropertyToID(DEPTHNORMALS_TEXTURE_NAME);
 
+            // Feature Settings - Shader values
             private static readonly int s_OutlineThicknessID = Shader.PropertyToID("_OutlineThickness");
             private static readonly int s_DepthSensitivityID = Shader.PropertyToID("_DepthSensitivity");
             private static readonly int s_NormalsSensitivityID = Shader.PropertyToID("_NormalsSensitivity");
             private static readonly int s_ColorSensitivityID = Shader.PropertyToID("_ColorSensitivity");
             private static readonly int s_OutlineColorID = Shader.PropertyToID("_OutlineColor");
-
-            //private const string k_ShaderName_Outline = "Avatar/Outline";
-            //[SerializeField, HideInInspector] private Shader m_ShaderOutline = null;
 
             private enum ShaderPasses
             {
@@ -78,23 +75,23 @@ namespace DCL.Rendering.Avatar
             // Use <c>ScriptableRenderContext</c> to issue drawing commands or execute command buffers
             // https://docs.unity3d.com/ScriptReference/Rendering.ScriptableRenderContext.html
             // You don't have to call ScriptableRenderContext.submit, the render pipeline will call it at specific points in the pipeline.
-            public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
+            public override void Execute(ScriptableRenderContext _context, ref RenderingData _renderingData)
             {
                 CommandBuffer cmd = CommandBufferPool.Get("_OutlinePass");
                 using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
                 {
-                    cmd.SetGlobalTexture(s_ColourTextureID, renderingData.cameraData.renderer.cameraColorTargetHandle);
-                    cmd.SetGlobalTexture(s_DepthTextureID, renderingData.cameraData.renderer.cameraDepthTargetHandle);
+                    cmd.SetGlobalTexture(s_ColourTextureID, _renderingData.cameraData.renderer.cameraColorTargetHandle);
+                    cmd.SetGlobalTexture(s_DepthTextureID, _renderingData.cameraData.renderer.cameraDepthTargetHandle);
                     cmd.SetGlobalTexture(s_DepthNormalsTextureID, depthNormalsRTHandle);
                     CoreUtils.SetRenderTarget(cmd, buffer: this.outlineRTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.Unknown, depthSlice: -1);
                     CoreUtils.DrawFullScreen(cmd, this.outlineMaterial, properties: null, (int)ShaderPasses.OutlineRender);
 
                     cmd.SetGlobalTexture(s_OutlineTextureID, this.outlineRTHandle);
-                    CoreUtils.SetRenderTarget(cmd, renderingData.cameraData.renderer.cameraColorTargetHandle, renderingData.cameraData.renderer.cameraDepthTargetHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.Unknown, depthSlice: -1);
+                    CoreUtils.SetRenderTarget(cmd, _renderingData.cameraData.renderer.cameraColorTargetHandle, _renderingData.cameraData.renderer.cameraDepthTargetHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.Unknown, depthSlice: -1);
                     CoreUtils.DrawFullScreen(cmd, this.outlineMaterial, properties: null, (int)ShaderPasses.OutlineDraw);
                 }
 
-                context.ExecuteCommandBuffer(cmd);
+                _context.ExecuteCommandBuffer(cmd);
                 CommandBufferPool.Release(cmd);
             }
 
