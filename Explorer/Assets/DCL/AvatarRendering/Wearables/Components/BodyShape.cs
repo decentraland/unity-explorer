@@ -1,5 +1,6 @@
 ﻿using DCL.ECSComponents;
 using System;
+using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Wearables
 {
@@ -35,6 +36,8 @@ namespace DCL.AvatarRendering.Wearables
 
         public static readonly BodyShape MALE = new ("urn:decentraland:off-chain:base-avatars:BaseMale", 0);
         public static readonly BodyShape FEMALE = new ("urn:decentraland:off-chain:base-avatars:BaseFemale", 1);
+
+        public static readonly IReadOnlyList<BodyShape> VALUES = new[] { MALE, FEMALE };
 
         public bool Equals(BodyShape other) =>
             Value == other.Value && Index == other.Index;

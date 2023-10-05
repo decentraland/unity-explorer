@@ -19,11 +19,17 @@ namespace ECS.StreamableLoading.Common.Components
         /// </summary>
         public AssetSource CurrentSource;
 
+        /// <summary>
+        ///     If Custom Sub-directory is not null it should be respected for loading from the Embedded source
+        /// </summary>
+        public readonly URLSubdirectory CustomEmbeddedSubDirectory;
+
         public CancellationToken CancellationToken => CancellationTokenSource.Token;
 
         public readonly CancellationTokenSource CancellationTokenSource;
 
         public CommonLoadingArguments(URLAddress url,
+            URLSubdirectory customEmbeddedSubDirectory = default,
             int timeout = StreamableLoadingDefaults.TIMEOUT,
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
             AssetSource permittedSources = AssetSource.WEB,
@@ -31,6 +37,7 @@ namespace ECS.StreamableLoading.Common.Components
             CancellationTokenSource cancellationTokenSource = null)
         {
             URL = url;
+            CustomEmbeddedSubDirectory = customEmbeddedSubDirectory;
             Timeout = timeout;
             Attempts = attempts;
             PermittedSources = permittedSources;
@@ -42,11 +49,12 @@ namespace ECS.StreamableLoading.Common.Components
         ///     Use URLAddress instead of string
         /// </summary>
         public CommonLoadingArguments(string url,
+            URLSubdirectory customEmbeddedSubDirectory = default,
             int timeout = StreamableLoadingDefaults.TIMEOUT,
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
             AssetSource permittedSources = AssetSource.WEB,
             AssetSource currentSource = AssetSource.WEB,
             CancellationTokenSource cancellationTokenSource = null) :
-            this(URLAddress.FromString(url), timeout, attempts, permittedSources, currentSource, cancellationTokenSource) { }
+            this(URLAddress.FromString(url), customEmbeddedSubDirectory, timeout, attempts, permittedSources, currentSource, cancellationTokenSource) { }
     }
 }

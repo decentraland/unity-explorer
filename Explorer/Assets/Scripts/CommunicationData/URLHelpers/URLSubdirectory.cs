@@ -10,6 +10,9 @@
 
         public readonly string Value;
 
+        public bool IsEmpty() =>
+            string.IsNullOrEmpty(Value);
+
         private URLSubdirectory(string value)
         {
             Value = value;

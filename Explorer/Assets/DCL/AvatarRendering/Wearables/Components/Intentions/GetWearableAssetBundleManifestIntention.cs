@@ -7,7 +7,13 @@ namespace DCL.AvatarRendering.Wearables.Components
     public struct GetWearableAssetBundleManifestIntention : ILoadingIntention, IEquatable<GetWearableAssetBundleManifestIntention>
     {
         public CommonLoadingArguments CommonArguments { get; set; }
-        public string Hash;
+        public readonly string Hash;
+
+        public GetWearableAssetBundleManifestIntention(string hash, CommonLoadingArguments commonArguments)
+        {
+            Hash = hash;
+            CommonArguments = commonArguments;
+        }
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 

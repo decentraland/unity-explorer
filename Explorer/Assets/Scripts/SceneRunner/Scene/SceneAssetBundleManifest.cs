@@ -12,8 +12,8 @@ namespace SceneRunner.Scene
         public static readonly SceneAssetBundleManifest NULL = new ();
 
         private readonly URLDomain assetBundlesBaseUrl;
+        private readonly HashSet<string> convertedFiles;
         internal readonly SceneAbDto dto;
-        internal readonly HashSet<string> convertedFiles;
 
         private readonly string versionHashPart;
 
@@ -25,6 +25,8 @@ namespace SceneRunner.Scene
 
             versionHashPart = string.IsNullOrEmpty(dto.Version) ? ComputeVersionedHashPart(assetBundlesBaseUrl) : dto.Version;
         }
+
+        public IReadOnlyCollection<string> ConvertedFiles => convertedFiles;
 
         /// <summary>
         ///     Null implementation with no bundles provided
@@ -66,17 +68,6 @@ namespace SceneRunner.Scene
             hash.AsSpan().CopyTo(hashBuilder[versionHashPart.Length..]);
 
             fixed (char* ptr = hashBuilder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * hashBuilder.Length)); }
-        }
-
-        public string FixCapitalization(string hash)
-        {
-            foreach (string convertedFile in convertedFiles)
-            {
-                if (string.Compare(hash, convertedFile, StringComparison.OrdinalIgnoreCase) == 0)
-                    return convertedFile;
-            }
-
-            return hash;
         }
 
         public bool Contains(string hash) =>

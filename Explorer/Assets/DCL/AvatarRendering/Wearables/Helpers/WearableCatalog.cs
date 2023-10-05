@@ -14,18 +14,22 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             wearableDictionary = new Dictionary<string, IWearable>();
         }
 
-        public void AddWearableByDTO(WearableDTO wearableDto, out IWearable addedWearable)
+        public void Dispose()
+        {
+            foreach (IWearable wearableDictionaryValue in wearableDictionary.Values)
+                wearableDictionaryValue.Dispose();
+        }
+
+        public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto)
         {
             if (wearableDictionary.TryGetValue(wearableDto.metadata.id, out IWearable exitingWearable))
-                addedWearable = exitingWearable;
-            else
-            {
-                var wearable = new Wearable();
-                wearable.WearableDTO = new StreamableLoadingResult<WearableDTO>(wearableDto);
-                wearable.IsLoading = false;
-                wearableDictionary.Add(wearable.GetUrn(), wearable);
-                addedWearable = wearable;
-            }
+                return exitingWearable;
+
+            var wearable = new Wearable();
+            wearable.WearableDTO = new StreamableLoadingResult<WearableDTO>(wearableDto);
+            wearable.IsLoading = false;
+            wearableDictionary.Add(wearable.GetUrn(), wearable);
+            return wearable;
         }
 
         public void AddEmptyWearable(string loadingIntentionPointer)
@@ -47,11 +51,5 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public IWearable GetDefaultWearable(BodyShape bodyShape, string category) =>
             wearableDictionary[WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category)];
-
-        public void Dispose()
-        {
-            foreach (IWearable wearableDictionaryValue in wearableDictionary.Values)
-                wearableDictionaryValue.Dispose();
-        }
     }
 }
