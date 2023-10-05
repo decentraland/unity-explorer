@@ -8,8 +8,6 @@ namespace DCL.AvatarRendering.AvatarShape.DemoScripts.UI
     {
         [SerializeField]
         private TMP_InputField amountofAvatarsToInstantiate;
-        [SerializeField]
-        private Toggle doSkin;
 
         public Button addRandomAvatarButton;
 
@@ -39,9 +37,6 @@ namespace DCL.AvatarRendering.AvatarShape.DemoScripts.UI
 
         public int GetAvatarsToInstantiate() =>
             int.Parse(amountofAvatarsToInstantiate.text);
-
-        public bool GetDoSkin() =>
-            doSkin.isOn;
 
         private void CloseProfilerWindow()
         {

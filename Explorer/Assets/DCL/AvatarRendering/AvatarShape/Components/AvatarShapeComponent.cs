@@ -45,12 +45,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             handle = default(JobHandle);
             SkinColor = skinColor;
             HairColor = hairColor;
-
-            //TODO: Debug feature, remove when done
-            if (ID == "0")
-                skinningMethod = new ComputeShaderSkinning();
-            else
-                skinningMethod = new UnityCustomSkinning();
+            skinningMethod = new ComputeShaderSkinning();
         }
 
         public void SetupBurstJob(Transform avatarBaseTransform, Transform[] bones)

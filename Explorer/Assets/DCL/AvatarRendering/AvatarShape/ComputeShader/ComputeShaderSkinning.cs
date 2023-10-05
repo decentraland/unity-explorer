@@ -167,7 +167,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             avatarMaterial.DisableKeyword("_NORMALMAP");
 
             //vertOutMaterial.SetColor(ComputeShaderHelpers._BaseColour_ShaderID, Color.red);
-            avatarMaterial.SetInteger("_useCompute", 1);
             avatarMaterial.SetInteger(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, lastWearableVertCount);
             avatarMaterial.SetInteger(ComputeShaderConstants.LAST_WEARABLE_VERT_COUNT_ID, lastAvatarVertCount);
 

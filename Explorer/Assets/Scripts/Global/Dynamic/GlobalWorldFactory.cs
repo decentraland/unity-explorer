@@ -89,7 +89,6 @@ namespace Global.Dynamic
                     BodyShape = BodyShape.MALE,
                     Wearables = { WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE) },
                     Name = "Player",
-                    Id = "0",
                     SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor3(),
                     HairColor = WearablesConstants.DefaultColors.GetRandomHairColor3(),
                 }

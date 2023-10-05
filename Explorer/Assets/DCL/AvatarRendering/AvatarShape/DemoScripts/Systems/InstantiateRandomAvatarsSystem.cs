@@ -76,7 +76,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             World.Create(new AddRandomAvatarIntention
             {
                 avatarsToInstantiate = avatarsToInstantiate,
-                addSkinnedMeshRendererAvatar = view.GetDoSkin(),
             });
         }
 
@@ -107,7 +106,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             if (randomAvatarRequest.BaseWearablesPromise.TryConsume(World, out StreamableLoadingResult<IWearable[]> baseWearables))
             {
                 if (baseWearables.Succeeded)
-                    GenerateRandomAvatars(baseWearables.Asset, addRandomAvatarIntention.avatarsToInstantiate, addRandomAvatarIntention.addSkinnedMeshRendererAvatar, cameraComponent.Camera.transform.position);
+                    GenerateRandomAvatars(baseWearables.Asset, addRandomAvatarIntention.avatarsToInstantiate, cameraComponent.Camera.transform.position);
                 else
                     ReportHub.LogError(GetReportCategory(), "Base wearables could't be loaded!");
 
@@ -115,7 +114,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             }
         }
 
-        private void GenerateRandomAvatars(IWearable[] defaultWearables, int randomAvatarsToInstantiate, bool addSkinnedMeshRenderer, Vector3 cameraPosition)
+        private void GenerateRandomAvatars(IWearable[] defaultWearables, int randomAvatarsToInstantiate, Vector3 cameraPosition)
         {
             var male = new AvatarRandomizer(BodyShape.MALE);
             var female = new AvatarRandomizer(BodyShape.FEMALE);
@@ -166,29 +165,12 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 var avatarShape = new PBAvatarShape
                 {
                     BodyShape = currentRandomizer.BodyShape,
-                    Id = "0",
                     Wearables = { wearables.ToArray() },
                     SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor3(),
                     HairColor = WearablesConstants.DefaultColors.GetRandomHairColor3(),
                 };
 
                 World.Create(avatarShape, transformComp);
-
-                if (addSkinnedMeshRenderer)
-                {
-                    Transform transformSkinnedMesh = new GameObject($"RANDOM_AVATAR_{i}").transform;
-                    var transformCompSkinnedMesh = new TransformComponent(transformSkinnedMesh);
-                    transformCompSkinnedMesh.Transform.transform.position = transform.position + new Vector3(1, 0, 0);
-
-                    var avatarShapeSkinnedMesh = new PBAvatarShape
-                    {
-                        BodyShape = currentRandomizer.BodyShape,
-                        Id = "1",
-                        Wearables = { wearables.ToArray() },
-                    };
-
-                    World.Create(avatarShapeSkinnedMesh, transformCompSkinnedMesh);
-                }
             }
 
             view.SetAvatarCount(totalAvatarsInstantiated);
