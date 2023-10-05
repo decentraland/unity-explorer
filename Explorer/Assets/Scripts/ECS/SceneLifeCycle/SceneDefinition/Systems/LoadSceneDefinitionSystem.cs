@@ -10,7 +10,7 @@ using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using Ipfs;
 using System.Threading;
-using UnityEngine;
+using Unity.Plastic.Newtonsoft.Json;
 using UnityEngine.Networking;
 using Utility.Multithreading;
 
@@ -40,7 +40,11 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             await UniTask.SwitchToThreadPool();
 
+#if UNITY_EDITOR
+            IpfsTypes.SceneEntityDefinition sceneEntityDefinition = JsonConvert.DeserializeObject<IpfsTypes.SceneEntityDefinition>(text);
+#else
             IpfsTypes.SceneEntityDefinition sceneEntityDefinition = JsonUtility.FromJson<IpfsTypes.SceneEntityDefinition>(text);
+#endif
             sceneEntityDefinition.id ??= intention.IpfsPath.EntityId;
 
             // switching back is handled by the base class
