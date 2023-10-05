@@ -52,7 +52,7 @@ namespace DCL.Rendering.Avatar
             this.depthNormalsRenderPass.renderPassEvent = RenderPassEvent.AfterRenderingPrePasses;
 
             this.outlineRenderPass = new OutlineRenderPass();
-            this.outlineRenderPass.renderPassEvent = RenderPassEvent.AfterRenderingTransparents;
+            this.outlineRenderPass.renderPassEvent = RenderPassEvent.AfterRenderingOpaques;
         }
 
         public override void SetupRenderPasses(ScriptableRenderer _renderer, in RenderingData _renderingData)
