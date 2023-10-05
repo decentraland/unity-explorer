@@ -48,7 +48,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             mockedABManifest = new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(URLDomain.EMPTY, new SceneAbDto
                 { version = "0" }));
 
-            system = new ResolveWearableByPointerSystem(world, wearableCatalog, new RealmData(new IpfsRealm(URLDomain.EMPTY)));
+            system = new ResolveWearableByPointerSystem(world, wearableCatalog, new RealmData(new IpfsRealm(URLDomain.EMPTY)), URLSubdirectory.EMPTY);
         }
 
         private IWearable CreateMockWearable(string urn, bool isUnisex, bool isDefaultWearable)

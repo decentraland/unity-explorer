@@ -1,3 +1,4 @@
+using AssetManagement;
 using DCL.ECSComponents;
 using ECS.StreamableLoading.Common.Components;
 using System;
@@ -8,26 +9,27 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
 {
     public struct GetWearablesByPointersIntention : IAssetIntention, IEquatable<GetWearablesByPointersIntention>
     {
-        public List<string> Pointers;
-        public IWearable[] Results;
-        public BodyShape BodyShape;
+        public readonly List<string> Pointers;
+        public readonly IWearable[] Results;
+        public readonly AssetSource PermittedSources;
+        public readonly BodyShape BodyShape;
+        public readonly bool FallbackToDefaultWearables;
+
         public CancellationTokenSource CancellationTokenSource { get; }
 
-        public GetWearablesByPointersIntention(List<string> pointers, IWearable[] result, PBAvatarShape bodyShape)
+        public GetWearablesByPointersIntention(List<string> pointers, IWearable[] result, PBAvatarShape bodyShape, bool fallbackToDefaultWearables = true)
+            : this(pointers, result, (BodyShape)bodyShape, fallbackToDefaultWearables: fallbackToDefaultWearables) { }
+
+        public GetWearablesByPointersIntention(List<string> pointers, IWearable[] result, BodyShape bodyShape, AssetSource permittedSources = AssetSource.ALL, bool fallbackToDefaultWearables = true)
         {
             Pointers = pointers;
             Results = result;
             BodyShape = bodyShape;
+            FallbackToDefaultWearables = fallbackToDefaultWearables;
+            PermittedSources = permittedSources;
             CancellationTokenSource = new CancellationTokenSource();
         }
 
-        public GetWearablesByPointersIntention(List<string> pointers, IWearable[] result, BodyShape bodyShape)
-        {
-            Pointers = pointers;
-            Results = result;
-            BodyShape = bodyShape;
-            CancellationTokenSource = new CancellationTokenSource();
-        }
         public bool Equals(GetWearablesByPointersIntention other) =>
             Equals(Pointers, other.Pointers);
 
@@ -36,6 +38,5 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
 
         public override int GetHashCode() =>
             HashCode.Combine(Pointers);
-
     }
 }

@@ -26,6 +26,9 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         string[] GetHidingList();
 
+        /// <summary>
+        ///     Might be never resolved if Wearable is loaded from the Embedded Source
+        /// </summary>
         StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
         StreamableLoadingResult<AssetBundleData>?[] AssetBundleData { get; set; }
         StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }
