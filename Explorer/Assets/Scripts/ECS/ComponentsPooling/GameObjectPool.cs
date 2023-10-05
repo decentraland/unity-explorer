@@ -5,7 +5,7 @@ using Utility;
 
 namespace ECS.ComponentsPooling
 {
-    public class UnityComponentPool<T> : IComponentPool<T> where T: Component
+    public class GameObjectPool<T> : IComponentPool<T> where T: Component
     {
         private readonly string DEFAULT_COMPONENT_NAME = $"POOL_OBJECT_{typeof(T).Name}";
         private readonly ObjectPool<T> gameObjectPool;
@@ -14,7 +14,7 @@ namespace ECS.ComponentsPooling
 
         private readonly Action<T> onRelease;
 
-        public UnityComponentPool(Transform rootContainer, Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 2048)
+        public GameObjectPool(Transform rootContainer, Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 2048)
         {
             parentContainer = new GameObject($"POOL_CONTAINER_{typeof(T).Name}").transform;
             parentContainer.SetParent(rootContainer);

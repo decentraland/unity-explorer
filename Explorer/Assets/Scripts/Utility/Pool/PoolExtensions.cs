@@ -25,5 +25,7 @@ namespace Utility.Pool
                 Value = null;
             }
         }
+
     }
+
 }

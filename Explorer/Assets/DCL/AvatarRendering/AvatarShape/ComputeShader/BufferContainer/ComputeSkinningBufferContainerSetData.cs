@@ -8,7 +8,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     {
         public ComputeSkinningBufferContainerSetData(int vertCount, int skinnedMeshRenderersConeCount) : base(vertCount, skinnedMeshRenderersConeCount) { }
 
-        //TODO: Do Slicing correctly
+        //TODO: Do Slicing correctly. Where should we create the preallocated array?
         /*
         private unsafe NativeArray<T> SliceNativeArray<T>(int start, int size) where T: struct
         {

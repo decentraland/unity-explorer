@@ -1,5 +1,4 @@
 ﻿using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.Wearables;
 using DCL.PluginSystem.Global;
 using ECS;
@@ -38,8 +37,7 @@ namespace Global.Dynamic
                 new ProfilingPlugin(staticContainer.AssetsProvisioner, staticContainer.ProfilingProvider),
 
                 new WearablePlugin(staticContainer.AssetsProvisioner, realmData, ASSET_BUNDLES_URL),
-                new AvatarPlugin(staticContainer.AssetsProvisioner, staticContainer.SingletonSharedDependencies.FrameTimeCapBudgetProvider,
-                    staticContainer.ComponentsContainer.ComponentPoolsRegistry.GetReferenceTypePool<AvatarBase>(), realmData),
+                new AvatarPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.SingletonSharedDependencies.FrameTimeCapBudgetProvider, realmData),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

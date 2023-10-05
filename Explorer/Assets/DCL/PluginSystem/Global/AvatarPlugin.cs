@@ -55,7 +55,7 @@ namespace DCL.PluginSystem.Global
 
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IConcurrentBudgetProvider frameTimeCapBudgetProvider;
-        private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
+        private IComponentPool<AvatarBase> avatarPoolRegistry;
 
         private IObjectPool<Material> celShadingMaterialPool;
         private IObjectPool<ComputeShader> computeShaderPool;
@@ -63,13 +63,14 @@ namespace DCL.PluginSystem.Global
 
         private ProvidedInstance<AvatarInstantiatorView> avatarInstantiatorView;
         private readonly IRealmData realmData;
-
+        private readonly IComponentPoolsRegistry componentPoolsRegistry;
 
         public async UniTask Initialize(AvatarShapeSettings settings, CancellationToken ct)
         {
-            //TODO: Check this static reference assignation
             ProvidedAsset<GameObject> providedAvatarBase = await assetsProvisioner.ProvideMainAsset(settings.avatarBase, ct: ct);
-            AvatarPoolUtils.AvatarBasePrefab = providedAvatarBase.Value.GetComponent<AvatarBase>();
+            var avatarPoolUtils = new AvatarPoolUtils(providedAvatarBase.Value.GetComponent<AvatarBase>());
+            componentPoolsRegistry.AddGameObjectPool(avatarPoolUtils.CreateAvatarContainer);
+
 
             //TODO: Does it make sense to prewarm using a for?
             ProvidedAsset<Material> providedMaterial = await assetsProvisioner.ProvideMainAsset(settings.celShadingMaterial, ct: ct);
@@ -94,18 +95,18 @@ namespace DCL.PluginSystem.Global
 
         }
 
-        public AvatarPlugin(IAssetsProvisioner assetsProvisioner, IConcurrentBudgetProvider frameTimeCapBudgetProvider, IComponentPool<AvatarBase> avatarPoolRegistry, IRealmData realmData)
+        public AvatarPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner, IConcurrentBudgetProvider frameTimeCapBudgetProvider, IRealmData realmData)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudgetProvider = frameTimeCapBudgetProvider;
-            this.avatarPoolRegistry = avatarPoolRegistry;
             this.realmData = realmData;
+            componentPoolsRegistry = poolsRegistry;
             textureArrayContainer = new TextureArrayContainer();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            AvatarSystem.InjectToWorld(ref builder, frameTimeCapBudgetProvider, avatarPoolRegistry, celShadingMaterialPool, computeShaderPool, textureArrayContainer);
+            AvatarSystem.InjectToWorld(ref builder, frameTimeCapBudgetProvider, componentPoolsRegistry.GetReferenceTypePool<AvatarBase>(), celShadingMaterialPool, computeShaderPool, textureArrayContainer);
             StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder);
 
             //Debug scripts

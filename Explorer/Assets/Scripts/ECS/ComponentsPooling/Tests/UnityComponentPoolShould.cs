@@ -6,19 +6,19 @@ namespace ECS.ComponentsPooling.Tests
     [TestFixture]
     public class UnityComponentPoolShould
     {
-        private UnityComponentPool<Transform> unityComponentPool;
+        private GameObjectPool<Transform> gameObjectPool;
 
         [SetUp]
         public void SetUp()
         {
-            unityComponentPool = new UnityComponentPool<Transform>(null, null, null, 1000);
+            gameObjectPool = new GameObjectPool<Transform>(null, null, null, 1000);
         }
 
         [Test]
         public void GetGameObject()
         {
             //Act
-            unityComponentPool.Get(out Transform component);
+            gameObjectPool.Get(out Transform component);
 
             //Assert
             Assert.NotNull(component);
@@ -29,32 +29,32 @@ namespace ECS.ComponentsPooling.Tests
         public void ReleaseGameObject()
         {
             //Act
-            unityComponentPool.Get(out Transform component);
-            unityComponentPool.Release(component);
+            gameObjectPool.Get(out Transform component);
+            gameObjectPool.Release(component);
 
             //Assert
             Assert.NotNull(component);
             Assert.IsFalse(component.gameObject.activeSelf);
-            Assert.AreEqual(1, unityComponentPool.CountInactive);
+            Assert.AreEqual(1, gameObjectPool.CountInactive);
         }
 
         [Test]
         public void ClearPool()
         {
             //Act
-            unityComponentPool.Get(out Transform component);
-            unityComponentPool.Release(component);
-            unityComponentPool.Clear();
+            gameObjectPool.Get(out Transform component);
+            gameObjectPool.Release(component);
+            gameObjectPool.Clear();
 
             //Assert
             Assert.IsTrue(component == null);
-            Assert.AreEqual(0, unityComponentPool.CountInactive);
+            Assert.AreEqual(0, gameObjectPool.CountInactive);
         }
 
         [TearDown]
         public void TearDown()
         {
-            unityComponentPool.Clear();
+            gameObjectPool.Clear();
         }
     }
 }

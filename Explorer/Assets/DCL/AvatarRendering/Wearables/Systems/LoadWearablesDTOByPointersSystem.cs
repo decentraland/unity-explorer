@@ -70,8 +70,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             bodyBuilder.Append("]}");
 
-            Debug.Log("AAAA " + bodyBuilder);
-
             await UniTask.SwitchToMainThread();
             string response;
 

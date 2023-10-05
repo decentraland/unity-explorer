@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace ECS.ComponentsPooling
 {
@@ -20,5 +21,11 @@ namespace ECS.ComponentsPooling
         IComponentPool<T> GetReferenceTypePool<T>() where T: class;
 
         IComponentPool GetPool(Type type);
+
+        void AddGameObjectPool<T>(Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 1024) where T: Component;
+
+        void AddComponentPool<T>(Action<T> onGet = null, Action<T> onRelease = null) where T: class, new();
+
+
     }
 }

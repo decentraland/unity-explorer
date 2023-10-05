@@ -61,7 +61,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             computeShaderSkinningPool = computeShaderPool;
 
             //TODO: Looks like it needs to be released
-            vertexOutBuffer = new ComputeBuffer(5000000, Marshal.SizeOf<VertexInfo>());
+            vertexOutBuffer = new ComputeBuffer(5_000_000, Marshal.SizeOf<VertexInfo>());
             Shader.SetGlobalBuffer("_GlobalAvatarBuffer", vertexOutBuffer);
         }
 
@@ -161,6 +161,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
                 if (hidingList.Contains(resultWearable.GetCategory()))
                     continue;
+
+                Debug.Log(resultWearable.GetUrn());
 
                 //TODO: Pooling of wearables
                 GameObject instantiatedWearable

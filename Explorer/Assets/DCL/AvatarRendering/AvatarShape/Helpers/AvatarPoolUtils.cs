@@ -2,11 +2,16 @@ using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape.Helpers
 {
-    public static class AvatarPoolUtils
+    public class AvatarPoolUtils
     {
-        public static AvatarBase AvatarBasePrefab;
+        private readonly AvatarBase avatarBasePrefab;
 
-        public static AvatarBase CreateAvatarContainer() =>
-            Object.Instantiate(AvatarBasePrefab, Vector3.zero, Quaternion.identity);
+        public AvatarPoolUtils(AvatarBase avatarBasePrefab)
+        {
+            this.avatarBasePrefab = avatarBasePrefab;
+        }
+
+        public AvatarBase CreateAvatarContainer() =>
+            Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity);
     }
 }

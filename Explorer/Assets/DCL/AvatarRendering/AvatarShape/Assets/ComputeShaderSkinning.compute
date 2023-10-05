@@ -42,6 +42,8 @@ void main(uint3 threadID : SV_DispatchThreadID,
     BoneWeight si = g_SourceSkin[t];
     const int baseIndex = g_BindPosesIndex[t];
 
+
+    //TODO: Optimization. Tne bind pose matrix could be calculated once using jobs outside the compute shader
     float3 vP = g_VertsIn[t].xyz;
     float3 vPacc = float3(0,0,0);
     vPacc += si.weight0 * mul(g_mBones[si.index0], mul(g_BindPoses[baseIndex+si.index0], float4(vP, 1))).xyz;

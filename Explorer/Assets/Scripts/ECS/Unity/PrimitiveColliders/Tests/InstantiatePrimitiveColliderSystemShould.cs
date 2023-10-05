@@ -40,10 +40,10 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             poolsRegistry = new ComponentPoolsRegistry(
                 new Dictionary<Type, IComponentPool>
                 {
-                    { typeof(BoxCollider), new UnityComponentPool<BoxCollider>(null) },
-                    { typeof(MeshCollider), new UnityComponentPool<MeshCollider>(null) },
-                    { typeof(SphereCollider), new UnityComponentPool<SphereCollider>(null) },
-                });
+                    { typeof(BoxCollider), new GameObjectPool<BoxCollider>(null) },
+                    { typeof(MeshCollider), new GameObjectPool<MeshCollider>(null) },
+                    { typeof(SphereCollider), new GameObjectPool<SphereCollider>(null) },
+                }, new GameObject().transform);
 
             system = new InstantiatePrimitiveColliderSystem(world, poolsRegistry, setupColliders);
 
