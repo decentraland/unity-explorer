@@ -1,8 +1,6 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using UnityEngine.Experimental.Rendering;
 using Diagnostics.ReportsHandling;
 
 namespace DCL.Rendering.Avatar
