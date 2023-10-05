@@ -6,6 +6,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
+using Diagnostics.ReportsHandling;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -21,6 +22,7 @@ using Utility.Multithreading;
 namespace DCL.AvatarRendering.Wearables.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [LogCategory(ReportCategory.WEARABLE)]
     public partial class LoadWearablesByParamSystem : LoadSystemBase<IWearable[], GetWearableByParamIntention>
     {
         private readonly URLSubdirectory lambdaSubdirectory;
@@ -66,8 +68,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             for (var i = 0; i < lambdaResponse.elements.Count; i++)
             {
                 WearableDTO wearableDto = lambdaResponse.elements[i].entity;
-                wearableCatalog.AddWearableByDTO(wearableDto, out IWearable resultantWearable);
-                intention.Results.Add(resultantWearable);
+                intention.Results.Add(wearableCatalog.GetOrAddWearableByDTO(wearableDto));
             }
 
             return new StreamableLoadingResult<IWearable[]>(intention.Results.ToArray());

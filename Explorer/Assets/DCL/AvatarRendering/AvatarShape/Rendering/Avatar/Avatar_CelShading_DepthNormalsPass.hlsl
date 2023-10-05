@@ -7,13 +7,13 @@
 #endif
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RealtimeLights.hlsl"
 
+// Skinning structure
 struct VertexInfo
 {
     float3 position;
     float3 normal;
     float4 tangent;
 };
-
 StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
 
 struct Attributes
@@ -60,17 +60,6 @@ Varyings DepthNormalsVertex(Attributes input)
     return output;
 }
 
-// Encoding/decoding view space normals into 2D 0..1 vector
-inline float2 EncodeViewNormalStereo( float3 n )
-{
-    float kScale = 1.7777;
-    float2 enc;
-    enc = n.xy / (n.z+1);
-    enc /= kScale;
-    enc = enc*0.5+0.5;
-    return enc;
-}
-
 void DepthNormalsFragment(
     Varyings input
     , out half4 outNormalWS : SV_Target0
@@ -94,8 +83,7 @@ void DepthNormalsFragment(
     half3 packedNormalWS = PackFloat2To888(remappedOctNormalWS);      // values between [ 0,  1]
     outNormalWS = half4(packedNormalWS, 0.0);
     #else
-    float3 normalWS = NormalizeNormalPerPixel(input.normalWS.xyz);
-    normalWS.xyz = (normalWS.xyz + 1) * 0.5f;
+    float3 normalWS = (NormalizeNormalPerPixel(input.normalWS.xyz) + 1.0f) * 0.5f;
     outNormalWS = half4(normalWS.xyz, input.normalWS.w);
     #endif
 

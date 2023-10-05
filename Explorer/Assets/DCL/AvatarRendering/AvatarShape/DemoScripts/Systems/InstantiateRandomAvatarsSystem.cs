@@ -2,13 +2,13 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.DemoScripts.Components;
 using DCL.AvatarRendering.AvatarShape.DemoScripts.UI;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.AvatarRendering.Wearables.Systems;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
 using Diagnostics.ReportsHandling;
@@ -28,35 +28,37 @@ using RaycastHit = UnityEngine.RaycastHit;
 //TODO: Class used for demo, should be removed or refactored for production code
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
-
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.AVATAR)]
     public partial class InstantiateRandomAvatarsSystem : BaseUnityLoopSystem
     {
+        private const int MAX_AVATAR_NUMBER = 1000;
+
         private readonly AvatarInstantiatorView view;
+        private readonly IRealmData realmData;
         private SingleInstanceEntity camera;
+        private SingleInstanceEntity defaultWearableState;
 
         private int totalAvatarsInstantiated;
-        private readonly int MAX_AVATAR_NUMBER = 1000;
 
         public InstantiateRandomAvatarsSystem(World world, AvatarInstantiatorView avatarInstantiatorView, IRealmData realmData) : base(world)
         {
             view = avatarInstantiatorView;
+            this.realmData = realmData;
             view.addRandomAvatarButton.onClick.AddListener(AddRandomAvatar);
             view.gameObject.SetActive(false);
             totalAvatarsInstantiated = 1;
-            WaitForRealmDataAndEnableView(realmData);
         }
 
-        private async UniTaskVoid WaitForRealmDataAndEnableView(IRealmData realmData)
+        private void SetViewActivity()
         {
-            await UniTask.WaitUntil(() => realmData.Configured);
-            view.gameObject.SetActive(true);
+            view.gameObject.SetActive(realmData.Configured && defaultWearableState.GetDefaultWearablesState(World).ResolvedState == DefaultWearablesComponent.State.Success);
         }
 
         public override void Initialize()
         {
             camera = World.CacheCamera();
+            defaultWearableState = World.CacheDefaultWearablesState();
         }
 
         private void AddRandomAvatar()
@@ -70,20 +72,21 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             }
 
             totalAvatarsInstantiated += avatarsToInstantiate;
+
             World.Create(new AddRandomAvatarIntention
             {
                 avatarsToInstantiate = avatarsToInstantiate,
                 addSkinnedMeshRendererAvatar = view.GetDoSkin(),
             });
-
         }
 
         protected override void Update(float t)
         {
+            SetViewActivity();
+
             StartRandomAvatarInstantiationQuery(World);
             FinalizeRandomAvatarInstantiationQuery(World, in camera.GetCameraComponent(World));
         }
-
 
         [Query]
         [None(typeof(RandomAvatarRequest))]
@@ -149,7 +152,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 // Create a transform, normally it will be created either by JS Scene or by Comms
                 Transform transform = new GameObject($"RANDOM_AVATAR_{i}").transform;
 
-                Vector3 pos  = new Vector3(startXPosition + randomX, 500, startZPosition + randomZ);
+                var pos = new Vector3(startXPosition + randomX, 500, startZPosition + randomZ);
                 RaycastHit hitInfo = new RaycastHit();
                 float distance = 1000.0f;
 
@@ -157,7 +160,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     transform.localPosition = hitInfo.point;
                 else
                     transform.localPosition = new Vector3(pos.x, 0.0f, pos.z);
-
 
                 var transformComp = new TransformComponent(transform);
 
@@ -169,6 +171,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor3(),
                     HairColor = WearablesConstants.DefaultColors.GetRandomHairColor3(),
                 };
+
                 World.Create(avatarShape, transformComp);
 
                 if (addSkinnedMeshRenderer)

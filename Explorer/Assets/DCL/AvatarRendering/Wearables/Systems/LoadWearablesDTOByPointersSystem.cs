@@ -4,6 +4,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
+using Diagnostics.ReportsHandling;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
@@ -21,6 +22,7 @@ using Utility.Multithreading;
 namespace DCL.AvatarRendering.Wearables.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [LogCategory(ReportCategory.WEARABLE)]
     public partial class LoadWearablesDTOByPointersSystem : LoadSystemBase<WearableDTO[], GetWearableDTOByPointersIntention>
     {
         // When the number of wearables to request is greater than MAX_WEARABLES_PER_REQUEST, we split the request into several smaller ones.

@@ -47,7 +47,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 CommonLoadingArguments ca = assetBundleIntention.CommonArguments;
                 ca.Attempts = 1;
                 ca.CurrentSource = AssetSource.EMBEDDED;
-                ca.URL = GetStreamingAssetsUrl(assetBundleIntention.Hash);
+                ca.URL = GetStreamingAssetsUrl(assetBundleIntention.Hash, assetBundleIntention.CommonArguments.CustomEmbeddedSubDirectory);
                 assetBundleIntention.CommonArguments = ca;
                 return;
             }
@@ -55,6 +55,14 @@ namespace ECS.StreamableLoading.AssetBundles
             // Second priority
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.WEB))
             {
+                if (assetBundleIntention.Manifest == null)
+                {
+                    World.Add(entity, new StreamableLoadingResult<AssetBundleData>
+                        (CreateException(new ArgumentException($"Manifest must be provided to load {assetBundleIntention.Name} from `WEB` source"))));
+
+                    return;
+                }
+
                 if (!assetBundleIntention.Manifest.Contains(assetBundleIntention.Hash))
                 {
                     // Add the failure to the entity
@@ -74,7 +82,9 @@ namespace ECS.StreamableLoading.AssetBundles
             }
         }
 
-        private URLAddress GetStreamingAssetsUrl(string hash) =>
-            streamingAssetURL.Append(URLPath.FromString(hash));
+        private URLAddress GetStreamingAssetsUrl(string hash, URLSubdirectory customSubdirectory) =>
+            customSubdirectory.IsEmpty()
+                ? streamingAssetURL.Append(URLPath.FromString(hash))
+                : streamingAssetURL.Append(customSubdirectory).Append(URLPath.FromString(hash));
     }
 }

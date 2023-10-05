@@ -1,8 +1,6 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using UnityEngine.Experimental.Rendering;
 using Diagnostics.ReportsHandling;
 
 namespace DCL.Rendering.Avatar
@@ -12,7 +10,7 @@ namespace DCL.Rendering.Avatar
         public class DepthNormalsRenderPass : ScriptableRenderPass
         {
             private ReportData m_ReportData = new ReportData("DCL_RenderFeature_Outline_DepthNormalsPass", ReportHint.SessionStatic);
-            private const string profilerTag = "Custom Pass: DepthNormals";
+            private const string profilerTag = "_DepthNormalsPass";
 
             private Material depthNormalsMaterial = null;
             private RTHandle depthNormalsRTHandle_Colour = null;
