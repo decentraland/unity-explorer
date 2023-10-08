@@ -1,3 +1,4 @@
+using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
@@ -7,6 +8,9 @@ using DCL.AvatarRendering.AvatarShape.GPUSkinning;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.AvatarRendering.AvatarShape.Systems;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Character.Components;
+using DCL.ECSComponents;
 using ECS;
 using ECS.ComponentsPooling;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
@@ -23,54 +27,36 @@ namespace DCL.PluginSystem.Global
 {
     public class AvatarPlugin : IDCLGlobalPlugin<AvatarPlugin.AvatarShapeSettings>
     {
-        [Serializable]
-        public class AvatarShapeSettings : IDCLPluginSettings
-        {
-            [field: Header(nameof(AvatarPlugin) + "." + nameof(AvatarShapeSettings))]
-            [field: Space]
-            [field: SerializeField]
-            public AssetReferenceGameObject avatarBase;
-
-            [field: SerializeField]
-            public AssetReferenceMaterial celShadingMaterial;
-
-            [field: SerializeField]
-            public int defaultMaterialCapacity = 100;
-
-            [field: SerializeField]
-            public AssetReferenceComputeShader computeShader;
-
-            [Serializable]
-            public class AvatarInstantiatorViewRef : ComponentReference<AvatarInstantiatorView>
-            {
-                public AvatarInstantiatorViewRef(string guid) : base(guid) { }
-            }
-
-            [field: Header(nameof(AvatarPlugin) + ".Debug")]
-            [field: Space]
-            [field: SerializeField]
-            public AvatarInstantiatorViewRef avatarInstantiatorViewRef { get; private set; }
-
-        }
+        private static readonly QueryDescription AVATARS_QUERY = new QueryDescription().WithAll<PBAvatarShape>().WithNone<PlayerComponent>();
 
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IConcurrentBudgetProvider frameTimeCapBudgetProvider;
+        private readonly IRealmData realmData;
+        private readonly TextureArrayContainer textureArrayContainer;
+
+        private readonly WearableAssetsCache wearableAssetsCache = new (3, 100);
+
+        private ProvidedInstance<AvatarInstantiatorView> avatarInstantiatorView;
         private IComponentPool<AvatarBase> avatarPoolRegistry;
 
         private IObjectPool<Material> celShadingMaterialPool;
         private IObjectPool<ComputeShader> computeShaderPool;
-        private readonly TextureArrayContainer textureArrayContainer;
 
-        private ProvidedInstance<AvatarInstantiatorView> avatarInstantiatorView;
-        private readonly IRealmData realmData;
-        private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        public AvatarPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner, IConcurrentBudgetProvider frameTimeCapBudgetProvider, IRealmData realmData)
+        {
+            this.assetsProvisioner = assetsProvisioner;
+            this.frameTimeCapBudgetProvider = frameTimeCapBudgetProvider;
+            this.realmData = realmData;
+            componentPoolsRegistry = poolsRegistry;
+            textureArrayContainer = new TextureArrayContainer();
+        }
 
         public async UniTask Initialize(AvatarShapeSettings settings, CancellationToken ct)
         {
             ProvidedAsset<GameObject> providedAvatarBase = await assetsProvisioner.ProvideMainAsset(settings.avatarBase, ct: ct);
             var avatarPoolUtils = new AvatarPoolUtils(providedAvatarBase.Value.GetComponent<AvatarBase>());
             componentPoolsRegistry.AddGameObjectPool(avatarPoolUtils.CreateAvatarContainer);
-
 
             //TODO: Does it make sense to prewarm using a for?
             ProvidedAsset<Material> providedMaterial = await assetsProvisioner.ProvideMainAsset(settings.celShadingMaterial, ct: ct);
@@ -92,29 +78,51 @@ namespace DCL.PluginSystem.Global
             }
 
             avatarInstantiatorView = await assetsProvisioner.ProvideInstance(settings.avatarInstantiatorViewRef, ct: ct);
-
-        }
-
-        public AvatarPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner, IConcurrentBudgetProvider frameTimeCapBudgetProvider, IRealmData realmData)
-        {
-            this.assetsProvisioner = assetsProvisioner;
-            this.frameTimeCapBudgetProvider = frameTimeCapBudgetProvider;
-            this.realmData = realmData;
-            componentPoolsRegistry = poolsRegistry;
-            textureArrayContainer = new TextureArrayContainer();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            AvatarSystem.InjectToWorld(ref builder, frameTimeCapBudgetProvider, componentPoolsRegistry.GetReferenceTypePool<AvatarBase>(), celShadingMaterialPool, computeShaderPool, textureArrayContainer);
+            AvatarSystem.InjectToWorld(ref builder, frameTimeCapBudgetProvider, componentPoolsRegistry.GetReferenceTypePool<AvatarBase>(), celShadingMaterialPool,
+                computeShaderPool, textureArrayContainer, wearableAssetsCache);
+
             StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder);
 
             //Debug scripts
-            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, avatarInstantiatorView.Value, realmData);
+            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, avatarInstantiatorView.Value, realmData, AVATARS_QUERY);
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            wearableAssetsCache.Dispose();
+        }
 
+        [Serializable]
+        public class AvatarShapeSettings : IDCLPluginSettings
+        {
+            [field: Header(nameof(AvatarPlugin) + "." + nameof(AvatarShapeSettings))]
+            [field: Space]
+            [field: SerializeField]
+            public AssetReferenceGameObject avatarBase;
 
+            [field: SerializeField]
+            public AssetReferenceMaterial celShadingMaterial;
+
+            [field: SerializeField]
+            public int defaultMaterialCapacity = 100;
+
+            [field: SerializeField]
+            public AssetReferenceComputeShader computeShader;
+
+            [field: Header(nameof(AvatarPlugin) + ".Debug")]
+            [field: Space]
+            [field: SerializeField]
+            public AvatarInstantiatorViewRef avatarInstantiatorViewRef { get; private set; }
+
+            [Serializable]
+            public class AvatarInstantiatorViewRef : ComponentReference<AvatarInstantiatorView>
+            {
+                public AvatarInstantiatorViewRef(string guid) : base(guid) { }
+            }
+        }
     }
 }

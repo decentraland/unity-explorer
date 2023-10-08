@@ -17,7 +17,6 @@ using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
-using UnityEngine.Pool;
 using Utility;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
@@ -81,7 +80,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 // Wait for default wearables to be resolved
                 return;
 
-            List<string> missingPointers = ListPool<string>.Get();
+            List<string> missingPointers = WearableComponentsUtils.POINTERS_POOL.Get();
             var successfulResults = 0;
 
             for (var index = 0; index < wearablesByPointersIntention.Pointers.Count; index++)
@@ -113,7 +112,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             }
 
             //If there are no missing pointers, we release the list
-            ListPool<string>.Release(missingPointers);
+            WearableComponentsUtils.POINTERS_POOL.Release(missingPointers);
 
             if (successfulResults == wearablesByPointersIntention.Pointers.Count)
                 World.Add(entity, new StreamableLoadingResult<IWearable[]>(wearablesByPointersIntention.Results));
@@ -151,7 +150,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     }
                 }
 
-                ListPool<string>.Release(promise.LoadingIntention.Pointers);
+                WearableComponentsUtils.POINTERS_POOL.Release(promise.LoadingIntention.Pointers);
                 World.Destroy(entity);
             }
         }
@@ -236,11 +235,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private void CreateMissingPointersPromise(List<string> missingPointers, GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
-            var wearableDtoByPointersIntention = new GetWearableDTOByPointersIntention
-            {
-                Pointers = missingPointers,
-                CommonArguments = new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint, cancellationTokenSource: intention.CancellationTokenSource),
-            };
+            var wearableDtoByPointersIntention = new GetWearableDTOByPointersIntention(
+                missingPointers,
+                new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint, cancellationTokenSource: intention.CancellationTokenSource));
 
             var promise = AssetPromise<WearableDTO[], GetWearableDTOByPointersIntention>.Create(World, wearableDtoByPointersIntention, partitionComponent);
             World.Create(promise, intention.BodyShape);

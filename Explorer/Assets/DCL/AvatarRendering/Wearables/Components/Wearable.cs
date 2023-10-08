@@ -26,14 +26,17 @@ namespace DCL.AvatarRendering.Wearables.Components
                 AssetBundleData[i] = null;
         }
 
-        //TODO: Make this method better
-        public string GetMainFileHash(string bodyShape)
+        public string GetMainFileHash(BodyShape bodyShape)
         {
             var mainFileKey = "";
             var hashToReturn = "";
 
-            foreach (WearableDTO.WearableMetadataDto.Representation representation in WearableDTO.Asset.metadata.data.representations)
+            // The length of arrays is small, so O(N) complexity is fine
+            // Avoid iterator allocations with "for" loop
+            for (var i = 0; i < WearableDTO.Asset.metadata.data.representations.Length; i++)
             {
+                WearableDTO.WearableMetadataDto.Representation representation = WearableDTO.Asset.metadata.data.representations[i];
+
                 if (representation.bodyShapes.Contains(bodyShape))
                 {
                     mainFileKey = representation.mainFile;
@@ -41,8 +44,10 @@ namespace DCL.AvatarRendering.Wearables.Components
                 }
             }
 
-            foreach (WearableDTO.WearableContentDto wearableContentDto in WearableDTO.Asset.content)
+            for (var i = 0; i < WearableDTO.Asset.content.Length; i++)
             {
+                WearableDTO.WearableContentDto wearableContentDto = WearableDTO.Asset.content[i];
+
                 if (wearableContentDto.file.Equals(mainFileKey))
                 {
                     hashToReturn = wearableContentDto.hash;
@@ -89,6 +94,5 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         //TODO: Implement Dispose method
         public void Dispose() { }
-
     }
 }

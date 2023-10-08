@@ -10,7 +10,13 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
         public CommonLoadingArguments CommonArguments { get; set; }
 
-        public List<string> Pointers;
+        public readonly List<string> Pointers;
+
+        public GetWearableDTOByPointersIntention(List<string> pointers, CommonLoadingArguments commonArguments)
+        {
+            Pointers = pointers;
+            CommonArguments = commonArguments;
+        }
 
         public bool Equals(GetWearableDTOByPointersIntention other) =>
             Equals(Pointers, other.Pointers);

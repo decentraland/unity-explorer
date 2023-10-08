@@ -14,6 +14,7 @@ using DCL.ECSComponents;
 using Diagnostics.ReportsHandling;
 using ECS;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.Transforms.Components;
@@ -29,6 +30,7 @@ using RaycastHit = UnityEngine.RaycastHit;
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateBefore(typeof(AvatarSystem))] // Updating before AvatarSystem allows it to react as soon as possible
     [LogCategory(ReportCategory.AVATAR)]
     public partial class InstantiateRandomAvatarsSystem : BaseUnityLoopSystem
     {
@@ -36,16 +38,20 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private readonly AvatarInstantiatorView view;
         private readonly IRealmData realmData;
+        private readonly QueryDescription avatarsQuery;
+
         private SingleInstanceEntity camera;
         private SingleInstanceEntity defaultWearableState;
 
         private int totalAvatarsInstantiated;
 
-        public InstantiateRandomAvatarsSystem(World world, AvatarInstantiatorView avatarInstantiatorView, IRealmData realmData) : base(world)
+        internal InstantiateRandomAvatarsSystem(World world, AvatarInstantiatorView avatarInstantiatorView, IRealmData realmData, QueryDescription avatarsQuery) : base(world)
         {
             view = avatarInstantiatorView;
             this.realmData = realmData;
+            this.avatarsQuery = avatarsQuery;
             view.addRandomAvatarButton.onClick.AddListener(AddRandomAvatar);
+            view.destroyAllAvatarsButton.onClick.AddListener(DestroyAllAvatars);
             view.gameObject.SetActive(false);
             totalAvatarsInstantiated = 1;
         }
@@ -59,6 +65,12 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             camera = World.CacheCamera();
             defaultWearableState = World.CacheDefaultWearablesState();
+        }
+
+        private void DestroyAllAvatars()
+        {
+            // Input events are processed before Update
+            World.Add(in avatarsQuery, new DeleteEntityIntention());
         }
 
         private void AddRandomAvatar()

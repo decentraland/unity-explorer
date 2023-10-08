@@ -11,6 +11,8 @@ namespace DCL.AvatarRendering.AvatarShape.DemoScripts.UI
 
         public Button addRandomAvatarButton;
 
+        public Button destroyAllAvatarsButton;
+
         [SerializeField]
         private Button openButton;
 

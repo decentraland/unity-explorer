@@ -13,7 +13,9 @@ using DCL.PluginSystem.Global;
 using DCL.Systems;
 using ECS;
 using ECS.ComponentsPooling;
+using ECS.Groups;
 using ECS.LifeCycle;
+using ECS.LifeCycle.Systems;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.Prioritization.Systems;
@@ -78,7 +80,11 @@ namespace Global.Dynamic
             // not synced by mutex, for compatibility only
             var mutex = new MutexSync();
 
+            ISceneStateProvider globalSceneStateProvider = new SceneStateProvider();
+            globalSceneStateProvider.State = SceneState.Running;
+
             var builder = new ArchSystemsWorldBuilder<World>(world);
+            builder.InjectCustomGroup(new SyncedPostRenderingSystemGroup(mutex, globalSceneStateProvider));
 
             Entity playerEntity = world.Create(
                 new CRDTEntity(SpecialEntititiesID.PLAYER_ENTITY),
@@ -130,6 +136,8 @@ namespace Global.Dynamic
 
             CheckCameraQualifiedForRepartitioningSystem.InjectToWorld(ref builder, partitionSettings, realmData);
             SortWorldsAggregateSystem.InjectToWorld(ref builder, partitionedWorldsAggregateFactory, realmPartitionSettings);
+
+            DestroyEntitiesSystem.InjectToWorld(ref builder);
 
             var pluginArgs = new GlobalPluginArguments(playerEntity);
 

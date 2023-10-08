@@ -8,7 +8,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 {
     public interface IWearable : IDisposable
     {
-        string GetMainFileHash(string bodyShape);
+        string GetMainFileHash(BodyShape bodyShape);
 
         string GetHash();
 

@@ -1,5 +1,6 @@
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
+using DCL.AvatarRendering.Wearables.Helpers;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Unity.Collections;
@@ -21,7 +22,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         private readonly List<UsedTextureArraySlot> usedTextureArraySlots;
 
-
         public ComputeShaderSkinning()
         {
             usedTextureArraySlots = new List<UsedTextureArraySlot>();
@@ -40,7 +40,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             mBones.EndWrite<float4x4>(ComputeShaderConstants.BONE_COUNT);*/
         }
 
-        public override int Initialize(List<GameObject> gameObjects, TextureArrayContainer textureArrayContainer,
+        public override int Initialize(IReadOnlyList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer,
             UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterialPool, int lastAvatarVertCount, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer, AvatarShapeComponent avatarShapeComponent)
         {
             SetupCounters(gameObjects);
@@ -49,7 +49,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return vertCount;
         }
 
-        private void SetupComputeShader(List<GameObject> gameObjects, UnityEngine.ComputeShader skinningShader, int lastAvatarVertCount)
+        private void SetupComputeShader(IReadOnlyList<CachedWearable> gameObjects, UnityEngine.ComputeShader skinningShader, int lastAvatarVertCount)
         {
             //Note (Juani): Using too many BeginWrite in Mac caused a crash. So I ve set up this switch that changes the way in which we
             //set up the buffers depending on the platform
@@ -103,9 +103,10 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             computeSkinningBufferContainer.CopyAllBuffers(mesh, currentMeshVertexCount, vertexCounter, skinnedMeshCounter);
         }
 
-        private void SetupCounters(List<GameObject> gameObjects)
+        private void SetupCounters(IReadOnlyList<CachedWearable> gameObjects)
         {
             var skinnedMeshRendererCount = 0;
+
             foreach (GameObject gameObject in gameObjects)
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in gameObject.GetComponentsInChildren<SkinnedMeshRenderer>())
             {
@@ -116,7 +117,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             skinnedMeshRendererBoneCount = skinnedMeshRendererCount * ComputeShaderConstants.BONE_COUNT;
         }
 
-        private void SetupMeshRenderer(List<GameObject> gameObjects, TextureArrayContainer textureArrayContainer, IObjectPool<Material> avatarMaterial, int lastAvatarVertCount, AvatarShapeComponent avatarShapeComponent)
+        private void SetupMeshRenderer(IReadOnlyList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer, IObjectPool<Material> avatarMaterial, int lastAvatarVertCount, AvatarShapeComponent avatarShapeComponent)
         {
             var auxVertCounter = 0;
 
