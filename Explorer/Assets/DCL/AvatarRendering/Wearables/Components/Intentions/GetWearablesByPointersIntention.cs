@@ -19,9 +19,6 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
 
         public CancellationTokenSource CancellationTokenSource { get; }
 
-        internal GetWearablesByPointersIntention(List<string> pointers, IWearable[] result, PBAvatarShape bodyShape, bool fallbackToDefaultWearables = true)
-            : this(pointers, result, (BodyShape)bodyShape, fallbackToDefaultWearables: fallbackToDefaultWearables) { }
-
         internal GetWearablesByPointersIntention(List<string> pointers, IWearable[] result, BodyShape bodyShape, AssetSource permittedSources = AssetSource.ALL,
             bool fallbackToDefaultWearables = true)
         {

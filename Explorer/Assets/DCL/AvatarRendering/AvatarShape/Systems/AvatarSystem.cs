@@ -17,7 +17,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.ColorComponent;
 using ECS.Unity.Transforms.Components;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -179,8 +178,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             lastAvatarVertCount += newVertCount;
 
-            ListPool<string>.Release(intention.Pointers);
-            ArrayPool<IWearable>.Shared.Return(intention.Results);
+            intention.Dispose();
             avatarShapeComponent.IsDirty = false;
         }
 
