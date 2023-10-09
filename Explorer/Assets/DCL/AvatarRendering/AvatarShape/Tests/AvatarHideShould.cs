@@ -52,7 +52,7 @@ namespace DCL.Tests
             mockWearables = new[] { upperMockWearable };
 
             var hidingList = new HashSet<string>();
-            AvatarWearableHide.ComposeHiddenCategoriesOrdered(TEST_BODY_SHAPE, null, mockWearables, hidingList);
+            AvatarWearableHide.ComposeHiddenCategoriesOrdered(TEST_BODY_SHAPE, null, mockWearables, mockWearables.Length, hidingList);
 
             Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.LOWER_BODY));
             Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.HANDS));
@@ -65,7 +65,7 @@ namespace DCL.Tests
             mockWearables = new[] { upperMockWearable, upperSkinWearable };
 
             var hidingList = new HashSet<string>();
-            AvatarWearableHide.ComposeHiddenCategoriesOrdered(TEST_BODY_SHAPE, null, mockWearables, hidingList);
+            AvatarWearableHide.ComposeHiddenCategoriesOrdered(TEST_BODY_SHAPE, null, mockWearables, mockWearables.Length, hidingList);
 
             Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.UPPER_BODY));
             Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.HANDS));
@@ -82,7 +82,7 @@ namespace DCL.Tests
             forceRender.Add(WearablesConstants.Categories.LOWER_BODY);
 
             var hidingList = new HashSet<string>();
-            AvatarWearableHide.ComposeHiddenCategoriesOrdered(TEST_BODY_SHAPE, forceRender, mockWearables, hidingList);
+            AvatarWearableHide.ComposeHiddenCategoriesOrdered(TEST_BODY_SHAPE, forceRender, mockWearables, mockWearables.Length, hidingList);
 
             Assert.IsFalse(hidingList.Contains(WearablesConstants.Categories.LOWER_BODY));
             Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.HANDS));
@@ -95,7 +95,7 @@ namespace DCL.Tests
             mockWearables = new[] { upperMockWearable };
 
             var hidingList = new HashSet<string>();
-            AvatarWearableHide.ComposeHiddenCategoriesOrdered(TEST_BODY_SHAPE, null, mockWearables, hidingList);
+            AvatarWearableHide.ComposeHiddenCategoriesOrdered(TEST_BODY_SHAPE, null, mockWearables, mockWearables.Length, hidingList);
 
             var usedCategories = new HashSet<string>();
             usedCategories.Add(WearablesConstants.Categories.HEAD);
