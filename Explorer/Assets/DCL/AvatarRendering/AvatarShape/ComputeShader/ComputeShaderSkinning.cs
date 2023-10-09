@@ -2,11 +2,13 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.AvatarRendering.Wearables.Helpers;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Pool;
+using UnityEngine.Profiling;
+using Utility.Pool;
 
 namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
@@ -51,6 +53,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         private void SetupComputeShader(IReadOnlyList<CachedWearable> gameObjects, UnityEngine.ComputeShader skinningShader, int lastAvatarVertCount)
         {
+            Profiler.BeginSample(nameof(SetupComputeShader));
+
             //Note (Juani): Using too many BeginWrite in Mac caused a crash. So I ve set up this switch that changes the way in which we
             //set up the buffers depending on the platform
 #if UNITY_STANDALONE_WIN
@@ -67,7 +71,9 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             {
                 Transform rootTransform = gameObject.transform;
 
-                foreach (SkinnedMeshRenderer skinnedMeshRenderer in gameObject.GetComponentsInChildren<SkinnedMeshRenderer>())
+                using PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = gameObject.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>();
+
+                foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
                 {
                     int meshVertexCount = skinnedMeshRenderer.sharedMesh.vertexCount;
                     ResetTransforms(skinnedMeshRenderer, rootTransform);
@@ -78,12 +84,14 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             }
 
             SetupBuffers(skinningShader, lastAvatarVertCount);
+
+            Profiler.EndSample();
         }
 
         private void SetupBuffers(UnityEngine.ComputeShader skinningShader, int lastAvatarVertCount)
         {
             computeSkinningBufferContainer.EndWriting();
-            mBones = new ComputeBuffer(ComputeShaderConstants.BONE_COUNT, Marshal.SizeOf(typeof(float4x4)), ComputeBufferType.Structured, ComputeBufferMode.Dynamic);
+            mBones = new ComputeBuffer(ComputeShaderConstants.BONE_COUNT, Unsafe.SizeOf<float4x4>(), ComputeBufferType.Structured, ComputeBufferMode.Dynamic);
 
             cs = skinningShader;
             kernel = cs.FindKernel(ComputeShaderConstants.SKINNING_KERNEL_NAME);
@@ -105,16 +113,24 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         private void SetupCounters(IReadOnlyList<CachedWearable> gameObjects)
         {
+            Profiler.BeginSample(nameof(SetupCounters));
+
             var skinnedMeshRendererCount = 0;
 
             foreach (GameObject gameObject in gameObjects)
-            foreach (SkinnedMeshRenderer skinnedMeshRenderer in gameObject.GetComponentsInChildren<SkinnedMeshRenderer>())
             {
-                vertCount += skinnedMeshRenderer.sharedMesh.vertexCount;
-                skinnedMeshRendererCount++;
+                using PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = gameObject.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>();
+
+                foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
+                {
+                    vertCount += skinnedMeshRenderer.sharedMesh.vertexCount;
+                    skinnedMeshRendererCount++;
+                }
             }
 
             skinnedMeshRendererBoneCount = skinnedMeshRendererCount * ComputeShaderConstants.BONE_COUNT;
+
+            Profiler.EndSample();
         }
 
         private void SetupMeshRenderer(IReadOnlyList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer, IObjectPool<Material> avatarMaterial, int lastAvatarVertCount, AvatarShapeComponent avatarShapeComponent)
@@ -123,7 +139,9 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
             foreach (GameObject gameObject in gameObjects)
             {
-                foreach (SkinnedMeshRenderer skinnedMeshRenderer in gameObject.GetComponentsInChildren<SkinnedMeshRenderer>())
+                using PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = gameObject.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>();
+
+                foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
                 {
                     int currentVertexCount = skinnedMeshRenderer.sharedMesh.vertexCount;
                     Renderer renderer = SetupMesh(skinnedMeshRenderer);
