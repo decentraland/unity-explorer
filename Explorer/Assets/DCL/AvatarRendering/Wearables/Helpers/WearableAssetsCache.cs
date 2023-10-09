@@ -13,11 +13,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     ///     <para>
     ///         It keeps a limited reasonable number of unique assets
     ///     </para>
-    ///     <para>
-    ///         In the future we may consider merging it with <see cref="GltfContainerAssetsCache" /> as it uses
-    ///         effectively the same Assets (instantiated from GLTFs/ABs).
-    ///         However, when it comes to avatars we can make more assumptions with regard to their number and distribution
-    ///     </para>
     /// </summary>
     public class WearableAssetsCache : IWearableAssetsCache, IDisposable
     {
@@ -58,7 +53,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public IWearableAssetsCache.ReleaseResult TryRelease(CachedWearable cachedWearable)
         {
-            GameObject asset = cachedWearable.originalAsset;
+            GameObject asset = cachedWearable.OriginalAsset.GameObject;
             GameObject instance = cachedWearable.Instance;
 
             if (!cache.TryGetValue(asset, out List<GameObject> list))

@@ -1,5 +1,4 @@
 using DCL.AvatarRendering.Wearables.Helpers;
-using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
@@ -12,19 +11,9 @@ namespace DCL.AvatarRendering.Wearables.Components
     public class Wearable : IWearable
     {
         public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
-        public StreamableLoadingResult<AssetBundleData>?[] AssetBundleData { get; set; }
+        public StreamableLoadingResult<WearableAsset>?[] WearableAssets { get; set; } = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
         public StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }
-        public bool IsLoading { get; set; }
-
-        public Wearable()
-        {
-            IsLoading = true;
-
-            AssetBundleData = new StreamableLoadingResult<AssetBundleData>?[BodyShape.COUNT];
-
-            for (var i = 0; i < AssetBundleData.Length; i++)
-                AssetBundleData[i] = null;
-        }
+        public bool IsLoading { get; set; } = true;
 
         public string GetMainFileHash(BodyShape bodyShape)
         {

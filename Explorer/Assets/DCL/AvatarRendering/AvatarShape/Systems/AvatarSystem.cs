@@ -18,7 +18,7 @@ using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.ColorComponent;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -63,7 +63,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             computeShaderSkinningPool = computeShaderPool;
 
             //TODO: Looks like it needs to be released
-            vertexOutBuffer = new ComputeBuffer(5_000_000, Marshal.SizeOf<VertexInfo>());
+            vertexOutBuffer = new ComputeBuffer(5_000_000, Unsafe.SizeOf<VertexInfo>());
             Shader.SetGlobalBuffer("_GlobalAvatarBuffer", vertexOutBuffer);
         }
 
@@ -162,7 +162,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 if (hidingList.Contains(resultWearable.GetCategory()))
                     continue;
 
-                GameObject originalAsset = resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape);
+                WearableAsset originalAsset = resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape);
                 CachedWearable instantiatedWearable = wearableAssetsCache.InstantiateWearable(originalAsset, avatarTransform);
                 avatarShapeComponent.InstantiatedWearables.Add(instantiatedWearable);
 

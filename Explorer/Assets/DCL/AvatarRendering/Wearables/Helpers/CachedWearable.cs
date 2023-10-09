@@ -7,12 +7,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     /// </summary>
     public readonly struct CachedWearable
     {
-        internal readonly GameObject originalAsset;
+        public readonly WearableAsset OriginalAsset;
         public readonly GameObject Instance;
 
-        public CachedWearable(GameObject originalAsset, GameObject instance)
+        public CachedWearable(WearableAsset originalAsset, GameObject instance)
         {
-            this.originalAsset = originalAsset;
+            OriginalAsset = originalAsset;
             Instance = instance;
         }
 

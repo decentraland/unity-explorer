@@ -31,9 +31,9 @@ namespace DCL.AvatarRendering.Wearables.Tests
         private readonly string unisexTestUrn = "urn:decentraland:off-chain:base-avatars:red_hoodie_unisex";
         private readonly string defaultWearableUrn = "urn:decentraland:off-chain:base-avatars:green_hoodie";
 
-        private StreamableLoadingResult<AssetBundleData> mockedDefaultAB;
+        private StreamableLoadingResult<WearableAsset> mockedDefaultAB;
         private StreamableLoadingResult<SceneAssetBundleManifest> mockedABManifest;
-        private StreamableLoadingResult<AssetBundleData> mockedAB;
+        private StreamableLoadingResult<WearableAsset> mockedAB;
 
         [SetUp]
         public void Setup()
@@ -42,8 +42,8 @@ namespace DCL.AvatarRendering.Wearables.Tests
             IWearable mockDefaultWearable = CreateMockWearable(defaultWearableUrn, false, true);
             wearableCatalog.wearableDictionary.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
 
-            mockedAB = new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(null, null, null));
-            mockedDefaultAB = new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(null, null, null));
+            mockedAB = new StreamableLoadingResult<WearableAsset>(new WearableAsset());
+            mockedDefaultAB = new StreamableLoadingResult<WearableAsset>(new WearableAsset());
 
             mockedABManifest = new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(URLDomain.EMPTY, new SceneAbDto
                 { version = "0" }));
@@ -58,13 +58,13 @@ namespace DCL.AvatarRendering.Wearables.Tests
             wearable.IsUnisex().Returns(isUnisex);
             wearable.GetCategory().Returns(WearablesConstants.Categories.UPPER_BODY);
 
-            var AssetBundleData
-                = new StreamableLoadingResult<AssetBundleData>?[BodyShape.COUNT];
+            var assetBundleData
+                = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
 
             if (isDefaultWearable)
-                AssetBundleData[BodyShape.MALE] = mockedDefaultAB;
+                assetBundleData[BodyShape.MALE] = mockedDefaultAB;
 
-            wearable.AssetBundleData.Returns(AssetBundleData);
+            wearable.WearableAssets.Returns(assetBundleData);
             return wearable;
         }
 
@@ -113,7 +113,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             MockWearableManifestResult(getWearablesByPointersIntention.CancellationTokenSource, mockWearable, false);
             MockABResult(getWearablesByPointersIntention.CancellationTokenSource, mockWearable, false);
 
-            mockWearable.AssetBundleData[BodyShape.MALE] = mockedAB;
+            mockWearable.WearableAssets[BodyShape.MALE] = mockedAB;
             mockWearable.Received().ManifestResult = mockedABManifest;
         }
 
@@ -132,8 +132,8 @@ namespace DCL.AvatarRendering.Wearables.Tests
             MockWearableManifestResult(getWearablesByPointersIntention.CancellationTokenSource, mockUnisexWearable, false);
             MockABResult(getWearablesByPointersIntention.CancellationTokenSource, mockUnisexWearable, false);
 
-            mockUnisexWearable.AssetBundleData[BodyShape.MALE] = mockedAB;
-            mockUnisexWearable.AssetBundleData[BodyShape.FEMALE] = mockedAB;
+            mockUnisexWearable.WearableAssets[BodyShape.MALE] = mockedAB;
+            mockUnisexWearable.WearableAssets[BodyShape.FEMALE] = mockedAB;
             mockUnisexWearable.Received().ManifestResult = mockedABManifest;
         }
 
@@ -151,7 +151,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             MockWearableManifestResult(getWearablesByPointersIntention.CancellationTokenSource, mockWearable, true);
 
-            mockWearable.AssetBundleData[BodyShape.MALE] = mockedDefaultAB;
+            mockWearable.WearableAssets[BodyShape.MALE] = mockedDefaultAB;
             mockWearable.DidNotReceive().ManifestResult = mockedABManifest;
         }
 
@@ -170,7 +170,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             MockWearableManifestResult(getWearablesByPointersIntention.CancellationTokenSource, mockWearable, false);
             MockABResult(getWearablesByPointersIntention.CancellationTokenSource, mockWearable, true);
 
-            mockWearable.AssetBundleData[BodyShape.MALE] = mockedDefaultAB;
+            mockWearable.WearableAssets[BodyShape.MALE] = mockedDefaultAB;
             mockWearable.Received().ManifestResult = mockedABManifest;
         }
 

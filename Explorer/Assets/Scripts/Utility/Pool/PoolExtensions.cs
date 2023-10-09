@@ -12,10 +12,10 @@ namespace Utility.Pool
             internal static readonly UnityComponentPool<T> INSTANCE = new ();
         }
 
-        public static Scope<List<TComponent>> GetComponentsInChildrenIntoPooledList<TComponent>(this GameObject go) where TComponent: class
+        public static Scope<List<TComponent>> GetComponentsInChildrenIntoPooledList<TComponent>(this GameObject go, bool includeInactive = false) where TComponent: class
         {
             Scope<List<TComponent>> scope = AutoScope(UnityComponentPool<TComponent>.INSTANCE);
-            go.GetComponentsInChildren(scope.Value);
+            go.GetComponentsInChildren(includeInactive, scope.Value);
             return scope;
         }
 

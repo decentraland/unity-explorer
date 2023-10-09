@@ -1,5 +1,6 @@
 ﻿using DCL.AvatarRendering.Wearables.Helpers;
 using NUnit.Framework;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.Wearables.Tests
@@ -23,7 +24,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public void ReturnToPool()
         {
-            var asset = new GameObject("ORIGINAL");
+            var asset = new WearableAsset(new GameObject("ORIGINAL"), new List<WearableAsset.RendererInfo>());
 
             for (var i = 0; i < 2; i++)
                 Assert.That(cache.TryRelease(new CachedWearable(asset, new GameObject("INSTANCE" + i))), Is.EqualTo(IWearableAssetsCache.ReleaseResult.ReturnedToPool));
@@ -32,7 +33,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public void ExceedCapacity()
         {
-            var asset = new GameObject("ORIGINAL");
+            var asset = new WearableAsset(new GameObject("ORIGINAL"), new List<WearableAsset.RendererInfo>());
 
             for (var i = 0; i < 2; i++)
                 cache.TryRelease(new CachedWearable(asset, new GameObject("INSTANCE" + i)));
@@ -44,13 +45,13 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public void GetPooledObject()
         {
-            var asset = new GameObject("ORIGINAL");
+            var asset = new WearableAsset(new GameObject("ORIGINAL"), new List<WearableAsset.RendererInfo>());
 
             for (var i = 0; i < 2; i++)
                 cache.TryRelease(new CachedWearable(asset, new GameObject("INSTANCE" + i)));
 
             for (var i = 0; i < 2; i++)
-                Assert.That(cache.TryGet(asset, out _), Is.True);
+                Assert.That(cache.TryGet(asset.GameObject, out _), Is.True);
         }
     }
 }

@@ -98,7 +98,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                 if (CreatePromiseIfRequired(component, wearablesByPointersIntention, partitionComponent)) continue;
 
-                if (component.AssetBundleData[wearablesByPointersIntention.BodyShape] is { Succeeded: true })
+                if (component.WearableAssets[wearablesByPointersIntention.BodyShape] is { Succeeded: true })
                 {
                     successfulResults++;
                     wearablesByPointersIntention.Results[index] = component;
@@ -214,7 +214,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 return true;
             }
 
-            if (component.AssetBundleData[intention.BodyShape] == null)
+            if (component.WearableAssets[intention.BodyShape] == null)
             {
                 SceneAssetBundleManifest manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : component.ManifestResult?.Asset;
 
@@ -249,15 +249,16 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 ReportHub.LogError(GetReportCategory(), $"Default wearable {wearable.WearableDTO.Asset.id} failed to load");
 
-                var failedResult = new StreamableLoadingResult<AssetBundleData>(new Exception("Default wearable failed to load"));
+                StreamableLoadingResult<WearableAsset> failedResult = new StreamableLoadingResult<AssetBundleData>(new Exception("Default wearable failed to load"))
+                   .ToWearableAsset();
 
                 if (wearable.IsUnisex())
                 {
-                    wearable.AssetBundleData[BodyShape.MALE] = failedResult;
-                    wearable.AssetBundleData[BodyShape.FEMALE] = failedResult;
+                    wearable.WearableAssets[BodyShape.MALE] = failedResult;
+                    wearable.WearableAssets[BodyShape.FEMALE] = failedResult;
                 }
                 else
-                    wearable.AssetBundleData[bodyShape] = failedResult;
+                    wearable.WearableAssets[bodyShape] = failedResult;
 
                 return;
             }
@@ -268,22 +269,24 @@ namespace DCL.AvatarRendering.Wearables.Systems
             // Waiting for the default wearable should be moved to the loading screen
             if (wearable.IsUnisex())
             {
-                wearable.AssetBundleData[BodyShape.MALE] = wearableCatalog.GetDefaultWearable(BodyShape.MALE, wearable.GetCategory()).AssetBundleData[BodyShape.MALE];
-                wearable.AssetBundleData[BodyShape.FEMALE] = wearableCatalog.GetDefaultWearable(BodyShape.FEMALE, wearable.GetCategory()).AssetBundleData[BodyShape.FEMALE];
+                wearable.WearableAssets[BodyShape.MALE] = wearableCatalog.GetDefaultWearable(BodyShape.MALE, wearable.GetCategory()).WearableAssets[BodyShape.MALE];
+                wearable.WearableAssets[BodyShape.FEMALE] = wearableCatalog.GetDefaultWearable(BodyShape.FEMALE, wearable.GetCategory()).WearableAssets[BodyShape.FEMALE];
             }
             else
-                wearable.AssetBundleData[bodyShape] = wearableCatalog.GetDefaultWearable(bodyShape, wearable.GetCategory()).AssetBundleData[bodyShape];
+                wearable.WearableAssets[bodyShape] = wearableCatalog.GetDefaultWearable(bodyShape, wearable.GetCategory()).WearableAssets[bodyShape];
         }
 
         private void SetWearableResult(IWearable wearable, StreamableLoadingResult<AssetBundleData> result, in BodyShape bodyShape)
         {
+            StreamableLoadingResult<WearableAsset> wearableAsset = result.ToWearableAsset();
+
             if (wearable.IsUnisex())
             {
-                wearable.AssetBundleData[BodyShape.MALE] = result;
-                wearable.AssetBundleData[BodyShape.FEMALE] = result;
+                wearable.WearableAssets[BodyShape.MALE] = wearableAsset;
+                wearable.WearableAssets[BodyShape.FEMALE] = wearableAsset;
             }
             else
-                wearable.AssetBundleData[bodyShape] = result;
+                wearable.WearableAssets[bodyShape] = wearableAsset;
         }
     }
 }

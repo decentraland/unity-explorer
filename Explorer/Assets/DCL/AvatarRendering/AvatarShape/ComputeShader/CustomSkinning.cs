@@ -18,15 +18,14 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         public abstract int Initialize(IReadOnlyList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer,
             UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterial, int lastAvatarVertCount, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer, AvatarShapeComponent avatarShapeComponent);
 
-        protected abstract void SetupMaterial(Renderer meshRenderer, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, IObjectPool<Material> avatarMaterialPool, int lastAvatarVertCount,
-            AvatarShapeComponent avatarShapeComponent);
+        protected abstract void SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, IObjectPool<Material> celShadingMaterial,
+            int lastAvatarVertCount, AvatarShapeComponent avatarShapeComponent);
 
-        protected void ResetTransforms(SkinnedMeshRenderer skinnedMeshRenderer, Transform rootTransform)
+        protected void ResetTransforms(Transform currentTransform, Transform rootTransform)
         {
             // Make sure that Transform is uniform with the root
             // Non-uniform does not make sense as skin relatively to the base avatar
             // so we just waste calculations on transformation matrices
-            Transform currentTransform = skinnedMeshRenderer.transform;
 
             while (currentTransform != rootTransform)
             {

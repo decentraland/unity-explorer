@@ -14,15 +14,16 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public class ComputeShaderSkinning : CustomSkinning
     {
-        private int vertCount;
-        private int skinnedMeshRendererBoneCount;
-        private int kernel;
-
-        private UnityEngine.ComputeShader cs;
-        private ComputeBuffer mBones;
+        private readonly List<UsedTextureArraySlot> usedTextureArraySlots;
         private ComputeSkinningBufferContainer computeSkinningBufferContainer;
 
-        private readonly List<UsedTextureArraySlot> usedTextureArraySlots;
+        private UnityEngine.ComputeShader cs;
+
+        //private int skinnedMeshRendererBoneCount;
+        private int kernel;
+        private ComputeBuffer mBones;
+
+        private int vertCount;
 
         public ComputeShaderSkinning()
         {
@@ -45,13 +46,22 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         public override int Initialize(IReadOnlyList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer,
             UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterialPool, int lastAvatarVertCount, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer, AvatarShapeComponent avatarShapeComponent)
         {
-            SetupCounters(gameObjects);
-            SetupComputeShader(gameObjects, skinningShader, lastAvatarVertCount);
-            SetupMeshRenderer(gameObjects, textureArrayContainer, avatarMaterialPool, lastAvatarVertCount, avatarShapeComponent);
+            List<MeshData> meshesData = ListPool<MeshData>.Get();
+            CreateMeshData(meshesData, gameObjects);
+
+            (int vertCount, int boneCount) = SetupCounters(meshesData);
+            this.vertCount = vertCount;
+
+            SetupComputeShader(meshesData, skinningShader, lastAvatarVertCount, vertCount, boneCount);
+            SetupMeshRenderer(meshesData, textureArrayContainer, avatarMaterialPool, lastAvatarVertCount, avatarShapeComponent);
+
+            ListPool<MeshData>.Release(meshesData);
+
             return vertCount;
         }
 
-        private void SetupComputeShader(IReadOnlyList<CachedWearable> gameObjects, UnityEngine.ComputeShader skinningShader, int lastAvatarVertCount)
+        private void SetupComputeShader(IReadOnlyList<MeshData> meshesData, UnityEngine.ComputeShader skinningShader,
+            int lastAvatarVertCount, int vertCount, int skinnedMeshRendererBoneCount)
         {
             Profiler.BeginSample(nameof(SetupComputeShader));
 
@@ -67,28 +77,22 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             var vertCounter = 0;
             var skinnedMeshCounter = 0;
 
-            foreach (GameObject gameObject in gameObjects)
+            for (var i = 0; i < meshesData.Count; i++)
             {
-                Transform rootTransform = gameObject.transform;
-
-                using PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = gameObject.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>();
-
-                foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
-                {
-                    int meshVertexCount = skinnedMeshRenderer.sharedMesh.vertexCount;
-                    ResetTransforms(skinnedMeshRenderer, rootTransform);
-                    FillMeshArray(skinnedMeshRenderer, meshVertexCount, vertCounter, skinnedMeshCounter);
-                    vertCounter += meshVertexCount;
-                    skinnedMeshCounter++;
-                }
+                MeshData meshData = meshesData[i];
+                int meshVertexCount = meshData.Mesh.sharedMesh.vertexCount;
+                ResetTransforms(meshData.Transform, meshData.RootTransform);
+                FillMeshArray(meshData.Mesh.sharedMesh, meshVertexCount, vertCounter, skinnedMeshCounter);
+                vertCounter += meshVertexCount;
+                skinnedMeshCounter++;
             }
 
-            SetupBuffers(skinningShader, lastAvatarVertCount);
+            SetupBuffers(skinningShader, lastAvatarVertCount, vertCount);
 
             Profiler.EndSample();
         }
 
-        private void SetupBuffers(UnityEngine.ComputeShader skinningShader, int lastAvatarVertCount)
+        private void SetupBuffers(UnityEngine.ComputeShader skinningShader, int lastAvatarVertCount, int vertCount)
         {
             computeSkinningBufferContainer.EndWriting();
             mBones = new ComputeBuffer(ComputeShaderConstants.BONE_COUNT, Unsafe.SizeOf<float4x4>(), ComputeBufferType.Structured, ComputeBufferMode.Dynamic);
@@ -101,73 +105,99 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             cs.SetBuffer(kernel, ComputeShaderConstants.BONES_ID, mBones);
         }
 
-        private void FillMeshArray(SkinnedMeshRenderer skinnedMeshRenderer, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter)
+        private void FillMeshArray(Mesh mesh, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter)
         {
-            Mesh mesh = skinnedMeshRenderer.sharedMesh;
-
             // HACK: We only need to do this if the avatar has _NORMALMAPS enabled on the material.
             mesh.RecalculateTangents();
 
             computeSkinningBufferContainer.CopyAllBuffers(mesh, currentMeshVertexCount, vertexCounter, skinnedMeshCounter);
         }
 
-        private void SetupCounters(IReadOnlyList<CachedWearable> gameObjects)
+        private (int vertCount, int boneCount) SetupCounters(IReadOnlyList<MeshData> meshesData)
         {
             Profiler.BeginSample(nameof(SetupCounters));
 
             var skinnedMeshRendererCount = 0;
+            var vertCount = 0;
 
-            foreach (GameObject gameObject in gameObjects)
+            for (var i = 0; i < meshesData.Count; i++)
             {
-                using PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = gameObject.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>();
-
-                foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
-                {
-                    vertCount += skinnedMeshRenderer.sharedMesh.vertexCount;
-                    skinnedMeshRendererCount++;
-                }
+                vertCount += meshesData[i].Mesh.sharedMesh.vertexCount;
+                skinnedMeshRendererCount++;
             }
 
-            skinnedMeshRendererBoneCount = skinnedMeshRendererCount * ComputeShaderConstants.BONE_COUNT;
-
             Profiler.EndSample();
+
+            return (vertCount, skinnedMeshRendererCount * ComputeShaderConstants.BONE_COUNT);
         }
 
-        private void SetupMeshRenderer(IReadOnlyList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer, IObjectPool<Material> avatarMaterial, int lastAvatarVertCount, AvatarShapeComponent avatarShapeComponent)
+        private void SetupMeshRenderer(IReadOnlyList<MeshData> gameObjects, TextureArrayContainer textureArrayContainer,
+            IObjectPool<Material> avatarMaterial, int lastAvatarVertCount, AvatarShapeComponent avatarShapeComponent)
         {
             var auxVertCounter = 0;
 
-            foreach (GameObject gameObject in gameObjects)
+            for (var i = 0; i < gameObjects.Count; i++)
             {
-                using PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = gameObject.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>();
+                MeshData meshData = gameObjects[i];
+                int currentVertexCount = meshData.Mesh.sharedMesh.vertexCount;
+                SetupMaterial(meshData.Renderer, meshData.OriginalMaterial, auxVertCounter, textureArrayContainer, avatarMaterial, lastAvatarVertCount, avatarShapeComponent);
+                auxVertCounter += currentVertexCount;
+            }
+        }
 
-                foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
+        private void CreateMeshData(List<MeshData> targetList, IReadOnlyList<CachedWearable> wearables)
+        {
+            foreach (CachedWearable cachedWearable in wearables)
+            {
+                GameObject instance = cachedWearable.Instance;
+
+                using (PoolExtensions.Scope<List<MeshFilter>> pooledList = instance.GetComponentsInChildrenIntoPooledList<MeshFilter>(true))
                 {
-                    int currentVertexCount = skinnedMeshRenderer.sharedMesh.vertexCount;
-                    Renderer renderer = SetupMesh(skinnedMeshRenderer);
-                    renderer.renderingLayerMask = 2;
-                    SetupMaterial(renderer, auxVertCounter, textureArrayContainer, avatarMaterial, lastAvatarVertCount, avatarShapeComponent);
-                    auxVertCounter += currentVertexCount;
+                    // From Pooled Object
+                    for (var i = 0; i < pooledList.Value.Count; i++)
+                    {
+                        MeshFilter meshRenderer = pooledList.Value[i];
+                        if (!meshRenderer.gameObject.activeSelf) continue;
+
+                        targetList.Add(new MeshData(meshRenderer, meshRenderer.GetComponent<MeshRenderer>(), meshRenderer.transform, instance.transform,
+                            cachedWearable.OriginalAsset.RendererInfos[i].Material));
+                    }
+                }
+
+                using (PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = instance.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>(true))
+                {
+                    // From Asset Bundle
+                    for (var i = 0; i < pooledList.Value.Count; i++)
+                    {
+                        SkinnedMeshRenderer skinnedMeshRenderer = pooledList.Value[i];
+                        if (!skinnedMeshRenderer.gameObject.activeSelf) continue;
+
+                        (MeshRenderer, MeshFilter) tuple = SetupMesh(skinnedMeshRenderer);
+
+                        targetList.Add(new MeshData(tuple.Item2, tuple.Item1, tuple.Item1.transform, instance.transform,
+                            cachedWearable.OriginalAsset.RendererInfos[i].Material));
+                    }
                 }
             }
         }
 
-        private Renderer SetupMesh(SkinnedMeshRenderer skin)
+        private (MeshRenderer, MeshFilter) SetupMesh(SkinnedMeshRenderer skin)
         {
             GameObject go = skin.gameObject;
             MeshFilter filter = go.AddComponent<MeshFilter>();
             MeshRenderer meshRenderer = go.AddComponent<MeshRenderer>();
             filter.mesh = skin.sharedMesh;
             meshRenderer.material = skin.material;
+            meshRenderer.renderingLayerMask = 2;
             Object.Destroy(skin);
-            return meshRenderer;
+            return (meshRenderer, filter);
         }
 
-        protected override void SetupMaterial(Renderer meshRenderer, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, IObjectPool<Material> celShadingMaterial, int lastAvatarVertCount,
+        protected override void SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount,
+            TextureArrayContainer textureArrayContainer, IObjectPool<Material> celShadingMaterial, int lastAvatarVertCount,
             AvatarShapeComponent avatarShapeComponent)
         {
             Material avatarMaterial = celShadingMaterial.Get();
-            Material originalMaterial = meshRenderer.material;
             var albedoTexture = (Texture2D)originalMaterial.mainTexture;
 
             if (albedoTexture != null)
@@ -200,6 +230,24 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
             usedTextureArraySlots.Clear();
             computeSkinningBufferContainer.Dispose();
+        }
+
+        private readonly struct MeshData
+        {
+            public readonly MeshFilter Mesh;
+            public readonly Renderer Renderer;
+            public readonly Material OriginalMaterial;
+            public readonly Transform Transform;
+            public readonly Transform RootTransform;
+
+            public MeshData(MeshFilter mesh, Renderer renderer, Transform transform, Transform rootTransform, Material originalMaterial)
+            {
+                Mesh = mesh;
+                Transform = transform;
+                RootTransform = rootTransform;
+                OriginalMaterial = originalMaterial;
+                Renderer = renderer;
+            }
         }
     }
 }
