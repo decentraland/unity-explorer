@@ -151,31 +151,27 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             {
                 GameObject instance = cachedWearable.Instance;
 
-                using (PoolExtensions.Scope<List<MeshFilter>> pooledList = instance.GetComponentsInChildrenIntoPooledList<MeshFilter>(true))
+                using (PoolExtensions.Scope<List<Renderer>> pooledList = instance.GetComponentsInChildrenIntoPooledList<Renderer>(true))
                 {
-                    // From Pooled Object
                     for (var i = 0; i < pooledList.Value.Count; i++)
                     {
-                        MeshFilter meshRenderer = pooledList.Value[i];
+                        Renderer meshRenderer = pooledList.Value[i];
                         if (!meshRenderer.gameObject.activeSelf) continue;
 
-                        targetList.Add(new MeshData(meshRenderer, meshRenderer.GetComponent<MeshRenderer>(), meshRenderer.transform, instance.transform,
-                            cachedWearable.OriginalAsset.RendererInfos[i].Material));
-                    }
-                }
+                        if (meshRenderer is SkinnedMeshRenderer renderer)
+                        {
+                            // From Asset Bundle
+                            (MeshRenderer, MeshFilter) tuple = SetupMesh(renderer);
 
-                using (PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = instance.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>(true))
-                {
-                    // From Asset Bundle
-                    for (var i = 0; i < pooledList.Value.Count; i++)
-                    {
-                        SkinnedMeshRenderer skinnedMeshRenderer = pooledList.Value[i];
-                        if (!skinnedMeshRenderer.gameObject.activeSelf) continue;
-
-                        (MeshRenderer, MeshFilter) tuple = SetupMesh(skinnedMeshRenderer);
-
-                        targetList.Add(new MeshData(tuple.Item2, tuple.Item1, tuple.Item1.transform, instance.transform,
-                            cachedWearable.OriginalAsset.RendererInfos[i].Material));
+                            targetList.Add(new MeshData(tuple.Item2, tuple.Item1, tuple.Item1.transform, instance.transform,
+                                cachedWearable.OriginalAsset.RendererInfos[i].Material));
+                        }
+                        else
+                        {
+                            // From Pooled Object
+                            targetList.Add(new MeshData(meshRenderer.GetComponent<MeshFilter>(), meshRenderer, meshRenderer.transform, instance.transform,
+                                cachedWearable.OriginalAsset.RendererInfos[i].Material));
+                        }
                     }
                 }
             }
@@ -199,6 +195,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         {
             Material avatarMaterial = celShadingMaterial.Get();
             var albedoTexture = (Texture2D)originalMaterial.mainTexture;
+
 
             if (albedoTexture != null)
             {
