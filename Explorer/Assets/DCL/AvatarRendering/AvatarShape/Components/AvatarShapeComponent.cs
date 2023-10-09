@@ -1,5 +1,6 @@
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Helpers;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
@@ -23,7 +24,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public Promise WearablePromise;
 
         public AvatarBase Base;
-        public List<GameObject> InstantiatedWearables;
+        public List<CachedWearable> InstantiatedWearables;
         public CustomSkinning skinningMethod;
 
         private TransformAccessArray Bones;
@@ -39,7 +40,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             IsDirty = true;
             WearablePromise = wearablePromise;
             Base = null;
-            InstantiatedWearables = new List<GameObject>();
+            InstantiatedWearables = new List<CachedWearable>();
             Bones = default(TransformAccessArray);
             job = default(BoneMatrixCalculationJob);
             handle = default(JobHandle);
@@ -74,11 +75,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public void Clear()
         {
             skinningMethod.Dispose();
+
             //TODO: Clear BurstJob and everything else that could be dirty
         }
-
     }
-
-
-    }
-
+}

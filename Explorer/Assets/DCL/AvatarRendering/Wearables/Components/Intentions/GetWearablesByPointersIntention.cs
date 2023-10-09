@@ -1,26 +1,25 @@
 using AssetManagement;
-using DCL.ECSComponents;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using static DCL.AvatarRendering.Wearables.Helpers.WearableComponentsUtils;
 
 namespace DCL.AvatarRendering.Wearables.Components.Intentions
 {
-    public struct GetWearablesByPointersIntention : IAssetIntention, IEquatable<GetWearablesByPointersIntention>
+    public struct GetWearablesByPointersIntention : IAssetIntention, IDisposable, IEquatable<GetWearablesByPointersIntention>
     {
         public readonly List<string> Pointers;
         public readonly IWearable[] Results;
+
         public readonly AssetSource PermittedSources;
         public readonly BodyShape BodyShape;
         public readonly bool FallbackToDefaultWearables;
 
         public CancellationTokenSource CancellationTokenSource { get; }
 
-        public GetWearablesByPointersIntention(List<string> pointers, IWearable[] result, PBAvatarShape bodyShape, bool fallbackToDefaultWearables = true)
-            : this(pointers, result, (BodyShape)bodyShape, fallbackToDefaultWearables: fallbackToDefaultWearables) { }
-
-        public GetWearablesByPointersIntention(List<string> pointers, IWearable[] result, BodyShape bodyShape, AssetSource permittedSources = AssetSource.ALL, bool fallbackToDefaultWearables = true)
+        internal GetWearablesByPointersIntention(List<string> pointers, IWearable[] result, BodyShape bodyShape, AssetSource permittedSources = AssetSource.ALL,
+            bool fallbackToDefaultWearables = true)
         {
             Pointers = pointers;
             Results = result;
@@ -38,5 +37,11 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
 
         public override int GetHashCode() =>
             HashCode.Combine(Pointers);
+
+        public void Dispose()
+        {
+            POINTERS_POOL.Release(Pointers);
+            RESULTS_POOL.Return(Results);
+        }
     }
 }

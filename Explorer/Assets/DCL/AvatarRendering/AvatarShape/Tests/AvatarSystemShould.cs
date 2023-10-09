@@ -4,15 +4,16 @@ using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.ECSComponents;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
 using NSubstitute;
 using NUnit.Framework;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -52,12 +53,12 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         {
             IWearable mockWearable = Substitute.For<IWearable>();
 
-            var AssetBundleData
-                = new StreamableLoadingResult<AssetBundleData>?[BodyShape.COUNT];
+            var assetBundleData
+                = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
 
-            AssetBundleData[BodyShape.MALE] = new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(null, null, new GameObject()));
+            assetBundleData[BodyShape.MALE] = new StreamableLoadingResult<WearableAsset>(new WearableAsset(new GameObject(), new List<WearableAsset.RendererInfo>()));
 
-            mockWearable.AssetBundleData.Returns(AssetBundleData);
+            mockWearable.WearableAssets.Returns(assetBundleData);
             return mockWearable;
         }
 

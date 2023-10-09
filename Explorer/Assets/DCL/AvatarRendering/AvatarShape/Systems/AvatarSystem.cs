@@ -7,6 +7,7 @@ using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.ECSComponents;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
@@ -17,9 +18,8 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.ColorComponent;
 using ECS.Unity.Transforms.Components;
-using System.Buffers;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -37,6 +37,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly TextureArrayContainer textureArrays;
         private readonly IObjectPool<Material> avatarMaterialPool;
         private readonly IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool;
+        private readonly IWearableAssetsCache wearableAssetsCache;
 
         private readonly ComputeBuffer vertexOutBuffer;
 
@@ -51,17 +52,20 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         public AvatarSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider,
-            IComponentPool<AvatarBase> avatarPoolRegistry, IObjectPool<Material> avatarMaterialPool, IObjectPool<UnityEngine.ComputeShader> computeShaderPool, TextureArrayContainer textureArrayContainer) : base(world)
+            IComponentPool<AvatarBase> avatarPoolRegistry, IObjectPool<Material> avatarMaterialPool, IObjectPool<UnityEngine.ComputeShader> computeShaderPool, TextureArrayContainer textureArrayContainer,
+            IWearableAssetsCache wearableAssetsCache) : base(world)
         {
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
             this.avatarPoolRegistry = avatarPoolRegistry;
 
             //TODO: This generates a MASSIVE hiccup. We could hide it behind the loading screen, but we should be careful
             textureArrays = textureArrayContainer;
+            this.wearableAssetsCache = wearableAssetsCache;
             this.avatarMaterialPool = avatarMaterialPool;
             computeShaderSkinningPool = computeShaderPool;
+
             //TODO: Looks like it needs to be released
-            vertexOutBuffer = new ComputeBuffer(5_000_000, Marshal.SizeOf<VertexInfo>());
+            vertexOutBuffer = new ComputeBuffer(5_000_000, Unsafe.SizeOf<VertexInfo>());
             Shader.SetGlobalBuffer("_GlobalAvatarBuffer", vertexOutBuffer);
         }
 
@@ -92,15 +96,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Name, pbAvatarShape.Id, pbAvatarShape, wearablePromise, pbAvatarShape.SkinColor.ToUnityColor(), pbAvatarShape.HairColor.ToUnityColor()));
         }
 
-        private Promise CreateWearablePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition)
-        {
-            List<string> pointers = ListPool<string>.Get();
-            pointers.Add(pbAvatarShape.BodyShape);
-            pointers.AddRange(pbAvatarShape.Wearables);
-
-            IWearable[] results = ArrayPool<IWearable>.Shared.Rent(pointers.Count);
-            return Promise.Create(World, new GetWearablesByPointersIntention(pointers, results, pbAvatarShape), partition);
-        }
+        private Promise CreateWearablePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition) =>
+            Promise.Create(World,
+                WearableComponentsUtils.CreateGetWearablesByPointersIntention(pbAvatarShape, pbAvatarShape.Wearables),
+                partition);
 
         [Query]
         private void UpdateAvatar(ref PBAvatarShape pbAvatarShape, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
@@ -142,22 +141,24 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarTransform.SetParent(transformComponent.Transform, false);
             avatarTransform.ResetLocalTRS();
 
-            ClearWearables(avatarShapeComponent.InstantiatedWearables);
+            wearableAssetsCache.TryReleaseAssets(avatarShapeComponent.InstantiatedWearables);
+
+            GetWearablesByPointersIntention intention = avatarShapeComponent.WearablePromise.LoadingIntention;
 
             HashSet<string> wearablesToHide = HashSetPool<string>.Get();
-            AvatarWearableHide.ComposeHiddenCategoriesOrdered(avatarShapeComponent.BodyShape, null, wearablesResult.Asset, wearablesToHide);
-
             HashSet<string> usedCategories = HashSetPool<string>.Get();
+            AvatarWearableHide.ComposeHiddenCategoriesOrdered(avatarShapeComponent.BodyShape, null, wearablesResult.Asset, wearablesToHide);
             GameObject bodyShape = null;
 
             //Using Pointer size for counter, since we dont know the size of the results array
             //because it was pooled
-            for (var i = 0; i < avatarShapeComponent.WearablePromise.LoadingIntention.Pointers.Count; i++)
+            for (var i = 0; i < intention.Pointers.Count; i++)
             {
                 IWearable resultWearable = wearablesResult.Asset[i];
 
                 if (wearablesToHide.Contains(resultWearable.GetCategory()))
                     continue;
+
 
                 if (resultWearable.isFacialFeature())
                 {
@@ -165,14 +166,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 }
                 else
                 {
-                    //TODO: Pooling of wearables
-                    GameObject instantiatedWearable
-                        = Object.Instantiate(resultWearable.AssetBundleData[avatarShapeComponent.BodyShape].Value.Asset.GameObject, avatarTransform);
-
-                    instantiatedWearable.transform.ResetLocalTRS();
+                    WearableAsset originalAsset = resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape);
+                    CachedWearable instantiatedWearable = wearableAssetsCache.InstantiateWearable(originalAsset, avatarTransform);
                     avatarShapeComponent.InstantiatedWearables.Add(instantiatedWearable);
-                    usedCategories.Add(resultWearable.GetCategory());
 
+                    usedCategories.Add(resultWearable.GetCategory());
                     if (resultWearable.IsBodyShape())
                         bodyShape = instantiatedWearable;
                 }
@@ -186,8 +184,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 textureArrays, computeShaderSkinningPool.Get(), avatarMaterialPool, lastAvatarVertCount, avatarBase.AvatarSkinnedMeshRenderer, avatarShapeComponent);
             lastAvatarVertCount += newVertCount;
 
-            ListPool<string>.Release(avatarShapeComponent.WearablePromise.LoadingIntention.Pointers);
-            ArrayPool<IWearable>.Shared.Return(avatarShapeComponent.WearablePromise.LoadingIntention.Results);
+            intention.Dispose();
             avatarShapeComponent.IsDirty = false;
         }
 
@@ -196,19 +193,14 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         [All(typeof(DeleteEntityIntention))]
         private void DestroyAvatar(ref AvatarShapeComponent avatarShapeComponent)
         {
+            // Use frame budget for destruction as well
+            if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
+                return;
+
             if (avatarShapeComponent.Base != null)
                 avatarPoolRegistry.Release(avatarShapeComponent.Base);
 
-            ClearWearables(avatarShapeComponent.InstantiatedWearables);
-        }
-
-        private void ClearWearables(List<GameObject> instantiatedWearables)
-        {
-            //TODO: Pooling of wearables
-            foreach (GameObject instantiatedWearable in instantiatedWearables)
-                Object.Destroy(instantiatedWearable);
-
-            instantiatedWearables.Clear();
+            wearableAssetsCache.TryReleaseAssets(avatarShapeComponent.InstantiatedWearables);
         }
 
         public override void Dispose()

@@ -1,4 +1,4 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape.ComputeShader
@@ -9,7 +9,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         //TODO: Pool this buffer
         private ComputeBuffer CreateSubUpdateBuffer<T>(int size) where T: struct =>
-            new (size, Marshal.SizeOf(typeof(T)), ComputeBufferType.Structured, ComputeBufferMode.SubUpdates);
+            new (size, Unsafe.SizeOf<T>(), ComputeBufferType.Structured, ComputeBufferMode.SubUpdates);
 
         public override void StartWriting()
         {

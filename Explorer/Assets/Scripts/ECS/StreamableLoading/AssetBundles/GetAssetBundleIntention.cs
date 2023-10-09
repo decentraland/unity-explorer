@@ -65,13 +65,13 @@ namespace ECS.StreamableLoading.AssetBundles
             new (hash: hash, permittedSources: permittedSources, assetBundleManifest: manifest, customEmbeddedSubDirectory: customEmbeddedSubDirectory, cancellationTokenSource: cancellationTokenSource);
 
         public bool Equals(GetAssetBundleIntention other) =>
-            Hash == other.Hash || Name == other.Name;
+            StringComparer.OrdinalIgnoreCase.Equals(Hash, other.Hash) || Name == other.Name;
 
         public override bool Equals(object obj) =>
             obj is GetAssetBundleIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(Hash, Name);
+            HashCode.Combine(StringComparer.OrdinalIgnoreCase.GetHashCode(Hash), Name);
 
         public override string ToString() =>
             $"Get Asset Bundle: {Name} ({Hash})";

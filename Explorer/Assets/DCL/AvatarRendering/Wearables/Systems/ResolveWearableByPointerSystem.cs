@@ -17,7 +17,6 @@ using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
-using UnityEngine.Pool;
 using Utility;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
@@ -81,7 +80,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 // Wait for default wearables to be resolved
                 return;
 
-            List<string> missingPointers = ListPool<string>.Get();
+            List<string> missingPointers = WearableComponentsUtils.POINTERS_POOL.Get();
             var successfulResults = 0;
 
             for (var index = 0; index < wearablesByPointersIntention.Pointers.Count; index++)
@@ -99,7 +98,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                 if (CreatePromiseIfRequired(component, wearablesByPointersIntention, partitionComponent)) continue;
 
-                if (component.AssetBundleData[wearablesByPointersIntention.BodyShape] is { Succeeded: true })
+                if (component.WearableAssets[wearablesByPointersIntention.BodyShape] is { Succeeded: true })
                 {
                     successfulResults++;
                     wearablesByPointersIntention.Results[index] = component;
@@ -113,7 +112,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             }
 
             //If there are no missing pointers, we release the list
-            ListPool<string>.Release(missingPointers);
+            WearableComponentsUtils.POINTERS_POOL.Release(missingPointers);
 
             if (successfulResults == wearablesByPointersIntention.Pointers.Count)
                 World.Add(entity, new StreamableLoadingResult<IWearable[]>(wearablesByPointersIntention.Results));
@@ -151,7 +150,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     }
                 }
 
-                ListPool<string>.Release(promise.LoadingIntention.Pointers);
+                WearableComponentsUtils.POINTERS_POOL.Release(promise.LoadingIntention.Pointers);
                 World.Destroy(entity);
             }
         }
@@ -215,7 +214,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 return true;
             }
 
-            if (component.AssetBundleData[intention.BodyShape] == null)
+            if (component.WearableAssets[intention.BodyShape] == null)
             {
                 SceneAssetBundleManifest manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : component.ManifestResult?.Asset;
 
@@ -236,11 +235,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private void CreateMissingPointersPromise(List<string> missingPointers, GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
-            var wearableDtoByPointersIntention = new GetWearableDTOByPointersIntention
-            {
-                Pointers = missingPointers,
-                CommonArguments = new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint, cancellationTokenSource: intention.CancellationTokenSource),
-            };
+            var wearableDtoByPointersIntention = new GetWearableDTOByPointersIntention(
+                missingPointers,
+                new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint, cancellationTokenSource: intention.CancellationTokenSource));
 
             var promise = AssetPromise<WearableDTO[], GetWearableDTOByPointersIntention>.Create(World, wearableDtoByPointersIntention, partitionComponent);
             World.Create(promise, intention.BodyShape);
@@ -252,15 +249,16 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 ReportHub.LogError(GetReportCategory(), $"Default wearable {wearable.WearableDTO.Asset.id} failed to load");
 
-                var failedResult = new StreamableLoadingResult<AssetBundleData>(new Exception("Default wearable failed to load"));
+                StreamableLoadingResult<WearableAsset> failedResult = new StreamableLoadingResult<AssetBundleData>(new Exception("Default wearable failed to load"))
+                   .ToWearableAsset();
 
                 if (wearable.IsUnisex())
                 {
-                    wearable.AssetBundleData[BodyShape.MALE] = failedResult;
-                    wearable.AssetBundleData[BodyShape.FEMALE] = failedResult;
+                    wearable.WearableAssets[BodyShape.MALE] = failedResult;
+                    wearable.WearableAssets[BodyShape.FEMALE] = failedResult;
                 }
                 else
-                    wearable.AssetBundleData[bodyShape] = failedResult;
+                    wearable.WearableAssets[bodyShape] = failedResult;
 
                 return;
             }
@@ -271,22 +269,24 @@ namespace DCL.AvatarRendering.Wearables.Systems
             // Waiting for the default wearable should be moved to the loading screen
             if (wearable.IsUnisex())
             {
-                wearable.AssetBundleData[BodyShape.MALE] = wearableCatalog.GetDefaultWearable(BodyShape.MALE, wearable.GetCategory()).AssetBundleData[BodyShape.MALE];
-                wearable.AssetBundleData[BodyShape.FEMALE] = wearableCatalog.GetDefaultWearable(BodyShape.FEMALE, wearable.GetCategory()).AssetBundleData[BodyShape.FEMALE];
+                wearable.WearableAssets[BodyShape.MALE] = wearableCatalog.GetDefaultWearable(BodyShape.MALE, wearable.GetCategory()).WearableAssets[BodyShape.MALE];
+                wearable.WearableAssets[BodyShape.FEMALE] = wearableCatalog.GetDefaultWearable(BodyShape.FEMALE, wearable.GetCategory()).WearableAssets[BodyShape.FEMALE];
             }
             else
-                wearable.AssetBundleData[bodyShape] = wearableCatalog.GetDefaultWearable(bodyShape, wearable.GetCategory()).AssetBundleData[bodyShape];
+                wearable.WearableAssets[bodyShape] = wearableCatalog.GetDefaultWearable(bodyShape, wearable.GetCategory()).WearableAssets[bodyShape];
         }
 
         private void SetWearableResult(IWearable wearable, StreamableLoadingResult<AssetBundleData> result, in BodyShape bodyShape)
         {
+            StreamableLoadingResult<WearableAsset> wearableAsset = result.ToWearableAsset();
+
             if (wearable.IsUnisex())
             {
-                wearable.AssetBundleData[BodyShape.MALE] = result;
-                wearable.AssetBundleData[BodyShape.FEMALE] = result;
+                wearable.WearableAssets[BodyShape.MALE] = wearableAsset;
+                wearable.WearableAssets[BodyShape.FEMALE] = wearableAsset;
             }
             else
-                wearable.AssetBundleData[bodyShape] = result;
+                wearable.WearableAssets[bodyShape] = wearableAsset;
         }
     }
 }

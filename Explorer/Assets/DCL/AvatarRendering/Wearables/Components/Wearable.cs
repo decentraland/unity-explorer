@@ -1,5 +1,4 @@
 using DCL.AvatarRendering.Wearables.Helpers;
-using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
@@ -12,31 +11,22 @@ namespace DCL.AvatarRendering.Wearables.Components
     [Serializable]
     public class Wearable : IWearable
     {
-
         public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
-        public StreamableLoadingResult<AssetBundleData>?[] AssetBundleData { get; set; }
+        public StreamableLoadingResult<WearableAsset>?[] WearableAssets { get; set; } = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
         public StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }
+        public bool IsLoading { get; set; } = true;
 
-        public bool IsLoading { get; set; }
-
-        public Wearable()
-        {
-            IsLoading = true;
-
-            AssetBundleData = new StreamableLoadingResult<AssetBundleData>?[BodyShape.COUNT];
-
-            for (var i = 0; i < AssetBundleData.Length; i++)
-                AssetBundleData[i] = null;
-        }
-
-        //TODO: Make this method better
-        public string GetMainFileHash(string bodyShape)
+        public string GetMainFileHash(BodyShape bodyShape)
         {
             var mainFileKey = "";
             var hashToReturn = "";
 
-            foreach (WearableDTO.WearableMetadataDto.Representation representation in WearableDTO.Asset.metadata.data.representations)
+            // The length of arrays is small, so O(N) complexity is fine
+            // Avoid iterator allocations with "for" loop
+            for (var i = 0; i < WearableDTO.Asset.metadata.data.representations.Length; i++)
             {
+                WearableDTO.WearableMetadataDto.Representation representation = WearableDTO.Asset.metadata.data.representations[i];
+
                 if (representation.bodyShapes.Contains(bodyShape))
                 {
                     mainFileKey = representation.mainFile;
@@ -44,8 +34,10 @@ namespace DCL.AvatarRendering.Wearables.Components
                 }
             }
 
-            foreach (WearableDTO.WearableContentDto wearableContentDto in WearableDTO.Asset.content)
+            for (var i = 0; i < WearableDTO.Asset.content.Length; i++)
             {
+                WearableDTO.WearableContentDto wearableContentDto = WearableDTO.Asset.content[i];
+
                 if (wearableContentDto.file.Equals(mainFileKey))
                 {
                     hashToReturn = wearableContentDto.hash;
