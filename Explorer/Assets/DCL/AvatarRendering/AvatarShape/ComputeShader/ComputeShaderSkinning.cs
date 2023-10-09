@@ -166,10 +166,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             // HACK: We currently aren't using normal maps so we're just creating shading issues by using this variant.
             avatarMaterial.DisableKeyword("_NORMALMAP");
 
-            //vertOutMaterial.SetColor(ComputeShaderHelpers._BaseColour_ShaderID, Color.red);
             avatarMaterial.SetInteger(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, lastWearableVertCount);
             avatarMaterial.SetInteger(ComputeShaderConstants.LAST_WEARABLE_VERT_COUNT_ID, lastAvatarVertCount);
-
             SetAvatarColors(avatarMaterial, originalMaterial, avatarShapeComponent);
             meshRenderer.material = avatarMaterial;
         }

@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
@@ -59,7 +60,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             textureArrays = textureArrayContainer;
             this.avatarMaterialPool = avatarMaterialPool;
             computeShaderSkinningPool = computeShaderPool;
-
             //TODO: Looks like it needs to be released
             vertexOutBuffer = new ComputeBuffer(5_000_000, Marshal.SizeOf<VertexInfo>());
             Shader.SetGlobalBuffer("_GlobalAvatarBuffer", vertexOutBuffer);
@@ -144,14 +144,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             ClearWearables(avatarShapeComponent.InstantiatedWearables);
 
-            HashSet<string> hidingList = HashSetPool<string>.Get();
+            HashSet<string> wearablesToHide = HashSetPool<string>.Get();
+            AvatarWearableHide.ComposeHiddenCategoriesOrdered(avatarShapeComponent.BodyShape, null, wearablesResult.Asset, wearablesToHide);
 
-            for (var i = 0; i < avatarShapeComponent.WearablePromise.LoadingIntention.Pointers.Count; i++)
-            {
-                IWearable resultWearable = wearablesResult.Asset[i];
-                foreach (string s in resultWearable.GetHidingList())
-                    hidingList.Add(s);
-            }
+            HashSet<string> usedCategories = HashSetPool<string>.Get();
+            GameObject bodyShape = null;
 
             //Using Pointer size for counter, since we dont know the size of the results array
             //because it was pooled
@@ -159,24 +156,31 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             {
                 IWearable resultWearable = wearablesResult.Asset[i];
 
-                if (hidingList.Contains(resultWearable.GetCategory()))
+                if (wearablesToHide.Contains(resultWearable.GetCategory()))
                     continue;
 
-                Debug.Log(resultWearable.GetUrn());
+                if (resultWearable.isFacialFeature())
+                {
+                    //TODO: Facial Features
+                }
+                else
+                {
+                    //TODO: Pooling of wearables
+                    GameObject instantiatedWearable
+                        = Object.Instantiate(resultWearable.AssetBundleData[avatarShapeComponent.BodyShape].Value.Asset.GameObject, avatarTransform);
 
-                //TODO: Pooling of wearables
-                GameObject instantiatedWearable
-                    = Object.Instantiate(resultWearable.AssetBundleData[avatarShapeComponent.BodyShape].Value.Asset.GameObject, avatarTransform);
+                    instantiatedWearable.transform.ResetLocalTRS();
+                    avatarShapeComponent.InstantiatedWearables.Add(instantiatedWearable);
+                    usedCategories.Add(resultWearable.GetCategory());
 
-                instantiatedWearable.transform.ResetLocalTRS();
-                avatarShapeComponent.InstantiatedWearables.Add(instantiatedWearable);
-
-                //TODO: Do a proper hiding algorithm
-                if (resultWearable.IsBodyShape())
-                    HideBodyParts(instantiatedWearable);
+                    if (resultWearable.IsBodyShape())
+                        bodyShape = instantiatedWearable;
+                }
             }
 
-            HashSetPool<string>.Release(hidingList);
+            AvatarWearableHide.HideBodyShape(bodyShape, wearablesToHide, usedCategories);
+            HashSetPool<string>.Release(wearablesToHide);
+            HashSetPool<string>.Release(usedCategories);
 
             int newVertCount = avatarShapeComponent.skinningMethod.Initialize(avatarShapeComponent.InstantiatedWearables,
                 textureArrays, computeShaderSkinningPool.Get(), avatarMaterialPool, lastAvatarVertCount, avatarBase.AvatarSkinnedMeshRenderer, avatarShapeComponent);
@@ -205,18 +209,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 Object.Destroy(instantiatedWearable);
 
             instantiatedWearables.Clear();
-        }
-
-        private void HideBodyParts(GameObject bodyShape)
-        {
-            for (var i = 0; i < bodyShape.transform.childCount; i++)
-            {
-                bool turnOff = !(bodyShape.transform.GetChild(i).name.Contains("uBody_BaseMesh") ||
-                                 bodyShape.transform.GetChild(i).name.Contains("lBody_BaseMesh") ||
-                                 bodyShape.transform.GetChild(i).name.Contains("Feet_BaseMesh"));
-
-                bodyShape.transform.GetChild(i).gameObject.SetActive(turnOff);
-            }
         }
 
         public override void Dispose()

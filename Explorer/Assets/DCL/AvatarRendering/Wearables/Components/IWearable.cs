@@ -3,6 +3,7 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
+using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {
@@ -24,7 +25,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         bool IsLoading { get; set; }
 
-        string[] GetHidingList();
+        void GetHidingList(string bodyShapeType, HashSet<string> hideListResult);
 
         /// <summary>
         ///     Might be never resolved if Wearable is loaded from the Embedded Source
@@ -32,5 +33,9 @@ namespace DCL.AvatarRendering.Wearables.Components
         StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
         StreamableLoadingResult<AssetBundleData>?[] AssetBundleData { get; set; }
         StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }
+
+        WearableDTO.WearableMetadataDto.DataDto GetData();
+
+        bool isFacialFeature();
     }
 }
