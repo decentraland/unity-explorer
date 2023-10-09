@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
+using System;
 using System.Collections.Generic;
 using UnityEngine.Pool;
 
@@ -23,10 +24,10 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         public bool Equals(GetAssetBundleIntention x, GetAssetBundleIntention y) =>
-            x.Hash == y.Hash;
+            StringComparer.OrdinalIgnoreCase.Equals(x.Hash, y.Hash);
 
         public int GetHashCode(GetAssetBundleIntention obj) =>
-            obj.Hash.GetHashCode();
+            StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Hash);
 
         public bool TryGet(in GetAssetBundleIntention key, out AssetBundleData asset) =>
             cache.TryGetValue(key, out asset);
