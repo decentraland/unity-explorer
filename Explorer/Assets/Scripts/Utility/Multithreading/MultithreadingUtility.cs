@@ -19,19 +19,10 @@ namespace Utility.Multithreading
         /// <summary>
         ///     Thread-safe frame count
         /// </summary>
-        public static long FrameCount
-        {
-            get
-            {
-                return
-#if UNITY_EDITOR
-                    !PlayerLoopHelper.IsMainThread || !Application.isPlaying
-                        ? 0
-                        :
-#endif
-                        Interlocked.Read(ref frameCounter.frameCount);
-            }
-        }
+        public static long FrameCount =>
+
+            // In Tests frameCounter is null
+            frameCounter != null ? Interlocked.Read(ref frameCounter.frameCount) : 0;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void SaveFrameCount()

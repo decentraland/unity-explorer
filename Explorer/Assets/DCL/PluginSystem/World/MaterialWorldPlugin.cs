@@ -54,7 +54,7 @@ namespace DCL.PluginSystem.World
 
         public MaterialsPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IAssetsProvisioner assetsProvisioner)
         {
-            capFrameTimeBudgetProvider = sharedDependencies.FrameTimeCapBudgetProvider;
+            capFrameTimeBudgetProvider = sharedDependencies.FrameTimeBudgetProvider;
             this.assetsProvisioner = assetsProvisioner;
 
             // materialsCache = new MaterialsCappedCache(CACHE_CAPACITY, (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); });

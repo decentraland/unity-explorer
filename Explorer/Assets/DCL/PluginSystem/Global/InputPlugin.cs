@@ -10,9 +10,9 @@ namespace DCL.PluginSystem.Global
     {
         private readonly DCLInput dclInput;
 
-        public InputPlugin()
+        public InputPlugin(DCLInput dclInput)
         {
-            dclInput = new DCLInput();
+            this.dclInput = dclInput;
             dclInput.Enable();
         }
 

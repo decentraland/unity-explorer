@@ -22,7 +22,7 @@ namespace CrdtEcsBridge.Components
         public bool TryGet(int id, out SDKComponentBridge sdkComponentBridge) =>
             bridges.TryGetValue(id, out sdkComponentBridge);
 
-        public bool TryGet<T>(out SDKComponentBridge sdkComponentBridge) where T: IMessage<T> =>
+        public bool TryGet<T>(out SDKComponentBridge sdkComponentBridge) where T: IMessage =>
             bridgeByType.TryGetValue(typeof(T), out sdkComponentBridge);
     }
 }

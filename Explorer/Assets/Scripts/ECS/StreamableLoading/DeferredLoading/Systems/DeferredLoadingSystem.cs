@@ -6,8 +6,8 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine.Pool;
+using Utility;
 
 namespace ECS.StreamableLoading.DeferredLoading
 {
@@ -54,7 +54,7 @@ namespace ECS.StreamableLoading.DeferredLoading
 
                         var intentionData = new IntentionData
                         {
-                            StatePointer = UnsafeUtility.AddressOf(ref state),
+                            StatePointer = new ManagedTypePointer<StreamableLoadingState>(ref state),
                             PartitionComponent = partition,
                         };
 
@@ -80,7 +80,7 @@ namespace ECS.StreamableLoading.DeferredLoading
                 if (!concurrentLoadingBudgetProvider.TrySpendBudget())
                     break;
 
-                ref StreamableLoadingState state = ref UnsafeUtility.AsRef<StreamableLoadingState>(intentionToAnalyze.StatePointer);
+                ref StreamableLoadingState state = ref intentionToAnalyze.StatePointer.Value;
                 state.SetAllowed(AcquiredBudget.Create(concurrentLoadingBudgetProvider));
             }
 
@@ -88,7 +88,7 @@ namespace ECS.StreamableLoading.DeferredLoading
             for (; i < loadingIntentions.Count; i++)
             {
                 IntentionData intentionToAnalyze = loadingIntentions[i];
-                ref StreamableLoadingState state = ref UnsafeUtility.AsRef<StreamableLoadingState>(intentionToAnalyze.StatePointer);
+                ref StreamableLoadingState state = ref intentionToAnalyze.StatePointer.Value;
                 state.Value = StreamableLoadingState.Status.Forbidden;
             }
         }
@@ -99,10 +99,10 @@ namespace ECS.StreamableLoading.DeferredLoading
             ListPool<IntentionData>.Release(loadingIntentions);
         }
 
-        internal unsafe struct IntentionData
+        internal struct IntentionData
         {
             public IPartitionComponent PartitionComponent;
-            public void* StatePointer;
+            public ManagedTypePointer<StreamableLoadingState> StatePointer;
         }
     }
 }

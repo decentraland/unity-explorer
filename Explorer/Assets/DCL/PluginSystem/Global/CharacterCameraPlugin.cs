@@ -24,12 +24,14 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly RealmSamplingData realmSamplingData;
         private readonly CameraSamplingData cameraSamplingData;
+        private readonly ExposedCameraData exposedCameraData;
 
-        public CharacterCameraPlugin(IAssetsProvisioner assetsProvisioner, RealmSamplingData realmSamplingData, CameraSamplingData cameraSamplingData)
+        public CharacterCameraPlugin(IAssetsProvisioner assetsProvisioner, RealmSamplingData realmSamplingData, CameraSamplingData cameraSamplingData, ExposedCameraData exposedCameraData)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.realmSamplingData = realmSamplingData;
             this.cameraSamplingData = cameraSamplingData;
+            this.exposedCameraData = exposedCameraData;
         }
 
         public async UniTask Initialize(CharacterCameraSettings settings, CancellationToken ct)
@@ -59,8 +61,9 @@ namespace DCL.PluginSystem.Global
 
             // Create a special camera entity
             world.Create(
-                new CRDTEntity(SpecialEntititiesID.CAMERA_ENTITY),
+                new CRDTEntity(SpecialEntitiesID.CAMERA_ENTITY),
                 new CameraComponent(cinemachinePreset.Brain.OutputCamera),
+                exposedCameraData,
                 cinemachinePreset,
                 new CinemachineCameraState(),
                 cameraSamplingData,
@@ -69,6 +72,7 @@ namespace DCL.PluginSystem.Global
             // Register systems
             ControlCinemachineVirtualCameraSystem.InjectToWorld(ref builder);
             ApplyCinemachineCameraInputSystem.InjectToWorld(ref builder);
+            PrepareExposedCameraDataSystem.InjectToWorld(ref builder);
         }
     }
 }

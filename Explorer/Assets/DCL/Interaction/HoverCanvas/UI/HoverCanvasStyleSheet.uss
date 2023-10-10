@@ -1,0 +1,40 @@
+.tooltipBackground {
+    height: 36px;
+    background-color: rgba(22, 21, 24, 0.96);
+    border-radius: 12px;
+    padding-left: 7px;
+    padding-right: 10px;
+    align-self: flex-start;
+    max-width: 400px;
+}
+
+.tooltipInputKey {
+    height: 63%;
+    border-radius: 5px;
+    border-width: 1px;
+    border-color: white;
+    margin: 0;
+    padding-left: 3px;
+    padding-right: 3px;
+}
+
+.unity-label {
+    margin: 0;
+    padding: 0;
+}
+
+.tooltipIcon {
+    height: 65%;
+    width: 18px;
+    margin-left: 2;
+}
+
+.tooltipHintText {
+    max-height: 70%;
+    margin-left: 3;
+}
+
+.alignedTooltipGap {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}

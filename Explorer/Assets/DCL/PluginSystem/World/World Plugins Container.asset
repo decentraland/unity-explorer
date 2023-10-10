@@ -14,9 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   settings:
   - rid: 6784895267130048515
+  - rid: 1268264040174714880
   references:
     version: 2
     RefIds:
+    - rid: 1268264040174714880
+      type: {class: InteractionPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        <RaycastBucketThreshold>k__BackingField: 3
+        <RaycastFrameBudgetMs>k__BackingField: 3
+        <PlayerOriginRaycastMaxDistance>k__BackingField: 200
     - rid: 6784895267130048515
       type: {class: MaterialsPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:

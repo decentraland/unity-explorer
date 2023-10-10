@@ -70,7 +70,7 @@ namespace Global.Dynamic
             var builder = new ArchSystemsWorldBuilder<World>(world);
 
             Entity playerEntity = world.Create(
-                new CRDTEntity(SpecialEntititiesID.PLAYER_ENTITY),
+                new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
                 new PlayerComponent(characterObject.CameraFocus),
                 new TransformComponent { Transform = characterObject.Transform });
 

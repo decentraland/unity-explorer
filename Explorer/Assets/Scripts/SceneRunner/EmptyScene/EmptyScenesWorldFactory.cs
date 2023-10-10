@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components;
+using CrdtEcsBridge.Components.Special;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.Groups;
@@ -57,8 +58,8 @@ namespace SceneRunner.EmptyScene
             Transform emptyScenesRoot = new GameObject("Empty Scenes").transform;
             emptyScenesRoot.ResetLocalTRS();
 
-            Entity sceneRootEntity = sharedDependencies.EntityFactory.Create(SpecialEntititiesID.SCENE_ROOT_ENTITY, world);
-            world.Add(sceneRootEntity, new TransformComponent(emptyScenesRoot));
+            // This entity may be further enriched by plugins
+            Entity sceneRootEntity = world.Create(SpecialEntitiesID.SCENE_ROOT_ENTITY, new SceneRootComponent(), new TransformComponent(emptyScenesRoot));
 
             SyncEmptyScenesPartitionSystem.InjectToWorld(ref builder);
             DestroyEntitiesSystem.InjectToWorld(ref builder);

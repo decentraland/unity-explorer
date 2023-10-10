@@ -15,45 +15,51 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
     [TestFixture]
     public class ECSToCRDTWriterShould
     {
-        [Test]
-        public void AppendMessage()
+        private ICRDTProtocol crdtProtocol;
+        private IOutgoingCRDTMessagesProvider outgoingCRDTMessageProvider;
+        private SDKComponentsRegistry sdkComponentRegistry;
+        private ComponentWriter.ECSToCRDTWriter writer;
+
+        [SetUp]
+        public void Setup()
         {
-            //Arrange
-            ICRDTProtocol crdtProtocol = Substitute.For<ICRDTProtocol>();
-            IOutgoingCRTDMessagesProvider outgoingCRDTMessageProvider = Substitute.For<IOutgoingCRTDMessagesProvider>();
-
-            var sdkComponentRegistry = new SDKComponentsRegistry();
-            sdkComponentRegistry.Add(SDKComponentBuilder<PBPointerEventsResult>.Create(ComponentID.POINTER_EVENTS_RESULT).AsProtobufComponent());
-
-            var ecsToCRDTWriter = new ComponentWriter.ECSToCRDTWriter(crdtProtocol, outgoingCRDTMessageProvider, sdkComponentRegistry, CRDTPooledMemoryAllocator.Create());
-            crdtProtocol.ProcessMessage(Arg.Any<CRDTMessage>()).Returns(_ => new CRDTReconciliationResult(CRDTStateReconciliationResult.StateAppendedData, CRDTReconciliationEffect.ComponentAdded));
-            var crdtEntity = new CRDTEntity(1);
-
-            //Act
-            ecsToCRDTWriter.AppendMessage(crdtEntity, new PBPointerEventsResult());
-
-            //Assert
-            crdtProtocol.Received().CreateAppendMessage(crdtEntity, Arg.Any<int>(), Arg.Any<IMemoryOwner<byte>>());
-            outgoingCRDTMessageProvider.Received().AddMessage(Arg.Any<ProcessedCRDTMessage>());
+            crdtProtocol = Substitute.For<ICRDTProtocol>();
+            outgoingCRDTMessageProvider = Substitute.For<IOutgoingCRDTMessagesProvider>();
+            sdkComponentRegistry = new SDKComponentsRegistry();
+            writer = new ComponentWriter.ECSToCRDTWriter(crdtProtocol, outgoingCRDTMessageProvider, sdkComponentRegistry, CRDTPooledMemoryAllocator.Create());
         }
 
         [Test]
-        public void AddMessageToProtocol()
+        public void AppendMessage()
         {
-            //Arrange
-            ICRDTProtocol crdtProtocol = new CRDTProtocol();
-            IOutgoingCRTDMessagesProvider outgoingCRDTMessageProvider = Substitute.For<IOutgoingCRTDMessagesProvider>();
-
-            var sdkComponentRegistry = new SDKComponentsRegistry();
             sdkComponentRegistry.Add(SDKComponentBuilder<PBPointerEventsResult>.Create(ComponentID.POINTER_EVENTS_RESULT).AsProtobufComponent());
-
-            var ecsToCRDTWriter = new ComponentWriter.ECSToCRDTWriter(crdtProtocol, outgoingCRDTMessageProvider, sdkComponentRegistry, CRDTPooledMemoryAllocator.Create());
+            var crdtEntity = new CRDTEntity(1);
 
             //Act
-            ecsToCRDTWriter.PutMessage(new CRDTEntity(), new PBPointerEventsResult());
+            writer.AppendMessage(crdtEntity, new PBPointerEventsResult(), 100);
 
             //Assert
-            Assert.AreEqual(crdtProtocol.GetMessagesCount(), 1);
+            crdtProtocol.Received().CreateAppendMessage(crdtEntity, ComponentID.POINTER_EVENTS_RESULT, 100, Arg.Any<IMemoryOwner<byte>>());
+            outgoingCRDTMessageProvider.Received().AppendMessage(Arg.Any<ProcessedCRDTMessage>());
+        }
+
+        [Test]
+        public void PutLwwMessage()
+        {
+            sdkComponentRegistry.Add(SDKComponentBuilder<PBPointerEventsResult>.Create(ComponentID.POINTER_EVENTS_RESULT).AsProtobufComponent());
+
+            //Act
+            writer.PutMessage(300, new PBPointerEventsResult());
+            outgoingCRDTMessageProvider.Received().AddLwwMessage(Arg.Any<ProcessedCRDTMessage>());
+        }
+
+        [Test]
+        public void DeleteMessage()
+        {
+            sdkComponentRegistry.Add(SDKComponentBuilder<PBPointerEventsResult>.Create(ComponentID.POINTER_EVENTS_RESULT).AsProtobufComponent());
+
+            writer.PutMessage(50, new PBPointerEventsResult());
+            outgoingCRDTMessageProvider.Received().AddLwwMessage(Arg.Any<ProcessedCRDTMessage>());
         }
     }
 }

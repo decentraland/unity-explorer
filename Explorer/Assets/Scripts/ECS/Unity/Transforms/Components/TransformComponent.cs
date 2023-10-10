@@ -13,6 +13,17 @@ namespace ECS.Unity.Transforms.Components
     /// </summary>
     public struct TransformComponent : IPoolableComponentProvider<Transform>
     {
+        public struct CachedTransform
+        {
+            public Vector3 WorldPosition;
+            public Quaternion WorldRotation;
+            public Vector3 LocalPosition;
+            public Quaternion LocalRotation;
+            public Vector3 LocalScale;
+        }
+
+        public CachedTransform Cached;
+
         public Transform Transform;
         public HashSet<EntityReference> Children;
         public EntityReference Parent;
@@ -22,6 +33,28 @@ namespace ECS.Unity.Transforms.Components
             Transform = transform;
             Children = HashSetPool<EntityReference>.Get();
             Parent = EntityReference.Null;
+
+            Cached = new CachedTransform
+            {
+                WorldPosition = transform.position,
+                WorldRotation = transform.rotation,
+                LocalPosition = transform.localPosition,
+                LocalRotation = transform.localRotation,
+                LocalScale = transform.localScale,
+            };
+        }
+
+        public void SetTransform(Vector3 localPosition, Quaternion localRotation, Vector3 localScale)
+        {
+            Transform.localPosition = localPosition;
+            Transform.localRotation = localRotation;
+            Transform.localScale = localScale;
+
+            Cached.LocalPosition = localPosition;
+            Cached.LocalRotation = localRotation;
+            Cached.LocalScale = localScale;
+            Cached.WorldPosition = Transform.position;
+            Cached.WorldRotation = Transform.rotation;
         }
 
         Transform IPoolableComponentProvider<Transform>.PoolableComponent => Transform;
