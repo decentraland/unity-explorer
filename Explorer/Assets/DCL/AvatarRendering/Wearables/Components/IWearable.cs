@@ -2,6 +2,7 @@
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
+using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {
@@ -30,6 +31,11 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         bool IsBodyShape();
 
-        string[] GetHidingList();
+        void GetHidingList(string bodyShapeType, HashSet<string> hideListResult);
+
+        WearableDTO.WearableMetadataDto.DataDto GetData();
+
+        bool isFacialFeature();
+
     }
 }

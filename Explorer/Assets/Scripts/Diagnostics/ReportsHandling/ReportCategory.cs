@@ -106,7 +106,7 @@
         public const string AVATAR = nameof(AVATAR);
 
         /// <summary>
-        ///     Avatar rendering
+        ///     Wearable related
         /// </summary>
         public const string WEARABLE = nameof(WEARABLE);
 

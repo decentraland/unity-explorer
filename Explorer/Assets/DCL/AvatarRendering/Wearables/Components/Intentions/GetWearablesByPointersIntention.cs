@@ -1,5 +1,4 @@
 using AssetManagement;
-using DCL.ECSComponents;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;

@@ -19,7 +19,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         private UnityEngine.ComputeShader cs;
 
-        //private int skinnedMeshRendererBoneCount;
         private int kernel;
         private ComputeBuffer mBones;
 
@@ -151,31 +150,27 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             {
                 GameObject instance = cachedWearable.Instance;
 
-                using (PoolExtensions.Scope<List<MeshFilter>> pooledList = instance.GetComponentsInChildrenIntoPooledList<MeshFilter>(true))
+                using (PoolExtensions.Scope<List<Renderer>> pooledList = instance.GetComponentsInChildrenIntoPooledList<Renderer>(true))
                 {
-                    // From Pooled Object
                     for (var i = 0; i < pooledList.Value.Count; i++)
                     {
-                        MeshFilter meshRenderer = pooledList.Value[i];
+                        Renderer meshRenderer = pooledList.Value[i];
                         if (!meshRenderer.gameObject.activeSelf) continue;
 
-                        targetList.Add(new MeshData(meshRenderer, meshRenderer.GetComponent<MeshRenderer>(), meshRenderer.transform, instance.transform,
-                            cachedWearable.OriginalAsset.RendererInfos[i].Material));
-                    }
-                }
+                        if (meshRenderer is SkinnedMeshRenderer renderer)
+                        {
+                            // From Asset Bundle
+                            (MeshRenderer, MeshFilter) tuple = SetupMesh(renderer);
 
-                using (PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = instance.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>(true))
-                {
-                    // From Asset Bundle
-                    for (var i = 0; i < pooledList.Value.Count; i++)
-                    {
-                        SkinnedMeshRenderer skinnedMeshRenderer = pooledList.Value[i];
-                        if (!skinnedMeshRenderer.gameObject.activeSelf) continue;
-
-                        (MeshRenderer, MeshFilter) tuple = SetupMesh(skinnedMeshRenderer);
-
-                        targetList.Add(new MeshData(tuple.Item2, tuple.Item1, tuple.Item1.transform, instance.transform,
-                            cachedWearable.OriginalAsset.RendererInfos[i].Material));
+                            targetList.Add(new MeshData(tuple.Item2, tuple.Item1, tuple.Item1.transform, instance.transform,
+                                cachedWearable.OriginalAsset.RendererInfos[i].Material));
+                        }
+                        else
+                        {
+                            // From Pooled Object
+                            targetList.Add(new MeshData(meshRenderer.GetComponent<MeshFilter>(), meshRenderer, meshRenderer.transform, instance.transform,
+                                cachedWearable.OriginalAsset.RendererInfos[i].Material));
+                        }
                     }
                 }
             }
@@ -200,6 +195,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             Material avatarMaterial = celShadingMaterial.Get();
             var albedoTexture = (Texture2D)originalMaterial.mainTexture;
 
+
             if (albedoTexture != null)
             {
                 UsedTextureArraySlot usedIndex = textureArrayContainer.SetTexture(avatarMaterial, albedoTexture, ComputeShaderConstants.TextureArrayType.ALBEDO);
@@ -215,10 +211,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             // HACK: We currently aren't using normal maps so we're just creating shading issues by using this variant.
             avatarMaterial.DisableKeyword("_NORMALMAP");
 
-            //vertOutMaterial.SetColor(ComputeShaderHelpers._BaseColour_ShaderID, Color.red);
             avatarMaterial.SetInteger(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, lastWearableVertCount);
             avatarMaterial.SetInteger(ComputeShaderConstants.LAST_WEARABLE_VERT_COUNT_ID, lastAvatarVertCount);
-
             SetAvatarColors(avatarMaterial, originalMaterial, avatarShapeComponent);
             meshRenderer.material = avatarMaterial;
         }
@@ -232,22 +226,5 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             computeSkinningBufferContainer.Dispose();
         }
 
-        private readonly struct MeshData
-        {
-            public readonly MeshFilter Mesh;
-            public readonly Renderer Renderer;
-            public readonly Material OriginalMaterial;
-            public readonly Transform Transform;
-            public readonly Transform RootTransform;
-
-            public MeshData(MeshFilter mesh, Renderer renderer, Transform transform, Transform rootTransform, Material originalMaterial)
-            {
-                Mesh = mesh;
-                Transform = transform;
-                RootTransform = rootTransform;
-                OriginalMaterial = originalMaterial;
-                Renderer = renderer;
-            }
-        }
     }
 }

@@ -82,7 +82,9 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            AvatarSystem.InjectToWorld(ref builder, frameTimeCapBudgetProvider, componentPoolsRegistry.GetReferenceTypePool<AvatarBase>(), celShadingMaterialPool,
+            AvatarLoaderSystem.InjectToWorld(ref builder);
+
+            AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudgetProvider, componentPoolsRegistry.GetReferenceTypePool<AvatarBase>(), celShadingMaterialPool,
                 computeShaderPool, textureArrayContainer, wearableAssetsCache);
 
             StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder);

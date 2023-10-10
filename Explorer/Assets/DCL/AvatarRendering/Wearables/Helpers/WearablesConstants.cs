@@ -7,6 +7,58 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public static class WearablesConstants
     {
+        //Used for hiding algorithm
+        public static readonly IList<string> CATEGORIES_PRIORITY = new List<string>
+        {
+            Categories.SKIN,
+            Categories.UPPER_BODY,
+            Categories.HANDS_WEAR,
+            Categories.LOWER_BODY,
+            Categories.FEET,
+            Categories.HELMET,
+            Categories.HAT,
+            Categories.TOP_HEAD,
+            Categories.MASK,
+            Categories.EYEWEAR,
+            Categories.EARRING,
+            Categories.TIARA,
+            Categories.HAIR,
+            Categories.EYEBROWS,
+            Categories.EYES,
+            Categories.MOUTH,
+            Categories.FACIAL_HAIR,
+            Categories.BODY_SHAPE,
+        };
+
+        //Used for hiding algorithm
+        public static readonly string[] SKIN_IMPLICIT_CATEGORIES =
+        {
+            Categories.EYES,
+            Categories.MOUTH,
+            Categories.EYEBROWS,
+            Categories.HAIR,
+            Categories.UPPER_BODY,
+            Categories.LOWER_BODY,
+            Categories.FEET,
+            Categories.HANDS,
+            Categories.HANDS_WEAR,
+            Categories.HEAD,
+            Categories.FACIAL_HAIR,
+        };
+
+        //Used for hiding algorithm
+        public static readonly string[] UPPER_BODY_DEFAULT_HIDES =
+        {
+            Categories.HANDS,
+        };
+
+        public static readonly IList<string> FACIAL_FEATURES = new List<string>
+        {
+            Categories.EYEBROWS,
+            Categories.EYES,
+            Categories.MOUTH,
+        };
+
         public static class Categories
         {
             public const string BODY_SHAPE = "body_shape";
@@ -69,9 +121,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             //TODO: Commented wearables that Im not sure we have default ABs
             public static readonly IReadOnlyDictionary<(BodyShape, string), string> DEFAULT_WEARABLES = new Dictionary<(BodyShape, string), string>
             {
-                //{ (BodyShapes.MALE, Categories.EYES), "urn:decentraland:off-chain:base-avatars:eyes_00" },
-                //{ (BodyShapes.MALE, Categories.EYEBROWS), "urn:decentraland:off-chain:base-avatars:eyebrows_00" },
-                //{ (BodyShapes.MALE, Categories.MOUTH), "urn:decentraland:off-chain:base-avatars:mouth_00" },
+                { (BodyShape.MALE, Categories.EYES), "urn:decentraland:off-chain:base-avatars:eyes_00" },
+                { (BodyShape.MALE, Categories.EYEBROWS), "urn:decentraland:off-chain:base-avatars:eyebrows_00" },
+                { (BodyShape.MALE, Categories.MOUTH), "urn:decentraland:off-chain:base-avatars:mouth_00" },
                 { (BodyShape.MALE, Categories.HAIR), "urn:decentraland:off-chain:base-avatars:casual_hair_01" },
 
                 //{ (BodyShapes.MALE, Categories.FACIAL), "urn:decentraland:off-chain:base-avatars:beard" },
@@ -79,9 +131,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 { (BodyShape.MALE, Categories.LOWER_BODY), "urn:decentraland:off-chain:base-avatars:brown_pants" },
                 { (BodyShape.MALE, Categories.FEET), "urn:decentraland:off-chain:base-avatars:sneakers" },
 
-                //{ (BodyShapes.FEMALE, Categories.EYES), "urn:decentraland:off-chain:base-avatars:f_eyes_00" },
-                //{ (BodyShapes.FEMALE, Categories.EYEBROWS), "urn:decentraland:off-chain:base-avatars:f_eyebrows_00" },
-                //{ (BodyShapes.FEMALE, Categories.MOUTH), "urn:decentraland:off-chain:base-avatars:f_mouth_00" },
+                { (BodyShape.FEMALE, Categories.EYES), "urn:decentraland:off-chain:base-avatars:f_eyes_00" },
+                { (BodyShape.FEMALE, Categories.EYEBROWS), "urn:decentraland:off-chain:base-avatars:f_eyebrows_00" },
+                { (BodyShape.FEMALE, Categories.MOUTH), "urn:decentraland:off-chain:base-avatars:f_mouth_00" },
                 { (BodyShape.FEMALE, Categories.HAIR), "urn:decentraland:off-chain:base-avatars:standard_hair" },
                 { (BodyShape.FEMALE, Categories.UPPER_BODY), "urn:decentraland:off-chain:base-avatars:f_sweater" },
                 { (BodyShape.FEMALE, Categories.LOWER_BODY), "urn:decentraland:off-chain:base-avatars:f_jeans" },
