@@ -3,7 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components;
-using CrdtEcsBridge.Components.Special;
+using CrdtEcsBridge.Components.ResetExtensions;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;

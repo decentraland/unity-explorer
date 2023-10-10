@@ -1,6 +1,6 @@
 ﻿using Arch.Core;
 using CRDT;
-using CrdtEcsBridge.Components.Special;
+using CrdtEcsBridge.Components.ResetExtensions;
 using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
 using ECS.Unity.Transforms.Components;

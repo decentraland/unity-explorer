@@ -1,5 +1,5 @@
 using CrdtEcsBridge.Components;
-using CrdtEcsBridge.Components.Special;
+using CrdtEcsBridge.Components.ResetExtensions;
 using CrdtEcsBridge.Components.Transform;
 using DCL.ECS7;
 using DCL.ECSComponents;
