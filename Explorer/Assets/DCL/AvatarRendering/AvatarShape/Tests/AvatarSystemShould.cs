@@ -19,7 +19,7 @@ using UnityEngine.TestTools;
 
 namespace DCL.AvatarRendering.AvatarShape.Tests
 {
-    public class AvatarSystemShould : UnitySystemTestBase<AvatarSystem>
+    public class AvatarSystemShould : UnitySystemTestBase<AvatarInstantiatorSystem>
     {
         private AvatarBase instantiatedAvatarBase;
         private PBAvatarShape pbAvatarShape;

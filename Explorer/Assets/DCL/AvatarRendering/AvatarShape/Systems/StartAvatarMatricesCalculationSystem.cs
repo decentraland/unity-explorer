@@ -15,7 +15,7 @@ namespace DCL.AvatarRendering.AvatarShape.GPUSkinning
     ///     how to distribute workload
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateBefore(typeof(AvatarSystem))]
+    [UpdateBefore(typeof(AvatarInstantiatorSystem))]
     public partial class StartAvatarMatricesCalculationSystem : BaseUnityLoopSystem
     {
         internal StartAvatarMatricesCalculationSystem(World world) : base(world) { }
@@ -26,12 +26,12 @@ namespace DCL.AvatarRendering.AvatarShape.GPUSkinning
         }
 
         [Query]
-        private void Execute(ref AvatarShapeComponent avatarShapeComponent)
+        private void Execute(ref AvatarBase avatarBase, ref AvatarTransformMatrixComponent transformMatrixComponent, ref AvatarShapeComponent avatarShapeComponent)
         {
             if (avatarShapeComponent.IsDirty)
                 return;
 
-            avatarShapeComponent.ScheduleBoneMatrixCalculation();
+            transformMatrixComponent.ScheduleBoneMatrixCalculation(avatarBase.transform.worldToLocalMatrix);
         }
     }
 }

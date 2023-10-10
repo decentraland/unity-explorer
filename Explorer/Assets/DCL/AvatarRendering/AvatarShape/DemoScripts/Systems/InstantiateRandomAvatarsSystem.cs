@@ -30,7 +30,7 @@ using RaycastHit = UnityEngine.RaycastHit;
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateBefore(typeof(AvatarSystem))] // Updating before AvatarSystem allows it to react as soon as possible
+    [UpdateBefore(typeof(AvatarInstantiatorSystem))] // Updating before AvatarSystem allows it to react as soon as possible
     [LogCategory(ReportCategory.AVATAR)]
     public partial class InstantiateRandomAvatarsSystem : BaseUnityLoopSystem
     {
