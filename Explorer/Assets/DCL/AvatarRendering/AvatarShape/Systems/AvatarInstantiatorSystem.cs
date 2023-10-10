@@ -84,7 +84,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             if (!avatarShapeComponent.WearablePromise.TryConsume(World, out StreamableLoadingResult<IWearable[]> wearablesResult)) return;
 
             skinningComponent.Dispose();
-            wearableAssetsCache.TryReleaseAssets(avatarShapeComponent.InstantiatedWearables);
+            wearableAssetsCache.TryReleaseAssets(avatarShapeComponent.InstantiatedWearables, avatarMaterialPool);
 
             // Override by ref
             skinningComponent = InstantiateAvatar(ref avatarShapeComponent, wearablesResult, avatarBase);
@@ -181,21 +181,24 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         //We only care to release AvatarShapeComponent with AvatarBase; since this are the ones that got instantiated.
         //The ones that dont have AvatarBase never got instantiated and therefore we have nothing to release
         [Query]
-        [All(typeof(DeleteEntityIntention))]
         private void DestroyAvatar(ref AvatarShapeComponent avatarShapeComponent, ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
-            AvatarBase avatarBase, AvatarCustomSkinningComponent skinningComponent)
+            AvatarBase avatarBase, AvatarCustomSkinningComponent skinningComponent, ref DeleteEntityIntention deleteEntityIntention)
         {
             // Use frame budget for destruction as well
             if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
+            {
+                deleteEntityIntention.DeferDeletion = true;
                 return;
+            }
 
             vertOutBuffer.Release(skinningComponent.VertsOutRegion);
 
             avatarPoolRegistry.Release(avatarBase);
             avatarTransformMatrixComponent.Dispose();
             skinningComponent.Dispose();
+            deleteEntityIntention.DeferDeletion = false;
 
-            wearableAssetsCache.TryReleaseAssets(avatarShapeComponent.InstantiatedWearables);
+            wearableAssetsCache.TryReleaseAssets(avatarShapeComponent.InstantiatedWearables, avatarMaterialPool);
         }
 
         public override void Dispose()

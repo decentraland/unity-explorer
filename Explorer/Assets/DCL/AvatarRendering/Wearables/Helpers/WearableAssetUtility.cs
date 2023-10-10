@@ -4,6 +4,7 @@ using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility;
 using Utility.Pool;
 
@@ -12,10 +13,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     public static class WearableAssetUtility
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void TryReleaseAsset(this IWearableAssetsCache.ReleaseResult releaseResult, GameObject asset)
+        public static void TryReleaseAsset(this IWearableAssetsCache.ReleaseResult releaseResult, WearableAssetInstance asset, IObjectPool<Material> materialPool)
         {
             if (releaseResult == IWearableAssetsCache.ReleaseResult.CapacityExceeded)
-                UnityObjectUtils.SafeDestroy(asset);
+                asset.Release(materialPool);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -44,14 +45,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return new StreamableLoadingResult<WearableAsset>(new WearableAsset(result.Asset.GameObject, rendererInfos));
         }
 
-        public static void TryReleaseAssets(this IWearableAssetsCache cache, IList<CachedWearable> instantiatedWearables)
+        public static void TryReleaseAssets(this IWearableAssetsCache cache, IList<CachedWearable> instantiatedWearables, IObjectPool<Material> materialPool)
         {
             for (var i = 0; i < instantiatedWearables.Count; i++)
             {
                 CachedWearable cachedWearable = instantiatedWearables[i];
-                GameObject instantiatedWearable = cachedWearable.Instance;
                 IWearableAssetsCache.ReleaseResult releaseResult = cache.TryRelease(cachedWearable);
-                releaseResult.TryReleaseAsset(instantiatedWearable);
+                releaseResult.TryReleaseAsset(cachedWearable.Instance, materialPool);
             }
 
             instantiatedWearables.Clear();
@@ -66,7 +66,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             instantiatedWearable.transform.ResetLocalTRS();
             instantiatedWearable.gameObject.SetActive(true);
-            return new CachedWearable(originalAsset, instantiatedWearable);
+            return new CachedWearable(originalAsset, new WearableAssetInstance(instantiatedWearable));
         }
     }
 }

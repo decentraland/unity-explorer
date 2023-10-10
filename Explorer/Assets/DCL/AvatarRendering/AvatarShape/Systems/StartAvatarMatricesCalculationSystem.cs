@@ -5,6 +5,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using UnityEngine.PlayerLoop;
 
 namespace DCL.AvatarRendering.AvatarShape.GPUSkinning
@@ -26,6 +27,7 @@ namespace DCL.AvatarRendering.AvatarShape.GPUSkinning
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void Execute(ref AvatarBase avatarBase, ref AvatarTransformMatrixComponent transformMatrixComponent, ref AvatarShapeComponent avatarShapeComponent)
         {
             if (avatarShapeComponent.IsDirty)
