@@ -26,7 +26,7 @@ namespace CRDT.Protocol
         /// <summary>
         /// Creates an Append Message but does not process it
         /// </summary>
-        ProcessedCRDTMessage CreateAppendMessage(CRDTEntity entity, int componentId, in IMemoryOwner<byte> data);
+        ProcessedCRDTMessage CreateAppendMessage(CRDTEntity entity, int componentId, int timestamp, in IMemoryOwner<byte> data);
 
         /// <summary>
         /// Creates an LWW PUT Message but does not process it

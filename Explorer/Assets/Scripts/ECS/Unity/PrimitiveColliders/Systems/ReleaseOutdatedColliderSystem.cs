@@ -3,10 +3,12 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
+using DCL.Interaction.Utility;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.ComponentsPooling;
 using ECS.Groups;
+using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.PrimitiveColliders.Components;
 
@@ -22,16 +24,20 @@ namespace ECS.Unity.PrimitiveColliders.Systems
     public partial class ReleaseOutdatedColliderSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPoolsRegistry poolsRegistry;
+        private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
 
-        internal ReleaseOutdatedColliderSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
+        internal ReleaseOutdatedColliderSystem(World world, IComponentPoolsRegistry poolsRegistry,
+            IEntityCollidersSceneCache entityCollidersSceneCache) : base(world)
         {
             this.poolsRegistry = poolsRegistry;
+            this.entityCollidersSceneCache = entityCollidersSceneCache;
         }
 
         protected override void Update(float t)
         {
             ValidateColliderQuery(World);
             HandleComponentRemovalQuery(World);
+            RemoveFromCacheQuery(World);
 
             // Batch remove
             World.Remove<PrimitiveColliderComponent>(in HandleComponentRemoval_QueryDescription);
@@ -41,8 +47,17 @@ namespace ECS.Unity.PrimitiveColliders.Systems
         [None(typeof(PBMeshCollider))]
         private void HandleComponentRemoval(ref PrimitiveColliderComponent component)
         {
+            entityCollidersSceneCache.Remove(component.Collider);
+
             if (poolsRegistry.TryGetPool(component.ColliderType, out IComponentPool componentPool))
                 componentPool.Release(component.Collider);
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void RemoveFromCache(ref PrimitiveColliderComponent colliderComponent)
+        {
+            entityCollidersSceneCache.Remove(colliderComponent.Collider);
         }
 
         [Query]
@@ -51,6 +66,8 @@ namespace ECS.Unity.PrimitiveColliders.Systems
         {
             if (meshCollider.IsDirty && meshCollider.MeshCase != component.SDKType)
             {
+                entityCollidersSceneCache.Remove(component.Collider);
+
                 if (poolsRegistry.TryGetPool(component.ColliderType, out IComponentPool componentPool))
                     componentPool.Release(component.Collider);
 

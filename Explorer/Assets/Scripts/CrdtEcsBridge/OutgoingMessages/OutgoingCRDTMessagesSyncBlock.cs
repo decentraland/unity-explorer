@@ -1,7 +1,6 @@
 using CRDT.Protocol.Factory;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 
 namespace CrdtEcsBridge.OutgoingMessages
 {
@@ -10,37 +9,34 @@ namespace CrdtEcsBridge.OutgoingMessages
     /// </summary>
     public readonly struct OutgoingCRDTMessagesSyncBlock : IDisposable
     {
-        private readonly Mutex mutex;
         private readonly List<ProcessedCRDTMessage> messages;
 
-        internal OutgoingCRDTMessagesSyncBlock(List<ProcessedCRDTMessage> messages, Mutex mutex)
+        internal OutgoingCRDTMessagesSyncBlock(List<ProcessedCRDTMessage> messages)
         {
             this.messages = messages;
-            this.mutex = mutex;
+
+            PayloadLength = 0;
+
+            for (var i = 0; i < messages.Count; i++)
+            {
+                ProcessedCRDTMessage processedCRDTMessage = messages[i];
+                PayloadLength += processedCRDTMessage.CRDTMessageDataLength;
+            }
         }
 
         public IReadOnlyList<ProcessedCRDTMessage> Messages => messages;
 
-        /// <summary>
-        /// Returns the total size of the payload of the outgoing CRDT Messages
-        /// </summary>
-        public int GetPayloadLength()
-        {
-            var length = 0;
-
-            for (var i = 0; i < messages.Count; i++)
-                length += messages[i].CRDTMessageDataLength;
-
-            return length;
-        }
+        public int PayloadLength { get; }
 
         /// <summary>
         /// Flushes the outgoing CRDT messages and releases the mutex
         /// </summary>
         public void Dispose()
         {
-            messages.Clear();
-            mutex.ReleaseMutex();
+            for (var i = 0; i < messages.Count; i++)
+                messages[i].message.Data.Dispose();
+
+            OutgoingCRDTMessagesProvider.MESSAGES_SHARED_POOL.Release(messages);
         }
     }
 }

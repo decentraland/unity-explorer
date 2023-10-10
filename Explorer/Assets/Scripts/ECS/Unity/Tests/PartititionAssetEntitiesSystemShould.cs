@@ -16,17 +16,18 @@ namespace ECS.Unity.Tests
     public class PartitionAssetEntitiesSystemShould : UnitySystemTestBase<PartitionAssetEntitiesSystem>
     {
         private Entity sceneRoot;
-        private Transform sceneRootTransform;
         private IPartitionSettings partitionSettings;
         private IPartitionComponent scenePartition;
         private IReadOnlyCameraSamplingData samplingData;
         private IComponentPool<PartitionComponent> componentPool;
 
+        private ref TransformComponent sceneRootTransform => ref world.Get<TransformComponent>(sceneRoot);
+
         [SetUp]
         public void SetUp()
         {
             sceneRoot = world.Create(new SceneRootComponent());
-            sceneRootTransform = AddTransformToEntity(sceneRoot).Transform;
+            AddTransformToEntity(sceneRoot);
             partitionSettings = Substitute.For<IPartitionSettings>();
             partitionSettings.AngleTolerance.Returns(0);
             partitionSettings.PositionSqrTolerance.Returns(0);
@@ -72,7 +73,7 @@ namespace ECS.Unity.Tests
 
             Entity e = world.Create(new PartitionComponent { Bucket = 10, IsBehind = false }, new PBGltfContainer());
 
-            sceneRootTransform.position = Vector3.zero;
+            sceneRootTransform.SetTransform(Vector3.zero, Quaternion.identity, Vector3.one);
 
             system.Update(0);
 
@@ -113,7 +114,7 @@ namespace ECS.Unity.Tests
 
             Entity e = world.Create(new PBGltfContainer());
 
-            sceneRootTransform.position = new Vector3(0, 0, 180);
+            sceneRootTransform.SetTransform(new Vector3(0, 0, 180), Quaternion.identity, Vector3.one);
 
             system.Update(0);
 

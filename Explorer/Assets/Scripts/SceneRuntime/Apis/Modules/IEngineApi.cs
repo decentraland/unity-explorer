@@ -9,8 +9,9 @@ namespace SceneRuntime.Apis.Modules
     public interface IEngineApi : IDisposable
     {
         /// <param name="dataMemory"></param>
+        /// <param name="returnData"></param>
         /// <returns>A contiguous byte array of the CRDT Message representing the outgoing messages</returns>
-        public ArraySegment<byte> CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory);
+        public ArraySegment<byte> CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory, bool returnData = true);
 
         /// <returns>The full serialized CRDT State, A contiguous byte array of the CRDT Message</returns>
         public ArraySegment<byte> CrdtGetState();

@@ -18,6 +18,8 @@ namespace CRDT.Memory
 
             private bool disposed;
 
+            private Memory<byte> slicedMemory;
+
             internal MemoryOwner(CRDTPooledMemoryAllocator crdtPooledMemoryAllocator)
             {
                 this.crdtPooledMemoryAllocator = crdtPooledMemoryAllocator;
@@ -26,7 +28,7 @@ namespace CRDT.Memory
             internal void Set(byte[] array, int size)
             {
                 this.array = array;
-                Memory = this.array.AsMemory().Slice(0, size);
+                slicedMemory = this.array.AsMemory().Slice(0, size);
                 disposed = false;
             }
 
@@ -39,11 +41,12 @@ namespace CRDT.Memory
                     crdtPooledMemoryAllocator.arrayPool.Return(array);
                     crdtPooledMemoryAllocator.memoryOwnerPool.Release(this);
                     array = null;
+                    slicedMemory = Memory<byte>.Empty;
                     disposed = true;
                 }
             }
 
-            public Memory<byte> Memory { get; private set; }
+            public Memory<byte> Memory => disposed ? throw new ObjectDisposedException(nameof(CRDTPooledMemoryAllocator) + "." + nameof(MemoryOwner)) : slicedMemory;
         }
 
         private static readonly ThreadSafeObjectPool<CRDTPooledMemoryAllocator> POOL = new (

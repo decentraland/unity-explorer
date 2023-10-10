@@ -97,34 +97,6 @@ MonoBehaviour:
     - Category: UNSPECIFIED
       Severity: 1
     - Category: ENGINE
-      Severity: 3
-    - Category: CRDT
-      Severity: 3
-    - Category: CRDT_ECS_BRIDGE
-      Severity: 3
-    - Category: SCENE_FACTORY
-      Severity: 3
-    - Category: SCENE_LOADING
-      Severity: 3
-    - Category: ECS
-      Severity: 3
-    - Category: STREAMABLE_LOADING
-      Severity: 3
-    - Category: ASSET_BUNDLES
-      Severity: 3
-    - Category: TEXTURES
-      Severity: 3
-    - Category: GLTF_CONTAINER
-      Severity: 3
-    - Category: MATERIALS
-      Severity: 3
-    - Category: PRIMITIVE_COLLIDERS
-      Severity: 3
-    - Category: PRIMITIVE_MESHES
-      Severity: 3
-    - Category: UNSPECIFIED
-      Severity: 3
-    - Category: ENGINE
       Severity: 2
     - Category: CRDT
       Severity: 2
@@ -155,8 +127,6 @@ MonoBehaviour:
     - Category: GLTF_CONTAINER
       Severity: 4
     - Category: REALM
-      Severity: 3
-    - Category: REALM
       Severity: 2
     - Category: REALM
       Severity: 0
@@ -164,8 +134,6 @@ MonoBehaviour:
       Severity: 4
     - Category: REALM
       Severity: 1
-    - Category: PRIORITIZATION
-      Severity: 3
     - Category: PRIORITIZATION
       Severity: 2
     - Category: PRIORITIZATION
@@ -175,8 +143,6 @@ MonoBehaviour:
     - Category: PRIORITIZATION
       Severity: 1
     - Category: JAVASCRIPT
-      Severity: 3
-    - Category: JAVASCRIPT
       Severity: 2
     - Category: JAVASCRIPT
       Severity: 0
@@ -185,8 +151,6 @@ MonoBehaviour:
     - Category: JAVASCRIPT
       Severity: 1
     - Category: MOTION
-      Severity: 3
-    - Category: MOTION
       Severity: 2
     - Category: MOTION
       Severity: 0
@@ -194,8 +158,6 @@ MonoBehaviour:
       Severity: 4
     - Category: MOTION
       Severity: 1
-    - Category: INPUT
-      Severity: 3
     - Category: INPUT
       Severity: 2
     - Category: INPUT

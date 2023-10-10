@@ -6,7 +6,6 @@ using CrdtEcsBridge.Components.Transform;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Transforms.Components;
-using UnityEngine;
 
 namespace ECS.Unity.Transforms.Systems
 {
@@ -28,10 +27,7 @@ namespace ECS.Unity.Transforms.Systems
         {
             if (sdkTransform.IsDirty)
             {
-                Transform unityTransform = transformComponent.Transform;
-                unityTransform.localPosition = sdkTransform.Position;
-                unityTransform.localRotation = sdkTransform.Rotation;
-                unityTransform.localScale = sdkTransform.Scale;
+                transformComponent.SetTransform(sdkTransform.Position, sdkTransform.Rotation, sdkTransform.Scale);
                 sdkTransform.IsDirty = false;
             }
         }

@@ -9,6 +9,7 @@ using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using DCL.Interaction.Utility;
 using ECS.LifeCycle;
 using ECS.Prioritization.Components;
 using NSubstitute;
@@ -67,7 +68,8 @@ namespace SceneRunner.Tests
             crdtSerializer = Substitute.For<ICRDTSerializer>();
             componentsRegistry = Substitute.For<ISDKComponentsRegistry>();
 
-            sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry, new EntityFactory());
+            sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry,
+                new SceneEntityFactory(), new EntityCollidersGlobalCache());
         }
 
         [OneTimeTearDown]
@@ -109,12 +111,13 @@ namespace SceneRunner.Tests
                 sceneRuntime,
                 TestSystemsWorld.Create(),
                 Substitute.For<ICRDTProtocol>(),
-                Substitute.For<IOutgoingCRTDMessagesProvider>(),
+                Substitute.For<IOutgoingCRDTMessagesProvider>(),
                 Substitute.For<ICRDTWorldSynchronizer>(),
                 Substitute.For<IInstancePoolsProvider>(),
                 Substitute.For<ICRDTMemoryAllocator>(),
                 Substitute.For<ISceneExceptionsHandler>(),
                 new SceneStateProvider(),
+                Substitute.For<IEntityCollidersSceneCache>(),
                 Substitute.For<ISceneData>()
             );
 
@@ -195,12 +198,13 @@ namespace SceneRunner.Tests
                 sceneRuntime,
                 TestSystemsWorld.Create(),
                 Substitute.For<ICRDTProtocol>(),
-                Substitute.For<IOutgoingCRTDMessagesProvider>(),
+                Substitute.For<IOutgoingCRDTMessagesProvider>(),
                 Substitute.For<ICRDTWorldSynchronizer>(),
                 Substitute.For<IInstancePoolsProvider>(),
                 Substitute.For<ICRDTMemoryAllocator>(),
                 Substitute.For<ISceneExceptionsHandler>(),
                 new SceneStateProvider(),
+                Substitute.For<IEntityCollidersSceneCache>(),
                 Substitute.For<ISceneData>()
             );
 
