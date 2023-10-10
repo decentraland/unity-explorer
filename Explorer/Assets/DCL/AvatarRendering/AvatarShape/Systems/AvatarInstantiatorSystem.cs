@@ -46,7 +46,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             public Vector3 position;
             public Vector3 normal;
             public Vector4 tangent;
-
         }
 
         public AvatarInstantiatorSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider,
@@ -85,7 +84,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             computeShaderSkinning.ComputeSkinning(avatarTransformMatrixComponent.CompleteBoneMatrixCalculations());
         }
 
-
         [Query]
         public void InstantiateExistingAvatar(ref AvatarShapeComponent avatarShapeComponent, ref TransformComponent transformComponent, AvatarBase avatarBase, ComputeShaderSkinning computeSkinningComponent)
         {
@@ -98,7 +96,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             InstantiateAvatar(ref avatarShapeComponent, wearablesResult, avatarBase, computeSkinningComponent);
         }
-
 
         [Query]
         [None(typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(ComputeShaderSkinning))]
@@ -119,7 +116,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarBase.SetAsMainPlayer(avatarShapeComponent.Name.Equals("Player"));
 
             var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create();
-            ;
+
             avatarTransformMatrixComponent.SetupBurstJob(avatarBase.transform, avatarBase.AvatarSkinnedMeshRenderer.bones);
 
             var computeShaderSkinning = new ComputeShaderSkinning();
@@ -139,6 +136,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             AvatarWearableHide.ComposeHiddenCategoriesOrdered(avatarShapeComponent.BodyShape, null, wearablesResult.Asset,
                 intention.Pointers.Count, wearablesToHide);
+
             GameObject bodyShape = null;
 
             //Using Pointer size for counter, since we dont know the size of the results array
@@ -161,9 +159,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
                     CachedWearable instantiatedWearable =
                         wearableAssetsCache.InstantiateWearable(originalAsset, avatarBase.transform);
+
                     avatarShapeComponent.InstantiatedWearables.Add(instantiatedWearable);
 
                     usedCategories.Add(resultWearable.GetCategory());
+
                     if (resultWearable.IsBodyShape())
                         bodyShape = instantiatedWearable;
                 }
@@ -175,6 +175,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             int newVertCount = computeShaderSkinning.Initialize(avatarShapeComponent.InstantiatedWearables,
                 textureArrays, computeShaderSkinningPool.Get(), avatarMaterialPool, lastAvatarVertCount, avatarBase.AvatarSkinnedMeshRenderer, avatarShapeComponent);
+
             lastAvatarVertCount += newVertCount;
 
             intention.Dispose();
