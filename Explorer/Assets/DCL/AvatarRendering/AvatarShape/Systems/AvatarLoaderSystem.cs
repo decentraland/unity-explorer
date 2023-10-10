@@ -17,7 +17,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [LogCategory(ReportCategory.AVATAR)]
     public partial class AvatarLoaderSystem : BaseUnityLoopSystem
     {
-        public AvatarLoaderSystem(World world) : base(world) { }
+        internal AvatarLoaderSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {

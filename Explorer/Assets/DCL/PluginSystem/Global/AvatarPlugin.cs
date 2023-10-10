@@ -3,9 +3,9 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape;
+using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.DemoScripts.UI;
 using DCL.AvatarRendering.AvatarShape.GPUSkinning;
-using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -15,6 +15,7 @@ using ECS;
 using ECS.ComponentsPooling;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -54,9 +55,8 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask Initialize(AvatarShapeSettings settings, CancellationToken ct)
         {
-            ProvidedAsset<GameObject> providedAvatarBase = await assetsProvisioner.ProvideMainAsset(settings.avatarBase, ct: ct);
-            var avatarPoolUtils = new AvatarPoolUtils(providedAvatarBase.Value.GetComponent<AvatarBase>());
-            componentPoolsRegistry.AddGameObjectPool(avatarPoolUtils.CreateAvatarContainer);
+            AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAsset(settings.avatarBase, ct: ct)).Value.GetComponent<AvatarBase>();
+            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity));
 
             //TODO: Does it make sense to prewarm using a for?
             ProvidedAsset<Material> providedMaterial = await assetsProvisioner.ProvideMainAsset(settings.celShadingMaterial, ct: ct);
@@ -82,10 +82,17 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
+            var vertOutBuffer = new FixedComputeBufferHandler(5_000_000, Unsafe.SizeOf<CustomSkinningVertexInfo>());
+            Shader.SetGlobalBuffer("_GlobalAvatarBuffer", vertOutBuffer.Buffer);
+
+            var skinningStrategy = new ComputeShaderSkinning();
+
             AvatarLoaderSystem.InjectToWorld(ref builder);
 
             AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudgetProvider, componentPoolsRegistry.GetReferenceTypePool<AvatarBase>(), celShadingMaterialPool,
-                computeShaderPool, textureArrayContainer, wearableAssetsCache);
+                computeShaderPool, textureArrayContainer, wearableAssetsCache, skinningStrategy, vertOutBuffer);
+
+            MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
 
             StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder);
 

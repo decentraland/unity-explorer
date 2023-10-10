@@ -17,7 +17,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -26,44 +25,34 @@ using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.We
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateAfter(typeof(AvatarLoaderSystem))]
     [LogCategory(ReportCategory.AVATAR)]
     public partial class AvatarInstantiatorSystem : BaseUnityLoopSystem
     {
-        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
+        private readonly IObjectPool<Material> avatarMaterialPool;
         private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
+        private readonly IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool;
+        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
+
+        private readonly CustomSkinning skinningStrategy;
 
         private readonly TextureArrayContainer textureArrays;
-        private readonly IObjectPool<Material> avatarMaterialPool;
-        private readonly IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool;
+        private readonly FixedComputeBufferHandler vertOutBuffer;
         private readonly IWearableAssetsCache wearableAssetsCache;
-
-        private readonly ComputeBuffer vertexOutBuffer;
-
-        private int lastAvatarVertCount;
-
-        public struct VertexInfo
-        {
-            public Vector3 position;
-            public Vector3 normal;
-            public Vector4 tangent;
-        }
 
         public AvatarInstantiatorSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider,
             IComponentPool<AvatarBase> avatarPoolRegistry, IObjectPool<Material> avatarMaterialPool, IObjectPool<UnityEngine.ComputeShader> computeShaderPool, TextureArrayContainer textureArrayContainer,
-            IWearableAssetsCache wearableAssetsCache) : base(world)
+            IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer) : base(world)
         {
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
             this.avatarPoolRegistry = avatarPoolRegistry;
 
-            //TODO: This generates a MASSIVE hiccup. We could hide it behind the loading screen, but we should be careful
             textureArrays = textureArrayContainer;
             this.wearableAssetsCache = wearableAssetsCache;
+            this.skinningStrategy = skinningStrategy;
+            this.vertOutBuffer = vertOutBuffer;
             this.avatarMaterialPool = avatarMaterialPool;
             computeShaderSkinningPool = computeShaderPool;
-
-            //TODO: Looks like it needs to be released
-            vertexOutBuffer = new ComputeBuffer(5_000_000, Unsafe.SizeOf<VertexInfo>());
-            Shader.SetGlobalBuffer("_GlobalAvatarBuffer", vertexOutBuffer);
         }
 
         protected override void Update(float t)
@@ -76,30 +65,34 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateAvatarBones(ref AvatarShapeComponent avatarShapeComponent, ref AvatarTransformMatrixComponent avatarTransformMatrixComponent, ComputeShaderSkinning computeShaderSkinning)
+        private void UpdateAvatarBones(ref AvatarShapeComponent avatarShapeComponent, ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
+            ref AvatarCustomSkinningComponent computeShaderSkinning)
         {
             if (avatarShapeComponent.IsDirty)
                 return;
 
-            computeShaderSkinning.ComputeSkinning(avatarTransformMatrixComponent.CompleteBoneMatrixCalculations());
+            skinningStrategy.ComputeSkinning(avatarTransformMatrixComponent.CompleteBoneMatrixCalculations(), ref computeShaderSkinning);
         }
 
         [Query]
-        public void InstantiateExistingAvatar(ref AvatarShapeComponent avatarShapeComponent, ref TransformComponent transformComponent, AvatarBase avatarBase, ComputeShaderSkinning computeSkinningComponent)
+        [All(typeof(TransformComponent))]
+        private void InstantiateExistingAvatar(ref AvatarShapeComponent avatarShapeComponent, AvatarBase avatarBase,
+            ref AvatarCustomSkinningComponent skinningComponent)
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return;
 
             if (!avatarShapeComponent.WearablePromise.TryConsume(World, out StreamableLoadingResult<IWearable[]> wearablesResult)) return;
 
-            computeSkinningComponent.Dispose();
+            skinningComponent.Dispose();
             wearableAssetsCache.TryReleaseAssets(avatarShapeComponent.InstantiatedWearables);
 
-            InstantiateAvatar(ref avatarShapeComponent, wearablesResult, avatarBase, computeSkinningComponent);
+            // Override by ref
+            skinningComponent = InstantiateAvatar(ref avatarShapeComponent, wearablesResult, avatarBase);
         }
 
         [Query]
-        [None(typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(ComputeShaderSkinning))]
-        public void InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref TransformComponent transformComponent)
+        [None(typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
+        private void InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref TransformComponent transformComponent)
         {
             if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return;
 
@@ -119,15 +112,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             avatarTransformMatrixComponent.SetupBurstJob(avatarBase.transform, avatarBase.AvatarSkinnedMeshRenderer.bones);
 
-            var computeShaderSkinning = new ComputeShaderSkinning();
+            AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, wearablesResult, avatarBase);
 
-            InstantiateAvatar(ref avatarShapeComponent, wearablesResult, avatarBase, computeShaderSkinning);
-
-            World.Add(entity, avatarBase, avatarTransformMatrixComponent, computeShaderSkinning);
+            World.Add(entity, avatarBase, avatarTransformMatrixComponent, skinningComponent);
         }
 
-        private void InstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent,
-            StreamableLoadingResult<IWearable[]> wearablesResult, AvatarBase avatarBase, ComputeShaderSkinning computeShaderSkinning)
+        private AvatarCustomSkinningComponent InstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent,
+            StreamableLoadingResult<IWearable[]> wearablesResult, AvatarBase avatarBase)
         {
             GetWearablesByPointersIntention intention = avatarShapeComponent.WearablePromise.LoadingIntention;
 
@@ -173,13 +164,15 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             HashSetPool<string>.Release(wearablesToHide);
             HashSetPool<string>.Release(usedCategories);
 
-            int newVertCount = computeShaderSkinning.Initialize(avatarShapeComponent.InstantiatedWearables,
-                textureArrays, computeShaderSkinningPool.Get(), avatarMaterialPool, lastAvatarVertCount, avatarBase.AvatarSkinnedMeshRenderer, avatarShapeComponent);
+            AvatarCustomSkinningComponent skinningComponent = skinningStrategy.Initialize(avatarShapeComponent.InstantiatedWearables,
+                textureArrays, computeShaderSkinningPool.Get(), avatarMaterialPool, avatarBase.AvatarSkinnedMeshRenderer, avatarShapeComponent);
 
-            lastAvatarVertCount += newVertCount;
+            skinningStrategy.SetVertOutRegion(vertOutBuffer.Rent(skinningComponent.vertCount), ref skinningComponent);
 
             intention.Dispose();
             avatarShapeComponent.IsDirty = false;
+
+            return skinningComponent;
         }
 
         private bool ReadyToInstantiateNewAvatar(ref AvatarShapeComponent avatarShapeComponent) =>
@@ -189,23 +182,25 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         //The ones that dont have AvatarBase never got instantiated and therefore we have nothing to release
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void DestroyAvatar(ref AvatarShapeComponent avatarShapeComponent, ref AvatarTransformMatrixComponent avatarTransformMatrixComponent, AvatarBase avatarBase, ComputeShaderSkinning computeSkinningComponent)
+        private void DestroyAvatar(ref AvatarShapeComponent avatarShapeComponent, ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
+            AvatarBase avatarBase, AvatarCustomSkinningComponent skinningComponent)
         {
             // Use frame budget for destruction as well
             if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
                 return;
 
+            vertOutBuffer.Release(skinningComponent.VertsOutRegion);
+
             avatarPoolRegistry.Release(avatarBase);
             avatarTransformMatrixComponent.Dispose();
-            computeSkinningComponent.Dispose();
+            skinningComponent.Dispose();
 
             wearableAssetsCache.TryReleaseAssets(avatarShapeComponent.InstantiatedWearables);
         }
 
         public override void Dispose()
         {
-            base.Dispose();
-            vertexOutBuffer.Release();
+            vertOutBuffer.Dispose();
         }
     }
 }

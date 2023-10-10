@@ -31,5 +31,10 @@ namespace Utility.Pool
         ///     prewarmed capacity for the skinning compute shade
         /// </summary>
         public const int COMPUTE_SHADER_COUNT = 30;
+
+        /// <summary>
+        ///     Target simultaneous Avatars Count
+        /// </summary>
+        public const int AVATARS_COUNT = 100;
     }
 }

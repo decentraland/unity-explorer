@@ -14,25 +14,10 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public class ComputeShaderSkinning : CustomSkinning
     {
-        private readonly List<UsedTextureArraySlot> usedTextureArraySlots;
-        private ComputeSkinningBufferContainer computeSkinningBufferContainer;
-
-        private UnityEngine.ComputeShader cs;
-
-        private int kernel;
-        private ComputeBuffer mBones;
-
-        private int vertCount;
-
-        public ComputeShaderSkinning()
+        public override void ComputeSkinning(NativeArray<float4x4> bonesResult, ref AvatarCustomSkinningComponent skinning)
         {
-            usedTextureArraySlots = new List<UsedTextureArraySlot>();
-        }
-
-        public override void ComputeSkinning(NativeArray<float4x4> bonesResult)
-        {
-            mBones.SetData(bonesResult);
-            cs.Dispatch(kernel, (vertCount / 64) + 1, 1, 1);
+            skinning.buffers.bones.SetData(bonesResult);
+            skinning.computeShaderInstance.Dispatch(skinning.buffers.kernel, (skinning.vertCount / 64) + 1, 1, 1);
 
             //Note (Juani): According to Unity, BeginWrite/EndWrite works better than SetData. But we got inconsitent result using ComputeBufferMode.SubUpdates
             //Ash machine (AMD) worked way worse than mine (NVidia). So, we are back to SetData with a ComputeBufferMode.Dynamic, which works well for both.
@@ -42,35 +27,40 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             mBones.EndWrite<float4x4>(ComputeShaderConstants.BONE_COUNT);*/
         }
 
-        public override int Initialize(IReadOnlyList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer,
-            UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterialPool, int lastAvatarVertCount, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer, AvatarShapeComponent avatarShapeComponent)
+        public override AvatarCustomSkinningComponent Initialize(IReadOnlyList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer,
+            UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterialPool, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer, AvatarShapeComponent avatarShapeComponent)
         {
             List<MeshData> meshesData = ListPool<MeshData>.Get();
             CreateMeshData(meshesData, gameObjects);
 
             (int vertCount, int boneCount) = SetupCounters(meshesData);
-            this.vertCount = vertCount;
 
-            SetupComputeShader(meshesData, skinningShader, lastAvatarVertCount, vertCount, boneCount);
-            SetupMeshRenderer(meshesData, textureArrayContainer, avatarMaterialPool, lastAvatarVertCount, avatarShapeComponent);
+            AvatarCustomSkinningComponent.Buffers buffers = SetupComputeShader(meshesData, skinningShader, vertCount, boneCount);
+            List<AvatarCustomSkinningComponent.MaterialSetup> materialSetups = SetupMeshRenderer(meshesData, textureArrayContainer, avatarMaterialPool, avatarShapeComponent);
 
             ListPool<MeshData>.Release(meshesData);
 
-            return vertCount;
+            return new AvatarCustomSkinningComponent(vertCount, buffers, materialSetups, skinningShader);
         }
 
-        private void SetupComputeShader(IReadOnlyList<MeshData> meshesData, UnityEngine.ComputeShader skinningShader,
-            int lastAvatarVertCount, int vertCount, int skinnedMeshRendererBoneCount)
+        private static ComputeSkinningBufferContainer CreateBufferContainer(int vertCount, int skinnedMeshRendererBoneCount)
+        {
+            //Note (Juani): Using too many BeginWrite in Mac caused a crash. So I ve set up this switch that changes the way in which we
+            //set up the buffers depending on the platform
+
+#if UNITY_STANDALONE_WIN
+            return new ComputeSkinningBufferContainerWrite(vertCount, skinnedMeshRendererBoneCount);
+#else
+            return new ComputeSkinningBufferContainerSetData(vertCount, skinnedMeshRendererBoneCount);
+#endif
+        }
+
+        private AvatarCustomSkinningComponent.Buffers SetupComputeShader(IReadOnlyList<MeshData> meshesData, UnityEngine.ComputeShader skinningShader, int vertCount, int skinnedMeshRendererBoneCount)
         {
             Profiler.BeginSample(nameof(SetupComputeShader));
 
-            //Note (Juani): Using too many BeginWrite in Mac caused a crash. So I ve set up this switch that changes the way in which we
-            //set up the buffers depending on the platform
-#if UNITY_STANDALONE_WIN
-            computeSkinningBufferContainer = new ComputeSkinningBufferContainerWrite(vertCount, skinnedMeshRendererBoneCount);
-#else
-            computeSkinningBufferContainer = new ComputeSkinningBufferContainerSetData(vertCount, skinnedMeshRendererBoneCount);
-#endif
+            ComputeSkinningBufferContainer computeSkinningBufferContainer = CreateBufferContainer(vertCount, skinnedMeshRendererBoneCount);
+
             computeSkinningBufferContainer.StartWriting();
 
             var vertCounter = 0;
@@ -81,30 +71,35 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                 MeshData meshData = meshesData[i];
                 int meshVertexCount = meshData.Mesh.sharedMesh.vertexCount;
                 ResetTransforms(meshData.Transform, meshData.RootTransform);
-                FillMeshArray(meshData.Mesh.sharedMesh, meshVertexCount, vertCounter, skinnedMeshCounter);
+                FillMeshArray(meshData.Mesh.sharedMesh, meshVertexCount, vertCounter, skinnedMeshCounter, computeSkinningBufferContainer);
                 vertCounter += meshVertexCount;
                 skinnedMeshCounter++;
             }
 
-            SetupBuffers(skinningShader, lastAvatarVertCount, vertCount);
+            AvatarCustomSkinningComponent.Buffers buffers = SetupBuffers(computeSkinningBufferContainer, skinningShader, vertCount);
+            buffers.computeSkinningBufferContainer = computeSkinningBufferContainer;
 
             Profiler.EndSample();
+
+            return buffers;
         }
 
-        private void SetupBuffers(UnityEngine.ComputeShader skinningShader, int lastAvatarVertCount, int vertCount)
+        private AvatarCustomSkinningComponent.Buffers SetupBuffers(
+            ComputeSkinningBufferContainer computeSkinningBufferContainer,
+            UnityEngine.ComputeShader cs, int vertCount)
         {
             computeSkinningBufferContainer.EndWriting();
-            mBones = new ComputeBuffer(ComputeShaderConstants.BONE_COUNT, Unsafe.SizeOf<float4x4>(), ComputeBufferType.Structured, ComputeBufferMode.Dynamic);
+            var mBones = new ComputeBuffer(ComputeShaderConstants.BONE_COUNT, Unsafe.SizeOf<float4x4>(), ComputeBufferType.Structured, ComputeBufferMode.Dynamic);
 
-            cs = skinningShader;
-            kernel = cs.FindKernel(ComputeShaderConstants.SKINNING_KERNEL_NAME);
+            int kernel = cs.FindKernel(ComputeShaderConstants.SKINNING_KERNEL_NAME);
             computeSkinningBufferContainer.SetBuffers(cs, kernel);
             cs.SetInt(ComputeShaderConstants.VERT_COUNT_ID, vertCount);
-            cs.SetInt(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, lastAvatarVertCount);
             cs.SetBuffer(kernel, ComputeShaderConstants.BONES_ID, mBones);
+
+            return new AvatarCustomSkinningComponent.Buffers(mBones, kernel);
         }
 
-        private void FillMeshArray(Mesh mesh, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter)
+        private void FillMeshArray(Mesh mesh, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter, ComputeSkinningBufferContainer computeSkinningBufferContainer)
         {
             // HACK: We only need to do this if the avatar has _NORMALMAPS enabled on the material.
             mesh.RecalculateTangents();
@@ -130,18 +125,22 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return (vertCount, skinnedMeshRendererCount * ComputeShaderConstants.BONE_COUNT);
         }
 
-        private void SetupMeshRenderer(IReadOnlyList<MeshData> gameObjects, TextureArrayContainer textureArrayContainer,
-            IObjectPool<Material> avatarMaterial, int lastAvatarVertCount, AvatarShapeComponent avatarShapeComponent)
+        private List<AvatarCustomSkinningComponent.MaterialSetup> SetupMeshRenderer(IReadOnlyList<MeshData> gameObjects, TextureArrayContainer textureArrayContainer,
+            IObjectPool<Material> avatarMaterial, AvatarShapeComponent avatarShapeComponent)
         {
             var auxVertCounter = 0;
+
+            List<AvatarCustomSkinningComponent.MaterialSetup> list = AvatarCustomSkinningComponent.USED_SLOTS_POOL.Get();
 
             for (var i = 0; i < gameObjects.Count; i++)
             {
                 MeshData meshData = gameObjects[i];
                 int currentVertexCount = meshData.Mesh.sharedMesh.vertexCount;
-                SetupMaterial(meshData.Renderer, meshData.OriginalMaterial, auxVertCounter, textureArrayContainer, avatarMaterial, lastAvatarVertCount, avatarShapeComponent);
+                list.Add(SetupMaterial(meshData.Renderer, meshData.OriginalMaterial, auxVertCounter, textureArrayContainer, avatarMaterial, avatarShapeComponent));
                 auxVertCounter += currentVertexCount;
             }
+
+            return list;
         }
 
         private void CreateMeshData(List<MeshData> targetList, IReadOnlyList<CachedWearable> wearables)
@@ -188,19 +187,16 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return (meshRenderer, filter);
         }
 
-        protected override void SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount,
-            TextureArrayContainer textureArrayContainer, IObjectPool<Material> celShadingMaterial, int lastAvatarVertCount,
-            AvatarShapeComponent avatarShapeComponent)
+        private protected override AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount,
+            TextureArrayContainer textureArrayContainer, IObjectPool<Material> celShadingMaterial, AvatarShapeComponent avatarShapeComponent)
         {
             Material avatarMaterial = celShadingMaterial.Get();
             var albedoTexture = (Texture2D)originalMaterial.mainTexture;
 
+            UsedTextureArraySlot? usedIndex = null;
 
             if (albedoTexture != null)
-            {
-                UsedTextureArraySlot usedIndex = textureArrayContainer.SetTexture(avatarMaterial, albedoTexture, ComputeShaderConstants.TextureArrayType.ALBEDO);
-                usedTextureArraySlots.Add(usedIndex);
-            }
+                usedIndex = textureArrayContainer.SetTexture(avatarMaterial, albedoTexture, ComputeShaderConstants.TextureArrayType.ALBEDO);
 
             foreach (string keyword in ComputeShaderConstants.keywordsToCheck)
             {
@@ -211,20 +207,21 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             // HACK: We currently aren't using normal maps so we're just creating shading issues by using this variant.
             avatarMaterial.DisableKeyword("_NORMALMAP");
 
-            avatarMaterial.SetInteger(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, lastWearableVertCount);
-            avatarMaterial.SetInteger(ComputeShaderConstants.LAST_WEARABLE_VERT_COUNT_ID, lastAvatarVertCount);
+            avatarMaterial.SetInteger(ComputeShaderConstants.LAST_WEARABLE_VERT_COUNT_ID, lastWearableVertCount);
             SetAvatarColors(avatarMaterial, originalMaterial, avatarShapeComponent);
             meshRenderer.material = avatarMaterial;
+
+            return new AvatarCustomSkinningComponent.MaterialSetup(usedIndex, avatarMaterial);
         }
 
-        public new void Dispose()
+        public override void SetVertOutRegion(FixedComputeBufferHandler.Slice region, ref AvatarCustomSkinningComponent skinningComponent)
         {
-            //foreach (UsedTextureArraySlot usedTextureArraySlot in usedTextureArraySlots)
-            //    textureArrayContainer.FreeTexture(usedTextureArraySlot);
+            skinningComponent.VertsOutRegion = region;
 
-            usedTextureArraySlots.Clear();
-            computeSkinningBufferContainer.Dispose();
+            skinningComponent.computeShaderInstance.SetInt(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, region.StartIndex);
+
+            for (var i = 0; i < skinningComponent.materials.Count; i++)
+                skinningComponent.materials[i].celShadingMaterial.SetInteger(ComputeShaderConstants.LAST_AVATAR_VERT_COUNT_ID, region.StartIndex);
         }
-
     }
 }

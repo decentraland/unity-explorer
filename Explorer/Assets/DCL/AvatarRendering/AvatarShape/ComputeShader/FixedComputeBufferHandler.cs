@@ -8,47 +8,55 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     /// <summary>
     ///     Provides API to reuse regions of the fixed compute buffer
     /// </summary>
-    public class FixedComputeBufferHandler : IEqualityComparer<FixedComputeBufferHandler.Slice>
+    public class FixedComputeBufferHandler : IEqualityComparer<FixedComputeBufferHandler.Slice>, IDisposable
     {
-        public readonly struct Slice
-        {
-            public readonly int StartIndex;
-            public readonly int Length;
-
-            public Slice(int startIndex, int length)
-            {
-                StartIndex = startIndex;
-                Length = length;
-            }
-        }
-
         /// <summary>
         ///     The number of free regions after which the fragmentation will be executed
         /// </summary>
         private const int DEFRAGMENTATION_THRESHOLD = 20;
 
         public readonly ComputeBuffer Buffer;
+        private readonly int elementsCount;
+        private readonly int defragmentationThreshold;
 
         private readonly List<Slice> freeRegions;
-        private readonly HashSet<Slice> rentedRegions;
 
-        private readonly Dictionary<int, int> rebindingMap;
+        private readonly Dictionary<int, Slice> rebindingMap;
+        private readonly HashSet<Slice> rentedRegions;
 
         private readonly List<Slice> rentedRegionsSortedTemp;
 
-        public FixedComputeBufferHandler(int elementsCount, int stride)
+        public FixedComputeBufferHandler(int elementsCount, int stride, int defragmentationThreshold = DEFRAGMENTATION_THRESHOLD)
         {
+            this.elementsCount = elementsCount;
+            this.defragmentationThreshold = defragmentationThreshold;
             Buffer = new ComputeBuffer(elementsCount, stride);
 
-            freeRegions = new List<Slice>(DEFRAGMENTATION_THRESHOLD) { new (0, elementsCount) };
+            freeRegions = new List<Slice>(defragmentationThreshold) { new (0, elementsCount) };
             rentedRegions = new HashSet<Slice>(100, this);
             rentedRegionsSortedTemp = new List<Slice>(100);
 
-            rebindingMap = new Dictionary<int, int>(DEFRAGMENTATION_THRESHOLD);
+            rebindingMap = new Dictionary<int, Slice>(defragmentationThreshold);
         }
+
+        internal IReadOnlyCollection<Slice> RentedRegions => rentedRegions;
+        internal IReadOnlyList<Slice> FreeRegions => freeRegions;
+
+        public void Dispose()
+        {
+            Buffer.Dispose();
+        }
+
+        bool IEqualityComparer<Slice>.Equals(Slice x, Slice y) =>
+            x.StartIndex == y.StartIndex && x.Length == y.Length;
+
+        int IEqualityComparer<Slice>.GetHashCode(Slice obj) =>
+            HashCode.Combine(obj.StartIndex, obj.Length);
 
         internal Slice Rent(int length)
         {
+            if (length == 0) throw new ArgumentOutOfRangeException(nameof(length), "length must be greater than 0");
+
             // Search the freeRegions list for the first region that's larger than or equal to N.
             // Update the start pointer of that region by N bytes (or remove the region from freeRegions if it's exactly N bytes).
             // Add the rented region to the usedRegions list.
@@ -86,6 +94,12 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             if (!rentedRegions.Remove(slice))
             {
                 ReportHub.LogError(ReportCategory.AVATAR, "Trying to release a slice that was not rented");
+                return;
+            }
+
+            if (freeRegions.Count == 0)
+            {
+                freeRegions.Add(slice);
                 return;
             }
 
@@ -138,13 +152,13 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         ///     Returns temporary dictionary that should be consumed straight away
         /// </summary>
         /// <returns>Empty Dictionary if no defragmentation was performed</returns>
-        public IReadOnlyDictionary<int, int> TryMakeDefragmentation()
+        public IReadOnlyDictionary<int, Slice> TryMakeDefragmentation()
         {
             rebindingMap.Clear();
 
             // When the number of fragmented free regions crosses a certain limit.
 
-            if (freeRegions.Count >= DEFRAGMENTATION_THRESHOLD)
+            if (freeRegions.Count >= defragmentationThreshold)
             {
                 // Set a pointer writePointer to the start of the buffer.
                 // For each region in usedRegions:
@@ -167,27 +181,39 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                     if (region.StartIndex != writePointer)
                     {
                         // If it's not the same, this means there's a gap (due to fragmentation) between the writePointer and the region.
-                        rebindingMap[region.StartIndex] = writePointer;
+                        var newRegion = new Slice(writePointer, region.Length);
+                        rebindingMap[region.StartIndex] = newRegion;
 
                         // Update the stored region
                         rentedRegions.Remove(region);
-                        rentedRegions.Add(new Slice(writePointer, region.Length));
-
-                        continue;
+                        rentedRegions.Add(newRegion);
                     }
 
                     // If it's the same as writePointer, this region is already in the right place.
                     writePointer += region.Length;
                 }
+
+                // Regions were compacted so the only one left is the last one (default one)
+                freeRegions.Clear();
+                freeRegions.Add(new Slice(writePointer, elementsCount - writePointer));
             }
 
             return rebindingMap;
         }
 
-        bool IEqualityComparer<Slice>.Equals(Slice x, Slice y) =>
-            x.StartIndex == y.StartIndex && x.Length == y.Length;
+        public readonly struct Slice
+        {
+            public readonly int StartIndex;
+            public readonly int Length;
 
-        int IEqualityComparer<Slice>.GetHashCode(Slice obj) =>
-            HashCode.Combine(obj.StartIndex, obj.Length);
+            public Slice(int startIndex, int length)
+            {
+                StartIndex = startIndex;
+                Length = length;
+            }
+
+            public override string ToString() =>
+                $"[{StartIndex}, {StartIndex + Length})]";
+        }
     }
 }
