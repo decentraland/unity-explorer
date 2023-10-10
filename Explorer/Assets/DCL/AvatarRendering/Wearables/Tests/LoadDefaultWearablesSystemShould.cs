@@ -26,7 +26,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             var partialTargetList = new List<WearableDTO>(64);
             JsonConvert.PopulateObject(File.ReadAllText(definitionsPath), partialTargetList);
 
-            system = new LoadDefaultWearablesSystem(world, partialTargetList, wearableCatalog = new WearableCatalog());
+            system = new LoadDefaultWearablesSystem(world, new WearablesDTOList(partialTargetList), wearableCatalog = new WearableCatalog());
         }
 
         [Test]

@@ -33,7 +33,7 @@ namespace DCL.AvatarRendering.Wearables
         private readonly IRealmData realmData;
         private readonly WearableCatalog wearableCatalog;
 
-        private IReadOnlyList<WearableDTO> defaultWearablesDTOs;
+        private WearablesDTOList defaultWearablesDTOs;
 
         public WearablePlugin(IAssetsProvisioner assetsProvisioner, IRealmData realmData, URLDomain assetBundleURL)
         {
@@ -49,7 +49,7 @@ namespace DCL.AvatarRendering.Wearables
             var partialTargetList = new List<WearableDTO>(64);
             JsonConvert.PopulateObject(defaultWearableDefinition.Value.text, partialTargetList);
 
-            defaultWearablesDTOs = partialTargetList;
+            defaultWearablesDTOs = new WearablesDTOList(partialTargetList);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
@@ -59,7 +59,7 @@ namespace DCL.AvatarRendering.Wearables
 
             ResolveWearableByPointerSystem.InjectToWorld(ref builder, wearableCatalog, realmData, WEARABLES_EMBEDDED_SUBDIRECTORY);
             LoadWearablesByParamSystem.InjectToWorld(ref builder, new NoCache<IWearable[], GetWearableByParamIntention>(false, false), realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, wearableCatalog, mutexSync);
-            LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, new NoCache<WearableDTO[], GetWearableDTOByPointersIntention>(false, false), mutexSync);
+            LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false), mutexSync);
             LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(true, true), mutexSync, assetBundleURL);
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, defaultWearablesDTOs, wearableCatalog);
         }

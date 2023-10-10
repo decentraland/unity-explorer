@@ -17,7 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.Wearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
-using WearableDTOPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearableDTO[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableDTOByPointersIntention>;
+using WearableDTOPromise = ECS.StreamableLoading.Common.AssetPromise<System.Collections.Generic.IReadOnlyList<DCL.AvatarRendering.Wearables.Helpers.WearableDTO>, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableDTOByPointersIntention>;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 

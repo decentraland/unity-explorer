@@ -19,11 +19,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
     [LogCategory(ReportCategory.WEARABLE)]
     public partial class LoadDefaultWearablesSystem : BaseUnityLoopSystem
     {
-        private readonly IReadOnlyList<WearableDTO> defaultWearableDefinition;
+        private readonly WearablesDTOList defaultWearableDefinition;
         private readonly WearableCatalog wearableCatalog;
 
         internal LoadDefaultWearablesSystem(World world,
-            IReadOnlyList<WearableDTO> defaultWearableDefinition, WearableCatalog wearableCatalog) : base(world)
+            WearablesDTOList defaultWearableDefinition, WearableCatalog wearableCatalog) : base(world)
         {
             this.defaultWearableDefinition = defaultWearableDefinition;
             this.wearableCatalog = wearableCatalog;
@@ -39,13 +39,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
             var pointersRequest = new List<string>[BodyShape.COUNT];
 
             for (var i = 0; i < BodyShape.VALUES.Count; i++)
-                pointersRequest[BodyShape.VALUES[i]] = new List<string>(defaultWearableDefinition.Count);
+                pointersRequest[BodyShape.VALUES[i]] = new List<string>(defaultWearableDefinition.Value.Count);
 
             var state = new DefaultWearablesComponent(new AssetPromise<IWearable[], GetWearablesByPointersIntention>[BodyShape.COUNT]);
 
-            for (var i = 0; i < defaultWearableDefinition.Count; i++)
+            for (var i = 0; i < defaultWearableDefinition.Value.Count; i++)
             {
-                WearableDTO dto = defaultWearableDefinition[i];
+                WearableDTO dto = defaultWearableDefinition.Value[i];
                 IWearable wearable = wearableCatalog.GetOrAddWearableByDTO(dto);
 
                 BodyShape analyzedBodyShape = wearable.IsCompatibleWithBodyShape(BodyShape.MALE) ? BodyShape.MALE : BodyShape.FEMALE;

@@ -119,7 +119,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        private void FinalizeWearableDTO([Data] bool defaultWearablesResolved, in Entity entity, ref AssetPromise<WearableDTO[], GetWearableDTOByPointersIntention> promise, ref BodyShape bodyShape)
+        private void FinalizeWearableDTO([Data] bool defaultWearablesResolved, in Entity entity, ref AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> promise, ref BodyShape bodyShape)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -128,7 +128,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 return;
             }
 
-            if (promise.TryConsume(World, out StreamableLoadingResult<WearableDTO[]> promiseResult))
+            if (promise.TryConsume(World, out StreamableLoadingResult<WearablesDTOList> promiseResult))
             {
                 if (!promiseResult.Succeeded)
                 {
@@ -141,7 +141,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 }
                 else
                 {
-                    foreach (WearableDTO assetEntity in promiseResult.Asset)
+                    foreach (WearableDTO assetEntity in promiseResult.Asset.Value)
                     {
                         //TODO: Download Thumbnail
                         wearableCatalog.TryGetWearable(assetEntity.metadata.id, out IWearable component);
@@ -239,7 +239,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 missingPointers,
                 new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint, cancellationTokenSource: intention.CancellationTokenSource));
 
-            var promise = AssetPromise<WearableDTO[], GetWearableDTOByPointersIntention>.Create(World, wearableDtoByPointersIntention, partitionComponent);
+            var promise = AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention>.Create(World, wearableDtoByPointersIntention, partitionComponent);
             World.Create(promise, intention.BodyShape);
         }
 

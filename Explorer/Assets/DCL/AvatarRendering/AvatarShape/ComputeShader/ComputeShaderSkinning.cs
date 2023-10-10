@@ -208,7 +208,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
             foreach (string keyword in ComputeShaderConstants.keywordsToCheck)
             {
-                if (meshRenderer.material.IsKeywordEnabled(keyword))
+                if (originalMaterial.IsKeywordEnabled(keyword))
                     avatarMaterial.EnableKeyword(keyword);
             }
 
