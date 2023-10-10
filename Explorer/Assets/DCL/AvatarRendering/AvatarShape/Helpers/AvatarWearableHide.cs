@@ -4,6 +4,7 @@ using Diagnostics.ReportsHandling;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility.Pool;
 
 namespace DCL.AvatarRendering.AvatarShape.Helpers
 {
@@ -56,32 +57,35 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             if (bodyShape == null)
                 return;
 
-            foreach (Renderer r in bodyShape.GetComponentsInChildren<Renderer>())
+            using (PoolExtensions.Scope<List<Renderer>> pooledList = bodyShape.GetComponentsInChildrenIntoPooledList<Renderer>(true))
             {
-                if (r is not SkinnedMeshRenderer renderer)
-                    continue;
-
-                string name = renderer.name.ToLower();
-
-                // Support for the old gltf hierarchy for ABs
-                if (name.Contains("primitive"))
-                    name = renderer.transform.parent.name.ToLower();
-
-                var isPartMapped = false;
-
-                foreach (KeyValuePair<string, string> kvp in bodyPartsMapping)
+                for (var i = 0; i < pooledList.Value.Count; i++)
                 {
-                    if (name.Contains(kvp.Key))
-                    {
-                        r.gameObject.SetActive(!(hidingList.Contains(kvp.Value) || usedCategories.Contains(kvp.Value)));
-                        isPartMapped = true;
-                        break;
-                    }
-                }
+                    Renderer renderer = pooledList.Value[i];
 
-                if (!isPartMapped)
-                    ReportHub.LogWarning(ReportCategory.WEARABLE, $"{name} has not been set-up as a valid body part");
+                    string name = renderer.name.ToLower();
+
+                    // Support for the old gltf hierarchy for ABs
+                    if (name.Contains("primitive"))
+                        name = renderer.transform.parent.name.ToLower();
+
+                    var isPartMapped = false;
+
+                    foreach (KeyValuePair<string, string> kvp in bodyPartsMapping)
+                    {
+                        if (name.Contains(kvp.Key))
+                        {
+                            renderer.gameObject.SetActive(!(hidingList.Contains(kvp.Value) || usedCategories.Contains(kvp.Value)));
+                            isPartMapped = true;
+                            break;
+                        }
+                    }
+
+                    if (!isPartMapped)
+                        ReportHub.LogWarning(ReportCategory.WEARABLE, $"{name} has not been set-up as a valid body part");
+                }
             }
+
         }
     }
 }
