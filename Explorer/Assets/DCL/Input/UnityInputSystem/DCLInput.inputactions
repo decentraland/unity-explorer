@@ -497,18 +497,36 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "Drag",
-                    "type": "Value",
-                    "id": "7fef09dc-e06d-4090-9b9d-a0cc66d7fbf9",
+                    "name": "Point",
+                    "type": "PassThrough",
+                    "id": "d15ab1b9-7a1e-422d-bdd8-89e12832711e",
                     "expectedControlType": "Vector2",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
                 },
                 {
-                    "name": "Point",
-                    "type": "PassThrough",
-                    "id": "d15ab1b9-7a1e-422d-bdd8-89e12832711e",
+                    "name": "Lock",
+                    "type": "Button",
+                    "id": "06bfcffb-08c8-4f0a-8643-080d3abf003b",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Unlock",
+                    "type": "Button",
+                    "id": "e3e3eb16-ce29-4a58-9d50-86775c95cf90",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Delta",
+                    "type": "Value",
+                    "id": "2f28f6ef-27b5-4a27-8768-6bbc3958f0c5",
                     "expectedControlType": "Vector2",
                     "processors": "",
                     "interactions": "",
@@ -550,37 +568,26 @@
                     "isPartOfComposite": false
                 },
                 {
-                    "name": "Mouse Button + Mouse Move",
-                    "id": "edbbe1db-4f37-4c02-8687-67e95c5af898",
-                    "path": "OneModifier",
+                    "name": "",
+                    "id": "12a8cc85-ac90-425f-9120-421f75f08442",
+                    "path": "<Mouse>/leftButton",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Drag",
-                    "isComposite": true,
+                    "action": "Lock",
+                    "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
-                    "name": "modifier",
-                    "id": "1f5daa67-0064-459a-880a-7a3a90307dbb",
-                    "path": "<Mouse>/press",
+                    "name": "",
+                    "id": "b3508dda-328c-4d7b-89dd-abcc86f65324",
+                    "path": "<Keyboard>/escape",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Drag",
+                    "action": "Unlock",
                     "isComposite": false,
-                    "isPartOfComposite": true
-                },
-                {
-                    "name": "binding",
-                    "id": "3b5f4e7c-00cc-4a09-ad92-62748f2f4746",
-                    "path": "<Mouse>/delta",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Drag",
-                    "isComposite": false,
-                    "isPartOfComposite": true
+                    "isPartOfComposite": false
                 },
                 {
                     "name": "",
@@ -612,6 +619,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Point",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "01152821-4d2b-4b89-842a-bc8dacac9131",
+                    "path": "<Mouse>/delta",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Delta",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

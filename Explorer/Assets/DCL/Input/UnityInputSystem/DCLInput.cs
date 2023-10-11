@@ -519,18 +519,36 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": true
                 },
                 {
-                    ""name"": ""Drag"",
-                    ""type"": ""Value"",
-                    ""id"": ""7fef09dc-e06d-4090-9b9d-a0cc66d7fbf9"",
+                    ""name"": ""Point"",
+                    ""type"": ""PassThrough"",
+                    ""id"": ""d15ab1b9-7a1e-422d-bdd8-89e12832711e"",
                     ""expectedControlType"": ""Vector2"",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
                 },
                 {
-                    ""name"": ""Point"",
-                    ""type"": ""PassThrough"",
-                    ""id"": ""d15ab1b9-7a1e-422d-bdd8-89e12832711e"",
+                    ""name"": ""Lock"",
+                    ""type"": ""Button"",
+                    ""id"": ""06bfcffb-08c8-4f0a-8643-080d3abf003b"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Unlock"",
+                    ""type"": ""Button"",
+                    ""id"": ""e3e3eb16-ce29-4a58-9d50-86775c95cf90"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Delta"",
+                    ""type"": ""Value"",
+                    ""id"": ""2f28f6ef-27b5-4a27-8768-6bbc3958f0c5"",
                     ""expectedControlType"": ""Vector2"",
                     ""processors"": """",
                     ""interactions"": """",
@@ -572,37 +590,26 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 },
                 {
-                    ""name"": ""Mouse Button + Mouse Move"",
-                    ""id"": ""edbbe1db-4f37-4c02-8687-67e95c5af898"",
-                    ""path"": ""OneModifier"",
+                    ""name"": """",
+                    ""id"": ""12a8cc85-ac90-425f-9120-421f75f08442"",
+                    ""path"": ""<Mouse>/leftButton"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Drag"",
-                    ""isComposite"": true,
+                    ""action"": ""Lock"",
+                    ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
                 {
-                    ""name"": ""modifier"",
-                    ""id"": ""1f5daa67-0064-459a-880a-7a3a90307dbb"",
-                    ""path"": ""<Mouse>/press"",
+                    ""name"": """",
+                    ""id"": ""b3508dda-328c-4d7b-89dd-abcc86f65324"",
+                    ""path"": ""<Keyboard>/escape"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Drag"",
+                    ""action"": ""Unlock"",
                     ""isComposite"": false,
-                    ""isPartOfComposite"": true
-                },
-                {
-                    ""name"": ""binding"",
-                    ""id"": ""3b5f4e7c-00cc-4a09-ad92-62748f2f4746"",
-                    ""path"": ""<Mouse>/delta"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Drag"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
+                    ""isPartOfComposite"": false
                 },
                 {
                     ""name"": """",
@@ -634,6 +641,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Point"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""01152821-4d2b-4b89-842a-bc8dacac9131"",
+                    ""path"": ""<Mouse>/delta"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Delta"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -761,8 +779,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Camera_ZoomOut = m_Camera.FindAction("ZoomOut", throwIfNotFound: true);
         m_Camera_Zoom = m_Camera.FindAction("Zoom", throwIfNotFound: true);
         m_Camera_ZoomIn = m_Camera.FindAction("ZoomIn", throwIfNotFound: true);
-        m_Camera_Drag = m_Camera.FindAction("Drag", throwIfNotFound: true);
         m_Camera_Point = m_Camera.FindAction("Point", throwIfNotFound: true);
+        m_Camera_Lock = m_Camera.FindAction("Lock", throwIfNotFound: true);
+        m_Camera_Unlock = m_Camera.FindAction("Unlock", throwIfNotFound: true);
+        m_Camera_Delta = m_Camera.FindAction("Delta", throwIfNotFound: true);
         // FreeCamera
         m_FreeCamera = asset.FindActionMap("FreeCamera", throwIfNotFound: true);
         m_FreeCamera_Movement = m_FreeCamera.FindAction("Movement", throwIfNotFound: true);
@@ -981,8 +1001,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Camera_ZoomOut;
     private readonly InputAction m_Camera_Zoom;
     private readonly InputAction m_Camera_ZoomIn;
-    private readonly InputAction m_Camera_Drag;
     private readonly InputAction m_Camera_Point;
+    private readonly InputAction m_Camera_Lock;
+    private readonly InputAction m_Camera_Unlock;
+    private readonly InputAction m_Camera_Delta;
     public struct CameraActions
     {
         private @DCLInput m_Wrapper;
@@ -990,8 +1012,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ZoomOut => m_Wrapper.m_Camera_ZoomOut;
         public InputAction @Zoom => m_Wrapper.m_Camera_Zoom;
         public InputAction @ZoomIn => m_Wrapper.m_Camera_ZoomIn;
-        public InputAction @Drag => m_Wrapper.m_Camera_Drag;
         public InputAction @Point => m_Wrapper.m_Camera_Point;
+        public InputAction @Lock => m_Wrapper.m_Camera_Lock;
+        public InputAction @Unlock => m_Wrapper.m_Camera_Unlock;
+        public InputAction @Delta => m_Wrapper.m_Camera_Delta;
         public InputActionMap Get() { return m_Wrapper.m_Camera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1010,12 +1034,18 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ZoomIn.started += instance.OnZoomIn;
             @ZoomIn.performed += instance.OnZoomIn;
             @ZoomIn.canceled += instance.OnZoomIn;
-            @Drag.started += instance.OnDrag;
-            @Drag.performed += instance.OnDrag;
-            @Drag.canceled += instance.OnDrag;
             @Point.started += instance.OnPoint;
             @Point.performed += instance.OnPoint;
             @Point.canceled += instance.OnPoint;
+            @Lock.started += instance.OnLock;
+            @Lock.performed += instance.OnLock;
+            @Lock.canceled += instance.OnLock;
+            @Unlock.started += instance.OnUnlock;
+            @Unlock.performed += instance.OnUnlock;
+            @Unlock.canceled += instance.OnUnlock;
+            @Delta.started += instance.OnDelta;
+            @Delta.performed += instance.OnDelta;
+            @Delta.canceled += instance.OnDelta;
         }
 
         private void UnregisterCallbacks(ICameraActions instance)
@@ -1029,12 +1059,18 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ZoomIn.started -= instance.OnZoomIn;
             @ZoomIn.performed -= instance.OnZoomIn;
             @ZoomIn.canceled -= instance.OnZoomIn;
-            @Drag.started -= instance.OnDrag;
-            @Drag.performed -= instance.OnDrag;
-            @Drag.canceled -= instance.OnDrag;
             @Point.started -= instance.OnPoint;
             @Point.performed -= instance.OnPoint;
             @Point.canceled -= instance.OnPoint;
+            @Lock.started -= instance.OnLock;
+            @Lock.performed -= instance.OnLock;
+            @Lock.canceled -= instance.OnLock;
+            @Unlock.started -= instance.OnUnlock;
+            @Unlock.performed -= instance.OnUnlock;
+            @Unlock.canceled -= instance.OnUnlock;
+            @Delta.started -= instance.OnDelta;
+            @Delta.performed -= instance.OnDelta;
+            @Delta.canceled -= instance.OnDelta;
         }
 
         public void RemoveCallbacks(ICameraActions instance)
@@ -1137,8 +1173,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnZoomOut(InputAction.CallbackContext context);
         void OnZoom(InputAction.CallbackContext context);
         void OnZoomIn(InputAction.CallbackContext context);
-        void OnDrag(InputAction.CallbackContext context);
         void OnPoint(InputAction.CallbackContext context);
+        void OnLock(InputAction.CallbackContext context);
+        void OnUnlock(InputAction.CallbackContext context);
+        void OnDelta(InputAction.CallbackContext context);
     }
     public interface IFreeCameraActions
     {
