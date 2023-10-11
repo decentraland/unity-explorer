@@ -14,6 +14,9 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public class ComputeShaderSkinning : CustomSkinning
     {
+        internal static readonly ListObjectPool<Material> MATERIAL_POOL = new (defaultCapacity: 50, listInstanceDefaultCapacity: 5);
+
+
         public override void ComputeSkinning(NativeArray<float4x4> bonesResult, ref AvatarCustomSkinningComponent skinning)
         {
             skinning.buffers.bones.SetData(bonesResult);
@@ -178,10 +181,16 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         {
             GameObject go = skin.gameObject;
             MeshFilter filter = go.AddComponent<MeshFilter>();
-            MeshRenderer meshRenderer = go.AddComponent<MeshRenderer>();
             filter.mesh = skin.sharedMesh;
-            meshRenderer.material = skin.material;
+
+            MeshRenderer meshRenderer = go.AddComponent<MeshRenderer>();
             meshRenderer.renderingLayerMask = 2;
+
+            List<Material> materialPool = MATERIAL_POOL.Get();
+            skin.GetMaterials(materialPool);
+            meshRenderer.material = materialPool[0];
+            MATERIAL_POOL.Release(materialPool);
+
             Object.Destroy(skin);
             return (meshRenderer, filter);
         }
