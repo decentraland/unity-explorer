@@ -63,11 +63,11 @@ namespace DCL.CharacterCamera.Systems
 
         private void UpdateLockState(bool locked)
         {
-            if (locked && Cursor.lockState == CursorLockMode.None)
+            if (locked)
             {
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
-            } else if (!locked && Cursor.lockState == CursorLockMode.Locked)
+            } else
             {
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
