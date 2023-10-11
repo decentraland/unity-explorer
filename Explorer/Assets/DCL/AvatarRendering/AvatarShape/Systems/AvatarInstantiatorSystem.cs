@@ -73,8 +73,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             if (!avatarShapeComponent.WearablePromise.TryConsume(World, out StreamableLoadingResult<IWearable[]> wearablesResult)) return;
 
-            skinningComponent.Dispose(avatarMaterialPool);
-            wearableAssetsCache.TryReleaseAssets(avatarShapeComponent.InstantiatedWearables, avatarMaterialPool);
+            CommonAvatarRelease(avatarShapeComponent, skinningComponent);
 
             // Override by ref
             skinningComponent = InstantiateAvatar(ref avatarShapeComponent, wearablesResult, avatarBase);
@@ -181,13 +180,17 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 return;
             }
 
-            vertOutBuffer.Release(skinningComponent.VertsOutRegion);
+            CommonAvatarRelease(avatarShapeComponent, skinningComponent);
 
-            avatarPoolRegistry.Release(avatarBase);
             avatarTransformMatrixComponent.Dispose();
-            skinningComponent.Dispose(avatarMaterialPool);
+            avatarPoolRegistry.Release(avatarBase);
             deleteEntityIntention.DeferDeletion = false;
+        }
 
+        private void CommonAvatarRelease(AvatarShapeComponent avatarShapeComponent, AvatarCustomSkinningComponent skinningComponent)
+        {
+            vertOutBuffer.Release(skinningComponent.VertsOutRegion);
+            skinningComponent.Dispose(avatarMaterialPool);
             wearableAssetsCache.TryReleaseAssets(avatarShapeComponent.InstantiatedWearables, avatarMaterialPool);
         }
 
