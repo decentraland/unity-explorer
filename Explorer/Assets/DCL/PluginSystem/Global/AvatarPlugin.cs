@@ -95,6 +95,7 @@ namespace DCL.PluginSystem.Global
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
 
             StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder);
+            FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy);
 
             //Debug scripts
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, avatarInstantiatorView.Value, realmData, AVATARS_QUERY);

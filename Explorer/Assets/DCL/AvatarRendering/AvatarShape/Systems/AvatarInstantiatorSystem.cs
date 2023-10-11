@@ -60,19 +60,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             InstantiateNewAvatarQuery(World);
             InstantiateExistingAvatarQuery(World);
             DestroyAvatarQuery(World);
-            UpdateAvatarBonesQuery(World);
         }
 
-        [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void UpdateAvatarBones(ref AvatarShapeComponent avatarShapeComponent, ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
-            ref AvatarCustomSkinningComponent computeShaderSkinning)
-        {
-            if (avatarShapeComponent.IsDirty)
-                return;
 
-            skinningStrategy.ComputeSkinning(avatarTransformMatrixComponent.CompleteBoneMatrixCalculations(), ref computeShaderSkinning);
-        }
 
         [Query]
         [All(typeof(TransformComponent))]
