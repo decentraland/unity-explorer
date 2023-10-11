@@ -73,7 +73,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             if (!avatarShapeComponent.WearablePromise.TryConsume(World, out StreamableLoadingResult<IWearable[]> wearablesResult)) return;
 
-            skinningComponent.Dispose();
+            skinningComponent.Dispose(avatarMaterialPool);
             wearableAssetsCache.TryReleaseAssets(avatarShapeComponent.InstantiatedWearables, avatarMaterialPool);
 
             // Override by ref
@@ -185,7 +185,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             avatarPoolRegistry.Release(avatarBase);
             avatarTransformMatrixComponent.Dispose();
-            skinningComponent.Dispose();
+            skinningComponent.Dispose(avatarMaterialPool);
             deleteEntityIntention.DeferDeletion = false;
 
             wearableAssetsCache.TryReleaseAssets(avatarShapeComponent.InstantiatedWearables, avatarMaterialPool);

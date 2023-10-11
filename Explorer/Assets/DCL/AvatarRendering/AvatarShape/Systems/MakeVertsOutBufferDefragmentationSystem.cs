@@ -12,7 +12,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.AVATAR)]
-    [UpdateAfter(typeof(AvatarInstantiatorSystem))]
+    [UpdateBefore(typeof(AvatarInstantiatorSystem))]
     public partial class MakeVertsOutBufferDefragmentationSystem : BaseUnityLoopSystem
     {
         private readonly FixedComputeBufferHandler computeBufferHandler;

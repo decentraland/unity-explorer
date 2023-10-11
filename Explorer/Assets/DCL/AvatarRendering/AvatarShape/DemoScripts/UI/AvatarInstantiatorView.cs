@@ -13,6 +13,10 @@ namespace DCL.AvatarRendering.AvatarShape.DemoScripts.UI
 
         public Button destroyAllAvatarsButton;
 
+        public Button destroyRandomAmountAvatarsButton;
+
+        public Button randomizeWearablesButton;
+
         [SerializeField]
         private Button openButton;
 
@@ -35,6 +39,7 @@ namespace DCL.AvatarRendering.AvatarShape.DemoScripts.UI
             openButton.onClick.AddListener(OpenProfilerWindow);
             closeButton.onClick.AddListener(CloseProfilerWindow);
             avatarLimitWarning.gameObject.SetActive(false);
+            gameObject.SetActive(false);
         }
 
         public int GetAvatarsToInstantiate() =>

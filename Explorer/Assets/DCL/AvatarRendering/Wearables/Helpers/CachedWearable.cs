@@ -8,15 +8,15 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     public struct CachedWearable
     {
         public readonly WearableAsset OriginalAsset;
-        public WearableAssetInstance Instance;
+        public GameObject Instance;
 
-        public CachedWearable(WearableAsset originalAsset, WearableAssetInstance instance)
+        public CachedWearable(WearableAsset originalAsset, GameObject instance)
         {
             OriginalAsset = originalAsset;
             Instance = instance;
         }
 
         public static implicit operator GameObject(CachedWearable cachedWearable) =>
-            cachedWearable.Instance.GameObject;
+            cachedWearable.Instance;
     }
 }

@@ -147,7 +147,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         {
             foreach (CachedWearable cachedWearable in wearables)
             {
-                GameObject instance = cachedWearable.Instance.GameObject;
+                GameObject instance = cachedWearable.Instance;
                 using (PoolExtensions.Scope<List<Renderer>> pooledList = instance.GetComponentsInChildrenIntoPooledList<Renderer>(true))
                 {
                     for (var i = 0; i < pooledList.Value.Count; i++)
@@ -171,8 +171,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                         }
                     }
                 }
-
-                cachedWearable.Instance.UpdateMeshRendererPool();
             }
         }
 

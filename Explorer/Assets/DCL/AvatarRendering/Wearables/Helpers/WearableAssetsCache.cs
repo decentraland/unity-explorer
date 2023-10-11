@@ -54,7 +54,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         public IWearableAssetsCache.ReleaseResult TryRelease(CachedWearable cachedWearable)
         {
             GameObject asset = cachedWearable.OriginalAsset.GameObject;
-            GameObject instance = cachedWearable.Instance.GameObject;
+            GameObject instance = cachedWearable.Instance;
 
             if (!cache.TryGetValue(asset, out List<GameObject> list))
                 cache[asset] = list = listPool.Get();

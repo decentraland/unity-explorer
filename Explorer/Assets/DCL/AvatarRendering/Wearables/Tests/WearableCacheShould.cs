@@ -27,7 +27,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             var asset = new WearableAsset(new GameObject("ORIGINAL"), new List<WearableAsset.RendererInfo>());
 
             for (var i = 0; i < 2; i++)
-                Assert.That(cache.TryRelease(new CachedWearable(asset, new WearableAssetInstance(new GameObject("INSTANCE" + i)))), Is.EqualTo(IWearableAssetsCache.ReleaseResult.ReturnedToPool));
+                Assert.That(cache.TryRelease(new CachedWearable(asset, new GameObject("INSTANCE" + i))), Is.EqualTo(IWearableAssetsCache.ReleaseResult.ReturnedToPool));
         }
 
         [Test]
@@ -36,9 +36,9 @@ namespace DCL.AvatarRendering.Wearables.Tests
             var asset = new WearableAsset(new GameObject("ORIGINAL"), new List<WearableAsset.RendererInfo>());
 
             for (var i = 0; i < 2; i++)
-                cache.TryRelease(new CachedWearable(asset, new WearableAssetInstance(new GameObject("INSTANCE" + i))));
+                cache.TryRelease(new CachedWearable(asset, new GameObject("INSTANCE" + i)));
 
-            Assert.That(cache.TryRelease(new CachedWearable(asset, new WearableAssetInstance(new GameObject("EXCEEDING")))),
+            Assert.That(cache.TryRelease(new CachedWearable(asset, new GameObject("EXCEEDING"))),
                 Is.EqualTo(IWearableAssetsCache.ReleaseResult.CapacityExceeded));
         }
 
@@ -48,7 +48,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             var asset = new WearableAsset(new GameObject("ORIGINAL"), new List<WearableAsset.RendererInfo>());
 
             for (var i = 0; i < 2; i++)
-                cache.TryRelease(new CachedWearable(asset, new WearableAssetInstance(new GameObject("INSTANCE" + i))));
+                cache.TryRelease(new CachedWearable(asset, new GameObject("INSTANCE" + i)));
 
             for (var i = 0; i < 2; i++)
                 Assert.That(cache.TryGet(asset.GameObject, out _), Is.True);

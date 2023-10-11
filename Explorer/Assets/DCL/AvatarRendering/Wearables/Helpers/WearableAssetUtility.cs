@@ -13,10 +13,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     public static class WearableAssetUtility
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void TryReleaseAsset(this IWearableAssetsCache.ReleaseResult releaseResult, WearableAssetInstance asset, IObjectPool<Material> materialPool)
+        public static void TryReleaseAsset(this IWearableAssetsCache.ReleaseResult releaseResult, GameObject asset, IObjectPool<Material> materialPool)
         {
             if (releaseResult == IWearableAssetsCache.ReleaseResult.CapacityExceeded)
-                asset.Release(materialPool);
+                UnityObjectUtils.SafeDestroy(asset);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -66,7 +66,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             instantiatedWearable.transform.ResetLocalTRS();
             instantiatedWearable.gameObject.SetActive(true);
-            return new CachedWearable(originalAsset, new WearableAssetInstance(instantiatedWearable));
+            return new CachedWearable(originalAsset, instantiatedWearable);
         }
     }
 }

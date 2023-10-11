@@ -1,8 +1,8 @@
 ﻿using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility.Pool;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
@@ -10,7 +10,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     /// <summary>
     ///     Stores data for the compute shader to perform skinning
     /// </summary>
-    public struct AvatarCustomSkinningComponent : IDisposable
+    public struct AvatarCustomSkinningComponent
     {
         public struct Buffers
         {
@@ -62,10 +62,13 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             VertsOutRegion = default(FixedComputeBufferHandler.Slice);
         }
 
-        public void Dispose()
+        public void Dispose(IObjectPool<Material> objectPool)
         {
             for (var i = 0; i < materials.Count; i++)
+            {
                 materials[i].usedTextureArraySlot?.FreeSlot();
+                objectPool.Release(materials[i].celShadingMaterial);
+            }
 
             buffers.computeSkinningBufferContainer.Dispose();
             USED_SLOTS_POOL.Release(materials);

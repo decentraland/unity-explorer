@@ -46,6 +46,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             Promise newPromise = CreateWearablePromise(pbAvatarShape, partition);
             avatarShapeComponent.WearablePromise = newPromise;
 
+            avatarShapeComponent.BodyShape = pbAvatarShape;
             avatarShapeComponent.IsDirty = true;
             pbAvatarShape.IsDirty = false;
         }
