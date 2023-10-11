@@ -12,6 +12,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public abstract class CustomSkinning
     {
+
         public abstract void ComputeSkinning(NativeArray<float4x4> bonesResult, ref AvatarCustomSkinningComponent skinning);
 
         public abstract AvatarCustomSkinningComponent Initialize(IReadOnlyList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer,
@@ -43,9 +44,9 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             // its important for the asset bundles materials to have normalized names but this functionality should work too
             string name = originalMaterial.name.ToLower();
 
-            if (name.Contains("skin"))
+            if (name.Contains(ComputeShaderConstants.SKIN_MATERIAL_NAME))
                 avatarMaterial.SetColor(ComputeShaderConstants._BaseColour_ShaderID, avatarShapeComponent.SkinColor);
-            else if (name.Contains("hair"))
+            else if (name.Contains(ComputeShaderConstants.HAIR_MATERIAL_NAME))
                 avatarMaterial.SetColor(ComputeShaderConstants._BaseColour_ShaderID, avatarShapeComponent.HairColor);
         }
     }

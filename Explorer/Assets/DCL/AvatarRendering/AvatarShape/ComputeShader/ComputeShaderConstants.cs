@@ -38,5 +38,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         public static readonly int BIND_POSE_ID = Shader.PropertyToID("g_BindPoses");
         public static readonly int BIND_POSES_INDEX_ID = Shader.PropertyToID("g_BindPosesIndex");
         public static readonly int BONES_ID = Shader.PropertyToID("g_mBones");
+
+        public static readonly string HAIR_MATERIAL_NAME = "hair";
+        public static readonly string SKIN_MATERIAL_NAME = "skin";
     }
 }
