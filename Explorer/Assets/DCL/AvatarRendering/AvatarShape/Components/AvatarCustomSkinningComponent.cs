@@ -27,13 +27,13 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         internal struct MaterialSetup
         {
-            internal readonly UsedTextureArraySlot? usedTextureArraySlot;
+            internal readonly TextureArraySlot? usedTextureArraySlot;
             /// <summary>
             ///     Cel Shading Material is created based on the original material
             /// </summary>
             internal readonly Material celShadingMaterial;
 
-            public MaterialSetup(UsedTextureArraySlot? usedTextureArraySlot, Material celShadingMaterial)
+            public MaterialSetup(TextureArraySlot? usedTextureArraySlot, Material celShadingMaterial)
             {
                 this.usedTextureArraySlot = usedTextureArraySlot;
                 this.celShadingMaterial = celShadingMaterial;
@@ -64,9 +64,10 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public void Dispose()
         {
-            // TODO Dispose of UsedTextureArraySlot
-            buffers.computeSkinningBufferContainer.Dispose();
+            for (var i = 0; i < materials.Count; i++)
+                materials[i].usedTextureArraySlot?.FreeSlot();
 
+            buffers.computeSkinningBufferContainer.Dispose();
             USED_SLOTS_POOL.Release(materials);
         }
     }

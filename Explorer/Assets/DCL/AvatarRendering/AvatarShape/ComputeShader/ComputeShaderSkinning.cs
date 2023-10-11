@@ -194,7 +194,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             Material avatarMaterial = celShadingMaterial.Get();
             var albedoTexture = (Texture2D)originalMaterial.mainTexture;
 
-            UsedTextureArraySlot? usedIndex = null;
+            TextureArraySlot? usedIndex = null;
 
             if (albedoTexture != null)
                 usedIndex = textureArrayContainer.SetTexture(avatarMaterial, albedoTexture, ComputeShaderConstants.TextureArrayType.ALBEDO);

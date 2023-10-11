@@ -5,21 +5,17 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.Avatar
 {
     public class TextureArrayContainer
     {
-        private readonly TextureArray[] textureArrayTypes;
-        private readonly int textureArraySize = 512;
+        internal readonly TextureArrayType[] textureArrayTypes;
+        private readonly int textureArraySize = 500;
 
         public TextureArrayContainer()
         {
-            textureArrayTypes = new TextureArray[1];
-            textureArrayTypes[(int)ComputeShaderConstants.TextureArrayType.ALBEDO] = new TextureArray(textureArraySize, ComputeShaderConstants._BaseMapArr_ShaderID, ComputeShaderConstants._BaseMapArrTex_ShaderID);
+            textureArrayTypes = new TextureArrayType[1];
+            textureArrayTypes[(int)ComputeShaderConstants.TextureArrayType.ALBEDO] = new TextureArrayType(textureArraySize, ComputeShaderConstants._BaseMapArr_ShaderID, ComputeShaderConstants._BaseMapArrTex_ShaderID);
         }
 
-        public UsedTextureArraySlot SetTexture(Material material, Texture2D texture, ComputeShaderConstants.TextureArrayType type) =>
-            textureArrayTypes[(int)type].SetTexture(type, material, texture);
+        public TextureArraySlot SetTexture(Material material, Texture2D texture, ComputeShaderConstants.TextureArrayType type) =>
+            textureArrayTypes[(int)type].SetTexture(material, texture);
 
-        public void FreeTexture(UsedTextureArraySlot usedTextureArraySlot)
-        {
-            textureArrayTypes[(int)usedTextureArraySlot.TextureArrayType].FreeTexture(usedTextureArraySlot);
-        }
     }
 }
