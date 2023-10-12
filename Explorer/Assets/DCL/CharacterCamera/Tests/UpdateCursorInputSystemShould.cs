@@ -21,9 +21,7 @@ namespace DCL.CharacterCamera.Tests
         private Entity entity;
         private Keyboard keyboard;
         private Mouse mouse;
-        private RectTransform imageRT;
-        private GameObject ui;
-        private IEventSystem eventSystem;
+        private IUIRaycaster uiRaycaster;
 
         [SetUp]
         public void CreateCameraSetup()
@@ -37,69 +35,61 @@ namespace DCL.CharacterCamera.Tests
             var dlcInput = new DCLInput();
             dlcInput.Enable();
 
-            entity = world.Create( new CameraInput());
-            eventSystem = Substitute.For<IEventSystem>();
-            eventSystem.GetPointerEventData().Returns(new PointerEventData(null));
+            entity = world.Create(new CameraComponent());
+            uiRaycaster = Substitute.For<IUIRaycaster>();
 
-            system = new UpdateCursorInputSystem(world, dlcInput, this.eventSystem);
+            system = new UpdateCursorInputSystem(world, dlcInput, this.uiRaycaster);
             system.Initialize();
         }
 
         [Test]
         public void DontLockCursorWhenOverUI()
         {
-            world.Set(entity, new CameraInput { IsCursorLocked = false });
+            world.Set(entity, new CameraComponent { CursorIsLocked = false });
 
-            eventSystem.When(x => x.RaycastAll(Arg.Any<PointerEventData>(),Arg.Any<List<RaycastResult>>() ))
-                       .Do(callInfo =>
-                        {
-                            var list = callInfo.ArgAt<List<RaycastResult>>(1);
-                            list.Add(new RaycastResult());
-                        });
+            uiRaycaster.RaycastAll(Arg.Any<Vector2>()).Returns(new List<RaycastResult> { new () });
 
             Press(mouse.leftButton);
 
             system.Update(0);
 
-            Assert.IsFalse(world.Get<CameraInput>(entity).IsCursorLocked);
+            Assert.IsFalse(world.Get<CameraComponent>(entity).CursorIsLocked);
         }
 
         [Test]
         public void LockCursorWhenNotClickingUI()
         {
-            world.Set(entity, new CameraInput { IsCursorLocked = false });
+            world.Set(entity, new CameraComponent { CursorIsLocked = false });
 
             Press(mouse.leftButton);
 
             system.Update(0);
 
-            Assert.IsTrue(world.Get<CameraInput>(entity).IsCursorLocked);
+            Assert.IsTrue(world.Get<CameraComponent>(entity).CursorIsLocked);
         }
 
         [Test]
         public void DontRaycastUIWhileLocked1()
         {
-            world.Set(entity, new CameraInput { IsCursorLocked = true });
+            world.Set(entity, new CameraComponent { CursorIsLocked = true });
 
             Press(mouse.leftButton);
 
             system.Update(0);
 
-            eventSystem.DidNotReceive().RaycastAll(Arg.Any<PointerEventData>(), Arg.Any<List<RaycastResult>>());
+            uiRaycaster.DidNotReceive().RaycastAll(Arg.Any<Vector2>());
         }
 
         [Test]
         public void UnlockCursor()
         {
-            world.Set(entity, new CameraInput { IsCursorLocked = true });
+            world.Set(entity, new CameraComponent { CursorIsLocked = true });
 
             Press(keyboard.escapeKey);
 
             system.Update(0);
 
-            Assert.IsFalse(world.Get<CameraInput>(entity).IsCursorLocked);
+            Assert.IsFalse(world.Get<CameraComponent>(entity).CursorIsLocked);
         }
     }
-
-
 }

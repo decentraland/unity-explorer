@@ -22,10 +22,5 @@ namespace DCL.CharacterCamera.Components
         /// When in free camera mode, this is the movement vector
         /// </summary>
         public Vector2 FreeMovement;
-
-        /// <summary>
-        /// Cursor lock state, when true the cursor is hidden and the camera can be moved
-        /// </summary>
-        public bool IsCursorLocked;
     }
 }

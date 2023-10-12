@@ -4,28 +4,21 @@ using Arch.SystemGroups;
 using DCL.CharacterCamera.Components;
 using DCL.Input;
 using DCL.Input.Systems;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 namespace DCL.CharacterCamera.Systems
 {
+    [UpdateBefore(typeof(UpdateCameraInputSystem))]
     [UpdateInGroup(typeof(InputGroup))]
     public partial class UpdateCursorInputSystem : UpdateInputSystem<CameraInput, CameraComponent>
     {
-        private readonly IEventSystem eventSystem;
+        private readonly IUIRaycaster uiRaycaster;
         private readonly DCLInput.CameraActions cameraActions;
-        private readonly PointerEventData pointerData;
-        private readonly List<RaycastResult> results;
 
-        internal UpdateCursorInputSystem(World world, DCLInput dclInput, IEventSystem eventSystem) : base(world)
+        internal UpdateCursorInputSystem(World world, DCLInput dclInput, IUIRaycaster uiRaycaster) : base(world)
         {
-            this.eventSystem = eventSystem;
+            this.uiRaycaster = uiRaycaster;
             cameraActions = dclInput.Camera;
-
-            // Cache data to avoid allocations
-            pointerData = eventSystem.GetPointerEventData();
-            results = new List<RaycastResult>();
         }
 
         protected override void Update(float t)
@@ -34,31 +27,30 @@ namespace DCL.CharacterCamera.Systems
         }
 
         [Query]
-        private void UpdateInput(ref CameraInput cursorInput)
+        private void UpdateInput(ref CameraComponent cameraComponent)
         {
             var mousePos = cameraActions.Point.ReadValue<Vector2>();
 
-            if (cameraActions.Lock.WasPerformedThisFrame() && !cursorInput.IsCursorLocked)
+            if (cameraActions.Lock.WasPerformedThisFrame() && !cameraComponent.CursorIsLocked)
             {
-                pointerData.position = mousePos;
-                eventSystem.RaycastAll(pointerData, results);
+                var results = uiRaycaster.RaycastAll(mousePos);
 
                 if (results.Count == 0)
                 {
-                    cursorInput.IsCursorLocked = true;
-                    UpdateLockState(cursorInput.IsCursorLocked);
+                    cameraComponent.CursorIsLocked = true;
+                    UpdateLockState(cameraComponent.CursorIsLocked);
                 }
             }
 
-            if (cameraActions.Unlock.WasPerformedThisFrame() && cursorInput.IsCursorLocked)
+            if (cameraActions.Unlock.WasPerformedThisFrame() && cameraComponent.CursorIsLocked)
             {
-                cursorInput.IsCursorLocked = false;
-                UpdateLockState(cursorInput.IsCursorLocked);
+                cameraComponent.CursorIsLocked = false;
+                UpdateLockState(cameraComponent.CursorIsLocked);
             }
 
             // in case the cursor was unlocked externally
             if (Cursor.lockState == CursorLockMode.None)
-                cursorInput.IsCursorLocked = false;
+                cameraComponent.CursorIsLocked = false;
         }
 
         private void UpdateLockState(bool locked)
