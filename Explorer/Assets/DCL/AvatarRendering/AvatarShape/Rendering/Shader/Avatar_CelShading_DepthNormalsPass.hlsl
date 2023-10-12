@@ -53,6 +53,16 @@ Varyings DepthNormalsVertex(Attributes input)
     return output;
 }
 
+// Copied from ShaderVariablesFunctions.hlsl
+float3 NormalizeNormalPerPixel_Avatar(float3 normalWS)
+{
+    #if defined(UNITY_NO_DXT5nm) && defined(_NORMALMAP)
+        return SafeNormalize(normalWS);
+    #else
+        return normalize(normalWS);
+    #endif
+}
+
 void DepthNormalsFragment(
     Varyings input
     , out half4 outNormalWS : SV_Target0
@@ -76,7 +86,7 @@ void DepthNormalsFragment(
     half3 packedNormalWS = PackFloat2To888(remappedOctNormalWS);      // values between [ 0,  1]
     outNormalWS = half4(packedNormalWS, 0.0);
     #else
-    float3 normalWS = (NormalizeNormalPerPixel(input.normalWS.xyz) + 1.0f) * 0.5f;
+    float3 normalWS = (NormalizeNormalPerPixel_Avatar(input.normalWS.xyz) + 1.0f) * 0.5f;
     outNormalWS = half4(normalWS.xyz, input.normalWS.w);
     #endif
 
