@@ -7,6 +7,7 @@ Shader "Custom/Avatar_CelShading"
         [HideInInspector] [PerRendererData] _MetallicGlossMapArr_ID ("MetallicGlossMap Array ID", Integer) = -1
         [HideInInspector] [PerRendererData] _BumpMapArr_ID ("BumpMap Array ID", Integer) = -1
         [HideInInspector] [PerRendererData] _EmissionMapArr_ID ("EmissionMap Array ID", Integer) = -1
+        [HideInInspector] [PerRendererData] _OcclusionMapArr_ID ("OcclusionMap Array ID", Integer) = -1
         
         [HideInInspector] [PerRendererData] _lastWearableVertCount ("Last wearable Vert Count", Integer) = -1
         [HideInInspector] [PerRendererData] _lastAvatarVertCount ("Last avatar vert count", Integer) = -1
@@ -52,11 +53,7 @@ Shader "Custom/Avatar_CelShading"
         _EmissiveMapUVs ("Emissive UV Channel", Int) = 0
         
         [HDR] _EmissionColor("Color", Color) = (0,0,0)
-
-        // SRP batching compatibility for Clear Coat (Not used in Lit)
-        [HideInInspector] _ClearCoatMask("_ClearCoatMask", Float) = 0.0
-        [HideInInspector] _ClearCoatSmoothness("_ClearCoatSmoothness", Float) = 0.0
-
+        
         // Blending state
         [HideInInspector] _Surface("__surface", Float) = 0.0
         [HideInInspector] _Blend("__blend", Float) = 0.0
@@ -74,11 +71,7 @@ Shader "Custom/Avatar_CelShading"
         _FadeThickness ("Fade Thickness", Float) = 5
         _FadeDirection ("Fade Direction", Float) = 0
         
-//        [HideInInspector][NoScaleOffset]unity_Lightmaps("unity_Lightmaps", 2DArray) = "" {}
-//        [HideInInspector][NoScaleOffset]unity_LightmapsInd("unity_LightmapsInd", 2DArray) = "" {}
         [HideInInspector][NoScaleOffset]unity_ShadowMasks("unity_ShadowMasks", 2DArray) = "" {}
-        
-        
     }
 
     SubShader

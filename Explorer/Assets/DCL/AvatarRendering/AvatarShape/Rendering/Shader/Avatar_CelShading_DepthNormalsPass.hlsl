@@ -45,7 +45,7 @@ Varyings DepthNormalsVertex(Attributes input)
     //output.uv         = TRANSFORM_TEX(input.texcoord, _BaseMap);
     output.positionCS = TransformObjectToHClip(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
 
-     VertexNormalInputs normalInput = GetVertexNormalInputs(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz, _GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].tangent.xyzw);
+    VertexNormalInputs normalInput = GetVertexNormalInputs(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz, _GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].tangent.xyzw);
     
     output.normalWS.xyz = NormalizeNormalPerVertex(normalInput.normalWS);
     output.normalWS.w = -(mul(UNITY_MATRIX_V, mul(unity_ObjectToWorld, float4(input.positionOS.xyz, 1.0))).z * _ProjectionParams.w);

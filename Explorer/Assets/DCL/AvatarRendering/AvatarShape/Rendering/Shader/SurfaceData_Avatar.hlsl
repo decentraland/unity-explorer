@@ -11,8 +11,6 @@ struct SurfaceData_Avatar
     half3 emission;
     half  occlusion;
     half  alpha;
-    half  clearCoatMask;
-    half  clearCoatSmoothness;
 };
 
 #endif

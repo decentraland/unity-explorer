@@ -24,7 +24,7 @@ StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
 
 struct Attributes
 {
-    uint   index            : SV_VertexID;
+    uint   index        : SV_VertexID;
     float4 positionOS   : POSITION;
     float3 normalOS     : NORMAL;
     float2 texcoord     : TEXCOORD0;
@@ -40,7 +40,6 @@ struct Varyings
 float4 GetShadowPositionHClip(Attributes input)
 {
     float3 positionWS = TransformObjectToWorld(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
-
     float3 normalWS = TransformObjectToWorldNormal(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz);
 
     #if _CASTING_PUNCTUAL_LIGHT_SHADOW

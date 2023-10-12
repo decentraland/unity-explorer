@@ -35,7 +35,7 @@ struct Varyings
 {
     float4 uvAlbedoNormal           : TEXCOORD0; //Albedo, Normal UVs
     //float4 uvMetallicEmissive       : TEXCOORD1; //Metallic, Emissive UVs
-    DECLARE_LIGHTMAP_OR_SH(lightmapUV, vertexSH, 1);
+    half3 vertexSH                  : TEXCOORD1;
 
     #if defined(REQUIRES_WORLD_SPACE_POS_INTERPOLATOR)
         float3 positionWS               : TEXCOORD2;
@@ -46,7 +46,6 @@ struct Varyings
         float4 tangentWS                : TEXCOORD4;    // xyz: tangent, w: sign
     #endif
     float3 viewDirWS                : TEXCOORD5;
-
     half4 fogFactorAndVertexLight   : TEXCOORD6; // x: fogFactor, yzw: vertex light
 
     #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
@@ -55,16 +54,11 @@ struct Varyings
 
 	//NOTE(Brian): needed for FadeDithering
 	float4 positionSS               : TEXCOORD8;
-
     float3 normalMS                 : TEXCOORD9;
-
-
     float4 positionCS               : SV_POSITION;
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
 };
-
-
 
 void InitializeInputData(Varyings input, half3 normalTS, out InputData_Avatar inputData)
 {
@@ -86,7 +80,6 @@ void InitializeInputData(Varyings input, half3 normalTS, out InputData_Avatar in
     inputData.normalWS = NormalizeNormalPerPixel(inputData.normalWS);
     inputData.viewDirectionWS = viewDirWS;
     
-
     #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
         inputData.shadowCoord = input.shadowCoord;
     #elif defined(MAIN_LIGHT_CALCULATE_SHADOWS)
@@ -97,9 +90,8 @@ void InitializeInputData(Varyings input, half3 normalTS, out InputData_Avatar in
 
     inputData.fogCoord = input.fogFactorAndVertexLight.x;
     inputData.vertexLighting = input.fogFactorAndVertexLight.yzw;
-    inputData.bakedGI = SAMPLE_GI(input.lightmapUV, input.vertexSH, inputData.normalWS);
+    inputData.bakedGI = SampleSHPixel(input.vertexSH, inputData.normalWS);
     inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
-    inputData.shadowMask = SAMPLE_SHADOWMASK(input.lightmapUV);
     inputData.matCapUV = mul(UNITY_MATRIX_V, input.normalMS).xy * 0.5 + float2(0.5, 0.5);
 }
 
@@ -116,13 +108,12 @@ Varyings LitPassVertex(Attributes input)
     UNITY_TRANSFER_INSTANCE_ID(input, output);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-    
     VertexPositionInputs vertexInput = GetVertexPositionInputs(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
     
     // normalWS and tangentWS already normalize.
     // this is required to avoid skewing the direction during interpolation
     // also required for per-vertex lighting and SH evaluation
-    //TODO: : Avatar Material Tangents
+    //TODO: Tangents
     VertexNormalInputs normalInput = GetVertexNormalInputs(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz, _GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].tangent.xyzw);
 
     half3 viewDirWS = GetWorldSpaceViewDir(vertexInput.positionWS);
@@ -145,10 +136,8 @@ Varyings LitPassVertex(Attributes input)
     #if defined(REQUIRES_WORLD_SPACE_TANGENT_INTERPOLATOR)
         output.tangentWS = tangentWS;
     #endif
-
-    OUTPUT_LIGHTMAP_UV(input.lightmapUV, unity_LightmapST, output.lightmapUV);
-    OUTPUT_SH(output.normalWS.xyz, output.vertexSH);
-
+    
+    output.vertexSH.xyz = SampleSHVertex(output.normalWS.xyz);
     output.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
 
     #if defined(REQUIRES_WORLD_SPACE_POS_INTERPOLATOR)
@@ -160,12 +149,8 @@ Varyings LitPassVertex(Attributes input)
     #endif
 
     output.positionCS = vertexInput.positionCS;
-
-	//NOTE(Brian): needed for FadeDithering
-	output.positionSS = ComputeScreenPos(vertexInput.positionCS);
-
+	output.positionSS = ComputeScreenPos(vertexInput.positionCS); // needed for FadeDithering
     output.normalMS = mul(UNITY_MATRIX_M, input.normalOS);
-
     return output;
 }
 
@@ -184,11 +169,8 @@ half4 LitPassFragment(Varyings input) : SV_Target
     half4 color = UniversalFragmentPBR_Avatar(inputData, surfaceData);
  
     color.rgb = MixFog(color.rgb, inputData.fogCoord);
-    //color.rgb = (input.normalWS + float3(1.0f, 1.0f, 1.0f)) * 0.5f;
     color.a = OutputAlpha(color.a, _Surface);    
 	color = fadeDithering(color, input.positionWS, input.positionSS);
     return color;
 }
-
-
 #endif
