@@ -9,8 +9,6 @@
 #include "Packages/com.decentraland.unity-shared-dependencies/Runtime/Shaders/URP/Constants.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
 
-
-
 UNITY_INSTANCING_BUFFER_START(UnityPerMaterial)
 // UNITY_DEFINE_INSTANCED_PROP(float4, _BaseMap_ST)
 // UNITY_DEFINE_INSTANCED_PROP(float4, _DetailAlbedoMap_ST)
@@ -419,12 +417,12 @@ half3 LightingPhysicallyBased_Avatar(   BRDFData_Avatar brdfData,
     half3 radiance = (radiance1 * 0.5f) + (radiance2 * 0.5f);
 
     half3 brdf = brdfData.diffuse;
-    #ifndef _SPECULARHIGHLIGHTS_OFF
-    [branch] if (!specularHighlightsOff)
+    //#ifndef _SPECULARHIGHLIGHTS_OFF
+    //[branch] if (!specularHighlightsOff)
     {
         brdf += brdfData.specular * SAMPLE_TEXTURE2D(_MatCap, sampler_MatCap, matCapUV) * 5.0f * DirectBRDFSpecular_Avatar(brdfData, normalWS, lightDirectionWS, viewDirectionWS);
     }
-    #endif // _SPECULARHIGHLIGHTS_OFF
+    //#endif // _SPECULARHIGHLIGHTS_OFF
 
     return brdf * radiance;
 }
