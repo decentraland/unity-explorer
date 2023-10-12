@@ -553,6 +553,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""TemporalLock"",
+                    ""type"": ""Button"",
+                    ""id"": ""41804754-dbbc-4ed6-9543-9b60cc18066b"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -652,6 +661,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Delta"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""1887f5bd-1bc4-4854-8445-052b432614c1"",
+                    ""path"": ""<Mouse>/rightButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""TemporalLock"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -783,6 +803,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Camera_Lock = m_Camera.FindAction("Lock", throwIfNotFound: true);
         m_Camera_Unlock = m_Camera.FindAction("Unlock", throwIfNotFound: true);
         m_Camera_Delta = m_Camera.FindAction("Delta", throwIfNotFound: true);
+        m_Camera_TemporalLock = m_Camera.FindAction("TemporalLock", throwIfNotFound: true);
         // FreeCamera
         m_FreeCamera = asset.FindActionMap("FreeCamera", throwIfNotFound: true);
         m_FreeCamera_Movement = m_FreeCamera.FindAction("Movement", throwIfNotFound: true);
@@ -1005,6 +1026,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Camera_Lock;
     private readonly InputAction m_Camera_Unlock;
     private readonly InputAction m_Camera_Delta;
+    private readonly InputAction m_Camera_TemporalLock;
     public struct CameraActions
     {
         private @DCLInput m_Wrapper;
@@ -1016,6 +1038,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @Lock => m_Wrapper.m_Camera_Lock;
         public InputAction @Unlock => m_Wrapper.m_Camera_Unlock;
         public InputAction @Delta => m_Wrapper.m_Camera_Delta;
+        public InputAction @TemporalLock => m_Wrapper.m_Camera_TemporalLock;
         public InputActionMap Get() { return m_Wrapper.m_Camera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1046,6 +1069,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Delta.started += instance.OnDelta;
             @Delta.performed += instance.OnDelta;
             @Delta.canceled += instance.OnDelta;
+            @TemporalLock.started += instance.OnTemporalLock;
+            @TemporalLock.performed += instance.OnTemporalLock;
+            @TemporalLock.canceled += instance.OnTemporalLock;
         }
 
         private void UnregisterCallbacks(ICameraActions instance)
@@ -1071,6 +1097,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Delta.started -= instance.OnDelta;
             @Delta.performed -= instance.OnDelta;
             @Delta.canceled -= instance.OnDelta;
+            @TemporalLock.started -= instance.OnTemporalLock;
+            @TemporalLock.performed -= instance.OnTemporalLock;
+            @TemporalLock.canceled -= instance.OnTemporalLock;
         }
 
         public void RemoveCallbacks(ICameraActions instance)
@@ -1177,6 +1206,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnLock(InputAction.CallbackContext context);
         void OnUnlock(InputAction.CallbackContext context);
         void OnDelta(InputAction.CallbackContext context);
+        void OnTemporalLock(InputAction.CallbackContext context);
     }
     public interface IFreeCameraActions
     {

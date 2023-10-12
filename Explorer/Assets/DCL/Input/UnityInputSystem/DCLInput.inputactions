@@ -531,6 +531,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
+                },
+                {
+                    "name": "TemporalLock",
+                    "type": "Button",
+                    "id": "41804754-dbbc-4ed6-9543-9b60cc18066b",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -630,6 +639,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Delta",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "1887f5bd-1bc4-4854-8445-052b432614c1",
+                    "path": "<Mouse>/rightButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "TemporalLock",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

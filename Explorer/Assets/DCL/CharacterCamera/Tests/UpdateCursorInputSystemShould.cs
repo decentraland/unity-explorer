@@ -42,6 +42,13 @@ namespace DCL.CharacterCamera.Tests
             system.Initialize();
         }
 
+        [TearDown]
+        public void Teardown()
+        {
+            InputSystem.RemoveDevice(keyboard);
+            InputSystem.RemoveDevice(mouse);
+        }
+
         [Test]
         public void DontLockCursorWhenOverUI()
         {
@@ -86,6 +93,24 @@ namespace DCL.CharacterCamera.Tests
             world.Set(entity, new CameraComponent { CursorIsLocked = true });
 
             Press(keyboard.escapeKey);
+
+            system.Update(0);
+
+            Assert.IsFalse(world.Get<CameraComponent>(entity).CursorIsLocked);
+        }
+
+        [Test]
+        public void LockAndUnlockCursorWithTemporalLock()
+        {
+            world.Set(entity, new CameraComponent { CursorIsLocked = false });
+
+            Press(mouse.rightButton);
+
+            system.Update(0);
+
+            Assert.IsTrue(world.Get<CameraComponent>(entity).CursorIsLocked);
+
+            Release(mouse.rightButton);
 
             system.Update(0);
 

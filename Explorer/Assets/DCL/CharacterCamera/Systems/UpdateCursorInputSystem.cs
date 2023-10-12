@@ -31,7 +31,10 @@ namespace DCL.CharacterCamera.Systems
         {
             var mousePos = cameraActions.Point.ReadValue<Vector2>();
 
-            if (cameraActions.Lock.WasPerformedThisFrame() && !cameraComponent.CursorIsLocked)
+            bool inputWantsToLock = cameraActions.Lock.WasPerformedThisFrame() || cameraActions.TemporalLock.WasPressedThisFrame();
+            bool inputWantsToUnlock = cameraActions.Unlock.WasPerformedThisFrame() || cameraActions.TemporalLock.WasReleasedThisFrame();
+
+            if (inputWantsToLock && !cameraComponent.CursorIsLocked)
             {
                 var results = uiRaycaster.RaycastAll(mousePos);
 
@@ -42,7 +45,7 @@ namespace DCL.CharacterCamera.Systems
                 }
             }
 
-            if (cameraActions.Unlock.WasPerformedThisFrame() && cameraComponent.CursorIsLocked)
+            if (inputWantsToUnlock && cameraComponent.CursorIsLocked)
             {
                 cameraComponent.CursorIsLocked = false;
                 UpdateLockState(cameraComponent.CursorIsLocked);
