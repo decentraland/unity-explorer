@@ -3,7 +3,7 @@ using System.Text;
 
 namespace CommunicationData.URLHelpers
 {
-    public class URLBuilder
+    public class URLBuilder : IURLBuilder
     {
         private readonly StringBuilder stringBuilder = new ();
 
@@ -18,7 +18,7 @@ namespace CommunicationData.URLHelpers
         ///     Set the full domain of the URL, must be called first
         /// </summary>
         /// <exception cref="InvalidOperationException"></exception>
-        public URLBuilder AppendDomain(in URLDomain domain)
+        public IURLBuilder AppendDomain(in URLDomain domain)
         {
             if (URLDomain != null)
                 throw new InvalidOperationException("Domain already set");
@@ -33,7 +33,7 @@ namespace CommunicationData.URLHelpers
         ///     Set the full domain of the URL, must be called first
         /// </summary>
         /// <exception cref="InvalidOperationException"></exception>
-        public URLBuilder AppendDomainWithReplacedPath(in URLDomain domain, in URLSubdirectory newPath)
+        public IURLBuilder AppendDomainWithReplacedPath(in URLDomain domain, in URLSubdirectory newPath)
         {
             if (URLDomain != null)
                 throw new InvalidOperationException("Domain already set");
@@ -61,7 +61,7 @@ namespace CommunicationData.URLHelpers
         ///     Append a subdirectory to the URL, handles slashes
         /// </summary>
         /// <exception cref="InvalidOperationException"></exception>
-        public URLBuilder AppendSubDirectory(in URLSubdirectory subdirectory)
+        public IURLBuilder AppendSubDirectory(in URLSubdirectory subdirectory)
         {
             if (URLDomain == null)
                 throw new InvalidOperationException("Subdirectory should be set after domain");
@@ -80,7 +80,7 @@ namespace CommunicationData.URLHelpers
         ///     Append the final part of the URL, handles slashes
         /// </summary>
         /// <exception cref="InvalidOperationException"></exception>
-        public URLBuilder AppendPath(in URLPath path)
+        public IURLBuilder AppendPath(in URLPath path)
         {
             if (URLDomain == null)
                 throw new InvalidOperationException("Path should be set after domain");
@@ -105,7 +105,7 @@ namespace CommunicationData.URLHelpers
         ///     Append a parameter to the URL, handles question mark and ampersand cases
         /// </summary>
         /// <exception cref="InvalidOperationException"></exception>
-        public URLBuilder AppendParameter(in URLParameter parameter)
+        public IURLBuilder AppendParameter(in URLParameter parameter)
         {
             if (URLDomain == null)
                 throw new InvalidOperationException("Parameter should be set after domain");
@@ -133,8 +133,11 @@ namespace CommunicationData.URLHelpers
         public URLAddress Build() =>
             new (ToString());
 
-        public override string ToString() =>
+        public string GetResult() =>
             stringBuilder.ToString();
+
+        public override string ToString() =>
+            GetResult();
 
         /// <summary>
         ///     Reset the instance so the underlying StringBuilder can be reused
@@ -144,6 +147,7 @@ namespace CommunicationData.URLHelpers
             stringBuilder.Clear();
             URLDomain = null;
             URLPath = null;
+            parametersCount = 0;
         }
 
         /// <summary>

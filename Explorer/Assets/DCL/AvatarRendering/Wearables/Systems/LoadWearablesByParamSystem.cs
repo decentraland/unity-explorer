@@ -28,7 +28,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private readonly URLSubdirectory lambdaSubdirectory;
 
         private readonly IRealmData realmData;
-        private URLBuilder urlBuilder = new ();
+        internal IURLBuilder urlBuilder = new URLBuilder();
         private readonly URLSubdirectory wearablesSubdirectory;
         private readonly WearableCatalog wearableCatalog;
 
@@ -62,7 +62,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
             //Deserialize out of the main thread
             await UniTask.SwitchToThreadPool();
 
-            //TODO: Keep this in mind, because not completely sure what we will need in the future
             WearableDTO.LambdaResponse lambdaResponse = JsonUtility.FromJson<WearableDTO.LambdaResponse>(response);
 
             for (var i = 0; i < lambdaResponse.elements.Count; i++)
@@ -76,8 +75,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private string BuildURL(string userID, (string paramName, string paramValue)[] urlEncodedParams)
         {
-            //TODO: Fix the clear
-            urlBuilder = new URLBuilder();
+            urlBuilder.Clear();
 
             urlBuilder.AppendDomainWithReplacedPath(realmData.Ipfs.LambdasBaseUrl, lambdaSubdirectory)
                       .AppendSubDirectory(URLSubdirectory.FromString(userID))
@@ -89,7 +87,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     urlBuilder.AppendParameter(urlEncodedParams[i]);
             }
 
-            return urlBuilder.ToString();
+            return urlBuilder.GetResult();
         }
     }
 }

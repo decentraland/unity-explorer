@@ -1,12 +1,11 @@
 ﻿using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
-using System;
 using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {
-    public interface IWearable : IDisposable
+    public interface IWearable
     {
         bool IsLoading { get; set; }
 

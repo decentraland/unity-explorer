@@ -1,23 +1,41 @@
+using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Components.Intentions;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.AvatarRendering.Wearables.Systems;
+using ECS;
+using ECS.StreamableLoading.Tests;
+using NSubstitute;
+using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using UnityEngine;
+using Utility.Multithreading;
 using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.Wearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
 
 namespace DCL.AvatarRendering.Wearables.Tests
 {
-    /*
+
   [TestFixture]
   public class LoadWearableByParamSystemShould : LoadSystemBaseShould<LoadWearablesByParamSystem, IWearable[], GetWearableByParamIntention>
   {
-
-      private Dictionary<string, IWearable> wearableCatalog;
+      private WearableCatalog wearableCatalog;
       private readonly string existingURN = "urn:decentraland:off-chain:base-avatars:aviatorstyle";
-      private readonly string successURL = "SuccessUserParam";
+
+      private string successPath => $"file://{Application.dataPath}/../TestResources/Wearables/SuccessUserParam";
+
       private string failPath => $"file://{Application.dataPath}/../TestResources/Wearables/non_existing";
       private string wrongTypePath => $"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}";
 
       protected override LoadWearablesByParamSystem CreateSystem()
       {
-          wearableCatalog = new Dictionary<string, IWearable>();
+          wearableCatalog = new WearableCatalog();
 
-          return new LoadWearablesByParamSystem(world, cache, new RealmData(new IpfsRealm(URLDomain.FromString($"file://{Application.dataPath}/../TestResources/"))),
+          IRealmData realmData = Substitute.For<IRealmData>();
+          realmData.Configured.Returns(true);
+
+          return new LoadWearablesByParamSystem(world, cache, realmData,
               URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), wearableCatalog, new MutexSync());
       }
 
@@ -25,22 +43,31 @@ namespace DCL.AvatarRendering.Wearables.Tests
       {
           base.AssertSuccess(asset);
 
-          foreach (string wearableCatalogKey in wearableCatalog.Keys)
+          foreach (string wearableCatalogKey in wearableCatalog.wearableDictionary.Keys)
               Debug.Log(wearableCatalogKey);
 
-          Assert.AreEqual(wearableCatalog.Count, 1);
-          Assert.NotNull(wearableCatalog[existingURN]);
+          Assert.AreEqual(wearableCatalog.wearableDictionary.Count, 1);
+          Assert.NotNull(wearableCatalog.wearableDictionary[existingURN]);
       }
 
       [Test]
       public async Task ConcludeSuccessOnExistingWearable()
       {
-          wearableCatalog.Add(existingURN, Substitute.For<IWearable>());
+          wearableCatalog.wearableDictionary.Add(existingURN, Substitute.For<IWearable>());
           await ConcludeSuccess();
       }
 
-      protected override GetWearableByParamIntention CreateSuccessIntention() =>
-          new (Array.Empty<(string, string)>(), successURL, new List<IWearable>());
+      protected override GetWearableByParamIntention CreateSuccessIntention()
+      {
+          IURLBuilder urlBuilder = Substitute.For<IURLBuilder>();
+          urlBuilder.AppendDomainWithReplacedPath(Arg.Any<URLDomain>(), Arg.Any<URLSubdirectory>()).Returns(urlBuilder);
+          urlBuilder.AppendSubDirectory(Arg.Any<URLSubdirectory>()).Returns(urlBuilder);
+          urlBuilder.GetResult().Returns(successPath);
+
+          system.urlBuilder = urlBuilder;
+
+          return new GetWearableByParamIntention(Array.Empty<(string, string)>(), successPath, new List<IWearable>());
+      }
 
       protected override GetWearableByParamIntention CreateNotFoundIntention() =>
           new (Array.Empty<(string, string)>(), failPath, new List<IWearable>());
@@ -49,5 +76,6 @@ namespace DCL.AvatarRendering.Wearables.Tests
           new (Array.Empty<(string, string)>(), wrongTypePath, new List<IWearable>());
 
     }
-     */
+
+
 }

@@ -37,8 +37,7 @@ namespace DCL.AvatarRendering
                 feet[Random.Range(0, feet.Count)],
                 hair[Random.Range(0, hair.Count)],
 
-                //TODO: We still dont have the default asset bundles for this ones
-                //We should add them before using them
+                //TODO Facial features.
                 //mouth[Random.Range(0, mouth.Count)].metadata.id,
                 //eyes[Random.Range(0, eyes.Count)].metadata.id,
                 //eyebros[Random.Range(0, eyebros.Count)].metadata.id,

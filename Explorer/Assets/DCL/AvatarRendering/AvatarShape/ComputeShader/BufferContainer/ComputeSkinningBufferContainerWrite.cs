@@ -7,7 +7,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     {
         public ComputeSkinningBufferContainerWrite(int vertCount, int skinnedMeshRenderersConeCount) : base(vertCount, skinnedMeshRenderersConeCount) { }
 
-        //TODO: Pool this buffer
+        //TODO ComputeShaderOptimization.  Pool this buffer
         private ComputeBuffer CreateSubUpdateBuffer<T>(int size) where T: struct =>
             new (size, Unsafe.SizeOf<T>(), ComputeBufferType.Structured, ComputeBufferMode.SubUpdates);
 

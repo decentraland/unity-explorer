@@ -136,8 +136,5 @@ namespace DCL.AvatarRendering.Wearables.Components
             return representation.overrideReplaces;
         }
 
-        //TODO: Implement Dispose method
-        public void Dispose() { }
-
     }
 }

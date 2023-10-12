@@ -15,7 +15,7 @@ namespace DCL.AvatarRendering.AvatarShape
         [SerializeField]
         private RuntimeAnimatorController randomAnimator;
 
-        //TODO: Debug stuff, remove after demo
+        //Debug stuff, remove after demo
         public void SetAsMainPlayer(bool isMainPlayer)
         {
             if (isMainPlayer)

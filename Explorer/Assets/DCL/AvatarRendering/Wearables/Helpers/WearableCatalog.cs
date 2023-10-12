@@ -1,23 +1,16 @@
 ﻿using DCL.AvatarRendering.Wearables.Components;
 using ECS.StreamableLoading.Common.Components;
-using System;
 using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
-    public class WearableCatalog : IDisposable
+    public class WearableCatalog
     {
         internal Dictionary<string, IWearable> wearableDictionary;
 
         public WearableCatalog()
         {
             wearableDictionary = new Dictionary<string, IWearable>();
-        }
-
-        public void Dispose()
-        {
-            foreach (IWearable wearableDictionaryValue in wearableDictionary.Values)
-                wearableDictionaryValue.Dispose();
         }
 
         public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto)

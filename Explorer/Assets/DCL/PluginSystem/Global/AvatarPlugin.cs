@@ -58,7 +58,6 @@ namespace DCL.PluginSystem.Global
             AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAsset(settings.avatarBase, ct: ct)).Value.GetComponent<AvatarBase>();
             componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity));
 
-            //TODO: Does it make sense to prewarm using a for?
             ProvidedAsset<Material> providedMaterial = await assetsProvisioner.ProvideMainAsset(settings.celShadingMaterial, ct: ct);
             celShadingMaterialPool = new ObjectPool<Material>(() => new Material(providedMaterial.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.defaultMaterialCapacity);
 

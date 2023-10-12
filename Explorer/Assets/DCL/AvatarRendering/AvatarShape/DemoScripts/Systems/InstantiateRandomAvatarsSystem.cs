@@ -25,7 +25,6 @@ using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRenderi
 using Random = UnityEngine.Random;
 using RaycastHit = UnityEngine.RaycastHit;
 
-//TODO: Class used for demo, should be removed or refactored for production code
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
@@ -76,15 +75,12 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 (ref PBAvatarShape pbAvatarShape) =>
                 {
                     AvatarRandomizer currentRandomizer = randomizers[Random.Range(0, randomizers.Length)];
-                    var wearables = new List<string>();
-
+                    pbAvatarShape.Wearables.Clear();
                     foreach (string randomAvatarWearable in currentRandomizer.GetRandomAvatarWearables())
-                        wearables.Add(randomAvatarWearable);
+                        pbAvatarShape.Wearables.Add(randomAvatarWearable);
 
                     pbAvatarShape.BodyShape = currentRandomizer.BodyShape;
                     pbAvatarShape.IsDirty = true;
-                    pbAvatarShape.Wearables.Clear();
-                    pbAvatarShape.Wearables.AddRange(wearables);
                 });
         }
 
@@ -217,7 +213,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 var avatarShape = new PBAvatarShape
                 {
                     BodyShape = currentRandomizer.BodyShape,
-                    Wearables = { wearables.ToArray() },
+                    Wearables = { wearables },
                     SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor3(),
                     HairColor = WearablesConstants.DefaultColors.GetRandomHairColor3(),
                 };

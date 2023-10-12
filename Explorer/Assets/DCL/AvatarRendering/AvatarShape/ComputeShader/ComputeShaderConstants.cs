@@ -13,7 +13,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             EMMISSION = 4,
         }
 
-        //TODO: Add this textures arrays to the material
+        //TODO Avatar Material. Add this textures arrays to the material
         public static int _AlphaTextureArr_ShaderID = Shader.PropertyToID("_AlphaTextureArr_ID");
         public static int _MetallicGlossMapArr_ShaderID = Shader.PropertyToID("_MetallicGlossMapArr_ID");
         public static int _BumpMapArr_ShaderID = Shader.PropertyToID("_BumpMapArr_ID");

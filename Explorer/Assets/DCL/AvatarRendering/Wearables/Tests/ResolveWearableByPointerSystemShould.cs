@@ -48,6 +48,10 @@ namespace DCL.AvatarRendering.Wearables.Tests
             mockedABManifest = new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(URLDomain.EMPTY, new SceneAbDto
                 { version = "0" }));
 
+            world.Create(new DefaultWearablesComponent
+            {
+                ResolvedState = DefaultWearablesComponent.State.Success,
+            });
             system = new ResolveWearableByPointerSystem(world, wearableCatalog, new RealmData(new IpfsRealm(URLDomain.EMPTY)), URLSubdirectory.EMPTY);
         }
 
@@ -95,24 +99,24 @@ namespace DCL.AvatarRendering.Wearables.Tests
             world.Create(assetBundlePromise, mockWearable, BodyShape.MALE);
             EntityReference assetBundlePromiseEntity = assetBundlePromise.Entity;
             world.Add(assetBundlePromiseEntity, failed ? new StreamableLoadingResult<AssetBundleData>(new Exception("FAILED")) : mockedAB);
-            system.Update(0);
         }
 
         [Test]
         public void ResolveWearable()
         {
+            //Arrange
             IWearable mockWearable = CreateMockWearable(testUrn, false, false);
             wearableCatalog.wearableDictionary.Add(mockWearable.GetUrn(), mockWearable);
-
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<string>
                 { testUrn }, new IWearable[1], BodyShape.MALE);
-
             Promise.Create(world, getWearablesByPointersIntention, PartitionComponent.TOP_PRIORITY);
             system.Update(0);
 
+            //Act
             MockWearableManifestResult(getWearablesByPointersIntention.CancellationTokenSource, mockWearable, false);
             MockABResult(getWearablesByPointersIntention.CancellationTokenSource, mockWearable, false);
 
+            //Assert
             mockWearable.WearableAssets[BodyShape.MALE] = mockedAB;
             mockWearable.Received().ManifestResult = mockedABManifest;
         }
@@ -120,18 +124,19 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public void ResolveUnisexWearable()
         {
+            //Arrange
             IWearable mockUnisexWearable = CreateMockWearable(unisexTestUrn, false, true);
             wearableCatalog.wearableDictionary.Add(mockUnisexWearable.GetUrn(), mockUnisexWearable);
-
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<string>
                 { unisexTestUrn }, new IWearable[1], BodyShape.MALE);
-
             Promise.Create(world, getWearablesByPointersIntention, PartitionComponent.TOP_PRIORITY);
             system.Update(0);
 
+            //Act
             MockWearableManifestResult(getWearablesByPointersIntention.CancellationTokenSource, mockUnisexWearable, false);
             MockABResult(getWearablesByPointersIntention.CancellationTokenSource, mockUnisexWearable, false);
 
+            //Assert
             mockUnisexWearable.WearableAssets[BodyShape.MALE] = mockedAB;
             mockUnisexWearable.WearableAssets[BodyShape.FEMALE] = mockedAB;
             mockUnisexWearable.Received().ManifestResult = mockedABManifest;
@@ -140,17 +145,18 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public void ResolveDefaultWearableOnManifestFail()
         {
+            //Arrange
             IWearable mockWearable = CreateMockWearable(testUrn, false, false);
             wearableCatalog.wearableDictionary.Add(mockWearable.GetUrn(), mockWearable);
-
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<string>
                 { testUrn }, new IWearable[1], BodyShape.MALE);
-
             Promise.Create(world, getWearablesByPointersIntention, PartitionComponent.TOP_PRIORITY);
-            system.Update(0);
 
+            //Act
+            system.Update(0);
             MockWearableManifestResult(getWearablesByPointersIntention.CancellationTokenSource, mockWearable, true);
 
+            //Assert
             mockWearable.WearableAssets[BodyShape.MALE] = mockedDefaultAB;
             mockWearable.DidNotReceive().ManifestResult = mockedABManifest;
         }
@@ -158,43 +164,76 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public void ResolveDefaultWearableOnABFail()
         {
+            //Arrange
             IWearable mockWearable = CreateMockWearable(testUrn, false, false);
             wearableCatalog.wearableDictionary.Add(mockWearable.GetUrn(), mockWearable);
-
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<string>
                 { testUrn }, new IWearable[1], BodyShape.MALE);
-
             Promise.Create(world, getWearablesByPointersIntention, PartitionComponent.TOP_PRIORITY);
             system.Update(0);
 
+            //Act
             MockWearableManifestResult(getWearablesByPointersIntention.CancellationTokenSource, mockWearable, false);
             MockABResult(getWearablesByPointersIntention.CancellationTokenSource, mockWearable, true);
 
+            //Assert
             mockWearable.WearableAssets[BodyShape.MALE] = mockedDefaultAB;
             mockWearable.Received().ManifestResult = mockedABManifest;
         }
 
         [Test]
-        public void CancelIntention()
+        public void CancelIntentionOnManifestStage()
         {
+            //Arrange
+            IWearable mockWearable = CreateMockWearable(testUrn, false, false);
+            wearableCatalog.wearableDictionary.Add(mockWearable.GetUrn(), mockWearable);
             var getWearablesByPointersIntention
                 = new GetWearablesByPointersIntention(new List<string>
                     { testUrn }, new IWearable[1], BodyShape.MALE);
 
             var promise = Promise.Create(world, getWearablesByPointersIntention, PartitionComponent.TOP_PRIORITY);
             system.Update(0);
+
+            //Act
+            Assert.AreEqual(1, world.CountEntities(in new QueryDescription().WithAll<AssetBundleManifestPromise>()));
             promise.ForgetLoading(world);
             system.Update(0);
 
-            //The DTO and WearableByPointer request remain in world with a cancelled exception
-            Assert.AreEqual(2, world.CountEntities(new QueryDescription()));
-            Assert.IsTrue(getWearablesByPointersIntention.CancellationTokenSource.IsCancellationRequested);
+            //Assert
+            Assert.IsTrue(promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested);
             Assert.IsFalse(promise.Entity.IsAlive(world));
 
-            //TODO: Discuss cancellation path. BY cancelling and add it as a result, wont it be
-            //looping forever and be innaccessible?
-            //Assert.IsTrue(promise.TryGetResult(world, out StreamableLoadingResult<Wearable[]> result));
-            //Assert.IsFalse(result.Succeeded);
+            //No  Manifest promises should be left
+            Assert.AreEqual(0, world.CountEntities(in new QueryDescription().WithAll<AssetBundleManifestPromise>()));
+        }
+
+        [Test]
+        public void CancelIntentionOnABStage()
+        {
+            //Arrange
+            IWearable mockWearable = CreateMockWearable(testUrn, false, false);
+            wearableCatalog.wearableDictionary.Add(mockWearable.GetUrn(), mockWearable);
+
+            var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<string>
+                { testUrn }, new IWearable[1], BodyShape.MALE);
+
+            var promise = Promise.Create(world, getWearablesByPointersIntention, PartitionComponent.TOP_PRIORITY);
+            system.Update(0);
+
+            //Mock result and start the next promise
+            //Act
+            MockWearableManifestResult(getWearablesByPointersIntention.CancellationTokenSource, mockWearable, false);
+            system.Update(0);
+            Assert.AreEqual(1, world.CountEntities(in new QueryDescription().WithAll<AssetBundlePromise>()));
+            promise.ForgetLoading(world);
+            system.Update(0);
+
+            //Assert
+            Assert.IsTrue(promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested);
+            Assert.IsFalse(promise.Entity.IsAlive(world));
+
+            //No AB promises should be left
+            Assert.AreEqual(0, world.CountEntities(in new QueryDescription().WithAll<AssetBundlePromise>()));
         }
     }
 }

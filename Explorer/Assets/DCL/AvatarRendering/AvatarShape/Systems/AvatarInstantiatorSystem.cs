@@ -63,7 +63,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
 
-
         [Query]
         [All(typeof(TransformComponent))]
         private void InstantiateExistingAvatar(ref AvatarShapeComponent avatarShapeComponent, AvatarBase avatarBase,
@@ -94,7 +93,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarTransform.SetParent(transformComponent.Transform, false);
             avatarTransform.ResetLocalTRS();
 
-            //TODO: Debug stuff, remove after demo
+            //Debug stuff, remove after demo
             avatarBase.SetAsMainPlayer(avatarShapeComponent.Name.Equals("Player"));
 
             var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create();
@@ -157,6 +156,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 textureArrays, computeShaderSkinningPool.Get(), avatarMaterialPool, avatarBase.AvatarSkinnedMeshRenderer, avatarShapeComponent);
 
             skinningStrategy.SetVertOutRegion(vertOutBuffer.Rent(skinningComponent.vertCount), ref skinningComponent);
+            avatarBase.gameObject.SetActive(true);
 
             intention.Dispose();
             avatarShapeComponent.IsDirty = false;
@@ -176,6 +176,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             // Use frame budget for destruction as well
             if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
             {
+                avatarBase.gameObject.SetActive(false);
                 deleteEntityIntention.DeferDeletion = true;
                 return;
             }
