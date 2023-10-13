@@ -17,43 +17,62 @@ MonoBehaviour:
   - rid: 6784895265412481026
   - rid: 6784895265412481027
   - rid: 6784895267130048513
-  - rid: 2761372266084433920
-  - rid: 2761372420489084973
+  - rid: 1268264176566403074
   references:
     version: 2
     RefIds:
-    - rid: 2761372266084433920
-      type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+    - rid: 1268264176566403074
+      type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        avatarBase:
-          m_AssetGUID: 8db46845fb5f52f44a71c2a0c2d92074
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        celShadingMaterial:
-          m_AssetGUID: 19373184c73f36042a55739551bb8298
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        defaultMaterialCapacity: 100
-        computeShader:
-          m_AssetGUID: e8cf73ccd47a385498b71ec58534d03c
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <avatarInstantiatorViewRef>k__BackingField:
-          m_AssetGUID: fdc0ac72e84d9534eafd826d7fdfb22a
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-    - rid: 2761372420489084973
-      type: {class: WearablePlugin/WearableSettings, ns: DCL.AvatarRendering.Wearables, asm: DCL.Plugins}
-      data:
-        defaultWearablesDefinition:
-          m_AssetGUID: 81ea8febf47eb484986af220584361dc
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
+        <hoverCanvasSettings>k__BackingField:
+          <HoverCanvasAsset>k__BackingField:
+            m_AssetGUID: 8fd0fd0188702304689c461c6aacc7c5
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
+          <InputButtons>k__BackingField:
+          - InputAction: 0
+            Key: 
+            Icon: {fileID: 21300000, guid: 1298933c0a6b35a499063fcfb805f66b, type: 3}
+          - InputAction: 1
+            Key: E
+            Icon: {fileID: 0}
+          - InputAction: 2
+            Key: F
+            Icon: {fileID: 0}
+          - InputAction: 3
+            Key: 
+            Icon: {fileID: 21300000, guid: f2510343b050e5e45b65ee7371482b8e, type: 3}
+          - InputAction: 4
+            Key: W
+            Icon: {fileID: 0}
+          - InputAction: 5
+            Key: S
+            Icon: {fileID: 0}
+          - InputAction: 6
+            Key: D
+            Icon: {fileID: 0}
+          - InputAction: 7
+            Key: A
+            Icon: {fileID: 0}
+          - InputAction: 8
+            Key: SPACE BAR
+            Icon: {fileID: 0}
+          - InputAction: 9
+            Key: LSHIFT
+            Icon: {fileID: 0}
+          - InputAction: 10
+            Key: 1
+            Icon: {fileID: 0}
+          - InputAction: 11
+            Key: 2
+            Icon: {fileID: 0}
+          - InputAction: 12
+            Key: 3
+            Icon: {fileID: 0}
+          - InputAction: 13
+            Key: 4
+            Icon: {fileID: 0}
     - rid: 6784895264912310272
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

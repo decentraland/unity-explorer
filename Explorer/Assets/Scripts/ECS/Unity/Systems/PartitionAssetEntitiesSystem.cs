@@ -54,7 +54,7 @@ namespace ECS.Unity.Systems
             // First re-partition if player position or rotation is changed
             // if is true then re-partition if Transform.isDirty
 
-            Vector3 scenePosition = World.Get<TransformComponent>(sceneRoot).Transform.position;
+            Vector3 scenePosition = World.Get<TransformComponent>(sceneRoot).Cached.WorldPosition;
             Vector3 cameraPosition = samplingData.Position;
             Vector3 cameraForward = samplingData.Forward;
 
@@ -90,7 +90,7 @@ namespace ECS.Unity.Systems
         private void PartitionNewEntity([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, in Entity entity, ref TransformComponent transformComponent)
         {
             PartitionComponent partitionComponent = partitionComponentPool.Get();
-            RePartition(cameraPosition, cameraForward, transformComponent.Transform.position, ref partitionComponent);
+            RePartition(cameraPosition, cameraForward, transformComponent.Cached.WorldPosition, ref partitionComponent);
             partitionComponent.IsDirty = true;
             World.Add(entity, partitionComponent);
         }
@@ -122,7 +122,7 @@ namespace ECS.Unity.Systems
             if (checkTransform && !sdkTransform.IsDirty)
                 return;
 
-            RePartition(cameraPosition, cameraForward, transformComponent.Transform.position, ref partitionComponent);
+            RePartition(cameraPosition, cameraForward, transformComponent.Cached.WorldPosition, ref partitionComponent);
         }
 
         private void RePartition(Vector3 cameraTransform, Vector3 cameraForward, Vector3 entityPosition, ref PartitionComponent partitionComponent)

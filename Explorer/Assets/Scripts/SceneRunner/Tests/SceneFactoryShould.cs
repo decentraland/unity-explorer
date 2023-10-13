@@ -4,6 +4,7 @@ using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
+using DCL.Interaction.Utility;
 using ECS.Prioritization.Components;
 using NSubstitute;
 using NUnit.Framework;
@@ -48,7 +49,8 @@ namespace SceneRunner.Tests
             crdtSerializer = Substitute.For<ICRDTSerializer>();
             componentsRegistry = Substitute.For<ISDKComponentsRegistry>();
 
-            sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry, new EntityFactory());
+            sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry,
+                new SceneEntityFactory(), new EntityCollidersGlobalCache());
         }
 
         [TearDown]
@@ -68,7 +70,6 @@ namespace SceneRunner.Tests
 
             Assert.IsNotNull(sceneFacadeImpl.crdtProtocol);
             Assert.IsNotNull(sceneFacadeImpl.runtimeInstance);
-            Assert.IsNotNull(sceneFacadeImpl.outgoingCrtdMessagesProvider);
             Assert.IsNotNull(sceneFacadeImpl.crdtWorldSynchronizer);
             Assert.IsNotNull(sceneFacadeImpl.instancePoolsProvider);
             Assert.IsNotNull(sceneFacadeImpl.crdtMemoryAllocator);

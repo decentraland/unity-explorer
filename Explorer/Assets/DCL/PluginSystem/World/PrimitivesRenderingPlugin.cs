@@ -23,7 +23,7 @@ namespace DCL.PluginSystem.World
         public PrimitivesRenderingPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies)
         {
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
-            capFrameTimeBudgetProvider = singletonSharedDependencies.FrameTimeCapBudgetProvider;
+            capFrameTimeBudgetProvider = singletonSharedDependencies.FrameTimeBudgetProvider;
 
             componentPoolsRegistry.AddComponentPool<BoxPrimitive>();
             componentPoolsRegistry.AddComponentPool<SpherePrimitive>();

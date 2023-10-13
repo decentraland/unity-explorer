@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
+using DCL.Interaction.Utility;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
@@ -9,7 +10,6 @@ using DCL.PluginSystem.World.Dependencies;
 using Diagnostics;
 using Diagnostics.ReportsHandling;
 using ECS.Prioritization;
-using ECS.Prioritization.Components;
 using ECS.Profiling;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System.Collections.Generic;
@@ -34,7 +34,7 @@ namespace Global
 
         public ComponentsContainer ComponentsContainer { get; private set; }
 
-        public CameraSamplingData CameraSamplingData { get; private set; }
+        public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
 
         public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; }
 
@@ -46,6 +46,8 @@ namespace Global
         public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
 
         public IProfilingProvider ProfilingProvider { get; private set; }
+
+        public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
 
         public async UniTask Initialize(StaticSettings settings, CancellationToken ct)
         {
@@ -82,6 +84,7 @@ namespace Global
         public static async UniTask<(StaticContainer container, bool success)> Create(IPluginSettingsContainer settingsContainer, CancellationToken ct)
         {
             var componentsContainer = ComponentsContainer.Create();
+            var exposedGlobalDataContainer = ExposedGlobalDataContainer.Create();
             var profilingProvider = new ProfilingProvider();
 
             var container = new StaticContainer();
@@ -96,7 +99,7 @@ namespace Global
             var sharedDependencies = new ECSWorldSingletonSharedDependencies(
                 componentsContainer.ComponentPoolsRegistry,
                 container.ReportHandlingSettings,
-                new EntityFactory(),
+                new SceneEntityFactory(),
                 new PartitionedWorldsAggregate.Factory(),
                 new ConcurrentLoadingBudgetProvider(50),
                 new FrameTimeCapBudgetProvider(40, profilingProvider)
@@ -105,8 +108,9 @@ namespace Global
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
-            container.CameraSamplingData = new CameraSamplingData();
             container.ProfilingProvider = profilingProvider;
+            container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
+            container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
 
             var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings);
 
@@ -120,6 +124,7 @@ namespace Global
                 new VisibilityPlugin(),
                 assetBundlePlugin,
                 new GltfContainerPlugin(sharedDependencies),
+                new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
             };
 
             container.SharedPlugins = new IDCLGlobalPlugin[]

@@ -1,13 +1,15 @@
 ﻿using Arch.Core;
+using CRDT;
+using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
+using DCL.Interaction.Utility;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.TestSuite;
-using ECS.Unity.GLTFContainer.Asset;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Asset.Systems;
 using ECS.Unity.GLTFContainer.Asset.Tests;
@@ -33,11 +35,11 @@ namespace ECS.Unity.GLTFContainer.Tests
         [SetUp]
         public void SetUp()
         {
-            Entity sceneRoot = world.Create();
+            Entity sceneRoot = world.Create(new SceneRootComponent());
             AddTransformToEntity(sceneRoot);
             IConcurrentBudgetProvider concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
             concurrentBudgetProvider.TrySpendBudget().Returns(true);
-            system = new FinalizeGltfContainerLoadingSystem(world, world.Reference(sceneRoot), concurrentBudgetProvider);
+            system = new FinalizeGltfContainerLoadingSystem(world, world.Reference(sceneRoot), concurrentBudgetProvider, NullEntityCollidersSceneCache.INSTANCE);
             IConcurrentBudgetProvider budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
             budgetProvider.TrySpendBudget().Returns(true);
             createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budgetProvider);
@@ -66,7 +68,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             component.State.Set(LoadingState.Loading);
 
-            Entity e = world.Create(component, new TransformComponent(), new PBGltfContainer());
+            Entity e = world.Create(component, new CRDTEntity(100), new TransformComponent(), new PBGltfContainer());
             world.Add(component.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(new Exception()));
 
             LogAssert.ignoreFailingMessages = true;
@@ -88,7 +90,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             await InstantiateAssetBundle(GltfContainerTestResources.SIMPLE_RENDERER, component.Promise.Entity);
 
-            Entity e = world.Create(component, new PBGltfContainer { Src = GltfContainerTestResources.SIMPLE_RENDERER });
+            Entity e = world.Create(component, new CRDTEntity(100), new PBGltfContainer { Src = GltfContainerTestResources.SIMPLE_RENDERER });
             TransformComponent transform = AddTransformToEntity(e);
 
             system.Update(0);
@@ -111,7 +113,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             await InstantiateAssetBundle(GltfContainerTestResources.SCENE_WITH_COLLIDER, component.Promise.Entity);
 
-            Entity e = world.Create(component, new PBGltfContainer { Src = GltfContainerTestResources.SCENE_WITH_COLLIDER, IsDirty = true });
+            Entity e = world.Create(component, new CRDTEntity(100), new PBGltfContainer { Src = GltfContainerTestResources.SCENE_WITH_COLLIDER, IsDirty = true });
             AddTransformToEntity(e);
 
             system.Update(0);
@@ -134,7 +136,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             await InstantiateAssetBundle(GltfContainerTestResources.SCENE_WITH_COLLIDER, component.Promise.Entity);
 
-            Entity e = world.Create(component, new PBGltfContainer { Src = GltfContainerTestResources.SCENE_WITH_COLLIDER });
+            Entity e = world.Create(component, new CRDTEntity(100), new PBGltfContainer { Src = GltfContainerTestResources.SCENE_WITH_COLLIDER });
             AddTransformToEntity(e);
 
             system.Update(0);

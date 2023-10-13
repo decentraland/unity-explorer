@@ -59,4 +59,9 @@ namespace DCL.ECSComponents
     {
         public bool IsDirty { get; set; }
     }
+
+    public partial class PBRaycast : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
 }

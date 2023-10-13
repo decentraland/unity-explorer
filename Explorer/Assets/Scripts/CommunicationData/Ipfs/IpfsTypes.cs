@@ -60,6 +60,9 @@ namespace Ipfs
 
             public bool Equals(EntityDefinitionGeneric<T> other) =>
                 id.Equals(other?.id);
+
+            public override string ToString() =>
+                id;
         }
 
         [Serializable]
@@ -80,6 +83,7 @@ namespace Ipfs
         {
             public string main;
             public SceneMetadataScene scene;
+            public string runtimeVersion;
         }
 
         [Serializable]

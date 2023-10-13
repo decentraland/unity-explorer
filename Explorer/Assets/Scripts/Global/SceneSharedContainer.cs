@@ -18,10 +18,12 @@ namespace Global
         public static SceneSharedContainer Create(in StaticContainer staticContainer)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
+            ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 staticContainer.PartitionSettings,
-                staticContainer.CameraSamplingData,
+                exposedGlobalDataContainer.CameraSamplingData,
+                exposedGlobalDataContainer.ExposedCameraData,
                 staticContainer.ECSWorldPlugins);
 
             return new SceneSharedContainer
@@ -32,7 +34,8 @@ namespace Global
                     new SharedPoolsProvider(),
                     new CRDTSerializer(),
                     staticContainer.ComponentsContainer.SDKComponentsRegistry,
-                    sharedDependencies.EntityFactory
+                    sharedDependencies.EntityFactory,
+                    staticContainer.EntityCollidersGlobalCache
                 ),
             };
         }

@@ -3,7 +3,6 @@ using Arch.Core;
 using CRDT;
 using CRDT.Protocol;
 using CrdtEcsBridge.Components;
-using Diagnostics.ReportsHandling;
 using ECS.LifeCycle.Components;
 using System;
 using System.Collections.Generic;
@@ -49,7 +48,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
         private readonly List<CRDTEntity> deletedEntities;
 
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
-        private readonly IEntityFactory entityFactory;
+        private readonly ISceneEntityFactory entityFactory;
         private readonly WorldSyncCommandBufferCollectionsPool collectionsPool;
 
         private bool finalized;
@@ -58,7 +57,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
         /// <summary>
         /// Can't contain a public ctor as should be instantiated within the assembly
         /// </summary>
-        internal WorldSyncCommandBuffer(ISDKComponentsRegistry componentsRegistry, IEntityFactory entityFactory, WorldSyncCommandBufferCollectionsPool collectionsPool)
+        internal WorldSyncCommandBuffer(ISDKComponentsRegistry componentsRegistry, ISceneEntityFactory entityFactory, WorldSyncCommandBufferCollectionsPool collectionsPool)
         {
             batchStates = collectionsPool.GetMainDictionary();
             deletedEntities = collectionsPool.GetDeletedEntities();
@@ -108,7 +107,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
                     if (!sdkComponentsRegistry.TryGet(message.ComponentId, out var sdkComponentBridge))
                     {
-                        ReportHub.LogWarning(ReportCategory.CRDT_ECS_BRIDGE, $"SDK Component {message.ComponentId} is not registered");
+                        // ReportHub.LogWarning(ReportCategory.CRDT_ECS_BRIDGE, $"SDK Component {message.ComponentId} is not registered");
                         return CRDTReconciliationEffect.NoChanges;
                     }
 
@@ -217,6 +216,12 @@ namespace CrdtEcsBridge.WorldSynchronizer
                     // it is sub-optimal but I don't see the way to do it better
 
                     if (componentsBatch.Count == 0) continue;
+
+                    if (entity.Equals(SpecialEntitiesID.PLAYER_ENTITY) || entity.Equals(SpecialEntitiesID.CAMERA_ENTITY))
+                    {
+                        // Camera and player entities are not supported yet
+                        continue;
+                    }
 
                     if (!entitiesMap.TryGetValue(entity, out var realEntity))
                         entitiesMap[entity] = realEntity = entityFactory.Create(entity, world);

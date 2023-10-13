@@ -8,6 +8,7 @@ using ECS.Abstract;
 using ECS.ComponentsPooling;
 using ECS.LifeCycle.Components;
 using ECS.Unity.GLTFContainer.Components;
+using Utility.Pool;
 
 namespace ECS.Unity.GLTFContainer.Systems
 {
@@ -41,7 +42,8 @@ namespace ECS.Unity.GLTFContainer.Systems
             if (!component.State.ChangedThisFrame())
                 return;
 
-            PBGltfContainerLoadingState sdkComponent = componentPool.Get();
+            using PoolExtensions.Scope<PBGltfContainerLoadingState> scope = componentPool.AutoScope();
+            PBGltfContainerLoadingState sdkComponent = scope.Value;
             sdkComponent.CurrentState = component.State;
             ecsToCRDTWriter.PutMessage(sdkEntity, sdkComponent);
         }

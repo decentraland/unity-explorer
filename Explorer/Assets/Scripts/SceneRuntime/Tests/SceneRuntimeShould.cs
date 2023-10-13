@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
+using Diagnostics;
 using JetBrains.Annotations;
 using NSubstitute;
 using NUnit.Framework;
@@ -57,7 +58,7 @@ namespace SceneRuntime.Tests
         ";
 
                 SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
-                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code, poolsProvider, CancellationToken.None);
+                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
                 sceneRuntime.RegisterEngineApi(engineApi);
                 await sceneRuntime.StartScene();
@@ -83,7 +84,7 @@ namespace SceneRuntime.Tests
         ";
 
                 SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
-                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code, poolsProvider, CancellationToken.None);
+                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
                 sceneRuntime.RegisterEngineApi(engineApi);
 
@@ -121,7 +122,7 @@ namespace SceneRuntime.Tests
         ";
 
                 SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
-                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code, poolsProvider, CancellationToken.None);
+                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
                 await sceneRuntime.StartScene();
 
@@ -147,8 +148,8 @@ namespace SceneRuntime.Tests
                 var engineApi = Substitute.For<IEngineApi>();
 
                 SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
-                var path = URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
-                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPath(path, poolsProvider, CancellationToken.None);
+                var path =  URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
+                SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPath(path, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
                 sceneRuntime.RegisterEngineApi(engineApi);
 

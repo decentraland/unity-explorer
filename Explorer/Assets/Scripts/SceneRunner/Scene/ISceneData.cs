@@ -48,5 +48,7 @@ namespace SceneRunner.Scene
         bool TryGetMediaUrl(string url, out URLAddress result);
 
         bool IsUrlDomainAllowed(string url);
+
+        bool IsSdk7();
     }
 }

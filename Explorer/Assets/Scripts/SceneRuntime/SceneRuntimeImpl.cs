@@ -1,5 +1,6 @@
 using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
+using Diagnostics;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
@@ -13,7 +14,7 @@ using UnityEngine.Assertions;
 namespace SceneRuntime
 {
     // Avoid the same name for Namespace and Class
-    public class SceneRuntimeImpl : ISceneRuntime
+    public class SceneRuntimeImpl : ISceneRuntime, IJsOperations
     {
         private readonly IInstancePoolsProvider instancePoolsProvider;
         internal readonly V8ScriptEngine engine;
@@ -29,7 +30,11 @@ namespace SceneRuntime
 
         private EngineApiWrapper engineApi;
 
-        public SceneRuntimeImpl(string sourceCode, string jsInitCode, Dictionary<string, string> jsModules, IInstancePoolsProvider instancePoolsProvider)
+        private RuntimeWrapper runtimeWrapper;
+
+        public SceneRuntimeImpl(string sourceCode, string jsInitCode,
+            Dictionary<string, string> jsModules, IInstancePoolsProvider instancePoolsProvider,
+            SceneShortInfo sceneShortInfo)
         {
             this.instancePoolsProvider = instancePoolsProvider;
             resetableSource = new TaskResolverResetable();
@@ -40,7 +45,7 @@ namespace SceneRuntime
             var sceneScript = engine.Compile(sourceCode);
 
             // Initialize init API
-            unityOpsApi = new UnityOpsApi(engine, moduleLoader, sceneScript);
+            unityOpsApi = new UnityOpsApi(engine, moduleLoader, sceneScript, sceneShortInfo);
             engine.AddHostObject("UnityOpsApi", unityOpsApi);
             engine.Execute(jsInitCode);
 
@@ -71,6 +76,11 @@ namespace SceneRuntime
             engine.AddHostObject("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, new RethrowSceneExceptionsHandler()));
         }
 
+        public void RegisterRuntime(IRuntime api)
+        {
+            engine.AddHostObject("UnityRuntime", runtimeWrapper = new RuntimeWrapper(api, new RethrowSceneExceptionsHandler()));
+        }
+
         public void SetIsDisposing()
         {
             engineApi?.SetIsDisposing();
@@ -88,7 +98,7 @@ namespace SceneRuntime
 
         public void ApplyStaticMessages(ReadOnlyMemory<byte> data)
         {
-            var result = engineApi.api.CrdtSendToRenderer(data);
+            ArraySegment<byte> result = engineApi.api.CrdtSendToRenderer(data, false);
 
             // Initial messages are not expected to return anything
             Assert.IsTrue(result.Count == 0);
@@ -98,6 +108,10 @@ namespace SceneRuntime
         {
             engineApi?.Dispose();
             engine.Dispose();
+            runtimeWrapper?.Dispose();
         }
+
+        public ITypedArray<byte> CreateUint8Array(int length) =>
+            (ITypedArray<byte>)engine.Evaluate("(function () { return new Uint8Array(" + length + "); })()");
     }
 }

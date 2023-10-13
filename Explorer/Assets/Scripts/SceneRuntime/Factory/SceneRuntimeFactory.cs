@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
+using Diagnostics;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -31,6 +32,7 @@ namespace SceneRuntime.Factory
         /// </summary>
         public async UniTask<SceneRuntimeImpl> CreateBySourceCode(string sourceCode,
             IInstancePoolsProvider instancePoolsProvider,
+            SceneShortInfo sceneShortInfo,
             CancellationToken ct,
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
         {
@@ -45,7 +47,7 @@ namespace SceneRuntime.Factory
             // Provide basic Thread Pool synchronization context
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
 
-            return new SceneRuntimeImpl(WrapInModuleCommonJs(sourceCode), initSourceCode, moduleDictionary, instancePoolsProvider);
+            return new SceneRuntimeImpl(WrapInModuleCommonJs(sourceCode), initSourceCode, moduleDictionary, instancePoolsProvider, sceneShortInfo);
         }
 
         /// <summary>
@@ -53,13 +55,14 @@ namespace SceneRuntime.Factory
         /// </summary>
         public async UniTask<SceneRuntimeImpl> CreateByPath(URLAddress path,
             IInstancePoolsProvider instancePoolsProvider,
+            SceneShortInfo sceneShortInfo,
             CancellationToken ct,
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
         {
             AssertCalledOnTheMainThread();
 
             string sourceCode = await LoadJavaScriptSourceCode(path, ct);
-            return await CreateBySourceCode(sourceCode, instancePoolsProvider, ct, instantiationBehavior);
+            return await CreateBySourceCode(sourceCode, instancePoolsProvider, sceneShortInfo, ct, instantiationBehavior);
         }
 
         private void AssertCalledOnTheMainThread()

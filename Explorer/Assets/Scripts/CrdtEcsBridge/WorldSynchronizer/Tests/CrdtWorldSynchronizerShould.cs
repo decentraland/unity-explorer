@@ -15,7 +15,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         [SetUp]
         public void SetUp()
         {
-            crdtWorldSynchronizer = new CRDTWorldSynchronizer(World.Create(), Substitute.For<ISDKComponentsRegistry>(), Substitute.For<IEntityFactory>(), new Dictionary<CRDTEntity, Entity>());
+            crdtWorldSynchronizer = new CRDTWorldSynchronizer(World.Create(), Substitute.For<ISDKComponentsRegistry>(), Substitute.For<ISceneEntityFactory>(), new Dictionary<CRDTEntity, Entity>());
         }
 
         [Test]

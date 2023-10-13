@@ -28,7 +28,7 @@ namespace CrdtEcsBridge.Engine
         private readonly ICRDTDeserializer crdtDeserializer;
         private readonly ICRDTSerializer crdtSerializer;
         private readonly ICRDTWorldSynchronizer crdtWorldSynchronizer;
-        private readonly IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider;
+        private readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
         private readonly ISystemGroupsUpdateGate systemGroupsUpdateGate;
         private readonly ISceneExceptionsHandler exceptionsHandler;
         private readonly MutexSync mutexSync;
@@ -50,7 +50,7 @@ namespace CrdtEcsBridge.Engine
             ICRDTDeserializer crdtDeserializer,
             ICRDTSerializer crdtSerializer,
             ICRDTWorldSynchronizer crdtWorldSynchronizer,
-            IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider,
+            IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
             ISystemGroupsUpdateGate systemGroupsUpdateGate,
             ISceneExceptionsHandler exceptionsHandler,
             MutexSync mutexSync)
@@ -73,7 +73,7 @@ namespace CrdtEcsBridge.Engine
             applyBufferSampler = CustomSampler.Create(nameof(ApplySyncCommandBuffer));
         }
 
-        public ArraySegment<byte> CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory)
+        public ArraySegment<byte> CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory, bool returnData = true)
         {
             // TODO it's dirty, think how to do it better
             if (isDisposing) return Array.Empty<byte>();
@@ -120,11 +120,15 @@ namespace CrdtEcsBridge.Engine
 
             instancePoolsProvider.ReleaseDeserializationMessagesPool(messages);
 
-            int payloadLength = SerializeOutgoingCRDTMessages();
-
             ApplySyncCommandBuffer(worldSyncBuffer);
 
-            return new ArraySegment<byte>(lastSerializationBuffer, 0, payloadLength);
+            if (returnData)
+            {
+                int payloadLength = SerializeOutgoingCRDTMessages();
+                return new ArraySegment<byte>(lastSerializationBuffer, 0, payloadLength);
+            }
+
+            return ArraySegment<byte>.Empty;
         }
 
         private int SerializeOutgoingCRDTMessages()
@@ -139,7 +143,7 @@ namespace CrdtEcsBridge.Engine
                 {
                     lastSerializationBuffer =
                         sharedPoolsProvider.GetSerializedStateBytesPool(
-                            payloadLength = outgoingMessagesSyncBlock.GetPayloadLength());
+                            payloadLength = outgoingMessagesSyncBlock.PayloadLength);
 
                     SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, lastSerializationBuffer.AsSpan());
                 }
@@ -175,13 +179,12 @@ namespace CrdtEcsBridge.Engine
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SerializeOutgoingCRDTMessages(IReadOnlyList<ProcessedCRDTMessage> outgoingMessages, Span<byte> span)
+        private void SerializeOutgoingCRDTMessages(IReadOnlyCollection<ProcessedCRDTMessage> outgoingMessages, Span<byte> span)
         {
-            for (var i = 0; i < outgoingMessages.Count; i++)
-            {
-                var processedCRDTMessage = outgoingMessages[i];
+            if (outgoingMessages.Count == 0) return;
+
+            foreach (ProcessedCRDTMessage processedCRDTMessage in outgoingMessages)
                 crdtSerializer.Serialize(ref span, in processedCRDTMessage);
-            }
         }
 
         public ArraySegment<byte> CrdtGetState()
@@ -208,7 +211,7 @@ namespace CrdtEcsBridge.Engine
                 // By the end of the block messages are flushed and adding is unblocked
                 using OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock();
 
-                int outgoingCRDTMessagesPayloadLength = outgoingMessagesSyncBlock.GetPayloadLength();
+                int outgoingCRDTMessagesPayloadLength = outgoingMessagesSyncBlock.PayloadLength;
 
                 int totalPayloadLength = currentStatePayloadLength + outgoingCRDTMessagesPayloadLength;
 

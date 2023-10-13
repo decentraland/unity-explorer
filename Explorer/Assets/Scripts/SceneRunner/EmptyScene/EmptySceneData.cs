@@ -53,5 +53,8 @@ namespace SceneRunner.EmptyScene
 
         public bool IsUrlDomainAllowed(string url) =>
             throw new NotImplementedException();
+
+        public bool IsSdk7() =>
+            true;
     }
 }

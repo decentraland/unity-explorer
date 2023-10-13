@@ -17,9 +17,20 @@ MonoBehaviour:
   - rid: 6784895265412481024
   - rid: 6784895265412481025
   - rid: 6784895267130048514
+  - rid: 1268264197252972544
   references:
     version: 2
     RefIds:
+    - rid: 1268264197252972544
+      type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <hoverCanvasSettings>k__BackingField:
+          <HoverCanvasAsset>k__BackingField:
+            m_AssetGUID: 8fd0fd0188702304689c461c6aacc7c5
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
+          <InputButtons>k__BackingField: []
     - rid: 6784895265395441664
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

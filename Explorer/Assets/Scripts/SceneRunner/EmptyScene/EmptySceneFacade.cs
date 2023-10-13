@@ -77,6 +77,8 @@ namespace SceneRunner.EmptyScene
             // Add this root to the map so it can be processed by ParentingTransformSystem
             args.EntitiesMap.Add(sceneRoot.Id, sceneRoot);
 
+            var counter = 0;
+
             Entity CreateGltf(string file)
             {
                 SDKTransform transform = transformPool.Get();
@@ -86,7 +88,7 @@ namespace SceneRunner.EmptyScene
                 transform.ParentId = sceneRoot.Id;
                 PBGltfContainer grassGltf = gltfContainerPool.Get();
                 grassGltf.Src = file;
-                return sharedWorld.Create(transform, grassGltf, args.ParentPartition, partitionPool.Get());
+                return sharedWorld.Create(transform, grassGltf, new CRDTEntity(counter++), args.ParentPartition, partitionPool.Get());
             }
 
             // Logic transferred from JS, otherwise it creates significant overhead

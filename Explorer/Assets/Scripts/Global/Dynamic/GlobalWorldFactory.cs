@@ -87,7 +87,7 @@ namespace Global.Dynamic
             builder.InjectCustomGroup(new SyncedPostRenderingSystemGroup(mutex, globalSceneStateProvider));
 
             Entity playerEntity = world.Create(
-                new CRDTEntity(SpecialEntititiesID.PLAYER_ENTITY),
+                new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
                 new PlayerComponent(characterObject.CameraFocus),
                 new TransformComponent { Transform = characterObject.Transform },
                 new PBAvatarShape
@@ -117,8 +117,9 @@ namespace Global.Dynamic
             LoadFixedPointersSystem.InjectToWorld(ref builder);
 
             // Archaic systems
-            // LoadPointersByRadiusSystem.InjectToWorld(ref builder);
-            // ResolveSceneStateByRadiusSystem.InjectToWorld(ref builder);
+            //LoadPointersByRadiusSystem.InjectToWorld(ref builder);
+            //ResolveSceneStateByRadiusSystem.InjectToWorld(ref builder);
+
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);

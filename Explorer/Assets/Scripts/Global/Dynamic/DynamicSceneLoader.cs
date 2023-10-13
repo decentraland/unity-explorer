@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.UIElements;
 using Utility;
 
 namespace Global.Dynamic
@@ -22,6 +23,7 @@ namespace Global.Dynamic
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer;
         [Space]
+        [SerializeField] private UIDocument uiToolkitRoot;
         [SerializeField] private Vector2Int StartPosition;
         [SerializeField] private int SceneLoadRadius = 4;
 
@@ -83,6 +85,7 @@ namespace Global.Dynamic
 
                 dynamicWorldContainer = DynamicWorldContainer.Create(
                     in staticContainer,
+                    uiToolkitRoot,
                     StaticLoadPositions,
                     SceneLoadRadius);
 

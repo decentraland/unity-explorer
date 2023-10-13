@@ -21,12 +21,36 @@ namespace CrdtEcsBridge.Physics
 
         public static readonly int DEFAULT_LAYER = LayerMask.NameToLayer("Default");
         public static readonly int ON_POINTER_EVENT_LAYER = LayerMask.NameToLayer("OnPointerEvent");
+
+        /// <summary>
+        ///     Assigned to the player only
+        /// </summary>
         public static readonly int CHARACTER_LAYER = LayerMask.NameToLayer("CharacterController");
         public static readonly int CHARACTER_ONLY_LAYER = LayerMask.NameToLayer("CharacterOnly");
         public static readonly int SDK_CUSTOM_LAYER = LayerMask.NameToLayer("SDKCustomLayer");
 
+        public static readonly LayerMask PLAYER_ORIGIN_RAYCAST_MASK = (1 << ON_POINTER_EVENT_LAYER) | (1 << DEFAULT_LAYER);
+
         public static bool LayerMaskHasAnySDKCustomLayer(ColliderLayer layerMask) =>
             (layerMask & ~NON_CUSTOM_LAYERS) != 0;
+
+        public static int CreateUnityLayerMaskFromSDKMask(ColliderLayer sdkMask)
+        {
+            int unityLayerMask = (1 << CHARACTER_LAYER) | (1 << DEFAULT_LAYER);
+
+            unityLayerMask |= sdkMask switch
+                              {
+                                  ColliderLayer.ClPointer => 1 << ON_POINTER_EVENT_LAYER,
+                                  ColliderLayer.ClPhysics => 1 << CHARACTER_ONLY_LAYER,
+                                  _ => (1 << CHARACTER_ONLY_LAYER) | (1 << ON_POINTER_EVENT_LAYER),
+                              };
+
+            // 8 Custom SDK Layers are projected onto a single Unity layer
+            if (LayerMaskHasAnySDKCustomLayer(sdkMask))
+                unityLayerMask |= 1 << SDK_CUSTOM_LAYER;
+
+            return unityLayerMask;
+        }
 
         public static bool TryGetUnityLayerFromSDKLayer(ColliderLayer sdkMask, out int unityLayer)
         {

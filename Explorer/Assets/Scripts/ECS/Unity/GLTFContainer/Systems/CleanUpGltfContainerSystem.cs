@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using DCL.Interaction.Utility;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.Groups;
@@ -19,19 +20,19 @@ namespace ECS.Unity.GLTFContainer.Systems
     [LogCategory(ReportCategory.GLTF_CONTAINER)]
     public partial class CleanUpGltfContainerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private readonly QueryDescription entityDestroyQuery = new QueryDescription()
+        private static readonly QueryDescription ENTITY_DESTROY_QUERY = new QueryDescription()
            .WithAll<DeleteEntityIntention, GltfContainerComponent>();
 
         private ReleaseOnEntityDestroy releaseOnEntityDestroy;
 
-        internal CleanUpGltfContainerSystem(World world, IStreamableCache<GltfContainerAsset, string> cache) : base(world)
+        internal CleanUpGltfContainerSystem(World world, IStreamableCache<GltfContainerAsset, string> cache, IEntityCollidersSceneCache entityCollidersSceneCache) : base(world)
         {
-            releaseOnEntityDestroy = new ReleaseOnEntityDestroy(cache, World);
+            releaseOnEntityDestroy = new ReleaseOnEntityDestroy(cache, entityCollidersSceneCache, World);
         }
 
         protected override void Update(float t)
         {
-            World.InlineQuery<ReleaseOnEntityDestroy, GltfContainerComponent>(in entityDestroyQuery, ref releaseOnEntityDestroy);
+            World.InlineQuery<ReleaseOnEntityDestroy, GltfContainerComponent>(in ENTITY_DESTROY_QUERY, ref releaseOnEntityDestroy);
         }
 
         public void FinalizeComponents(in Query query)
@@ -41,19 +42,24 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         private readonly struct ReleaseOnEntityDestroy : IForEach<GltfContainerComponent>
         {
+            private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
             private readonly IStreamableCache<GltfContainerAsset, string> cache;
             private readonly World world;
 
-            public ReleaseOnEntityDestroy(IStreamableCache<GltfContainerAsset, string> cache, World world)
+            public ReleaseOnEntityDestroy(IStreamableCache<GltfContainerAsset, string> cache, IEntityCollidersSceneCache entityCollidersSceneCache, World world)
             {
                 this.cache = cache;
                 this.world = world;
+                this.entityCollidersSceneCache = entityCollidersSceneCache;
             }
 
             public void Update(ref GltfContainerComponent component)
             {
                 if (component.Promise.TryGetResult(world, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
+                {
                     cache.Dereference(component.Source, result.Asset);
+                    entityCollidersSceneCache.Remove(result.Asset);
+                }
 
                 component.Promise.ForgetLoading(world);
             }
