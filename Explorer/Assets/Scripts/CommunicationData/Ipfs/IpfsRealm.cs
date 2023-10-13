@@ -27,7 +27,10 @@ namespace Ipfs
                 sceneUrns = serverAbout.configurations.scenesUrn;
                 ContentBaseUrl = URLDomain.FromString(serverAbout.content.publicUrl);
                 LambdasBaseUrl = URLDomain.FromString(serverAbout.lambdas.publicUrl);
+
+                //Note: Content url requires the subdirectory content, but the actives endpoint requires the base one.
                 EntitiesActiveEndpoint = URLBuilder.Combine(ContentBaseUrl, URLSubdirectory.FromString("entities/active"));
+                ContentBaseUrl =  URLBuilder.Combine(ContentBaseUrl,  URLSubdirectory.FromString("contents/"));
             }
             else
             {
