@@ -68,7 +68,7 @@ namespace Realm
             if (SceneIsInRange(definition, parcelsInRange))
                 return;
 
-            World.Add<DeleteEntityIntention>(entity);
+            World.Add(entity, DeleteEntityIntention.DeferredDeletion);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
