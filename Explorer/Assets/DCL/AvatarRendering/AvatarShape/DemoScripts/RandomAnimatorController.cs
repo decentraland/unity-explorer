@@ -12,7 +12,7 @@ public class RandomAnimatorController : MonoBehaviour
         clips = animator.runtimeAnimatorController.animationClips;
 
         //Lets animate depending on the number of the avatar
-        string parentName = transform.parent.parent.name;
+        string parentName = transform.parent.parent != null ? transform.parent.parent.name : "00" ;
         int clipToPlay = int.Parse(parentName.Substring(parentName.Length - 1, 1)) % clips.Length;
 
         animator.Play(clips[clipToPlay].name);
