@@ -110,38 +110,40 @@ Shader "Custom/Avatar_CelShading"
 
             // -------------------------------------
             // Material Keywords
-            #pragma shader_feature_local _NORMALMAP
-            #pragma shader_feature_local _RECEIVE_SHADOWS_OFF
+            //#pragma shader_feature_local _NORMALMAP
+            //#pragma shader_feature_local_fragment _EMISSION
+            //#pragma shader_feature_local_fragment _OCCLUSIONMAP
+            //#pragma shader_feature_local _RECEIVE_SHADOWS_OFF
             #pragma shader_feature_local_fragment _SURFACE_TYPE_TRANSPARENT
             #pragma shader_feature_local_fragment _ALPHATEST_ON
             #pragma shader_feature_local_fragment _ALPHAPREMULTIPLY_ON
-            #pragma shader_feature_local_fragment _EMISSION
-            #pragma shader_feature_local_fragment _METALLICSPECGLOSSMAP
+            //#pragma shader_feature_local_fragment _METALLICSPECGLOSSMAP
             #pragma shader_feature_local_fragment _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-            #pragma shader_feature_local_fragment _OCCLUSIONMAP
-            #pragma shader_feature_local_fragment _ENVIRONMENTREFLECTIONS_OFF
+            //#pragma shader_feature_local_fragment _ENVIRONMENTREFLECTIONS_OFF
 
             // -------------------------------------
             // Universal Pipeline keywords
-            #pragma shader_feature_local _MAIN_LIGHT_SHADOWS
-            #pragma shader_feature_local _MAIN_LIGHT_SHADOWS_CASCADE
-            #pragma shader_feature_local _MAIN_LIGHT_SHADOWS_SCREEN
-            #pragma shader_feature_local _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
+            // #pragma shader_feature_local _MAIN_LIGHT_SHADOWS
+            // #pragma shader_feature_local _MAIN_LIGHT_SHADOWS_CASCADE
+            // #pragma shader_feature_local _MAIN_LIGHT_SHADOWS_SCREEN
+            //#pragma shader_feature_local _ADDITIONAL_LIGHTS
             // #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             // #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
             // #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
             // #pragma multi_compile_fragment _ _SHADOWS_SOFT
             // #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
-            #pragma shader_feature_local_fragment _ADDITIONAL_LIGHT_SHADOWS
-            #pragma shader_feature_local_fragment _REFLECTION_PROBE_BLENDING
-            #pragma shader_feature_local_fragment _REFLECTION_PROBE_BOX_PROJECTION
-            #pragma shader_feature_local_fragment _SHADOWS_SOFT
-            #pragma shader_feature_local_fragment _SCREEN_SPACE_OCCLUSION
+            //#pragma shader_feature_local_fragment _ADDITIONAL_LIGHT_SHADOWS
+            //#pragma shader_feature_local_fragment _REFLECTION_PROBE_BLENDING
+            //#pragma shader_feature_local_fragment _REFLECTION_PROBE_BOX_PROJECTION
+            #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            //#pragma shader_feature_local_fragment _SHADOWS_SOFT
+            //#pragma shader_feature_local_fragment _SCREEN_SPACE_OCCLUSION
             //#pragma multi_compile_fragment _ _DBUFFER_MRT1 _DBUFFER_MRT2 _DBUFFER_MRT3
             //#pragma multi_compile_fragment _ _LIGHT_LAYERS
             //#pragma shader_feature_local_fragment _LIGHT_COOKIES
             
-            #pragma shader_feature_local _CLUSTERED_RENDERING
+            //#pragma shader_feature_local _CLUSTERED_RENDERING
             // #pragma multi_compile_fragment _ _LIGHT_COOKIES
             // #pragma multi_compile _ _CLUSTERED_RENDERING
 

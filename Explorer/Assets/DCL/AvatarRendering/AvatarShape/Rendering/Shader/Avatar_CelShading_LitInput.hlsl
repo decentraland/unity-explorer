@@ -495,13 +495,6 @@ Light_Avatar GetMainLight_Avatar(float4 shadowCoord, float3 positionWS, half4 sh
     return light;
 }
 
-// void MixRealtimeAndBakedGI_Avatar(inout Light_Avatar light, half3 normalWS, inout half3 bakedGI)
-// {
-//     #if defined(LIGHTMAP_ON) && defined(_MIXED_LIGHTING_SUBTRACTIVE)
-//     bakedGI = SubtractDirectMainLightFromLightmap(light, normalWS, bakedGI);
-//     #endif
-// }
-
 half4 UniversalFragmentPBR_Avatar(InputData_Avatar inputData, SurfaceData_Avatar surfaceData)
 {
     // #ifdef _SPECULARHIGHLIGHTS_OFF
@@ -533,8 +526,7 @@ half4 UniversalFragmentPBR_Avatar(InputData_Avatar inputData, SurfaceData_Avatar
             surfaceData.occlusion = min(surfaceData.occlusion, aoFactor.indirectAmbientOcclusion);
         #endif
     #endif
-
-    //MixRealtimeAndBakedGI_Avatar(mainLight, inputData.normalWS, inputData.bakedGI);
+    
     half3 color = GlobalIllumination_Avatar(brdfData,
                                             inputData.bakedGI,
                                             surfaceData.occlusion,
