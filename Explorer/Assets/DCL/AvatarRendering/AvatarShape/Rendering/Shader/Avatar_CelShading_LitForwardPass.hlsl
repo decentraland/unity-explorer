@@ -92,6 +92,7 @@ void InitializeInputData(Varyings input, half3 normalTS, out InputData_Avatar in
     inputData.vertexLighting = input.fogFactorAndVertexLight.yzw;
     inputData.bakedGI = SampleSHPixel(input.vertexSH, inputData.normalWS);
     inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
+    inputData.shadowMask = SAMPLE_SHADOWMASK(input.lightmapUV);
     inputData.matCapUV = mul(UNITY_MATRIX_V, input.normalMS).xy * 0.5 + float2(0.5, 0.5);
 }
 

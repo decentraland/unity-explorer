@@ -12,6 +12,7 @@ struct InputData_Avatar // Copy & modified from InputData.hlsl
     half3   vertexLighting;
     half3   bakedGI;
     float2  normalizedScreenSpaceUV;
+    half4   shadowMask;
     half3x3 tangentToWorld;
     float2  matCapUV;
 
