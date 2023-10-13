@@ -23,6 +23,12 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 this.bones = bones;
                 this.kernel = kernel;
             }
+
+            public void DisposeBuffers()
+            {
+                computeSkinningBufferContainer.Dispose();
+                bones.Dispose();
+            }
         }
 
         internal struct MaterialSetup
@@ -70,7 +76,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 objectPool.Release(materials[i].celShadingMaterial);
             }
 
-            buffers.computeSkinningBufferContainer.Dispose();
+            buffers.DisposeBuffers();
             USED_SLOTS_POOL.Release(materials);
         }
     }

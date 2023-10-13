@@ -14,16 +14,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private BoneMatrixCalculationJob Job;
         private JobHandle Handle;
 
-        public void SetupBurstJob(Transform avatarBaseTransform, Transform[] bones)
-        {
-            Bones = new TransformAccessArray(bones);
-
-            Job = new BoneMatrixCalculationJob
-            {
-                BonesMatricesResult = new NativeArray<float4x4>(bones.Length, Allocator.Persistent),
-                AvatarTransform = avatarBaseTransform.worldToLocalMatrix,
-            };
-        }
 
         public void ScheduleBoneMatrixCalculation(Matrix4x4 avatarWorldToLocalMatrix)
         {
@@ -44,12 +34,16 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             Bones.Dispose();
         }
 
-        public static AvatarTransformMatrixComponent Create() =>
+        public static AvatarTransformMatrixComponent Create(Transform avatarBaseTransform, Transform[] bones) =>
+
             new ()
             {
-                Bones = default(TransformAccessArray),
-                Job = default(BoneMatrixCalculationJob),
-                Handle = default(JobHandle),
+                Bones = new TransformAccessArray(bones),
+                Job = new BoneMatrixCalculationJob
+                {
+                    BonesMatricesResult = new NativeArray<float4x4>(bones.Length, Allocator.Persistent),
+                    AvatarTransform = avatarBaseTransform.worldToLocalMatrix,
+                },
             };
     }
 }

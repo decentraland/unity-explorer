@@ -96,9 +96,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             //Debug stuff, remove after demo
             avatarBase.SetAsMainPlayer(avatarShapeComponent.Name.Equals("Player"));
 
-            var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create();
-
-            avatarTransformMatrixComponent.SetupBurstJob(avatarBase.transform, avatarBase.AvatarSkinnedMeshRenderer.bones);
+            var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create(avatarBase.transform, avatarBase.AvatarSkinnedMeshRenderer.bones);
 
             AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, wearablesResult, avatarBase);
 
@@ -181,10 +179,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 return;
             }
 
-            CommonAvatarRelease(avatarShapeComponent, skinningComponent);
-
-            avatarTransformMatrixComponent.Dispose();
-            avatarPoolRegistry.Release(avatarBase);
+            InternalDestroyAvatar(ref avatarShapeComponent, ref skinningComponent, ref avatarTransformMatrixComponent, avatarBase);
             deleteEntityIntention.DeferDeletion = false;
         }
 
@@ -195,9 +190,26 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             wearableAssetsCache.TryReleaseAssets(avatarShapeComponent.InstantiatedWearables, avatarMaterialPool);
         }
 
+
         public override void Dispose()
         {
+            World.Query(in new QueryDescription().WithAll<AvatarBase, AvatarTransformMatrixComponent, AvatarShapeComponent, AvatarCustomSkinningComponent>(),
+                (ref AvatarTransformMatrixComponent avatarTransformMatrixComponent, ref AvatarShapeComponent avatarShapeComponent, ref AvatarCustomSkinningComponent skinningComponent, ref AvatarBase avatarBase)
+                    =>
+                {
+                    InternalDestroyAvatar(ref avatarShapeComponent, ref skinningComponent, ref avatarTransformMatrixComponent, avatarBase);
+                });
+
             vertOutBuffer.Dispose();
+        }
+
+        private void InternalDestroyAvatar(ref AvatarShapeComponent avatarShapeComponent,
+            ref AvatarCustomSkinningComponent skinningComponent, ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
+            AvatarBase avatarBase)
+        {
+            CommonAvatarRelease(avatarShapeComponent, skinningComponent);
+            avatarTransformMatrixComponent.Dispose();
+            avatarPoolRegistry.Release(avatarBase);
         }
     }
 }
