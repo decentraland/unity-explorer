@@ -1,3 +1,4 @@
+using DCL.AssetsProvision;
 using DCL.CharacterCamera.Settings;
 using System;
 using UnityEngine;

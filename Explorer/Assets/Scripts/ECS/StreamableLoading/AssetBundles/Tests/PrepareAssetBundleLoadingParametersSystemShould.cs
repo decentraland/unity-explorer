@@ -8,6 +8,7 @@ using NUnit.Framework;
 using SceneRunner.Scene;
 using System;
 using UnityEngine;
+using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {

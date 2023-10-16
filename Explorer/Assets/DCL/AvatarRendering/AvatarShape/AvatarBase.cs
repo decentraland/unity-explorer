@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.AvatarShape.DemoScripts;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.AvatarShape

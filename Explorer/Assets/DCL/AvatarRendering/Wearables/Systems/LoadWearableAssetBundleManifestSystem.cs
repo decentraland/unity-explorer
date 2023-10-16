@@ -15,6 +15,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
+using Utility;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Systems

@@ -1,20 +1,23 @@
 using UnityEngine;
 
-//DELETE CLASS, TEMPORARY HELPER TO DEMO MULTIPLE ANIMATIONS
-public class RandomAnimatorController : MonoBehaviour
+// TODO: DELETE CLASS, TEMPORARY HELPER TO DEMO MULTIPLE ANIMATIONS
+namespace DCL.AvatarRendering.AvatarShape.DemoScripts
 {
-    private AnimationClip[] clips;
-    private Animator animator;
-
-    private void Start()
+    public class RandomAnimatorController : MonoBehaviour
     {
-        animator = GetComponent<Animator>();
-        clips = animator.runtimeAnimatorController.animationClips;
+        private AnimationClip[] clips;
+        private Animator animator;
 
-        //Lets animate depending on the number of the avatar
-        string parentName = transform.parent.parent != null ? transform.parent.parent.name : "00";
-        int clipToPlay = int.Parse(parentName.Substring(parentName.Length - 1, 1)) % clips.Length;
+        private void Start()
+        {
+            animator = GetComponent<Animator>();
+            clips = animator.runtimeAnimatorController.animationClips;
 
-        animator.Play(clips[clipToPlay].name);
+            //Lets animate depending on the number of the avatar
+            string parentName = transform.parent.parent != null ? transform.parent.parent.name : "00";
+            int clipToPlay = int.Parse(parentName.Substring(parentName.Length - 1, 1)) % clips.Length;
+
+            animator.Play(clips[clipToPlay].name);
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using DCL.Character;
+﻿using DCL.AssetsProvision;
+using DCL.Character;
 using Diagnostics.ReportsHandling;
 using ECS.Prioritization;
 using System;
