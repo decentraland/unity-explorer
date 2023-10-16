@@ -10,13 +10,13 @@ namespace ECS.ComponentsPooling.Tests
     [TestFixture]
     public class MeshRendererUnityComponentPoolShould
     {
-        private UnityComponentPool<MeshRenderer> unityComponentPool;
+        private GameObjectPool<MeshRenderer> gameObjectPool;
         private Mesh mesh;
 
         [SetUp]
         public void SetUp()
         {
-            unityComponentPool = new UnityComponentPool<MeshRenderer>(null,
+            gameObjectPool = new GameObjectPool<MeshRenderer>(null,
                 MeshRendererPoolUtils.CreateMeshRendererComponent, MeshRendererPoolUtils.ReleaseMeshRendererComponent, 1000);
 
             mesh = new Mesh();
@@ -26,7 +26,7 @@ namespace ECS.ComponentsPooling.Tests
         public void GetGameObject()
         {
             //Act
-            unityComponentPool.Get(out MeshRenderer component);
+            gameObjectPool.Get(out MeshRenderer component);
 
             //Assert
             Assert.NotNull(component);
@@ -41,9 +41,9 @@ namespace ECS.ComponentsPooling.Tests
             BoxFactory.Create(ref mesh);
 
             //Act
-            unityComponentPool.Get(out MeshRenderer component);
+            gameObjectPool.Get(out MeshRenderer component);
             component.material = DefaultMaterial.New();
-            unityComponentPool.Release(component);
+            gameObjectPool.Release(component);
 
             await UniTask.Yield(PlayerLoopTiming.Update);
 
@@ -55,26 +55,26 @@ namespace ECS.ComponentsPooling.Tests
             Assert.NotNull(component.gameObject.GetComponent<MeshFilter>());
             Assert.IsNull(component.gameObject.GetComponent<MeshFilter>().sharedMesh);
 
-            Assert.AreEqual(1, unityComponentPool.CountInactive);
+            Assert.AreEqual(1, gameObjectPool.CountInactive);
         }
 
         [Test]
         public void ClearPool()
         {
             //Act
-            unityComponentPool.Get(out MeshRenderer component);
-            unityComponentPool.Release(component);
-            unityComponentPool.Clear();
+            gameObjectPool.Get(out MeshRenderer component);
+            gameObjectPool.Release(component);
+            gameObjectPool.Clear();
 
             //Assert
             Assert.IsTrue(component == null);
-            Assert.AreEqual(0, unityComponentPool.CountInactive);
+            Assert.AreEqual(0, gameObjectPool.CountInactive);
         }
 
         [TearDown]
         public void TearDown()
         {
-            unityComponentPool.Clear();
+            gameObjectPool.Clear();
         }
     }
 }

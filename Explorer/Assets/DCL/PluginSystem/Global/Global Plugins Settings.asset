@@ -18,6 +18,8 @@ MonoBehaviour:
   - rid: 6784895265412481027
   - rid: 6784895267130048513
   - rid: 1268264176566403074
+  - rid: 5215741520409264128
+  - rid: 5215741520409264129
   references:
     version: 2
     RefIds:
@@ -33,7 +35,7 @@ MonoBehaviour:
           <InputButtons>k__BackingField:
           - InputAction: 0
             Key: 
-            Icon: {fileID: 21300000, guid: 1298933c0a6b35a499063fcfb805f66b, type: 3}
+            Icon: {fileID: 0}
           - InputAction: 1
             Key: E
             Icon: {fileID: 0}
@@ -42,7 +44,7 @@ MonoBehaviour:
             Icon: {fileID: 0}
           - InputAction: 3
             Key: 
-            Icon: {fileID: 21300000, guid: f2510343b050e5e45b65ee7371482b8e, type: 3}
+            Icon: {fileID: 0}
           - InputAction: 4
             Key: W
             Icon: {fileID: 0}
@@ -73,6 +75,38 @@ MonoBehaviour:
           - InputAction: 13
             Key: 4
             Icon: {fileID: 0}
+    - rid: 5215741520409264128
+      type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        avatarBase:
+          m_AssetGUID: 8db46845fb5f52f44a71c2a0c2d92074
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        celShadingMaterial:
+          m_AssetGUID: 19373184c73f36042a55739551bb8298
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        defaultMaterialCapacity: 100
+        computeShader:
+          m_AssetGUID: e8cf73ccd47a385498b71ec58534d03c
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <avatarInstantiatorViewRef>k__BackingField:
+          m_AssetGUID: fdc0ac72e84d9534eafd826d7fdfb22a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 5215741520409264129
+      type: {class: WearablePlugin/WearableSettings, ns: DCL.AvatarRendering.Wearables, asm: DCL.Plugins}
+      data:
+        defaultWearablesDefinition:
+          m_AssetGUID: 81ea8febf47eb484986af220584361dc
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 6784895264912310272
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

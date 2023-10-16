@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using Diagnostics.ReportsHandling;
 using ECS.Prioritization.Components;
@@ -33,7 +34,7 @@ namespace CrdtEcsBridge.Engine
 
         public async UniTask<IRuntime.ReadFileResponse> ReadFile(string fileName, CancellationToken ct)
         {
-            sceneData.TryGetContentUrl(fileName, out string url);
+            sceneData.TryGetContentUrl(fileName, out URLAddress url);
             sceneData.TryGetHash(fileName, out string hash);
 
             await UniTask.SwitchToMainThread();

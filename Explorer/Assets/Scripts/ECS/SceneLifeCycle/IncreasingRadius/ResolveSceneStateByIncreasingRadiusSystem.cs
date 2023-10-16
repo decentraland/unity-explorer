@@ -155,7 +155,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private void StartUnloading(in Entity entity, ref PartitionComponent partitionComponent)
         {
             if (partitionComponent.Bucket < realmPartitionSettings.UnloadBucket) return;
-            World.Add(entity, new DeleteEntityIntention());
+            World.Add(entity, DeleteEntityIntention.DeferredDeletion);
         }
     }
 }

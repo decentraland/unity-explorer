@@ -7,7 +7,6 @@ using DCL.CharacterMotion.Systems;
 using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle.Components;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -24,19 +23,19 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateAfter(typeof(CameraGroup))]
     public partial class CheckCameraQualifiedForRepartitioningSystem : BaseUnityLoopSystem
     {
-        private static readonly QueryDescription REALM_QUERY = new QueryDescription().WithAll<RealmComponent>();
-
+        private readonly IRealmData realmData;
         private readonly IPartitionSettings partitionSettings;
 
-        internal CheckCameraQualifiedForRepartitioningSystem(World world, IPartitionSettings partitionSettings) : base(world)
+        internal CheckCameraQualifiedForRepartitioningSystem(World world, IPartitionSettings partitionSettings, IRealmData realmData) : base(world)
         {
             this.partitionSettings = partitionSettings;
+            this.realmData = realmData;
         }
 
         protected override void Update(float t)
         {
             // it should be updated only if realm is already loaded
-            if (World.CountEntities(in REALM_QUERY) > 0)
+            if (realmData.Configured)
                 CheckCameraTransformChangedQuery(World);
         }
 

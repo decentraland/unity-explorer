@@ -1,25 +1,33 @@
-﻿using ECS.StreamableLoading.Cache;
+﻿using Cysharp.Threading.Tasks;
+using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Common.Components;
+using System;
 using System.Collections.Generic;
+using UnityEngine.Pool;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
     /// <summary>
     ///     An eternal runtime cache to prevent parallel loading of the same bundle
     /// </summary>
-    public class AssetBundleCache : OngoingRequestsCacheBase<AssetBundleData>, IStreamableCache<AssetBundleData, GetAssetBundleIntention>
+    public class AssetBundleCache : IStreamableCache<AssetBundleData, GetAssetBundleIntention>
     {
         private readonly Dictionary<GetAssetBundleIntention, AssetBundleData> cache;
+        public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>> OngoingRequests { get; }
+        public IDictionary<string, StreamableLoadingResult<AssetBundleData>> IrrecoverableFailures { get; }
 
         public AssetBundleCache()
         {
             cache = new Dictionary<GetAssetBundleIntention, AssetBundleData>(256, this);
+            IrrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Get();
+            OngoingRequests = DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>.Get();
         }
 
         public bool Equals(GetAssetBundleIntention x, GetAssetBundleIntention y) =>
-            x.Hash == y.Hash;
+            StringComparer.OrdinalIgnoreCase.Equals(x.Hash, y.Hash);
 
         public int GetHashCode(GetAssetBundleIntention obj) =>
-            obj.Hash.GetHashCode();
+            StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Hash);
 
         public bool TryGet(in GetAssetBundleIntention key, out AssetBundleData asset) =>
             cache.TryGetValue(key, out asset);
@@ -30,5 +38,18 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         public void Dereference(in GetAssetBundleIntention key, AssetBundleData asset) { }
+
+        private bool disposed { get; set; }
+
+        public void Dispose()
+        {
+            if (disposed)
+                return;
+
+            DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Release(IrrecoverableFailures as Dictionary<string, StreamableLoadingResult<AssetBundleData>>);
+            DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>.Release(OngoingRequests as Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>);
+
+            disposed = true;
+        }
     }
 }

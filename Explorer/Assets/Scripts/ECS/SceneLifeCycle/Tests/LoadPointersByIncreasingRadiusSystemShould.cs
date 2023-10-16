@@ -31,7 +31,7 @@ namespace ECS.SceneLifeCycle.Tests
         {
             realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(int.MaxValue);
 
-            var realm = new RealmComponent(new TestIpfsRealm());
+            var realm = new RealmComponent(new RealmData(new TestIpfsRealm()));
             var processedParcels = new NativeHashSet<int2>(100, AllocatorManager.Persistent);
 
             parcelMathJobifiedHelper.StartParcelsRingSplit(new int2(1, 1), radius, processedParcels);
@@ -54,7 +54,7 @@ namespace ECS.SceneLifeCycle.Tests
         {
             realmPartitionSettings.ScenesDefinitionsRequestBatchSize.Returns(int.MaxValue);
 
-            var realm = new RealmComponent(new TestIpfsRealm());
+            var realm = new RealmComponent(new RealmData(new TestIpfsRealm()));
             var processedParcels = new NativeHashSet<int2>(100, AllocatorManager.Persistent);
 
             parcelMathJobifiedHelper.StartParcelsRingSplit(new int2(1, 1), radius, processedParcels);

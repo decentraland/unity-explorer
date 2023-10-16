@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using ECS.Abstract;
@@ -15,13 +16,18 @@ namespace ECS.LifeCycle.Systems
     [ThrottlingEnabled]
     public partial class DestroyEntitiesSystem : BaseUnityLoopSystem
     {
-        private readonly QueryDescription query = new QueryDescription().WithAll<DeleteEntityIntention>();
-
         internal DestroyEntitiesSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
-            World.Destroy(in query);
+            DeleteEntitiesQuery(World);
+        }
+
+        [Query]
+        public void DeleteEntities(in Entity entity, ref DeleteEntityIntention deleteEntityIntention)
+        {
+            if (!deleteEntityIntention.DeferDeletion)
+                World.Destroy(entity);
         }
     }
 }

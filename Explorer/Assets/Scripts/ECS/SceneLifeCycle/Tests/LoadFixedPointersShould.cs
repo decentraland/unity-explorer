@@ -39,7 +39,7 @@ namespace ECS.SceneLifeCycle.Tests
         [Test]
         public void CreatePromises()
         {
-            Entity e = world.Create(new RealmComponent(new TestIpfsRealm(URNs)));
+            Entity e = world.Create(new RealmComponent(new RealmData(new TestIpfsRealm(URNs))));
 
             system.Update(0);
 
@@ -85,7 +85,7 @@ namespace ECS.SceneLifeCycle.Tests
 
             // Create realm + fixed pointers
 
-            Entity realm = world.Create(new RealmComponent(ipfsRealm), new FixedScenePointers(results), ProcessesScenePointers.Create());
+            Entity realm = world.Create(new RealmComponent(new RealmData(ipfsRealm)), new FixedScenePointers(results), ProcessesScenePointers.Create());
 
             system.Update(0);
 

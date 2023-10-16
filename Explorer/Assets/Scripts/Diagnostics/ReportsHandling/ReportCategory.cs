@@ -101,6 +101,16 @@
         public const string INPUT = nameof(INPUT);
 
         /// <summary>
+        ///     Avatar rendering
+        /// </summary>
+        public const string AVATAR = nameof(AVATAR);
+
+        /// <summary>
+        ///     Wearable related
+        /// </summary>
+        public const string WEARABLE = nameof(WEARABLE);
+
+        /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
         /// </summary>
         public const string UNSPECIFIED = nameof(UNSPECIFIED);

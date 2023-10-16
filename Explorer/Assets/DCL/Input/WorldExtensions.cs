@@ -21,5 +21,6 @@ namespace DCL.Input
 
         public static ref InputMapComponent GetInputMapComponent(this in SingleInstanceEntity instance, World world) =>
             ref world.Get<InputMapComponent>(instance);
+
     }
 }

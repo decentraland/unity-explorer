@@ -11,6 +11,7 @@ using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
 using ECS.Unity.PrimitiveRenderer.Systems;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 
 namespace DCL.PluginSystem.World
 {
@@ -23,6 +24,12 @@ namespace DCL.PluginSystem.World
         {
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
             capFrameTimeBudgetProvider = singletonSharedDependencies.FrameTimeBudgetProvider;
+
+            componentPoolsRegistry.AddComponentPool<BoxPrimitive>();
+            componentPoolsRegistry.AddComponentPool<SpherePrimitive>();
+            componentPoolsRegistry.AddComponentPool<PlanePrimitive>();
+            componentPoolsRegistry.AddComponentPool<CylinderPrimitive>();
+            componentPoolsRegistry.AddGameObjectPool(MeshRendererPoolUtils.CreateMeshRendererComponent, MeshRendererPoolUtils.ReleaseMeshRendererComponent);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)

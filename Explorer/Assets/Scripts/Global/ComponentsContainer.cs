@@ -5,7 +5,6 @@ using DCL.ECS7;
 using DCL.ECSComponents;
 using ECS.ComponentsPooling;
 using ECS.Prioritization.Components;
-using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +22,7 @@ namespace Global
         public ISDKComponentsRegistry SDKComponentsRegistry { get; private set; }
 
         public IComponentPoolsRegistry ComponentPoolsRegistry { get; private set; }
+
 
         public static ComponentsContainer Create()
         {
@@ -71,8 +71,10 @@ namespace Global
                .Add(SDKComponentBuilder<PBBillboard>.Create(ComponentID.BILLBOARD).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBEngineInfo>.Create(ComponentID.ENGINE_INFO).AsProtobufResult())
                .Add(SDKComponentBuilder<PBVisibilityComponent>.Create(ComponentID.VISIBILITY_COMPONENT).AsProtobufComponent())
-               .Add(SDKComponentBuilder<PBGltfContainerLoadingState>.Create(ComponentID.GLTF_CONTAINER_LOADING_STATE).AsProtobufComponent());
+               .Add(SDKComponentBuilder<PBGltfContainerLoadingState>.Create(ComponentID.GLTF_CONTAINER_LOADING_STATE).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBAvatarShape>.Create(ComponentID.AVATAR_SHAPE).AsProtobufComponent());
 
+            Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
             // add others as required
 
             var componentPoolsRegistry = new ComponentPoolsRegistry(
@@ -82,38 +84,13 @@ namespace Global
                                      .Select(c => (c.ComponentType, c.Pool))
                                      .Append((typeof(RaycastHit), raycastHitPool))
                                      .Concat(GetMiscComponents())
-                                     .Concat(GetPrimitivesMeshesDictionary())
-                                     .ToDictionary(x => x.Item1, x => x.Item2));
+                                     .ToDictionary(x => x.Item1, x => x.Item2), rootContainer);
 
             return new ComponentsContainer { SDKComponentsRegistry = sdkComponentsRegistry, ComponentPoolsRegistry = componentPoolsRegistry };
         }
 
-        private static IEnumerable<(Type type, IComponentPool pool)> GetPrimitivesMeshesDictionary()
-        {
-            (Type type, IComponentPool pool) CreateExtraComponentPool<T>(Action<T> onGet = null, Action<T> onRelease = null) where T: class, new() =>
-                (typeof(T), new ComponentPool<T>(onGet, onRelease));
-
-            yield return CreateExtraComponentPool<BoxPrimitive>();
-            yield return CreateExtraComponentPool<SpherePrimitive>();
-            yield return CreateExtraComponentPool<PlanePrimitive>();
-            yield return CreateExtraComponentPool<CylinderPrimitive>();
-        }
-
         private static IEnumerable<(Type type, IComponentPool pool)> GetMiscComponents()
         {
-            Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
-
-            (Type type, IComponentPool pool) CreateComponentPool<T>(Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 1024) where T: Component =>
-                (typeof(T), new UnityComponentPool<T>(rootContainer, creationHandler, onRelease, maxSize: maxSize));
-
-            yield return CreateComponentPool<Transform>();
-
-            // Primitive Colliders
-            yield return CreateComponentPool<MeshCollider>();
-            yield return CreateComponentPool<BoxCollider>();
-            yield return CreateComponentPool<SphereCollider>();
-            yield return CreateComponentPool(MeshRendererPoolUtils.CreateMeshRendererComponent, MeshRendererPoolUtils.ReleaseMeshRendererComponent);
-
             // Partition Component
             yield return (typeof(PartitionComponent), new ComponentPool<PartitionComponent>(defaultCapacity: 2000, onRelease: p =>
             {
@@ -121,6 +98,7 @@ namespace Global
                 p.Bucket = byte.MaxValue;
                 p.RawSqrDistance = 0;
             }));
+
         }
     }
 }

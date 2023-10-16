@@ -8,10 +8,8 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using UnityEngine.Pool;
 using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.Common.Systems
@@ -32,8 +30,6 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, TIntention> cachedInternalFlowDelegate;
 
-        private readonly Dictionary<string, StreamableLoadingResult<TAsset>> irrecoverableFailures;
-
         // asynchronous operations run independently on Update that is already synchronized
         // so they require explicit synchronisation
         private readonly MutexSync mutexSync;
@@ -47,7 +43,6 @@ namespace ECS.StreamableLoading.Common.Systems
             this.cache = cache;
             this.mutexSync = mutexSync;
             query = World.Query(in CREATE_WEB_REQUEST);
-            irrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<TAsset>>.Get();
 
             cachedInternalFlowDelegate = FlowInternal;
         }
@@ -62,7 +57,7 @@ namespace ECS.StreamableLoading.Common.Systems
             cancellationTokenSource.Cancel();
             cancellationTokenSource.Dispose();
 
-            DictionaryPool<string, StreamableLoadingResult<TAsset>>.Release(irrecoverableFailures);
+            cache.Dispose();
         }
 
         protected override void Update(float t)
@@ -102,7 +97,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 return;
 
             // If the given URL failed irrecoverably just return the failure
-            if (irrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset> failure))
+            if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset> failure))
             {
                 FinalizeLoading(entity, intention, failure, currentSource);
                 return;
@@ -174,6 +169,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (result.Value.Succeeded)
                     ReportHub.Log(GetReportCategory(), $"{intention}'s successfully loaded from {source}");
             }
+            else if (intention.CancellationTokenSource.IsCancellationRequested) { World.Destroy(entity); }
             else
             {
                 // Indicate that it should be reevaluated
@@ -200,7 +196,7 @@ namespace ECS.StreamableLoading.Common.Systems
         private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlow(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             var source = new UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
-            cache.OngoingRequests[intention.CommonArguments.URL] = source;
+            cache.OngoingRequests.Add(intention.CommonArguments.URL, source);
 
             try
             {
@@ -248,7 +244,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention, StreamableLoadingResult<TAsset> failure)
         {
-            irrecoverableFailures[intention.CommonArguments.URL] = failure;
+            cache.IrrecoverableFailures.Add(intention.CommonArguments.URL, failure);
             return failure;
         }
 

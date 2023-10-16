@@ -166,6 +166,74 @@ MonoBehaviour:
       Severity: 4
     - Category: INPUT
       Severity: 1
+    - Category: ASSETS_PROVISION
+      Severity: 3
+    - Category: ENGINE
+      Severity: 3
+    - Category: CRDT
+      Severity: 3
+    - Category: CRDT_ECS_BRIDGE
+      Severity: 3
+    - Category: REALM
+      Severity: 3
+    - Category: SCENE_FACTORY
+      Severity: 3
+    - Category: SCENE_LOADING
+      Severity: 3
+    - Category: JAVASCRIPT
+      Severity: 3
+    - Category: ECS
+      Severity: 3
+    - Category: STREAMABLE_LOADING
+      Severity: 3
+    - Category: ASSET_BUNDLES
+      Severity: 3
+    - Category: TEXTURES
+      Severity: 3
+    - Category: GLTF_CONTAINER
+      Severity: 3
+    - Category: MATERIALS
+      Severity: 3
+    - Category: PRIMITIVE_COLLIDERS
+      Severity: 3
+    - Category: PRIMITIVE_MESHES
+      Severity: 3
+    - Category: PRIORITIZATION
+      Severity: 3
+    - Category: MOTION
+      Severity: 3
+    - Category: INPUT
+      Severity: 3
+    - Category: AVATAR
+      Severity: 3
+    - Category: WEARABLE
+      Severity: 3
+    - Category: UNSPECIFIED
+      Severity: 3
+    - Category: ASSETS_PROVISION
+      Severity: 2
+    - Category: AVATAR
+      Severity: 2
+    - Category: WEARABLE
+      Severity: 2
+    - Category: ASSETS_PROVISION
+      Severity: 0
+    - Category: AVATAR
+      Severity: 0
+    - Category: WEARABLE
+      Severity: 0
+    - Category: ASSETS_PROVISION
+      Severity: 4
+    - Category: AVATAR
+      Severity: 4
+    - Category: WEARABLE
+      Severity: 4
+    - Category: ASSETS_PROVISION
+      Severity: 1
+    - Category: AVATAR
+      Severity: 1
+    - Category: WEARABLE
+      Severity: 1
   sentryMatrix:
     entries:
     - Category: ENGINE
