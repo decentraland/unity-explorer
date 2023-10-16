@@ -11,7 +11,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.TestTools;
 
 namespace Global.Tests
 {
@@ -78,7 +77,6 @@ namespace Global.Tests
         }
 
         [Test]
-        [RequiresPlayMode]
         public async Task EmitECSComponents()
         {
             // For some reason SetUp is not awaited, probably a Unity's bug
@@ -101,9 +99,9 @@ namespace Global.Tests
 
             // Check ECS world
 
-            var world = sceneFacadeImpl.ecsWorldFacade.EcsWorld;
+            World world = sceneFacadeImpl.ecsWorldFacade.EcsWorld;
 
-            var cubes = new QueryDescription().WithAll<SDKTransform, PBMeshRenderer>(); // 256 cubes
+            QueryDescription cubes = new QueryDescription().WithAll<SDKTransform, PBMeshRenderer>(); // 256 cubes
             Assert.AreEqual(256, world.CountEntities(in cubes));
 
             // save positions
@@ -111,7 +109,7 @@ namespace Global.Tests
 
             world.Query(in cubes, (in Entity e, ref SDKTransform transform) => { positions[e] = transform.Position; });
 
-            var textShape = new QueryDescription().WithAll<SDKTransform, PBTextShape, PBBillboard>(); // Billboard
+            QueryDescription textShape = new QueryDescription().WithAll<SDKTransform, PBTextShape, PBBillboard>(); // Billboard
             Assert.AreEqual(1, world.CountEntities(in textShape));
 
             await UniTask.SwitchToThreadPool();

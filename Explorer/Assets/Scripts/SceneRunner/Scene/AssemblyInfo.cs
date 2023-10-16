@@ -2,6 +2,7 @@
 
 [assembly: InternalsVisibleTo("DCL.Plugins")]
 [assembly: InternalsVisibleTo("DCL.Tests")]
+[assembly: InternalsVisibleTo("DCL.PlayMode.Tests")]
 [assembly: InternalsVisibleTo("Containers.Tests")]
 [assembly: InternalsVisibleTo("StreamableLoading.Tests")]
 [assembly: InternalsVisibleTo("SceneExceptionsHandling")]
