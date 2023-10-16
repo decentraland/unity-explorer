@@ -14,8 +14,6 @@ jobs:
       max-parallel: 1
       matrix:
         include:
-          - targetPlatform: StandaloneWindows64
-            dockerImage: windows-2019
           - targetPlatform: StandaloneOSX
             dockerImage: macos-latest-xl
 
@@ -72,11 +70,23 @@ jobs:
           echo 2. go into build dir and output files
           cd build
           ls
-          echo 3. tar mac build folder + remove og files
-          sudo tar -cvf "${{ matrix.targetPlatform }}.tar" ${{ matrix.targetPlatform }} --remove-files
-          echo 4. go back to src dir
+          echo 3. delete unnecessary folder
+          rm -r  ${ matrix.targetPlatform }/StandaloneOSX_BackUpThisFolder_ButDontShipItWithYourGame
+          rm -r  ${ matrix.targetPlatform }/StandaloneOSX_BurstDebugInformation_DoNotShip
+          echo 4. tar mac build folder + remove og files
+          echo "Matrix Target Platform: ${{ matrix.targetPlatform }}"
+          if [ -e "${{ matrix.targetPlatform }}" ]; then
+             if [ -w "${{ matrix.targetPlatform }}" ]; then
+              sudo tar -cvf "${{ matrix.targetPlatform }}.tar" "${{ matrix.targetPlatform }}" --remove-files
+             else
+              echo "Error: You don't have write permission for ${{ matrix.targetPlatform }}."
+            fi
+          else
+            echo "Error: The specified file or directory '${{ matrix.targetPlatform }}' does not exist."
+          fi
+          echo 5. go back to src dir
           cd ..
-          echo 5. src dir contents
+          echo 6. src dir contents
           pwd
           ls
           
