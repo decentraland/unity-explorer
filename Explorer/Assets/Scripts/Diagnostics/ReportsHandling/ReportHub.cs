@@ -14,6 +14,7 @@ namespace Diagnostics.ReportsHandling
             new (new (ReportHandler, IReportHandler)[]
             {
                 (ReportHandler.DebugLog, new DefaultReportLogger()),
+                (ReportHandler.Sentry, new SentryReportHandler()),
             });
 
         /// <summary>
