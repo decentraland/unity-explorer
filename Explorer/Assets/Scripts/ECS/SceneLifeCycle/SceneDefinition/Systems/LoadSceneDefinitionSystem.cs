@@ -9,10 +9,14 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using Ipfs;
-using Newtonsoft.Json;
 using System.Threading;
 using UnityEngine.Networking;
 using Utility.Multithreading;
+#if UNITY_EDITOR
+using Newtonsoft.Json;
+#else
+using UnityEngine;
+#endif
 
 namespace ECS.SceneLifeCycle.SceneDefinition
 {
