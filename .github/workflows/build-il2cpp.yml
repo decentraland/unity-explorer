@@ -71,8 +71,8 @@ jobs:
           cd build
           ls
           echo 3. delete unnecessary folder
-          rm -r  ${ matrix.targetPlatform }/StandaloneOSX_BackUpThisFolder_ButDontShipItWithYourGame
-          rm -r  ${ matrix.targetPlatform }/StandaloneOSX_BurstDebugInformation_DoNotShip
+          rm -r  ${{ matrix.targetPlatform }}/StandaloneOSX_BackUpThisFolder_ButDontShipItWithYourGame
+          rm -r  ${{ matrix.targetPlatform }}/StandaloneOSX_BurstDebugInformation_DoNotShip
           echo 4. tar mac build folder + remove og files
           echo "Matrix Target Platform: ${{ matrix.targetPlatform }}"
           if [ -e "${{ matrix.targetPlatform }}" ]; then
