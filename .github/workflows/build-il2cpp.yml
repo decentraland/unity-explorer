@@ -74,16 +74,8 @@ jobs:
           rm -r  ${{ matrix.targetPlatform }}/StandaloneOSX_BackUpThisFolder_ButDontShipItWithYourGame
           rm -r  ${{ matrix.targetPlatform }}/StandaloneOSX_BurstDebugInformation_DoNotShip
           echo 4. tar mac build folder + remove og files
-          echo "Matrix Target Platform: ${{ matrix.targetPlatform }}"
-          if [ -e "${{ matrix.targetPlatform }}" ]; then
-             if [ -w "${{ matrix.targetPlatform }}" ]; then
-              sudo tar -cvf "${{ matrix.targetPlatform }}.tar" "${{ matrix.targetPlatform }}" --remove-files
-             else
-              echo "Error: You don't have write permission for ${{ matrix.targetPlatform }}."
-            fi
-          else
-            echo "Error: The specified file or directory '${{ matrix.targetPlatform }}' does not exist."
-          fi
+          sudo tar -cvf "${{ matrix.targetPlatform }}.tar" "${{ matrix.targetPlatform }}"
+          rm -r  ${{ matrix.targetPlatform }}
           echo 5. go back to src dir
           cd ..
           echo 6. src dir contents
