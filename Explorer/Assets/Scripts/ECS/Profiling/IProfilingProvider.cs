@@ -8,6 +8,8 @@ namespace ECS.Profiling
 
         int HiccupCountInBuffer { get; }
 
+        long TotalUsedMemoryInBytes { get; }
+
         float TotalUsedMemoryInMB { get; }
 
         void CheckHiccup();
