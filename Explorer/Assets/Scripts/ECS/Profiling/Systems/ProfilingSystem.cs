@@ -24,8 +24,10 @@ namespace ECS.Profiling.Systems
             if (profilerView.IsOpen && lastTimeSinceMetricsUpdate > 0.5f)
             {
                 lastTimeSinceMetricsUpdate = 0;
-                profilerView.SetHiccups(profilingProvider.GetHiccupCountInBuffer());
-                profilerView.SetFPS((float)profilingProvider.GetAverageFrameTimeValueInNS() * 1e-9f);
+
+                profilerView.SetMemory(profilingProvider.TotalUsedMemoryInMB);
+                profilerView.SetHiccups(profilingProvider.HiccupCountInBuffer);
+                profilerView.SetFPS((float)profilingProvider.AverageFrameTimeValueInNS * 1e-9f);
             }
 
             lastTimeSinceMetricsUpdate += t;

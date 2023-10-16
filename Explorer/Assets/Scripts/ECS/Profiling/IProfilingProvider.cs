@@ -2,11 +2,13 @@ namespace ECS.Profiling
 {
     public interface IProfilingProvider
     {
-        long GetCurrentFrameTimeValueInNS();
+        long CurrentFrameTimeValueInNS { get; }
 
-        double GetAverageFrameTimeValueInNS();
+        double AverageFrameTimeValueInNS { get; }
 
-        int GetHiccupCountInBuffer();
+        int HiccupCountInBuffer { get; }
+
+        float TotalUsedMemoryInMB { get; }
 
         void CheckHiccup();
     }

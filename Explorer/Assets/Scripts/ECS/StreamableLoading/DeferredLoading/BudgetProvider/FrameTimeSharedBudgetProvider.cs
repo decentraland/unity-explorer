@@ -5,9 +5,9 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
 {
     public class FrameTimeSharedBudgetProvider : IConcurrentBudgetProvider
     {
-        private double currentAvailableBudget;
         private readonly float totalBudgetAvailable;
         private readonly IProfilingProvider profilingProvider;
+        private double currentAvailableBudget;
         private long startTime;
         private bool outOfBudget;
 
@@ -30,7 +30,7 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
             if (outOfBudget)
                 return false;
 
-            currentAvailableBudget -= (profilingProvider.GetCurrentFrameTimeValueInNS() - startTime);
+            currentAvailableBudget -= (profilingProvider.CurrentFrameTimeValueInNS - startTime);
             ReleaseBudget();
 
             outOfBudget = currentAvailableBudget < 0;
@@ -40,7 +40,7 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
 
         public void ReleaseBudget()
         {
-            startTime = profilingProvider.GetCurrentFrameTimeValueInNS();
+            startTime = profilingProvider.CurrentFrameTimeValueInNS;
         }
 
         private void TryResetBudget()
