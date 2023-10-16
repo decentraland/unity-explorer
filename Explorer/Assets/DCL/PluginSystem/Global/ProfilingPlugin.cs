@@ -22,14 +22,14 @@ namespace DCL.PluginSystem.Global
             this.profilingProvider = profilingProvider;
         }
 
-        public async UniTask Initialize(Settings settings, CancellationToken ct)
-        {
-            profilingView = await assetsProvisioner.ProvideInstance(settings.profilingViewRef, ct: ct);
-        }
-
         public void Dispose()
         {
             profilingView.Dispose();
+        }
+
+        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
+        {
+            profilingView = await assetsProvisioner.ProvideInstanceAsync(settings.profilingViewRef, ct: ct);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

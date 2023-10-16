@@ -32,14 +32,14 @@ namespace CrdtEcsBridge.Engine
 
         public void Dispose() { }
 
-        public async UniTask<IRuntime.ReadFileResponse> ReadFile(string fileName, CancellationToken ct)
+        public async UniTask<IRuntime.ReadFileResponse> ReadFileAsync(string fileName, CancellationToken ct)
         {
             sceneData.TryGetContentUrl(fileName, out URLAddress url);
             sceneData.TryGetHash(fileName, out string hash);
 
             await UniTask.SwitchToMainThread();
 
-            async UniTask<StreamableLoadingResult<ITypedArray<byte>>> CreateFileRequest(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
+            async UniTask<StreamableLoadingResult<ITypedArray<byte>>> CreateFileRequestAsync(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
             {
                 using UnityWebRequest wr = await UnityWebRequest.Get(intention.CommonArguments.URL).SendWebRequest().WithCancellation(ct);
                 NativeArray<byte>.ReadOnly nativeBytes = wr.downloadHandler.nativeData;
@@ -55,7 +55,7 @@ namespace CrdtEcsBridge.Engine
             }
 
             var intent = new SubIntention(new CommonLoadingArguments(url));
-            ITypedArray<byte> content = (await intent.RepeatLoop(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateFileRequest, ReportCategory.ENGINE, ct)).UnwrapAndRethrow();
+            ITypedArray<byte> content = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateFileRequestAsync, ReportCategory.ENGINE, ct)).UnwrapAndRethrow();
 
             return new IRuntime.ReadFileResponse
             {

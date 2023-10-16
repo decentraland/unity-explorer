@@ -45,7 +45,7 @@ namespace ECS.SceneLifeCycle.Systems
             sharedWorld?.Dispose();
         }
 
-        internal async UniTask LoadMapping(CancellationToken ct)
+        internal async UniTask LoadMappingAsync(CancellationToken ct)
         {
             string text;
 
@@ -61,13 +61,13 @@ namespace ECS.SceneLifeCycle.Systems
             emptySceneData = new EmptySceneData(mappings.mappings);
         }
 
-        public async UniTask<ISceneFacade> Flow(GetSceneFacadeIntention intent, IPartitionComponent partition, CancellationToken ct)
+        public async UniTask<ISceneFacade> FlowAsync(GetSceneFacadeIntention intent, IPartitionComponent partition, CancellationToken ct)
         {
             if (emptySceneData == null)
             {
                 try
                 {
-                    await LoadMapping(ct);
+                    await LoadMappingAsync(ct);
                     await UniTask.SwitchToMainThread();
 
                     if (sharedWorld == null)

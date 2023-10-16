@@ -23,10 +23,11 @@ namespace DCL.Tests
         [TestCaseSource(nameof(AllCSharpFiles))]
         public void ClassShouldBeInNamespaces(string file)
         {
+            // Arrange
             string fileContent = File.ReadAllText(file);
             SyntaxNode root = CSharpSyntaxTree.ParseText(fileContent).GetRoot();
 
-            // Retrieve all non-partial class declarations that are direct children of the root (CompilationUnitSyntax).
+            // Act
             var classesOutsideNamespaces = root.DescendantNodesAndSelf()
                                                .OfType<ClassDeclarationSyntax>()
                                                .Where(classDeclaration =>
@@ -35,9 +36,43 @@ namespace DCL.Tests
                                                     classDeclaration.Parent is CompilationUnitSyntax)
                                                .ToList();
 
-            // Assert that there are no non-partial class declarations outside of namespaces.
+            // Assert
             Assert.AreEqual(0, classesOutsideNamespaces.Count,
                 $"File {Path.GetFileName(file)}: Found {classesOutsideNamespaces.Count} non-partial classes outside of namespaces. All non-partial classes should be within a namespace.");
         }
+
+        [TestCaseSource(nameof(AllCSharpFiles))]
+        public void AllAsyncMethodsShouldEndWithAsyncSuffix(string file)
+        {
+            // Arrange
+            string fileContent = File.ReadAllText(file);
+            SyntaxNode root = CSharpSyntaxTree.ParseText(fileContent).GetRoot();
+
+            var asyncMethods = root.DescendantNodesAndSelf()
+                                   .Where(n => (n is MethodDeclarationSyntax m && m.Modifiers.Any(SyntaxKind.AsyncKeyword)) ||
+                                               (n is LocalFunctionStatementSyntax l && l.Modifiers.Any(SyntaxKind.AsyncKeyword)))
+                                   .ToList();
+
+            // Act
+            var methodsWithoutProperSuffix = asyncMethods
+                                            .Where(n => !GetName(n).EndsWith("Async"))
+                                            .Select(n => $"{GetName(n)} (line {GetLineNumber(n)})")
+                                            .ToList();
+
+            // Assert
+            Assert.AreEqual(0, methodsWithoutProperSuffix.Count,
+                $"File {Path.GetFileName(file)}: Found async methods/functions without 'Async' suffix: \n{string.Join("\n", methodsWithoutProperSuffix)}");
+        }
+
+        private static string GetName(SyntaxNode node) =>
+            node switch
+            {
+                MethodDeclarationSyntax method => method.Identifier.Text,
+                LocalFunctionStatementSyntax localFunction => localFunction.Identifier.Text,
+                _ => string.Empty,
+            };
+
+        private static int GetLineNumber(SyntaxNode node) =>
+            node.GetLocation().GetLineSpan().StartLinePosition.Line + 1;
     }
 }

@@ -33,14 +33,14 @@ namespace DCL.PluginSystem.Global
             this.exposedCameraData = exposedCameraData;
         }
 
-        public async UniTask Initialize(CharacterCameraSettings settings, CancellationToken ct)
-        {
-            providedCinemachinePreset = await assetsProvisioner.ProvideInstance(settings.cinemachinePreset, Vector3.zero, Quaternion.identity, ct: ct);
-        }
-
         public void Dispose()
         {
             providedCinemachinePreset.Dispose();
+        }
+
+        public async UniTask InitializeAsync(CharacterCameraSettings settings, CancellationToken ct)
+        {
+            providedCinemachinePreset = await assetsProvisioner.ProvideInstanceAsync(settings.cinemachinePreset, Vector3.zero, Quaternion.identity, ct: ct);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

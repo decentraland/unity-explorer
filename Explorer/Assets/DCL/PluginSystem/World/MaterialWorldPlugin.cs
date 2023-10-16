@@ -39,10 +39,12 @@ namespace DCL.PluginSystem.World
             // materialsCache = new MaterialsCappedCache(CACHE_CAPACITY, (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); });
         }
 
-        public async UniTask Initialize(Settings settings, CancellationToken ct)
+        public void Dispose() { }
+
+        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
-            ProvidedAsset<Material> basicMatReference = await assetsProvisioner.ProvideMainAsset(settings.basicMaterial, ct: ct);
-            ProvidedAsset<Material> pbrMaterialReference = await assetsProvisioner.ProvideMainAsset(settings.pbrMaterial, ct: ct);
+            ProvidedAsset<Material> basicMatReference = await assetsProvisioner.ProvideMainAssetAsync(settings.basicMaterial, ct: ct);
+            ProvidedAsset<Material> pbrMaterialReference = await assetsProvisioner.ProvideMainAssetAsync(settings.pbrMaterial, ct: ct);
 
             basicMatPool = new ObjectPool<Material>(() => new Material(basicMatReference.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
             pbrMatPool = new ObjectPool<Material>(() => new Material(pbrMaterialReference.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
@@ -51,8 +53,6 @@ namespace DCL.PluginSystem.World
 
             loadingAttemptsCount = settings.LoadingAttemptsCount;
         }
-
-        public void Dispose() { }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {

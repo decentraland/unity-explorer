@@ -32,14 +32,14 @@ namespace DCL.PluginSystem.World
             this.globalInputEvents = globalInputEvents;
         }
 
-        public UniTask Initialize(Settings settings, CancellationToken ct)
+        public void Dispose() { }
+
+        public UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
             this.settings = settings;
             raycastBudgetProvider = new FrameTimeSharedBudgetProvider(settings.RaycastFrameBudgetMs, profilingProvider);
             return UniTask.CompletedTask;
         }
-
-        public void Dispose() { }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sceneDeps,
             in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)

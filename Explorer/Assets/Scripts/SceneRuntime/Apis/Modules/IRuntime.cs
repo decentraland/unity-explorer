@@ -11,7 +11,7 @@ namespace SceneRuntime.Apis.Modules
     /// </summary>
     public interface IRuntime : IDisposable
     {
-        public UniTask<ReadFileResponse> ReadFile(string fileName, CancellationToken ct);
+        public UniTask<ReadFileResponse> ReadFileAsync(string fileName, CancellationToken ct);
 
         public struct ReadFileResponse
         {

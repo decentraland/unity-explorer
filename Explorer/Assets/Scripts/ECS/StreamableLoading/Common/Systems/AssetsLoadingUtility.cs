@@ -20,7 +20,7 @@ namespace ECS.StreamableLoading.Common.Systems
         /// <returns>
         ///     <para>Null - if PermittedSources have value</para>
         /// </returns>
-        public static async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoop<TIntention, TAsset>(this TIntention intention,
+        public static async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync<TIntention, TAsset>(this TIntention intention,
             IAcquiredBudget acquiredBudget,
             IPartitionComponent partition,
             InternalFlowDelegate<TAsset, TIntention> flow, string reportCategory, CancellationToken ct)

@@ -21,7 +21,7 @@ namespace ECS.StreamableLoading.AssetBundles
             waitWhile = () => assetsAreBeingLoaded;
         }
 
-        public async UniTask<LoadingRegion> Acquire(CancellationToken ct)
+        public async UniTask<LoadingRegion> AcquireAsync(CancellationToken ct)
         {
             await UniTask.WaitWhile(waitWhile, cancellationToken: ct);
             assetsAreBeingLoaded = true;

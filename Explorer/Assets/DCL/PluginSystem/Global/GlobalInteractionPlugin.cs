@@ -43,12 +43,14 @@ namespace DCL.PluginSystem.Global
             this.globalInputEvents = globalInputEvents;
         }
 
-        public async UniTask Initialize(Settings settings, CancellationToken ct)
+        public void Dispose() { }
+
+        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
             this.settings = settings;
 
             hoverCanvas =
-                (await assetsProvisioner.ProvideMainAsset(settings.hoverCanvasSettings.HoverCanvasAsset, ct: ct))
+                (await assetsProvisioner.ProvideMainAssetAsync(settings.hoverCanvasSettings.HoverCanvasAsset, ct: ct))
                .Value.InstantiateForElement<HoverCanvas>();
 
             hoverCanvas.Initialize();
@@ -56,8 +58,6 @@ namespace DCL.PluginSystem.Global
             canvas.rootVisualElement.Add(hoverCanvas);
             hoverCanvas.SetDisplayed(false);
         }
-
-        public void Dispose() { }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {

@@ -47,7 +47,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             isRealmDataReady = () => realmData.Configured;
         }
 
-        protected override async UniTask<StreamableLoadingResult<IWearable[]>> FlowInternal(GetWearableByParamIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<IWearable[]>> FlowInternalAsync(GetWearableByParamIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             await UniTask.WaitUntil(isRealmDataReady, cancellationToken: ct);
 

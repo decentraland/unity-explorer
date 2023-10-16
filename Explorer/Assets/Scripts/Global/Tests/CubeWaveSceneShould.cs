@@ -94,7 +94,7 @@ namespace Global.Tests
             await UniTask.WaitUntil(() => sceneSharedContainer != null && staticContainer != null);
 
             // It will switch to the background thread and assign SynchronizationContext
-            sceneFacade = await sceneSharedContainer.SceneFactory.CreateSceneFromStreamableDirectory(PATH, Substitute.For<IPartitionComponent>(), CancellationToken.None);
+            sceneFacade = await sceneSharedContainer.SceneFactory.CreateSceneFromStreamableDirectoryAsync(PATH, Substitute.For<IPartitionComponent>(), CancellationToken.None);
 
             // It will call `IEngineAPI.GetState()`
             await sceneFacade.StartScene();

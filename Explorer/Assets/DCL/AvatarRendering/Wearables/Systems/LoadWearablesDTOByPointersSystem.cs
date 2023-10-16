@@ -35,7 +35,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         internal LoadWearablesDTOByPointersSystem(World world, IStreamableCache<WearablesDTOList, GetWearableDTOByPointersIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync) { }
 
-        protected override async UniTask<StreamableLoadingResult<WearablesDTOList>> FlowInternal(GetWearableDTOByPointersIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<WearablesDTOList>> FlowInternalAsync(GetWearableDTOByPointersIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             var finalTargetList = new List<WearableDTO>();
 
@@ -47,7 +47,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 int numberOfWearablesToRequest = Mathf.Min(intention.Pointers.Count - pointer, MAX_WEARABLES_PER_REQUEST);
 
-                await DoPartialRequest(intention.CommonArguments.URL, intention.Pointers,
+                await DoPartialRequestAsync(intention.CommonArguments.URL, intention.Pointers,
                     pointer, pointer + numberOfWearablesToRequest, finalTargetList, partition, ct);
 
                 pointer += numberOfWearablesToRequest;
@@ -56,7 +56,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             return new StreamableLoadingResult<WearablesDTOList>(new WearablesDTOList(finalTargetList));
         }
 
-        private async UniTask DoPartialRequest(string url,
+        private async UniTask DoPartialRequestAsync(string url,
             IReadOnlyList<string> wearablesToRequest, int startIndex, int endIndex, List<WearableDTO> results,
             IPartitionComponent partition, CancellationToken ct)
         {
@@ -80,13 +80,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             var subIntent = new SubIntention(new CommonLoadingArguments(url));
 
-            async UniTask<StreamableLoadingResult<string>> InnerFlow(SubIntention subIntention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+            async UniTask<StreamableLoadingResult<string>> InnerFlowAsync(SubIntention subIntention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
             {
                 using UnityWebRequest request = await UnityWebRequest.Post(subIntent.CommonArguments.URL, bodyBuilder.ToString(), "application/json").SendWebRequest().WithCancellation(ct);
                 return new StreamableLoadingResult<string>(request.downloadHandler.text);
             }
 
-            string response = (await subIntent.RepeatLoop(NoAcquiredBudget.INSTANCE, partition, InnerFlow, GetReportCategory(), ct)).UnwrapAndRethrow();
+            string response = (await subIntent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, partition, InnerFlowAsync, GetReportCategory(), ct)).UnwrapAndRethrow();
 
             await UniTask.SwitchToThreadPool();
 

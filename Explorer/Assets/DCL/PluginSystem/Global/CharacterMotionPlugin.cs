@@ -22,14 +22,14 @@ namespace DCL.PluginSystem.Global
             this.characterObject = characterObject;
         }
 
-        public async UniTask Initialize(CharacterMotionSettings settings, CancellationToken ct)
-        {
-            this.settings = await assetsProvisioner.ProvideMainAsset(settings.controllerSettings, ct);
-        }
-
         public void Dispose()
         {
             settings.Dispose();
+        }
+
+        public async UniTask InitializeAsync(CharacterMotionSettings settings, CancellationToken ct)
+        {
+            this.settings = await assetsProvisioner.ProvideMainAssetAsync(settings.controllerSettings, ct);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

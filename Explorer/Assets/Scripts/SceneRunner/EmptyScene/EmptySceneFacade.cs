@@ -52,7 +52,7 @@ namespace SceneRunner.EmptyScene
             args = default(Args);
         }
 
-        public UniTask StartUpdateLoop(int targetFPS, CancellationToken ct)
+        public UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
         {
             // Enable creating from the worker thread
             using MutexSync.Scope _ = args.MutexSync.GetScope();

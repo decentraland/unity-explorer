@@ -71,12 +71,12 @@ namespace SceneRunner
         UniTask ISceneFacade.Tick(float dt) =>
             runtimeInstance.UpdateScene(dt);
 
-        public async UniTask StartUpdateLoop(int targetFPS, CancellationToken ct)
+        public async UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
         {
-            AssertIsNotMainThread(nameof(StartUpdateLoop));
+            AssertIsNotMainThread(nameof(StartUpdateLoopAsync));
 
             if (sceneStateProvider.State != SceneState.NotStarted)
-                throw new ThreadStateException($"{nameof(StartUpdateLoop)} is already started!");
+                throw new ThreadStateException($"{nameof(StartUpdateLoopAsync)} is already started!");
 
             // Process "main.crdt" first
             if (SceneData.StaticSceneMessages.Data.Length > 0)
@@ -114,7 +114,7 @@ namespace SceneRunner
                     // Passing ct to Task.Delay allows to break the loop immediately
                     // as, otherwise, due to 0 or low FPS it can spin for much longer
 
-                    if (!await IdleWhileRunning(ct))
+                    if (!await IdleWhileRunningAsync(ct))
                         break;
 
                     int sleepMS = Math.Max(intervalMS - (int)stopWatch.ElapsedMilliseconds, 0);
@@ -129,7 +129,7 @@ namespace SceneRunner
             catch (OperationCanceledException) { }
         }
 
-        private async ValueTask<bool> IdleWhileRunning(CancellationToken ct)
+        private async ValueTask<bool> IdleWhileRunningAsync(CancellationToken ct)
         {
             bool TryComplete()
             {

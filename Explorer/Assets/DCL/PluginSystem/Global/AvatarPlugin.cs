@@ -53,12 +53,17 @@ namespace DCL.PluginSystem.Global
             textureArrayContainer = new TextureArrayContainer();
         }
 
-        public async UniTask Initialize(AvatarShapeSettings settings, CancellationToken ct)
+        public void Dispose()
         {
-            AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAsset(settings.avatarBase, ct: ct)).Value.GetComponent<AvatarBase>();
+            wearableAssetsCache.Dispose();
+        }
+
+        public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
+        {
+            AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.avatarBase, ct: ct)).Value.GetComponent<AvatarBase>();
             componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity));
 
-            ProvidedAsset<Material> providedMaterial = await assetsProvisioner.ProvideMainAsset(settings.celShadingMaterial, ct: ct);
+            ProvidedAsset<Material> providedMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.celShadingMaterial, ct: ct);
             celShadingMaterialPool = new ObjectPool<Material>(() => new Material(providedMaterial.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.defaultMaterialCapacity);
 
             for (var i = 0; i < settings.defaultMaterialCapacity; i++)
@@ -67,7 +72,7 @@ namespace DCL.PluginSystem.Global
                 celShadingMaterialPool.Release(prewarmedMaterial);
             }
 
-            ProvidedAsset<ComputeShader> providedComputeShader = await assetsProvisioner.ProvideMainAsset(settings.computeShader, ct: ct);
+            ProvidedAsset<ComputeShader> providedComputeShader = await assetsProvisioner.ProvideMainAssetAsync(settings.computeShader, ct: ct);
             computeShaderPool = new ObjectPool<ComputeShader>(() => Object.Instantiate(providedComputeShader.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.defaultMaterialCapacity);
 
             for (var i = 0; i < PoolConstants.COMPUTE_SHADER_COUNT; i++)
@@ -76,12 +81,7 @@ namespace DCL.PluginSystem.Global
                 computeShaderPool.Release(prewarmedShader);
             }
 
-            avatarInstantiatorView = await assetsProvisioner.ProvideInstance(settings.avatarInstantiatorViewRef, ct: ct);
-        }
-
-        public void Dispose()
-        {
-            wearableAssetsCache.Dispose();
+            avatarInstantiatorView = await assetsProvisioner.ProvideInstanceAsync(settings.avatarInstantiatorViewRef, ct: ct);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

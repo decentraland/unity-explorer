@@ -35,7 +35,7 @@ namespace SceneRuntime.Apis.Modules
         [UsedImplicitly]
         public object ReadFile(string fileName)
         {
-            try { return api.ReadFile(fileName, cancellationTokenSource.Token).AsTask().ToPromise(); }
+            try { return api.ReadFileAsync(fileName, cancellationTokenSource.Token).AsTask().ToPromise(); }
             catch (Exception e)
             {
                 // Report an uncategorized exception
