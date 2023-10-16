@@ -21,7 +21,7 @@ namespace DCL.Tests
                                              !assetPath.StartsWith("Packages/") && !EXCLUDED_PATHS.Any(assetPath.Contains));
 
         [TestCaseSource(nameof(AllCSharpFiles))]
-        public void AllClassesShouldBeInNamespaces(string file)
+        public void ClassShouldBeInNamespaces(string file)
         {
             string fileContent = File.ReadAllText(file);
             SyntaxNode root = CSharpSyntaxTree.ParseText(fileContent).GetRoot();
