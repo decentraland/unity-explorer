@@ -61,9 +61,39 @@ jobs:
         with:
           projectPath: Explorer
           targetPlatform: ${{ matrix.targetPlatform }}
+          
+      # Tar build files to maintain file permissions
+      - name: Tar MacOSX/Linux build files
+        if: ${{ matrix.targetPlatform == 'StandaloneOSX' }}
+        run: |
+          echo 1. current path and their files:
+          pwd
+          ls
+          echo 2. go into build dir and output files
+          cd build
+          ls
+          echo 3. tar mac build folder + remove og files
+          sudo tar -cvf "${{ matrix.targetPlatform }}.tar" ${{ matrix.targetPlatform }} --remove-files
+          echo 4. go back to src dir
+          cd ..
+          echo 5. src dir contents
+          pwd
+          ls
+          
+      # Upload artifact
+      - name: Upload mac artifact
+        if: ${{ matrix.targetPlatform == 'StandaloneOSX' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: Build-${{ matrix.targetPlatform }}
+          path: build/${{ matrix.targetPlatform }}.tar
+          if-no-files-found: error
+        
 
       # Upload artifact
-      - uses: actions/upload-artifact@v3
+      - name: Upload windows artifact
+        if: ${{ matrix.targetPlatform == 'StandaloneWindows64' }}
+        uses: actions/upload-artifact@v3
         with:
           name: Build-${{ matrix.targetPlatform }}
           path: |
