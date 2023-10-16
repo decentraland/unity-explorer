@@ -15,7 +15,7 @@ namespace ECS.StreamableLoading.Common
             World world,
             PlayerLoopTiming playerLoopTiming = PlayerLoopTiming.Update,
             CancellationToken cancellationToken = default)
-            where TLoadingIntention: ILoadingIntention, IEquatable<TLoadingIntention>
+            where TLoadingIntention: IAssetIntention, IEquatable<TLoadingIntention>
         {
             do await UniTask.Yield(playerLoopTiming, cancellationToken);
             while (!promise.TryConsume(world, out _));

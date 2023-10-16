@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using ECS;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -67,7 +68,7 @@ namespace Realm
             if (SceneIsInRange(definition, parcelsInRange))
                 return;
 
-            World.Add<DeleteEntityIntention>(entity);
+            World.Add(entity, DeleteEntityIntention.DeferredDeletion);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

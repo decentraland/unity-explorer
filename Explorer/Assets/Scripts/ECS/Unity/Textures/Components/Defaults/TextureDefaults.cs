@@ -1,7 +1,7 @@
-﻿using Decentraland.Common;
+﻿using CommunicationData.URLHelpers;
+using Decentraland.Common;
 using JetBrains.Annotations;
 using SceneRunner.Scene;
-using System;
 using UnityEngine;
 using Texture = Decentraland.Common.Texture;
 using TextureWrapMode = UnityEngine.TextureWrapMode;
@@ -15,13 +15,13 @@ namespace ECS.Unity.Textures.Components.Defaults
             if (self == null)
                 return null;
 
-            if (!self.TryGetTextureUrl(data, out string url))
+            if (!self.TryGetTextureUrl(data, out URLAddress url))
                 return null;
 
             return new TextureComponent(url, self.GetWrapMode(), self.GetFilterMode(), self.IsVideoTexture());
         }
 
-        public static bool TryGetTextureUrl(this TextureUnion self, ISceneData data, out string url)
+        public static bool TryGetTextureUrl(this TextureUnion self, ISceneData data, out URLAddress url)
         {
             switch (self.TexCase)
             {
@@ -29,7 +29,7 @@ namespace ECS.Unity.Textures.Components.Defaults
                     return self.AvatarTexture.TryGetTextureUrl(out url);
                 case TextureUnion.TexOneofCase.VideoTexture:
                     // Not implemented - just ignore to not break the loop
-                    url = string.Empty;
+                    url = URLAddress.EMPTY;
                     return false;
                 case TextureUnion.TexOneofCase.Texture:
                 default:
@@ -79,13 +79,13 @@ namespace ECS.Unity.Textures.Components.Defaults
             }
         }
 
-        public static bool TryGetTextureUrl(this Texture self, ISceneData data, out string url) =>
+        public static bool TryGetTextureUrl(this Texture self, ISceneData data, out URLAddress url) =>
             data.TryGetMediaUrl(self.Src, out url);
 
-        public static bool TryGetTextureUrl(this AvatarTexture self, out string url)
+        public static bool TryGetTextureUrl(this AvatarTexture self, out URLAddress url)
         {
             // Not implemented
-            url = string.Empty;
+            url = URLAddress.EMPTY;
             return false;
         }
 

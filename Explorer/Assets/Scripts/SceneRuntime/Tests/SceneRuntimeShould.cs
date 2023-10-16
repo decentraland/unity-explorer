@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
 using Diagnostics;
@@ -147,7 +148,7 @@ namespace SceneRuntime.Tests
                 var engineApi = Substitute.For<IEngineApi>();
 
                 SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
-                var path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
+                var path =  URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPath(path, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
                 sceneRuntime.RegisterEngineApi(engineApi);

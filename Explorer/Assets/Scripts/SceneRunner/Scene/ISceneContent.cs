@@ -1,8 +1,10 @@
-﻿namespace SceneRunner.Scene
+﻿using CommunicationData.URLHelpers;
+
+namespace SceneRunner.Scene
 {
     public interface ISceneContent
     {
-        bool TryGetContentUrl(string url, out string result);
+        bool TryGetContentUrl(string contentPath, out URLAddress result);
 
         bool TryGetHash(string name, out string hash);
     }

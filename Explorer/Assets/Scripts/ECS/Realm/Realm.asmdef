@@ -1,0 +1,7 @@
+﻿{
+  "name": "Realm",
+  "references": [
+    "GUID:8322ea9340a544c59ddc56d4793eac74",
+    "GUID:101b8b6ebaf64668909b49c4b7a1420d"
+  ]
+}

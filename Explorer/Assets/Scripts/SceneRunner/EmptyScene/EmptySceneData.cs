@@ -1,4 +1,5 @@
-﻿using Diagnostics;
+﻿using CommunicationData.URLHelpers;
+using Diagnostics;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -38,16 +39,16 @@ namespace SceneRunner.EmptyScene
         public bool HasRequiredPermission(string permission) =>
             throw new NotImplementedException();
 
-        public bool TryGetMainScriptUrl(out string result) =>
+        public bool TryGetMainScriptUrl(out URLAddress result) =>
             throw new NotImplementedException();
 
-        public bool TryGetContentUrl(string url, out string result) =>
+        public bool TryGetContentUrl(string url, out URLAddress result) =>
             throw new NotImplementedException();
 
         public bool TryGetHash(string name, out string hash) =>
             fileToHash.TryGetValue(name, out hash);
 
-        public bool TryGetMediaUrl(string url, out string result) =>
+        public bool TryGetMediaUrl(string url, out URLAddress result) =>
             throw new NotImplementedException();
 
         public bool IsUrlDomainAllowed(string url) =>

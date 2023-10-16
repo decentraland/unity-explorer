@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Diagnostics;
 using Ipfs;
 using JetBrains.Annotations;
@@ -46,20 +47,20 @@ namespace SceneRunner.Scene
             return false;
         }
 
-        public bool TryGetMainScriptUrl(out string result) =>
+        public bool TryGetMainScriptUrl(out URLAddress result) =>
             TryGetContentUrl(sceneDefinition.metadata.main, out result);
 
-        public bool TryGetContentUrl(string url, out string result) =>
+        public bool TryGetContentUrl(string url, out URLAddress result) =>
             sceneContent.TryGetContentUrl(url, out result);
 
         public bool TryGetHash(string name, out string hash) =>
             sceneContent.TryGetHash(name, out hash);
 
-        public bool TryGetMediaUrl(string url, out string result)
+        public bool TryGetMediaUrl(string url, out URLAddress result)
         {
             if (string.IsNullOrEmpty(url))
             {
-                result = string.Empty;
+                result = URLAddress.EMPTY;
                 return false;
             }
 
@@ -69,11 +70,11 @@ namespace SceneRunner.Scene
 
             if (HasRequiredPermission(ScenePermissionNames.ALLOW_MEDIA_HOSTNAMES) && IsUrlDomainAllowed(url))
             {
-                result = url;
+                result = URLAddress.FromString(url);
                 return true;
             }
 
-            result = string.Empty;
+            result = URLAddress.EMPTY;
             return false;
         }
 

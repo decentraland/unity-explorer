@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Arch.Core;
+﻿using Arch.Core;
 using DCL.ECSComponents;
 using ECS.ComponentsPooling;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
@@ -11,6 +9,8 @@ using ECS.Unity.PrimitiveRenderer.MeshSetup;
 using ECS.Unity.PrimitiveRenderer.Systems;
 using NSubstitute;
 using NUnit.Framework;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 
@@ -44,12 +44,12 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
             poolsRegistry = new ComponentPoolsRegistry(
                 new Dictionary<Type, IComponentPool>
                 {
-                    { typeof(MeshRenderer), new UnityComponentPool<MeshRenderer>(null, MeshRendererPoolUtils.CreateMeshRendererComponent, MeshRendererPoolUtils.ReleaseMeshRendererComponent) },
+                    { typeof(MeshRenderer), new GameObjectPool<MeshRenderer>(null, MeshRendererPoolUtils.CreateMeshRendererComponent, MeshRendererPoolUtils.ReleaseMeshRendererComponent) },
                     { typeof(BoxPrimitive), new ComponentPool<BoxPrimitive>() },
                     { typeof(SpherePrimitive), new ComponentPool<SpherePrimitive>() },
                     { typeof(CylinderPrimitive), new ComponentPool<CylinderPrimitive>() },
                     { typeof(PlanePrimitive), new ComponentPool<PlanePrimitive>() }
-                });
+                }, new GameObject().transform);
 
             IConcurrentBudgetProvider budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
             budgetProvider.TrySpendBudget().Returns(true);

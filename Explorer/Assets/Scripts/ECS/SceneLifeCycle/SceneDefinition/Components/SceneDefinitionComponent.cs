@@ -1,4 +1,5 @@
-﻿using Ipfs;
+﻿using CommunicationData.URLHelpers;
+using Ipfs;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -44,7 +45,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             ParcelsCorners = new[] { ParcelMathHelper.CalculateCorners(parcel) };
             Parcels = new[] { parcel };
             IsEmpty = true;
-            IpfsPath = new IpfsTypes.IpfsPath(id, string.Empty);
+            IpfsPath = new IpfsTypes.IpfsPath(id, URLDomain.EMPTY);
 
             Definition = new IpfsTypes.SceneEntityDefinition
             {

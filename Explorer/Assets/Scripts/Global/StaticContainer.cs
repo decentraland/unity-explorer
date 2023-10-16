@@ -38,6 +38,11 @@ namespace Global
 
         public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; }
 
+        /// <summary>
+        ///     Some plugins may implement both interfaces
+        /// </summary>
+        public IReadOnlyList<IDCLGlobalPlugin> SharedPlugins { get; private set; }
+
         public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
 
         public IProfilingProvider ProfilingProvider { get; private set; }
@@ -107,6 +112,8 @@ namespace Global
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
 
+            var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings);
+
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
                 new TransformsPlugin(sharedDependencies),
@@ -115,9 +122,14 @@ namespace Global
                 new TexturesLoadingPlugin(),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
-                new AssetBundlesPlugin(container.ReportHandlingSettings),
+                assetBundlePlugin,
                 new GltfContainerPlugin(sharedDependencies),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
+            };
+
+            container.SharedPlugins = new IDCLGlobalPlugin[]
+            {
+                assetBundlePlugin,
             };
 
             return (container, true);

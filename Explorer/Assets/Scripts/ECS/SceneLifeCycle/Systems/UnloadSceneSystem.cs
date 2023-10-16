@@ -3,8 +3,10 @@ using Arch.System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using Realm;
 using SceneRunner.Scene;
@@ -14,8 +16,7 @@ namespace ECS.SceneLifeCycle.Systems
     /// <summary>
     ///     Based on formerly created intentions unloads the scene or interrupts its loading
     /// </summary>
-    [UpdateInGroup(typeof(RealmGroup))]
-    [UpdateAfter(typeof(ResolveSceneStateByRadiusSystem))]
+    [UpdateInGroup(typeof(CleanUpGroup))]
     public partial class UnloadSceneSystem : BaseUnityLoopSystem
     {
         internal UnloadSceneSystem(World world) : base(world) { }
@@ -44,5 +45,6 @@ namespace ECS.SceneLifeCycle.Systems
             promise.ForgetLoading(World);
             World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>, DeleteEntityIntention>(entity);
         }
+
     }
 }

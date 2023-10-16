@@ -1,17 +1,25 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components;
+using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character;
 using DCL.Character.Components;
+using DCL.ECSComponents;
+using DCL.GlobalPartitioning;
 using DCL.PluginSystem.Global;
+using DCL.Systems;
+using ECS;
 using ECS.ComponentsPooling;
+using ECS.Groups;
 using ECS.LifeCycle;
+using ECS.LifeCycle.Systems;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.Prioritization.Systems;
 using ECS.SceneLifeCycle.Components;
-using ECS.SceneLifeCycle.DeferredLoading;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
@@ -46,10 +54,13 @@ namespace Global.Dynamic
         private readonly IPartitionSettings partitionSettings;
         private readonly IRealmPartitionSettings realmPartitionSettings;
         private readonly RealmSamplingData realmSamplingData;
+        private readonly IRealmData realmData;
+        private readonly URLDomain assetBundlesURL;
         private readonly IReadOnlyList<IDCLGlobalPlugin> globalPlugins;
 
         public GlobalWorldFactory(in StaticContainer staticContainer, IRealmPartitionSettings realmPartitionSettings,
-            CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData, IReadOnlyList<IDCLGlobalPlugin> globalPlugins)
+            CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
+            URLDomain assetBundlesURL, IRealmData realmData, IReadOnlyList<IDCLGlobalPlugin> globalPlugins)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -57,7 +68,9 @@ namespace Global.Dynamic
             this.realmPartitionSettings = realmPartitionSettings;
             this.cameraSamplingData = cameraSamplingData;
             this.realmSamplingData = realmSamplingData;
+            this.assetBundlesURL = assetBundlesURL;
             this.globalPlugins = globalPlugins;
+            this.realmData = realmData;
         }
 
         public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory, ICharacterObject characterObject)
@@ -67,15 +80,25 @@ namespace Global.Dynamic
             // not synced by mutex, for compatibility only
             var mutex = new MutexSync();
 
+            ISceneStateProvider globalSceneStateProvider = new SceneStateProvider();
+            globalSceneStateProvider.State = SceneState.Running;
+
             var builder = new ArchSystemsWorldBuilder<World>(world);
+            builder.InjectCustomGroup(new SyncedPostRenderingSystemGroup(mutex, globalSceneStateProvider));
 
             Entity playerEntity = world.Create(
                 new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
                 new PlayerComponent(characterObject.CameraFocus),
-                new TransformComponent { Transform = characterObject.Transform });
-
-            // Asset Bundle Manifest
-            const string ASSET_BUNDLES_URL = "https://ab-cdn.decentraland.org/";
+                new TransformComponent { Transform = characterObject.Transform },
+                new PBAvatarShape
+                {
+                    BodyShape = BodyShape.MALE,
+                    Wearables = { WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE) },
+                    Name = "Player",
+                    SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor3(),
+                    HairColor = WearablesConstants.DefaultColors.GetRandomHairColor3(),
+                }
+            );
 
             IConcurrentBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(100);
 
@@ -83,11 +106,11 @@ namespace Global.Dynamic
             LoadSceneDefinitionSystem.InjectToWorld(ref builder, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
 
             LoadSceneSystem.InjectToWorld(ref builder,
-                new LoadSceneSystemLogic(ASSET_BUNDLES_URL),
+                new LoadSceneSystemLogic(assetBundlesURL),
                 new LoadEmptySceneSystemLogic(emptyScenesWorldFactory, componentPoolsRegistry, EMPTY_SCENES_MAPPINGS_URL),
                 sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex);
 
-            SceneLifeCycleDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider);
+            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider);
 
             CalculateParcelsInRangeSystem.InjectToWorld(ref builder, playerEntity);
             LoadStaticPointersSystem.InjectToWorld(ref builder);
@@ -108,9 +131,14 @@ namespace Global.Dynamic
             UnloadSceneSystem.InjectToWorld(ref builder);
             ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token);
 
-            PartitionSceneEntitiesSystem.InjectToWorld(ref builder, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>(), partitionSettings, cameraSamplingData);
-            CheckCameraQualifiedForRepartitioningSystem.InjectToWorld(ref builder, partitionSettings);
+            IComponentPool<PartitionComponent> partitionComponentPool = componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>();
+            PartitionSceneEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData);
+            PartitionGlobalAssetEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData);
+
+            CheckCameraQualifiedForRepartitioningSystem.InjectToWorld(ref builder, partitionSettings, realmData);
             SortWorldsAggregateSystem.InjectToWorld(ref builder, partitionedWorldsAggregateFactory, realmPartitionSettings);
+
+            DestroyEntitiesSystem.InjectToWorld(ref builder);
 
             var pluginArgs = new GlobalPluginArguments(playerEntity);
 

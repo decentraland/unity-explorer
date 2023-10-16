@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Avatar
+  m_EditorClassIdentifier: 
+  m_GroupName: Avatar
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 1dd1efed42c2dcb48954101ce18c8946
+  m_SerializeEntries:
+  - m_GUID: 1b6579d7e91068e41872ba3a3eb66fdf
+    m_Address: Avatar_Male_Mesh
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8db46845fb5f52f44a71c2a0c2d92074
+    m_Address: AvatarBase
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9776466c722cb644c914ee056b28d232
+    m_Address: Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 19373184c73f36042a55739551bb8298
+    m_Address: Avatar_CelShading
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fdc0ac72e84d9534eafd826d7fdfb22a
+    m_Address: AvatarDebugView
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3662049975e2d0549a312769ab17ad07
+    m_Address: PlayerAnimator
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: aab64a77806b44a43b6f5d0da6de94c6
+    m_Address: RandomAnimator
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: fc8a9d2b539788c47a5b305639fa8b34, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: e4e44e1629d2cde4aa4efcbd0ddf1b8c, type: 2}
+    - {fileID: 11400000, guid: 2094e3b64157b0243a16ba026d9ece3d, type: 2}
