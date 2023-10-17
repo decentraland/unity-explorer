@@ -1,0 +1,41 @@
+name: Cancel Prior Runs
+
+on:
+  pull_request:
+    types:
+      - synchronize
+
+jobs:
+  cancel-runs:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Cancel prior runs
+      uses: actions/github-script@v5
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          const { owner, repo } = context.repo;
+          const { octokit } = github;
+          const prNumber = context.issue.number;
+
+          // Fetch workflow runs for the specific PR
+          const runs = await octokit.actions.listWorkflowRunsForRepo({
+            owner,
+            repo,
+            event: "pull_request",
+            per_page: 50
+          });
+
+          const currentSHA = context.sha;
+
+          // Cancel runs from previous commits of the same PR
+          for (const run of runs.data.workflow_runs) {
+            if (run.head_sha !== currentSHA && run.pull_requests.some(pr => pr.number === prNumber)) {
+              await octokit.actions.cancelWorkflowRun({
+                owner,
+                repo,
+                run_id: run.id
+              });
+            }
+          }
