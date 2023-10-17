@@ -54,7 +54,7 @@ namespace DCL.CharacterMotion.Systems
             Vector3 characterForward = characterTransform.forward;
 
             if (targetForward != Vector3.zero)
-                characterTransform.forward = Vector3.Slerp(characterForward, targetForward, characterControllerSettings.RotationAngularSpeed * dt);
+                characterTransform.forward = Vector3.Slerp(characterForward, targetForward, characterControllerSettings.RotationSpeed * dt);
         }
     }
 }

@@ -44,13 +44,13 @@ namespace DCL.CharacterMotion.Systems
             {
                 inputToUpdate.CurrentHoldTime += t;
 
-                if (inputAction.WasReleasedThisFrame() || inputToUpdate.CurrentHoldTime > characterControllerSettings.HoldJumpTime)
+                if (inputAction.WasReleasedThisFrame() || inputToUpdate.CurrentHoldTime > characterControllerSettings.LongJumpTime)
                 {
                     // +1 because Update is executed before Physics so it will always hold the previous tick value
                     inputToUpdate.PhysicalButtonArguments.TickWhenJumpOccurred = tickValue + 1;
 
                     inputToUpdate.PhysicalButtonArguments.Power =
-                        Mathf.Clamp01(inputToUpdate.CurrentHoldTime / characterControllerSettings.HoldJumpTime);
+                        Mathf.Clamp01(inputToUpdate.CurrentHoldTime / characterControllerSettings.LongJumpTime);
 
                     inputToUpdate.IsChargingJump = false;
                     inputToUpdate.CurrentHoldTime = 0;

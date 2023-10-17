@@ -51,6 +51,6 @@ namespace DCL.CharacterMotion.Systems
         }
 
         private static float GetAcceleration(ICharacterControllerSettings characterControllerSettings, in CharacterRigidTransform physics) =>
-            physics.IsGrounded ? characterControllerSettings.GroundAcceleration : characterControllerSettings.AirAcceleration;
+            physics.IsGrounded ? characterControllerSettings.Acceleration : characterControllerSettings.AirAcceleration;
     }
 }

@@ -18,7 +18,7 @@ namespace DCL.CharacterMotion
 
             if (characterPhysics.IsGrounded && power > 0)
             {
-                float jumpHeight = Mathf.Lerp(characterControllerSettings.JumpHeight.x, characterControllerSettings.JumpHeight.y, power);
+                float jumpHeight = Mathf.Lerp(characterControllerSettings.JogJumpHeight, characterControllerSettings.RunJumpHeight, power);
 
                 // Override velocity in a jump direction
                 characterPhysics.NonInterpolatedVelocity.y = Mathf.Sqrt(-2 * jumpHeight * characterControllerSettings.Gravity);
