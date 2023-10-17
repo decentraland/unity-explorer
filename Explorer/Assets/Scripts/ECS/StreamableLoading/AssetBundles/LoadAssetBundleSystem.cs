@@ -11,8 +11,6 @@ using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using SceneRunner.Scene;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -119,16 +117,13 @@ namespace ECS.StreamableLoading.AssetBundles
             AssetBundleRequest asyncOp = assetBundle.LoadAllAssetsAsync<GameObject>();
             await asyncOp.WithCancellation(ct);
 
-            // Can't avoid an array instantiation - no API with List
-            // Can't avoid casting - no generic API
-            var gameObjects = new List<GameObject>(asyncOp.allAssets.Cast<GameObject>());
+            if (asyncOp.allAssets.Length == 0)
+                return null;
 
-            if (gameObjects.Count > 1)
+            if (asyncOp.allAssets.Length > 1)
                 ReportHub.LogError(GetReportCategory(), $"AssetBundle {assetBundle.name} contains more than one root gameobject. Only the first one will be used.");
 
-            GameObject rootGameObject = gameObjects.Count > 0 ? gameObjects[0] : null;
-
-            return rootGameObject;
+            return asyncOp.allAssets[0] as GameObject;
         }
 
         private async UniTask WaitForDependency(SceneAssetBundleManifest manifest,

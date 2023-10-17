@@ -11,7 +11,9 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Components.Defaults;
 using System.Threading;
 using UnityEngine.Assertions;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.Unity.GLTFContainer.Asset.Components.GltfContainerAsset, ECS.Unity.GLTFContainer.Asset.Components.GetGltfContainerAssetIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<
+    ECS.Unity.GLTFContainer.Asset.Components.GltfContainerAsset,
+    ECS.Unity.GLTFContainer.Asset.Components.GetGltfContainerAssetIntention>;
 
 namespace ECS.Unity.GLTFContainer.Systems
 {
