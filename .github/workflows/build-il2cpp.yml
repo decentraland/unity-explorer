@@ -14,6 +14,8 @@ jobs:
       max-parallel: 1
       matrix:
         include:
+          - targetPlatform: StandaloneWindows64
+            dockerImage: windows-2019
           - targetPlatform: StandaloneOSX
             dockerImage: macos-latest-xl
 
@@ -64,13 +66,9 @@ jobs:
       - name: Tar MacOSX/Linux build files
         if: ${{ matrix.targetPlatform == 'StandaloneOSX' }}
         run: |
-          echo 1. current path and their files:
-          pwd
-          ls
-          echo 2. go into build dir and output files
+          echo 1. go into build dir
           cd build
-          ls
-          echo 3. delete unnecessary folder
+          echo 2. delete unnecessary folder
           rm -r  ${{ matrix.targetPlatform }}/StandaloneOSX_BackUpThisFolder_ButDontShipItWithYourGame
           rm -r  ${{ matrix.targetPlatform }}/StandaloneOSX_BurstDebugInformation_DoNotShip
           echo 4. tar mac build folder + remove og files
@@ -78,9 +76,6 @@ jobs:
           rm -r  ${{ matrix.targetPlatform }}
           echo 5. go back to src dir
           cd ..
-          echo 6. src dir contents
-          pwd
-          ls
           
       # Upload artifact
       - name: Upload mac artifact
