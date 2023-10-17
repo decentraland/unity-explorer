@@ -13,11 +13,13 @@ namespace DCL.CharacterCamera.Systems
     public partial class UpdateCursorInputSystem : UpdateInputSystem<CameraInput, CameraComponent>
     {
         private readonly IUIRaycaster uiRaycaster;
+        private readonly ICursor cursor;
         private readonly DCLInput.CameraActions cameraActions;
 
-        internal UpdateCursorInputSystem(World world, DCLInput dclInput, IUIRaycaster uiRaycaster) : base(world)
+        internal UpdateCursorInputSystem(World world, DCLInput dclInput, IUIRaycaster uiRaycaster, ICursor cursor) : base(world)
         {
             this.uiRaycaster = uiRaycaster;
+            this.cursor = cursor;
             cameraActions = dclInput.Camera;
         }
 
@@ -41,31 +43,21 @@ namespace DCL.CharacterCamera.Systems
                 if (results.Count == 0)
                 {
                     cameraComponent.CursorIsLocked = true;
-                    UpdateLockState(cameraComponent.CursorIsLocked);
+                    cursor.Lock();
                 }
             }
 
             if (inputWantsToUnlock && cameraComponent.CursorIsLocked)
             {
                 cameraComponent.CursorIsLocked = false;
-                UpdateLockState(cameraComponent.CursorIsLocked);
+                cursor.Unlock();
             }
 
             // in case the cursor was unlocked externally
-            if (Cursor.lockState == CursorLockMode.None)
+            if (!cursor.IsLocked() && cameraComponent.CursorIsLocked)
+            {
                 cameraComponent.CursorIsLocked = false;
-        }
-
-        private void UpdateLockState(bool locked)
-        {
-            if (locked)
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-            } else
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
+                cursor.Unlock();
             }
         }
     }

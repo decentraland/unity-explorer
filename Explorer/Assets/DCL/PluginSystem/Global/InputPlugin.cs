@@ -28,7 +28,7 @@ namespace DCL.PluginSystem.Global
             UpdateInputMovementSystem.InjectToWorld(ref builder, dclInput);
             UpdateCameraInputSystem.InjectToWorld(ref builder, dclInput);
             DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, dclInput.FreeCamera.DropPlayer);
-            UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, new UIRaycaster(EventSystem.current));
+            UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, new UIRaycaster(EventSystem.current), new DCLCursor());
 
             // UpdateInputButtonSystem<PrimaryKey>.InjectToWorld(ref builder, dclInput.Player.PrimaryKey);
 
