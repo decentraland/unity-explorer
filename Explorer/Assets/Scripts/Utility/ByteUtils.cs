@@ -111,7 +111,7 @@ namespace Utility
             }
 
             MemoryMarshal.Write(span, ref value);
-            span = span.Slice(sizeof(TTo));
+            span = span[sizeof(TTo)..];
         }
 
         /// <summary>
@@ -122,7 +122,7 @@ namespace Utility
         public static void Write(this ref Span<byte> destination, in ReadOnlySpan<byte> source)
         {
             source.CopyTo(destination);
-            destination = destination.Slice(source.Length);
+            destination = destination[source.Length..];
         }
     }
 }

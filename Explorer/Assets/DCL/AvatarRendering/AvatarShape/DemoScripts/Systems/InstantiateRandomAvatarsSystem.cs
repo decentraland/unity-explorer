@@ -118,12 +118,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             totalAvatarsInstantiated += avatarsToInstantiate;
 
-            var randomAvatarRequest = new RandomAvatarRequest();
-            randomAvatarRequest.RandomAvatarsToInstantiate = avatarsToInstantiate;
-
-            randomAvatarRequest.BaseWearablesPromise = ParamPromise.Create(World,
-                new GetWearableByParamIntention(new[] { ("collectionType", "base-wearable"), ("pageSize", "50") }, "DummyUser", new List<IWearable>()),
-                PartitionComponent.TOP_PRIORITY);
+            var randomAvatarRequest = new RandomAvatarRequest
+            {
+                RandomAvatarsToInstantiate = avatarsToInstantiate,
+                BaseWearablesPromise = ParamPromise.Create(World,
+                    new GetWearableByParamIntention(new[] { ("collectionType", "base-wearable"), ("pageSize", "50") }, "DummyUser", new List<IWearable>()),
+                    PartitionComponent.TOP_PRIORITY),
+            };
 
             World.Create(randomAvatarRequest);
         }

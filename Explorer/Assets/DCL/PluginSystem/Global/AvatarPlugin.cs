@@ -28,6 +28,7 @@ namespace DCL.PluginSystem.Global
 {
     public class AvatarPlugin : IDCLGlobalPlugin<AvatarPlugin.AvatarShapeSettings>
     {
+        private static readonly int GLOBAL_AVATAR_BUFFER = Shader.PropertyToID("_GlobalAvatarBuffer");
         private static readonly QueryDescription AVATARS_QUERY = new QueryDescription().WithAll<PBAvatarShape>().WithNone<PlayerComponent>();
 
         private readonly IAssetsProvisioner assetsProvisioner;
@@ -87,7 +88,7 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             var vertOutBuffer = new FixedComputeBufferHandler(5_000_000, Unsafe.SizeOf<CustomSkinningVertexInfo>());
-            Shader.SetGlobalBuffer("_GlobalAvatarBuffer", vertOutBuffer.Buffer);
+            Shader.SetGlobalBuffer(GLOBAL_AVATAR_BUFFER, vertOutBuffer.Buffer);
 
             var skinningStrategy = new ComputeShaderSkinning();
 
