@@ -1,8 +1,7 @@
 name: Unity Mac Build IL2CPP
 
 on:
-  pull_request: {}
-  push: { branches: [main] }
+  workflow_dispatch: {}
 
 jobs:
   build:
