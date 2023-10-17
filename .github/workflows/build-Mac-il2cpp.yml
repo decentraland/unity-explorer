@@ -1,7 +1,7 @@
-name: Unity Mac Build IL2CPP
+git sname: Unity Mac Build IL2CPP
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 jobs:
   build:
