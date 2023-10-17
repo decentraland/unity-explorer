@@ -12,12 +12,73 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 355a79a57f074a269424516ca6de7156, type: 3}
   m_Name: CharacterControllerSettings
   m_EditorClassIdentifier: 
-  <WalkSpeed>k__BackingField: 3.6
-  <RunSpeed>k__BackingField: 7
-  <GroundAcceleration>k__BackingField: 40
+  <WalkSpeed>k__BackingField: 1.5
+  <JogSpeed>k__BackingField: 8
+  <RunSpeed>k__BackingField: 10
   <AirAcceleration>k__BackingField: 10
-  <RotationAngularSpeed>k__BackingField: 10
-  <Gravity>k__BackingField: -9.8
-  <JumpHeight>k__BackingField: {x: 1.5, y: 2}
-  <AirDrag>k__BackingField: 0
-  <HoldJumpTime>k__BackingField: 0.5
+  <Gravity>k__BackingField: -10
+  <JogJumpHeight>k__BackingField: 1
+  <RunJumpHeight>k__BackingField: 1.5
+  <CharacterControllerRadius>k__BackingField: 0.4
+  <GroundDrag>k__BackingField: 0.5
+  <AirDrag>k__BackingField: 0.05
+  <MinImpulse>k__BackingField: 1
+  <JumpVelocityDrag>k__BackingField: 5
+  accelerationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.9
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  <Acceleration>k__BackingField: 20
+  <MaxAcceleration>k__BackingField: 25
+  <AccelerationTime>k__BackingField: 0.5
+  <StopTimeSec>k__BackingField: 0.12
+  <LongJumpTime>k__BackingField: 0.5
+  <LongJumpGravityScale>k__BackingField: 0.5
+  <JumpGravityFactor>k__BackingField: 4
+  <JumpGraceTime>k__BackingField: 0.15
+  <JumpHeightStun>k__BackingField: 10
+  <LongFallStunTime>k__BackingField: 0.75
+  <NoSlipDistance>k__BackingField: 0.15
+  <EdgeSlipSpeed>k__BackingField: 7
+  <RotationSpeed>k__BackingField: 360
+  <MovAnimBlendSpeed>k__BackingField: 5
+  <JumpPadForce>k__BackingField: 50
+  <AnimationSpeed>k__BackingField: 1

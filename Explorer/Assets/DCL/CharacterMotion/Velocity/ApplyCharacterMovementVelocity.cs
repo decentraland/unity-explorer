@@ -31,6 +31,8 @@ namespace DCL.CharacterMotion
             {
                 case MovementKind.Run:
                     return characterControllerSettings.RunSpeed;
+                case MovementKind.Jog:
+                    return characterControllerSettings.JogSpeed;
                 default: return characterControllerSettings.WalkSpeed;
             }
         }
