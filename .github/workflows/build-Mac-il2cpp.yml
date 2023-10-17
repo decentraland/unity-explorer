@@ -1,4 +1,4 @@
-git sname: Unity Mac Build IL2CPP
+name: Unity Mac Build IL2CPP
 
 on:
   workflow_dispatch: {}
