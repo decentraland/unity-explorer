@@ -99,9 +99,9 @@ namespace Global.Tests
 
             // Check ECS world
 
-            World world = sceneFacadeImpl.ecsWorldFacade.EcsWorld;
+            var world = sceneFacadeImpl.ecsWorldFacade.EcsWorld;
 
-            QueryDescription cubes = new QueryDescription().WithAll<SDKTransform, PBMeshRenderer>(); // 256 cubes
+            var cubes = new QueryDescription().WithAll<SDKTransform, PBMeshRenderer>(); // 256 cubes
             Assert.AreEqual(256, world.CountEntities(in cubes));
 
             // save positions
@@ -109,7 +109,7 @@ namespace Global.Tests
 
             world.Query(in cubes, (in Entity e, ref SDKTransform transform) => { positions[e] = transform.Position; });
 
-            QueryDescription textShape = new QueryDescription().WithAll<SDKTransform, PBTextShape, PBBillboard>(); // Billboard
+            var textShape = new QueryDescription().WithAll<SDKTransform, PBTextShape, PBBillboard>(); // Billboard
             Assert.AreEqual(1, world.CountEntities(in textShape));
 
             await UniTask.SwitchToThreadPool();
