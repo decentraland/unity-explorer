@@ -1,7 +1,6 @@
 ﻿using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
-using Diagnostics.ReportsHandling;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
@@ -19,8 +18,10 @@ namespace DCL.CharacterMotion
 
             Vector3 cameraForward = cameraTransform.forward;
             cameraForward.y = 0;
+            cameraForward.Normalize();
             Vector3 cameraRight = cameraTransform.right;
             cameraRight.y = 0;
+            cameraRight.Normalize();
 
             float yAxis = GetSpeedLimit(settings, input) * input.Axes.y;
             float xAxis = GetSpeedLimit(settings, input) * input.Axes.x;
@@ -44,9 +45,10 @@ namespace DCL.CharacterMotion
                 rigidTransform.zVelocity = Mathf.MoveTowards(rigidTransform.zVelocity, yAxis, currentAcceleration * dt);
             }
             else
-                rigidTransform.zVelocity = Mathf.SmoothDamp(rigidTransform.zVelocity, xAxis, ref rigidTransform.zDamp, settings.StopTimeSec);
+                rigidTransform.zVelocity = Mathf.SmoothDamp(rigidTransform.zVelocity, yAxis, ref rigidTransform.zDamp, settings.StopTimeSec);
 
             Vector3 targetForward = (cameraForward * rigidTransform.zVelocity) + (cameraRight * rigidTransform.xVelocity);
+            Debug.DrawLine(rigidTransform.lastPosition, rigidTransform.lastPosition + targetForward, Color.blue, dt);
             rigidTransform.MoveVelocity.Target = targetForward;
         }
 

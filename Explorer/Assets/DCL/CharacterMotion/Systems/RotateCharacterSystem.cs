@@ -20,41 +20,33 @@ namespace DCL.CharacterMotion.Systems
     [UpdateAfter(typeof(CameraGroup))]
     public partial class RotateCharacterSystem : BaseUnityLoopSystem
     {
-        private SingleInstanceEntity camera;
-
         internal RotateCharacterSystem(World world) : base(world) { }
 
         public override void Initialize()
         {
-            camera = World.CacheCamera();
+
         }
 
         protected override void Update(float t)
         {
-            LerpRotationQuery(World, t, in camera.GetCameraComponent(World));
+            LerpRotationQuery(World, t);
         }
 
         [Query]
         private void LerpRotation(
             [Data] float dt,
-            [Data] in CameraComponent camera,
             ref ICharacterControllerSettings characterControllerSettings,
-            ref TransformComponent transform,
-            ref MovementInputComponent input)
+            ref CharacterRigidTransform rigidTransform,
+            ref TransformComponent transform)
         {
-            Transform cameraTransform = camera.Camera.transform;
-            Vector3 forward = cameraTransform.forward;
-            forward.y = 0;
-            Vector3 right = cameraTransform.right;
-            right.y = 0;
-
-            Vector3 targetForward = ((forward * input.Axes.y) + (right * input.Axes.x)).normalized;
-
             Transform characterTransform = transform.Transform;
-            Vector3 characterForward = characterTransform.forward;
+            Vector3 targetForward = rigidTransform.MoveVelocity.Target;
 
-            if (targetForward != Vector3.zero)
-                characterTransform.forward = Vector3.Slerp(characterForward, targetForward, characterControllerSettings.RotationSpeed * dt);
+            if (targetForward.sqrMagnitude < characterTransform.forward.sqrMagnitude)
+                targetForward = characterTransform.forward;
+
+            Quaternion targetRotation = Quaternion.LookRotation(targetForward);
+            characterTransform.rotation = Quaternion.RotateTowards(characterTransform.rotation, targetRotation, characterControllerSettings.RotationSpeed * dt);
         }
     }
 }

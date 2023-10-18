@@ -41,6 +41,8 @@ namespace DCL.CharacterMotion.Systems
 
             CollisionFlags collisionFlags = characterController.Move(rigidTransform.MoveVelocity.Target * dt);
 
+            rigidTransform.lastPosition = characterController.transform.position;
+
             bool hasGroundedFlag = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
 
             if (!Mathf.Approximately(delta.y, 0f))

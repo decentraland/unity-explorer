@@ -32,6 +32,7 @@ namespace DCL.CharacterMotion.Components
         public float zDamp;
         public float currentAcceleration;
         public float accelerationWeight;
+        public Vector3 lastPosition;
 
         public struct MovementVelocity
         {
