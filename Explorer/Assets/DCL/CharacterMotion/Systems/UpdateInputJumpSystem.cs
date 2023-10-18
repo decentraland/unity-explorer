@@ -31,31 +31,14 @@ namespace DCL.CharacterMotion.Systems
 
         protected override void Update(float t)
         {
-            UpdateInputQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick);
+            UpdateInputQuery(World, fixedTick.GetPhysicsTickComponent(World).Tick);
         }
 
         [Query]
-        private void UpdateInput([Data] float t, [Data] int tickValue, ref JumpInputComponent inputToUpdate,
-            ref CharacterRigidTransform characterPhysics, ref ICharacterControllerSettings characterControllerSettings)
+        private void UpdateInput([Data] int tickValue, ref JumpInputComponent inputToUpdate)
         {
-            if (characterPhysics.IsGrounded && inputAction.WasPressedThisFrame())
-                inputToUpdate.IsChargingJump = true;
-            else if (inputToUpdate.IsChargingJump)
-            {
-                inputToUpdate.CurrentHoldTime += t;
-
-                if (inputAction.WasReleasedThisFrame() || inputToUpdate.CurrentHoldTime > characterControllerSettings.LongJumpTime)
-                {
-                    // +1 because Update is executed before Physics so it will always hold the previous tick value
-                    inputToUpdate.PhysicalButtonArguments.TickWhenJumpOccurred = tickValue + 1;
-
-                    inputToUpdate.PhysicalButtonArguments.Power =
-                        Mathf.Clamp01(inputToUpdate.CurrentHoldTime / characterControllerSettings.LongJumpTime);
-
-                    inputToUpdate.IsChargingJump = false;
-                    inputToUpdate.CurrentHoldTime = 0;
-                }
-            }
+            if (inputAction.WasPressedThisFrame())
+                inputToUpdate.Trigger.TickWhenJumpOccurred = tickValue + 1;
         }
     }
 }

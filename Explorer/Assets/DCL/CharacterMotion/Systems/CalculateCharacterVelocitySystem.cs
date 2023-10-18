@@ -40,13 +40,13 @@ namespace DCL.CharacterMotion.Systems
             [Data] int physicsTick,
             [Data] in CameraComponent camera,
             ref ICharacterControllerSettings characterControllerSettings,
-            ref JumpInputComponent jump,
             ref CharacterRigidTransform rigidTransform,
-            ref MovementInputComponent movementInput)
+            in JumpInputComponent jump,
+            in MovementInputComponent movementInput)
         {
             // Apply all velocities
             ApplyCharacterMovementVelocity.Execute(characterControllerSettings, ref rigidTransform, in camera, in movementInput, dt);
-            ApplyJump.Execute(characterControllerSettings, ref jump, ref rigidTransform, physicsTick);
+            ApplyJump.Execute(characterControllerSettings, ref rigidTransform, in jump, in movementInput, physicsTick);
             ApplyGravity.Execute(characterControllerSettings, ref rigidTransform, dt);
             ApplyAirDrag.Execute(characterControllerSettings, ref rigidTransform, dt);
         }

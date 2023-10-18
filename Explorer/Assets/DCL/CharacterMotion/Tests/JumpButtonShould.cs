@@ -49,43 +49,6 @@ namespace DCL.CharacterMotion.Tests
         private SingleInstanceEntity fixedTick;
 
         [Test]
-        public async Task PressAndReleaseJump()
-        {
-            Press(inputDevice.spaceKey);
-
-            updateInputJumpSystem.Update(0);
-
-            //Assert
-            Assert.IsTrue(world.Get<JumpInputComponent>(playerEntity).IsChargingJump);
-
-            await UniTask.Yield();
-
-            Release(inputDevice.spaceKey);
-            updateInputJumpSystem.Update(0);
-
-            //Assert
-            Assert.IsFalse(world.Get<JumpInputComponent>(playerEntity).IsChargingJump);
-        }
-
-        [Test]
-        public async Task JumpReleaseAfterHoldTime()
-        {
-            Press(inputDevice.spaceKey);
-
-            updateInputJumpSystem.Update(0);
-
-            //Assert
-            Assert.IsTrue(world.Get<JumpInputComponent>(playerEntity).IsChargingJump);
-
-            await UniTask.Yield();
-
-            updateInputJumpSystem.Update(2);
-
-            //Assert
-            Assert.IsFalse(world.Get<JumpInputComponent>(playerEntity).IsChargingJump);
-        }
-
-        [Test]
         public async Task JumpOccursOnCorrectPhysicalFrame()
         {
             //Lets simulate a Fixed Update tick
@@ -107,7 +70,7 @@ namespace DCL.CharacterMotion.Tests
             await UniTask.Yield();
 
             //This simulated another fixed update. On this call, the jump should occur
-            Assert.IsTrue(world.Get<JumpInputComponent>(playerEntity).PhysicalButtonArguments.GetPower(fixedTick.GetPhysicsTickComponent(world).Tick) > 0);
+            Assert.IsTrue(world.Get<JumpInputComponent>(playerEntity).Trigger.IsAvailable(fixedTick.GetPhysicsTickComponent(world).Tick));
         }
     }
 }
