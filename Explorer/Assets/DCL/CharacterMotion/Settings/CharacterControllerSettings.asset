@@ -15,7 +15,6 @@ MonoBehaviour:
   <WalkSpeed>k__BackingField: 1.5
   <JogSpeed>k__BackingField: 8
   <RunSpeed>k__BackingField: 10
-  <AirAcceleration>k__BackingField: 10
   <Gravity>k__BackingField: -10
   <JogJumpHeight>k__BackingField: 1
   <RunJumpHeight>k__BackingField: 1.5
@@ -69,6 +68,8 @@ MonoBehaviour:
   <Acceleration>k__BackingField: 20
   <MaxAcceleration>k__BackingField: 25
   <AccelerationTime>k__BackingField: 0.5
+  <AirAcceleration>k__BackingField: 7
+  <MaxAirAcceleration>k__BackingField: 10
   <StopTimeSec>k__BackingField: 0.12
   <LongJumpTime>k__BackingField: 0.5
   <LongJumpGravityScale>k__BackingField: 0.5

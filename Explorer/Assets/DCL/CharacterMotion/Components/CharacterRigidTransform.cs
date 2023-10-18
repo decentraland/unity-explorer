@@ -37,14 +37,34 @@ namespace DCL.CharacterMotion.Components
         public struct MovementVelocity
         {
             /// <summary>
-            ///     Set by physics system in FixedUpdate
+            /// Current sideways velocity
             /// </summary>
-            public Vector3 Target;
+            public float XVelocity;
 
             /// <summary>
-            ///     Interpolated according to acceleration every Update
+            /// Current frontal velocity
             /// </summary>
-            public Vector3 Interpolated;
+            public float ZVelocity;
+
+            /// <summary>
+            /// Sideways velocity dampening
+            /// </summary>
+            public float XDamp;
+
+            /// <summary>
+            /// Frontal velocity dampening
+            /// </summary>
+            public float ZDamp;
+
+            /// <summary>
+            /// Current acceleration weight (0 to 1) to decide which acceleration we have based on a curve
+            /// </summary>
+            public float AccelerationWeight;
+
+            /// <summary>
+            /// Set by physics system in FixedUpdate
+            /// </summary>
+            public Vector3 Velocity;
         }
     }
 }

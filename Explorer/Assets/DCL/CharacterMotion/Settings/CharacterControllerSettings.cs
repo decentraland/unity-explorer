@@ -8,7 +8,6 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField, Header("General config")] public float WalkSpeed { get; private set; } = 1;
         [field: SerializeField] public float JogSpeed { get; private set; } = 3;
         [field: SerializeField] public float RunSpeed { get; private set; } = 5;
-        [field: SerializeField] public float AirAcceleration { get; private set; } = 5;
         [field: SerializeField] public float Gravity { get; private set; } = -9.8f;
         [field: SerializeField] public float JogJumpHeight { get; private set; } = 3f;
         [field: SerializeField] public float RunJumpHeight { get; private set; } = 5f;
@@ -24,6 +23,8 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float Acceleration { get; private set; } = 5;
         [field: SerializeField] public float MaxAcceleration { get; private set; } = 25f;
         [field: SerializeField] public float AccelerationTime { get; private set; } = 0.5f;
+        [field: SerializeField] public float AirAcceleration { get; private set; } = 7;
+        [field: SerializeField] public float MaxAirAcceleration { get; private set; } = 10;
 
         [field: SerializeField, Header("De-acceleration dampening")] public float StopTimeSec { get; private set; } = 0.12f;
 

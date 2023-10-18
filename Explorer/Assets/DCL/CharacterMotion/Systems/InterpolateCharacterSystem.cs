@@ -37,19 +37,14 @@ namespace DCL.CharacterMotion.Systems
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController)
         {
-            Vector3 delta = (rigidTransform.MoveVelocity.Target + rigidTransform.NonInterpolatedVelocity) * dt;
+            Vector3 delta = (rigidTransform.MoveVelocity.Velocity + rigidTransform.NonInterpolatedVelocity) * dt;
+            CollisionFlags collisionFlags = characterController.Move(delta);
 
-            CollisionFlags collisionFlags = characterController.Move(rigidTransform.MoveVelocity.Target * dt);
-
-            rigidTransform.lastPosition = characterController.transform.position;
 
             bool hasGroundedFlag = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
 
             if (!Mathf.Approximately(delta.y, 0f))
                 rigidTransform.IsGrounded = hasGroundedFlag;
         }
-
-        private static float GetAcceleration(ICharacterControllerSettings characterControllerSettings, in CharacterRigidTransform physics) =>
-            physics.IsGrounded ? characterControllerSettings.Acceleration : characterControllerSettings.AirAcceleration;
     }
 }

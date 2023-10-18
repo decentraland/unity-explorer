@@ -11,6 +11,7 @@ namespace DCL.CharacterMotion.Settings
         float JogSpeed { get; }
         float RunSpeed { get; }
         float AirAcceleration { get; }
+        float MaxAirAcceleration { get; }
         float Gravity { get; }
         float JogJumpHeight { get; }
         float RunJumpHeight { get; }
