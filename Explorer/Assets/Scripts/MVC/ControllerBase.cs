@@ -7,6 +7,9 @@ namespace MVC
     public abstract class ControllerBase<TView> : ControllerBase<TView, ControllerNoData> where TView: MonoBehaviour, IView
     {
         protected ControllerBase(ViewFactoryMethod viewFactory) : base(viewFactory) { }
+
+        public static ShowCommand<TView, ControllerNoData> IssueCommand() =>
+            new (default(ControllerNoData));
     }
 
     /// <summary>

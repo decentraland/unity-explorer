@@ -3,10 +3,11 @@ using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility.Updatable.DisposableSubscriptions;
 
 namespace MVC
 {
-    public class MVCCheetSheet
+    public abstract class MVCCheetSheet
     {
         private IMVCManager mvcManager;
 
@@ -66,6 +67,24 @@ namespace MVC
             [field: SerializeField]
             public Button CloseButton { get; private set; }
 
+            public DisposableEventEmitter CloseButtonClicked = new ();
+
+            [field: SerializeField]
+            public TMP_Text Text { get; private set; }
+
+            private void Awake()
+            {
+                CloseButton.onClick.AddListener(CloseButtonClicked.Invoke);
+            }
+        }
+
+        public struct ExampleViewDataComponent
+        {
+            public string Value;
+        }
+
+        public class ExampleView2 : ViewBase, IView
+        {
             [field: SerializeField]
             public TMP_Text Text { get; private set; }
         }
