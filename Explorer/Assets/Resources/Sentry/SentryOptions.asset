@@ -63,8 +63,8 @@ MonoBehaviour:
   <MacosNativeSupportEnabled>k__BackingField: 1
   <LinuxNativeSupportEnabled>k__BackingField: 1
   <Il2CppLineNumberSupportEnabled>k__BackingField: 1
-  <RuntimeOptionsConfiguration>k__BackingField: {fileID: 0}
-  <BuildTimeOptionsConfiguration>k__BackingField: {fileID: 0}
-  <Debug>k__BackingField: 0
+  <RuntimeOptionsConfiguration>k__BackingField: {fileID: 11400000, guid: 9be8e0e1385ca4d10ba92f41fe3e32eb, type: 2}
+  <BuildTimeOptionsConfiguration>k__BackingField: {fileID: 11400000, guid: 7d0023a09c237461b8d7ad6fe2058aca, type: 2}
+  <Debug>k__BackingField: 1
   <DebugOnlyInEditor>k__BackingField: 1
   <DiagnosticLevel>k__BackingField: 2

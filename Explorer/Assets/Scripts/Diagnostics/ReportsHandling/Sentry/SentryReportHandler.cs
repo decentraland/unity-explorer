@@ -3,7 +3,7 @@ using System;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace Diagnostics.ReportsHandling
+namespace Diagnostics.ReportsHandling.Sentry
 {
     public class SentryReportHandler : ReportHandlerBase
     {
@@ -12,13 +12,13 @@ namespace Diagnostics.ReportsHandling
 
         internal override void LogInternal(LogType logType, ReportData category, Object context, object message)
         {
-            SentrySdk.CaptureMessage(message.ToString(), ToSentryLevel(logType));
+            SentrySdk.CaptureMessage(message.ToString(), ToSentryLevel(in logType));
         }
 
         internal override void LogFormatInternal(LogType logType, ReportData category, Object context, object message, params object[] args)
         {
             var format = string.Format(message.ToString(), args);
-            SentrySdk.CaptureMessage(format, ToSentryLevel(logType));
+            SentrySdk.CaptureMessage(format, ToSentryLevel(in logType));
         }
 
         internal override void LogExceptionInternal<T>(T ecsSystemException)
@@ -31,7 +31,7 @@ namespace Diagnostics.ReportsHandling
             SentrySdk.CaptureException(exception);
         }
 
-        private SentryLevel ToSentryLevel(LogType logType)
+        private SentryLevel ToSentryLevel(in LogType logType)
         {
             switch (logType)
             {

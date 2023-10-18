@@ -1,4 +1,5 @@
 ﻿using Diagnostics.ReportsHandling;
+using Diagnostics.ReportsHandling.Sentry;
 using System;
 using UnityEngine;
 
