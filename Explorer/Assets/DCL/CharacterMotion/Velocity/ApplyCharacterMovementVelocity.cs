@@ -24,8 +24,9 @@ namespace DCL.CharacterMotion
             Vector3 cameraRight = cameraTransform.right;
             cameraRight.y = 0;
 
-            float yAxis = GetSpeedLimit(settings, input) * input.Axes.y;
-            float xAxis = GetSpeedLimit(settings, input) * input.Axes.x;
+            float speedLimit = GetSpeedLimit(settings, input);
+            float yAxis = speedLimit * input.Axes.y;
+            float xAxis = speedLimit * input.Axes.x;
 
             int targetAccelerationWeight = Mathf.Abs(xAxis) > 0 || Mathf.Abs(yAxis) > 0 ? 1 : 0;
             rigidTransform.MoveVelocity.AccelerationWeight = Mathf.MoveTowards(rigidTransform.MoveVelocity.AccelerationWeight, targetAccelerationWeight, dt / settings.AccelerationTime);
@@ -49,6 +50,7 @@ namespace DCL.CharacterMotion
                 rigidTransform.MoveVelocity.ZVelocity = Mathf.SmoothDamp(rigidTransform.MoveVelocity.ZVelocity, yAxis, ref rigidTransform.MoveVelocity.ZDamp, settings.StopTimeSec);
 
             Vector3 targetForward = (cameraForward * rigidTransform.MoveVelocity.ZVelocity) + (cameraRight * rigidTransform.MoveVelocity.XVelocity);
+            targetForward = Vector3.ClampMagnitude(targetForward, speedLimit);
             rigidTransform.MoveVelocity.Velocity = targetForward;
         }
 

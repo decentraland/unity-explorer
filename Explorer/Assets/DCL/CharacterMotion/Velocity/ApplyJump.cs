@@ -21,9 +21,10 @@ namespace DCL.CharacterMotion
             if (characterPhysics.IsGrounded && wantsToJump)
             {
                 float jumpHeight = GetJumpHeight(characterPhysics.MoveVelocity.Velocity, characterControllerSettings, inputComponent);
+                float gravity = characterControllerSettings.Gravity * characterControllerSettings.JumpGravityFactor;
 
                 // Override velocity in a jump direction
-                characterPhysics.NonInterpolatedVelocity.y = Mathf.Sqrt(-2 * jumpHeight * characterControllerSettings.Gravity);
+                characterPhysics.NonInterpolatedVelocity.y = Mathf.Sqrt(-2 * jumpHeight * gravity);
 
                 characterPhysics.IsGrounded = false;
             }

@@ -13,9 +13,15 @@ namespace DCL.CharacterMotion
             float deltaTime)
         {
             if (!characterPhysics.IsGrounded)
+            {
+                float gravity = characterControllerSettings.Gravity;
+
+                if (characterPhysics.NonInterpolatedVelocity.y > 0)
+                    gravity *= characterControllerSettings.JumpGravityFactor;
 
                 // Gravity is already negative
-                characterPhysics.NonInterpolatedVelocity += Vector3.up * characterControllerSettings.Gravity * deltaTime;
+                characterPhysics.NonInterpolatedVelocity += Vector3.up * gravity * deltaTime;
+            }
             else
 
                 // Gravity should always affect the character, otherwise we are unable to ground it properly
