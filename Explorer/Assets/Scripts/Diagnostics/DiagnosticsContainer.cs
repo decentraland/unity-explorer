@@ -18,7 +18,7 @@ namespace Diagnostics
             var logger = new ReportHubLogger(new (ReportHandler, IReportHandler)[]
             {
                 (ReportHandler.DebugLog, new DebugLogReportHandler(Debug.unityLogger.logHandler, settings.GetMatrix(ReportHandler.DebugLog), settings.DebounceEnabled)),
-                (ReportHandler.Sentry, new SentryReportHandlerWithSettings(new SentryReportHandler(), settings.GetMatrix(ReportHandler.Sentry), settings.DebounceEnabled)),
+                (ReportHandler.Sentry, new SentryReportHandler(settings.GetMatrix(ReportHandler.Sentry), settings.DebounceEnabled)),
             });
 
             ILogHandler defaultLogHandler = Debug.unityLogger.logHandler;

@@ -5,25 +5,28 @@ using Object = UnityEngine.Object;
 
 namespace Diagnostics.ReportsHandling
 {
-    public class SentryReportHandler : IReportHandler
+    public class SentryReportHandler : ReportHandlerBase
     {
-        public void Log(LogType logType, ReportData reportData, Object context, object message)
+        public SentryReportHandler(ICategorySeverityMatrix matrix, bool debounceEnabled)
+            : base(matrix, debounceEnabled) { }
+
+        internal override void LogInternal(LogType logType, ReportData category, Object context, object message)
         {
             SentrySdk.CaptureMessage(message.ToString(), ToSentryLevel(logType));
         }
 
-        public void LogFormat(LogType logType, ReportData reportData, Object context, object message, params object[] args)
+        internal override void LogFormatInternal(LogType logType, ReportData category, Object context, object message, params object[] args)
         {
             var format = string.Format(message.ToString(), args);
             SentrySdk.CaptureMessage(format, ToSentryLevel(logType));
         }
 
-        public void LogException<T>(T ecsSystemException) where T: Exception, IManagedEcsException
+        internal override void LogExceptionInternal<T>(T ecsSystemException)
         {
             SentrySdk.CaptureException(ecsSystemException);
         }
 
-        public void LogException(Exception exception, ReportData reportData, Object context)
+        internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object context)
         {
             SentrySdk.CaptureException(exception);
         }
