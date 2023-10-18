@@ -24,7 +24,7 @@ MonoBehaviour:
   <AirDrag>k__BackingField: 0.05
   <MinImpulse>k__BackingField: 1
   <JumpVelocityDrag>k__BackingField: 5
-  accelerationCurve:
+  <AccelerationCurve>k__BackingField:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3

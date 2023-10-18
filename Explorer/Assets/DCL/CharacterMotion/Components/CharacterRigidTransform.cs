@@ -26,6 +26,13 @@ namespace DCL.CharacterMotion.Components
         /// </summary>
         public Vector3 NonInterpolatedVelocity;
 
+        public float xVelocity;
+        public float zVelocity;
+        public float xDamp;
+        public float zDamp;
+        public float currentAcceleration;
+        public float accelerationWeight;
+
         public struct MovementVelocity
         {
             /// <summary>

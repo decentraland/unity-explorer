@@ -45,7 +45,7 @@ namespace DCL.CharacterMotion.Systems
             ref MovementInputComponent movementInput)
         {
             // Apply all velocities
-            ApplyCharacterMovementVelocity.Execute(characterControllerSettings, ref rigidTransform.MoveVelocity, in camera, in movementInput);
+            ApplyCharacterMovementVelocity.Execute(characterControllerSettings, ref rigidTransform, in camera, in movementInput, dt);
             ApplyJump.Execute(characterControllerSettings, ref jump, ref rigidTransform, physicsTick);
             ApplyGravity.Execute(characterControllerSettings, ref rigidTransform, dt);
             ApplyAirDrag.Execute(characterControllerSettings, ref rigidTransform, dt);

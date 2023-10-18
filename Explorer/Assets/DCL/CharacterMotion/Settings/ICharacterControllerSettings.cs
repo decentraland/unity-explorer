@@ -35,5 +35,6 @@ namespace DCL.CharacterMotion.Settings
         float MovAnimBlendSpeed { get; }
         float JumpPadForce { get; }
         float AnimationSpeed { get; }
+        public AnimationCurve AccelerationCurve { get; }
     }
 }

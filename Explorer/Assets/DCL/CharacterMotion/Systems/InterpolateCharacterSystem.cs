@@ -37,12 +37,9 @@ namespace DCL.CharacterMotion.Systems
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController)
         {
-            float acceleration = GetAcceleration(settings, in rigidTransform);
-            rigidTransform.MoveVelocity.Interpolated = Vector3.MoveTowards(rigidTransform.MoveVelocity.Interpolated, rigidTransform.MoveVelocity.Target, acceleration * dt);
+            Vector3 delta = (rigidTransform.MoveVelocity.Target + rigidTransform.NonInterpolatedVelocity) * dt;
 
-            Vector3 delta = (rigidTransform.MoveVelocity.Interpolated + rigidTransform.NonInterpolatedVelocity) * dt;
-
-            CollisionFlags collisionFlags = characterController.Move(delta);
+            CollisionFlags collisionFlags = characterController.Move(rigidTransform.MoveVelocity.Target * dt);
 
             bool hasGroundedFlag = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
 

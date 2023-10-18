@@ -20,7 +20,7 @@ namespace DCL.CharacterMotion.Settings
 
         [field: SerializeField, Header("Velocity Drag")] public float JumpVelocityDrag { get; private set; } = 3f;
 
-        [field: SerializeField, Header("Smooth acceleration")] public AnimationCurve accelerationCurve;
+        [field: SerializeField, Header("Smooth acceleration")] public AnimationCurve AccelerationCurve { get; private set; }
         [field: SerializeField] public float Acceleration { get; private set; } = 5;
         [field: SerializeField] public float MaxAcceleration { get; private set; } = 25f;
         [field: SerializeField] public float AccelerationTime { get; private set; } = 0.5f;
