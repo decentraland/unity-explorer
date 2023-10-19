@@ -79,6 +79,11 @@ namespace DCL.PluginSystem.Global
             avatarInstantiatorView = await assetsProvisioner.ProvideInstance(settings.avatarInstantiatorViewRef, ct: ct);
         }
 
+        public void Dispose()
+        {
+            wearableAssetsCache.Dispose();
+        }
+
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             var vertOutBuffer = new FixedComputeBufferHandler(5_000_000, Unsafe.SizeOf<CustomSkinningVertexInfo>());
@@ -98,11 +103,6 @@ namespace DCL.PluginSystem.Global
 
             //Debug scripts
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, avatarInstantiatorView.Value, realmData, AVATARS_QUERY);
-        }
-
-        public void Dispose()
-        {
-            wearableAssetsCache.Dispose();
         }
 
         [Serializable]

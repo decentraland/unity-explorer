@@ -18,27 +18,6 @@ namespace DCL.PluginSystem.World
 {
     public class MaterialsPlugin : IDCLWorldPlugin<MaterialsPlugin.Settings>
     {
-        [Serializable]
-        public class Settings : IDCLPluginSettings
-        {
-            [field: Header(nameof(MaterialsPlugin) + "." + nameof(Settings))]
-            [field: Space]
-            [field: SerializeField]
-            public int LoadingAttemptsCount { get; private set; } = 6;
-
-            [field: SerializeField]
-            public int PoolInitialCapacity { get; private set; } = 256;
-
-            [field: SerializeField]
-            public int PoolMaxSize { get; private set; } = 2048;
-
-            [field: SerializeField]
-            public AssetReferenceMaterial basicMaterial;
-
-            [field: SerializeField]
-            public AssetReferenceMaterial pbrMaterial;
-        }
-
         // private const int CACHE_CAPACITY = 512;
         // private readonly IMaterialsCache materialsCache;
 
@@ -73,6 +52,8 @@ namespace DCL.PluginSystem.World
             loadingAttemptsCount = settings.LoadingAttemptsCount;
         }
 
+        public void Dispose() { }
+
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
             StartMaterialsLoadingSystem.InjectToWorld(ref builder, destroyMaterial, sharedDependencies.SceneData, loadingAttemptsCount, capFrameTimeBudgetProvider);
@@ -89,6 +70,24 @@ namespace DCL.PluginSystem.World
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
 
-        public void Dispose() { }
+        [Serializable]
+        public class Settings : IDCLPluginSettings
+        {
+            [field: SerializeField]
+            public AssetReferenceMaterial basicMaterial;
+
+            [field: SerializeField]
+            public AssetReferenceMaterial pbrMaterial;
+            [field: Header(nameof(MaterialsPlugin) + "." + nameof(Settings))]
+            [field: Space]
+            [field: SerializeField]
+            public int LoadingAttemptsCount { get; private set; } = 6;
+
+            [field: SerializeField]
+            public int PoolInitialCapacity { get; private set; } = 256;
+
+            [field: SerializeField]
+            public int PoolMaxSize { get; private set; } = 2048;
+        }
     }
 }

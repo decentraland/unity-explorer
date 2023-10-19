@@ -13,7 +13,7 @@ namespace DCL.Input.Systems
 
         internal UpdateInputButtonSystem(World world, InputAction dclInputAction) : base(world)
         {
-            this.inputAction = dclInputAction;
+            inputAction = dclInputAction;
         }
 
         protected override void Update(float t)

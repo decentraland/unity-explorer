@@ -27,6 +27,11 @@ namespace DCL.PluginSystem.Global
             this.settings = await assetsProvisioner.ProvideMainAsset(settings.controllerSettings, ct);
         }
 
+        public void Dispose()
+        {
+            settings.Dispose();
+        }
+
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             Arch.Core.World world = builder.World;
@@ -40,11 +45,6 @@ namespace DCL.PluginSystem.Global
             InterpolateCharacterSystem.InjectToWorld(ref builder);
             RotateCharacterSystem.InjectToWorld(ref builder);
             CalculateCharacterVelocitySystem.InjectToWorld(ref builder);
-        }
-
-        public void Dispose()
-        {
-            settings.Dispose();
         }
     }
 }

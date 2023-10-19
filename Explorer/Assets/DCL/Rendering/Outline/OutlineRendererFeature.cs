@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Diagnostics.ReportsHandling;
+using System;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using Diagnostics.ReportsHandling;
-using UnityEngine.Experimental.Rendering;
 
 namespace DCL.Rendering.Avatar
 {
@@ -15,30 +15,31 @@ namespace DCL.Rendering.Avatar
         [SerializeField] internal float DepthSensitivity = 0.05f;
         [SerializeField] internal float NormalsSensitivity = 1.0f;
         [SerializeField] internal float ColorSensitivity = 0.5f;
-        [SerializeField] internal Color OutlineColor = new Color(1.0f, 1.0f, 1.0f, 0.5f);
+        [SerializeField] internal Color OutlineColor = new (1.0f, 1.0f, 1.0f, 0.5f);
     }
+
     public partial class OutlineRendererFeature : ScriptableRendererFeature
     {
-        private ReportData m_ReportData = new ReportData("DCL_RenderFeature_Outline", ReportHint.SessionStatic);
+        private const string k_ShaderName_DepthNormals = "Outline/DepthNormals";
+        private const string k_ShaderName_Outline = "Avatar/Outline";
 
         [SerializeField] private OutlineRendererFeature_Settings m_Settings;
+        private readonly ReportData m_ReportData = new ("DCL_RenderFeature_Outline", ReportHint.SessionStatic);
 
         // DepthNormals Pass Data
         private DepthNormalsRenderPass depthNormalsRenderPass;
-        private Material depthNormalsMaterial = null;
-        private const string k_ShaderName_DepthNormals = "Outline/DepthNormals";
-        private Shader m_ShaderDepthNormals = null;
-        private RTHandle depthNormalsRTHandle_Colour = null;
-        private RTHandle depthNormalsRTHandle_Depth = null;
+        private Material depthNormalsMaterial;
+        private Shader m_ShaderDepthNormals;
+        private RTHandle depthNormalsRTHandle_Colour;
+        private RTHandle depthNormalsRTHandle_Depth;
         private RenderTextureDescriptor depthNormalsRTDescriptor_Colour;
         private RenderTextureDescriptor depthNormalsRTDescriptor_Depth;
 
         // Outline Pass Data
         private OutlineRenderPass outlineRenderPass;
-        private Material outlineMaterial = null;
-        private const string k_ShaderName_Outline = "Avatar/Outline";
-        private Shader m_ShaderOutline = null;
-        private RTHandle outlineRTHandle = null;
+        private Material outlineMaterial;
+        private Shader m_ShaderOutline;
+        private RTHandle outlineRTHandle;
         private RenderTextureDescriptor outlineRTDescriptor;
 
         public OutlineRendererFeature()
@@ -48,39 +49,39 @@ namespace DCL.Rendering.Avatar
 
         public override void Create()
         {
-            this.depthNormalsRenderPass = new DepthNormalsRenderPass();
-            this.depthNormalsRenderPass.renderPassEvent = RenderPassEvent.AfterRenderingPrePasses;
+            depthNormalsRenderPass = new DepthNormalsRenderPass();
+            depthNormalsRenderPass.renderPassEvent = RenderPassEvent.AfterRenderingPrePasses;
 
-            this.outlineRenderPass = new OutlineRenderPass();
-            this.outlineRenderPass.renderPassEvent = RenderPassEvent.AfterRenderingOpaques;
+            outlineRenderPass = new OutlineRenderPass();
+            outlineRenderPass.renderPassEvent = RenderPassEvent.AfterRenderingOpaques;
         }
 
         public override void SetupRenderPasses(ScriptableRenderer _renderer, in RenderingData _renderingData)
         {
             // DepthNormals Material, Shader, RenderTarget and pass setups
             {
-                if (this.depthNormalsMaterial == null)
+                if (depthNormalsMaterial == null)
                 {
-                    this.m_ShaderDepthNormals = Shader.Find(k_ShaderName_DepthNormals);
+                    m_ShaderDepthNormals = Shader.Find(k_ShaderName_DepthNormals);
 
-                    if (this.m_ShaderDepthNormals == null)
+                    if (m_ShaderDepthNormals == null)
                     {
-                        ReportHub.LogError(this.m_ReportData, $"m_ShaderDepthNormals not found.");
+                        ReportHub.LogError(m_ReportData, "m_ShaderDepthNormals not found.");
                         return;
                     }
 
-                    this.depthNormalsMaterial = CoreUtils.CreateEngineMaterial(this.m_ShaderDepthNormals);
+                    depthNormalsMaterial = CoreUtils.CreateEngineMaterial(m_ShaderDepthNormals);
 
-                    if (this.depthNormalsMaterial == null)
+                    if (depthNormalsMaterial == null)
                     {
-                        ReportHub.LogError(this.m_ReportData, $"depthNormalsMaterial not found.");
+                        ReportHub.LogError(m_ReportData, "depthNormalsMaterial not found.");
                         return;
                     }
                 }
 
                 // DepthNormals - Colour Texture
                 {
-                    RenderTextureDescriptor desc = new RenderTextureDescriptor();
+                    var desc = new RenderTextureDescriptor();
                     desc.autoGenerateMips = false;
                     desc.bindMS = false;
                     desc.colorFormat = RenderTextureFormat.ARGB32;
@@ -101,13 +102,13 @@ namespace DCL.Rendering.Avatar
                     desc.volumeDepth = 0;
                     desc.vrUsage = VRTextureUsage.None;
                     desc.width = _renderingData.cameraData.cameraTargetDescriptor.width;
-                    this.depthNormalsRTDescriptor_Colour = desc;
+                    depthNormalsRTDescriptor_Colour = desc;
                     RenderingUtils.ReAllocateIfNeeded(ref depthNormalsRTHandle_Colour, depthNormalsRTDescriptor_Colour, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_DepthNormals_ColourTexture");
                 }
 
                 // DepthNormals - Depth Texture
                 {
-                    RenderTextureDescriptor desc = new RenderTextureDescriptor();
+                    var desc = new RenderTextureDescriptor();
                     desc.autoGenerateMips = false;
                     desc.bindMS = false;
                     desc.colorFormat = RenderTextureFormat.Shadowmap;
@@ -128,54 +129,48 @@ namespace DCL.Rendering.Avatar
                     desc.volumeDepth = 0;
                     desc.vrUsage = VRTextureUsage.None;
                     desc.width = _renderingData.cameraData.cameraTargetDescriptor.width;
-                    this.depthNormalsRTDescriptor_Depth = desc;
+                    depthNormalsRTDescriptor_Depth = desc;
                     RenderingUtils.ReAllocateIfNeeded(ref depthNormalsRTHandle_Depth, depthNormalsRTDescriptor_Depth, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_DepthNormals_DepthTexture");
                 }
 
-                this.depthNormalsRenderPass.Setup(depthNormalsMaterial, depthNormalsRTHandle_Colour, depthNormalsRTDescriptor_Colour, depthNormalsRTHandle_Depth, depthNormalsRTDescriptor_Depth);
+                depthNormalsRenderPass.Setup(depthNormalsMaterial, depthNormalsRTHandle_Colour, depthNormalsRTDescriptor_Colour, depthNormalsRTHandle_Depth, depthNormalsRTDescriptor_Depth);
             }
 
             // Outline Material, Shader, RenderTarget and pass setups
             {
-                if (this.outlineMaterial == null)
+                if (outlineMaterial == null)
                 {
-                    this.m_ShaderOutline = Shader.Find(k_ShaderName_Outline);
+                    m_ShaderOutline = Shader.Find(k_ShaderName_Outline);
 
-                    if (this.m_ShaderOutline == null)
+                    if (m_ShaderOutline == null)
                     {
-                        ReportHub.LogError(this.m_ReportData, $"m_ShaderOutline not found.");
+                        ReportHub.LogError(m_ReportData, "m_ShaderOutline not found.");
                         return;
                     }
 
-                    this.outlineMaterial = CoreUtils.CreateEngineMaterial(this.m_ShaderOutline);
+                    outlineMaterial = CoreUtils.CreateEngineMaterial(m_ShaderOutline);
 
-                    if (this.outlineMaterial == null)
+                    if (outlineMaterial == null)
                     {
-                        ReportHub.LogError(this.m_ReportData, $"outlineMaterial not found.");
+                        ReportHub.LogError(m_ReportData, "outlineMaterial not found.");
                         return;
                     }
                 }
 
-                this.outlineRTDescriptor = _renderingData.cameraData.cameraTargetDescriptor;
-                this.outlineRTDescriptor.depthBufferBits = 0;
-                RenderingUtils.ReAllocateIfNeeded(ref this.outlineRTHandle, this.outlineRTDescriptor, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_OutlineTexture");
-                this.outlineRenderPass.Setup(this.m_Settings, this.outlineMaterial, this.outlineRTHandle, this.outlineRTDescriptor, this.depthNormalsRTHandle_Colour);
+                outlineRTDescriptor = _renderingData.cameraData.cameraTargetDescriptor;
+                outlineRTDescriptor.depthBufferBits = 0;
+                RenderingUtils.ReAllocateIfNeeded(ref outlineRTHandle, outlineRTDescriptor, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_OutlineTexture");
+                outlineRenderPass.Setup(m_Settings, outlineMaterial, outlineRTHandle, outlineRTDescriptor, depthNormalsRTHandle_Colour);
             }
         }
 
         public override void AddRenderPasses(ScriptableRenderer _renderer, ref RenderingData _renderingData)
         {
             // DepthNormals
-            if (this.depthNormalsMaterial != null && this.m_ShaderDepthNormals != null && this.depthNormalsRTHandle_Colour != null)
-            {
-                _renderer.EnqueuePass(this.depthNormalsRenderPass);
-            }
+            if (depthNormalsMaterial != null && m_ShaderDepthNormals != null && depthNormalsRTHandle_Colour != null) { _renderer.EnqueuePass(depthNormalsRenderPass); }
 
             // Outline
-            if (this.outlineMaterial != null && this.m_ShaderOutline != null && this.outlineRTHandle != null)
-            {
-                _renderer.EnqueuePass(this.outlineRenderPass);
-            }
+            if (outlineMaterial != null && m_ShaderOutline != null && outlineRTHandle != null) { _renderer.EnqueuePass(outlineRenderPass); }
         }
 
         protected override void Dispose(bool _bDisposing)

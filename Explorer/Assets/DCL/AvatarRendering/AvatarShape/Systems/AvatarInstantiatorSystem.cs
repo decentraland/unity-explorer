@@ -62,7 +62,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             DestroyAvatarQuery(World);
         }
 
-
         [Query]
         [All(typeof(TransformComponent))]
         private void InstantiateExistingAvatar(ref AvatarShapeComponent avatarShapeComponent, AvatarBase avatarBase,
@@ -189,7 +188,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             skinningComponent.Dispose(avatarMaterialPool);
             wearableAssetsCache.TryReleaseAssets(avatarShapeComponent.InstantiatedWearables, avatarMaterialPool);
         }
-
 
         public override void Dispose()
         {

@@ -39,6 +39,8 @@ namespace DCL.PluginSystem.World
             return UniTask.CompletedTask;
         }
 
+        public void Dispose() { }
+
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sceneDeps,
             in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
@@ -59,8 +61,6 @@ namespace DCL.PluginSystem.World
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
-
-        public void Dispose() { }
 
         [Serializable]
         public class Settings : IDCLPluginSettings

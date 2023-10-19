@@ -28,11 +28,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private readonly URLSubdirectory lambdaSubdirectory;
 
         private readonly IRealmData realmData;
-        internal IURLBuilder urlBuilder = new URLBuilder();
         private readonly URLSubdirectory wearablesSubdirectory;
         private readonly WearableCatalog wearableCatalog;
 
         private readonly Func<bool> isRealmDataReady;
+        internal IURLBuilder urlBuilder = new URLBuilder();
 
         public LoadWearablesByParamSystem(
             World world, IStreamableCache<IWearable[], GetWearableByParamIntention> cache, IRealmData realmData,

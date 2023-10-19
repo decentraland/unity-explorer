@@ -40,15 +40,15 @@ namespace DCL.PluginSystem.Global
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
+            [field: Header(nameof(ProfilingPlugin) + "." + nameof(Settings))]
+            [field: Space]
+            [field: SerializeField] internal ProfilingViewRef profilingViewRef { get; private set; }
+
             [Serializable]
             public class ProfilingViewRef : ComponentReference<ProfilingView>
             {
                 public ProfilingViewRef(string guid) : base(guid) { }
             }
-
-            [field: Header(nameof(ProfilingPlugin) + "." + nameof(Settings))]
-            [field: Space]
-            [field: SerializeField] internal ProfilingViewRef profilingViewRef { get; private set; }
         }
     }
 }

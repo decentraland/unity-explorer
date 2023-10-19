@@ -52,6 +52,8 @@ namespace DCL.AvatarRendering.Wearables
             defaultWearablesDTOs = new WearablesDTOList(partialTargetList);
         }
 
+        public void Dispose() { }
+
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
             // not synced by mutex, for compatibility only
@@ -63,8 +65,6 @@ namespace DCL.AvatarRendering.Wearables
             LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(true, true), mutexSync, assetBundleURL);
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, defaultWearablesDTOs, wearableCatalog);
         }
-
-        public void Dispose() { }
 
         [Serializable]
         public class WearableSettings : IDCLPluginSettings

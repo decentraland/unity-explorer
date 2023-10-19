@@ -16,10 +16,9 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 {
     public class WritePointerEventResultsSystemShould : UnitySystemTestBase<WritePointerEventResultsSystem>
     {
+        private readonly List<PBPointerEventsResult> results = new ();
         private IECSToCRDTWriter writer;
         private IGlobalInputEvents globalInputEvents;
-
-        private readonly List<PBPointerEventsResult> results = new ();
 
         [SetUp]
         public void SetUp()

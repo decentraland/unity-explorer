@@ -57,6 +57,8 @@ namespace DCL.PluginSystem.Global
             hoverCanvas.SetDisplayed(false);
         }
 
+        public void Dispose() { }
+
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             var playerInteractionEntity = new PlayerInteractionEntity(
@@ -89,8 +91,6 @@ namespace DCL.PluginSystem.Global
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
             PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
         }
-
-        public void Dispose() { }
 
         [Serializable]
         public class Settings : IDCLPluginSettings

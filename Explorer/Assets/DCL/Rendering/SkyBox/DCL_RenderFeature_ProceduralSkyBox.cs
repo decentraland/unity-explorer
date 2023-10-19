@@ -1,9 +1,9 @@
+using Diagnostics.ReportsHandling;
 using System;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using UnityEngine.Experimental.Rendering;
-using Diagnostics.ReportsHandling;
 
 [Serializable]
 internal class ProceduralSkyBoxSettings_Generate
@@ -12,34 +12,33 @@ internal class ProceduralSkyBoxSettings_Generate
     [SerializeField] internal float SunSize = 1.0f;
     [SerializeField] internal float SunSizeConvergence = 5.0f;
     [SerializeField] internal float AtmosphereThickness = 1.0f;
-    [SerializeField] internal Color GroundColor = new Color(0.369f, 0.349f, 0.341f, 1.0f);
-    [SerializeField] internal Color SkyTint = new Color(0.5f, 0.5f, 0.5f, 1.0f);
+    [SerializeField] internal Color GroundColor = new (0.369f, 0.349f, 0.341f, 1.0f);
+    [SerializeField] internal Color SkyTint = new (0.5f, 0.5f, 0.5f, 1.0f);
     [SerializeField] internal float Exposure = 1.3f;
-    [SerializeField] internal Vector4 SunPos = new Vector4(-0.04f, -0.02f, 0.0f, 1.0f);
-    [SerializeField] internal Vector4 SunColour = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+    [SerializeField] internal Vector4 SunPos = new (-0.04f, -0.02f, 0.0f, 1.0f);
+    [SerializeField] internal Vector4 SunColour = new (1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 [Serializable]
 internal class ProceduralSkyBoxSettings_Draw
 {
     // Parameters
-
 }
 
 public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeature
 {
-    // Debug
-    private ReportData m_ReportData = new ReportData("DCL_RenderFeature_ProceduralSkyBox", ReportHint.SessionStatic);
+    // Shaders
+    private const string k_ShaderName_Generate = "CustomRenderTexture/SkyBox_Procedural_Generate";
+    private const string k_ShaderName_Draw = "Skybox/DCL_SkyBox_Procedural_Draw";
 
     // Pass Settings
     [SerializeField] private ProceduralSkyBoxSettings_Generate m_SettingsGenerate;
     [SerializeField] private ProceduralSkyBoxSettings_Draw m_SettingsDraw;
+    [SerializeField] [HideInInspector] private Shader m_ShaderGenerate;
+    [SerializeField] [HideInInspector] private Shader m_ShaderDraw;
 
-    // Shaders
-    private const string k_ShaderName_Generate = "CustomRenderTexture/SkyBox_Procedural_Generate";
-    [SerializeField, HideInInspector] private Shader m_ShaderGenerate = null;
-    private const string k_ShaderName_Draw = "Skybox/DCL_SkyBox_Procedural_Draw";
-    [SerializeField, HideInInspector] private Shader m_ShaderDraw = null;
+    // Debug
+    private readonly ReportData m_ReportData = new ("DCL_RenderFeature_ProceduralSkyBox", ReportHint.SessionStatic);
 
     // Materials
     private Material m_Material_Generate;
@@ -84,32 +83,24 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
     {
         if (!GetMaterial_Generate())
         {
-            ReportHub.LogError(this.m_ReportData, $"{GetType().Name}.AddRenderPasses(): Missing material. {name} render pass will not be added. Check for missing reference in the renderer resources.");
+            ReportHub.LogError(m_ReportData, $"{GetType().Name}.AddRenderPasses(): Missing material. {name} render pass will not be added. Check for missing reference in the renderer resources.");
             return;
         }
 
         if (!GetMaterial_Draw())
         {
-            ReportHub.LogError(this.m_ReportData, $"{GetType().Name}.AddRenderPasses(): Missing material. {name} render pass will not be added. Check for missing reference in the renderer resources.");
+            ReportHub.LogError(m_ReportData, $"{GetType().Name}.AddRenderPasses(): Missing material. {name} render pass will not be added. Check for missing reference in the renderer resources.");
             return;
         }
 
+        if (m_GeneratePass != null) { _renderer.EnqueuePass(m_GeneratePass); }
 
-        if (m_GeneratePass != null)
-        {
-            _renderer.EnqueuePass(m_GeneratePass);
-        }
-
-
-        if (m_DrawPass != null)
-        {
-            _renderer.EnqueuePass(m_DrawPass);
-        }
+        if (m_DrawPass != null) { _renderer.EnqueuePass(m_DrawPass); }
     }
 
     public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
     {
-        RenderTextureDescriptor desc = new RenderTextureDescriptor();
+        var desc = new RenderTextureDescriptor();
         desc.autoGenerateMips = false;
         desc.bindMS = false;
         desc.colorFormat = RenderTextureFormat.ARGB32;
@@ -120,7 +111,8 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         desc.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
         desc.height = 1024;
         desc.memoryless = RenderTextureMemoryless.None;
-        desc.mipCount = 0;;
+        desc.mipCount = 0;
+        ;
         desc.msaaSamples = 1;
         desc.shadowSamplingMode = ShadowSamplingMode.None;
         desc.sRGB = false;
@@ -146,24 +138,19 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         CoreUtils.Destroy(m_Material_Draw);
     }
 
-    public override void OnCameraPreCull(ScriptableRenderer renderer, in CameraData cameraData)
-    {
-
-    }
+    public override void OnCameraPreCull(ScriptableRenderer renderer, in CameraData cameraData) { }
 
     private bool GetMaterial_Generate()
     {
-        if (m_Material_Generate != null)
-        {
-            return true;
-        }
+        if (m_Material_Generate != null) { return true; }
 
         if (m_ShaderGenerate == null)
         {
             m_ShaderGenerate = Shader.Find(k_ShaderName_Generate);
+
             if (m_ShaderGenerate == null)
             {
-                ReportHub.LogError(this.m_ReportData, $"m_Shader_Generate not found.");
+                ReportHub.LogError(m_ReportData, "m_Shader_Generate not found.");
                 return false;
             }
         }
@@ -175,17 +162,15 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
 
     private bool GetMaterial_Draw()
     {
-        if (m_Material_Draw != null)
-        {
-            return true;
-        }
+        if (m_Material_Draw != null) { return true; }
 
         if (m_ShaderDraw == null)
         {
             m_ShaderDraw = Shader.Find(k_ShaderName_Draw);
+
             if (m_ShaderDraw == null)
             {
-                ReportHub.LogError(this.m_ReportData, $"m_Shader_Draw not found.");
+                ReportHub.LogError(m_ReportData, "m_Shader_Draw not found.");
                 return false;
             }
         }
@@ -195,5 +180,3 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         return m_Material_Draw != null;
     }
 }
-
-

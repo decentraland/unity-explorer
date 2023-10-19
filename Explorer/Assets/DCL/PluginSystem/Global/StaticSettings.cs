@@ -10,6 +10,22 @@ namespace DCL.PluginSystem.Global
     [Serializable]
     public class StaticSettings : IDCLPluginSettings
     {
+        [field: Header(nameof(StaticSettings))] [field: Space]
+        [field: SerializeField]
+        public CharacterObjectRef CharacterObject { get; private set; }
+
+        [field: SerializeField]
+        public float StartYPosition { get; private set; } = 1.0f;
+
+        [field: SerializeField]
+        public ReportHandlingSettingsRef ReportHandlingSettings { get; private set; }
+
+        [field: SerializeField]
+        public PartitionSettingsRef PartitionSettings { get; private set; }
+
+        [field: SerializeField]
+        public RealmPartitionSettingsRef RealmPartitionSettings { get; private set; }
+
         [Serializable]
         public class CharacterObjectRef : ComponentReference<CharacterObject>
         {
@@ -33,21 +49,5 @@ namespace DCL.PluginSystem.Global
         {
             public RealmPartitionSettingsRef(string guid) : base(guid) { }
         }
-
-        [field: Header(nameof(StaticSettings))] [field: Space]
-        [field: SerializeField]
-        public CharacterObjectRef CharacterObject { get; private set; }
-
-        [field: SerializeField]
-        public float StartYPosition { get; private set; } = 1.0f;
-
-        [field: SerializeField]
-        public ReportHandlingSettingsRef ReportHandlingSettings { get; private set; }
-
-        [field: SerializeField]
-        public PartitionSettingsRef PartitionSettings { get; private set; }
-
-        [field: SerializeField]
-        public RealmPartitionSettingsRef RealmPartitionSettings { get; private set; }
     }
 }
