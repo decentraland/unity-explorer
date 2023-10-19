@@ -59,6 +59,7 @@ jobs:
         with:
           projectPath: Explorer
           targetPlatform: ${{ matrix.targetPlatform }}
+          versioning: Semantic
 
       # Upload artifact
       - name: Upload windows artifact

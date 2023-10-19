@@ -58,6 +58,7 @@ jobs:
         with:
           projectPath: Explorer
           targetPlatform: ${{ matrix.targetPlatform }}
+          versioning: Semantic
           
       # Tar build files to maintain file permissions
       - name: Tar MacOSX/Linux build files
