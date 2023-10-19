@@ -9,17 +9,17 @@ namespace Ipfs
     /// </summary>
     public class LocalIpfsRealm : IIpfsRealm
     {
+        public URLDomain CatalystBaseUrl { get; }
+        public URLDomain ContentBaseUrl { get; }
+        public URLDomain LambdasBaseUrl { get; }
+        public IReadOnlyList<string> SceneUrns => Array.Empty<string>();
+        public URLDomain EntitiesActiveEndpoint => URLDomain.EMPTY;
+
         public LocalIpfsRealm(URLDomain fullPath)
         {
             CatalystBaseUrl = fullPath;
             ContentBaseUrl = fullPath;
             LambdasBaseUrl = URLDomain.FromString("https://peer.decentraland.org/explorer/");
         }
-
-        public URLDomain CatalystBaseUrl { get; }
-        public URLDomain ContentBaseUrl { get; }
-        public URLDomain LambdasBaseUrl { get; }
-        public IReadOnlyList<string> SceneUrns => Array.Empty<string>();
-        public URLDomain EntitiesActiveEndpoint => URLDomain.EMPTY;
     }
 }

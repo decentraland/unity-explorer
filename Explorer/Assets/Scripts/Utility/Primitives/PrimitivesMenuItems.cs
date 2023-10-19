@@ -15,7 +15,7 @@ namespace Utility.Primitives
             MeshRenderer meshRenderer = go.AddComponent<MeshRenderer>();
 
             Mesh mesh = null;
-            CylinderVariantsFactory.Create(ref mesh, 0.5f, 0.5f);
+            CylinderVariantsFactory.Create(ref mesh);
             meshFilter.mesh = mesh;
 
             AssignDefaultMaterial(meshRenderer);
@@ -30,7 +30,7 @@ namespace Utility.Primitives
             MeshRenderer meshRenderer = go.AddComponent<MeshRenderer>();
 
             Mesh mesh = null;
-            CylinderVariantsFactory.Create(ref mesh, 0f, 0.5f);
+            CylinderVariantsFactory.Create(ref mesh, 0f);
             meshFilter.mesh = mesh;
 
             AssignDefaultMaterial(meshRenderer);
@@ -45,7 +45,7 @@ namespace Utility.Primitives
             MeshRenderer meshRenderer = go.AddComponent<MeshRenderer>();
 
             Mesh mesh = null;
-            CylinderVariantsFactory.Create(ref mesh, 0.25f, 0.5f);
+            CylinderVariantsFactory.Create(ref mesh, 0.25f);
             meshFilter.mesh = mesh;
 
             AssignDefaultMaterial(meshRenderer);

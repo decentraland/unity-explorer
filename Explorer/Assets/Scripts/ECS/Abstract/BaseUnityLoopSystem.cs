@@ -8,7 +8,7 @@ using UnityEngine.Profiling;
 namespace ECS.Abstract
 {
     /// <summary>
-    /// Provides additional functionality to `BaseSystem`
+    ///     Provides additional functionality to `BaseSystem`
     /// </summary>
     public abstract class BaseUnityLoopSystem : PlayerLoopSystem<World>
     {

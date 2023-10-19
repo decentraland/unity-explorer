@@ -18,22 +18,6 @@ namespace SceneRuntime.Tests
 {
     public class SceneRuntimeShould
     {
-        public class TestUtilCheckOk
-        {
-            private bool value;
-
-            [UsedImplicitly]
-            public void Ok()
-            {
-                value = true;
-            }
-
-            public bool IsOk()
-            {
-                return value;
-            }
-        }
-
         private IInstancePoolsProvider poolsProvider;
 
         [SetUp]
@@ -47,7 +31,7 @@ namespace SceneRuntime.Tests
         public IEnumerator EngineApi_GetState() =>
             UniTask.ToCoroutine(async () =>
             {
-                var engineApi = Substitute.For<IEngineApi>();
+                IEngineApi engineApi = Substitute.For<IEngineApi>();
 
                 var code = @"
             const engineApi = require('~system/EngineApi')
@@ -57,7 +41,7 @@ namespace SceneRuntime.Tests
             exports.onUpdate = async function(dt) {};
         ";
 
-                SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
+                var sceneRuntimeFactory = new SceneRuntimeFactory();
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
                 sceneRuntime.RegisterEngineApi(engineApi);
@@ -70,7 +54,7 @@ namespace SceneRuntime.Tests
         public IEnumerator EngineApi_CrdtSendToRenderer() =>
             UniTask.ToCoroutine(async () =>
             {
-                var engineApi = Substitute.For<IEngineApi>();
+                IEngineApi engineApi = Substitute.For<IEngineApi>();
 
                 var code = @"
             const engineApi = require('~system/EngineApi')
@@ -83,7 +67,7 @@ namespace SceneRuntime.Tests
             };
         ";
 
-                SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
+                var sceneRuntimeFactory = new SceneRuntimeFactory();
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
                 sceneRuntime.RegisterEngineApi(engineApi);
@@ -98,7 +82,7 @@ namespace SceneRuntime.Tests
                 // hot
                 await sceneRuntime.UpdateScene(0.0f);
 
-                for (int i = 0; i < 10; ++i)
+                for (var i = 0; i < 10; ++i)
                 {
                     await UniTask.Yield();
                     await sceneRuntime.UpdateScene(0.01f);
@@ -121,7 +105,7 @@ namespace SceneRuntime.Tests
             exports.onUpdate = async function(dt) {};
         ";
 
-                SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
+                var sceneRuntimeFactory = new SceneRuntimeFactory();
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCode(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
                 await sceneRuntime.StartScene();
@@ -129,12 +113,12 @@ namespace SceneRuntime.Tests
                 // hot
                 await sceneRuntime.UpdateScene(0.0f);
 
-                for (int i = 0; i < 10; ++i)
+                for (var i = 0; i < 10; ++i)
                 {
                     await UniTask.Yield();
 
                     Profiler.BeginSample("UpdateScene");
-                    var ut = sceneRuntime.UpdateScene(0.01f);
+                    UniTask ut = sceneRuntime.UpdateScene(0.01f);
                     Profiler.EndSample();
 
                     await ut;
@@ -145,10 +129,10 @@ namespace SceneRuntime.Tests
         public IEnumerator EngineApi_TestRealScene() =>
             UniTask.ToCoroutine(async () =>
             {
-                var engineApi = Substitute.For<IEngineApi>();
+                IEngineApi engineApi = Substitute.For<IEngineApi>();
 
-                SceneRuntimeFactory sceneRuntimeFactory = new SceneRuntimeFactory();
-                var path =  URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
+                var sceneRuntimeFactory = new SceneRuntimeFactory();
+                var path = URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPath(path, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
                 sceneRuntime.RegisterEngineApi(engineApi);
@@ -159,11 +143,25 @@ namespace SceneRuntime.Tests
                 await UniTask.Yield();
                 await sceneRuntime.UpdateScene(0.01f);
 
-                for (int i = 0; i < 10; ++i)
+                for (var i = 0; i < 10; ++i)
                 {
                     await UniTask.Yield();
                     await sceneRuntime.UpdateScene(0.01f);
                 }
             });
+
+        public class TestUtilCheckOk
+        {
+            private bool value;
+
+            [UsedImplicitly]
+            public void Ok()
+            {
+                value = true;
+            }
+
+            public bool IsOk() =>
+                value;
+        }
     }
 }

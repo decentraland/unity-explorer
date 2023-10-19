@@ -14,6 +14,8 @@ namespace ECS.ComponentsPooling
 
         private readonly Action<T> onRelease;
 
+        public int CountInactive => gameObjectPool.CountInactive;
+
         public GameObjectPool(Transform rootContainer, Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 2048)
         {
             parentContainer = new GameObject($"POOL_CONTAINER_{typeof(T).Name}").transform;
@@ -21,6 +23,9 @@ namespace ECS.ComponentsPooling
             this.onRelease += onRelease;
             gameObjectPool = new ObjectPool<T>(creationHandler ?? HandleCreation, actionOnGet: HandleGet, actionOnRelease: HandleRelease, actionOnDestroy: UnityObjectUtils.SafeDestroyGameObject, defaultCapacity: maxSize / 4, maxSize: maxSize);
         }
+
+        public void Dispose() =>
+            Clear();
 
         public PooledObject<T> Get(out T v) =>
             gameObjectPool.Get(out v);
@@ -33,11 +38,6 @@ namespace ECS.ComponentsPooling
 
         public void Clear() =>
             gameObjectPool.Clear();
-
-        public int CountInactive => gameObjectPool.CountInactive;
-
-        public void Dispose() =>
-            Clear();
 
         private T HandleCreation()
         {

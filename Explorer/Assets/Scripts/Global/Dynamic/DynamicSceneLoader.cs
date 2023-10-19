@@ -37,7 +37,6 @@ namespace Global.Dynamic
 
         private GlobalWorld globalWorld;
 
-
         private void Awake()
         {
             realmLauncher.Initialize(realms);

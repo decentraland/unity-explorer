@@ -21,24 +21,12 @@ namespace SceneRunner.Tests
     [TestFixture]
     public class SceneFactoryShould
     {
-        private SceneRuntimeFactory sceneRuntimeFactory;
-        private IECSWorldFactory ecsWorldFactory;
-        private ISharedPoolsProvider sharedPoolsProvider;
-        private ICRDTDeserializer crdtDeserializer;
-        private ICRDTSerializer crdtSerializer;
-        private ISDKComponentsRegistry componentsRegistry;
-        private SceneFactory sceneFactory;
-
-        private ISceneFacade sceneFacade;
-
-        private string path;
-
         [SetUp]
         public void SetUp()
         {
             path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
 
-            var ecsWorldFacade = TestSystemsWorld.Create();
+            ECSWorldFacade ecsWorldFacade = TestSystemsWorld.Create();
 
             sceneRuntimeFactory = new SceneRuntimeFactory();
 
@@ -58,6 +46,18 @@ namespace SceneRunner.Tests
         {
             sceneFacade?.DisposeAsync().Forget();
         }
+
+        private SceneRuntimeFactory sceneRuntimeFactory;
+        private IECSWorldFactory ecsWorldFactory;
+        private ISharedPoolsProvider sharedPoolsProvider;
+        private ICRDTDeserializer crdtDeserializer;
+        private ICRDTSerializer crdtSerializer;
+        private ISDKComponentsRegistry componentsRegistry;
+        private SceneFactory sceneFactory;
+
+        private ISceneFacade sceneFacade;
+
+        private string path;
 
         [Test]
         public async Task CreateSceneFacadeForTestScene()
@@ -81,7 +81,7 @@ namespace SceneRunner.Tests
         [Test]
         public async Task ReturnToTheThreadPool()
         {
-            var threadId = Thread.CurrentThread.ManagedThreadId;
+            int threadId = Thread.CurrentThread.ManagedThreadId;
 
             sceneFacade = await sceneFactory.CreateSceneFromFile(path, Substitute.For<IPartitionComponent>(), CancellationToken.None);
 

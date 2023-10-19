@@ -2,10 +2,7 @@
 using CRDT.Protocol;
 using CRDT.Protocol.Factory;
 using NUnit.Framework;
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading;
 
 namespace CrdtEcsBridge.OutgoingMessages.Tests
 {

@@ -6,7 +6,7 @@ using System.Text;
 namespace CRDT.CRDTTests.Protocol
 {
     /// <summary>
-    /// JSON Serializable Message without any optimizations
+    ///     JSON Serializable Message without any optimizations
     /// </summary>
     [Serializable]
     internal class CRDTTestMessage

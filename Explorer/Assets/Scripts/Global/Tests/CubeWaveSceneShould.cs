@@ -66,16 +66,25 @@ namespace Global.Tests
     [TestFixture]
     public class CubeWaveSceneShould
     {
-        private SceneSharedContainer sceneSharedContainer;
-        private StaticContainer staticContainer;
-        private ISceneFacade sceneFacade;
-        private const string PATH = "cube-wave-16x16";
-
         [SetUp]
         public async Task SetUp()
         {
             (staticContainer, sceneSharedContainer) = await IntegrationTestsSuite.CreateStaticContainer();
         }
+
+        [TearDown]
+        public async Task Dispose()
+        {
+            if (sceneFacade != null)
+                await sceneFacade.DisposeAsync();
+
+            staticContainer?.Dispose();
+        }
+
+        private SceneSharedContainer sceneSharedContainer;
+        private StaticContainer staticContainer;
+        private ISceneFacade sceneFacade;
+        private const string PATH = "cube-wave-16x16";
 
         [Test]
         [RequiresPlayMode]
@@ -101,9 +110,9 @@ namespace Global.Tests
 
             // Check ECS world
 
-            var world = sceneFacadeImpl.ecsWorldFacade.EcsWorld;
+            World world = sceneFacadeImpl.ecsWorldFacade.EcsWorld;
 
-            var cubes = new QueryDescription().WithAll<SDKTransform, PBMeshRenderer>(); // 256 cubes
+            QueryDescription cubes = new QueryDescription().WithAll<SDKTransform, PBMeshRenderer>(); // 256 cubes
             Assert.AreEqual(256, world.CountEntities(in cubes));
 
             // save positions
@@ -111,7 +120,7 @@ namespace Global.Tests
 
             world.Query(in cubes, (in Entity e, ref SDKTransform transform) => { positions[e] = transform.Position; });
 
-            var textShape = new QueryDescription().WithAll<SDKTransform, PBTextShape, PBBillboard>(); // Billboard
+            QueryDescription textShape = new QueryDescription().WithAll<SDKTransform, PBTextShape, PBBillboard>(); // Billboard
             Assert.AreEqual(1, world.CountEntities(in textShape));
 
             await UniTask.SwitchToThreadPool();
@@ -125,15 +134,6 @@ namespace Global.Tests
 
             Assert.AreEqual(256, world.CountEntities(in cubes));
             world.Query(in cubes, (in Entity e, ref SDKTransform transform) => { Assert.AreNotEqual(positions[e], transform.Position); });
-        }
-
-        [TearDown]
-        public async Task Dispose()
-        {
-            if (sceneFacade != null)
-                await sceneFacade.DisposeAsync();
-
-            staticContainer?.Dispose();
         }
     }
 }

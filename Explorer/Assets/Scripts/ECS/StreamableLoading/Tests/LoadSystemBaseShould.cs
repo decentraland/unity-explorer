@@ -18,6 +18,13 @@ namespace ECS.StreamableLoading.Tests
         where TSystem: LoadSystemBase<TAsset, TIntention>
         where TIntention: struct, ILoadingIntention, IEquatable<TIntention>
     {
+        protected IStreamableCache<TAsset, TIntention> cache;
+
+        private MockedReportScope mockedReportScope;
+        private IAcquiredBudget budget;
+
+        protected AssetPromise<TAsset, TIntention> promise { get; private set; }
+
         protected abstract TIntention CreateSuccessIntention();
 
         protected abstract TIntention CreateNotFoundIntention();
@@ -25,13 +32,6 @@ namespace ECS.StreamableLoading.Tests
         protected abstract TIntention CreateWrongTypeIntention();
 
         protected abstract TSystem CreateSystem();
-
-        protected AssetPromise<TAsset, TIntention> promise { get; private set; }
-
-        protected IStreamableCache<TAsset, TIntention> cache;
-
-        private MockedReportScope mockedReportScope;
-        private IAcquiredBudget budget;
 
         [SetUp]
         public void BaseSetUp()

@@ -49,6 +49,19 @@ namespace Global
 
         public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
 
+        public IAssetsProvisioner AssetsProvisioner { get; private set; }
+
+        /// <summary>
+        ///     Character Object exists in a single instance
+        /// </summary>
+        public ICharacterObject CharacterObject => characterObject.Value;
+
+        public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
+
+        public IPartitionSettings PartitionSettings => partitionSettings.Value;
+
+        public IRealmPartitionSettings RealmPartitionSettings => realmPartitionSettings.Value;
+
         public async UniTask Initialize(StaticSettings settings, CancellationToken ct)
         {
             (characterObject, reportHandlingSettings, partitionSettings, realmPartitionSettings) =
@@ -67,19 +80,6 @@ namespace Global
             partitionSettings.Dispose();
             reportHandlingSettings.Dispose();
         }
-
-        public IAssetsProvisioner AssetsProvisioner { get; private set; }
-
-        /// <summary>
-        ///     Character Object exists in a single instance
-        /// </summary>
-        public ICharacterObject CharacterObject => characterObject.Value;
-
-        public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
-
-        public IPartitionSettings PartitionSettings => partitionSettings.Value;
-
-        public IRealmPartitionSettings RealmPartitionSettings => realmPartitionSettings.Value;
 
         public static async UniTask<(StaticContainer container, bool success)> Create(IPluginSettingsContainer settingsContainer, CancellationToken ct)
         {

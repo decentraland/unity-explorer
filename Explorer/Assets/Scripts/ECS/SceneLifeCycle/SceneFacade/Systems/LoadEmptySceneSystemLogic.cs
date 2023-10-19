@@ -23,6 +23,13 @@ namespace ECS.SceneLifeCycle.Systems
 
         private EmptyScenesWorld sharedWorld;
 
+        /// <summary>
+        ///     Indicates that mapping could not be loaded and the whole logic will be skipped
+        /// </summary>
+        public bool Inactive { get; private set; }
+
+        internal EmptySceneData emptySceneData { get; private set; }
+
         public LoadEmptySceneSystemLogic(
             IEmptyScenesWorldFactory emptyScenesWorldFactory,
             IComponentPoolsRegistry componentPoolsRegistry,
@@ -32,13 +39,6 @@ namespace ECS.SceneLifeCycle.Systems
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.mappingURL = mappingURL;
         }
-
-        internal EmptySceneData emptySceneData { get; private set; }
-
-        /// <summary>
-        ///     Indicates that mapping could not be loaded and the whole logic will be skipped
-        /// </summary>
-        public bool Inactive { get; private set; }
 
         public void Dispose()
         {

@@ -32,6 +32,8 @@ namespace SceneRunner
 
         private int intervalMS;
 
+        public ISceneData SceneData { get; }
+
         public SceneFacade(
             ISceneRuntime runtimeInstance,
             ECSWorldFacade ecsWorldFacade,
@@ -57,8 +59,6 @@ namespace SceneRunner
             this.entityCollidersSceneCache = entityCollidersSceneCache;
             SceneData = sceneData;
         }
-
-        public ISceneData SceneData { get; }
 
         public void SetTargetFPS(int fps)
         {
@@ -156,7 +156,7 @@ namespace SceneRunner
         }
 
         /// <summary>
-        /// Must ensure that the execution does not jump between different threads
+        ///     Must ensure that the execution does not jump between different threads
         /// </summary>
         [Conditional("UNITY_EDITOR")]
         [Conditional("DEBUG")]

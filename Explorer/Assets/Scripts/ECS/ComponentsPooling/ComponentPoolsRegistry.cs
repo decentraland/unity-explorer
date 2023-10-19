@@ -16,6 +16,17 @@ namespace ECS.ComponentsPooling
             this.rootContainer = rootContainer;
         }
 
+        public void Dispose()
+        {
+            lock (pools)
+            {
+                foreach (IComponentPool pool in pools.Values)
+                    pool.Dispose();
+
+                pools.Clear();
+            }
+        }
+
         public bool TryGetPool(Type type, out IComponentPool componentPool)
         {
             lock (pools) { return pools.TryGetValue(type, out componentPool); }
@@ -56,17 +67,6 @@ namespace ECS.ComponentsPooling
                 }
 
                 pools.Add(typeof(T), new ComponentPool<T>(onGet, onRelease));
-            }
-        }
-
-        public void Dispose()
-        {
-            lock (pools)
-            {
-                foreach (IComponentPool pool in pools.Values)
-                    pool.Dispose();
-
-                pools.Clear();
             }
         }
     }

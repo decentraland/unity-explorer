@@ -7,11 +7,6 @@ namespace Utility.Pool
 {
     public static class PoolExtensions
     {
-        internal class UnityComponentPool<T> : ListObjectPool<T>
-        {
-            internal static readonly UnityComponentPool<T> INSTANCE = new ();
-        }
-
         public static Scope<List<TComponent>> GetComponentsInChildrenIntoPooledList<TComponent>(this GameObject go, bool includeInactive = false) where TComponent: class
         {
             Scope<List<TComponent>> scope = AutoScope(UnityComponentPool<TComponent>.INSTANCE);
@@ -21,6 +16,11 @@ namespace Utility.Pool
 
         public static Scope<TElement> AutoScope<TElement>(this IObjectPool<TElement> pool) where TElement: class =>
             new (pool.Get(), pool);
+
+        internal class UnityComponentPool<T> : ListObjectPool<T>
+        {
+            internal static readonly UnityComponentPool<T> INSTANCE = new ();
+        }
 
         public struct Scope<TElement> : IDisposable where TElement: class
         {

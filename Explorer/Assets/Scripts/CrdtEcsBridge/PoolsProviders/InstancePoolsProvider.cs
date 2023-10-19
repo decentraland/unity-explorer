@@ -23,13 +23,13 @@ namespace CrdtEcsBridge.PoolsProviders
         // Forbid creating instances of this class outside of the pool
         private InstancePoolsProvider() { }
 
-        public static InstancePoolsProvider Create() =>
-            POOL.Get();
-
         public void Dispose()
         {
             POOL.Release(this);
         }
+
+        public static InstancePoolsProvider Create() =>
+            POOL.Get();
 
         public byte[] GetCrdtRawDataPool(int size) =>
             crdtRawDataPool.Rent(size);

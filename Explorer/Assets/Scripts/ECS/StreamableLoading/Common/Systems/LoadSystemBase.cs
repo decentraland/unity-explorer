@@ -123,6 +123,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 {
                     // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
                     acquiredBudget.Release();
+
                     // if the cached request is cancelled it does not mean failure for the new intent
                     (requestIsNotFulfilled, result) = await cachedSource.Task.SuppressCancellationThrow();
                 }

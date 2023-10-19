@@ -5,12 +5,10 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
-using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules;
-using System.Collections.Generic;
 using System.Threading;
 using Unity.Collections;
 using UnityEngine.Networking;
@@ -19,7 +17,7 @@ using Utility;
 namespace CrdtEcsBridge.Engine
 {
     /// <summary>
-    /// Unique instance for each Scene Runtime
+    ///     Unique instance for each Scene Runtime
     /// </summary>
     public class RuntimeImplementation : IRuntime
     {
@@ -31,6 +29,8 @@ namespace CrdtEcsBridge.Engine
             this.jsOperations = jsOperations;
             this.sceneData = sceneData;
         }
+
+        public void Dispose() { }
 
         public async UniTask<IRuntime.ReadFileResponse> ReadFile(string fileName, CancellationToken ct)
         {
@@ -55,15 +55,13 @@ namespace CrdtEcsBridge.Engine
             }
 
             var intent = new SubIntention(new CommonLoadingArguments(url));
-            var content = (await intent.RepeatLoop(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateFileRequest, ReportCategory.ENGINE, ct)).UnwrapAndRethrow();
+            ITypedArray<byte> content = (await intent.RepeatLoop(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateFileRequest, ReportCategory.ENGINE, ct)).UnwrapAndRethrow();
 
-            return new IRuntime.ReadFileResponse()
+            return new IRuntime.ReadFileResponse
             {
                 content = content,
                 hash = hash,
             };
         }
-
-        public void Dispose() { }
     }
 }

@@ -4,7 +4,7 @@ using UnityEngine.Profiling;
 namespace ECS.Abstract
 {
     /// <summary>
-    /// <inheritdoc cref="ISystem"/>
+    ///     <inheritdoc cref="ISystem" />
     /// </summary>
     public abstract class BaseSystem : ISystem
     {
@@ -15,9 +15,9 @@ namespace ECS.Abstract
             this.world = world;
         }
 
-        public virtual void Dispose() { }
-
         public virtual void Initialize() { }
+
+        public virtual void Dispose() { }
 
         public void Update()
         {

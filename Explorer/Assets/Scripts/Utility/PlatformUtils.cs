@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 public static class PlatformUtils

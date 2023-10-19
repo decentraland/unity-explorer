@@ -6,13 +6,19 @@ namespace ECS.ComponentsPooling.Tests
     [TestFixture]
     public class UnityComponentPoolShould
     {
-        private GameObjectPool<Transform> gameObjectPool;
-
         [SetUp]
         public void SetUp()
         {
             gameObjectPool = new GameObjectPool<Transform>(null, null, null, 1000);
         }
+
+        [TearDown]
+        public void TearDown()
+        {
+            gameObjectPool.Clear();
+        }
+
+        private GameObjectPool<Transform> gameObjectPool;
 
         [Test]
         public void GetGameObject()
@@ -49,12 +55,6 @@ namespace ECS.ComponentsPooling.Tests
             //Assert
             Assert.IsTrue(component == null);
             Assert.AreEqual(0, gameObjectPool.CountInactive);
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            gameObjectPool.Clear();
         }
     }
 }

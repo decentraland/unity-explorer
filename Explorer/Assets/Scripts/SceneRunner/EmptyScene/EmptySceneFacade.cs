@@ -20,18 +20,17 @@ namespace SceneRunner.EmptyScene
 {
     public class EmptySceneFacade : ISceneFacade
     {
+        internal static readonly Vector3 GLTF_POSITION = new (8, 0, 8);
         private static readonly IObjectPool<EmptySceneFacade> POOL = new ThreadSafeObjectPool<EmptySceneFacade>(() => new EmptySceneFacade(), defaultCapacity: PoolConstants.EMPTY_SCENES_COUNT);
 
-        internal static readonly Vector3 GLTF_POSITION = new (8, 0, 8);
-
         private Args args;
-
-        private EmptySceneFacade() { }
 
         internal Entity sceneRoot { get; private set; } = Entity.Null;
 
         //internal Entity grass { get; private set; } = Entity.Null;
         internal Entity environment { get; private set; } = Entity.Null;
+
+        private EmptySceneFacade() { }
 
         public async UniTask DisposeAsync()
         {

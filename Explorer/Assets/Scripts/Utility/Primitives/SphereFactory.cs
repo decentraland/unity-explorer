@@ -10,7 +10,7 @@ namespace Utility.Primitives
         public static void Create(ref Mesh mesh)
         {
             mesh.name = "DCL Sphere";
-            var radius = PrimitivesSize.SPHERE_RADIUS;
+            float radius = PrimitivesSize.SPHERE_RADIUS;
 
             //float radius = 1f;
             // Longitude |||
@@ -40,7 +40,7 @@ namespace Utility.Primitives
                     float sin2 = Mathf.Sin(a2);
                     float cos2 = Mathf.Cos(a2);
 
-                    vertices[lon + lat * (nbLong + 1) + 1] = new Vector3(sin1 * cos2, cos1, sin1 * sin2) * radius;
+                    vertices[lon + (lat * (nbLong + 1)) + 1] = new Vector3(sin1 * cos2, cos1, sin1 * sin2) * radius;
                 }
             }
 
@@ -66,7 +66,6 @@ namespace Utility.Primitives
                         new Vector2(1f - ((float)lon / nbLong), (float)(lat + 1) / (nbLat + 1));
                 }
             }
-
 #endregion
 
 #region Triangles
@@ -75,10 +74,8 @@ namespace Utility.Primitives
             int nbIndexes = nbTriangles * 3;
             int[] triangles = PrimitivesBuffersPool.TRIANGLES.Rent(nbIndexes);
 
-            for (var j = 0; j < nbIndexes; j++)
-            {
-                triangles[j] = 0;
-            }
+            for (var j = 0; j < nbIndexes; j++) { triangles[j] = 0; }
+
             //Top Cap
             var i = 0;
 

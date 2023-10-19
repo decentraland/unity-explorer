@@ -9,10 +9,6 @@ namespace CrdtEcsBridge.Components.Tests
 {
     public class SDKComponentsRegistryTests
     {
-        public class FooComponent { }
-
-        public class BarComponent { }
-
         private SDKComponentsRegistry sdkComponentsRegistry;
 
         [SetUp]
@@ -40,7 +36,7 @@ namespace CrdtEcsBridge.Components.Tests
         [TestCaseSource(nameof(AllTypes))]
         public void ProvideRegisteredComponents(Type componentType, int id)
         {
-            Assert.IsTrue(sdkComponentsRegistry.TryGet(id, out var bridge));
+            Assert.IsTrue(sdkComponentsRegistry.TryGet(id, out SDKComponentBridge bridge));
             Assert.AreEqual(componentType, bridge.ComponentType);
         }
 
@@ -48,7 +44,7 @@ namespace CrdtEcsBridge.Components.Tests
         [TestCaseSource(nameof(AllTypes))]
         public void BuildUpAllRequiredComponents(Type componentType, int id)
         {
-            sdkComponentsRegistry.TryGet(id, out var bridge);
+            sdkComponentsRegistry.TryGet(id, out SDKComponentBridge bridge);
             Assert.IsNotNull(bridge.Serializer);
             Assert.IsNotNull(bridge.Pool);
             Assert.IsNotNull(bridge.CommandBufferSynchronizer);
@@ -59,7 +55,11 @@ namespace CrdtEcsBridge.Components.Tests
             {
                 new object[] { typeof(FooComponent), 1 },
                 new object[] { typeof(BarComponent), 2 },
-                new object[] { typeof(PBMeshCollider), ComponentID.MESH_COLLIDER }
+                new object[] { typeof(PBMeshCollider), ComponentID.MESH_COLLIDER },
             };
+
+        public class FooComponent { }
+
+        public class BarComponent { }
     }
 }

@@ -43,6 +43,7 @@ namespace ECS.StreamableLoading.Common.Systems
                     {
                         ReportHub.LogError(reportCategory, $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()} with url {intention.CommonArguments.URL}.\n"
                                                            + "No more sources left.");
+
                         ReportHub.LogException(unityWebRequestException, reportCategory);
                     }
                     else

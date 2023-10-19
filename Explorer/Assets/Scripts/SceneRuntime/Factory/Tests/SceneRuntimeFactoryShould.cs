@@ -54,7 +54,7 @@ namespace SceneRuntime.Factory.Tests
                 var path = URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
 
                 // Act
-                var engineApi = Substitute.For<IEngineApi>();
+                IEngineApi engineApi = Substitute.For<IEngineApi>();
                 IInstancePoolsProvider instancePoolsProvider = Substitute.For<IInstancePoolsProvider>();
                 instancePoolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new byte[c.Arg<int>()]);
 

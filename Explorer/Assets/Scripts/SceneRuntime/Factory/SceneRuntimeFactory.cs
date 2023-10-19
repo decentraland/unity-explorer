@@ -15,7 +15,7 @@ namespace SceneRuntime.Factory
         public enum InstantiationBehavior
         {
             StayOnMainThread,
-            SwitchToThreadPool
+            SwitchToThreadPool,
         }
 
         private readonly JsCodeResolver codeContentResolver;
@@ -28,7 +28,7 @@ namespace SceneRuntime.Factory
         }
 
         /// <summary>
-        /// Must be called on the main thread
+        ///     Must be called on the main thread
         /// </summary>
         public async UniTask<SceneRuntimeImpl> CreateBySourceCode(string sourceCode,
             IInstancePoolsProvider instancePoolsProvider,
@@ -38,7 +38,7 @@ namespace SceneRuntime.Factory
         {
             AssertCalledOnTheMainThread();
 
-            var (initSourceCode, moduleDictionary) = await UniTask.WhenAll(GetJsInitSourceCode(ct), GetJsModuleDictionary(ct));
+            (string initSourceCode, Dictionary<string, string> moduleDictionary) = await UniTask.WhenAll(GetJsInitSourceCode(ct), GetJsModuleDictionary(ct));
 
             // On instantiation there is a bit of logic to execute by the scene runtime so we can benefit from the thread pool
             if (instantiationBehavior == InstantiationBehavior.SwitchToThreadPool)
@@ -51,7 +51,7 @@ namespace SceneRuntime.Factory
         }
 
         /// <summary>
-        /// Must be called on the main thread
+        ///     Must be called on the main thread
         /// </summary>
         public async UniTask<SceneRuntimeImpl> CreateByPath(URLAddress path,
             IInstancePoolsProvider instancePoolsProvider,
