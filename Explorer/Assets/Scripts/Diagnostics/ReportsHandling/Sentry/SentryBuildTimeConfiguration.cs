@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Diagnostics.ReportsHandling.Sentry
 {
-    [CreateAssetMenu(fileName = "Assets/Resources/Sentry/SentryBuildTimeConfiguration.asset", menuName = "Sentry/SentryBuildTimeConfiguration", order = 999)]
+    [CreateAssetMenu(fileName = "SentryBuildTimeConfiguration.asset", menuName = "Sentry/SentryBuildTimeConfiguration", order = 999)]
     public class SentryBuildTimeConfiguration : SentryBuildTimeOptionsConfiguration
     {
         /// Called during app build. Changes made here will affect build-time processing, symbol upload, etc.
@@ -13,10 +13,22 @@ namespace Diagnostics.ReportsHandling.Sentry
         /// Learn more at https://docs.sentry.io/platforms/unity/configuration/options/#programmatic-configuration
         public override void Configure(SentryUnityOptions options, SentryCliOptions cliOptions)
         {
-            options.Environment = Environment.GetEnvironmentVariable("SENTRY_ENVIRONMENT");
-            options.Dsn = Environment.GetEnvironmentVariable("SENTRY_DSN");
-            options.Release = Environment.GetEnvironmentVariable("SENTRY_RELEASE_NAME");
-            cliOptions.Auth = Environment.GetEnvironmentVariable("SENTRY_AUTH_TOKEN");
+            ApplyFromYamlFile(options, cliOptions);
+            ApplyFromEnvironmentVars(options, cliOptions);
+        }
+
+        private static void ApplyFromEnvironmentVars(SentryUnityOptions options, SentryCliOptions cliOptions)
+        {
+            options.Environment = Environment.GetEnvironmentVariable("SENTRY_ENVIRONMENT") ?? options.Environment;
+            options.Dsn = Environment.GetEnvironmentVariable("SENTRY_DSN") ?? options.Dsn;
+            options.Release = Environment.GetEnvironmentVariable("SENTRY_RELEASE_NAME") ?? options.Release;
+            cliOptions.Auth = Environment.GetEnvironmentVariable("SENTRY_AUTH_TOKEN") ?? cliOptions.Auth;
+        }
+
+        private static void ApplyFromYamlFile(SentryUnityOptions options, SentryCliOptions cliOptions)
+        {
+            SentryYamlConfigLoader.Apply(options);
+            SentryYamlConfigLoader.Apply(cliOptions);
         }
     }
 }

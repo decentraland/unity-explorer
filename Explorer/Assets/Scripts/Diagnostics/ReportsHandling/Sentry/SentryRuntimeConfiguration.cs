@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Diagnostics.ReportsHandling.Sentry
 {
-    [CreateAssetMenu(fileName = "Assets/Resources/Sentry/SentryRuntimeConfiguration.asset", menuName = "Sentry/SentryRuntimeConfiguration", order = 999)]
+    [CreateAssetMenu(fileName = "SentryRuntimeConfiguration.asset", menuName = "Sentry/SentryRuntimeConfiguration", order = 999)]
     public class SentryRuntimeConfiguration : SentryRuntimeOptionsConfiguration
     {
         /// Called at the player startup by SentryInitialization.
@@ -14,7 +14,12 @@ namespace Diagnostics.ReportsHandling.Sentry
         {
             // Note that changes to the options here will **not** affect iOS, macOS and Android events. (i.e. environment and release)
             // Take a look at `SentryBuildTimeOptionsConfiguration` instead.
-            // TODO implement
+#if UNITY_EDITOR
+            ApplyFromYamlFile(options);
+#endif
         }
+
+        private static void ApplyFromYamlFile(SentryUnityOptions options) =>
+            SentryYamlConfigLoader.Apply(options);
     }
 }
