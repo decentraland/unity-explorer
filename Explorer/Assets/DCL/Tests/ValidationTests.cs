@@ -23,7 +23,9 @@ namespace DCL.Tests
             Assert.Fail(errorMessage);
 
             return;
-            bool IsDirectoryEmpty(string path) => !Directory.EnumerateFileSystemEntries(path).Any();
+
+            bool IsDirectoryEmpty(string path) =>
+                !Directory.EnumerateFileSystemEntries(path).Any();
         }
     }
 }

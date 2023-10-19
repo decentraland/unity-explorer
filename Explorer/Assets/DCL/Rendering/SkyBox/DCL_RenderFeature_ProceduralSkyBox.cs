@@ -31,14 +31,14 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
     private const string k_ShaderName_Generate = "CustomRenderTexture/SkyBox_Procedural_Generate";
     private const string k_ShaderName_Draw = "Skybox/DCL_SkyBox_Procedural_Draw";
 
+    // Debug
+    private readonly ReportData m_ReportData = new ("DCL_RenderFeature_ProceduralSkyBox", ReportHint.SessionStatic);
+
     // Pass Settings
     [SerializeField] private ProceduralSkyBoxSettings_Generate m_SettingsGenerate;
     [SerializeField] private ProceduralSkyBoxSettings_Draw m_SettingsDraw;
     [SerializeField] [HideInInspector] private Shader m_ShaderGenerate;
     [SerializeField] [HideInInspector] private Shader m_ShaderDraw;
-
-    // Debug
-    private readonly ReportData m_ReportData = new ("DCL_RenderFeature_ProceduralSkyBox", ReportHint.SessionStatic);
 
     // Materials
     private Material m_Material_Generate;

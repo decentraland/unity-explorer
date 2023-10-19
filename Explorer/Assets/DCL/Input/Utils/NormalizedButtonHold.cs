@@ -6,8 +6,8 @@ namespace DCL.Input.Utils
     public class NormalizedButtonPressListener
     {
         private readonly InputAction actionToListen;
-        private float currentValue;
         private readonly float timeToMax;
+        private float currentValue;
         private bool isPressed;
 
         public NormalizedButtonPressListener(InputAction actionToListen, float timeToMax)

@@ -10,6 +10,9 @@ namespace DCL.Rendering.Avatar
         public class DepthNormalsRenderPass : ScriptableRenderPass
         {
             private const string profilerTag = "_DepthNormalsPass";
+
+            //private RTHandle destinationHandle;
+            private readonly ShaderTagId m_ShaderTagId = new ("DepthNormals");
             private ReportData m_ReportData = new ("DCL_RenderFeature_Outline_DepthNormalsPass", ReportHint.SessionStatic);
 
             private Material depthNormalsMaterial;
@@ -19,9 +22,6 @@ namespace DCL.Rendering.Avatar
             private RenderTextureDescriptor depthNormalsRTDescriptor_Depth;
 
             private FilteringSettings m_FilteringSettings;
-
-            //private RTHandle destinationHandle;
-            private readonly ShaderTagId m_ShaderTagId = new ("DepthNormals");
 
             public DepthNormalsRenderPass()
             {

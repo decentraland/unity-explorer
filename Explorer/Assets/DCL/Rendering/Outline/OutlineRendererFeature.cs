@@ -22,9 +22,9 @@ namespace DCL.Rendering.Avatar
     {
         private const string k_ShaderName_DepthNormals = "Outline/DepthNormals";
         private const string k_ShaderName_Outline = "Avatar/Outline";
+        private readonly ReportData m_ReportData = new ("DCL_RenderFeature_Outline", ReportHint.SessionStatic);
 
         [SerializeField] private OutlineRendererFeature_Settings m_Settings;
-        private readonly ReportData m_ReportData = new ("DCL_RenderFeature_Outline", ReportHint.SessionStatic);
 
         // DepthNormals Pass Data
         private DepthNormalsRenderPass depthNormalsRenderPass;
