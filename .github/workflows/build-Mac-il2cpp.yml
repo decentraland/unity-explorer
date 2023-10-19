@@ -1,8 +1,7 @@
-name: Unity Build IL2CPP
+name: Unity Mac Build IL2CPP
 
 on:
-  pull_request: {}
-  push: { branches: [main] }
+  workflow_dispatch: {}
 
 jobs:
   build:
@@ -14,8 +13,6 @@ jobs:
       max-parallel: 1
       matrix:
         include:
-          - targetPlatform: StandaloneWindows64
-            dockerImage: windows-2019
           - targetPlatform: StandaloneOSX
             dockerImage: macos-latest-xl
 
@@ -51,7 +48,7 @@ jobs:
             !Explorer/Library/BuildPlayerData/**
           key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
 
-      - uses: kuruk-mm/unity-builder@0.9
+      - uses: decentraland/unity-builder@0.1
         id: build
         timeout-minutes: 120
         env:
@@ -61,13 +58,27 @@ jobs:
         with:
           projectPath: Explorer
           targetPlatform: ${{ matrix.targetPlatform }}
-
+          
+      # Tar build files to maintain file permissions
+      - name: Tar MacOSX/Linux build files
+        run: |
+          echo 1. go into build dir
+          cd build
+          echo 2. delete unnecessary folder
+          rm -r  ${{ matrix.targetPlatform }}/StandaloneOSX_BackUpThisFolder_ButDontShipItWithYourGame
+          rm -r  ${{ matrix.targetPlatform }}/StandaloneOSX_BurstDebugInformation_DoNotShip
+          echo 4. tar mac build folder + remove og files
+          sudo tar -cvf "${{ matrix.targetPlatform }}.tar" "${{ matrix.targetPlatform }}"
+          rm -r  ${{ matrix.targetPlatform }}
+          echo 5. go back to src dir
+          cd ..
+          
       # Upload artifact
-      - uses: actions/upload-artifact@v3
+      - name: Upload mac artifact
+        uses: actions/upload-artifact@v3
         with:
           name: Build-${{ matrix.targetPlatform }}
-          path: |
-            build
-            !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
-            !build/**/*_BurstDebugInformation_DoNotShip
+          path: build/${{ matrix.targetPlatform }}.tar
           if-no-files-found: error
+        
+
