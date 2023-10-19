@@ -6,6 +6,8 @@ namespace Diagnostics.ReportsHandling.Sentry
     [CreateAssetMenu(fileName = "SentryRuntimeConfiguration.asset", menuName = "Sentry/SentryRuntimeConfiguration", order = 999)]
     public class SentryRuntimeConfiguration : SentryRuntimeOptionsConfiguration
     {
+        [SerializeField] private string configYamlFilePath = "./.sentryconfig.yml";
+
         /// Called at the player startup by SentryInitialization.
         /// You can alter configuration for the C# error handling and also
         /// native error handling in platforms **other** than iOS, macOS and Android.
@@ -19,7 +21,7 @@ namespace Diagnostics.ReportsHandling.Sentry
 #endif
         }
 
-        private static void ApplyFromYamlFile(SentryUnityOptions options) =>
-            SentryYamlConfigLoader.Apply(options);
+        private void ApplyFromYamlFile(SentryUnityOptions options) =>
+            SentryYamlConfigLoader.Apply(configYamlFilePath, options);
     }
 }

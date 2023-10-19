@@ -6,10 +6,10 @@ namespace Diagnostics.ReportsHandling.Sentry
 {
     public static class SentryYamlConfigLoader
     {
-        public static void Apply(SentryCliOptions cliOptions)
+        public static void Apply(string filePath, SentryCliOptions cliOptions)
         {
-            if (!File.Exists("./.sentryconfig.yml")) return;
-            string fileContent = File.ReadAllText("./.sentryconfig.yml");
+            if (!File.Exists(filePath)) return;
+            string fileContent = File.ReadAllText(filePath);
             var stringReader = new StringReader(fileContent);
             var yaml = new YamlStream();
             yaml.Load(stringReader);
@@ -18,10 +18,10 @@ namespace Diagnostics.ReportsHandling.Sentry
             cliOptions.Auth = GetYamlValue(in root, "auth") ?? cliOptions.Auth;
         }
 
-        public static void Apply(SentryUnityOptions options)
+        public static void Apply(string filePath, SentryUnityOptions options)
         {
-            if (!File.Exists("./.sentryconfig.yml")) return;
-            string fileContent = File.ReadAllText("./.sentryconfig.yml");
+            if (!File.Exists(filePath)) return;
+            string fileContent = File.ReadAllText(filePath);
             var stringReader = new StringReader(fileContent);
             var yaml = new YamlStream();
             yaml.Load(stringReader);
