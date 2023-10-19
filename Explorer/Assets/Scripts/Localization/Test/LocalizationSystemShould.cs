@@ -15,13 +15,7 @@ namespace Localization.Test
             new ("es", "TestStringEs"),
         };
 
-        [SetUp]
-        public void SetUp()
-        {
-        }
-
         [Test]
-        [RequiresPlayMode]
         public void TranslateFromLocalesTable([ValueSource(nameof(values))] KeyValuePair<string, string> langTranslationMapping)
         {
             var locales = LocalizationSettings.AvailableLocales.GetLocale(langTranslationMapping.Key);
