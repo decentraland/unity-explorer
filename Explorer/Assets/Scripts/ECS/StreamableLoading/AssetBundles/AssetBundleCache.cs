@@ -12,9 +12,12 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleCache : IStreamableCache<AssetBundleData, GetAssetBundleIntention>
     {
+        public static bool destroyCache;
         private readonly Dictionary<GetAssetBundleIntention, AssetBundleData> cache;
         public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>> OngoingRequests { get; }
         public IDictionary<string, StreamableLoadingResult<AssetBundleData>> IrrecoverableFailures { get; }
+
+        private bool disposed { get; set; }
 
         public AssetBundleCache()
         {
@@ -22,24 +25,6 @@ namespace ECS.StreamableLoading.AssetBundles
             IrrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Get();
             OngoingRequests = DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>.Get();
         }
-
-        public bool Equals(GetAssetBundleIntention x, GetAssetBundleIntention y) =>
-            StringComparer.OrdinalIgnoreCase.Equals(x.Hash, y.Hash);
-
-        public int GetHashCode(GetAssetBundleIntention obj) =>
-            StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Hash);
-
-        public bool TryGet(in GetAssetBundleIntention key, out AssetBundleData asset) =>
-            cache.TryGetValue(key, out asset);
-
-        public void Add(in GetAssetBundleIntention key, AssetBundleData asset)
-        {
-            cache.Add(key, asset);
-        }
-
-        public void Dereference(in GetAssetBundleIntention key, AssetBundleData asset) { }
-
-        private bool disposed { get; set; }
 
         public void Dispose()
         {
@@ -51,5 +36,55 @@ namespace ECS.StreamableLoading.AssetBundles
 
             disposed = true;
         }
+
+        public bool Equals(GetAssetBundleIntention x, GetAssetBundleIntention y) =>
+            StringComparer.OrdinalIgnoreCase.Equals(x.Hash, y.Hash);
+
+        public int GetHashCode(GetAssetBundleIntention obj) =>
+            StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Hash);
+
+        public bool TryGet(in GetAssetBundleIntention key, out AssetBundleData asset)
+        {
+            if (destroyCache)
+            {
+                Dispose();
+
+                foreach (AssetBundleData assetBundleData in cache.Values)
+                    assetBundleData.AssetBundle.Unload(false);
+
+                cache.Clear();
+                asset = null;
+                return false;
+            }
+
+            if (cache.TryGetValue(key, out asset))
+            {
+                UnityEngine.Debug.Log($"VV:: Try get = {cache.Count}", asset.GameObject);
+                return true;
+            }
+
+            return false;
+        }
+
+        public void Add(in GetAssetBundleIntention key, AssetBundleData asset)
+        {
+            if (destroyCache)
+            {
+                Dispose();
+
+                foreach (AssetBundleData assetBundleData in cache.Values)
+                    assetBundleData.AssetBundle.Unload(false);
+
+                cache.Clear();
+                return;
+            }
+            else
+            {
+                UnityEngine.Debug.Log($"VV:: Add = {cache.Count}", asset.GameObject);
+                cache.Add(key, asset);
+            }
+        }
+
+        public void Dereference(in GetAssetBundleIntention key, AssetBundleData asset) { }
     }
 }

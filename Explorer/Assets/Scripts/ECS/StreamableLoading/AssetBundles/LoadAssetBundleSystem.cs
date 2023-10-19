@@ -105,6 +105,7 @@ namespace ECS.StreamableLoading.AssetBundles
             ct.ThrowIfCancellationRequested();
 
             GameObject gameObjects = await LoadAllAssets(assetBundle, ct);
+            Debug.Log($"VV:: loaded Asset bundle {gameObjects?.name}", gameObjects);
 
             return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, gameObjects));
         }

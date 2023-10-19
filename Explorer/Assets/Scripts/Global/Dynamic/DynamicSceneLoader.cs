@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using Diagnostics.ReportsHandling;
+using ECS.StreamableLoading.AssetBundles;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -19,6 +20,7 @@ namespace Global.Dynamic
     /// </summary>
     public class DynamicSceneLoader : MonoBehaviour
     {
+        public bool destroyCache;
         [Header("Settings")]
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer;
@@ -37,12 +39,16 @@ namespace Global.Dynamic
 
         private GlobalWorld globalWorld;
 
-
         private void Awake()
         {
             realmLauncher.Initialize(realms);
 
             InitializationFlow(destroyCancellationToken).Forget();
+        }
+
+        private void Update()
+        {
+            AssetBundleCache.destroyCache = destroyCache;
         }
 
         private void OnDestroy()

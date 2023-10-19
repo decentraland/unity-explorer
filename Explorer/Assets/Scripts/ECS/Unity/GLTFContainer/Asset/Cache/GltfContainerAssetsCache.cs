@@ -19,6 +19,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
     public class GltfContainerAssetsCache : IStreamableCache<GltfContainerAsset, string>
     {
         private readonly Dictionary<string, List<GltfContainerAsset>> cache;
+        private readonly Dictionary<string, (int, float)> cacheMetrics;
+
         private readonly int maxSize;
 
         private readonly Transform parentContainer;
@@ -26,6 +28,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
         public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>> OngoingRequests { get; }
         public IDictionary<string, StreamableLoadingResult<GltfContainerAsset>> IrrecoverableFailures { get; }
 
+        private bool disposed { get; set; }
 
         public GltfContainerAssetsCache(int maxSize)
         {
@@ -39,6 +42,14 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             IrrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<GltfContainerAsset>>.Get();
         }
 
+        public void Dispose()
+        {
+            if (disposed)
+                return;
+
+            DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Release(IrrecoverableFailures as Dictionary<string, StreamableLoadingResult<AssetBundleData>>);
+            disposed = true;
+        }
 
         public bool TryGet(in string key, out GltfContainerAsset asset)
         {
@@ -74,22 +85,10 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             asset.Root.transform.SetParent(parentContainer);
         }
 
-
         bool IEqualityComparer<string>.Equals(string x, string y) =>
             string.Equals(x, y, StringComparison.OrdinalIgnoreCase);
 
         int IEqualityComparer<string>.GetHashCode(string obj) =>
             obj.GetHashCode(StringComparison.OrdinalIgnoreCase);
-
-        private bool disposed { get; set; }
-
-        public void Dispose()
-        {
-            if (disposed)
-                return;
-
-            DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Release(IrrecoverableFailures as Dictionary<string, StreamableLoadingResult<AssetBundleData>>);
-            disposed = true;
-        }
     }
 }
