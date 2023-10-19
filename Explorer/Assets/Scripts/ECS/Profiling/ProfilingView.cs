@@ -12,6 +12,10 @@ namespace ECS.Profiling
         [SerializeField]
         private TMP_Text averageFrameRate;
 
+        //Note: Doing it an input field so it can be selected and copied
+        [SerializeField]
+        private TMP_InputField version;
+
         [SerializeField]
         private TMP_Text hiccupCounter;
 
@@ -33,6 +37,8 @@ namespace ECS.Profiling
 
             openButton.onClick.AddListener(OpenProfilerWindow);
             closeButton.onClick.AddListener(CloseProfilerWindow);
+
+            version.text = $"V: {Application.version}";
         }
         public void SetFPS(float averageFrameTimeInSeconds)
         {
