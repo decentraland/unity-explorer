@@ -1,5 +1,5 @@
 {
-    "name": "DCL.Tests",
+    "name": "DCL.PlayMode.Tests",
     "rootNamespace": "",
     "references": [
         "GUID:dc04f38471c3a459fb4d31124ee9127d",
@@ -38,10 +38,28 @@
         "GUID:e37c129839591a044b0819431bee5cb5",
         "GUID:101b8b6ebaf64668909b49c4b7a1420d"
     ],
-    "includePlatforms": [
-        "Editor"
+    "includePlatforms": [],
+    "excludePlatforms": [
+        "Android",
+        "EmbeddedLinux",
+        "GameCoreScarlett",
+        "GameCoreXboxOne",
+        "iOS",
+        "LinuxStandalone64",
+        "CloudRendering",
+        "macOSStandalone",
+        "PS4",
+        "PS5",
+        "QNX",
+        "Stadia",
+        "Switch",
+        "tvOS",
+        "WSA",
+        "WebGL",
+        "WindowsStandalone32",
+        "WindowsStandalone64",
+        "XboxOne"
     ],
-    "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
@@ -54,9 +72,7 @@
         "ClearScript.Core.dll",
         "ClearScript.V8.ICUData.dll",
         "Newtonsoft.Json.dll",
-        "Google.Protobuf.dll",
-        "Microsoft.CodeAnalysis.CSharp.dll",
-        "Microsoft.CodeAnalysis.dll"
+        "Google.Protobuf.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [
