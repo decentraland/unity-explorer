@@ -1,3 +1,4 @@
+using Sentry;
 using Sentry.Unity;
 using UnityEngine;
 
@@ -6,6 +7,7 @@ namespace Diagnostics.ReportsHandling.Sentry
     [CreateAssetMenu(fileName = "SentryRuntimeConfiguration.asset", menuName = "Sentry/SentryRuntimeConfiguration", order = 999)]
     public class SentryRuntimeConfiguration : SentryRuntimeOptionsConfiguration
     {
+        // This file should be never committed since it may contain secrets
         [SerializeField] private string configYamlFilePath = "./.sentryconfig.yml";
 
         /// Called at the player startup by SentryInitialization.
@@ -16,9 +18,19 @@ namespace Diagnostics.ReportsHandling.Sentry
         {
             // Note that changes to the options here will **not** affect iOS, macOS and Android events. (i.e. environment and release)
             // Take a look at `SentryBuildTimeOptionsConfiguration` instead.
+            options.SetBeforeSend(ProcessAndFilterEvents);
+
 #if UNITY_EDITOR
             ApplyFromYamlFile(options);
 #endif
+        }
+
+        private SentryEvent ProcessAndFilterEvents(SentryEvent @event)
+        {
+            if (!@event.Tags.TryGetValue("custom_reporting", out string reporting)) return null;
+            if (reporting != "sentry") return null;
+            @event.UnsetTag("custom_reporting");
+            return @event;
         }
 
         private void ApplyFromYamlFile(SentryUnityOptions options) =>

@@ -7,6 +7,7 @@ namespace Diagnostics.ReportsHandling.Sentry
     [CreateAssetMenu(fileName = "SentryBuildTimeConfiguration.asset", menuName = "Sentry/SentryBuildTimeConfiguration", order = 999)]
     public class SentryBuildTimeConfiguration : SentryBuildTimeOptionsConfiguration
     {
+        // This file should be never committed since it may contain secrets
         [SerializeField] private string configYamlFilePath = "./.sentryconfig.yml";
 
         /// Called during app build. Changes made here will affect build-time processing, symbol upload, etc.
