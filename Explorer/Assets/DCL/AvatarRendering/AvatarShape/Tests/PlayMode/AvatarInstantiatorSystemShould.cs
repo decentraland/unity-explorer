@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
@@ -16,60 +17,67 @@ using ECS.Unity.Transforms.Components;
 using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
-using UnityEditor;
+using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
-using UnityEngine.TestTools;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
-
 
 namespace DCL.AvatarRendering.AvatarShape.Tests
 {
     public class AvatarInstantiatorSystemShould : UnitySystemTestBase<AvatarInstantiatorSystem>
     {
-        private AvatarBase instantiatedAvatarBase;
-        private AvatarShapeComponent avatarShapeComponent;
         private Entity avatarEntity;
+        private AvatarShapeComponent avatarShapeComponent;
+
         private Color randomSkinColor;
         private Color randomHairColor;
+        private Mesh avatarMesh;
 
-        private Shader shader;
-        private UnityEngine.ComputeShader computeShaderAsset;
 
         [SetUp]
-        public void Setup()
+        public async void Setup()
         {
             IConcurrentBudgetProvider budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
             budgetProvider.TrySpendBudget().Returns(true);
 
-            instantiatedAvatarBase = Object.Instantiate(AssetDatabase.LoadAssetAtPath<AvatarBase>("Assets/DCL/AvatarRendering/AvatarShape/Assets/AvatarBase.prefab"));
+            GameObject avatarBaseGameObject = await Addressables.LoadAssetAsync<GameObject>("AvatarBase_TestAsset");
+            AvatarBase instantiatedAvatarBase = Object.Instantiate(avatarBaseGameObject.GetComponent<AvatarBase>());
             IComponentPool<AvatarBase> avatarPoolRegistry = Substitute.For<IComponentPool<AvatarBase>>();
             avatarPoolRegistry.Get().Returns(instantiatedAvatarBase);
 
-            Promise promise = Promise.Create(world,
-                WearableComponentsUtils.CreateGetWearablesByPointersIntention(BodyShape.MALE, new List<string>(){ "skin", "hair"}),
-                new PartitionComponent());
-            world.Add(promise.Entity, new StreamableLoadingResult<IWearable[]>(new []{
-                GetMockWearable("body_shape", WearablesConstants.Categories.BODY_SHAPE),
-                GetMockWearable("skin", WearablesConstants.Categories.UPPER_BODY),
-                GetMockWearable("hair", WearablesConstants.Categories.HAIR)}));
+            avatarMesh = await Addressables.LoadAssetAsync<Mesh>("Avatar_Male_Mesh_TestAsset");
 
             randomSkinColor = new Color(0.5f, 0.5f, 0.5f, 1);
             randomHairColor = new Color(0.75f, 0.75f, 0.75f, 1);
 
+            UnityEngine.ComputeShader computeShader = await Addressables.LoadAssetAsync<UnityEngine.ComputeShader>("ComputeShaderSkinning_TestAsset");
+
+            IObjectPool<UnityEngine.ComputeShader> computeShaderPool = Substitute.For<IObjectPool<UnityEngine.ComputeShader>>();
+            computeShaderPool.Get().Returns(Object.Instantiate(computeShader));
+
+            Material celShadingMaterial = await Addressables.LoadAssetAsync<Material>("Avatar_CelShading_TestAsset");
+            IObjectPool<Material> materialPool = Substitute.For<IObjectPool<Material>>();
+            materialPool.Get().Returns(new Material(celShadingMaterial), new Material(celShadingMaterial), new Material(celShadingMaterial));
+
+            var promise = Promise.Create(world,
+                WearableComponentsUtils.CreateGetWearablesByPointersIntention(BodyShape.MALE, new List<string>
+                    { "skin", "hair" }),
+                new PartitionComponent());
+
+            world.Add(promise.Entity, new StreamableLoadingResult<IWearable[]>(new[]
+            {
+                GetMockWearable("body_shape", WearablesConstants.Categories.BODY_SHAPE),
+                GetMockWearable("skin", WearablesConstants.Categories.UPPER_BODY),
+                GetMockWearable("hair", WearablesConstants.Categories.HAIR),
+            }));
+
             avatarShapeComponent = new AvatarShapeComponent("TEST_AVATAR", "TEST_ID", BodyShape.MALE, promise,
                 randomSkinColor, randomHairColor);
 
-            computeShaderAsset = AssetDatabase.LoadAssetAtPath<UnityEngine.ComputeShader>("Assets/DCL/AvatarRendering/AvatarShape/Assets/ComputeShaderSkinning.compute");
-            IObjectPool<UnityEngine.ComputeShader> computeShaderPool = Substitute.For<IObjectPool<UnityEngine.ComputeShader>>();
-            computeShaderPool.Get().Returns(Object.Instantiate(computeShaderAsset));
-
-            shader = Shader.Find("Custom/Avatar_CelShading");
-            IObjectPool<Material> materialPool = Substitute.For<IObjectPool<Material>>();
-            materialPool.Get().Returns(new Material(shader), new Material(shader), new Material(shader));
-
             system = new AvatarInstantiatorSystem(world, budgetProvider, avatarPoolRegistry, materialPool, computeShaderPool,
                 new TextureArrayContainer(), Substitute.For<IWearableAssetsCache>(), new ComputeShaderSkinning(), new FixedComputeBufferHandler(10000, 4, 4));
+
         }
 
         private IWearable GetMockWearable(string materialName, string category)
@@ -80,32 +88,38 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                 = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
 
             //Creating a hierarchy
-            GameObject avatarGameObject = new GameObject();
+            var avatarGameObject = new GameObject();
             avatarGameObject.transform.SetParent(avatarGameObject.transform);
 
-            //Creating a fake SMR and material
+            //Creating a fake SMR
             SkinnedMeshRenderer skinnedMeshRenderer = avatarGameObject.AddComponent<SkinnedMeshRenderer>();
-            Material fakeABMaterial = new Material(Shader.Find("Standard"));
-            fakeABMaterial.name = materialName;
+            skinnedMeshRenderer.sharedMesh = avatarMesh;
+            skinnedMeshRenderer.bones = new Transform[ComputeShaderConstants.BONE_COUNT];
+            skinnedMeshRenderer.sharedMesh.bindposes = new Matrix4x4[ComputeShaderConstants.BONE_COUNT];
 
-            skinnedMeshRenderer.sharedMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/DCL/AvatarRendering/AvatarShape/Assets/Avatar_Male_Mesh.asset");
+            //Creating a fake standard material
+            var fakeABMaterial = new Material(Shader.Find("Standard"));
+            fakeABMaterial.name = materialName;
             skinnedMeshRenderer.material = fakeABMaterial;
 
-            WearableAsset.RendererInfo rendererInfo = new WearableAsset.RendererInfo(skinnedMeshRenderer, fakeABMaterial);
+            var rendererInfo = new WearableAsset.RendererInfo(skinnedMeshRenderer, fakeABMaterial);
 
             assetBundleData[BodyShape.MALE]
                 = new StreamableLoadingResult<WearableAsset>(new WearableAsset(avatarGameObject,
-                    new List<WearableAsset.RendererInfo>() { rendererInfo}));
+                    new List<WearableAsset.RendererInfo>
+                        { rendererInfo }));
 
             mockWearable.WearableAssets.Returns(assetBundleData);
             mockWearable.GetCategory().Returns(category);
-            return mockWearable ;
+            return mockWearable;
         }
 
         [Test]
-        [RequiresPlayMode]
-        public void InstantiateAvatar()
+        public async Task InstantiateAvatar()
         {
+            // For some reason SetUp is not awaited, probably a Unity's bug
+            await UniTask.WaitUntil(() => system != null && avatarMesh != null);
+
             //Arrange
             avatarEntity = world.Create(avatarShapeComponent, PartitionComponent.TOP_PRIORITY, new TransformComponent());
 
@@ -119,18 +133,19 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Assert.AreEqual(world.Get<AvatarShapeComponent>(avatarEntity).InstantiatedWearables[2].Instance.GetComponent<MeshRenderer>().material.GetColor(ComputeShaderConstants._BaseColour_ShaderID), randomHairColor);
         }
 
+
         [Test]
-        [RequiresPlayMode]
-        public void UpdateInstantiatedAvatar()
+        public async Task UpdateInstantiatedAvatar()
         {
             //Arrange
-            InstantiateAvatar();
+            await InstantiateAvatar();
 
             //Act
-            Promise newPromise = Promise.Create(world,
+            var newPromise = Promise.Create(world,
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(BodyShape.MALE, new List<string>()),
                 new PartitionComponent());
-            world.Add(newPromise.Entity, new StreamableLoadingResult<IWearable[]>(new []{GetMockWearable("body_shape", WearablesConstants.Categories.BODY_SHAPE)}));
+
+            world.Add(newPromise.Entity, new StreamableLoadingResult<IWearable[]>(new[] { GetMockWearable("body_shape", WearablesConstants.Categories.BODY_SHAPE) }));
 
             world.Get<AvatarShapeComponent>(avatarEntity).IsDirty = true;
             world.Get<AvatarShapeComponent>(avatarEntity).WearablePromise = newPromise;
@@ -142,9 +157,11 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         }
 
         [Test]
-        [RequiresPlayMode]
-        public void DestroyInstantiatedAvatar()
+        public async Task DestroyInstantiatedAvatar()
         {
+            // For some reason SetUp is not awaited, probably a Unity's bug
+            await UniTask.WaitUntil(() => system != null && avatarMesh != null);
+
             //Arrange
             Entity entity = world.Create(avatarShapeComponent, PartitionComponent.TOP_PRIORITY, new TransformComponent());
             system.Update(0);
