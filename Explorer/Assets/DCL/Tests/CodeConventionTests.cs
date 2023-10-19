@@ -64,6 +64,32 @@ namespace DCL.Tests
                 $"File {Path.GetFileName(file)}: Found async methods/functions without 'Async' suffix: \n{string.Join("\n", methodsWithoutProperSuffix)}");
         }
 
+        [TestCaseSource(nameof(AllCSharpFiles))]
+        public void UsingUnityEditorShouldBeSurroundedByDirectives(string file)
+        {
+            string fileContent = File.ReadAllText(file);
+            SyntaxTree tree = CSharpSyntaxTree.ParseText(fileContent);
+            SyntaxNode root = tree.GetRoot();
+
+            // Find all using directives for UnityEditor.
+            var usingUnityEditorDirectives = root.DescendantNodes(descendIntoTrivia: true) // descendIntoTrivia to get preprocessor directives
+                                                 .OfType<UsingDirectiveSyntax>()
+                                                 .Where(u => u.Name.ToFullString().Trim() == "UnityEditor")
+                                                 .ToList();
+
+            foreach (UsingDirectiveSyntax usingDirective in usingUnityEditorDirectives)
+            {
+                var precedingTrivia = usingDirective.GetLeadingTrivia().ToList();
+                var followingTrivia = usingDirective.GetTrailingTrivia().ToList();
+
+                bool hasStartDirective = precedingTrivia.Any(t => t.IsKind(SyntaxKind.IfDirectiveTrivia) && t.ToFullString().Contains("UNITY_EDITOR"));
+                bool hasEndDirective = followingTrivia.Any(t => t.IsKind(SyntaxKind.EndIfDirectiveTrivia));
+
+                Assert.IsTrue(hasStartDirective, $"File {Path.GetFileName(file)}: 'using UnityEditor;' is not preceded by '#if UNITY_EDITOR'.");
+                Assert.IsTrue(hasEndDirective, $"File {Path.GetFileName(file)}: 'using UnityEditor;' is not followed by '#endif'.");
+            }
+        }
+
         private static string GetName(SyntaxNode node) =>
             node switch
             {
