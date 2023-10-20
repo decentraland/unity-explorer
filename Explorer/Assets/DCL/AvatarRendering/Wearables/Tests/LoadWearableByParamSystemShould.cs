@@ -16,66 +16,62 @@ using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRenderi
 
 namespace DCL.AvatarRendering.Wearables.Tests
 {
+    [TestFixture]
+    public class LoadWearableByParamSystemShould : LoadSystemBaseShould<LoadWearablesByParamSystem, IWearable[], GetWearableByParamIntention>
+    {
+        private WearableCatalog wearableCatalog;
+        private readonly string existingURN = "urn:decentraland:off-chain:base-avatars:aviatorstyle";
 
-  [TestFixture]
-  public class LoadWearableByParamSystemShould : LoadSystemBaseShould<LoadWearablesByParamSystem, IWearable[], GetWearableByParamIntention>
-  {
-      private WearableCatalog wearableCatalog;
-      private readonly string existingURN = "urn:decentraland:off-chain:base-avatars:aviatorstyle";
+        private string successPath => $"file://{Application.dataPath}/../TestResources/Wearables/SuccessUserParam";
 
-      private string successPath => $"file://{Application.dataPath}/../TestResources/Wearables/SuccessUserParam";
+        private string failPath => $"file://{Application.dataPath}/../TestResources/Wearables/non_existing";
+        private string wrongTypePath => $"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}";
 
-      private string failPath => $"file://{Application.dataPath}/../TestResources/Wearables/non_existing";
-      private string wrongTypePath => $"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}";
+        protected override LoadWearablesByParamSystem CreateSystem()
+        {
+            wearableCatalog = new WearableCatalog();
 
-      protected override LoadWearablesByParamSystem CreateSystem()
-      {
-          wearableCatalog = new WearableCatalog();
+            IRealmData realmData = Substitute.For<IRealmData>();
+            realmData.Configured.Returns(true);
 
-          IRealmData realmData = Substitute.For<IRealmData>();
-          realmData.Configured.Returns(true);
+            return new LoadWearablesByParamSystem(world, cache, memoryBudgetProvider, realmData,
+                URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), wearableCatalog, new MutexSync());
+        }
 
-          return new LoadWearablesByParamSystem(world, cache, realmData,
-              URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), wearableCatalog, new MutexSync());
-      }
+        protected override void AssertSuccess(IWearable[] asset)
+        {
+            base.AssertSuccess(asset);
 
-      protected override void AssertSuccess(IWearable[] asset)
-      {
-          base.AssertSuccess(asset);
+            foreach (string wearableCatalogKey in wearableCatalog.wearableDictionary.Keys)
+                Debug.Log(wearableCatalogKey);
 
-          foreach (string wearableCatalogKey in wearableCatalog.wearableDictionary.Keys)
-              Debug.Log(wearableCatalogKey);
+            Assert.AreEqual(wearableCatalog.wearableDictionary.Count, 1);
+            Assert.NotNull(wearableCatalog.wearableDictionary[existingURN]);
+        }
 
-          Assert.AreEqual(wearableCatalog.wearableDictionary.Count, 1);
-          Assert.NotNull(wearableCatalog.wearableDictionary[existingURN]);
-      }
+        [Test]
+        public async Task ConcludeSuccessOnExistingWearable()
+        {
+            wearableCatalog.wearableDictionary.Add(existingURN, Substitute.For<IWearable>());
+            await ConcludeSuccess();
+        }
 
-      [Test]
-      public async Task ConcludeSuccessOnExistingWearable()
-      {
-          wearableCatalog.wearableDictionary.Add(existingURN, Substitute.For<IWearable>());
-          await ConcludeSuccess();
-      }
+        protected override GetWearableByParamIntention CreateSuccessIntention()
+        {
+            IURLBuilder urlBuilder = Substitute.For<IURLBuilder>();
+            urlBuilder.AppendDomainWithReplacedPath(Arg.Any<URLDomain>(), Arg.Any<URLSubdirectory>()).Returns(urlBuilder);
+            urlBuilder.AppendSubDirectory(Arg.Any<URLSubdirectory>()).Returns(urlBuilder);
+            urlBuilder.GetResult().Returns(successPath);
 
-      protected override GetWearableByParamIntention CreateSuccessIntention()
-      {
-          IURLBuilder urlBuilder = Substitute.For<IURLBuilder>();
-          urlBuilder.AppendDomainWithReplacedPath(Arg.Any<URLDomain>(), Arg.Any<URLSubdirectory>()).Returns(urlBuilder);
-          urlBuilder.AppendSubDirectory(Arg.Any<URLSubdirectory>()).Returns(urlBuilder);
-          urlBuilder.GetResult().Returns(successPath);
+            system.urlBuilder = urlBuilder;
 
-          system.urlBuilder = urlBuilder;
+            return new GetWearableByParamIntention(Array.Empty<(string, string)>(), successPath, new List<IWearable>());
+        }
 
-          return new GetWearableByParamIntention(Array.Empty<(string, string)>(), successPath, new List<IWearable>());
-      }
+        protected override GetWearableByParamIntention CreateNotFoundIntention() =>
+            new (Array.Empty<(string, string)>(), failPath, new List<IWearable>());
 
-      protected override GetWearableByParamIntention CreateNotFoundIntention() =>
-          new (Array.Empty<(string, string)>(), failPath, new List<IWearable>());
-
-      protected override GetWearableByParamIntention CreateWrongTypeIntention() =>
-          new (Array.Empty<(string, string)>(), wrongTypePath, new List<IWearable>());
-
+        protected override GetWearableByParamIntention CreateWrongTypeIntention() =>
+            new (Array.Empty<(string, string)>(), wrongTypePath, new List<IWearable>());
     }
-
-
 }

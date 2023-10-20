@@ -1,7 +1,10 @@
 ﻿using Arch.Core;
 using CrdtEcsBridge.Components.Transform;
 using ECS.Abstract;
+using ECS.Profiling;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Transforms.Components;
+using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -9,9 +12,10 @@ namespace ECS.TestSuite
 {
     public abstract class UnitySystemTestBase<TSystem> where TSystem: BaseUnityLoopSystem
     {
-        private World cachedWorld;
         protected TSystem system;
 
+        protected MemoryBudgetProvider memoryBudgetProvider = new (Substitute.For<ISystemMemory>(), Substitute.For<IProfilingProvider>());
+        private World cachedWorld;
         protected World world => cachedWorld ??= World.Create();
 
         [TearDown]

@@ -28,8 +28,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private readonly URLBuilder urlBuilder = new ();
 
         internal LoadWearableAssetBundleManifestSystem(World world,
+            MemoryBudgetProvider memoryBudgetProvider,
             IStreamableCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention> cache,
-            MutexSync mutexSync, URLDomain assetBundleURL) : base(world, cache, mutexSync)
+            MutexSync mutexSync, URLDomain assetBundleURL) : base(world, memoryBudgetProvider, cache, mutexSync)
         {
             this.assetBundleURL = assetBundleURL;
         }

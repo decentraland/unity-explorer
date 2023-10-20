@@ -28,16 +28,18 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private readonly URLSubdirectory lambdaSubdirectory;
 
         private readonly IRealmData realmData;
-        internal IURLBuilder urlBuilder = new URLBuilder();
         private readonly URLSubdirectory wearablesSubdirectory;
         private readonly WearableCatalog wearableCatalog;
 
         private readonly Func<bool> isRealmDataReady;
+        internal IURLBuilder urlBuilder = new URLBuilder();
 
         public LoadWearablesByParamSystem(
-            World world, IStreamableCache<IWearable[], GetWearableByParamIntention> cache, IRealmData realmData,
+            World world, IStreamableCache<IWearable[], GetWearableByParamIntention> cache,
+            MemoryBudgetProvider memoryBudgetProvider,
+            IRealmData realmData,
             URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory, WearableCatalog wearableCatalog,
-            MutexSync mutexSync) : base(world, cache, mutexSync)
+            MutexSync mutexSync) : base(world, memoryBudgetProvider, cache, mutexSync)
         {
             this.realmData = realmData;
             this.lambdaSubdirectory = lambdaSubdirectory;

@@ -1,5 +1,4 @@
 ﻿using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.StreamableLoading.Tests;
 using NUnit.Framework;
 using UnityEngine;
@@ -29,7 +28,7 @@ namespace ECS.StreamableLoading.Textures.Tests
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
         protected override LoadTextureSystem CreateSystem() =>
-            new (world, cache, new MutexSync());
+            new (world, memoryBudgetProvider, cache, new MutexSync());
 
         protected override void AssertSuccess(Texture2D asset)
         {

@@ -26,6 +26,7 @@ namespace ECS.StreamableLoading.Common.Systems
                                                                      .WithAll<TIntention, IPartitionComponent, StreamableLoadingState>()
                                                                      .WithNone<StreamableLoadingResult<TAsset>>();
 
+        private readonly MemoryBudgetProvider memoryBudgetProvider;
         private readonly IStreamableCache<TAsset, TIntention> cache;
 
         private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, TIntention> cachedInternalFlowDelegate;
@@ -38,8 +39,9 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private CancellationTokenSource cancellationTokenSource;
 
-        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync) : base(world)
+        protected LoadSystemBase(World world, MemoryBudgetProvider memoryBudgetProvider, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync) : base(world)
         {
+            this.memoryBudgetProvider = memoryBudgetProvider;
             this.cache = cache;
             this.mutexSync = mutexSync;
             query = World.Query(in CREATE_WEB_REQUEST);
@@ -109,8 +111,8 @@ namespace ECS.StreamableLoading.Common.Systems
             Flow(entity, currentSource, intention, state.AcquiredBudget, partitionComponent, cancellationTokenSource.Token).Forget();
         }
 
-        private async UniTask Flow(Entity entity,
-            AssetSource source, TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken disposalCt)
+        private async UniTask Flow(Entity entity, AssetSource source, TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition,
+            CancellationToken disposalCt)
         {
             StreamableLoadingResult<TAsset>? result = null;
 
@@ -123,6 +125,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 {
                     // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
                     acquiredBudget.Release();
+
                     // if the cached request is cancelled it does not mean failure for the new intent
                     (requestIsNotFulfilled, result) = await cachedSource.Task.SuppressCancellationThrow();
                 }

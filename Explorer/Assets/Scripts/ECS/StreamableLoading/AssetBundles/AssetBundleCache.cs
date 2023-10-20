@@ -12,7 +12,6 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleCache : IStreamableCache<AssetBundleData, GetAssetBundleIntention>
     {
-        public static bool destroyCache;
         private readonly Dictionary<GetAssetBundleIntention, AssetBundleData> cache;
         public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>> OngoingRequests { get; }
         public IDictionary<string, StreamableLoadingResult<AssetBundleData>> IrrecoverableFailures { get; }
@@ -31,6 +30,9 @@ namespace ECS.StreamableLoading.AssetBundles
             if (disposed)
                 return;
 
+            foreach (AssetBundleData ab in cache.Values)
+                ab.Dispose();
+
             DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Release(IrrecoverableFailures as Dictionary<string, StreamableLoadingResult<AssetBundleData>>);
             DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>.Release(OngoingRequests as Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>);
 
@@ -43,46 +45,12 @@ namespace ECS.StreamableLoading.AssetBundles
         public int GetHashCode(GetAssetBundleIntention obj) =>
             StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Hash);
 
-        public bool TryGet(in GetAssetBundleIntention key, out AssetBundleData asset)
-        {
-            if (destroyCache)
-            {
-                Dispose();
-
-                foreach (AssetBundleData assetBundleData in cache.Values)
-                    assetBundleData.AssetBundle.Unload(false);
-
-                cache.Clear();
-                asset = null;
-                return false;
-            }
-
-            if (cache.TryGetValue(key, out asset))
-            {
-                UnityEngine.Debug.Log($"VV:: Try get = {cache.Count}", asset.GameObject);
-                return true;
-            }
-
-            return false;
-        }
+        public bool TryGet(in GetAssetBundleIntention key, out AssetBundleData asset) =>
+            cache.TryGetValue(key, out asset);
 
         public void Add(in GetAssetBundleIntention key, AssetBundleData asset)
         {
-            if (destroyCache)
-            {
-                Dispose();
-
-                foreach (AssetBundleData assetBundleData in cache.Values)
-                    assetBundleData.AssetBundle.Unload(false);
-
-                cache.Clear();
-                return;
-            }
-            else
-            {
-                UnityEngine.Debug.Log($"VV:: Add = {cache.Count}", asset.GameObject);
-                cache.Add(key, asset);
-            }
+            cache.Add(key, asset);
         }
 
         public void Dereference(in GetAssetBundleIntention key, AssetBundleData asset) { }

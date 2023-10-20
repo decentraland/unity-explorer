@@ -1,6 +1,7 @@
 ﻿using JetBrains.Annotations;
 using System;
 using UnityEngine;
+using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
@@ -23,16 +24,15 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public AssetBundleData(AssetBundle assetBundle, [CanBeNull] AssetBundleMetrics? metrics, GameObject gameObject)
         {
-            Debug.Log($"VV:: Creating AssetBundleData with {gameObject?.name}", gameObject);
             AssetBundle = assetBundle;
             Metrics = metrics;
-
             GameObject = gameObject;
         }
 
         public void Dispose()
         {
-            AssetBundle.Unload(true);
+            AssetBundle.Unload(false);
+            UnityObjectUtils.SafeDestroy(gameObject);
         }
     }
 }

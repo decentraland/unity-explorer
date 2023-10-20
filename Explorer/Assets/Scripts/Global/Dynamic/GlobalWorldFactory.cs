@@ -57,6 +57,7 @@ namespace Global.Dynamic
         private readonly IRealmData realmData;
         private readonly URLDomain assetBundlesURL;
         private readonly IReadOnlyList<IDCLGlobalPlugin> globalPlugins;
+        private readonly MemoryBudgetProvider memoryBudgetProvider;
 
         public GlobalWorldFactory(in StaticContainer staticContainer, IRealmPartitionSettings realmPartitionSettings,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
@@ -70,6 +71,7 @@ namespace Global.Dynamic
             this.realmSamplingData = realmSamplingData;
             this.assetBundlesURL = assetBundlesURL;
             this.globalPlugins = globalPlugins;
+            memoryBudgetProvider = staticContainer.SingletonSharedDependencies.MemoryBudgetProvider;
             this.realmData = realmData;
         }
 
@@ -102,13 +104,13 @@ namespace Global.Dynamic
 
             IConcurrentBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(100);
 
-            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
-            LoadSceneDefinitionSystem.InjectToWorld(ref builder, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
+            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, memoryBudgetProvider, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
+            LoadSceneDefinitionSystem.InjectToWorld(ref builder, memoryBudgetProvider, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
 
             LoadSceneSystem.InjectToWorld(ref builder,
                 new LoadSceneSystemLogic(assetBundlesURL),
                 new LoadEmptySceneSystemLogic(emptyScenesWorldFactory, componentPoolsRegistry, EMPTY_SCENES_MAPPINGS_URL),
-                sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex);
+                sceneFactory, memoryBudgetProvider, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex);
 
             GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider);
 

@@ -40,7 +40,7 @@ namespace Global.Dynamic
                 new GlobalInteractionPlugin(dclInput, rootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.CameraSamplingData, exposedGlobalDataContainer.ExposedCameraData),
                 new ProfilingPlugin(staticContainer.AssetsProvisioner, staticContainer.ProfilingProvider),
-                new WearablePlugin(staticContainer.AssetsProvisioner, realmData, ASSET_BUNDLES_URL),
+                new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.SingletonSharedDependencies.MemoryBudgetProvider, realmData, ASSET_BUNDLES_URL),
                 new AvatarPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, realmData)
             };
 

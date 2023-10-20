@@ -32,9 +32,10 @@ namespace ECS.StreamableLoading.AssetBundles
         private readonly AssetBundleLoadingMutex loadingMutex;
 
         internal LoadAssetBundleSystem(World world,
+            MemoryBudgetProvider memoryBudgetProvider,
             IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache,
             MutexSync mutexSync,
-            AssetBundleLoadingMutex loadingMutex) : base(world, cache, mutexSync)
+            AssetBundleLoadingMutex loadingMutex) : base(world, memoryBudgetProvider, cache, mutexSync)
         {
             this.loadingMutex = loadingMutex;
         }

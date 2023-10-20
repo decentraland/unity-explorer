@@ -49,6 +49,19 @@ namespace Global
 
         public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
 
+        public IAssetsProvisioner AssetsProvisioner { get; private set; }
+
+        /// <summary>
+        ///     Character Object exists in a single instance
+        /// </summary>
+        public ICharacterObject CharacterObject => characterObject.Value;
+
+        public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
+
+        public IPartitionSettings PartitionSettings => partitionSettings.Value;
+
+        public IRealmPartitionSettings RealmPartitionSettings => realmPartitionSettings.Value;
+
         public async UniTask Initialize(StaticSettings settings, CancellationToken ct)
         {
             (characterObject, reportHandlingSettings, partitionSettings, realmPartitionSettings) =
@@ -67,19 +80,6 @@ namespace Global
             partitionSettings.Dispose();
             reportHandlingSettings.Dispose();
         }
-
-        public IAssetsProvisioner AssetsProvisioner { get; private set; }
-
-        /// <summary>
-        ///     Character Object exists in a single instance
-        /// </summary>
-        public ICharacterObject CharacterObject => characterObject.Value;
-
-        public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
-
-        public IPartitionSettings PartitionSettings => partitionSettings.Value;
-
-        public IRealmPartitionSettings RealmPartitionSettings => realmPartitionSettings.Value;
 
         public static async UniTask<(StaticContainer container, bool success)> Create(IPluginSettingsContainer settingsContainer, CancellationToken ct)
         {
@@ -102,7 +102,8 @@ namespace Global
                 new SceneEntityFactory(),
                 new PartitionedWorldsAggregate.Factory(),
                 new ConcurrentLoadingBudgetProvider(50),
-                new FrameTimeCapBudgetProvider(40, profilingProvider)
+                new FrameTimeCapBudgetProvider(40, profilingProvider),
+                new MemoryBudgetProvider(new SystemMemoryMock(50), profilingProvider)
             );
 
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
@@ -112,14 +113,14 @@ namespace Global
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
 
-            var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings);
+            var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, sharedDependencies.MemoryBudgetProvider);
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
                 new TransformsPlugin(sharedDependencies),
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
                 new PrimitiveCollidersPlugin(sharedDependencies),
-                new TexturesLoadingPlugin(),
+                new TexturesLoadingPlugin(sharedDependencies.MemoryBudgetProvider),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 assetBundlePlugin,
