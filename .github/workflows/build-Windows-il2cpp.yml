@@ -28,7 +28,6 @@ jobs:
           - targetPlatform: StandaloneWindows64
             dockerImage: windows-2019
 
-
     name: Build
     runs-on: ${{ matrix.dockerImage }}
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (!github.event.pull_request.draft)
