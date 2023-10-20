@@ -19,10 +19,7 @@ namespace DCL.AvatarRendering.AvatarShape
         public void SetAsMainPlayer(bool isMainPlayer)
         {
             if (isMainPlayer)
-            {
-                avatarAnimator.transform.localPosition = new Vector3(0, -1.1f, 0);
                 avatarAnimator.runtimeAnimatorController = playerAnimator;
-            }
             else
             {
                 avatarAnimator.runtimeAnimatorController = randomAnimator;

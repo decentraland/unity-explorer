@@ -43,8 +43,7 @@ namespace DCL.CharacterMotion.Systems
 
             bool hasGroundedFlag = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
 
-            if (!Mathf.Approximately(delta.y, 0f))
-                rigidTransform.IsGrounded = hasGroundedFlag;
+            if (!Mathf.Approximately(delta.y, 0f)) { rigidTransform.IsGrounded = hasGroundedFlag || characterController.isGrounded; }
         }
     }
 }
