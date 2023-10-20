@@ -475,8 +475,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2561918839770535189}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: -1, z: 0}
+  m_LocalScale: {x: 0.01, y: 0.01, z: 0.01}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 174017465429567360}
@@ -2047,7 +2047,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <AvatarSkinnedMeshRenderer>k__BackingField: {fileID: 918335364077391645}
   avatarAnimator: {fileID: 6654053651110562472}
-  playerAnimator: {fileID: 9100000, guid: 3662049975e2d0549a312769ab17ad07, type: 2}
+  playerAnimator: {fileID: 9100000, guid: acef92320d301c14d9df6983262b5fea, type: 2}
   randomAnimator: {fileID: 9100000, guid: aab64a77806b44a43b6f5d0da6de94c6, type: 2}
 --- !u!1 &8230367895675129645
 GameObject:

@@ -1,6 +1,7 @@
 ﻿using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
+using DCL.CharacterMotion.Utils;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
@@ -24,7 +25,7 @@ namespace DCL.CharacterMotion
             Vector3 cameraRight = cameraTransform.right;
             cameraRight.y = 0;
 
-            float speedLimit = GetSpeedLimit(settings, input);
+            float speedLimit = SpeedLimit.Get(settings, input.Kind);
             float yAxis = speedLimit * input.Axes.y;
             float xAxis = speedLimit * input.Axes.x;
 
@@ -61,19 +62,6 @@ namespace DCL.CharacterMotion
                 return Mathf.Lerp(settings.Acceleration, settings.MaxAcceleration, settings.AccelerationCurve.Evaluate(moveVelocity.AccelerationWeight));
             else
                 return Mathf.Lerp(settings.AirAcceleration, settings.MaxAirAcceleration, settings.AccelerationCurve.Evaluate(moveVelocity.AccelerationWeight));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static float GetSpeedLimit(ICharacterControllerSettings settings, in MovementInputComponent inputComponent)
-        {
-            switch (inputComponent.Kind)
-            {
-                case MovementKind.Run:
-                    return settings.RunSpeed;
-                case MovementKind.Jog:
-                    return settings.JogSpeed;
-                default: return settings.WalkSpeed;
-            }
         }
     }
 }

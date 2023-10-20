@@ -5,8 +5,8 @@ namespace DCL.AvatarRendering.AvatarShape
 {
     public class AvatarBase : MonoBehaviour
     {
-        [SerializeField]
-        private Animator avatarAnimator;
+        [field: SerializeField]
+        public Animator avatarAnimator;
 
         [SerializeField]
         private RuntimeAnimatorController playerAnimator;
@@ -22,7 +22,6 @@ namespace DCL.AvatarRendering.AvatarShape
             {
                 avatarAnimator.transform.localPosition = new Vector3(0, -1.1f, 0);
                 avatarAnimator.runtimeAnimatorController = playerAnimator;
-                avatarAnimator.gameObject.AddComponent<PlayerAnimatorController>();
             }
             else
             {
