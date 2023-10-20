@@ -1,7 +1,12 @@
 name: Unity Windows Build IL2CPP
 
 on:
-  pull_request: {}
+  pull_request: 
+      types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
   push: { branches: [main] }
 
 env:
@@ -14,6 +19,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event.pull_request && !github.event.pull_request.draft)
   build:
     strategy:
       max-parallel: 1
