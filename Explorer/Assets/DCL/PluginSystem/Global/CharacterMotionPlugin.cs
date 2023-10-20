@@ -41,12 +41,14 @@ namespace DCL.PluginSystem.Global
                 new CharacterRigidTransform(),
                 (ICharacterControllerSettings)settings.Value,
                 characterObject.Controller,
-                new CharacterAnimationComponent(new CharacterAnimationComponent.AnimationTriggers()));
+                new CharacterAnimationComponent(new CharacterAnimationComponent.AnimationTriggers()),
+                new CharacterPlatformComponent());
 
             InterpolateCharacterSystem.InjectToWorld(ref builder);
             RotateCharacterSystem.InjectToWorld(ref builder);
             CalculateCharacterVelocitySystem.InjectToWorld(ref builder);
             CharacterAnimationSystem.InjectToWorld(ref builder);
+            CharacterPlatformSystem.InjectToWorld(ref builder);
         }
     }
 }

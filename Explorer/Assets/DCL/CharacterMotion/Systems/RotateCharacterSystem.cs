@@ -37,7 +37,8 @@ namespace DCL.CharacterMotion.Systems
             [Data] float dt,
             ref ICharacterControllerSettings characterControllerSettings,
             ref CharacterRigidTransform rigidTransform,
-            ref TransformComponent transform)
+            ref TransformComponent transform,
+            ref CharacterPlatformComponent platformComponent)
         {
             Transform characterTransform = transform.Transform;
             Vector3 targetForward = rigidTransform.MoveVelocity.Velocity;
@@ -47,6 +48,11 @@ namespace DCL.CharacterMotion.Systems
 
             Quaternion targetRotation = Quaternion.LookRotation(targetForward);
             characterTransform.rotation = Quaternion.RotateTowards(characterTransform.rotation, targetRotation, characterControllerSettings.RotationSpeed * dt);
+
+            // TODO: Move this to other System?
+            if (platformComponent.CurrentPlatform != null)
+                platformComponent.LastRotation = platformComponent.CurrentPlatform.transform.InverseTransformDirection(characterTransform.forward);
+
         }
     }
 }

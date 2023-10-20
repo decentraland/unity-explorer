@@ -35,7 +35,8 @@ namespace DCL.CharacterMotion.Systems
             [Data] float dt,
             ref ICharacterControllerSettings settings,
             ref CharacterRigidTransform rigidTransform,
-            ref CharacterController characterController)
+            ref CharacterController characterController,
+            ref CharacterPlatformComponent platformComponent)
         {
             Vector3 delta = (rigidTransform.MoveVelocity.Velocity + rigidTransform.NonInterpolatedVelocity) * dt;
             CollisionFlags collisionFlags = characterController.Move(delta);
@@ -44,6 +45,10 @@ namespace DCL.CharacterMotion.Systems
             bool hasGroundedFlag = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
 
             if (!Mathf.Approximately(delta.y, 0f)) { rigidTransform.IsGrounded = hasGroundedFlag || characterController.isGrounded; }
+
+            // TODO: Move this to other System?
+            if (platformComponent.CurrentPlatform != null)
+                platformComponent.LastPosition = platformComponent.CurrentPlatform.transform.InverseTransformPoint(characterController.transform.position);
         }
     }
 }
