@@ -31,6 +31,7 @@ jobs:
 
     name: Build
     runs-on: ${{ matrix.dockerImage }}
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (!github.event.pull_request.draft)
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
