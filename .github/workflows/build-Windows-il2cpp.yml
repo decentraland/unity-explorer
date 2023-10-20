@@ -19,8 +19,7 @@ concurrency:
   cancel-in-progress: true
 
 
-jobs:
-  if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (!github.event.pull_request.draft)
+jobs:  
   build:
     strategy:
       max-parallel: 1
