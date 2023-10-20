@@ -18,6 +18,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
     /// </summary>
     public class GltfContainerAssetsCache : IStreamableCache<GltfContainerAsset, string>
     {
+        public static bool clearCache;
         private readonly Dictionary<string, List<GltfContainerAsset>> cache;
         private readonly Dictionary<string, (int, float)> cacheMetrics;
 
@@ -55,10 +56,21 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
         {
             if (cache.TryGetValue(key, out List<GltfContainerAsset> list) && list.Count > 0)
             {
-                // Remove from the tail of the list
-                asset = list[^1];
-                list.RemoveAt(list.Count - 1);
-                return true;
+                if (!clearCache)
+                { // Remove from the tail of the list
+                    asset = list[^1];
+                    list.RemoveAt(list.Count - 1);
+                    return true;
+                }
+
+                Debug.Log($"VV: clearing {cache.Values.Count}");
+
+                foreach (List<GltfContainerAsset> a in cache.Values)
+                {
+                    foreach (GltfContainerAsset b in a) { b.Dispose(); }
+
+                    a.Clear();
+                }
             }
 
             asset = default(GltfContainerAsset);
@@ -72,6 +84,18 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
         public void Dereference(in string key, GltfContainerAsset asset)
         {
+            if (clearCache)
+            {
+                foreach (List<GltfContainerAsset> a in cache.Values)
+                {
+                    foreach (GltfContainerAsset b in a) { b.Dispose(); }
+
+                    a.Clear();
+                }
+
+                return;
+            }
+
             // Return to the pool
             if (!cache.TryGetValue(key, out List<GltfContainerAsset> list))
                 cache[key] = list = new List<GltfContainerAsset>(maxSize / 10);
