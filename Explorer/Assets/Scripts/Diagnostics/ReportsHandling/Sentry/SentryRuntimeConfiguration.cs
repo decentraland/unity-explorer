@@ -1,5 +1,6 @@
-using Sentry;
 using Sentry.Unity;
+using Sentry.Unity.Integrations;
+using System;
 using UnityEngine;
 
 namespace Diagnostics.ReportsHandling.Sentry
@@ -18,19 +19,21 @@ namespace Diagnostics.ReportsHandling.Sentry
         {
             // Note that changes to the options here will **not** affect iOS, macOS and Android events. (i.e. environment and release)
             // Take a look at `SentryBuildTimeOptionsConfiguration` instead.
-            options.SetBeforeSend(ProcessAndFilterEvents);
+
+            UnhookSentryReportingFromUnityLogs();
 
 #if UNITY_EDITOR
             ApplyFromYamlFile(options);
 #endif
         }
 
-        private SentryEvent ProcessAndFilterEvents(SentryEvent @event)
+        private void UnhookSentryReportingFromUnityLogs()
         {
-            if (!@event.Tags.TryGetValue("custom_reporting", out string reporting)) return null;
-            if (reporting != "sentry") return null;
-            @event.UnsetTag("custom_reporting");
-            return @event;
+            var onLogMessageReceived = (Application.LogCallback)Delegate.CreateDelegate(typeof(Application.LogCallback),
+                ApplicationAdapter.Instance,
+                "OnLogMessageReceived");
+
+            Application.logMessageReceivedThreaded -= onLogMessageReceived;
         }
 
         private void ApplyFromYamlFile(SentryUnityOptions options) =>
