@@ -21,20 +21,21 @@ namespace DCL.CharacterMotion.Systems
 
         protected override void Update(float t)
         {
-            ResolveVelocityQuery(World, t);
+            UpdateAnimationQuery(World, t);
         }
 
         [Query]
-        private void ResolveVelocity(
+        private void UpdateAnimation(
             [Data] float dt,
             ref CharacterAnimationComponent animationComponent,
             in AvatarBase avatarBase,
-            in ICharacterControllerSettings characterControllerSettings,
+            in ICharacterControllerSettings settings,
             in CharacterRigidTransform rigidTransform,
             in MovementInputComponent movementInput
         )
         {
-            ApplyMovementBlend.Execute(dt, ref animationComponent, in characterControllerSettings, in rigidTransform, in movementInput, in avatarBase);
+            ApplyMovementBlend.Execute(dt, ref animationComponent, in settings, in rigidTransform, in movementInput, in avatarBase);
+            ApplyJumpState.Execute(ref animationComponent, in settings, in rigidTransform, in avatarBase);
         }
     }
 }

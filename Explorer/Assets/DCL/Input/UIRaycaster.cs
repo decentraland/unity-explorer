@@ -20,6 +20,17 @@ namespace DCL.Input
         public IReadOnlyList<RaycastResult> RaycastAll(Vector2 position)
         {
             pointerEventData.position = position;
+            raycastResults.Clear();
+
+            bool isInSafeAreaWidth = position.x < 15 || position.x > Screen.width - 15;
+            bool isInSafeAreaHeight = position.y < 15 || position.y > Screen.height - 15;
+
+            if (isInSafeAreaWidth || isInSafeAreaHeight)
+            {
+                raycastResults.Add(new RaycastResult());
+                return raycastResults;
+            }
+
             eventSystem.RaycastAll(pointerEventData, raycastResults);
             return raycastResults;
         }

@@ -30,8 +30,8 @@ namespace DCL.CharacterMotion.Animation
                 targetBlend = velocityMagnitude / maxVelocity * movementBlendId;
             }
 
-            animationComponent.MovementBlendValue = Mathf.MoveTowards(animationComponent.MovementBlendValue, targetBlend, dt * settings.MovAnimBlendSpeed);
-            avatarBase.avatarAnimator.SetFloat(AnimationHashes.MOVEMENT_BLEND, animationComponent.MovementBlendValue);
+            animationComponent.States.MovementBlendValue = Mathf.MoveTowards(animationComponent.States.MovementBlendValue, targetBlend, dt * settings.MovAnimBlendSpeed);
+            avatarBase.avatarAnimator.SetFloat(AnimationHashes.MOVEMENT_BLEND, animationComponent.States.MovementBlendValue);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

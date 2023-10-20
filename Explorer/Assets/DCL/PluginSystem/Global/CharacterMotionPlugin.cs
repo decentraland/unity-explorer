@@ -41,7 +41,7 @@ namespace DCL.PluginSystem.Global
                 new CharacterRigidTransform(),
                 (ICharacterControllerSettings)settings.Value,
                 characterObject.Controller,
-                new CharacterAnimationComponent());
+                new CharacterAnimationComponent(new CharacterAnimationComponent.AnimationTriggers()));
 
             InterpolateCharacterSystem.InjectToWorld(ref builder);
             RotateCharacterSystem.InjectToWorld(ref builder);
