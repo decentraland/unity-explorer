@@ -34,13 +34,21 @@ jobs:
     steps:
       - name: Set SHA env variable
         run: |
-          if [[ "${{ github.event_name }}" == "push" ]]; then
-            SHORT_SHA=$(git rev-parse --short ${{ github.sha }})
-            echo "CUSTOM_SHA=$SHORT_SHA" >> $GITHUB_ENV
-          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            SHORT_SHA=$(git rev-parse --short ${{ github.event.pull_request.head.sha }})
-            echo "CUSTOM_SHA=$SHORT_SHA" >> $GITHUB_ENV
-    
+            $eventName = "${{ github.event_name }}"
+
+            if ($eventName -eq "push") {
+                $LONG_SHA = "${{ github.sha }}"
+                $SHORT_SHA = ($LONG_SHA).Substring(0, 7)
+                Add-Content -Value "CUSTOM_SHA=$SHORT_SHA" -Path $env:GITHUB_ENV
+                Write-Output $SHORT_SHA
+            }
+            elseif ($eventName -eq "pull_request") {
+                $LONG_SHA = "${{ github.event.pull_request.head.sha }}"
+                $SHORT_SHA = ($LONG_SHA).Substring(0, 7)
+                Add-Content -Value "CUSTOM_SHA=$SHORT_SHA" -Path $env:GITHUB_ENV
+                Write-Output $SHORT_SHA
+            }
+
       - name: Checkout code
         uses: actions/checkout@v3
 
