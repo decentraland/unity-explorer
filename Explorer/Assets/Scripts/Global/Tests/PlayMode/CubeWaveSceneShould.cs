@@ -11,7 +11,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.TestTools;
 
 namespace Global.Tests
 {
@@ -78,7 +77,6 @@ namespace Global.Tests
         }
 
         [Test]
-        [RequiresPlayMode]
         public async Task EmitECSComponents()
         {
             // For some reason SetUp is not awaited, probably a Unity's bug
