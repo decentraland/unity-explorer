@@ -1,7 +1,9 @@
+using Collections.Pooled;
 using CRDT.Memory;
 using CRDT.Protocol;
 using CRDT.Protocol.Factory;
 using NUnit.Framework;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace CRDT.CRDTTests.Protocol
@@ -9,13 +11,13 @@ namespace CRDT.CRDTTests.Protocol
     [TestFixture]
     public class CRDTProtocolShould
     {
-        private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
-
         [SetUp]
         public void SetUp()
         {
             crdtPooledMemoryAllocator = CRDTPooledMemoryAllocator.Create();
         }
+
+        private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
 
         [Test]
         [TestCaseSource(typeof(CRDTTestsUtils), nameof(CRDTTestsUtils.GetTestFilesPath))]
@@ -35,16 +37,16 @@ namespace CRDT.CRDTTests.Protocol
 
         private void AssertTestFile(ParsedCRDTTestFile parsedFile)
         {
-            CRDTProtocol crdt = new CRDTProtocol();
+            var crdt = new CRDTProtocol();
 
-            for (int i = 0; i < parsedFile.fileInstructions.Count; i++)
+            for (var i = 0; i < parsedFile.fileInstructions.Count; i++)
             {
                 ParsedCRDTTestFile.TestFileInstruction instruction = parsedFile.fileInstructions[i];
 
                 if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.MESSAGE)
                 {
                     (CRDTMessage msg, CRDTReconciliationResult? expectedResult) = ParsedCRDTTestFile.InstructionToMessage(instruction, crdtPooledMemoryAllocator);
-                    var result = crdt.ProcessMessage(msg);
+                    CRDTReconciliationResult result = crdt.ProcessMessage(msg);
 
                     if (expectedResult != null)
                     {
@@ -54,7 +56,7 @@ namespace CRDT.CRDTTests.Protocol
                 }
                 else if (instruction.instructionType == ParsedCRDTTestFile.InstructionType.FINAL_STATE)
                 {
-                    var finalState = ParsedCRDTTestFile.InstructionToFinalState(instruction);
+                    CRDTProtocol.State finalState = ParsedCRDTTestFile.InstructionToFinalState(instruction);
                     bool sameState = AreStatesEqual(crdt.CRDTState, finalState, out string reason);
 
                     Assert.IsTrue(sameState, $"Final state mismatch {instruction.testSpect} " +
@@ -67,9 +69,9 @@ namespace CRDT.CRDTTests.Protocol
 
         private void AssertGetCurrentState(ParsedCRDTTestFile parsedFile)
         {
-            CRDTProtocol crdt = new CRDTProtocol();
+            var crdt = new CRDTProtocol();
 
-            for (int i = 0; i < parsedFile.fileInstructions.Count; i++)
+            for (var i = 0; i < parsedFile.fileInstructions.Count; i++)
             {
                 ParsedCRDTTestFile.TestFileInstruction instruction = parsedFile.fileInstructions[i];
 
@@ -106,10 +108,10 @@ namespace CRDT.CRDTTests.Protocol
                 return false;
             }
 
-            foreach (var componentA in stateA.lwwComponents)
+            foreach (KeyValuePair<int, PooledDictionary<CRDTEntity, CRDTProtocol.EntityComponentData>> componentA in stateA.lwwComponents)
             {
                 // The component A is not in the state B
-                if (!stateB.lwwComponents.TryGetValue(componentA.Key, out var componentB))
+                if (!stateB.lwwComponents.TryGetValue(componentA.Key, out PooledDictionary<CRDTEntity, CRDTProtocol.EntityComponentData> componentB))
                 {
                     if (stateB.lwwComponents.Count == 0)
                         continue;
@@ -118,13 +120,13 @@ namespace CRDT.CRDTTests.Protocol
                     return false;
                 }
 
-                foreach (var entityComponent in componentA.Value)
+                foreach (KeyValuePair<CRDTEntity, CRDTProtocol.EntityComponentData> entityComponent in componentA.Value)
                 {
-                    var entityId = entityComponent.Key;
-                    var entityComponentDataA = entityComponent.Value;
+                    CRDTEntity entityId = entityComponent.Key;
+                    CRDTProtocol.EntityComponentData entityComponentDataA = entityComponent.Value;
 
                     // The entity is in the stateA, but not in stateB
-                    if (!componentB.TryGetValue(entityId, out var entityComponentDataB))
+                    if (!componentB.TryGetValue(entityId, out CRDTProtocol.EntityComponentData entityComponentDataB))
                     {
                         reason = $"The entity {entityId} in the component {componentA.Key} from stateA is not in stateB.";
                         return false;
@@ -153,7 +155,7 @@ namespace CRDT.CRDTTests.Protocol
                 return false;
             }
 
-            foreach (var entity in stateA.deletedEntities)
+            foreach (KeyValuePair<int, int> entity in stateA.deletedEntities)
             {
                 if (!stateB.deletedEntities.TryGetValue(entity.Key, out int entityVersion))
                 {

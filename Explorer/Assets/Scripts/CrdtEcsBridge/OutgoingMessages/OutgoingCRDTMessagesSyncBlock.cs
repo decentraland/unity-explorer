@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace CrdtEcsBridge.OutgoingMessages
 {
     /// <summary>
-    /// Prevents modification to the outgoing CRDT messages while they being accessed from the background thread
+    ///     Prevents modification to the outgoing CRDT messages while they being accessed from the background thread
     /// </summary>
     public readonly struct OutgoingCRDTMessagesSyncBlock : IDisposable
     {
@@ -29,7 +29,7 @@ namespace CrdtEcsBridge.OutgoingMessages
         public int PayloadLength { get; }
 
         /// <summary>
-        /// Flushes the outgoing CRDT messages and releases the mutex
+        ///     Flushes the outgoing CRDT messages and releases the mutex
         /// </summary>
         public void Dispose()
         {

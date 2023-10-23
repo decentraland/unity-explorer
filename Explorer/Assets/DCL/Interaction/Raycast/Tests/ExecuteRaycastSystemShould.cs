@@ -26,6 +26,7 @@ namespace DCL.Interaction.Raycast.Tests
 {
     public class ExecuteRaycastSystemShould : UnitySystemTestBase<ExecuteRaycastSystem>
     {
+        private readonly List<Component> instantiatedTemp = new ();
         private IEntityCollidersSceneCache entityCollidersSceneCache;
         private IConcurrentBudgetProvider budgetProvider;
         private ISceneStateProvider sceneStateProvider;
@@ -36,8 +37,6 @@ namespace DCL.Interaction.Raycast.Tests
         private PartitionComponent partitionComponent;
         private Entity raycastEntity;
         private PBRaycastResult raycastResult;
-
-        private readonly List<Component> instantiatedTemp = new ();
 
         [SetUp]
         public void SetUp()

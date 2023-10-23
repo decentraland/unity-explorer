@@ -43,12 +43,14 @@ namespace DCL.PluginSystem.Global
             this.globalInputEvents = globalInputEvents;
         }
 
-        public async UniTask Initialize(Settings settings, CancellationToken ct)
+        public void Dispose() { }
+
+        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
             this.settings = settings;
 
             hoverCanvas =
-                (await assetsProvisioner.ProvideMainAsset(settings.hoverCanvasSettings.HoverCanvasAsset, ct: ct))
+                (await assetsProvisioner.ProvideMainAssetAsync(settings.hoverCanvasSettings.HoverCanvasAsset, ct: ct))
                .Value.InstantiateForElement<HoverCanvas>();
 
             hoverCanvas.Initialize();
@@ -89,8 +91,6 @@ namespace DCL.PluginSystem.Global
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
             PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
         }
-
-        public void Dispose() { }
 
         [Serializable]
         public class Settings : IDCLPluginSettings

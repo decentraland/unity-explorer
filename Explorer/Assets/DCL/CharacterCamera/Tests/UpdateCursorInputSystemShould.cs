@@ -1,12 +1,9 @@
 ﻿using Arch.Core;
-using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Systems;
 using DCL.Input;
 using NSubstitute;
 using NUnit.Framework;
-using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -16,14 +13,6 @@ namespace DCL.CharacterCamera.Tests
     [TestFixture]
     public class UpdateCursorInputSystemShould : InputTestFixture
     {
-        private UpdateCursorInputSystem system;
-        private World world;
-        private Entity entity;
-        private Keyboard keyboard;
-        private Mouse mouse;
-        private IUIRaycaster uiRaycaster;
-        private ICursor cursor;
-
         [SetUp]
         public void CreateCameraSetup()
         {
@@ -40,7 +29,7 @@ namespace DCL.CharacterCamera.Tests
             uiRaycaster = Substitute.For<IUIRaycaster>();
             cursor = Substitute.For<ICursor>();
 
-            system = new UpdateCursorInputSystem(world, dlcInput, this.uiRaycaster, cursor);
+            system = new UpdateCursorInputSystem(world, dlcInput, uiRaycaster, cursor);
             system.Initialize();
         }
 
@@ -50,6 +39,14 @@ namespace DCL.CharacterCamera.Tests
             InputSystem.RemoveDevice(keyboard);
             InputSystem.RemoveDevice(mouse);
         }
+
+        private UpdateCursorInputSystem system;
+        private World world;
+        private Entity entity;
+        private Keyboard keyboard;
+        private Mouse mouse;
+        private IUIRaycaster uiRaycaster;
+        private ICursor cursor;
 
         [Test]
         public void DontLockCursorWhenOverUI()

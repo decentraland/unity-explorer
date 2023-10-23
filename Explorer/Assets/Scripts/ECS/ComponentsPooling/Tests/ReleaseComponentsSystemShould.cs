@@ -31,7 +31,7 @@ namespace ECS.ComponentsPooling.Tests
         {
             var world = World.Create();
 
-            var componentsPoolRegistry = Substitute.For<IComponentPoolsRegistry>();
+            IComponentPoolsRegistry componentsPoolRegistry = Substitute.For<IComponentPoolsRegistry>();
 
             for (var i = 0; i < 100; i++)
                 world.Create(new TestComponent1(), new TestComponent2(), new DeleteEntityIntention());

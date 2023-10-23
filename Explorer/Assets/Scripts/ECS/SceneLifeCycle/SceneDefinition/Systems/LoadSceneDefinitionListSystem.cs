@@ -34,7 +34,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             MutexSync mutexSync)
             : base(world, cache, mutexSync) { }
 
-        protected override async UniTask<StreamableLoadingResult<SceneDefinitions>> FlowInternal(GetSceneDefinitionList intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<SceneDefinitions>> FlowInternalAsync(GetSceneDefinitionList intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             bodyBuilder.Clear();
             bodyBuilder.Append("{\"pointers\":[");

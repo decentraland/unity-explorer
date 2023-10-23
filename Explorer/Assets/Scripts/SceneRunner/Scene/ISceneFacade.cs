@@ -8,7 +8,7 @@ namespace SceneRunner.Scene
         /// <summary>
         ///     Start an update loop with a given FPS
         /// </summary>
-        UniTask StartUpdateLoop(int targetFPS, CancellationToken ct);
+        UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct);
 
         /// <summary>
         ///     Change the target fps while the scene is running.

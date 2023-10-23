@@ -10,9 +10,6 @@ namespace ECS.ComponentsPooling.Tests
     [TestFixture]
     public class MeshRendererUnityComponentPoolShould
     {
-        private GameObjectPool<MeshRenderer> gameObjectPool;
-        private Mesh mesh;
-
         [SetUp]
         public void SetUp()
         {
@@ -21,6 +18,15 @@ namespace ECS.ComponentsPooling.Tests
 
             mesh = new Mesh();
         }
+
+        [TearDown]
+        public void TearDown()
+        {
+            gameObjectPool.Clear();
+        }
+
+        private GameObjectPool<MeshRenderer> gameObjectPool;
+        private Mesh mesh;
 
         [Test]
         public void GetGameObject()
@@ -69,12 +75,6 @@ namespace ECS.ComponentsPooling.Tests
             //Assert
             Assert.IsTrue(component == null);
             Assert.AreEqual(0, gameObjectPool.CountInactive);
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            gameObjectPool.Clear();
         }
     }
 }

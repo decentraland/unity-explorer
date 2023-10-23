@@ -5,9 +5,9 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
 {
     public class FrameTimeSharedBudgetProvider : IConcurrentBudgetProvider
     {
-        private double currentAvailableBudget;
         private readonly float totalBudgetAvailable;
         private readonly IProfilingProvider profilingProvider;
+        private double currentAvailableBudget;
         private long startTime;
         private bool outOfBudget;
 
@@ -16,8 +16,8 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
         public FrameTimeSharedBudgetProvider(float totalBudgetAvailableInMiliseconds, IProfilingProvider profilingProvider)
         {
             //FrameTime return CurrentValue in nanoseconds, so we are converting milliseconds to nanoseconds
-            this.totalBudgetAvailable = totalBudgetAvailableInMiliseconds * 1000000;
-            this.currentAvailableBudget = totalBudgetAvailable;
+            totalBudgetAvailable = totalBudgetAvailableInMiliseconds * 1000000;
+            currentAvailableBudget = totalBudgetAvailable;
             this.profilingProvider = profilingProvider;
 
             currentFrameNumber = Time.frameCount;
@@ -30,7 +30,7 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
             if (outOfBudget)
                 return false;
 
-            currentAvailableBudget -= (profilingProvider.GetCurrentFrameTimeValueInNS() - startTime);
+            currentAvailableBudget -= profilingProvider.GetCurrentFrameTimeValueInNS() - startTime;
             ReleaseBudget();
 
             outOfBudget = currentAvailableBudget < 0;

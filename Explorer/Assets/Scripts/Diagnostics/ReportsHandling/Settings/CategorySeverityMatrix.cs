@@ -7,13 +7,6 @@ namespace Diagnostics.ReportsHandling
     [Serializable]
     internal class CategorySeverityMatrix : ICategorySeverityMatrix
     {
-        [Serializable]
-        public class Entry
-        {
-            public string Category;
-            public LogType Severity;
-        }
-
         // Remove an entry if category no longer exists
         [SerializeField] internal List<Entry> entries;
 
@@ -29,6 +22,13 @@ namespace Diagnostics.ReportsHandling
             }
 
             return false;
+        }
+
+        [Serializable]
+        public class Entry
+        {
+            public string Category;
+            public LogType Severity;
         }
     }
 }

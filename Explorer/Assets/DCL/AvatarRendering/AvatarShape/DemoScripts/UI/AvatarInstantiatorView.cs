@@ -6,9 +6,6 @@ namespace DCL.AvatarRendering.AvatarShape.DemoScripts.UI
 {
     public class AvatarInstantiatorView : MonoBehaviour
     {
-        [SerializeField]
-        private TMP_InputField amountofAvatarsToInstantiate;
-
         public Button addRandomAvatarButton;
 
         public Button destroyAllAvatarsButton;
@@ -16,6 +13,8 @@ namespace DCL.AvatarRendering.AvatarShape.DemoScripts.UI
         public Button destroyRandomAmountAvatarsButton;
 
         public Button randomizeWearablesButton;
+        [SerializeField]
+        private TMP_InputField amountofAvatarsToInstantiate;
 
         [SerializeField]
         private Button openButton;

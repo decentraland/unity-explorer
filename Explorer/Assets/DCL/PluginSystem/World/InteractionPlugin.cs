@@ -32,7 +32,9 @@ namespace DCL.PluginSystem.World
             this.globalInputEvents = globalInputEvents;
         }
 
-        public UniTask Initialize(Settings settings, CancellationToken ct)
+        public void Dispose() { }
+
+        public UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
             this.settings = settings;
             raycastBudgetProvider = new FrameTimeSharedBudgetProvider(settings.RaycastFrameBudgetMs, profilingProvider);
@@ -59,8 +61,6 @@ namespace DCL.PluginSystem.World
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
-
-        public void Dispose() { }
 
         [Serializable]
         public class Settings : IDCLPluginSettings
