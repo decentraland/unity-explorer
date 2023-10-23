@@ -8,6 +8,13 @@ namespace ECS.SceneLifeCycle.Tests
 {
     public class TestIpfsRealm : IIpfsRealm
     {
+        public URLDomain LambdasBaseUrl { get; }
+        public IReadOnlyList<string> SceneUrns { get; }
+        public URLDomain EntitiesActiveEndpoint { get; }
+
+        public URLDomain CatalystBaseUrl { get; }
+        public URLDomain ContentBaseUrl { get; }
+
         public TestIpfsRealm(string[] sceneUrns = null)
         {
             SceneUrns = sceneUrns ?? Array.Empty<string>();
@@ -16,12 +23,5 @@ namespace ECS.SceneLifeCycle.Tests
             EntitiesActiveEndpoint = URLDomain.FromString($"{ContentBaseUrl.Value}ActiveEntitiesByPointer.json");
             LambdasBaseUrl = URLDomain.EMPTY;
         }
-
-        public URLDomain LambdasBaseUrl { get; }
-        public IReadOnlyList<string> SceneUrns { get; }
-        public URLDomain EntitiesActiveEndpoint { get; }
-
-        public URLDomain CatalystBaseUrl { get; }
-        public URLDomain ContentBaseUrl { get; }
     }
 }

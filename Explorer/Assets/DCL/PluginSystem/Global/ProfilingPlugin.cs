@@ -22,14 +22,14 @@ namespace DCL.PluginSystem.Global
             this.profilingProvider = profilingProvider;
         }
 
-        public async UniTask Initialize(Settings settings, CancellationToken ct)
-        {
-            profilingView = await assetsProvisioner.ProvideInstance(settings.profilingViewRef, ct: ct);
-        }
-
         public void Dispose()
         {
             profilingView.Dispose();
+        }
+
+        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
+        {
+            profilingView = await assetsProvisioner.ProvideInstanceAsync(settings.profilingViewRef, ct: ct);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -40,15 +40,15 @@ namespace DCL.PluginSystem.Global
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
+            [field: Header(nameof(ProfilingPlugin) + "." + nameof(Settings))]
+            [field: Space]
+            [field: SerializeField] internal ProfilingViewRef profilingViewRef { get; private set; }
+
             [Serializable]
             public class ProfilingViewRef : ComponentReference<ProfilingView>
             {
                 public ProfilingViewRef(string guid) : base(guid) { }
             }
-
-            [field: Header(nameof(ProfilingPlugin) + "." + nameof(Settings))]
-            [field: Space]
-            [field: SerializeField] internal ProfilingViewRef profilingViewRef { get; private set; }
         }
     }
 }

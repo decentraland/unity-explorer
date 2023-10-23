@@ -51,7 +51,9 @@
         "ClearScript.Core.dll",
         "ClearScript.V8.ICUData.dll",
         "Newtonsoft.Json.dll",
-        "Google.Protobuf.dll"
+        "Google.Protobuf.dll",
+        "Microsoft.CodeAnalysis.CSharp.dll",
+        "Microsoft.CodeAnalysis.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [

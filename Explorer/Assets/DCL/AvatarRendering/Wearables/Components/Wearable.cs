@@ -135,6 +135,5 @@ namespace DCL.AvatarRendering.Wearables.Components
 
             return representation.overrideReplaces;
         }
-
     }
 }

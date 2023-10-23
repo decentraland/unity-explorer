@@ -16,8 +16,8 @@ namespace DCL.PluginSystem
     public interface IDCLPlugin<in T> : IDCLPlugin where T: IDCLPluginSettings, new()
     {
         UniTask IDCLPlugin.Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
-            Initialize(container.GetSettings<T>(), ct);
+            InitializeAsync(container.GetSettings<T>(), ct);
 
-        UniTask Initialize(T settings, CancellationToken ct);
+        UniTask InitializeAsync(T settings, CancellationToken ct);
     }
 }

@@ -26,6 +26,13 @@ namespace SceneRunner.Scene.ExceptionsHandling
 
         private SceneExceptionsHandler() { }
 
+        public void Dispose()
+        {
+            sceneState = null;
+            Array.Clear(ecsExceptionsBag, 0, ecsExceptionsBag.Length);
+            POOL.Release(this);
+        }
+
         public ISystemGroupExceptionHandler.Action Handle(Exception exception, Type systemGroupType)
         {
             const float INTERVAL = 60;
@@ -110,13 +117,6 @@ namespace SceneRunner.Scene.ExceptionsHandling
             // For javascript no tolerance
             // TODO Log a proper exception
             sceneState.State = SceneState.JavaScriptError;
-        }
-
-        public void Dispose()
-        {
-            sceneState = null;
-            Array.Clear(ecsExceptionsBag, 0, ecsExceptionsBag.Length);
-            POOL.Release(this);
         }
 
         public static SceneExceptionsHandler Create(ISceneStateProvider sceneState, SceneShortInfo sceneShortInfo)

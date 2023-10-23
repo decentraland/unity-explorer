@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace ECS.Abstract
 {
     /// <summary>
-    /// Simple group without arguments and with a Single Update
+    ///     Simple group without arguments and with a Single Update
     /// </summary>
     public class BaseSystemsGroup : ISystem
     {
@@ -20,21 +19,21 @@ namespace ECS.Abstract
             this.systems = new List<ISystem>(systems);
         }
 
-        public void Dispose()
-        {
-            for (int index = 0; index < systems.Count; ++index)
-                systems[index].Dispose();
-        }
-
         public void Initialize()
         {
-            for (int index = 0; index < systems.Count; ++index)
+            for (var index = 0; index < systems.Count; ++index)
                 systems[index].Initialize();
+        }
+
+        public void Dispose()
+        {
+            for (var index = 0; index < systems.Count; ++index)
+                systems[index].Dispose();
         }
 
         public void Update()
         {
-            for (int index = 0; index < systems.Count; ++index)
+            for (var index = 0; index < systems.Count; ++index)
                 systems[index].Update();
         }
     }

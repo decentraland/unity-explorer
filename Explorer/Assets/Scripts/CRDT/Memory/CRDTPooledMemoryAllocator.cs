@@ -7,56 +7,15 @@ using Utility.ThreadSafePool;
 namespace CRDT.Memory
 {
     /// <summary>
-    /// Allocates chunks for CRDT Messages from the Array Pool unique for each scene (thread)
+    ///     Allocates chunks for CRDT Messages from the Array Pool unique for each scene (thread)
     /// </summary>
     public class CRDTPooledMemoryAllocator : ICRDTMemoryAllocator
     {
-        private class MemoryOwner : IMemoryOwner<byte>
-        {
-            private readonly CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
-            private byte[] array;
-
-            private bool disposed;
-
-            private Memory<byte> slicedMemory;
-
-            internal MemoryOwner(CRDTPooledMemoryAllocator crdtPooledMemoryAllocator)
-            {
-                this.crdtPooledMemoryAllocator = crdtPooledMemoryAllocator;
-            }
-
-            internal void Set(byte[] array, int size)
-            {
-                this.array = array;
-                slicedMemory = this.array.AsMemory().Slice(0, size);
-                disposed = false;
-            }
-
-            public void Dispose()
-            {
-                if (!disposed)
-                {
-                    // it is mandatory to have two-level pool as the size of the array
-                    // on every rent can be absolutely different
-                    crdtPooledMemoryAllocator.arrayPool.Return(array);
-                    crdtPooledMemoryAllocator.memoryOwnerPool.Release(this);
-                    array = null;
-                    slicedMemory = Memory<byte>.Empty;
-                    disposed = true;
-                }
-            }
-
-            public Memory<byte> Memory => disposed ? throw new ObjectDisposedException(nameof(CRDTPooledMemoryAllocator) + "." + nameof(MemoryOwner)) : slicedMemory;
-        }
-
         private static readonly ThreadSafeObjectPool<CRDTPooledMemoryAllocator> POOL = new (
             () => new CRDTPooledMemoryAllocator(), defaultCapacity: PoolConstants.SCENES_COUNT);
 
         // Introduce a pool of memory owners to prevent allocations per message
         private readonly IObjectPool<MemoryOwner> memoryOwnerPool;
-
-        public static CRDTPooledMemoryAllocator Create() =>
-            POOL.Get();
 
         private readonly ArrayPool<byte> arrayPool;
 
@@ -82,6 +41,14 @@ namespace CRDT.Memory
             );
         }
 
+        public void Dispose()
+        {
+            POOL.Release(this);
+        }
+
+        public static CRDTPooledMemoryAllocator Create() =>
+            POOL.Get();
+
         public IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream, int shift, int length)
         {
             byte[] byteArray = arrayPool.Rent(length);
@@ -101,9 +68,42 @@ namespace CRDT.Memory
         public IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream) =>
             GetMemoryBuffer(originalStream, 0, originalStream.Length);
 
-        public void Dispose()
+        private class MemoryOwner : IMemoryOwner<byte>
         {
-            POOL.Release(this);
+            private readonly CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
+            private byte[] array;
+
+            private bool disposed;
+
+            private Memory<byte> slicedMemory;
+
+            public Memory<byte> Memory => disposed ? throw new ObjectDisposedException(nameof(CRDTPooledMemoryAllocator) + "." + nameof(MemoryOwner)) : slicedMemory;
+
+            internal MemoryOwner(CRDTPooledMemoryAllocator crdtPooledMemoryAllocator)
+            {
+                this.crdtPooledMemoryAllocator = crdtPooledMemoryAllocator;
+            }
+
+            public void Dispose()
+            {
+                if (!disposed)
+                {
+                    // it is mandatory to have two-level pool as the size of the array
+                    // on every rent can be absolutely different
+                    crdtPooledMemoryAllocator.arrayPool.Return(array);
+                    crdtPooledMemoryAllocator.memoryOwnerPool.Release(this);
+                    array = null;
+                    slicedMemory = Memory<byte>.Empty;
+                    disposed = true;
+                }
+            }
+
+            internal void Set(byte[] array, int size)
+            {
+                this.array = array;
+                slicedMemory = this.array.AsMemory().Slice(0, size);
+                disposed = false;
+            }
         }
     }
 }

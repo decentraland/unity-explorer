@@ -4,7 +4,9 @@ using Arch.SystemGroups;
 using DCL.CharacterCamera.Components;
 using DCL.Input;
 using DCL.Input.Systems;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace DCL.CharacterCamera.Systems
 {
@@ -31,14 +33,14 @@ namespace DCL.CharacterCamera.Systems
         [Query]
         private void UpdateInput(ref CameraComponent cameraComponent)
         {
-            var mousePos = cameraActions.Point.ReadValue<Vector2>();
+            Vector2 mousePos = cameraActions.Point.ReadValue<Vector2>();
 
             bool inputWantsToLock = cameraActions.Lock.WasPerformedThisFrame() || cameraActions.TemporalLock.WasPressedThisFrame();
             bool inputWantsToUnlock = cameraActions.Unlock.WasPerformedThisFrame() || cameraActions.TemporalLock.WasReleasedThisFrame();
 
             if (inputWantsToLock && !cameraComponent.CursorIsLocked)
             {
-                var results = uiRaycaster.RaycastAll(mousePos);
+                IReadOnlyList<RaycastResult> results = uiRaycaster.RaycastAll(mousePos);
 
                 if (results.Count == 0)
                 {

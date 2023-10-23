@@ -1,6 +1,6 @@
-using System;
 using Google.Protobuf.Collections;
 using NUnit.Framework;
+using System;
 using UnityEngine;
 
 namespace Utility.Primitives.Tests
@@ -14,7 +14,7 @@ namespace Utility.Primitives.Tests
             var mesh = new Mesh();
             var gameObject = new GameObject();
             gameObject.AddComponent<MeshFilter>();
-            var meshRenderer = gameObject.AddComponent<MeshRenderer>();
+            MeshRenderer meshRenderer = gameObject.AddComponent<MeshRenderer>();
 
             PlaneFactory.Create(ref mesh);
             meshRenderer.GetComponent<MeshFilter>().mesh = mesh;
@@ -24,8 +24,8 @@ namespace Utility.Primitives.Tests
         [Test]
         public void ValidateMeshCount()
         {
-            var finalVerticesCount = PlaneFactory.VERTICES_NUM;
-            var trianglesCount = PlaneFactory.TRIS_NUM;
+            int finalVerticesCount = PlaneFactory.VERTICES_NUM;
+            int trianglesCount = PlaneFactory.TRIS_NUM;
 
             var mesh = new Mesh();
             PlaneFactory.Create(ref mesh);
@@ -42,16 +42,14 @@ namespace Utility.Primitives.Tests
             var mesh = new Mesh();
             PlaneFactory.Create(ref mesh);
 
-            var originalUVs = mesh.uv;
+            Vector2[] originalUVs = mesh.uv;
 
             PlaneFactory.UpdateMesh(ref mesh, null);
             Assert.AreEqual(mesh.uv, originalUVs);
 
             var repeatedField = new RepeatedField<float>();
-            for (var i = 0; i < PlaneFactory.VERTICES_NUM; i++)
-            {
-                repeatedField.Add(i);
-            }
+
+            for (var i = 0; i < PlaneFactory.VERTICES_NUM; i++) { repeatedField.Add(i); }
 
             PlaneFactory.UpdateMesh(ref mesh, repeatedField);
             Assert.AreNotEqual(mesh.uv, originalUVs);
@@ -60,12 +58,12 @@ namespace Utility.Primitives.Tests
         [Test]
         public void ReuseBuffers()
         {
-            var finalVerticesCount = PlaneFactory.VERTICES_NUM;
-            var trianglesCount = PlaneFactory.TRIS_NUM;
+            int finalVerticesCount = PlaneFactory.VERTICES_NUM;
+            int trianglesCount = PlaneFactory.TRIS_NUM;
 
-            var triangles = PrimitivesBuffersPool.TRIANGLES.Rent(trianglesCount);
-            var vertices = PrimitivesBuffersPool.EQUAL_TO_VERTICES.Rent(finalVerticesCount);
-            var normals = PrimitivesBuffersPool.EQUAL_TO_VERTICES.Rent(finalVerticesCount);
+            int[] triangles = PrimitivesBuffersPool.TRIANGLES.Rent(trianglesCount);
+            Vector3[] vertices = PrimitivesBuffersPool.EQUAL_TO_VERTICES.Rent(finalVerticesCount);
+            Vector3[] normals = PrimitivesBuffersPool.EQUAL_TO_VERTICES.Rent(finalVerticesCount);
 
             PrimitivesBuffersPool.TRIANGLES.Return(triangles, true);
             PrimitivesBuffersPool.EQUAL_TO_VERTICES.Return(vertices, true);
@@ -77,11 +75,11 @@ namespace Utility.Primitives.Tests
 
             // We don't clear buffer so if they are reused they should be filled with data
 
-            void CheckAllItemsAreNotDefault<T>(string arrayName, T[] array) where T : IEquatable<T>
+            void CheckAllItemsAreNotDefault<T>(string arrayName, T[] array) where T: IEquatable<T>
             {
-                foreach (var element in array)
+                foreach (T element in array)
                 {
-                    if (!element.Equals(default))
+                    if (!element.Equals(default(T)))
                         return;
                 }
 
