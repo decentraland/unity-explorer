@@ -1,23 +1,13 @@
-#ifndef AVATAR_DEPTH_ONLY_PASS_INCLUDED
-#define AVATAR_DEPTH_ONLY_PASS_INCLUDED
+#ifndef SCENE_DEPTH_ONLY_PASS_INCLUDED
+#define SCENE_DEPTH_ONLY_PASS_INCLUDED
 
-#include "Avatar_CelShading_Core.hlsl"
+#include "Scene_Core.hlsl"
 #if defined(LOD_FADE_CROSSFADE)
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl"
 #endif
 
-// Skinning structure
-struct VertexInfo
-{
-    float3 position;
-    float3 normal;
-    float4 tangent;
-};
-StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
-
 struct Attributes
 {
-    uint   index            : SV_VertexID;
     float4 position     : POSITION;
     float2 texcoord     : TEXCOORD0;
     UNITY_VERTEX_INPUT_INSTANCE_ID
@@ -25,8 +15,8 @@ struct Attributes
 
 struct Varyings
 {
-    float4 positionCS   : SV_POSITION;
     float2 uv           : TEXCOORD0;
+    float4 positionCS   : SV_POSITION;
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
 };
@@ -37,9 +27,8 @@ Varyings DepthOnlyVertex(Attributes input)
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-    //output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
-    output.positionCS = TransformObjectToHClip(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
-    
+    output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
+    output.positionCS = TransformObjectToHClip(input.position.xyz);
     return output;
 }
 
@@ -47,11 +36,11 @@ half DepthOnlyFragment(Varyings input) : SV_TARGET
 {
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-    //Alpha(SampleAlbedoAlpha(input.uv, TEXTURE2D_ARGS(_BaseMap, sampler_BaseMap)).a, _BaseColor, _Cutoff);
+    Alpha(SampleAlbedoAlpha(input.uv, TEXTURE2D_ARGS(_BaseMap, sampler_BaseMap)).a, _BaseColor, _Cutoff);
 
-    #ifdef LOD_FADE_CROSSFADE
+#ifdef LOD_FADE_CROSSFADE
     LODFadeCrossFade(input.positionCS);
-    #endif
+#endif
 
     return input.positionCS.z;
 }

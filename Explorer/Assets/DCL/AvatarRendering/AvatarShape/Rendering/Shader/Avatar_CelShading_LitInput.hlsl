@@ -1,17 +1,17 @@
 #ifndef AVATAR_CELSHADING_LITINPUT_INCLUDED
 #define AVATAR_CELSHADING_LITINPUT_INCLUDED
 
-#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-#include "InputData_Avatar.hlsl"
-#include "SurfaceData_Avatar.hlsl"
-#include "BRDFData_Avatar.hlsl"
+#include "Avatar_CelShading_Core.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
 #include "Packages/com.decentraland.unity-shared-dependencies/Runtime/Shaders/URP/Constants.hlsl"
-#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
+#include "Avatar_CelShading_Shadows.hlsl"
+#include "Avatar_CelShading_Input.hlsl"
+#include "Avatar_CelShading_SurfaceData.hlsl"
+#include "Avatar_CelShading_BRDF.hlsl"
+#include "Avatar_CelShading_RealtimeLights.hlsl"
 
 UNITY_INSTANCING_BUFFER_START(UnityPerMaterial)
-// UNITY_DEFINE_INSTANCED_PROP(float4, _BaseMap_ST)
-// UNITY_DEFINE_INSTANCED_PROP(float4, _DetailAlbedoMap_ST)
+UNITY_DEFINE_INSTANCED_PROP(float4, _BaseMap_ST)
 UNITY_DEFINE_INSTANCED_PROP(half4, _BaseColor)
 UNITY_DEFINE_INSTANCED_PROP(half4, _SpecColor)
 UNITY_DEFINE_INSTANCED_PROP(half4, _EmissionColor)
@@ -21,8 +21,6 @@ UNITY_DEFINE_INSTANCED_PROP(half, _Metallic)
 UNITY_DEFINE_INSTANCED_PROP(half, _BumpScale)
 UNITY_DEFINE_INSTANCED_PROP(half, _Parallax)
 UNITY_DEFINE_INSTANCED_PROP(half, _OcclusionStrength)
-UNITY_DEFINE_INSTANCED_PROP(half, _DetailAlbedoMapScale)
-UNITY_DEFINE_INSTANCED_PROP(half, _DetailNormalMapScale)
 UNITY_DEFINE_INSTANCED_PROP(half, _Surface)
 UNITY_DEFINE_INSTANCED_PROP(float, _CullYPlane)
 UNITY_DEFINE_INSTANCED_PROP(half, _FadeThickness)
@@ -49,43 +47,40 @@ UNITY_DEFINE_INSTANCED_PROP(float, _SpecularRampOuterMin)
 UNITY_DEFINE_INSTANCED_PROP(float, _SpecularRampOuterMax)
 UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 
-// #define _BaseMap_ST UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseMap_ST)
-// #define _DetailAlbedoMap_ST UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _DetailAlbedoMap_ST)
-#define _BaseColor UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseColor)
-#define _SpecColor UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SpecColor)
-#define _EmissionColor UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _EmissionColor)
-#define _Cutoff UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Cutoff)
-#define _Smoothness UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Smoothness)
-#define _Metallic UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Metallic)
-#define _BumpScale UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BumpScale)
-#define _Parallax UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Parallax)
-#define _OcclusionStrength UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _OcclusionStrength)
-#define _DetailAlbedoMapScale UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _DetailAlbedoMapScale)
-#define _DetailNormalMapScale UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _DetailNormalMapScale)
-#define _Surface UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Surface)
-#define _CullYPlane UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _CullYPlane)
-#define _FadeThickness UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _FadeThickness)
-#define _FadeDirection UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _FadeDirection)
-#define _BaseMapUVs UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseMapUVs)
-#define _NormalMapUVs UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _NormalMapUVs)
-#define _MetallicMapUVs UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _MetallicMapUVs)
-#define _EmissiveMapUVs UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _EmissiveMapUVs)
-#define _BaseMapArr_ID UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseMapArr_ID) 
-#define _AlphaTextureArr_ID UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _AlphaTextureArr_ID) 
-#define _MetallicGlossMapArr_ID UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _MetallicGlossMapArr_ID) 
-#define _BumpMapArr_ID UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BumpMapArr_ID)
-#define _lastWearableVertCount UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _lastWearableVertCount) 
-#define _lastAvatarVertCount UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _lastAvatarVertCount)
-#define _EmissionMapArr_ID UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _EmissionMapArr_ID)
-#define _OcclusionMapArr_ID UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _OcclusionMapArr_ID)
-#define _DiffuseRampInnerMin UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _DiffuseRampInnerMin)
-#define _DiffuseRampInnerMax UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _DiffuseRampInnerMax)
-#define _DiffuseRampOuterMin UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _DiffuseRampOuterMin)
-#define _DiffuseRampOuterMax UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _DiffuseRampOuterMax)
-#define _SpecularRampInnerMin UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SpecularRampInnerMin)
-#define _SpecularRampInnerMax UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SpecularRampInnerMax)
-#define _SpecularRampOuterMin UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SpecularRampOuterMin)
-#define _SpecularRampOuterMax UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SpecularRampOuterMax)
+#define _BaseMap_ST                     UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseMap_ST)
+#define _BaseColor                      UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseColor)
+#define _SpecColor                      UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SpecColor)
+#define _EmissionColor                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _EmissionColor)
+#define _Cutoff                         UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Cutoff)
+#define _Smoothness                     UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Smoothness)
+#define _Metallic                       UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Metallic)
+#define _BumpScale                      UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BumpScale)
+#define _Parallax                       UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Parallax)
+#define _OcclusionStrength              UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _OcclusionStrength)
+#define _Surface                        UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Surface)
+#define _CullYPlane                     UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _CullYPlane)
+#define _FadeThickness                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _FadeThickness)
+#define _FadeDirection                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _FadeDirection)
+#define _BaseMapUVs                     UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseMapUVs)
+#define _NormalMapUVs                   UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _NormalMapUVs)
+#define _MetallicMapUVs                 UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _MetallicMapUVs)
+#define _EmissiveMapUVs                 UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _EmissiveMapUVs)
+#define _BaseMapArr_ID                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseMapArr_ID) 
+#define _AlphaTextureArr_ID             UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _AlphaTextureArr_ID) 
+#define _MetallicGlossMapArr_ID         UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _MetallicGlossMapArr_ID) 
+#define _BumpMapArr_ID                  UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BumpMapArr_ID)
+#define _lastWearableVertCount          UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _lastWearableVertCount) 
+#define _lastAvatarVertCount            UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _lastAvatarVertCount)
+#define _EmissionMapArr_ID              UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _EmissionMapArr_ID)
+#define _OcclusionMapArr_ID             UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _OcclusionMapArr_ID)
+#define _DiffuseRampInnerMin            UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _DiffuseRampInnerMin)
+#define _DiffuseRampInnerMax            UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _DiffuseRampInnerMax)
+#define _DiffuseRampOuterMin            UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _DiffuseRampOuterMin)
+#define _DiffuseRampOuterMax            UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _DiffuseRampOuterMax)
+#define _SpecularRampInnerMin           UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SpecularRampInnerMin)
+#define _SpecularRampInnerMax           UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SpecularRampInnerMax)
+#define _SpecularRampOuterMin           UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SpecularRampOuterMin)
+#define _SpecularRampOuterMax           UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _SpecularRampOuterMax)
 
 /////////////////////////
 // from SurfaceInput.hlsl
@@ -552,7 +547,9 @@ half4 UniversalFragmentPBR_Avatar(InputData_Avatar inputData, SurfaceData_Avatar
             #endif
             #endif
             color += LightingPhysicallyBased_Avatar(brdfData,
-                                                    light,
+                                                    light.color,
+                                                    light.direction,
+                                                    light.distanceAttenuation * light.shadowAttenuation,
                                                     inputData.normalWS,
                                                     inputData.viewDirectionWS,
                                                     inputData.matCapUV,

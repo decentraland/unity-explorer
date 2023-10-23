@@ -64,7 +64,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             IObjectPool<UnityEngine.ComputeShader> computeShaderPool = Substitute.For<IObjectPool<UnityEngine.ComputeShader>>();
             computeShaderPool.Get().Returns(Object.Instantiate(computeShaderAsset));
 
-            shader = Shader.Find("Custom/Avatar_CelShading");
+            shader = Shader.Find("DCL/Avatar_CelShading");
             IObjectPool<Material> materialPool = Substitute.For<IObjectPool<Material>>();
             materialPool.Get().Returns(new Material(shader), new Material(shader), new Material(shader));
 

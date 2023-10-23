@@ -1,8 +1,8 @@
-#ifndef AVATAR_SHADOW_CASTER_PASS_INCLUDED
-#define AVATAR_SHADOW_CASTER_PASS_INCLUDED
+#ifndef SCENE_SHADOW_CASTER_PASS_INCLUDED
+#define SCENE_SHADOW_CASTER_PASS_INCLUDED
 
-#include "Avatar_CelShading_Core.hlsl"
-#include "Avatar_CelShading_Shadows.hlsl"
+#include "Scene_Core.hlsl"
+#include "Scene_Shadows.hlsl"
 #if defined(LOD_FADE_CROSSFADE)
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl"
 #endif
@@ -13,18 +13,8 @@
 float3 _LightDirection;
 float3 _LightPosition;
 
-// Skinning structure
-struct VertexInfo
-{
-    float3 position;
-    float3 normal;
-    float4 tangent;
-};
-StructuredBuffer<VertexInfo> _GlobalAvatarBuffer;
-
 struct Attributes
 {
-    uint   index        : SV_VertexID;
     float4 positionOS   : POSITION;
     float3 normalOS     : NORMAL;
     float2 texcoord     : TEXCOORD0;
@@ -39,22 +29,22 @@ struct Varyings
 
 float4 GetShadowPositionHClip(Attributes input)
 {
-    float3 positionWS = TransformObjectToWorld(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].position.xyz);
-    float3 normalWS = TransformObjectToWorldNormal(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + input.index].normal.xyz);
+    float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
+    float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
 
-    #if _CASTING_PUNCTUAL_LIGHT_SHADOW
-        float3 lightDirectionWS = normalize(_LightPosition - positionWS);
-    #else
-        float3 lightDirectionWS = _LightDirection;
-    #endif
+#if _CASTING_PUNCTUAL_LIGHT_SHADOW
+    float3 lightDirectionWS = normalize(_LightPosition - positionWS);
+#else
+    float3 lightDirectionWS = _LightDirection;
+#endif
 
     float4 positionCS = TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, lightDirectionWS));
 
-    #if UNITY_REVERSED_Z
-        positionCS.z = min(positionCS.z, UNITY_NEAR_CLIP_VALUE);
-    #else
-        positionCS.z = max(positionCS.z, UNITY_NEAR_CLIP_VALUE);
-    #endif
+#if UNITY_REVERSED_Z
+    positionCS.z = min(positionCS.z, UNITY_NEAR_CLIP_VALUE);
+#else
+    positionCS.z = max(positionCS.z, UNITY_NEAR_CLIP_VALUE);
+#endif
 
     return positionCS;
 }
@@ -71,11 +61,11 @@ Varyings ShadowPassVertex(Attributes input)
 
 half4 ShadowPassFragment(Varyings input) : SV_TARGET
 {
-    //Alpha(SampleAlbedoAlpha(input.uv, TEXTURE2D_ARGS(_BaseMap, sampler_BaseMap)).a, _BaseColor, _Cutoff);
+    Alpha(SampleAlbedoAlpha(input.uv, TEXTURE2D_ARGS(_BaseMap, sampler_BaseMap)).a, _BaseColor, _Cutoff);
 
-    #ifdef LOD_FADE_CROSSFADE
-        LODFadeCrossFade(input.positionCS);
-    #endif
+#ifdef LOD_FADE_CROSSFADE
+    LODFadeCrossFade(input.positionCS);
+#endif
 
     return 0;
 }

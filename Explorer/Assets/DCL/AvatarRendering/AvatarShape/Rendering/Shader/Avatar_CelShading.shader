@@ -1,4 +1,4 @@
-Shader "Custom/Avatar_CelShading"
+Shader "DCL/Avatar_CelShading"
 {
     Properties
     {
@@ -12,7 +12,7 @@ Shader "Custom/Avatar_CelShading"
         [HideInInspector] [PerRendererData] _lastWearableVertCount ("Last wearable Vert Count", Integer) = -1
         [HideInInspector] [PerRendererData] _lastAvatarVertCount ("Last avatar vert count", Integer) = -1
 
-        
+        [MainTexture] _BaseMap("Albedo", 2D) = "white" {}
         [HideInInspector] _BaseMapArr ("AlbedoArray", 2DArray) = "white" {}
         [HideInInspector] _AlphaTextureArr("Alpha Texture", 2DArray) = "white" {}
         [HideInInspector] _MetallicGlossMapArr("Metallic", 2DArray) = "white" {}
@@ -71,7 +71,7 @@ Shader "Custom/Avatar_CelShading"
         _FadeThickness ("Fade Thickness", Float) = 5
         _FadeDirection ("Fade Direction", Float) = 0
         
-        [HideInInspector][NoScaleOffset]unity_ShadowMasks("unity_ShadowMasks", 2DArray) = "" {}
+        //[HideInInspector][NoScaleOffset]unity_ShadowMasks("unity_ShadowMasks", 2DArray) = "" {}
     }
 
     SubShader
@@ -81,6 +81,7 @@ Shader "Custom/Avatar_CelShading"
         // material work with both Universal Render Pipeline and Builtin Unity Pipeline
         Tags
         {
+            "RenderType" = "Opaque"
             "RenderPipeline" = "UniversalPipeline"
             "UniversalMaterialType" = "Lit"
             "IgnoreProjector" = "True"
@@ -127,11 +128,11 @@ Shader "Custom/Avatar_CelShading"
             // #pragma shader_feature_local _MAIN_LIGHT_SHADOWS
             // #pragma shader_feature_local _MAIN_LIGHT_SHADOWS_CASCADE
             // #pragma shader_feature_local _MAIN_LIGHT_SHADOWS_SCREEN
-            //#pragma shader_feature_local _ADDITIONAL_LIGHTS
-            // #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             // #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
             // #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
-            // #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            #pragma multi_compile_fragment _ _SHADOWS_SOFT
             // #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
             //#pragma shader_feature_local_fragment _ADDITIONAL_LIGHT_SHADOWS
             //#pragma shader_feature_local_fragment _REFLECTION_PROBE_BLENDING
@@ -142,10 +143,11 @@ Shader "Custom/Avatar_CelShading"
             //#pragma multi_compile_fragment _ _DBUFFER_MRT1 _DBUFFER_MRT2 _DBUFFER_MRT3
             //#pragma multi_compile_fragment _ _LIGHT_LAYERS
             //#pragma shader_feature_local_fragment _LIGHT_COOKIES
+            #pragma multi_compile _ _FORWARD_PLUS
             
             //#pragma shader_feature_local _CLUSTERED_RENDERING
             // #pragma multi_compile_fragment _ _LIGHT_COOKIES
-            // #pragma multi_compile _ _CLUSTERED_RENDERING
+            #pragma multi_compile _ _CLUSTERED_RENDERING
 
             // -------------------------------------
             // Unity defined keywords
@@ -194,6 +196,7 @@ Shader "Custom/Avatar_CelShading"
 
             // -------------------------------------
             // Universal Pipeline keywords
+            #pragma multi_compile_fragment _ LOD_FADE_CROSSFADE
 
             // This is used during shadow map generation to differentiate between directional and punctual light shadows, as they use different formulas to apply Normal Bias
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
