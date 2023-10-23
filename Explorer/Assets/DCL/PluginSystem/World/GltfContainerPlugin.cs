@@ -25,7 +25,7 @@ namespace DCL.PluginSystem.World
             this.memoryBudgetProvider = memoryBudgetProvider;
             assetsCache = new GltfContainerAssetsCache(1000);
 
-            // cacheCleaner.Register(assetsCache);
+            cacheCleaner.Register(assetsCache);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,

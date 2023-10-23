@@ -13,6 +13,8 @@ namespace ECS.StreamableLoading.AssetBundles
     public class AssetBundleCache : IStreamableCache<AssetBundleData, GetAssetBundleIntention>
     {
         private readonly Dictionary<GetAssetBundleIntention, AssetBundleData> cache;
+
+        private readonly HashSet<GetAssetBundleIntention> unloadKeys;
         public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>> OngoingRequests { get; }
         public IDictionary<string, StreamableLoadingResult<AssetBundleData>> IrrecoverableFailures { get; }
 
@@ -23,6 +25,7 @@ namespace ECS.StreamableLoading.AssetBundles
             cache = new Dictionary<GetAssetBundleIntention, AssetBundleData>(256, this);
             IrrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Get();
             OngoingRequests = DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>.Get();
+            unloadKeys = HashSetPool<GetAssetBundleIntention>.Get();
         }
 
         public void Dispose()
@@ -35,6 +38,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Release(IrrecoverableFailures as Dictionary<string, StreamableLoadingResult<AssetBundleData>>);
             DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>.Release(OngoingRequests as Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>);
+            HashSetPool<GetAssetBundleIntention>.Release(unloadKeys);
 
             disposed = true;
         }
@@ -57,8 +61,16 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public void UnloadCache()
         {
-            foreach (AssetBundleData ab in cache.Values)
-                ab.Dispose();
+            unloadKeys.Clear();
+
+            foreach (KeyValuePair<GetAssetBundleIntention, AssetBundleData> pair in cache)
+            {
+                unloadKeys.Add(pair.Key);
+                pair.Value.Dispose();
+            }
+
+            foreach (GetAssetBundleIntention key in unloadKeys)
+                cache.Remove(key);
         }
     }
 }

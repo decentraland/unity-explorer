@@ -9,7 +9,7 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
 
         public MemoryBudgetProvider(ISystemMemory systemMemory, IProfilingProvider profilingProvider)
         {
-            budgetCapInBytes = 1000 * ProfilingProvider.BYTES_IN_MEGABYTE;
+            budgetCapInBytes = 3000 * ProfilingProvider.BYTES_IN_MEGABYTE;
             this.profilingProvider = profilingProvider;
         }
 
