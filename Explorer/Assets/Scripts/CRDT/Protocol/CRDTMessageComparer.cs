@@ -6,7 +6,7 @@ namespace CRDT.Protocol
     public static class CRDTMessageComparer
     {
         /// <summary>
-        /// The meaning of this function is to have the same reconciliation mechanism between SDK and the client
+        ///     The meaning of this function is to have the same reconciliation mechanism between SDK and the client
         /// </summary>
         public static int CompareData(in IMemoryOwner<byte> x, in IMemoryOwner<byte> y)
         {

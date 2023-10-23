@@ -6,6 +6,8 @@ namespace Utility
     {
         private static bool isQuitting;
 
+        public static bool IsQuitting => Application.isPlaying && isQuitting;
+
         [RuntimeInitializeOnLoadMethod]
         private static void StartTrackingApplicationStatus()
         {
@@ -17,8 +19,6 @@ namespace Utility
 
             Application.quitting += SetQuitting;
         }
-
-        public static bool IsQuitting => Application.isPlaying && isQuitting;
 
         /// <summary>
         ///     Tries to destroy Game Object based on the current state of the Application

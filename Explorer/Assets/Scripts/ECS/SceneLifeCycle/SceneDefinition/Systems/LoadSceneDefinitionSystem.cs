@@ -10,10 +10,13 @@ using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using Ipfs;
 using System.Threading;
-using Newtonsoft.Json;
-using UnityEngine;
 using UnityEngine.Networking;
 using Utility.Multithreading;
+#if UNITY_EDITOR
+using Newtonsoft.Json;
+#else
+using UnityEngine;
+#endif
 
 namespace ECS.SceneLifeCycle.SceneDefinition
 {
@@ -27,7 +30,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         internal LoadSceneDefinitionSystem(World world, IStreamableCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition> cache, MutexSync mutexSync)
             : base(world, cache, mutexSync) { }
 
-        protected override async UniTask<StreamableLoadingResult<IpfsTypes.SceneEntityDefinition>> FlowInternal(GetSceneDefinition intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<IpfsTypes.SceneEntityDefinition>> FlowInternalAsync(GetSceneDefinition intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             string text;
 
@@ -42,6 +45,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             await UniTask.SwitchToThreadPool();
 
 #if UNITY_EDITOR
+
             //Note (Juani): In editor I get way less crashes while using this JsonConvert method. So, nto to affect the build,
             //I added this directive
             IpfsTypes.SceneEntityDefinition sceneEntityDefinition = JsonConvert.DeserializeObject<IpfsTypes.SceneEntityDefinition>(text);

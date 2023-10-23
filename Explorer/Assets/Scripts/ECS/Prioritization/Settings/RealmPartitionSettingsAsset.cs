@@ -10,16 +10,6 @@ namespace ECS.Prioritization
         [SerializeField] private int behindFps = 1;
         [SerializeField] private float aggregatePositionTolerance = 0.5f;
 
-        private void OnEnable()
-        {
-            OnValidate();
-        }
-
-        private void OnValidate()
-        {
-            AggregatePositionSqrTolerance = aggregatePositionTolerance * aggregatePositionTolerance;
-        }
-
         [field: SerializeField]
         public float AggregateAngleTolerance { get; private set; }
 
@@ -36,6 +26,16 @@ namespace ECS.Prioritization
         public int ScenesDefinitionsRequestBatchSize { get; private set; }
 
         public float AggregatePositionSqrTolerance { get; private set; }
+
+        private void OnEnable()
+        {
+            OnValidate();
+        }
+
+        private void OnValidate()
+        {
+            AggregatePositionSqrTolerance = aggregatePositionTolerance * aggregatePositionTolerance;
+        }
 
         public int GetSceneUpdateFrequency(in PartitionComponent partition)
         {

@@ -10,6 +10,8 @@ namespace SceneRunner.Scene.ExceptionsHandling
     /// </summary>
     public class RethrowSceneExceptionsHandler : ISceneExceptionsHandler
     {
+        public void Dispose() { }
+
         public ISystemGroupExceptionHandler.Action Handle(Exception exception, Type systemGroupType) =>
             throw exception;
 
@@ -17,8 +19,6 @@ namespace SceneRunner.Scene.ExceptionsHandling
         {
             throw new ScriptEngineException(message);
         }
-
-        public void Dispose() { }
 
         public void OnEngineException(Exception exception, string category = ReportCategory.ENGINE)
         {

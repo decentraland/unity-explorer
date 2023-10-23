@@ -36,7 +36,7 @@ namespace SceneRuntime.Factory.Tests
                 IInstancePoolsProvider instancePoolsProvider = Substitute.For<IInstancePoolsProvider>();
                 instancePoolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new byte[c.Arg<int>()]);
 
-                SceneRuntimeImpl sceneRuntime = await factory.CreateBySourceCode(sourceCode, instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
+                SceneRuntimeImpl sceneRuntime = await factory.CreateBySourceCodeAsync(sourceCode, instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
 
                 // Assert
                 Assert.NotNull(sceneRuntime);
@@ -54,11 +54,11 @@ namespace SceneRuntime.Factory.Tests
                 var path = URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
 
                 // Act
-                var engineApi = Substitute.For<IEngineApi>();
+                IEngineApi engineApi = Substitute.For<IEngineApi>();
                 IInstancePoolsProvider instancePoolsProvider = Substitute.For<IInstancePoolsProvider>();
                 instancePoolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new byte[c.Arg<int>()]);
 
-                SceneRuntimeImpl sceneRuntime = await factory.CreateByPath(path, instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
+                SceneRuntimeImpl sceneRuntime = await factory.CreateByPathAsync(path, instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
                 sceneRuntime.RegisterEngineApi(engineApi);
 
                 // Assert

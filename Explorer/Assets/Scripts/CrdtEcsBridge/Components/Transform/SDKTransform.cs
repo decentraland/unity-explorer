@@ -19,6 +19,8 @@ namespace CrdtEcsBridge.Components.Transform
         public Vector3 Scale = Vector3.one;
         public bool IsDirty { get; set; }
 
+        public MessageDescriptor Descriptor => throw new NotSupportedException($"{nameof(Descriptor)} is not supported for {nameof(SDKTransform)}");
+
         public void MergeFrom(CodedInputStream input)
         {
             throw new NotSupportedException($"{nameof(MergeFrom)} is not supported for {nameof(SDKTransform)}");
@@ -31,7 +33,5 @@ namespace CrdtEcsBridge.Components.Transform
 
         public int CalculateSize() =>
             (Marshal.SizeOf<Vector3>() * 2) + Marshal.SizeOf<Quaternion>() + Marshal.SizeOf<CRDTEntity>();
-
-        public MessageDescriptor Descriptor => throw new NotSupportedException($"{nameof(Descriptor)} is not supported for {nameof(SDKTransform)}");
     }
 }

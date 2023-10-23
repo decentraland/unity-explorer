@@ -3,4 +3,3 @@
 [assembly: InternalsVisibleTo("StreamableLoading.Tests")]
 [assembly: InternalsVisibleTo("SceneLifeCycle.Tests")]
 [assembly: InternalsVisibleTo("DCL.Tests")]
-

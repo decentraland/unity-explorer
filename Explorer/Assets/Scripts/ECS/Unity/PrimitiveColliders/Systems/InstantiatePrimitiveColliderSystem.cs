@@ -23,8 +23,6 @@ namespace ECS.Unity.PrimitiveColliders.Systems
     [LogCategory(ReportCategory.PRIMITIVE_COLLIDERS)]
     public partial class InstantiatePrimitiveColliderSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPoolsRegistry poolsRegistry;
-
         private static readonly Dictionary<PBMeshCollider.MeshOneofCase, ISetupCollider> SETUP_COLLIDER_LOGIC = new ()
         {
             { PBMeshCollider.MeshOneofCase.Box, new SetupBoxCollider() },
@@ -32,6 +30,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
             { PBMeshCollider.MeshOneofCase.Cylinder, new SetupCylinderCollider() },
             { PBMeshCollider.MeshOneofCase.Plane, new SetupPlaneCollider() },
         };
+        private readonly IComponentPoolsRegistry poolsRegistry;
 
         private readonly Dictionary<PBMeshCollider.MeshOneofCase, ISetupCollider> setupColliderCases;
         private readonly IEntityCollidersSceneCache entityCollidersCache;

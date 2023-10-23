@@ -21,14 +21,14 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         [Test]
         public void ThrowIfSyncBufferIsAlreadyRented()
         {
-            var cb = crdtWorldSynchronizer.GetSyncCommandBuffer();
+            IWorldSyncCommandBuffer cb = crdtWorldSynchronizer.GetSyncCommandBuffer();
             Assert.Throws<TimeoutException>(() => crdtWorldSynchronizer.GetSyncCommandBuffer());
         }
 
         [Test]
         public void ReleaseSyncBuffer()
         {
-            var worldSyncCommandBuffer = crdtWorldSynchronizer.GetSyncCommandBuffer();
+            IWorldSyncCommandBuffer worldSyncCommandBuffer = crdtWorldSynchronizer.GetSyncCommandBuffer();
             worldSyncCommandBuffer.FinalizeAndDeserialize();
             crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncCommandBuffer);
 

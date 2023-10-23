@@ -15,6 +15,11 @@ namespace Utility.Multithreading
             SAMPLER = CustomSampler.Create("MutexSync.Wait");
         }
 
+        public void Dispose()
+        {
+            Mutex.Dispose();
+        }
+
         public Scope GetScope()
         {
             SAMPLER.Begin();
@@ -37,11 +42,6 @@ namespace Utility.Multithreading
             {
                 mutex.ReleaseMutex();
             }
-        }
-
-        public void Dispose()
-        {
-            Mutex.Dispose();
         }
     }
 }

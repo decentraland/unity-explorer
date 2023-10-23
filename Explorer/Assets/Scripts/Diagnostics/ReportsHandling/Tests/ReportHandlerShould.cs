@@ -8,42 +8,6 @@ namespace Diagnostics.ReportsHandling.Tests
 {
     public class ReportHandlerShould
     {
-        public abstract class TestHandler : ReportHandlerBase
-        {
-            public TestHandler(ICategorySeverityMatrix matrix, bool debounceEnabled) : base(matrix, debounceEnabled) { }
-
-            public abstract void LogTest(LogType logType, ReportData category, Object context, object message);
-
-            public abstract void LogFormatTest(LogType logType, ReportData category, Object context, object message, params object[] args);
-
-            public abstract void LogExceptionTest<T>(T ecsSystemException) where T: Exception, IManagedEcsException;
-
-            public abstract void LogExceptionTest(Exception exception, Object context);
-
-            internal override void LogInternal(LogType logType, ReportData category, Object context, object message)
-            {
-                LogTest(logType, category, context, message);
-            }
-
-            internal override void LogFormatInternal(LogType logType, ReportData category, Object context, object message, params object[] args)
-            {
-                LogFormatTest(logType, category, context, message, args);
-            }
-
-            internal override void LogExceptionInternal<T>(T ecsSystemException)
-            {
-                LogExceptionTest(ecsSystemException);
-            }
-
-            internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object context)
-            {
-                LogExceptionTest(exception, context);
-            }
-
-            protected sealed override bool DebounceInternal(in object message, in ReportData reportData, LogType logType) =>
-                base.DebounceInternal(in message, in reportData, logType);
-        }
-
         private ICategorySeverityMatrix categorySeverityMatrix;
         private TestHandler reportHandlerBase;
 
@@ -113,6 +77,42 @@ namespace Diagnostics.ReportsHandling.Tests
 
             reportHandlerBase.Log(LogType.Error, new ReportData("TEST"), null, "error");
             reportHandlerBase.Received(1).LogInternal(LogType.Error, new ReportData("TEST"), null, "error");
+        }
+
+        public abstract class TestHandler : ReportHandlerBase
+        {
+            public TestHandler(ICategorySeverityMatrix matrix, bool debounceEnabled) : base(matrix, debounceEnabled) { }
+
+            public abstract void LogTest(LogType logType, ReportData category, Object context, object message);
+
+            public abstract void LogFormatTest(LogType logType, ReportData category, Object context, object message, params object[] args);
+
+            public abstract void LogExceptionTest<T>(T ecsSystemException) where T: Exception, IManagedEcsException;
+
+            public abstract void LogExceptionTest(Exception exception, Object context);
+
+            internal override void LogInternal(LogType logType, ReportData category, Object context, object message)
+            {
+                LogTest(logType, category, context, message);
+            }
+
+            internal override void LogFormatInternal(LogType logType, ReportData category, Object context, object message, params object[] args)
+            {
+                LogFormatTest(logType, category, context, message, args);
+            }
+
+            internal override void LogExceptionInternal<T>(T ecsSystemException)
+            {
+                LogExceptionTest(ecsSystemException);
+            }
+
+            internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object context)
+            {
+                LogExceptionTest(exception, context);
+            }
+
+            protected sealed override bool DebounceInternal(in object message, in ReportData reportData, LogType logType) =>
+                base.DebounceInternal(in message, in reportData, logType);
         }
     }
 }

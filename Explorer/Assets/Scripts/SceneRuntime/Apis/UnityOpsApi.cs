@@ -45,11 +45,11 @@ namespace SceneRuntime.Apis
             if (moduleName == "~scene.js")
                 return engine.Evaluate(sceneScript);
 
-            var dirname = moduleName.Substring(0, 1);
-            var filename = moduleName.Substring(1);
+            string dirname = moduleName.Substring(0, 1);
+            string filename = moduleName.Substring(1);
 
             // Load JavaScript wrapper in the Runtime
-            var moduleScript = moduleLoader.GetModuleScript(filename);
+            V8Script moduleScript = moduleLoader.GetModuleScript(filename);
 
             return engine.Evaluate(moduleScript);
         }

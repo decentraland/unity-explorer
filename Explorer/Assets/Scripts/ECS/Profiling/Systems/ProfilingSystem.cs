@@ -16,7 +16,7 @@ namespace ECS.Profiling.Systems
         internal ProfilingSystem(World world, IProfilingProvider profilingProvider, ProfilingView profilingView) : base(world)
         {
             this.profilingProvider = profilingProvider;
-            this.profilerView = profilingView;
+            profilerView = profilingView;
         }
 
         protected override void Update(float t)

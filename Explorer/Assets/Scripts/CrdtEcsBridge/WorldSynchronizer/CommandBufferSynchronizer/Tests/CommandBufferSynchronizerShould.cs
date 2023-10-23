@@ -12,6 +12,23 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer.Tests
     [TestFixture]
     public class CommandBufferSynchronizerShould
     {
+        [SetUp]
+        public void SetUp()
+        {
+            world = World.Create();
+            commandBuffer = new PersistentCommandBuffer(world);
+            componentPool = Substitute.For<IComponentPool<TestComponent>>();
+
+            commandBufferSynchronizer = new SDKComponentCommandBufferSynchronizer<TestComponent>(componentPool);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            commandBuffer.Dispose();
+            world.Dispose();
+        }
+
         public class TestComponent
         {
             public int Value;
@@ -23,16 +40,6 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer.Tests
         private Entity entity;
 
         private SDKComponentCommandBufferSynchronizer<TestComponent> commandBufferSynchronizer;
-
-        [SetUp]
-        public void SetUp()
-        {
-            world = World.Create();
-            commandBuffer = new PersistentCommandBuffer(world);
-            componentPool = Substitute.For<IComponentPool<TestComponent>>();
-
-            commandBufferSynchronizer = new SDKComponentCommandBufferSynchronizer<TestComponent>(componentPool);
-        }
 
         [Test]
         public void ApplyModifiedComponent()
@@ -68,13 +75,6 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer.Tests
 
             componentPool.Received(1).Release(Arg.Is<TestComponent>(t => t.Value == 100));
             Assert.IsFalse(world.Has<TestComponent>(entity));
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            commandBuffer.Dispose();
-            world.Dispose();
         }
     }
 }

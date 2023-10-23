@@ -59,7 +59,7 @@ namespace DCL.CharacterCamera.Systems
             Transform cinemachineTransform = cinemachinePreset.FreeCameraData.Camera.transform;
 
             // Camera's rotation is not
-            var cameraTransform = camera.Camera.transform;
+            Transform cameraTransform = camera.Camera.transform;
 
             cinemachineTransform.localPosition += ((cameraTransform.forward * cameraInput.FreeMovement.y) +
                                                    (cameraTransform.right * cameraInput.FreeMovement.x))

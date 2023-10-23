@@ -6,6 +6,19 @@ namespace ECS.StreamableLoading.Cache
 {
     public class FakeDictionaryCache<TAsset> : IDictionary<string, TAsset>
     {
+        public TAsset this[string key]
+        {
+            get => throw new NotImplementedException();
+
+            set => throw new NotImplementedException();
+        }
+
+        public ICollection<string> Keys { get; }
+        public ICollection<TAsset> Values { get; }
+
+        public int Count { get; }
+        public bool IsReadOnly { get; }
+
         public void Add(string key, TAsset value) { }
 
         public bool ContainsKey(string key) =>
@@ -19,16 +32,6 @@ namespace ECS.StreamableLoading.Cache
             value = default(TAsset);
             return false;
         }
-
-        public TAsset this[string key]
-        {
-            get => throw new NotImplementedException();
-
-            set => throw new NotImplementedException();
-        }
-
-        public ICollection<string> Keys { get; }
-        public ICollection<TAsset> Values { get; }
 
         public IEnumerator<KeyValuePair<string, TAsset>> GetEnumerator() =>
             throw new NotImplementedException();
@@ -47,8 +50,5 @@ namespace ECS.StreamableLoading.Cache
 
         public bool Remove(KeyValuePair<string, TAsset> item) =>
             false;
-
-        public int Count { get; }
-        public bool IsReadOnly { get; }
     }
 }

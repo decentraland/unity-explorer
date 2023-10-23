@@ -6,7 +6,7 @@ namespace Utility.ThreadSafePool
     public abstract class ThreadSafeCollectionPool<TCollection, TItem> : ThreadSafeObjectPool<TCollection> where TCollection: class, ICollection<TItem>, new()
     {
         /// <summary>
-        /// Shared Collection Pool with default capacity
+        ///     Shared Collection Pool with default capacity
         /// </summary>
         public static readonly ThreadSafeObjectPool<TCollection> SHARED = new (() => new TCollection(), actionOnRelease: c => c.Clear());
 

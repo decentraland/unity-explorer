@@ -16,6 +16,5 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.Avatar
 
         public TextureArraySlot SetTexture(Material material, Texture2D texture, ComputeShaderConstants.TextureArrayType type) =>
             textureArrayTypes[(int)type].SetTexture(material, texture);
-
     }
 }

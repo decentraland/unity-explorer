@@ -14,10 +14,6 @@ namespace CRDT.CRDTTests
     [TestFixture]
     public class CRDTShould
     {
-        private ICRDTSerializer serializer;
-        private ICRDTDeserializer deserializer;
-        private static readonly CRDTPooledMemoryAllocator CRDT_POOLED_MEMORY_ALLOCATOR = CRDTPooledMemoryAllocator.Create();
-
         [SetUp]
         public void SetUp()
         {
@@ -25,15 +21,19 @@ namespace CRDT.CRDTTests
             deserializer = new CRDTDeserializer(CRDT_POOLED_MEMORY_ALLOCATOR);
         }
 
+        private ICRDTSerializer serializer;
+        private ICRDTDeserializer deserializer;
+        private static readonly CRDTPooledMemoryAllocator CRDT_POOLED_MEMORY_ALLOCATOR = CRDTPooledMemoryAllocator.Create();
+
         [Test]
         [TestCaseSource(nameof(GetIndividualMessages))]
         public void HaveDeserializerAndSerializerOnParWithIndividualMessages(CRDTMessage expected)
         {
-            var messageDataLength = expected.GetMessageDataLength();
+            int messageDataLength = expected.GetMessageDataLength();
             var processedMessage = new ProcessedCRDTMessage(expected, messageDataLength);
 
             var destination = new byte[messageDataLength];
-            var destinationSpan = destination.AsSpan();
+            Span<byte> destinationSpan = destination.AsSpan();
             serializer.Serialize(ref destinationSpan, in processedMessage);
 
             var memory = new ReadOnlyMemory<byte>(destination);
@@ -48,13 +48,13 @@ namespace CRDT.CRDTTests
         [TestCaseSource(nameof(GetBatches))]
         public void HaveDeserializerAndSerializerOnParWithBatches(CRDTMessage[] expected)
         {
-            var dataLength = expected.Aggregate(0, (acc, msg) => acc + msg.GetMessageDataLength());
+            int dataLength = expected.Aggregate(0, (acc, msg) => acc + msg.GetMessageDataLength());
             var destination = new byte[dataLength];
-            var destinationSpan = destination.AsSpan();
+            Span<byte> destinationSpan = destination.AsSpan();
 
             foreach (CRDTMessage message in expected)
             {
-                var messageDataLength = message.GetMessageDataLength();
+                int messageDataLength = message.GetMessageDataLength();
                 var processedMessage = new ProcessedCRDTMessage(message, messageDataLength);
                 serializer.Serialize(ref destinationSpan, in processedMessage);
             }
@@ -105,7 +105,7 @@ namespace CRDT.CRDTTests
                     new (CRDTMessageType.DELETE_ENTITY, 6654, 0, 0, EmptyMemoryOwner<byte>.EMPTY),
 
                     //new (CRDTMessageType.DELETE_ENTITY, 66712, 0, 0, EmptyMemoryOwner<byte>.EMPTY)
-                }
+                },
             };
         }
     }
