@@ -62,6 +62,8 @@ namespace Global
 
         public IRealmPartitionSettings RealmPartitionSettings => realmPartitionSettings.Value;
 
+        public CacheCleaner CacheCleaner { get; private set; }
+
         public async UniTask Initialize(StaticSettings settings, CancellationToken ct)
         {
             (characterObject, reportHandlingSettings, partitionSettings, realmPartitionSettings) =
@@ -106,6 +108,8 @@ namespace Global
                 new MemoryBudgetProvider(new SystemMemoryMock(50), profilingProvider)
             );
 
+            var cacheCleaner = new CacheCleaner();
+            container.CacheCleaner = cacheCleaner;
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
@@ -113,7 +117,7 @@ namespace Global
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
 
-            var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, sharedDependencies.MemoryBudgetProvider);
+            var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, sharedDependencies.MemoryBudgetProvider, cacheCleaner);
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
@@ -124,7 +128,7 @@ namespace Global
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 assetBundlePlugin,
-                new GltfContainerPlugin(sharedDependencies),
+                new GltfContainerPlugin(sharedDependencies, sharedDependencies.MemoryBudgetProvider, cacheCleaner),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
             };
 

@@ -54,5 +54,11 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         public void Dereference(in GetAssetBundleIntention key, AssetBundleData asset) { }
+
+        public void UnloadCache()
+        {
+            foreach (AssetBundleData ab in cache.Values)
+                ab.Dispose();
+        }
     }
 }

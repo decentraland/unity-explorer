@@ -14,12 +14,13 @@ namespace ECS.StreamableLoading.Cache
     {
         public static readonly NoCache<TAsset, TLoadingIntention> INSTANCE = new (false, false);
 
-        public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>> OngoingRequests { get; }
-        public IDictionary<string, StreamableLoadingResult<TAsset>> IrrecoverableFailures { get; }
-
         private readonly bool useOngoingRequestCache;
         private readonly bool useIrrecoverableFailureCache;
 
+        public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>> OngoingRequests { get; }
+        public IDictionary<string, StreamableLoadingResult<TAsset>> IrrecoverableFailures { get; }
+
+        private bool disposed { get; set; }
 
         public NoCache(bool useOngoingRequestCache, bool useIrrecoverableFailureCache)
         {
@@ -37,6 +38,20 @@ namespace ECS.StreamableLoading.Cache
                 IrrecoverableFailures = new FakeDictionaryCache<StreamableLoadingResult<TAsset>>();
         }
 
+        public void Dispose()
+        {
+            if (disposed)
+                return;
+
+            if (useOngoingRequestCache)
+                DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>.Release(OngoingRequests as Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>);
+
+            if (useIrrecoverableFailureCache)
+                DictionaryPool<string, StreamableLoadingResult<TAsset>>.Release(IrrecoverableFailures as Dictionary<string, StreamableLoadingResult<TAsset>>);
+
+            disposed = true;
+        }
+
         public bool TryGet(in TLoadingIntention key, out TAsset asset)
         {
             asset = default(TAsset);
@@ -47,25 +62,12 @@ namespace ECS.StreamableLoading.Cache
 
         public void Dereference(in TLoadingIntention key, TAsset asset) { }
 
+        public void UnloadCache() { }
+
         bool IEqualityComparer<TLoadingIntention>.Equals(TLoadingIntention x, TLoadingIntention y) =>
             EqualityComparer<TLoadingIntention>.Default.Equals(x, y);
 
         int IEqualityComparer<TLoadingIntention>.GetHashCode(TLoadingIntention obj) =>
             EqualityComparer<TLoadingIntention>.Default.GetHashCode(obj);
-
-        private bool disposed { get; set; }
-
-        public void Dispose()
-        {
-            if (disposed)
-                return;
-
-            if (useOngoingRequestCache)
-                DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>.Release(OngoingRequests as Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>);
-            if (useIrrecoverableFailureCache)
-                DictionaryPool<string, StreamableLoadingResult<TAsset>>.Release(IrrecoverableFailures as Dictionary<string, StreamableLoadingResult<TAsset>>);
-
-            disposed = true;
-        }
     }
 }

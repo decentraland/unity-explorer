@@ -17,14 +17,13 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
     [TestFixture]
     public class CreateGltfAssetFromAssetBundleSystemShould : UnitySystemTestBase<CreateGltfAssetFromAssetBundleSystem>
     {
-        private readonly GltfContainerTestResources resources = new ();
-
         [SetUp]
         public void SetUp()
         {
             IConcurrentBudgetProvider budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+            MemoryBudgetProvider memoryBudgetProvider = Substitute.For<MemoryBudgetProvider>();
             budgetProvider.TrySpendBudget().Returns(true);
-            system = new CreateGltfAssetFromAssetBundleSystem(world, budgetProvider);
+            system = new CreateGltfAssetFromAssetBundleSystem(world, budgetProvider, memoryBudgetProvider);
         }
 
         [TearDown]
@@ -32,6 +31,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         {
             resources.UnloadBundle();
         }
+
+        private readonly GltfContainerTestResources resources = new ();
 
         [Test]
         public async Task ResolveSimpleScene()

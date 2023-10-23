@@ -105,10 +105,12 @@ namespace ECS.StreamableLoading.Common.Systems
                 return;
             }
 
-            // Indicate that loading has started
-            state.Value = StreamableLoadingState.Status.InProgress;
-
-            Flow(entity, currentSource, intention, state.AcquiredBudget, partitionComponent, cancellationTokenSource.Token).Forget();
+            if (memoryBudgetProvider.TrySpendBudget())
+            {
+                // Indicate that loading has started
+                state.Value = StreamableLoadingState.Status.InProgress;
+                Flow(entity, currentSource, intention, state.AcquiredBudget, partitionComponent, cancellationTokenSource.Token).Forget();
+            }
         }
 
         private async UniTask Flow(Entity entity, AssetSource source, TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition,

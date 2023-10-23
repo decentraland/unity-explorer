@@ -25,6 +25,7 @@ namespace Global.Dynamic
 
         public static DynamicWorldContainer Create(
             in StaticContainer staticContainer,
+            CacheCleaner cacheCleaner,
             UIDocument rootUIDocument,
             IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius)
         {

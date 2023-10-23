@@ -7,6 +7,7 @@ using Diagnostics.ReportsHandling;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
+using Global;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -32,12 +33,14 @@ namespace DCL.PluginSystem.World
         private readonly AssetBundleCache assetBundleCache;
         private readonly AssetBundleLoadingMutex assetBundleLoadingMutex;
 
-        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, MemoryBudgetProvider memoryBudgetProvider)
+        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, MemoryBudgetProvider memoryBudgetProvider, CacheCleaner cacheCleaner)
         {
             this.reportsHandlingSettings = reportsHandlingSettings;
             this.memoryBudgetProvider = memoryBudgetProvider;
             assetBundleCache = new AssetBundleCache();
             assetBundleLoadingMutex = new AssetBundleLoadingMutex();
+
+            // cacheCleaner.Register(assetBundleCache);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)

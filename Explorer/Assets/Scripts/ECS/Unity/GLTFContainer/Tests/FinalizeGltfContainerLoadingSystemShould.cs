@@ -41,8 +41,9 @@ namespace ECS.Unity.GLTFContainer.Tests
             concurrentBudgetProvider.TrySpendBudget().Returns(true);
             system = new FinalizeGltfContainerLoadingSystem(world, world.Reference(sceneRoot), concurrentBudgetProvider, NullEntityCollidersSceneCache.INSTANCE);
             IConcurrentBudgetProvider budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+            MemoryBudgetProvider memoryBudgetProvider = Substitute.For<MemoryBudgetProvider>();
             budgetProvider.TrySpendBudget().Returns(true);
-            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budgetProvider);
+            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budgetProvider, memoryBudgetProvider);
         }
 
         [TearDown]

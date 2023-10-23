@@ -4,9 +4,11 @@ using DCL.Interaction.Utility;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Systems;
 using ECS.Unity.GLTFContainer.Systems;
+using Global;
 using System.Collections.Generic;
 
 namespace DCL.PluginSystem.World
@@ -14,12 +16,16 @@ namespace DCL.PluginSystem.World
     public class GltfContainerPlugin : IDCLWorldPluginWithoutSettings
     {
         private readonly ECSWorldSingletonSharedDependencies globalDeps;
+        private readonly MemoryBudgetProvider memoryBudgetProvider;
         private readonly GltfContainerAssetsCache assetsCache;
 
-        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps)
+        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, MemoryBudgetProvider memoryBudgetProvider, CacheCleaner cacheCleaner)
         {
             this.globalDeps = globalDeps;
+            this.memoryBudgetProvider = memoryBudgetProvider;
             assetsCache = new GltfContainerAssetsCache(1000);
+
+            // cacheCleaner.Register(assetsCache);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
@@ -27,7 +33,7 @@ namespace DCL.PluginSystem.World
         {
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);
-            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudgetProvider);
+            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudgetProvider, memoryBudgetProvider);
             ReportGltfErrorsSystem.InjectToWorld(ref builder, globalDeps.ReportsHandlingSettings);
 
             // GLTF Container
@@ -49,7 +55,7 @@ namespace DCL.PluginSystem.World
         {
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);
-            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudgetProvider);
+            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudgetProvider, memoryBudgetProvider);
             ReportGltfErrorsSystem.InjectToWorld(ref builder, globalDeps.ReportsHandlingSettings);
 
             // GLTF Container

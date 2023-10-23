@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using Diagnostics.ReportsHandling;
-using ECS.Unity.GLTFContainer.Asset.Cache;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -20,7 +19,6 @@ namespace Global.Dynamic
     /// </summary>
     public class DynamicSceneLoader : MonoBehaviour
     {
-        public bool clearCache;
         [Header("Settings")]
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer;
@@ -43,11 +41,6 @@ namespace Global.Dynamic
         {
             realmLauncher.Initialize(realms);
             InitializationFlow(destroyCancellationToken).Forget();
-        }
-
-        private void Update()
-        {
-            if (clearCache) { GltfContainerAssetsCache.clearCache = clearCache; }
         }
 
         private void OnDestroy()
@@ -90,6 +83,7 @@ namespace Global.Dynamic
 
                 dynamicWorldContainer = DynamicWorldContainer.Create(
                     in staticContainer,
+                    staticContainer.CacheCleaner,
                     uiToolkitRoot,
                     StaticLoadPositions,
                     SceneLoadRadius);
