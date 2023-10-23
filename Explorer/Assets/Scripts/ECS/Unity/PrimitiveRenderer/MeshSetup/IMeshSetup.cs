@@ -1,11 +1,11 @@
-using System;
 using DCL.ECSComponents;
 using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
+using System;
 using UnityEngine;
 
 namespace ECS.Unity.PrimitiveRenderer.MeshSetup
 {
-    public interface IMeshSetup<T> : ISetupMesh where T : IPrimitiveMesh
+    public interface IMeshSetup<T> : ISetupMesh where T: IPrimitiveMesh
     {
         Type ISetupMesh.MeshType => typeof(T);
     }

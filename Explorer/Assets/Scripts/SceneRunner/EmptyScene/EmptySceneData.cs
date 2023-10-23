@@ -12,9 +12,15 @@ namespace SceneRunner.EmptyScene
     /// </summary>
     public class EmptySceneData : ISceneData
     {
+        public readonly IReadOnlyList<EmptySceneMapping> Mappings;
         private readonly Dictionary<string, string> fileToHash;
 
-        public readonly IReadOnlyList<EmptySceneMapping> Mappings;
+        public SceneShortInfo SceneShortInfo { get; }
+
+        public Vector3 BasePosition { get; }
+
+        public SceneAssetBundleManifest AssetBundleManifest => SceneAssetBundleManifest.NULL;
+        public StaticSceneMessages StaticSceneMessages => StaticSceneMessages.EMPTY;
 
         public EmptySceneData(IReadOnlyList<EmptySceneMapping> mappings)
         {
@@ -28,13 +34,6 @@ namespace SceneRunner.EmptyScene
                 fileToHash[mapping.environment.file] = mapping.environment.hash;
             }
         }
-
-        public SceneShortInfo SceneShortInfo { get; }
-
-        public Vector3 BasePosition { get; }
-
-        public SceneAssetBundleManifest AssetBundleManifest => SceneAssetBundleManifest.NULL;
-        public StaticSceneMessages StaticSceneMessages => StaticSceneMessages.EMPTY;
 
         public bool HasRequiredPermission(string permission) =>
             throw new NotImplementedException();

@@ -8,15 +8,6 @@ namespace CrdtEcsBridge.OutgoingMessages
 {
     public class OutgoingCRDTMessagesProvider : IOutgoingCRDTMessagesProvider
     {
-        private class EqualityComparer : IEqualityComparer<OutgoingMessageKey>
-        {
-            public bool Equals(OutgoingMessageKey x, OutgoingMessageKey y) =>
-                x.Entity.Equals(y.Entity) && x.ComponentId == y.ComponentId;
-
-            public int GetHashCode(OutgoingMessageKey obj) =>
-                HashCode.Combine(obj.Entity.Id, obj.ComponentId);
-        }
-
         internal static readonly ThreadSafeDictionaryPool<OutgoingMessageKey, int> INDICES_SHARED_POOL =
             new (64, PoolConstants.SCENES_COUNT, new EqualityComparer());
 
@@ -25,6 +16,12 @@ namespace CrdtEcsBridge.OutgoingMessages
 
         internal readonly Dictionary<OutgoingMessageKey, int> lwwMessageIndices = INDICES_SHARED_POOL.Get();
         internal readonly List<ProcessedCRDTMessage> messages = MESSAGES_SHARED_POOL.Get();
+
+        public void Dispose()
+        {
+            INDICES_SHARED_POOL.Release(lwwMessageIndices);
+            MESSAGES_SHARED_POOL.Release(messages);
+        }
 
         public void AddLwwMessage(ProcessedCRDTMessage processedCRDTMessage)
         {
@@ -69,10 +66,13 @@ namespace CrdtEcsBridge.OutgoingMessages
             return new OutgoingCRDTMessagesSyncBlock(listCopy);
         }
 
-        public void Dispose()
+        private class EqualityComparer : IEqualityComparer<OutgoingMessageKey>
         {
-            INDICES_SHARED_POOL.Release(lwwMessageIndices);
-            MESSAGES_SHARED_POOL.Release(messages);
+            public bool Equals(OutgoingMessageKey x, OutgoingMessageKey y) =>
+                x.Entity.Equals(y.Entity) && x.ComponentId == y.ComponentId;
+
+            public int GetHashCode(OutgoingMessageKey obj) =>
+                HashCode.Combine(obj.Entity.Id, obj.ComponentId);
         }
     }
 }

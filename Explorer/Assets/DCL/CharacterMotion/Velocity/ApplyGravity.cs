@@ -17,6 +17,7 @@ namespace DCL.CharacterMotion
                 // Gravity is already negative
                 characterPhysics.NonInterpolatedVelocity += Vector3.up * characterControllerSettings.Gravity * deltaTime;
             else
+
                 // Gravity should always affect the character, otherwise we are unable to ground it properly
                 characterPhysics.NonInterpolatedVelocity.y = characterControllerSettings.Gravity * deltaTime;
         }

@@ -6,6 +6,8 @@ namespace ECS.Profiling
 {
     public class ProfilingView : MonoBehaviour, IProfilerView
     {
+        private readonly string frameRateFormat = "Frame Rate: {0:1} fps ({1:1} ms)";
+        private readonly string hiccupCounterFormat = "Hiccups last 1000 frames: {0}";
         [SerializeField]
         private GameObject debugViewWindow;
 
@@ -27,10 +29,6 @@ namespace ECS.Profiling
 
         public bool IsOpen { get; private set; }
 
-        private readonly string frameRateFormat = "Frame Rate: {0:1} fps ({1:1} ms)";
-        private readonly string hiccupCounterFormat = "Hiccups last 1000 frames: {0}";
-
-
         private void Start()
         {
             OpenProfilerWindow(); // Open on start
@@ -40,6 +38,13 @@ namespace ECS.Profiling
 
             version.text = $"V: {Application.version}";
         }
+
+        private void OnDestroy()
+        {
+            openButton.onClick.RemoveAllListeners();
+            closeButton.onClick.RemoveAllListeners();
+        }
+
         public void SetFPS(float averageFrameTimeInSeconds)
         {
             float frameTimeInMS = averageFrameTimeInSeconds * 1e3f;
@@ -52,6 +57,7 @@ namespace ECS.Profiling
         {
             hiccupCounter.SetText(hiccupCounterFormat, hiccupCount);
         }
+
         private void CloseProfilerWindow()
         {
             openButton.gameObject.SetActive(true);
@@ -64,12 +70,6 @@ namespace ECS.Profiling
             openButton.gameObject.SetActive(false);
             debugViewWindow.gameObject.SetActive(true);
             IsOpen = true;
-        }
-
-        private void OnDestroy()
-        {
-            openButton.onClick.RemoveAllListeners();
-            closeButton.onClick.RemoveAllListeners();
         }
     }
 }

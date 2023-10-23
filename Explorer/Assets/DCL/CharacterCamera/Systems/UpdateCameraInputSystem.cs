@@ -29,10 +29,10 @@ namespace DCL.CharacterCamera.Systems
         private void UpdateInput(ref CameraInput cameraInput, ref CameraComponent cameraComponent)
         {
             cameraInput.ZoomIn = cameraActions.Zoom.ReadValue<Vector2>().y > 0
-                                   || cameraActions.ZoomIn.WasPressedThisFrame();
+                                 || cameraActions.ZoomIn.WasPressedThisFrame();
 
             cameraInput.ZoomOut = cameraActions.Zoom.ReadValue<Vector2>().y < 0
-                                    || cameraActions.ZoomOut.WasPressedThisFrame();
+                                  || cameraActions.ZoomOut.WasPressedThisFrame();
 
             cameraInput.Delta = cameraComponent.CursorIsLocked ? cameraActions.Delta.ReadValue<Vector2>() : Vector2.zero;
 

@@ -8,6 +8,12 @@ namespace DCL.Interaction.HoverCanvas
     [Serializable]
     public struct HoverCanvasSettings
     {
+        [field: SerializeField]
+        public AssetReferenceVisualTreeAsset HoverCanvasAsset { get; private set; }
+
+        [field: SerializeField]
+        public InputButtonSettings[] InputButtons { get; private set; }
+
         [Serializable]
         public struct InputButtonSettings
         {
@@ -20,11 +26,5 @@ namespace DCL.Interaction.HoverCanvas
 
             public Sprite Icon;
         }
-
-        [field: SerializeField]
-        public AssetReferenceVisualTreeAsset HoverCanvasAsset { get; private set; }
-
-        [field: SerializeField]
-        public InputButtonSettings[] InputButtons { get; private set; }
     }
 }

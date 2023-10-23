@@ -13,14 +13,14 @@ namespace SceneRunner.Tests.TestUtils
 
         private InitializationTestSystem1(World world) : base(world) { }
 
-        public override void Dispose()
-        {
-            Internal.Dispose();
-        }
-
         public override void Initialize()
         {
             Internal.Initialize();
+        }
+
+        public override void Dispose()
+        {
+            Internal.Dispose();
         }
 
         public override void BeforeUpdate(in float t)
@@ -46,14 +46,14 @@ namespace SceneRunner.Tests.TestUtils
 
         private SimulationTestSystem1(World world) : base(world) { }
 
-        public override void Dispose()
-        {
-            Internal.Dispose();
-        }
-
         public override void Initialize()
         {
             Internal.Initialize();
+        }
+
+        public override void Dispose()
+        {
+            Internal.Dispose();
         }
 
         public override void BeforeUpdate(in float t)
@@ -75,20 +75,19 @@ namespace SceneRunner.Tests.TestUtils
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     public partial class FinalizeSimulationTestSystem : BaseSystem<World, float>, IFinalizeWorldSystem
     {
+        public bool FinalizeCalled;
         public TestSystemInternal Internal { get; }
 
-        public bool FinalizeCalled;
-
         private FinalizeSimulationTestSystem(World world) : base(world) { }
-
-        public override void Dispose()
-        {
-            Internal.Dispose();
-        }
 
         public override void Initialize()
         {
             Internal.Initialize();
+        }
+
+        public override void Dispose()
+        {
+            Internal.Dispose();
         }
 
         public override void BeforeUpdate(in float t)

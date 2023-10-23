@@ -13,11 +13,6 @@ namespace ECS.Unity.Transforms.Tests
     [TestFixture]
     public class InstantiateTransformUnitySystemShould : UnitySystemTestBase<InstantiateTransformSystem>
     {
-        private SDKTransform sdkTransform;
-        private IComponentPoolsRegistry componentRegistry;
-        private IComponentPool<Transform> transformPool;
-        private Transform testTransform;
-
         [SetUp]
         public void SetUp()
         {
@@ -30,6 +25,17 @@ namespace ECS.Unity.Transforms.Tests
             sdkTransform = new SDKTransform();
             system = new InstantiateTransformSystem(world, componentRegistry);
         }
+
+        [TearDown]
+        public void TearDown()
+        {
+            Object.DestroyImmediate(testTransform.gameObject);
+        }
+
+        private SDKTransform sdkTransform;
+        private IComponentPoolsRegistry componentRegistry;
+        private IComponentPool<Transform> transformPool;
+        private Transform testTransform;
 
         [Test]
         public void InstantiateTransformComponent()
@@ -46,12 +52,6 @@ namespace ECS.Unity.Transforms.Tests
             QueryDescription entityWithUnityTransform = new QueryDescription().WithAll<SDKTransform, TransformComponent>();
             Assert.AreEqual(1, world.CountEntities(in entityWithUnityTransform));
             Assert.AreEqual(0, world.CountEntities(in entityWithoutUnityTransform));
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            Object.DestroyImmediate(testTransform.gameObject);
         }
     }
 }

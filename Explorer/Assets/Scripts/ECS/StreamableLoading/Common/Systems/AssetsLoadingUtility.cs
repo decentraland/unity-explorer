@@ -20,7 +20,7 @@ namespace ECS.StreamableLoading.Common.Systems
         /// <returns>
         ///     <para>Null - if PermittedSources have value</para>
         /// </returns>
-        public static async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoop<TIntention, TAsset>(this TIntention intention,
+        public static async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync<TIntention, TAsset>(this TIntention intention,
             IAcquiredBudget acquiredBudget,
             IPartitionComponent partition,
             InternalFlowDelegate<TAsset, TIntention> flow, string reportCategory, CancellationToken ct)
@@ -43,6 +43,7 @@ namespace ECS.StreamableLoading.Common.Systems
                     {
                         ReportHub.LogError(reportCategory, $"Exception occured on loading {typeof(TAsset)} from {intention.ToString()} with url {intention.CommonArguments.URL}.\n"
                                                            + "No more sources left.");
+
                         ReportHub.LogException(unityWebRequestException, reportCategory);
                     }
                     else

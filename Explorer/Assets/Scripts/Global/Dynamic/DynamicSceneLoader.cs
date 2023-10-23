@@ -37,12 +37,11 @@ namespace Global.Dynamic
 
         private GlobalWorld globalWorld;
 
-
         private void Awake()
         {
             realmLauncher.Initialize(realms);
 
-            InitializationFlow(destroyCancellationToken).Forget();
+            InitializationFlowAsync(destroyCancellationToken).Forget();
         }
 
         private void OnDestroy()
@@ -56,7 +55,7 @@ namespace Global.Dynamic
                 }
 
                 if (globalWorld != null)
-                    await dynamicWorldContainer.RealmController.DisposeGlobalWorld(globalWorld).SuppressCancellationThrow();
+                    await dynamicWorldContainer.RealmController.DisposeGlobalWorldAsync(globalWorld).SuppressCancellationThrow();
 
                 await UniTask.SwitchToMainThread();
 
@@ -67,13 +66,13 @@ namespace Global.Dynamic
             DisposeAsync().Forget();
         }
 
-        private async UniTask InitializationFlow(CancellationToken ct)
+        private async UniTask InitializationFlowAsync(CancellationToken ct)
         {
             try
             {
                 // First load the common global plugin
                 bool isLoaded;
-                (staticContainer, isLoaded) = await StaticContainer.Create(globalPluginSettingsContainer, ct);
+                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, ct);
 
                 if (!isLoaded)
                 {
@@ -98,8 +97,8 @@ namespace Global.Dynamic
                         anyFailure = true;
                 }
 
-                await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePlugin(gp, ct).ContinueWith(OnPluginInitialized)));
-                await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePlugin(gp, ct).ContinueWith(OnPluginInitialized)));
+                await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
+                await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
 
                 if (anyFailure)
                 {
@@ -111,7 +110,7 @@ namespace Global.Dynamic
 
                 void SetRealm(string selectedRealm)
                 {
-                    ChangeRealm(staticContainer, destroyCancellationToken, selectedRealm).Forget();
+                    ChangeRealmAsync(staticContainer, destroyCancellationToken, selectedRealm).Forget();
                 }
 
                 realmLauncher.OnRealmSelected += SetRealm;
@@ -134,10 +133,10 @@ namespace Global.Dynamic
             ReportHub.LogError(ReportCategory.ENGINE, "Initialization Failed! Game is irrecoverably dead!");
         }
 
-        private async UniTask ChangeRealm(StaticContainer globalContainer, CancellationToken ct, string selectedRealm)
+        private async UniTask ChangeRealmAsync(StaticContainer globalContainer, CancellationToken ct, string selectedRealm)
         {
             if (globalWorld != null)
-                await dynamicWorldContainer.RealmController.UnloadCurrentRealm(globalWorld);
+                await dynamicWorldContainer.RealmController.UnloadCurrentRealmAsync(globalWorld);
 
             await UniTask.SwitchToMainThread();
 
@@ -146,7 +145,7 @@ namespace Global.Dynamic
 
             globalContainer.CharacterObject.Controller.Move(characterPos - globalContainer.CharacterObject.Transform.position);
 
-            await dynamicWorldContainer.RealmController.SetRealm(globalWorld, URLDomain.FromString(selectedRealm), ct);
+            await dynamicWorldContainer.RealmController.SetRealmAsync(globalWorld, URLDomain.FromString(selectedRealm), ct);
         }
     }
 }

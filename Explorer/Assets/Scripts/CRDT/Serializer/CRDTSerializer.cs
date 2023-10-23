@@ -9,7 +9,7 @@ namespace CRDT.Serializer
     {
         public void Serialize(ref Span<byte> destination, in ProcessedCRDTMessage processedMessage)
         {
-            var crdtMessage = processedMessage.message;
+            CRDTMessage crdtMessage = processedMessage.message;
 
             destination.Write(processedMessage.CRDTMessageDataLength);
             destination.WriteEnumAs<CRDTMessageType, int>(crdtMessage.Type);

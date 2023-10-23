@@ -35,17 +35,17 @@ namespace Global.Dynamic
             worldSystems = systemGroupWorld;
         }
 
-        public void Clear()
-        {
-            cameraSamplingData.Clear();
-            realmSamplingData.Clear();
-        }
-
         public void Dispose()
         {
             destroyCancellationSource.Cancel();
             worldSystems.Dispose();
             EcsWorld.Dispose();
+        }
+
+        public void Clear()
+        {
+            cameraSamplingData.Clear();
+            realmSamplingData.Clear();
         }
     }
 }

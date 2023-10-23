@@ -20,7 +20,7 @@ namespace ECS.StreamableLoading.Textures
     {
         internal LoadTextureSystem(World world, IStreamableCache<Texture2D, GetTextureIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync) { }
 
-        protected override async UniTask<StreamableLoadingResult<Texture2D>> FlowInternal(GetTextureIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<Texture2D>> FlowInternalAsync(GetTextureIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             using UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(intention.CommonArguments.URL, !intention.IsReadable);
             await webRequest.SendWebRequest().WithCancellation(ct);

@@ -11,13 +11,9 @@ namespace ECS.Prioritization
     /// </summary>
     public class PartitionedWorldsAggregate : IPartitionedWorldsAggregate, IComparer<PartitionedWorldsAggregate.Entry>
     {
-        public class Factory : ISystemGroupAggregate<IPartitionComponent>.IFactory
-        {
-            public ISystemGroupAggregate<IPartitionComponent> Create(Type systemGroupType) =>
-                new PartitionedWorldsAggregate();
-        }
-
         private readonly List<Entry> entries = new (PoolConstants.SCENES_COUNT);
+
+        public int Count => entries.Count;
 
         int IComparer<Entry>.Compare(Entry x, Entry y)
         {
@@ -59,7 +55,11 @@ namespace ECS.Prioritization
             }
         }
 
-        public int Count => entries.Count;
+        public class Factory : ISystemGroupAggregate<IPartitionComponent>.IFactory
+        {
+            public ISystemGroupAggregate<IPartitionComponent> Create(Type systemGroupType) =>
+                new PartitionedWorldsAggregate();
+        }
 
         internal struct Entry
         {

@@ -1,5 +1,5 @@
-using System;
 using NUnit.Framework;
+using System;
 using UnityEngine;
 
 namespace Utility.Primitives.Tests
@@ -13,7 +13,7 @@ namespace Utility.Primitives.Tests
             var mesh = new Mesh();
             var gameObject = new GameObject();
             gameObject.AddComponent<MeshFilter>();
-            var meshRenderer = gameObject.AddComponent<MeshRenderer>();
+            MeshRenderer meshRenderer = gameObject.AddComponent<MeshRenderer>();
 
             SphereFactory.Create(ref mesh);
             meshRenderer.GetComponent<MeshFilter>().mesh = mesh;
@@ -23,8 +23,8 @@ namespace Utility.Primitives.Tests
         [Test]
         public void ValidateMeshCount()
         {
-            var finalVerticesCount = (SphereFactory.LONGITUDE + 1) * SphereFactory.LATITUDE + 2;
-            var trianglesCount = finalVerticesCount * 6;
+            int finalVerticesCount = ((SphereFactory.LONGITUDE + 1) * SphereFactory.LATITUDE) + 2;
+            int trianglesCount = finalVerticesCount * 6;
 
             var mesh = new Mesh();
             SphereFactory.Create(ref mesh);
@@ -38,13 +38,13 @@ namespace Utility.Primitives.Tests
         [Test]
         public void ReuseBuffers()
         {
-            var finalVerticesCount = (SphereFactory.LONGITUDE + 1) * SphereFactory.LATITUDE + 2;
-            var trianglesCount = finalVerticesCount * 6;
+            int finalVerticesCount = ((SphereFactory.LONGITUDE + 1) * SphereFactory.LATITUDE) + 2;
+            int trianglesCount = finalVerticesCount * 6;
 
-            var triangles = PrimitivesBuffersPool.TRIANGLES.Rent(trianglesCount);
-            var uvs = PrimitivesBuffersPool.UVS.Rent(finalVerticesCount);
-            var vertices = PrimitivesBuffersPool.EQUAL_TO_VERTICES.Rent(finalVerticesCount);
-            var normals = PrimitivesBuffersPool.EQUAL_TO_VERTICES.Rent(finalVerticesCount);
+            int[] triangles = PrimitivesBuffersPool.TRIANGLES.Rent(trianglesCount);
+            Vector2[] uvs = PrimitivesBuffersPool.UVS.Rent(finalVerticesCount);
+            Vector3[] vertices = PrimitivesBuffersPool.EQUAL_TO_VERTICES.Rent(finalVerticesCount);
+            Vector3[] normals = PrimitivesBuffersPool.EQUAL_TO_VERTICES.Rent(finalVerticesCount);
 
             PrimitivesBuffersPool.TRIANGLES.Return(triangles, true);
             PrimitivesBuffersPool.UVS.Return(uvs, true);
@@ -57,11 +57,11 @@ namespace Utility.Primitives.Tests
 
             // We don't clear buffer so if they are reused they should be filled with data
 
-            void CheckAllItemsAreNotDefault<T>(string arrayName, T[] array) where T : IEquatable<T>
+            void CheckAllItemsAreNotDefault<T>(string arrayName, T[] array) where T: IEquatable<T>
             {
-                foreach (var element in array)
+                foreach (T element in array)
                 {
-                    if (!element.Equals(default))
+                    if (!element.Equals(default(T)))
                         return;
                 }
 

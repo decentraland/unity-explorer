@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 namespace CRDT.Protocol.Factory
 {
     /// <summary>
-    /// Contains the size field denoting the number of bytes required for Serialization
+    ///     Contains the size field denoting the number of bytes required for Serialization
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public readonly struct ProcessedCRDTMessage
@@ -14,8 +14,7 @@ namespace CRDT.Protocol.Factory
         public ProcessedCRDTMessage(CRDTMessage message, int crdtMessageDataLength)
         {
             this.message = message;
-            this.CRDTMessageDataLength = crdtMessageDataLength;
+            CRDTMessageDataLength = crdtMessageDataLength;
         }
-
     }
 }

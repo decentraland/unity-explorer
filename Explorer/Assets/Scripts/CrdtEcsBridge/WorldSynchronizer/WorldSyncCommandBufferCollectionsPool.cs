@@ -18,9 +18,6 @@ namespace CrdtEcsBridge.WorldSynchronizer
         private static readonly ThreadSafeObjectPool<WorldSyncCommandBufferCollectionsPool> POOL = new (
             () => new WorldSyncCommandBufferCollectionsPool(), defaultCapacity: PoolConstants.SCENES_COUNT);
 
-        private Dictionary<CRDTEntity, Dictionary<int, BatchState>> mainDictionary = new (1024, CRDTEntityComparer.INSTANCE);
-        private List<CRDTEntity> deletedEntities = new (256);
-
         private readonly IObjectPool<Dictionary<int, BatchState>> innerDictionariesPool = new ObjectPool<Dictionary<int, BatchState>>(
 
             // just preallocate an array big enough
@@ -33,10 +30,30 @@ namespace CrdtEcsBridge.WorldSynchronizer
             collectionCheck: false
         );
 
-        public static WorldSyncCommandBufferCollectionsPool Create() =>
-            POOL.Get();
+        private Dictionary<CRDTEntity, Dictionary<int, BatchState>> mainDictionary = new (1024, CRDTEntityComparer.INSTANCE);
+        private List<CRDTEntity> deletedEntities = new (256);
 
         private WorldSyncCommandBufferCollectionsPool() { }
+
+        public void Dispose()
+        {
+            if (mainDictionary == null)
+            {
+                Debug.LogError($"{nameof(WorldSyncCommandBufferCollectionsPool)} can't be disposed: {nameof(mainDictionary)} leaked");
+                return;
+            }
+
+            if (deletedEntities == null)
+            {
+                Debug.LogError($"{nameof(WorldSyncCommandBufferCollectionsPool)} can't be disposed: {nameof(deletedEntities)} leaked");
+                return;
+            }
+
+            POOL.Release(this);
+        }
+
+        public static WorldSyncCommandBufferCollectionsPool Create() =>
+            POOL.Get();
 
         public Dictionary<CRDTEntity, Dictionary<int, BatchState>> GetMainDictionary()
         {
@@ -76,23 +93,6 @@ namespace CrdtEcsBridge.WorldSynchronizer
         public void ReleaseInnerDictionary(Dictionary<int, BatchState> inner)
         {
             innerDictionariesPool.Release(inner);
-        }
-
-        public void Dispose()
-        {
-            if (mainDictionary == null)
-            {
-                Debug.LogError($"{nameof(WorldSyncCommandBufferCollectionsPool)} can't be disposed: {nameof(mainDictionary)} leaked");
-                return;
-            }
-
-            if (deletedEntities == null)
-            {
-                Debug.LogError($"{nameof(WorldSyncCommandBufferCollectionsPool)} can't be disposed: {nameof(deletedEntities)} leaked");
-                return;
-            }
-
-            POOL.Release(this);
         }
     }
 }

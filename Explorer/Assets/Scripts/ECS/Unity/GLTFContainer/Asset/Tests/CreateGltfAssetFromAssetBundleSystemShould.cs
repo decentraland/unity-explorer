@@ -17,8 +17,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
     [TestFixture]
     public class CreateGltfAssetFromAssetBundleSystemShould : UnitySystemTestBase<CreateGltfAssetFromAssetBundleSystem>
     {
-        private readonly GltfContainerTestResources resources = new ();
-
         [SetUp]
         public void SetUp()
         {
@@ -32,6 +30,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         {
             resources.UnloadBundle();
         }
+
+        private readonly GltfContainerTestResources resources = new ();
 
         [Test]
         public async Task ResolveSimpleScene()

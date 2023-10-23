@@ -29,11 +29,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
             this.wearableCatalog = wearableCatalog;
         }
 
-        protected override void Update(float t)
-        {
-            TryConsumeDefaultWearablesPromiseQuery(World);
-        }
-
         public override void Initialize()
         {
             var pointersRequest = new List<string>[BodyShape.COUNT];
@@ -62,6 +57,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
             }
 
             World.Create(state);
+        }
+
+        protected override void Update(float t)
+        {
+            TryConsumeDefaultWearablesPromiseQuery(World);
         }
 
         [Query]

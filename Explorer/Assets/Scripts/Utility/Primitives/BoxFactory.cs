@@ -23,44 +23,45 @@ namespace Utility.Primitives
             var vIndex = 0;
 
             float size = PrimitivesSize.CUBE_SIZE;
+
             //top and bottom
             var start = new Vector3(-size / 2, size / 2, size / 2);
             vertices[vIndex++] = start;
-            vertices[vIndex++] = start + Vector3.right * size;
-            vertices[vIndex++] = start + Vector3.right * size + Vector3.back * size;
-            vertices[vIndex++] = start + Vector3.back * size;
+            vertices[vIndex++] = start + (Vector3.right * size);
+            vertices[vIndex++] = start + (Vector3.right * size) + (Vector3.back * size);
+            vertices[vIndex++] = start + (Vector3.back * size);
 
             start = new Vector3(-size / 2, -size / 2, size / 2);
             vertices[vIndex++] = start;
-            vertices[vIndex++] = start + Vector3.right * size;
-            vertices[vIndex++] = start + Vector3.right * size + Vector3.back * size;
-            vertices[vIndex++] = start + Vector3.back * size;
+            vertices[vIndex++] = start + (Vector3.right * size);
+            vertices[vIndex++] = start + (Vector3.right * size) + (Vector3.back * size);
+            vertices[vIndex++] = start + (Vector3.back * size);
 
             //left and right
             start = new Vector3(-size / 2, size / 2, size / 2);
             vertices[vIndex++] = start;
-            vertices[vIndex++] = start + Vector3.back * size;
-            vertices[vIndex++] = start + Vector3.back * size + Vector3.down * size;
-            vertices[vIndex++] = start + Vector3.down * size;
+            vertices[vIndex++] = start + (Vector3.back * size);
+            vertices[vIndex++] = start + (Vector3.back * size) + (Vector3.down * size);
+            vertices[vIndex++] = start + (Vector3.down * size);
 
             start = new Vector3(size / 2, size / 2, size / 2);
             vertices[vIndex++] = start;
-            vertices[vIndex++] = start + Vector3.back * size;
-            vertices[vIndex++] = start + Vector3.back * size + Vector3.down * size;
-            vertices[vIndex++] = start + Vector3.down * size;
+            vertices[vIndex++] = start + (Vector3.back * size);
+            vertices[vIndex++] = start + (Vector3.back * size) + (Vector3.down * size);
+            vertices[vIndex++] = start + (Vector3.down * size);
 
             //front and back
             start = new Vector3(-size / 2, size / 2, size / 2);
             vertices[vIndex++] = start;
-            vertices[vIndex++] = start + Vector3.right * size;
-            vertices[vIndex++] = start + Vector3.right * size + Vector3.down * size;
-            vertices[vIndex++] = start + Vector3.down * size;
+            vertices[vIndex++] = start + (Vector3.right * size);
+            vertices[vIndex++] = start + (Vector3.right * size) + (Vector3.down * size);
+            vertices[vIndex++] = start + (Vector3.down * size);
 
             start = new Vector3(-size / 2, size / 2, -size / 2);
             vertices[vIndex++] = start;
-            vertices[vIndex++] = start + Vector3.right * size;
-            vertices[vIndex++] = start + Vector3.right * size + Vector3.down * size;
-            vertices[vIndex++] = start + Vector3.down * size;
+            vertices[vIndex++] = start + (Vector3.right * size);
+            vertices[vIndex++] = start + (Vector3.right * size) + (Vector3.down * size);
+            vertices[vIndex++] = start + (Vector3.down * size);
 
             //uv
             var uvIndex = 0;
@@ -97,8 +98,6 @@ namespace Utility.Primitives
             defaultUVs[uvIndex++] = new Vector2(1f, 1f);
             defaultUVs[uvIndex++] = new Vector2(1f, 0f);
             defaultUVs[uvIndex++] = new Vector2(0f, 0f);
-
-
 
             //uv2
             vIndex = 0;
@@ -240,4 +239,3 @@ namespace Utility.Primitives
         }
     }
 }
-

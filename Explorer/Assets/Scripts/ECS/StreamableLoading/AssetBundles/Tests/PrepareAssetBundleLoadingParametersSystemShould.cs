@@ -8,17 +8,13 @@ using NUnit.Framework;
 using SceneRunner.Scene;
 using System;
 using UnityEngine;
+using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
     [TestFixture]
     public class PrepareAssetBundleLoadingParametersSystemShould : UnitySystemTestBase<PrepareAssetBundleLoadingParametersSystem>
     {
-        private ISceneData sceneData;
-        private URLDomain path;
-
-        private static readonly URLDomain FAKE_AB_PATH = URLDomain.FromString("http://www.fakepath.com/v1/");
-
         [SetUp]
         public void SetUp()
         {
@@ -26,6 +22,11 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             sceneData = Substitute.For<ISceneData>();
             system = new PrepareAssetBundleLoadingParametersSystem(world, sceneData, path);
         }
+
+        private ISceneData sceneData;
+        private URLDomain path;
+
+        private static readonly URLDomain FAKE_AB_PATH = URLDomain.FromString("http://www.fakepath.com/v1/");
 
         [Test]
         public void ResolveHashFromName()

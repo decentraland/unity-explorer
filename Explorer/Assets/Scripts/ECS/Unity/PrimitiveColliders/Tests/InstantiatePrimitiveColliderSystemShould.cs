@@ -16,9 +16,6 @@ namespace ECS.Unity.PrimitiveColliders.Tests
 {
     public class InstantiatePrimitiveColliderSystemShould : UnitySystemTestBase<InstantiatePrimitiveColliderSystem>
     {
-        private IComponentPoolsRegistry poolsRegistry;
-        private IEntityCollidersSceneCache entityCollidersSceneCache;
-
         private readonly Dictionary<PBMeshCollider.MeshOneofCase, ISetupCollider> setupColliders
             = new ()
             {
@@ -27,6 +24,10 @@ namespace ECS.Unity.PrimitiveColliders.Tests
                 { PBMeshCollider.MeshOneofCase.Cylinder, CreateSubstitute<MeshCollider>() },
                 { PBMeshCollider.MeshOneofCase.Plane, CreateSubstitute<BoxCollider>() },
             };
+        private IComponentPoolsRegistry poolsRegistry;
+        private IEntityCollidersSceneCache entityCollidersSceneCache;
+
+        private Entity entity;
 
         private static ISetupCollider CreateSubstitute<T>() where T: Collider
         {
@@ -34,8 +35,6 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             s.ColliderType.Returns(typeof(T));
             return s;
         }
-
-        private Entity entity;
 
         [SetUp]
         public void SetUp()

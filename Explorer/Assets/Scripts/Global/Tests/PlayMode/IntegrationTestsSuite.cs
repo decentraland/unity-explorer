@@ -15,7 +15,7 @@ namespace Global.Tests
         {
             PluginSettingsContainer globalSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(GLOBAL_CONTAINER_ADDRESS);
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
-            return await StaticSceneLauncher.Install(globalSettingsContainer, sceneSettingsContainer, CancellationToken.None);
+            return await StaticSceneLauncher.InstallAsync(globalSettingsContainer, sceneSettingsContainer, CancellationToken.None);
         }
     }
 }
