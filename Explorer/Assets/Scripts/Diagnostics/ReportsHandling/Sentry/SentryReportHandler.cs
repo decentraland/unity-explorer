@@ -1,4 +1,5 @@
 using Sentry;
+using Sentry.Unity;
 using System;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -8,7 +9,13 @@ namespace Diagnostics.ReportsHandling.Sentry
     public class SentryReportHandler : ReportHandlerBase
     {
         public SentryReportHandler(ICategorySeverityMatrix matrix, bool debounceEnabled)
-            : base(matrix, debounceEnabled) { }
+            : base(matrix, debounceEnabled)
+        {
+            var sentryUnityInfo = new SentryUnityInfo();
+            SentryUnityOptions options = ScriptableSentryUnityOptions.LoadSentryUnityOptions(sentryUnityInfo);
+            options!.Enabled = true;
+            SentrySdk.Init(options);
+        }
 
         internal override void LogInternal(LogType logType, ReportData category, Object context, object message)
         {

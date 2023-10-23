@@ -2,7 +2,8 @@
     "name": "Diagnostics",
     "rootNamespace": "",
     "references": [
-        "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:9887bf5401cdc9140916d3edbea10b69"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

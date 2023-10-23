@@ -16,6 +16,8 @@ namespace Diagnostics.ReportsHandling.Sentry
         /// Learn more at https://docs.sentry.io/platforms/unity/configuration/options/#programmatic-configuration
         public override void Configure(SentryUnityOptions options, SentryCliOptions cliOptions)
         {
+            options.Enabled = true;
+
             ApplyFromYamlFile(options, cliOptions);
             ApplyFromEnvironmentVars(options, cliOptions);
         }
