@@ -57,8 +57,6 @@ namespace DCL.AvatarRendering.Wearables
             defaultWearablesDTOs = new WearablesDTOList(partialTargetList);
         }
 
-        public void Dispose() { }
-
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
             // not synced by mutex, for compatibility only

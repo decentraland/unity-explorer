@@ -64,16 +64,6 @@ namespace Global
 
         public CacheCleaner CacheCleaner { get; private set; }
 
-        public async UniTask Initialize(StaticSettings settings, CancellationToken ct)
-        {
-            (characterObject, reportHandlingSettings, partitionSettings, realmPartitionSettings) =
-                await UniTask.WhenAll(
-                    AssetsProvisioner.ProvideInstance(settings.CharacterObject, new Vector3(0f, settings.StartYPosition, 0f), Quaternion.identity, ct: ct),
-                    AssetsProvisioner.ProvideMainAsset(settings.ReportHandlingSettings, ct),
-                    AssetsProvisioner.ProvideMainAsset(settings.PartitionSettings, ct),
-                    AssetsProvisioner.ProvideMainAsset(settings.RealmPartitionSettings, ct));
-        }
-
         public void Dispose()
         {
             DiagnosticsContainer?.Dispose();
@@ -83,7 +73,17 @@ namespace Global
             reportHandlingSettings.Dispose();
         }
 
-        public static async UniTask<(StaticContainer container, bool success)> Create(IPluginSettingsContainer settingsContainer, CancellationToken ct)
+        public async UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
+        {
+            (characterObject, reportHandlingSettings, partitionSettings, realmPartitionSettings) =
+                await UniTask.WhenAll(
+                    AssetsProvisioner.ProvideInstanceAsync(settings.CharacterObject, new Vector3(0f, settings.StartYPosition, 0f), Quaternion.identity, ct: ct),
+                    AssetsProvisioner.ProvideMainAssetAsync(settings.ReportHandlingSettings, ct),
+                    AssetsProvisioner.ProvideMainAssetAsync(settings.PartitionSettings, ct),
+                    AssetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct));
+        }
+
+        public static async UniTask<(StaticContainer container, bool success)> CreateAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
         {
             var componentsContainer = ComponentsContainer.Create();
             var exposedGlobalDataContainer = ExposedGlobalDataContainer.Create();
@@ -93,7 +93,7 @@ namespace Global
             var addressablesProvisioner = new AddressablesProvisioner();
             container.AssetsProvisioner = addressablesProvisioner;
 
-            (_, bool result) = await settingsContainer.InitializePlugin(container, ct);
+            (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
 
             if (!result)
                 return (null, false);

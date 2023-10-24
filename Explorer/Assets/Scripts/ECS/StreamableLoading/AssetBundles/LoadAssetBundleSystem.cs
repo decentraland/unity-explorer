@@ -45,7 +45,7 @@ namespace ECS.StreamableLoading.AssetBundles
             await UniTask.SwitchToMainThread();
             string metadata;
 
-            using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.Acquire(ct))
+            using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
                 metadata = GetMetadata(assetBundle)?.text;
 
             if (metadata != null)
@@ -64,7 +64,7 @@ namespace ECS.StreamableLoading.AssetBundles
             }
         }
 
-        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternal(GetAssetBundleIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             AssetBundle assetBundle;
 
@@ -75,7 +75,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 ((DownloadHandlerAssetBundle)webRequest.downloadHandler).autoLoadAssetBundle = false;
                 await webRequest.SendWebRequest().WithCancellation(ct);
 
-                using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.Acquire(ct))
+                using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
                     assetBundle = DownloadHandlerAssetBundle.GetContent(webRequest);
 
                 // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
@@ -90,7 +90,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             TextAsset metricsFile;
 
-            using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.Acquire(ct))
+            using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
                 metricsFile = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME);
 
             // Switch to thread pool to parse JSONs
@@ -113,7 +113,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private async UniTask<GameObject> LoadAllAssets(AssetBundle assetBundle, CancellationToken ct)
         {
-            using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.Acquire(ct);
+            using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct);
 
             // we are only interested in game objects
             AssetBundleRequest asyncOp = assetBundle.LoadAllAssetsAsync<GameObject>();
@@ -137,7 +137,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             try
             {
-                assetBundlePromise = await assetBundlePromise.ToUniTask(World, cancellationToken: ct);
+                assetBundlePromise = await assetBundlePromise.ToUniTaskAsync(World, cancellationToken: ct);
 
                 if (!assetBundlePromise.TryGetResult(World, out StreamableLoadingResult<AssetBundleData> depResult))
                     throw new Exception($"Dependency {hash} is not resolved");

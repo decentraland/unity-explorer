@@ -54,7 +54,7 @@ namespace Global.Dynamic
                 }
 
                 if (globalWorld != null)
-                    await dynamicWorldContainer.RealmController.DisposeGlobalWorld(globalWorld).SuppressCancellationThrow();
+                    await dynamicWorldContainer.RealmController.DisposeGlobalWorldAsync(globalWorld).SuppressCancellationThrow();
 
                 await UniTask.SwitchToMainThread();
 
@@ -71,7 +71,7 @@ namespace Global.Dynamic
             {
                 // First load the common global plugin
                 bool isLoaded;
-                (staticContainer, isLoaded) = await StaticContainer.Create(globalPluginSettingsContainer, ct);
+                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, ct);
 
                 if (!isLoaded)
                 {
@@ -97,8 +97,8 @@ namespace Global.Dynamic
                         anyFailure = true;
                 }
 
-                await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePlugin(gp, ct).ContinueWith(OnPluginInitialized)));
-                await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePlugin(gp, ct).ContinueWith(OnPluginInitialized)));
+                await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
+                await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
 
                 if (anyFailure)
                 {
@@ -136,7 +136,7 @@ namespace Global.Dynamic
         private async UniTask ChangeRealm(StaticContainer globalContainer, CancellationToken ct, string selectedRealm)
         {
             if (globalWorld != null)
-                await dynamicWorldContainer.RealmController.UnloadCurrentRealm(globalWorld);
+                await dynamicWorldContainer.RealmController.UnloadCurrentRealmAsync(globalWorld);
 
             await UniTask.SwitchToMainThread();
 
@@ -145,7 +145,7 @@ namespace Global.Dynamic
 
             globalContainer.CharacterObject.Controller.Move(characterPos - globalContainer.CharacterObject.Transform.position);
 
-            await dynamicWorldContainer.RealmController.SetRealm(globalWorld, URLDomain.FromString(selectedRealm), ct);
+            await dynamicWorldContainer.RealmController.SetRealmAsync(globalWorld, URLDomain.FromString(selectedRealm), ct);
         }
     }
 }
