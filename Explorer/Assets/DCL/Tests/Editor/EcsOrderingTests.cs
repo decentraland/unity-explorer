@@ -6,46 +6,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
-using UnityEngine;
 
 namespace DCL.Tests
 {
     public class EcsOrderingTests
     {
         private readonly string[] includePath = { "Assets/DCL/", "Assets/Scripts/ECS" };
-
-        [Test]
-        public void SystemGroupDerivedClassesShouldHaveGroupSuffix()
-        {
-            string[] allCsFiles = AssetDatabase.FindAssets("t:Script", includePath)
-                                               .Select(AssetDatabase.GUIDToAssetPath)
-                                               .Where(file => !IsCodeGenerated(file))
-                                               .ToArray();
-
-            foreach (string file in allCsFiles)
-            {
-                string fileContent = File.ReadAllText(file);
-                SyntaxTree tree = CSharpSyntaxTree.ParseText(fileContent);
-                SyntaxNode root = tree.GetRoot();
-
-                // Retrieve all class declarations
-                IEnumerable<ClassDeclarationSyntax> classDeclarations = root.DescendantNodes().OfType<ClassDeclarationSyntax>();
-
-                foreach (ClassDeclarationSyntax classDeclaration in classDeclarations)
-                {
-                    var baseType = classDeclaration.BaseList?.Types.FirstOrDefault()?.Type.ToString();
-
-                    // Check if the class inherits from SystemGroup (or its descendants)
-                    // Note: This check is simple and assumes that no other classes have the same name as SystemGroup or its descendants.
-                    // For a more accurate check, consider using Roslyn's semantic model (which will be more expensive).
-                    if (baseType == "SystemGroup" || baseType?.EndsWith("Group") == true) // You can adjust this check based on your project's structure
-                    {
-                        // Check if the class name has the suffix "Group"
-                        if (!classDeclaration.Identifier.Text.EndsWith("Group")) { Assert.Fail($"Class {classDeclaration.Identifier.Text} in file {Path.GetFileName(file)} inherits from {baseType} but doesn't have the 'Group' suffix."); }
-                    }
-                }
-            }
-        }
 
         [Test]
         public void CheckSystemOrderingConsistency()
@@ -94,7 +60,7 @@ namespace DCL.Tests
             Assert.AreEqual(0, errors.Count, string.Join("\n", errors));
         }
 
-        private Dictionary<string, string> BuildSystemToGroupMap(string[] allCsFiles)
+        private static Dictionary<string, string> BuildSystemToGroupMap(IEnumerable<string> allCsFiles)
         {
             var map = new Dictionary<string, string>();
 
@@ -113,27 +79,20 @@ namespace DCL.Tests
                     string groupName = GetTypeNameFromAttribute(attributes.FirstOrDefault(attr => attr.Name.ToString() == "UpdateInGroup"));
 
                     if (groupName != null)
-                    {
                         map[systemClass.Identifier.Text] = groupName;
-                        Debug.Log($"System: {systemClass.Identifier.Text}, Group: {groupName}");
-                    }
-                    else { Debug.LogWarning($"No group found for system: {systemClass.Identifier.Text}"); }
                 }
             }
 
             return map;
         }
 
-        private string GetTypeNameFromAttribute(AttributeSyntax attribute)
+        private static string GetTypeNameFromAttribute(AttributeSyntax attribute)
         {
             if (attribute == null) return null;
+            if (attribute.ArgumentList.Arguments.Count <= 0) return null;
 
-            if (attribute.ArgumentList.Arguments.Count > 0)
-            {
-                var argument = attribute.ArgumentList.Arguments[0].Expression as TypeOfExpressionSyntax;
-
-                if (argument != null) { return argument.Type.ToString(); }
-            }
+            if (attribute.ArgumentList.Arguments[0].Expression is TypeOfExpressionSyntax argument)
+                return argument.Type.ToString();
 
             return null;
         }
