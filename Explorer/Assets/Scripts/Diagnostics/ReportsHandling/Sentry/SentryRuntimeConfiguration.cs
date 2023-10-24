@@ -1,6 +1,4 @@
 using Sentry.Unity;
-using Sentry.Unity.Integrations;
-using System;
 using UnityEngine;
 
 namespace Diagnostics.ReportsHandling.Sentry
@@ -9,7 +7,7 @@ namespace Diagnostics.ReportsHandling.Sentry
     public class SentryRuntimeConfiguration : SentryRuntimeOptionsConfiguration
     {
         // This file should be never committed since it may contain secrets
-        [SerializeField] private string configYamlFilePath = "./.sentryconfig.yml";
+        [SerializeField] private string configJsonFilePath = "./.sentryconfig.json";
 
         /// Called at the player startup by SentryInitialization.
         /// You can alter configuration for the C# error handling and also
@@ -20,23 +18,12 @@ namespace Diagnostics.ReportsHandling.Sentry
             // Note that changes to the options here will **not** affect iOS, macOS and Android events. (i.e. environment and release)
             // Take a look at `SentryBuildTimeOptionsConfiguration` instead.
 
-            UnhookSentryReportingFromUnityLogs();
-
 #if UNITY_EDITOR
-            ApplyFromYamlFile(options);
+            ApplyFromJsonFile(options);
 #endif
         }
 
-        private void UnhookSentryReportingFromUnityLogs()
-        {
-            var onLogMessageReceived = (Application.LogCallback)Delegate.CreateDelegate(typeof(Application.LogCallback),
-                ApplicationAdapter.Instance,
-                "OnLogMessageReceived");
-
-            Application.logMessageReceivedThreaded -= onLogMessageReceived;
-        }
-
-        private void ApplyFromYamlFile(SentryUnityOptions options) =>
-            SentryYamlConfigLoader.Apply(configYamlFilePath, options);
+        private void ApplyFromJsonFile(SentryUnityOptions options) =>
+            SentryJsonConfigLoader.Apply(configJsonFilePath, options);
     }
 }

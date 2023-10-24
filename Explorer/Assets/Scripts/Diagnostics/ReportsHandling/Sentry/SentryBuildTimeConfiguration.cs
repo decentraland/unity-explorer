@@ -8,7 +8,7 @@ namespace Diagnostics.ReportsHandling.Sentry
     public class SentryBuildTimeConfiguration : SentryBuildTimeOptionsConfiguration
     {
         // This file should be never committed since it may contain secrets
-        [SerializeField] private string configYamlFilePath = "./.sentryconfig.yml";
+        [SerializeField] private string configJsonFilePath = "./.sentryconfig.json";
 
         /// Called during app build. Changes made here will affect build-time processing, symbol upload, etc.
         /// Additionally, because iOS, macOS and Android native error handling is configured at build time,
@@ -16,9 +16,7 @@ namespace Diagnostics.ReportsHandling.Sentry
         /// Learn more at https://docs.sentry.io/platforms/unity/configuration/options/#programmatic-configuration
         public override void Configure(SentryUnityOptions options, SentryCliOptions cliOptions)
         {
-            options.Enabled = true;
-
-            ApplyFromYamlFile(options, cliOptions);
+            ApplyFromJsonFile(options, cliOptions);
             ApplyFromEnvironmentVars(options, cliOptions);
         }
 
@@ -30,10 +28,10 @@ namespace Diagnostics.ReportsHandling.Sentry
             cliOptions.Auth = Environment.GetEnvironmentVariable("SENTRY_AUTH_TOKEN") ?? cliOptions.Auth;
         }
 
-        private void ApplyFromYamlFile(SentryUnityOptions options, SentryCliOptions cliOptions)
+        private void ApplyFromJsonFile(SentryUnityOptions options, SentryCliOptions cliOptions)
         {
-            SentryYamlConfigLoader.Apply(configYamlFilePath, options);
-            SentryYamlConfigLoader.Apply(configYamlFilePath, cliOptions);
+            SentryJsonConfigLoader.Apply(configJsonFilePath, options);
+            SentryJsonConfigLoader.Apply(configJsonFilePath, cliOptions);
         }
     }
 }

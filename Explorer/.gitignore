@@ -63,4 +63,4 @@ sysinfo.txt
 crashlytics-build.properties
 
 # Sentry
-.sentryconfig.yml
+.sentryconfig.json
