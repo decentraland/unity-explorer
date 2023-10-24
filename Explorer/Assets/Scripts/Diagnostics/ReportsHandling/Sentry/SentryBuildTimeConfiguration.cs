@@ -24,8 +24,8 @@ namespace Diagnostics.ReportsHandling.Sentry
         {
             options.Environment = Environment.GetEnvironmentVariable("SENTRY_ENVIRONMENT") ?? options.Environment;
             options.Dsn = Environment.GetEnvironmentVariable("SENTRY_DSN") ?? options.Dsn;
-            options.Release = Environment.GetEnvironmentVariable("SENTRY_RELEASE_NAME") ?? options.Release;
-            cliOptions.Auth = Environment.GetEnvironmentVariable("SENTRY_AUTH_TOKEN") ?? cliOptions.Auth;
+            options.Release = Environment.GetEnvironmentVariable("SENTRY_RELEASE") ?? options.Release;
+            cliOptions.Auth = Environment.GetEnvironmentVariable("SENTRY_CLI_AUTH_TOKEN") ?? cliOptions.Auth;
         }
 
         private void ApplyFromJsonFile(SentryUnityOptions options, SentryCliOptions cliOptions)
