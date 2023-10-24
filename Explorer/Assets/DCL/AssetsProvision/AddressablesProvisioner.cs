@@ -8,21 +8,21 @@ namespace DCL.AssetsProvision
 {
     public class AddressablesProvisioner : IAssetsProvisioner
     {
-        public async UniTask<ProvidedAsset<T>> ProvideMainAsset<T>(AssetReferenceT<T> assetReferenceT, CancellationToken ct) where T: Object
+        public async UniTask<ProvidedAsset<T>> ProvideMainAssetAsync<T>(AssetReferenceT<T> assetReferenceT, CancellationToken ct) where T: Object
         {
             AsyncOperationHandle<T> asyncOp = assetReferenceT.LoadAssetAsync();
             await asyncOp.WithCancellation(ct);
             return new ProvidedAsset<T>(asyncOp);
         }
 
-        public async UniTask<ProvidedInstance<T>> ProvideInstance<T>(ComponentReference<T> componentReference, Vector3 position, Quaternion rotation, Transform parent = null, CancellationToken ct = default) where T: Object
+        public async UniTask<ProvidedInstance<T>> ProvideInstanceAsync<T>(ComponentReference<T> componentReference, Vector3 position, Quaternion rotation, Transform parent = null, CancellationToken ct = default) where T: Object
         {
             AsyncOperationHandle<T> asyncOp = componentReference.InstantiateAsync(position, rotation, parent);
             await asyncOp.WithCancellation(ct);
             return new ProvidedInstance<T>(asyncOp);
         }
 
-        public async UniTask<ProvidedInstance<T>> ProvideInstance<T>(ComponentReference<T> componentReference, Transform parent = null, bool instantiateInWorldSpace = false, CancellationToken ct = default) where T: Object
+        public async UniTask<ProvidedInstance<T>> ProvideInstanceAsync<T>(ComponentReference<T> componentReference, Transform parent = null, bool instantiateInWorldSpace = false, CancellationToken ct = default) where T: Object
         {
             AsyncOperationHandle<T> asyncOp = componentReference.InstantiateAsync(parent, instantiateInWorldSpace);
             await asyncOp.WithCancellation(ct);

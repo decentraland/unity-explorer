@@ -55,18 +55,17 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             view.destroyAllAvatarsButton.onClick.AddListener(DestroyAllAvatars);
             view.destroyRandomAmountAvatarsButton.onClick.AddListener(DestroyRandomAmountOfAvatars);
             view.randomizeWearablesButton.onClick.AddListener(RandomizeWearablesOfAvatars);
-
-        }
-
-        private void SetViewActivity()
-        {
-            view.gameObject.SetActive(realmData.Configured && defaultWearableState.GetDefaultWearablesState(World).ResolvedState == DefaultWearablesComponent.State.Success);
         }
 
         public override void Initialize()
         {
             camera = World.CacheCamera();
             defaultWearableState = World.CacheDefaultWearablesState();
+        }
+
+        private void SetViewActivity()
+        {
+            view.gameObject.SetActive(realmData.Configured && defaultWearableState.GetDefaultWearablesState(World).ResolvedState == DefaultWearablesComponent.State.Success);
         }
 
         private void RandomizeWearablesOfAvatars()
@@ -76,6 +75,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 {
                     AvatarRandomizer currentRandomizer = randomizers[Random.Range(0, randomizers.Length)];
                     pbAvatarShape.Wearables.Clear();
+
                     foreach (string randomAvatarWearable in currentRandomizer.GetRandomAvatarWearables())
                         pbAvatarShape.Wearables.Add(randomAvatarWearable);
 
@@ -118,15 +118,15 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             totalAvatarsInstantiated += avatarsToInstantiate;
 
-            var randomAvatarRequest = new RandomAvatarRequest();
-            randomAvatarRequest.RandomAvatarsToInstantiate = avatarsToInstantiate;
-
-            randomAvatarRequest.BaseWearablesPromise = ParamPromise.Create(World,
-                new GetWearableByParamIntention(new[] { ("collectionType", "base-wearable"), ("pageSize", "50") }, "DummyUser", new List<IWearable>()),
-                PartitionComponent.TOP_PRIORITY);
+            var randomAvatarRequest = new RandomAvatarRequest
+            {
+                RandomAvatarsToInstantiate = avatarsToInstantiate,
+                BaseWearablesPromise = ParamPromise.Create(World,
+                    new GetWearableByParamIntention(new[] { ("collectionType", "base-wearable"), ("pageSize", "50") }, "DummyUser", new List<IWearable>()),
+                    PartitionComponent.TOP_PRIORITY),
+            };
 
             World.Create(randomAvatarRequest);
-
         }
 
         protected override void Update(float t)
@@ -134,7 +134,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             SetViewActivity();
             FinalizeRandomAvatarInstantiationQuery(World, in camera.GetCameraComponent(World));
         }
-
 
         [Query]
         private void FinalizeRandomAvatarInstantiation(in Entity entity, [Data] in CameraComponent cameraComponent, ref RandomAvatarRequest randomAvatarRequest)
@@ -177,7 +176,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             float startZPosition = cameraPosition.z;
 
             //hacky spawn size
-            float density = 2.0f;
+            var density = 2.0f;
             float spawnArea = (float)Math.Sqrt(randomAvatarsToInstantiate) * density;
 
             var currentXCounter = 0;
@@ -200,8 +199,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 Transform transform = new GameObject($"RANDOM_AVATAR_{i}").transform;
 
                 var pos = new Vector3(startXPosition + randomX, 500, startZPosition + randomZ);
-                RaycastHit hitInfo = new RaycastHit();
-                float distance = 1000.0f;
+                var hitInfo = new RaycastHit();
+                var distance = 1000.0f;
 
                 if (Physics.Raycast(pos, Vector3.down, out hitInfo, distance))
                     transform.localPosition = hitInfo.point;

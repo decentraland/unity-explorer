@@ -12,21 +12,11 @@ namespace CRDT.CRDTTests.Protocol
         public enum InstructionType
         {
             MESSAGE = 0,
-            FINAL_STATE = 1
-        }
-
-        [Serializable]
-        public class TestFileInstruction
-        {
-            public InstructionType instructionType;
-            public string instructionValue;
-            public int lineNumber;
-            public string fileName;
-            public string testSpect;
+            FINAL_STATE = 1,
         }
 
         public string fileName;
-        public List<TestFileInstruction> fileInstructions = new List<TestFileInstruction>();
+        public List<TestFileInstruction> fileInstructions = new ();
 
         public static (CRDTMessage, CRDTReconciliationResult?) InstructionToMessage(TestFileInstruction instruction, ICRDTMemoryAllocator memoryAllocator)
         {
@@ -35,7 +25,7 @@ namespace CRDT.CRDTTests.Protocol
 
             try
             {
-                var parts = instruction.instructionValue.Split("=>");
+                string[] parts = instruction.instructionValue.Split("=>");
 
                 if (parts.Length == 2)
                 {
@@ -51,7 +41,7 @@ namespace CRDT.CRDTTests.Protocol
             }
 
             // move from crdt message type from crdt library to crdt protocol
-            int crdtLibType = (int)msg.type;
+            var crdtLibType = (int)msg.type;
 
             if (crdtLibType == 1) { msg.type = CRDTMessageType.PUT_COMPONENT; }
             else if (crdtLibType == 2) { msg.type = CRDTMessageType.DELETE_ENTITY; }
@@ -70,15 +60,15 @@ namespace CRDT.CRDTTests.Protocol
                                $"{instruction.instructionValue} for file {instruction.fileName}, {e}");
             }
 
-            foreach (var entityComponentData in finalState.components)
+            foreach (CrdtTestEntityComponentData entityComponentData in finalState.components)
             {
-                var entityId = entityComponentData.entityId;
+                int entityId = entityComponentData.entityId;
                 int componentId = entityComponentData.componentId;
 
                 yield return new CRDTMessage(CRDTMessageType.PUT_COMPONENT, entityId, componentId, entityComponentData.timestamp, crdtPooledMemoryAllocator.GetMemoryBuffer(entityComponentData.GetBytes()));
             }
 
-            foreach (var entity in finalState.deletedEntities)
+            foreach (CrdtTestEntity entity in finalState.deletedEntities)
                 yield return new CRDTMessage(CRDTMessageType.DELETE_ENTITY, CRDTEntity.Create(entity.entityNumber, entity.entityVersion), 0, 0, EmptyMemoryOwner<byte>.EMPTY);
         }
 
@@ -93,14 +83,14 @@ namespace CRDT.CRDTTests.Protocol
                                $"{instruction.instructionValue} for file {instruction.fileName}, {e}");
             }
 
-            CRDTProtocol.State state = new CRDTProtocol.State(
+            var state = new CRDTProtocol.State(
                 new PooledDictionary<int, int>(),
                 new PooledDictionary<int, PooledDictionary<CRDTEntity, CRDTProtocol.EntityComponentData>>(),
                 new PooledDictionary<int, PooledDictionary<CRDTEntity, PooledList<CRDTProtocol.EntityComponentData>>>());
 
-            foreach (var entityComponentData in finalState.components)
+            foreach (CrdtTestEntityComponentData entityComponentData in finalState.components)
             {
-                var entityId = entityComponentData.entityId;
+                int entityId = entityComponentData.entityId;
                 int componentId = entityComponentData.componentId;
 
                 var realData = entityComponentData.ToEntityComponentData();
@@ -111,10 +101,20 @@ namespace CRDT.CRDTTests.Protocol
                 state.lwwComponents[componentId].Add(new CRDTEntity(entityId), realData);
             }
 
-            foreach (var entity in finalState.deletedEntities)
+            foreach (CrdtTestEntity entity in finalState.deletedEntities)
                 state.deletedEntities.Add(entity.entityNumber, entity.entityVersion);
 
             return state;
+        }
+
+        [Serializable]
+        public class TestFileInstruction
+        {
+            public InstructionType instructionType;
+            public string instructionValue;
+            public int lineNumber;
+            public string fileName;
+            public string testSpect;
         }
     }
 }

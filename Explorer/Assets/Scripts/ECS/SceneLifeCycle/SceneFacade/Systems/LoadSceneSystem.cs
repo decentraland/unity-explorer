@@ -38,17 +38,17 @@ namespace ECS.SceneLifeCycle.Systems
             this.loadEmptySceneSystemLogic = loadEmptySceneSystemLogic;
         }
 
-        protected override async UniTask<StreamableLoadingResult<ISceneFacade>> FlowInternal(GetSceneFacadeIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<ISceneFacade>> FlowInternalAsync(GetSceneFacadeIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             if (intention.IsEmpty)
             {
                 if (loadEmptySceneSystemLogic.Inactive)
                     throw new ArgumentException("Empty scene loading is inactive");
 
-                return new StreamableLoadingResult<ISceneFacade>(await loadEmptySceneSystemLogic.Flow(intention, partition, ct));
+                return new StreamableLoadingResult<ISceneFacade>(await loadEmptySceneSystemLogic.FlowAsync(intention, partition, ct));
             }
 
-            return new StreamableLoadingResult<ISceneFacade>(await loadSceneSystemLogic.Flow(sceneFactory, intention, GetReportCategory(), partition, ct));
+            return new StreamableLoadingResult<ISceneFacade>(await loadSceneSystemLogic.FlowAsync(sceneFactory, intention, GetReportCategory(), partition, ct));
         }
 
         public override void Dispose()

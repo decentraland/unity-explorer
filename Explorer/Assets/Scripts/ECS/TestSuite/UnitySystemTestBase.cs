@@ -13,6 +13,7 @@ namespace ECS.TestSuite
     public abstract class UnitySystemTestBase<TSystem> where TSystem: BaseUnityLoopSystem
     {
         protected TSystem system;
+        private World cachedWorld;
 
         protected MemoryBudgetProvider memoryBudgetProvider = new (Substitute.For<ISystemMemory>(), Substitute.For<IProfilingProvider>());
         private World cachedWorld;

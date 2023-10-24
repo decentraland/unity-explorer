@@ -16,6 +16,12 @@ namespace DCL.Interaction.Utility
 
         private EntityCollidersSceneCache() { }
 
+        public void Dispose()
+        {
+            globalCache.RemoveSceneInfo(this);
+            POOL.Release(this);
+        }
+
         public bool TryGetEntity(Collider collider, out ColliderEntityInfo entity) =>
             map.TryGetValue(collider, out entity);
 
@@ -47,12 +53,6 @@ namespace DCL.Interaction.Utility
         {
             foreach (Collider collider in colliders)
                 Remove(collider);
-        }
-
-        public void Dispose()
-        {
-            globalCache.RemoveSceneInfo(this);
-            POOL.Release(this);
         }
 
         public static EntityCollidersSceneCache Create(IEntityCollidersGlobalCache globalCache)

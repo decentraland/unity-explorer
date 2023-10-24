@@ -46,9 +46,11 @@ namespace DCL.AvatarRendering.Wearables
             this.assetBundleURL = assetBundleURL;
         }
 
-        public async UniTask Initialize(WearableSettings settings, CancellationToken ct)
+        public void Dispose() { }
+
+        public async UniTask InitializeAsync(WearableSettings settings, CancellationToken ct)
         {
-            ProvidedAsset<TextAsset> defaultWearableDefinition = await assetsProvisioner.ProvideMainAsset(settings.defaultWearablesDefinition, ct: ct);
+            ProvidedAsset<TextAsset> defaultWearableDefinition = await assetsProvisioner.ProvideMainAssetAsync(settings.defaultWearablesDefinition, ct: ct);
             var partialTargetList = new List<WearableDTO>(64);
             JsonConvert.PopulateObject(defaultWearableDefinition.Value.text, partialTargetList);
 

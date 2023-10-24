@@ -31,8 +31,8 @@ namespace DCL.CharacterCamera.Systems
                 case CameraMode.ThirdPerson:
 
                     CinemachineFreeLook tpc = cinemachinePreset.ThirdPersonCameraData.Camera;
-                    tpc.m_XAxis.m_InputAxisValue = cameraInput.POV.x;
-                    tpc.m_YAxis.m_InputAxisValue = cameraInput.POV.y;
+                    tpc.m_XAxis.m_InputAxisValue = cameraInput.Delta.x;
+                    tpc.m_YAxis.m_InputAxisValue = cameraInput.Delta.y;
                     break;
 
                 case CameraMode.FirstPerson:
@@ -59,7 +59,7 @@ namespace DCL.CharacterCamera.Systems
             Transform cinemachineTransform = cinemachinePreset.FreeCameraData.Camera.transform;
 
             // Camera's rotation is not
-            var cameraTransform = camera.Camera.transform;
+            Transform cameraTransform = camera.Camera.transform;
 
             cinemachineTransform.localPosition += ((cameraTransform.forward * cameraInput.FreeMovement.y) +
                                                    (cameraTransform.right * cameraInput.FreeMovement.x))
@@ -70,8 +70,8 @@ namespace DCL.CharacterCamera.Systems
         {
             if (cinemachinePOV)
             {
-                cinemachinePOV.m_HorizontalAxis.m_InputAxisValue = cameraInput.POV.x;
-                cinemachinePOV.m_VerticalAxis.m_InputAxisValue = cameraInput.POV.y;
+                cinemachinePOV.m_HorizontalAxis.m_InputAxisValue = cameraInput.Delta.x;
+                cinemachinePOV.m_VerticalAxis.m_InputAxisValue = cameraInput.Delta.y;
             }
         }
     }

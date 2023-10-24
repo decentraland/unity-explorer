@@ -11,23 +11,23 @@ namespace CRDT.CRDTTests
     [TestFixture]
     public class CRDTDeserializerShould
     {
-        private static readonly byte[] componentDataBytes =
-        {
-            64, 73, 15, 219, 64, 73, 15, 219,
-            64, 73, 15, 219, 64, 73, 15, 219, 64, 73, 15, 219,
-            64, 73, 15, 219, 64, 73, 15, 219, 64, 73, 15, 219,
-            64, 73, 15, 219, 64, 73, 15, 219
-        };
-
-        private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
-        private CRDTDeserializer deserializer;
-
         [SetUp]
         public void SetUp()
         {
             crdtPooledMemoryAllocator = CRDTPooledMemoryAllocator.Create();
             deserializer = new CRDTDeserializer(crdtPooledMemoryAllocator);
         }
+
+        private static readonly byte[] componentDataBytes =
+        {
+            64, 73, 15, 219, 64, 73, 15, 219,
+            64, 73, 15, 219, 64, 73, 15, 219, 64, 73, 15, 219,
+            64, 73, 15, 219, 64, 73, 15, 219, 64, 73, 15, 219,
+            64, 73, 15, 219, 64, 73, 15, 219,
+        };
+
+        private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
+        private CRDTDeserializer deserializer;
 
         [Test]
         public void ParsePutComponent()
@@ -39,7 +39,7 @@ namespace CRDT.CRDTTests
                 154, 2, 0, 0,
                 1, 0, 0, 0,
                 242, 29, 0, 0,
-                40, 0, 0, 0
+                40, 0, 0, 0,
             };
 
             bytes = bytes.Concat(componentDataBytes).ToArray();
@@ -65,7 +65,7 @@ namespace CRDT.CRDTTests
                 154, 2, 0, 0,
                 1, 0, 0, 0,
                 242, 29, 0, 0,
-                40, 0, 0, 0
+                40, 0, 0, 0,
             };
 
             bytes = bytes.Concat(componentDataBytes).ToArray();
@@ -103,7 +103,7 @@ namespace CRDT.CRDTTests
                 2, 0, 0, 0,
                 154, 2, 0, 0,
                 100, 0, 0, 0,
-                100, 0, 0, 0
+                100, 0, 0, 0,
             };
 
             TestInput(bytes, new[] { new CRDTMessage(CRDTMessageType.DELETE_COMPONENT, new CRDTEntity(666), 100, 100, EmptyMemoryOwner<byte>.EMPTY) });
@@ -116,7 +116,7 @@ namespace CRDT.CRDTTests
             {
                 64, 0, 0, 0, 1, 0, 0, 0, 154, 2, 0, 0,
                 1, 0, 0, 0, 242, 29, 0, 0,
-                40, 0, 0, 0
+                40, 0, 0, 0,
             };
 
             bytesMsgA = bytesMsgA.Concat(componentDataBytes).ToArray();
@@ -125,7 +125,7 @@ namespace CRDT.CRDTTests
             {
                 64, 0, 0, 0, 1, 0, 0, 0, 154, 2, 0, 0,
                 1, 0, 0, 0, 242, 29, 0, 0,
-                40, 0, 0, 0
+                40, 0, 0, 0,
             };
 
             bytesMsgB = bytesMsgB.Concat(componentDataBytes).ToArray();
@@ -147,7 +147,7 @@ namespace CRDT.CRDTTests
                 0, 0, 0, 40, 64, 73, 15, 219, 64, 73, 15, 219,
                 64, 73, 15, 219, 64, 73, 15, 219, 64, 73, 15, 219,
                 64, 73, 15, 219, 64, 73, 15, 219, 64, 73, 15, 219,
-                64, 73, 15, 219, 64, 73, 15, 219
+                64, 73, 15, 219, 64, 73, 15, 219,
             };
 
             int dataStart = 8 + 16; //sizeof(CRDTMessageHeader) + sizeof(CRDTComponentMessageHeader)
@@ -158,7 +158,7 @@ namespace CRDT.CRDTTests
             ReadOnlyMemory<byte> binaryMessageMemory = binaryMessage;
             deserializer.DeserializeBatch(ref binaryMessageMemory, list);
 
-            foreach (var crdtMessage in list)
+            foreach (CRDTMessage crdtMessage in list)
                 Assert.IsTrue(data.AsSpan().SequenceEqual(crdtMessage.Data.Memory.Span), "Messages are not equal");
         }
 
@@ -213,7 +213,7 @@ namespace CRDT.CRDTTests
                 154, 2, 0, 0,
                 1, 0, 0, 0,
                 242, 29, 0, 0,
-                40, 0, 0, 0
+                40, 0, 0, 0,
             };
 
             byte[] put =
@@ -223,7 +223,7 @@ namespace CRDT.CRDTTests
                 154, 2, 0, 0,
                 1, 0, 0, 0,
                 242, 29, 0, 0,
-                40, 0, 0, 0
+                40, 0, 0, 0,
             };
 
             byte[] deleteComponent =
@@ -232,7 +232,7 @@ namespace CRDT.CRDTTests
                 2, 0, 0, 0,
                 154, 2, 0, 0,
                 100, 0, 0, 0,
-                100, 0, 0, 0
+                100, 0, 0, 0,
             };
 
             byte[] deleteEntity =
@@ -242,7 +242,7 @@ namespace CRDT.CRDTTests
                 154, 2, 0, 0,
             };
 
-            var all = append.Concat(componentDataBytes).Concat(put).Concat(componentDataBytes).Concat(deleteComponent).Concat(deleteEntity).ToArray();
+            byte[] all = append.Concat(componentDataBytes).Concat(put).Concat(componentDataBytes).Concat(deleteComponent).Concat(deleteEntity).ToArray();
 
             TestInput(all, new[]
             {
@@ -273,7 +273,7 @@ namespace CRDT.CRDTTests
                     0,
                     0,
                     EmptyMemoryOwner<byte>.EMPTY
-                )
+                ),
             });
         }
 

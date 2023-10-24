@@ -23,6 +23,13 @@ namespace ECS.SceneLifeCycle.Systems
 
         private EmptyScenesWorld sharedWorld;
 
+        /// <summary>
+        ///     Indicates that mapping could not be loaded and the whole logic will be skipped
+        /// </summary>
+        public bool Inactive { get; private set; }
+
+        internal EmptySceneData emptySceneData { get; private set; }
+
         public LoadEmptySceneSystemLogic(
             IEmptyScenesWorldFactory emptyScenesWorldFactory,
             IComponentPoolsRegistry componentPoolsRegistry,
@@ -33,19 +40,12 @@ namespace ECS.SceneLifeCycle.Systems
             this.mappingURL = mappingURL;
         }
 
-        internal EmptySceneData emptySceneData { get; private set; }
-
-        /// <summary>
-        ///     Indicates that mapping could not be loaded and the whole logic will be skipped
-        /// </summary>
-        public bool Inactive { get; private set; }
-
         public void Dispose()
         {
             sharedWorld?.Dispose();
         }
 
-        internal async UniTask LoadMapping(CancellationToken ct)
+        internal async UniTask LoadMappingAsync(CancellationToken ct)
         {
             string text;
 
@@ -61,13 +61,13 @@ namespace ECS.SceneLifeCycle.Systems
             emptySceneData = new EmptySceneData(mappings.mappings);
         }
 
-        public async UniTask<ISceneFacade> Flow(GetSceneFacadeIntention intent, IPartitionComponent partition, CancellationToken ct)
+        public async UniTask<ISceneFacade> FlowAsync(GetSceneFacadeIntention intent, IPartitionComponent partition, CancellationToken ct)
         {
             if (emptySceneData == null)
             {
                 try
                 {
-                    await LoadMapping(ct);
+                    await LoadMappingAsync(ct);
                     await UniTask.SwitchToMainThread();
 
                     if (sharedWorld == null)

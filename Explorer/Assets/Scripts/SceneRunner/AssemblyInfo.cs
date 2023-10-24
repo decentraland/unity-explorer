@@ -2,5 +2,4 @@
 
 [assembly: InternalsVisibleTo("SceneRunner.Tests")]
 [assembly: InternalsVisibleTo("Assembly-CSharp-Editor")]
-[assembly: InternalsVisibleTo("Containers.Tests")]
 [assembly: InternalsVisibleTo("SceneLifeCycle.Tests")]

@@ -11,6 +11,12 @@ namespace ECS.StreamableLoading.Tests
     [TestFixture]
     public class FrameTimeCapBudgetProviderShould
     {
+        [SetUp]
+        public void SetUp()
+        {
+            profilingProvider = new ProfilingProvider();
+        }
+
         public struct DummyComponent
         {
             public int timesUpdated;
@@ -18,12 +24,6 @@ namespace ECS.StreamableLoading.Tests
 
         private FrameTimeCapBudgetProvider budgetProvider;
         private ProfilingProvider profilingProvider;
-
-        [SetUp]
-        public void SetUp()
-        {
-            profilingProvider = new ProfilingProvider();
-        }
 
         [Test]
         public async Task SpendBudget()

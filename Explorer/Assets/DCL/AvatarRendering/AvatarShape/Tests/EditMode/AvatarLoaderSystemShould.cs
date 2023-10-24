@@ -16,12 +16,12 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 {
     public class AvatarLoaderSystemShould : UnitySystemTestBase<AvatarLoaderSystem>
     {
-        private PBAvatarShape pbAvatarShape;
         private readonly string BODY_SHAPE_MALE = BodyShape.MALE;
         private readonly string BODY_SHAPE_FEMALE = BodyShape.FEMALE;
         private readonly string FAKE_NAME = "FAKE_NAME_1";
         private readonly string FAKE_ID = "1";
         private readonly List<string> FAKE_WEARABLES = new () { "WEARABLE_1", "WEARABLE_2" };
+        private PBAvatarShape pbAvatarShape;
         private List<string> FAKE_POINTERS;
 
         private Color3 FAKE_HAIR_COLOR;

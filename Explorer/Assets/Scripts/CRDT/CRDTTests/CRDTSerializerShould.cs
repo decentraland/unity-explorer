@@ -11,15 +11,15 @@ namespace CRDT.CRDTTests
     [TestFixture]
     public class CRDTSerializerShould
     {
-        private CRDTSerializer crdtSerializer;
-        private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
-
         [SetUp]
         public void SetUp()
         {
             crdtSerializer = new CRDTSerializer();
             crdtPooledMemoryAllocator = CRDTPooledMemoryAllocator.Create();
         }
+
+        private CRDTSerializer crdtSerializer;
+        private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
 
         [Test]
         [TestCase(0, 1, 100, null,
@@ -60,7 +60,7 @@ namespace CRDT.CRDTTests
 
             var processedMessage = new ProcessedCRDTMessage(message, messageDataLength);
             var destination = new byte[messageDataLength];
-            var destinationSpan = destination.AsSpan();
+            Span<byte> destinationSpan = destination.AsSpan();
 
             crdtSerializer.Serialize(ref destinationSpan, in processedMessage);
 
@@ -104,7 +104,7 @@ namespace CRDT.CRDTTests
 
             var processedMessage = new ProcessedCRDTMessage(message, messageDataLength);
             var destination = new byte[messageDataLength];
-            var destinationSpan = destination.AsSpan();
+            Span<byte> destinationSpan = destination.AsSpan();
 
             crdtSerializer.Serialize(ref destinationSpan, in processedMessage);
 

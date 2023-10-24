@@ -47,46 +47,45 @@ namespace ECS.Unity.GLTFContainer.Systems
         [Query]
         private void ReconfigureGltfContainer(ref GltfContainerComponent component, ref PBGltfContainer sdkComponent, ref PartitionComponent partitionComponent)
         {
-            if (sdkComponent.IsDirty)
+            if (!sdkComponent.IsDirty) return;
+
+            switch (component.State.Value)
             {
-                switch (component.State.Value)
-                {
-                    // The source is changed, should start downloading over again
-                    case LoadingState.Unknown:
-                        var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, new CancellationTokenSource()), partitionComponent);
-                        component.Promise = promise;
-                        component.State.Set(LoadingState.Loading);
+                // The source is changed, should start downloading over again
+                case LoadingState.Unknown:
+                    var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, new CancellationTokenSource()), partitionComponent);
+                    component.Promise = promise;
+                    component.State.Set(LoadingState.Loading);
+                    return;
+
+                // Clean-up is handled by ResetGltfContainerSystem so "InProgress" is not considered here
+                // Do nothing if finished with error
+                case LoadingState.Finished:
+                    Assert.IsTrue(component.Promise.Result.HasValue);
+
+                    // if promise was unsuccessful nothing to do
+                    StreamableLoadingResult<GltfContainerAsset> result = component.Promise.Result.Value;
+
+                    if (!result.Succeeded)
                         return;
 
-                    // Clean-up is handled by ResetGltfContainerSystem so "InProgress" is not considered here
-                    // Do nothing if finished with error
-                    case LoadingState.Finished:
-                        Assert.IsTrue(component.Promise.Result.HasValue);
+                    ColliderLayer visibleCollisionMask = sdkComponent.GetVisibleMeshesCollisionMask();
 
-                        // if promise was unsuccessful nothing to do
-                        StreamableLoadingResult<GltfContainerAsset> result = component.Promise.Result.Value;
+                    if (visibleCollisionMask != component.VisibleMeshesCollisionMask)
+                    {
+                        component.VisibleMeshesCollisionMask = visibleCollisionMask;
+                        ConfigureGltfContainerColliders.SetupVisibleColliders(ref component, result.Asset);
+                    }
 
-                        if (!result.Succeeded)
-                            return;
+                    ColliderLayer invisibleCollisionMask = sdkComponent.GetInvisibleMeshesCollisionMask();
 
-                        ColliderLayer visibleCollisionMask = sdkComponent.GetVisibleMeshesCollisionMask();
+                    if (invisibleCollisionMask != component.InvisibleMeshesCollisionMask)
+                    {
+                        component.InvisibleMeshesCollisionMask = invisibleCollisionMask;
+                        ConfigureGltfContainerColliders.SetupInvisibleColliders(ref component, result.Asset);
+                    }
 
-                        if (visibleCollisionMask != component.VisibleMeshesCollisionMask)
-                        {
-                            component.VisibleMeshesCollisionMask = visibleCollisionMask;
-                            ConfigureGltfContainerColliders.SetupVisibleColliders(ref component, result.Asset);
-                        }
-
-                        ColliderLayer invisibleCollisionMask = sdkComponent.GetInvisibleMeshesCollisionMask();
-
-                        if (invisibleCollisionMask != component.InvisibleMeshesCollisionMask)
-                        {
-                            component.InvisibleMeshesCollisionMask = invisibleCollisionMask;
-                            ConfigureGltfContainerColliders.SetupInvisibleColliders(ref component, result.Asset);
-                        }
-
-                        return;
-                }
+                    return;
             }
         }
     }

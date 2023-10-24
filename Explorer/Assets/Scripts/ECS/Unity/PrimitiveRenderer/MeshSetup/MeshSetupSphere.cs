@@ -6,8 +6,6 @@ namespace ECS.Unity.PrimitiveRenderer.MeshSetup
 {
     public class MeshSetupSphere : IMeshSetup<SpherePrimitive>
     {
-        public void Execute(PBMeshRenderer pbRenderer, Mesh mesh)
-        {
-        }
+        public void Execute(PBMeshRenderer pbRenderer, Mesh mesh) { }
     }
 }

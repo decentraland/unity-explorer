@@ -8,6 +8,8 @@ namespace DCL.Interaction.PlayerOriginated
     /// </summary>
     public interface IGlobalInputEvents
     {
+        IReadOnlyList<Entry> Entries { get; }
+
         public readonly struct Entry
         {
             public readonly InputAction InputAction;
@@ -19,13 +21,13 @@ namespace DCL.Interaction.PlayerOriginated
                 PointerEventType = pointerEventType;
             }
         }
-
-        IReadOnlyList<Entry> Entries { get; }
     }
 
     public class GlobalInputEvents : IGlobalInputEvents
     {
         private readonly List<IGlobalInputEvents.Entry> entries = new (10);
+
+        public IReadOnlyList<IGlobalInputEvents.Entry> Entries => entries;
 
         public void Add(IGlobalInputEvents.Entry entry)
         {
@@ -36,7 +38,5 @@ namespace DCL.Interaction.PlayerOriginated
         {
             entries.Clear();
         }
-
-        public IReadOnlyList<IGlobalInputEvents.Entry> Entries => entries;
     }
 }

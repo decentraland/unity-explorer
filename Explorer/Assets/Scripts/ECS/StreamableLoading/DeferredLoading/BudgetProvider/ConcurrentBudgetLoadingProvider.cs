@@ -4,8 +4,8 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
 {
     public class ConcurrentLoadingBudgetProvider : IConcurrentBudgetProvider
     {
-        private int currentBudget;
         private readonly int maxBudget;
+        private int currentBudget;
 
         public ConcurrentLoadingBudgetProvider(int initialBudget)
         {

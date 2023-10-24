@@ -83,7 +83,7 @@ namespace DCL.PluginSystem.World
             // Don't even try to retrieve empty settings
             UniTask.CompletedTask;
 
-        UniTask IDCLPlugin<NoExposedPluginSettings>.Initialize(NoExposedPluginSettings settings, CancellationToken ct) =>
+        UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
             UniTask.CompletedTask;
 
         void IDisposable.Dispose() { }

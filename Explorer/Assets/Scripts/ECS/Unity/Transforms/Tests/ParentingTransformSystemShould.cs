@@ -14,23 +14,6 @@ namespace ECS.Unity.Transforms.Tests
     [TestFixture]
     public class ParentingTransformSystemShould : UnitySystemTestBase<ParentingTransformSystem>
     {
-        private SDKTransform parentSDKTransform;
-        private SDKTransform childSDKTransform;
-
-        private TransformComponent parentTransformComponent;
-        private TransformComponent childTransformComponent;
-        private TransformComponent sceneRoot;
-
-        private CRDTEntity sceneRootCRDT;
-        private CRDTEntity parentCRDTEntity;
-        private CRDTEntity childCRDTEntity;
-
-        private Entity rootEntity;
-        private Entity parentEntity;
-        private Entity childEntity;
-
-        private Dictionary<CRDTEntity, Entity> crdtToEntityDict;
-
         [SetUp]
         public void SetUp()
         {
@@ -67,6 +50,23 @@ namespace ECS.Unity.Transforms.Tests
 
             system = new ParentingTransformSystem(world, crdtToEntityDict, world.Reference(rootEntity));
         }
+
+        private SDKTransform parentSDKTransform;
+        private SDKTransform childSDKTransform;
+
+        private TransformComponent parentTransformComponent;
+        private TransformComponent childTransformComponent;
+        private TransformComponent sceneRoot;
+
+        private CRDTEntity sceneRootCRDT;
+        private CRDTEntity parentCRDTEntity;
+        private CRDTEntity childCRDTEntity;
+
+        private Entity rootEntity;
+        private Entity parentEntity;
+        private Entity childEntity;
+
+        private Dictionary<CRDTEntity, Entity> crdtToEntityDict;
 
         [Test]
         public void ParentTransform()

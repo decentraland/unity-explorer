@@ -18,9 +18,18 @@ namespace Diagnostics.ReportsHandling
         /// </summary>
         public readonly bool Unhandled;
 
+        internal ReportData reportData;
+
         private string messagePrefix;
 
-        internal ReportData reportData;
+        public override string Message => messagePrefix + base.Message;
+
+        public ref readonly ReportData ReportData => ref reportData;
+
+        string IManagedEcsException.MessagePrefix
+        {
+            set => messagePrefix = value;
+        }
 
         public EcsSystemException(ISystem<float> faultySystem, Exception innerException, ReportData reportData, bool unhandled = true)
             : base(faultySystem == null ? string.Empty : $"[{faultySystem.GetType().Name}]", innerException)
@@ -29,14 +38,5 @@ namespace Diagnostics.ReportsHandling
             FaultySystem = faultySystem;
             Unhandled = unhandled;
         }
-
-        public override string Message => messagePrefix + base.Message;
-
-        string IManagedEcsException.MessagePrefix
-        {
-            set => messagePrefix = value;
-        }
-
-        public ref readonly ReportData ReportData => ref reportData;
     }
 }
