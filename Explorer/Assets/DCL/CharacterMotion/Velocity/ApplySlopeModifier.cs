@@ -29,8 +29,6 @@ namespace DCL.CharacterMotion
 
             float downwardsSlopeDistance = input.Kind == MovementKind.Run ? 0.55f : 0.45f;
 
-            Debug.DrawLine(ray.origin, ray.origin + (ray.direction * downwardsSlopeDistance), Color.magenta, dt);
-
             if (!Physics.Raycast(ray, out var hit, downwardsSlopeDistance, PhysicsLayers.PLAYER_ORIGIN_RAYCAST_MASK))
                 return Vector3.zero;
 
