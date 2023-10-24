@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <WalkSpeed>k__BackingField: 1.5
   <JogSpeed>k__BackingField: 8
-  <RunSpeed>k__BackingField: 10
+  <RunSpeed>k__BackingField: 30
   <Gravity>k__BackingField: -10
   <JogJumpHeight>k__BackingField: 1
-  <RunJumpHeight>k__BackingField: 1.5
+  <RunJumpHeight>k__BackingField: 20
   <CharacterControllerRadius>k__BackingField: 0.4
   <GroundDrag>k__BackingField: 0.5
   <AirDrag>k__BackingField: 0.05

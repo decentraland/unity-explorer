@@ -39,6 +39,8 @@ namespace DCL.CharacterMotion.Systems
         {
             if (inputAction.WasPressedThisFrame())
                 inputToUpdate.Trigger.TickWhenJumpOccurred = tickValue + 1;
+
+            inputToUpdate.IsPressed = inputAction.IsPressed();
         }
     }
 }
