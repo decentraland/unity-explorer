@@ -2,6 +2,9 @@ name: Unity Mac Build IL2CPP
 
 on:
   workflow_dispatch: {}
+  
+env:
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
 
 jobs:
   build:
@@ -47,6 +50,16 @@ jobs:
             !Explorer/Library/Bee/**
             !Explorer/Library/BuildPlayerData/**
           key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
+          
+      - name: Set sentry vars
+        run: |
+          if [[ github.ref == 'refs/heads/main' ]]; then
+            echo "SENTRY_ENVIRONMENT=production" >> "$GITHUB_ENV"
+          elif [[ github.ref == 'refs/heads/dev' ]]; then
+            echo "SENTRY_ENVIRONMENT=development" >> "$GITHUB_ENV"
+          else
+            echo "SENTRY_ENVIRONMENT=branch" >> "$GITHUB_ENV"
+          fi
 
       - uses: decentraland/unity-builder@0.1
         id: build

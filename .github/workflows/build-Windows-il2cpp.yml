@@ -62,7 +62,6 @@ jobs:
           key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
           
       - name: Set sentry vars
-        uses: actions/cache@v3
         run: |
           if [[ github.ref == 'refs/heads/main' ]]; then
             echo "SENTRY_ENVIRONMENT=production" >> "$GITHUB_ENV"
