@@ -1,6 +1,8 @@
 ﻿using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character;
 using DCL.Interaction.Utility;
 using DCL.PluginSystem;
@@ -11,7 +13,12 @@ using Diagnostics;
 using Diagnostics.ReportsHandling;
 using ECS.Prioritization;
 using ECS.Profiling;
+using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
+using Ipfs;
+using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -25,6 +32,17 @@ namespace Global
     /// </summary>
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
+        private static readonly Dictionary<Type, int> MEMORY_ESTIMATION_MAP = new ()
+        {
+            [typeof(AssetBundleData)] = 1,
+            [typeof(Texture2D)] = 2,
+            [typeof(WearablesDTOList)] = 2,
+            [typeof(IWearable[])] = 2,
+            [typeof(SceneDefinitions)] = 2,
+            [typeof(IpfsTypes.SceneEntityDefinition)] = 2,
+            [typeof(ISceneFacade)] = 2,
+            [typeof(SceneAssetBundleManifest)] = 2,
+        };
         private ProvidedInstance<CharacterObject> characterObject;
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
@@ -105,7 +123,7 @@ namespace Global
                 new PartitionedWorldsAggregate.Factory(),
                 new ConcurrentLoadingBudgetProvider(50),
                 new FrameTimeCapBudgetProvider(40, profilingProvider),
-                new MemoryBudgetProvider(profilingProvider)
+                new MemoryBudgetProvider(MEMORY_ESTIMATION_MAP, profilingProvider)
             );
 
             var cacheCleaner = new CacheCleaner();

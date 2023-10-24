@@ -105,7 +105,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 return;
             }
 
-            if (memoryBudgetProvider.TrySpendBudget())
+            if (memoryBudgetProvider.TrySpendBudget<TAsset>())
             {
                 // Indicate that loading has started
                 state.Value = StreamableLoadingState.Status.InProgress;

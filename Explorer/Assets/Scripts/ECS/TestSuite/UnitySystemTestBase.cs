@@ -6,13 +6,15 @@ using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Transforms.Components;
 using NSubstitute;
 using NUnit.Framework;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ECS.TestSuite
 {
     public abstract class UnitySystemTestBase<TSystem> where TSystem: BaseUnityLoopSystem
     {
-        protected readonly MemoryBudgetProvider memoryBudgetProvider = new (Substitute.For<IProfilingProvider>());
+        protected readonly MemoryBudgetProvider memoryBudgetProvider = new (new Dictionary<Type, int>(), Substitute.For<IProfilingProvider>());
         protected TSystem system;
         private World cachedWorld;
 
