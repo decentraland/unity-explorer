@@ -12,8 +12,8 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         public readonly AssetBundle AssetBundle;
 
-        [CanBeNull]
-        public readonly AssetBundleMetrics? Metrics;
+        [CanBeNull] public readonly AssetBundleMetrics? Metrics;
+
         private GameObject gameObject;
         private bool gameObjectLoaded;
 

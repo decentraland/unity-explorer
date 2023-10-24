@@ -12,7 +12,7 @@ namespace ECS.TestSuite
 {
     public abstract class UnitySystemTestBase<TSystem> where TSystem: BaseUnityLoopSystem
     {
-        protected readonly MemoryBudgetProvider memoryBudgetProvider = new (Substitute.For<ISystemMemory>(), Substitute.For<IProfilingProvider>());
+        protected readonly MemoryBudgetProvider memoryBudgetProvider = new (Substitute.For<IProfilingProvider>());
         protected TSystem system;
         private World cachedWorld;
 

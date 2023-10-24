@@ -21,7 +21,16 @@ namespace ECS.StreamableLoading.Common.Systems
 
         protected override void Update(float t)
         {
-            if (!memoryBudgetProvider.TrySpendBudget()) { cacheCleaner.UnloadCache(); }
+            // if (!memoryBudgetProvider.TrySpendBudget())                 cacheCleaner.UnloadCache();
+
+            // --- Unload cache
+            // 1. Unload long time not used cache
+            // 2. Unload less used caches
+
+            // --- Unload scenes
+            // 1. Far and Behind
+
+            memoryBudgetProvider.FlushRequestedMemoryCounter();
         }
     }
 }

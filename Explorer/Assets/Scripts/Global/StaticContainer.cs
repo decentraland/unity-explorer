@@ -105,7 +105,7 @@ namespace Global
                 new PartitionedWorldsAggregate.Factory(),
                 new ConcurrentLoadingBudgetProvider(50),
                 new FrameTimeCapBudgetProvider(40, profilingProvider),
-                new MemoryBudgetProvider(new SystemMemoryMock(50), profilingProvider)
+                new MemoryBudgetProvider(profilingProvider)
             );
 
             var cacheCleaner = new CacheCleaner();
