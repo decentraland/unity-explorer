@@ -18,7 +18,7 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
         public MemoryBudgetProvider(Dictionary<Type, int> memoryEstimationMap, IProfilingProvider profilingProvider)
         {
             // systemMemory = new DesktopSystemMemory();
-            budgetCapInBytes = 3000 * ProfilingProvider.BYTES_IN_MEGABYTE;
+            budgetCapInBytes = 2000 * ProfilingProvider.BYTES_IN_MEGABYTE;
 
             this.memoryEstimationMap = memoryEstimationMap;
             this.profilingProvider = profilingProvider;
@@ -31,9 +31,7 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
         }
 
         public bool TrySpendBudget() =>
-            true;
-
-        // profilingProvider.TotalUsedMemoryInBytes < budgetCapInBytes;
+            profilingProvider.TotalUsedMemoryInBytes < budgetCapInBytes;
 
         public void ReleaseBudget() { }
 

@@ -34,14 +34,14 @@ namespace Global
     {
         private static readonly Dictionary<Type, int> MEMORY_ESTIMATION_MAP = new ()
         {
-            [typeof(AssetBundleData)] = 1,
-            [typeof(Texture2D)] = 2,
-            [typeof(WearablesDTOList)] = 2,
-            [typeof(IWearable[])] = 2,
-            [typeof(SceneDefinitions)] = 2,
-            [typeof(IpfsTypes.SceneEntityDefinition)] = 2,
-            [typeof(ISceneFacade)] = 2,
-            [typeof(SceneAssetBundleManifest)] = 2,
+            [typeof(AssetBundleData)] = 20,
+            [typeof(Texture2D)] = 10,
+            [typeof(WearablesDTOList)] = 1,
+            [typeof(IWearable[])] = 5,
+            [typeof(SceneDefinitions)] = 1,
+            [typeof(IpfsTypes.SceneEntityDefinition)] = 1,
+            [typeof(ISceneFacade)] = 1,
+            [typeof(SceneAssetBundleManifest)] = 1,
         };
         private ProvidedInstance<CharacterObject> characterObject;
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
