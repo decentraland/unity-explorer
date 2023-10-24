@@ -42,6 +42,7 @@ namespace DCL.CharacterMotion.Systems
         {
             Transform characterTransform = transform.Transform;
             Vector3 targetForward = rigidTransform.MoveVelocity.Velocity;
+            targetForward.y = 0;
 
             if (targetForward.sqrMagnitude < characterTransform.forward.sqrMagnitude)
                 targetForward = characterTransform.forward;

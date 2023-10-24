@@ -42,14 +42,19 @@ namespace DCL.CharacterMotion.Systems
             [Data] float dt,
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController,
-            ref CharacterPlatformComponent platformComponent)
+            ref CharacterPlatformComponent platformComponent,
+            in JumpInputComponent jump,
+            in MovementInputComponent movementInput)
         {
-            Vector3 delta = (rigidTransform.MoveVelocity.Velocity + rigidTransform.NonInterpolatedVelocity) * dt;
-            CollisionFlags collisionFlags = characterController.Move(delta);
+            var slopeModifier = ApplySlopeModifier.Execute(in rigidTransform, in movementInput, in jump, characterController, dt);
+
+            Vector3 movementDelta = (rigidTransform.MoveVelocity.Velocity + rigidTransform.NonInterpolatedVelocity) * dt;
+
+            CollisionFlags collisionFlags = characterController.Move(movementDelta + slopeModifier);
 
             bool hasGroundedFlag = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
 
-            if (!Mathf.Approximately(delta.y, 0f))
+            if (!Mathf.Approximately(movementDelta.y, 0f))
             {
                 rigidTransform.IsGrounded = hasGroundedFlag || characterController.isGrounded;
 
