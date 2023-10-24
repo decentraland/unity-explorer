@@ -46,7 +46,7 @@ namespace MVC
 
         protected TInputData inputData { get; private set; }
 
-        public abstract string SortingLayer { get; }
+        public abstract CanvasOrdering.SORTING_LAYER SortingLayer { get; }
 
         public async UniTask LaunchViewLifeCycle(CanvasOrdering ordering, TInputData inputData, CancellationToken ct)
         {

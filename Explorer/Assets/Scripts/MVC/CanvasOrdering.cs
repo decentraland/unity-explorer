@@ -2,14 +2,18 @@
 {
     public readonly struct CanvasOrdering
     {
-        // These layers should be added to settings "Tags and Layers"
-        public const string FULLSCREEN_SORTING_LAYER = "UI_FULLSCREEN";
-        public const string POPUP_SORTING_LAYER = "UI_POPUP";
+        public enum SORTING_LAYER
+        {
+            Fullscreen,
+            Popup,
+            Persistent,
+            Top
+        }
 
-        public readonly string SortingLayer;
+        public readonly SORTING_LAYER SortingLayer;
         public readonly int OrderInLayer;
 
-        public CanvasOrdering(string sortingLayer, int orderInLayer)
+        public CanvasOrdering(SORTING_LAYER sortingLayer, int orderInLayer)
         {
             SortingLayer = sortingLayer;
             OrderInLayer = orderInLayer;

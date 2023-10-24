@@ -17,7 +17,7 @@ namespace MVC
             system.SetQueryMethod(QueryDataQuery);
         }
 
-        public override string SortingLayer => CanvasOrdering.FULLSCREEN_SORTING_LAYER;
+        public override CanvasOrdering.SORTING_LAYER SortingLayer => CanvasOrdering.SORTING_LAYER.Fullscreen;
 
         [Query]
         private void QueryData(in MVCCheetSheet.ExampleViewDataComponent component)

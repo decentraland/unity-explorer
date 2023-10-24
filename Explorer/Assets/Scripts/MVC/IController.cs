@@ -6,7 +6,7 @@ namespace MVC
 {
     public interface IController
     {
-        string SortingLayer { get; }
+        CanvasOrdering.SORTING_LAYER SortingLayer { get; }
 
         /// <summary>
         ///     View is focused when the obscuring view disappears

@@ -3,7 +3,6 @@ using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Utility.Updatable.DisposableSubscriptions;
 
 namespace MVC
 {
@@ -16,14 +15,14 @@ namespace MVC
         /// </summary>
         public void Registration()
         {
-            var mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource());
+            var mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(),Resources.Load<PopupCloserView>("PopupCloser"));
 
             // prefabs are taken from Addressables in Plugin
             ExampleView prefab = new GameObject("bla-bla").AddComponent<ExampleView>();
 
             // Parent will be set once from the scene and propagated to the plugin
             // Do we need multiple parents?
-            mvcManager.RegisterController(new ExampleController(ExampleController.CreateLazily(prefab, null)));
+            mvcManager.RegisterController(new ExampleController(ExampleController.Preallocate(prefab, null)));
 
             this.mvcManager = mvcManager;
         }
@@ -50,7 +49,7 @@ namespace MVC
         {
             public ExampleController(ViewFactoryMethod viewFactory) : base(viewFactory) { }
 
-            public override string SortingLayer => CanvasOrdering.FULLSCREEN_SORTING_LAYER;
+            public override CanvasOrdering.SORTING_LAYER SortingLayer => CanvasOrdering.SORTING_LAYER.Fullscreen;
 
             protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
                 viewInstance.CloseButton.OnClickAsync(ct);
@@ -67,15 +66,8 @@ namespace MVC
             [field: SerializeField]
             public Button CloseButton { get; private set; }
 
-            public DisposableEventEmitter CloseButtonClicked = new ();
-
             [field: SerializeField]
             public TMP_Text Text { get; private set; }
-
-            private void Awake()
-            {
-                CloseButton.onClick.AddListener(CloseButtonClicked.Invoke);
-            }
         }
 
         public struct ExampleViewDataComponent

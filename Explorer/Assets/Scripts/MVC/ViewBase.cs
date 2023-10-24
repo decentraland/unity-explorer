@@ -15,8 +15,13 @@ namespace MVC
 
         public void SetDrawOrder(CanvasOrdering order)
         {
-            canvas.sortingLayerName = order.SortingLayer;
+            canvas.sortingLayerName = order.SortingLayer.ToString();
             canvas.sortingOrder = order.OrderInLayer;
+        }
+
+        public void DecreaseDrawOrderBy(int decreaseAmount)
+        {
+            canvas.sortingOrder -= decreaseAmount;
         }
 
         public virtual async UniTask Show(CancellationToken ct)
