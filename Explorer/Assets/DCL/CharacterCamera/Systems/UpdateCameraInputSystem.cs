@@ -26,17 +26,17 @@ namespace DCL.CharacterCamera.Systems
         }
 
         [Query]
-        private void UpdateInput(ref CameraInput inputToUpdate)
+        private void UpdateInput(ref CameraInput cameraInput, ref CameraComponent cameraComponent)
         {
-            inputToUpdate.ZoomIn = cameraActions.Zoom.ReadValue<Vector2>().y > 0
-                                   || cameraActions.ZoomIn.WasPressedThisFrame();
+            cameraInput.ZoomIn = cameraActions.Zoom.ReadValue<Vector2>().y > 0
+                                 || cameraActions.ZoomIn.WasPressedThisFrame();
 
-            inputToUpdate.ZoomOut = cameraActions.Zoom.ReadValue<Vector2>().y < 0
-                                    || cameraActions.ZoomOut.WasPressedThisFrame();
+            cameraInput.ZoomOut = cameraActions.Zoom.ReadValue<Vector2>().y < 0
+                                  || cameraActions.ZoomOut.WasPressedThisFrame();
 
-            inputToUpdate.POV = cameraActions.Drag.ReadValue<Vector2>();
+            cameraInput.Delta = cameraComponent.CursorIsLocked ? cameraActions.Delta.ReadValue<Vector2>() : Vector2.zero;
 
-            inputToUpdate.FreeMovement = freeCameraActions.Movement.ReadValue<Vector2>();
+            cameraInput.FreeMovement = freeCameraActions.Movement.ReadValue<Vector2>();
         }
     }
 }

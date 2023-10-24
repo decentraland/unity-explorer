@@ -1,8 +1,8 @@
 ﻿namespace CRDT.Protocol
 {
     /// <summary>
-    /// Contains the arithmetic sum of the fields' size which compound different CRDT messages
-    /// in their serialized form
+    ///     Contains the arithmetic sum of the fields' size which compound different CRDT messages
+    ///     in their serialized form
     /// </summary>
     public static class CRDTConstants
     {

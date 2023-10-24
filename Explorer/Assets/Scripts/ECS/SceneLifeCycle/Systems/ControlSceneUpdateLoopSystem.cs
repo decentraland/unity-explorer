@@ -54,7 +54,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 int fps = realmPartitionSettings.GetSceneUpdateFrequency(in partition);
 
-                async UniTaskVoid RunOnThreadPool()
+                async UniTaskVoid RunOnThreadPoolAsync()
                 {
                     await UniTask.SwitchToThreadPool();
                     if (destroyCancellationToken.IsCancellationRequested) return;
@@ -63,10 +63,10 @@ namespace ECS.SceneLifeCycle.Systems
                     SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
 
                     // FPS is set by another system
-                    await scene.StartUpdateLoop(fps, destroyCancellationToken);
+                    await scene.StartUpdateLoopAsync(fps, destroyCancellationToken);
                 }
 
-                RunOnThreadPool().Forget();
+                RunOnThreadPoolAsync().Forget();
 
                 // So we know the scene has started
                 World.Add(entity, scene);

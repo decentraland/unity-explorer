@@ -34,7 +34,7 @@ namespace ECS.Profiling
 
             private int tailIndex;
 
-            public long Tail { get => Values[tailIndex]; }
+            public long Tail => Values[tailIndex];
 
             public LinealBufferFPSCounter(int bufferSize)
             {

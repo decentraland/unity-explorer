@@ -5,21 +5,19 @@ namespace CRDT.CRDTTests.Protocol
 {
     public class CRDTTestsUtils
     {
-        public static string[] GetTestFilesPath()
-        {
-            return Directory.GetFiles($"{Application.dataPath}/../TestResources/CRDT/", "*.test");
-        }
+        public static string[] GetTestFilesPath() =>
+            Directory.GetFiles($"{Application.dataPath}/../TestResources/CRDT/", "*.test");
 
         public static ParsedCRDTTestFile ParseTestFile(string filePath)
         {
-            ParsedCRDTTestFile parsedFile = new ParsedCRDTTestFile()
+            var parsedFile = new ParsedCRDTTestFile
             {
-                fileName = filePath
+                fileName = filePath,
             };
 
             string testSpecName = null;
-            bool nextLineIsState = false;
-            int lineNumber = 0;
+            var nextLineIsState = false;
+            var lineNumber = 0;
 
             foreach (string line in File.ReadLines(filePath))
             {
@@ -41,13 +39,13 @@ namespace CRDT.CRDTTests.Protocol
 
                 if (nextLineIsState)
                 {
-                    parsedFile.fileInstructions.Add(new ParsedCRDTTestFile.TestFileInstruction()
+                    parsedFile.fileInstructions.Add(new ParsedCRDTTestFile.TestFileInstruction
                     {
                         fileName = filePath,
                         instructionType = ParsedCRDTTestFile.InstructionType.FINAL_STATE,
                         instructionValue = line,
                         lineNumber = lineNumber,
-                        testSpect = testSpecName
+                        testSpect = testSpecName,
                     });
 
                     testSpecName = null;
@@ -55,13 +53,13 @@ namespace CRDT.CRDTTests.Protocol
                 }
                 else
                 {
-                    parsedFile.fileInstructions.Add(new ParsedCRDTTestFile.TestFileInstruction()
+                    parsedFile.fileInstructions.Add(new ParsedCRDTTestFile.TestFileInstruction
                     {
                         fileName = filePath,
                         instructionType = ParsedCRDTTestFile.InstructionType.MESSAGE,
                         instructionValue = line,
                         lineNumber = lineNumber,
-                        testSpect = testSpecName
+                        testSpect = testSpecName,
                     });
                 }
             }

@@ -16,8 +16,8 @@ namespace SceneRuntime
     // Avoid the same name for Namespace and Class
     public class SceneRuntimeImpl : ISceneRuntime, IJsOperations
     {
-        private readonly IInstancePoolsProvider instancePoolsProvider;
         internal readonly V8ScriptEngine engine;
+        private readonly IInstancePoolsProvider instancePoolsProvider;
 
         private readonly SceneModuleLoader moduleLoader;
         private readonly UnityOpsApi unityOpsApi; // TODO: This is only needed for the LifeCycle
@@ -42,7 +42,7 @@ namespace SceneRuntime
             engine = V8EngineFactory.Create();
 
             // Compile Scene Code
-            var sceneScript = engine.Compile(sourceCode);
+            V8Script sceneScript = engine.Compile(sourceCode);
 
             // Initialize init API
             unityOpsApi = new UnityOpsApi(engine, moduleLoader, sceneScript, sceneShortInfo);
@@ -69,6 +69,13 @@ namespace SceneRuntime
 
             updateFunc = (ScriptObject)engine.Evaluate("__internalOnUpdate");
             startFunc = (ScriptObject)engine.Evaluate("__internalScene.onStart");
+        }
+
+        public void Dispose()
+        {
+            engineApi?.Dispose();
+            engine.Dispose();
+            runtimeWrapper?.Dispose();
         }
 
         public void RegisterEngineApi(IEngineApi api)
@@ -102,13 +109,6 @@ namespace SceneRuntime
 
             // Initial messages are not expected to return anything
             Assert.IsTrue(result.Count == 0);
-        }
-
-        public void Dispose()
-        {
-            engineApi?.Dispose();
-            engine.Dispose();
-            runtimeWrapper?.Dispose();
         }
 
         public ITypedArray<byte> CreateUint8Array(int length) =>

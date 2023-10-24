@@ -11,10 +11,10 @@ namespace DCL.Tests
 {
     public class AvatarHideShould
     {
+        private readonly BodyShape TEST_BODY_SHAPE = BodyShape.MALE;
         private IWearable[] mockWearables;
         private IWearable upperMockWearable;
         private IWearable upperSkinWearable;
-        private readonly BodyShape TEST_BODY_SHAPE = BodyShape.MALE;
 
         [SetUp]
         public void SetUp()

@@ -37,6 +37,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             listPool = new ListObjectPool<GameObject>(listInstanceDefaultCapacity: maxNumberOfAssetsPerKey, defaultCapacity: initialCapacity);
         }
 
+        public void Dispose()
+        {
+            UnityObjectUtils.SafeDestroyGameObject(parentContainer);
+        }
+
         public bool TryGet(GameObject asset, out GameObject instance)
         {
             if (cache.TryGetValue(asset, out List<GameObject> list) && list.Count > 0)
@@ -70,11 +75,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             instance.SetActive(false);
             instance.transform.SetParent(parentContainer);
             return IWearableAssetsCache.ReleaseResult.ReturnedToPool;
-        }
-
-        public void Dispose()
-        {
-            UnityObjectUtils.SafeDestroyGameObject(parentContainer);
         }
     }
 }

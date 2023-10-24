@@ -6,9 +6,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.Components;
-using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
-using Realm;
 using SceneRunner.Scene;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -45,6 +43,5 @@ namespace ECS.SceneLifeCycle.Systems
             promise.ForgetLoading(World);
             World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>, DeleteEntityIntention>(entity);
         }
-
     }
 }

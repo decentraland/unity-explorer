@@ -43,6 +43,11 @@ namespace Ipfs
         [Serializable]
         public class EntityDefinitionGeneric<T> : IEquatable<EntityDefinitionGeneric<T>>
         {
+            public List<ContentDefinition> content;
+            public string id;
+            public T metadata;
+            public List<string> pointers;
+
             /// <summary>
             ///     Clear data for the future reusing
             /// </summary>
@@ -52,11 +57,6 @@ namespace Ipfs
                 entityDefinition.id = string.Empty;
                 entityDefinition.pointers?.Clear();
             }
-
-            public List<ContentDefinition> content;
-            public string id;
-            public T metadata;
-            public List<string> pointers;
 
             public bool Equals(EntityDefinitionGeneric<T> other) =>
                 id.Equals(other?.id);
@@ -70,12 +70,12 @@ namespace Ipfs
         {
             public List<string> allowedMediaHostnames;
 
-            [SerializeField] internal string @base = string.Empty;
-            public string baseParcel => @base;
-
             public List<string> parcels;
 
             public List<string> requiredPermissions;
+
+            [SerializeField] internal string @base = string.Empty;
+            public string baseParcel => @base;
         }
 
         [Serializable]

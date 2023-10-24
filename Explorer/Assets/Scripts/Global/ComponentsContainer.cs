@@ -9,7 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Utility;
 using RaycastHit = DCL.ECSComponents.RaycastHit;
 
 namespace Global
@@ -22,7 +21,6 @@ namespace Global
         public ISDKComponentsRegistry SDKComponentsRegistry { get; private set; }
 
         public IComponentPoolsRegistry ComponentPoolsRegistry { get; private set; }
-
 
         public static ComponentsContainer Create()
         {
@@ -75,6 +73,7 @@ namespace Global
                .Add(SDKComponentBuilder<PBAvatarShape>.Create(ComponentID.AVATAR_SHAPE).AsProtobufComponent());
 
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
+
             // add others as required
 
             var componentPoolsRegistry = new ComponentPoolsRegistry(
@@ -98,7 +97,6 @@ namespace Global
                 p.Bucket = byte.MaxValue;
                 p.RawSqrDistance = 0;
             }));
-
         }
     }
 }

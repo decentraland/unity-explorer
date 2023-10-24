@@ -1,33 +1,30 @@
-﻿using UnityEngine;
+﻿using Diagnostics.ReportsHandling;
+using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using Diagnostics.ReportsHandling;
 
 namespace DCL.Rendering.Avatar
 {
     public partial class OutlineRendererFeature : ScriptableRendererFeature
     {
-        class OutlineRenderPass : ScriptableRenderPass
+        private class OutlineRenderPass : ScriptableRenderPass
         {
-            // Debug
-            private ReportData m_ReportData = new ReportData("DCL_RenderFeature_Outline_OutlinePass", ReportHint.SessionStatic);
+            private enum ShaderPasses
+            {
+                OutlineRender = 0,
+                OutlineDraw = 1,
+            }
+
             private const string profilerTag = "Custom Pass: Outline";
-
-            private OutlineRendererFeature_Settings m_Settings;
-
-            private Material outlineMaterial = null;
-            private RTHandle outlineRTHandle = null;
-            private RenderTextureDescriptor outlineRTDescriptor;
-            private RTHandle depthNormalsRTHandle = null;
 
             // Texture IDs for Outline Shader - defined in Outline.HLSL
             private const string OUTLINE_TEXTURE_NAME = "_OutlineTexture";
-            private static readonly int s_OutlineTextureID = Shader.PropertyToID(OUTLINE_TEXTURE_NAME);
             private const string COLOUR_TEXTURE_NAME = "_CameraColorTexture";
-            private static readonly int s_ColourTextureID = Shader.PropertyToID(COLOUR_TEXTURE_NAME);
             private const string DEPTH_TEXTURE_NAME = "_CameraDepthTexture";
-            private static readonly int s_DepthTextureID = Shader.PropertyToID(DEPTH_TEXTURE_NAME);
             private const string DEPTHNORMALS_TEXTURE_NAME = "_CameraDepthNormalsTexture";
+            private static readonly int s_OutlineTextureID = Shader.PropertyToID(OUTLINE_TEXTURE_NAME);
+            private static readonly int s_ColourTextureID = Shader.PropertyToID(COLOUR_TEXTURE_NAME);
+            private static readonly int s_DepthTextureID = Shader.PropertyToID(DEPTH_TEXTURE_NAME);
             private static readonly int s_DepthNormalsTextureID = Shader.PropertyToID(DEPTHNORMALS_TEXTURE_NAME);
 
             // Feature Settings - Shader values
@@ -37,24 +34,23 @@ namespace DCL.Rendering.Avatar
             private static readonly int s_ColorSensitivityID = Shader.PropertyToID("_ColorSensitivity");
             private static readonly int s_OutlineColorID = Shader.PropertyToID("_OutlineColor");
 
-            private enum ShaderPasses
-            {
-                OutlineRender = 0,
-                OutlineDraw = 1
-            }
+            // Debug
+            private ReportData m_ReportData = new ("DCL_RenderFeature_Outline_OutlinePass", ReportHint.SessionStatic);
 
-            public void Setup(OutlineRendererFeature_Settings _Settings, Material _outlineMaterial, RTHandle _outlineRTHandle, RenderTextureDescriptor _outlineRTDescriptor,  RTHandle _depthNormalsRTHandle)
-            {
-                this.m_Settings = _Settings;
-                this.outlineMaterial = _outlineMaterial;
-                this.outlineRTHandle = _outlineRTHandle;
-                this.outlineRTDescriptor = _outlineRTDescriptor;
-                this.depthNormalsRTHandle = _depthNormalsRTHandle;
-            }
+            private OutlineRendererFeature_Settings m_Settings;
 
-            public OutlineRenderPass()
-            {
+            private Material outlineMaterial;
+            private RTHandle outlineRTHandle;
+            private RenderTextureDescriptor outlineRTDescriptor;
+            private RTHandle depthNormalsRTHandle;
 
+            public void Setup(OutlineRendererFeature_Settings _Settings, Material _outlineMaterial, RTHandle _outlineRTHandle, RenderTextureDescriptor _outlineRTDescriptor, RTHandle _depthNormalsRTHandle)
+            {
+                m_Settings = _Settings;
+                outlineMaterial = _outlineMaterial;
+                outlineRTHandle = _outlineRTHandle;
+                outlineRTDescriptor = _outlineRTDescriptor;
+                depthNormalsRTHandle = _depthNormalsRTHandle;
             }
 
             // This method is called before executing the render pass.
@@ -64,11 +60,11 @@ namespace DCL.Rendering.Avatar
             // The render pipeline will ensure target setup and clearing happens in an performance manner.
             public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
             {
-                outlineMaterial.SetFloat(s_OutlineThicknessID, this.m_Settings.OutlineThickness);
-                outlineMaterial.SetFloat(s_DepthSensitivityID, this.m_Settings.DepthSensitivity);
-                outlineMaterial.SetFloat(s_NormalsSensitivityID, this.m_Settings.NormalsSensitivity);
-                outlineMaterial.SetFloat(s_ColorSensitivityID, this.m_Settings.ColorSensitivity);
-                outlineMaterial.SetVector(s_OutlineColorID, this.m_Settings.OutlineColor);
+                outlineMaterial.SetFloat(s_OutlineThicknessID, m_Settings.OutlineThickness);
+                outlineMaterial.SetFloat(s_DepthSensitivityID, m_Settings.DepthSensitivity);
+                outlineMaterial.SetFloat(s_NormalsSensitivityID, m_Settings.NormalsSensitivity);
+                outlineMaterial.SetFloat(s_ColorSensitivityID, m_Settings.ColorSensitivity);
+                outlineMaterial.SetVector(s_OutlineColorID, m_Settings.OutlineColor);
             }
 
             // Here you can implement the rendering logic.
@@ -78,17 +74,18 @@ namespace DCL.Rendering.Avatar
             public override void Execute(ScriptableRenderContext _context, ref RenderingData _renderingData)
             {
                 CommandBuffer cmd = CommandBufferPool.Get("_OutlinePass");
+
                 using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
                 {
                     cmd.SetGlobalTexture(s_ColourTextureID, _renderingData.cameraData.renderer.cameraColorTargetHandle);
                     cmd.SetGlobalTexture(s_DepthTextureID, _renderingData.cameraData.renderer.cameraDepthTargetHandle);
                     cmd.SetGlobalTexture(s_DepthNormalsTextureID, depthNormalsRTHandle);
-                    CoreUtils.SetRenderTarget(cmd, buffer: this.outlineRTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.Unknown, depthSlice: -1);
-                    CoreUtils.DrawFullScreen(cmd, this.outlineMaterial, properties: null, (int)ShaderPasses.OutlineRender);
+                    CoreUtils.SetRenderTarget(cmd, buffer: outlineRTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.Unknown, depthSlice: -1);
+                    CoreUtils.DrawFullScreen(cmd, outlineMaterial, properties: null);
 
-                    cmd.SetGlobalTexture(s_OutlineTextureID, this.outlineRTHandle);
+                    cmd.SetGlobalTexture(s_OutlineTextureID, outlineRTHandle);
                     CoreUtils.SetRenderTarget(cmd, _renderingData.cameraData.renderer.cameraColorTargetHandle, _renderingData.cameraData.renderer.cameraDepthTargetHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.Unknown, depthSlice: -1);
-                    CoreUtils.DrawFullScreen(cmd, this.outlineMaterial, properties: null, (int)ShaderPasses.OutlineDraw);
+                    CoreUtils.DrawFullScreen(cmd, outlineMaterial, properties: null, (int)ShaderPasses.OutlineDraw);
                 }
 
                 _context.ExecuteCommandBuffer(cmd);
@@ -96,14 +93,11 @@ namespace DCL.Rendering.Avatar
             }
 
             /// Cleanup any allocated resources that were created during the execution of this render pass.
-            public override void FrameCleanup(CommandBuffer cmd)
-            {
-
-            }
+            public override void FrameCleanup(CommandBuffer cmd) { }
 
             public void Dispose()
             {
-                this.outlineRTHandle?.Release();
+                outlineRTHandle?.Release();
             }
         }
     }

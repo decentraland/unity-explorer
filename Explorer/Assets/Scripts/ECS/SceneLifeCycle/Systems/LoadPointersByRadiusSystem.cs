@@ -10,7 +10,6 @@ using ECS.StreamableLoading.Common.Components;
 using Ipfs;
 using System.Collections.Generic;
 using Unity.Mathematics;
-using UnityEngine;
 using Utility;
 
 namespace ECS.SceneLifeCycle.Systems

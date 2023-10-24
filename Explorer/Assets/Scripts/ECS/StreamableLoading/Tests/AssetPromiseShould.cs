@@ -11,17 +11,6 @@ namespace ECS.StreamableLoading.Tests
 {
     public class AssetPromiseShould
     {
-        public struct Intent : ILoadingIntention, IEquatable<Intent>
-        {
-            public CommonLoadingArguments CommonArguments { get; set; }
-            public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
-
-            public bool Equals(Intent other) =>
-                CommonArguments.URL == other.CommonArguments.URL;
-        }
-
-        public class Asset { }
-
         private World world;
 
         private AssetPromise<Asset, Intent> assetPromise;
@@ -93,5 +82,16 @@ namespace ECS.StreamableLoading.Tests
         {
             world.Dispose();
         }
+
+        public struct Intent : ILoadingIntention, IEquatable<Intent>
+        {
+            public CommonLoadingArguments CommonArguments { get; set; }
+            public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
+
+            public bool Equals(Intent other) =>
+                CommonArguments.URL == other.CommonArguments.URL;
+        }
+
+        public class Asset { }
     }
 }

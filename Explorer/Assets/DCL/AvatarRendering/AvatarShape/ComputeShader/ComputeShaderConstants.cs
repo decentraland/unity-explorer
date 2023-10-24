@@ -13,20 +13,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             EMMISSION = 4,
         }
 
-        //TODO Avatar Material. Add this textures arrays to the material
-        public static int _AlphaTextureArr_ShaderID = Shader.PropertyToID("_AlphaTextureArr_ID");
-        public static int _MetallicGlossMapArr_ShaderID = Shader.PropertyToID("_MetallicGlossMapArr_ID");
-        public static int _BumpMapArr_ShaderID = Shader.PropertyToID("_BumpMapArr_ID");
-        public static int _EmissionMapArr_ShaderID = Shader.PropertyToID("_EmissionMapArr_ID");
-
-        //Material properties
-        public static string[] keywordsToCheck = { "_NORMALMAP", "_ALPHATEST_ON", "_EMISSION", "_SURFACE_TYPE_TRANSPARENT" };
-        public static int _BaseColour_ShaderID = Shader.PropertyToID("_BaseColor");
         public static readonly int _BaseMapArr_ShaderID = Shader.PropertyToID("_BaseMapArr_ID");
         public static readonly int _BaseMapArrTex_ShaderID = Shader.PropertyToID("_BaseMapArr");
-
-        //Compute shader properties
-        public static string SKINNING_KERNEL_NAME = "main";
         public static readonly int BONE_COUNT = 62;
         public static readonly int VERT_COUNT_ID = Shader.PropertyToID("g_VertCount");
         public static readonly int LAST_AVATAR_VERT_COUNT_ID = Shader.PropertyToID("_lastAvatarVertCount");
@@ -41,5 +29,18 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         public static readonly string HAIR_MATERIAL_NAME = "hair";
         public static readonly string SKIN_MATERIAL_NAME = "skin";
+
+        //TODO Avatar Material. Add this textures arrays to the material
+        public static int _AlphaTextureArr_ShaderID = Shader.PropertyToID("_AlphaTextureArr_ID");
+        public static int _MetallicGlossMapArr_ShaderID = Shader.PropertyToID("_MetallicGlossMapArr_ID");
+        public static int _BumpMapArr_ShaderID = Shader.PropertyToID("_BumpMapArr_ID");
+        public static int _EmissionMapArr_ShaderID = Shader.PropertyToID("_EmissionMapArr_ID");
+
+        //Material properties
+        public static string[] keywordsToCheck = { "_NORMALMAP", "_ALPHATEST_ON", "_EMISSION", "_SURFACE_TYPE_TRANSPARENT" };
+        public static int _BaseColour_ShaderID = Shader.PropertyToID("_BaseColor");
+
+        //Compute shader properties
+        public static string SKINNING_KERNEL_NAME = "main";
     }
 }

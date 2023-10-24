@@ -36,6 +36,5 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.Avatar
             material.SetTexture(textureID, slot.TextureArray);
             return slot;
         }
-
     }
 }

@@ -48,15 +48,15 @@ namespace Global.Dynamic
         /// <summary>
         ///     it is an async process so it should be executed before ECS kicks in
         /// </summary>
-        public async UniTask SetRealm(GlobalWorld globalWorld, URLDomain realm, CancellationToken ct)
+        public async UniTask SetRealmAsync(GlobalWorld globalWorld, URLDomain realm, CancellationToken ct)
         {
             World world = globalWorld.EcsWorld;
 
             // Show loading screen
 
-            await UnloadCurrentRealm(globalWorld);
+            await UnloadCurrentRealmAsync(globalWorld);
 
-            async UniTask<StreamableLoadingResult<IpfsTypes.ServerAbout>> CreateServerAboutRequest(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
+            async UniTask<StreamableLoadingResult<IpfsTypes.ServerAbout>> CreateServerAboutRequestAsync(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
             {
                 string text;
 
@@ -70,7 +70,7 @@ namespace Global.Dynamic
             }
 
             var intent = new SubIntention(new CommonLoadingArguments(realm.Append(new URLPath("/about"))));
-            IpfsTypes.ServerAbout result = (await intent.RepeatLoop(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateServerAboutRequest, ReportCategory.REALM, ct)).UnwrapAndRethrow();
+            IpfsTypes.ServerAbout result = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateServerAboutRequestAsync, ReportCategory.REALM, ct)).UnwrapAndRethrow();
 
             realmData.Reconfigure(new IpfsRealm(realm, result));
 
@@ -103,7 +103,7 @@ namespace Global.Dynamic
             return false;
         }
 
-        public async UniTask UnloadCurrentRealm(GlobalWorld globalWorld)
+        public async UniTask UnloadCurrentRealmAsync(GlobalWorld globalWorld)
         {
             World world = globalWorld.EcsWorld;
 
@@ -126,7 +126,7 @@ namespace Global.Dynamic
             GC.Collect();
         }
 
-        public async UniTask DisposeGlobalWorld(GlobalWorld globalWorld)
+        public async UniTask DisposeGlobalWorldAsync(GlobalWorld globalWorld)
         {
             World world = globalWorld.EcsWorld;
             FindLoadedScenes(world);

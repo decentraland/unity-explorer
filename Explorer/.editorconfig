@@ -24,7 +24,6 @@ trim_trailing_whitespace = true
 max_line_length = 3000
 
 
-
 ###############################
 # .NET/C# Settings
 # https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/style-rules/
@@ -289,8 +288,7 @@ dotnet_diagnostic.IDE0110.severity = warning # Remove unnecessary discard
 # https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/style-rules/miscellaneous-rules
 
 dotnet_diagnostic.IDE0076.severity = warning # Remove invalid global 'SuppressMessageAttribute'
-dotnet_diagnostic.IDE0077.severity =  warning # Avoid legacy format target in global 'SuppressMessageAttribute'
-
+dotnet_diagnostic.IDE0077.severity = warning # Avoid legacy format target in global 'SuppressMessageAttribute'
 
 
 ###############################

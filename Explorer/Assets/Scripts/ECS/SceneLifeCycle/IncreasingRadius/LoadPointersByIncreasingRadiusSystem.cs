@@ -13,7 +13,6 @@ using Ipfs;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
-using UnityEngine;
 using Utility;
 
 namespace ECS.SceneLifeCycle.IncreasingRadius
