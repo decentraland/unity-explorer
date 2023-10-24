@@ -5,7 +5,7 @@ using ECS.Groups;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using Global;
 
-namespace ECS.LifeCycle.Systems
+namespace ECS.StreamableLoading.Common.Systems
 {
     [UpdateInGroup(typeof(CleanUpGroup))]
     public partial class ReleaseMemorySystem : BaseUnityLoopSystem
