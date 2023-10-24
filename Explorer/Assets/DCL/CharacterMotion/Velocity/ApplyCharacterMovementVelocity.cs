@@ -52,7 +52,17 @@ namespace DCL.CharacterMotion
 
             Vector3 targetForward = (cameraForward * rigidTransform.MoveVelocity.ZVelocity) + (cameraRight * rigidTransform.MoveVelocity.XVelocity);
             targetForward = Vector3.ClampMagnitude(targetForward, speedLimit);
-            rigidTransform.MoveVelocity.Velocity = targetForward;
+
+            if (rigidTransform.IsGrounded)
+            {
+                // Grounded velocity change is instant
+                rigidTransform.MoveVelocity.Velocity = targetForward;
+            }
+            else
+            {
+                // Air velocity change is updated slowly in order for drag to work, in the real world the velocity should not increase every frame because we cant "move" in the air, but we do here
+                rigidTransform.MoveVelocity.Velocity = Vector3.MoveTowards(rigidTransform.MoveVelocity.Velocity, targetForward, currentAcceleration * dt);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

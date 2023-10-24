@@ -1,4 +1,4 @@
-namespace DCL.Input.Component
+namespace DCL.Time.Components
 {
     public struct PhysicsTickComponent
     {

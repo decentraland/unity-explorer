@@ -6,7 +6,7 @@ using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.Input;
-using DCL.Input.Systems;
+using DCL.Time.Systems;
 using ECS.Abstract;
 
 namespace DCL.CharacterMotion.Systems
@@ -15,13 +15,13 @@ namespace DCL.CharacterMotion.Systems
     ///     Entry point to calculate everything that affects character's velocity
     /// </summary>
     [UpdateInGroup(typeof(PhysicsSystemGroup))]
-    [UpdateAfter(typeof(UpdateInputPhysicsTickSystem))]
+    [UpdateAfter(typeof(UpdatePhysicsTickSystem))]
     public partial class CalculateCharacterVelocitySystem : BaseUnityLoopSystem
     {
         private SingleInstanceEntity camera;
         private SingleInstanceEntity fixedTick;
 
-        internal CalculateCharacterVelocitySystem(World world) : base(world) { }
+        public CalculateCharacterVelocitySystem(World world) : base(world) { }
 
         public override void Initialize()
         {

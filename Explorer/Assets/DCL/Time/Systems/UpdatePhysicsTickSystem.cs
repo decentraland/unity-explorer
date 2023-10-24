@@ -2,15 +2,15 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.Input.Component;
+using DCL.Time.Components;
 using ECS.Abstract;
 
-namespace DCL.Input.Systems
+namespace DCL.Time.Systems
 {
     [UpdateInGroup(typeof(PhysicsSystemGroup))]
-    public partial class UpdateInputPhysicsTickSystem : BaseUnityLoopSystem
+    public partial class UpdatePhysicsTickSystem : BaseUnityLoopSystem
     {
-        public UpdateInputPhysicsTickSystem(World world) : base(world)
+        public UpdatePhysicsTickSystem(World world) : base(world)
         {
             World.Create<PhysicsTickComponent>();
         }

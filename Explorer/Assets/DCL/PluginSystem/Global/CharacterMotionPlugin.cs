@@ -5,6 +5,7 @@ using DCL.Character;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
+using DCL.Time.Systems;
 using System.Threading;
 
 namespace DCL.PluginSystem.Global
@@ -43,6 +44,10 @@ namespace DCL.PluginSystem.Global
                 characterObject.Controller,
                 new CharacterAnimationComponent(new CharacterAnimationComponent.AnimationTriggers()),
                 new CharacterPlatformComponent());
+
+            // TODO: Move these elsewhere? They should be global-er
+            UpdatePhysicsTickSystem.InjectToWorld(ref builder);
+            UpdateTimeSystem.InjectToWorld(ref builder);
 
             InterpolateCharacterSystem.InjectToWorld(ref builder);
             RotateCharacterSystem.InjectToWorld(ref builder);

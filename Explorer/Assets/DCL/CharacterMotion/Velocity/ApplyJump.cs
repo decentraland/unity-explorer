@@ -10,23 +10,36 @@ namespace DCL.CharacterMotion
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Execute(
-            ICharacterControllerSettings characterControllerSettings,
+            ICharacterControllerSettings settings,
             ref CharacterRigidTransform characterPhysics,
             in JumpInputComponent jump,
             in MovementInputComponent inputComponent,
             int physicsTick)
         {
-            bool wantsToJump = jump.Trigger.IsAvailable(physicsTick);
+            // (Coyote Timer: Pressing Jump before touching ground)
+            // We calculate the bonus frames that we have after we decide to jump, settings.JumpGraceTime is in seconds, we convert it into physics ticks
+            int bonusFrames = Mathf.RoundToInt(settings.JumpGraceTime / UnityEngine.Time.fixedDeltaTime);
 
-            if (characterPhysics.IsGrounded && wantsToJump)
+            // no bonus frames if we are already going up
+            if (characterPhysics.NonInterpolatedVelocity.y > 0)
+                bonusFrames = 0;
+
+            bool wantsToJump = jump.Trigger.IsAvailable(physicsTick, bonusFrames);
+
+            bool canJump = characterPhysics.IsGrounded || physicsTick - characterPhysics.LastGroundedFrame < bonusFrames;
+
+            // (Coyote Timer: Pressing Jump late after starting to fall, to give the player a chance to jump after not being grounded)
+
+            if (canJump && wantsToJump)
             {
-                float jumpHeight = GetJumpHeight(characterPhysics.MoveVelocity.Velocity, characterControllerSettings, inputComponent);
-                float gravity = characterControllerSettings.Gravity * characterControllerSettings.JumpGravityFactor;
+                float jumpHeight = GetJumpHeight(characterPhysics.MoveVelocity.Velocity, settings, inputComponent);
+                float gravity = settings.Gravity * settings.JumpGravityFactor;
 
                 // Override velocity in a jump direction
                 characterPhysics.NonInterpolatedVelocity.y = Mathf.Sqrt(-2 * jumpHeight * gravity);
 
                 characterPhysics.IsGrounded = false;
+                characterPhysics.LastJumpFrame = physicsTick;
             }
         }
 

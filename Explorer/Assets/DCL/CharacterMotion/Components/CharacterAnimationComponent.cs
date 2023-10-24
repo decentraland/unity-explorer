@@ -45,7 +45,7 @@ namespace DCL.CharacterMotion.Components
         }
 
         public AnimationStates States;
-        public AnimationTriggers Triggers;
+        public readonly AnimationTriggers Triggers;
 
         public CharacterAnimationComponent(AnimationTriggers triggers)
         {

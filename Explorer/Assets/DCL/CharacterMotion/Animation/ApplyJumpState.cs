@@ -5,13 +5,17 @@ using System.Runtime.CompilerServices;
 
 namespace DCL.CharacterMotion.Animation
 {
-    public class ApplyJumpState
+    public static class ApplyJumpState
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(ref CharacterAnimationComponent animationComponent, in ICharacterControllerSettings settings, in CharacterRigidTransform rigidTransform, in AvatarBase avatarBase)
+        public static void Execute(
+            ref CharacterAnimationComponent animationComponent,
+            in ICharacterControllerSettings settings,
+            in CharacterRigidTransform rigidTransform,
+            in AvatarBase avatarBase)
         {
             animationComponent.States.IsGrounded = rigidTransform.IsGrounded;
-            animationComponent.States.IsFalling = !rigidTransform.IsGrounded && rigidTransform.NonInterpolatedVelocity.y < 0;
+            animationComponent.States.IsFalling = !rigidTransform.IsGrounded && rigidTransform.NonInterpolatedVelocity.y < 5f;
             animationComponent.States.IsLongJump = rigidTransform.NonInterpolatedVelocity.y > settings.JogJumpHeight * 3 * settings.JumpGravityFactor;
 
             bool jumpState = !rigidTransform.IsGrounded && (rigidTransform.NonInterpolatedVelocity.y > 5f || animationComponent.States.IsLongJump);

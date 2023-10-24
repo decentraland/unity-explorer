@@ -14,26 +14,6 @@ namespace DCL.CharacterMotion.Components
     /// </summary>
     public class CharacterRigidTransform
     {
-        public MovementVelocity MoveVelocity;
-
-        /// <summary>
-        ///     Whether the character is grounded
-        /// </summary>
-        public bool IsGrounded;
-
-        /// <summary>
-        ///     Every velocity that is applied as is
-        /// </summary>
-        public Vector3 NonInterpolatedVelocity;
-
-        public float xVelocity;
-        public float zVelocity;
-        public float xDamp;
-        public float zDamp;
-        public float currentAcceleration;
-        public float accelerationWeight;
-        public Vector3 lastPosition;
-
         public struct MovementVelocity
         {
             /// <summary>
@@ -66,5 +46,21 @@ namespace DCL.CharacterMotion.Components
             /// </summary>
             public Vector3 Velocity;
         }
+
+        public MovementVelocity MoveVelocity;
+
+        /// <summary>
+        ///     Whether the character is grounded
+        /// </summary>
+        public bool IsGrounded;
+
+        public int LastGroundedFrame;
+
+        public int LastJumpFrame;
+
+        /// <summary>
+        /// Every velocity that is applied as is
+        /// </summary>
+        public Vector3 NonInterpolatedVelocity;
     }
 }

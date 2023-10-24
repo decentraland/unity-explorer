@@ -5,7 +5,9 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.Input;
+using DCL.Input.Component;
 using DCL.Input.Systems;
+using DCL.Time.Systems;
 using ECS.Abstract;
 using NSubstitute;
 using NUnit.Framework;
@@ -32,14 +34,14 @@ namespace DCL.CharacterMotion.Tests
 
             playerEntity = world.Create(new PlayerComponent(), controllerSettings, new CharacterRigidTransform { IsGrounded = true });
 
-            updatePhysicsTickSystem = new UpdateInputPhysicsTickSystem(world);
+            updatePhysicsTickSystem = new UpdatePhysicsTickSystem(world);
             updateInputJumpSystem = new UpdateInputJumpSystem(world, dlcInput.Player.Jump);
             updateInputJumpSystem.Initialize();
 
             fixedTick = world.CachePhysicsTick();
         }
 
-        private UpdateInputPhysicsTickSystem updatePhysicsTickSystem;
+        private UpdatePhysicsTickSystem updatePhysicsTickSystem;
         private UpdateInputJumpSystem updateInputJumpSystem;
 
         private World world;
@@ -70,7 +72,7 @@ namespace DCL.CharacterMotion.Tests
             await UniTask.Yield();
 
             //This simulated another fixed update. On this call, the jump should occur
-            Assert.IsTrue(world.Get<JumpInputComponent>(playerEntity).Trigger.IsAvailable(fixedTick.GetPhysicsTickComponent(world).Tick));
+            Assert.IsTrue(world.Get<JumpInputComponent>(playerEntity).Trigger.IsAvailable(fixedTick.GetPhysicsTickComponent(world).Tick, 0));
         }
     }
 }

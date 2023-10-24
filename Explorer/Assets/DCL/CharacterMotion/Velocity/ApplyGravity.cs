@@ -34,6 +34,6 @@ namespace DCL.CharacterMotion
         }
 
         private static float PhysicsToDeltaTime(int ticks) =>
-            Time.fixedDeltaTime * ticks;
+            UnityEngine.Time.fixedDeltaTime * ticks;
     }
 }

@@ -23,7 +23,6 @@ namespace DCL.PluginSystem.Global
             builder.World.Create(new InputMapComponent((InputMapComponent.Kind)(~0)));
 
             ApplyInputMapsSystem.InjectToWorld(ref builder, dclInput);
-            UpdateInputPhysicsTickSystem.InjectToWorld(ref builder);
             UpdateInputJumpSystem.InjectToWorld(ref builder, dclInput.Player.Jump);
             UpdateInputMovementSystem.InjectToWorld(ref builder, dclInput);
             UpdateCameraInputSystem.InjectToWorld(ref builder, dclInput);
