@@ -16,8 +16,10 @@ namespace Diagnostics.ReportsHandling.Sentry
         /// Learn more at https://docs.sentry.io/platforms/unity/configuration/options/#programmatic-configuration
         public override void Configure(SentryUnityOptions options, SentryCliOptions cliOptions)
         {
-            ApplyFromJsonFile(options, cliOptions);
+            // The release version is set by CI
+            options.Release = Application.version ?? options.Release;
             ApplyFromEnvironmentVars(options, cliOptions);
+            ApplyFromJsonFile(options, cliOptions);
         }
 
         private static void ApplyFromEnvironmentVars(SentryUnityOptions options, SentryCliOptions cliOptions)
