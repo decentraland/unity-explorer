@@ -15,5 +15,7 @@ namespace MVC
         /// <typeparam name="TView"></typeparam>
         /// <typeparam name="TInputData"></typeparam>
         UniTask Show<TView, TInputData>(ShowCommand<TView, TInputData> command) where TView: MonoBehaviour, IView;
+
+        void RegisterController<TView, TInputData>(IController<TView, TInputData> controller) where TView: MonoBehaviour, IView;
     }
 }

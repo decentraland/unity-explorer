@@ -15,7 +15,7 @@ namespace MVC
         /// </summary>
         public void Registration()
         {
-            var mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(),Resources.Load<PopupCloserView>("PopupCloser"));
+            var mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(),null,null);
 
             // prefabs are taken from Addressables in Plugin
             ExampleView prefab = new GameObject("bla-bla").AddComponent<ExampleView>();

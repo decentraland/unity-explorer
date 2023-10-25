@@ -31,6 +31,7 @@ namespace Global.Dynamic
         [SerializeField] private List<int2> StaticLoadPositions;
         [SerializeField] private RealmLauncher realmLauncher;
         [SerializeField] private string[] realms;
+        [SerializeField] private DynamicSettings dynamicSettings;
 
         private StaticContainer staticContainer;
         private DynamicWorldContainer dynamicWorldContainer;
@@ -86,7 +87,8 @@ namespace Global.Dynamic
                     in staticContainer,
                     uiToolkitRoot,
                     StaticLoadPositions,
-                    SceneLoadRadius);
+                    SceneLoadRadius,
+                    dynamicSettings);
 
                 // Initialize global plugins
                 var anyFailure = false;

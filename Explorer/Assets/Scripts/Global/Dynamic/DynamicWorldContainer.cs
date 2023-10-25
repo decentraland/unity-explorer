@@ -3,9 +3,11 @@ using DCL.AvatarRendering.Wearables;
 using DCL.PluginSystem.Global;
 using ECS;
 using ECS.Prioritization.Components;
+using MVC;
 using SceneRunner.EmptyScene;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Unity.Mathematics;
 using UnityEngine.UIElements;
 
@@ -26,12 +28,15 @@ namespace Global.Dynamic
         public static DynamicWorldContainer Create(
             in StaticContainer staticContainer,
             UIDocument rootUIDocument,
-            IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius)
+            IReadOnlyList<int2> staticLoadPositions,
+            int sceneLoadRadius,
+            in DynamicSettings dynamicSettings)
         {
             var realmSamplingData = new RealmSamplingData();
             var dclInput = new DCLInput();
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
             var realmData = new RealmData();
+            MVCManager mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), staticContainer.AssetsProvisioner, dynamicSettings.PopupCloserView);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -42,6 +47,7 @@ namespace Global.Dynamic
                 new ProfilingPlugin(staticContainer.AssetsProvisioner, staticContainer.ProfilingProvider),
                 new WearablePlugin(staticContainer.AssetsProvisioner, realmData, ASSET_BUNDLES_URL),
                 new AvatarPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, realmData),
+                new ExplorePanelPlugin(staticContainer.AssetsProvisioner, mvcManager)
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

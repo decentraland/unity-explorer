@@ -1,8 +1,10 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace MVC
 {
@@ -11,15 +13,22 @@ namespace MVC
         private readonly Dictionary<Type, IController> controllers;
         private readonly IWindowsStackManager windowsStackManager;
         private readonly CancellationTokenSource destructionCancellationTokenSource;
-        private readonly PopupCloserView popupCloser;
+        private PopupCloserView popupCloser;
+        private readonly IAssetsProvisioner assetsProvisioner;
 
-        public MVCManager(IWindowsStackManager windowsStackManager, CancellationTokenSource destructionCancellationTokenSource, PopupCloserView popupCloser)
+        public MVCManager(IWindowsStackManager windowsStackManager, CancellationTokenSource destructionCancellationTokenSource, IAssetsProvisioner assetsProvisioner, AssetReferenceGameObject popupCloserView)
         {
             this.windowsStackManager = windowsStackManager;
             this.destructionCancellationTokenSource = destructionCancellationTokenSource;
-            this.popupCloser = popupCloser;
+            this.assetsProvisioner = assetsProvisioner;
 
             controllers = new Dictionary<Type, IController>(200);
+            Initialize(popupCloserView).Forget();
+        }
+
+        private async UniTaskVoid Initialize(AssetReferenceGameObject popupCloserView)
+        {
+            popupCloser = UnityEngine.Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(popupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
         }
 
         /// <summary>

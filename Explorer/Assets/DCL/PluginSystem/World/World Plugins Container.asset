@@ -24,12 +24,10 @@ MonoBehaviour:
         <RaycastBucketThreshold>k__BackingField: 3
         <RaycastFrameBudgetMs>k__BackingField: 3
         <PlayerOriginRaycastMaxDistance>k__BackingField: 200
+        <GlobalInputPropagationBucketThreshold>k__BackingField: 3
     - rid: 6784895267130048515
       type: {class: MaterialsPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
-        <LoadingAttemptsCount>k__BackingField: 6
-        <PoolInitialCapacity>k__BackingField: 256
-        <PoolMaxSize>k__BackingField: 2048
         basicMaterial:
           m_AssetGUID: 60d3d51407bdce5449781acd4ee86781
           m_SubObjectName: 
@@ -40,3 +38,6 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <LoadingAttemptsCount>k__BackingField: 6
+        <PoolInitialCapacity>k__BackingField: 256
+        <PoolMaxSize>k__BackingField: 2048
