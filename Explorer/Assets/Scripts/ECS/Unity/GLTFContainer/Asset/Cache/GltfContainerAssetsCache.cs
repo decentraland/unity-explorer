@@ -98,6 +98,16 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             cache.Clear();
         }
 
+        // public (Type, int) UnloadUnusedCache(int budget)
+        // {
+        //     // unloadCacheFilter = data => data.LastUsedTime > CacheCleaner.CACHE_EXPIRATION_TIME || IsNotReusedInHoldTime(data);
+        //     //
+        //     // return UnloadCache(budget);
+        //     //
+        //     // bool IsNotReusedInHoldTime(AssetBundleCacheData cacheData) =>
+        //     //     cacheData.ReusedCount == 0 && cacheData.LastUsedTime > CacheCleaner.CACHE_MINIMAL_HOLD_TIME;
+        // }
+
         bool IEqualityComparer<string>.Equals(string x, string y) =>
             string.Equals(x, y, StringComparison.OrdinalIgnoreCase);
 

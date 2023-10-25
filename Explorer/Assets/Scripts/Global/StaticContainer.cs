@@ -127,8 +127,7 @@ namespace Global
                 new MemoryBudgetProvider(MEMORY_ESTIMATION_MAP, profilingProvider)
             );
 
-            var cacheCleaner = new CacheCleaner();
-            container.CacheCleaner = cacheCleaner;
+            container.CacheCleaner = new CacheCleaner(MEMORY_ESTIMATION_MAP);
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
@@ -136,7 +135,7 @@ namespace Global
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
 
-            var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, sharedDependencies.MemoryBudgetProvider, cacheCleaner);
+            var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, sharedDependencies.MemoryBudgetProvider, container.CacheCleaner);
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
@@ -147,7 +146,7 @@ namespace Global
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 assetBundlePlugin,
-                new GltfContainerPlugin(sharedDependencies, sharedDependencies.MemoryBudgetProvider, cacheCleaner),
+                new GltfContainerPlugin(sharedDependencies, sharedDependencies.MemoryBudgetProvider, container.CacheCleaner),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
             };
 

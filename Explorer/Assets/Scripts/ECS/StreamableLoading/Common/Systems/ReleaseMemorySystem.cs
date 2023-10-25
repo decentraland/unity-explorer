@@ -4,7 +4,6 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using Global;
-using UnityEngine;
 
 namespace ECS.StreamableLoading.Common.Systems
 {
@@ -22,15 +21,15 @@ namespace ECS.StreamableLoading.Common.Systems
 
         protected override void Update(float t)
         {
-            Debug.Log($"VV:: {memoryBudgetProvider.TrySpendBudget()} {memoryBudgetProvider.RequestedMemoryCounter}");
-
             switch (memoryBudgetProvider.GetMemoryUsageStatus())
             {
                 case MemoryUsageStatus.Warning:
-                    cacheCleaner.UnloadUnusedCache(memoryBudgetProvider.RequestedMemoryCounter);
+                    cacheCleaner.UnloadUnusedCache(memoryBudgetProvider.MemoryOverusageInMB());
                     break;
                 case MemoryUsageStatus.Critical:
-                    cacheCleaner.UnloadAllCache();
+                    cacheCleaner.UnloadUnusedCache(memoryBudgetProvider.MemoryOverusageInMB());
+
+                    // cacheCleaner.UnloadAllCache();
                     break;
             }
 

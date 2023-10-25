@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
+using Global;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,9 +14,6 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleCache : IStreamableCache<AssetBundleData, GetAssetBundleIntention>
     {
-        private const float CACHE_EXPIRATION_TIME = 15 * 60; // minutes in seconds
-        private const float CACHE_MINIMAL_HOLD_TIME = 5f * 60; // minutes in seconds
-
         private readonly Dictionary<GetAssetBundleIntention, AssetBundleCacheData> cache;
         private readonly HashSet<GetAssetBundleIntention> cacheKeysToUnload;
 
@@ -74,33 +72,60 @@ namespace ECS.StreamableLoading.AssetBundles
         public void Add(in GetAssetBundleIntention key, AssetBundleData asset)
         {
             cache.Add(key, new AssetBundleCacheData(asset));
+
+            GameStats.BulletCount.Value = cache.Count;
+            GameStats.EnemyCount.Sample(cache.Count);
         }
 
         public void Dereference(in GetAssetBundleIntention key, AssetBundleData asset) { }
 
-        public int UnloadAllCache()
+        public int UnloadAllCache(int budget)
         {
             unloadCacheFilter = _ => true;
 
-            return UnloadCache().Item2;
+            return UnloadCache(budget).Item2;
         }
 
-        public (Type, int) UnloadUnusedCache()
-        {
-            unloadCacheFilter = data => data.LastUsedTime > CACHE_EXPIRATION_TIME || IsNotReusedInHoldTime(data);
-
-            return UnloadCache();
-
-            bool IsNotReusedInHoldTime(AssetBundleCacheData cacheData) =>
-                cacheData.ReusedCount == 0 && cacheData.LastUsedTime > CACHE_MINIMAL_HOLD_TIME;
-        }
-
-        private (Type, int) UnloadCache()
+        public (Type, int) UnloadUnusedCache(int budget)
         {
             cacheKeysToUnload.Clear();
 
             foreach (KeyValuePair<GetAssetBundleIntention, AssetBundleCacheData> pair in cache)
             {
+                if (cacheKeysToUnload.Count >= budget) break;
+
+                if (Time.unscaledTime - pair.Value.LastUsedTime > CacheCleaner.CACHE_EXPIRATION_TIME ||
+                    (pair.Value.ReusedCount == 0 && Time.unscaledTime - pair.Value.LastUsedTime > CacheCleaner.CACHE_MINIMAL_HOLD_TIME))
+                {
+                    cacheKeysToUnload.Add(pair.Key);
+                    pair.Value.Data.Dispose();
+                }
+            }
+
+            foreach (GetAssetBundleIntention key in cacheKeysToUnload)
+                cache.Remove(key);
+
+            GameStats.BulletCount.Value = cache.Count;
+            GameStats.EnemyCount.Sample(cache.Count);
+
+            return (typeof(AssetBundleData), cacheKeysToUnload.Count);
+
+            // unloadCacheFilter = data => Time.unscaledTime - data.LastUsedTime > CacheCleaner.CACHE_EXPIRATION_TIME || IsNotReusedInHoldTime(data);
+            //
+            // return UnloadCache(budget);
+
+            bool IsNotReusedInHoldTime(AssetBundleCacheData cacheData) =>
+                cacheData.ReusedCount == 0 && Time.unscaledTime - cacheData.LastUsedTime > CacheCleaner.CACHE_MINIMAL_HOLD_TIME;
+        }
+
+        private (Type, int) UnloadCache(int budget)
+        {
+            cacheKeysToUnload.Clear();
+
+            foreach (KeyValuePair<GetAssetBundleIntention, AssetBundleCacheData> pair in cache)
+            {
+                if (cacheKeysToUnload.Count >= budget) break;
+
                 if (unloadCacheFilter.Invoke(pair.Value))
                 {
                     cacheKeysToUnload.Add(pair.Key);
@@ -110,6 +135,9 @@ namespace ECS.StreamableLoading.AssetBundles
 
             foreach (GetAssetBundleIntention key in cacheKeysToUnload)
                 cache.Remove(key);
+
+            GameStats.BulletCount.Value = cache.Count;
+            GameStats.EnemyCount.Sample(cache.Count);
 
             return (typeof(AssetBundleData), cacheKeysToUnload.Count);
         }
