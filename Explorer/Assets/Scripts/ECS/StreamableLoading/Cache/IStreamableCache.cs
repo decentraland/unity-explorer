@@ -24,7 +24,5 @@ namespace ECS.StreamableLoading.Cache
         ///     It is needed for cache with limited capacity based on LRU, reference counting
         /// </summary>
         void Dereference(in TLoadingIntention key, TAsset asset);
-
-        void UnloadCache();
     }
 }

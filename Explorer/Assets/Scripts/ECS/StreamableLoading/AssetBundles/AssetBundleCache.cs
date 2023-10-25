@@ -13,8 +13,13 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleCache : IStreamableCache<AssetBundleData, GetAssetBundleIntention>
     {
+        private const float CACHE_EXPIRATION_TIME = 15 * 60; // minutes in seconds
+        private const float CACHE_MINIMAL_HOLD_TIME = 5f * 60; // minutes in seconds
+
         private readonly Dictionary<GetAssetBundleIntention, AssetBundleCacheData> cache;
         private readonly HashSet<GetAssetBundleIntention> cacheKeysToUnload;
+
+        private Func<AssetBundleCacheData, bool> unloadCacheFilter;
 
         public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>> OngoingRequests { get; }
         public IDictionary<string, StreamableLoadingResult<AssetBundleData>> IrrecoverableFailures { get; }
@@ -57,7 +62,7 @@ namespace ECS.StreamableLoading.AssetBundles
             if (cache.TryGetValue(key, out AssetBundleCacheData cacheData))
             {
                 cacheData.ReusedCount++;
-                cacheData.LastFrameUsed = Time.frameCount;
+                cacheData.LastUsedTime = Time.unscaledTime;
 
                 asset = cacheData.Data;
                 return true;
@@ -73,18 +78,40 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public void Dereference(in GetAssetBundleIntention key, AssetBundleData asset) { }
 
-        public void UnloadCache()
+        public int UnloadAllCache()
+        {
+            unloadCacheFilter = _ => true;
+
+            return UnloadCache().Item2;
+        }
+
+        public (Type, int) UnloadUnusedCache()
+        {
+            unloadCacheFilter = data => data.LastUsedTime > CACHE_EXPIRATION_TIME || IsNotReusedInHoldTime(data);
+
+            return UnloadCache();
+
+            bool IsNotReusedInHoldTime(AssetBundleCacheData cacheData) =>
+                cacheData.ReusedCount == 0 && cacheData.LastUsedTime > CACHE_MINIMAL_HOLD_TIME;
+        }
+
+        private (Type, int) UnloadCache()
         {
             cacheKeysToUnload.Clear();
 
             foreach (KeyValuePair<GetAssetBundleIntention, AssetBundleCacheData> pair in cache)
             {
-                cacheKeysToUnload.Add(pair.Key);
-                pair.Value.Data.Dispose();
+                if (unloadCacheFilter.Invoke(pair.Value))
+                {
+                    cacheKeysToUnload.Add(pair.Key);
+                    pair.Value.Data.Dispose();
+                }
             }
 
             foreach (GetAssetBundleIntention key in cacheKeysToUnload)
                 cache.Remove(key);
+
+            return (typeof(AssetBundleData), cacheKeysToUnload.Count);
         }
 
         private class AssetBundleCacheData
@@ -92,12 +119,12 @@ namespace ECS.StreamableLoading.AssetBundles
             public readonly AssetBundleData Data;
 
             public int ReusedCount;
-            public int LastFrameUsed;
+            public float LastUsedTime;
 
             public AssetBundleCacheData(AssetBundleData assetData)
             {
                 Data = assetData;
-                LastFrameUsed = Time.frameCount;
+                LastUsedTime = Time.unscaledTime;
             }
         }
     }

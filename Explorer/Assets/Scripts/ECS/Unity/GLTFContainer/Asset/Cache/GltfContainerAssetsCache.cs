@@ -85,7 +85,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             asset.Root.transform.SetParent(parentContainer);
         }
 
-        public void UnloadCache()
+        public void UnloadAllCache()
         {
             foreach (List<GltfContainerAsset> assetsList in cache.Values)
             {

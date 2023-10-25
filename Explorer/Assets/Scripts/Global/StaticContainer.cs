@@ -43,6 +43,7 @@ namespace Global
             [typeof(ISceneFacade)] = 1,
             [typeof(SceneAssetBundleManifest)] = 1,
         };
+
         private ProvidedInstance<CharacterObject> characterObject;
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;

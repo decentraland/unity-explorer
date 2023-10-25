@@ -1,5 +1,6 @@
 ﻿using ECS.StreamableLoading.AssetBundles;
 using ECS.Unity.GLTFContainer.Asset.Cache;
+using System;
 
 namespace Global
 {
@@ -8,20 +9,22 @@ namespace Global
         private AssetBundleCache assetBundleCache;
         private GltfContainerAssetsCache gltfContainerAssetsCache;
 
-        public void UnloadCache()
+        public void UnloadUnusedCache(int requestedMemoryCounter)
         {
-            assetBundleCache.UnloadCache();
-            gltfContainerAssetsCache.UnloadCache();
+            (Type, int) unloaded = assetBundleCache.UnloadUnusedCache();
         }
 
-        public void Register(AssetBundleCache assetBundleCache)
+        public void UnloadAllCache()
         {
+            assetBundleCache.UnloadAllCache();
+
+            // gltfContainerAssetsCache.UnloadAllCache();
+        }
+
+        public void Register(AssetBundleCache assetBundleCache) =>
             this.assetBundleCache = assetBundleCache;
-        }
 
-        public void Register(GltfContainerAssetsCache gltfContainerAssetsCache)
-        {
+        public void Register(GltfContainerAssetsCache gltfContainerAssetsCache) =>
             this.gltfContainerAssetsCache = gltfContainerAssetsCache;
-        }
     }
 }

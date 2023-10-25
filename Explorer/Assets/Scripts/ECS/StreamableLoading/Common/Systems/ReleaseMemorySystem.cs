@@ -14,7 +14,7 @@ namespace ECS.StreamableLoading.Common.Systems
         private readonly MemoryBudgetProvider memoryBudgetProvider;
         private readonly CacheCleaner cacheCleaner;
 
-        public ReleaseMemorySystem(World world, CacheCleaner cacheCleaner, MemoryBudgetProvider memoryBudgetProvider) : base(world)
+        private ReleaseMemorySystem(World world, CacheCleaner cacheCleaner, MemoryBudgetProvider memoryBudgetProvider) : base(world)
         {
             this.cacheCleaner = cacheCleaner;
             this.memoryBudgetProvider = memoryBudgetProvider;
@@ -24,11 +24,15 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             Debug.Log($"VV:: {memoryBudgetProvider.TrySpendBudget()} {memoryBudgetProvider.RequestedMemoryCounter}");
 
-            // if (!memoryBudgetProvider.TrySpendBudget())                 cacheCleaner.UnloadCache();
-
-            // --- Unload cache
-            // 1. Unload long time not used cache
-            // 2. Unload less used caches
+            switch (memoryBudgetProvider.GetMemoryUsageStatus())
+            {
+                case MemoryUsageStatus.Warning:
+                    cacheCleaner.UnloadUnusedCache(memoryBudgetProvider.RequestedMemoryCounter);
+                    break;
+                case MemoryUsageStatus.Critical:
+                    cacheCleaner.UnloadAllCache();
+                    break;
+            }
 
             // --- Unload scenes
             // 1. Far and Behind
