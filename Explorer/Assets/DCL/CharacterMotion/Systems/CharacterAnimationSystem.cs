@@ -27,11 +27,12 @@ namespace DCL.CharacterMotion.Systems
             in AvatarBase avatarBase,
             in ICharacterControllerSettings settings,
             in CharacterRigidTransform rigidTransform,
-            in MovementInputComponent movementInput
+            in MovementInputComponent movementInput,
+            in StunComponent stunComponent
         )
         {
             ApplyMovementBlend.Execute(dt, ref animationComponent, in settings, in rigidTransform, in movementInput, in avatarBase);
-            ApplyJumpState.Execute(ref animationComponent, in settings, in rigidTransform, in avatarBase);
+            ApplyJumpState.Execute(ref animationComponent, in settings, in rigidTransform, in avatarBase, in stunComponent);
         }
     }
 }

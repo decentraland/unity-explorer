@@ -42,8 +42,9 @@ namespace DCL.PluginSystem.Global
                 new CharacterRigidTransform(),
                 (ICharacterControllerSettings)settings.Value,
                 characterObject.Controller,
-                new CharacterAnimationComponent(new CharacterAnimationComponent.AnimationTriggers()),
-                new CharacterPlatformComponent());
+                new CharacterAnimationComponent(),
+                new CharacterPlatformComponent(),
+                new StunComponent());
 
             // TODO: Move these elsewhere? They should be global-er
             UpdatePhysicsTickSystem.InjectToWorld(ref builder);
@@ -54,6 +55,7 @@ namespace DCL.PluginSystem.Global
             CalculateCharacterVelocitySystem.InjectToWorld(ref builder);
             CharacterAnimationSystem.InjectToWorld(ref builder);
             CharacterPlatformSystem.InjectToWorld(ref builder);
+            StunCharacterSystem.InjectToWorld(ref builder);
         }
     }
 }

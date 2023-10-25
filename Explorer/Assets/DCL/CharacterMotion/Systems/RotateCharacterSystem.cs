@@ -38,10 +38,16 @@ namespace DCL.CharacterMotion.Systems
             ref ICharacterControllerSettings characterControllerSettings,
             ref CharacterRigidTransform rigidTransform,
             ref TransformComponent transform,
-            ref CharacterPlatformComponent platformComponent)
+            ref CharacterPlatformComponent platformComponent,
+            in StunComponent stunComponent)
         {
+            Vector3 moveVelocity = rigidTransform.MoveVelocity.Velocity;
+
+            if (stunComponent.IsStunned)
+                moveVelocity = Vector3.zero;
+
             Transform characterTransform = transform.Transform;
-            Vector3 targetForward = rigidTransform.MoveVelocity.Velocity;
+            Vector3 targetForward = moveVelocity;
             targetForward.y = 0;
 
             if (targetForward.sqrMagnitude < characterTransform.forward.sqrMagnitude)

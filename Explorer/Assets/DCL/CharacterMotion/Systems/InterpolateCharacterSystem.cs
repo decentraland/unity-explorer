@@ -43,12 +43,18 @@ namespace DCL.CharacterMotion.Systems
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController,
             ref CharacterPlatformComponent platformComponent,
+            ref StunComponent stunComponent,
             in JumpInputComponent jump,
             in MovementInputComponent movementInput)
         {
             var slopeModifier = ApplySlopeModifier.Execute(in rigidTransform, in movementInput, in jump, characterController, dt);
 
-            Vector3 movementDelta = (rigidTransform.MoveVelocity.Velocity + rigidTransform.NonInterpolatedVelocity) * dt;
+            Vector3 movementVelocity = rigidTransform.MoveVelocity.Velocity;
+
+            if (stunComponent.IsStunned)
+                movementVelocity = Vector3.zero;
+
+            Vector3 movementDelta = (movementVelocity + rigidTransform.NonInterpolatedVelocity) * dt;
 
             CollisionFlags collisionFlags = characterController.Move(movementDelta + slopeModifier);
 

@@ -24,6 +24,10 @@ namespace DCL.CharacterMotion
             if (characterPhysics.NonInterpolatedVelocity.y > 0)
                 bonusFrames = 0;
 
+            // avoid triggering jump on the first frames
+            if (physicsTick < bonusFrames)
+                bonusFrames = 0;
+
             bool wantsToJump = jump.Trigger.IsAvailable(physicsTick, bonusFrames);
 
             bool canJump = characterPhysics.IsGrounded || physicsTick - characterPhysics.LastGroundedFrame < bonusFrames;
