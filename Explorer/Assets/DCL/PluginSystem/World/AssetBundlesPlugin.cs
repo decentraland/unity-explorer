@@ -35,12 +35,12 @@ namespace DCL.PluginSystem.World
         private readonly AssetBundleCache assetBundleCache;
         private readonly AssetBundleLoadingMutex assetBundleLoadingMutex;
 
-        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, MemoryBudgetProvider memoryBudgetProvider, CacheCleaner cacheCleaner)
+        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, IConcurrentBudgetProvider frameBudget, MemoryBudgetProvider memoryBudgetProvider, CacheCleaner cacheCleaner)
         {
             this.reportsHandlingSettings = reportsHandlingSettings;
             this.memoryBudgetProvider = memoryBudgetProvider;
             this.cacheCleaner = cacheCleaner;
-            assetBundleCache = new AssetBundleCache();
+            assetBundleCache = new AssetBundleCache(frameBudget);
             assetBundleLoadingMutex = new AssetBundleLoadingMutex();
 
             cacheCleaner.Register(assetBundleCache);

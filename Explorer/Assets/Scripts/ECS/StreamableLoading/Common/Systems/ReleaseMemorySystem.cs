@@ -28,8 +28,9 @@ namespace ECS.StreamableLoading.Common.Systems
                     break;
                 case MemoryUsageStatus.Critical:
                     cacheCleaner.UnloadUnusedCache(memoryBudgetProvider.MemoryOverusageInMB());
-
-                    // cacheCleaner.UnloadAllCache();
+                    break;
+                case MemoryUsageStatus.Full:
+                    cacheCleaner.UnloadUnusedCache(memoryBudgetProvider.MemoryOverusageInMB());
                     break;
             }
 

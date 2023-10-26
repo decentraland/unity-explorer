@@ -8,10 +8,10 @@ namespace Global
 {
     public class CacheCleaner
     {
-        public const float CACHE_EXPIRATION_TIME = 150; // * 60; // minutes in seconds
+        public const float CACHE_EXPIRATION_TIME = 2 * 60; // minutes in seconds
         public const float CACHE_MINIMAL_HOLD_TIME = 10f; // * 60; // minutes in seconds
 
-        private const int UNLOADING_BUDGET = 50;
+        private const int UNLOADING_BUDGET = 3;
 
         private readonly Dictionary<Type, int> estimationMap;
 

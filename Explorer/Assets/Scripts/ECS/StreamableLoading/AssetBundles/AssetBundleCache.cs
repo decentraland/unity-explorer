@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using Global;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,7 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleCache : IStreamableCache<AssetBundleData, GetAssetBundleIntention>
     {
+        private readonly IConcurrentBudgetProvider frameBudget;
         private readonly Dictionary<GetAssetBundleIntention, AssetBundleCacheData> cache;
         private readonly HashSet<GetAssetBundleIntention> cacheKeysToUnload;
 
@@ -24,8 +26,10 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private bool disposed { get; set; }
 
-        public AssetBundleCache()
+        public AssetBundleCache(IConcurrentBudgetProvider frameBudget)
         {
+            this.frameBudget = frameBudget;
+
             cache = new Dictionary<GetAssetBundleIntention, AssetBundleCacheData>(256, this);
             IrrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Get();
             OngoingRequests = DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>.Get();
@@ -73,8 +77,7 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             cache.Add(key, new AssetBundleCacheData(asset));
 
-            GameStats.BulletCount.Value = cache.Count;
-            GameStats.EnemyCount.Sample(cache.Count);
+            GameStats.ABCacheSizeCounter.Value = cache.Count;
         }
 
         public void Dereference(in GetAssetBundleIntention key, AssetBundleData asset) { }
@@ -88,31 +91,9 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public (Type, int) UnloadUnusedCache(int budget)
         {
-            cacheKeysToUnload.Clear();
+            unloadCacheFilter = data => Time.unscaledTime - data.LastUsedTime > CacheCleaner.CACHE_EXPIRATION_TIME || IsNotReusedInHoldTime(data);
 
-            foreach (KeyValuePair<GetAssetBundleIntention, AssetBundleCacheData> pair in cache)
-            {
-                if (cacheKeysToUnload.Count >= budget) break;
-
-                if (Time.unscaledTime - pair.Value.LastUsedTime > CacheCleaner.CACHE_EXPIRATION_TIME ||
-                    (pair.Value.ReusedCount == 0 && Time.unscaledTime - pair.Value.LastUsedTime > CacheCleaner.CACHE_MINIMAL_HOLD_TIME))
-                {
-                    cacheKeysToUnload.Add(pair.Key);
-                    pair.Value.Data.Dispose();
-                }
-            }
-
-            foreach (GetAssetBundleIntention key in cacheKeysToUnload)
-                cache.Remove(key);
-
-            GameStats.BulletCount.Value = cache.Count;
-            GameStats.EnemyCount.Sample(cache.Count);
-
-            return (typeof(AssetBundleData), cacheKeysToUnload.Count);
-
-            // unloadCacheFilter = data => Time.unscaledTime - data.LastUsedTime > CacheCleaner.CACHE_EXPIRATION_TIME || IsNotReusedInHoldTime(data);
-            //
-            // return UnloadCache(budget);
+            return UnloadCache(budget);
 
             bool IsNotReusedInHoldTime(AssetBundleCacheData cacheData) =>
                 cacheData.ReusedCount == 0 && Time.unscaledTime - cacheData.LastUsedTime > CacheCleaner.CACHE_MINIMAL_HOLD_TIME;
@@ -124,7 +105,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             foreach (KeyValuePair<GetAssetBundleIntention, AssetBundleCacheData> pair in cache)
             {
-                if (cacheKeysToUnload.Count >= budget) break;
+                if (!frameBudget.TrySpendBudget() || cacheKeysToUnload.Count >= budget) break;
 
                 if (unloadCacheFilter.Invoke(pair.Value))
                 {
@@ -136,8 +117,8 @@ namespace ECS.StreamableLoading.AssetBundles
             foreach (GetAssetBundleIntention key in cacheKeysToUnload)
                 cache.Remove(key);
 
-            GameStats.BulletCount.Value = cache.Count;
-            GameStats.EnemyCount.Sample(cache.Count);
+            GameStats.ABCacheSizeCounter.Value = cache.Count;
+            GameStats.ABCacheChangeCalls.Sample(cacheKeysToUnload.Count);
 
             return (typeof(AssetBundleData), cacheKeysToUnload.Count);
         }

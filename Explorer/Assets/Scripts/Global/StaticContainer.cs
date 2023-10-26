@@ -135,7 +135,7 @@ namespace Global
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
 
-            var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, sharedDependencies.MemoryBudgetProvider, container.CacheCleaner);
+            var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, sharedDependencies.FrameTimeBudgetProvider, sharedDependencies.MemoryBudgetProvider, container.CacheCleaner);
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {

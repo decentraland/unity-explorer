@@ -31,7 +31,9 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public void Dispose()
         {
-            AssetBundle.Unload(false);
+            if (AssetBundle != null)
+                AssetBundle.Unload(false);
+
             UnityObjectUtils.SafeDestroy(gameObject);
         }
     }
