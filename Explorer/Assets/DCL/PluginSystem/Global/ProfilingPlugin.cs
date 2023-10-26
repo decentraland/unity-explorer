@@ -1,6 +1,7 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.DebugUtilities.Builders;
 using ECS.Profiling;
 using ECS.Profiling.Systems;
 using System;
@@ -11,30 +12,21 @@ namespace DCL.PluginSystem.Global
 {
     public class ProfilingPlugin : IDCLGlobalPlugin<ProfilingPlugin.Settings>
     {
-        private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IProfilingProvider profilingProvider;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
 
-        private ProvidedInstance<ProfilingView> profilingView;
-
-        public ProfilingPlugin(IAssetsProvisioner assetsProvisioner, IProfilingProvider profilingProvider)
+        public ProfilingPlugin(IProfilingProvider profilingProvider, IDebugContainerBuilder debugContainerBuilder)
         {
-            this.assetsProvisioner = assetsProvisioner;
             this.profilingProvider = profilingProvider;
+            this.debugContainerBuilder = debugContainerBuilder;
         }
 
-        public void Dispose()
-        {
-            profilingView.Dispose();
-        }
-
-        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
-        {
-            profilingView = await assetsProvisioner.ProvideInstanceAsync(settings.profilingViewRef, ct: ct);
-        }
+        public UniTask InitializeAsync(Settings settings, CancellationToken ct) =>
+            UniTask.CompletedTask;
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ProfilingSystem.InjectToWorld(ref builder, profilingProvider, profilingView.Value);
+            ProfilingSystem.InjectToWorld(ref builder, profilingProvider, debugContainerBuilder);
         }
 
         [Serializable]
@@ -50,5 +42,7 @@ namespace DCL.PluginSystem.Global
                 public ProfilingViewRef(string guid) : base(guid) { }
             }
         }
+
+        public void Dispose() { }
     }
 }

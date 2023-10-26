@@ -1,9 +1,11 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace DCL.AvatarRendering.AvatarShape.DemoScripts.UI
 {
+    [Obsolete]
     public class AvatarInstantiatorView : MonoBehaviour
     {
         public Button addRandomAvatarButton;

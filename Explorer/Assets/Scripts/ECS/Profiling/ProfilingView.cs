@@ -1,9 +1,11 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace ECS.Profiling
 {
+    [Obsolete]
     public class ProfilingView : MonoBehaviour, IProfilerView
     {
         private readonly string frameRateFormat = "Frame Rate: {0:1} fps ({1:1} ms)";

@@ -10,6 +10,7 @@ using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
+using DCL.DebugUtilities.Builders;
 using DCL.ECSComponents;
 using ECS;
 using ECS.ComponentsPooling;
@@ -36,20 +37,23 @@ namespace DCL.PluginSystem.Global
         private readonly IConcurrentBudgetProvider frameTimeCapBudgetProvider;
         private readonly IRealmData realmData;
         private readonly TextureArrayContainer textureArrayContainer;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
 
         private readonly WearableAssetsCache wearableAssetsCache = new (3, 100);
 
-        private ProvidedInstance<AvatarInstantiatorView> avatarInstantiatorView;
         private IComponentPool<AvatarBase> avatarPoolRegistry;
 
         private IObjectPool<Material> celShadingMaterialPool;
         private IObjectPool<ComputeShader> computeShaderPool;
 
-        public AvatarPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner, IConcurrentBudgetProvider frameTimeCapBudgetProvider, IRealmData realmData)
+        public AvatarPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner,
+            IConcurrentBudgetProvider frameTimeCapBudgetProvider, IRealmData realmData,
+            IDebugContainerBuilder debugContainerBuilder)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudgetProvider = frameTimeCapBudgetProvider;
             this.realmData = realmData;
+            this.debugContainerBuilder = debugContainerBuilder;
             componentPoolsRegistry = poolsRegistry;
             textureArrayContainer = new TextureArrayContainer();
         }
@@ -81,8 +85,6 @@ namespace DCL.PluginSystem.Global
                 ComputeShader prewarmedShader = computeShaderPool.Get();
                 computeShaderPool.Release(prewarmedShader);
             }
-
-            avatarInstantiatorView = await assetsProvisioner.ProvideInstanceAsync(settings.avatarInstantiatorViewRef, ct: ct);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -103,7 +105,7 @@ namespace DCL.PluginSystem.Global
             FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy);
 
             //Debug scripts
-            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, avatarInstantiatorView.Value, realmData, AVATARS_QUERY);
+            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY);
         }
 
         [Serializable]

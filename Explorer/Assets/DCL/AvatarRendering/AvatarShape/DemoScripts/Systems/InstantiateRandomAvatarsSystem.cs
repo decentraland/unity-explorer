@@ -2,13 +2,15 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.AvatarRendering.AvatarShape.DemoScripts.UI;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
 using DCL.CharacterCamera;
+using DCL.DebugUtilities.Builders;
+using DCL.DebugUtilities.Declarations;
+using DCL.DebugUtilities.UIBindings;
 using DCL.ECSComponents;
 using Diagnostics.ReportsHandling;
 using ECS;
@@ -34,27 +36,30 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     {
         private const int MAX_AVATAR_NUMBER = 1000;
 
-        private readonly AvatarInstantiatorView view;
         private readonly IRealmData realmData;
         private readonly QueryDescription avatarsQuery;
+
+        private readonly DebugWidgetVisibilityBinding debugVisibilityBinding;
+        private readonly ElementBinding<ulong> totalAvatarsInstantiated;
 
         private SingleInstanceEntity camera;
         private SingleInstanceEntity defaultWearableState;
 
-        private int totalAvatarsInstantiated;
-
         private AvatarRandomizer[] randomizers;
         private bool randomizerInitialized;
 
-        internal InstantiateRandomAvatarsSystem(World world, AvatarInstantiatorView avatarInstantiatorView, IRealmData realmData, QueryDescription avatarsQuery) : base(world)
+        internal InstantiateRandomAvatarsSystem(World world, IDebugContainerBuilder debugBuilder, IRealmData realmData, QueryDescription avatarsQuery) : base(world)
         {
-            view = avatarInstantiatorView;
             this.realmData = realmData;
             this.avatarsQuery = avatarsQuery;
-            view.addRandomAvatarButton.onClick.AddListener(AddRandomAvatar);
-            view.destroyAllAvatarsButton.onClick.AddListener(DestroyAllAvatars);
-            view.destroyRandomAmountAvatarsButton.onClick.AddListener(DestroyRandomAmountOfAvatars);
-            view.randomizeWearablesButton.onClick.AddListener(RandomizeWearablesOfAvatars);
+
+            debugBuilder.AddWidget("Avatar Debug")
+                        .SetVisibilityBinding(debugVisibilityBinding = new DebugWidgetVisibilityBinding(false))
+                        .AddIntFieldWithConfirmation(10, "Instantiate", AddRandomAvatar)
+                        .AddControl(new DebugConstLabelDef("Total Avatars"), new DebugLongMarkerDef(totalAvatarsInstantiated = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat))
+                        .AddSingleButton("Destroy All Avatars", DestroyAllAvatars)
+                        .AddSingleButton("Destroy Random Amount of Avatars", DestroyRandomAmountOfAvatars)
+                        .AddSingleButton("Randomize Wearables of Avatars", RandomizeWearablesOfAvatars);
         }
 
         public override void Initialize()
@@ -65,7 +70,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private void SetViewActivity()
         {
-            view.gameObject.SetActive(realmData.Configured && defaultWearableState.GetDefaultWearablesState(World).ResolvedState == DefaultWearablesComponent.State.Success);
+            debugVisibilityBinding.SetVisible(realmData.Configured && defaultWearableState.GetDefaultWearablesState(World).ResolvedState == DefaultWearablesComponent.State.Success);
         }
 
         private void RandomizeWearablesOfAvatars()
@@ -92,8 +97,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     if (Random.Range(0, 3) == 0)
                     {
                         World.Add(entity, new DeleteEntityIntention());
-                        totalAvatarsInstantiated--;
-                        view.SetAvatarCount(totalAvatarsInstantiated);
+                        totalAvatarsInstantiated.Value--;
                     }
                 });
         }
@@ -102,21 +106,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             // Input events are processed before Update
             World.Add(in avatarsQuery, new DeleteEntityIntention());
-            totalAvatarsInstantiated = 0;
-            view.SetAvatarCount(totalAvatarsInstantiated);
+            totalAvatarsInstantiated.Value = 0;
         }
 
-        private void AddRandomAvatar()
+        private void AddRandomAvatar(int number)
         {
-            int avatarsToInstantiate = view.GetAvatarsToInstantiate();
-
-            if (totalAvatarsInstantiated + avatarsToInstantiate >= MAX_AVATAR_NUMBER)
-            {
-                view.ShowMaxNumberWarning(MAX_AVATAR_NUMBER);
-                return;
-            }
-
-            totalAvatarsInstantiated += avatarsToInstantiate;
+            int avatarsToInstantiate = Mathf.Clamp(number, 0, MAX_AVATAR_NUMBER - (int)totalAvatarsInstantiated.Value);
+            totalAvatarsInstantiated.Value += (uint)avatarsToInstantiate;
 
             var randomAvatarRequest = new RandomAvatarRequest
             {
@@ -219,15 +215,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
                 World.Create(avatarShape, transformComp);
             }
-
-            view.SetAvatarCount(totalAvatarsInstantiated);
-        }
-
-        public override void Dispose()
-        {
-            view.addRandomAvatarButton.onClick.RemoveAllListeners();
-            view.destroyAllAvatarsButton.onClick.RemoveAllListeners();
-            view.destroyRandomAmountAvatarsButton.onClick.RemoveAllListeners();
         }
     }
 }
