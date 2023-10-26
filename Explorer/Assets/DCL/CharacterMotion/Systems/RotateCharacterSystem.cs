@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Platforms;
 using DCL.CharacterMotion.Settings;
 using DCL.Diagnostics;
 using ECS.Abstract;
@@ -15,9 +16,10 @@ namespace DCL.CharacterMotion.Systems
     /// <summary>
     ///     Rotates character outside of physics update as it does not impact collisions or any other interactions
     /// </summary>
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.MOTION)]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(CameraGroup))]
+    [UpdateAfter(typeof(InterpolateCharacterSystem))]
     public partial class RotateCharacterSystem : BaseUnityLoopSystem
     {
         internal RotateCharacterSystem(World world) : base(world) { }
@@ -35,31 +37,28 @@ namespace DCL.CharacterMotion.Systems
         [Query]
         private void LerpRotation(
             [Data] float dt,
-            ref ICharacterControllerSettings characterControllerSettings,
+            ref ICharacterControllerSettings settings,
             ref CharacterRigidTransform rigidTransform,
             ref TransformComponent transform,
-            ref CharacterPlatformComponent platformComponent,
-            in StunComponent stunComponent)
+            ref CharacterPlatformComponent platformComponent)
         {
-            Vector3 moveVelocity = rigidTransform.MoveVelocity.Velocity;
-
-            if (stunComponent.IsStunned)
-                moveVelocity = Vector3.zero;
-
             Transform characterTransform = transform.Transform;
-            Vector3 targetForward = moveVelocity;
-            targetForward.y = 0;
+            Quaternion targetRotation = GetTargetDirection(rigidTransform.MoveVelocity.Velocity, characterTransform.forward);
+            characterTransform.rotation = Quaternion.RotateTowards(characterTransform.rotation, targetRotation, settings.RotationSpeed * dt);
 
-            if (targetForward.sqrMagnitude < characterTransform.forward.sqrMagnitude)
-                targetForward = characterTransform.forward;
+            SaveLocalRotation.Execute(ref platformComponent, characterTransform.forward);
+        }
 
-            Quaternion targetRotation = Quaternion.LookRotation(targetForward);
-            characterTransform.rotation = Quaternion.RotateTowards(characterTransform.rotation, targetRotation, characterControllerSettings.RotationSpeed * dt);
+        private static Quaternion GetTargetDirection(Vector3 moveVelocity, Vector3 currentForward)
+        {
+            Vector3 targetDirection = moveVelocity;
+            targetDirection.y = 0;
 
-            // TODO: Move this to other System?
-            if (platformComponent.CurrentPlatform != null)
-                platformComponent.LastRotation = platformComponent.CurrentPlatform.transform.InverseTransformDirection(characterTransform.forward);
+            if (targetDirection.sqrMagnitude < currentForward.sqrMagnitude)
+                targetDirection = currentForward;
 
+            var targetRotation = Quaternion.LookRotation(targetDirection);
+            return targetRotation;
         }
     }
 }

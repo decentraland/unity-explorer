@@ -46,10 +46,6 @@ namespace DCL.PluginSystem.Global
                 new CharacterPlatformComponent(),
                 new StunComponent());
 
-            // TODO: Move these elsewhere? They should be global-er
-            UpdatePhysicsTickSystem.InjectToWorld(ref builder);
-            UpdateTimeSystem.InjectToWorld(ref builder);
-
             InterpolateCharacterSystem.InjectToWorld(ref builder);
             RotateCharacterSystem.InjectToWorld(ref builder);
             CalculateCharacterVelocitySystem.InjectToWorld(ref builder);

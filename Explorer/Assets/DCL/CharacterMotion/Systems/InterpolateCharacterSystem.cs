@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Platforms;
 using DCL.CharacterMotion.Settings;
 using DCL.Diagnostics;
 using Diagnostics.ReportsHandling;
@@ -49,12 +50,9 @@ namespace DCL.CharacterMotion.Systems
         {
             var slopeModifier = ApplySlopeModifier.Execute(in rigidTransform, in movementInput, in jump, characterController, dt);
 
-            Vector3 movementVelocity = rigidTransform.MoveVelocity.Velocity;
+            ApplyVelocityStun.Execute(ref rigidTransform, in stunComponent);
 
-            if (stunComponent.IsStunned)
-                movementVelocity = Vector3.zero;
-
-            Vector3 movementDelta = (movementVelocity + rigidTransform.NonInterpolatedVelocity) * dt;
+            Vector3 movementDelta = (rigidTransform.MoveVelocity.Velocity + rigidTransform.NonInterpolatedVelocity) * dt;
 
             CollisionFlags collisionFlags = characterController.Move(movementDelta + slopeModifier);
 
@@ -65,16 +63,10 @@ namespace DCL.CharacterMotion.Systems
                 rigidTransform.IsGrounded = hasGroundedFlag || characterController.isGrounded;
 
                 if (rigidTransform.IsGrounded)
-                {
-                    // I dont like this
                     rigidTransform.LastGroundedFrame = Mathf.CeilToInt(time.GetTimeComponent(World).Time / UnityEngine.Time.fixedDeltaTime);
-                }
             }
 
-            // TODO: Move this to other System?
-            // We save our local position at the current platform
-            if (platformComponent.CurrentPlatform != null)
-                platformComponent.LastPosition = platformComponent.CurrentPlatform.transform.InverseTransformPoint(characterController.transform.position);
+            SaveLocalPosition.Execute(ref platformComponent, characterController.transform.position);
         }
     }
 }

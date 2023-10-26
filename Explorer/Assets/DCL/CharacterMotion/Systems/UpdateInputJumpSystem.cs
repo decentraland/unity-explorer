@@ -3,11 +3,9 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
-using DCL.CharacterMotion.Settings;
 using DCL.Input;
 using DCL.Input.Systems;
 using ECS.Abstract;
-using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace DCL.CharacterMotion.Systems

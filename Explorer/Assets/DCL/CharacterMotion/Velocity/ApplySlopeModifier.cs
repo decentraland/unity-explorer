@@ -29,7 +29,7 @@ namespace DCL.CharacterMotion
 
             float downwardsSlopeDistance = input.Kind == MovementKind.Run ? 0.55f : 0.45f;
 
-            if (!Physics.Raycast(ray, out var hit, downwardsSlopeDistance, PhysicsLayers.PLAYER_ORIGIN_RAYCAST_MASK))
+            if (!Physics.Raycast(ray, out RaycastHit hit, downwardsSlopeDistance, PhysicsLayers.CHARACTER_ONLY_MASK))
                 return Vector3.zero;
 
             float diff = feet - hit.point.y;

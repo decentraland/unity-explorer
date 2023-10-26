@@ -36,7 +36,9 @@ namespace DCL.CharacterMotion.Systems
                 return;
             }
 
-            CheckPlatform(platformComponent, characterController);
+            Transform transform = characterController.transform;
+
+            CheckPlatform(platformComponent, transform);
 
             if (platformComponent.CurrentPlatform == null) return;
 
@@ -45,33 +47,29 @@ namespace DCL.CharacterMotion.Systems
             Vector3 newGroundWorldPos = platformTransform.TransformPoint(platformComponent.LastPosition);
             Vector3 newCharacterForward = platformTransform.TransformDirection(platformComponent.LastRotation);
 
-            Vector3 deltaPosition = newGroundWorldPos - characterController.transform.position;
+            Vector3 deltaPosition = newGroundWorldPos - transform.position;
             characterController.Move(deltaPosition);
-            characterController.transform.forward = newCharacterForward;
+            transform.forward = newCharacterForward;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void CheckPlatform(CharacterPlatformComponent platformComponent, CharacterController characterController)
+        private static void CheckPlatform(CharacterPlatformComponent platformComponent, Transform transform)
         {
             var ray = new Ray
             {
-                origin = characterController.transform.position + (Vector3.up * 0.15f),
+                origin = transform.position + (Vector3.up * 0.15f),
                 direction = Vector3.down,
             };
 
-            bool hasHit = Physics.Raycast(ray, out RaycastHit hitInfo, 0.30f, PhysicsLayers.PLAYER_ORIGIN_RAYCAST_MASK);
+            bool hasHit = Physics.Raycast(ray, out RaycastHit hitInfo, 0.30f, PhysicsLayers.CHARACTER_ONLY_MASK);
 
             if (hasHit)
             {
                 if (platformComponent.CurrentPlatform != hitInfo.collider.transform)
                 {
                     platformComponent.CurrentPlatform = hitInfo.collider.transform;
-
-                    platformComponent.LastPosition =
-                        platformComponent.CurrentPlatform.InverseTransformPoint(characterController.transform.position);
-
-                    platformComponent.LastRotation =
-                        platformComponent.CurrentPlatform.InverseTransformDirection(characterController.transform.forward);
+                    platformComponent.LastPosition = platformComponent.CurrentPlatform.InverseTransformPoint(transform.position);
+                    platformComponent.LastRotation = platformComponent.CurrentPlatform.InverseTransformDirection(transform.forward);
                 }
             }
             else
