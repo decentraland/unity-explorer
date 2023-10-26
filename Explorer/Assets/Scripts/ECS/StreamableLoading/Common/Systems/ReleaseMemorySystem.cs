@@ -24,20 +24,18 @@ namespace ECS.StreamableLoading.Common.Systems
             switch (memoryBudgetProvider.GetMemoryUsageStatus())
             {
                 case MemoryUsageStatus.Warning:
-                    cacheCleaner.UnloadUnusedCache(memoryBudgetProvider.MemoryOverusageInMB());
+                    cacheCleaner.UnloadUnusedCache();
                     break;
                 case MemoryUsageStatus.Critical:
-                    cacheCleaner.UnloadUnusedCache(memoryBudgetProvider.MemoryOverusageInMB());
+                    cacheCleaner.UnloadUnusedCache();
                     break;
                 case MemoryUsageStatus.Full:
-                    cacheCleaner.UnloadUnusedCache(memoryBudgetProvider.MemoryOverusageInMB());
+                    cacheCleaner.UnloadUnusedCache();
                     break;
             }
 
             // --- Unload scenes
             // 1. Far and Behind
-
-            memoryBudgetProvider.FlushRequestedMemoryCounter();
         }
     }
 }

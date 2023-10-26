@@ -1,7 +1,5 @@
 ﻿using ECS.StreamableLoading.AssetBundles;
 using ECS.Unity.GLTFContainer.Asset.Cache;
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Global
@@ -13,32 +11,25 @@ namespace Global
 
         private const int UNLOADING_BUDGET = 3;
 
-        private readonly Dictionary<Type, int> estimationMap;
-
         private AssetBundleCache assetBundleCache;
         private GltfContainerAssetsCache gltfContainerAssetsCache;
 
-        public CacheCleaner(Dictionary<Type, int> memoryEstimationMap)
+        public void UnloadUnusedCache()
         {
-            estimationMap = memoryEstimationMap;
-        }
+            int unloadedAmount = assetBundleCache.UnloadUnusedCache(UNLOADING_BUDGET);
 
-        public void UnloadUnusedCache(float memoryOverusage)
-        {
-            (Type type, int amount) unloaded = assetBundleCache.UnloadUnusedCache(UNLOADING_BUDGET);
+            if (unloadedAmount < UNLOADING_BUDGET)
+                unloadedAmount += gltfContainerAssetsCache.UnloadUnusedCache(UNLOADING_BUDGET - unloadedAmount);
 
-            Debug.Log($"VV AB:: cleared {unloaded.amount}");
-
-            if (unloaded.amount < UNLOADING_BUDGET && estimationMap.TryGetValue(unloaded.type, out int size) && size * unloaded.amount < memoryOverusage)
-            {
-                // gltfContainerAssetsCache.UnloadUnusedCache(UNLOADING_BUDGET - unloaded.amount);
-            }
+            Debug.Log($"VV AB:: cleared {unloadedAmount}");
         }
 
         public void UnloadAllCache()
         {
-            assetBundleCache.UnloadAllCache(UNLOADING_BUDGET);
-            gltfContainerAssetsCache.UnloadAllCache();
+            int unloadedAmount = assetBundleCache.UnloadAllCache(UNLOADING_BUDGET);
+
+            if (unloadedAmount < UNLOADING_BUDGET)
+                unloadedAmount += gltfContainerAssetsCache.UnloadAllCache(UNLOADING_BUDGET - unloadedAmount);
         }
 
         public void Register(AssetBundleCache assetBundleCache) =>

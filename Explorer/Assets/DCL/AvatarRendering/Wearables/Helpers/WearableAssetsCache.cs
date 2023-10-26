@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ECS.StreamableLoading.Cache;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -25,6 +26,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public WearableAssetsCache(int maxNumberOfAssetsPerKey, int initialCapacity)
         {
+            GameStats.WearablesCacheSizeCounter.Value = 0;
+
             this.maxNumberOfAssetsPerKey = maxNumberOfAssetsPerKey;
 
             var parentContainerGo = new GameObject($"POOL_CONTAINER_{nameof(WearableAssetsCache)}");
@@ -49,6 +52,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 // Remove from the tail of the list
                 instance = list[^1];
                 list.RemoveAt(list.Count - 1);
+                GameStats.WearablesCacheSizeCounter.Value = cache.Count;
                 return true;
             }
 
@@ -63,6 +67,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             if (!cache.TryGetValue(asset, out List<GameObject> list))
                 cache[asset] = list = listPool.Get();
+
+            GameStats.WearablesCacheSizeCounter.Value = cache.Count;
 
             if (list.Count >= maxNumberOfAssetsPerKey)
                 return IWearableAssetsCache.ReleaseResult.CapacityExceeded;

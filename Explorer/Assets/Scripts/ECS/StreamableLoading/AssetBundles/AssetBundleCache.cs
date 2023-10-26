@@ -28,6 +28,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public AssetBundleCache(IConcurrentBudgetProvider frameBudget)
         {
+            GameStats.ABCacheSizeCounter.Value = 0;
             this.frameBudget = frameBudget;
 
             cache = new Dictionary<GetAssetBundleIntention, AssetBundleCacheData>(256, this);
@@ -86,10 +87,10 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             unloadCacheFilter = _ => true;
 
-            return UnloadCache(budget).Item2;
+            return UnloadCache(budget);
         }
 
-        public (Type, int) UnloadUnusedCache(int budget)
+        public int UnloadUnusedCache(int budget)
         {
             unloadCacheFilter = data => Time.unscaledTime - data.LastUsedTime > CacheCleaner.CACHE_EXPIRATION_TIME || IsNotReusedInHoldTime(data);
 
@@ -99,10 +100,8 @@ namespace ECS.StreamableLoading.AssetBundles
                 cacheData.ReusedCount == 0 && Time.unscaledTime - cacheData.LastUsedTime > CacheCleaner.CACHE_MINIMAL_HOLD_TIME;
         }
 
-        private (Type, int) UnloadCache(int budget)
+        private int UnloadCache(int budget)
         {
-            cacheKeysToUnload.Clear();
-
             foreach (KeyValuePair<GetAssetBundleIntention, AssetBundleCacheData> pair in cache)
             {
                 if (!frameBudget.TrySpendBudget() || cacheKeysToUnload.Count >= budget) break;
@@ -117,10 +116,13 @@ namespace ECS.StreamableLoading.AssetBundles
             foreach (GetAssetBundleIntention key in cacheKeysToUnload)
                 cache.Remove(key);
 
-            GameStats.ABCacheSizeCounter.Value = cache.Count;
-            GameStats.ABCacheChangeCalls.Sample(cacheKeysToUnload.Count);
+            int unloadedCount = cacheKeysToUnload.Count;
+            cacheKeysToUnload.Clear();
 
-            return (typeof(AssetBundleData), cacheKeysToUnload.Count);
+            GameStats.ABCacheSizeCounter.Value = cache.Count;
+            GameStats.ABCacheUnloadCalls.Sample(cacheKeysToUnload.Count);
+
+            return unloadedCount;
         }
 
         private class AssetBundleCacheData

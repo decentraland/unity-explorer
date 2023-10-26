@@ -1,8 +1,6 @@
 ﻿using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character;
 using DCL.Interaction.Utility;
 using DCL.PluginSystem;
@@ -13,12 +11,7 @@ using Diagnostics;
 using Diagnostics.ReportsHandling;
 using ECS.Prioritization;
 using ECS.Profiling;
-using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
-using Ipfs;
-using SceneRunner.Scene;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -32,18 +25,6 @@ namespace Global
     /// </summary>
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
-        private static readonly Dictionary<Type, int> MEMORY_ESTIMATION_MAP = new ()
-        {
-            [typeof(AssetBundleData)] = 20,
-            [typeof(Texture2D)] = 10,
-            [typeof(WearablesDTOList)] = 1,
-            [typeof(IWearable[])] = 5,
-            [typeof(SceneDefinitions)] = 1,
-            [typeof(IpfsTypes.SceneEntityDefinition)] = 1,
-            [typeof(ISceneFacade)] = 1,
-            [typeof(SceneAssetBundleManifest)] = 1,
-        };
-
         private ProvidedInstance<CharacterObject> characterObject;
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
@@ -124,10 +105,10 @@ namespace Global
                 new PartitionedWorldsAggregate.Factory(),
                 new ConcurrentLoadingBudgetProvider(50),
                 new FrameTimeCapBudgetProvider(40, profilingProvider),
-                new MemoryBudgetProvider(MEMORY_ESTIMATION_MAP, profilingProvider)
+                new MemoryBudgetProvider(profilingProvider)
             );
 
-            container.CacheCleaner = new CacheCleaner(MEMORY_ESTIMATION_MAP);
+            container.CacheCleaner = new CacheCleaner();
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;

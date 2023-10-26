@@ -1,6 +1,4 @@
 ﻿using ECS.Profiling;
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
@@ -19,16 +17,11 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
 
         private readonly ISystemMemory systemMemory;
 
-        public int RequestedMemoryCounter { get; private set; }
-
-        private Dictionary<Type, int> memoryEstimationMap { get; }
-
-        public MemoryBudgetProvider(Dictionary<Type, int> memoryEstimationMap, IProfilingProvider profilingProvider)
+        public MemoryBudgetProvider(IProfilingProvider profilingProvider)
         {
             systemMemory = new SystemMemoryMock(5000);
             Debug.Log($"{systemMemory.TotalSizeInMB * 0.8} {systemMemory.TotalSizeInMB * 0.9}  {systemMemory.TotalSizeInMB * 0.95}");
 
-            this.memoryEstimationMap = memoryEstimationMap;
             this.profilingProvider = profilingProvider;
         }
 
@@ -45,14 +38,6 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
                    };
         }
 
-        public float MemoryOverusageInMB()
-        {
-            long usedMemory = profilingProvider.TotalUsedMemoryInBytes * ProfilingProvider.BYTES_IN_MEGABYTE;
-            float warningMemoryUsage = systemMemory.TotalSizeInMB * 0.8f;
-
-            return usedMemory > warningMemoryUsage ? usedMemory - warningMemoryUsage : 0;
-        }
-
         public bool TrySpendBudget<TAsset>()
         {
             // RequestedMemoryCounter += memoryEstimationMap[typeof(TAsset)];
@@ -63,8 +48,5 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
             GetMemoryUsageStatus() != MemoryUsageStatus.Full;
 
         public void ReleaseBudget() { }
-
-        public void FlushRequestedMemoryCounter() =>
-            RequestedMemoryCounter = 0;
     }
 }

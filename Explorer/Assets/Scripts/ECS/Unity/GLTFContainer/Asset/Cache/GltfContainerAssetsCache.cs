@@ -2,7 +2,9 @@
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.GLTFContainer.Asset.Components;
+using Global;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,16 +16,17 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
     /// <summary>
     ///     Individual pool for each GltfContainer source. LRU cache
     ///     <para>Gltf Containers can't be reused</para>
-    ///     TODO At the moment it is a draft and not cleaned-up at all
     /// </summary>
     public class GltfContainerAssetsCache : IStreamableCache<GltfContainerAsset, string>
     {
-        private readonly Dictionary<string, List<GltfContainerAsset>> cache;
-        private readonly Dictionary<string, (int, float)> cacheMetrics;
+        private readonly Dictionary<string, (CacheMetrics metrics, List<GltfContainerAsset> assets)> cache;
 
         private readonly int maxSize;
 
         private readonly Transform parentContainer;
+
+        private readonly HashSet<string> cacheKeysToUnload;
+        private readonly IConcurrentBudgetProvider frameBudget;
 
         public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>> OngoingRequests { get; }
         public IDictionary<string, StreamableLoadingResult<GltfContainerAsset>> IrrecoverableFailures { get; }
@@ -32,14 +35,17 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
         public GltfContainerAssetsCache(int maxSize)
         {
+            GameStats.GLTFCacheSizeCounter.Value = 0;
+
             this.maxSize = Mathf.Min(500, maxSize);
-            cache = new Dictionary<string, List<GltfContainerAsset>>(this.maxSize, this);
+            cache = new Dictionary<string, (CacheMetrics, List<GltfContainerAsset>)>(this.maxSize, this);
             var parentContainerGo = new GameObject($"POOL_CONTAINER_{nameof(GltfContainerAsset)}");
             parentContainerGo.SetActive(false);
             parentContainer = parentContainerGo.transform;
 
             OngoingRequests = new FakeDictionaryCache<UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>>();
             IrrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<GltfContainerAsset>>.Get();
+            cacheKeysToUnload = HashSetPool<string>.Get();
         }
 
         public void Dispose()
@@ -53,11 +59,16 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
         public bool TryGet(in string key, out GltfContainerAsset asset)
         {
-            if (cache.TryGetValue(key, out List<GltfContainerAsset> list) && list.Count > 0)
+            if (cache.TryGetValue(key, out (CacheMetrics metrics, List<GltfContainerAsset> list) cacheValue) && cacheValue.list.Count > 0)
             {
                 // Remove from the tail of the list
-                asset = list[^1];
-                list.RemoveAt(list.Count - 1);
+                asset = cacheValue.list[^1];
+                cacheValue.list.RemoveAt(cacheValue.list.Count - 1);
+
+                cacheValue.metrics.ReusedCount++;
+                cacheValue.metrics.LastUsedTime = Time.unscaledTime;
+
+                GameStats.GLTFCacheSizeCounter.Value = cache.Count;
                 return true;
             }
 
@@ -73,10 +84,16 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
         public void Dereference(in string key, GltfContainerAsset asset)
         {
             // Return to the pool
-            if (!cache.TryGetValue(key, out List<GltfContainerAsset> list))
-                cache[key] = list = new List<GltfContainerAsset>(maxSize / 10);
+            if (!cache.TryGetValue(key, out (CacheMetrics metrics, List<GltfContainerAsset> list) cacheValue))
+            {
+                cacheValue.metrics = new CacheMetrics(Time.unscaledTime, 0);
+                cacheValue.list = new List<GltfContainerAsset>(maxSize / 10);
+                cache[key] = cacheValue;
+            }
 
-            list.Add(asset);
+            cacheValue.metrics.LastUsedTime = Time.unscaledTime;
+            cacheValue.list.Add(asset);
+            GameStats.GLTFCacheSizeCounter.Value = cache.Count;
 
             // This logic should not be executed if the application is quitting
             if (UnityObjectUtils.IsQuitting) return;
@@ -85,33 +102,72 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             asset.Root.transform.SetParent(parentContainer);
         }
 
-        public void UnloadAllCache()
-        {
-            foreach (List<GltfContainerAsset> assetsList in cache.Values)
-            {
-                foreach (GltfContainerAsset gltfAsset in assetsList)
-                    gltfAsset.Dispose();
+        public int UnloadAllCache(int budget) =>
 
-                assetsList.Clear();
+            // foreach ((CacheMetrics metrics, List<GltfContainerAsset> assets) entry in cache.Values)
+            //     if (frameBudget.TrySpendBudget() && cacheKeysToUnload.Count <= budget)
+            //         foreach (GltfContainerAsset asset in entry.assets)
+            //             asset.Dispose();
+            //
+            // cache.Clear();
+            0;
+
+        public int UnloadUnusedCache(int budget)
+        {
+            foreach (KeyValuePair<string, (CacheMetrics metrics, List<GltfContainerAsset> assets)> entry in cache)
+            {
+                CacheMetrics cacheMetrics = entry.Value.metrics;
+
+                if (Time.unscaledTime - cacheMetrics.LastUsedTime > CacheCleaner.CACHE_EXPIRATION_TIME || IsNotReusedInHoldTime(cacheMetrics))
+                {
+                    var i = 0;
+
+                    for (; i < entry.Value.assets.Count; i++)
+                        if (frameBudget.TrySpendBudget() && cacheKeysToUnload.Count < budget)
+                            entry.Value.assets[i].Dispose();
+
+                    if (i == entry.Value.assets.Count)
+                        cacheKeysToUnload.Add(entry.Key);
+                }
+                else
+                {
+                    // leave only 1 asset for specific key
+                    for (var i = 0; i < entry.Value.assets.Count - 1; i++)
+                    {
+                        if (!frameBudget.TrySpendBudget() || cacheKeysToUnload.Count > budget) break;
+                        entry.Value.assets[i].Dispose();
+                    }
+                }
             }
 
-            cache.Clear();
-        }
+            foreach (string key in cacheKeysToUnload)
+                cache.Remove(key);
 
-        // public (Type, int) UnloadUnusedCache(int budget)
-        // {
-        //     // unloadCacheFilter = data => data.LastUsedTime > CacheCleaner.CACHE_EXPIRATION_TIME || IsNotReusedInHoldTime(data);
-        //     //
-        //     // return UnloadCache(budget);
-        //     //
-        //     // bool IsNotReusedInHoldTime(AssetBundleCacheData cacheData) =>
-        //     //     cacheData.ReusedCount == 0 && cacheData.LastUsedTime > CacheCleaner.CACHE_MINIMAL_HOLD_TIME;
-        // }
+            int unloadedCount = cacheKeysToUnload.Count;
+            cacheKeysToUnload.Clear();
+
+            return unloadedCount;
+
+            bool IsNotReusedInHoldTime(CacheMetrics cacheData) =>
+                cacheData.ReusedCount == 0 && Time.unscaledTime - cacheData.LastUsedTime > CacheCleaner.CACHE_MINIMAL_HOLD_TIME;
+        }
 
         bool IEqualityComparer<string>.Equals(string x, string y) =>
             string.Equals(x, y, StringComparison.OrdinalIgnoreCase);
 
         int IEqualityComparer<string>.GetHashCode(string obj) =>
             obj.GetHashCode(StringComparison.OrdinalIgnoreCase);
+
+        private class CacheMetrics
+        {
+            public int ReusedCount;
+            public float LastUsedTime;
+
+            public CacheMetrics(float lastUsedTime, int reusedCount)
+            {
+                LastUsedTime = lastUsedTime;
+                ReusedCount = reusedCount;
+            }
+        }
     }
 }
