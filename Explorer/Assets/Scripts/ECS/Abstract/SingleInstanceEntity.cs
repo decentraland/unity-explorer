@@ -14,10 +14,10 @@ namespace ECS.Abstract
 
         public SingleInstanceEntity(in QueryDescription query, World world)
         {
-            TEMP[0] = default(Entity);
+            TEMP[0] = Entity.Null;
             world.GetEntities(in query, TEMP);
 
-            if (TEMP[0] == default(Entity))
+            if (TEMP[0] == Entity.Null)
                 throw new Exception("Entity not found");
 
             entity = TEMP[0];
