@@ -5,6 +5,7 @@ using DCL.DebugUtilities.Builders;
 using DCL.DebugUtilities.Declarations;
 using DCL.DebugUtilities.UIBindings;
 using ECS.Abstract;
+using UnityEngine;
 
 namespace ECS.Profiling.Systems
 {
@@ -14,9 +15,10 @@ namespace ECS.Profiling.Systems
         private readonly IProfilingProvider profilingProvider;
 
         private readonly DebugWidgetVisibilityBinding visibilityBinding;
+
+        private readonly ElementBinding<string> version;
         private readonly ElementBinding<ulong> hiccups;
         private readonly ElementBinding<string> fps;
-        private readonly ElementBinding<string> usedMemory;
 
         private float lastTimeSinceMetricsUpdate;
 
@@ -26,9 +28,11 @@ namespace ECS.Profiling.Systems
 
             debugBuilder.AddWidget("Performance")
                         .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true))
-                        .AddCustomMarker("Total Used Memory:", usedMemory = new ElementBinding<string>(string.Empty))
+                        .AddCustomMarker("Version:", version = new ElementBinding<string>(string.Empty))
                         .AddCustomMarker("Frame Rate:", fps = new ElementBinding<string>(string.Empty))
                         .AddMarker("Hiccups last 1000 frames:", hiccups = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat);
+
+            version.Value = Application.version;
         }
 
         protected override void Update(float t)
@@ -36,8 +40,7 @@ namespace ECS.Profiling.Systems
             if (visibilityBinding.IsExpanded && lastTimeSinceMetricsUpdate > 0.5f)
             {
                 lastTimeSinceMetricsUpdate = 0;
-                hiccups.Value = profilingProvider.HiccupCountInBuffer;
-                usedMemory.Value = $"{profilingProvider.TotalUsedMemoryInMB} MB";
+                hiccups.Value = profilingProvider.GetHiccupCountInBuffer();
 
                 SetFPS();
             }
@@ -48,7 +51,7 @@ namespace ECS.Profiling.Systems
 
         private void SetFPS()
         {
-            float averageFrameTimeInSeconds = (float)profilingProvider.AverageFrameTimeValueInNS * 1e-9f;
+            float averageFrameTimeInSeconds = (float)profilingProvider.GetAverageFrameTimeValueInNS() * 1e-9f;
 
             float frameTimeInMS = averageFrameTimeInSeconds * 1e3f;
             float frameRate = 1 / averageFrameTimeInSeconds;
