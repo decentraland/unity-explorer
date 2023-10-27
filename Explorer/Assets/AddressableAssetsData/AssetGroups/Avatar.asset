@@ -32,11 +32,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: fdc0ac72e84d9534eafd826d7fdfb22a
-    m_Address: AvatarDebugView
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3662049975e2d0549a312769ab17ad07
     m_Address: PlayerAnimator
     m_ReadOnly: 0
