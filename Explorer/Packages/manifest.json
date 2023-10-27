@@ -6,7 +6,6 @@
     "com.decentraland.unity-shared-dependencies": "https://github.com/decentraland/unity-shared-dependencies.git",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.addressables": "1.21.15",
-    "com.unity.assetbundlebrowser": "https://github.com/Unity-Technologies/AssetBundles-Browser.git",
     "com.unity.cinemachine": "2.9.7",
     "com.unity.code-analysis": "0.1.2-preview",
     "com.unity.collab-proxy": "2.0.5",
