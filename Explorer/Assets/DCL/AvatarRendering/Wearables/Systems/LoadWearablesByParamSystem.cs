@@ -36,7 +36,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         public LoadWearablesByParamSystem(
             World world, IStreamableCache<IWearable[], GetWearableByParamIntention> cache,
-            MemoryBudgetProvider memoryBudgetProvider,
+            IConcurrentBudgetProvider memoryBudgetProvider,
             IRealmData realmData,
             URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory, WearableCatalog wearableCatalog,
             MutexSync mutexSync) : base(world, memoryBudgetProvider, cache, mutexSync)

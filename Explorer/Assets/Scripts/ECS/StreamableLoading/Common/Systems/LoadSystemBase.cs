@@ -26,7 +26,7 @@ namespace ECS.StreamableLoading.Common.Systems
                                                                      .WithAll<TIntention, IPartitionComponent, StreamableLoadingState>()
                                                                      .WithNone<StreamableLoadingResult<TAsset>>();
 
-        private readonly MemoryBudgetProvider memoryBudgetProvider;
+        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
         private readonly IStreamableCache<TAsset, TIntention> cache;
 
         private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, TIntention> cachedInternalFlowDelegate;
@@ -39,7 +39,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private CancellationTokenSource cancellationTokenSource;
 
-        protected LoadSystemBase(World world, MemoryBudgetProvider memoryBudgetProvider, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync) : base(world)
+        protected LoadSystemBase(World world, IConcurrentBudgetProvider memoryBudgetProvider, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync) : base(world)
         {
             this.memoryBudgetProvider = memoryBudgetProvider;
             this.cache = cache;
@@ -109,11 +109,11 @@ namespace ECS.StreamableLoading.Common.Systems
             {
                 // Indicate that loading has started
                 state.Value = StreamableLoadingState.Status.InProgress;
-                Flow(entity, currentSource, intention, state.AcquiredBudget, partitionComponent, cancellationTokenSource.Token).Forget();
+                FlowAsync(entity, currentSource, intention, state.AcquiredBudget, partitionComponent, cancellationTokenSource.Token).Forget();
             }
         }
 
-        private async UniTask Flow(Entity entity, AssetSource source, TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition,
+        private async UniTask FlowAsync(Entity entity, AssetSource source, TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition,
             CancellationToken disposalCt)
         {
             StreamableLoadingResult<TAsset>? result = null;
@@ -134,7 +134,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 // if this request must be cancelled by `intention.CommonArguments.CancellationToken` it will be cancelled after `if (!requestIsNotFulfilled)`
                 if (requestIsNotFulfilled)
-                    result = await CacheableFlow(intention, acquiredBudget, partition, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
+                    result = await CacheableFlowAsync(intention, acquiredBudget, partition, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
 
                 if (!result.HasValue)
 
@@ -198,14 +198,14 @@ namespace ECS.StreamableLoading.Common.Systems
         /// <summary>
         ///     Part of the flow that can be reused by multiple intentions
         /// </summary>
-        private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlow(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlowAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             var source = new UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
             cache.OngoingRequests.Add(intention.CommonArguments.URL, source);
 
             try
             {
-                StreamableLoadingResult<TAsset>? result = await RepeatLoop(intention, acquiredBudget, partition, ct);
+                StreamableLoadingResult<TAsset>? result = await RepeatLoopAsync(intention, acquiredBudget, partition, ct);
 
                 // Ensure that we returned to the main thread
                 await UniTask.SwitchToMainThread();
@@ -241,7 +241,7 @@ namespace ECS.StreamableLoading.Common.Systems
             }
         }
 
-        private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoop(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             StreamableLoadingResult<TAsset>? result = await intention.RepeatLoopAsync(acquiredBudget, partition, cachedInternalFlowDelegate, GetReportCategory(), ct);
             return result is { Succeeded: false } ? SetIrrecoverableFailure(intention, result.Value) : result;

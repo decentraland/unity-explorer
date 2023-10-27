@@ -21,7 +21,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         public void SetUp()
         {
             IConcurrentBudgetProvider budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
-            MemoryBudgetProvider memoryBudgetProvider = Substitute.For<MemoryBudgetProvider>();
+            IConcurrentBudgetProvider memoryBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
             budgetProvider.TrySpendBudget().Returns(true);
             system = new CreateGltfAssetFromAssetBundleSystem(world, budgetProvider, memoryBudgetProvider);
         }

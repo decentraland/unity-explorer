@@ -32,7 +32,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         {
             system = new LoadGltfContainerSystem(world);
             IConcurrentBudgetProvider budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
-            MemoryBudgetProvider memoryBudgetProvider = Substitute.For<MemoryBudgetProvider>();
+            IConcurrentBudgetProvider memoryBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
             budgetProvider.TrySpendBudget().Returns(true);
             createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budgetProvider, memoryBudgetProvider);
         }

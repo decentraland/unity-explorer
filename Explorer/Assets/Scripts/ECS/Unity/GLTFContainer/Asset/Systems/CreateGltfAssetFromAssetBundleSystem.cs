@@ -24,9 +24,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     public partial class CreateGltfAssetFromAssetBundleSystem : BaseUnityLoopSystem
     {
         private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
-        private readonly MemoryBudgetProvider memoryBudgetProvider;
+        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
 
-        internal CreateGltfAssetFromAssetBundleSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, MemoryBudgetProvider memoryBudgetProvider) : base(world)
+        internal CreateGltfAssetFromAssetBundleSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider) : base(world)
         {
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
             this.memoryBudgetProvider = memoryBudgetProvider;
