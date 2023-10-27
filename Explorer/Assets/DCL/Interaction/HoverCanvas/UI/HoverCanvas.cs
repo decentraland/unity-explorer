@@ -35,9 +35,9 @@ namespace DCL.Interaction.HoverCanvas.UI
                 tooltips[i].style.opacity = i < count ? 1 : 0;
         }
 
-        public new class UxmlFactory : UxmlFactory<HoverCanvas> { }
-
         public int Compare(HoverCanvasTooltipElement x, HoverCanvasTooltipElement y) =>
             x.parent.tabIndex.CompareTo(y.parent.tabIndex);
+
+        public new class UxmlFactory : UxmlFactory<HoverCanvas> { }
     }
 }

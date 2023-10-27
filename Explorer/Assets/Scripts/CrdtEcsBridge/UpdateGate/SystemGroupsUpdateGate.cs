@@ -22,12 +22,20 @@ namespace CrdtEcsBridge.UpdateGate
         // If we open it in the middle of the current frame the update order will be broken
         private long keepOpenFrame;
 
+        internal IReadOnlyCollection<Type> OpenGroups => openGroups;
+
         public SystemGroupsUpdateGate()
         {
             openGroups = POOL.Get();
         }
 
-        internal IReadOnlyCollection<Type> OpenGroups => openGroups;
+        public void Dispose()
+        {
+            if (openGroups == null) return;
+
+            POOL.Release(openGroups);
+            openGroups = null;
+        }
 
         public bool ShouldThrottle(Type systemGroupType, in TimeProvider.Info timeInfo)
         {
@@ -65,14 +73,6 @@ namespace CrdtEcsBridge.UpdateGate
 
                 keepOpenFrame = MultithreadingUtility.FrameCount + 1;
             }
-        }
-
-        public void Dispose()
-        {
-            if (openGroups == null) return;
-
-            POOL.Release(openGroups);
-            openGroups = null;
         }
     }
 }

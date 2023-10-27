@@ -9,9 +9,14 @@ namespace Diagnostics
     /// </summary>
     public class DiagnosticsContainer : IDisposable
     {
+        private ILogHandler defaultLogHandler;
         public ReportHubLogger ReportHubLogger { get; private set; }
 
-        private ILogHandler defaultLogHandler;
+        public void Dispose()
+        {
+            // Restore Default Unity Logger
+            Debug.unityLogger.logHandler = defaultLogHandler;
+        }
 
         public static DiagnosticsContainer Create(IReportsHandlingSettings settings)
         {
@@ -31,12 +36,6 @@ namespace Diagnostics
             ReportHub.Instance = logger;
 
             return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler };
-        }
-
-        public void Dispose()
-        {
-            // Restore Default Unity Logger
-            Debug.unityLogger.logHandler = defaultLogHandler;
         }
     }
 }

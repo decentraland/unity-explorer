@@ -20,12 +20,12 @@ namespace CRDT.Protocol
         public readonly CRDTMessageType Type;
 
         /// <summary>
-        /// Entity {
-        /// uint32_t id;
-        /// struct {
-        ///    uint16_t version;
-        ///    uint16_t number;
-        /// }
+        ///     Entity {
+        ///     uint32_t id;
+        ///     struct {
+        ///     uint16_t version;
+        ///     uint16_t number;
+        ///     }
         /// </summary>
         public readonly CRDTEntity EntityId;
 
@@ -34,7 +34,7 @@ namespace CRDT.Protocol
         public readonly int Timestamp;
 
         /// <summary>
-        /// Using Memory provides additional versatility for pooling
+        ///     Using Memory provides additional versatility for pooling
         /// </summary>
 
         // The layout of this structure is not clear

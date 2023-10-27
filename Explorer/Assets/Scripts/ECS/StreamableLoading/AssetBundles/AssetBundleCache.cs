@@ -16,11 +16,24 @@ namespace ECS.StreamableLoading.AssetBundles
         public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>> OngoingRequests { get; }
         public IDictionary<string, StreamableLoadingResult<AssetBundleData>> IrrecoverableFailures { get; }
 
+        private bool disposed { get; set; }
+
         public AssetBundleCache()
         {
             cache = new Dictionary<GetAssetBundleIntention, AssetBundleData>(256, this);
             IrrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Get();
             OngoingRequests = DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>.Get();
+        }
+
+        public void Dispose()
+        {
+            if (disposed)
+                return;
+
+            DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Release(IrrecoverableFailures as Dictionary<string, StreamableLoadingResult<AssetBundleData>>);
+            DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>.Release(OngoingRequests as Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>);
+
+            disposed = true;
         }
 
         public bool Equals(GetAssetBundleIntention x, GetAssetBundleIntention y) =>
@@ -38,18 +51,5 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         public void Dereference(in GetAssetBundleIntention key, AssetBundleData asset) { }
-
-        private bool disposed { get; set; }
-
-        public void Dispose()
-        {
-            if (disposed)
-                return;
-
-            DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Release(IrrecoverableFailures as Dictionary<string, StreamableLoadingResult<AssetBundleData>>);
-            DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>.Release(OngoingRequests as Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>);
-
-            disposed = true;
-        }
     }
 }

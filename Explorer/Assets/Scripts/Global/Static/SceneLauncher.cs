@@ -25,39 +25,12 @@ namespace Global.Static
 
             IntegerField fps = ui.rootVisualElement.Q<IntegerField>("FPS");
 
-            void OnSceneSelected(ChangeEvent<string> evt)
-            {
-                async UniTaskVoid LaunchScene()
-                {
-                    string directory = evt.newValue;
-                    if (dropdown.choices.IndexOf(directory) < 0) return;
-
-                    currentScene = await sceneSharedContainer.SceneFactory.CreateSceneFromStreamableDirectory(directory, new PartitionComponent(), destroyCancellationToken);
-                    await currentScene.StartUpdateLoop(fps.value, destroyCancellationToken);
-                }
-
-                currentScene?.DisposeAsync().Forget();
-                currentScene = null;
-
-                LaunchScene().Forget();
-            }
-
             dropdown.RegisterValueChangedCallback(OnSceneSelected);
-
-            void OnFPSChanged(ChangeEvent<int> evt)
-            {
-                currentScene?.SetTargetFPS(Mathf.Clamp(evt.newValue, 0, 300));
-            }
 
             fps.RegisterValueChangedCallback(OnFPSChanged);
 
             Button stopBtn = ui.rootVisualElement.Q<Button>("StopButton");
             stopBtn.clicked += OnStopButtonClicked;
-
-            void OnStopButtonClicked()
-            {
-                dropdown.index = -1;
-            }
 
             destroyCancellationToken.RegisterWithoutCaptureExecutionContext(() =>
             {
@@ -67,6 +40,36 @@ namespace Global.Static
                 stopBtn.clicked -= OnStopButtonClicked;
                 currentScene = null;
             });
+
+            return;
+
+            void OnStopButtonClicked()
+            {
+                dropdown.index = -1;
+            }
+
+            void OnSceneSelected(ChangeEvent<string> evt)
+            {
+                currentScene?.DisposeAsync().Forget();
+                currentScene = null;
+
+                LaunchSceneAsync().Forget();
+                return;
+
+                async UniTaskVoid LaunchSceneAsync()
+                {
+                    string directory = evt.newValue;
+                    if (dropdown.choices.IndexOf(directory) < 0) return;
+
+                    currentScene = await sceneSharedContainer.SceneFactory.CreateSceneFromStreamableDirectoryAsync(directory, new PartitionComponent(), destroyCancellationToken);
+                    await currentScene.StartUpdateLoopAsync(fps.value, destroyCancellationToken);
+                }
+            }
+
+            void OnFPSChanged(ChangeEvent<int> evt)
+            {
+                currentScene?.SetTargetFPS(Mathf.Clamp(evt.newValue, 0, 300));
+            }
         }
     }
 }

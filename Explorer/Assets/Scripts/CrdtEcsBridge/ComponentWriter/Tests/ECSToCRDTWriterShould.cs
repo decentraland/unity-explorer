@@ -15,11 +15,6 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
     [TestFixture]
     public class ECSToCRDTWriterShould
     {
-        private ICRDTProtocol crdtProtocol;
-        private IOutgoingCRDTMessagesProvider outgoingCRDTMessageProvider;
-        private SDKComponentsRegistry sdkComponentRegistry;
-        private ComponentWriter.ECSToCRDTWriter writer;
-
         [SetUp]
         public void Setup()
         {
@@ -28,6 +23,11 @@ namespace CrdtEcsBridge.ECSToCRDTWriter.Tests
             sdkComponentRegistry = new SDKComponentsRegistry();
             writer = new ComponentWriter.ECSToCRDTWriter(crdtProtocol, outgoingCRDTMessageProvider, sdkComponentRegistry, CRDTPooledMemoryAllocator.Create());
         }
+
+        private ICRDTProtocol crdtProtocol;
+        private IOutgoingCRDTMessagesProvider outgoingCRDTMessageProvider;
+        private SDKComponentsRegistry sdkComponentRegistry;
+        private ComponentWriter.ECSToCRDTWriter writer;
 
         [Test]
         public void AppendMessage()

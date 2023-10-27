@@ -85,7 +85,6 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
                         ReportHub.LogWarning(ReportCategory.WEARABLE, $"{name} has not been set-up as a valid body part");
                 }
             }
-
         }
     }
 }

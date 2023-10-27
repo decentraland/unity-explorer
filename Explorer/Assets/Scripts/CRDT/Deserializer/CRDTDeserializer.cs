@@ -26,7 +26,7 @@ namespace CRDT.Deserializer
             while (memory.Length > CRDTConstants.MESSAGE_HEADER_LENGTH)
             {
                 int messageLength = memory.Read<int>();
-                var messageType = memory.ReadEnumAs<CRDTMessageType, int>();
+                CRDTMessageType messageType = memory.ReadEnumAs<CRDTMessageType, int>();
 
                 // Message length lower than minimal, it's an invalid message
                 if (messageLength <= CRDTConstants.MESSAGE_HEADER_LENGTH)
@@ -41,7 +41,7 @@ namespace CRDT.Deserializer
                 switch (messageType)
                 {
                     case CRDTMessageType.PUT_COMPONENT:
-                        if (TryDeserializePutComponent(ref memory, out var crdtMessage))
+                        if (TryDeserializePutComponent(ref memory, out CRDTMessage crdtMessage))
                             messages.Add(crdtMessage);
 
                         break;
@@ -74,13 +74,13 @@ namespace CRDT.Deserializer
         public static bool TryDeserializeDeleteEntity(ref ReadOnlyMemory<byte> memory, out CRDTMessage crdtMessage)
         {
             var shift = 0;
-            var memorySpan = memory.Span;
-            crdtMessage = default;
+            ReadOnlySpan<byte> memorySpan = memory.Span;
+            crdtMessage = default(CRDTMessage);
 
             if (memorySpan.Length < CRDTConstants.CRDT_DELETE_ENTITY_HEADER_LENGTH)
                 return false;
 
-            var entityId = memorySpan.Read<CRDTEntity>(ref shift);
+            CRDTEntity entityId = memorySpan.Read<CRDTEntity>(ref shift);
             memory = memory.Slice(shift);
 
             crdtMessage = new CRDTMessage(CRDTMessageType.DELETE_ENTITY, entityId, 0, 0, EmptyMemoryOwner<byte>.EMPTY);
@@ -90,15 +90,15 @@ namespace CRDT.Deserializer
         public static bool TryDeserializeDeleteComponent(ref ReadOnlyMemory<byte> memory, out CRDTMessage crdtMessage)
         {
             var shift = 0;
-            var memorySpan = memory.Span;
-            crdtMessage = default;
+            ReadOnlySpan<byte> memorySpan = memory.Span;
+            crdtMessage = default(CRDTMessage);
 
             if (memorySpan.Length < CRDTConstants.CRDT_DELETE_COMPONENT_HEADER_LENGTH)
                 return false;
 
-            var entityId = memorySpan.Read<CRDTEntity>(ref shift);
-            var componentId = memorySpan.Read<int>(ref shift);
-            var timestamp = memorySpan.Read<int>(ref shift);
+            CRDTEntity entityId = memorySpan.Read<CRDTEntity>(ref shift);
+            int componentId = memorySpan.Read<int>(ref shift);
+            int timestamp = memorySpan.Read<int>(ref shift);
 
             memory = memory.Slice(shift);
 
@@ -109,13 +109,13 @@ namespace CRDT.Deserializer
         public bool TryDeserializeAppendComponent(ref ReadOnlyMemory<byte> memory, out CRDTMessage crdtMessage)
         {
             var shift = 0;
-            var memorySpan = memory.Span;
-            crdtMessage = default;
+            ReadOnlySpan<byte> memorySpan = memory.Span;
+            crdtMessage = default(CRDTMessage);
 
             if (memorySpan.Length < CRDTConstants.CRDT_APPEND_COMPONENT_HEADER_LENGTH)
                 return false;
 
-            DeserializerParameters(ref memorySpan, out var entityId, out var componentId, out var timestamp, out var dataLength, ref shift);
+            DeserializerParameters(ref memorySpan, out CRDTEntity entityId, out int componentId, out int timestamp, out int dataLength, ref shift);
 
             if (TryReturnInvalidDataLength(ref memory, dataLength, memorySpan, shift))
                 return false;
@@ -131,13 +131,13 @@ namespace CRDT.Deserializer
         public bool TryDeserializePutComponent(ref ReadOnlyMemory<byte> memory, out CRDTMessage crdtMessage)
         {
             var shift = 0;
-            var memorySpan = memory.Span;
-            crdtMessage = default;
+            ReadOnlySpan<byte> memorySpan = memory.Span;
+            crdtMessage = default(CRDTMessage);
 
             if (memorySpan.Length < CRDTConstants.CRDT_PUT_COMPONENT_HEADER_LENGTH)
                 return false;
 
-            DeserializerParameters(ref memorySpan, out var entityId, out var componentId, out var timestamp, out var dataLength, ref shift);
+            DeserializerParameters(ref memorySpan, out CRDTEntity entityId, out int componentId, out int timestamp, out int dataLength, ref shift);
 
             if (TryReturnInvalidDataLength(ref memory, dataLength, memorySpan, shift))
                 return false;

@@ -10,6 +10,8 @@ namespace Diagnostics.ReportsHandling
         [SerializeField] private CategorySeverityMatrix sentryMatrix;
         [SerializeField] private bool debounceEnabled;
 
+        public bool DebounceEnabled => debounceEnabled;
+
         public bool CategoryIsEnabled(string category, LogType logType) =>
             debugLogMatrix.IsEnabled(category, logType) || sentryMatrix.IsEnabled(category, logType);
 
@@ -22,7 +24,5 @@ namespace Diagnostics.ReportsHandling
                        _ => throw new ArgumentOutOfRangeException(nameof(handler), handler, null),
                    };
         }
-
-        public bool DebounceEnabled => debounceEnabled;
     }
 }

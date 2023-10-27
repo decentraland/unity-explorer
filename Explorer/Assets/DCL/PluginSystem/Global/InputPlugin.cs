@@ -31,7 +31,6 @@ namespace DCL.PluginSystem.Global
             UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, new UIRaycaster(EventSystem.current), new DCLCursor());
 
             // UpdateInputButtonSystem<PrimaryKey>.InjectToWorld(ref builder, dclInput.Player.PrimaryKey);
-
         }
     }
 }

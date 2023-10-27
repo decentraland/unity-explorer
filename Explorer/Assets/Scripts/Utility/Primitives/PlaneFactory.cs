@@ -15,7 +15,7 @@ namespace Utility.Primitives
         {
             mesh.name = "DCL Plane";
 
-            var halfSize = PrimitivesSize.PLANE_SIZE / 2;
+            Vector3 halfSize = PrimitivesSize.PLANE_SIZE / 2;
 
             Vector3[] vertices = PrimitivesBuffersPool.EQUAL_TO_VERTICES.Rent(VERTICES_NUM);
             vertices[0] = new Vector3(-halfSize.x, -halfSize.y, 0);
@@ -40,7 +40,6 @@ namespace Utility.Primitives
             defaultUVs[5] = new Vector2(1f, 1f);
             defaultUVs[6] = new Vector2(0f, 1f);
             defaultUVs[7] = new Vector2(0f, 0f);
-
 
             int[] tris = PrimitivesBuffersPool.TRIANGLES.Rent(TRIS_NUM);
             tris[0] = 0;

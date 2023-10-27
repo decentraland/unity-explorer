@@ -109,7 +109,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
                     world.Get<StreamableLoadingState>(entities[i]).Value == StreamableLoadingState.Status.Allowed);
 
             // We'll release 3 budget and check that additional 3 intentions are allowed
-            for (int i = 0; i < 3; i++)
+            for (var i = 0; i < 3; i++)
                 concurrentLoadingBudgetProvider.ReleaseBudget();
 
             system.Update(0);

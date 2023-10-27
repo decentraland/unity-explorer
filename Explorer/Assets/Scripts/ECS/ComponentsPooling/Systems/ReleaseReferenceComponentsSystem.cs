@@ -10,7 +10,7 @@ using System;
 namespace ECS.ComponentsPooling.Systems
 {
     /// <summary>
-    /// Called as a last step before entity destruction to return reference components to the pool
+    ///     Called as a last step before entity destruction to return reference components to the pool
     /// </summary>
     [UpdateInGroup(typeof(CleanUpGroup))]
     [ThrottlingEnabled]
@@ -27,7 +27,7 @@ namespace ECS.ComponentsPooling.Systems
 
         protected override void Update(float _)
         {
-            var query = World.Query(in queryDescription);
+            Query query = World.Query(in queryDescription);
             ReleaseComponentsToPool(in query);
         }
 

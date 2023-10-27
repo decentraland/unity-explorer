@@ -28,11 +28,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private readonly URLSubdirectory lambdaSubdirectory;
 
         private readonly IRealmData realmData;
-        internal IURLBuilder urlBuilder = new URLBuilder();
         private readonly URLSubdirectory wearablesSubdirectory;
         private readonly WearableCatalog wearableCatalog;
 
         private readonly Func<bool> isRealmDataReady;
+        internal IURLBuilder urlBuilder = new URLBuilder();
 
         public LoadWearablesByParamSystem(
             World world, IStreamableCache<IWearable[], GetWearableByParamIntention> cache, IRealmData realmData,
@@ -47,7 +47,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             isRealmDataReady = () => realmData.Configured;
         }
 
-        protected override async UniTask<StreamableLoadingResult<IWearable[]>> FlowInternal(GetWearableByParamIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<IWearable[]>> FlowInternalAsync(GetWearableByParamIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             await UniTask.WaitUntil(isRealmDataReady, cancellationToken: ct);
 

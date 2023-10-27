@@ -62,22 +62,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             DestroyAvatarQuery(World);
         }
 
-
-        [Query]
-        [All(typeof(TransformComponent))]
-        private void InstantiateExistingAvatar(ref AvatarShapeComponent avatarShapeComponent, AvatarBase avatarBase,
-            ref AvatarCustomSkinningComponent skinningComponent)
-        {
-            if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return;
-
-            if (!avatarShapeComponent.WearablePromise.TryConsume(World, out StreamableLoadingResult<IWearable[]> wearablesResult)) return;
-
-            CommonAvatarRelease(avatarShapeComponent, skinningComponent);
-
-            // Override by ref
-            skinningComponent = InstantiateAvatar(ref avatarShapeComponent, wearablesResult, avatarBase);
-        }
-
         [Query]
         [None(typeof(AvatarBase), typeof(AvatarTransformMatrixComponent), typeof(AvatarCustomSkinningComponent))]
         private void InstantiateNewAvatar(in Entity entity, ref AvatarShapeComponent avatarShapeComponent, ref TransformComponent transformComponent)
@@ -101,6 +85,21 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, wearablesResult, avatarBase);
 
             World.Add(entity, avatarBase, avatarTransformMatrixComponent, skinningComponent);
+        }
+
+        [Query]
+        [All(typeof(TransformComponent))]
+        private void InstantiateExistingAvatar(ref AvatarShapeComponent avatarShapeComponent, AvatarBase avatarBase,
+            ref AvatarCustomSkinningComponent skinningComponent)
+        {
+            if (!ReadyToInstantiateNewAvatar(ref avatarShapeComponent)) return;
+
+            if (!avatarShapeComponent.WearablePromise.TryConsume(World, out StreamableLoadingResult<IWearable[]> wearablesResult)) return;
+
+            CommonAvatarRelease(avatarShapeComponent, skinningComponent);
+
+            // Override by ref
+            skinningComponent = InstantiateAvatar(ref avatarShapeComponent, wearablesResult, avatarBase);
         }
 
         private AvatarCustomSkinningComponent InstantiateAvatar(ref AvatarShapeComponent avatarShapeComponent,
@@ -189,7 +188,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             skinningComponent.Dispose(avatarMaterialPool);
             wearableAssetsCache.TryReleaseAssets(avatarShapeComponent.InstantiatedWearables, avatarMaterialPool);
         }
-
 
         public override void Dispose()
         {

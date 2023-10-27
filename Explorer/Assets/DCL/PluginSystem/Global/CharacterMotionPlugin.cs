@@ -22,9 +22,14 @@ namespace DCL.PluginSystem.Global
             this.characterObject = characterObject;
         }
 
-        public async UniTask Initialize(CharacterMotionSettings settings, CancellationToken ct)
+        public void Dispose()
         {
-            this.settings = await assetsProvisioner.ProvideMainAsset(settings.controllerSettings, ct);
+            settings.Dispose();
+        }
+
+        public async UniTask InitializeAsync(CharacterMotionSettings settings, CancellationToken ct)
+        {
+            this.settings = await assetsProvisioner.ProvideMainAssetAsync(settings.controllerSettings, ct);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -40,11 +45,6 @@ namespace DCL.PluginSystem.Global
             InterpolateCharacterSystem.InjectToWorld(ref builder);
             RotateCharacterSystem.InjectToWorld(ref builder);
             CalculateCharacterVelocitySystem.InjectToWorld(ref builder);
-        }
-
-        public void Dispose()
-        {
-            settings.Dispose();
         }
     }
 }
