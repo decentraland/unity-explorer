@@ -19,6 +19,8 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
         }
 
+        public void Dispose() { }
+
         public UniTask InitializeAsync(Settings settings, CancellationToken ct) =>
             UniTask.CompletedTask;
 
@@ -29,7 +31,5 @@ namespace DCL.PluginSystem.Global
 
         [Serializable]
         public class Settings : IDCLPluginSettings { }
-
-        public void Dispose() { }
     }
 }
