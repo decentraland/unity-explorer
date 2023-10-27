@@ -5,7 +5,6 @@ using DCL.Character;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
-using DCL.Time.Systems;
 using System.Threading;
 
 namespace DCL.PluginSystem.Global
@@ -52,6 +51,7 @@ namespace DCL.PluginSystem.Global
             CharacterAnimationSystem.InjectToWorld(ref builder);
             CharacterPlatformSystem.InjectToWorld(ref builder);
             StunCharacterSystem.InjectToWorld(ref builder);
+            CalculateCameraFovSystem.InjectToWorld(ref builder);
         }
     }
 }

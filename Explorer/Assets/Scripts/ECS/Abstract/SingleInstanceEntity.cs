@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using System;
 
 namespace ECS.Abstract
 {
@@ -13,7 +14,12 @@ namespace ECS.Abstract
 
         public SingleInstanceEntity(in QueryDescription query, World world)
         {
+            TEMP[0] = default(Entity);
             world.GetEntities(in query, TEMP);
+
+            if (TEMP[0] == default(Entity))
+                throw new Exception("Entity not found");
+
             entity = TEMP[0];
         }
 

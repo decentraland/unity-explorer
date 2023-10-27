@@ -44,6 +44,9 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField, Header("Animation")] public float RotationSpeed { get; private set; } = 360f;
         [field: SerializeField] public float MovAnimBlendSpeed { get; private set; } = 3f;
 
+        [field: SerializeField] [field: Header("Animation")] public float CameraFOVWhileRunning { get; private set; } = 15;
+        [field: SerializeField] public float FOVChangeSpeed { get; private set; } = 15;
+
         [field: SerializeField, Header("Cheat/Debug/Misc")] public float JumpPadForce { get; private set; } = 50f;
         [field: SerializeField] public float AnimationSpeed { get; private set; } = 1;
     }
