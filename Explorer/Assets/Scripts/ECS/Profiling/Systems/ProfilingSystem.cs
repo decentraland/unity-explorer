@@ -5,6 +5,7 @@ using DCL.DebugUtilities.Builders;
 using DCL.DebugUtilities.Declarations;
 using DCL.DebugUtilities.UIBindings;
 using ECS.Abstract;
+using UnityEngine;
 
 namespace ECS.Profiling.Systems
 {
@@ -14,6 +15,8 @@ namespace ECS.Profiling.Systems
         private readonly IProfilingProvider profilingProvider;
 
         private readonly DebugWidgetVisibilityBinding visibilityBinding;
+
+        private readonly ElementBinding<string> version;
         private readonly ElementBinding<ulong> hiccups;
         private readonly ElementBinding<string> fps;
 
@@ -25,8 +28,11 @@ namespace ECS.Profiling.Systems
 
             debugBuilder.AddWidget("Performance")
                         .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true))
+                        .AddCustomMarker("Version:", version = new ElementBinding<string>(string.Empty))
                         .AddCustomMarker("Frame Rate:", fps = new ElementBinding<string>(string.Empty))
                         .AddMarker("Hiccups last 1000 frames:", hiccups = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat);
+
+            version.Value = Application.version;
         }
 
         protected override void Update(float t)
