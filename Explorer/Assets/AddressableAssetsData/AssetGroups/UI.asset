@@ -17,11 +17,6 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 9d34671c4a9995044aa4b38f0c1c3570
   m_SerializeEntries:
-  - m_GUID: 03608bfcd31894b8daf215b6e82338bf
-    m_Address: Profiler View
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8fd0fd0188702304689c461c6aacc7c5
     m_Address: HoverCanvas
     m_ReadOnly: 0
