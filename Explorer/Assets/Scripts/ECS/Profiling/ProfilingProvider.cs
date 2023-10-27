@@ -8,33 +8,30 @@ namespace ECS.Profiling
     /// </summary>
     public class ProfilingProvider : IProfilingProvider
     {
-        public const long BYTES_IN_MEGABYTE = 1024 * 1024;
         private const int HICCUP_THRESHOLD_IN_NS = 50_000_000;
         private const int HICCUP_BUFFER_SIZE = 1_000;
-
-        // Frame time
         private readonly LinealBufferHiccupCounter hiccupBufferCounter;
-        private readonly ProfilerRecorder mainThreadTimeRecorder;
-        private readonly ProfilerRecorder totalUsedMemoryRecorder;
-
-        public long TotalUsedMemoryInBytes => totalUsedMemoryRecorder.LastValue;
-        public float TotalUsedMemoryInMB => totalUsedMemoryRecorder.LastValue / BYTES_IN_MEGABYTE;
-
-        public long CurrentFrameTimeValueInNS => mainThreadTimeRecorder.CurrentValue;
-        public double AverageFrameTimeValueInNS => GetRecorderFPSAverage(mainThreadTimeRecorder);
-        public int HiccupCountInBuffer => hiccupBufferCounter.HiccupsCountInBuffer;
+        private ProfilerRecorder mainThreadTimeRecorder;
 
         public ProfilingProvider()
         {
-            totalUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Used Memory");
             mainThreadTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", 15);
             hiccupBufferCounter = new LinealBufferHiccupCounter(HICCUP_BUFFER_SIZE, HICCUP_THRESHOLD_IN_NS);
         }
 
+        public long GetCurrentFrameTimeValueInNS() =>
+            mainThreadTimeRecorder.CurrentValue;
+
+        public double GetAverageFrameTimeValueInNS() =>
+            GetRecorderFPSAverage(mainThreadTimeRecorder);
+
         public void CheckHiccup() =>
             hiccupBufferCounter.AddDeltaTime(mainThreadTimeRecorder.LastValue);
 
-        private static double GetRecorderFPSAverage(ProfilerRecorder recorder)
+        public ulong GetHiccupCountInBuffer() =>
+            hiccupBufferCounter.HiccupsCountInBuffer;
+
+        private double GetRecorderFPSAverage(ProfilerRecorder recorder)
         {
             int samplesCount = recorder.Capacity;
 

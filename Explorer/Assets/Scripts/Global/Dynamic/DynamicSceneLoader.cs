@@ -24,6 +24,7 @@ namespace Global.Dynamic
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer;
         [Space]
         [SerializeField] private UIDocument uiToolkitRoot;
+        [SerializeField] private UIDocument debugUiRoot;
         [SerializeField] private Vector2Int StartPosition;
         [SerializeField] private int SceneLoadRadius = 4;
 
@@ -40,7 +41,8 @@ namespace Global.Dynamic
         private void Awake()
         {
             realmLauncher.Initialize(realms);
-            InitializationFlow(destroyCancellationToken).Forget();
+
+            InitializationFlowAsync(destroyCancellationToken).Forget();
         }
 
         private void OnDestroy()
@@ -65,7 +67,7 @@ namespace Global.Dynamic
             DisposeAsync().Forget();
         }
 
-        private async UniTask InitializationFlow(CancellationToken ct)
+        private async UniTask InitializationFlowAsync(CancellationToken ct)
         {
             try
             {
@@ -81,12 +83,19 @@ namespace Global.Dynamic
 
                 var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
 
-                dynamicWorldContainer = DynamicWorldContainer.Create(
-                    in staticContainer,
-                    staticContainer.CacheCleaner,
+                (dynamicWorldContainer, isLoaded) = await DynamicWorldContainer.CreateAsync(
+                    staticContainer,
+                    scenePluginSettingsContainer,
+                    ct,
                     uiToolkitRoot,
                     StaticLoadPositions,
                     SceneLoadRadius);
+
+                if (!isLoaded)
+                {
+                    PrintGameIsDead();
+                    return;
+                }
 
                 // Initialize global plugins
                 var anyFailure = false;
@@ -108,9 +117,11 @@ namespace Global.Dynamic
 
                 globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory, dynamicWorldContainer.EmptyScenesWorldFactory, staticContainer.CharacterObject);
 
+                dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
+
                 void SetRealm(string selectedRealm)
                 {
-                    ChangeRealm(staticContainer, destroyCancellationToken, selectedRealm).Forget();
+                    ChangeRealmAsync(staticContainer, destroyCancellationToken, selectedRealm).Forget();
                 }
 
                 realmLauncher.OnRealmSelected += SetRealm;
@@ -133,7 +144,7 @@ namespace Global.Dynamic
             ReportHub.LogError(ReportCategory.ENGINE, "Initialization Failed! Game is irrecoverably dead!");
         }
 
-        private async UniTask ChangeRealm(StaticContainer globalContainer, CancellationToken ct, string selectedRealm)
+        private async UniTask ChangeRealmAsync(StaticContainer globalContainer, CancellationToken ct, string selectedRealm)
         {
             if (globalWorld != null)
                 await dynamicWorldContainer.RealmController.UnloadCurrentRealmAsync(globalWorld);
