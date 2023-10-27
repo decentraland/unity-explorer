@@ -19,11 +19,11 @@ namespace DCL.PluginSystem.World
         private readonly MemoryBudgetProvider memoryBudgetProvider;
         private readonly GltfContainerAssetsCache assetsCache;
 
-        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, MemoryBudgetProvider memoryBudgetProvider, CacheCleaner cacheCleaner)
+        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, IConcurrentBudgetProvider frameBudget, MemoryBudgetProvider memoryBudgetProvider, CacheCleaner cacheCleaner)
         {
             this.globalDeps = globalDeps;
             this.memoryBudgetProvider = memoryBudgetProvider;
-            assetsCache = new GltfContainerAssetsCache(1000);
+            assetsCache = new GltfContainerAssetsCache(1000, frameBudget);
 
             cacheCleaner.Register(assetsCache);
         }

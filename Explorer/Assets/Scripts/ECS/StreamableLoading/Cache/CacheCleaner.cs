@@ -1,15 +1,14 @@
 ﻿using ECS.StreamableLoading.AssetBundles;
 using ECS.Unity.GLTFContainer.Asset.Cache;
-using UnityEngine;
 
 namespace Global
 {
     public class CacheCleaner
     {
-        public const float CACHE_EXPIRATION_TIME = 2 * 60; // minutes in seconds
-        public const float CACHE_MINIMAL_HOLD_TIME = 10f; // * 60; // minutes in seconds
+        public const float CACHE_EXPIRATION_TIME = 5 * 60; // [min] * [sec]
+        public const float CACHE_MINIMAL_HOLD_TIME = 0.5f * 60; // [min] * [sec]
 
-        private const int UNLOADING_BUDGET = 3;
+        private const int UNLOADING_BUDGET = 10;
 
         private AssetBundleCache assetBundleCache;
         private GltfContainerAssetsCache gltfContainerAssetsCache;
@@ -18,18 +17,16 @@ namespace Global
         {
             int unloadedAmount = assetBundleCache.UnloadUnusedCache(UNLOADING_BUDGET);
 
-            if (unloadedAmount < UNLOADING_BUDGET)
-                unloadedAmount += gltfContainerAssetsCache.UnloadUnusedCache(UNLOADING_BUDGET - unloadedAmount);
-
-            Debug.Log($"VV AB:: cleared {unloadedAmount}");
+            // if (unloadedAmount < UNLOADING_BUDGET)
+            //     unloadedAmount += gltfContainerAssetsCache.UnloadUnusedCache(UNLOADING_BUDGET - unloadedAmount);
         }
 
         public void UnloadAllCache()
         {
             int unloadedAmount = assetBundleCache.UnloadAllCache(UNLOADING_BUDGET);
 
-            if (unloadedAmount < UNLOADING_BUDGET)
-                unloadedAmount += gltfContainerAssetsCache.UnloadAllCache(UNLOADING_BUDGET - unloadedAmount);
+            // if (unloadedAmount < UNLOADING_BUDGET)
+            //     unloadedAmount += gltfContainerAssetsCache.UnloadAllCache(UNLOADING_BUDGET - unloadedAmount);
         }
 
         public void Register(AssetBundleCache assetBundleCache) =>

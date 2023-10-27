@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Utility;
 using Utility.Pool;
 
 namespace ECS.Unity.GLTFContainer.Asset.Components
@@ -49,7 +48,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
             if (VisibleMeshesColliders != null)
                 COLLIDERS_POOL.Release(VisibleMeshesColliders);
 
-            UnityObjectUtils.SafeDestroy(Root);
+            // TODO: Only when not referenced
+            // UnityObjectUtils.SafeDestroy(Root);
         }
 
         public static GltfContainerAsset Create(GameObject root) =>

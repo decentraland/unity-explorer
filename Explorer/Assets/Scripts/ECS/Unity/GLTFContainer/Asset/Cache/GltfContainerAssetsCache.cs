@@ -33,8 +33,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
         private bool disposed { get; set; }
 
-        public GltfContainerAssetsCache(int maxSize)
+        public GltfContainerAssetsCache(int maxSize, IConcurrentBudgetProvider frameBudget)
         {
+            this.frameBudget = frameBudget;
             GameStats.GLTFCacheSizeCounter.Value = 0;
 
             this.maxSize = Mathf.Min(500, maxSize);
@@ -102,16 +103,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             asset.Root.transform.SetParent(parentContainer);
         }
 
-        public int UnloadAllCache(int budget) =>
-
-            // foreach ((CacheMetrics metrics, List<GltfContainerAsset> assets) entry in cache.Values)
-            //     if (frameBudget.TrySpendBudget() && cacheKeysToUnload.Count <= budget)
-            //         foreach (GltfContainerAsset asset in entry.assets)
-            //             asset.Dispose();
-            //
-            // cache.Clear();
-            0;
-
         public int UnloadUnusedCache(int budget)
         {
             foreach (KeyValuePair<string, (CacheMetrics metrics, List<GltfContainerAsset> assets)> entry in cache)
@@ -123,8 +114,10 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
                     var i = 0;
 
                     for (; i < entry.Value.assets.Count; i++)
-                        if (frameBudget.TrySpendBudget() && cacheKeysToUnload.Count < budget)
-                            entry.Value.assets[i].Dispose();
+                    {
+                        if (!frameBudget.TrySpendBudget() || cacheKeysToUnload.Count > budget) break;
+                        entry.Value.assets[i].Dispose();
+                    }
 
                     if (i == entry.Value.assets.Count)
                         cacheKeysToUnload.Add(entry.Key);

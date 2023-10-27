@@ -1,5 +1,4 @@
 ﻿using ECS.Profiling;
-using UnityEngine;
 
 namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
 {
@@ -19,8 +18,9 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
 
         public MemoryBudgetProvider(IProfilingProvider profilingProvider)
         {
-            systemMemory = new SystemMemoryMock(5000);
-            Debug.Log($"{systemMemory.TotalSizeInMB * 0.8} {systemMemory.TotalSizeInMB * 0.9}  {systemMemory.TotalSizeInMB * 0.95}");
+            systemMemory = new StandaloneSystemMemory(); // new SystemMemoryMock(5000);
+
+            // Debug.Log($"{systemMemory.TotalSizeInMB * 0.8} {systemMemory.TotalSizeInMB * 0.9}  {systemMemory.TotalSizeInMB * 0.95}");
 
             this.profilingProvider = profilingProvider;
         }
@@ -36,12 +36,6 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
                        _ when usedMemory > systemMemory.TotalSizeInMB * 0.8 => MemoryUsageStatus.Warning,
                        _ => MemoryUsageStatus.Normal,
                    };
-        }
-
-        public bool TrySpendBudget<TAsset>()
-        {
-            // RequestedMemoryCounter += memoryEstimationMap[typeof(TAsset)];
-            return TrySpendBudget();
         }
 
         public bool TrySpendBudget() =>

@@ -2,8 +2,6 @@
   "name": "Wearables",
   "rootNamespace": "",
   "references": [
-    "GUID:c2b7e3e0e95f4eb588516c8ae12e919b",
-    "GUID:fa0cb088e184452c8a89ecdeff7c731d",
     "GUID:9e314663ce958b746873cb22d57ede55",
     "GUID:f51ebe6a0ceec4240a699833d6309b23",
     "GUID:286980af24684da6acc1caa413039811",
@@ -14,7 +12,8 @@
     "GUID:e0eedfa2deb9406daf86fd8368728e39",
     "GUID:8322ea9340a544c59ddc56d4793eac74",
     "GUID:4794e238ed0f65142a4aea5848b513e5",
-    "GUID:06affd6aa466aff4cb5040abb84fe0a0"
+    "GUID:06affd6aa466aff4cb5040abb84fe0a0",
+    "GUID:b46779583a009f04ba9f5f31d0e7e6ac"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

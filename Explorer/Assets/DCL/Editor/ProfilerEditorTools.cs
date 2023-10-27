@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using Unity.Profiling;
+using Unity.Profiling.LowLevel;
 using Unity.Profiling.LowLevel.Unsafe;
 using UnityEditor;
 using UnityEngine;
@@ -10,13 +11,8 @@ namespace DCL.Editor
 {
     public class ProfilerEditorTools
     {
-        [MenuItem("🛠️ DCL/Log All Profiler Markers")]
+        [MenuItem("🛠️ DCL/Profiling/Log All Profiler Markers")]
         private static void EnumerateProfilerStatsMenuItem()
-        {
-            EnumerateProfilerStats();
-        }
-
-        private static void EnumerateProfilerStats()
         {
             var availableStatHandles = new List<ProfilerRecorderHandle>();
             ProfilerRecorderHandle.GetAvailable(availableStatHandles);
@@ -30,6 +26,7 @@ namespace DCL.Editor
                                         Cat = statDesc.Category,
                                         Name = statDesc.Name,
                                         Unit = statDesc.UnitType,
+                                        Flags = statDesc.Flags,
                                     }));
 
             availableStats.Sort((a, b) =>
@@ -45,7 +42,7 @@ namespace DCL.Editor
                 writer.WriteLine("Available stats:");
 
                 foreach (StatInfo s in availableStats)
-                    writer.WriteLine($"{s.Cat}\t\t - {s.Name}\t\t - {s.Unit}");
+                    writer.WriteLine($"{s.Cat}\t\t - {s.Name}\t\t - {s.Unit}\t\t - {s.Flags}");
             }
 
             Debug.Log($"Profiler stats saved to: {filePath}");
@@ -57,6 +54,7 @@ namespace DCL.Editor
             public ProfilerCategory Cat;
             public string Name;
             public ProfilerMarkerDataUnit Unit;
+            public MarkerFlags Flags;
         }
     }
 }

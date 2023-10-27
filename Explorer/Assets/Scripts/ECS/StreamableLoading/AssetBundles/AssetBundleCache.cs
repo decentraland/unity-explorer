@@ -120,7 +120,6 @@ namespace ECS.StreamableLoading.AssetBundles
             cacheKeysToUnload.Clear();
 
             GameStats.ABCacheSizeCounter.Value = cache.Count;
-            GameStats.ABCacheUnloadCalls.Sample(cacheKeysToUnload.Count);
 
             return unloadedCount;
         }

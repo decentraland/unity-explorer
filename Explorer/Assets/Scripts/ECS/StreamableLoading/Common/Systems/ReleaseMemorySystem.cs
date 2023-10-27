@@ -27,15 +27,12 @@ namespace ECS.StreamableLoading.Common.Systems
                     cacheCleaner.UnloadUnusedCache();
                     break;
                 case MemoryUsageStatus.Critical:
-                    cacheCleaner.UnloadUnusedCache();
+                    cacheCleaner.UnloadAllCache();
                     break;
                 case MemoryUsageStatus.Full:
-                    cacheCleaner.UnloadUnusedCache();
+                    cacheCleaner.UnloadAllCache();
                     break;
             }
-
-            // --- Unload scenes
-            // 1. Far and Behind
         }
     }
 }
