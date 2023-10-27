@@ -1,12 +1,10 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
 using DCL.DebugUtilities.Builders;
 using ECS.Profiling;
 using ECS.Profiling.Systems;
 using System;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.PluginSystem.Global
 {
@@ -30,18 +28,7 @@ namespace DCL.PluginSystem.Global
         }
 
         [Serializable]
-        public class Settings : IDCLPluginSettings
-        {
-            [field: Header(nameof(ProfilingPlugin) + "." + nameof(Settings))]
-            [field: Space]
-            [field: SerializeField] internal ProfilingViewRef profilingViewRef { get; private set; }
-
-            [Serializable]
-            public class ProfilingViewRef : ComponentReference<ProfilingView>
-            {
-                public ProfilingViewRef(string guid) : base(guid) { }
-            }
-        }
+        public class Settings : IDCLPluginSettings { }
 
         public void Dispose() { }
     }

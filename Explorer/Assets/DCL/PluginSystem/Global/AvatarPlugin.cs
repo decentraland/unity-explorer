@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
-using DCL.AvatarRendering.AvatarShape.DemoScripts.UI;
 using DCL.AvatarRendering.AvatarShape.GPUSkinning;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.AvatarRendering.AvatarShape.Systems;
@@ -124,17 +123,6 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceComputeShader computeShader;
-
-            [field: Header(nameof(AvatarPlugin) + ".Debug")]
-            [field: Space]
-            [field: SerializeField]
-            public AvatarInstantiatorViewRef avatarInstantiatorViewRef { get; private set; }
-
-            [Serializable]
-            public class AvatarInstantiatorViewRef : ComponentReference<AvatarInstantiatorView>
-            {
-                public AvatarInstantiatorViewRef(string guid) : base(guid) { }
-            }
         }
     }
 }
