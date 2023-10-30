@@ -11,6 +11,12 @@ namespace Diagnostics.ReportsHandling.Sentry
         public SentryReportHandler(ICategorySeverityMatrix matrix, bool debounceEnabled)
             : base(matrix, debounceEnabled)
         {
+            // To prevent unwanted logs, manual initialization is required.
+            // We need to delay the replacement of Debug.unityLogger.logHandler instance
+            // to ensure that Unity's default logger is initially injected in our custom loggers.
+            // After this initialization, Debug.unityLogger.logHandler is replaced which reports all the unhandled exceptions.
+            // For this to work correctly, the "enabled" option in Assets/Resources/Sentry/SentryOptions.asset should be set to off
+            // preventing `SentryInitialization` from running the app's startup process.
             var sentryUnityInfo = new SentryUnityInfo();
             SentryUnityOptions options = ScriptableSentryUnityOptions.LoadSentryUnityOptions(sentryUnityInfo);
             options!.Enabled = true;
