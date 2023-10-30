@@ -41,12 +41,12 @@ namespace ECS.StreamableLoading.AssetBundles
             this.loadingMutex = loadingMutex;
         }
 
-        private async UniTask LoadDependencies(SceneAssetBundleManifest manifest, IPartitionComponent partition, URLSubdirectory customEmbeddedSubdirectory, AssetBundle assetBundle, CancellationToken ct)
+        private async UniTask LoadDependenciesAsync(SceneAssetBundleManifest manifest, IPartitionComponent partition, URLSubdirectory customEmbeddedSubdirectory, AssetBundle assetBundle, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
             string metadata;
 
-            using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.Acquire(ct))
+            using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
                 metadata = GetMetadata(assetBundle)?.text;
 
             if (metadata != null)
@@ -61,11 +61,11 @@ namespace ECS.StreamableLoading.AssetBundles
                 await UniTask.SwitchToMainThread();
 
                 // WhenAll uses pool under the hood
-                await UniTask.WhenAll(reusableMetadata.Value.dependencies.Select(hash => WaitForDependency(manifest, hash, customEmbeddedSubdirectory, partition, ct)));
+                await UniTask.WhenAll(reusableMetadata.Value.dependencies.Select(hash => WaitForDependencyAsync(manifest, hash, customEmbeddedSubdirectory, partition, ct)));
             }
         }
 
-        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternal(GetAssetBundleIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             AssetBundle assetBundle;
 
@@ -76,7 +76,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 ((DownloadHandlerAssetBundle)webRequest.downloadHandler).autoLoadAssetBundle = false;
                 await webRequest.SendWebRequest().WithCancellation(ct);
 
-                using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.Acquire(ct))
+                using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
                     assetBundle = DownloadHandlerAssetBundle.GetContent(webRequest);
 
                 // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
@@ -91,7 +91,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             TextAsset metricsFile;
 
-            using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.Acquire(ct))
+            using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
                 metricsFile = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME);
 
             // Switch to thread pool to parse JSONs
@@ -101,19 +101,19 @@ namespace ECS.StreamableLoading.AssetBundles
 
             AssetBundleMetrics? metrics = metricsFile != null ? JsonUtility.FromJson<AssetBundleMetrics>(metricsFile.text) : null;
 
-            await LoadDependencies(intention.Manifest, partition, intention.CommonArguments.CustomEmbeddedSubDirectory, assetBundle, ct);
+            await LoadDependenciesAsync(intention.Manifest, partition, intention.CommonArguments.CustomEmbeddedSubDirectory, assetBundle, ct);
 
             await UniTask.SwitchToMainThread();
             ct.ThrowIfCancellationRequested();
 
-            GameObject gameObjects = await LoadAllAssets(assetBundle, ct);
+            GameObject gameObjects = await LoadAllAssetsAsync(assetBundle, ct);
 
             return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, gameObjects));
         }
 
-        private async UniTask<GameObject> LoadAllAssets(AssetBundle assetBundle, CancellationToken ct)
+        private async UniTask<GameObject> LoadAllAssetsAsync(AssetBundle assetBundle, CancellationToken ct)
         {
-            using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.Acquire(ct);
+            using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct);
 
             // we are only interested in game objects
             AssetBundleRequest asyncOp = assetBundle.LoadAllAssetsAsync<GameObject>();
@@ -131,7 +131,7 @@ namespace ECS.StreamableLoading.AssetBundles
             return rootGameObject;
         }
 
-        private async UniTask WaitForDependency(SceneAssetBundleManifest manifest,
+        private async UniTask WaitForDependencyAsync(SceneAssetBundleManifest manifest,
             string hash, URLSubdirectory customEmbeddedSubdirectory,
             IPartitionComponent partition, CancellationToken ct)
         {
@@ -140,7 +140,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             try
             {
-                assetBundlePromise = await assetBundlePromise.ToUniTask(World, cancellationToken: ct);
+                assetBundlePromise = await assetBundlePromise.ToUniTaskAsync(World, cancellationToken: ct);
 
                 if (!assetBundlePromise.TryGetResult(World, out StreamableLoadingResult<AssetBundleData> depResult))
                     throw new Exception($"Dependency {hash} is not resolved");

@@ -13,6 +13,11 @@ namespace SceneRunner.Scene
         private readonly ISceneContent sceneContent;
         private readonly IpfsTypes.SceneEntityDefinition sceneDefinition;
 
+        public StaticSceneMessages StaticSceneMessages { get; }
+        public SceneShortInfo SceneShortInfo { get; }
+        public Vector3 BasePosition { get; }
+        public SceneAssetBundleManifest AssetBundleManifest { get; }
+
         public SceneData(
             ISceneContent sceneContent,
             IpfsTypes.SceneEntityDefinition sceneDefinition,
@@ -27,11 +32,6 @@ namespace SceneRunner.Scene
             SceneShortInfo = new SceneShortInfo(baseParcel, sceneDefinition.id);
             BasePosition = ParcelMathHelper.GetPositionByParcelPosition(SceneShortInfo.BaseParcel);
         }
-
-        public StaticSceneMessages StaticSceneMessages { get; }
-        public SceneShortInfo SceneShortInfo { get; }
-        public Vector3 BasePosition { get; }
-        public SceneAssetBundleManifest AssetBundleManifest { get; }
 
         public bool HasRequiredPermission(string permission)
         {

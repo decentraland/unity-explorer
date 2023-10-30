@@ -1,5 +1,4 @@
 ﻿using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.StreamableLoading.Tests;
 using NUnit.Framework;
 using UnityEngine;

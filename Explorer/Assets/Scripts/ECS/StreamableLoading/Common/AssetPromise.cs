@@ -66,7 +66,7 @@ namespace ECS.StreamableLoading.Common
 
         /// <summary>
         ///     Returns the result and deletes an entity if the loading is finished,
-        /// can't be consumed several times
+        ///     can't be consumed several times
         /// </summary>
         public bool TryConsume(World world, out StreamableLoadingResult<TAsset> result)
         {

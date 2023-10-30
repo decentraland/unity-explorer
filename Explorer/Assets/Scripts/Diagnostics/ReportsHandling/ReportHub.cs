@@ -61,7 +61,7 @@ namespace Diagnostics.ReportsHandling
         /// <param name="message">Message</param>
         /// <param name="reportToHandlers">Handlers to report to, All by default</param>
         [HideInCallstack]
-        [Conditional("UNITY_EDITOR"), Conditional("VERBOSE_LOGS")]
+        [Conditional("UNITY_EDITOR")] [Conditional("VERBOSE_LOGS")]
         public static void Log(ReportData reportData, object message, ReportHandler reportToHandlers = ReportHandler.All)
         {
             Instance.Log(LogType.Log, reportData, message, null, reportToHandlers);

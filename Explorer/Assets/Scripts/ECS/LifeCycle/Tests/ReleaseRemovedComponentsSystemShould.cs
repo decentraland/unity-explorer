@@ -10,15 +10,15 @@ namespace ECS.LifeCycle.Tests
     [TestFixture]
     public class ReleaseRemovedComponentsSystemShould : UnitySystemTestBase<ReleaseRemovedComponentsSystem>
     {
-        public class TestComponent1
-        {
-            public int v = Random.Range(0, 1000);
-        }
-
         [SetUp]
         public void SetUp()
         {
             system = new ReleaseRemovedComponentsSystem(world);
+        }
+
+        public class TestComponent1
+        {
+            public int v = Random.Range(0, 1000);
         }
 
         [Test]

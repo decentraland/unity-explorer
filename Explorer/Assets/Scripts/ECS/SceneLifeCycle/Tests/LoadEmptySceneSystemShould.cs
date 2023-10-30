@@ -55,7 +55,7 @@ namespace ECS.SceneLifeCycle.Tests
         [Test]
         public async Task LoadMapping()
         {
-            await loadEmptySceneSystemLogic.LoadMapping(CancellationToken.None);
+            await loadEmptySceneSystemLogic.LoadMappingAsync(CancellationToken.None);
 
             Assert.NotNull(loadEmptySceneSystemLogic.emptySceneData);
             Assert.That(loadEmptySceneSystemLogic.emptySceneData.Mappings.Count, Is.EqualTo(12));
@@ -80,7 +80,7 @@ namespace ECS.SceneLifeCycle.Tests
                 },
                 new[] { parcel }, true);
 
-            ISceneFacade facade = await loadEmptySceneSystemLogic.Flow(intent, partition, CancellationToken.None);
+            ISceneFacade facade = await loadEmptySceneSystemLogic.FlowAsync(intent, partition, CancellationToken.None);
             Assert.NotNull(facade);
         }
 
@@ -122,7 +122,7 @@ namespace ECS.SceneLifeCycle.Tests
 
             var facade = EmptySceneFacade.Create(args);
 
-            await facade.StartUpdateLoop(30, CancellationToken.None);
+            await facade.StartUpdateLoopAsync(30, CancellationToken.None);
 
             Assert.That(map.Count, Is.EqualTo(1));
 

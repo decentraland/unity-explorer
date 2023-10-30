@@ -34,7 +34,6 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         private Color randomHairColor;
         private Mesh avatarMesh;
 
-
         [SetUp]
         public async void Setup()
         {
@@ -77,7 +76,6 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             system = new AvatarInstantiatorSystem(world, budgetProvider, avatarPoolRegistry, materialPool, computeShaderPool,
                 new TextureArrayContainer(), Substitute.For<IWearableAssetsCache>(), new ComputeShaderSkinning(), new FixedComputeBufferHandler(10000, 4, 4));
-
         }
 
         private IWearable GetMockWearable(string materialName, string category)
@@ -132,7 +130,6 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             Assert.AreEqual(world.Get<AvatarShapeComponent>(avatarEntity).InstantiatedWearables[1].Instance.GetComponent<MeshRenderer>().material.GetColor(ComputeShaderConstants._BaseColour_ShaderID), randomSkinColor);
             Assert.AreEqual(world.Get<AvatarShapeComponent>(avatarEntity).InstantiatedWearables[2].Instance.GetComponent<MeshRenderer>().material.GetColor(ComputeShaderConstants._BaseColour_ShaderID), randomHairColor);
         }
-
 
         [Test]
         public async Task UpdateInstantiatedAvatar()

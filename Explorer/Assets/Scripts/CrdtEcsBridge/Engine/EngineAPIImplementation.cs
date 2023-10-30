@@ -17,7 +17,7 @@ using Utility.Multithreading;
 namespace CrdtEcsBridge.Engine
 {
     /// <summary>
-    /// Unique instance for each Scene Runtime
+    ///     Unique instance for each Scene Runtime
     /// </summary>
     public class EngineAPIImplementation : IEngineApi
     {
@@ -33,13 +33,13 @@ namespace CrdtEcsBridge.Engine
         private readonly ISceneExceptionsHandler exceptionsHandler;
         private readonly MutexSync mutexSync;
 
-        private byte[] lastSerializationBuffer;
-
         private readonly CustomSampler deserializeBatchSampler;
         private readonly CustomSampler worldSyncBufferSampler;
         private readonly CustomSampler outgoingMessagesSampler;
         private readonly CustomSampler crdtProcessMessagesSampler;
         private readonly CustomSampler applyBufferSampler;
+
+        private byte[] lastSerializationBuffer;
 
         private bool isDisposing;
 
@@ -73,6 +73,12 @@ namespace CrdtEcsBridge.Engine
             applyBufferSampler = CustomSampler.Create(nameof(ApplySyncCommandBuffer));
         }
 
+        public void Dispose()
+        {
+            ReleaseSerializationBuffer();
+            systemGroupsUpdateGate.Dispose();
+        }
+
         public ArraySegment<byte> CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory, bool returnData = true)
         {
             // TODO it's dirty, think how to do it better
@@ -95,15 +101,15 @@ namespace CrdtEcsBridge.Engine
             worldSyncBufferSampler.Begin();
 
             // as we no longer wait for a buffer to apply the thread should be frozen
-            var worldSyncBuffer = crdtWorldSynchronizer.GetSyncCommandBuffer();
+            IWorldSyncCommandBuffer worldSyncBuffer = crdtWorldSynchronizer.GetSyncCommandBuffer();
 
             // Reconcile CRDT state
             for (var i = 0; i < messages.Count; i++)
             {
                 crdtProcessMessagesSampler.Begin();
 
-                var message = messages[i];
-                var reconciliationResult = crdtProtocol.ProcessMessage(in message);
+                CRDTMessage message = messages[i];
+                CRDTReconciliationResult reconciliationResult = crdtProtocol.ProcessMessage(in message);
 
                 crdtProcessMessagesSampler.End();
 
@@ -202,7 +208,7 @@ namespace CrdtEcsBridge.Engine
             {
                 // Create CRDT Messages from the current state
                 // we know exactly how big the array should be
-                var messagesCount = crdtProtocol.GetMessagesCount();
+                int messagesCount = crdtProtocol.GetMessagesCount();
                 ProcessedCRDTMessage[] processedMessages = sharedPoolsProvider.GetSerializationCrdtMessagesPool(messagesCount);
 
                 int currentStatePayloadLength = crdtProtocol.CreateMessagesFromTheCurrentState(processedMessages);
@@ -247,8 +253,8 @@ namespace CrdtEcsBridge.Engine
         }
 
         /// <summary>
-        /// When the state or outgoing messages processed by the Scene Runtime we can safely return them to the pool.
-        /// It is guaranteed by the sequential order of `CrdtSendToRenderer`/`CrdtGetState` calls
+        ///     When the state or outgoing messages processed by the Scene Runtime we can safely return them to the pool.
+        ///     It is guaranteed by the sequential order of `CrdtSendToRenderer`/`CrdtGetState` calls
         /// </summary>
         private void ReleaseSerializationBuffer()
         {
@@ -257,12 +263,6 @@ namespace CrdtEcsBridge.Engine
                 sharedPoolsProvider.ReleaseSerializedStateBytesPool(lastSerializationBuffer);
                 lastSerializationBuffer = null;
             }
-        }
-
-        public void Dispose()
-        {
-            ReleaseSerializationBuffer();
-            systemGroupsUpdateGate.Dispose();
         }
     }
 }

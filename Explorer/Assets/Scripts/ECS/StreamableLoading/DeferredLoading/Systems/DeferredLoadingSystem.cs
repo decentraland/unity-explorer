@@ -31,7 +31,7 @@ namespace ECS.StreamableLoading.DeferredLoading
                .WithAll<TIntention, IPartitionComponent, StreamableLoadingState>()
                .WithNone<StreamableLoadingResult<TAsset>>();
 
-        protected override unsafe void Update(float t)
+        protected override void Update(float t)
         {
             loadingIntentions.Clear();
 
@@ -69,7 +69,7 @@ namespace ECS.StreamableLoading.DeferredLoading
             AnalyzeBudget();
         }
 
-        private unsafe void AnalyzeBudget()
+        private void AnalyzeBudget()
         {
             int i;
 

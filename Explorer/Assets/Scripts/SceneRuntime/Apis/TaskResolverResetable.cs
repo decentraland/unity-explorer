@@ -8,12 +8,12 @@ namespace SceneRuntime.Apis
     {
         private AutoResetUniTaskCompletionSource source;
 
+        public UniTask Task => source.Task;
+
         public void Reset()
         {
             source = AutoResetUniTaskCompletionSource.Create();
         }
-
-        public UniTask Task => source.Task;
 
         [UsedImplicitly]
         public void Completed()

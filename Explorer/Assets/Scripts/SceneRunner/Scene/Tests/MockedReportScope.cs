@@ -10,9 +10,8 @@ namespace SceneRunner.Scene.Tests
     /// </summary>
     public class MockedReportScope : IDisposable
     {
-        private readonly ReportHubLogger savedInstance;
-
         public readonly IReportHandler Mock;
+        private readonly ReportHubLogger savedInstance;
 
         public MockedReportScope()
         {

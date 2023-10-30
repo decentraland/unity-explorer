@@ -4,12 +4,12 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
-using DCL.AvatarRendering.AvatarShape.DemoScripts.UI;
 using DCL.AvatarRendering.AvatarShape.GPUSkinning;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
+using DCL.DebugUtilities.Builders;
 using DCL.ECSComponents;
 using ECS;
 using ECS.ComponentsPooling;
@@ -28,6 +28,7 @@ namespace DCL.PluginSystem.Global
 {
     public class AvatarPlugin : IDCLGlobalPlugin<AvatarPlugin.AvatarShapeSettings>
     {
+        private static readonly int GLOBAL_AVATAR_BUFFER = Shader.PropertyToID("_GlobalAvatarBuffer");
         private static readonly QueryDescription AVATARS_QUERY = new QueryDescription().WithAll<PBAvatarShape>().WithNone<PlayerComponent>();
 
         private readonly IAssetsProvisioner assetsProvisioner;
@@ -35,30 +36,38 @@ namespace DCL.PluginSystem.Global
         private readonly IConcurrentBudgetProvider frameTimeCapBudgetProvider;
         private readonly IRealmData realmData;
         private readonly TextureArrayContainer textureArrayContainer;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
 
         private readonly WearableAssetsCache wearableAssetsCache = new (3, 100);
 
-        private ProvidedInstance<AvatarInstantiatorView> avatarInstantiatorView;
         private IComponentPool<AvatarBase> avatarPoolRegistry;
 
         private IObjectPool<Material> celShadingMaterialPool;
         private IObjectPool<ComputeShader> computeShaderPool;
 
-        public AvatarPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner, IConcurrentBudgetProvider frameTimeCapBudgetProvider, IRealmData realmData)
+        public AvatarPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner,
+            IConcurrentBudgetProvider frameTimeCapBudgetProvider, IRealmData realmData,
+            IDebugContainerBuilder debugContainerBuilder)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudgetProvider = frameTimeCapBudgetProvider;
             this.realmData = realmData;
+            this.debugContainerBuilder = debugContainerBuilder;
             componentPoolsRegistry = poolsRegistry;
             textureArrayContainer = new TextureArrayContainer();
         }
 
-        public async UniTask Initialize(AvatarShapeSettings settings, CancellationToken ct)
+        public void Dispose()
         {
-            AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAsset(settings.avatarBase, ct: ct)).Value.GetComponent<AvatarBase>();
+            wearableAssetsCache.Dispose();
+        }
+
+        public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
+        {
+            AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.avatarBase, ct: ct)).Value.GetComponent<AvatarBase>();
             componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity));
 
-            ProvidedAsset<Material> providedMaterial = await assetsProvisioner.ProvideMainAsset(settings.celShadingMaterial, ct: ct);
+            ProvidedAsset<Material> providedMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.celShadingMaterial, ct: ct);
             celShadingMaterialPool = new ObjectPool<Material>(() => new Material(providedMaterial.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.defaultMaterialCapacity);
 
             for (var i = 0; i < settings.defaultMaterialCapacity; i++)
@@ -67,7 +76,7 @@ namespace DCL.PluginSystem.Global
                 celShadingMaterialPool.Release(prewarmedMaterial);
             }
 
-            ProvidedAsset<ComputeShader> providedComputeShader = await assetsProvisioner.ProvideMainAsset(settings.computeShader, ct: ct);
+            ProvidedAsset<ComputeShader> providedComputeShader = await assetsProvisioner.ProvideMainAssetAsync(settings.computeShader, ct: ct);
             computeShaderPool = new ObjectPool<ComputeShader>(() => Object.Instantiate(providedComputeShader.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.defaultMaterialCapacity);
 
             for (var i = 0; i < PoolConstants.COMPUTE_SHADER_COUNT; i++)
@@ -75,14 +84,12 @@ namespace DCL.PluginSystem.Global
                 ComputeShader prewarmedShader = computeShaderPool.Get();
                 computeShaderPool.Release(prewarmedShader);
             }
-
-            avatarInstantiatorView = await assetsProvisioner.ProvideInstance(settings.avatarInstantiatorViewRef, ct: ct);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             var vertOutBuffer = new FixedComputeBufferHandler(5_000_000, Unsafe.SizeOf<CustomSkinningVertexInfo>());
-            Shader.SetGlobalBuffer("_GlobalAvatarBuffer", vertOutBuffer.Buffer);
+            Shader.SetGlobalBuffer(GLOBAL_AVATAR_BUFFER, vertOutBuffer.Buffer);
 
             var skinningStrategy = new ComputeShaderSkinning();
 
@@ -97,12 +104,7 @@ namespace DCL.PluginSystem.Global
             FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy);
 
             //Debug scripts
-            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, avatarInstantiatorView.Value, realmData, AVATARS_QUERY);
-        }
-
-        public void Dispose()
-        {
-            wearableAssetsCache.Dispose();
+            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY);
         }
 
         [Serializable]
@@ -121,17 +123,6 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceComputeShader computeShader;
-
-            [field: Header(nameof(AvatarPlugin) + ".Debug")]
-            [field: Space]
-            [field: SerializeField]
-            public AvatarInstantiatorViewRef avatarInstantiatorViewRef { get; private set; }
-
-            [Serializable]
-            public class AvatarInstantiatorViewRef : ComponentReference<AvatarInstantiatorView>
-            {
-                public AvatarInstantiatorViewRef(string guid) : base(guid) { }
-            }
         }
     }
 }

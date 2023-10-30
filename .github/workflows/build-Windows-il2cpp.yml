@@ -33,6 +33,23 @@ jobs:
     runs-on: ${{ matrix.dockerImage }}
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (!github.event.pull_request.draft)
     steps:
+      - name: Set SHA env variable
+        run: |
+            $eventName = "${{ github.event_name }}"
+
+            if ($eventName -eq "push") {
+                $LONG_SHA = "${{ github.sha }}"
+                $SHORT_SHA = ($LONG_SHA).Substring(0, 7)
+                Add-Content -Value "CUSTOM_SHA=$SHORT_SHA" -Path $env:GITHUB_ENV
+                Write-Output $SHORT_SHA
+            }
+            elseif ($eventName -eq "pull_request") {
+                $LONG_SHA = "${{ github.event.pull_request.head.sha }}"
+                $SHORT_SHA = ($LONG_SHA).Substring(0, 7)
+                Add-Content -Value "CUSTOM_SHA=$SHORT_SHA" -Path $env:GITHUB_ENV
+                Write-Output $SHORT_SHA
+            }
+
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -71,12 +88,13 @@ jobs:
             echo "SENTRY_ENVIRONMENT=branch" >> "$GITHUB_ENV"
           fi
 
-      - uses: decentraland/unity-builder@0.1
+      - uses: decentraland/unity-builder@0.6
         id: build
         timeout-minutes: 120
         with:
           projectPath: Explorer
           targetPlatform: ${{ matrix.targetPlatform }}
+          versioning: Semantic
 
       # Upload artifact
       - name: Upload windows artifact

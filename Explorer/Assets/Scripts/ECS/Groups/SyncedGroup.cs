@@ -45,6 +45,12 @@ namespace ECS.Groups
             this.sceneStateProvider = sceneStateProvider;
         }
 
+        public override void Initialize()
+        {
+            using MutexSync.Scope scope = mutexSync.GetScope();
+            InitializeInternal();
+        }
+
         public override void BeforeUpdate(in float t, bool throttle)
         {
             if (sceneStateProvider.State != SceneState.Running)
@@ -76,12 +82,6 @@ namespace ECS.Groups
         {
             using MutexSync.Scope scope = mutexSync.GetScope();
             DisposeInternal();
-        }
-
-        public override void Initialize()
-        {
-            using MutexSync.Scope scope = mutexSync.GetScope();
-            InitializeInternal();
         }
     }
 }

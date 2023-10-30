@@ -7,7 +7,6 @@ namespace CrdtEcsBridge.Serialization
         void DeserializeInto(object instance, in ReadOnlySpan<byte> data);
 
         void SerializeInto(object model, in Span<byte> span);
-
     }
 
     public interface IComponentSerializer<in T> : IComponentSerializer where T: class, new()

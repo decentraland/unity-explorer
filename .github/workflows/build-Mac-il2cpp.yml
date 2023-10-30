@@ -23,6 +23,11 @@ jobs:
     name: Build
     runs-on: ${{ matrix.dockerImage }}
     steps:
+      - name: Set SHA env variable
+        run: |         
+            SHORT_SHA=$(git rev-parse --short ${{ github.sha }})
+            echo "CUSTOM_SHA=$SHORT_SHA" >> $GITHUB_ENV         
+            
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -61,7 +66,7 @@ jobs:
             echo "SENTRY_ENVIRONMENT=branch" >> "$GITHUB_ENV"
           fi
 
-      - uses: decentraland/unity-builder@0.1
+      - uses: decentraland/unity-builder@0.6
         id: build
         timeout-minutes: 120
         env:
@@ -71,6 +76,7 @@ jobs:
         with:
           projectPath: Explorer
           targetPlatform: ${{ matrix.targetPlatform }}
+          versioning: Semantic
           
       # Tar build files to maintain file permissions
       - name: Tar MacOSX/Linux build files

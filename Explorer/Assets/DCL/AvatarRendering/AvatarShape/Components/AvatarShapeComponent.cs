@@ -32,6 +32,5 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             SkinColor = skinColor;
             HairColor = hairColor;
         }
-
     }
 }

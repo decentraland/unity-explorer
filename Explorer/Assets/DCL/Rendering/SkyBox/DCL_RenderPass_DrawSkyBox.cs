@@ -1,34 +1,32 @@
-using System.Collections;
-using System.Collections.Generic;
+using Diagnostics.ReportsHandling;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using Diagnostics.ReportsHandling;
 
 public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeature
 {
     public class DCL_RenderPass_DrawSkyBox : ScriptableRenderPass
     {
-        // Debug
-        private ReportData m_ReportData = new ReportData("DCL_RenderPass_GenerateSkyBox", ReportHint.SessionStatic);
+        private enum ShaderPasses
+        {
+            Scenery = 0,
+            Sky = 1,
+        }
 
         //public static RTHandle k_CameraTarget
         private const string PROFILER_TAG = "Custom Pass: DrawSkyBox";
+
+        private const string SKYBOX_CUBEMAP_TEXTURE_NAME = "_SkyBox_Cubemap_Texture";
+        private static readonly int s_SkyBoxCubemapTextureID = Shader.PropertyToID(SKYBOX_CUBEMAP_TEXTURE_NAME);
+
+        // Debug
+        private readonly ReportData m_ReportData = new ("DCL_RenderPass_GenerateSkyBox", ReportHint.SessionStatic);
         private Material m_Material_Draw;
         private ProceduralSkyBoxSettings_Draw m_Settings_Draw;
         private RTHandle m_SkyBoxCubeMap_RTHandle;
         private RTHandle m_cameraColorTarget_RTHandle;
         private RTHandle m_cameraDepthTarget_RTHandle;
-        private Mesh m_cubeMesh = null;
-
-        private const string SKYBOX_CUBEMAP_TEXTURE_NAME = "_SkyBox_Cubemap_Texture";
-        private static readonly int s_SkyBoxCubemapTextureID = Shader.PropertyToID(SKYBOX_CUBEMAP_TEXTURE_NAME);
-
-        private enum ShaderPasses
-        {
-            Scenery = 0,
-            Sky = 1
-        }
+        private Mesh m_cubeMesh;
 
         internal DCL_RenderPass_DrawSkyBox()
         {
@@ -37,11 +35,11 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
 
         internal void Setup(ProceduralSkyBoxSettings_Draw _featureSettings, Material _material, RTHandle _cameraColorTarget, RTHandle _cameraDepthTarget, RTHandle _SkyBox_Cubemap_Texture)
         {
-            this.m_Material_Draw = _material;
-            this.m_Settings_Draw = _featureSettings;
-            this.m_cameraColorTarget_RTHandle = _cameraColorTarget;
-            this.m_cameraDepthTarget_RTHandle = _cameraDepthTarget;
-            this.m_SkyBoxCubeMap_RTHandle = _SkyBox_Cubemap_Texture;
+            m_Material_Draw = _material;
+            m_Settings_Draw = _featureSettings;
+            m_cameraColorTarget_RTHandle = _cameraColorTarget;
+            m_cameraDepthTarget_RTHandle = _cameraDepthTarget;
+            m_SkyBoxCubeMap_RTHandle = _SkyBox_Cubemap_Texture;
         }
 
         // This method is called before executing the render pass.
@@ -49,10 +47,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         // When empty this render pass will render to the active camera render target.
         // You should never call CommandBuffer.SetRenderTarget. Instead call <c>ConfigureTarget</c> and <c>ConfigureClear</c>.
         // The render pipeline will ensure target setup and clearing happens in a performant manner.
-        public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
-        {
-
-        }
+        public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData) { }
 
         public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
         {
@@ -65,17 +60,19 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         // You don't have to call ScriptableRenderContext.submit, the render pipeline will call it at specific points in the pipeline.
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
-            if (this.m_Material_Draw == null)
+            if (m_Material_Draw == null)
             {
-                ReportHub.LogError(this.m_ReportData, $"{GetType().Name}.Execute(): Missing material. DCL_RenderPass_DrawSkyBox pass will not execute. Check for missing reference in the renderer resources.");
+                ReportHub.LogError(m_ReportData, $"{GetType().Name}.Execute(): Missing material. DCL_RenderPass_DrawSkyBox pass will not execute. Check for missing reference in the renderer resources.");
                 return;
             }
 
             CommandBuffer cmd = CommandBufferPool.Get();
+
             using (new ProfilingScope(cmd, new ProfilingSampler(PROFILER_TAG)))
             {
-                CoreUtils.SetRenderTarget(cmd, this.m_cameraColorTarget_RTHandle, this.m_cameraDepthTarget_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.Unknown, depthSlice: -1);
-                cmd.SetGlobalTexture(s_SkyBoxCubemapTextureID, this.m_SkyBoxCubeMap_RTHandle);
+                CoreUtils.SetRenderTarget(cmd, m_cameraColorTarget_RTHandle, m_cameraDepthTarget_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.Unknown, depthSlice: -1);
+                cmd.SetGlobalTexture(s_SkyBoxCubemapTextureID, m_SkyBoxCubeMap_RTHandle);
+
                 //cmd.DrawMesh(m_cubeMesh, Matrix4x4.identity, m_Material_Draw, submeshIndex: 0, (int)ShaderPasses.Scenery, properties: null);
                 cmd.DrawMesh(GetCube(), Matrix4x4.identity, m_Material_Draw, submeshIndex: 0, (int)ShaderPasses.Sky, properties: null);
             }
@@ -85,15 +82,12 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         }
 
         // Cleanup any allocated resources that were created during the execution of this render pass.
-        public override void OnCameraCleanup(CommandBuffer cmd)
-        {
-
-        }
+        public override void OnCameraCleanup(CommandBuffer cmd) { }
 
         public void dispose()
         {
-            this.m_SkyBoxCubeMap_RTHandle?.Release();
-            this.m_cubeMesh = null;
+            m_SkyBoxCubeMap_RTHandle?.Release();
+            m_cubeMesh = null;
         }
 
         private Vector3[] GetVertices()
@@ -101,28 +95,34 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             float cubeLength = 100000;
             float cubeWidth = 100000;
             float cubeHeight = 100000;
-            Vector3 vertice_0 = new Vector3 (-cubeLength * .5f, -cubeWidth * .5f, cubeHeight * .5f);
-            Vector3 vertice_1 = new Vector3 (cubeLength * .5f, -cubeWidth * .5f, cubeHeight * .5f);
-            Vector3 vertice_2 = new Vector3 (cubeLength * .5f, -cubeWidth * .5f, -cubeHeight * .5f);
-            Vector3 vertice_3 = new Vector3 (-cubeLength * .5f, -cubeWidth * .5f, -cubeHeight * .5f);
-            Vector3 vertice_4 = new Vector3 (-cubeLength * .5f, cubeWidth * .5f, cubeHeight * .5f);
-            Vector3 vertice_5 = new Vector3 (cubeLength * .5f, cubeWidth * .5f, cubeHeight * .5f);
-            Vector3 vertice_6 = new Vector3 (cubeLength * .5f, cubeWidth * .5f, -cubeHeight * .5f);
-            Vector3 vertice_7 = new Vector3 (-cubeLength * .5f, cubeWidth * .5f, -cubeHeight * .5f);
-            Vector3[] vertices = new Vector3[]
+            var vertice_0 = new Vector3(-cubeLength * .5f, -cubeWidth * .5f, cubeHeight * .5f);
+            var vertice_1 = new Vector3(cubeLength * .5f, -cubeWidth * .5f, cubeHeight * .5f);
+            var vertice_2 = new Vector3(cubeLength * .5f, -cubeWidth * .5f, -cubeHeight * .5f);
+            var vertice_3 = new Vector3(-cubeLength * .5f, -cubeWidth * .5f, -cubeHeight * .5f);
+            var vertice_4 = new Vector3(-cubeLength * .5f, cubeWidth * .5f, cubeHeight * .5f);
+            var vertice_5 = new Vector3(cubeLength * .5f, cubeWidth * .5f, cubeHeight * .5f);
+            var vertice_6 = new Vector3(cubeLength * .5f, cubeWidth * .5f, -cubeHeight * .5f);
+            var vertice_7 = new Vector3(-cubeLength * .5f, cubeWidth * .5f, -cubeHeight * .5f);
+
+            Vector3[] vertices =
             {
-            // Bottom Polygon
-            vertice_0, vertice_1, vertice_2, vertice_3,
-            // Left Polygon
-            vertice_7, vertice_4, vertice_0, vertice_3,
-            // Front Polygon
-            vertice_4, vertice_5, vertice_1, vertice_0,
-            // Back Polygon
-            vertice_6, vertice_7, vertice_3, vertice_2,
-            // Right Polygon
-            vertice_5, vertice_6, vertice_2, vertice_1,
-            // Top Polygon
-            vertice_7, vertice_6, vertice_5, vertice_4
+                // Bottom Polygon
+                vertice_0, vertice_1, vertice_2, vertice_3,
+
+                // Left Polygon
+                vertice_7, vertice_4, vertice_0, vertice_3,
+
+                // Front Polygon
+                vertice_4, vertice_5, vertice_1, vertice_0,
+
+                // Back Polygon
+                vertice_6, vertice_7, vertice_3, vertice_2,
+
+                // Right Polygon
+                vertice_5, vertice_6, vertice_2, vertice_1,
+
+                // Top Polygon
+                vertice_7, vertice_6, vertice_5, vertice_4,
             };
 
             return vertices;
@@ -137,7 +137,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             Vector3 left = Vector3.left;
             Vector3 right = Vector3.right;
 
-            Vector3[] normales = new Vector3[]
+            Vector3[] normales =
             {
                 // Bottom Side Render
                 down, down, down, down,
@@ -155,7 +155,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
                 right, right, right, right,
 
                 // UP Side Render
-                up, up, up, up
+                up, up, up, up,
             };
 
             return normales;
@@ -163,22 +163,28 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
 
         private Vector2[] GetUVsMap()
         {
-            Vector2 _00_CORDINATES = new Vector2 (0f, 0f);
-            Vector2 _10_CORDINATES = new Vector2 (1f, 0f);
-            Vector2 _01_CORDINATES = new Vector2 (0f, 1f);
-            Vector2 _11_CORDINATES = new Vector2 (1f, 1f);
-            Vector2[] uvs = new Vector2[]
+            var _00_CORDINATES = new Vector2(0f, 0f);
+            var _10_CORDINATES = new Vector2(1f, 0f);
+            var _01_CORDINATES = new Vector2(0f, 1f);
+            var _11_CORDINATES = new Vector2(1f, 1f);
+
+            Vector2[] uvs =
             {
                 // Bottom
                 _11_CORDINATES, _01_CORDINATES, _00_CORDINATES, _10_CORDINATES,
+
                 // Left
                 _11_CORDINATES, _01_CORDINATES, _00_CORDINATES, _10_CORDINATES,
+
                 // Front
                 _11_CORDINATES, _01_CORDINATES, _00_CORDINATES, _10_CORDINATES,
+
                 // Back
                 _11_CORDINATES, _01_CORDINATES, _00_CORDINATES, _10_CORDINATES,
+
                 // Right
                 _11_CORDINATES, _01_CORDINATES, _00_CORDINATES, _10_CORDINATES,
+
                 // Top
                 _11_CORDINATES, _01_CORDINATES, _00_CORDINATES, _10_CORDINATES,
             };
@@ -188,26 +194,31 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
 
         private int[] GetTriangles()
         {
-            int[] triangles = new int[]
+            int[] triangles =
             {
                 // Cube Bottom Side Triangles
                 3, 1, 0,
                 3, 2, 1,
+
                 // Cube Left Side Triangles
-                3 + 4 * 1, 1 + 4 * 1, 0 + 4 * 1,
-                3 + 4 * 1, 2 + 4 * 1, 1 + 4 * 1,
+                3 + (4 * 1), 1 + (4 * 1), 0 + (4 * 1),
+                3 + (4 * 1), 2 + (4 * 1), 1 + (4 * 1),
+
                 // Cube Front Side Triangles
-                3 + 4 * 2, 1 + 4 * 2, 0 + 4 * 2,
-                3 + 4 * 2, 2 + 4 * 2, 1 + 4 * 2,
+                3 + (4 * 2), 1 + (4 * 2), 0 + (4 * 2),
+                3 + (4 * 2), 2 + (4 * 2), 1 + (4 * 2),
+
                 // Cube Back Side Triangles
-                3 + 4 * 3, 1 + 4 * 3, 0 + 4 * 3,
-                3 + 4 * 3, 2 + 4 * 3, 1 + 4 * 3,
+                3 + (4 * 3), 1 + (4 * 3), 0 + (4 * 3),
+                3 + (4 * 3), 2 + (4 * 3), 1 + (4 * 3),
+
                 // Cube Rigth Side Triangles
-                3 + 4 * 4, 1 + 4 * 4, 0 + 4 * 4,
-                3 + 4 * 4, 2 + 4 * 4, 1 + 4 * 4,
+                3 + (4 * 4), 1 + (4 * 4), 0 + (4 * 4),
+                3 + (4 * 4), 2 + (4 * 4), 1 + (4 * 4),
+
                 // Cube Top Side Triangles
-                3 + 4 * 5, 1 + 4 * 5, 0 + 4 * 5,
-                3 + 4 * 5, 2 + 4 * 5, 1 + 4 * 5,
+                3 + (4 * 5), 1 + (4 * 5), 0 + (4 * 5),
+                3 + (4 * 5), 2 + (4 * 5), 1 + (4 * 5),
             };
 
             return triangles;
@@ -215,23 +226,23 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
 
         private void MakeCube()
         {
-            if (this.m_cubeMesh == null)
+            if (m_cubeMesh == null)
             {
-                this.m_cubeMesh = new Mesh();
-                this.m_cubeMesh.vertices = GetVertices();
-                this.m_cubeMesh.normals = GetNormals();
-                this.m_cubeMesh.uv = GetUVsMap();
-                this.m_cubeMesh.triangles = GetTriangles();
-                this.m_cubeMesh.RecalculateBounds();
-                this.m_cubeMesh.RecalculateNormals();
-                this.m_cubeMesh.Optimize();
+                m_cubeMesh = new Mesh();
+                m_cubeMesh.vertices = GetVertices();
+                m_cubeMesh.normals = GetNormals();
+                m_cubeMesh.uv = GetUVsMap();
+                m_cubeMesh.triangles = GetTriangles();
+                m_cubeMesh.RecalculateBounds();
+                m_cubeMesh.RecalculateNormals();
+                m_cubeMesh.Optimize();
             }
         }
 
         private Mesh GetCube()
         {
             MakeCube();
-            return this.m_cubeMesh;
+            return m_cubeMesh;
         }
     }
 }
