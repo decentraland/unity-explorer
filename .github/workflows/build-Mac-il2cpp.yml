@@ -26,7 +26,21 @@ jobs:
       - name: Set SHA env variable
         run: |         
             SHORT_SHA=$(git rev-parse --short ${{ github.sha }})
-            echo "CUSTOM_SHA=$SHORT_SHA" >> $GITHUB_ENV         
+            echo "CUSTOM_SHA=$SHORT_SHA" >> $GITHUB_ENV
+          
+      - name: Set sentry env var
+        run: |
+          $branchName = "${{ github.ref }}"
+          $SENTRY_ENVIRONMENT = "branch"
+          
+          if ($branchName -eq 'refs/heads/main') {
+            $SENTRY_ENVIRONMENT = "production"
+          } elseif ($branchName -eq 'refs/heads/dev') {
+            $SENTRY_ENVIRONMENT = "development"
+          }
+          
+          Add-Content -Value "SENTRY_ENVIRONMENT=$SENTRY_ENVIRONMENT" -Path $env:GITHUB_ENV
+          Write-Output $SENTRY_ENVIRONMENT
             
       - name: Checkout code
         uses: actions/checkout@v3
@@ -56,20 +70,6 @@ jobs:
             !Explorer/Library/BuildPlayerData/**
           key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
           
-      - name: Set sentry vars
-        run: |
-          $branchName = "${{ github.ref }}"
-          $SENTRY_ENVIRONMENT = "branch"
-          
-          if ($branchName -eq 'refs/heads/main') {
-            $SENTRY_ENVIRONMENT = "production"
-          } elseif ($branchName -eq 'refs/heads/dev') {
-            $SENTRY_ENVIRONMENT = "development"
-          }
-          
-          Add-Content -Value "SENTRY_ENVIRONMENT=$SENTRY_ENVIRONMENT" -Path $env:GITHUB_ENV
-          Write-Output $SENTRY_ENVIRONMENT
-
       - uses: decentraland/unity-builder@0.6
         id: build
         timeout-minutes: 120
