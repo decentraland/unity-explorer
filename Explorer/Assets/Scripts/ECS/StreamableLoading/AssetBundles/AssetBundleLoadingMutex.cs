@@ -13,13 +13,19 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleLoadingMutex
     {
-        private bool assetsAreBeingLoaded;
-
         private readonly Func<bool> waitWhile;
+        private bool assetsAreBeingLoaded;
 
         public AssetBundleLoadingMutex()
         {
             waitWhile = () => assetsAreBeingLoaded;
+        }
+
+        public async UniTask<LoadingRegion> AcquireAsync(CancellationToken ct)
+        {
+            await UniTask.WaitWhile(waitWhile, cancellationToken: ct);
+            assetsAreBeingLoaded = true;
+            return LoadingRegion.Enter(this);
         }
 
         public struct LoadingRegion : IDisposable
@@ -38,13 +44,6 @@ namespace ECS.StreamableLoading.AssetBundles
             {
                 mutex.assetsAreBeingLoaded = false;
             }
-        }
-
-        public async UniTask<LoadingRegion> Acquire(CancellationToken ct)
-        {
-            await UniTask.WaitWhile(waitWhile, cancellationToken: ct);
-            assetsAreBeingLoaded = true;
-            return LoadingRegion.Enter(this);
         }
     }
 }

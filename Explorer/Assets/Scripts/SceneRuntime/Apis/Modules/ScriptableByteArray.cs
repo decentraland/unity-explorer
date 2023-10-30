@@ -7,13 +7,25 @@ namespace SceneRuntime.Apis.Modules
 {
     public class ScriptableByteArray : IScriptableEnumerator<byte>
     {
+        public static readonly ScriptableByteArray EMPTY = new (Array.Empty<byte>());
         private readonly IEnumerator<byte> enumerator;
 
-        public static readonly ScriptableByteArray EMPTY = new (Array.Empty<byte>());
+        public byte Current => enumerator.Current;
+
+        public byte ScriptableCurrent => Current;
+
+        object IEnumerator.Current => Current;
+
+        object IScriptableEnumerator.ScriptableCurrent => ScriptableCurrent;
 
         public ScriptableByteArray(ArraySegment<byte> array)
         {
             enumerator = array.GetEnumerator();
+        }
+
+        public void Dispose()
+        {
+            enumerator.Dispose();
         }
 
         public bool MoveNext() =>
@@ -24,15 +36,6 @@ namespace SceneRuntime.Apis.Modules
             enumerator.Reset();
         }
 
-        public byte Current => enumerator.Current;
-
-        object IEnumerator.Current => Current;
-
-        public void Dispose()
-        {
-            enumerator.Dispose();
-        }
-
         public bool ScriptableMoveNext() =>
             MoveNext();
 
@@ -40,9 +43,5 @@ namespace SceneRuntime.Apis.Modules
         {
             Dispose();
         }
-
-        public byte ScriptableCurrent => Current;
-
-        object IScriptableEnumerator.ScriptableCurrent => ScriptableCurrent;
     }
 }

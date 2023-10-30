@@ -15,6 +15,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
+using Utility;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Systems
@@ -34,7 +35,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             this.assetBundleURL = assetBundleURL;
         }
 
-        protected override async UniTask<StreamableLoadingResult<SceneAssetBundleManifest>> FlowInternal(GetWearableAssetBundleManifestIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<SceneAssetBundleManifest>> FlowInternalAsync(GetWearableAssetBundleManifestIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             urlBuilder.Clear();
 

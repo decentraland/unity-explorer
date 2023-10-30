@@ -10,14 +10,14 @@ using System.Collections.Generic;
 namespace CrdtEcsBridge.WorldSynchronizer
 {
     /// <summary>
-    /// Merges CRDT Messages to their final state
-    /// to execute deserialize and execute them only once in the ECS World.
-    /// Can't be executed concurrently
+    ///     Merges CRDT Messages to their final state
+    ///     to execute deserialize and execute them only once in the ECS World.
+    ///     Can't be executed concurrently
     /// </summary>
     public class WorldSyncCommandBuffer : IWorldSyncCommandBuffer
     {
         /// <summary>
-        /// Represents the final state of the operation on (entity, component)
+        ///     Represents the final state of the operation on (entity, component)
         /// </summary>
         private static readonly Dictionary<ReconciliationState, CRDTReconciliationEffect> MERGE_MATRIX =
             new ()
@@ -55,32 +55,44 @@ namespace CrdtEcsBridge.WorldSynchronizer
         private bool deserialized;
 
         /// <summary>
-        /// Can't contain a public ctor as should be instantiated within the assembly
+        ///     Can't contain a public ctor as should be instantiated within the assembly
         /// </summary>
         internal WorldSyncCommandBuffer(ISDKComponentsRegistry componentsRegistry, ISceneEntityFactory entityFactory, WorldSyncCommandBufferCollectionsPool collectionsPool)
         {
             batchStates = collectionsPool.GetMainDictionary();
             deletedEntities = collectionsPool.GetDeletedEntities();
 
-            this.sdkComponentsRegistry = componentsRegistry;
+            sdkComponentsRegistry = componentsRegistry;
             this.entityFactory = entityFactory;
             this.collectionsPool = collectionsPool;
         }
 
+        public void Dispose()
+        {
+            if (finalized) return;
+
+            foreach (Dictionary<int, BatchState> componentsBatch in batchStates.Values) ReleaseBatchStateDictionary(componentsBatch);
+
+            collectionsPool.ReleaseMainDictionary(batchStates);
+            collectionsPool.ReleaseDeletedEntities(deletedEntities);
+
+            finalized = true;
+        }
+
         /// <summary>
-        /// For tests only
+        ///     For tests only
         /// </summary>
         internal CRDTReconciliationEffect GetLastState(CRDTEntity entity, int componentId) =>
-            batchStates.TryGetValue(entity, out var componentsBatch) &&
-            componentsBatch.TryGetValue(componentId, out var batchState)
+            batchStates.TryGetValue(entity, out Dictionary<int, BatchState> componentsBatch) &&
+            componentsBatch.TryGetValue(componentId, out BatchState batchState)
                 ? batchState.reconciliationState.Last
                 : CRDTReconciliationEffect.NoChanges;
 
         /// <summary>
-        /// Add messages in the order they are processed by CRDT
-        /// This sync function is for ECS syncing and it heavily relies on the proper result from the CRDT Protocol
+        ///     Add messages in the order they are processed by CRDT
+        ///     This sync function is for ECS syncing and it heavily relies on the proper result from the CRDT Protocol
         /// </summary>
-        /// <returns>The last status corresponding to the (<see cref="CRDTMessage.EntityId"/>, <see cref="CRDTMessage.ComponentId"/>)</returns>
+        /// <returns>The last status corresponding to the (<see cref="CRDTMessage.EntityId" />, <see cref="CRDTMessage.ComponentId" />)</returns>
         public CRDTReconciliationEffect SyncCRDTMessage(in CRDTMessage message, CRDTReconciliationEffect reconciliationEffect)
         {
             if (finalized)
@@ -94,7 +106,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
                     // Just delete the batch
                     // CRDT guarantees that once entity is deleted no more components will be added to it (it can't revive)
-                    if (batchStates.TryGetValue(message.EntityId, out var componentsBatch))
+                    if (batchStates.TryGetValue(message.EntityId, out Dictionary<int, BatchState> componentsBatch))
                     {
                         ReleaseBatchStateDictionary(componentsBatch);
                         batchStates.Remove(message.EntityId);
@@ -105,7 +117,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
                 case CRDTReconciliationEffect.ComponentDeleted:
                 case CRDTReconciliationEffect.ComponentModified:
 
-                    if (!sdkComponentsRegistry.TryGet(message.ComponentId, out var sdkComponentBridge))
+                    if (!sdkComponentsRegistry.TryGet(message.ComponentId, out SDKComponentBridge sdkComponentBridge))
                     {
                         // ReportHub.LogWarning(ReportCategory.CRDT_ECS_BRIDGE, $"SDK Component {message.ComponentId} is not registered");
                         return CRDTReconciliationEffect.NoChanges;
@@ -115,7 +127,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
                     bool componentBatchExists;
 
                     if ((componentBatchExists = batchStates.TryGetValue(message.EntityId, out componentsBatch))
-                        && componentsBatch.TryGetValue(message.ComponentId, out var state))
+                        && componentsBatch.TryGetValue(message.ComponentId, out BatchState state))
                     {
                         // take the first one, override the last one
                         state.reconciliationState = new ReconciliationState(state.reconciliationState.First, reconciliationEffect);
@@ -130,9 +142,9 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
                     // the first and the last are the same
                     // take the component from the pool
-                    var batchState = BatchState.POOL.Get();
+                    BatchState batchState = BatchState.POOL.Get();
                     batchState.crdtMessage = message;
-                    batchState.reconciliationState = new (reconciliationEffect, reconciliationEffect);
+                    batchState.reconciliationState = new ReconciliationState(reconciliationEffect, reconciliationEffect);
                     batchState.sdkComponentBridge = sdkComponentBridge;
                     componentsBatch[message.ComponentId] = batchState;
                     return reconciliationEffect;
@@ -142,9 +154,9 @@ namespace CrdtEcsBridge.WorldSynchronizer
         }
 
         /// <summary>
-        /// Resolves the final state of (entity, component) <br/>
-        /// Deserializes only the last state of the component <br/>
-        /// Should be called from the background thread <br/>
+        ///     Resolves the final state of (entity, component) <br />
+        ///     Deserializes only the last state of the component <br />
+        ///     Should be called from the background thread <br />
         /// </summary>
         public void FinalizeAndDeserialize()
         {
@@ -158,17 +170,17 @@ namespace CrdtEcsBridge.WorldSynchronizer
                 // Indicator if there were any changes after the full reconciliation
                 var containsAnyChanges = false;
 
-                foreach (var batchState in componentsBatch.Values)
+                foreach (BatchState batchState in componentsBatch.Values)
                 {
-                    var finalState = MERGE_MATRIX[batchState.reconciliationState];
+                    CRDTReconciliationEffect finalState = MERGE_MATRIX[batchState.reconciliationState];
 
                     // just override with the final state
                     batchState.reconciliationState = new ReconciliationState(finalState, finalState);
 
                     if (finalState != CRDTReconciliationEffect.ComponentDeleted)
                     {
-                        var bridge = batchState.sdkComponentBridge;
-                        var deserializationTarget = batchState.sdkComponentBridge.Pool.Rent();
+                        SDKComponentBridge bridge = batchState.sdkComponentBridge;
+                        object deserializationTarget = batchState.sdkComponentBridge.Pool.Rent();
                         bridge.Serializer.DeserializeInto(deserializationTarget, batchState.crdtMessage.Data.Memory.Span);
                         batchState.deserializationTarget = deserializationTarget;
                     }
@@ -197,9 +209,9 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
             try
             {
-                foreach (var deletedEntity in deletedEntities)
+                foreach (CRDTEntity deletedEntity in deletedEntities)
                 {
-                    if (entitiesMap.TryGetValue(deletedEntity, out var entity))
+                    if (entitiesMap.TryGetValue(deletedEntity, out Entity entity))
                     {
                         // let components dispose if the entity was deleted
                         commandBuffer.Add(entity, new DeleteEntityIntention());
@@ -208,7 +220,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
                 }
 
                 // we have final state and deserialized component already
-                foreach (var (entity, componentsBatch) in batchStates)
+                foreach ((CRDTEntity entity, Dictionary<int, BatchState> componentsBatch) in batchStates)
                 {
                     // we have to create the entity if it doesn't exist directly
                     // not via CommandBuffer as we need to map it as there will be no other moment to do it
@@ -223,10 +235,10 @@ namespace CrdtEcsBridge.WorldSynchronizer
                         continue;
                     }
 
-                    if (!entitiesMap.TryGetValue(entity, out var realEntity))
+                    if (!entitiesMap.TryGetValue(entity, out Entity realEntity))
                         entitiesMap[entity] = realEntity = entityFactory.Create(entity, world);
 
-                    foreach (var batchState in componentsBatch.Values)
+                    foreach (BatchState batchState in componentsBatch.Values)
                     {
                         if (batchState.reconciliationState.Last == CRDTReconciliationEffect.NoChanges)
                             continue;
@@ -245,7 +257,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
         }
 
         /// <summary>
-        /// <inheritdoc cref="IWorldSyncCommandBuffer.Apply"/>
+        ///     <inheritdoc cref="IWorldSyncCommandBuffer.Apply" />
         /// </summary>
         void IWorldSyncCommandBuffer.Apply(World world, PersistentCommandBuffer commandBuffer, Dictionary<CRDTEntity, Entity> entitiesMap)
         {
@@ -258,18 +270,6 @@ namespace CrdtEcsBridge.WorldSynchronizer
                 BatchState.POOL.Release(batchState);
 
             collectionsPool.ReleaseInnerDictionary(inner);
-        }
-
-        public void Dispose()
-        {
-            if (finalized) return;
-
-            foreach (Dictionary<int, BatchState> componentsBatch in batchStates.Values) ReleaseBatchStateDictionary(componentsBatch);
-
-            collectionsPool.ReleaseMainDictionary(batchStates);
-            collectionsPool.ReleaseDeletedEntities(deletedEntities);
-
-            finalized = true;
         }
     }
 }

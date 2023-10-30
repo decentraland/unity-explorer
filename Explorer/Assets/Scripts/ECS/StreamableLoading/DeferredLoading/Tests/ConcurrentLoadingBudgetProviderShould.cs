@@ -11,7 +11,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
         public void SpendBudget()
         {
             // Arrange
-            int initialBudget = 1;
+            var initialBudget = 1;
             var budgetProvider = new ConcurrentLoadingBudgetProvider(initialBudget);
 
             // Assert
@@ -23,7 +23,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
         public void RefillBudget()
         {
             // Arrange
-            int initialBudget = 1;
+            var initialBudget = 1;
             var budgetProvider = new ConcurrentLoadingBudgetProvider(initialBudget);
 
             // Assert
@@ -41,7 +41,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
         public void BudgetOverflowThrown()
         {
             // Arrange
-            int initialBudget = 1;
+            var initialBudget = 1;
             var budgetProvider = new ConcurrentLoadingBudgetProvider(initialBudget);
 
             // Assert

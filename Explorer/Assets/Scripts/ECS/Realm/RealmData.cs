@@ -11,16 +11,6 @@ namespace ECS
         private IIpfsRealm ipfs;
         private bool scenesAreFixed;
 
-        /// <summary>
-        ///     Create an empty data to configure later
-        /// </summary>
-        public RealmData() { }
-
-        public RealmData(IIpfsRealm ipfsRealm)
-        {
-            Reconfigure(ipfsRealm);
-        }
-
         public bool Configured { get; private set; }
 
         public IIpfsRealm Ipfs
@@ -39,6 +29,16 @@ namespace ECS
                 Validate();
                 return scenesAreFixed;
             }
+        }
+
+        /// <summary>
+        ///     Create an empty data to configure later
+        /// </summary>
+        public RealmData() { }
+
+        public RealmData(IIpfsRealm ipfsRealm)
+        {
+            Reconfigure(ipfsRealm);
         }
 
         public void Reconfigure(IIpfsRealm ipfsRealm)

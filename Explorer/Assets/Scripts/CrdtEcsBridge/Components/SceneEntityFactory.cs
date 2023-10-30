@@ -6,7 +6,7 @@ using System;
 namespace CrdtEcsBridge.Components
 {
     /// <summary>
-    /// Handles an archetype for special entities
+    ///     Handles an archetype for special entities
     /// </summary>
     public class SceneEntityFactory : ISceneEntityFactory
     {

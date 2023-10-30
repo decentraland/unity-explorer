@@ -9,7 +9,9 @@ using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.Unity.ColorComponent;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<
+    DCL.AvatarRendering.Wearables.Components.IWearable[],
+    DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {

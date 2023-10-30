@@ -22,11 +22,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 8db46845fb5f52f44a71c2a0c2d92074
-    m_Address: AvatarBase
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 9776466c722cb644c914ee056b28d232
     m_Address: Idle
     m_ReadOnly: 0
@@ -37,11 +32,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: fdc0ac72e84d9534eafd826d7fdfb22a
-    m_Address: AvatarDebugView
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3662049975e2d0549a312769ab17ad07
     m_Address: PlayerAnimator
     m_ReadOnly: 0
@@ -49,6 +39,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: aab64a77806b44a43b6f5d0da6de94c6
     m_Address: RandomAnimator
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8db46845fb5f52f44a71c2a0c2d92074
+    m_Address: AvatarBase
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

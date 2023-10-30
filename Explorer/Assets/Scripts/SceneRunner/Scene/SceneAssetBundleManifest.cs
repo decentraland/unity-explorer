@@ -10,12 +10,14 @@ namespace SceneRunner.Scene
     public class SceneAssetBundleManifest
     {
         public static readonly SceneAssetBundleManifest NULL = new ();
+        internal readonly SceneAbDto dto;
 
         private readonly URLDomain assetBundlesBaseUrl;
         private readonly HashSet<string> convertedFiles;
-        internal readonly SceneAbDto dto;
 
         private readonly string versionHashPart;
+
+        public IReadOnlyCollection<string> ConvertedFiles => convertedFiles;
 
         public SceneAssetBundleManifest(URLDomain assetBundlesBaseUrl, SceneAbDto dto)
         {
@@ -25,8 +27,6 @@ namespace SceneRunner.Scene
 
             versionHashPart = string.IsNullOrEmpty(dto.Version) ? ComputeVersionedHashPart(assetBundlesBaseUrl) : dto.Version;
         }
-
-        public IReadOnlyCollection<string> ConvertedFiles => convertedFiles;
 
         /// <summary>
         ///     Null implementation with no bundles provided

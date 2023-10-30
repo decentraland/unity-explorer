@@ -36,7 +36,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             for (var i = 0; i < definition.metadata.scene.parcels.Count; i++)
             {
-                var parcel = IpfsHelper.DecodePointer(definition.metadata.scene.parcels[i]);
+                Vector2Int parcel = IpfsHelper.DecodePointer(definition.metadata.scene.parcels[i]);
                 parcels[i] = parcel;
 
                 if (!processedParcels.Add(parcel.ToInt2()))

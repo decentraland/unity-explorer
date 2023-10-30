@@ -209,8 +209,6 @@ namespace Utility.Primitives
             PrimitivesBuffersPool.TRIANGLES.Return(tris);
         }
 
-        public static void Update(ref Mesh mesh, float getTopRadius, float getBottomRadius)
-        {
-        }
+        public static void Update(ref Mesh mesh, float getTopRadius, float getBottomRadius) { }
     }
 }

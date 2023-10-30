@@ -7,7 +7,7 @@ using System.Threading.Tasks.Sources;
 namespace Utility.Tasks
 {
     /// <summary>
-    /// see https://source.dot.net/#System.Net.Quic/System/Net/Quic/Internal/ResettableValueTaskSource.cs
+    ///     see https://source.dot.net/#System.Net.Quic/System/Net/Quic/Internal/ResettableValueTaskSource.cs
     /// </summary>
     public class AutoResetValueTaskSource : IValueTaskSource
     {
@@ -20,13 +20,19 @@ namespace Utility.Tasks
             None,
             Awaiting,
             Ready,
-            Completed
+            Completed,
         }
+
+        private readonly TaskCompletionSource<bool> finalTaskSource;
 
         private ManualResetValueTaskSourceCore<bool> valueTaskSource;
         private State state;
 
-        private readonly TaskCompletionSource<bool> finalTaskSource;
+        /// <summary>
+        ///     Returns <c>true</c> is this task source has entered its final state, i.e. <see cref="TrySetResult(bool)" /> or <see cref="TrySetException(Exception, bool)" />
+        ///     was called with <c>final</c> set to <c>true</c> and the result was propagated.
+        /// </summary>
+        public bool IsCompleted => (State)Volatile.Read(ref Unsafe.As<State, byte>(ref state)) == State.Completed;
 
         public AutoResetValueTaskSource()
         {
@@ -37,29 +43,29 @@ namespace Utility.Tasks
         }
 
         /// <summary>
-        /// Tries to transition from <see cref="State.Awaiting"/> to either <see cref="State.Ready"/> or <see cref="State.Completed"/>, depending on the value of <paramref name="final"/>.
-        /// Only the first call (with either value for <paramref name="final"/>) is able to do that. I.e.: <c>TrySetResult()</c> followed by <c>TrySetResult(true)</c> will both return <c>true</c>.
+        ///     Tries to transition from <see cref="State.Awaiting" /> to either <see cref="State.Ready" /> or <see cref="State.Completed" />, depending on the value of <paramref name="final" />.
+        ///     Only the first call (with either value for <paramref name="final" />) is able to do that. I.e.: <c>TrySetResult()</c> followed by <c>TrySetResult(true)</c> will both return <c>true</c>.
         /// </summary>
-        /// <param name="final">Whether this is the final transition to <see cref="State.Completed" /> or just a transition into <see cref="State.Ready"/> from which the task source can be reset back to <see cref="State.None"/>.</param>
+        /// <param name="final">Whether this is the final transition to <see cref="State.Completed" /> or just a transition into <see cref="State.Ready" /> from which the task source can be reset back to <see cref="State.None" />.</param>
         /// <returns><c>true</c> if this is the first call that set the result; otherwise, <c>false</c>.</returns>
         public bool TrySetResult(bool final = false) =>
             TryComplete(null, final);
 
         /// <summary>
-        /// Tries to transition from <see cref="State.Awaiting"/> to either <see cref="State.Ready"/> or <see cref="State.Completed"/>, depending on the value of <paramref name="final"/>.
-        /// Only the first call is able to do that with the exception of <c>TrySetResult()</c> followed by <c>TrySetResult(true)</c>, which will both return <c>true</c>.
+        ///     Tries to transition from <see cref="State.Awaiting" /> to either <see cref="State.Ready" /> or <see cref="State.Completed" />, depending on the value of <paramref name="final" />.
+        ///     Only the first call is able to do that with the exception of <c>TrySetResult()</c> followed by <c>TrySetResult(true)</c>, which will both return <c>true</c>.
         /// </summary>
-        /// <param name="final">Whether this is the final transition to <see cref="State.Completed" /> or just a transition into <see cref="State.Ready"/> from which the task source can be reset back to <see cref="State.None"/>.</param>
+        /// <param name="final">Whether this is the final transition to <see cref="State.Completed" /> or just a transition into <see cref="State.Ready" /> from which the task source can be reset back to <see cref="State.None" />.</param>
         /// <param name="exception">The exception to set as a result of the value task.</param>
         /// <returns><c>true</c> if this is the first call that set the result; otherwise, <c>false</c>.</returns>
         public bool TrySetException(Exception exception, bool final = false) =>
             TryComplete(exception, final);
 
         /// <summary>
-        /// Tries to get a value task representing this task source. If this task source is <see cref="State.None"/>, it'll also transition it into <see cref="State.Awaiting"/> state.
-        /// It prevents concurrent operations from being invoked since it'll return <c>false</c> if the task source was already in <see cref="State.Awaiting"/> state.
-        /// In other states, it'll return a value task representing this task source without any other work. So to determine whether to invoke a P/Invoke operation or not,
-        /// the state of <paramref name="valueTask"/> must also be checked.
+        ///     Tries to get a value task representing this task source. If this task source is <see cref="State.None" />, it'll also transition it into <see cref="State.Awaiting" /> state.
+        ///     It prevents concurrent operations from being invoked since it'll return <c>false</c> if the task source was already in <see cref="State.Awaiting" /> state.
+        ///     In other states, it'll return a value task representing this task source without any other work. So to determine whether to invoke a P/Invoke operation or not,
+        ///     the state of <paramref name="valueTask" /> must also be checked.
         /// </summary>
         /// <param name="valueTask">A value task representing the result. Only meaningful in case this method returns <c>true</c>. Might already be completed.</param>
         /// <returns><c>true</c> if this is not an overlapping call (task source transitioned or was already set); otherwise, <c>false</c>.</returns>
@@ -67,7 +73,7 @@ namespace Utility.Tasks
         {
             lock (this)
             {
-                var state = this.state;
+                State state = this.state;
 
                 // None: prepare for the actual operation happening and transition to Awaiting.
                 if (state == State.None)
@@ -81,20 +87,14 @@ namespace Utility.Tasks
                 }
 
                 // Awaiting: forbidden concurrent call.
-                valueTask = default;
+                valueTask = default(ValueTask);
                 return false;
             }
         }
 
-        /// <summary>
-        /// Returns <c>true</c> is this task source has entered its final state, i.e. <see cref="TrySetResult(bool)"/> or <see cref="TrySetException(Exception, bool)"/>
-        /// was called with <c>final</c> set to <c>true</c> and the result was propagated.
-        /// </summary>
-        public bool IsCompleted => (State)Volatile.Read(ref Unsafe.As<State, byte>(ref state)) == State.Completed;
-
         void IValueTaskSource.GetResult(short token)
         {
-            bool successful = false;
+            var successful = false;
 
             try
             {
@@ -166,15 +166,13 @@ namespace Utility.Tasks
 
                     return state != State.Ready;
                 }
-                else
-                {
-                    if (state is State.None or State.Awaiting) valueTaskSource.SetResult(final);
 
-                    if (final)
-                        return finalTaskSource.TrySetResult(true);
+                if (state is State.None or State.Awaiting) valueTaskSource.SetResult(final);
 
-                    return state != State.Ready;
-                }
+                if (final)
+                    return finalTaskSource.TrySetResult(true);
+
+                return state != State.Ready;
             }
         }
     }

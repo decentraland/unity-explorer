@@ -14,7 +14,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private BoneMatrixCalculationJob Job;
         private JobHandle Handle;
 
-
         public void ScheduleBoneMatrixCalculation(Matrix4x4 avatarWorldToLocalMatrix)
         {
             Job.AvatarTransform = avatarWorldToLocalMatrix;
@@ -35,7 +34,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         }
 
         public static AvatarTransformMatrixComponent Create(Transform avatarBaseTransform, Transform[] bones) =>
-
             new ()
             {
                 Bones = new TransformAccessArray(bones),

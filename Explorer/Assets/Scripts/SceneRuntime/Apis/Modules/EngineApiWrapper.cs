@@ -23,6 +23,19 @@ namespace SceneRuntime.Apis.Modules
             this.exceptionsHandler = exceptionsHandler;
         }
 
+        public void Dispose()
+        {
+            // Dispose the last input buffer
+            if (lastInput != null)
+                instancePoolsProvider.ReleaseCrdtRawDataPool(lastInput);
+
+            lastInput = null;
+
+            // Dispose the engine API Implementation
+            // It will dispose its buffers
+            api.Dispose();
+        }
+
         [UsedImplicitly]
         public ScriptableByteArray CrdtSendToRenderer(ITypedArray<byte> data)
         {
@@ -72,19 +85,6 @@ namespace SceneRuntime.Apis.Modules
         public void SetIsDisposing()
         {
             api.SetIsDisposing();
-        }
-
-        public void Dispose()
-        {
-            // Dispose the last input buffer
-            if (lastInput != null)
-                instancePoolsProvider.ReleaseCrdtRawDataPool(lastInput);
-
-            lastInput = null;
-
-            // Dispose the engine API Implementation
-            // It will dispose its buffers
-            api.Dispose();
         }
     }
 }

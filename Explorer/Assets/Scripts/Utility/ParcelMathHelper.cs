@@ -7,22 +7,6 @@ namespace Utility
 {
     public static class ParcelMathHelper
     {
-        public readonly struct ParcelCorners
-        {
-            public readonly Vector3 minXZ;
-            public readonly Vector3 minXmaxZ;
-            public readonly Vector3 maxXZ;
-            public readonly Vector3 maxXminZ;
-
-            public ParcelCorners(Vector3 minXZ, Vector3 minXmaxZ, Vector3 maxXZ, Vector3 maxXminZ)
-            {
-                this.minXZ = minXZ;
-                this.minXmaxZ = minXmaxZ;
-                this.maxXZ = maxXZ;
-                this.maxXminZ = maxXminZ;
-            }
-        }
-
         public const float PARCEL_SIZE = 16.0f;
 
         public const float SQR_PARCEL_SIZE = PARCEL_SIZE * PARCEL_SIZE;
@@ -68,17 +52,33 @@ namespace Utility
             {
                 for (int parcelY = minParcel.y; parcelY < maxParcel.y; ++parcelY)
                 {
-                    Vector2 parcel = new Vector2(parcelX, parcelY);
+                    var parcel = new Vector2(parcelX, parcelY);
                     Vector2 parcelMinPoint = parcel * PARCEL_SIZE;
                     Vector2 parcelMaxPoint = (parcel + new Vector2(1.0f, 1.0f)) * PARCEL_SIZE;
 
                     float nearestPointX = Mathf.Clamp(focus.x, parcelMinPoint.x, parcelMaxPoint.x);
                     float nearestPointY = Mathf.Clamp(focus.y, parcelMinPoint.y, parcelMaxPoint.y);
-                    Vector2 nearestPoint = new Vector2(nearestPointX, nearestPointY);
+                    var nearestPoint = new Vector2(nearestPointX, nearestPointY);
                     float distance = Vector2.Distance(nearestPoint, focus);
 
                     if (distance < range) results.Add(new int2(parcelX, parcelY));
                 }
+            }
+        }
+
+        public readonly struct ParcelCorners
+        {
+            public readonly Vector3 minXZ;
+            public readonly Vector3 minXmaxZ;
+            public readonly Vector3 maxXZ;
+            public readonly Vector3 maxXminZ;
+
+            public ParcelCorners(Vector3 minXZ, Vector3 minXmaxZ, Vector3 maxXZ, Vector3 maxXminZ)
+            {
+                this.minXZ = minXZ;
+                this.minXmaxZ = minXmaxZ;
+                this.maxXZ = maxXZ;
+                this.maxXminZ = maxXminZ;
             }
         }
     }

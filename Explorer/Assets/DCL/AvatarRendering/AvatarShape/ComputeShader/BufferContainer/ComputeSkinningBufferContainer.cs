@@ -9,6 +9,12 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public abstract class ComputeSkinningBufferContainer : IDisposable
     {
+        internal static readonly ListObjectPool<Matrix4x4> MATRIX4X4_POOL = new (listInstanceDefaultCapacity: ComputeShaderConstants.BONE_COUNT);
+
+        //5000 is an approximation of a top value a wearable may have for its vertex count
+        internal static readonly ListObjectPool<Vector3> VECTOR3_POOL = new (defaultCapacity: 2, listInstanceDefaultCapacity: 5000);
+        internal static readonly ListObjectPool<Vector4> VECTOR4_POOL = new (listInstanceDefaultCapacity: 5000);
+        internal static readonly ListObjectPool<BoneWeight> BONE_WEIGHT_POOL = new (listInstanceDefaultCapacity: 5000);
         protected ComputeBuffer vertexIn;
         protected ComputeBuffer tangentsIn;
         protected ComputeBuffer normalsIn;
@@ -32,6 +38,16 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             skinnedMeshRendererBoneCount = skinnedMeshRenderersConeCount;
         }
 
+        public void Dispose()
+        {
+            vertexIn.Dispose();
+            normalsIn.Dispose();
+            tangentsIn.Dispose();
+            sourceSkin.Dispose();
+            bindPosesIndex.Dispose();
+            bindPoses.Dispose();
+        }
+
         public abstract void StartWriting();
 
         public abstract void EndWriting();
@@ -45,13 +61,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             cs.SetBuffer(kernel, ComputeShaderConstants.BIND_POSE_ID, bindPoses);
             cs.SetBuffer(kernel, ComputeShaderConstants.BIND_POSES_INDEX_ID, bindPosesIndex);
         }
-
-        internal static readonly ListObjectPool<Matrix4x4> MATRIX4X4_POOL = new (listInstanceDefaultCapacity: ComputeShaderConstants.BONE_COUNT);
-
-        //5000 is an approximation of a top value a wearable may have for its vertex count
-        internal static readonly ListObjectPool<Vector3> VECTOR3_POOL = new (defaultCapacity: 2, listInstanceDefaultCapacity: 5000);
-        internal static readonly ListObjectPool<Vector4> VECTOR4_POOL = new (listInstanceDefaultCapacity: 5000);
-        internal static readonly ListObjectPool<BoneWeight> BONE_WEIGHT_POOL = new (listInstanceDefaultCapacity: 5000);
 
         public void CopyAllBuffers(Mesh mesh, int currentMeshVertexCount, int vertexCounter, int skinnedMeshCounter)
         {
@@ -80,21 +89,9 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             NativeArray<Vector4>.Copy(UnsafeUtility.As<List<Vector4>, ListPrivateFieldAccess<Vector4>>(ref tangentsPool)._items, 0, totalTangentsIn, vertexCounter, currentMeshVertexCount);
             VECTOR4_POOL.Release(tangentsPool);
 
-
             //Setup vertex index for current wearable
             for (var i = 0; i < mesh.vertexCount; i++)
                 bindPosesIndexList[vertexCounter + i] = ComputeShaderConstants.BONE_COUNT * skinnedMeshCounter;
-
-        }
-
-        public void Dispose()
-        {
-            vertexIn.Dispose();
-            normalsIn.Dispose();
-            tangentsIn.Dispose();
-            sourceSkin.Dispose();
-            bindPosesIndex.Dispose();
-            bindPoses.Dispose();
         }
 
         //Helper class to access private fields of List<T>

@@ -1,11 +1,9 @@
 using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
-using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace SceneRuntime.Apis.Modules
 {
@@ -24,18 +22,6 @@ namespace SceneRuntime.Apis.Modules
             cancellationTokenSource = new CancellationTokenSource();
         }
 
-        [UsedImplicitly]
-        public object ReadFile(string fileName)
-        {
-            try { return api.ReadFile(fileName, cancellationTokenSource.Token).AsTask().ToPromise(); }
-            catch (Exception e)
-            {
-                // Report an uncategorized exception
-                exceptionsHandler.OnEngineException(e);
-                return null;
-            }
-        }
-
         public void Dispose()
         {
             // Dispose the engine API Implementation
@@ -44,6 +30,18 @@ namespace SceneRuntime.Apis.Modules
 
             cancellationTokenSource.Cancel();
             cancellationTokenSource.Dispose();
+        }
+
+        [UsedImplicitly]
+        public object ReadFile(string fileName)
+        {
+            try { return api.ReadFileAsync(fileName, cancellationTokenSource.Token).AsTask().ToPromise(); }
+            catch (Exception e)
+            {
+                // Report an uncategorized exception
+                exceptionsHandler.OnEngineException(e);
+                return null;
+            }
         }
     }
 }

@@ -20,6 +20,8 @@ namespace ECS.Unity.Materials
         private readonly Stack<LinkedListNode<MaterialData>> nodePool;
         private readonly LinkedList<MaterialData> notReferencedMaterials;
 
+        internal int Count => cachedMaterials.Count;
+
         public MaterialsCappedCache(int maxSize, DestroyMaterial destroyMaterial)
         {
             maxSize = Mathf.Min(MIN_SIZE, maxSize);
@@ -36,8 +38,6 @@ namespace ECS.Unity.Materials
             for (var i = 0; i < maxSize; i++)
                 nodePool.Push(new LinkedListNode<MaterialData>(default(MaterialData)));
         }
-
-        internal int Count => cachedMaterials.Count;
 
         internal bool TryGetCacheEntry(in MaterialData materialData, out (Material material, int refCount) entry)
         {

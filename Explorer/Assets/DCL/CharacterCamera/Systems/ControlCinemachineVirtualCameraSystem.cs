@@ -65,7 +65,7 @@ namespace DCL.CharacterCamera.Systems
 
         private void SetActiveCamera(ICinemachinePreset cinemachinePreset, in CameraComponent camera, ref CinemachineCameraState cameraState)
         {
-            ref var inputMapComponent = ref inputMap.GetInputMapComponent(World);
+            ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
 
             switch (camera.Mode)
             {
@@ -164,7 +164,7 @@ namespace DCL.CharacterCamera.Systems
         private static void SetDefaultFreeCameraPosition(in ICinemachinePreset preset)
         {
             // take previous position from third person camera
-            var tpPos = preset.ThirdPersonCameraData.Camera.transform.position;
+            Vector3 tpPos = preset.ThirdPersonCameraData.Camera.transform.position;
             preset.FreeCameraData.Camera.transform.position = tpPos + preset.FreeCameraData.DefaultPosition;
 
             // copy POV
@@ -173,7 +173,7 @@ namespace DCL.CharacterCamera.Systems
         }
 
         /// <summary>
-        /// Apply zoom and check if scrolling was enough to switch to another mode
+        ///     Apply zoom and check if scrolling was enough to switch to another mode
         /// </summary>
         /// <returns></returns>
         private static bool TrySwitchToAnotherMode(ref float zoomValue, int direction, float zoomSensitivity)

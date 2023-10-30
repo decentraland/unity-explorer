@@ -14,19 +14,6 @@ namespace DCL.CharacterMotion.Components
     /// </summary>
     public class CharacterRigidTransform
     {
-        public struct MovementVelocity
-        {
-            /// <summary>
-            /// Set by physics system in FixedUpdate
-            /// </summary>
-            public Vector3 Target;
-
-            /// <summary>
-            /// Interpolated according to acceleration every Update
-            /// </summary>
-            public Vector3 Interpolated;
-        }
-
         public MovementVelocity MoveVelocity;
 
         /// <summary>
@@ -35,8 +22,21 @@ namespace DCL.CharacterMotion.Components
         public bool IsGrounded;
 
         /// <summary>
-        /// Every velocity that is applied as is
+        ///     Every velocity that is applied as is
         /// </summary>
         public Vector3 NonInterpolatedVelocity;
+
+        public struct MovementVelocity
+        {
+            /// <summary>
+            ///     Set by physics system in FixedUpdate
+            /// </summary>
+            public Vector3 Target;
+
+            /// <summary>
+            ///     Interpolated according to acceleration every Update
+            /// </summary>
+            public Vector3 Interpolated;
+        }
     }
 }

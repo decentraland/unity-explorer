@@ -28,7 +28,7 @@ namespace ECS.Unity.Materials.Systems
         private readonly DestroyMaterial destroyMaterial;
         private readonly ISceneData sceneData;
         private readonly int attemptsCount;
-        private IConcurrentBudgetProvider capFrameTimeBudgetProvider;
+        private readonly IConcurrentBudgetProvider capFrameTimeBudgetProvider;
 
         public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData, int attemptsCount, IConcurrentBudgetProvider capFrameTimeBudgetProvider) : base(world)
         {
