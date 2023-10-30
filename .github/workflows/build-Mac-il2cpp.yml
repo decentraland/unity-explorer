@@ -58,13 +58,13 @@ jobs:
           
       - name: Set sentry vars
         run: |
-          $branchName = ${{ github.ref_name }}
+          $branchName = "${{ github.ref }}"
           
-          if ($branchName -eq 'main') {
+          if ($branchName -eq 'refs/heads/main') {
             $SENTRY_ENVIRONMENT = production
             Add-Content -Value "SENTRY_ENVIRONMENT=$SENTRY_ENVIRONMENT" -Path $env:GITHUB_ENV
             Write-Output $SENTRY_ENVIRONMENT
-          } elseif ($branchName -eq 'dev') {
+          } elseif ($branchName -eq 'refs/heads/dev') {
             $SENTRY_ENVIRONMENT = development
             Add-Content -Value "SENTRY_ENVIRONMENT=$SENTRY_ENVIRONMENT" -Path $env:GITHUB_ENV
             Write-Output $SENTRY_ENVIRONMENT
