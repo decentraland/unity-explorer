@@ -83,16 +83,16 @@ jobs:
           $branchName = "${{ github.ref }}"
           
           if ($branchName -eq 'refs/heads/main') {
-            $SENTRY_ENVIRONMENT = production
-            Add-Content -Value "SENTRY_ENVIRONMENT=$SENTRY_ENVIRONMENT" -Path $env:GITHUB_ENV
+            $sentryEnvironment = "production"
+            Add-Content -Value "SENTRY_ENVIRONMENT=$sentryEnvironment" -Path $env:GITHUB_ENV
             Write-Output $SENTRY_ENVIRONMENT
           } elseif ($branchName -eq 'refs/heads/dev') {
-            $SENTRY_ENVIRONMENT = development
-            Add-Content -Value "SENTRY_ENVIRONMENT=$SENTRY_ENVIRONMENT" -Path $env:GITHUB_ENV
+            $sentryEnvironment = "development"
+            Add-Content -Value "SENTRY_ENVIRONMENT=$sentryEnvironment" -Path $env:GITHUB_ENV
             Write-Output $SENTRY_ENVIRONMENT
           } else {
-            $SENTRY_ENVIRONMENT = branch
-            Add-Content -Value "SENTRY_ENVIRONMENT=$SENTRY_ENVIRONMENT" -Path $env:GITHUB_ENV
+            $sentryEnvironment = "branch"
+            Add-Content -Value "SENTRY_ENVIRONMENT=$sentryEnvironment" -Path $env:GITHUB_ENV
             Write-Output $SENTRY_ENVIRONMENT
           }
 
