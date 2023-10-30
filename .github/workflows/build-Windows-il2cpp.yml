@@ -81,20 +81,16 @@ jobs:
       - name: Set sentry vars
         run: |
           $branchName = "${{ github.ref }}"
+          $SENTRY_ENVIRONMENT = "branch"
           
           if ($branchName -eq 'refs/heads/main') {
-            $sentryEnvironment = "production"
-            Add-Content -Value "SENTRY_ENVIRONMENT=$sentryEnvironment" -Path $env:GITHUB_ENV
-            Write-Output $SENTRY_ENVIRONMENT
+            $SENTRY_ENVIRONMENT = "production"
           } elseif ($branchName -eq 'refs/heads/dev') {
-            $sentryEnvironment = "development"
-            Add-Content -Value "SENTRY_ENVIRONMENT=$sentryEnvironment" -Path $env:GITHUB_ENV
-            Write-Output $SENTRY_ENVIRONMENT
-          } else {
-            $sentryEnvironment = "branch"
-            Add-Content -Value "SENTRY_ENVIRONMENT=$sentryEnvironment" -Path $env:GITHUB_ENV
-            Write-Output $SENTRY_ENVIRONMENT
+            $SENTRY_ENVIRONMENT = "development"
           }
+          
+          Add-Content -Value "SENTRY_ENVIRONMENT=$SENTRY_ENVIRONMENT" -Path $env:GITHUB_ENV
+          Write-Output $SENTRY_ENVIRONMENT
 
       - uses: decentraland/unity-builder@0.6
         id: build
