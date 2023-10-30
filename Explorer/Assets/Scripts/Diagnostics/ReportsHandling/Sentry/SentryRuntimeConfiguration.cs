@@ -1,3 +1,4 @@
+using Sentry;
 using Sentry.Unity;
 using UnityEngine;
 
@@ -18,9 +19,19 @@ namespace Diagnostics.ReportsHandling.Sentry
             // Note that changes to the options here will **not** affect iOS, macOS and Android events. (i.e. environment and release)
             // Take a look at `SentryBuildTimeOptionsConfiguration` instead.
 
+            options.SetBeforeSend(AddUnspecifiedCategory);
+
 #if UNITY_EDITOR
             ApplyFromJsonFile(options);
 #endif
+        }
+
+        private SentryEvent AddUnspecifiedCategory(SentryEvent @event)
+        {
+            if (!@event.Tags.ContainsKey("category"))
+                @event.SetTag("category", "UNSPECIFIED");
+
+            return @event;
         }
 
         private void ApplyFromJsonFile(SentryUnityOptions options) =>
