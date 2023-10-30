@@ -167,7 +167,7 @@ half4 LitPassFragment(Varyings input) : SV_Target
     InputData_Avatar inputData;
     InitializeInputData(input, surfaceData.normalTS, inputData);
 
-    half4 color = UniversalFragmentPBR(inputData, surfaceData);
+    half4 color = UniversalFragmentPBR_Avatar(inputData, surfaceData);
  
     color.rgb = MixFog(color.rgb, inputData.fogCoord);
     color.a = OutputAlpha(color.a, _Surface);    

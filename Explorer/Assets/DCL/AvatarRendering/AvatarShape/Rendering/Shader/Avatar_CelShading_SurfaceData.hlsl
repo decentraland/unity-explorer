@@ -11,6 +11,10 @@ struct SurfaceData_Avatar
     half3 emission;
     half  occlusion;
     half  alpha;
+    half specularRampInnerMin;
+    half specularRampInnerMax;
+    half specularRampOuterMin;
+    half specularRampOuterMax;
 };
 
 #endif

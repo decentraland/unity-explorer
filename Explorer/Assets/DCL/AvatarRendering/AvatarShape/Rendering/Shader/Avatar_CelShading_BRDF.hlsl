@@ -18,6 +18,10 @@ struct BRDFData_Avatar
     half roughness;
     half roughness2;
     half grazingTerm;
+    half specularRampInnerMin;
+    half specularRampInnerMax;
+    half specularRampOuterMin;
+    half specularRampOuterMax;
 
     // We save some light invariant BRDF terms so we don't have to recompute
     // them in the light loop. Take a look at DirectBRDF function for detailed explaination.
@@ -102,6 +106,10 @@ inline void InitializeBRDFData(half3 albedo, half metallic, half3 specular, half
 
 inline void InitializeBRDFData(inout SurfaceData_Avatar surfaceData, out BRDFData_Avatar brdfData)
 {
+    brdfData.specularRampInnerMin = surfaceData.specularRampInnerMin;
+    brdfData.specularRampInnerMax = surfaceData.specularRampInnerMax;
+    brdfData.specularRampOuterMin = surfaceData.specularRampOuterMin;
+    brdfData.specularRampOuterMax = surfaceData.specularRampOuterMax;
     InitializeBRDFData(surfaceData.albedo, surfaceData.metallic, surfaceData.specular, surfaceData.smoothness, surfaceData.alpha, brdfData);
 }
 
@@ -161,7 +169,7 @@ BRDFData_Avatar CreateClearCoatBRDFData(SurfaceData_Avatar surfaceData, inout BR
 half3 EnvironmentBRDFSpecular(BRDFData_Avatar brdfData, half fresnelTerm)
 {
     float surfaceReduction = 1.0 / (brdfData.roughness2 + 1.0);
-    return half3(surfaceReduction * lerp(brdfData.specular, brdfData.grazingTerm, fresnelTerm));
+    return half3(surfaceReduction * brdfData.specular); //lerp(brdfData.specular, brdfData.grazingTerm, fresnelTerm));
 }
 
 half3 EnvironmentBRDF(BRDFData_Avatar brdfData, half3 indirectDiffuse, half3 indirectSpecular, half fresnelTerm)
@@ -202,19 +210,11 @@ half DirectBRDFSpecular(BRDFData_Avatar brdfData, half3 normalWS, half3 lightDir
 
     half LoH2 = LoH * LoH;
     half specularTerm = brdfData.roughness2 / ((d * d) * max(0.1h, LoH2) * brdfData.normalizationTerm);
-
-    // On platforms where half actually means something, the denominator has a risk of overflow
-    // clamp below was added specifically to "fix" that, but dx compiler (we convert bytecode to metal/gles)
-    // sees that specularTerm have only non-negative terms, so it skips max(0,..) in clamp (leaving only min(100,...))
-#if REAL_IS_HALF
-    specularTerm = specularTerm - HALF_MIN;
-    // Update: Conservative bump from 100.0 to 1000.0 to better match the full float specular look.
-    // Roughly 65504.0 / 32*2 == 1023.5,
-    // or HALF_MAX / ((mobile) MAX_VISIBLE_LIGHTS * 2),
-    // to reserve half of the per light range for specular and half for diffuse + indirect + emissive.
-    specularTerm = clamp(specularTerm, 0.0, 1000.0); // Prevent FP16 overflow on mobiles
-#endif
-
+    
+    half specularInner = smoothstep(brdfData.specularRampInnerMin, brdfData.specularRampInnerMax, specularTerm);
+    half specularOuter = smoothstep(brdfData.specularRampOuterMin, brdfData.specularRampOuterMax, specularTerm);
+    specularTerm = (specularInner * 0.5f) + (specularOuter * 0.5f);
+    
     return specularTerm;
 }
 

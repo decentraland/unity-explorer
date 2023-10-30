@@ -41,33 +41,14 @@ half3 LightingPhysicallyBased(BRDFData_Avatar brdfData, BRDFData_Avatar brdfData
     half3 normalWS, half3 viewDirectionWS,
     half clearCoatMask, bool specularHighlightsOff)
 {
-    half NdotL = saturate(dot(normalWS, lightDirectionWS));
-    half3 radiance = lightColor * (lightAttenuation * NdotL);
+    half NdotL1 = smoothstep(_DiffuseRampInnerMin, _DiffuseRampInnerMax, saturate(dot(normalWS, lightDirectionWS)));
+    half NdotL2 = smoothstep(_DiffuseRampOuterMin, _DiffuseRampOuterMax, saturate(dot(normalWS, lightDirectionWS)));
+    half3 radiance1 = lightColor * (lightAttenuation * NdotL1);
+    half3 radiance2 = lightColor * (lightAttenuation * NdotL2);
+    half3 radiance = (radiance1 * 0.5f) + (radiance2 * 0.5f);
 
     half3 brdf = brdfData.diffuse;
-#ifndef _SPECULARHIGHLIGHTS_OFF
-    [branch] if (!specularHighlightsOff)
-    {
-        brdf += brdfData.specular * DirectBRDFSpecular(brdfData, normalWS, lightDirectionWS, viewDirectionWS);
-
-#if defined(_CLEARCOAT) || defined(_CLEARCOATMAP)
-        // Clear coat evaluates the specular a second timw and has some common terms with the base specular.
-        // We rely on the compiler to merge these and compute them only once.
-        half brdfCoat = kDielectricSpec.r * DirectBRDFSpecular(brdfDataClearCoat, normalWS, lightDirectionWS, viewDirectionWS);
-
-            // Mix clear coat and base layer using khronos glTF recommended formula
-            // https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_materials_clearcoat/README.md
-            // Use NoV for direct too instead of LoH as an optimization (NoV is light invariant).
-            half NoV = saturate(dot(normalWS, viewDirectionWS));
-            // Use slightly simpler fresnelTerm (Pow4 vs Pow5) as a small optimization.
-            // It is matching fresnel used in the GI/Env, so should produce a consistent clear coat blend (env vs. direct)
-            half coatFresnel = kDielectricSpec.x + kDielectricSpec.a * Pow4(1.0 - NoV);
-
-        brdf = brdf * (1.0 - clearCoatMask * coatFresnel) + brdfCoat * clearCoatMask;
-#endif // _CLEARCOAT
-    }
-#endif // _SPECULARHIGHLIGHTS_OFF
-
+    brdf += brdfData.specular * DirectBRDFSpecular(brdfData, normalWS, lightDirectionWS, viewDirectionWS);
     return brdf * radiance;
 }
 
@@ -244,13 +225,9 @@ half3 CalculateBlinnPhong(Light light, InputData_Avatar inputData, SurfaceData_A
 ////////////////////////////////////////////////////////////////////////////////
 /// PBR lighting...
 ////////////////////////////////////////////////////////////////////////////////
-half4 UniversalFragmentPBR(InputData_Avatar inputData, SurfaceData_Avatar surfaceData)
+half4 UniversalFragmentPBR_Avatar(InputData_Avatar inputData, SurfaceData_Avatar surfaceData)
 {
-    #if defined(_SPECULARHIGHLIGHTS_OFF)
-    bool specularHighlightsOff = true;
-    #else
     bool specularHighlightsOff = false;
-    #endif
     BRDFData_Avatar brdfData;
 
     // NOTE: can modify "surfaceData"...
@@ -338,7 +315,7 @@ half4 UniversalFragmentPBR(InputData_Avatar inputData, SurfaceData_Avatar surfac
 }
 
 // Deprecated: Use the version which takes "SurfaceData" instead of passing all of these arguments...
-half4 UniversalFragmentPBR(InputData_Avatar inputData, half3 albedo, half metallic, half3 specular,
+half4 UniversalFragmentPBR_Avatar(InputData_Avatar inputData, half3 albedo, half metallic, half3 specular,
     half smoothness, half occlusion, half3 emission, half alpha)
 {
     SurfaceData_Avatar surfaceData;
@@ -354,7 +331,7 @@ half4 UniversalFragmentPBR(InputData_Avatar inputData, half3 albedo, half metall
     //surfaceData.clearCoatMask = 0;
     //surfaceData.clearCoatSmoothness = 1;
 
-    return UniversalFragmentPBR(inputData, surfaceData);
+    return UniversalFragmentPBR_Avatar(inputData, surfaceData);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

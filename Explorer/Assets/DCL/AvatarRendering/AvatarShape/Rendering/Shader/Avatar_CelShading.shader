@@ -137,7 +137,7 @@ Shader "DCL/Avatar_CelShading"
             //#pragma shader_feature_local_fragment _ADDITIONAL_LIGHT_SHADOWS
             //#pragma shader_feature_local_fragment _REFLECTION_PROBE_BLENDING
             //#pragma shader_feature_local_fragment _REFLECTION_PROBE_BOX_PROJECTION
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            //#pragma multi_compile_fragment _ _SHADOWS_SOFT
             //#pragma shader_feature_local_fragment _SHADOWS_SOFT
             //#pragma shader_feature_local_fragment _SCREEN_SPACE_OCCLUSION
             //#pragma multi_compile_fragment _ _DBUFFER_MRT1 _DBUFFER_MRT2 _DBUFFER_MRT3
