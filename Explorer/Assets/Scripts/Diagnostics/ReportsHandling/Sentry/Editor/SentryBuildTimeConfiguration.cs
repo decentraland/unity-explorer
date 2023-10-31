@@ -1,12 +1,15 @@
 using Sentry.Unity;
 using System;
+using System.IO;
 using UnityEngine;
 
-namespace Diagnostics.ReportsHandling.Sentry
+namespace Diagnostics.ReportsHandling.Sentry.Editor
 {
     [CreateAssetMenu(fileName = "SentryBuildTimeConfiguration.asset", menuName = "Sentry/SentryBuildTimeConfiguration", order = 999)]
     public class SentryBuildTimeConfiguration : SentryBuildTimeOptionsConfiguration
     {
+        private const string SENTRY_ASSET_PATH = "./Assets/Resources/Sentry/SentryOptions.asset";
+
         // This file should be never committed since it may contain secrets
         [SerializeField] private string configJsonFilePath = "./.sentryconfig.json";
 
@@ -16,10 +19,13 @@ namespace Diagnostics.ReportsHandling.Sentry
         /// Learn more at https://docs.sentry.io/platforms/unity/configuration/options/#programmatic-configuration
         public override void Configure(SentryUnityOptions options, SentryCliOptions cliOptions)
         {
-            // The release version is set by CI
             options.Release = Application.version ?? options.Release;
+
             ApplyFromEnvironmentVars(options, cliOptions);
             ApplyFromJsonFile(options, cliOptions);
+
+            // SentryOptions.asset must be modified so the app is built with the expected information
+            PersistIntoAssetFile(SENTRY_ASSET_PATH, options);
         }
 
         private static void ApplyFromEnvironmentVars(SentryUnityOptions options, SentryCliOptions cliOptions)
@@ -34,6 +40,19 @@ namespace Diagnostics.ReportsHandling.Sentry
         {
             SentryJsonConfigLoader.Apply(configJsonFilePath, options);
             SentryJsonConfigLoader.Apply(configJsonFilePath, cliOptions);
+        }
+
+        private void PersistIntoAssetFile(string path, SentryUnityOptions options)
+        {
+            if (!File.Exists(path)) return;
+
+            string fileContent = File.ReadAllText(path);
+
+            fileContent = fileContent.Replace("<REPLACE_RELEASE>", options.Release)
+                                     .Replace("<REPLACE_ENVIRONMENT>", options.Environment)
+                                     .Replace("<REPLACE_DSN>", options.Dsn);
+
+            File.WriteAllText(path, fileContent);
         }
     }
 }

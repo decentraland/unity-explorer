@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: SentryOptions
   m_EditorClassIdentifier: 
   <Enabled>k__BackingField: 0
-  <Dsn>k__BackingField: https://dsn.dsn
+  <Dsn>k__BackingField: <REPLACE_DSN>
   <CaptureInEditor>k__BackingField: 0
   <EnableLogDebouncing>k__BackingField: 1
   <DebounceTimeLog>k__BackingField: 1000
@@ -25,8 +25,8 @@ MonoBehaviour:
   <AutoAwakeTraces>k__BackingField: 0
   <AutoSessionTracking>k__BackingField: 1
   <AutoSessionTrackingInterval>k__BackingField: 30000
-  <ReleaseOverride>k__BackingField: <RELEASE>
-  <EnvironmentOverride>k__BackingField: <ENVIRONMENT>
+  <ReleaseOverride>k__BackingField: <REPLACE_RELEASE>
+  <EnvironmentOverride>k__BackingField: <REPLACE_ENVIRONMENT>
   <AttachStacktrace>k__BackingField: 1
   <AttachScreenshot>k__BackingField: 0
   <ScreenshotQuality>k__BackingField: 1
