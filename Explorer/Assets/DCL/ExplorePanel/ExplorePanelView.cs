@@ -1,3 +1,4 @@
+using DCL.UI;
 using MVC;
 using UnityEngine;
 using UnityEngine.UI;
