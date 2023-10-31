@@ -32,11 +32,14 @@ namespace MVC
             if (raycaster) raycaster.enabled = true;
         }
 
-        public virtual async UniTask Hide(CancellationToken ct)
+        public virtual async UniTask Hide(CancellationToken ct, bool isInstant = false)
         {
             gameObject.SetActive(false);
             if (raycaster) raycaster.enabled = false;
-            await PlayHideAnimation(ct);
+
+            if (!isInstant)
+                await PlayHideAnimation(ct);
+
             gameObject.SetActive(false);
         }
 

@@ -84,6 +84,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        navmapPrefab:
+          m_AssetGUID: ad0eada9babef44e5bb3f06b080eef83
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
         persistentExploreOpenerPrefab:
           m_AssetGUID: b55e2970d2dc94295ad8af70cb9d09f4
           m_SubObjectName: 

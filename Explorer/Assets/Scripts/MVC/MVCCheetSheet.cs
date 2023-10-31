@@ -22,7 +22,7 @@ namespace MVC
 
             // Parent will be set once from the scene and propagated to the plugin
             // Do we need multiple parents?
-            mvcManager.RegisterController(new ExampleController(ExampleController.Preallocate(prefab, null)));
+            mvcManager.RegisterController(new ExampleController(ExampleController.Preallocate(prefab, null, out _)));
 
             this.mvcManager = mvcManager;
         }

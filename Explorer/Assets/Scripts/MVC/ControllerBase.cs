@@ -24,10 +24,12 @@ namespace MVC
         public static ViewFactoryMethod CreateLazily(TView prefab, Transform root) =>
             () => Object.Instantiate(prefab, Vector3.zero, Quaternion.identity, root);
 
-        public static ViewFactoryMethod Preallocate(TView prefab, Transform root)
+        public static ViewFactoryMethod Preallocate(TView prefab, Transform root, out TView instance)
         {
-            TView instance = Object.Instantiate(prefab, Vector3.zero, Quaternion.identity, root);
-            return () => instance;
+            TView instance2 = Object.Instantiate(prefab, Vector3.zero, Quaternion.identity, root);
+            instance = instance2;
+            instance2.Hide(CancellationToken.None, true).Forget();
+            return () => instance2;
         }
 
         /// <summary>
@@ -51,7 +53,11 @@ namespace MVC
         public async UniTask LaunchViewLifeCycle(CanvasOrdering ordering, TInputData inputData, CancellationToken ct)
         {
             // make sure instance is provided (it can be instantiated lazily)
-            viewInstance ??= viewFactory();
+            if (viewInstance == null)
+            {
+                viewInstance = viewFactory();
+                OnViewInstantiated();
+            }
             this.inputData = inputData;
 
             viewInstance.SetDrawOrder(ordering);
@@ -61,6 +67,11 @@ namespace MVC
             OnViewShow();
 
             await WaitForCloseIntent(ct);
+        }
+
+        protected virtual void OnViewInstantiated()
+        {
+
         }
 
         async UniTask IController.HideView(CancellationToken ct)

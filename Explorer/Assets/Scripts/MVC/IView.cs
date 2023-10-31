@@ -12,6 +12,6 @@ namespace MVC
         /// </summary>
         UniTask Show(CancellationToken ct);
 
-        UniTask Hide(CancellationToken ct);
+        UniTask Hide(CancellationToken ct, bool isInstant = false);
     }
 }

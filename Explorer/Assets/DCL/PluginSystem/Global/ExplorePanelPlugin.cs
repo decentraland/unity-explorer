@@ -1,10 +1,13 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.ExplorePanel;
+using DCL.Navmap;
 using MVC;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using static UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {
@@ -22,14 +25,19 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
         {
             mvcManager.RegisterController(new ExplorePanelController(
-                ExplorePanelController.CreateLazily(
-                    (await assetsProvisioner.ProvideMainAssetAsync(settings.explorePanelPrefab, ct: ct)).Value.GetComponent<ExplorePanelView>(), null))
-            );
+                ExplorePanelController.Preallocate(
+                    (await assetsProvisioner.ProvideMainAssetAsync(settings.explorePanelPrefab, ct: ct)).Value.GetComponent<ExplorePanelView>(), null, out var explorePanelView)));
 
             mvcManager.RegisterController(new PersistentExploreOpenerController(
                 PersistentExploreOpenerController.CreateLazily(
                     (await assetsProvisioner.ProvideMainAssetAsync(settings.persistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>(), null), mvcManager)
             );
+
+            NavmapController navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>());
+
+            //NavmapView navmapView = Instantiate((await assetsProvisioner.ProvideMainAssetAsync(settings.navmapPrefab, ct: ct)).Value).GetComponent<NavmapView>();
+            //navmapView.Hide(CancellationToken.None).Forget();
+            //var navmapPlugin = new NavmapPlugin(assetsProvisioner, mvcManager, navmapView);
             mvcManager.Show(PersistentExploreOpenerController.IssueCommand(new MVCCheetSheet.ExampleParam("TEST"))).Forget();
         }
 
@@ -48,6 +56,10 @@ namespace DCL.PluginSystem.Global
             [field: Space]
             [field: SerializeField]
             public AssetReferenceGameObject explorePanelPrefab;
+
+            [field: Space]
+            [field: SerializeField]
+            public AssetReferenceGameObject navmapPrefab;
 
             [field: Space]
             [field: SerializeField]
