@@ -24,6 +24,7 @@ namespace DCL.AvatarRendering.AvatarShape
             {
                 avatarAnimator.runtimeAnimatorController = randomAnimator;
                 avatarAnimator.gameObject.AddComponent<RandomAnimatorController>();
+                avatarAnimator.gameObject.transform.localScale = Vector3.one;
             }
         }
     }
