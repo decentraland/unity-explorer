@@ -9,7 +9,6 @@ namespace DCL.Navmap
 {
     public class NavmapController
     {
-
         private NavmapView navmapView;
         private SectionSelectorController sectionSelectorController;
         private CancellationTokenSource animationCts;
