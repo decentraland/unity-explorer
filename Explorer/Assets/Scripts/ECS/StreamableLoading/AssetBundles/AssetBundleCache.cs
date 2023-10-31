@@ -19,8 +19,6 @@ namespace ECS.StreamableLoading.AssetBundles
         private readonly Dictionary<GetAssetBundleIntention, AssetBundleCacheData> cache;
         private readonly HashSet<GetAssetBundleIntention> cacheKeysToUnload;
 
-        private Func<AssetBundleCacheData, bool> unloadCacheFilter;
-
         public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>> OngoingRequests { get; }
         public IDictionary<string, StreamableLoadingResult<AssetBundleData>> IrrecoverableFailures { get; }
 
@@ -64,7 +62,6 @@ namespace ECS.StreamableLoading.AssetBundles
 
             if (cache.TryGetValue(key, out AssetBundleCacheData cacheData))
             {
-                cacheData.ReusedCount++;
                 cacheData.LastUsedTime = Time.unscaledTime;
 
                 asset = cacheData.Data;
@@ -83,30 +80,13 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public void Dereference(in GetAssetBundleIntention key, AssetBundleData asset) { }
 
-        public int UnloadAllCache(int budget)
-        {
-            unloadCacheFilter = _ => true;
-
-            return UnloadCache(budget);
-        }
-
         public int UnloadUnusedCache(int budget)
-        {
-            unloadCacheFilter = data => Time.unscaledTime - data.LastUsedTime > CacheCleaner.CACHE_EXPIRATION_TIME || IsNotReusedInHoldTime(data);
-
-            return UnloadCache(budget);
-
-            bool IsNotReusedInHoldTime(AssetBundleCacheData cacheData) =>
-                cacheData.ReusedCount == 0 && Time.unscaledTime - cacheData.LastUsedTime > CacheCleaner.CACHE_MINIMAL_HOLD_TIME;
-        }
-
-        private int UnloadCache(int budget)
         {
             foreach (KeyValuePair<GetAssetBundleIntention, AssetBundleCacheData> pair in cache)
             {
                 if (!frameBudget.TrySpendBudget() || cacheKeysToUnload.Count >= budget) break;
 
-                if (unloadCacheFilter.Invoke(pair.Value))
+                if (Time.unscaledTime - pair.Value.LastUsedTime > CacheCleaner.CACHE_EXPIRATION_TIME)
                 {
                     cacheKeysToUnload.Add(pair.Key);
                     pair.Value.Data.Dispose();

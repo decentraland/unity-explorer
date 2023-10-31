@@ -18,7 +18,7 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
 
         public MemoryBudgetProvider(IProfilingProvider profilingProvider)
         {
-            systemMemory = new StandaloneSystemMemory(); // new SystemMemoryMock(5000);
+            systemMemory = new SystemMemoryMock(3800); // new StandaloneSystemMemory();
 
             // Debug.Log($"{systemMemory.TotalSizeInMB * 0.8} {systemMemory.TotalSizeInMB * 0.9}  {systemMemory.TotalSizeInMB * 0.95}");
 
@@ -39,7 +39,9 @@ namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
         }
 
         public bool TrySpendBudget() =>
-            GetMemoryUsageStatus() != MemoryUsageStatus.Full;
+            true;
+
+        // GetMemoryUsageStatus() != MemoryUsageStatus.Full;
 
         public void ReleaseBudget() { }
     }

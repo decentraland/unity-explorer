@@ -53,7 +53,7 @@ namespace DCL.PluginSystem.World
             ReportAssetBundleErrorSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // TODO create a runtime ref-counting cache
-            LoadAssetBundleSystem.InjectToWorld(ref builder, memoryBudgetProvider, assetBundleCache, sharedDependencies.MutexSync, assetBundleLoadingMutex);
+            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, sharedDependencies.MutexSync, assetBundleLoadingMutex);
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies)
@@ -63,7 +63,7 @@ namespace DCL.PluginSystem.World
             ReportAssetBundleErrorSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // TODO create a runtime ref-counting cache
-            LoadAssetBundleSystem.InjectToWorld(ref builder, memoryBudgetProvider, assetBundleCache, dependencies.Mutex, assetBundleLoadingMutex);
+            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, dependencies.Mutex, assetBundleLoadingMutex);
             ReleaseMemorySystem.InjectToWorld(ref builder, cacheCleaner, memoryBudgetProvider);
         }
 
@@ -74,7 +74,7 @@ namespace DCL.PluginSystem.World
             ReportGlobalAssetBundleErrorSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // TODO create a runtime ref-counting cache
-            LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, memoryBudgetProvider, assetBundleCache, new MutexSync(), assetBundleLoadingMutex);
+            LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, new MutexSync(), assetBundleLoadingMutex);
         }
 
 #region Interface Ambiguity

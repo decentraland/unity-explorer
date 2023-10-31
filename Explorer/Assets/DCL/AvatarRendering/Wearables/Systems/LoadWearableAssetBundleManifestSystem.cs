@@ -31,7 +31,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         internal LoadWearableAssetBundleManifestSystem(World world,
             MemoryBudgetProvider memoryBudgetProvider,
             IStreamableCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention> cache,
-            MutexSync mutexSync, URLDomain assetBundleURL) : base(world, memoryBudgetProvider, cache, mutexSync)
+            MutexSync mutexSync, URLDomain assetBundleURL) : base(world, cache, mutexSync)
         {
             this.assetBundleURL = assetBundleURL;
         }

@@ -30,8 +30,8 @@ namespace ECS.SceneLifeCycle.Systems
 
         internal LoadSceneSystem(World world,
             LoadSceneSystemLogic loadSceneSystemLogic, LoadEmptySceneSystemLogic loadEmptySceneSystemLogic,
-            ISceneFactory sceneFactory, MemoryBudgetProvider memoryBudgetProvider, IStreamableCache<ISceneFacade, GetSceneFacadeIntention> cache, MutexSync mutexSync)
-            : base(world, memoryBudgetProvider, cache, mutexSync)
+            ISceneFactory sceneFactory, IStreamableCache<ISceneFacade, GetSceneFacadeIntention> cache, MutexSync mutexSync)
+            : base(world, cache, mutexSync)
         {
             this.sceneFactory = sceneFactory;
             this.loadSceneSystemLogic = loadSceneSystemLogic;

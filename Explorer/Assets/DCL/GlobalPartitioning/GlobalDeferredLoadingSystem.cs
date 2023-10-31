@@ -46,7 +46,7 @@ namespace DCL.GlobalPartitioning
             };
         }
 
-        internal GlobalDeferredLoadingSystem(World world, IConcurrentBudgetProvider concurrentLoadingBudgetProvider)
-            : base(world, COMPONENT_HANDLERS, concurrentLoadingBudgetProvider) { }
+        internal GlobalDeferredLoadingSystem(World world, IConcurrentBudgetProvider concurrentLoadingBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider)
+            : base(world, COMPONENT_HANDLERS, concurrentLoadingBudgetProvider, memoryBudgetProvider) { }
     }
 }

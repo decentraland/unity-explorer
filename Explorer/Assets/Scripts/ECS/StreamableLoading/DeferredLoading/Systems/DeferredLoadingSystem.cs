@@ -14,15 +14,17 @@ namespace ECS.StreamableLoading.DeferredLoading
     public abstract class DeferredLoadingSystem : BaseUnityLoopSystem
     {
         private readonly IConcurrentBudgetProvider concurrentLoadingBudgetProvider;
+        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
 
         private readonly List<IntentionData> loadingIntentions;
 
         private readonly QueryDescription[] sameBoatQueries;
 
-        protected DeferredLoadingSystem(World world, QueryDescription[] sameBoatQueries, IConcurrentBudgetProvider concurrentLoadingBudgetProvider) : base(world)
+        protected DeferredLoadingSystem(World world, QueryDescription[] sameBoatQueries, IConcurrentBudgetProvider concurrentLoadingBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider) : base(world)
         {
             this.sameBoatQueries = sameBoatQueries;
             this.concurrentLoadingBudgetProvider = concurrentLoadingBudgetProvider;
+            this.memoryBudgetProvider = memoryBudgetProvider;
             loadingIntentions = ListPool<IntentionData>.Get();
         }
 
@@ -75,20 +77,17 @@ namespace ECS.StreamableLoading.DeferredLoading
 
             for (i = 0; i < loadingIntentions.Count; i++)
             {
-                IntentionData intentionToAnalyze = loadingIntentions[i];
-
-                if (!concurrentLoadingBudgetProvider.TrySpendBudget())
+                if (!concurrentLoadingBudgetProvider.TrySpendBudget() || !memoryBudgetProvider.TrySpendBudget())
                     break;
 
-                ref StreamableLoadingState state = ref intentionToAnalyze.StatePointer.Value;
+                ref StreamableLoadingState state = ref loadingIntentions[i].StatePointer.Value;
                 state.SetAllowed(AcquiredBudget.Create(concurrentLoadingBudgetProvider));
             }
 
             // Set the rest to forbidden
             for (; i < loadingIntentions.Count; i++)
             {
-                IntentionData intentionToAnalyze = loadingIntentions[i];
-                ref StreamableLoadingState state = ref intentionToAnalyze.StatePointer.Value;
+                ref StreamableLoadingState state = ref loadingIntentions[i].StatePointer.Value;
                 state.Value = StreamableLoadingState.Status.Forbidden;
             }
         }

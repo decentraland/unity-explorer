@@ -19,7 +19,6 @@ namespace ECS.StreamableLoading.Tests
         where TIntention: struct, ILoadingIntention, IEquatable<TIntention>
     {
         protected IStreamableCache<TAsset, TIntention> cache;
-        protected IConcurrentBudgetProvider memoryBudgetProvider;
 
         private MockedReportScope mockedReportScope;
         private IAcquiredBudget budget;
@@ -41,7 +40,6 @@ namespace ECS.StreamableLoading.Tests
 
             cache = Substitute.For<IStreamableCache<TAsset, TIntention>>();
             budget = Substitute.For<IAcquiredBudget>();
-            memoryBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
 
             system = CreateSystem();
             system.Initialize();

@@ -33,8 +33,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private readonly StringBuilder bodyBuilder = new ();
 
-        internal LoadWearablesDTOByPointersSystem(World world, MemoryBudgetProvider memoryBudgetProvider, IStreamableCache<WearablesDTOList, GetWearableDTOByPointersIntention> cache, MutexSync mutexSync)
-            : base(world, memoryBudgetProvider, cache, mutexSync) { }
+        internal LoadWearablesDTOByPointersSystem(World world, IStreamableCache<WearablesDTOList, GetWearableDTOByPointersIntention> cache, MutexSync mutexSync)
+            : base(world, cache, mutexSync) { }
 
         protected override async UniTask<StreamableLoadingResult<WearablesDTOList>> FlowInternalAsync(GetWearableDTOByPointersIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {

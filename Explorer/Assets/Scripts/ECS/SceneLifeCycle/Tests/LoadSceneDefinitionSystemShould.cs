@@ -25,7 +25,7 @@ namespace ECS.SceneLifeCycle.Tests
             new (new CommonLoadingArguments(wrongTypePath), new IpfsTypes.IpfsPath());
 
         protected override LoadSceneDefinitionSystem CreateSystem() =>
-            new (world, memoryBudgetProvider, cache, new MutexSync());
+            new (world, cache, new MutexSync());
 
         protected override void AssertSuccess(IpfsTypes.SceneEntityDefinition asset)
         {

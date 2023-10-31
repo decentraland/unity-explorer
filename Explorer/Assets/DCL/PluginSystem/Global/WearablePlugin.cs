@@ -63,8 +63,8 @@ namespace DCL.AvatarRendering.Wearables
             var mutexSync = new MutexSync();
 
             ResolveWearableByPointerSystem.InjectToWorld(ref builder, wearableCatalog, realmData, WEARABLES_EMBEDDED_SUBDIRECTORY);
-            LoadWearablesByParamSystem.InjectToWorld(ref builder, new NoCache<IWearable[], GetWearableByParamIntention>(false, false), memoryBudgetProvider, realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, wearableCatalog, mutexSync);
-            LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, memoryBudgetProvider, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false), mutexSync);
+            LoadWearablesByParamSystem.InjectToWorld(ref builder, new NoCache<IWearable[], GetWearableByParamIntention>(false, false), realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, wearableCatalog, mutexSync);
+            LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false), mutexSync);
             LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, memoryBudgetProvider, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(true, true), mutexSync, assetBundleURL);
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, defaultWearablesDTOs, wearableCatalog);
         }

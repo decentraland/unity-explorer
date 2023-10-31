@@ -26,7 +26,6 @@ namespace ECS.StreamableLoading.Common.Systems
                                                                      .WithAll<TIntention, IPartitionComponent, StreamableLoadingState>()
                                                                      .WithNone<StreamableLoadingResult<TAsset>>();
 
-        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
         private readonly IStreamableCache<TAsset, TIntention> cache;
 
         private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, TIntention> cachedInternalFlowDelegate;
@@ -39,9 +38,8 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private CancellationTokenSource cancellationTokenSource;
 
-        protected LoadSystemBase(World world, IConcurrentBudgetProvider memoryBudgetProvider, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync) : base(world)
+        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync) : base(world)
         {
-            this.memoryBudgetProvider = memoryBudgetProvider;
             this.cache = cache;
             this.mutexSync = mutexSync;
             query = World.Query(in CREATE_WEB_REQUEST);
@@ -105,12 +103,9 @@ namespace ECS.StreamableLoading.Common.Systems
                 return;
             }
 
-            if (memoryBudgetProvider.TrySpendBudget())
-            {
-                // Indicate that loading has started
-                state.Value = StreamableLoadingState.Status.InProgress;
-                FlowAsync(entity, currentSource, intention, state.AcquiredBudget, partitionComponent, cancellationTokenSource.Token).Forget();
-            }
+            // Indicate that loading has started
+            state.Value = StreamableLoadingState.Status.InProgress;
+            FlowAsync(entity, currentSource, intention, state.AcquiredBudget, partitionComponent, cancellationTokenSource.Token).Forget();
         }
 
         private async UniTask FlowAsync(Entity entity, AssetSource source, TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition,

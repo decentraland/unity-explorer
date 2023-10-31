@@ -4,6 +4,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
+using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
 
@@ -13,13 +14,17 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
     {
         private List<Entity> entities;
         private ConcurrentLoadingBudgetProvider concurrentLoadingBudgetProvider;
+        private MemoryBudgetProvider memoryBudgetProvider;
 
         [SetUp]
         public void SetUp()
         {
             // We ll create a budget system that only allows 5 concurrent loading requests
             concurrentLoadingBudgetProvider = new ConcurrentLoadingBudgetProvider(5);
-            system = new AssetsDeferredLoadingSystem(world, concurrentLoadingBudgetProvider);
+            memoryBudgetProvider = Substitute.For<MemoryBudgetProvider>();
+            memoryBudgetProvider.TrySpendBudget().Returns(true);
+
+            system = new AssetsDeferredLoadingSystem(world, concurrentLoadingBudgetProvider, memoryBudgetProvider);
             entities = new List<Entity>();
         }
 

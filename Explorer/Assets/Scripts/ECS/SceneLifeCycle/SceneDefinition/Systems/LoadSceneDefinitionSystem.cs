@@ -24,8 +24,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     [LogCategory(ReportCategory.SCENE_LOADING)]
     public partial class LoadSceneDefinitionSystem : LoadSystemBase<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>
     {
-        internal LoadSceneDefinitionSystem(World world, IConcurrentBudgetProvider memoryBudgetProvider, IStreamableCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition> cache, MutexSync mutexSync)
-            : base(world, memoryBudgetProvider, cache, mutexSync) { }
+        internal LoadSceneDefinitionSystem(World world, IStreamableCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition> cache, MutexSync mutexSync)
+            : base(world, cache, mutexSync) { }
 
         protected override async UniTask<StreamableLoadingResult<IpfsTypes.SceneEntityDefinition>> FlowInternalAsync(GetSceneDefinition intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {

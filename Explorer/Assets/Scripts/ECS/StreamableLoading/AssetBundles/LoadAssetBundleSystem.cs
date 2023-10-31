@@ -32,10 +32,9 @@ namespace ECS.StreamableLoading.AssetBundles
         private readonly AssetBundleLoadingMutex loadingMutex;
 
         internal LoadAssetBundleSystem(World world,
-            IConcurrentBudgetProvider memoryBudgetProvider,
             IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache,
             MutexSync mutexSync,
-            AssetBundleLoadingMutex loadingMutex) : base(world, memoryBudgetProvider, cache, mutexSync)
+            AssetBundleLoadingMutex loadingMutex) : base(world, cache, mutexSync)
         {
             this.loadingMutex = loadingMutex;
         }
@@ -106,8 +105,6 @@ namespace ECS.StreamableLoading.AssetBundles
             ct.ThrowIfCancellationRequested();
 
             GameObject gameObjects = await LoadAllAssetsAsync(assetBundle, ct);
-            Debug.Log($"VV:: loaded Asset bundle {gameObjects?.name}", gameObjects);
-
             return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, gameObjects));
         }
 

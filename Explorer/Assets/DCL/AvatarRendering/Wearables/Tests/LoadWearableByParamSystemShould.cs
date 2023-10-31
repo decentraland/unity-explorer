@@ -34,8 +34,8 @@ namespace DCL.AvatarRendering.Wearables.Tests
             IRealmData realmData = Substitute.For<IRealmData>();
             realmData.Configured.Returns(true);
 
-            return new LoadWearablesByParamSystem(world, cache, memoryBudgetProvider, realmData,
-                URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), wearableCatalog, new MutexSync());
+            return new LoadWearablesByParamSystem(world, cache, realmData, URLSubdirectory.EMPTY,
+                URLSubdirectory.FromString("Wearables"), wearableCatalog, new MutexSync());
         }
 
         protected override void AssertSuccess(IWearable[] asset)

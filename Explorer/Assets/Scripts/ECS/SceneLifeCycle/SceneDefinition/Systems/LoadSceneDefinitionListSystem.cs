@@ -30,9 +30,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         private readonly StringBuilder bodyBuilder = new ();
 
         // There is no cache for the list but a cache per entity that is stored in ECS itself
-        internal LoadSceneDefinitionListSystem(World world, MemoryBudgetProvider memoryBudgetProvider, IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache,
-            MutexSync mutexSync)
-            : base(world, memoryBudgetProvider, cache, mutexSync) { }
+        internal LoadSceneDefinitionListSystem(World world, IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache, MutexSync mutexSync)
+            : base(world, cache, mutexSync) { }
 
         protected override async UniTask<StreamableLoadingResult<SceneDefinitions>> FlowInternalAsync(GetSceneDefinitionList intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {

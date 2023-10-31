@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Diagnostics.ReportsHandling;
 using ECS.StreamableLoading.Cache;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -15,7 +14,7 @@ namespace ECS.StreamableLoading.AssetBundles
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class LoadGlobalAssetBundleSystem : LoadAssetBundleSystem
     {
-        internal LoadGlobalAssetBundleSystem(World world, MemoryBudgetProvider memoryBudgetProvider, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache, MutexSync mutexSync, AssetBundleLoadingMutex loadingMutex) :
-            base(world, memoryBudgetProvider, cache, mutexSync, loadingMutex) { }
+        internal LoadGlobalAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache, MutexSync mutexSync, AssetBundleLoadingMutex loadingMutex) :
+            base(world, cache, mutexSync, loadingMutex) { }
     }
 }

@@ -104,15 +104,15 @@ namespace Global.Dynamic
 
             IConcurrentBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(100);
 
-            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, memoryBudgetProvider, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
-            LoadSceneDefinitionSystem.InjectToWorld(ref builder, memoryBudgetProvider, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
+            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
+            LoadSceneDefinitionSystem.InjectToWorld(ref builder, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
 
             LoadSceneSystem.InjectToWorld(ref builder,
                 new LoadSceneSystemLogic(assetBundlesURL),
                 new LoadEmptySceneSystemLogic(emptyScenesWorldFactory, componentPoolsRegistry, EMPTY_SCENES_MAPPINGS_URL),
-                sceneFactory, memoryBudgetProvider, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex);
+                sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex);
 
-            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider);
+            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider, memoryBudgetProvider);
 
             CalculateParcelsInRangeSystem.InjectToWorld(ref builder, playerEntity);
             LoadStaticPointersSystem.InjectToWorld(ref builder);

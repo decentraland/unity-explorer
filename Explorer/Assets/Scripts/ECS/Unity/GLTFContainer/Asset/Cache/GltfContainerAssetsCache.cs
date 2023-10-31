@@ -109,7 +109,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             {
                 CacheMetrics cacheMetrics = entry.Value.metrics;
 
-                if (Time.unscaledTime - cacheMetrics.LastUsedTime > CacheCleaner.CACHE_EXPIRATION_TIME || IsNotReusedInHoldTime(cacheMetrics))
+                if (Time.unscaledTime - cacheMetrics.LastUsedTime > CacheCleaner.CACHE_EXPIRATION_TIME)
                 {
                     var i = 0;
 
@@ -140,9 +140,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             cacheKeysToUnload.Clear();
 
             return unloadedCount;
-
-            bool IsNotReusedInHoldTime(CacheMetrics cacheData) =>
-                cacheData.ReusedCount == 0 && Time.unscaledTime - cacheData.LastUsedTime > CacheCleaner.CACHE_MINIMAL_HOLD_TIME;
         }
 
         bool IEqualityComparer<string>.Equals(string x, string y) =>

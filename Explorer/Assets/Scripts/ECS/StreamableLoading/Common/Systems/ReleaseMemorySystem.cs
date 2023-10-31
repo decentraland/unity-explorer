@@ -24,13 +24,13 @@ namespace ECS.StreamableLoading.Common.Systems
             switch (memoryBudgetProvider.GetMemoryUsageStatus())
             {
                 case MemoryUsageStatus.Warning:
-                    cacheCleaner.UnloadUnusedCache();
+                    cacheCleaner.UnloadCache();
                     break;
                 case MemoryUsageStatus.Critical:
-                    cacheCleaner.UnloadAllCache();
+                    cacheCleaner.UnloadCache();
                     break;
                 case MemoryUsageStatus.Full:
-                    cacheCleaner.UnloadAllCache();
+                    cacheCleaner.UnloadCache();
                     break;
             }
         }
