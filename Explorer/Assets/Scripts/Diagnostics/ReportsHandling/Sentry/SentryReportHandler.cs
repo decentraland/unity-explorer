@@ -17,10 +17,10 @@ namespace Diagnostics.ReportsHandling.Sentry
             // After this initialization, Debug.unityLogger.logHandler is replaced which reports all the unhandled exceptions.
             // For this to work correctly, the "enabled" option in Assets/Resources/Sentry/SentryOptions.asset should be set to off
             // preventing `SentryInitialization` from running the app's startup process.
-            // var sentryUnityInfo = new SentryUnityInfo();
-            // SentryUnityOptions options = ScriptableSentryUnityOptions.LoadSentryUnityOptions(sentryUnityInfo);
-            // options!.Enabled = true;
-            // SentrySdk.Init(options);
+            var sentryUnityInfo = new SentryUnityInfo();
+            SentryUnityOptions options = ScriptableSentryUnityOptions.LoadSentryUnityOptions(sentryUnityInfo);
+            options!.Enabled = true;
+            SentrySdk.Init(options);
         }
 
         internal override void LogInternal(LogType logType, ReportData category, Object context, object message)
