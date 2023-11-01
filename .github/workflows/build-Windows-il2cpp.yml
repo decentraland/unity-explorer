@@ -27,7 +27,7 @@ jobs:
       matrix:
         include:
           - targetPlatform: StandaloneWindows64
-            dockerImage: windows-latest-xl
+            dockerImage: windows-2019
 
     name: Build
     runs-on: ${{ matrix.dockerImage }}
