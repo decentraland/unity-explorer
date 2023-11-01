@@ -30,7 +30,7 @@ jobs:
             dockerImage: windows-2019
 
     name: Build
-    runs-on: ${{ matrix.dockerImage }}
+    runs-on: windows-2019-16core
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (!github.event.pull_request.draft)
     steps:
       - name: Set SHA env variable
