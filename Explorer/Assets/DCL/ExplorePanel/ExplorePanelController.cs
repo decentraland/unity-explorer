@@ -21,11 +21,9 @@ namespace DCL.ExplorePanel
 
         protected override void OnViewInstantiated()
         {
-            Dictionary<ExploreSections, GameObject> exploreSections = new ()
-            {
-                { ExploreSections.Navmap, viewInstance.GetComponentInChildren<NavmapView>().transform.parent.gameObject },
-                { ExploreSections.Settings, viewInstance.GetComponentInChildren<SettingsView>().transform.parent.gameObject },
-            };
+            Dictionary<ExploreSections, GameObject> exploreSections = new ();
+            for (var i = 0; i < viewInstance.Sections.Length; i++)
+                exploreSections.Add(viewInstance.Sections[i], viewInstance.SectionsObjects[i]);
 
             sectionSelectorController = new SectionSelectorController(exploreSections, ExploreSections.Navmap);
             foreach (var tabSelector in viewInstance.TabSelectorViews)
