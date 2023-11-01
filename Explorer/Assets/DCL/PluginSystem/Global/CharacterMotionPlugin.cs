@@ -43,7 +43,8 @@ namespace DCL.PluginSystem.Global
                 characterObject.Controller,
                 new CharacterAnimationComponent(),
                 new CharacterPlatformComponent(),
-                new StunComponent());
+                new StunComponent(),
+                new FeetIKComponent());
 
             InterpolateCharacterSystem.InjectToWorld(ref builder);
             RotateCharacterSystem.InjectToWorld(ref builder);
@@ -52,6 +53,7 @@ namespace DCL.PluginSystem.Global
             CharacterPlatformSystem.InjectToWorld(ref builder);
             StunCharacterSystem.InjectToWorld(ref builder);
             CalculateCameraFovSystem.InjectToWorld(ref builder);
+            FeetIKSystem.InjectToWorld(ref builder);
         }
     }
 }
