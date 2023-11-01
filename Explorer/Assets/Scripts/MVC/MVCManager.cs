@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using MVC.PopupsController.PopupCloser;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -10,26 +11,25 @@ namespace MVC
 {
     public class MVCManager : IMVCManager
     {
-        private readonly Dictionary<Type, IController> controllers;
+        internal readonly Dictionary<Type, IController> controllers;
         private readonly IWindowsStackManager windowsStackManager;
         private readonly CancellationTokenSource destructionCancellationTokenSource;
-        private PopupCloserView popupCloser;
-        private readonly IAssetsProvisioner assetsProvisioner;
+        private IPopupCloserView popupCloser;
 
-        public MVCManager(IWindowsStackManager windowsStackManager, CancellationTokenSource destructionCancellationTokenSource, IAssetsProvisioner assetsProvisioner, AssetReferenceGameObject popupCloserView)
+        public MVCManager(
+            IWindowsStackManager windowsStackManager,
+            CancellationTokenSource destructionCancellationTokenSource,
+            IPopupCloserView popupCloserView)
         {
             this.windowsStackManager = windowsStackManager;
             this.destructionCancellationTokenSource = destructionCancellationTokenSource;
-            this.assetsProvisioner = assetsProvisioner;
 
             controllers = new Dictionary<Type, IController>(200);
-            Initialize(popupCloserView).Forget();
+            popupCloser = popupCloserView;
         }
 
-        private async UniTaskVoid Initialize(AssetReferenceGameObject popupCloserView)
-        {
-            popupCloser = UnityEngine.Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(popupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
-        }
+        private UniTaskVoid Initialize(AssetReferenceGameObject popupCloserView) =>
+            default;
 
         /// <summary>
         ///     Instead of a builder just expose a method
@@ -48,18 +48,18 @@ namespace MVC
             IController controller = controllers[typeof(IController<TView, TInputData>)];
             CancellationToken ct = destructionCancellationTokenSource.Token;
 
-            switch (controller.SortingLayer)
+            switch (controller.SortLayers)
             {
-                case CanvasOrdering.SORTING_LAYER.Popup:
+                case CanvasOrdering.SortingLayer.Popup:
                     await ShowPopup(command, controller, ct);
                     break;
-                case CanvasOrdering.SORTING_LAYER.Fullscreen:
+                case CanvasOrdering.SortingLayer.Fullscreen:
                     await ShowFullScreen(command, controller, ct);
                     break;
-                case CanvasOrdering.SORTING_LAYER.Persistent:
+                case CanvasOrdering.SortingLayer.Persistent:
                     await ShowPersistent(command, controller, ct);
                     break;
-                case CanvasOrdering.SORTING_LAYER.Top:
+                case CanvasOrdering.SortingLayer.Top:
                     await ShowTop(command, controller, ct);
                     break;
             }
@@ -78,6 +78,7 @@ namespace MVC
             }
             topPushInfo.PopupControllers.Clear();
 
+            // Hide fullscreen UI if any
             if (topPushInfo.FullscreenController != null)
             {
                 topPushInfo.FullscreenController.HideView(ct).Forget();
@@ -99,8 +100,6 @@ namespace MVC
             PersistentPushInfo persistentPushInfo = windowsStackManager.PushPersistent(controller);
 
             await UniTask.WhenAll(command.Execute(controller, persistentPushInfo.ControllerOrdering, ct));
-
-            await controller.HideView(ct);
         }
 
         private async UniTask ShowFullScreen<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)

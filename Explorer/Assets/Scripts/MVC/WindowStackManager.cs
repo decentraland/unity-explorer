@@ -7,6 +7,59 @@ using UnityEngine;
 
 namespace MVC
 {
+    public class WindowStackManager : IWindowsStackManager
+    {
+        private List<IController> popupStack = new List<IController>();
+        private List<IController> persistentStack = new List<IController>();
+        private IController fullscreenController;
+        private IController topController;
+
+        public IController TopMostPopup => popupStack.LastOrDefault();
+
+        public PopupPushInfo PushPopup(IController controller)
+        {
+            int orderInLayer = popupStack.Count * 2;
+            popupStack.Add(controller);
+
+            return new PopupPushInfo(
+                    new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, orderInLayer),
+                    new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, orderInLayer - 1),
+                    popupStack.Count >= 2 ? popupStack[^2] : null);
+        }
+
+        public FullscreenPushInfo PushFullscreen(IController controller)
+        {
+            fullscreenController = controller;
+            return new FullscreenPushInfo(popupStack, new CanvasOrdering(CanvasOrdering.SortingLayer.Fullscreen, 0));
+        }
+
+        public void PopFullscreen(IController controller) =>
+            fullscreenController = null;
+
+        public PersistentPushInfo PushPersistent(IController controller)
+        {
+            persistentStack.Add(controller);
+            return new PersistentPushInfo(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, -20));
+        }
+
+        public TopPushInfo PushTop(IController controller)
+        {
+            topController = controller;
+            return new TopPushInfo(popupStack, fullscreenController, new CanvasOrdering(CanvasOrdering.SortingLayer.Top, 1));
+        }
+
+        public void PopTop(IController controller) =>
+            topController = null;
+
+        public PopupPopInfo PopPopup(IController controller)
+        {
+            popupStack.Remove(controller);
+            return new PopupPopInfo(
+                new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, ((popupStack.Count - 1) * 2) - 1),
+                TopMostPopup);
+        }
+    }
+
     public readonly struct PopupPushInfo
     {
         public readonly CanvasOrdering ControllerOrdering;
@@ -58,6 +111,7 @@ namespace MVC
             FullscreenController = fullscreenController;
         }
     }
+
     public readonly struct PersistentPushInfo
     {
         public readonly CanvasOrdering ControllerOrdering;
@@ -65,68 +119,6 @@ namespace MVC
         public PersistentPushInfo(CanvasOrdering controllerOrdering)
         {
             ControllerOrdering = controllerOrdering;
-        }
-    }
-
-    public readonly struct FullscreenPopInfo
-    {
-    }
-
-    public class WindowStackManager : IWindowsStackManager
-    {
-        private List<IController> popupStack = new List<IController>();
-        private List<IController> persistentStack = new List<IController>();
-        private IController fullscreenController;
-        private IController topController;
-
-        public IController TopMostPopup => popupStack.LastOrDefault();
-
-        public PopupPushInfo PushPopup(IController controller)
-        {
-            int orderInLayer = popupStack.Count * 2;
-            popupStack.Add(controller);
-
-            return new PopupPushInfo(
-                    new CanvasOrdering(CanvasOrdering.SORTING_LAYER.Popup, orderInLayer),
-                    new CanvasOrdering(CanvasOrdering.SORTING_LAYER.Popup, orderInLayer - 1),
-                    popupStack.Count >= 2 ? popupStack[^2] : null);
-        }
-
-        public FullscreenPushInfo PushFullscreen(IController controller)
-        {
-            fullscreenController = controller;
-            return new FullscreenPushInfo(popupStack, new CanvasOrdering(CanvasOrdering.SORTING_LAYER.Fullscreen, 0));
-        }
-
-        public FullscreenPopInfo PopFullscreen(IController controller)
-        {
-            fullscreenController = null;
-            return new FullscreenPopInfo();
-        }
-
-        public PersistentPushInfo PushPersistent(IController controller)
-        {
-            persistentStack.Add(controller);
-            return new PersistentPushInfo(new CanvasOrdering(CanvasOrdering.SORTING_LAYER.Persistent, -20));
-        }
-
-        public TopPushInfo PushTop(IController controller)
-        {
-            topController = controller;
-            return new TopPushInfo(popupStack, fullscreenController, new CanvasOrdering(CanvasOrdering.SORTING_LAYER.Top, 1));
-        }
-
-        public void PopTop(IController controller)
-        {
-            topController = null;
-        }
-
-        public PopupPopInfo PopPopup(IController controller)
-        {
-            popupStack.Remove(controller);
-            return new PopupPopInfo(
-                new CanvasOrdering(CanvasOrdering.SORTING_LAYER.Popup, ((popupStack.Count - 1) * 2) - 1),
-                TopMostPopup);
         }
     }
 }

@@ -15,7 +15,7 @@ namespace MVC
         /// </summary>
         public void Registration()
         {
-            var mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(),null,null);
+            var mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(),null);
 
             // prefabs are taken from Addressables in Plugin
             ExampleView prefab = new GameObject("bla-bla").AddComponent<ExampleView>();
@@ -49,7 +49,7 @@ namespace MVC
         {
             public ExampleController(ViewFactoryMethod viewFactory) : base(viewFactory) { }
 
-            public override CanvasOrdering.SORTING_LAYER SortingLayer => CanvasOrdering.SORTING_LAYER.Fullscreen;
+            public override CanvasOrdering.SortingLayer SortLayers => CanvasOrdering.SortingLayer.Fullscreen;
 
             protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
                 viewInstance.CloseButton.OnClickAsync(ct);

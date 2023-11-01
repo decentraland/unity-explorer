@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace DCL.ExplorePanel
 {
-    public class PersistentExploreOpenerController : ControllerBase<PersistentExploreOpenerView, MVCCheetSheet.ExampleParam>
+    public class PersistentExploreOpenerController : ControllerBase<PersistentExploreOpenerView, EmptyParameter>
     {
         private readonly IMVCManager mvcManager;
 
@@ -13,7 +13,7 @@ namespace DCL.ExplorePanel
             this.mvcManager = mvcManager;
         }
 
-        public override CanvasOrdering.SORTING_LAYER SortingLayer => CanvasOrdering.SORTING_LAYER.Persistent;
+        public override CanvasOrdering.SortingLayer SortLayers => CanvasOrdering.SortingLayer.Persistent;
 
         protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
             viewInstance.CloseButton.OnClickAsync(ct);
@@ -22,7 +22,7 @@ namespace DCL.ExplorePanel
         {
             viewInstance.OpenExploreButton.onClick.RemoveAllListeners();
             viewInstance.OpenExploreButton.onClick.AddListener(() =>
-                mvcManager.Show(ExplorePanelController.IssueCommand(new MVCCheetSheet.ExampleParam("TEST"))).Forget());
+                mvcManager.Show(ExplorePanelController.IssueCommand(new EmptyParameter())).Forget());
         }
 
     }

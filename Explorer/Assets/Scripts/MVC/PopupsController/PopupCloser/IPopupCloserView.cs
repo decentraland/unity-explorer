@@ -1,0 +1,9 @@
+using UnityEngine.UI;
+
+namespace MVC.PopupsController.PopupCloser
+{
+    public interface IPopupCloserView : IView
+    {
+        public Button CloseButton { get; }
+    }
+}

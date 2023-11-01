@@ -5,6 +5,10 @@ using UnityEngine;
 
 namespace MVC
 {
+    /// <summary>
+    ///     Abstract class that should be used for all popups
+    ///     It overrides the opening and closing animations only
+    /// </summary>
     public abstract class PopupViewBase : ViewBase
     {
         private const float ANIMATION_TIME = 0.3f;

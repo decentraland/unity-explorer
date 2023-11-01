@@ -38,7 +38,7 @@ namespace DCL.PluginSystem.Global
             //NavmapView navmapView = Instantiate((await assetsProvisioner.ProvideMainAssetAsync(settings.navmapPrefab, ct: ct)).Value).GetComponent<NavmapView>();
             //navmapView.Hide(CancellationToken.None).Forget();
             //var navmapPlugin = new NavmapPlugin(assetsProvisioner, mvcManager, navmapView);
-            mvcManager.Show(PersistentExploreOpenerController.IssueCommand(new MVCCheetSheet.ExampleParam("TEST"))).Forget();
+            mvcManager.Show(PersistentExploreOpenerController.IssueCommand(new EmptyParameter())).Forget();
         }
 
         public void Dispose()

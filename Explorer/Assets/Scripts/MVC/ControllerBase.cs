@@ -48,7 +48,7 @@ namespace MVC
 
         protected TInputData inputData { get; private set; }
 
-        public abstract CanvasOrdering.SORTING_LAYER SortingLayer { get; }
+        public abstract CanvasOrdering.SortingLayer SortLayers { get; }
 
         public async UniTask LaunchViewLifeCycle(CanvasOrdering ordering, TInputData inputData, CancellationToken ct)
         {
@@ -69,16 +69,16 @@ namespace MVC
             await WaitForCloseIntent(ct);
         }
 
-        protected virtual void OnViewInstantiated()
-        {
-
-        }
-
         async UniTask IController.HideView(CancellationToken ct)
         {
             OnViewClose();
             await viewInstance.Hide(ct);
         }
+
+        /// <summary>
+        ///     Called once when the view is instantiated
+        /// </summary>
+        protected virtual void OnViewInstantiated() { }
 
         /// <summary>
         ///     View is focused when the obscuring view disappears

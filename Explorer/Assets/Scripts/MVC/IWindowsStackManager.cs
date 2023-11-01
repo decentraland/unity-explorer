@@ -11,7 +11,7 @@
 
         FullscreenPushInfo PushFullscreen(IController controller);
 
-        FullscreenPopInfo PopFullscreen(IController controller);
+        void PopFullscreen(IController controller);
 
         PersistentPushInfo PushPersistent(IController controller);
 

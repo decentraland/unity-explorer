@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace DCL.ExplorePanel
 {
-    public class ExplorePanelController : ControllerBase<ExplorePanelView, MVCCheetSheet.ExampleParam>
+    public class ExplorePanelController : ControllerBase<ExplorePanelView, EmptyParameter>
     {
         private SectionSelectorController sectionSelectorController;
         private CancellationTokenSource animationCts;
@@ -17,7 +17,7 @@ namespace DCL.ExplorePanel
         {
         }
 
-        public override CanvasOrdering.SORTING_LAYER SortingLayer => CanvasOrdering.SORTING_LAYER.Fullscreen;
+        public override CanvasOrdering.SortingLayer SortLayers => CanvasOrdering.SortingLayer.Fullscreen;
 
         protected override void OnViewInstantiated()
         {

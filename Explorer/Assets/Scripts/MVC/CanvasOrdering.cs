@@ -4,7 +4,7 @@ namespace MVC
 {
     public readonly struct CanvasOrdering
     {
-        public enum SORTING_LAYER
+        public enum SortingLayer
         {
             Fullscreen,
             Popup,
@@ -12,21 +12,21 @@ namespace MVC
             Top
         }
 
-        private static Dictionary<SORTING_LAYER, int> sortingLayerOffsets => new()
+        private static Dictionary<SortingLayer, int> sortingLayerOffsets => new()
         {
-            {SORTING_LAYER.Persistent, 0},
-            {SORTING_LAYER.Fullscreen, 200},
-            {SORTING_LAYER.Popup, 400},
-            {SORTING_LAYER.Top, 600}
+            {SortingLayer.Persistent, 0},
+            {SortingLayer.Fullscreen, 200},
+            {SortingLayer.Popup, 400},
+            {SortingLayer.Top, 600}
         };
 
-        public readonly SORTING_LAYER SortingLayer;
+        public readonly SortingLayer Layer;
         public readonly int OrderInLayer;
 
-        public CanvasOrdering(SORTING_LAYER sortingLayer, int orderInLayer) : this()
+        public CanvasOrdering(SortingLayer layer, int orderInLayer) : this()
         {
-            SortingLayer = sortingLayer;
-            OrderInLayer = orderInLayer + sortingLayerOffsets[sortingLayer];
+            Layer = layer;
+            OrderInLayer = orderInLayer + sortingLayerOffsets[layer];
         }
     }
 }

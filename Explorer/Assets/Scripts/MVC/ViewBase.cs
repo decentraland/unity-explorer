@@ -15,7 +15,7 @@ namespace MVC
 
         public void SetDrawOrder(CanvasOrdering order)
         {
-            canvas.sortingLayerName = order.SortingLayer.ToString();
+            canvas.sortingLayerName = order.Layer.ToString();
             canvas.sortingOrder = order.OrderInLayer;
         }
 

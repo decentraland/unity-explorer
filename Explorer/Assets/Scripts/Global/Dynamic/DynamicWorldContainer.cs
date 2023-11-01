@@ -53,7 +53,8 @@ namespace Global.Dynamic
             var dclInput = new DCLInput();
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
             var realmData = new RealmData();
-            MVCManager mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), staticContainer.AssetsProvisioner, dynamicSettings.PopupCloserView);
+            PopupCloserView popupCloserView = UnityEngine.Object.Instantiate((await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
+            MVCManager mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
