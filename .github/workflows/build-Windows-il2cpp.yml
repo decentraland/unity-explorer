@@ -30,7 +30,7 @@ jobs:
             dockerImage: windows-2019
 
     name: Build
-    runs-on: self-hosted
+    runs-on: lorux0r-windows-large
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (!github.event.pull_request.draft)
     steps:
       - name: Set SHA env variable
