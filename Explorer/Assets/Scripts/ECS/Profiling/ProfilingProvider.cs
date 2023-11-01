@@ -28,7 +28,7 @@ namespace ECS.Profiling
         public void CheckHiccup() =>
             hiccupBufferCounter.AddDeltaTime(mainThreadTimeRecorder.LastValue);
 
-        public int GetHiccupCountInBuffer() =>
+        public ulong GetHiccupCountInBuffer() =>
             hiccupBufferCounter.HiccupsCountInBuffer;
 
         private double GetRecorderFPSAverage(ProfilerRecorder recorder)

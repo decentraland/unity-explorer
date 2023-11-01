@@ -1,4 +1,4 @@
-﻿using CommunicationData.URLHelpers;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -24,6 +24,7 @@ namespace Global.Dynamic
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer;
         [Space]
         [SerializeField] private UIDocument uiToolkitRoot;
+        [SerializeField] private UIDocument debugUiRoot;
         [SerializeField] private Vector2Int StartPosition;
         [SerializeField] private int SceneLoadRadius = 4;
 
@@ -83,12 +84,20 @@ namespace Global.Dynamic
 
                 var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
 
-                dynamicWorldContainer = DynamicWorldContainer.Create(
-                    in staticContainer,
+                (dynamicWorldContainer, isLoaded) = await DynamicWorldContainer.CreateAsync(
+                    staticContainer,
+                    scenePluginSettingsContainer,
+                    ct,
                     uiToolkitRoot,
                     StaticLoadPositions,
                     SceneLoadRadius,
                     dynamicSettings);
+
+                if (!isLoaded)
+                {
+                    PrintGameIsDead();
+                    return;
+                }
 
                 // Initialize global plugins
                 var anyFailure = false;
@@ -109,6 +118,8 @@ namespace Global.Dynamic
                 }
 
                 globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory, dynamicWorldContainer.EmptyScenesWorldFactory, staticContainer.CharacterObject);
+
+                dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
 
                 void SetRealm(string selectedRealm)
                 {

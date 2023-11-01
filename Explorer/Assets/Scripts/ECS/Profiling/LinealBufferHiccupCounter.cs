@@ -5,7 +5,7 @@ namespace ECS.Profiling
         private readonly LinealBufferFPSCounter counter;
         private readonly int hiccupThresholdInNS;
 
-        public int HiccupsCountInBuffer { get; private set; }
+        public ulong HiccupsCountInBuffer { get; private set; }
 
         public LinealBufferHiccupCounter(int bufferSize, int hiccupThresholdInNs)
         {
