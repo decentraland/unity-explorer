@@ -66,16 +66,16 @@ namespace Diagnostics.ReportsHandling.Sentry.Editor
 
                 switch (arg)
                 {
-                    case "SENTRY_ENVIRONMENT":
+                    case "-sentryEnvironment":
                         options.Environment = args[i + 1];
                         break;
-                    case "SENTRY_DSN":
+                    case "-sentryDsn":
                         options.Dsn = args[i + 1];
                         break;
-                    case "SENTRY_RELEASE":
+                    case "-sentryRelease":
                         options.Release = args[i + 1];
                         break;
-                    case "SENTRY_CLI_AUTH_TOKEN":
+                    case "-sentryCliAuthToken":
                         cliOptions.Auth = args[i + 1];
                         break;
                 }

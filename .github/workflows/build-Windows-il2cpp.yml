@@ -99,7 +99,7 @@ jobs:
           projectPath: Explorer
           targetPlatform: ${{ matrix.targetPlatform }}
           versioning: Semantic
-          customParameters: -SENTRY_DSN ${{ secrets.SENTRY_DSN }} -SENTRY_ENVIRONMENT ${{ env.SENTRY_ENVIRONMENT }}
+          customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }}
 
       # Upload artifact
       - name: Upload windows artifact
