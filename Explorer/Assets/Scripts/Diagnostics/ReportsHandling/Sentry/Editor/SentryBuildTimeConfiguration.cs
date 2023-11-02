@@ -27,6 +27,9 @@ namespace Diagnostics.ReportsHandling.Sentry.Editor
             try { ApplyFromJsonFile(options, cliOptions); }
             catch (Exception e) { Debug.LogException(e); }
 
+            try { ApplyFromProgramArgs(options, cliOptions); }
+            catch (Exception e) { Debug.LogException(e); }
+
             try
             {
                 // SentryOptions.asset must be modified so the app is built with the expected information
@@ -49,6 +52,34 @@ namespace Diagnostics.ReportsHandling.Sentry.Editor
             Debug.Log($"SentryBuildTimeConfiguration.ApplyFromEnvironmentVars.SENTRY_RELEASE: {Environment.GetEnvironmentVariable("SENTRY_RELEASE")}");
             Debug.Log($"SentryBuildTimeConfiguration.ApplyFromEnvironmentVars.SENTRY_DSN: {Environment.GetEnvironmentVariable("SENTRY_DSN")}");
             Debug.Log($"SentryBuildTimeConfiguration.ApplyFromEnvironmentVars.SENTRY_ENVIRONMENT: {Environment.GetEnvironmentVariable("SENTRY_ENVIRONMENT")}");
+        }
+
+        private static void ApplyFromProgramArgs(SentryUnityOptions options, SentryCliOptions cliOptions)
+        {
+            string[] args = Environment.GetCommandLineArgs();
+
+            Debug.Log($"SentryBuildTimeConfiguration.ApplyFromProgramArgs.args: {string.Join(',', args)}");
+
+            for (var i = 0; i < args.Length; i++)
+            {
+                string arg = args[i];
+
+                switch (arg)
+                {
+                    case "SENTRY_ENVIRONMENT":
+                        options.Environment = args[i + 1];
+                        break;
+                    case "SENTRY_DSN":
+                        options.Dsn = args[i + 1];
+                        break;
+                    case "SENTRY_RELEASE":
+                        options.Release = args[i + 1];
+                        break;
+                    case "SENTRY_CLI_AUTH_TOKEN":
+                        cliOptions.Auth = args[i + 1];
+                        break;
+                }
+            }
         }
 
         private void ApplyFromJsonFile(SentryUnityOptions options, SentryCliOptions cliOptions)
