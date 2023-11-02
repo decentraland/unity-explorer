@@ -5,8 +5,8 @@ namespace MVC
 {
     public class WindowStackManager : IWindowsStackManager
     {
-        internal List<IController> popupStack = new List<IController>();
-        internal List<IController> persistentStack = new List<IController>();
+        internal readonly List<IController> popupStack = new ();
+        internal readonly List<IController> persistentStack = new ();
         internal IController fullscreenController;
         internal IController topController;
 

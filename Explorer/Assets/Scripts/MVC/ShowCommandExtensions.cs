@@ -11,7 +11,7 @@ namespace MVC
         /// </summary>
         public static UniTask Execute<TView, TInputData>(
             this ref ShowCommand<TView, TInputData> command,
-            IController controller, CanvasOrdering canvasOrdering, CancellationToken ct) where TView: MonoBehaviour, IView
+            IController controller, CanvasOrdering canvasOrdering, CancellationToken ct) where TView: IView
         {
             var castedController = (IController<TView, TInputData>)controller;
             return castedController.LaunchViewLifeCycle(canvasOrdering, command.InputData, ct);

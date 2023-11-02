@@ -7,7 +7,7 @@ namespace MVC
     /// </summary>
     /// <typeparam name="TView"></typeparam>
     /// <typeparam name="TInputData"></typeparam>
-    public readonly struct ShowCommand<TView, TInputData> where TView: MonoBehaviour, IView
+    public readonly struct ShowCommand<TView, TInputData> where TView: IView
     {
         public readonly TInputData InputData;
 

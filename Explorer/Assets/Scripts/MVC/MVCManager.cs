@@ -36,13 +36,13 @@ namespace MVC
         ///     to add controller gradually (from different plug-ins).
         ///     It should not be exposed to the interface as the interface is for consumers only
         /// </summary>
-        public void RegisterController<TView, TInputData>(IController<TView, TInputData> controller) where TView: MonoBehaviour, IView
+        public void RegisterController<TView, TInputData>(IController<TView, TInputData> controller) where TView: IView
         {
             // throw an exception if the same combination of <TView, TInputData> was already added
             controllers.Add(typeof(IController<TView, TInputData>), controller);
         }
 
-        public async UniTask Show<TView, TInputData>(ShowCommand<TView, TInputData> command) where TView: MonoBehaviour, IView
+        public async UniTask Show<TView, TInputData>(ShowCommand<TView, TInputData> command) where TView: IView
         {
             // Find the controller
             IController controller = controllers[typeof(IController<TView, TInputData>)];
@@ -66,17 +66,19 @@ namespace MVC
         }
 
         private async UniTask ShowTop<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
-            where TView : MonoBehaviour, IView
+            where TView : IView
         {
             // Push new fullscreen controller
             TopPushInfo topPushInfo = windowsStackManager.PushTop(controller);
 
             // Hide all popups in the stack and clear it
-            foreach (IController popupController in topPushInfo.PopupControllers)
+            if(topPushInfo.PopupControllers != null)
             {
-                popupController.HideView(ct).Forget();
+                foreach (IController popupController in topPushInfo.PopupControllers)
+                    popupController.HideView(ct).Forget();
+
+                topPushInfo.PopupControllers.Clear();
             }
-            topPushInfo.PopupControllers.Clear();
 
             // Hide fullscreen UI if any
             if (topPushInfo.FullscreenController != null)
@@ -94,7 +96,7 @@ namespace MVC
         }
 
         private async UniTask ShowPersistent<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
-            where TView : MonoBehaviour, IView
+            where TView : IView
         {
             // Push new fullscreen controller
             PersistentPushInfo persistentPushInfo = windowsStackManager.PushPersistent(controller);
@@ -103,17 +105,19 @@ namespace MVC
         }
 
         private async UniTask ShowFullScreen<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
-            where TView : MonoBehaviour, IView
+            where TView : IView
         {
             // Push new fullscreen controller
             FullscreenPushInfo fullscreenPushInfo = windowsStackManager.PushFullscreen(controller);
 
             // Hide all popups in the stack and clear it
-            foreach (IController popupController in fullscreenPushInfo.PopupControllers)
+            if(fullscreenPushInfo.PopupControllers != null)
             {
-                popupController.HideView(ct).Forget();
+                foreach (IController popupController in fullscreenPushInfo.PopupControllers)
+                    popupController.HideView(ct).Forget();
+
+                fullscreenPushInfo.PopupControllers.Clear();
             }
-            fullscreenPushInfo.PopupControllers.Clear();
 
             // Hide the popup closer
             popupCloser.Hide(ct).Forget();
@@ -125,7 +129,7 @@ namespace MVC
         }
 
         private async UniTask ShowPopup<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
-            where TView : MonoBehaviour, IView
+            where TView : IView
         {
             PopupPushInfo pushPopupPush = windowsStackManager.PushPopup(controller);
 

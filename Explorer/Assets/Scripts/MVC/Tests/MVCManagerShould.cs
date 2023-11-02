@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using MVC.PopupsController.PopupCloser;
 using NSubstitute;
+using NSubstitute.ReceivedExtensions;
 using NUnit.Framework;
 using System;
 using System.Threading;
@@ -13,19 +14,21 @@ namespace MVC.Tests
     {
         private IWindowsStackManager windowsStackManager;
         private MVCManager mvcManager;
+        private IPopupCloserView popupCloserView;
 
         [SetUp]
         public void Setup()
         {
             windowsStackManager = Substitute.For<IWindowsStackManager>();
-            mvcManager = new MVCManager(windowsStackManager, new CancellationTokenSource(), Substitute.For<IPopupCloserView>());
+            popupCloserView = Substitute.For<IPopupCloserView>();
+            mvcManager = new MVCManager(windowsStackManager, new CancellationTokenSource(), popupCloserView);
         }
 
         [Test]
         public void RegisterController()
         {
             // Arrange
-            TestController controller = new TestController(TestController.CreateLazily(new GameObject("TEST_GO").AddComponent<TestView>(), null));
+            IController<ITestView, TestInputData> controller = Substitute.For<IController<ITestView, TestInputData>>();
 
             // Act
             mvcManager.RegisterController(controller);
@@ -38,7 +41,7 @@ namespace MVC.Tests
         public void RegisterControllerThrowsExceptionWhenSameControllerIsAddedTwice()
         {
             // Arrange
-            TestController controller = new TestController(TestController.CreateLazily(new GameObject("TEST_GO").AddComponent<TestView>(), null));
+            IController<ITestView, TestInputData> controller = Substitute.For<IController<ITestView, TestInputData>>();
 
             // Act
             mvcManager.RegisterController(controller);
@@ -48,33 +51,66 @@ namespace MVC.Tests
         }
 
         [Test]
-        public async Task Show()
+        [TestCase(CanvasOrdering.SortingLayer.Popup)]
+        [TestCase(CanvasOrdering.SortingLayer.Fullscreen)]
+        [TestCase(CanvasOrdering.SortingLayer.Top)]
+        [TestCase(CanvasOrdering.SortingLayer.Persistent)]
+        public async Task Show(CanvasOrdering.SortingLayer layer)
         {
-            TestController controller = new TestController(TestController.CreateLazily(new GameObject("TEST_GO").AddComponent<TestView>(), null));
+            IController<ITestView, TestInputData> controller = Substitute.For<IController<ITestView, TestInputData>>();
+            controller.SortLayers.Returns(layer);
 
             mvcManager.RegisterController(controller);
 
-            await mvcManager.Show(TestController.IssueCommand(new TestInputData()));
-            windowsStackManager.Received().PushPopup(Arg.Any<IController>());
+            await mvcManager.Show(new ShowCommand<ITestView, TestInputData>());
+
+            switch (layer)
+            {
+                case CanvasOrdering.SortingLayer.Popup:
+                    popupCloserView.Received().Show(Arg.Any<CancellationToken>());
+                    windowsStackManager.Received().PushPopup(controller);
+                    break;
+                case CanvasOrdering.SortingLayer.Fullscreen:
+                    popupCloserView.DidNotReceive().Show(Arg.Any<CancellationToken>());
+                    windowsStackManager.Received().PushFullscreen(controller);
+                    break;
+                case CanvasOrdering.SortingLayer.Top:
+                    popupCloserView.DidNotReceive().Show(Arg.Any<CancellationToken>());
+                    windowsStackManager.Received().PushTop(controller);
+                    break;
+                case CanvasOrdering.SortingLayer.Persistent:
+                    popupCloserView.DidNotReceive().Show(Arg.Any<CancellationToken>());
+                    windowsStackManager.Received().PushPersistent(controller);
+                    break;
+            }
         }
 
     }
 
-    public class TestController : ControllerBase<TestView, TestInputData>
+    public class TestController : IController<ITestView, TestInputData>
     {
-        public TestController(ViewFactoryMethod viewFactory) : base(viewFactory)
+        public UniTask LaunchViewLifeCycle(CanvasOrdering ordering, TestInputData inputData, CancellationToken ct) =>
+            throw new NotImplementedException();
+
+        public CanvasOrdering.SortingLayer SortLayers { get; }
+
+        public void OnFocus()
         {
+
         }
 
-        public override CanvasOrdering.SortingLayer SortLayers => CanvasOrdering.SortingLayer.Popup;
+        public void OnBlur()
+        {
 
-        protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
+        }
+
+        UniTask IController.HideView(CancellationToken ct) =>
             throw new NotImplementedException();
     }
 
     public class TestInputData { }
 
-    public class TestView : ViewBase, IView
+    public interface ITestView : IView
     {
     }
 

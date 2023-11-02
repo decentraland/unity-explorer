@@ -25,7 +25,7 @@ namespace MVC
     }
 
     // ReSharper disable once UnusedTypeParameter TView it's used for registering a proper association in MVC Manager
-    public interface IController<TView, in TInputData> : IController where TView: MonoBehaviour, IView
+    public interface IController<TView, in TInputData> : IController where TView: IView
     {
         /// <summary>
         ///     Shows the views and keeps spinning until the close intention is sent (e.g. by button)
