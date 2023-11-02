@@ -25,9 +25,6 @@ namespace DCL.ExplorePanel
         [field: SerializeField]
         public Button CloseButton { get; private set; }
 
-        [field: SerializeField]
-        public Transform SubPanelTransform { get; private set; }
-
         protected override UniTask PlayShowAnimation(CancellationToken ct)
         {
             AnimationTransform.anchoredPosition = new Vector2(0, 1920);

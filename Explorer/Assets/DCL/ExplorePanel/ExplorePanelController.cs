@@ -12,6 +12,7 @@ namespace DCL.ExplorePanel
     {
         private SectionSelectorController sectionSelectorController;
         private CancellationTokenSource animationCts;
+        private TabSelectorView previousSelector;
 
         public ExplorePanelController(ViewFactoryMethod viewFactory) : base(viewFactory)
         {
@@ -22,6 +23,7 @@ namespace DCL.ExplorePanel
         protected override void OnViewInstantiated()
         {
             Dictionary<ExploreSections, GameObject> exploreSections = new ();
+            //TODO: improve as soon as we have a serializable dictionary to avoid key and values list
             for (var i = 0; i < viewInstance.Sections.Length; i++)
                 exploreSections.Add(viewInstance.Sections[i], viewInstance.SectionsObjects[i]);
 

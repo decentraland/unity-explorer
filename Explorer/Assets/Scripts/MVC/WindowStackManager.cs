@@ -1,18 +1,14 @@
-﻿using Cysharp.Threading.Tasks;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
-using UnityEngine;
 
 namespace MVC
 {
     public class WindowStackManager : IWindowsStackManager
     {
-        private List<IController> popupStack = new List<IController>();
-        private List<IController> persistentStack = new List<IController>();
-        private IController fullscreenController;
-        private IController topController;
+        internal List<IController> popupStack = new List<IController>();
+        internal List<IController> persistentStack = new List<IController>();
+        internal IController fullscreenController;
+        internal IController topController;
 
         public IController TopMostPopup => popupStack.LastOrDefault();
 

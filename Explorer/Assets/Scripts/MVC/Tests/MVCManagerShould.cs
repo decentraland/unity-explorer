@@ -4,18 +4,21 @@ using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace MVC.Tests
 {
     public class MVCManagerShould
     {
+        private IWindowsStackManager windowsStackManager;
         private MVCManager mvcManager;
 
         [SetUp]
-        public void SetUp()
+        public void Setup()
         {
-            mvcManager = new MVCManager(Substitute.For<IWindowsStackManager>(), new CancellationTokenSource(), Substitute.For<IPopupCloserView>());
+            windowsStackManager = Substitute.For<IWindowsStackManager>();
+            mvcManager = new MVCManager(windowsStackManager, new CancellationTokenSource(), Substitute.For<IPopupCloserView>());
         }
 
         [Test]
@@ -42,6 +45,17 @@ namespace MVC.Tests
 
             // Assert
             Assert.Throws<ArgumentException>(() => mvcManager.RegisterController(controller));
+        }
+
+        [Test]
+        public async Task Show()
+        {
+            TestController controller = new TestController(TestController.CreateLazily(new GameObject("TEST_GO").AddComponent<TestView>(), null));
+
+            mvcManager.RegisterController(controller);
+
+            await mvcManager.Show(TestController.IssueCommand(new TestInputData()));
+            windowsStackManager.Received().PushPopup(Arg.Any<IController>());
         }
 
     }
