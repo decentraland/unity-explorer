@@ -53,6 +53,7 @@ namespace Diagnostics.ReportsHandling.Sentry.Editor
 
         private void ApplyFromJsonFile(SentryUnityOptions options, SentryCliOptions cliOptions)
         {
+            Debug.Log($"SentryBuildTimeConfiguration.ApplyFromJsonFile.Exists: {File.Exists(configJsonFilePath)}");
             SentryJsonConfigLoader.Apply(configJsonFilePath, options);
             SentryJsonConfigLoader.Apply(configJsonFilePath, cliOptions);
         }
