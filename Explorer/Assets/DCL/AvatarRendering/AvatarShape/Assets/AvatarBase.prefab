@@ -801,7 +801,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2963336440703908039}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.08910017, y: 0.08150374, z: 0}
+  m_LocalPosition: {x: 0.08910017, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2087,7 +2087,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6821754714854142103}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.08909986, y: 0.08150374, z: 0}
+  m_LocalPosition: {x: -0.08909986, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -2715,6 +2715,7 @@ MonoBehaviour:
   <AvatarSkinnedMeshRenderer>k__BackingField: {fileID: 918335364077391645}
   playerAnimator: {fileID: 9100000, guid: acef92320d301c14d9df6983262b5fea, type: 2}
   randomAnimator: {fileID: 9100000, guid: aab64a77806b44a43b6f5d0da6de94c6, type: 2}
+  <FeetIKRig>k__BackingField: {fileID: 8371887180010344672}
   <RightLegConstraint>k__BackingField: {fileID: 1621103848960102164}
   <RightLegIKTarget>k__BackingField: {fileID: 7739112277832749632}
   <LeftLegConstraint>k__BackingField: {fileID: 8175808268924959991}

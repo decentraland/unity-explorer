@@ -39,10 +39,10 @@ namespace DCL.CharacterMotion.Settings
         public AnimationCurve AccelerationCurve { get; }
         float CameraFOVWhileRunning { get; }
         float FOVChangeSpeed { get; }
-        float FeetIKHipsPullMaxDistance { get; }
-        float FeetIKSphereSize { get; }
-        float IKWeightSpeed { get; }
-        float IKPositionSpeed { get; }
+        float FeetIKHipsPullMaxDistance { get; set; }
+        float FeetIKSphereSize { get; set; }
+        float IKWeightSpeed { get; set; }
+        float IKPositionSpeed { get; set; }
         float AnimationFallSpeed { get; }
         float AnimationLongFallSpeed { get; }
         float PlatformRaycastLength { get; }

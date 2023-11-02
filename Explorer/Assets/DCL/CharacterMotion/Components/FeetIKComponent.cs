@@ -7,6 +7,7 @@ namespace DCL.CharacterMotion.Components
         public FeetComponent Left;
         public FeetComponent Right;
         public bool Initialized;
+        public bool IsDisabled;
 
         public struct FeetComponent
         {

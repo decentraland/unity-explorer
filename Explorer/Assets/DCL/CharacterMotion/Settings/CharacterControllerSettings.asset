@@ -83,9 +83,9 @@ MonoBehaviour:
   <MovAnimBlendSpeed>k__BackingField: 5
   <CameraFOVWhileRunning>k__BackingField: 20
   <FOVChangeSpeed>k__BackingField: 60
-  <FeetIKHipsPullMaxDistance>k__BackingField: 0.5
+  <FeetIKHipsPullMaxDistance>k__BackingField: 0.6
   <FeetIKSphereSize>k__BackingField: 0.1
   <IKWeightSpeed>k__BackingField: 3
-  <IKPositionSpeed>k__BackingField: 2
+  <IKPositionSpeed>k__BackingField: 4
   <JumpPadForce>k__BackingField: 50
   <AnimationSpeed>k__BackingField: 1

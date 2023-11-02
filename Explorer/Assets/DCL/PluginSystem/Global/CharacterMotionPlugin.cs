@@ -5,6 +5,7 @@ using DCL.Character;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
+using DCL.DebugUtilities.Builders;
 using System.Threading;
 
 namespace DCL.PluginSystem.Global
@@ -13,13 +14,15 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ICharacterObject characterObject;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
 
         private ProvidedAsset<CharacterControllerSettings> settings;
 
-        public CharacterMotionPlugin(IAssetsProvisioner assetsProvisioner, ICharacterObject characterObject)
+        public CharacterMotionPlugin(IAssetsProvisioner assetsProvisioner, ICharacterObject characterObject, IDebugContainerBuilder debugContainerBuilder)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.characterObject = characterObject;
+            this.debugContainerBuilder = debugContainerBuilder;
         }
 
         public void Dispose()
@@ -53,7 +56,7 @@ namespace DCL.PluginSystem.Global
             CharacterPlatformSystem.InjectToWorld(ref builder);
             StunCharacterSystem.InjectToWorld(ref builder);
             CalculateCameraFovSystem.InjectToWorld(ref builder);
-            FeetIKSystem.InjectToWorld(ref builder);
+            FeetIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
         }
     }
 }
