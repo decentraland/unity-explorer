@@ -26,6 +26,10 @@ namespace Diagnostics.ReportsHandling.Sentry.Editor
 
             // SentryOptions.asset must be modified so the app is built with the expected information
             PersistIntoAssetFile(SENTRY_ASSET_PATH, options);
+
+            Debug.Log($"SentryBuildTimeConfiguration.options.Release: {options.Release}");
+            Debug.Log($"SentryBuildTimeConfiguration.options.Dsn: {options.Dsn}");
+            Debug.Log($"SentryBuildTimeConfiguration.options.Environment: {options.Environment}");
         }
 
         private static void ApplyFromEnvironmentVars(SentryUnityOptions options, SentryCliOptions cliOptions)
@@ -34,6 +38,10 @@ namespace Diagnostics.ReportsHandling.Sentry.Editor
             options.Dsn = Environment.GetEnvironmentVariable("SENTRY_DSN") ?? options.Dsn;
             options.Release = Environment.GetEnvironmentVariable("SENTRY_RELEASE") ?? options.Release;
             cliOptions.Auth = Environment.GetEnvironmentVariable("SENTRY_CLI_AUTH_TOKEN") ?? cliOptions.Auth;
+
+            Debug.Log($"SentryBuildTimeConfiguration.ApplyFromEnvironmentVars.SENTRY_RELEASE: {Environment.GetEnvironmentVariable("SENTRY_RELEASE")}");
+            Debug.Log($"SentryBuildTimeConfiguration.ApplyFromEnvironmentVars.SENTRY_DSN: {Environment.GetEnvironmentVariable("SENTRY_DSN")}");
+            Debug.Log($"SentryBuildTimeConfiguration.ApplyFromEnvironmentVars.SENTRY_ENVIRONMENT: {Environment.GetEnvironmentVariable("SENTRY_ENVIRONMENT")}");
         }
 
         private void ApplyFromJsonFile(SentryUnityOptions options, SentryCliOptions cliOptions)
@@ -44,6 +52,7 @@ namespace Diagnostics.ReportsHandling.Sentry.Editor
 
         private void PersistIntoAssetFile(string path, SentryUnityOptions options)
         {
+            Debug.Log($"SentryBuildTimeConfiguration.PersistIntoAssetFile.Exists: {File.Exists(path)}");
             if (!File.Exists(path)) return;
 
             string fileContent = File.ReadAllText(path);
