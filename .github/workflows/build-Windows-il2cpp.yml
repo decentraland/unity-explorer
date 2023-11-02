@@ -30,7 +30,8 @@ jobs:
             dockerImage: windows-2019
 
     name: Build
-    runs-on: windows.4xlarge
+    runs-on:
+      labels: windows-2022-16core
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (!github.event.pull_request.draft)
     steps:
       - name: Set SHA env variable
