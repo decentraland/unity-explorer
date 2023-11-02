@@ -1,6 +1,8 @@
 ﻿using Diagnostics.ReportsHandling;
 using Diagnostics.ReportsHandling.Sentry;
+using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Diagnostics
@@ -21,11 +23,15 @@ namespace Diagnostics
 
         public static DiagnosticsContainer Create(IReportsHandlingSettings settings)
         {
-            var logger = new ReportHubLogger(new (ReportHandler, IReportHandler)[]
-            {
-                (ReportHandler.DebugLog, new DebugLogReportHandler(Debug.unityLogger.logHandler, settings.GetMatrix(ReportHandler.DebugLog), settings.DebounceEnabled)),
-                (ReportHandler.Sentry, new SentryReportHandler(settings.GetMatrix(ReportHandler.Sentry), settings.DebounceEnabled)),
-            });
+            List<(ReportHandler, IReportHandler)> handlers = new (2);
+
+            if (settings.IsEnabled(ReportHandler.DebugLog))
+                handlers.Add((ReportHandler.DebugLog, new DebugLogReportHandler(Debug.unityLogger.logHandler, settings.GetMatrix(ReportHandler.DebugLog), settings.DebounceEnabled)));
+
+            if (settings.IsEnabled(ReportHandler.Sentry))
+                handlers.Add((ReportHandler.Sentry, new SentryReportHandler(settings.GetMatrix(ReportHandler.Sentry), settings.DebounceEnabled)));
+
+            var logger = new ReportHubLogger(handlers);
 
             ILogHandler defaultLogHandler = Debug.unityLogger.logHandler;
 
