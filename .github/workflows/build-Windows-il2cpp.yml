@@ -27,11 +27,10 @@ jobs:
       matrix:
         include:
           - targetPlatform: StandaloneWindows64
-            dockerImage: windows-2019
+            dockerImage: windows-latest-xl
 
     name: Build
-    runs-on:
-      labels: windows-2022-16core
+    runs-on: ${{ matrix.dockerImage }}
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (!github.event.pull_request.draft)
     steps:
       - name: Set SHA env variable
