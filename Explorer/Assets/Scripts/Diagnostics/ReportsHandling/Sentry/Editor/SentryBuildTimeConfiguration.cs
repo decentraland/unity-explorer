@@ -21,11 +21,18 @@ namespace Diagnostics.ReportsHandling.Sentry.Editor
         {
             options.Release = Application.version ?? options.Release;
 
-            ApplyFromEnvironmentVars(options, cliOptions);
-            ApplyFromJsonFile(options, cliOptions);
+            try { ApplyFromEnvironmentVars(options, cliOptions); }
+            catch (Exception e) { Debug.LogException(e); }
 
-            // SentryOptions.asset must be modified so the app is built with the expected information
-            PersistIntoAssetFile(SENTRY_ASSET_PATH, options);
+            try { ApplyFromJsonFile(options, cliOptions); }
+            catch (Exception e) { Debug.LogException(e); }
+
+            try
+            {
+                // SentryOptions.asset must be modified so the app is built with the expected information
+                PersistIntoAssetFile(SENTRY_ASSET_PATH, options);
+            }
+            catch (Exception e) { Debug.LogException(e); }
 
             Debug.Log($"SentryBuildTimeConfiguration.options.Release: {options.Release}");
             Debug.Log($"SentryBuildTimeConfiguration.options.Dsn: {options.Dsn}");

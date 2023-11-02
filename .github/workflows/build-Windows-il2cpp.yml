@@ -95,6 +95,9 @@ jobs:
       - uses: decentraland/unity-builder@0.6
         id: build
         timeout-minutes: 120
+        env:
+          SENTRY_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_ENVIRONMENT: ${{ env.SENTRY_ENVIRONMENT }}
         with:
           projectPath: Explorer
           targetPlatform: ${{ matrix.targetPlatform }}
