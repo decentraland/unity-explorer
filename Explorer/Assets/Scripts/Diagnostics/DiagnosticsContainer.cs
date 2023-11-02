@@ -1,6 +1,5 @@
 ﻿using Diagnostics.ReportsHandling;
 using Diagnostics.ReportsHandling.Sentry;
-using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
