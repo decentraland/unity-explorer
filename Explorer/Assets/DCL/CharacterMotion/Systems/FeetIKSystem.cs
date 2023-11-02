@@ -32,7 +32,7 @@ namespace DCL.CharacterMotion.Systems
 
         private FeetIKSystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
         {
-            debugBuilder.AddWidget("Locomotion: IK")
+            debugBuilder.AddWidget("Locomotion: Feet IK")
                         .AddSingleButton("Toggle Enable", () => disableWasToggled = true)
                         .AddCustomMarker("Left IK Weight", leftIKWeightBinding = new ElementBinding<string>("0"))
                         .AddCustomMarker("Right IK Weight", rightIKWeightBinding = new ElementBinding<string>("0"))

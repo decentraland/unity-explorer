@@ -87,5 +87,8 @@ MonoBehaviour:
   <FeetIKSphereSize>k__BackingField: 0.1
   <IKWeightSpeed>k__BackingField: 3
   <IKPositionSpeed>k__BackingField: 4
+  <HandsIKWallHitDistance>k__BackingField: 0.5
+  <HandsIKWeightSpeed>k__BackingField: 5
+  <HandsIKElbowOffset>k__BackingField: {x: 25.6, y: 38.8, z: -53.5}
   <JumpPadForce>k__BackingField: 50
   <AnimationSpeed>k__BackingField: 1

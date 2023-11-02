@@ -53,10 +53,14 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] [field: Header("Camera")] public float CameraFOVWhileRunning { get; private set; } = 15;
         [field: SerializeField] public float FOVChangeSpeed { get; private set; } = 15;
 
-        [field: SerializeField] [field: Header("IK")] public float FeetIKHipsPullMaxDistance { get; set; } = 0.5f;
+        [field: SerializeField] [field: Header("Feet IK")] public float FeetIKHipsPullMaxDistance { get; set; } = 0.5f;
         [field: SerializeField] public float FeetIKSphereSize { get; set; } = 0.15f;
         [field: SerializeField] public float IKWeightSpeed { get; set; } = 2f;
         [field: SerializeField] public float IKPositionSpeed { get; set; } = 1f;
+
+        [field: SerializeField] [field: Header("Hands IK")] public float HandsIKWallHitDistance { get; set; } = 0.5f;
+        [field: SerializeField] public float HandsIKWeightSpeed { get; set; } = 0.5f;
+        [field: SerializeField] public Vector3 HandsIKElbowOffset { get; set; } = Vector3.zero;
 
         [field: SerializeField, Header("Cheat/Debug/Misc")] public float JumpPadForce { get; private set; } = 50f;
         [field: SerializeField] public float AnimationSpeed { get; private set; } = 1;

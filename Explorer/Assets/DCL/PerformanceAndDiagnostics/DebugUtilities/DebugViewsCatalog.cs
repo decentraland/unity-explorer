@@ -42,5 +42,8 @@ namespace DCL.DebugUtilities
 
         [field: SerializeField]
         public VisualTreeAsset FloatField { get; private set; }
+
+        [field: SerializeField]
+        public VisualTreeAsset Vector3Field { get; private set; }
     }
 }

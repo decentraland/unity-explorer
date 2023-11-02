@@ -43,6 +43,9 @@ namespace DCL.CharacterMotion.Settings
         float FeetIKSphereSize { get; set; }
         float IKWeightSpeed { get; set; }
         float IKPositionSpeed { get; set; }
+        float HandsIKWallHitDistance { get; set; }
+        float HandsIKWeightSpeed { get; set; }
+        Vector3 HandsIKElbowOffset { get; set; }
         float AnimationFallSpeed { get; }
         float AnimationLongFallSpeed { get; }
         float PlatformRaycastLength { get; }

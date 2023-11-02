@@ -1,0 +1,119 @@
+﻿using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
+using CrdtEcsBridge.Physics;
+using DCL.AvatarRendering.AvatarShape;
+using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Settings;
+using DCL.DebugUtilities.Builders;
+using DCL.DebugUtilities.UIBindings;
+using Diagnostics.ReportsHandling;
+using ECS.Abstract;
+using System.Runtime.CompilerServices;
+using UnityEngine;
+using UnityEngine.Animations.Rigging;
+
+namespace DCL.CharacterMotion.Systems
+{
+    [LogCategory(ReportCategory.MOTION)]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateAfter(typeof(InterpolateCharacterSystem))]
+    public partial class HandsIKSystem : BaseUnityLoopSystem
+    {
+        private bool disableWasToggled;
+        private readonly ElementBinding<float> wallDistance;
+        private readonly ElementBinding<float> ikWeightSpeed;
+
+        //private readonly ElementBinding<Vector3> elbowHintOffset;
+
+        private HandsIKSystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
+        {
+            debugBuilder.AddWidget("Locomotion: Hands IK")
+                        .AddSingleButton("Toggle Enable", () => disableWasToggled = true)
+                        .AddFloatField("Wall Distance", wallDistance = new ElementBinding<float>(0))
+                        .AddFloatField("IK Weight Speed", ikWeightSpeed = new ElementBinding<float>(0));
+
+            //.AddVectorField("Elbow Hint Offset", elbowHintOffset = new ElementBinding<Vector3>(Vector3.zero));
+        }
+
+        protected override void Update(float t)
+        {
+            UpdateIKQuery(World, t);
+        }
+
+        [Query]
+        private void UpdateIK(
+            [Data] float dt,
+            ref HandsIKComponent handsIKComponent,
+            ref AvatarBase avatarBase,
+            in CharacterRigidTransform rigidTransform,
+            in ICharacterControllerSettings settings
+        )
+        {
+            if (disableWasToggled)
+            {
+                disableWasToggled = false;
+                handsIKComponent.IsDisabled = !handsIKComponent.IsDisabled;
+                avatarBase.HandsIKRig.weight = handsIKComponent.IsDisabled ? 0 : 1;
+            }
+
+            if (!handsIKComponent.Initialized)
+            {
+                wallDistance.Value = settings.HandsIKWallHitDistance;
+                ikWeightSpeed.Value = settings.HandsIKWeightSpeed;
+
+                //elbowHintOffset.Value = settings.HandsIKElbowOffset;
+                handsIKComponent.Initialized = true;
+            }
+
+            settings.HandsIKWallHitDistance = wallDistance.Value;
+            settings.HandsIKWeightSpeed = ikWeightSpeed.Value;
+
+            //settings.HandsIKElbowOffset = elbowHintOffset.Value;
+
+            if (handsIKComponent.IsDisabled) return;
+
+            ApplyHandIK(avatarBase.LeftHandRaycast, avatarBase.LeftHandSubTarget, avatarBase.LeftHandIK, settings, dt);
+            ApplyHandIK(avatarBase.RightHandRaycast, avatarBase.RightHandSubTarget, avatarBase.RightHandIK, settings, dt);
+
+            Transform leftHint = avatarBase.LeftHandIK.data.hint;
+            Vector3 leftPosition = settings.HandsIKElbowOffset;
+            leftPosition.x = -leftPosition.x;
+            leftHint.localPosition = leftPosition;
+
+            Transform rightHint = avatarBase.RightHandIK.data.hint;
+            Vector3 rightPosition = settings.HandsIKElbowOffset;
+            rightHint.localPosition = rightPosition;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void ApplyHandIK(
+            Transform raycastTransform,
+            Transform handIKTarget,
+            TwoBoneIKConstraint handIK,
+            ICharacterControllerSettings settings,
+            float dt)
+        {
+            Vector3 origin = raycastTransform.position;
+            Vector3 rayOrigin = origin;
+            Vector3 rayDirection = raycastTransform.forward;
+            float rayDistance = settings.HandsIKWallHitDistance;
+
+            Debug.DrawRay(rayOrigin, rayDirection * rayDistance, Color.red);
+
+            var targetWeight = 0;
+
+            if (Physics.SphereCast(rayOrigin, settings.FeetIKSphereSize, rayDirection, out RaycastHit hitInfo, rayDistance, PhysicsLayers.CHARACTER_ONLY_MASK))
+            {
+                handIKTarget.position = Vector3.MoveTowards(handIKTarget.position, hitInfo.point, settings.IKPositionSpeed * dt);
+                handIKTarget.forward = -hitInfo.normal;
+                targetWeight = 1;
+                /*var rotationCorrection = Quaternion.FromToRotation(Vector3.up, hitInfo.normal);
+                handIKTarget.rotation = rotationCorrection * Quaternion.LookRotation(legConstraintForward, Vector3.up);*/
+            }
+
+            handIK.weight = Mathf.MoveTowards(handIK.weight, targetWeight, settings.HandsIKWeightSpeed * dt);
+        }
+    }
+}

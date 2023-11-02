@@ -21,6 +21,7 @@ namespace DCL.DebugUtilities
                         { typeof(DebugButtonDef), new DebugElementBase<DebugButtonElement, DebugButtonDef>.Factory(viewsCatalog.Button) },
                         { typeof(DebugConstLabelDef), new DebugElementBase<DebugConstLabelElement, DebugConstLabelDef>.Factory(viewsCatalog.ConstLabel) },
                         { typeof(DebugFloatFieldDef), new DebugElementBase<DebugFloatFieldElement, DebugFloatFieldDef>.Factory(viewsCatalog.FloatField) },
+                        { typeof(DebugVector3FieldDef), new DebugElementBase<DebugVector3FieldElement, DebugVector3FieldDef>.Factory(viewsCatalog.Vector3Field) },
                         { typeof(DebugHintDef), new DebugElementBase<DebugHintElement, DebugHintDef>.Factory(viewsCatalog.Hint) },
                         { typeof(DebugIntFieldDef), new DebugElementBase<DebugIntFieldElement, DebugIntFieldDef>.Factory(viewsCatalog.IntField) },
                         { typeof(DebugLongMarkerDef), new DebugElementBase<DebugLongMarkerElement, DebugLongMarkerDef>.Factory(viewsCatalog.LongMarker) },
