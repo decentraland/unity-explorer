@@ -14,11 +14,11 @@ namespace ECS.Profiling.Systems
     {
         private readonly IProfilingProvider profilingProvider;
 
-        private readonly DebugWidgetVisibilityBinding visibilityBinding;
+        private DebugWidgetVisibilityBinding visibilityBinding;
 
-        private readonly ElementBinding<ulong> hiccups;
-        private readonly ElementBinding<string> fps;
-        private readonly ElementBinding<string> usedMemory;
+        private ElementBinding<ulong> hiccups;
+        private ElementBinding<string> fps;
+        private ElementBinding<string> usedMemory;
 
         private float lastTimeSinceMetricsUpdate;
 
@@ -26,16 +26,19 @@ namespace ECS.Profiling.Systems
         {
             this.profilingProvider = profilingProvider;
 
-            ElementBinding<string> version;
+            CreateView();
 
-            debugBuilder.AddWidget("Performance")
-                        .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true))
-                        .AddCustomMarker("Version:", version = new ElementBinding<string>(string.Empty))
-                        .AddCustomMarker("Total Used Memory:", usedMemory = new ElementBinding<string>(string.Empty))
-                        .AddCustomMarker("Frame Rate:", fps = new ElementBinding<string>(string.Empty))
-                        .AddMarker("Hiccups last 1000 frames:", hiccups = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat);
+            void CreateView()
+            {
+                var version = new ElementBinding<string>(Application.version);
 
-            version.Value = Application.version;
+                debugBuilder.AddWidget("Performance")
+                            .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true))
+                            .AddCustomMarker("Version:", version)
+                            .AddCustomMarker("Total Used Memory:", usedMemory = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Frame Rate:", fps = new ElementBinding<string>(string.Empty))
+                            .AddMarker("Hiccups last 1000 frames:", hiccups = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat);
+            }
         }
 
         protected override void Update(float t)
@@ -43,24 +46,28 @@ namespace ECS.Profiling.Systems
             if (visibilityBinding.IsExpanded && lastTimeSinceMetricsUpdate > 0.5f)
             {
                 lastTimeSinceMetricsUpdate = 0;
-                hiccups.Value = profilingProvider.GetHiccupCountInBuffer();
-                usedMemory.Value = $"{profilingProvider.TotalUsedMemoryInMB} MB";
-
-                SetFPS();
+                UpdateView();
             }
 
             lastTimeSinceMetricsUpdate += t;
             profilingProvider.CheckHiccup();
         }
 
-        private void SetFPS()
+        private void UpdateView()
         {
-            float averageFrameTimeInSeconds = (float)profilingProvider.GetAverageFrameTimeValueInNS() * 1e-9f;
+            hiccups.Value = profilingProvider.GetHiccupCountInBuffer();
+            usedMemory.Value = $"{profilingProvider.TotalUsedMemoryInMB} MB";
+            SetFPS();
 
-            float frameTimeInMS = averageFrameTimeInSeconds * 1e3f;
-            float frameRate = 1 / averageFrameTimeInSeconds;
+            void SetFPS()
+            {
+                float averageFrameTimeInSeconds = (float)profilingProvider.GetAverageFrameTimeValueInNS() * 1e-9f;
 
-            fps.Value = $"{frameRate:F1} fps ({frameTimeInMS:F1} ms)";
+                float frameTimeInMS = averageFrameTimeInSeconds * 1e3f;
+                float frameRate = 1 / averageFrameTimeInSeconds;
+
+                fps.Value = $"{frameRate:F1} fps ({frameTimeInMS:F1} ms)";
+            }
         }
     }
 }
