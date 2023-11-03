@@ -5,10 +5,10 @@ namespace MVC
 {
     public class WindowStackManager : IWindowsStackManager
     {
-        internal readonly List<IController> popupStack = new ();
-        internal readonly List<IController> persistentStack = new ();
-        internal IController fullscreenController;
-        internal IController topController;
+        internal List<IController> popupStack { get; } = new ();
+        internal List<IController> persistentStack { get; } = new ();
+        internal IController fullscreenController { get; private set; }
+        internal IController topController { get; private set; }
 
         public IController TopMostPopup => popupStack.LastOrDefault();
 
@@ -38,13 +38,13 @@ namespace MVC
             return new PersistentPushInfo(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, -20));
         }
 
-        public TopPushInfo PushTop(IController controller)
+        public OverlayPushInfo PushOverlay(IController controller)
         {
             topController = controller;
-            return new TopPushInfo(popupStack, fullscreenController, new CanvasOrdering(CanvasOrdering.SortingLayer.Top, 1));
+            return new OverlayPushInfo(popupStack, fullscreenController, new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 1));
         }
 
-        public void PopTop(IController controller) =>
+        public void PopOverlay(IController controller) =>
             topController = null;
 
         public PopupPopInfo PopPopup(IController controller)
@@ -94,13 +94,13 @@ namespace MVC
         }
     }
 
-    public readonly struct TopPushInfo
+    public readonly struct OverlayPushInfo
     {
         public readonly List<IController> PopupControllers;
         public readonly IController FullscreenController;
         public readonly CanvasOrdering ControllerOrdering;
 
-        public TopPushInfo(List<IController> popupControllers, IController fullscreenController, CanvasOrdering controllerOrdering)
+        public OverlayPushInfo(List<IController> popupControllers, IController fullscreenController, CanvasOrdering controllerOrdering)
         {
             this.PopupControllers = popupControllers;
             ControllerOrdering = controllerOrdering;

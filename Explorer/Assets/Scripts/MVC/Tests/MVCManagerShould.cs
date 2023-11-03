@@ -53,7 +53,7 @@ namespace MVC.Tests
         [Test]
         [TestCase(CanvasOrdering.SortingLayer.Popup)]
         [TestCase(CanvasOrdering.SortingLayer.Fullscreen)]
-        [TestCase(CanvasOrdering.SortingLayer.Top)]
+        [TestCase(CanvasOrdering.SortingLayer.Overlay)]
         [TestCase(CanvasOrdering.SortingLayer.Persistent)]
         public async Task Show(CanvasOrdering.SortingLayer layer)
         {
@@ -74,9 +74,9 @@ namespace MVC.Tests
                     popupCloserView.DidNotReceive().Show(Arg.Any<CancellationToken>());
                     windowsStackManager.Received().PushFullscreen(controller);
                     break;
-                case CanvasOrdering.SortingLayer.Top:
+                case CanvasOrdering.SortingLayer.Overlay:
                     popupCloserView.DidNotReceive().Show(Arg.Any<CancellationToken>());
-                    windowsStackManager.Received().PushTop(controller);
+                    windowsStackManager.Received().PushOverlay(controller);
                     break;
                 case CanvasOrdering.SortingLayer.Persistent:
                     popupCloserView.DidNotReceive().Show(Arg.Any<CancellationToken>());

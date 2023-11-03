@@ -15,9 +15,9 @@
 
         PersistentPushInfo PushPersistent(IController controller);
 
-        TopPushInfo PushTop(IController controller);
+        OverlayPushInfo PushOverlay(IController controller);
 
-        void PopTop(IController controller);
+        void PopOverlay(IController controller);
 
         /// <summary>
         ///     Recycle a previously rented ordering setup.

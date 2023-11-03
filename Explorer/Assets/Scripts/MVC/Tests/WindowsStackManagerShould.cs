@@ -74,7 +74,7 @@ namespace MVC.Tests
         [Test]
         public void PushTop()
         {
-            manager.PushTop(controller);
+            manager.PushOverlay(controller);
 
             Assert.AreSame(controller, manager.topController);
         }
@@ -82,9 +82,9 @@ namespace MVC.Tests
         [Test]
         public void PopTop()
         {
-            manager.PushTop(controller);
+            manager.PushOverlay(controller);
 
-            manager.PopTop(controller);
+            manager.PopOverlay(controller);
 
             Assert.IsNull(manager.topController);
         }

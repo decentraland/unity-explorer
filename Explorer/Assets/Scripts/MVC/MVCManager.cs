@@ -56,7 +56,7 @@ namespace MVC
                 case CanvasOrdering.SortingLayer.Persistent:
                     await ShowPersistent(command, controller, ct);
                     break;
-                case CanvasOrdering.SortingLayer.Top:
+                case CanvasOrdering.SortingLayer.Overlay:
                     await ShowTop(command, controller, ct);
                     break;
             }
@@ -66,28 +66,28 @@ namespace MVC
             where TView : IView
         {
             // Push new fullscreen controller
-            TopPushInfo topPushInfo = windowsStackManager.PushTop(controller);
+            OverlayPushInfo overlayPushInfo = windowsStackManager.PushOverlay(controller);
 
             // Hide all popups in the stack and clear it
-            if(topPushInfo.PopupControllers != null)
+            if(overlayPushInfo.PopupControllers != null)
             {
-                foreach (IController popupController in topPushInfo.PopupControllers)
+                foreach (IController popupController in overlayPushInfo.PopupControllers)
                     popupController.HideView(ct).Forget();
 
-                topPushInfo.PopupControllers.Clear();
+                overlayPushInfo.PopupControllers.Clear();
             }
 
             // Hide fullscreen UI if any
-            if (topPushInfo.FullscreenController != null)
+            if (overlayPushInfo.FullscreenController != null)
             {
-                topPushInfo.FullscreenController.HideView(ct).Forget();
-                windowsStackManager.PopFullscreen(topPushInfo.FullscreenController);
+                overlayPushInfo.FullscreenController.HideView(ct).Forget();
+                windowsStackManager.PopFullscreen(overlayPushInfo.FullscreenController);
             }
 
             // Hide the popup closer
             popupCloser.Hide(ct).Forget();
 
-            await command.Execute(controller, topPushInfo.ControllerOrdering, ct);
+            await command.Execute(controller, overlayPushInfo.ControllerOrdering, ct);
 
             await controller.HideView(ct);
         }
