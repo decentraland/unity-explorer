@@ -6,6 +6,7 @@ namespace DCL.Input
 {
     public class UIRaycaster : IUIRaycaster
     {
+        private const int SCREEN_SAFE_MARGIN = 15;
         private readonly EventSystem eventSystem;
         private readonly PointerEventData pointerEventData;
         private readonly List<RaycastResult> raycastResults;
@@ -22,8 +23,8 @@ namespace DCL.Input
             pointerEventData.position = position;
             raycastResults.Clear();
 
-            bool isInSafeAreaWidth = position.x < 15 || position.x > Screen.width - 15;
-            bool isInSafeAreaHeight = position.y < 15 || position.y > Screen.height - 15;
+            bool isInSafeAreaWidth = position.x < SCREEN_SAFE_MARGIN || position.x > Screen.width - SCREEN_SAFE_MARGIN;
+            bool isInSafeAreaHeight = position.y < SCREEN_SAFE_MARGIN || position.y > Screen.height - SCREEN_SAFE_MARGIN;
 
             if (isInSafeAreaWidth || isInSafeAreaHeight)
             {
