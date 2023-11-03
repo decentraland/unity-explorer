@@ -16,19 +16,22 @@ namespace ECS.Profiling.Systems
 
         private readonly DebugWidgetVisibilityBinding visibilityBinding;
 
-        private readonly ElementBinding<string> version;
         private readonly ElementBinding<ulong> hiccups;
         private readonly ElementBinding<string> fps;
+        private readonly ElementBinding<string> usedMemory;
 
         private float lastTimeSinceMetricsUpdate;
 
-        internal ProfilingSystem(World world, IProfilingProvider profilingProvider, IDebugContainerBuilder debugBuilder) : base(world)
+        private ProfilingSystem(World world, IProfilingProvider profilingProvider, IDebugContainerBuilder debugBuilder) : base(world)
         {
             this.profilingProvider = profilingProvider;
+
+            ElementBinding<string> version;
 
             debugBuilder.AddWidget("Performance")
                         .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true))
                         .AddCustomMarker("Version:", version = new ElementBinding<string>(string.Empty))
+                        .AddCustomMarker("Total Used Memory:", usedMemory = new ElementBinding<string>(string.Empty))
                         .AddCustomMarker("Frame Rate:", fps = new ElementBinding<string>(string.Empty))
                         .AddMarker("Hiccups last 1000 frames:", hiccups = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat);
 
@@ -41,6 +44,7 @@ namespace ECS.Profiling.Systems
             {
                 lastTimeSinceMetricsUpdate = 0;
                 hiccups.Value = profilingProvider.GetHiccupCountInBuffer();
+                usedMemory.Value = $"{profilingProvider.TotalUsedMemoryInMB} MB";
 
                 SetFPS();
             }
