@@ -22,12 +22,7 @@ namespace DCL.CharacterMotion.Systems
     [UpdateAfter(typeof(InterpolateCharacterSystem))]
     public partial class RotateCharacterSystem : BaseUnityLoopSystem
     {
-        internal RotateCharacterSystem(World world) : base(world) { }
-
-        public override void Initialize()
-        {
-
-        }
+        private RotateCharacterSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
