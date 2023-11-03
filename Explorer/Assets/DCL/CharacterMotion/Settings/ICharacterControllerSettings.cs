@@ -41,5 +41,6 @@ namespace DCL.CharacterMotion.Settings
         float FOVChangeSpeed { get; }
         float AnimationFallSpeed { get; }
         float AnimationLongFallSpeed { get; }
+        float PlatformRaycastLength { get; }
     }
 }

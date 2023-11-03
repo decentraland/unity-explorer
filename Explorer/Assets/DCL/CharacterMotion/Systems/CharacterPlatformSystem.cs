@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CrdtEcsBridge.Physics;
 using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Settings;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
@@ -26,6 +27,7 @@ namespace DCL.CharacterMotion.Systems
 
         [Query]
         private void ResolvePlatformMovement(
+            in ICharacterControllerSettings settings,
             ref CharacterPlatformComponent platformComponent,
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController)
@@ -38,7 +40,7 @@ namespace DCL.CharacterMotion.Systems
 
             Transform transform = characterController.transform;
 
-            CheckPlatform(platformComponent, transform);
+            CheckPlatform(platformComponent, transform, settings);
 
             if (platformComponent.CurrentPlatform == null) return;
 
@@ -53,15 +55,18 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void CheckPlatform(CharacterPlatformComponent platformComponent, Transform transform)
+        private static void CheckPlatform(CharacterPlatformComponent platformComponent, Transform transform, ICharacterControllerSettings settings)
         {
+            float rayDistance = settings.PlatformRaycastLength;
+            float halfDistance = rayDistance * 0.5f;
+
             var ray = new Ray
             {
-                origin = transform.position + (Vector3.up * 0.15f),
+                origin = transform.position + (Vector3.up * halfDistance),
                 direction = Vector3.down,
             };
 
-            bool hasHit = Physics.Raycast(ray, out RaycastHit hitInfo, 0.30f, PhysicsLayers.CHARACTER_ONLY_MASK);
+            bool hasHit = Physics.Raycast(ray, out RaycastHit hitInfo, rayDistance, PhysicsLayers.CHARACTER_ONLY_MASK);
 
             if (hasHit)
             {
