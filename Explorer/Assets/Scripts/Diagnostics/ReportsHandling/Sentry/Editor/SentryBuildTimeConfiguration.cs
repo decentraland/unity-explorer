@@ -1,6 +1,6 @@
 using Sentry.Unity;
 using System;
-using System.IO;
+using UnityEditor;
 using UnityEngine;
 
 namespace Diagnostics.ReportsHandling.Sentry.Editor
@@ -8,7 +8,7 @@ namespace Diagnostics.ReportsHandling.Sentry.Editor
     [CreateAssetMenu(fileName = "SentryBuildTimeConfiguration.asset", menuName = "Sentry/SentryBuildTimeConfiguration", order = 999)]
     public class SentryBuildTimeConfiguration : SentryBuildTimeOptionsConfiguration
     {
-        private const string SENTRY_ASSET_PATH = "./Assets/Resources/Sentry/SentryOptions.asset";
+        private const string SENTRY_ASSET_PATH = "Assets/Resources/Sentry/SentryOptions.asset";
 
         // This file should be never committed since it may contain secrets
         [SerializeField] private string configJsonFilePath = "./.sentryconfig.json";
@@ -84,23 +84,18 @@ namespace Diagnostics.ReportsHandling.Sentry.Editor
 
         private void ApplyFromJsonFile(SentryUnityOptions options, SentryCliOptions cliOptions)
         {
-            Debug.Log($"SentryBuildTimeConfiguration.ApplyFromJsonFile.Exists: {File.Exists(configJsonFilePath)}");
             SentryJsonConfigLoader.Apply(configJsonFilePath, options);
             SentryJsonConfigLoader.Apply(configJsonFilePath, cliOptions);
         }
 
         private void PersistIntoAssetFile(string path, SentryUnityOptions options)
         {
-            Debug.Log($"SentryBuildTimeConfiguration.PersistIntoAssetFile.Exists: {File.Exists(path)}");
-            if (!File.Exists(path)) return;
-
-            string fileContent = File.ReadAllText(path);
-
-            fileContent = fileContent.Replace("<REPLACE_RELEASE>", options.Release)
-                                     .Replace("<REPLACE_ENVIRONMENT>", options.Environment)
-                                     .Replace("<REPLACE_DSN>", options.Dsn);
-
-            File.WriteAllText(path, fileContent);
+            ScriptableSentryUnityOptions asset = AssetDatabase.LoadAssetAtPath<ScriptableSentryUnityOptions>(path);
+            if (asset == null) return;
+            asset.ReleaseOverride = options.Release;
+            asset.Dsn = options.Dsn;
+            asset.EnvironmentOverride = options.Environment;
+            EditorUtility.SetDirty(asset);
         }
     }
 }
