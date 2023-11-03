@@ -17,15 +17,15 @@ namespace DCL.Time.Systems
 
         protected override void Update(float t)
         {
-            UpdateTickQuery(World, t);
+            UpdateTickQuery(World, UnityEngine.Time.time);
         }
 
         [Query]
         private void UpdateTick(
-            [Data] float dt,
+            [Data] float time,
             ref TimeComponent tickComponent)
         {
-            tickComponent.Time += dt;
+            tickComponent.Time = time;
         }
     }
 }
