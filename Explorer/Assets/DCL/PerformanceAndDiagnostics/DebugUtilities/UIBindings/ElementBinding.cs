@@ -1,4 +1,5 @@
-﻿using UnityEngine.UIElements;
+﻿using System;
+using UnityEngine.UIElements;
 
 namespace DCL.DebugUtilities.UIBindings
 {
@@ -7,6 +8,8 @@ namespace DCL.DebugUtilities.UIBindings
     /// </summary>
     public class ElementBinding<T> : IBinding
     {
+        public event Action<T> OnValueChanged;
+
         private T tempValue;
 
         private bool tempValueIsDirty;
@@ -55,7 +58,10 @@ namespace DCL.DebugUtilities.UIBindings
         public void Update()
         {
             if (tempValueIsDirty)
+            {
                 element.value = tempValue;
+                OnValueChanged?.Invoke(element.value);
+            }
 
             tempValueIsDirty = false;
         }

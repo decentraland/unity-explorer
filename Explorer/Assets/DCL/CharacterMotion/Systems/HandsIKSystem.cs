@@ -25,16 +25,15 @@ namespace DCL.CharacterMotion.Systems
         private readonly ElementBinding<float> wallDistance;
         private readonly ElementBinding<float> ikWeightSpeed;
 
-        //private readonly ElementBinding<Vector3> elbowHintOffset;
+        private readonly ElementBinding<Vector3> elbowHintOffset;
 
         private HandsIKSystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
         {
             debugBuilder.AddWidget("Locomotion: Hands IK")
                         .AddSingleButton("Toggle Enable", () => disableWasToggled = true)
                         .AddFloatField("Wall Distance", wallDistance = new ElementBinding<float>(0))
-                        .AddFloatField("IK Weight Speed", ikWeightSpeed = new ElementBinding<float>(0));
-
-            //.AddVectorField("Elbow Hint Offset", elbowHintOffset = new ElementBinding<Vector3>(Vector3.zero));
+                        .AddFloatField("IK Weight Speed", ikWeightSpeed = new ElementBinding<float>(0))
+                        .AddVectorField("Elbow Hint Offset", elbowHintOffset = new ElementBinding<Vector3>(Vector3.zero));
         }
 
         protected override void Update(float t)
@@ -63,14 +62,13 @@ namespace DCL.CharacterMotion.Systems
                 wallDistance.Value = settings.HandsIKWallHitDistance;
                 ikWeightSpeed.Value = settings.HandsIKWeightSpeed;
 
-                //elbowHintOffset.Value = settings.HandsIKElbowOffset;
+                elbowHintOffset.Value = settings.HandsIKElbowOffset;
                 handsIKComponent.Initialized = true;
             }
 
             settings.HandsIKWallHitDistance = wallDistance.Value;
             settings.HandsIKWeightSpeed = ikWeightSpeed.Value;
-
-            //settings.HandsIKElbowOffset = elbowHintOffset.Value;
+            settings.HandsIKElbowOffset = elbowHintOffset.Value;
 
             if (handsIKComponent.IsDisabled) return;
 
@@ -109,8 +107,6 @@ namespace DCL.CharacterMotion.Systems
                 handIKTarget.position = Vector3.MoveTowards(handIKTarget.position, hitInfo.point, settings.IKPositionSpeed * dt);
                 handIKTarget.forward = -hitInfo.normal;
                 targetWeight = 1;
-                /*var rotationCorrection = Quaternion.FromToRotation(Vector3.up, hitInfo.normal);
-                handIKTarget.rotation = rotationCorrection * Quaternion.LookRotation(legConstraintForward, Vector3.up);*/
             }
 
             handIK.weight = Mathf.MoveTowards(handIK.weight, targetWeight, settings.HandsIKWeightSpeed * dt);

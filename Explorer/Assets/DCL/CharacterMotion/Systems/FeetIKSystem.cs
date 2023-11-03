@@ -74,6 +74,7 @@ namespace DCL.CharacterMotion.Systems
             ApplyIKWeight(avatarBase.RightLegIK, rightLegConstraint.localPosition, ref feetIKComponent.Right, rigidTransform.IsGrounded, settings, dt);
             ApplyIKWeight(avatarBase.LeftLegIK, leftLegConstraint.localPosition, ref feetIKComponent.Left, rigidTransform.IsGrounded, settings, dt);
 
+            // Fix/Remove those strings allocations
             leftIKWeightBinding.Value = $"{avatarBase.LeftLegIK.weight:F2}";
             rightIKWeightBinding.Value = $"{avatarBase.RightLegIK.weight:F2}";
 
