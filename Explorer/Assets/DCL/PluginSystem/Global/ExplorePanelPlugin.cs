@@ -26,11 +26,16 @@ namespace DCL.PluginSystem.Global
         {
             mvcManager.RegisterController(new ExplorePanelController(
                 ExplorePanelController.Preallocate(
-                    (await assetsProvisioner.ProvideMainAssetAsync(settings.explorePanelPrefab, ct: ct)).Value.GetComponent<ExplorePanelView>(), null, out var explorePanelView)));
+                    (await assetsProvisioner.ProvideMainAssetAsync(settings.ExplorePanelPrefab, ct: ct)).Value.GetComponent<ExplorePanelView>(), null, out var explorePanelView)));
 
             mvcManager.RegisterController(new PersistentExploreOpenerController(
                 PersistentExploreOpenerController.CreateLazily(
-                    (await assetsProvisioner.ProvideMainAssetAsync(settings.persistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>(), null), mvcManager)
+                    (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>(), null), mvcManager)
+            );
+
+            mvcManager.RegisterController(new MinimapController(
+                MinimapController.CreateLazily(
+                    (await assetsProvisioner.ProvideMainAssetAsync(settings.MinimapPrefab, ct: ct)).Value.GetComponent<MinimapView>(), null), mvcManager)
             );
 
             NavmapController navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>());
@@ -39,6 +44,7 @@ namespace DCL.PluginSystem.Global
             //navmapView.Hide(CancellationToken.None).Forget();
             //var navmapPlugin = new NavmapPlugin(assetsProvisioner, mvcManager, navmapView);
             mvcManager.Show(PersistentExploreOpenerController.IssueCommand(new EmptyParameter())).Forget();
+            mvcManager.Show(MinimapController.IssueCommand(new EmptyParameter())).Forget();
         }
 
         public void Dispose()
@@ -55,15 +61,15 @@ namespace DCL.PluginSystem.Global
             [field: Header(nameof(ExplorePanelPlugin) + "." + nameof(ExplorePanelSettings))]
             [field: Space]
             [field: SerializeField]
-            public AssetReferenceGameObject explorePanelPrefab;
+            public AssetReferenceGameObject ExplorePanelPrefab;
 
             [field: Space]
             [field: SerializeField]
-            public AssetReferenceGameObject navmapPrefab;
+            public AssetReferenceGameObject PersistentExploreOpenerPrefab;
 
             [field: Space]
             [field: SerializeField]
-            public AssetReferenceGameObject persistentExploreOpenerPrefab;
+            public AssetReferenceGameObject MinimapPrefab;
         }
     }
 }

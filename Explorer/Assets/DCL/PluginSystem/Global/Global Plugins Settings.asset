@@ -79,18 +79,18 @@ MonoBehaviour:
     - rid: 1501337502808539138
       type: {class: ExplorePanelPlugin/ExplorePanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        explorePanelPrefab:
+        ExplorePanelPrefab:
           m_AssetGUID: 7dc631660587a41589ba55c08ff7fa73
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        navmapPrefab:
-          m_AssetGUID: ad0eada9babef44e5bb3f06b080eef83
+        PersistentExploreOpenerPrefab:
+          m_AssetGUID: b55e2970d2dc94295ad8af70cb9d09f4
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        persistentExploreOpenerPrefab:
-          m_AssetGUID: b55e2970d2dc94295ad8af70cb9d09f4
+        MinimapPrefab:
+          m_AssetGUID: f2ef3a867ab2840cb9bc73b4762922fd
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

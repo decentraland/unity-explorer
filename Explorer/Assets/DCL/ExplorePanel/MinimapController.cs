@@ -1,14 +1,15 @@
 using Cysharp.Threading.Tasks;
+using DCL.UI;
 using MVC;
 using System.Threading;
 
 namespace DCL.ExplorePanel
 {
-    public class PersistentExploreOpenerController : ControllerBase<PersistentExploreOpenerView, EmptyParameter>
+    public class MinimapController : ControllerBase<MinimapView, EmptyParameter>
     {
         private readonly IMVCManager mvcManager;
 
-        public PersistentExploreOpenerController(ViewFactoryMethod viewFactory, IMVCManager mvcManager) : base(viewFactory)
+        public MinimapController(ViewFactoryMethod viewFactory, IMVCManager mvcManager) : base(viewFactory)
         {
             this.mvcManager = mvcManager;
         }
@@ -19,9 +20,9 @@ namespace DCL.ExplorePanel
 
         protected override void OnViewShow()
         {
-            viewInstance.OpenExploreButton.onClick.RemoveAllListeners();
-            viewInstance.OpenExploreButton.onClick.AddListener(() =>
-                mvcManager.Show(ExplorePanelController.IssueCommand(new ExplorePanelParameter(null))).Forget());
+            viewInstance.OpenExploreMapButton.onClick.RemoveAllListeners();
+            viewInstance.OpenExploreMapButton.onClick.AddListener(() =>
+                mvcManager.Show(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
         }
 
     }

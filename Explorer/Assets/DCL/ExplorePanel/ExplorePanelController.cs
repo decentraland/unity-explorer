@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace DCL.ExplorePanel
 {
-    public class ExplorePanelController : ControllerBase<ExplorePanelView, EmptyParameter>
+    public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>
     {
         private SectionSelectorController sectionSelectorController;
         private CancellationTokenSource animationCts;
@@ -43,7 +43,24 @@ namespace DCL.ExplorePanel
             }
         }
 
+        protected override void OnViewShow()
+        {
+            foreach (var tabSelector in viewInstance.TabSelectorViews)
+                if (tabSelector.section == inputData.Section)
+                    tabSelector.TabSelectorToggle.isOn = true;
+        }
+
         protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
             viewInstance.CloseButton.OnClickAsync(ct);
+    }
+
+    public readonly struct ExplorePanelParameter
+    {
+        public readonly ExploreSections? Section;
+
+        public ExplorePanelParameter(ExploreSections? section)
+        {
+            Section = section;
+        }
     }
 }

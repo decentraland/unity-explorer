@@ -50,7 +50,7 @@ namespace MVC
 
         public abstract CanvasOrdering.SortingLayer SortLayers { get; }
 
-        public async UniTask LaunchViewLifeCycle(CanvasOrdering ordering, TInputData inputData, CancellationToken ct)
+        public async UniTask LaunchViewLifeCycle(CanvasOrdering ordering, TInputData data, CancellationToken ct)
         {
             // make sure instance is provided (it can be instantiated lazily)
             if (viewInstance == null)
@@ -58,7 +58,7 @@ namespace MVC
                 viewInstance = viewFactory();
                 OnViewInstantiated();
             }
-            this.inputData = inputData;
+            this.inputData = data;
 
             viewInstance.SetDrawOrder(ordering);
             OnBeforeViewShow();
