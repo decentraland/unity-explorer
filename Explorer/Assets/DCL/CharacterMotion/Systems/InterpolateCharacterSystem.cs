@@ -6,6 +6,7 @@ using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Platforms;
 using DCL.CharacterMotion.Settings;
+using DCL.CharacterMotion.Settings;
 using DCL.Diagnostics;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
@@ -41,6 +42,7 @@ namespace DCL.CharacterMotion.Systems
         [Query]
         private void Interpolate(
             [Data] float dt,
+            in ICharacterControllerSettings settings,
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController,
             ref CharacterPlatformComponent platformComponent,
@@ -48,7 +50,7 @@ namespace DCL.CharacterMotion.Systems
             in JumpInputComponent jump,
             in MovementInputComponent movementInput)
         {
-            var slopeModifier = ApplySlopeModifier.Execute(in rigidTransform, in movementInput, in jump, characterController, dt);
+            Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
 
             ApplyVelocityStun.Execute(ref rigidTransform, in stunComponent);
 

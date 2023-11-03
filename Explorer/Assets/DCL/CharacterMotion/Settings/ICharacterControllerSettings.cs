@@ -42,5 +42,7 @@ namespace DCL.CharacterMotion.Settings
         float AnimationFallSpeed { get; }
         float AnimationLongFallSpeed { get; }
         float PlatformRaycastLength { get; }
+        float DownwardsSlopeJogRaycastDistance { get; }
+        float DownwardsSlopeRunRaycastDistance { get; }
     }
 }

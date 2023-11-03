@@ -1,12 +1,15 @@
 ﻿using CrdtEcsBridge.Physics;
 using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Settings;
 using UnityEngine;
 
 namespace DCL.CharacterMotion
 {
     public static class ApplySlopeModifier
     {
-        public static Vector3 Execute(in CharacterRigidTransform rigidTransform,
+        public static Vector3 Execute(
+            in ICharacterControllerSettings settings,
+            in CharacterRigidTransform rigidTransform,
             in MovementInputComponent input,
             in JumpInputComponent jump,
             CharacterController characterController,
@@ -20,14 +23,13 @@ namespace DCL.CharacterMotion
             float feet = position.y;
             position.y = feet;
 
-            // Todo: cache
             var ray = new Ray
             {
                 origin = position + (rigidTransform.MoveVelocity.Velocity * dt),
                 direction = Vector3.down,
             };
 
-            float downwardsSlopeDistance = input.Kind == MovementKind.Run ? 0.55f : 0.45f;
+            float downwardsSlopeDistance = input.Kind == MovementKind.Run ? settings.DownwardsSlopeRunRaycastDistance : settings.DownwardsSlopeJogRaycastDistance;
 
             if (!Physics.Raycast(ray, out RaycastHit hit, downwardsSlopeDistance, PhysicsLayers.CHARACTER_ONLY_MASK))
                 return Vector3.zero;
