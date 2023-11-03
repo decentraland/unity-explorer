@@ -6,6 +6,7 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -77,14 +78,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarTransform.SetParent(transformComponent.Transform, false);
             avatarTransform.ResetLocalTRS();
 
-            //Debug stuff, remove after demo
-            avatarBase.SetAsMainPlayer(avatarShapeComponent.Name.Equals("Player"));
-
             var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create(avatarBase.transform, avatarBase.AvatarSkinnedMeshRenderer.bones);
 
             AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, wearablesResult, avatarBase);
 
-            World.Add(entity, avatarBase, avatarTransformMatrixComponent, skinningComponent);
+            World.Add(entity, avatarBase, (IAvatarView)avatarBase, avatarTransformMatrixComponent, skinningComponent);
         }
 
         [Query]

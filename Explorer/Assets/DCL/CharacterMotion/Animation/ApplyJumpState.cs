@@ -1,4 +1,4 @@
-﻿using DCL.AvatarRendering.AvatarShape;
+﻿using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using System.Runtime.CompilerServices;
@@ -11,11 +11,9 @@ namespace DCL.CharacterMotion.Animation
         public static void Execute(ref CharacterAnimationComponent animationComponent,
             in ICharacterControllerSettings settings,
             in CharacterRigidTransform rigidTransform,
-            in AvatarBase avatarBase,
+            in IAvatarView view,
             in StunComponent stunComponent)
         {
-            var animator = avatarBase.avatarAnimator;
-
             animationComponent.States.IsGrounded = rigidTransform.IsGrounded;
             animationComponent.States.IsFalling = !rigidTransform.IsGrounded && rigidTransform.NonInterpolatedVelocity.y < -5f;
             animationComponent.States.IsLongFall = !rigidTransform.IsGrounded && rigidTransform.NonInterpolatedVelocity.y < -12f;
@@ -24,20 +22,20 @@ namespace DCL.CharacterMotion.Animation
             bool jumpState = !rigidTransform.IsGrounded && (rigidTransform.NonInterpolatedVelocity.y > 5f || animationComponent.States.IsLongJump);
 
             if (jumpState && !animationComponent.States.IsJumping)
-                animator.SetTrigger(AnimationHashes.JUMP);
+                view.SetAnimatorTrigger(AnimationHashes.JUMP);
 
             animationComponent.States.IsJumping = jumpState;
 
             if (stunComponent.IsStunned && !animationComponent.States.IsStunned)
-                animator.SetTrigger(AnimationHashes.STUNNED);
+                view.SetAnimatorTrigger(AnimationHashes.STUNNED);
 
             animationComponent.States.IsStunned = stunComponent.IsStunned;
 
-            animator.SetBool(AnimationHashes.GROUNDED, animationComponent.States.IsGrounded);
-            animator.SetBool(AnimationHashes.JUMPING, animationComponent.States.IsJumping);
-            animator.SetBool(AnimationHashes.FALLING, animationComponent.States.IsFalling);
-            animator.SetBool(AnimationHashes.LONG_JUMP, animationComponent.States.IsLongJump);
-            animator.SetBool(AnimationHashes.LONG_FALL, animationComponent.States.IsLongFall);
+            view.SetAnimatorBool(AnimationHashes.GROUNDED, animationComponent.States.IsGrounded);
+            view.SetAnimatorBool(AnimationHashes.JUMPING, animationComponent.States.IsJumping);
+            view.SetAnimatorBool(AnimationHashes.FALLING, animationComponent.States.IsFalling);
+            view.SetAnimatorBool(AnimationHashes.LONG_JUMP, animationComponent.States.IsLongJump);
+            view.SetAnimatorBool(AnimationHashes.LONG_FALL, animationComponent.States.IsLongFall);
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using DCL.AvatarRendering.AvatarShape;
+﻿using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Utils;
@@ -14,8 +14,13 @@ namespace DCL.CharacterMotion.Animation
         // blend  0  -----   1  -----  2  -----  3
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(float dt, ref CharacterAnimationComponent animationComponent, in ICharacterControllerSettings settings, in CharacterRigidTransform rigidTransform, in MovementInputComponent movementInput,
-            in AvatarBase avatarBase)
+        public static void Execute(
+            float dt,
+            ref CharacterAnimationComponent animationComponent,
+            in ICharacterControllerSettings settings,
+            in CharacterRigidTransform rigidTransform,
+            in MovementInputComponent movementInput,
+            in IAvatarView view)
         {
             var velocity = rigidTransform.MoveVelocity.Velocity;
             float maxVelocity = SpeedLimit.Get(settings, movementInput.Kind);
@@ -31,7 +36,7 @@ namespace DCL.CharacterMotion.Animation
             }
 
             animationComponent.States.MovementBlendValue = Mathf.MoveTowards(animationComponent.States.MovementBlendValue, targetBlend, dt * settings.MovAnimBlendSpeed);
-            avatarBase.avatarAnimator.SetFloat(AnimationHashes.MOVEMENT_BLEND, animationComponent.States.MovementBlendValue);
+            view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animationComponent.States.MovementBlendValue);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

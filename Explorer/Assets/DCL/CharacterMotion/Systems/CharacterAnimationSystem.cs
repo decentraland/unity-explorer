@@ -2,7 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.AvatarRendering.AvatarShape;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
@@ -24,15 +24,15 @@ namespace DCL.CharacterMotion.Systems
         private void UpdateAnimation(
             [Data] float dt,
             ref CharacterAnimationComponent animationComponent,
-            in AvatarBase avatarBase,
+            in IAvatarView view,
             in ICharacterControllerSettings settings,
             in CharacterRigidTransform rigidTransform,
             in MovementInputComponent movementInput,
             in StunComponent stunComponent
         )
         {
-            ApplyMovementBlend.Execute(dt, ref animationComponent, in settings, in rigidTransform, in movementInput, in avatarBase);
-            ApplyJumpState.Execute(ref animationComponent, in settings, in rigidTransform, in avatarBase, in stunComponent);
+            ApplyMovementBlend.Execute(dt, ref animationComponent, in settings, in rigidTransform, in movementInput, in view);
+            ApplyJumpState.Execute(ref animationComponent, in settings, in rigidTransform, in view, in stunComponent);
         }
     }
 }
