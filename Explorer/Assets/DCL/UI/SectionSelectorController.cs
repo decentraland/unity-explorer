@@ -6,10 +6,10 @@ using UnityEngine;
 
 namespace DCL.UI
 {
-        public class SectionSelectorController
+    public class SectionSelectorController
     {
-        private ExploreSections previousSection;
         private readonly Dictionary<ExploreSections, GameObject> sections;
+        private ExploreSections previousSection;
 
         public SectionSelectorController(Dictionary<ExploreSections, GameObject> sections, ExploreSections initialSection)
         {
@@ -43,18 +43,24 @@ namespace DCL.UI
             panelOpening.anchoredPosition = new Vector2(1920, 0);
 
             await UniTask.WhenAll(
-                panelClosing.DOAnchorPos(new Vector2(-1920,0), 1f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct).ContinueWith(() =>
-                {
-                    //Ensures that if cancelled the closing panel is in the correct position and disabled
-                    panelClosing.anchoredPosition = new Vector2(-1920, 0);
-                    panelClosing.gameObject.SetActive(false);
-                }),
-                panelOpening.DOAnchorPos(new Vector2(0,0), 1f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct).ContinueWith(() =>
-                {
-                    //Ensures that if cancelled the panel is in the correct position
-                    panelOpening.anchoredPosition = Vector2.zero;
-                    previousSection = newSection;
-                })
+                panelClosing.DOAnchorPos(new Vector2(-1920, 0), 1f)
+                            .SetEase(Ease.OutCubic)
+                            .ToUniTask(cancellationToken: ct)
+                            .ContinueWith(() =>
+                             {
+                                 //Ensures that if cancelled the closing panel is in the correct position and disabled
+                                 panelClosing.anchoredPosition = new Vector2(-1920, 0);
+                                 panelClosing.gameObject.SetActive(false);
+                             }),
+                panelOpening.DOAnchorPos(new Vector2(0, 0), 1f)
+                            .SetEase(Ease.OutCubic)
+                            .ToUniTask(cancellationToken: ct)
+                            .ContinueWith(() =>
+                             {
+                                 //Ensures that if cancelled the panel is in the correct position
+                                 panelOpening.anchoredPosition = Vector2.zero;
+                                 previousSection = newSection;
+                             })
             );
         }
     }
