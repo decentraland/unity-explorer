@@ -11,7 +11,8 @@ namespace MVC
     /// </summary>
     public abstract class PopupViewBase : ViewBase
     {
-        private const float ANIMATION_TIME = 0.3f;
+        [field: SerializeField]
+        private float ANIMATION_TIME = 0.3f;
 
         protected override UniTask PlayShowAnimation(CancellationToken ct)
         {

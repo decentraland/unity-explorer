@@ -4,11 +4,11 @@ using System.Threading;
 
 namespace DCL.ExplorePanel
 {
-    public class PersistentExploreOpenerController : ControllerBase<PersistentExploreOpenerView, EmptyParameter>
+    public class PersistentExplorePanelOpenerController : ControllerBase<PersistentExploreOpenerView, EmptyParameter>
     {
         private readonly IMVCManager mvcManager;
 
-        public PersistentExploreOpenerController(ViewFactoryMethod viewFactory, IMVCManager mvcManager) : base(viewFactory)
+        public PersistentExplorePanelOpenerController(ViewFactoryMethod viewFactory, IMVCManager mvcManager) : base(viewFactory)
         {
             this.mvcManager = mvcManager;
         }

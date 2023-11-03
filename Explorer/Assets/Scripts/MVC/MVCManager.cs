@@ -14,7 +14,7 @@ namespace MVC
         internal readonly Dictionary<Type, IController> controllers;
         private readonly IWindowsStackManager windowsStackManager;
         private readonly CancellationTokenSource destructionCancellationTokenSource;
-        private IPopupCloserView popupCloser;
+        private readonly IPopupCloserView popupCloser;
 
         public MVCManager(
             IWindowsStackManager windowsStackManager,
@@ -27,9 +27,6 @@ namespace MVC
             controllers = new Dictionary<Type, IController>(200);
             popupCloser = popupCloserView;
         }
-
-        private UniTaskVoid Initialize(AssetReferenceGameObject popupCloserView) =>
-            default;
 
         /// <summary>
         ///     Instead of a builder just expose a method
@@ -90,7 +87,7 @@ namespace MVC
             // Hide the popup closer
             popupCloser.Hide(ct).Forget();
 
-            await UniTask.WhenAll(command.Execute(controller, topPushInfo.ControllerOrdering, ct));
+            await command.Execute(controller, topPushInfo.ControllerOrdering, ct);
 
             await controller.HideView(ct);
         }
@@ -101,7 +98,7 @@ namespace MVC
             // Push new fullscreen controller
             PersistentPushInfo persistentPushInfo = windowsStackManager.PushPersistent(controller);
 
-            await UniTask.WhenAll(command.Execute(controller, persistentPushInfo.ControllerOrdering, ct));
+            await command.Execute(controller, persistentPushInfo.ControllerOrdering, ct);
         }
 
         private async UniTask ShowFullScreen<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
@@ -122,7 +119,7 @@ namespace MVC
             // Hide the popup closer
             popupCloser.Hide(ct).Forget();
 
-            await UniTask.WhenAll(command.Execute(controller, fullscreenPushInfo.ControllerOrdering, ct));
+            await command.Execute(controller, fullscreenPushInfo.ControllerOrdering, ct);
 
             await controller.HideView(ct);
             windowsStackManager.PopFullscreen(controller);

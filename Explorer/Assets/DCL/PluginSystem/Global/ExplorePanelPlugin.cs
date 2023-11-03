@@ -28,8 +28,8 @@ namespace DCL.PluginSystem.Global
                 ExplorePanelController.Preallocate(
                     (await assetsProvisioner.ProvideMainAssetAsync(settings.ExplorePanelPrefab, ct: ct)).Value.GetComponent<ExplorePanelView>(), null, out var explorePanelView)));
 
-            mvcManager.RegisterController(new PersistentExploreOpenerController(
-                PersistentExploreOpenerController.CreateLazily(
+            mvcManager.RegisterController(new PersistentExplorePanelOpenerController(
+                PersistentExplorePanelOpenerController.CreateLazily(
                     (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>(), null), mvcManager)
             );
 
@@ -40,10 +40,7 @@ namespace DCL.PluginSystem.Global
 
             NavmapController navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>());
 
-            //NavmapView navmapView = Instantiate((await assetsProvisioner.ProvideMainAssetAsync(settings.navmapPrefab, ct: ct)).Value).GetComponent<NavmapView>();
-            //navmapView.Hide(CancellationToken.None).Forget();
-            //var navmapPlugin = new NavmapPlugin(assetsProvisioner, mvcManager, navmapView);
-            mvcManager.Show(PersistentExploreOpenerController.IssueCommand(new EmptyParameter())).Forget();
+            mvcManager.Show(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter())).Forget();
             mvcManager.Show(MinimapController.IssueCommand(new EmptyParameter())).Forget();
         }
 
