@@ -27,7 +27,6 @@ jobs:
       matrix:
         include:
           - targetPlatform: StandaloneWindows64
-            dockerImage: windows-latest
 
     name: Build
     runs-on: bigwindows
