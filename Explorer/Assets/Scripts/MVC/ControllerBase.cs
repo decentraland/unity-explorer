@@ -28,7 +28,7 @@ namespace MVC
         {
             TView instance2 = Object.Instantiate(prefab, Vector3.zero, Quaternion.identity, root);
             instance = instance2;
-            instance2.Hide(CancellationToken.None, true).Forget();
+            instance2.HideAsync(CancellationToken.None, true).Forget();
             return () => instance2;
         }
 
@@ -63,7 +63,7 @@ namespace MVC
             viewInstance.SetDrawOrder(ordering);
             OnBeforeViewShow();
 
-            await viewInstance.Show(ct);
+            await viewInstance.ShowAsync(ct);
             OnViewShow();
 
             await WaitForCloseIntent(ct);
@@ -72,7 +72,7 @@ namespace MVC
         async UniTask IController.HideView(CancellationToken ct)
         {
             OnViewClose();
-            await viewInstance.Hide(ct);
+            await viewInstance.HideAsync(ct);
         }
 
         /// <summary>

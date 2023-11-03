@@ -19,7 +19,7 @@ namespace MVC
             canvas.sortingOrder = order.OrderInLayer;
         }
 
-        public virtual async UniTask Show(CancellationToken ct)
+        public virtual async UniTask ShowAsync(CancellationToken ct)
         {
             gameObject.SetActive(true);
             if (raycaster) raycaster.enabled = false; // Enable raycasts while the animation is playing
@@ -27,7 +27,7 @@ namespace MVC
             if (raycaster) raycaster.enabled = true;
         }
 
-        public virtual async UniTask Hide(CancellationToken ct, bool isInstant = false)
+        public virtual async UniTask HideAsync(CancellationToken ct, bool isInstant = false)
         {
             gameObject.SetActive(false);
             if (raycaster) raycaster.enabled = false;

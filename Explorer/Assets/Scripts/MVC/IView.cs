@@ -10,8 +10,8 @@ namespace MVC
         /// <summary>
         ///     Show the view without connection to data, data should be set before
         /// </summary>
-        UniTask Show(CancellationToken ct);
+        UniTask ShowAsync(CancellationToken ct);
 
-        UniTask Hide(CancellationToken ct, bool isInstant = false);
+        UniTask HideAsync(CancellationToken ct, bool isInstant = false);
     }
 }

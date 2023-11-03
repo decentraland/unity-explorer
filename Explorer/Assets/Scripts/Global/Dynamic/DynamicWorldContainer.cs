@@ -8,6 +8,7 @@ using DCL.PluginSystem.Global;
 using ECS;
 using ECS.Prioritization.Components;
 using MVC;
+using MVC.PopupsController.PopupCloser;
 using SceneRunner.EmptyScene;
 using System.Collections.Generic;
 using System.Linq;

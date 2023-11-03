@@ -85,7 +85,7 @@ namespace MVC
             }
 
             // Hide the popup closer
-            popupCloser.Hide(ct).Forget();
+            popupCloser.HideAsync(ct).Forget();
 
             await command.Execute(controller, overlayPushInfo.ControllerOrdering, ct);
 
@@ -117,7 +117,7 @@ namespace MVC
             }
 
             // Hide the popup closer
-            popupCloser.Hide(ct).Forget();
+            popupCloser.HideAsync(ct).Forget();
 
             await command.Execute(controller, fullscreenPushInfo.ControllerOrdering, ct);
 
@@ -135,7 +135,7 @@ namespace MVC
             pushPopupPush.PreviousController?.OnBlur();
 
             await UniTask.WhenAny(
-                UniTask.WhenAll(command.Execute(controller, pushPopupPush.ControllerOrdering, ct), popupCloser.Show(ct)),
+                UniTask.WhenAll(command.Execute(controller, pushPopupPush.ControllerOrdering, ct), popupCloser.ShowAsync(ct)),
                 WaitForPopupCloserClick(controller, ct));
 
             // "Close" command has been received
@@ -151,7 +151,7 @@ namespace MVC
             }
             else
             {
-                popupCloser.Hide(ct).Forget();
+                popupCloser.HideAsync(ct).Forget();
             }
         }
 

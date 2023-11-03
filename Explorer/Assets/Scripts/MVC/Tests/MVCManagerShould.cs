@@ -67,19 +67,19 @@ namespace MVC.Tests
             switch (layer)
             {
                 case CanvasOrdering.SortingLayer.Popup:
-                    popupCloserView.Received().Show(Arg.Any<CancellationToken>());
+                    popupCloserView.Received().ShowAsync(Arg.Any<CancellationToken>());
                     windowsStackManager.Received().PushPopup(controller);
                     break;
                 case CanvasOrdering.SortingLayer.Fullscreen:
-                    popupCloserView.DidNotReceive().Show(Arg.Any<CancellationToken>());
+                    popupCloserView.DidNotReceive().ShowAsync(Arg.Any<CancellationToken>());
                     windowsStackManager.Received().PushFullscreen(controller);
                     break;
                 case CanvasOrdering.SortingLayer.Overlay:
-                    popupCloserView.DidNotReceive().Show(Arg.Any<CancellationToken>());
+                    popupCloserView.DidNotReceive().ShowAsync(Arg.Any<CancellationToken>());
                     windowsStackManager.Received().PushOverlay(controller);
                     break;
                 case CanvasOrdering.SortingLayer.Persistent:
-                    popupCloserView.DidNotReceive().Show(Arg.Any<CancellationToken>());
+                    popupCloserView.DidNotReceive().ShowAsync(Arg.Any<CancellationToken>());
                     windowsStackManager.Received().PushPersistent(controller);
                     break;
             }
