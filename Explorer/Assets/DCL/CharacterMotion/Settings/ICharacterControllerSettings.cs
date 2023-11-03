@@ -39,5 +39,7 @@ namespace DCL.CharacterMotion.Settings
         public AnimationCurve AccelerationCurve { get; }
         float CameraFOVWhileRunning { get; }
         float FOVChangeSpeed { get; }
+        float AnimationFallSpeed { get; }
+        float AnimationLongFallSpeed { get; }
     }
 }

@@ -15,11 +15,11 @@ namespace DCL.CharacterMotion.Animation
             in StunComponent stunComponent)
         {
             animationComponent.States.IsGrounded = rigidTransform.IsGrounded;
-            animationComponent.States.IsFalling = !rigidTransform.IsGrounded && rigidTransform.NonInterpolatedVelocity.y < -5f;
-            animationComponent.States.IsLongFall = !rigidTransform.IsGrounded && rigidTransform.NonInterpolatedVelocity.y < -12f;
-            animationComponent.States.IsLongJump = rigidTransform.NonInterpolatedVelocity.y > settings.JogJumpHeight * 3 * settings.JumpGravityFactor;
+            animationComponent.States.IsFalling = !rigidTransform.IsGrounded && rigidTransform.NonInterpolatedVelocity.y < settings.AnimationFallSpeed;
+            animationComponent.States.IsLongFall = !rigidTransform.IsGrounded && rigidTransform.NonInterpolatedVelocity.y < settings.AnimationLongFallSpeed;
+            animationComponent.States.IsLongJump = rigidTransform.NonInterpolatedVelocity.y > settings.RunJumpHeight * settings.RunJumpHeight * settings.JumpGravityFactor;
 
-            bool jumpState = !rigidTransform.IsGrounded && (rigidTransform.NonInterpolatedVelocity.y > 5f || animationComponent.States.IsLongJump);
+            bool jumpState = !rigidTransform.IsGrounded && (rigidTransform.NonInterpolatedVelocity.y > -settings.AnimationFallSpeed || animationComponent.States.IsLongJump);
 
             if (jumpState && !animationComponent.States.IsJumping)
                 view.SetAnimatorTrigger(AnimationHashes.JUMP);
