@@ -38,22 +38,11 @@ namespace DCL.CharacterMotion.Systems
             ref CharacterPlatformComponent platformComponent)
         {
             Transform characterTransform = transform.Transform;
-            Quaternion targetRotation = GetTargetDirection(rigidTransform.MoveVelocity.Velocity, characterTransform.forward);
+            var targetRotation = Quaternion.LookRotation(rigidTransform.LookDirection);
             characterTransform.rotation = Quaternion.RotateTowards(characterTransform.rotation, targetRotation, settings.RotationSpeed * dt);
 
             SaveLocalRotation.Execute(ref platformComponent, characterTransform.forward);
         }
 
-        private static Quaternion GetTargetDirection(Vector3 moveVelocity, Vector3 currentForward)
-        {
-            Vector3 targetDirection = moveVelocity;
-            targetDirection.y = 0;
-
-            if (targetDirection.sqrMagnitude < currentForward.sqrMagnitude)
-                targetDirection = currentForward;
-
-            var targetRotation = Quaternion.LookRotation(targetDirection);
-            return targetRotation;
-        }
     }
 }

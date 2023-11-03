@@ -8,7 +8,6 @@ using DCL.CharacterMotion.Settings;
 using DCL.Input;
 using DCL.Time.Systems;
 using ECS.Abstract;
-using UnityEngine;
 
 namespace DCL.CharacterMotion.Systems
 {

@@ -30,6 +30,8 @@ namespace DCL.CharacterMotion.Components
         /// </summary>
         public Vector3 NonInterpolatedVelocity;
 
+        public Vector3 LookDirection = Vector3.forward;
+
         public struct MovementVelocity
         {
             /// <summary>
