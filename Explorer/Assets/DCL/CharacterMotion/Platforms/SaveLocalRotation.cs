@@ -1,10 +1,12 @@
 ﻿using DCL.CharacterMotion.Components;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.Platforms
 {
-    public class SaveLocalRotation
+    public static class SaveLocalRotation
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Execute(ref CharacterPlatformComponent platformComponent, Vector3 forward)
         {
             if (platformComponent.CurrentPlatform != null)
