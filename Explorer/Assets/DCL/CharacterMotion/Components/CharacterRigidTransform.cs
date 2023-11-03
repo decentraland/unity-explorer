@@ -14,39 +14,6 @@ namespace DCL.CharacterMotion.Components
     /// </summary>
     public class CharacterRigidTransform
     {
-        public struct MovementVelocity
-        {
-            /// <summary>
-            /// Current sideways velocity
-            /// </summary>
-            public float XVelocity;
-
-            /// <summary>
-            /// Current frontal velocity
-            /// </summary>
-            public float ZVelocity;
-
-            /// <summary>
-            /// Sideways velocity dampening
-            /// </summary>
-            public float XDamp;
-
-            /// <summary>
-            /// Frontal velocity dampening
-            /// </summary>
-            public float ZDamp;
-
-            /// <summary>
-            /// Current acceleration weight (0 to 1) to decide which acceleration we have based on a curve
-            /// </summary>
-            public float AccelerationWeight;
-
-            /// <summary>
-            /// Set by physics system in FixedUpdate
-            /// </summary>
-            public Vector3 Velocity;
-        }
-
         public MovementVelocity MoveVelocity;
 
         /// <summary>
@@ -59,8 +26,41 @@ namespace DCL.CharacterMotion.Components
         public int LastJumpFrame;
 
         /// <summary>
-        /// Every velocity that is applied as is
+        ///     Every velocity that is applied as is
         /// </summary>
         public Vector3 NonInterpolatedVelocity;
+
+        public struct MovementVelocity
+        {
+            /// <summary>
+            ///     Current sideways velocity
+            /// </summary>
+            public float XVelocity;
+
+            /// <summary>
+            ///     Current frontal velocity
+            /// </summary>
+            public float ZVelocity;
+
+            /// <summary>
+            ///     Sideways velocity dampening
+            /// </summary>
+            public float XDamp;
+
+            /// <summary>
+            ///     Frontal velocity dampening
+            /// </summary>
+            public float ZDamp;
+
+            /// <summary>
+            ///     Current acceleration weight (0 to 1) to decide which acceleration we have based on a curve
+            /// </summary>
+            public float AccelerationWeight;
+
+            /// <summary>
+            ///     Set by physics system in FixedUpdate
+            /// </summary>
+            public Vector3 Velocity;
+        }
     }
 }
