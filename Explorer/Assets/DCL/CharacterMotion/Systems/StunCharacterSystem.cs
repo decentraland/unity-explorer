@@ -15,11 +15,13 @@ namespace DCL.CharacterMotion.Systems
     [UpdateAfter(typeof(InterpolateCharacterSystem))]
     public partial class StunCharacterSystem : BaseUnityLoopSystem
     {
-        private readonly SingleInstanceEntity time;
+        private SingleInstanceEntity time;
 
-        private StunCharacterSystem(World world) : base(world)
+        private StunCharacterSystem(World world) : base(world) { }
+
+        public override void Initialize()
         {
-            time = world.CacheTime();
+            time = World.CacheTime();
         }
 
         protected override void Update(float t)

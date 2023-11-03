@@ -27,11 +27,13 @@ namespace DCL.CharacterMotion.Systems
     public partial class InterpolateCharacterSystem : BaseUnityLoopSystem
     {
         private SingleInstanceEntity fixedTick;
-        private readonly SingleInstanceEntity time;
+        private SingleInstanceEntity time;
 
-        internal InterpolateCharacterSystem(World world) : base(world)
+        private InterpolateCharacterSystem(World world) : base(world) { }
+
+        public override void Initialize()
         {
-            time = world.CacheTime();
+            time = World.CacheTime();
         }
 
         protected override void Update(float t)
