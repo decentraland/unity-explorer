@@ -104,7 +104,7 @@ namespace MVC.Tests
 
         }
 
-        UniTask IController.HideView(CancellationToken ct) =>
+        UniTask IController.HideViewAsync(CancellationToken ct) =>
             throw new NotImplementedException();
     }
 

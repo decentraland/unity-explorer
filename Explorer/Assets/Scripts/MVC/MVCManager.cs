@@ -48,21 +48,21 @@ namespace MVC
             switch (controller.SortLayers)
             {
                 case CanvasOrdering.SortingLayer.Popup:
-                    await ShowPopup(command, controller, ct);
+                    await ShowPopupAsync(command, controller, ct);
                     break;
                 case CanvasOrdering.SortingLayer.Fullscreen:
-                    await ShowFullScreen(command, controller, ct);
+                    await ShowFullScreenAsync(command, controller, ct);
                     break;
                 case CanvasOrdering.SortingLayer.Persistent:
-                    await ShowPersistent(command, controller, ct);
+                    await ShowPersistentAsync(command, controller, ct);
                     break;
                 case CanvasOrdering.SortingLayer.Overlay:
-                    await ShowTop(command, controller, ct);
+                    await ShowTopAsync(command, controller, ct);
                     break;
             }
         }
 
-        private async UniTask ShowTop<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
+        private async UniTask ShowTopAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
             where TView : IView
         {
             // Push new fullscreen controller
@@ -72,7 +72,7 @@ namespace MVC
             if(overlayPushInfo.PopupControllers != null)
             {
                 foreach (IController popupController in overlayPushInfo.PopupControllers)
-                    popupController.HideView(ct).Forget();
+                    popupController.HideViewAsync(ct).Forget();
 
                 overlayPushInfo.PopupControllers.Clear();
             }
@@ -80,7 +80,7 @@ namespace MVC
             // Hide fullscreen UI if any
             if (overlayPushInfo.FullscreenController != null)
             {
-                overlayPushInfo.FullscreenController.HideView(ct).Forget();
+                overlayPushInfo.FullscreenController.HideViewAsync(ct).Forget();
                 windowsStackManager.PopFullscreen(overlayPushInfo.FullscreenController);
             }
 
@@ -89,10 +89,10 @@ namespace MVC
 
             await command.Execute(controller, overlayPushInfo.ControllerOrdering, ct);
 
-            await controller.HideView(ct);
+            await controller.HideViewAsync(ct);
         }
 
-        private async UniTask ShowPersistent<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
+        private async UniTask ShowPersistentAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
             where TView : IView
         {
             // Push new fullscreen controller
@@ -101,7 +101,7 @@ namespace MVC
             await command.Execute(controller, persistentPushInfo.ControllerOrdering, ct);
         }
 
-        private async UniTask ShowFullScreen<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
+        private async UniTask ShowFullScreenAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
             where TView : IView
         {
             // Push new fullscreen controller
@@ -111,7 +111,7 @@ namespace MVC
             if(fullscreenPushInfo.PopupControllers != null)
             {
                 foreach (IController popupController in fullscreenPushInfo.PopupControllers)
-                    popupController.HideView(ct).Forget();
+                    popupController.HideViewAsync(ct).Forget();
 
                 fullscreenPushInfo.PopupControllers.Clear();
             }
@@ -121,11 +121,11 @@ namespace MVC
 
             await command.Execute(controller, fullscreenPushInfo.ControllerOrdering, ct);
 
-            await controller.HideView(ct);
+            await controller.HideViewAsync(ct);
             windowsStackManager.PopFullscreen(controller);
         }
 
-        private async UniTask ShowPopup<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
+        private async UniTask ShowPopupAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, IController controller, CancellationToken ct)
             where TView : IView
         {
             PopupPushInfo pushPopupPush = windowsStackManager.PushPopup(controller);
@@ -136,10 +136,10 @@ namespace MVC
 
             await UniTask.WhenAny(
                 UniTask.WhenAll(command.Execute(controller, pushPopupPush.ControllerOrdering, ct), popupCloser.ShowAsync(ct)),
-                WaitForPopupCloserClick(controller, ct));
+                WaitForPopupCloserClickAsync(controller, ct));
 
             // "Close" command has been received
-            await controller.HideView(ct);
+            await controller.HideViewAsync(ct);
 
             // Pop the stack
             PopupPopInfo popupPopInfo = windowsStackManager.PopPopup(controller);
@@ -155,7 +155,7 @@ namespace MVC
             }
         }
 
-        private async UniTask WaitForPopupCloserClick(IController currentController, CancellationToken ct)
+        private async UniTask WaitForPopupCloserClickAsync(IController currentController, CancellationToken ct)
         {
             do
             {

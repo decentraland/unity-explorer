@@ -32,7 +32,7 @@ namespace DCL.Navmap
                         animationCts?.Cancel();
                         animationCts?.Dispose();
                         animationCts = new CancellationTokenSource();
-                        sectionSelectorController.OnTabSelectorToggleValueChanged(isOn, tabSelector, animationCts.Token).Forget();
+                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector, animationCts.Token).Forget();
                     });
             }
             navmapView.TabSelectorViews[0].TabSelectorToggle.isOn = true;

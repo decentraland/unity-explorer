@@ -31,10 +31,10 @@ namespace DCL.ExplorePanel
             return AnimationTransform.DOAnchorPos(Vector2.zero, 0.5f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct);
         }
 
-        protected override async UniTask PlayHideAnimation(CancellationToken ct)
+        protected override UniTask PlayHideAnimation(CancellationToken ct)
         {
             AnimationTransform.anchoredPosition = Vector2.zero;
-            await AnimationTransform.DOAnchorPos(new Vector2(1920, 0), 0.5f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct);
+            return AnimationTransform.DOAnchorPos(new Vector2(1920, 0), 0.5f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct);
         }
     }
 }

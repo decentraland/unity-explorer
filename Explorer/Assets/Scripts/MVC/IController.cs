@@ -21,7 +21,7 @@ namespace MVC
         /// <summary>
         ///     Should be called from <see cref="IMVCManager" /> only
         /// </summary>
-        internal UniTask HideView(CancellationToken ct);
+        internal UniTask HideViewAsync(CancellationToken ct);
     }
 
     // ReSharper disable once UnusedTypeParameter TView it's used for registering a proper association in MVC Manager
