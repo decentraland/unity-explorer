@@ -25,8 +25,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        include:
-          - targetPlatform: StandaloneWindows64
+        targetPlatform: StandaloneWindows64
 
     name: Build
     runs-on: bigwindows
