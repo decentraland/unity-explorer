@@ -39,7 +39,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override async UniTask<StreamableLoadingResult<ISceneFacade>> FlowInternal(GetSceneFacadeIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            if (intention.IsEmpty)
+            if (intention.DefinitionComponent.IsEmpty)
             {
                 if (loadEmptySceneSystemLogic.Inactive)
                     throw new ArgumentException("Empty scene loading is inactive");

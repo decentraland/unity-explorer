@@ -18,6 +18,7 @@ namespace SceneRunner.Scene
             IpfsTypes.SceneEntityDefinition sceneDefinition,
             [NotNull] SceneAssetBundleManifest assetBundleManifest,
             Vector2Int baseParcel,
+            ParcelMathHelper.SceneGeometry geometry,
             StaticSceneMessages staticSceneMessages)
         {
             this.sceneContent = sceneContent;
@@ -25,12 +26,12 @@ namespace SceneRunner.Scene
             AssetBundleManifest = assetBundleManifest;
             StaticSceneMessages = staticSceneMessages;
             SceneShortInfo = new SceneShortInfo(baseParcel, sceneDefinition.id);
-            BasePosition = ParcelMathHelper.GetPositionByParcelPosition(SceneShortInfo.BaseParcel);
+            Geometry = geometry;
         }
 
         public StaticSceneMessages StaticSceneMessages { get; }
         public SceneShortInfo SceneShortInfo { get; }
-        public Vector3 BasePosition { get; }
+        public ParcelMathHelper.SceneGeometry Geometry { get; }
         public SceneAssetBundleManifest AssetBundleManifest { get; }
 
         public bool HasRequiredPermission(string permission)

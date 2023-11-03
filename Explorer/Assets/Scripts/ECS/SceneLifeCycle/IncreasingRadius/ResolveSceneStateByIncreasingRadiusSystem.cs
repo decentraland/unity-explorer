@@ -144,7 +144,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
                 World.Add(data.Entity,
                     AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                        new GetSceneFacadeIntention(ipfsRealm, data.DefinitionComponent.IpfsPath, data.DefinitionComponent.Definition, data.DefinitionComponent.Parcels, data.DefinitionComponent.IsEmpty),
+                        new GetSceneFacadeIntention(ipfsRealm, data.DefinitionComponent),
                         data.PartitionComponent));
             }
         }
