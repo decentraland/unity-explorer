@@ -36,10 +36,6 @@ namespace Diagnostics.ReportsHandling.Sentry.Editor
                 PersistIntoAssetFile(SENTRY_ASSET_PATH, options);
             }
             catch (Exception e) { Debug.LogException(e); }
-
-            Debug.Log($"SentryBuildTimeConfiguration.options.Release: {options.Release}");
-            Debug.Log($"SentryBuildTimeConfiguration.options.Dsn: {options.Dsn}");
-            Debug.Log($"SentryBuildTimeConfiguration.options.Environment: {options.Environment}");
         }
 
         private static void ApplyFromEnvironmentVars(SentryUnityOptions options, SentryCliOptions cliOptions)
@@ -48,17 +44,11 @@ namespace Diagnostics.ReportsHandling.Sentry.Editor
             options.Dsn = Environment.GetEnvironmentVariable("SENTRY_DSN") ?? options.Dsn;
             options.Release = Environment.GetEnvironmentVariable("SENTRY_RELEASE") ?? options.Release;
             cliOptions.Auth = Environment.GetEnvironmentVariable("SENTRY_CLI_AUTH_TOKEN") ?? cliOptions.Auth;
-
-            Debug.Log($"SentryBuildTimeConfiguration.ApplyFromEnvironmentVars.SENTRY_RELEASE: {Environment.GetEnvironmentVariable("SENTRY_RELEASE")}");
-            Debug.Log($"SentryBuildTimeConfiguration.ApplyFromEnvironmentVars.SENTRY_DSN: {Environment.GetEnvironmentVariable("SENTRY_DSN")}");
-            Debug.Log($"SentryBuildTimeConfiguration.ApplyFromEnvironmentVars.SENTRY_ENVIRONMENT: {Environment.GetEnvironmentVariable("SENTRY_ENVIRONMENT")}");
         }
 
         private static void ApplyFromProgramArgs(SentryUnityOptions options, SentryCliOptions cliOptions)
         {
             string[] args = Environment.GetCommandLineArgs();
-
-            Debug.Log($"SentryBuildTimeConfiguration.ApplyFromProgramArgs.args: {string.Join(',', args)}");
 
             for (var i = 0; i < args.Length; i++)
             {
