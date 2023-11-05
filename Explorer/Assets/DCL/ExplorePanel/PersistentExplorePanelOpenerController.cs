@@ -21,7 +21,7 @@ namespace DCL.ExplorePanel
         {
             viewInstance.OpenExploreButton.onClick.RemoveAllListeners();
             viewInstance.OpenExploreButton.onClick.AddListener(() =>
-                mvcManager.Show(ExplorePanelController.IssueCommand(new ExplorePanelParameter(null))).Forget());
+                mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(null))).Forget());
         }
 
     }

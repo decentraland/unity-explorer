@@ -14,7 +14,7 @@ namespace MVC
             IController controller, CanvasOrdering canvasOrdering, CancellationToken ct) where TView: IView
         {
             var castedController = (IController<TView, TInputData>)controller;
-            return castedController.LaunchViewLifeCycle(canvasOrdering, command.InputData, ct);
+            return castedController.LaunchViewLifeCycleAsync(canvasOrdering, command.InputData, ct);
         }
     }
 }

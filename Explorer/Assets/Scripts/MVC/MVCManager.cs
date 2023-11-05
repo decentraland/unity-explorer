@@ -39,7 +39,7 @@ namespace MVC
             controllers.Add(typeof(IController<TView, TInputData>), controller);
         }
 
-        public async UniTask Show<TView, TInputData>(ShowCommand<TView, TInputData> command) where TView: IView
+        public async UniTask ShowAsync<TView, TInputData>(ShowCommand<TView, TInputData> command) where TView: IView
         {
             // Find the controller
             IController controller = controllers[typeof(IController<TView, TInputData>)];

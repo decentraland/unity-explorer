@@ -22,7 +22,7 @@ namespace DCL.ExplorePanel
         {
             viewInstance.OpenExploreMapButton.onClick.RemoveAllListeners();
             viewInstance.OpenExploreMapButton.onClick.AddListener(() =>
-                mvcManager.Show(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
+                mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
         }
 
     }

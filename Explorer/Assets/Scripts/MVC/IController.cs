@@ -30,6 +30,6 @@ namespace MVC
         /// <summary>
         ///     Shows the views and keeps spinning until the close intention is sent (e.g. by button)
         /// </summary>
-        UniTask LaunchViewLifeCycle(CanvasOrdering ordering, TInputData data, CancellationToken ct);
+        UniTask LaunchViewLifeCycleAsync(CanvasOrdering ordering, TInputData data, CancellationToken ct);
     }
 }

@@ -40,8 +40,8 @@ namespace DCL.PluginSystem.Global
 
             NavmapController navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>());
 
-            mvcManager.Show(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter())).Forget();
-            mvcManager.Show(MinimapController.IssueCommand(new EmptyParameter())).Forget();
+            mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter())).Forget();
+            mvcManager.ShowAsync(MinimapController.IssueCommand(new EmptyParameter())).Forget();
         }
 
         public void Dispose()

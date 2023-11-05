@@ -62,7 +62,7 @@ namespace MVC.Tests
 
             mvcManager.RegisterController(controller);
 
-            await mvcManager.Show(new ShowCommand<ITestView, TestInputData>());
+            await mvcManager.ShowAsync(new ShowCommand<ITestView, TestInputData>());
 
             switch (layer)
             {
@@ -89,7 +89,7 @@ namespace MVC.Tests
 
     public class TestController : IController<ITestView, TestInputData>
     {
-        public UniTask LaunchViewLifeCycle(CanvasOrdering ordering, TestInputData inputData, CancellationToken ct) =>
+        public UniTask LaunchViewLifeCycleAsync(CanvasOrdering ordering, TestInputData inputData, CancellationToken ct) =>
             throw new NotImplementedException();
 
         public CanvasOrdering.SortingLayer SortLayers { get; }

@@ -32,7 +32,7 @@ namespace MVC
         /// </summary>
         public void Consumer()
         {
-            mvcManager.Show(ExampleController.IssueCommand(new ExampleParam("TEST"))).Forget();
+            mvcManager.ShowAsync(ExampleController.IssueCommand(new ExampleParam("TEST"))).Forget();
         }
 
         public readonly struct ExampleParam
