@@ -84,6 +84,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         }
 
         [Test]
+        [RequiresPlayMode]
         public async Task FinalizeWithSuccess()
         {
             var component = new GltfContainerComponent(ColliderLayer.ClPhysics, ColliderLayer.ClPointer,
@@ -107,6 +108,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         }
 
         [Test]
+        [RequiresPlayMode]
         public async Task InstantiateVisibleMeshesColliders()
         {
             var component = new GltfContainerComponent(ColliderLayer.ClPointer, ColliderLayer.ClNone,
@@ -130,6 +132,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         }
 
         [Test]
+        [RequiresPlayMode]
         public async Task EnableInvisibleColliders()
         {
             var component = new GltfContainerComponent(ColliderLayer.ClNone, ColliderLayer.ClPointer,
