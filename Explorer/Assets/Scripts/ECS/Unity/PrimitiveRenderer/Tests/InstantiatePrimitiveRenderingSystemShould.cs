@@ -1,6 +1,6 @@
 ﻿using Arch.Core;
 using DCL.ECSComponents;
-using DCL.PerformanceBudgeting.BudgetProvider;
+using DCL.PerformanceBudgeting;
 using ECS.ComponentsPooling;
 using ECS.TestSuite;
 using ECS.Unity.PrimitiveRenderer.Components;

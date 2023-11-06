@@ -1,6 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
-using DCL.PerformanceBudgeting.BudgetProvider;
+using DCL.PerformanceBudgeting;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Textures;
 using UnityEngine;
@@ -27,7 +27,7 @@ namespace ECS.StreamableLoading.DeferredLoading
             };
         }
 
-        internal AssetsDeferredLoadingSystem(World world, IConcurrentBudgetProvider concurrentLoadingBudgetProvider)
-            : base(world, COMPONENT_HANDLERS, concurrentLoadingBudgetProvider) { }
+        internal AssetsDeferredLoadingSystem(World world, IConcurrentBudgetProvider concurrentLoadingBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider)
+            : base(world, COMPONENT_HANDLERS, concurrentLoadingBudgetProvider, memoryBudgetProvider) { }
     }
 }

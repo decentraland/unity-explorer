@@ -1,6 +1,6 @@
 using DCL.Profiling;
 
-namespace DCL.PerformanceBudgeting.BudgetProvider
+namespace DCL.PerformanceBudgeting
 {
     public class FrameTimeCapBudgetProvider : IConcurrentBudgetProvider
     {

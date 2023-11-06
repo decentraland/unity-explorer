@@ -1,7 +1,7 @@
 using DCL.Profiling;
 using UnityEngine;
 
-namespace DCL.PerformanceBudgeting.BudgetProvider
+namespace DCL.PerformanceBudgeting
 {
     public class FrameTimeSharedBudgetProvider : IConcurrentBudgetProvider
     {

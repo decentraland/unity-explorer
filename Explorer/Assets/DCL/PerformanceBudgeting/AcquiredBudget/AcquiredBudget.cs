@@ -1,5 +1,4 @@
-﻿using DCL.PerformanceBudgeting.BudgetProvider;
-using UnityEngine.Pool;
+﻿using UnityEngine.Pool;
 using Utility.ThreadSafePool;
 
 namespace DCL.PerformanceBudgeting.AcquiredBudget

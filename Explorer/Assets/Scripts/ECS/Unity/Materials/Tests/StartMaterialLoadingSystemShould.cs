@@ -1,6 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.ECSComponents;
-using DCL.PerformanceBudgeting.BudgetProvider;
+using DCL.PerformanceBudgeting;
 using Decentraland.Common;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;

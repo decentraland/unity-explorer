@@ -1,6 +1,6 @@
 ﻿using Arch.SystemGroups;
 using DCL.ECSComponents;
-using DCL.PerformanceBudgeting.BudgetProvider;
+using DCL.PerformanceBudgeting;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.ComponentsPooling;
 using ECS.ComponentsPooling.Systems;

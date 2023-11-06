@@ -5,7 +5,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
-using DCL.PerformanceBudgeting.BudgetProvider;
+using DCL.PerformanceBudgeting;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
@@ -46,7 +46,7 @@ namespace DCL.GlobalPartitioning
             };
         }
 
-        internal GlobalDeferredLoadingSystem(World world, IConcurrentBudgetProvider concurrentLoadingBudgetProvider)
-            : base(world, COMPONENT_HANDLERS, concurrentLoadingBudgetProvider) { }
+        internal GlobalDeferredLoadingSystem(World world, IConcurrentBudgetProvider concurrentLoadingBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider)
+            : base(world, COMPONENT_HANDLERS, concurrentLoadingBudgetProvider, memoryBudgetProvider) { }
     }
 }

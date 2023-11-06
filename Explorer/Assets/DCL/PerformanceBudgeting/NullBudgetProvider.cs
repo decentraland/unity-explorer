@@ -1,4 +1,4 @@
-namespace DCL.PerformanceBudgeting.BudgetProvider
+namespace DCL.PerformanceBudgeting
 {
     public class NullBudgetProvider : IConcurrentBudgetProvider
     {

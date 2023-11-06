@@ -7,7 +7,7 @@ using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.PerformanceBudgeting.BudgetProvider;
+using DCL.PerformanceBudgeting;
 using ECS.ComponentsPooling;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;

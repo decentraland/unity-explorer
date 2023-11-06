@@ -1,7 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.PerformanceBudgeting.BudgetProvider;
+using DCL.PerformanceBudgeting;
 using DCL.Shaders;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.Materials.Components;

@@ -1,6 +1,6 @@
 using System;
 
-namespace DCL.PerformanceBudgeting.BudgetProvider
+namespace DCL.PerformanceBudgeting
 {
     public class ConcurrentLoadingBudgetProvider : IConcurrentBudgetProvider
     {

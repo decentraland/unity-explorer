@@ -9,7 +9,7 @@ using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
 using DCL.Interaction.Raycast.Components;
 using DCL.Interaction.Utility;
-using DCL.PerformanceBudgeting.BudgetProvider;
+using DCL.PerformanceBudgeting;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.ComponentsPooling;

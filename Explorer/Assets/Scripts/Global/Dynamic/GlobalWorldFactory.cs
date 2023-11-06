@@ -9,7 +9,7 @@ using DCL.Character;
 using DCL.Character.Components;
 using DCL.ECSComponents;
 using DCL.GlobalPartitioning;
-using DCL.PerformanceBudgeting.BudgetProvider;
+using DCL.PerformanceBudgeting;
 using DCL.PluginSystem.Global;
 using DCL.Systems;
 using ECS;
@@ -57,6 +57,7 @@ namespace Global.Dynamic
         private readonly IRealmData realmData;
         private readonly URLDomain assetBundlesURL;
         private readonly IReadOnlyList<IDCLGlobalPlugin> globalPlugins;
+        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
 
         public GlobalWorldFactory(in StaticContainer staticContainer, IRealmPartitionSettings realmPartitionSettings,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
@@ -71,6 +72,8 @@ namespace Global.Dynamic
             this.assetBundlesURL = assetBundlesURL;
             this.globalPlugins = globalPlugins;
             this.realmData = realmData;
+
+            memoryBudgetProvider = staticContainer.SingletonSharedDependencies.MemoryBudgetProvider;
         }
 
         public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory, ICharacterObject characterObject)
@@ -110,7 +113,7 @@ namespace Global.Dynamic
                 new LoadEmptySceneSystemLogic(emptyScenesWorldFactory, componentPoolsRegistry, EMPTY_SCENES_MAPPINGS_URL),
                 sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex);
 
-            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider);
+            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider, memoryBudgetProvider);
 
             CalculateParcelsInRangeSystem.InjectToWorld(ref builder, playerEntity);
             LoadStaticPointersSystem.InjectToWorld(ref builder);

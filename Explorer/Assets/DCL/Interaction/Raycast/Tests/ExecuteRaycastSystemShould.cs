@@ -8,7 +8,7 @@ using DCL.ECSComponents;
 using DCL.Interaction.Raycast.Components;
 using DCL.Interaction.Raycast.Systems;
 using DCL.Interaction.Utility;
-using DCL.PerformanceBudgeting.BudgetProvider;
+using DCL.PerformanceBudgeting;
 using ECS.ComponentsPooling;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;

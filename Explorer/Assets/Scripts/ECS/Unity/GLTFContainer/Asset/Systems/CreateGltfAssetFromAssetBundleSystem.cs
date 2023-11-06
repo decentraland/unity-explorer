@@ -1,7 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.PerformanceBudgeting.BudgetProvider;
+using DCL.PerformanceBudgeting;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.StreamableLoading;
@@ -24,10 +24,12 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     public partial class CreateGltfAssetFromAssetBundleSystem : BaseUnityLoopSystem
     {
         private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
+        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
 
-        internal CreateGltfAssetFromAssetBundleSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider) : base(world)
+        internal CreateGltfAssetFromAssetBundleSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider) : base(world)
         {
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
+            this.memoryBudgetProvider = memoryBudgetProvider;
         }
 
         protected override void Update(float t)
@@ -68,7 +70,15 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             // Create a new container root
             // It will be cached and pooled
+            // if (memoryBudgetProvider.TrySpendBudget())
+            {
+                GltfContainerAsset result = CreateGltfObject(assetBundleData);
+                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
+            }
+        }
 
+        private static GltfContainerAsset CreateGltfObject(AssetBundleData assetBundleData)
+        {
             var container = new GameObject($"AB:{assetBundleData.AssetBundle.name}");
 
             // Let the upper layer decide what to do with the root
@@ -106,7 +116,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 FilterVisibleColliderCandidate(result.VisibleColliderMeshes, meshFilter);
             }
 
-            World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
+            return result;
         }
 
         /// <summary>

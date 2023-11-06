@@ -11,7 +11,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.DebugUtilities.Builders;
 using DCL.ECSComponents;
-using DCL.PerformanceBudgeting.BudgetProvider;
+using DCL.PerformanceBudgeting;
 using ECS;
 using ECS.ComponentsPooling;
 using System;
