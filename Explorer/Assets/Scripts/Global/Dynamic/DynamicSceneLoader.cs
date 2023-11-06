@@ -1,4 +1,4 @@
-﻿using CommunicationData.URLHelpers;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -32,6 +32,7 @@ namespace Global.Dynamic
         [SerializeField] private List<int2> StaticLoadPositions;
         [SerializeField] private RealmLauncher realmLauncher;
         [SerializeField] private string[] realms;
+        [SerializeField] private DynamicSettings dynamicSettings;
 
         private StaticContainer staticContainer;
         private DynamicWorldContainer dynamicWorldContainer;
@@ -89,7 +90,8 @@ namespace Global.Dynamic
                     ct,
                     uiToolkitRoot,
                     StaticLoadPositions,
-                    SceneLoadRadius);
+                    SceneLoadRadius,
+                    dynamicSettings);
 
                 if (!isLoaded)
                 {
