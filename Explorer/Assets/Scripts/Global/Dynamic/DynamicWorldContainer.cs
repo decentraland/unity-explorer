@@ -1,4 +1,4 @@
-﻿using CommunicationData.URLHelpers;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables;
 using DCL.DebugUtilities;
@@ -7,6 +7,8 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using ECS;
 using ECS.Prioritization.Components;
+using MVC;
+using MVC.PopupsController.PopupCloser;
 using SceneRunner.EmptyScene;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,7 +39,8 @@ namespace Global.Dynamic
             IPluginSettingsContainer settingsContainer,
             CancellationToken ct,
             UIDocument rootUIDocument,
-            IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius)
+            IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius,
+            DynamicSettings dynamicSettings)
         {
             var container = new DynamicWorldContainer();
             (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
@@ -51,6 +54,8 @@ namespace Global.Dynamic
             var dclInput = new DCLInput();
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
             var realmData = new RealmData();
+            PopupCloserView popupCloserView = UnityEngine.Object.Instantiate((await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
+            MVCManager mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -62,6 +67,7 @@ namespace Global.Dynamic
                 new WearablePlugin(staticContainer.AssetsProvisioner, realmData, ASSET_BUNDLES_URL),
                 new AvatarPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, realmData, debugBuilder),
+                new ExplorePanelPlugin(staticContainer.AssetsProvisioner, mvcManager)
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

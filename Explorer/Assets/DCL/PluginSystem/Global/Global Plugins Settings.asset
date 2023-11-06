@@ -20,6 +20,7 @@ MonoBehaviour:
   - rid: 1268264176566403074
   - rid: 5215741520409264128
   - rid: 5215741520409264129
+  - rid: 1501337502808539138
   references:
     version: 2
     RefIds:
@@ -75,6 +76,24 @@ MonoBehaviour:
           - InputAction: 13
             Key: 4
             Icon: {fileID: 0}
+    - rid: 1501337502808539138
+      type: {class: ExplorePanelPlugin/ExplorePanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        ExplorePanelPrefab:
+          m_AssetGUID: 7dc631660587a41589ba55c08ff7fa73
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        PersistentExploreOpenerPrefab:
+          m_AssetGUID: b55e2970d2dc94295ad8af70cb9d09f4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        MinimapPrefab:
+          m_AssetGUID: f2ef3a867ab2840cb9bc73b4762922fd
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -91,11 +110,6 @@ MonoBehaviour:
         defaultMaterialCapacity: 100
         computeShader:
           m_AssetGUID: e8cf73ccd47a385498b71ec58534d03c
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <avatarInstantiatorViewRef>k__BackingField:
-          m_AssetGUID: fdc0ac72e84d9534eafd826d7fdfb22a
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -149,9 +163,3 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
     - rid: 6784895267130048513
       type: {class: ProfilingPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        <profilingViewRef>k__BackingField:
-          m_AssetGUID: 03608bfcd31894b8daf215b6e82338bf
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
