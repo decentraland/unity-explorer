@@ -1,7 +1,6 @@
 ﻿using DCL.PerformanceBudgeting.Memory;
 using DCL.Profiling;
 using System.Collections.Generic;
-using UnityEngine;
 using static DCL.PerformanceBudgeting.MemoryUsageStatus;
 
 namespace DCL.PerformanceBudgeting
@@ -10,7 +9,6 @@ namespace DCL.PerformanceBudgeting
     {
         Normal,
         Warning,
-        Critical,
         Full,
     }
 
@@ -19,7 +17,6 @@ namespace DCL.PerformanceBudgeting
         private readonly Dictionary<MemoryUsageStatus, float> p = new ()
         {
             { Warning, 0.5f },
-            { Critical, 0.8f },
             { Full, 0.95f },
         };
 
@@ -40,20 +37,16 @@ namespace DCL.PerformanceBudgeting
             return usedMemory switch
                    {
                        _ when usedMemory > systemMemory.GetTotalSizeInMB() * p[Full] => Full,
-                       _ when usedMemory > systemMemory.GetTotalSizeInMB() * p[Critical] => Critical,
                        _ when usedMemory > systemMemory.GetTotalSizeInMB() * p[Warning] => Warning,
                        _ => Normal,
                    };
         }
 
-        public (float warning, float critical, float full) GetMemoryRanges()
+        public (float warning, float full) GetMemoryRanges()
         {
             long totalSizeInMB = systemMemory.GetTotalSizeInMB();
-            return (totalSizeInMB * p[Warning], totalSizeInMB * p[Critical], totalSizeInMB * p[Full]);
+            return (totalSizeInMB * p[Warning], totalSizeInMB * p[Full]);
         }
-
-        private void LogLimits() =>
-            Debug.Log($"VV: {systemMemory.GetTotalSizeInMB() * p[Warning]} {systemMemory.GetTotalSizeInMB() * p[Critical]}  {systemMemory.GetTotalSizeInMB() * p[Full]}");
 
         public bool TrySpendBudget() =>
 

@@ -7,6 +7,7 @@ using DCL.DebugUtilities.UIBindings;
 using DCL.PerformanceBudgeting;
 using DCL.Profiling;
 using ECS.Abstract;
+using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
@@ -64,9 +65,9 @@ namespace ECS.Profiling.Systems
         private void UpdateView()
         {
             hiccups.Value = profilingProvider.GetHiccupCountInBuffer();
-            usedMemory.Value = $"{profilingProvider.TotalUsedMemoryInMB} MB";
+            usedMemory.Value = $"<color={GetMemoryUsageColor()}>{profilingProvider.TotalUsedMemoryInMB}</color> MB";
 
-            (float warning, float critical, float full) memoryRanges = memoryBudgetProvider.GetMemoryRanges();
+            (float warning, float full) memoryRanges = memoryBudgetProvider.GetMemoryRanges();
             memoryCheckpoints.Value = $"<color=green>{memoryRanges.warning}</color> | <color=red>{memoryRanges.full}</color>";
 
             SetFPS();
@@ -79,6 +80,17 @@ namespace ECS.Profiling.Systems
                 float frameRate = 1 / averageFrameTimeInSeconds;
 
                 fps.Value = $"{frameRate:F1} fps ({frameTimeInMS:F1} ms)";
+            }
+
+            string GetMemoryUsageColor()
+            {
+                return memoryBudgetProvider.GetMemoryUsageStatus() switch
+                       {
+                           MemoryUsageStatus.Normal => "green",
+                           MemoryUsageStatus.Warning => "yellow",
+                           MemoryUsageStatus.Full => "red",
+                           _ => throw new ArgumentOutOfRangeException(),
+                       };
             }
         }
     }
