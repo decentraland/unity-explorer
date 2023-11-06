@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Animations.Rigging;
 
 namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 {
@@ -6,6 +7,43 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
     {
         [SerializeField] private Animator avatarAnimator;
         [field: SerializeField] public SkinnedMeshRenderer AvatarSkinnedMeshRenderer { get; private set; }
+
+        [field: Header("Feet IK")]
+        [field: SerializeField] public Rig FeetIKRig { get; private set; }
+        /// <summary>
+        ///     This Transform position has the current position of the right leg feet, after the animation kicks in, before the IK. We raycast from this position
+        /// </summary>
+        [field: SerializeField] public Transform RightLegConstraint { get; private set; }
+        /// <summary>
+        ///     This transform position decides where we want to put the right leg
+        /// </summary>
+        [field: SerializeField] public Transform RightLegIKTarget { get; private set; }
+
+        /// <summary>
+        ///     Same as Right leg
+        /// </summary>
+        [field: SerializeField] public Transform LeftLegConstraint { get; private set; }
+        /// <summary>
+        ///     Same as Right leg
+        /// </summary>
+        [field: SerializeField] public Transform LeftLegIKTarget { get; private set; }
+
+        [field: SerializeField] public TwoBoneIKConstraint RightLegIK { get; private set; }
+        [field: SerializeField] public TwoBoneIKConstraint LeftLegIK { get; private set; }
+
+        /// <summary>
+        ///     This constraint Applies an offset to the hips, lowering the avatar position based on the desired feet position
+        /// </summary>
+        [field: SerializeField] public MultiPositionConstraint HipsConstraint { get; private set; }
+
+        [field: Header("Hands IK")]
+        [field: SerializeField] public Rig HandsIKRig { get; private set; }
+        [field: SerializeField] public TwoBoneIKConstraint LeftHandIK { get; private set; }
+        [field: SerializeField] public Transform LeftHandSubTarget { get; private set; }
+        [field: SerializeField] public Transform LeftHandRaycast { get; private set; }
+        [field: SerializeField] public TwoBoneIKConstraint RightHandIK { get; private set; }
+        [field: SerializeField] public Transform RightHandSubTarget { get; private set; }
+        [field: SerializeField] public Transform RightHandRaycast { get; private set; }
 
         public void SetAnimatorFloat(int hash, float value)
         {

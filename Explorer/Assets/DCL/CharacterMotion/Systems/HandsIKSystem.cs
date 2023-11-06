@@ -3,7 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CrdtEcsBridge.Physics;
-using DCL.AvatarRendering.AvatarShape;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.DebugUtilities.Builders;
