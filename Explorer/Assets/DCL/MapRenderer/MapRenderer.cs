@@ -1,0 +1,224 @@
+﻿using Cysharp.Threading.Tasks;
+using DCL.PluginSystem.Global;
+using DCLServices.MapRenderer.CommonBehavior;
+using DCLServices.MapRenderer.ComponentsFactory;
+using DCLServices.MapRenderer.Culling;
+using DCLServices.MapRenderer.MapCameraController;
+using DCLServices.MapRenderer.MapLayers;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using UnityEngine;
+using UnityEngine.Pool;
+using Utility;
+
+namespace DCLServices.MapRenderer
+{
+    public partial class MapRenderer : IMapRenderer
+    {
+        private class MapLayerStatus
+        {
+            public readonly IMapLayerController MapLayerController;
+            public readonly List<IMapActivityOwner> ActivityOwners = new ();
+
+            public bool? SharedActive;
+            public CancellationTokenSource CTS;
+
+            public MapLayerStatus(IMapLayerController mapLayerController)
+            {
+                MapLayerController = mapLayerController;
+            }
+        }
+
+        private static readonly MapLayer[] ALL_LAYERS = EnumUtils.Values<MapLayer>();
+
+        private CancellationToken cancellationToken;
+
+        private readonly IMapRendererComponentsFactory componentsFactory;
+
+        private Dictionary<MapLayer, MapLayerStatus> layers;
+        private List<IZoomScalingLayer> zoomScalingLayers;
+
+        private MapRendererConfiguration configurationInstance;
+
+        private IObjectPool<IMapCameraControllerInternal> mapCameraPool;
+
+        internal IMapCullingController cullingController { get; private set; }
+
+        public MapRenderer(IMapRendererComponentsFactory componentsFactory)
+        {
+            this.componentsFactory = componentsFactory;
+        }
+
+        public void Initialize() { }
+
+        public async UniTask InitializeAsync(CancellationToken ct, DynamicSettings dynamicSettings)
+        {
+            this.cancellationToken = ct;
+            layers = new Dictionary<MapLayer, MapLayerStatus>();
+            zoomScalingLayers = new List<IZoomScalingLayer>();
+
+            try
+            {
+                MapRendererComponents components = await componentsFactory.Create(ct, dynamicSettings);
+                cullingController = components.CullingController;
+                mapCameraPool = components.MapCameraControllers;
+                configurationInstance = components.ConfigurationInstance;
+
+                foreach (IZoomScalingLayer zoomScalingLayer in components.ZoomScalingLayers)
+                    zoomScalingLayers.Add(zoomScalingLayer);
+
+                foreach (KeyValuePair<MapLayer, IMapLayerController> pair in components.Layers)
+                {
+                    pair.Value.Disable(ct);
+                    layers[pair.Key] = new MapLayerStatus(pair.Value);
+                }
+
+                layers[MapLayer.SatelliteAtlas].SharedActive = true;
+                layers[MapLayer.ParcelsAtlas].SharedActive = false;
+            }
+            catch
+                (OperationCanceledException)
+            {
+                // just ignore
+            }
+            catch (Exception e) { Debug.LogException(e); }
+        }
+
+        public IMapCameraController RentCamera(in MapCameraInput cameraInput)
+        {
+            const int MIN_ZOOM = 5;
+            const int MAX_ZOOM = 300;
+
+            // Clamp texture to the maximum size allowed, preserving aspect ratio
+            Vector2Int zoomValues = cameraInput.ZoomValues;
+            zoomValues.x = Mathf.Max(zoomValues.x, MIN_ZOOM);
+            zoomValues.y = Mathf.Min(zoomValues.y, MAX_ZOOM);
+
+            EnableLayers(cameraInput.ActivityOwner, cameraInput.EnabledLayers);
+            IMapCameraControllerInternal mapCameraController = mapCameraPool.Get();
+            mapCameraController.Initialize(cameraInput.TextureResolution, zoomValues, cameraInput.EnabledLayers);
+            mapCameraController.OnReleasing += ReleaseCamera;
+
+            mapCameraController.ZoomChanged += OnCameraZoomChanged;
+
+            mapCameraController.SetPositionAndZoom(cameraInput.Position, cameraInput.Zoom);
+
+            return mapCameraController;
+        }
+
+        private void ReleaseCamera(IMapActivityOwner owner, IMapCameraControllerInternal mapCameraController)
+        {
+            mapCameraController.OnReleasing -= ReleaseCamera;
+            mapCameraController.ZoomChanged -= OnCameraZoomChanged;
+
+            foreach (IZoomScalingLayer layer in zoomScalingLayers)
+                layer.ResetToBaseScale();
+
+            DisableLayers(owner, mapCameraController.EnabledLayers);
+            mapCameraPool.Release(mapCameraController);
+        }
+
+        private void OnCameraZoomChanged(float baseZoom, float newZoom)
+        {
+            foreach (IZoomScalingLayer layer in zoomScalingLayers)
+                layer.ApplyCameraZoom(baseZoom, newZoom);
+        }
+
+        public void SetSharedLayer(MapLayer mask, bool active)
+        {
+            foreach (MapLayer mapLayer in ALL_LAYERS)
+            {
+                if (!EnumUtils.HasFlag(mask, mapLayer) || !layers.TryGetValue(mapLayer, out MapLayerStatus mapLayerStatus) || mapLayerStatus.ActivityOwners.Count == 0 || mapLayerStatus.SharedActive == active)
+                    continue;
+
+                mapLayerStatus.SharedActive = active;
+
+                // Cancel activation/deactivation flow
+                ResetCancellationSource(mapLayerStatus);
+
+                if (active)
+                    mapLayerStatus.MapLayerController.Enable(mapLayerStatus.CTS.Token).SuppressCancellationThrow().Forget();
+                else
+                    mapLayerStatus.MapLayerController.Disable(mapLayerStatus.CTS.Token).SuppressCancellationThrow().Forget();
+            }
+        }
+
+        private void EnableLayers(IMapActivityOwner owner, MapLayer mask)
+        {
+            foreach (MapLayer mapLayer in ALL_LAYERS)
+            {
+                if (!EnumUtils.HasFlag(mask, mapLayer) || !layers.TryGetValue(mapLayer, out MapLayerStatus mapLayerStatus)) continue;
+
+                if (owner.LayersParameters.TryGetValue(mapLayer, out IMapLayerParameter parameter))
+                    mapLayerStatus.MapLayerController.SetParameter(parameter);
+
+                if (mapLayerStatus.ActivityOwners.Count == 0 && mapLayerStatus.SharedActive != false)
+                {
+                    // Cancel deactivation flow
+                    ResetCancellationSource(mapLayerStatus);
+                    mapLayerStatus.MapLayerController.Enable(mapLayerStatus.CTS.Token).SuppressCancellationThrow().Forget();
+                }
+
+                mapLayerStatus.ActivityOwners.Add(owner);
+            }
+        }
+
+        private void DisableLayers(IMapActivityOwner owner, MapLayer mask)
+        {
+            foreach (MapLayer mapLayer in ALL_LAYERS)
+            {
+                if (!EnumUtils.HasFlag(mask, mapLayer) || !layers.TryGetValue(mapLayer, out MapLayerStatus mapLayerStatus)) continue;
+
+                if (mapLayerStatus.ActivityOwners.Contains(owner))
+                    mapLayerStatus.ActivityOwners.Remove(owner);
+
+                if (mapLayerStatus.ActivityOwners.Count == 0)
+                {
+                    // Cancel activation flow
+                    ResetCancellationSource(mapLayerStatus);
+                    mapLayerStatus.MapLayerController.Disable(mapLayerStatus.CTS.Token).SuppressCancellationThrow().Forget();
+                }
+                else
+                {
+                    var currentOwner = mapLayerStatus.ActivityOwners[^1];
+                    IReadOnlyDictionary<MapLayer, IMapLayerParameter> parametersByLayer = currentOwner.LayersParameters;
+
+                    if (parametersByLayer.ContainsKey(mapLayer))
+                        mapLayerStatus.MapLayerController.SetParameter(parametersByLayer[mapLayer]);
+                }
+            }
+        }
+
+        private void ResetCancellationSource(MapLayerStatus mapLayerStatus)
+        {
+            if (mapLayerStatus.CTS != null)
+            {
+                mapLayerStatus.CTS.Cancel();
+                mapLayerStatus.CTS.Dispose();
+            }
+
+            mapLayerStatus.CTS = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        }
+
+        public void Dispose()
+        {
+            foreach (MapLayerStatus status in layers.Values)
+            {
+                if (status.CTS != null)
+                {
+                    status.CTS.Cancel();
+                    status.CTS.Dispose();
+                    status.CTS = null;
+                }
+
+                status.MapLayerController.Dispose();
+            }
+
+            cullingController?.Dispose();
+
+            if (configurationInstance)
+                UnityObjectUtils.SafeDestroy(configurationInstance.gameObject);
+        }
+    }
+}
