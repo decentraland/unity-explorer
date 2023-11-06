@@ -4,7 +4,9 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities.Builders;
 using DCL.DebugUtilities.Declarations;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Profiling;
 using ECS.Abstract;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace ECS.Profiling.Systems
@@ -53,6 +55,7 @@ namespace ECS.Profiling.Systems
             profilingProvider.CheckHiccup();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateView()
         {
             hiccups.Value = profilingProvider.GetHiccupCountInBuffer();

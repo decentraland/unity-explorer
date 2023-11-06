@@ -1,6 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
-using ECS.Profiling;
+using DCL.Profiling;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using NUnit.Framework;
 using System.Threading.Tasks;

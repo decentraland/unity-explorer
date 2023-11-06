@@ -1,25 +1,8 @@
-﻿using System;
-using UnityEngine.Pool;
+﻿using UnityEngine.Pool;
 using Utility.ThreadSafePool;
 
 namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
 {
-    public interface IAcquiredBudget : IDisposable
-    {
-        void Release();
-    }
-
-    public class NoAcquiredBudget : IAcquiredBudget
-    {
-        public static readonly NoAcquiredBudget INSTANCE = new ();
-
-        private NoAcquiredBudget() { }
-
-        public void Dispose() { }
-
-        public void Release() { }
-    }
-
     /// <summary>
     ///     Identifies budget that was acquired, it must be a reference type so
     ///     it can be passed to the async flow and be released from there

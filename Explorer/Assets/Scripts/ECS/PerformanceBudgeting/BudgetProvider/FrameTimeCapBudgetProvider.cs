@@ -1,4 +1,4 @@
-using ECS.Profiling;
+using DCL.Profiling;
 
 namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
 {

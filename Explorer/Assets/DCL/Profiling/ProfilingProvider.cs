@@ -1,6 +1,6 @@
 using Unity.Profiling;
 
-namespace ECS.Profiling
+namespace DCL.Profiling
 {
     /// <summary>
     ///     Profiling provider to provide in game metrics. Profiler recorder returns values in NS, so to stay consistent with it,

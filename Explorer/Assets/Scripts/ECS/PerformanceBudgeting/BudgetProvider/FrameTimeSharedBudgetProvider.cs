@@ -1,4 +1,4 @@
-using ECS.Profiling;
+using DCL.Profiling;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider

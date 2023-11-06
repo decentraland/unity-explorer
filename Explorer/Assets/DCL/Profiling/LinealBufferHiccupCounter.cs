@@ -1,4 +1,4 @@
-namespace ECS.Profiling
+namespace DCL.Profiling
 {
     public class LinealBufferHiccupCounter
     {
