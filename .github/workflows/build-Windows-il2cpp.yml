@@ -1,6 +1,7 @@
 name: Unity Windows Build IL2CPP
 
 on:
+  workflow_dispatch: {}
   pull_request: 
       types:
       - opened
