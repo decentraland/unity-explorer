@@ -1,11 +1,11 @@
 ﻿using Arch.SystemGroups;
 using DCL.ECSComponents;
+using DCL.PerformanceBudgeting.BudgetProvider;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.ComponentsPooling;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
 using ECS.Unity.PrimitiveRenderer.Systems;

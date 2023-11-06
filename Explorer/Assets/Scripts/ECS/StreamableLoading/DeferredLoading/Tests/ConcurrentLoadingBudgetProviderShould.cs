@@ -1,4 +1,4 @@
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
+using DCL.PerformanceBudgeting.BudgetProvider;
 using NUnit.Framework;
 using System;
 

@@ -1,7 +1,8 @@
-﻿using UnityEngine.Pool;
+﻿using DCL.PerformanceBudgeting.BudgetProvider;
+using UnityEngine.Pool;
 using Utility.ThreadSafePool;
 
-namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
+namespace DCL.PerformanceBudgeting.AcquiredBudget
 {
     /// <summary>
     ///     Identifies budget that was acquired, it must be a reference type so

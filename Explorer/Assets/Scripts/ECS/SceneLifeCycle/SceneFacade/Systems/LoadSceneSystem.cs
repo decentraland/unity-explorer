@@ -2,13 +2,13 @@
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.PerformanceBudgeting.AcquiredBudget;
 using Diagnostics.ReportsHandling;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using SceneRunner;
 using SceneRunner.Scene;
 using System;

@@ -1,6 +1,6 @@
 using DCL.Profiling;
 
-namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
+namespace DCL.PerformanceBudgeting.BudgetProvider
 {
     public class FrameTimeCapBudgetProvider : IConcurrentBudgetProvider
     {

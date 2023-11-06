@@ -1,4 +1,4 @@
-namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
+namespace DCL.PerformanceBudgeting.AcquiredBudget
 {
     public class NoAcquiredBudget : IAcquiredBudget
     {

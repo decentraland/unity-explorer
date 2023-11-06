@@ -1,7 +1,7 @@
 using DCL.Profiling;
 using UnityEngine;
 
-namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
+namespace DCL.PerformanceBudgeting.BudgetProvider
 {
     public class FrameTimeSharedBudgetProvider : IConcurrentBudgetProvider
     {

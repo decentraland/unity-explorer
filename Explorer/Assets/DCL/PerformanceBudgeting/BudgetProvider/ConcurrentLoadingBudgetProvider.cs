@@ -1,6 +1,6 @@
 using System;
 
-namespace ECS.StreamableLoading.DeferredLoading.BudgetProvider
+namespace DCL.PerformanceBudgeting.BudgetProvider
 {
     public class ConcurrentLoadingBudgetProvider : IConcurrentBudgetProvider
     {

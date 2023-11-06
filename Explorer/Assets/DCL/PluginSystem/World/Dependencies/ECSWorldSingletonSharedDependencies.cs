@@ -1,9 +1,9 @@
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
+using DCL.PerformanceBudgeting.BudgetProvider;
 using Diagnostics.ReportsHandling;
 using ECS.ComponentsPooling;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 
 namespace DCL.PluginSystem.World.Dependencies
 {
