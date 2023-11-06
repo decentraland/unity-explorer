@@ -10,9 +10,9 @@ namespace Localization.Test
     public class LocalizationSystemShould
     {
         private static KeyValuePair<string, string>[] values = {
-            new ("en", "TestStringEng"),
             new ("it", "TestStringIta"),
             new ("es", "TestStringEs"),
+            new ("en", "TestStringEng"),
         };
 
         [Test]
