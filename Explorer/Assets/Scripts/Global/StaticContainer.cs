@@ -102,8 +102,8 @@ namespace Global
                 new SceneEntityFactory(),
                 new PartitionedWorldsAggregate.Factory(),
                 new ConcurrentLoadingBudgetProvider(50),
-                new MemoryBudgetProvider(profilingProvider),
-                new FrameTimeCapBudgetProvider(40, profilingProvider)
+                new FrameTimeCapBudgetProvider(40, profilingProvider),
+                new MemoryBudgetProvider(profilingProvider)
             );
 
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);

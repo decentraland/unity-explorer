@@ -1,6 +1,7 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities.Builders;
+using DCL.PerformanceBudgeting;
 using DCL.Profiling;
 using ECS.Profiling.Systems;
 using System;
@@ -11,12 +12,14 @@ namespace DCL.PluginSystem.Global
     public class ProfilingPlugin : IDCLGlobalPlugin<ProfilingPlugin.Settings>
     {
         private readonly IProfilingProvider profilingProvider;
+        private readonly MemoryBudgetProvider memoryBudgetProvider;
         private readonly IDebugContainerBuilder debugContainerBuilder;
 
-        public ProfilingPlugin(IProfilingProvider profilingProvider, IDebugContainerBuilder debugContainerBuilder)
+        public ProfilingPlugin(IProfilingProvider profilingProvider, MemoryBudgetProvider memoryBudgetProvider, IDebugContainerBuilder debugContainerBuilder)
         {
             this.profilingProvider = profilingProvider;
             this.debugContainerBuilder = debugContainerBuilder;
+            this.memoryBudgetProvider = memoryBudgetProvider;
         }
 
         public void Dispose() { }
@@ -26,7 +29,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ProfilingSystem.InjectToWorld(ref builder, profilingProvider, debugContainerBuilder);
+            ProfilingSystem.InjectToWorld(ref builder, profilingProvider, memoryBudgetProvider, debugContainerBuilder);
         }
 
         [Serializable]

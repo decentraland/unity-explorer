@@ -4,6 +4,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities.Builders;
 using DCL.DebugUtilities.Declarations;
 using DCL.DebugUtilities.UIBindings;
+using DCL.PerformanceBudgeting;
 using DCL.Profiling;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
@@ -15,18 +16,21 @@ namespace ECS.Profiling.Systems
     public partial class ProfilingSystem : BaseUnityLoopSystem
     {
         private readonly IProfilingProvider profilingProvider;
+        private readonly MemoryBudgetProvider memoryBudgetProvider;
 
         private DebugWidgetVisibilityBinding visibilityBinding;
 
         private ElementBinding<ulong> hiccups;
         private ElementBinding<string> fps;
         private ElementBinding<string> usedMemory;
+        private ElementBinding<string> memoryCheckpoints;
 
         private float lastTimeSinceMetricsUpdate;
 
-        private ProfilingSystem(World world, IProfilingProvider profilingProvider, IDebugContainerBuilder debugBuilder) : base(world)
+        private ProfilingSystem(World world, IProfilingProvider profilingProvider, MemoryBudgetProvider memoryBudgetProvider, IDebugContainerBuilder debugBuilder) : base(world)
         {
             this.profilingProvider = profilingProvider;
+            this.memoryBudgetProvider = memoryBudgetProvider;
 
             CreateView();
 
@@ -38,6 +42,7 @@ namespace ECS.Profiling.Systems
                             .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true))
                             .AddCustomMarker("Version:", version)
                             .AddCustomMarker("Total Used Memory:", usedMemory = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Memory Checkpoints:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Frame Rate:", fps = new ElementBinding<string>(string.Empty))
                             .AddMarker("Hiccups last 1000 frames:", hiccups = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat);
             }
@@ -60,6 +65,10 @@ namespace ECS.Profiling.Systems
         {
             hiccups.Value = profilingProvider.GetHiccupCountInBuffer();
             usedMemory.Value = $"{profilingProvider.TotalUsedMemoryInMB} MB";
+
+            (float warning, float critical, float full) memoryRanges = memoryBudgetProvider.GetMemoryRanges();
+            memoryCheckpoints.Value = $"<color=green>{memoryRanges.warning}</color> | <color=red>{memoryRanges.full}</color>";
+
             SetFPS();
 
             void SetFPS()

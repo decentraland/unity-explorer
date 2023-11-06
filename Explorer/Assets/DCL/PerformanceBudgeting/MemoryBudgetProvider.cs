@@ -16,7 +16,7 @@ namespace DCL.PerformanceBudgeting
 
     public class MemoryBudgetProvider : IConcurrentBudgetProvider
     {
-        private readonly Dictionary<MemoryUsageStatus, float> p = new()
+        private readonly Dictionary<MemoryUsageStatus, float> p = new ()
         {
             { Warning, 0.5f },
             { Critical, 0.8f },
@@ -44,6 +44,12 @@ namespace DCL.PerformanceBudgeting
                        _ when usedMemory > systemMemory.GetTotalSizeInMB() * p[Warning] => Warning,
                        _ => Normal,
                    };
+        }
+
+        public (float warning, float critical, float full) GetMemoryRanges()
+        {
+            long totalSizeInMB = systemMemory.GetTotalSizeInMB();
+            return (totalSizeInMB * p[Warning], totalSizeInMB * p[Critical], totalSizeInMB * p[Full]);
         }
 
         private void LogLimits() =>
