@@ -20,6 +20,13 @@ namespace Diagnostics.ReportsHandling.Sentry
             var sentryUnityInfo = new SentryUnityInfo();
             SentryUnityOptions options = ScriptableSentryUnityOptions.LoadSentryUnityOptions(sentryUnityInfo);
             options!.Enabled = true;
+
+            if (!IsValidConfiguration(options))
+            {
+                Debug.LogWarning($"Cannot initialize Sentry due invalid configuration: {options.Dsn}");
+                return;
+            }
+
             SentrySdk.Init(options);
         }
 
@@ -59,6 +66,10 @@ namespace Diagnostics.ReportsHandling.Sentry
             scope.SetTag("scene.base_parcel", data.SceneShortInfo.BaseParcel.ToString());
             scope.SetTag("scene.name", data.SceneShortInfo.Name);
         }
+
+        private bool IsValidConfiguration(SentryUnityOptions options) =>
+            !string.IsNullOrEmpty(options.Dsn)
+            && options.Dsn != "<REPLACE_DSN>";
 
         private SentryLevel ToSentryLevel(in LogType logType)
         {
