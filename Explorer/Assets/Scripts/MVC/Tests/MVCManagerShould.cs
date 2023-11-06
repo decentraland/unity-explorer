@@ -34,7 +34,7 @@ namespace MVC.Tests
             mvcManager.RegisterController(controller);
 
             // Assert
-            Assert.AreEqual(1, mvcManager.controllers.Count);
+            Assert.AreEqual(1, mvcManager.Controllers.Count);
         }
 
         [Test]

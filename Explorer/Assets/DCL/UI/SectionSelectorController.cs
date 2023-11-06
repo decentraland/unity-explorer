@@ -40,19 +40,19 @@ namespace DCL.UI
             panelOpening.gameObject.SetActive(true);
 
             panelClosing.anchoredPosition = Vector2.zero;
-            panelOpening.anchoredPosition = new Vector2(1920, 0);
+            panelOpening.anchoredPosition = new Vector2(panelClosing.rect.width, 0);
 
             await UniTask.WhenAll(
-                panelClosing.DOAnchorPos(new Vector2(-1920, 0), 1f)
+                panelClosing.DOAnchorPos(new Vector2(-panelClosing.rect.width, 0), 1f)
                             .SetEase(Ease.OutCubic)
                             .ToUniTask(cancellationToken: ct)
                             .ContinueWith(() =>
                              {
                                  //Ensures that if cancelled the closing panel is in the correct position and disabled
-                                 panelClosing.anchoredPosition = new Vector2(-1920, 0);
+                                 panelClosing.anchoredPosition = new Vector2(-panelClosing.rect.width, 0);
                                  panelClosing.gameObject.SetActive(false);
                              }),
-                panelOpening.DOAnchorPos(new Vector2(0, 0), 1f)
+                panelOpening.DOAnchorPos(Vector2.zero, 1f)
                             .SetEase(Ease.OutCubic)
                             .ToUniTask(cancellationToken: ct)
                             .ContinueWith(() =>

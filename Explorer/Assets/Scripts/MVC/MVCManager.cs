@@ -11,7 +11,9 @@ namespace MVC
 {
     public class MVCManager : IMVCManager
     {
-        internal readonly Dictionary<Type, IController> controllers;
+        public IReadOnlyDictionary<Type, IController> Controllers => controllers;
+
+        private readonly Dictionary<Type, IController> controllers;
         private readonly IWindowsStackManager windowsStackManager;
         private readonly CancellationTokenSource destructionCancellationTokenSource;
         private readonly IPopupCloserView popupCloser;

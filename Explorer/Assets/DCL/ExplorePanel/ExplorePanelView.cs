@@ -27,14 +27,14 @@ namespace DCL.ExplorePanel
 
         protected override UniTask PlayShowAnimation(CancellationToken ct)
         {
-            AnimationTransform.anchoredPosition = new Vector2(0, 1920);
+            AnimationTransform.anchoredPosition = new Vector2(0, canvas.pixelRect.width);
             return AnimationTransform.DOAnchorPos(Vector2.zero, 0.5f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct);
         }
 
         protected override UniTask PlayHideAnimation(CancellationToken ct)
         {
             AnimationTransform.anchoredPosition = Vector2.zero;
-            return AnimationTransform.DOAnchorPos(new Vector2(1920, 0), 0.5f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct);
+            return AnimationTransform.DOAnchorPos(new Vector2(canvas.pixelRect.width, 0), 0.5f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct);
         }
     }
 }
