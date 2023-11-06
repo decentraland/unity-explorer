@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: Settings_ContentUpdateGroupSchema
   m_EditorClassIdentifier: 
   m_Group: {fileID: 11400000, guid: e0f0f2d4ff3471c44953d71c1c51b7b7, type: 2}
-  m_StaticContent: 0
+  m_StaticContent: 1

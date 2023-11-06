@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine.Pool;
 using Utility;
+using static ECS.StreamableLoading.Common.Components.StreamableLoadingState;
 
 namespace ECS.StreamableLoading.DeferredLoading
 {
@@ -52,7 +53,7 @@ namespace ECS.StreamableLoading.DeferredLoading
                         ref IPartitionComponent partition = ref Unsafe.Add(ref partitionFirstElement, entityIndex);
 
                         // Process only not evaluated and explicitly forbidden entities
-                        if (state.Value is not (StreamableLoadingState.Status.NotStarted or StreamableLoadingState.Status.Forbidden))
+                        if (state.Value is not (Status.NotStarted or Status.Forbidden))
                             continue;
 
                         var intentionData = new IntentionData
@@ -78,21 +79,18 @@ namespace ECS.StreamableLoading.DeferredLoading
 
             for (i = 0; i < loadingIntentions.Count; i++)
             {
-                IntentionData intentionToAnalyze = loadingIntentions[i];
+                if (!memoryBudgetProvider.TrySpendBudget()) break;
+                if (!concurrentLoadingBudgetProvider.TrySpendBudget()) break;
 
-                if (!concurrentLoadingBudgetProvider.TrySpendBudget() || !memoryBudgetProvider.TrySpendBudget())
-                    break;
-
-                ref StreamableLoadingState state = ref intentionToAnalyze.StatePointer.Value;
+                ref StreamableLoadingState state = ref loadingIntentions[i].StatePointer.Value;
                 state.SetAllowed(AcquiredBudget.Create(concurrentLoadingBudgetProvider));
             }
 
             // Set the rest to forbidden
             for (; i < loadingIntentions.Count; i++)
             {
-                IntentionData intentionToAnalyze = loadingIntentions[i];
-                ref StreamableLoadingState state = ref intentionToAnalyze.StatePointer.Value;
-                state.Value = StreamableLoadingState.Status.Forbidden;
+                ref StreamableLoadingState state = ref loadingIntentions[i].StatePointer.Value;
+                state.Value = Status.Forbidden;
             }
         }
 

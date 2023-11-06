@@ -27,9 +27,11 @@ namespace DCL.PluginSystem.World.Dependencies
         {
             ComponentPoolsRegistry = componentPoolsRegistry;
             ReportsHandlingSettings = reportsHandlingSettings;
+
             EntityFactory = entityFactory;
-            LoadingBudgetProvider = loadingBudgetProvider;
             AggregateFactory = aggregateFactory;
+
+            LoadingBudgetProvider = loadingBudgetProvider;
             FrameTimeBudgetProvider = frameTimeBudgetProvider;
             MemoryBudgetProvider = memoryBudgetProvider;
         }
