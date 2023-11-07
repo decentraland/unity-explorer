@@ -2,12 +2,13 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.ExplorePanel;
+using DCL.Minimap;
 using DCL.Navmap;
+using Global.Dynamic;
 using MVC;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using static UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {
@@ -15,11 +16,13 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
+        private readonly MapRendererContainer mapRendererContainer;
 
-        public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner, IMVCManager mvcManager)
+        public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner, IMVCManager mvcManager, MapRendererContainer mapRendererContainer)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
+            this.mapRendererContainer = mapRendererContainer;
         }
 
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
@@ -33,15 +36,9 @@ namespace DCL.PluginSystem.Global
                     (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>(), null), mvcManager)
             );
 
-            mvcManager.RegisterController(new MinimapController(
-                MinimapController.CreateLazily(
-                    (await assetsProvisioner.ProvideMainAssetAsync(settings.MinimapPrefab, ct: ct)).Value.GetComponent<MinimapView>(), null), mvcManager)
-            );
-
             NavmapController navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>());
 
             mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter())).Forget();
-            mvcManager.ShowAsync(MinimapController.IssueCommand(new EmptyParameter())).Forget();
         }
 
         public void Dispose()

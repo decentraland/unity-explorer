@@ -1,6 +1,4 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.PluginSystem.Global;
-using DCLServices.MapRenderer.MapLayers;
 using System.Threading;
 
 namespace DCLServices.MapRenderer.ComponentsFactory
@@ -11,6 +9,6 @@ namespace DCLServices.MapRenderer.ComponentsFactory
     /// </summary>
     public interface IMapRendererComponentsFactory
     {
-        internal UniTask<MapRendererComponents> Create(CancellationToken cancellationToken, DynamicSettings dynamicSettings);
+        internal UniTask<MapRendererComponents> Create(CancellationToken cancellationToken);
     }
 }

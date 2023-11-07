@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.PluginSystem.Global;
 using DCLServices.MapRenderer.CoordsUtils;
 using DCLServices.MapRenderer.Culling;
 using DCLServices.MapRenderer.MapCameraController;
@@ -32,12 +31,18 @@ namespace DCLServices.MapRenderer.ComponentsFactory
         internal PlayerMarkerInstaller playerMarkerInstaller { get; }
 
         private IAssetsProvisioner assetsProvisioner;
-        private DynamicSettings dynamicSettings;
+        private MapRendererSettings mapSettings;
 
-        async UniTask<MapRendererComponents> IMapRendererComponentsFactory.Create(CancellationToken cancellationToken, DynamicSettings dynamicSettings)
+        public MapRendererChunkComponentsFactory (IAssetsProvisioner assetsProvisioner, MapRendererSettings settings)
         {
-            this.dynamicSettings = dynamicSettings;
-            MapRendererConfiguration configuration = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MapRendererConfiguration, ct: CancellationToken.None)).Value.GetComponent<MapRendererConfiguration>());
+            this.assetsProvisioner = assetsProvisioner;
+            this.mapSettings = settings;
+        }
+
+        async UniTask<MapRendererComponents> IMapRendererComponentsFactory.Create(CancellationToken cancellationToken)
+        {
+            this.mapSettings = mapSettings;
+            MapRendererConfiguration configuration = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapRendererConfiguration, ct: CancellationToken.None)).Value.GetComponent<MapRendererConfiguration>());
             var coordsUtils = new ChunkCoordsUtils(PARCEL_SIZE);
             IMapCullingController cullingController = new MapCullingController(new MapCullingRectVisibilityChecker(CULLING_BOUNDS_IN_PARCELS * PARCEL_SIZE));
             var layers = new Dictionary<MapLayer, IMapLayerController>();
@@ -52,7 +57,7 @@ namespace DCLServices.MapRenderer.ComponentsFactory
                 defaultCapacity: 1
             );
 
-            MapCameraObject mapCameraObjectPrefab = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MapCameraObject, ct: CancellationToken.None)).Value.GetComponent<MapCameraObject>());
+            MapCameraObject mapCameraObjectPrefab = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapCameraObject, ct: CancellationToken.None)).Value.GetComponent<MapCameraObject>());
             IObjectPool<IMapCameraControllerInternal> cameraControllersPool = new ObjectPool<IMapCameraControllerInternal>(
                 CameraControllerBuilder,
                 x => x.SetActive(true),
@@ -63,7 +68,7 @@ namespace DCLServices.MapRenderer.ComponentsFactory
             await UniTask.WhenAll(
                 CreateAtlas(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 CreateSatelliteAtlas(layers, configuration, coordsUtils, cullingController, cancellationToken),
-                playerMarkerInstaller.Install(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, dynamicSettings, cancellationToken)
+                playerMarkerInstaller.Install(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, cancellationToken)
                 /* List of other creators that can be executed in parallel */);
 
             return new MapRendererComponents(configuration, layers, zoomScalingLayers, cullingController, cameraControllersPool);
@@ -136,9 +141,9 @@ namespace DCLServices.MapRenderer.ComponentsFactory
         }
 
         internal async Task<SpriteRenderer> GetAtlasChunkPrefab(CancellationToken cancellationToken) =>
-            (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MapCameraObject, ct: CancellationToken.None)).Value.GetComponent<SpriteRenderer>();
+            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapCameraObject, ct: CancellationToken.None)).Value.GetComponent<SpriteRenderer>();
 
         private async UniTask<ParcelHighlightMarkerObject> GetParcelHighlightMarkerPrefab(CancellationToken cancellationToken) =>
-            (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MapCameraObject, ct: CancellationToken.None)).Value.GetComponent<ParcelHighlightMarkerObject>();
+            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapCameraObject, ct: CancellationToken.None)).Value.GetComponent<ParcelHighlightMarkerObject>();
     }
 }

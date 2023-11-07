@@ -8,35 +8,29 @@ namespace DCLServices.MapRenderer.ConsumerUtils
     /// <summary>
     /// Updates Map Camera Controller's position accordingly to the player position
     /// </summary>
-    public struct MapRendererTrackPlayerPosition : IDisposable
+    public struct MapRendererTrackPlayerPosition
     {
         private const float SQR_DISTANCE_TOLERANCE = 0.01f;
 
         private readonly IMapCameraController cameraController;
         //TODO: find base variable solution
-        //private readonly BaseVariable<Vector3> playerWorldPosition;
 
         private Vector3 lastPlayerPosition;
 
-        public MapRendererTrackPlayerPosition(IMapCameraController cameraController/*, BaseVariable<Vector3> playerWorldPosition*/)
+        public MapRendererTrackPlayerPosition(IMapCameraController cameraController)
         {
             this.cameraController = cameraController;
-            //this.playerWorldPosition = playerWorldPosition;
 
             lastPlayerPosition = Vector3.positiveInfinity;
-
-            //OnPlayerPositionChanged(Vector3.positiveInfinity, playerWorldPosition.Get());
-
-            //playerWorldPosition.OnChange += OnPlayerPositionChanged;
         }
 
-        private void OnPlayerPositionChanged(Vector3 oldPos, Vector3 newPos)
+        public void OnPlayerPositionChanged(Vector3 position)
         {
-            if (Vector3.SqrMagnitude(newPos - lastPlayerPosition) < SQR_DISTANCE_TOLERANCE)
+            if (Vector3.SqrMagnitude(position - lastPlayerPosition) < SQR_DISTANCE_TOLERANCE)
                 return;
 
-            lastPlayerPosition = newPos;
-            cameraController.SetPosition(GetPlayerCentricCoords(newPos));
+            lastPlayerPosition = position;
+            cameraController.SetPosition(GetPlayerCentricCoords(position));
         }
 
         public static Vector2 GetPlayerCentricCoords(Vector3 playerPosition)
@@ -49,11 +43,6 @@ namespace DCLServices.MapRenderer.ConsumerUtils
         {
             // quick hack to align with `CoordsToPositionWithOffset` and the pivot
             return playerCoords - Vector2.one;
-        }
-
-        public void Dispose()
-        {
-            //playerWorldPosition.OnChange -= OnPlayerPositionChanged;
         }
     }
 }

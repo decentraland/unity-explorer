@@ -1,5 +1,4 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.PluginSystem.Global;
 using DCLServices.MapRenderer.CommonBehavior;
 using DCLServices.MapRenderer.ComponentsFactory;
 using DCLServices.MapRenderer.Culling;
@@ -50,9 +49,7 @@ namespace DCLServices.MapRenderer
             this.componentsFactory = componentsFactory;
         }
 
-        public void Initialize() { }
-
-        public async UniTask InitializeAsync(CancellationToken ct, DynamicSettings dynamicSettings)
+        public async UniTask InitializeAsync(CancellationToken ct)
         {
             this.cancellationToken = ct;
             layers = new Dictionary<MapLayer, MapLayerStatus>();
@@ -60,7 +57,7 @@ namespace DCLServices.MapRenderer
 
             try
             {
-                MapRendererComponents components = await componentsFactory.Create(ct, dynamicSettings);
+                MapRendererComponents components = await componentsFactory.Create(ct);
                 cullingController = components.CullingController;
                 mapCameraPool = components.MapCameraControllers;
                 configurationInstance = components.ConfigurationInstance;

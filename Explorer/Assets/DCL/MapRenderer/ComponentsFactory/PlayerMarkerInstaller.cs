@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.PluginSystem.Global;
 using DCLServices.MapRenderer.CoordsUtils;
 using DCLServices.MapRenderer.Culling;
 using DCLServices.MapRenderer.MapLayers;
@@ -14,7 +13,7 @@ namespace DCLServices.MapRenderer.ComponentsFactory
     internal struct PlayerMarkerInstaller
     {
         private IAssetsProvisioner assetsProvisioner;
-        private DynamicSettings dynamicSettings;
+        private MapRendererSettings mapSettings;
 
         public async UniTask Install(
             Dictionary<MapLayer, IMapLayerController> writer,
@@ -22,10 +21,10 @@ namespace DCLServices.MapRenderer.ComponentsFactory
             MapRendererConfiguration configuration,
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
-            DynamicSettings dynamicSettings,
+            MapRendererSettings mapSettings,
             CancellationToken cancellationToken)
         {
-            this.dynamicSettings = dynamicSettings;
+            this.mapSettings = mapSettings;
             PlayerMarkerObject prefab = await GetPrefab(cancellationToken);
 
             var controller = new PlayerMarkerController(
@@ -55,7 +54,7 @@ namespace DCLServices.MapRenderer.ComponentsFactory
         }
 
         internal async UniTask<PlayerMarkerObject> GetPrefab(CancellationToken cancellationToken) =>
-            (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MapCameraObject, ct: CancellationToken.None)).Value.GetComponent<PlayerMarkerObject>();
+            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapCameraObject, ct: CancellationToken.None)).Value.GetComponent<PlayerMarkerObject>();
 
     }
 }

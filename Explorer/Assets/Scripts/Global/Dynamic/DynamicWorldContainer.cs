@@ -56,6 +56,7 @@ namespace Global.Dynamic
             var realmData = new RealmData();
             PopupCloserView popupCloserView = UnityEngine.Object.Instantiate((await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
             MVCManager mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
+            MapRendererContainer mapRendererContainer = await MapRendererContainer.Create(staticContainer.AssetsProvisioner, dynamicSettings.MapRendererSettings, ct);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -67,7 +68,8 @@ namespace Global.Dynamic
                 new WearablePlugin(staticContainer.AssetsProvisioner, realmData, ASSET_BUNDLES_URL),
                 new AvatarPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, realmData, debugBuilder),
-                new ExplorePanelPlugin(staticContainer.AssetsProvisioner, mvcManager)
+                new ExplorePanelPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer),
+                new MinimapPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer)
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
