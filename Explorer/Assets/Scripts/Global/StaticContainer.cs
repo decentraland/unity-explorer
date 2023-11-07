@@ -1,6 +1,7 @@
 ﻿using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.CacheCleanUp;
 using DCL.Character;
 using DCL.Interaction.Utility;
 using DCL.PerformanceBudgeting;
@@ -50,6 +51,8 @@ namespace Global
         public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
 
         public IAssetsProvisioner AssetsProvisioner { get; private set; }
+
+        public CacheCleaner CacheCleaner { get; private set; }
 
         /// <summary>
         ///     Character Object exists in a single instance
@@ -106,6 +109,8 @@ namespace Global
                 new MemoryBudgetProvider(profilingProvider)
             );
 
+            container.CacheCleaner = new CacheCleaner();
+
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
@@ -113,7 +118,7 @@ namespace Global
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
 
-            var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings);
+            var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, container.CacheCleaner);
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
@@ -124,7 +129,7 @@ namespace Global
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 assetBundlePlugin,
-                new GltfContainerPlugin(sharedDependencies),
+                new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
             };
 

@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Unity.Mathematics;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Global.Dynamic
@@ -55,7 +56,7 @@ namespace Global.Dynamic
             var dclInput = new DCLInput();
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
             var realmData = new RealmData();
-            PopupCloserView popupCloserView = UnityEngine.Object.Instantiate((await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
+            PopupCloserView popupCloserView = Object.Instantiate((await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
             MVCManager mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
@@ -65,9 +66,9 @@ namespace Global.Dynamic
                 new GlobalInteractionPlugin(dclInput, rootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.CameraSamplingData, exposedGlobalDataContainer.ExposedCameraData),
                 new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.MemoryBudgetProvider as MemoryBudgetProvider, debugBuilder),
-                new WearablePlugin(staticContainer.AssetsProvisioner, realmData, ASSET_BUNDLES_URL),
+                new WearablePlugin(staticContainer.AssetsProvisioner, realmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner),
                 new AvatarPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner,
-                    staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, realmData, debugBuilder),
+                    staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, realmData, debugBuilder, staticContainer.CacheCleaner),
                 new ExplorePanelPlugin(staticContainer.AssetsProvisioner, mvcManager)
             };
 

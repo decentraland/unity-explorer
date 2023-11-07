@@ -1,4 +1,5 @@
 using Arch.SystemGroups;
+using DCL.CacheCleanUp;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using DCL.PluginSystem.World.Dependencies;
@@ -16,10 +17,12 @@ namespace DCL.PluginSystem.World
         private readonly ECSWorldSingletonSharedDependencies globalDeps;
         private readonly GltfContainerAssetsCache assetsCache;
 
-        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps)
+        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner)
         {
             this.globalDeps = globalDeps;
             assetsCache = new GltfContainerAssetsCache(1000);
+
+            cacheCleaner.Register(assetsCache);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,

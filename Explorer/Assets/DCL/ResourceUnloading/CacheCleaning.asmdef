@@ -1,0 +1,7 @@
+﻿{
+  "name": "CacheCleaning",
+  "references": [
+    "GUID:4794e238ed0f65142a4aea5848b513e5",
+    "GUID:5eabe9a3d4dd19d42a16208ea5411062"
+  ]
+}

@@ -8,6 +8,7 @@ using DCL.AvatarRendering.AvatarShape.GPUSkinning;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.CacheCleanUp;
 using DCL.Character.Components;
 using DCL.DebugUtilities.Builders;
 using DCL.ECSComponents;
@@ -47,7 +48,7 @@ namespace DCL.PluginSystem.Global
 
         public AvatarPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner,
             IConcurrentBudgetProvider frameTimeCapBudgetProvider, IRealmData realmData,
-            IDebugContainerBuilder debugContainerBuilder)
+            IDebugContainerBuilder debugContainerBuilder, CacheCleaner cacheCleaner)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudgetProvider = frameTimeCapBudgetProvider;
@@ -55,6 +56,8 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
             componentPoolsRegistry = poolsRegistry;
             textureArrayContainer = new TextureArrayContainer();
+
+            cacheCleaner.Register(wearableAssetsCache);
         }
 
         public void Dispose()
