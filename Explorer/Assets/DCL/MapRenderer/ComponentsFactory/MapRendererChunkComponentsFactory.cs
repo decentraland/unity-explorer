@@ -23,11 +23,6 @@ namespace DCLServices.MapRenderer.ComponentsFactory
         // it is quite expensive to disable TextMeshPro so larger bounds should help keeping the right balance
         private const float CULLING_BOUNDS_IN_PARCELS = 10;
 
-        private const string ATLAS_CHUNK_ADDRESS = "AtlasChunk";
-        private const string MAP_CONFIGURATION_ADDRESS = "MapRendererConfiguration";
-        private const string MAP_CAMERA_OBJECT_ADDRESS = "MapCameraObject";
-        private const string PARCEL_HIGHLIGHT_OBJECT_ADDRESS = "MapParcelHighlightMarker";
-
         internal PlayerMarkerInstaller playerMarkerInstaller { get; }
 
         private IAssetsProvisioner assetsProvisioner;
@@ -57,7 +52,7 @@ namespace DCLServices.MapRenderer.ComponentsFactory
                 defaultCapacity: 1
             );
 
-            MapCameraObject mapCameraObjectPrefab = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapCameraObject, ct: CancellationToken.None)).Value.GetComponent<MapCameraObject>());
+            MapCameraObject mapCameraObjectPrefab = (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapCameraObject, ct: CancellationToken.None)).Value.GetComponent<MapCameraObject>();
             IObjectPool<IMapCameraControllerInternal> cameraControllersPool = new ObjectPool<IMapCameraControllerInternal>(
                 CameraControllerBuilder,
                 x => x.SetActive(true),
@@ -68,7 +63,7 @@ namespace DCLServices.MapRenderer.ComponentsFactory
             await UniTask.WhenAll(
                 CreateAtlas(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 CreateSatelliteAtlas(layers, configuration, coordsUtils, cullingController, cancellationToken),
-                playerMarkerInstaller.Install(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, cancellationToken)
+                playerMarkerInstaller.Install(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, cancellationToken)
                 /* List of other creators that can be executed in parallel */);
 
             return new MapRendererComponents(configuration, layers, zoomScalingLayers, cullingController, cameraControllersPool);
@@ -141,9 +136,9 @@ namespace DCLServices.MapRenderer.ComponentsFactory
         }
 
         internal async Task<SpriteRenderer> GetAtlasChunkPrefab(CancellationToken cancellationToken) =>
-            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapCameraObject, ct: CancellationToken.None)).Value.GetComponent<SpriteRenderer>();
+            (await assetsProvisioner.ProvideInstanceAsync(mapSettings.AtlasChunk, ct: CancellationToken.None)).Value.GetComponent<SpriteRenderer>();
 
         private async UniTask<ParcelHighlightMarkerObject> GetParcelHighlightMarkerPrefab(CancellationToken cancellationToken) =>
-            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapCameraObject, ct: CancellationToken.None)).Value.GetComponent<ParcelHighlightMarkerObject>();
+            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.ParcelHighlight, ct: CancellationToken.None)).Value.GetComponent<ParcelHighlightMarkerObject>();
     }
 }

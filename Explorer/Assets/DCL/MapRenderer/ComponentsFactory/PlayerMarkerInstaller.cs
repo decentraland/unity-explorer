@@ -21,10 +21,12 @@ namespace DCLServices.MapRenderer.ComponentsFactory
             MapRendererConfiguration configuration,
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
-            MapRendererSettings mapSettings,
+            MapRendererSettings settings,
+            IAssetsProvisioner assetProv,
             CancellationToken cancellationToken)
         {
-            this.mapSettings = mapSettings;
+            this.mapSettings = settings;
+            this.assetsProvisioner = assetProv;
             PlayerMarkerObject prefab = await GetPrefab(cancellationToken);
 
             var controller = new PlayerMarkerController(
@@ -54,7 +56,7 @@ namespace DCLServices.MapRenderer.ComponentsFactory
         }
 
         internal async UniTask<PlayerMarkerObject> GetPrefab(CancellationToken cancellationToken) =>
-            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapCameraObject, ct: CancellationToken.None)).Value.GetComponent<PlayerMarkerObject>();
+            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.PlayerMarker, ct: CancellationToken.None)).Value.GetComponent<PlayerMarkerObject>();
 
     }
 }

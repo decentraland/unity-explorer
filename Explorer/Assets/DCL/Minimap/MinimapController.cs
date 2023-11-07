@@ -73,8 +73,7 @@ namespace DCL.Minimap
 
         public override CanvasOrdering.SortingLayer SortLayers => CanvasOrdering.SortingLayer.Persistent;
 
-        protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
-            throw new NotImplementedException();
+        protected override UniTask WaitForCloseIntent(CancellationToken ct) => UniTask.CompletedTask;
 
         private void InitializeSystem()
         {

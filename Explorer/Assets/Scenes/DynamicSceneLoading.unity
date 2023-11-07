@@ -263,6 +263,32 @@ MonoBehaviour:
       m_SubObjectName: 
       m_SubObjectType: 
       m_EditorAssetChanged: 0
+    <MapRendererSettings>k__BackingField:
+      <MapRendererConfiguration>k__BackingField:
+        m_AssetGUID: b54d9d4189903c2438fa811308f14ceb
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_EditorAssetChanged: 0
+      <MapCameraObject>k__BackingField:
+        m_AssetGUID: 3efe8a48fc3905f47a0648abd6859394
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_EditorAssetChanged: 0
+      <AtlasChunk>k__BackingField:
+        m_AssetGUID: f80a8f4fcad2b4246b66c94221314244
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_EditorAssetChanged: 0
+      <ParcelHighlight>k__BackingField:
+        m_AssetGUID: 7e150ada146ad0749b39e65968780157
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_EditorAssetChanged: 0
+      <PlayerMarker>k__BackingField:
+        m_AssetGUID: 0ae66608be2735a4f96e0f1aa9b3a75b
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_EditorAssetChanged: 0
 --- !u!114 &234607244
 MonoBehaviour:
   m_ObjectHideFlags: 0

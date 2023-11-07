@@ -467,7 +467,7 @@ GameObject:
   - component: {fileID: 6099333271793956856}
   - component: {fileID: 6162744691669823357}
   - component: {fileID: 2110952359374055602}
-  - component: {fileID: 2991021760621484360}
+  - component: {fileID: 925130602362301365}
   m_Layer: 5
   m_Name: Minimap
   m_TagString: Untagged
@@ -559,7 +559,7 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
---- !u!114 &2991021760621484360
+--- !u!114 &925130602362301365
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -568,9 +568,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 9152785347356188261}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 13278a72b6e7d4f86a10001c82fba419, type: 3}
+  m_Script: {fileID: 11500000, guid: f38b33006c1e47c191dab3acdcc972df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   <canvas>k__BackingField: {fileID: 6099333271793956856}
   <raycaster>k__BackingField: {fileID: 2110952359374055602}
-  <OpenExploreMapButton>k__BackingField: {fileID: 2596301377976908798}
+  <mapRendererTargetImage>k__BackingField: {fileID: 6221276209546346655}
+  <pixelPerfectMapRendererTextureProvider>k__BackingField: {fileID: 0}
+  <mapRendererVisibleParcels>k__BackingField: 0
