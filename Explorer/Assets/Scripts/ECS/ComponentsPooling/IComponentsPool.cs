@@ -11,7 +11,7 @@ namespace ECS.ComponentsPooling
     }
 
     /// <summary>
-    /// Thread-safe Component Pool
+    ///     Thread-safe Component Pool
     /// </summary>
     /// <typeparam name="T">Type of Component</typeparam>
     public interface IComponentPool<T> : IObjectPool<T>, IComponentPool where T: class

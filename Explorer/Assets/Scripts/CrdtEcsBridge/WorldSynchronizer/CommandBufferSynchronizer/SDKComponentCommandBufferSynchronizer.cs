@@ -8,8 +8,8 @@ using JetBrains.Annotations;
 namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
 {
     /// <summary>
-    /// CommandBuffer has generic methods only, so we need to know the type of components somehow
-    /// This class resolves the issue
+    ///     CommandBuffer has generic methods only, so we need to know the type of components somehow
+    ///     This class resolves the issue
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public class SDKComponentCommandBufferSynchronizer<T> : SDKComponentCommandBufferSynchronizer where T: class, new()
@@ -22,8 +22,8 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
         }
 
         /// <summary>
-        /// Applies deserialized component to the world.
-        /// Must be called on the thread where World is running
+        ///     Applies deserialized component to the world.
+        ///     Must be called on the thread where World is running
         /// </summary>
         public override void Apply(World world, PersistentCommandBuffer commandBuffer, Entity entity, CRDTReconciliationEffect reconciliationEffect, object component)
         {

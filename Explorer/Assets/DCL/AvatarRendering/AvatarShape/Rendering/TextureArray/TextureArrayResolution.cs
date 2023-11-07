@@ -5,12 +5,12 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.Avatar
 {
     public class TextureArrayResolution
     {
-        private int nextFreeIndex;
         internal readonly List<Texture2DArray> arrays;
-        private readonly int minArraySize;
-        private readonly int resolution;
 
         internal readonly Stack<TextureArraySlot> freeSlots;
+        private readonly int minArraySize;
+        private readonly int resolution;
+        private int nextFreeIndex;
 
         public TextureArrayResolution(int resolution, int minArraySize)
         {

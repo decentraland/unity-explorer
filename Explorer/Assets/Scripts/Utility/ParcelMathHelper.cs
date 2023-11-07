@@ -97,6 +97,22 @@ namespace Utility
             }
         }
 
+        public static Vector2Int WorldToGridPosition(Vector3 worldPosition)
+        {
+            return new Vector2Int(
+                (int)Mathf.Floor(worldPosition.x / PARCEL_SIZE),
+                (int)Mathf.Floor(worldPosition.z / PARCEL_SIZE)
+            );
+        }
+
+        public static Vector2 WorldToGridPositionUnclamped(Vector3 worldPosition)
+        {
+            return new Vector2(
+                worldPosition.x / PARCEL_SIZE,
+                worldPosition.z / PARCEL_SIZE
+            );
+        }
+
         public readonly struct ParcelCorners
         {
             public readonly Vector3 minXZ;

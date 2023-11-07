@@ -23,17 +23,16 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
     [LogCategory(ReportCategory.PRIMITIVE_MESHES)]
     public partial class InstantiatePrimitiveRenderingSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPool<MeshRenderer> rendererPoolRegistry;
-        private readonly IComponentPoolsRegistry poolRegistry;
-        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
-
         private static readonly Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> SETUP_MESH_LOGIC = new ()
         {
             { PBMeshRenderer.MeshOneofCase.Box, new MeshSetupBox() },
             { PBMeshRenderer.MeshOneofCase.Sphere, new MeshSetupSphere() },
             { PBMeshRenderer.MeshOneofCase.Cylinder, new MeshSetupCylinder() },
-            { PBMeshRenderer.MeshOneofCase.Plane, new MeshSetupPlane() }
+            { PBMeshRenderer.MeshOneofCase.Plane, new MeshSetupPlane() },
         };
+        private readonly IComponentPool<MeshRenderer> rendererPoolRegistry;
+        private readonly IComponentPoolsRegistry poolRegistry;
+        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
 
         private readonly Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases;
 
@@ -65,7 +64,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
                 return;
 
             var meshRendererComponent = new PrimitiveMeshRendererComponent();
-            var meshRendererGo = rendererPoolRegistry.Get();
+            MeshRenderer meshRendererGo = rendererPoolRegistry.Get();
             meshRendererGo.sharedMaterial = DefaultMaterial.Shared;
             Instantiate(setupMesh, ref meshRendererGo, ref meshRendererComponent, sdkComponent, ref transform);
             World.Add(entity, meshRendererComponent);

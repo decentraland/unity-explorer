@@ -5,14 +5,14 @@ using System.Runtime.InteropServices;
 namespace CRDT
 {
     /// <summary>
-    /// Entity {<br/>
-    /// uint32_t id;<br/>
-    /// struct {<br/>
-    ///    uint16_t version;<br/>
-    ///    uint16_t number;<br/>
-    /// }<br/>
-    /// <br/>
-    /// We could use int directly but then there is a chance to assign the wrong structure accidently
+    ///     Entity {<br />
+    ///     uint32_t id;<br />
+    ///     struct {<br />
+    ///     uint16_t version;<br />
+    ///     uint16_t number;<br />
+    ///     }<br />
+    ///     <br />
+    ///     We could use int directly but then there is a chance to assign the wrong structure accidently
     /// </summary>
     [StructLayout(LayoutKind.Explicit, Size = 4)]
     public readonly struct CRDTEntity : IComparable<CRDTEntity>, IEquatable<CRDTEntity>
@@ -39,8 +39,10 @@ namespace CRDT
         public bool Equals(CRDTEntity other) =>
             Id.Equals(other.Id);
 
-        public override string ToString() => $"E: number {EntityNumber} version {EntityVersion}";
+        public override string ToString() =>
+            $"E: number {EntityNumber} version {EntityVersion}";
 
-        public static implicit operator CRDTEntity (int id) => new (id);
+        public static implicit operator CRDTEntity(int id) =>
+            new (id);
     }
 }

@@ -6,33 +6,10 @@ using Utility.ThreadSafePool;
 namespace CRDT.Memory
 {
     /// <summary>
-    /// Slices the original stream and does not use pooling
+    ///     Slices the original stream and does not use pooling
     /// </summary>
     public class CRDTOriginalMemorySlicer : ICRDTMemoryAllocator
     {
-        private class SliceOwner : IMemoryOwner<byte>
-        {
-            private readonly CRDTOriginalMemorySlicer memorySlicer;
-
-            internal SliceOwner(CRDTOriginalMemorySlicer memorySlicer)
-            {
-                this.memorySlicer = memorySlicer;
-            }
-
-            internal void Set(byte[] array)
-            {
-                Memory = array;
-            }
-
-            public void Dispose()
-            {
-                // Can't dispose the slice from the original array
-                memorySlicer.memoryOwnerPool.Release(this);
-            }
-
-            public Memory<byte> Memory { get; private set; }
-        }
-
         private static readonly ThreadSafeObjectPool<CRDTOriginalMemorySlicer> POOL = new (
             () => new CRDTOriginalMemorySlicer());
 
@@ -46,6 +23,11 @@ namespace CRDT.Memory
                 defaultCapacity: 1024,
                 maxSize: 1024 * 1024
             );
+        }
+
+        public void Dispose()
+        {
+            POOL.Release(this);
         }
 
         public static CRDTOriginalMemorySlicer Create() =>
@@ -70,9 +52,27 @@ namespace CRDT.Memory
         public IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream) =>
             GetMemoryBuffer(originalStream, 0, originalStream.Length);
 
-        public void Dispose()
+        private class SliceOwner : IMemoryOwner<byte>
         {
-            POOL.Release(this);
+            private readonly CRDTOriginalMemorySlicer memorySlicer;
+
+            public Memory<byte> Memory { get; private set; }
+
+            internal SliceOwner(CRDTOriginalMemorySlicer memorySlicer)
+            {
+                this.memorySlicer = memorySlicer;
+            }
+
+            public void Dispose()
+            {
+                // Can't dispose the slice from the original array
+                memorySlicer.memoryOwnerPool.Release(this);
+            }
+
+            internal void Set(byte[] array)
+            {
+                Memory = array;
+            }
         }
     }
 }

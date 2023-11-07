@@ -5,9 +5,9 @@ namespace DCL.Input.Utils
 {
     public class NormalizedButtonPressListener
     {
-        private InputAction actionToListen;
+        private readonly InputAction actionToListen;
+        private readonly float timeToMax;
         private float currentValue;
-        private float timeToMax;
         private bool isPressed;
 
         public NormalizedButtonPressListener(InputAction actionToListen, float timeToMax)
@@ -18,10 +18,7 @@ namespace DCL.Input.Utils
 
         public void Update(float dt)
         {
-            if (actionToListen.WasPerformedThisFrame())
-            {
-                isPressed = true;
-            }
+            if (actionToListen.WasPerformedThisFrame()) { isPressed = true; }
 
             if (actionToListen.WasReleasedThisFrame())
             {

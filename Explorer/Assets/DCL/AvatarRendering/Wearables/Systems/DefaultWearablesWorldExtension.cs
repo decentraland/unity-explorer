@@ -21,7 +21,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         /// </summary>
         /// <returns></returns>
         /// <exception cref="OperationCancelledException"></exception>
-        public static async UniTask<DefaultWearablesComponent.State> WaitForDefaultWearablesLoading(this World world,
+        public static async UniTask<DefaultWearablesComponent.State> WaitForDefaultWearablesLoadingAsync(this World world,
             PlayerLoopTiming playerLoopTiming = PlayerLoopTiming.Update,
             CancellationToken cancellationToken = default)
         {

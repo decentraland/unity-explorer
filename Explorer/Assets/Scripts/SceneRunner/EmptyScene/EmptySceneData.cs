@@ -12,9 +12,18 @@ namespace SceneRunner.EmptyScene
     /// </summary>
     public class EmptySceneData : ISceneData
     {
+        public readonly IReadOnlyList<EmptySceneMapping> Mappings;
         private readonly Dictionary<string, string> fileToHash;
 
-        public readonly IReadOnlyList<EmptySceneMapping> Mappings;
+        /// <summary>
+        ///     Per scene data is not resolved as empty scenes use the shared world for all instances
+        /// </summary>
+        public SceneShortInfo SceneShortInfo { get; }
+
+        public ParcelMathHelper.SceneGeometry Geometry => ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY;
+
+        public SceneAssetBundleManifest AssetBundleManifest => SceneAssetBundleManifest.NULL;
+        public StaticSceneMessages StaticSceneMessages => StaticSceneMessages.EMPTY;
 
         public EmptySceneData(IReadOnlyList<EmptySceneMapping> mappings)
         {
@@ -28,17 +37,6 @@ namespace SceneRunner.EmptyScene
                 fileToHash[mapping.environment.file] = mapping.environment.hash;
             }
         }
-
-        /// <summary>
-        ///     Per scene data is not resolved as empty scenes use the shared world for all instances
-        /// </summary>
-        public SceneShortInfo SceneShortInfo { get; }
-
-        public ParcelMathHelper.SceneGeometry Geometry => ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY;
-
-        public SceneAssetBundleManifest AssetBundleManifest => SceneAssetBundleManifest.NULL;
-        public StaticSceneMessages StaticSceneMessages => StaticSceneMessages.EMPTY;
-
         public bool HasRequiredPermission(string permission) =>
             throw new NotImplementedException();
 

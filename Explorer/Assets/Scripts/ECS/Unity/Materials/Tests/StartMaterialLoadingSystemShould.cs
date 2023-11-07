@@ -28,12 +28,12 @@ namespace ECS.Unity.Materials.Tests
     {
         private const int ATTEMPTS_COUNT = 5;
 
+        private ISceneData sceneData;
+        private DestroyMaterial destroyMaterial;
+
         private static string tex1 => $"file://{Application.dataPath + "/../TestResources/Images/alphaTexture.png"}";
         private static string tex2 => $"file://{Application.dataPath + "/../TestResources/Images/atlas.png"}";
         private static string tex3 => $"file://{Application.dataPath + "/../TestResources/Images/Gradient A4.png"}";
-
-        private ISceneData sceneData;
-        private DestroyMaterial destroyMaterial;
 
         [SetUp]
         public void SetUp()

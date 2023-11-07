@@ -60,7 +60,7 @@ namespace SceneRunner
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
         }
 
-        public async UniTask<ISceneFacade> CreateSceneFromFile(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct)
+        public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct)
         {
             var sceneDefinition = new IpfsTypes.SceneEntityDefinition();
 
@@ -77,10 +77,10 @@ namespace SceneRunner
             var sceneData = new SceneData(new SceneNonHashedContent(baseUrl), sceneDefinition, SceneAssetBundleManifest.NULL, Vector2Int.zero,
                 ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, StaticSceneMessages.EMPTY);
 
-            return await CreateScene(sceneData, partitionProvider, ct);
+            return await CreateSceneAsync(sceneData, partitionProvider, ct);
         }
 
-        public async UniTask<ISceneFacade> CreateSceneFromStreamableDirectory(string directoryName, IPartitionComponent partitionProvider, CancellationToken ct)
+        public async UniTask<ISceneFacade> CreateSceneFromStreamableDirectoryAsync(string directoryName, IPartitionComponent partitionProvider, CancellationToken ct)
         {
             const string SCENE_JSON_FILE_NAME = "scene.json";
 
@@ -102,13 +102,13 @@ namespace SceneRunner
             var sceneData = new SceneData(new SceneNonHashedContent(fullPath), sceneDefinition, SceneAssetBundleManifest.NULL,
                 Vector2Int.zero, ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, StaticSceneMessages.EMPTY);
 
-            return await CreateScene(sceneData, partitionProvider, ct);
+            return await CreateSceneAsync(sceneData, partitionProvider, ct);
         }
 
         public UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct) =>
-            CreateScene(sceneData, partitionProvider, ct);
+            CreateSceneAsync(sceneData, partitionProvider, ct);
 
-        private async UniTask<ISceneFacade> CreateScene(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)
+        private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)
         {
             var entitiesMap = new Dictionary<CRDTEntity, Entity>(1000, CRDTEntityComparer.INSTANCE);
 
@@ -143,7 +143,7 @@ namespace SceneRunner
                 sceneData.TryGetMainScriptUrl(out sceneCodeUrl);
             }
 
-            SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPath(sceneCodeUrl, instancePoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool);
+            SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(sceneCodeUrl, instancePoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool);
 
             ct.ThrowIfCancellationRequested();
 

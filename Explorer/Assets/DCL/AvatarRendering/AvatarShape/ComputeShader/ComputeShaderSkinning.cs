@@ -16,20 +16,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     {
         internal static readonly ListObjectPool<Material> MATERIAL_POOL = new (defaultCapacity: 50, listInstanceDefaultCapacity: 5);
 
-
-        public override void ComputeSkinning(NativeArray<float4x4> bonesResult, ref AvatarCustomSkinningComponent skinning)
-        {
-            skinning.buffers.bones.SetData(bonesResult);
-            skinning.computeShaderInstance.Dispatch(skinning.buffers.kernel, (skinning.vertCount / 64) + 1, 1, 1);
-
-            //Note (Juani): According to Unity, BeginWrite/EndWrite works better than SetData. But we got inconsitent result using ComputeBufferMode.SubUpdates
-            //Ash machine (AMD) worked way worse than mine (NVidia). So, we are back to SetData with a ComputeBufferMode.Dynamic, which works well for both.
-            //https://docs.unity3d.com/2020.1/Documentation/ScriptReference/ComputeBuffer.BeginWrite.html
-            /*NativeArray<float4x4> bonesIn = mBones.BeginWrite<float4x4>(0, ComputeShaderConstants.BONE_COUNT);
-            NativeArray<float4x4>.Copy(bonesResult, 0, bonesIn, 0, ComputeShaderConstants.BONE_COUNT);
-            mBones.EndWrite<float4x4>(ComputeShaderConstants.BONE_COUNT);*/
-        }
-
         public override AvatarCustomSkinningComponent Initialize(IReadOnlyList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer,
             UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterialPool, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer, AvatarShapeComponent avatarShapeComponent)
         {
@@ -44,6 +30,19 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             ListPool<MeshData>.Release(meshesData);
 
             return new AvatarCustomSkinningComponent(vertCount, buffers, materialSetups, skinningShader);
+        }
+
+        public override void ComputeSkinning(NativeArray<float4x4> bonesResult, ref AvatarCustomSkinningComponent skinning)
+        {
+            skinning.buffers.bones.SetData(bonesResult);
+            skinning.computeShaderInstance.Dispatch(skinning.buffers.kernel, (skinning.vertCount / 64) + 1, 1, 1);
+
+            //Note (Juani): According to Unity, BeginWrite/EndWrite works better than SetData. But we got inconsitent result using ComputeBufferMode.SubUpdates
+            //Ash machine (AMD) worked way worse than mine (NVidia). So, we are back to SetData with a ComputeBufferMode.Dynamic, which works well for both.
+            //https://docs.unity3d.com/2020.1/Documentation/ScriptReference/ComputeBuffer.BeginWrite.html
+            /*NativeArray<float4x4> bonesIn = mBones.BeginWrite<float4x4>(0, ComputeShaderConstants.BONE_COUNT);
+            NativeArray<float4x4>.Copy(bonesResult, 0, bonesIn, 0, ComputeShaderConstants.BONE_COUNT);
+            mBones.EndWrite<float4x4>(ComputeShaderConstants.BONE_COUNT);*/
         }
 
         private static ComputeSkinningBufferContainer CreateBufferContainer(int vertCount, int skinnedMeshRendererBoneCount)
@@ -151,6 +150,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             foreach (CachedWearable cachedWearable in wearables)
             {
                 GameObject instance = cachedWearable.Instance;
+
                 using (PoolExtensions.Scope<List<Renderer>> pooledList = instance.GetComponentsInChildrenIntoPooledList<Renderer>(true))
                 {
                     for (var i = 0; i < pooledList.Value.Count; i++)

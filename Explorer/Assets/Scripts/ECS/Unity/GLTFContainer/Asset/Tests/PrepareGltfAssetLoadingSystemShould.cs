@@ -15,13 +15,13 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
     [TestFixture]
     public class PrepareGltfAssetLoadingSystemShould : UnitySystemTestBase<PrepareGltfAssetLoadingSystem>
     {
-        private IStreamableCache<GltfContainerAsset, string> cache;
-
         [SetUp]
         public void SetUp()
         {
             system = new PrepareGltfAssetLoadingSystem(world, cache = Substitute.For<IStreamableCache<GltfContainerAsset, string>>());
         }
+
+        private IStreamableCache<GltfContainerAsset, string> cache;
 
         [Test]
         public void CreateAssetBundleIntention()

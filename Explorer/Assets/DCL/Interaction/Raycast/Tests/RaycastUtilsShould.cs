@@ -16,9 +16,8 @@ namespace DCL.Interaction.Raycast.Tests
 {
     public class RaycastUtilsShould : UnitySystemTestBase<ExecuteRaycastSystem>
     {
-        private TransformComponent ts;
-
         private readonly List<Collider> temp = new ();
+        private TransformComponent ts;
 
         [SetUp]
         public void Setup()

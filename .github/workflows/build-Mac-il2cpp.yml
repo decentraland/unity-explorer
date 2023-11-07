@@ -1,0 +1,90 @@
+name: Unity Mac Build IL2CPP
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    concurrency: 
+      group: build-il2cpp
+      cancel-in-progress: false
+
+    strategy:
+      max-parallel: 1
+      matrix:
+        include:
+          - targetPlatform: StandaloneOSX
+            dockerImage: macos-latest-xl
+
+
+    name: Build
+    runs-on: ${{ matrix.dockerImage }}
+    steps:
+      - name: Set SHA env variable
+        run: |         
+            SHORT_SHA=$(git rev-parse --short ${{ github.sha }})
+            echo "CUSTOM_SHA=$SHORT_SHA" >> $GITHUB_ENV         
+            
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Create LFS file list
+        run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+
+      - name: Restore LFS cache
+        uses: actions/cache@v3
+        id: lfs-cache
+        with:
+          path: .git/lfs
+          key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}
+
+      - name: Git LFS Pull
+        run: |
+          git lfs pull
+          git add .
+          git reset --hard
+
+      - name: Restore Library cache
+        uses: actions/cache@v3
+        with:
+          path: | 
+            Explorer/Library
+            !Explorer/Library/Bee/**
+            !Explorer/Library/BuildPlayerData/**
+          key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
+
+      - uses: decentraland/unity-builder@0.6
+        id: build
+        timeout-minutes: 120
+        env:
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: Explorer
+          targetPlatform: ${{ matrix.targetPlatform }}
+          versioning: Semantic
+          
+      # Tar build files to maintain file permissions
+      - name: Tar MacOSX/Linux build files
+        run: |
+          echo 1. go into build dir
+          cd build
+          echo 2. delete unnecessary folder
+          rm -r  ${{ matrix.targetPlatform }}/StandaloneOSX_BackUpThisFolder_ButDontShipItWithYourGame
+          rm -r  ${{ matrix.targetPlatform }}/StandaloneOSX_BurstDebugInformation_DoNotShip
+          echo 4. tar mac build folder + remove og files
+          sudo tar -cvf "${{ matrix.targetPlatform }}.tar" "${{ matrix.targetPlatform }}"
+          rm -r  ${{ matrix.targetPlatform }}
+          echo 5. go back to src dir
+          cd ..
+          
+      # Upload artifact
+      - name: Upload mac artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Build-${{ matrix.targetPlatform }}
+          path: build/${{ matrix.targetPlatform }}.tar
+          if-no-files-found: error
+        
+

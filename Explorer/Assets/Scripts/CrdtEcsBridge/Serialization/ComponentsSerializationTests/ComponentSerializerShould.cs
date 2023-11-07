@@ -16,10 +16,10 @@ namespace CrdtEcsBridge.Serialization.ComponentsSerializationTests
             var message = new PBMeshCollider
             {
                 Sphere = new PBMeshCollider.Types.SphereMesh(),
-                CollisionMask = 0b10100
+                CollisionMask = 0b10100,
             };
 
-            var byteArray = message.ToByteArray();
+            byte[] byteArray = message.ToByteArray();
 
             var newMessage = new PBMeshCollider();
 
@@ -38,6 +38,7 @@ namespace CrdtEcsBridge.Serialization.ComponentsSerializationTests
                 Sphere = new PBMeshCollider.Types.SphereMesh(),
                 CollisionMask = 0b10100,
             };
+
             Span<byte> byteArray = message.ToByteArray().AsSpan();
 
             //Act
@@ -72,7 +73,5 @@ namespace CrdtEcsBridge.Serialization.ComponentsSerializationTests
             //Assert
             Assert.AreEqual(message, deserializedMessage);
         }
-
-
     }
 }

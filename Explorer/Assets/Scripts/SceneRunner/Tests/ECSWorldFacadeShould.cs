@@ -11,13 +11,6 @@ namespace SceneRunner.Tests
     [TestFixture]
     public class ECSWorldFacadeShould
     {
-        private ECSWorldFacade ecsWorldFacade;
-        private World world;
-
-        private InitializationTestSystem1 initializationTestSystem1;
-        private SimulationTestSystem1 simulationTestSystem1;
-        private IFinalizeWorldSystem finalizeWorldSystem;
-
         [SetUp]
         public void SetUp()
         {
@@ -30,6 +23,13 @@ namespace SceneRunner.Tests
 
             ecsWorldFacade = new ECSWorldFacade(builder.Finish(), world, new[] { finalizeWorldSystem = Substitute.For<IFinalizeWorldSystem>() });
         }
+
+        private ECSWorldFacade ecsWorldFacade;
+        private World world;
+
+        private InitializationTestSystem1 initializationTestSystem1;
+        private SimulationTestSystem1 simulationTestSystem1;
+        private IFinalizeWorldSystem finalizeWorldSystem;
 
         [Test]
         public void CallInitializeOnSystems()

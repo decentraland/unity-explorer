@@ -7,8 +7,8 @@ namespace CRDT.Memory
     {
         public static readonly IMemoryOwner<T> EMPTY = new EmptyMemoryOwner<T>();
 
-        public void Dispose() { }
-
         public Memory<T> Memory => Memory<T>.Empty;
+
+        public void Dispose() { }
     }
 }

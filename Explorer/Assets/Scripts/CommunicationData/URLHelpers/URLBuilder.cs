@@ -7,12 +7,12 @@ namespace CommunicationData.URLHelpers
     {
         private readonly StringBuilder stringBuilder = new ();
 
-        private bool endsWithSlash => stringBuilder.Length > 0 && stringBuilder[^1] == '/';
-
         private byte parametersCount;
 
         public URLDomain? URLDomain { get; private set; }
         public URLPath? URLPath { get; private set; }
+
+        private bool endsWithSlash => stringBuilder.Length > 0 && stringBuilder[^1] == '/';
 
         /// <summary>
         ///     Set the full domain of the URL, must be called first
