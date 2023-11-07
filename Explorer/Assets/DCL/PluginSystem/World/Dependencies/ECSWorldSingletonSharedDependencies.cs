@@ -15,7 +15,7 @@ namespace DCL.PluginSystem.World.Dependencies
         public readonly ISceneEntityFactory EntityFactory;
         public readonly ConcurrentLoadingBudgetProvider LoadingBudgetProvider;
         public readonly IConcurrentBudgetProvider FrameTimeBudgetProvider;
-        public readonly IConcurrentBudgetProvider MemoryBudgetProvider;
+        public readonly MemoryBudgetProvider MemoryBudgetProvider;
 
         public ECSWorldSingletonSharedDependencies(IComponentPoolsRegistry componentPoolsRegistry,
             IReportsHandlingSettings reportsHandlingSettings,
@@ -23,7 +23,7 @@ namespace DCL.PluginSystem.World.Dependencies
             ISystemGroupAggregate<IPartitionComponent>.IFactory aggregateFactory,
             ConcurrentLoadingBudgetProvider loadingBudgetProvider,
             IConcurrentBudgetProvider frameTimeBudgetProvider,
-            IConcurrentBudgetProvider memoryBudgetProvider)
+            MemoryBudgetProvider memoryBudgetProvider)
         {
             ComponentPoolsRegistry = componentPoolsRegistry;
             ReportsHandlingSettings = reportsHandlingSettings;

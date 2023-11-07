@@ -1,0 +1,30 @@
+﻿using Arch.SystemGroups;
+using DCL.CacheCleanUp;
+using DCL.PerformanceBudgeting;
+using ECS.Abstract;
+using ECS.Groups;
+using UnityEngine;
+
+namespace DCL.PluginSystem.Global
+{
+    [UpdateInGroup(typeof(CleanUpGroup))]
+    public partial class ReleaseMemorySystem : BaseUnityLoopSystem
+    {
+        private readonly MemoryBudgetProvider memoryBudgetProvider;
+        private readonly CacheCleaner cacheCleaner;
+
+        public ReleaseMemorySystem(Arch.Core.World world, CacheCleaner cacheCleaner, MemoryBudgetProvider memoryBudgetProvider) : base(world)
+        {
+            this.cacheCleaner = cacheCleaner;
+            this.memoryBudgetProvider = memoryBudgetProvider;
+        }
+
+        protected override void Update(float t)
+        {
+            Debug.Log("VV: Update");
+
+            if (memoryBudgetProvider.GetMemoryUsageStatus() != MemoryUsageStatus.Normal)
+                cacheCleaner.UnloadCache();
+        }
+    }
+}
