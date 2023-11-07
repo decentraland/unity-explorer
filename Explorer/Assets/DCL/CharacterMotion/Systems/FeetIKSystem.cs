@@ -113,6 +113,7 @@ namespace DCL.CharacterMotion.Systems
             feetIKComponent.Left.TargetInitialRotation = avatarBase.LeftLegIKTarget.localRotation;
             feetIKComponent.Right.TargetInitialPosition = avatarBase.RightLegIKTarget.localPosition;
             feetIKComponent.Right.TargetInitialRotation = avatarBase.RightLegIKTarget.localRotation;
+            avatarBase.FeetIKRig.weight = 1;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

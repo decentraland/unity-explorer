@@ -46,7 +46,6 @@ namespace DCL.CharacterMotion.Systems
             [Data] float dt,
             ref HandsIKComponent handsIKComponent,
             ref AvatarBase avatarBase,
-            in CharacterRigidTransform rigidTransform,
             in ICharacterControllerSettings settings
         )
         {
@@ -64,6 +63,7 @@ namespace DCL.CharacterMotion.Systems
 
                 elbowHintOffset.Value = settings.HandsIKElbowOffset;
                 handsIKComponent.Initialized = true;
+                avatarBase.HandsIKRig.weight = 1;
             }
 
             settings.HandsIKWallHitDistance = wallDistance.Value;
