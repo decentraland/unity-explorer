@@ -1,3 +1,4 @@
+using DCL.PerformanceBudgeting.AcquiredBudget;
 using System;
 
 namespace DCL.PerformanceBudgeting
@@ -18,6 +19,20 @@ namespace DCL.PerformanceBudgeting
             if (currentBudget > 0)
             {
                 currentBudget--;
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool TrySpendBudget(out IAcquiredBudget acquiredBudget)
+        {
+            acquiredBudget = null; // Initialize the out parameter
+
+            if (currentBudget > 0)
+            {
+                currentBudget--;
+                acquiredBudget = AcquiredBudget.AcquiredBudget.Create(this);
                 return true;
             }
 
