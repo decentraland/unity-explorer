@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ECS.StreamableLoading.AssetBundles;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility.Pool;
@@ -32,8 +33,12 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         /// </summary>
         public List<Collider> VisibleMeshesColliders;
 
-        private GltfContainerAsset(GameObject root, List<Collider> invisibleColliders, List<MeshFilter> visibleColliderMeshes, List<Renderer> renderers)
+        private AssetBundleData assetBundleReference;
+
+        private GltfContainerAsset(GameObject root, AssetBundleData assetBundleReference, List<Collider> invisibleColliders, List<MeshFilter> visibleColliderMeshes, List<Renderer> renderers)
         {
+            this.assetBundleReference = assetBundleReference;
+
             Root = root;
             InvisibleColliders = invisibleColliders;
             VisibleColliderMeshes = visibleColliderMeshes;
@@ -42,14 +47,19 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
 
         public void Dispose()
         {
+            assetBundleReference.Dereference();
+            assetBundleReference = null;
+
             COLLIDERS_POOL.Release(InvisibleColliders);
             MESH_FILTERS_POOL.Release(VisibleColliderMeshes);
 
             if (VisibleMeshesColliders != null)
                 COLLIDERS_POOL.Release(VisibleMeshesColliders);
+
+            // UnityObjectUtils.SafeDestroy(Root);
         }
 
-        public static GltfContainerAsset Create(GameObject root) =>
-            new (root, COLLIDERS_POOL.Get(), MESH_FILTERS_POOL.Get(), RENDERERS_POOL.Get());
+        public static GltfContainerAsset Create(GameObject root, AssetBundleData assetBundleReference) =>
+            new (root, assetBundleReference, COLLIDERS_POOL.Get(), MESH_FILTERS_POOL.Get(), RENDERERS_POOL.Get());
     }
 }

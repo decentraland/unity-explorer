@@ -36,7 +36,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             var sdkComponent = new PBGltfContainer { IsDirty = true, Src = "2" };
             var c = new GltfContainerComponent();
             c.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention("1", new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY);
-            world.Add(c.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(GltfContainerAsset.Create(new GameObject())));
+            world.Add(c.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(GltfContainerAsset.Create(new GameObject(), null)));
             c.State.Set(LoadingState.Finished);
 
             Entity e = world.Create(sdkComponent, c, new DeleteEntityIntention());

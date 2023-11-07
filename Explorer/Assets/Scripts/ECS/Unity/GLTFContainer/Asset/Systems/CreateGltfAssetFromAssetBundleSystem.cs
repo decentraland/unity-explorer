@@ -85,7 +85,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             container.SetActive(false);
             Transform containerTransform = container.transform;
 
-            var result = GltfContainerAsset.Create(container);
+            var result = GltfContainerAsset.Create(container, assetBundleData);
 
             GameObject instance = Object.Instantiate(assetBundleData.GameObject, containerTransform);
 

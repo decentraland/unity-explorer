@@ -3,7 +3,6 @@ using DCL.CacheCleanUp;
 using DCL.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.Groups;
-using UnityEngine;
 
 namespace DCL.PluginSystem.Global
 {
@@ -21,8 +20,6 @@ namespace DCL.PluginSystem.Global
 
         protected override void Update(float t)
         {
-            Debug.Log("VV: Update");
-
             if (memoryBudgetProvider.GetMemoryUsageStatus() != MemoryUsageStatus.Normal)
                 cacheCleaner.UnloadCache();
         }

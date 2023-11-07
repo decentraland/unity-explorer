@@ -83,6 +83,15 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             asset.Root.transform.SetParent(parentContainer);
         }
 
+        public void Unload()
+        {
+            foreach (List<GltfContainerAsset> gltfList in cache.Values)
+            foreach (GltfContainerAsset gltfAsset in gltfList)
+                gltfAsset.Dispose();
+
+            cache.Clear();
+        }
+
         bool IEqualityComparer<string>.Equals(string x, string y) =>
             string.Equals(x, y, StringComparison.OrdinalIgnoreCase);
 
