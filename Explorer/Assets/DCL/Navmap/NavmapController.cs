@@ -23,11 +23,13 @@ namespace DCL.Navmap
         private CancellationTokenSource animationCts;
         private IMapCameraController cameraController;
         private IMapRenderer mapRenderer;
+        private NavmapZoomController zoomController;
 
         public NavmapController(NavmapView navmapView, IMapRenderer mapRenderer)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
+            zoomController = new NavmapZoomController(navmapView.zoomView);
             Dictionary<ExploreSections, GameObject> mapSections = new ()
             {
                 { ExploreSections.Satellite, navmapView.satellite },
@@ -60,15 +62,16 @@ namespace DCL.Navmap
                     this,
                     ACTIVE_MAP_LAYERS,
                     ParcelMathHelper.WorldToGridPosition(new Vector3(0,0,0)),//DataStore.i.player.playerWorldPosition.Get()),
-                    5f,//navmapZoomViewController.ResetZoomToMidValue(),
+                    zoomController.ResetZoomToMidValue(),
                     this.navmapView.SatellitePixelPerfectMapRendererTextureProvider.GetPixelPerfectTextureResolution(),
-                    new Vector2Int(100,100)//zoomView.zoomVerticalRange
+                    navmapView.zoomView.zoomVerticalRange
                 ));
 
             this.navmapView.SatelliteRenderImage.texture = cameraController.GetRenderTexture();
             this.navmapView.SatellitePixelPerfectMapRendererTextureProvider.Activate(cameraController);
             this.navmapView.StreetViewRenderImage.texture = cameraController.GetRenderTexture();
             this.navmapView.StreetViewPixelPerfectMapRendererTextureProvider.Activate(cameraController);
+            zoomController.Activate(cameraController);
         }
 
     }

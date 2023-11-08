@@ -13,6 +13,9 @@ namespace DCL.Navmap
         public GameObject streetView;
 
         [field: SerializeField]
+        public NavmapZoomView zoomView;
+
+        [field: SerializeField]
         public TabSelectorView[] TabSelectorViews { get; private set; }
 
         [field: SerializeField]

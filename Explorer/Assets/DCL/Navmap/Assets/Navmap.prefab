@@ -671,6 +671,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   satellite: {fileID: 2723043980555199245}
   streetView: {fileID: 6160499980858837278}
+  zoomView: {fileID: 5363161542596086617}
   <TabSelectorViews>k__BackingField:
   - {fileID: 3289875574004561177}
   - {fileID: 459497944378133901}
@@ -787,6 +788,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 333351180236904457, guid: dd1758cb97efe456cbe43d2c482a46f2, type: 3}
   m_PrefabInstance: {fileID: 4572231421811991558}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &5363161542596086617 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8439203922245218143, guid: dd1758cb97efe456cbe43d2c482a46f2, type: 3}
+  m_PrefabInstance: {fileID: 4572231421811991558}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2f1b8b4576b44a5a9a465b3539bd870, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &6233412524606333160
 PrefabInstance:
   m_ObjectHideFlags: 0
