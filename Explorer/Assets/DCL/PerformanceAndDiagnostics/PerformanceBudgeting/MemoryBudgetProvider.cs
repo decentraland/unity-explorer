@@ -25,7 +25,12 @@ namespace DCL.PerformanceBudgeting
 
         public MemoryBudgetProvider(IProfilingProvider profilingProvider)
         {
-            systemMemory = new SystemMemoryMock(profilingProvider, 64000); // new StandaloneSystemMemory();
+            systemMemory =
+#if UNITY_EDITOR
+                new SystemMemoryMock(profilingProvider, 64000);
+#else
+                new StandaloneSystemMemory();
+#endif
 
             this.profilingProvider = profilingProvider;
         }

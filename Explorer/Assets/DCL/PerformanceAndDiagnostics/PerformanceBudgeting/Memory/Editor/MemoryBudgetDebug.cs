@@ -1,6 +1,6 @@
 ﻿using UnityEditor;
 
-namespace DCL.PerformanceBudgeting.Memory.Editor
+namespace DCL.PerformanceAndDiagnostics.PerformanceBudgeting.Memory.Editor
 {
     public class MemoryBudgetDebug
     {
@@ -10,6 +10,7 @@ namespace DCL.PerformanceBudgeting.Memory.Editor
         public static bool flagNormal;
         public static bool flagWarning;
         public static bool flagFull;
+
         private static string currentMode = "NORMAL"; // Start with NORMAL as default
 
         [MenuItem(BASE_PATH + "NORMAL", false, 1)]
@@ -24,12 +25,10 @@ namespace DCL.PerformanceBudgeting.Memory.Editor
         private static void ToggleFull() =>
             ToggleFlag("FULL");
 
-        // This method toggles flags based on the given mode and updates the menu item checkmarks
         private static void ToggleFlag(string mode)
         {
             currentMode = mode;
 
-            // Set the flags according to the selected mode
             switch (currentMode)
             {
                 case "NORMAL":
@@ -50,12 +49,9 @@ namespace DCL.PerformanceBudgeting.Memory.Editor
                     flagWarning = false;
                     Menu.SetChecked(BASE_PATH + "FULL", flagFull);
                     break;
-
-                // You can add more cases for other modes if necessary
             }
         }
 
-        // This method updates the menu item checkmarks when the menu is opened
         [MenuItem(BASE_PATH + "NORMAL", true)]
         private static bool ValidateToggleNormal()
         {
@@ -63,7 +59,6 @@ namespace DCL.PerformanceBudgeting.Memory.Editor
             return true;
         }
 
-        // This method updates the menu item checkmarks when the menu is opened
         [MenuItem(BASE_PATH + "WARNING", true)]
         private static bool ValidateToggleWarning()
         {

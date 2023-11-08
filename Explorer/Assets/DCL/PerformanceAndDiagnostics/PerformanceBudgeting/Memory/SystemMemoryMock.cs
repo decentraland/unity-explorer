@@ -1,5 +1,7 @@
-﻿using DCL.PerformanceBudgeting.Memory.Editor;
-using DCL.Profiling;
+﻿using DCL.Profiling;
+#if UNITY_EDITOR
+using DCL.PerformanceAndDiagnostics.PerformanceBudgeting.Memory.Editor;
+#endif
 
 namespace DCL.PerformanceBudgeting.Memory
 {
@@ -16,11 +18,13 @@ namespace DCL.PerformanceBudgeting.Memory
 
         public long GetTotalSizeInMB()
         {
+#if UNITY_EDITOR
             if (MemoryBudgetDebug.flagFull)
                 return 0;
 
             if (MemoryBudgetDebug.flagWarning)
                 return (long)(profilingProvider.TotalUsedMemoryInBytes / ProfilingProvider.BYTES_IN_MEGABYTE / 0.6);
+#endif
 
             return totalSizeInMB;
         }
