@@ -26,6 +26,7 @@ namespace DCLServices.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             spriteRenderer = Object.Instantiate(prefab, parent);
             spriteRenderer.transform.localPosition = chunkLocalPosition;
             spriteRenderer.sortingOrder = drawOrder;
+            webRequestController = new WebRequestController();
 
 #if UNITY_EDITOR
             spriteRenderer.gameObject.name = $"Chunk {coordsCenter.x},{coordsCenter.y}";

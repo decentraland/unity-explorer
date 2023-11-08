@@ -64,6 +64,8 @@ namespace DCL.Minimap
                 ));
 
                 mapRendererTrackPlayerPosition = new MapRendererTrackPlayerPosition(mapCameraController);
+                viewInstance.mapRendererTargetImage.texture = mapCameraController.GetRenderTexture();
+                viewInstance.pixelPerfectMapRendererTextureProvider.Activate(mapCameraController);
             }
             else
             {

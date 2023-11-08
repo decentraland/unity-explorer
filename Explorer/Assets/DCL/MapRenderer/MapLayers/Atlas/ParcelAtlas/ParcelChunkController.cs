@@ -25,6 +25,7 @@ namespace DCLServices.MapRenderer.MapLayers.Atlas
 
             transform.localScale = Vector3.one * PIXELS_PER_UNIT;
             transform.localPosition = chunkLocalPosition;
+            webRequestController = new WebRequestController();
         }
 
         public async UniTask LoadImage(int chunkSize, int parcelSize, Vector2Int mapPosition, CancellationToken ct)
