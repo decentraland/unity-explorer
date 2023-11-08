@@ -80,10 +80,10 @@ namespace ECS.StreamableLoading.DeferredLoading
             for (i = 0; i < loadingIntentions.Count; i++)
             {
                 if (!memoryBudgetProvider.TrySpendBudget()) break;
-                if (!concurrentLoadingBudgetProvider.TrySpendBudget()) break;
+                if (!concurrentLoadingBudgetProvider.TrySpendBudget(out IAcquiredBudget acquiredBudget)) break;
 
                 ref StreamableLoadingState state = ref loadingIntentions[i].StatePointer.Value;
-                state.SetAllowed(AcquiredBudget.Create(concurrentLoadingBudgetProvider));
+                state.SetAllowed(acquiredBudget);
             }
 
             // Set the rest to forbidden
