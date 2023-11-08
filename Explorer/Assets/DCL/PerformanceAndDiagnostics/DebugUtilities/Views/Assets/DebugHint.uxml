@@ -1,0 +1,7 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <DCL.DebugUtilities.Views.DebugHintElement class="debug-hint--error"
+                                               style="align-items: center; justify-content: center; align-self: auto; flex-direction: row;">
+        <ui:VisualElement name="Sign" style="flex-grow: 0; background-color: rgba(0, 0, 0, 0); flex-shrink: 0;"/>
+        <ui:Label tabindex="-1" text="Label" display-tooltip-when-elided="true" class="debug-text--normal"/>
+    </DCL.DebugUtilities.Views.DebugHintElement>
+</ui:UXML>
