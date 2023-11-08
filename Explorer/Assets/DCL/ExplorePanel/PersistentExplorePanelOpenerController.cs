@@ -13,16 +13,17 @@ namespace DCL.ExplorePanel
             this.mvcManager = mvcManager;
         }
 
-        public override CanvasOrdering.SortingLayer SortLayers => CanvasOrdering.SortingLayer.Persistent;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
-        protected override UniTask WaitForCloseIntent(CancellationToken ct) => UniTask.CompletedTask;
+        protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
+            UniTask.CompletedTask;
 
         protected override void OnViewShow()
         {
             viewInstance.OpenExploreButton.onClick.RemoveAllListeners();
+
             viewInstance.OpenExploreButton.onClick.AddListener(() =>
                 mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(null))).Forget());
         }
-
     }
 }

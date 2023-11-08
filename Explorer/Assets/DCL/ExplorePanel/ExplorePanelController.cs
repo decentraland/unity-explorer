@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Navmap;
 using DCL.UI;
 using MVC;
 using System.Collections.Generic;
@@ -14,23 +13,24 @@ namespace DCL.ExplorePanel
         private CancellationTokenSource animationCts;
         private TabSelectorView previousSelector;
 
-        public ExplorePanelController(ViewFactoryMethod viewFactory) : base(viewFactory)
-        {
-        }
+        public ExplorePanelController(ViewFactoryMethod viewFactory) : base(viewFactory) { }
 
-        public override CanvasOrdering.SortingLayer SortLayers => CanvasOrdering.SortingLayer.Fullscreen;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
         protected override void OnViewInstantiated()
         {
             Dictionary<ExploreSections, GameObject> exploreSections = new ();
+
             //TODO: improve as soon as we have a serializable dictionary to avoid key and values list
             for (var i = 0; i < viewInstance.Sections.Length; i++)
                 exploreSections.Add(viewInstance.Sections[i], viewInstance.SectionsObjects[i]);
 
             sectionSelectorController = new SectionSelectorController(exploreSections, ExploreSections.Navmap);
+
             foreach (var tabSelector in viewInstance.TabSelectorViews)
             {
                 tabSelector.TabSelectorToggle.onValueChanged.RemoveAllListeners();
+
                 tabSelector.TabSelectorToggle.onValueChanged.AddListener(
                     (isOn) =>
                     {
