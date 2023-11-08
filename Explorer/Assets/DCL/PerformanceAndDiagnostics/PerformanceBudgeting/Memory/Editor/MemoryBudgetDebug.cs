@@ -7,9 +7,9 @@ namespace DCL.PerformanceAndDiagnostics.PerformanceBudgeting.Memory.Editor
         private const string BASE_PATH = "🛠️ DCL Tools/MemoryBudget/";
 
         // Static flags or other mode-specific data can be stored here
-        public static bool flagNormal;
-        public static bool flagWarning;
-        public static bool flagFull;
+        public static bool FlagNormal;
+        public static bool FlagWarning;
+        public static bool FlagFull;
 
         private static string currentMode = "NORMAL"; // Start with NORMAL as default
 
@@ -32,22 +32,22 @@ namespace DCL.PerformanceAndDiagnostics.PerformanceBudgeting.Memory.Editor
             switch (currentMode)
             {
                 case "NORMAL":
-                    flagNormal = !flagNormal;
-                    flagWarning = false;
-                    flagFull = false;
-                    Menu.SetChecked(BASE_PATH + "NORMAL", flagNormal);
+                    FlagNormal = !FlagNormal;
+                    FlagWarning = false;
+                    FlagFull = false;
+                    Menu.SetChecked(BASE_PATH + "NORMAL", FlagNormal);
                     break;
                 case "WARNING":
-                    flagWarning = !flagWarning;
-                    flagNormal = false;
-                    flagFull = false;
-                    Menu.SetChecked(BASE_PATH + "WARNING", flagWarning);
+                    FlagWarning = !FlagWarning;
+                    FlagNormal = false;
+                    FlagFull = false;
+                    Menu.SetChecked(BASE_PATH + "WARNING", FlagWarning);
                     break;
                 case "FULL":
-                    flagFull = !flagFull;
-                    flagNormal = false;
-                    flagWarning = false;
-                    Menu.SetChecked(BASE_PATH + "FULL", flagFull);
+                    FlagFull = !FlagFull;
+                    FlagNormal = false;
+                    FlagWarning = false;
+                    Menu.SetChecked(BASE_PATH + "FULL", FlagFull);
                     break;
             }
         }
@@ -55,21 +55,21 @@ namespace DCL.PerformanceAndDiagnostics.PerformanceBudgeting.Memory.Editor
         [MenuItem(BASE_PATH + "NORMAL", true)]
         private static bool ValidateToggleNormal()
         {
-            Menu.SetChecked(BASE_PATH + "NORMAL", flagNormal);
+            Menu.SetChecked(BASE_PATH + "NORMAL", FlagNormal);
             return true;
         }
 
         [MenuItem(BASE_PATH + "WARNING", true)]
         private static bool ValidateToggleWarning()
         {
-            Menu.SetChecked(BASE_PATH + "WARNING", flagWarning);
+            Menu.SetChecked(BASE_PATH + "WARNING", FlagWarning);
             return true;
         }
 
         [MenuItem(BASE_PATH + "FULL", true)]
         private static bool ValidateToggleFull()
         {
-            Menu.SetChecked(BASE_PATH + "FULL", flagFull);
+            Menu.SetChecked(BASE_PATH + "FULL", FlagFull);
             return true;
         }
     }

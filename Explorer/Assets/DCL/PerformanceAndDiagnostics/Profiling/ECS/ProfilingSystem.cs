@@ -43,7 +43,7 @@ namespace ECS.Profiling.Systems
                             .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true))
                             .AddCustomMarker("Version:", version)
                             .AddCustomMarker("Total Used Memory:", usedMemory = new ElementBinding<string>(string.Empty))
-                            .AddCustomMarker("Memory Checkpoints:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Memory Budget Thresholds:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Frame Rate:", fps = new ElementBinding<string>(string.Empty))
                             .AddMarker("Hiccups last 1000 frames:", hiccups = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat);
             }

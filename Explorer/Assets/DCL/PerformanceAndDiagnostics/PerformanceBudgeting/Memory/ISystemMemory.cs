@@ -2,6 +2,6 @@ namespace DCL.PerformanceBudgeting.Memory
 {
     public interface ISystemMemory
     {
-        long GetTotalSizeInMB();
+        long TotalSizeInMB { get; }
     }
 }

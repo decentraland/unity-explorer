@@ -1,7 +1,10 @@
-﻿using DCL.PerformanceBudgeting.Memory;
+﻿#if UNITY_EDITOR
+using DCL.PerformanceAndDiagnostics.PerformanceBudgeting.Memory.Editor;
+#endif
+using DCL.PerformanceBudgeting.Memory;
 using DCL.Profiling;
-using System.Collections.Generic;
 using static DCL.PerformanceBudgeting.MemoryUsageStatus;
+using static Global.BudgetingConfig;
 
 namespace DCL.PerformanceBudgeting
 {
@@ -14,23 +17,12 @@ namespace DCL.PerformanceBudgeting
 
     public class MemoryBudgetProvider : IConcurrentBudgetProvider
     {
-        private readonly Dictionary<MemoryUsageStatus, float> p = new ()
-        {
-            { Warning, 0.5f },
-            { Full, 0.95f },
-        };
-
         private readonly IProfilingProvider profilingProvider;
         private readonly ISystemMemory systemMemory;
 
         public MemoryBudgetProvider(IProfilingProvider profilingProvider)
         {
-            systemMemory =
-#if UNITY_EDITOR
-                new SystemMemoryMock(profilingProvider, 64000);
-#else
-                new StandaloneSystemMemory();
-#endif
+            systemMemory = new StandaloneSystemMemory();
 
             this.profilingProvider = profilingProvider;
         }
@@ -41,23 +33,34 @@ namespace DCL.PerformanceBudgeting
 
             return usedMemory switch
                    {
-                       _ when usedMemory > systemMemory.GetTotalSizeInMB() * p[Full] => Full,
-                       _ when usedMemory > systemMemory.GetTotalSizeInMB() * p[Warning] => Warning,
+                       _ when usedMemory > GetTotalSystemMemory() * MEM_THRESHOLD[Full] => Full,
+                       _ when usedMemory > GetTotalSystemMemory() * MEM_THRESHOLD[Warning] => Warning,
                        _ => Normal,
                    };
         }
 
         public (float warning, float full) GetMemoryRanges()
         {
-            long totalSizeInMB = systemMemory.GetTotalSizeInMB();
-            return (totalSizeInMB * p[Warning], totalSizeInMB * p[Full]);
+            long totalSizeInMB = GetTotalSystemMemory();
+            return (totalSizeInMB * MEM_THRESHOLD[Warning], totalSizeInMB * MEM_THRESHOLD[Full]);
         }
 
         public bool TrySpendBudget() =>
-
-            // true;
             GetMemoryUsageStatus() != Full;
 
         public void ReleaseBudget() { }
+
+        private long GetTotalSystemMemory()
+        {
+#if UNITY_EDITOR
+            if (MemoryBudgetDebug.FlagFull)
+                return 0;
+
+            if (MemoryBudgetDebug.FlagWarning)
+                return (long)(profilingProvider.TotalUsedMemoryInBytes / ProfilingProvider.BYTES_IN_MEGABYTE / (MEM_THRESHOLD[Warning] * 1.1f));
+#endif
+
+            return systemMemory.TotalSizeInMB;
+        }
     }
 }

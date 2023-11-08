@@ -4,7 +4,6 @@ namespace DCL.PerformanceBudgeting.Memory
 {
     public class StandaloneSystemMemory : ISystemMemory
     {
-        public long GetTotalSizeInMB() =>
-            SystemInfo.systemMemorySize;
+        public long TotalSizeInMB => SystemInfo.systemMemorySize;
     }
 }
