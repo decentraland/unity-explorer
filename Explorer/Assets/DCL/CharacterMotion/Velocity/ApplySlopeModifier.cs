@@ -1,12 +1,14 @@
 ﻿using CrdtEcsBridge.Physics;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace DCL.CharacterMotion
 {
     public static class ApplySlopeModifier
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Execute(
             in ICharacterControllerSettings settings,
             in CharacterRigidTransform rigidTransform,

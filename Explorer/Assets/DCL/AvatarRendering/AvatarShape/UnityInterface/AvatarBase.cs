@@ -47,7 +47,8 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         [field: Header("Feet IK")]
         [field: SerializeField] public Rig HeadIKRig { get; private set; }
-        [field: SerializeField] public Transform HeadLookAtTarget { get; private set; }
+        [field: SerializeField] public Transform HeadLookAtTargetHorizontal { get; private set; }
+        [field: SerializeField] public Transform HeadLookAtTargetVertical { get; private set; }
         [field: SerializeField] public Transform HeadPositionConstraint { get; private set; }
 
         public void SetAnimatorFloat(int hash, float value)

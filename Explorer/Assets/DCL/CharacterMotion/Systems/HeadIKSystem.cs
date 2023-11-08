@@ -5,12 +5,13 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.IK;
 using DCL.CharacterMotion.Settings;
 using DCL.DebugUtilities.Builders;
 using DCL.DebugUtilities.UIBindings;
 using Diagnostics.ReportsHandling;
 using ECS.Abstract;
-using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.Systems
@@ -25,6 +26,8 @@ namespace DCL.CharacterMotion.Systems
         private readonly ElementBinding<float> verticalLimit;
         private readonly ElementBinding<float> horizontalLimit;
         private readonly ElementBinding<float> speed;
+        private SingleInstanceEntity settingsEntity;
+        private bool isInitialized;
 
         private HeadIKSystem(World world, IDebugContainerBuilder builder) : base(world)
         {
@@ -37,12 +40,33 @@ namespace DCL.CharacterMotion.Systems
 
         public override void Initialize()
         {
+            isInitialized = false;
             camera = World.CacheCamera();
+            settingsEntity = World.CacheCharacterSettings();
         }
 
         protected override void Update(float t)
         {
+            UpdateDebugValues();
             UpdateIKQuery(World, t, in camera.GetCameraComponent(World));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void UpdateDebugValues()
+        {
+            ICharacterControllerSettings charSettings = settingsEntity.GetCharacterSettings(World);
+
+            if (!isInitialized)
+            {
+                isInitialized = true;
+                verticalLimit.Value = charSettings.HeadIKVerticalAngleLimit;
+                horizontalLimit.Value = charSettings.HeadIKHorizontalAngleLimit;
+                speed.Value = charSettings.HeadIKRotationSpeed;
+            }
+
+            charSettings.HeadIKVerticalAngleLimit = verticalLimit.Value;
+            charSettings.HeadIKHorizontalAngleLimit = horizontalLimit.Value;
+            charSettings.HeadIKRotationSpeed = speed.Value;
         }
 
         [Query]
@@ -54,44 +78,18 @@ namespace DCL.CharacterMotion.Systems
             in ICharacterControllerSettings settings
         )
         {
-            if (!headIK.IsInitialized)
-            {
-                headIK.IsInitialized = true;
-                verticalLimit.Value = settings.HeadIKVerticalAngleLimit;
-                horizontalLimit.Value = settings.HeadIKHorizontalAngleLimit;
-                speed.Value = settings.HeadIKRotationSpeed;
-            }
-
-            settings.HeadIKVerticalAngleLimit = verticalLimit.Value;
-            settings.HeadIKHorizontalAngleLimit = horizontalLimit.Value;
-            settings.HeadIKRotationSpeed = speed.Value;
-
             if (disableWasToggled)
             {
                 headIK.IsDisabled = !headIK.IsDisabled;
                 avatarBase.HeadIKRig.weight = headIK.IsDisabled ? 0 : 1;
                 disableWasToggled = false;
             }
-
             if (headIK.IsDisabled) return;
 
-            Transform reference = avatarBase.HeadPositionConstraint;
+            // TODO: Tie this to a proper look-at system to decide what to look at
+            Vector3 targetDirection = cameraComponent.Camera.transform.forward;
 
-            Vector3 referenceAngle = Quaternion.LookRotation(reference.forward).eulerAngles;
-            Vector3 targetAngle = Quaternion.LookRotation(cameraComponent.Camera.transform.forward).eulerAngles;
-
-            float horizontalAngle = Mathf.DeltaAngle(referenceAngle.y, targetAngle.y);
-            float verticalAngle = Mathf.DeltaAngle(referenceAngle.x, targetAngle.x);
-
-            horizontalAngle = Mathf.Clamp(horizontalAngle, -settings.HeadIKHorizontalAngleLimit, settings.HeadIKHorizontalAngleLimit);
-            verticalAngle = Mathf.Clamp(verticalAngle, -settings.HeadIKVerticalAngleLimit, settings.HeadIKVerticalAngleLimit);
-
-            Quaternion rotation = avatarBase.HeadLookAtTarget.localRotation;
-            Quaternion targetRotation = Quaternion.AngleAxis(horizontalAngle, Vector3.up) * Quaternion.AngleAxis(verticalAngle, Vector3.right);
-
-            // Quaternion Lerp or MoveTowards use the shortest path, this is wrong
-            rotation = Quaternion.RotateTowards(rotation, targetRotation, dt * settings.HeadIKRotationSpeed);
-            avatarBase.HeadLookAtTarget.localRotation = rotation;
+            ApplyHeadLookAt.Execute(targetDirection, avatarBase, dt, settings);
         }
     }
 }

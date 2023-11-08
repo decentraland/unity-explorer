@@ -26,6 +26,8 @@ namespace DCL.CharacterMotion.Systems
         private readonly ElementBinding<float> ikWeightSpeed;
 
         private readonly ElementBinding<Vector3> elbowHintOffset;
+        private bool isInitialized;
+        private SingleInstanceEntity settingsEntity;
 
         private HandsIKSystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
         {
@@ -36,8 +38,29 @@ namespace DCL.CharacterMotion.Systems
                         .AddVectorField("Elbow Hint Offset", elbowHintOffset = new ElementBinding<Vector3>(Vector3.zero));
         }
 
+        public override void Initialize()
+        {
+            isInitialized = false;
+            settingsEntity = World.CacheCharacterSettings();
+        }
+
         protected override void Update(float t)
         {
+            ICharacterControllerSettings settings = settingsEntity.GetCharacterSettings(World);
+
+            if (!isInitialized)
+            {
+                wallDistance.Value = settings.HandsIKWallHitDistance;
+                ikWeightSpeed.Value = settings.HandsIKWeightSpeed;
+
+                elbowHintOffset.Value = settings.HandsIKElbowOffset;
+                isInitialized = true;
+            }
+
+            settings.HandsIKWallHitDistance = wallDistance.Value;
+            settings.HandsIKWeightSpeed = ikWeightSpeed.Value;
+            settings.HandsIKElbowOffset = elbowHintOffset.Value;
+
             UpdateIKQuery(World, t);
         }
 
@@ -53,22 +76,9 @@ namespace DCL.CharacterMotion.Systems
             {
                 disableWasToggled = false;
                 handsIKComponent.IsDisabled = !handsIKComponent.IsDisabled;
-                avatarBase.HandsIKRig.weight = handsIKComponent.IsDisabled ? 0 : 1;
             }
 
-            if (!handsIKComponent.Initialized)
-            {
-                wallDistance.Value = settings.HandsIKWallHitDistance;
-                ikWeightSpeed.Value = settings.HandsIKWeightSpeed;
-
-                elbowHintOffset.Value = settings.HandsIKElbowOffset;
-                handsIKComponent.Initialized = true;
-                avatarBase.HandsIKRig.weight = 1;
-            }
-
-            settings.HandsIKWallHitDistance = wallDistance.Value;
-            settings.HandsIKWeightSpeed = ikWeightSpeed.Value;
-            settings.HandsIKElbowOffset = elbowHintOffset.Value;
+            avatarBase.HandsIKRig.weight = handsIKComponent.IsDisabled ? 0 : 1;
 
             if (handsIKComponent.IsDisabled) return;
 

@@ -29,6 +29,8 @@ namespace DCL.CharacterMotion.Systems
         private readonly ElementBinding<float> ikPositionChangeSpeed;
         private readonly ElementBinding<float> ikDistance;
         private readonly ElementBinding<float> spherecastWidth;
+        private SingleInstanceEntity settingsEntity;
+        private bool isInitialized;
 
         private FeetIKSystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
         {
@@ -42,8 +44,29 @@ namespace DCL.CharacterMotion.Systems
                         .AddFloatField("Spherecast Width", spherecastWidth = new ElementBinding<float>(0));
         }
 
+        public override void Initialize()
+        {
+            settingsEntity = World.CacheCharacterSettings();
+        }
+
         protected override void Update(float t)
         {
+            ICharacterControllerSettings settings = settingsEntity.GetCharacterSettings(World);
+
+            if (!isInitialized)
+            {
+                isInitialized = true;
+                ikWeightChangeSpeed.Value = settings.IKWeightSpeed;
+                ikPositionChangeSpeed.Value = settings.IKPositionSpeed;
+                ikDistance.Value = settings.FeetIKHipsPullMaxDistance;
+                spherecastWidth.Value = settings.FeetIKSphereSize;
+            }
+
+            settings.IKWeightSpeed = ikWeightChangeSpeed.Value;
+            settings.IKPositionSpeed = ikPositionChangeSpeed.Value;
+            settings.FeetIKHipsPullMaxDistance = ikDistance.Value;
+            settings.FeetIKSphereSize = spherecastWidth.Value;
+
             UpdateIKQuery(World, t);
         }
 
@@ -56,11 +79,11 @@ namespace DCL.CharacterMotion.Systems
             in ICharacterControllerSettings settings
         )
         {
-            ManageDebugSettings(ref feetIKComponent, avatarBase, settings);
+            UpdateToggleStatus(ref feetIKComponent, avatarBase);
 
             if (feetIKComponent.IsDisabled) return;
             if (!feetIKComponent.Initialized)
-                Initialize(ref feetIKComponent, avatarBase);
+                InitializeFeetComponent(ref feetIKComponent, avatarBase);
 
             // First: Raycast down from right/left constraints and update IK targets
 
@@ -83,7 +106,7 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ManageDebugSettings(ref FeetIKComponent feetIKComponent, AvatarBase avatarBase, ICharacterControllerSettings settings)
+        private void UpdateToggleStatus(ref FeetIKComponent feetIKComponent, AvatarBase avatarBase)
         {
             if (disableWasToggled)
             {
@@ -91,22 +114,10 @@ namespace DCL.CharacterMotion.Systems
                 feetIKComponent.IsDisabled = !feetIKComponent.IsDisabled;
                 avatarBase.FeetIKRig.weight = feetIKComponent.IsDisabled ? 0 : 1;
             }
-
-            if (!feetIKComponent.Initialized)
-            {
-                ikWeightChangeSpeed.Value = settings.IKWeightSpeed;
-                ikPositionChangeSpeed.Value = settings.IKPositionSpeed;
-                ikDistance.Value = settings.FeetIKHipsPullMaxDistance;
-                spherecastWidth.Value = settings.FeetIKSphereSize;
-            }
-
-            settings.IKWeightSpeed = ikWeightChangeSpeed.Value;
-            settings.IKPositionSpeed = ikPositionChangeSpeed.Value;
-            settings.FeetIKHipsPullMaxDistance = ikDistance.Value;
-            settings.FeetIKSphereSize = spherecastWidth.Value;
         }
 
-        private static void Initialize(ref FeetIKComponent feetIKComponent, AvatarBase avatarBase)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void InitializeFeetComponent(ref FeetIKComponent feetIKComponent, AvatarBase avatarBase)
         {
             feetIKComponent.Initialized = true;
             feetIKComponent.Left.TargetInitialPosition = avatarBase.LeftLegIKTarget.localPosition;

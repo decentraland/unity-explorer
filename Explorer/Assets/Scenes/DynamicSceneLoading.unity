@@ -1513,7 +1513,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 90818601}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 37.221138, y: 24.1, z: 13.866732}
+  m_LocalPosition: {x: -15.200001, y: 24.1, z: -40.3}
   m_LocalScale: {x: 1.1237, y: 1.1623553, z: 1.1237}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -3737,6 +3737,7 @@ MonoBehaviour:
   - https://sdk-team-cdn.decentraland.org/ipfs/streaming-world-main
   - https://sdk-test-scenes.decentraland.zone
   - https://peer.decentraland.org
+  - https://worlds-content-server.decentraland.org/world/olavra.dcl.eth
   dynamicSettings:
     <PopupCloserView>k__BackingField:
       m_AssetGUID: dbfb7e67a438449f9a887f820f733868
@@ -5670,7 +5671,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 440679284}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 10.221138, y: 24.1, z: 13.866732}
+  m_LocalPosition: {x: -42.2, y: 24.1, z: -40.3}
   m_LocalScale: {x: 1.1237, y: 1.1623553, z: 1.1237}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -17189,7 +17190,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1250109993}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 37.221138, y: 24.1, z: 37.866734}
+  m_LocalPosition: {x: -15.200001, y: 24.1, z: -16.299997}
   m_LocalScale: {x: 1.1237, y: 1.1623553, z: 1.1237}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -25934,7 +25935,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1760250052}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 10.221138, y: 24.1, z: 37.866734}
+  m_LocalPosition: {x: -42.2, y: 24.1, z: -16.299997}
   m_LocalScale: {x: 1.1237, y: 1.1623553, z: 1.1237}
   m_ConstrainProportionsScale: 0
   m_Children:
