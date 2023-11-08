@@ -15,12 +15,10 @@ namespace DCL.Tests
 
             // Act
             var emptyDirectories = allDirectories.Where(IsDirectoryEmpty).ToList();
-            if (emptyDirectories.Count <= 0) return;
-
             string errorMessage = "Found empty directories:\n" + string.Join("\n", emptyDirectories);
 
             // Assert
-            Assert.Fail(errorMessage);
+            Assert.That(emptyDirectories.Count, Is.EqualTo(0), errorMessage);
 
             return;
 
