@@ -105,7 +105,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             assetBundleData[BodyShape.MALE]
                 = new StreamableLoadingResult<WearableAsset>(new WearableAsset(avatarGameObject,
                     new List<WearableAsset.RendererInfo>
-                        { rendererInfo }));
+                        { rendererInfo }, null));
 
             mockWearable.WearableAssets.Returns(assetBundleData);
             mockWearable.GetCategory().Returns(category);

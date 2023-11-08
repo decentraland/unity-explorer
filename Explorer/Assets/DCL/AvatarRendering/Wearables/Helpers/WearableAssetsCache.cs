@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.Profiling;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -16,9 +17,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     /// </summary>
     public class WearableAssetsCache : IWearableAssetsCache, IDisposable
     {
-        // string is hash here which is retrieved via IWearable.GetMainFileHash
-        private readonly Dictionary<GameObject, List<GameObject>> cache;
-        private readonly ListObjectPool<GameObject> listPool;
+        private readonly Dictionary<WearableAsset, List<CachedWearable>> cache;
+        private readonly ListObjectPool<CachedWearable> listPool;
 
         private readonly int maxNumberOfAssetsPerKey;
         private readonly Transform parentContainer;
@@ -31,10 +31,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             parentContainerGo.SetActive(false);
             parentContainer = parentContainerGo.transform;
 
-            cache = new Dictionary<GameObject, List<GameObject>>(initialCapacity);
+            cache = new Dictionary<WearableAsset, List<CachedWearable>>(initialCapacity);
 
             // instantiate a couple of lists to prevent runtime allocations
-            listPool = new ListObjectPool<GameObject>(listInstanceDefaultCapacity: maxNumberOfAssetsPerKey, defaultCapacity: initialCapacity);
+            listPool = new ListObjectPool<CachedWearable>(listInstanceDefaultCapacity: maxNumberOfAssetsPerKey, defaultCapacity: initialCapacity);
         }
 
         public void Dispose()
@@ -42,39 +42,63 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             UnityObjectUtils.SafeDestroyGameObject(parentContainer);
         }
 
-        public bool TryGet(GameObject asset, out GameObject instance)
+        public bool TryGet(WearableAsset asset, out CachedWearable instance)
         {
-            if (cache.TryGetValue(asset, out List<GameObject> list) && list.Count > 0)
+            if (cache.TryGetValue(asset, out List<CachedWearable> list) && list.Count > 0)
             {
                 // Remove from the tail of the list
                 instance = list[^1];
                 list.RemoveAt(list.Count - 1);
+                ProfilingCounters.WearablesAmountCacheSize.Value--;
+
+                if (list.Count == 0)
+                    cache.Remove(asset);
+
                 return true;
             }
 
-            instance = default(GameObject);
+            instance = default(CachedWearable);
             return false;
         }
 
         public IWearableAssetsCache.ReleaseResult TryRelease(CachedWearable cachedWearable)
         {
-            GameObject asset = cachedWearable.OriginalAsset.GameObject;
-            GameObject instance = cachedWearable.Instance;
+            WearableAsset asset = cachedWearable.OriginalAsset;
 
-            if (!cache.TryGetValue(asset, out List<GameObject> list))
+            if (!cache.TryGetValue(asset, out List<CachedWearable> list))
                 cache[asset] = list = listPool.Get();
 
             if (list.Count >= maxNumberOfAssetsPerKey)
                 return IWearableAssetsCache.ReleaseResult.CapacityExceeded;
 
-            list.Add(instance);
+            list.Add(cachedWearable);
+            ProfilingCounters.WearablesAmountCacheSize.Value++;
 
             // This logic should not be executed if the application is quitting
             if (UnityObjectUtils.IsQuitting) return IWearableAssetsCache.ReleaseResult.EnvironmentIsDisposing;
 
-            instance.SetActive(false);
-            instance.transform.SetParent(parentContainer);
+            cachedWearable.Instance.SetActive(false);
+            cachedWearable.Instance.transform.SetParent(parentContainer);
             return IWearableAssetsCache.ReleaseResult.ReturnedToPool;
+        }
+
+        public void Unload()
+        {
+            foreach (KeyValuePair<WearableAsset, List<CachedWearable>> pair in cache)
+            {
+                ProfilingCounters.WearablesAmountCacheSize.Value -= pair.Value.Count;
+
+                foreach (CachedWearable cachedWearable in pair.Value)
+                    cachedWearable.Dispose();
+
+                pair.Value.Clear();
+            }
+
+            foreach (WearableAsset wearableAsset in cache.Keys)
+                if (wearableAsset.ReferenceCount == 0)
+                    wearableAsset.Dispose();
+
+            cache.Clear();
         }
     }
 }

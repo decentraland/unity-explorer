@@ -29,7 +29,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             // in case of a texture just return the result
             if (result.Asset.GameObject == null)
-                return new StreamableLoadingResult<WearableAsset>(new WearableAsset(null, WearableAsset.RENDERER_INFO_POOL.Get()));
+                return new StreamableLoadingResult<WearableAsset>(new WearableAsset(null, WearableAsset.RENDERER_INFO_POOL.Get(), null));
 
             // collect all renderers
             List<WearableAsset.RendererInfo> rendererInfos = WearableAsset.RENDERER_INFO_POOL.Get();
@@ -42,7 +42,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 rendererInfos.Add(new WearableAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
             }
 
-            return new StreamableLoadingResult<WearableAsset>(new WearableAsset(result.Asset.GameObject, rendererInfos));
+            return new StreamableLoadingResult<WearableAsset>(new WearableAsset(result.Asset.GameObject, rendererInfos, null));
         }
 
         public static void TryReleaseAssets(this IWearableAssetsCache cache, IList<CachedWearable> instantiatedWearables, IObjectPool<Material> materialPool)
@@ -50,8 +50,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             for (var i = 0; i < instantiatedWearables.Count; i++)
             {
                 CachedWearable cachedWearable = instantiatedWearables[i];
-                IWearableAssetsCache.ReleaseResult releaseResult = cache.TryRelease(cachedWearable);
-                releaseResult.TryReleaseAsset(cachedWearable.Instance, materialPool);
+                cache.TryRelease(cachedWearable);
             }
 
             instantiatedWearables.Clear();
@@ -59,14 +58,16 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public static CachedWearable InstantiateWearable(this IWearableAssetsCache wearableAssetsCache, WearableAsset originalAsset, Transform parent)
         {
-            if (!wearableAssetsCache.TryGet(originalAsset.GameObject, out GameObject instantiatedWearable))
-                instantiatedWearable = Object.Instantiate(originalAsset.GameObject, parent);
-            else
-                instantiatedWearable.transform.SetParent(parent);
+            originalAsset.AddReference();
 
-            instantiatedWearable.transform.ResetLocalTRS();
-            instantiatedWearable.gameObject.SetActive(true);
-            return new CachedWearable(originalAsset, instantiatedWearable);
+            if (wearableAssetsCache.TryGet(originalAsset, out CachedWearable cachedWearable))
+                cachedWearable.Instance.transform.SetParent(parent);
+            else
+                cachedWearable = new CachedWearable(originalAsset, Object.Instantiate(originalAsset.GameObject, parent));
+
+            cachedWearable.Instance.transform.ResetLocalTRS();
+            cachedWearable.Instance.gameObject.SetActive(true);
+            return cachedWearable;
         }
     }
 }

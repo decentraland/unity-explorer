@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace DCL.AvatarRendering.Wearables.Helpers
+﻿namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public interface IWearableAssetsCache
     {
@@ -24,8 +22,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             EnvironmentIsDisposing,
         }
 
-        bool TryGet(GameObject asset, out GameObject instance);
+        bool TryGet(WearableAsset asset, out CachedWearable instance);
 
         ReleaseResult TryRelease(CachedWearable cachedWearable);
+
+        void Unload();
     }
 }

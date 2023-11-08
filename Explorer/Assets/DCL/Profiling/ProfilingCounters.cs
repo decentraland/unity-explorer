@@ -23,6 +23,13 @@ namespace DCL.Profiling
         public static ProfilerCounterValue<int> GLTFCacheSize =
             new (MEMORY, "GLTF Cache Size", ProfilerMarkerDataUnit.Count);
 
+        // Wearables cache
+        public static ProfilerCounterValue<int> WearablesAssetsAmount =
+            new (MEMORY, "Wearables Assets Amount", ProfilerMarkerDataUnit.Count);
+
+        public static ProfilerCounterValue<int> WearablesAmountCacheSize =
+            new (MEMORY, "Wearables Cache Size", ProfilerMarkerDataUnit.Count);
+
         public static void CleanAllCounters()
         {
             ABDataAmount.Value = 0;
@@ -31,6 +38,9 @@ namespace DCL.Profiling
 
             GLTFContainerAssetsAmount.Value = 0;
             GLTFCacheSize.Value = 0;
+
+            WearablesAssetsAmount.Value = 0;
+            WearablesAmountCacheSize.Value = 0;
         }
     }
 }

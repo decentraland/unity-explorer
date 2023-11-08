@@ -33,8 +33,8 @@ namespace DCL.AvatarRendering.Wearables.Tests
             IWearable mockDefaultWearable = CreateMockWearable(defaultWearableUrn, false, true);
             wearableCatalog.wearableDictionary.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
 
-            mockedAB = new StreamableLoadingResult<WearableAsset>(new WearableAsset());
-            mockedDefaultAB = new StreamableLoadingResult<WearableAsset>(new WearableAsset());
+            mockedAB = new StreamableLoadingResult<WearableAsset>(new WearableAsset(null, null, null));
+            mockedDefaultAB = new StreamableLoadingResult<WearableAsset>(new WearableAsset(null, null, null));
 
             mockedABManifest = new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(URLDomain.EMPTY, new SceneAbDto
                 { version = "0" }));

@@ -15,8 +15,7 @@ namespace DCL.CacheCleanUp
         {
             gltfContainerAssetsCache.Unload();
             assetBundleCache.Unload();
-
-            // wearableAssetsCache.Unload();
+            wearableAssetsCache.Unload();
 
             // foreach (var wearable in catalog.wearableDictionary)
             // {
