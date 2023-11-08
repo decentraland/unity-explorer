@@ -1,8 +1,6 @@
 using DCL.UI;
-using MVC;
-using System.Collections.Generic;
+using DCLServices.MapRenderer.ConsumerUtils;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace DCL.Navmap
 {
@@ -16,5 +14,20 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public TabSelectorView[] TabSelectorViews { get; private set; }
+
+        [field: SerializeField]
+        public MapRenderImage SatelliteRenderImage { get; private set; }
+
+        [field: SerializeField]
+        public PixelPerfectMapRendererTextureProvider SatellitePixelPerfectMapRendererTextureProvider { get; private set; }
+
+        [field: SerializeField]
+        public MapRenderImage StreetViewRenderImage { get; private set; }
+
+        [field: SerializeField]
+        public PixelPerfectMapRendererTextureProvider StreetViewPixelPerfectMapRendererTextureProvider { get; private set; }
+
+        [field: SerializeField]
+        public MapCameraDragBehavior.MapCameraDragBehaviorData MapCameraDragBehaviorData { get; private set; }
     }
 }

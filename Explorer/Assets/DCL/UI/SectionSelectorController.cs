@@ -17,7 +17,7 @@ namespace DCL.UI
             previousSection = initialSection;
         }
 
-        public async UniTaskVoid OnTabSelectorToggleValueChangedAsync(bool isOn, TabSelectorView selectorToggle, CancellationToken ct)
+        public async UniTaskVoid OnTabSelectorToggleValueChangedAsync(bool isOn, TabSelectorView selectorToggle, CancellationToken ct, bool animate = true)
         {
             selectorToggle.SelectedImage.gameObject.SetActive(isOn);
             selectorToggle.UnselectedImage.gameObject.SetActive(!isOn);
@@ -27,11 +27,24 @@ namespace DCL.UI
 
             if (!isOn || selectorToggle.section == previousSection) return;
 
-            await AnimatePanelsAsync(
-                sections[previousSection].transform as RectTransform,
-                sections[selectorToggle.section].transform as RectTransform,
-                selectorToggle.section,
-                ct);
+            if (animate)
+            {
+                await AnimatePanelsAsync(
+                    sections[previousSection].transform as RectTransform,
+                    sections[selectorToggle.section].transform as RectTransform,
+                    selectorToggle.section,
+                    ct);
+            }
+            else
+            {
+                SetPanelsPosition(sections[previousSection].transform as RectTransform, sections[selectorToggle.section].transform as RectTransform);
+            }
+        }
+
+        private void SetPanelsPosition(RectTransform panelClosing, RectTransform panelOpening)
+        {
+            panelClosing.anchoredPosition = new Vector2(panelClosing.rect.width, 0);
+            panelOpening.anchoredPosition = Vector2.zero;
         }
 
         private async UniTask AnimatePanelsAsync(RectTransform panelClosing, RectTransform panelOpening, ExploreSections newSection, CancellationToken ct)
