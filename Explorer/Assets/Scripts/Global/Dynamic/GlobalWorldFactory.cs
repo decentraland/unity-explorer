@@ -103,7 +103,7 @@ namespace Global.Dynamic
                 }
             );
 
-            var sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(Config.SCENES_LOADING_BUDGET);
+            IConcurrentBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(Config.SCENES_LOADING_BUDGET);
 
             LoadSceneDefinitionListSystem.InjectToWorld(ref builder, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
             LoadSceneDefinitionSystem.InjectToWorld(ref builder, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);

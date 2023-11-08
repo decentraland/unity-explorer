@@ -13,7 +13,7 @@ namespace DCL.PluginSystem.World.Dependencies
         public readonly IReportsHandlingSettings ReportsHandlingSettings;
         public readonly ISystemGroupAggregate<IPartitionComponent>.IFactory AggregateFactory;
         public readonly ISceneEntityFactory EntityFactory;
-        public readonly ConcurrentLoadingBudgetProvider LoadingBudgetProvider;
+        public readonly IConcurrentBudgetProvider LoadingBudgetProvider;
         public readonly IConcurrentBudgetProvider FrameTimeBudgetProvider;
         public readonly IConcurrentBudgetProvider MemoryBudgetProvider;
 
@@ -21,7 +21,7 @@ namespace DCL.PluginSystem.World.Dependencies
             IReportsHandlingSettings reportsHandlingSettings,
             ISceneEntityFactory entityFactory,
             ISystemGroupAggregate<IPartitionComponent>.IFactory aggregateFactory,
-            ConcurrentLoadingBudgetProvider loadingBudgetProvider,
+            IConcurrentBudgetProvider loadingBudgetProvider,
             IConcurrentBudgetProvider frameTimeBudgetProvider,
             IConcurrentBudgetProvider memoryBudgetProvider)
         {

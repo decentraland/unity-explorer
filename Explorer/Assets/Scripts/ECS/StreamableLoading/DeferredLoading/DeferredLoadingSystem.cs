@@ -15,14 +15,14 @@ namespace ECS.StreamableLoading.DeferredLoading
 {
     public abstract class DeferredLoadingSystem : BaseUnityLoopSystem
     {
-        private readonly ConcurrentLoadingBudgetProvider concurrentLoadingBudgetProvider;
-        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
+        private readonly IConcurrentBudgetProvider concurrentLoadingBudgetProvider;
 
         private readonly List<IntentionData> loadingIntentions;
 
         private readonly QueryDescription[] sameBoatQueries;
+        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
 
-        protected DeferredLoadingSystem(World world, QueryDescription[] sameBoatQueries, ConcurrentLoadingBudgetProvider concurrentLoadingBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider) : base(world)
+        protected DeferredLoadingSystem(World world, QueryDescription[] sameBoatQueries, IConcurrentBudgetProvider concurrentLoadingBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider) : base(world)
         {
             this.sameBoatQueries = sameBoatQueries;
             this.concurrentLoadingBudgetProvider = concurrentLoadingBudgetProvider;
@@ -80,10 +80,10 @@ namespace ECS.StreamableLoading.DeferredLoading
             for (i = 0; i < loadingIntentions.Count; i++)
             {
                 if (!memoryBudgetProvider.TrySpendBudget()) break;
-                if (!concurrentLoadingBudgetProvider.TrySpendBudget(out IAcquiredBudget acquiredBudget)) break;
+                if (!concurrentLoadingBudgetProvider.TrySpendBudget()) break;
 
                 ref StreamableLoadingState state = ref loadingIntentions[i].StatePointer.Value;
-                state.SetAllowed(acquiredBudget);
+                state.SetAllowed(AcquiredBudget.Create(concurrentLoadingBudgetProvider));
             }
 
             // Set the rest to forbidden
