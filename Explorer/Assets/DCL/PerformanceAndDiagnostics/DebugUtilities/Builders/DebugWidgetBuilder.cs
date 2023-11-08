@@ -1,5 +1,4 @@
-﻿using DCL.DebugUtilities.Declarations;
-using DCL.DebugUtilities.UIBindings;
+﻿using DCL.DebugUtilities.UIBindings;
 using DCL.DebugUtilities.Views;
 using JetBrains.Annotations;
 using System;
@@ -8,7 +7,7 @@ using UnityEngine.UIElements;
 using Utility.Pool;
 using Utility.UIToolkit;
 
-namespace DCL.DebugUtilities.Builders
+namespace DCL.DebugUtilities
 {
     public class DebugWidgetBuilder
     {

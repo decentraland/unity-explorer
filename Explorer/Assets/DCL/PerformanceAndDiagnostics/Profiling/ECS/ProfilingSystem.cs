@@ -1,8 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.DebugUtilities.Builders;
-using DCL.DebugUtilities.Declarations;
+using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.PerformanceBudgeting;
 using DCL.Profiling;
@@ -11,7 +10,7 @@ using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace ECS.Profiling.Systems
+namespace DCL.PerformanceAndDiagnostics.Profiling.ECS
 {
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial class ProfilingSystem : BaseUnityLoopSystem

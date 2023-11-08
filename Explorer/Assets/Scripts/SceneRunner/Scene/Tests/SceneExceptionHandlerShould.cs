@@ -1,8 +1,7 @@
 ﻿using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using Diagnostics;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene.ExceptionsHandling;

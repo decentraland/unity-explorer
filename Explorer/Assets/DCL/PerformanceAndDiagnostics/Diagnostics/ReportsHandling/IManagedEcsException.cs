@@ -1,4 +1,4 @@
-﻿namespace Diagnostics.ReportsHandling
+﻿namespace DCL.Diagnostics
 {
     public interface IManagedEcsException
     {

@@ -1,9 +1,9 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.DebugUtilities.Builders;
+using DCL.DebugUtilities;
+using DCL.PerformanceAndDiagnostics.Profiling.ECS;
 using DCL.PerformanceBudgeting;
 using DCL.Profiling;
-using ECS.Profiling.Systems;
 using System;
 using System.Threading;
 

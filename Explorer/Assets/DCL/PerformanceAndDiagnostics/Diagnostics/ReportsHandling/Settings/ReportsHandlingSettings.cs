@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Diagnostics.ReportsHandling
+namespace DCL.Diagnostics
 {
     [CreateAssetMenu(menuName = "Create Reports Handling Settings", fileName = "ReportsHandlingSettings", order = 0)]
     public class ReportsHandlingSettings : ScriptableObject, IReportsHandlingSettings

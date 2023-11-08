@@ -1,6 +1,5 @@
 using Arch.Core;
 using DCL.PerformanceBudgeting;
-using DCL.PerformanceBudgeting.AcquiredBudget;
 using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;

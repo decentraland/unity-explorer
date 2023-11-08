@@ -1,6 +1,6 @@
 ﻿using Arch.Core;
+using DCL.Diagnostics;
 using DCL.PerformanceBudgeting;
-using Diagnostics.ReportsHandling;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;

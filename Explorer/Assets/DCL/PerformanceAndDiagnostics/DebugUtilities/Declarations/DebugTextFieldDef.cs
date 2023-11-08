@@ -1,6 +1,6 @@
 ﻿using DCL.DebugUtilities.UIBindings;
 
-namespace DCL.DebugUtilities.Declarations
+namespace DCL.DebugUtilities
 {
     /// <summary>
     ///     Definition for the text generic field

@@ -1,4 +1,4 @@
-using DCL.PerformanceBudgeting.AcquiredBudget;
+using DCL.PerformanceBudgeting;
 using JetBrains.Annotations;
 using UnityEngine.Assertions;
 

@@ -1,5 +1,5 @@
 ﻿using AssetManagement;
-using DCL.PerformanceBudgeting.AcquiredBudget;
+using DCL.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;

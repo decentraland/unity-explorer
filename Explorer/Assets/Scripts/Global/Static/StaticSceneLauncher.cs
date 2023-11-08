@@ -1,6 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.PluginSystem;
-using Diagnostics.ReportsHandling;
 using SceneRunner.Scene;
 using System;
 using System.Runtime.CompilerServices;

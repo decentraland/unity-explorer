@@ -1,8 +1,8 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using Diagnostics.ReportsHandling;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;

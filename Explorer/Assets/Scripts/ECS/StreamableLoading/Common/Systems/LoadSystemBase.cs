@@ -1,8 +1,8 @@
 ﻿using Arch.Core;
 using AssetManagement;
 using Cysharp.Threading.Tasks;
-using DCL.PerformanceBudgeting.AcquiredBudget;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
+using DCL.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;

@@ -1,6 +1,4 @@
-﻿using DCL.DebugUtilities.Builders;
-using DCL.DebugUtilities.Declarations;
-using DCL.DebugUtilities.Views;
+﻿using DCL.DebugUtilities.Views;
 using System;
 using System.Collections.Generic;
 using Utility.UIToolkit;

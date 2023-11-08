@@ -1,6 +1,6 @@
 ﻿using DCL.DebugUtilities.UIBindings;
 
-namespace DCL.DebugUtilities.Declarations
+namespace DCL.DebugUtilities
 {
     /// <summary>
     ///     Definition of the Label on which a long value in certain units is reflected

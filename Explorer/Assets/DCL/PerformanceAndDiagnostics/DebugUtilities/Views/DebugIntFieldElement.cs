@@ -1,5 +1,4 @@
-﻿using DCL.DebugUtilities.Declarations;
-using UnityEngine.UIElements;
+﻿using UnityEngine.UIElements;
 
 namespace DCL.DebugUtilities.Views
 {

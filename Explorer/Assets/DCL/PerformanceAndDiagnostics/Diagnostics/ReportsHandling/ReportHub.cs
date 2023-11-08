@@ -3,7 +3,7 @@ using System.Diagnostics;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace Diagnostics.ReportsHandling
+namespace DCL.Diagnostics
 {
     /// <summary>
     ///     Provides static accessors to extended logging possibilities

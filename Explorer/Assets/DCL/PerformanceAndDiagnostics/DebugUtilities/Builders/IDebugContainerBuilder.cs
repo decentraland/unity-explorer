@@ -1,4 +1,4 @@
-﻿namespace DCL.DebugUtilities.Builders
+﻿namespace DCL.DebugUtilities
 {
     /// <summary>
     ///     Builder used by Plugins to schedule the creation of individual debug widgets

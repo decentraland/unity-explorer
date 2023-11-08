@@ -1,7 +1,6 @@
-﻿using DCL.PerformanceBudgeting;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace Global
+namespace DCL.PerformanceBudgeting
 {
     public static class BudgetingConfig
     {

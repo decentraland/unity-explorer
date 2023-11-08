@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace Diagnostics.ReportsHandling
+namespace DCL.Diagnostics
 {
     /// <summary>
     ///     Enriches and redirects logs to the default Unity logger

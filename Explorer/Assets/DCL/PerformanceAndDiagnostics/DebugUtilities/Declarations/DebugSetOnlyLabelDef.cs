@@ -1,6 +1,6 @@
 using DCL.DebugUtilities.UIBindings;
 
-namespace DCL.DebugUtilities.Declarations
+namespace DCL.DebugUtilities
 {
     /// <summary>
     ///     Definition of the dynamic label with a custom value set from code

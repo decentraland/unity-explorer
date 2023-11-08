@@ -1,10 +1,9 @@
 ﻿#if UNITY_EDITOR
 using DCL.PerformanceAndDiagnostics.PerformanceBudgeting.Memory.Editor;
 #endif
-using DCL.PerformanceBudgeting.Memory;
 using DCL.Profiling;
 using static DCL.PerformanceBudgeting.MemoryUsageStatus;
-using static Global.BudgetingConfig;
+using static DCL.PerformanceBudgeting.BudgetingConfig;
 
 namespace DCL.PerformanceBudgeting
 {

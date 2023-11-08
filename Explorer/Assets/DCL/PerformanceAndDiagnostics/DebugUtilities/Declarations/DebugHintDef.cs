@@ -1,7 +1,7 @@
 ﻿using DCL.DebugUtilities.UIBindings;
 using JetBrains.Annotations;
 
-namespace DCL.DebugUtilities.Declarations
+namespace DCL.DebugUtilities
 {
     /// <summary>
     ///     Definition for the hint label

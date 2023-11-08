@@ -2,7 +2,7 @@
 using System.Globalization;
 using UnityEngine;
 
-namespace DCL.DebugUtilities.Formatter
+namespace DCL.DebugUtilities
 {
     public static class BytesFormatter
     {

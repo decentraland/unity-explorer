@@ -1,4 +1,4 @@
-namespace DCL.PerformanceBudgeting.AcquiredBudget
+namespace DCL.PerformanceBudgeting
 {
     public class NoAcquiredBudget : IAcquiredBudget
     {

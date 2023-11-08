@@ -1,6 +1,6 @@
 using System;
 
-namespace Diagnostics.ReportsHandling
+namespace DCL.Diagnostics
 {
     [Flags]
     public enum ReportHint : byte

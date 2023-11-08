@@ -1,4 +1,5 @@
-﻿using NSubstitute;
+﻿using DCL.Diagnostics;
+using NSubstitute;
 using NUnit.Framework;
 using System;
 using UnityEngine;

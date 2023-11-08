@@ -1,6 +1,6 @@
 ﻿using DCL.AssetsProvision;
 using DCL.Character;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using ECS.Prioritization;
 using System;
 using UnityEngine;

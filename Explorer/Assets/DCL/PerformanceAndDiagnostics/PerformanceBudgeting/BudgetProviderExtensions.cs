@@ -1,6 +1,4 @@
-﻿using DCL.PerformanceBudgeting.AcquiredBudget;
-
-namespace DCL.PerformanceBudgeting
+﻿namespace DCL.PerformanceBudgeting
 {
     public static class BudgetProviderExtensions
     {
@@ -8,7 +6,7 @@ namespace DCL.PerformanceBudgeting
         {
             if (budgetProvider.TrySpendBudget())
             {
-                acquiredBudget = AcquiredBudget.AcquiredBudget.Create(budgetProvider);
+                acquiredBudget = AcquiredBudget.Create(budgetProvider);
                 return true;
             }
 

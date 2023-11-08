@@ -1,6 +1,4 @@
-﻿using DCL.DebugUtilities.Declarations;
-using DCL.DebugUtilities.Formatter;
-using UnityEngine.UIElements;
+﻿using UnityEngine.UIElements;
 
 namespace DCL.DebugUtilities.Views
 {

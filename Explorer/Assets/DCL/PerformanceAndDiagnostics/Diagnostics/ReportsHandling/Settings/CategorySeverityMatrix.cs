@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Diagnostics.ReportsHandling
+namespace DCL.Diagnostics
 {
     [Serializable]
     internal class CategorySeverityMatrix : ICategorySeverityMatrix

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.Diagnostics;
+using System;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;

@@ -4,7 +4,7 @@ using UnityEngine;
 using Utility;
 using Object = UnityEngine.Object;
 
-namespace Diagnostics.ReportsHandling
+namespace DCL.Diagnostics
 {
     /// <summary>
     ///     Provides an extended way for logging, overrides default Unity DebugLogHandler.

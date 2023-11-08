@@ -1,7 +1,7 @@
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
+using DCL.Diagnostics;
 using DCL.PerformanceBudgeting;
-using Diagnostics.ReportsHandling;
 using ECS.ComponentsPooling;
 using ECS.Prioritization.Components;
 

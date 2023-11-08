@@ -1,7 +1,7 @@
 using Arch.System;
 using System;
 
-namespace Diagnostics.ReportsHandling
+namespace DCL.Diagnostics
 {
     /// <summary>
     ///     Exception happened in the ECS system

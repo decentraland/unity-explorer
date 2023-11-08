@@ -1,4 +1,4 @@
-namespace DCL.DebugUtilities.Declarations
+namespace DCL.DebugUtilities
 {
     public interface IDebugElementDef { }
 }

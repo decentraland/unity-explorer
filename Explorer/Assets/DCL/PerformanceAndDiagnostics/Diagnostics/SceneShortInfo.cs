@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Diagnostics
+namespace DCL.Diagnostics
 {
     /// <summary>
     ///     Brief information about a scene that can be used to display it as a reference

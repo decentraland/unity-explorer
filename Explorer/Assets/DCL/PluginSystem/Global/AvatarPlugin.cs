@@ -9,7 +9,7 @@ using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
-using DCL.DebugUtilities.Builders;
+using DCL.DebugUtilities;
 using DCL.ECSComponents;
 using DCL.PerformanceBudgeting;
 using ECS;

@@ -1,8 +1,7 @@
-﻿using Diagnostics.ReportsHandling;
-using System;
+﻿using System;
 using UnityEngine;
 
-namespace Diagnostics
+namespace DCL.Diagnostics
 {
     /// <summary>
     ///     Holds diagnostics dependencies that can be shared between different systems

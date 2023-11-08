@@ -1,6 +1,6 @@
 ﻿using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;

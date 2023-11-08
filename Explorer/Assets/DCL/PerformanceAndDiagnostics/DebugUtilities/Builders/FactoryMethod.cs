@@ -1,7 +1,6 @@
-﻿using DCL.DebugUtilities.Declarations;
-using UnityEngine.UIElements;
+﻿using UnityEngine.UIElements;
 
-namespace DCL.DebugUtilities.Builders
+namespace DCL.DebugUtilities
 {
     public interface IDebugElementFactory
     {

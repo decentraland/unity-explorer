@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Diagnostics.ReportsHandling
+namespace DCL.Diagnostics
 {
     public interface IReportsHandlingSettings
     {

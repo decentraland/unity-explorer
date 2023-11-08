@@ -1,6 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using ECS.StreamableLoading.Common.Systems;
 
 namespace ECS.StreamableLoading.AssetBundles

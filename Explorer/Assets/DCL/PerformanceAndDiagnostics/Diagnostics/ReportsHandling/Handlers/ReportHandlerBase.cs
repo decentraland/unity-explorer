@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace Diagnostics.ReportsHandling
+namespace DCL.Diagnostics
 {
     public abstract class ReportHandlerBase : IReportHandler
     {

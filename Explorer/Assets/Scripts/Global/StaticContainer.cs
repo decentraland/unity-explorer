@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
+using DCL.Diagnostics;
 using DCL.Interaction.Utility;
 using DCL.PerformanceBudgeting;
 using DCL.PluginSystem;
@@ -9,8 +10,6 @@ using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiling;
-using Diagnostics;
-using Diagnostics.ReportsHandling;
 using ECS.Prioritization;
 using System.Collections.Generic;
 using System.Threading;

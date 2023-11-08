@@ -1,6 +1,6 @@
 ﻿using UnityEngine.UIElements;
 
-namespace DCL.DebugUtilities.Declarations
+namespace DCL.DebugUtilities
 {
     /// <summary>
     ///     Definition for the toggle

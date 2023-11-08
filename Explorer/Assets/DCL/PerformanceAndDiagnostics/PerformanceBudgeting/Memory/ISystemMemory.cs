@@ -1,4 +1,4 @@
-namespace DCL.PerformanceBudgeting.Memory
+namespace DCL.PerformanceBudgeting
 {
     public interface ISystemMemory
     {

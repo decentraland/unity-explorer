@@ -1,8 +1,7 @@
-﻿using DCL.DebugUtilities.Declarations;
-using DCL.DebugUtilities.UIBindings;
+﻿using DCL.DebugUtilities.UIBindings;
 using System;
 
-namespace DCL.DebugUtilities.Builders
+namespace DCL.DebugUtilities
 {
     /// <summary>
     ///     Contains shortcuts for common scenarios of debug elements

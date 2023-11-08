@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DCL.PerformanceBudgeting.Memory
+namespace DCL.PerformanceBudgeting
 {
     public class StandaloneSystemMemory : ISystemMemory
     {

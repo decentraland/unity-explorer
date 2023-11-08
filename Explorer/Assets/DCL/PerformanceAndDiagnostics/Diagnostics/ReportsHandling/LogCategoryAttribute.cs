@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Diagnostics.ReportsHandling
+namespace DCL.Diagnostics
 {
     [AttributeUsage(AttributeTargets.Class)]
     public class LogCategoryAttribute : Attribute

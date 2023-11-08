@@ -1,7 +1,7 @@
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
-using Diagnostics;
+using DCL.Diagnostics;
 using JetBrains.Annotations;
 using NSubstitute;
 using NUnit.Framework;

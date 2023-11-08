@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
 
-namespace DCL.DebugUtilities.Builders
+namespace DCL.DebugUtilities
 {
     public class DebugContainerBuilder : IDebugContainerBuilder, IComparer<DebugWidgetBuilder>
     {

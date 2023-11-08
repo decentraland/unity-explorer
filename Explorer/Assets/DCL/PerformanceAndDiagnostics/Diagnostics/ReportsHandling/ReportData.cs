@@ -1,4 +1,4 @@
-namespace Diagnostics.ReportsHandling
+namespace DCL.Diagnostics
 {
     /// <summary>
     ///     Contains additional data that is attached to the log report.
