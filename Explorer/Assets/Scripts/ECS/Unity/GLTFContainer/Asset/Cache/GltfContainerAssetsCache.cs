@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
@@ -56,6 +57,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
                 // Remove from the tail of the list
                 asset = list[^1];
                 list.RemoveAt(list.Count - 1);
+
+                ProfilingCounters.GLTFCacheSize.Value--;
                 return true;
             }
 
@@ -75,6 +78,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
                 cache[key] = list = new List<GltfContainerAsset>(maxSize / 10);
 
             list.Add(asset);
+            ProfilingCounters.GLTFCacheSize.Value++;
 
             // This logic should not be executed if the application is quitting
             if (UnityObjectUtils.IsQuitting) return;
@@ -85,11 +89,18 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
         public void Unload()
         {
+            var unloaded = 0;
+
             foreach (List<GltfContainerAsset> gltfList in cache.Values)
             foreach (GltfContainerAsset gltfAsset in gltfList)
+            {
                 gltfAsset.Dispose();
+                unloaded++;
+            }
 
             cache.Clear();
+
+            ProfilingCounters.GLTFCacheSize.Value -= unloaded;
         }
 
         bool IEqualityComparer<string>.Equals(string x, string y) =>

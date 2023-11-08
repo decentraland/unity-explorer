@@ -1,4 +1,5 @@
-﻿using ECS.StreamableLoading.AssetBundles;
+﻿using DCL.Profiling;
+using ECS.StreamableLoading.AssetBundles;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -43,6 +44,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
             InvisibleColliders = invisibleColliders;
             VisibleColliderMeshes = visibleColliderMeshes;
             Renderers = renderers;
+
+            ProfilingCounters.GLTFContainerAssetsAmount.Value++;
         }
 
         public void Dispose()
@@ -56,7 +59,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
             if (VisibleMeshesColliders != null)
                 COLLIDERS_POOL.Release(VisibleMeshesColliders);
 
-            // UnityObjectUtils.SafeDestroy(Root);
+            ProfilingCounters.GLTFContainerAssetsAmount.Value--;
         }
 
         public static GltfContainerAsset Create(GameObject root, AssetBundleData assetBundleReference) =>

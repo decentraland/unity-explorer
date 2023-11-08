@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿using DCL.Profiling;
+using JetBrains.Annotations;
 using NUnit.Framework;
 using System;
 using UnityEngine;
@@ -31,12 +32,19 @@ namespace ECS.StreamableLoading.AssetBundles
 
             GameObject = gameObject;
             Dependencies = dependencies;
+
+            ProfilingCounters.ABDataAmount.Value++;
         }
 
         public void Dispose()
         {
             if (AssetBundle != null)
                 AssetBundle.Unload(unloadAllLoadedObjects: true);
+
+            if (referencesCount > 0)
+                ProfilingCounters.ABReferencedAmount.Value--;
+
+            ProfilingCounters.ABDataAmount.Value--;
         }
 
         public bool CanBeDisposed() =>
@@ -45,12 +53,18 @@ namespace ECS.StreamableLoading.AssetBundles
         public void AddReference()
         {
             referencesCount++;
+
+            if (referencesCount == 1)
+                ProfilingCounters.ABReferencedAmount.Value++;
         }
 
         public void Dereference()
         {
             referencesCount--;
             Assert.IsFalse(referencesCount < 0, "VV:: ReferencesCount < 0");
+
+            if (referencesCount == 0)
+                ProfilingCounters.ABReferencedAmount.Value--;
         }
     }
 }

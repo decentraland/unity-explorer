@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Profiling;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using System;
@@ -48,29 +49,32 @@ namespace ECS.StreamableLoading.AssetBundles
         public void Add(in GetAssetBundleIntention key, AssetBundleData asset)
         {
             cache.Add(key, asset);
+
+            ProfilingCounters.ABCacheSize.Value = cache.Count;
         }
 
         public void Dereference(in GetAssetBundleIntention key, AssetBundleData asset) { }
 
         public void Unload()
         {
-            List<GetAssetBundleIntention> unloadedKeys = ListPool<GetAssetBundleIntention>.Get();
-
-            foreach ((GetAssetBundleIntention key, AssetBundleData abData) in cache)
+            using (ListPool<GetAssetBundleIntention>.Get(out List<GetAssetBundleIntention> unloadedKeys))
             {
-                if (!abData.CanBeDisposed()) continue;
+                foreach ((GetAssetBundleIntention key, AssetBundleData abData) in cache)
+                {
+                    if (!abData.CanBeDisposed()) continue;
 
-                foreach (AssetBundleData child in abData.Dependencies)
-                    child?.Dereference();
+                    foreach (AssetBundleData child in abData.Dependencies)
+                        child?.Dereference();
 
-                abData.Dispose();
-                unloadedKeys.Add(key);
+                    abData.Dispose();
+                    unloadedKeys.Add(key);
+                }
+
+                foreach (GetAssetBundleIntention key in unloadedKeys)
+                    cache.Remove(key);
             }
 
-            foreach (GetAssetBundleIntention key in unloadedKeys)
-                cache.Remove(key);
-
-            ListPool<GetAssetBundleIntention>.Release(unloadedKeys);
+            ProfilingCounters.ABCacheSize.Value = cache.Count;
         }
     }
 }
