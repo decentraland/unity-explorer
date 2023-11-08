@@ -28,8 +28,9 @@ internal class ProceduralSkyBoxSettings_Draw
 public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeature
 {
     // Shaders
-    private const string k_ShaderName_Generate = "CustomRenderTexture/SkyBox_Procedural_Generate";
-    private const string k_ShaderName_Draw = "Skybox/DCL_SkyBox_Procedural_Draw";
+    private const string k_ShaderName_SkyBox_Generate = "DCL/SkyBox_Procedural_Generate";
+    private const string k_ShaderName_StarBox_Generate = "DCL/StarBox_Procedural_Generate";
+    private const string k_ShaderName_Draw = "DCL/DCL_SkyBox_Procedural_Draw";
 
     // Debug
     private readonly ReportData m_ReportData = new ("DCL_RenderFeature_ProceduralSkyBox", ReportHint.SessionStatic);
@@ -37,11 +38,13 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
     // Pass Settings
     [SerializeField] private ProceduralSkyBoxSettings_Generate m_SettingsGenerate;
     [SerializeField] private ProceduralSkyBoxSettings_Draw m_SettingsDraw;
-    [SerializeField] [HideInInspector] private Shader m_ShaderGenerate;
+    [SerializeField] [HideInInspector] private Shader m_ShaderSkyBoxGenerate;
+    [SerializeField] [HideInInspector] private Shader m_ShaderStarBoxGenerate;
     [SerializeField] [HideInInspector] private Shader m_ShaderDraw;
 
     // Materials
-    private Material m_Material_Generate;
+    private Material m_Material_SkyBox_Generate;
+    private Material m_Material_StarBox_Generate;
     private Material m_Material_Draw;
 
     // Passes
@@ -50,6 +53,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
 
     // RenderTarget Handles
     private RTHandle m_SkyBoxCubeMap_RTHandle;
+    private RTHandle m_StarBoxCubeMap_RTHandle;
 
     public DCL_RenderFeature_ProceduralSkyBox()
     {
@@ -73,7 +77,8 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             m_DrawPass.renderPassEvent = RenderPassEvent.AfterRenderingOpaques; // Configures where the render pass should be injected.
         }
 
-        GetMaterial_Generate();
+        GetMaterial_SkyBox_Generate();
+        GetMaterial_StarBox_Generate();
         GetMaterial_Draw();
     }
 
@@ -81,7 +86,13 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
     // This method is called when setting up the renderer once per-camera.
     public override void AddRenderPasses(ScriptableRenderer _renderer, ref RenderingData _renderingData)
     {
-        if (!GetMaterial_Generate())
+        if (!GetMaterial_SkyBox_Generate())
+        {
+            ReportHub.LogError(m_ReportData, $"{GetType().Name}.AddRenderPasses(): Missing material. {name} render pass will not be added. Check for missing reference in the renderer resources.");
+            return;
+        }
+
+        if (!GetMaterial_StarBox_Generate())
         {
             ReportHub.LogError(m_ReportData, $"{GetType().Name}.AddRenderPasses(): Missing material. {name} render pass will not be added. Check for missing reference in the renderer resources.");
             return;
@@ -94,7 +105,6 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         }
 
         if (m_GeneratePass != null) { _renderer.EnqueuePass(m_GeneratePass); }
-
         if (m_DrawPass != null) { _renderer.EnqueuePass(m_DrawPass); }
     }
 
@@ -112,7 +122,6 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         desc.height = 1024;
         desc.memoryless = RenderTextureMemoryless.None;
         desc.mipCount = 0;
-        ;
         desc.msaaSamples = 1;
         desc.shadowSamplingMode = ShadowSamplingMode.None;
         desc.sRGB = false;
@@ -124,40 +133,63 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         desc.width = 1024;
 
         RenderingUtils.ReAllocateIfNeeded(ref m_SkyBoxCubeMap_RTHandle, desc, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_SkyBoxCubeMapTex");
+        RenderingUtils.ReAllocateIfNeeded(ref m_StarBoxCubeMap_RTHandle, desc, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_StarBoxCubeMapTex");
 
-        m_GeneratePass.Setup(m_SettingsGenerate, m_Material_Generate, m_SkyBoxCubeMap_RTHandle);
-        m_DrawPass.Setup(m_SettingsDraw, m_Material_Draw, renderer.cameraColorTargetHandle, renderer.cameraDepthTargetHandle, m_SkyBoxCubeMap_RTHandle);
+        m_GeneratePass.Setup(m_SettingsGenerate, m_Material_SkyBox_Generate, m_Material_StarBox_Generate, m_SkyBoxCubeMap_RTHandle, m_StarBoxCubeMap_RTHandle);
+        m_DrawPass.Setup(m_SettingsDraw, m_Material_Draw, renderer.cameraColorTargetHandle, renderer.cameraDepthTargetHandle, m_SkyBoxCubeMap_RTHandle, m_StarBoxCubeMap_RTHandle);
     }
 
     protected override void Dispose(bool disposing)
     {
+        m_StarBoxCubeMap_RTHandle?.Release();
         m_SkyBoxCubeMap_RTHandle?.Release();
         m_GeneratePass?.dispose();
         m_DrawPass?.dispose();
-        CoreUtils.Destroy(m_Material_Generate);
+        CoreUtils.Destroy(m_Material_SkyBox_Generate);
+        CoreUtils.Destroy(m_Material_StarBox_Generate);
         CoreUtils.Destroy(m_Material_Draw);
     }
 
     public override void OnCameraPreCull(ScriptableRenderer renderer, in CameraData cameraData) { }
 
-    private bool GetMaterial_Generate()
+    private bool GetMaterial_SkyBox_Generate()
     {
-        if (m_Material_Generate != null) { return true; }
+        if (m_Material_SkyBox_Generate != null) { return true; }
 
-        if (m_ShaderGenerate == null)
+        if (m_ShaderSkyBoxGenerate == null)
         {
-            m_ShaderGenerate = Shader.Find(k_ShaderName_Generate);
+            m_ShaderSkyBoxGenerate = Shader.Find(k_ShaderName_SkyBox_Generate);
 
-            if (m_ShaderGenerate == null)
+            if (m_ShaderSkyBoxGenerate == null)
             {
-                ReportHub.LogError(m_ReportData, "m_Shader_Generate not found.");
+                ReportHub.LogError(m_ReportData, "m_ShaderSkyBoxGenerate not found.");
                 return false;
             }
         }
 
-        m_Material_Generate = CoreUtils.CreateEngineMaterial(m_ShaderGenerate);
+        m_Material_SkyBox_Generate = CoreUtils.CreateEngineMaterial(m_ShaderSkyBoxGenerate);
 
-        return m_Material_Generate != null;
+        return m_Material_SkyBox_Generate != null;
+    }
+
+    private bool GetMaterial_StarBox_Generate()
+    {
+        if (m_Material_StarBox_Generate != null) { return true; }
+
+        if (m_ShaderStarBoxGenerate == null)
+        {
+            m_ShaderStarBoxGenerate = Shader.Find(k_ShaderName_StarBox_Generate);
+
+            if (m_ShaderStarBoxGenerate == null)
+            {
+                ReportHub.LogError(m_ReportData, "m_ShaderStarBoxGenerate not found.");
+                return false;
+            }
+        }
+
+        m_Material_StarBox_Generate = CoreUtils.CreateEngineMaterial(m_ShaderStarBoxGenerate);
+
+        return m_Material_StarBox_Generate != null;
     }
 
     private bool GetMaterial_Draw()

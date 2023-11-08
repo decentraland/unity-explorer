@@ -5,6 +5,7 @@
 #include "Lighting.cginc"
 
 samplerCUBE _SkyBox_Cubemap_Texture;
+samplerCUBE _StarBox_Cubemap_Texture;
 half4 _Tex_HDR;
 half4 _Tint;
 half _Exposure; // HDR exposure
@@ -51,6 +52,16 @@ fixed4 frag (v2f i) : SV_Target
     c *= _Exposure;
     return tex;
     return half4(c, 1);
+}
+
+fixed4 frag_stars (v2f i) : SV_Target
+{
+    half4 tex = texCUBE (_StarBox_Cubemap_Texture, i.texcoord);
+    half3 c = DecodeHDR (tex, _Tex_HDR);
+    c = c * _Tint.rgb * unity_ColorSpaceDouble.rgb;
+    c *= _Exposure;
+    //return tex;
+    return half4(tex.rgb, 0.5);
 }
 
 #endif // DCL_SKYBOX_PROCEDURAL_DRAW

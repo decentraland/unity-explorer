@@ -1,7 +1,8 @@
-Shader "Skybox/DCL_SkyBox_Procedural_Draw"
+Shader "DCL/DCL_SkyBox_Procedural_Draw"
 {
     HLSLINCLUDE
         #pragma editor_sync_compilation
+        #pragma enable_d3d11_debug_symbols
         #include "Assets/DCL/Rendering/SkyBox/DCL_SkyBox_Procedural_Draw.hlsl"
     ENDHLSL
 
@@ -37,10 +38,10 @@ Shader "Skybox/DCL_SkyBox_Procedural_Draw"
             ENDHLSL
         }
 
-        // 1 - SkyBox
+        // 1 - StarBox
         Pass
         {
-            Name "SkyBox_Procedural_Draw_SkyBox"
+            Name "SkyBox_Procedural_Draw_StarBox"
 
             ZTest LEqual
             ZWrite Off
@@ -48,10 +49,29 @@ Shader "Skybox/DCL_SkyBox_Procedural_Draw"
 
             HLSLPROGRAM
                 #pragma vertex vert
+                #pragma fragment frag_stars
+                #pragma target 3.0                
+            ENDHLSL
+        }
+
+        // 2 - SkyBox
+        Pass
+        {
+            Name "SkyBox_Procedural_Draw_SkyBox"
+
+            ZTest LEqual
+            ZWrite Off
+            Cull Off
+            Blend One SrcAlpha
+
+            HLSLPROGRAM
+                #pragma vertex vert
                 #pragma fragment frag
                 #pragma target 3.0                
             ENDHLSL
         }
+
+        
     }
 
     Fallback Off

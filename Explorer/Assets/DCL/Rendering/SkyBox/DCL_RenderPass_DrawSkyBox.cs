@@ -10,7 +10,8 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         private enum ShaderPasses
         {
             Scenery = 0,
-            Sky = 1,
+            Stars = 1,
+            Sky = 2
         }
 
         //public static RTHandle k_CameraTarget
@@ -18,12 +19,15 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
 
         private const string SKYBOX_CUBEMAP_TEXTURE_NAME = "_SkyBox_Cubemap_Texture";
         private static readonly int s_SkyBoxCubemapTextureID = Shader.PropertyToID(SKYBOX_CUBEMAP_TEXTURE_NAME);
+        private const string STARBOX_CUBEMAP_TEXTURE_NAME = "_StarBox_Cubemap_Texture";
+        private static readonly int s_StarBoxCubemapTextureID = Shader.PropertyToID(STARBOX_CUBEMAP_TEXTURE_NAME);
 
         // Debug
         private readonly ReportData m_ReportData = new ("DCL_RenderPass_GenerateSkyBox", ReportHint.SessionStatic);
         private Material m_Material_Draw;
         private ProceduralSkyBoxSettings_Draw m_Settings_Draw;
         private RTHandle m_SkyBoxCubeMap_RTHandle;
+        private RTHandle m_StarBoxCubeMap_RTHandle;
         private RTHandle m_cameraColorTarget_RTHandle;
         private RTHandle m_cameraDepthTarget_RTHandle;
         private Mesh m_cubeMesh;
@@ -33,13 +37,14 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             MakeCube();
         }
 
-        internal void Setup(ProceduralSkyBoxSettings_Draw _featureSettings, Material _material, RTHandle _cameraColorTarget, RTHandle _cameraDepthTarget, RTHandle _SkyBox_Cubemap_Texture)
+        internal void Setup(ProceduralSkyBoxSettings_Draw _featureSettings, Material _material, RTHandle _cameraColorTarget, RTHandle _cameraDepthTarget, RTHandle _SkyBox_Cubemap_Texture, RTHandle _StarBox_Cubemap_Texture)
         {
             m_Material_Draw = _material;
             m_Settings_Draw = _featureSettings;
             m_cameraColorTarget_RTHandle = _cameraColorTarget;
             m_cameraDepthTarget_RTHandle = _cameraDepthTarget;
             m_SkyBoxCubeMap_RTHandle = _SkyBox_Cubemap_Texture;
+            m_StarBoxCubeMap_RTHandle = _StarBox_Cubemap_Texture;
         }
 
         // This method is called before executing the render pass.
@@ -72,8 +77,10 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             {
                 CoreUtils.SetRenderTarget(cmd, m_cameraColorTarget_RTHandle, m_cameraDepthTarget_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.Unknown, depthSlice: -1);
                 cmd.SetGlobalTexture(s_SkyBoxCubemapTextureID, m_SkyBoxCubeMap_RTHandle);
+                cmd.SetGlobalTexture(s_StarBoxCubemapTextureID, m_StarBoxCubeMap_RTHandle);
 
                 //cmd.DrawMesh(m_cubeMesh, Matrix4x4.identity, m_Material_Draw, submeshIndex: 0, (int)ShaderPasses.Scenery, properties: null);
+                cmd.DrawMesh(GetCube(), Matrix4x4.identity, m_Material_Draw, submeshIndex: 0, (int)ShaderPasses.Stars, properties: null);
                 cmd.DrawMesh(GetCube(), Matrix4x4.identity, m_Material_Draw, submeshIndex: 0, (int)ShaderPasses.Sky, properties: null);
             }
 
