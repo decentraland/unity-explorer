@@ -20,17 +20,14 @@ namespace DCL.Profiling
         public long TotalUsedMemoryInBytes => totalUsedMemoryRecorder.LastValue;
         public float TotalUsedMemoryInMB => TotalUsedMemoryInBytes / BYTES_IN_MEGABYTE;
 
-        public long GetCurrentFrameTimeValueInNS() =>
-            mainThreadTimeRecorder.CurrentValue;
+        public long CurrentFrameTimeValueInNS => mainThreadTimeRecorder.CurrentValue;
 
-        public double GetAverageFrameTimeValueInNS() =>
-            GetRecorderFPSAverage(mainThreadTimeRecorder);
+        public double AverageFrameTimeValueInNS => GetRecorderFPSAverage(mainThreadTimeRecorder);
+
+        public ulong HiccupCountInBuffer => hiccupBufferCounter.HiccupsCountInBuffer;
 
         public void CheckHiccup() =>
             hiccupBufferCounter.AddDeltaTime(mainThreadTimeRecorder.LastValue);
-
-        public ulong GetHiccupCountInBuffer() =>
-            hiccupBufferCounter.HiccupsCountInBuffer;
 
         private static double GetRecorderFPSAverage(ProfilerRecorder recorder)
         {

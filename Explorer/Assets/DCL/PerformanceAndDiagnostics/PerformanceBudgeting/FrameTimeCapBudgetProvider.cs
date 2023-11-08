@@ -16,7 +16,7 @@ namespace DCL.PerformanceBudgeting
         }
 
         public bool TrySpendBudget() =>
-            profilingProvider.GetCurrentFrameTimeValueInNS() < totalBudgetAvailable;
+            profilingProvider.CurrentFrameTimeValueInNS < totalBudgetAvailable;
 
         public void ReleaseBudget() { }
     }

@@ -6,11 +6,11 @@ namespace DCL.Profiling
 
         float TotalUsedMemoryInMB { get; }
 
-        long GetCurrentFrameTimeValueInNS();
+        long CurrentFrameTimeValueInNS { get; }
 
-        double GetAverageFrameTimeValueInNS();
+        double AverageFrameTimeValueInNS { get; }
 
-        ulong GetHiccupCountInBuffer();
+        ulong HiccupCountInBuffer { get; }
 
         void CheckHiccup();
     }

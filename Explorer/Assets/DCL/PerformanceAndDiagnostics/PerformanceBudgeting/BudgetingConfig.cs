@@ -1,6 +1,6 @@
 ﻿namespace Global
 {
-    public static class Config
+    public static class BudgetingConfig
     {
         public const int FPS_CAP = 40; // [ms]
 

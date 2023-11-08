@@ -30,7 +30,7 @@ namespace DCL.PerformanceBudgeting
             if (outOfBudget)
                 return false;
 
-            currentAvailableBudget -= profilingProvider.GetCurrentFrameTimeValueInNS() - startTime;
+            currentAvailableBudget -= profilingProvider.CurrentFrameTimeValueInNS - startTime;
             ReleaseBudget();
 
             outOfBudget = currentAvailableBudget < 0;
@@ -40,7 +40,7 @@ namespace DCL.PerformanceBudgeting
 
         public void ReleaseBudget()
         {
-            startTime = profilingProvider.GetCurrentFrameTimeValueInNS();
+            startTime = profilingProvider.CurrentFrameTimeValueInNS;
         }
 
         private void TryResetBudget()

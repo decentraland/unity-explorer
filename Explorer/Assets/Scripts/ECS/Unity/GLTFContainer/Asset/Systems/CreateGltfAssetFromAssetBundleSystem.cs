@@ -44,7 +44,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         [None(typeof(StreamableLoadingResult<GltfContainerAsset>))]
         private void ConvertFromAssetBundle(in Entity entity, ref GetGltfContainerAssetIntention assetIntention, ref StreamableLoadingResult<AssetBundleData> assetBundleResult)
         {
-            if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
+            if (!instantiationFrameTimeBudgetProvider.TrySpendBudget() || !memoryBudgetProvider.TrySpendBudget())
                 return;
 
             if (assetIntention.CancellationTokenSource.IsCancellationRequested)
@@ -70,11 +70,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             // Create a new container root
             // It will be cached and pooled
-            // if (memoryBudgetProvider.TrySpendBudget())
-            {
-                GltfContainerAsset result = CreateGltfObject(assetBundleData);
-                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
-            }
+            GltfContainerAsset result = CreateGltfObject(assetBundleData);
+            World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
         }
 
         private static GltfContainerAsset CreateGltfObject(AssetBundleData assetBundleData)

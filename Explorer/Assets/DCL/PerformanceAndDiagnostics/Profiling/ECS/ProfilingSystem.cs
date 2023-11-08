@@ -64,7 +64,7 @@ namespace ECS.Profiling.Systems
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateView()
         {
-            hiccups.Value = profilingProvider.GetHiccupCountInBuffer();
+            hiccups.Value = profilingProvider.HiccupCountInBuffer;
             usedMemory.Value = $"<color={GetMemoryUsageColor()}>{profilingProvider.TotalUsedMemoryInMB}</color> MB";
 
             (float warning, float full) memoryRanges = memoryBudgetProvider.GetMemoryRanges();
@@ -74,7 +74,7 @@ namespace ECS.Profiling.Systems
 
             void SetFPS()
             {
-                float averageFrameTimeInSeconds = (float)profilingProvider.GetAverageFrameTimeValueInNS() * 1e-9f;
+                float averageFrameTimeInSeconds = (float)profilingProvider.AverageFrameTimeValueInNS * 1e-9f;
 
                 float frameTimeInMS = averageFrameTimeInSeconds * 1e3f;
                 float frameRate = 1 / averageFrameTimeInSeconds;

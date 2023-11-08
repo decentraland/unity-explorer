@@ -101,8 +101,8 @@ namespace Global
                 container.ReportHandlingSettings,
                 new SceneEntityFactory(),
                 new PartitionedWorldsAggregate.Factory(),
-                new ConcurrentLoadingBudgetProvider(Config.ASSETS_LOADING_BUDGET),
-                new FrameTimeCapBudgetProvider(Config.FPS_CAP, profilingProvider),
+                new ConcurrentLoadingBudgetProvider(BudgetingConfig.ASSETS_LOADING_BUDGET),
+                new FrameTimeCapBudgetProvider(BudgetingConfig.FPS_CAP, profilingProvider),
                 new MemoryBudgetProvider(profilingProvider)
             );
 
