@@ -1,8 +1,8 @@
 using Arch.SystemGroups;
-using DCL.CacheCleanUp;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.ResourceUnloading;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using ECS.Unity.GLTFContainer.Asset.Cache;

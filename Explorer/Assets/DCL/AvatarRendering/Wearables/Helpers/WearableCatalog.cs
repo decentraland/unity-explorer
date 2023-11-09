@@ -6,7 +6,31 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public class WearableCatalog
     {
-        public readonly Dictionary<string, IWearable> WearableDictionary = new ();
+        public Dictionary<string, IWearable> WearableDictionary { get; } = new ();
+
+        public int WearableAssetsInCatalog
+        {
+            get
+            {
+                var sum = 0;
+
+                foreach (IWearable wearable in WearableDictionary.Values)
+                {
+                    if (wearable.WearableAssets != null)
+                    {
+                        var count = 0;
+
+                        foreach (StreamableLoadingResult<WearableAsset>? result in wearable.WearableAssets)
+                            if (result is { Asset: not null })
+                                count++;
+
+                        sum += count;
+                    }
+                }
+
+                return sum;
+            }
+        }
 
         public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto)
         {
@@ -38,6 +62,27 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             wearable = null;
             return false;
+        }
+
+        public void UnloadWearableAssets()
+        {
+            foreach (IWearable wearable in WearableDictionary.Values)
+                for (var i = 0; i < wearable.WearableAssets?.Length; i++)
+                {
+                    WearableAsset wearableAsset = wearable.WearableAssets[i]?.Asset;
+
+                    if (wearableAsset == null)
+                    {
+                        wearable.WearableAssets[i] = null;
+                        continue;
+                    }
+
+                    if (wearableAsset.ReferenceCount == 0)
+                    {
+                        wearableAsset.Dispose();
+                        wearable.WearableAssets[i] = null;
+                    }
+                }
         }
 
         public IWearable GetDefaultWearable(BodyShape bodyShape, string category) =>

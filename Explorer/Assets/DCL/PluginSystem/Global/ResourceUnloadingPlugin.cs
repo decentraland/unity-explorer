@@ -1,6 +1,6 @@
 ﻿using Arch.SystemGroups;
-using DCL.CacheCleanUp;
 using DCL.PerformanceBudgeting;
+using DCL.ResourceUnloading;
 
 namespace DCL.PluginSystem.Global
 {

@@ -175,9 +175,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             var density = 2.0f;
             float spawnArea = (float)Math.Sqrt(randomAvatarsToInstantiate) * density;
 
-            var currentXCounter = 0;
-            var currentYCounter = 0;
-
             for (var i = 0; i < randomAvatarsToInstantiate; i++)
             {
                 AvatarRandomizer currentRandomizer = randomizers[Random.Range(0, randomizers.Length)];

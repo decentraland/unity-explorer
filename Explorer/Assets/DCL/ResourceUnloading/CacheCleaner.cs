@@ -1,38 +1,22 @@
-﻿using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
+﻿using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 
-namespace DCL.CacheCleanUp
+namespace DCL.ResourceUnloading
 {
     public class CacheCleaner
     {
         private GltfContainerAssetsCache gltfContainerAssetsCache;
         private AssetBundleCache assetBundleCache;
-        public IWearableAssetsCache WearableAssetsCache { get; private set; }
-        public WearableCatalog WearableCatalog { get; private set; }
+        private IWearableAssetsCache wearableAssetsCache;
+        private WearableCatalog wearableCatalog;
 
         public void UnloadCache()
         {
             gltfContainerAssetsCache.Unload();
-            WearableAssetsCache.UnloadCachedWearables();
-
-            foreach (IWearable wearable in WearableCatalog.WearableDictionary.Values)
-                for (var i = 0; i < wearable.WearableAssets?.Length; i++)
-                {
-                    WearableAsset wearableAssets = wearable.WearableAssets[i]?.Asset;
-
-                    if (wearableAssets == null)
-                        wearable.WearableAssets[i] = null;
-                    else if (wearableAssets.ReferenceCount == 0)
-                    {
-                        wearableAssets.Dispose();
-                        wearable.WearableAssets[i] = null;
-                    }
-                }
-
-            WearableAssetsCache.UnloadCachedWearablesKeys();
-
+            wearableAssetsCache.Unload();
+            wearableCatalog.UnloadWearableAssets();
             assetBundleCache.Unload();
         }
 
@@ -43,9 +27,15 @@ namespace DCL.CacheCleanUp
             this.gltfContainerAssetsCache = gltfContainerAssetsCache;
 
         public void Register(IWearableAssetsCache wearableAssetsCache) =>
-            WearableAssetsCache = wearableAssetsCache;
+            this.wearableAssetsCache = wearableAssetsCache;
 
         public void Register(WearableCatalog catalog) =>
-            WearableCatalog = catalog;
+            wearableCatalog = catalog;
+
+        public void UpdateProfilingCounters()
+        {
+            ProfilingCounters.WearablesAssetsInCatalogAmount.Value = wearableCatalog.WearableAssetsInCatalog;
+            ProfilingCounters.WearablesAssetsInCacheAmount.Value = wearableAssetsCache.Cache.Keys.Count;
+        }
     }
 }

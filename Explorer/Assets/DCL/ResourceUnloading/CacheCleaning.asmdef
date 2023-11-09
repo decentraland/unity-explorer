@@ -1,7 +1,19 @@
-﻿{
+{
   "name": "CacheCleaning",
+  "rootNamespace": "",
   "references": [
     "GUID:4794e238ed0f65142a4aea5848b513e5",
-    "GUID:5eabe9a3d4dd19d42a16208ea5411062"
-  ]
+    "GUID:5eabe9a3d4dd19d42a16208ea5411062",
+    "GUID:b46779583a009f04ba9f5f31d0e7e6ac",
+    "GUID:56e8195b069a4dca9c4c4f313c65f526"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

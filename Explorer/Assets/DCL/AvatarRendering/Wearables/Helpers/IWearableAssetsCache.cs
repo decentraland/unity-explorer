@@ -24,8 +24,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         ReleaseResult TryRelease(CachedWearable cachedWearable);
 
-        void UnloadCachedWearablesKeys();
-
-        void UnloadCachedWearables();
+        void Unload();
     }
 }

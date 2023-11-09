@@ -1,9 +1,9 @@
 ﻿using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.CacheCleanUp;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.ResourceUnloading;
 using Diagnostics.ReportsHandling;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.AssetBundles;

@@ -1,7 +1,6 @@
 ﻿using DCL.Profiling;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using Utility;
 using Utility.Pool;
@@ -78,7 +77,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return IWearableAssetsCache.ReleaseResult.ReturnedToPool;
         }
 
-        public void UnloadCachedWearables()
+        public void Unload()
         {
             foreach (List<CachedWearable> cachedWearablesList in Cache.Values)
             {
@@ -90,20 +89,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 cachedWearablesList.Clear();
             }
 
-            // foreach (CachedWearable cachedWearable in AllCachedWearables)
-            //     cachedWearable.Dispose();
-            //
-            // AllCachedWearables.Clear();
-        }
-
-        public void UnloadCachedWearablesKeys()
-        {
-            var keysToRemove = Cache.Keys.Where(wearablesAsset => wearablesAsset == null).ToList();
-
-            foreach (WearableAsset key in keysToRemove)
-                Cache.Remove(key);
-
-            keysToRemove.Clear();
+            Cache.Clear();
         }
     }
 }
