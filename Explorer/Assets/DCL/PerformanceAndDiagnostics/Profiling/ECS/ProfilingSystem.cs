@@ -19,6 +19,7 @@ namespace DCL.PerformanceAndDiagnostics.Profiling.ECS
         private readonly MemoryBudgetProvider memoryBudgetProvider;
 
         private DebugWidgetVisibilityBinding visibilityBinding;
+        private DebugWidgetVisibilityBinding memoryVisibilityBinding;
 
         private ElementBinding<ulong> hiccups;
         private ElementBinding<string> fps;
@@ -41,16 +42,22 @@ namespace DCL.PerformanceAndDiagnostics.Profiling.ECS
                 debugBuilder.AddWidget("Performance")
                             .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true))
                             .AddCustomMarker("Version:", version)
-                            .AddCustomMarker("Total Used Memory:", usedMemory = new ElementBinding<string>(string.Empty))
-                            .AddCustomMarker("Memory Budget Thresholds:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Frame Rate:", fps = new ElementBinding<string>(string.Empty))
                             .AddMarker("Hiccups last 1000 frames:", hiccups = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat);
+
+                debugBuilder.AddWidget("Memory")
+                            .SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
+                            .AddCustomMarker("Total Used Memory:", usedMemory = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Memory Budget Thresholds:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
+                            .AddSingleButton("Memory NORMAL", () => MemoryBudgetProvider.DebugMode = MemoryUsageStatus.Normal)
+                            .AddSingleButton("Memory WARNING", () => MemoryBudgetProvider.DebugMode = MemoryUsageStatus.Warning)
+                            .AddSingleButton("Memory FULL", () => MemoryBudgetProvider.DebugMode = MemoryUsageStatus.Full);
             }
         }
 
         protected override void Update(float t)
         {
-            if (visibilityBinding.IsExpanded && lastTimeSinceMetricsUpdate > 0.5f)
+            if ((visibilityBinding.IsExpanded || memoryVisibilityBinding.IsExpanded) && lastTimeSinceMetricsUpdate > 0.5f)
             {
                 lastTimeSinceMetricsUpdate = 0;
                 UpdateView();

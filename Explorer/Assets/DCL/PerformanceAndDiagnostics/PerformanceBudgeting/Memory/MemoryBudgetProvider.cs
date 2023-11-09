@@ -1,7 +1,5 @@
-﻿#if UNITY_EDITOR
-using DCL.PerformanceAndDiagnostics.PerformanceBudgeting.Memory.Editor;
-#endif
-using DCL.Profiling;
+﻿using DCL.Profiling;
+using UnityEngine;
 using static DCL.PerformanceBudgeting.MemoryUsageStatus;
 using static DCL.PerformanceBudgeting.BudgetingConfig;
 
@@ -16,11 +14,14 @@ namespace DCL.PerformanceBudgeting
 
     public class MemoryBudgetProvider : IConcurrentBudgetProvider
     {
+        public static MemoryUsageStatus DebugMode;
+
         private readonly IProfilingProvider profilingProvider;
         private readonly ISystemMemory systemMemory;
 
         public MemoryBudgetProvider(IProfilingProvider profilingProvider)
         {
+            DebugMode = Normal;
             systemMemory = new StandaloneSystemMemory();
 
             this.profilingProvider = profilingProvider;
@@ -51,15 +52,14 @@ namespace DCL.PerformanceBudgeting
 
         private long GetTotalSystemMemory()
         {
-#if UNITY_EDITOR
-            if (MemoryBudgetDebug.FlagFull)
-                return 0;
+            if (!Debug.isDebugBuild) return systemMemory.TotalSizeInMB;
 
-            if (MemoryBudgetDebug.FlagWarning)
-                return (long)(profilingProvider.TotalUsedMemoryInBytes / ProfilingProvider.BYTES_IN_MEGABYTE / (MEM_THRESHOLD[Warning] * 1.1f));
-#endif
-
-            return systemMemory.TotalSizeInMB;
+            return DebugMode switch
+                   {
+                       Full => 0,
+                       Warning => (long)(profilingProvider.TotalUsedMemoryInBytes / ProfilingProvider.BYTES_IN_MEGABYTE / (MEM_THRESHOLD[Warning] * 1.1f)),
+                       _ => systemMemory.TotalSizeInMB,
+                   };
         }
     }
 }
