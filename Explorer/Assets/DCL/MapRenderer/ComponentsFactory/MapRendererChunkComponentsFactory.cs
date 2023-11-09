@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.WebRequests;
 using DCLServices.MapRenderer.CoordsUtils;
 using DCLServices.MapRenderer.Culling;
 using DCLServices.MapRenderer.MapCameraController;
@@ -20,23 +21,26 @@ namespace DCLServices.MapRenderer.ComponentsFactory
     {
         private const int ATLAS_CHUNK_SIZE = 1020;
         private const int PARCEL_SIZE = 20;
+
         // it is quite expensive to disable TextMeshPro so larger bounds should help keeping the right balance
         private const float CULLING_BOUNDS_IN_PARCELS = 10;
 
         internal PlayerMarkerInstaller playerMarkerInstaller { get; }
 
-        private IAssetsProvisioner assetsProvisioner;
-        private MapRendererSettings mapSettings;
+        private readonly IAssetsProvisioner assetsProvisioner;
 
-        public MapRendererChunkComponentsFactory (IAssetsProvisioner assetsProvisioner, MapRendererSettings settings)
+        private readonly IWebRequestController webRequestController;
+        private readonly MapRendererSettings mapSettings;
+
+        public MapRendererChunkComponentsFactory(IAssetsProvisioner assetsProvisioner, MapRendererSettings settings, IWebRequestController webRequestController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mapSettings = settings;
+            this.webRequestController = webRequestController;
         }
 
         async UniTask<MapRendererComponents> IMapRendererComponentsFactory.Create(CancellationToken cancellationToken)
         {
-            this.mapSettings = mapSettings;
             MapRendererConfiguration configuration = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapRendererConfiguration, ct: CancellationToken.None)).Value.GetComponent<MapRendererConfiguration>());
             var coordsUtils = new ChunkCoordsUtils(PARCEL_SIZE);
             IMapCullingController cullingController = new MapCullingController(new MapCullingRectVisibilityChecker(CULLING_BOUNDS_IN_PARCELS * PARCEL_SIZE));
@@ -44,6 +48,7 @@ namespace DCLServices.MapRenderer.ComponentsFactory
             var zoomScalingLayers = new List<IZoomScalingLayer>();
 
             ParcelHighlightMarkerObject highlightMarkerPrefab = await GetParcelHighlightMarkerPrefab(cancellationToken);
+
             var highlightMarkersPool = new ObjectPool<IParcelHighlightMarker>(
                 () => CreateHighlightMarker(highlightMarkerPrefab, configuration, coordsUtils),
                 _ => { },
@@ -53,6 +58,7 @@ namespace DCLServices.MapRenderer.ComponentsFactory
             );
 
             MapCameraObject mapCameraObjectPrefab = (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapCameraObject, ct: CancellationToken.None)).Value.GetComponent<MapCameraObject>();
+
             IObjectPool<IMapCameraControllerInternal> cameraControllersPool = new ObjectPool<IMapCameraControllerInternal>(
                 CameraControllerBuilder,
                 x => x.SetActive(true),
@@ -94,7 +100,7 @@ namespace DCLServices.MapRenderer.ComponentsFactory
             {
                 SpriteRenderer atlasChunkPrefab = await GetAtlasChunkPrefab(ct);
 
-                var chunk = new SatelliteChunkController(atlasChunkPrefab, chunkLocalPosition, chunkId, parent, MapRendererDrawOrder.SATELLITE_ATLAS);
+                var chunk = new SatelliteChunkController(atlasChunkPrefab, webRequestController, chunkLocalPosition, chunkId, parent, MapRendererDrawOrder.SATELLITE_ATLAS);
                 await chunk.LoadImage(chunkId, PARCELS_INSIDE_CHUNK * coordsUtils.ParcelSize, ct);
 
                 return chunk;
@@ -115,7 +121,7 @@ namespace DCLServices.MapRenderer.ComponentsFactory
             {
                 SpriteRenderer atlasChunkPrefab = await GetAtlasChunkPrefab(ct);
 
-                var chunk = new ParcelChunkController(atlasChunkPrefab, chunkLocalPosition, coordsCenter, parent);
+                var chunk = new ParcelChunkController(webRequestController, atlasChunkPrefab, chunkLocalPosition, coordsCenter, parent);
                 chunk.SetDrawOrder(MapRendererDrawOrder.ATLAS);
                 await chunk.LoadImage(ATLAS_CHUNK_SIZE, PARCEL_SIZE, coordsCenter, ct);
 

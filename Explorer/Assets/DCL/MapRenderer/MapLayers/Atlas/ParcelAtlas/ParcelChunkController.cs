@@ -1,8 +1,9 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.WebRequests;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Object = UnityEngine.Object;
 
 namespace DCLServices.MapRenderer.MapLayers.Atlas
 {
@@ -13,10 +14,12 @@ namespace DCLServices.MapRenderer.MapLayers.Atlas
 
         private readonly SpriteRenderer spriteRenderer;
 
-        private IWebRequestController webRequestController;
+        private readonly IWebRequestController webRequestController;
 
-        public ParcelChunkController(SpriteRenderer prefab, Vector3 chunkLocalPosition, Vector2Int coordsCenter, Transform parent)
+        public ParcelChunkController(IWebRequestController webRequestController, SpriteRenderer prefab, Vector3 chunkLocalPosition, Vector2Int coordsCenter, Transform parent)
         {
+            this.webRequestController = webRequestController;
+
             spriteRenderer = Object.Instantiate(prefab, parent);
 #if UNITY_EDITOR
             spriteRenderer.gameObject.name = $"Chunk {coordsCenter.x},{coordsCenter.y}";
@@ -25,26 +28,18 @@ namespace DCLServices.MapRenderer.MapLayers.Atlas
 
             transform.localScale = Vector3.one * PIXELS_PER_UNIT;
             transform.localPosition = chunkLocalPosition;
-            webRequestController = new WebRequestController();
         }
 
         public async UniTask LoadImage(int chunkSize, int parcelSize, Vector2Int mapPosition, CancellationToken ct)
         {
             string url = $"{CHUNKS_API}?center={mapPosition.x},{mapPosition.y}&width={chunkSize}&height={chunkSize}&size={parcelSize}";
-            var webRequest = await webRequestController.GetTextureAsync(url, cancellationToken: ct);
 
-            var texture = CreateTexture(webRequest.downloadHandler.data);
-            texture.wrapMode = TextureWrapMode.Clamp;
+            Texture2D texture =
+                (await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(url)), new GetTextureArguments(false), ct))
+               .CreateTexture(TextureWrapMode.Clamp);
 
             spriteRenderer.sprite =
                 Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
-
-            Texture2D CreateTexture(byte[] data)
-            {
-                Texture2D texture2D = new Texture2D(1, 1);
-                texture2D.LoadImage(data);
-                return texture2D;
-            }
         }
 
         public void Dispose()

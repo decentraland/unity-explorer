@@ -51,6 +51,11 @@
         public const string ECS = nameof(ECS);
 
         /// <summary>
+        ///     Unspecified web request
+        /// </summary>
+        public const string GENERIC_WEB_REQUEST = nameof(GENERIC_WEB_REQUEST);
+
+        /// <summary>
         ///     Non-granular Streamable category
         /// </summary>
         public const string STREAMABLE_LOADING = nameof(STREAMABLE_LOADING);

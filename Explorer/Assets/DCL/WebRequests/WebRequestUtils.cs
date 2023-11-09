@@ -1,16 +1,21 @@
 using Cysharp.Threading.Tasks;
-using ECS.StreamableLoading.Common.Components;
 using UnityEngine.Networking;
 
-namespace ECS.StreamableLoading
+namespace DCL.WebRequests
 {
     public static class WebRequestUtils
     {
-        public static void SetCommonParameters(this UnityWebRequest unityWebRequest, in CommonLoadingArguments parameters)
-        {
-            unityWebRequest.timeout = parameters.Timeout;
+        public static bool IsIrrecoverableError(this UnityWebRequestException exception, int attemptLeft) =>
+            attemptLeft <= 0 || ((exception.IsAborted() || exception.IsServerError()) && !exception.IsUnableToCompleteSSLConnection());
 
-            // Add more as needed
+        public static bool IsUnableToCompleteSSLConnection(this UnityWebRequestException exception)
+        {
+            // fixes frequent editor exception
+#if UNITY_EDITOR
+            return exception.Message.Contains("Unable to complete SSL connection");
+#else
+            return false;
+#endif
         }
 
         public static bool IsServerError(this UnityWebRequestException exception) =>

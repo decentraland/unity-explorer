@@ -7,6 +7,8 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.WebRequests;
+using DCL.WebRequests.Analytics;
 using Diagnostics;
 using Diagnostics.ReportsHandling;
 using ECS.Prioritization;
@@ -50,6 +52,8 @@ namespace Global
         public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
 
         public IAssetsProvisioner AssetsProvisioner { get; private set; }
+
+        public IWebRequestController WebRequestController { get; private set; }
 
         /// <summary>
         ///     Character Object exists in a single instance
@@ -111,6 +115,7 @@ namespace Global
             container.ProfilingProvider = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
+            container.WebRequestController = new WebRequestController(new WebRequestsAnalyticsContainer());
 
             var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings);
 
@@ -119,7 +124,7 @@ namespace Global
                 new TransformsPlugin(sharedDependencies),
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
                 new PrimitiveCollidersPlugin(sharedDependencies),
-                new TexturesLoadingPlugin(),
+                new TexturesLoadingPlugin(container.WebRequestController),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 assetBundlePlugin,

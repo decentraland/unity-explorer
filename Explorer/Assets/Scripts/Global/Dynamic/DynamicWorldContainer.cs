@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Unity.Mathematics;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Global.Dynamic
@@ -54,9 +55,9 @@ namespace Global.Dynamic
             var dclInput = new DCLInput();
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
             var realmData = new RealmData();
-            PopupCloserView popupCloserView = UnityEngine.Object.Instantiate((await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
+            PopupCloserView popupCloserView = Object.Instantiate((await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
             MVCManager mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
-            MapRendererContainer mapRendererContainer = await MapRendererContainer.Create(staticContainer.AssetsProvisioner, dynamicSettings.MapRendererSettings, ct);
+            MapRendererContainer mapRendererContainer = await MapRendererContainer.Create(staticContainer, dynamicSettings.MapRendererSettings, ct);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {

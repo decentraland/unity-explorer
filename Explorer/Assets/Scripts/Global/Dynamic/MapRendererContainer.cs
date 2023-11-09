@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
 using DCLServices.MapRenderer;
 using DCLServices.MapRenderer.ComponentsFactory;
 using System.Threading;
@@ -10,11 +9,11 @@ namespace Global.Dynamic
     {
         public IMapRenderer MapRenderer { get; private set; }
 
-        public static async UniTask<MapRendererContainer> Create(IAssetsProvisioner assetsProvisioner, MapRendererSettings settings, CancellationToken ct)
+        public static async UniTask<MapRendererContainer> Create(StaticContainer staticContainer, MapRendererSettings settings, CancellationToken ct)
         {
-            MapRenderer mapRenderer = new MapRenderer(new MapRendererChunkComponentsFactory(assetsProvisioner, settings));
+            var mapRenderer = new MapRenderer(new MapRendererChunkComponentsFactory(staticContainer.AssetsProvisioner, settings, staticContainer.WebRequestController));
             await mapRenderer.InitializeAsync(ct);
-            return new MapRendererContainer() { MapRenderer = mapRenderer };
+            return new MapRendererContainer { MapRenderer = mapRenderer };
         }
     }
 }
