@@ -39,19 +39,23 @@ namespace DCL.PerformanceAndDiagnostics.Profiling.ECS
             {
                 var version = new ElementBinding<string>(Application.version);
 
-                debugBuilder.AddWidget("Performance")
-                            .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true))
-                            .AddCustomMarker("Version:", version)
-                            .AddCustomMarker("Frame Rate:", fps = new ElementBinding<string>(string.Empty))
-                            .AddMarker("Hiccups last 1000 frames:", hiccups = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat);
+                DebugWidgetBuilder perfWidget = debugBuilder.AddWidget("Performance")
+                                                            .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true))
+                                                            .AddCustomMarker("Version:", version)
+                                                            .AddCustomMarker("Frame Rate:", fps = new ElementBinding<string>(string.Empty))
+                                                            .AddMarker("Hiccups last 1000 frames:", hiccups = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat);
 
-                debugBuilder.AddWidget("Memory")
-                            .SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
-                            .AddCustomMarker("Total Used Memory:", usedMemory = new ElementBinding<string>(string.Empty))
-                            .AddCustomMarker("Memory Budget Thresholds:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
-                            .AddSingleButton("Memory NORMAL", () => MemoryBudgetProvider.DebugMode = MemoryUsageStatus.Normal)
-                            .AddSingleButton("Memory WARNING", () => MemoryBudgetProvider.DebugMode = MemoryUsageStatus.Warning)
-                            .AddSingleButton("Memory FULL", () => MemoryBudgetProvider.DebugMode = MemoryUsageStatus.Full);
+                if (!Debug.isDebugBuild)
+                    perfWidget.AddCustomMarker("Total Used Memory:", usedMemory = new ElementBinding<string>(string.Empty))
+                              .AddCustomMarker("Memory Budget Thresholds:", memoryCheckpoints = new ElementBinding<string>(string.Empty));
+                else
+                    debugBuilder.AddWidget("Memory")
+                                .SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
+                                .AddCustomMarker("Total Used Memory:", usedMemory = new ElementBinding<string>(string.Empty))
+                                .AddCustomMarker("Memory Budget Thresholds:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
+                                .AddSingleButton("Memory NORMAL", () => MemoryBudgetProvider.DebugMode = MemoryUsageStatus.Normal)
+                                .AddSingleButton("Memory WARNING", () => MemoryBudgetProvider.DebugMode = MemoryUsageStatus.Warning)
+                                .AddSingleButton("Memory FULL", () => MemoryBudgetProvider.DebugMode = MemoryUsageStatus.Full);
             }
         }
 
