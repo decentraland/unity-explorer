@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.PerformanceBudgeting.AcquiredBudget;
+using DCL.Profiling;
 using Diagnostics.ReportsHandling;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -28,6 +29,7 @@ namespace ECS.StreamableLoading.Textures
             tex.wrapMode = intention.WrapMode;
             tex.filterMode = intention.FilterMode;
 
+            ProfilingCounters.TexturesAmount.Value++;
             cache.Add(intention, tex);
 
             return new StreamableLoadingResult<Texture2D>(tex);

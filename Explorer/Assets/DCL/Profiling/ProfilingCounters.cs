@@ -39,6 +39,13 @@ namespace DCL.Profiling
         public static ProfilerCounterValue<int> CachedWearablesInCacheAmount =
             new (MEMORY, "Cached Wearables In Cache", ProfilerMarkerDataUnit.Count);
 
+        // Textures cache
+        public static ProfilerCounterValue<int> TexturesAmount =
+            new (MEMORY, "Textures", ProfilerMarkerDataUnit.Count);
+
+        public static ProfilerCounterValue<int> TexturesInCache =
+            new (MEMORY, "Textures In Cache", ProfilerMarkerDataUnit.Count);
+
         public static void CleanAllCounters()
         {
             ABDataAmount.Value = 0;
@@ -54,6 +61,9 @@ namespace DCL.Profiling
 
             CachedWearablesAmount.Value = 0;
             CachedWearablesInCacheAmount.Value = 0;
+
+            TexturesAmount.Value = 0;
+            TexturesInCache.Value = 0;
         }
     }
 }

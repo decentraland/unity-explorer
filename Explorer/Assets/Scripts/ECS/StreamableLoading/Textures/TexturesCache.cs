@@ -1,9 +1,11 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Profiling;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 
 namespace ECS.StreamableLoading.Textures
 {
@@ -35,6 +37,19 @@ namespace ECS.StreamableLoading.Textures
             disposed = true;
         }
 
+        public void Unload()
+        {
+            foreach (Texture2D texture in cache.Values)
+            {
+                UnityObjectUtils.SafeDestroy(texture);
+                ProfilingCounters.TexturesAmount.Value--;
+            }
+
+            cache.Clear();
+
+            ProfilingCounters.TexturesInCache.Value = cache.Count;
+        }
+
         public bool Equals(GetTextureIntention x, GetTextureIntention y) =>
             x.Equals(y);
 
@@ -44,8 +59,11 @@ namespace ECS.StreamableLoading.Textures
         public bool TryGet(in GetTextureIntention key, out Texture2D asset) =>
             cache.TryGetValue(key, out asset);
 
-        public void Add(in GetTextureIntention key, Texture2D asset) =>
+        public void Add(in GetTextureIntention key, Texture2D asset)
+        {
             cache.Add(key, asset);
+            ProfilingCounters.TexturesInCache.Value = cache.Count;
+        }
 
         public void Dereference(in GetTextureIntention key, Texture2D asset) { }
     }

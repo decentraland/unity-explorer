@@ -1,6 +1,7 @@
 ﻿using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 
 namespace DCL.ResourceUnloading
@@ -11,12 +12,14 @@ namespace DCL.ResourceUnloading
         private AssetBundleCache assetBundleCache;
         private IWearableAssetsCache wearableAssetsCache;
         private WearableCatalog wearableCatalog;
+        private TexturesCache texturesCache;
 
         public void UnloadCache()
         {
             gltfContainerAssetsCache.Unload();
             wearableAssetsCache.Unload();
             wearableCatalog.UnloadWearableAssets();
+            texturesCache.Unload();
             assetBundleCache.Unload();
         }
 
@@ -31,6 +34,9 @@ namespace DCL.ResourceUnloading
 
         public void Register(WearableCatalog catalog) =>
             wearableCatalog = catalog;
+
+        public void Register(TexturesCache texturesCache) =>
+            this.texturesCache = texturesCache;
 
         public void UpdateProfilingCounters()
         {
