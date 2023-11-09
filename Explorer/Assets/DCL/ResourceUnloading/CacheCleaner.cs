@@ -9,22 +9,29 @@ namespace DCL.CacheCleanUp
     {
         private GltfContainerAssetsCache gltfContainerAssetsCache;
         private AssetBundleCache assetBundleCache;
-        private IWearableAssetsCache wearableAssetsCache;
-        private WearableCatalog catalog;
+        public IWearableAssetsCache WearableAssetsCache { get; private set; }
+        public WearableCatalog WearableCatalog { get; private set; }
 
         public void UnloadCache()
         {
             gltfContainerAssetsCache.Unload();
-            wearableAssetsCache.UnloadCachedWearables();
+            WearableAssetsCache.UnloadCachedWearables();
 
-            foreach (IWearable wearable in catalog.WearableDictionary.Values)
+            foreach (IWearable wearable in WearableCatalog.WearableDictionary.Values)
                 for (var i = 0; i < wearable.WearableAssets?.Length; i++)
                 {
                     WearableAsset wearableAssets = wearable.WearableAssets[i]?.Asset;
 
-                    if (wearableAssets == null || wearableAssetsCache.TryUnloadCacheKey(wearableAssets))
+                    if (wearableAssets == null)
                         wearable.WearableAssets[i] = null;
+                    else if (wearableAssets.ReferenceCount == 0)
+                    {
+                        wearableAssets.Dispose();
+                        wearable.WearableAssets[i] = null;
+                    }
                 }
+
+            WearableAssetsCache.UnloadCachedWearablesKeys();
 
             assetBundleCache.Unload();
         }
@@ -36,9 +43,9 @@ namespace DCL.CacheCleanUp
             this.gltfContainerAssetsCache = gltfContainerAssetsCache;
 
         public void Register(IWearableAssetsCache wearableAssetsCache) =>
-            this.wearableAssetsCache = wearableAssetsCache;
+            WearableAssetsCache = wearableAssetsCache;
 
         public void Register(WearableCatalog catalog) =>
-            this.catalog = catalog;
+            WearableCatalog = catalog;
     }
 }

@@ -58,7 +58,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
                 asset = list[^1];
                 list.RemoveAt(list.Count - 1);
 
-                ProfilingCounters.GLTFCacheSize.Value--;
+                ProfilingCounters.GltfInCacheAmount.Value--;
                 return true;
             }
 
@@ -78,7 +78,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
                 cache[key] = list = new List<GltfContainerAsset>(maxSize / 10);
 
             list.Add(asset);
-            ProfilingCounters.GLTFCacheSize.Value++;
+            ProfilingCounters.GltfInCacheAmount.Value++;
 
             // This logic should not be executed if the application is quitting
             if (UnityObjectUtils.IsQuitting) return;
@@ -100,7 +100,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
             cache.Clear();
 
-            ProfilingCounters.GLTFCacheSize.Value -= unloaded;
+            ProfilingCounters.GltfInCacheAmount.Value -= unloaded;
         }
 
         bool IEqualityComparer<string>.Equals(string x, string y) =>

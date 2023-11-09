@@ -1,5 +1,4 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.Profiling;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using System;
@@ -46,12 +45,8 @@ namespace ECS.StreamableLoading.AssetBundles
         public bool TryGet(in GetAssetBundleIntention key, out AssetBundleData asset) =>
             cache.TryGetValue(key, out asset);
 
-        public void Add(in GetAssetBundleIntention key, AssetBundleData asset)
-        {
+        public void Add(in GetAssetBundleIntention key, AssetBundleData asset) =>
             cache.Add(key, asset);
-
-            ProfilingCounters.ABCacheSize.Value = cache.Count;
-        }
 
         public void Dereference(in GetAssetBundleIntention key, AssetBundleData asset) { }
 
@@ -73,8 +68,6 @@ namespace ECS.StreamableLoading.AssetBundles
                 foreach (GetAssetBundleIntention key in unloadedKeys)
                     cache.Remove(key);
             }
-
-            ProfilingCounters.ABCacheSize.Value = cache.Count;
         }
     }
 }

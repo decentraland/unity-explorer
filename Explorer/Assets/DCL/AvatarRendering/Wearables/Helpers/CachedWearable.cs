@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.Profiling;
+using System;
 using UnityEngine;
 using Utility;
 
@@ -18,12 +19,16 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             Instance = instance;
 
             originalAsset.AddReference();
+
+            ProfilingCounters.CachedWearablesAmount.Value++;
         }
 
         public void Dispose()
         {
             OriginalAsset.Dereference();
             UnityObjectUtils.SafeDestroy(Instance);
+
+            ProfilingCounters.CachedWearablesAmount.Value--;
         }
 
         public static implicit operator GameObject(CachedWearable cachedWearable) =>

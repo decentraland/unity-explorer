@@ -51,18 +51,27 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             RENDERER_INFO_POOL.Release(rendererInfos);
             assetBundleData.Dereference();
 
+            if (ReferenceCount > 0)
+                ProfilingCounters.WearablesAssetsReferencedAmount.Value--;
+
             ProfilingCounters.WearablesAssetsAmount.Value--;
         }
 
         public void AddReference()
         {
             ReferenceCount++;
+
+            if (ReferenceCount == 1)
+                ProfilingCounters.WearablesAssetsReferencedAmount.Value++;
         }
 
         public void Dereference()
         {
             ReferenceCount--;
             Assert.IsTrue(ReferenceCount >= 0, "Reference count should never be negative");
+
+            if (ReferenceCount == 0)
+                ProfilingCounters.WearablesAssetsReferencedAmount.Value--;
         }
 
         public readonly struct RendererInfo

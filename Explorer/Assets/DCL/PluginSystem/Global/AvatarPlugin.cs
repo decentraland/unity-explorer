@@ -39,7 +39,7 @@ namespace DCL.PluginSystem.Global
         private readonly TextureArrayContainer textureArrayContainer;
         private readonly IDebugContainerBuilder debugContainerBuilder;
 
-        private readonly WearableAssetsCache wearableAssetsCache = new (3, 100);
+        private readonly WearableAssetsCache wearableAssetsCache = new (100);
 
         private IComponentPool<AvatarBase> avatarPoolRegistry;
 
