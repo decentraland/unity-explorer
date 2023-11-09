@@ -1,4 +1,5 @@
-﻿using DCL.AvatarRendering.Wearables.Helpers;
+﻿using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 
@@ -14,14 +15,18 @@ namespace DCL.CacheCleanUp
         public void UnloadCache()
         {
             gltfContainerAssetsCache.Unload();
-            assetBundleCache.Unload();
-            wearableAssetsCache.Unload();
+            wearableAssetsCache.UnloadCachedWearables();
 
-            // foreach (var wearable in catalog.wearableDictionary)
-            // {
-            //               if(wearableAssetsCache.Unload(wearable.Value.))
-            // nullify WearableAsset
-            // }
+            foreach (IWearable wearable in catalog.WearableDictionary.Values)
+                for (var i = 0; i < wearable.WearableAssets?.Length; i++)
+                {
+                    WearableAsset wearableAssets = wearable.WearableAssets[i]?.Asset;
+
+                    if (wearableAssets == null || wearableAssetsCache.TryUnloadCacheKey(wearableAssets))
+                        wearable.WearableAssets[i] = null;
+                }
+
+            assetBundleCache.Unload();
         }
 
         public void Register(AssetBundleCache assetBundleCache) =>

@@ -19,10 +19,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         /// <summary>
         ///     Can be null in case of a texture
         /// </summary>
-        [CanBeNull]
-        public readonly GameObject GameObject;
-        private readonly List<RendererInfo> rendererInfos;
+        [CanBeNull] public readonly GameObject GameObject;
         private readonly AssetBundleData assetBundleData;
+        private readonly List<RendererInfo> rendererInfos;
+
+        private bool disposed;
 
         public int ReferenceCount { get; private set; }
 
@@ -42,7 +43,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         /// </summary>
         public void Dispose()
         {
+            if (disposed)
+                return;
+
+            disposed = true;
+
             RENDERER_INFO_POOL.Release(rendererInfos);
+            assetBundleData.Dereference();
 
             ProfilingCounters.WearablesAssetsAmount.Value--;
         }

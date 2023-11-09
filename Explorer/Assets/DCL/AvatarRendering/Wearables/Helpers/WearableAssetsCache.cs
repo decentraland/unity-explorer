@@ -22,6 +22,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         private readonly int maxNumberOfAssetsPerKey;
         private readonly Transform parentContainer;
+        public List<CachedWearable> AllCachedWearables { get; } = new ();
 
         public WearableAssetsCache(int maxNumberOfAssetsPerKey, int initialCapacity)
         {
@@ -82,23 +83,32 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return IWearableAssetsCache.ReleaseResult.ReturnedToPool;
         }
 
-        public void Unload()
+        public void UnloadCachedWearables()
         {
-            foreach (KeyValuePair<WearableAsset, List<CachedWearable>> pair in cache)
+            foreach (List<CachedWearable> cachedWearablesList in cache.Values)
             {
-                ProfilingCounters.WearablesAmountCacheSize.Value -= pair.Value.Count;
+                ProfilingCounters.WearablesAmountCacheSize.Value -= cachedWearablesList.Count;
 
-                foreach (CachedWearable cachedWearable in pair.Value)
+                foreach (CachedWearable cachedWearable in cachedWearablesList)
                     cachedWearable.Dispose();
 
-                pair.Value.Clear();
+                cachedWearablesList.Clear();
             }
 
-            foreach (WearableAsset wearableAsset in cache.Keys)
-                if (wearableAsset.ReferenceCount == 0)
-                    wearableAsset.Dispose();
+            // foreach (CachedWearable cachedWearable in AllCachedWearables)
+            //     cachedWearable.Dispose();
+            //
+            // AllCachedWearables.Clear();
+        }
 
-            cache.Clear();
+        public bool TryUnloadCacheKey(WearableAsset wearableAsset)
+        {
+            if (!cache.ContainsKey(wearableAsset)) return false;
+            if (wearableAsset is not { ReferenceCount: 0 }) return false;
+
+            cache.Remove(wearableAsset);
+            wearableAsset.Dispose();
+            return true;
         }
     }
 }

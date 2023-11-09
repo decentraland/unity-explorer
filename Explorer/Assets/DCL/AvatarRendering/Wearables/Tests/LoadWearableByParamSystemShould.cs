@@ -42,17 +42,17 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             base.AssertSuccess(asset);
 
-            foreach (string wearableCatalogKey in wearableCatalog.wearableDictionary.Keys)
+            foreach (string wearableCatalogKey in wearableCatalog.WearableDictionary.Keys)
                 Debug.Log(wearableCatalogKey);
 
-            Assert.AreEqual(wearableCatalog.wearableDictionary.Count, 1);
-            Assert.NotNull(wearableCatalog.wearableDictionary[existingURN]);
+            Assert.AreEqual(wearableCatalog.WearableDictionary.Count, 1);
+            Assert.NotNull(wearableCatalog.WearableDictionary[existingURN]);
         }
 
         [Test]
         public async Task ConcludeSuccessOnExistingWearable()
         {
-            wearableCatalog.wearableDictionary.Add(existingURN, Substitute.For<IWearable>());
+            wearableCatalog.WearableDictionary.Add(existingURN, Substitute.For<IWearable>());
             await ConcludeSuccess();
         }
 

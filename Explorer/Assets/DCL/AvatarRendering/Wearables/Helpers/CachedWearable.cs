@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using Utility;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
@@ -6,7 +7,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     /// <summary>
     ///     We need to store the original asset to be able to release it later
     /// </summary>
-    public readonly struct CachedWearable
+    public readonly struct CachedWearable : IDisposable
     {
         public readonly WearableAsset OriginalAsset;
         public readonly GameObject Instance;
@@ -15,6 +16,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             OriginalAsset = originalAsset;
             Instance = instance;
+
+            originalAsset.AddReference();
         }
 
         public void Dispose()

@@ -1,4 +1,6 @@
-﻿namespace DCL.AvatarRendering.Wearables.Helpers
+﻿using System.Collections.Generic;
+
+namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public interface IWearableAssetsCache
     {
@@ -22,10 +24,14 @@
             EnvironmentIsDisposing,
         }
 
+        List<CachedWearable> AllCachedWearables { get; }
+
         bool TryGet(WearableAsset asset, out CachedWearable instance);
 
         ReleaseResult TryRelease(CachedWearable cachedWearable);
 
-        void Unload();
+        bool TryUnloadCacheKey(WearableAsset asset);
+
+        void UnloadCachedWearables();
     }
 }

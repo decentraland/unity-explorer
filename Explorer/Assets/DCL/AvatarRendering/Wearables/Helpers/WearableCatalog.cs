@@ -6,33 +6,31 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public class WearableCatalog
     {
-        internal Dictionary<string, IWearable> wearableDictionary;
-
-        public WearableCatalog()
-        {
-            wearableDictionary = new Dictionary<string, IWearable>();
-        }
+        public readonly Dictionary<string, IWearable> WearableDictionary = new ();
 
         public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto)
         {
-            if (wearableDictionary.TryGetValue(wearableDto.metadata.id, out IWearable exitingWearable))
+            if (WearableDictionary.TryGetValue(wearableDto.metadata.id, out IWearable exitingWearable))
                 return exitingWearable;
 
-            var wearable = new Wearable();
-            wearable.WearableDTO = new StreamableLoadingResult<WearableDTO>(wearableDto);
-            wearable.IsLoading = false;
-            wearableDictionary.Add(wearable.GetUrn(), wearable);
+            var wearable = new Wearable
+            {
+                WearableDTO = new StreamableLoadingResult<WearableDTO>(wearableDto),
+                IsLoading = false,
+            };
+
+            WearableDictionary.Add(wearable.GetUrn(), wearable);
             return wearable;
         }
 
         public void AddEmptyWearable(string loadingIntentionPointer)
         {
-            wearableDictionary.Add(loadingIntentionPointer, new Wearable());
+            WearableDictionary.Add(loadingIntentionPointer, new Wearable());
         }
 
         public bool TryGetWearable(string wearableURN, out IWearable wearable)
         {
-            if (wearableDictionary.TryGetValue(wearableURN, out IWearable resultWearable))
+            if (WearableDictionary.TryGetValue(wearableURN, out IWearable resultWearable))
             {
                 wearable = resultWearable;
                 return true;
@@ -43,6 +41,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         }
 
         public IWearable GetDefaultWearable(BodyShape bodyShape, string category) =>
-            wearableDictionary[WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category)];
+            WearableDictionary[WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category)];
     }
 }
