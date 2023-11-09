@@ -1,37 +1,38 @@
 {
-  "name": "StreamableLoading.Tests",
-  "rootNamespace": "",
-  "references": [
-    "GUID:a3c61f15599a43ae9de508c9c4dd5530",
-    "GUID:c2b7e3e0e95f4eb588516c8ae12e919b",
-    "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
-    "GUID:f51ebe6a0ceec4240a699833d6309b23",
-    "GUID:bfcb7f4c56e9fe947a7bdce7523884ff",
-    "GUID:286980af24684da6acc1caa413039811",
-    "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
-    "GUID:44f50a22f97c41b5b56db66b65bbd23a",
-    "GUID:fa0cb088e184452c8a89ecdeff7c731d",
-    "GUID:048d5eea760b5477d8fd03f28ea2b297",
-    "GUID:9e314663ce958b746873cb22d57ede55",
-    "GUID:8322ea9340a544c59ddc56d4793eac74",
-    "GUID:4794e238ed0f65142a4aea5848b513e5",
-    "GUID:4a12c0b1b77ec6b418a8d7bd5c925be3"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": true,
-  "overrideReferences": true,
-  "precompiledReferences": [
-    "nunit.framework.dll",
-    "NSubstitute.dll",
-    "Arch.dll",
-    "Arch.System.dll",
-    "Arch.SystemGroups.dll"
-  ],
-  "autoReferenced": false,
-  "defineConstraints": [
-    "UNITY_INCLUDE_TESTS"
-  ],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "StreamableLoading.Tests",
+    "rootNamespace": "",
+    "references": [
+        "GUID:a3c61f15599a43ae9de508c9c4dd5530",
+        "GUID:c2b7e3e0e95f4eb588516c8ae12e919b",
+        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:bfcb7f4c56e9fe947a7bdce7523884ff",
+        "GUID:286980af24684da6acc1caa413039811",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:44f50a22f97c41b5b56db66b65bbd23a",
+        "GUID:fa0cb088e184452c8a89ecdeff7c731d",
+        "GUID:048d5eea760b5477d8fd03f28ea2b297",
+        "GUID:9e314663ce958b746873cb22d57ede55",
+        "GUID:8322ea9340a544c59ddc56d4793eac74",
+        "GUID:4794e238ed0f65142a4aea5848b513e5",
+        "GUID:4a12c0b1b77ec6b418a8d7bd5c925be3",
+        "GUID:94762aa32b3aa47ae8f7c3f5f2177583"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "NSubstitute.dll",
+        "Arch.dll",
+        "Arch.System.dll",
+        "Arch.SystemGroups.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
