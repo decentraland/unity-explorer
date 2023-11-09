@@ -1,6 +1,7 @@
 using DCL.UI;
 using DCLServices.MapRenderer;
 using DCLServices.MapRenderer.CommonBehavior;
+using DCLServices.MapRenderer.ConsumerUtils;
 using DCLServices.MapRenderer.MapCameraController;
 using DCLServices.MapRenderer.MapLayers;
 using DCLServices.MapRenderer.MapLayers.PlayerMarker;
@@ -24,6 +25,7 @@ namespace DCL.Navmap
         private IMapCameraController cameraController;
         private IMapRenderer mapRenderer;
         private NavmapZoomController zoomController;
+        private MapCameraDragBehavior mapCameraDragBehavior;
 
         public NavmapController(NavmapView navmapView, IMapRenderer mapRenderer)
         {
@@ -68,11 +70,22 @@ namespace DCL.Navmap
                 ));
 
             this.navmapView.SatelliteRenderImage.texture = cameraController.GetRenderTexture();
-            this.navmapView.SatellitePixelPerfectMapRendererTextureProvider.Activate(cameraController);
             this.navmapView.StreetViewRenderImage.texture = cameraController.GetRenderTexture();
-            this.navmapView.StreetViewPixelPerfectMapRendererTextureProvider.Activate(cameraController);
+            Activate();
+        }
+
+        private void Activate()
+        {
+            navmapView.SatellitePixelPerfectMapRendererTextureProvider.Activate(cameraController);
+            navmapView.StreetViewPixelPerfectMapRendererTextureProvider.Activate(cameraController);
             zoomController.Activate(cameraController);
         }
 
+        private void Deactivate()
+        {
+            navmapView.SatellitePixelPerfectMapRendererTextureProvider.Deactivate();
+            navmapView.StreetViewPixelPerfectMapRendererTextureProvider.Deactivate();
+            zoomController.Deactivate();
+        }
     }
 }
