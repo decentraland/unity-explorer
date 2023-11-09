@@ -15,7 +15,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
     /// <summary>
     ///     Individual pool for each GltfContainer source. LRU cache
     ///     <para>Gltf Containers can't be reused</para>
-    ///     TODO At the moment it is a draft and not cleaned-up at all
     /// </summary>
     public class GltfContainerAssetsCache : IStreamableCache<GltfContainerAsset, string>
     {

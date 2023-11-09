@@ -27,6 +27,9 @@ namespace ECS.StreamableLoading.Textures
             Texture2D tex = DownloadHandlerTexture.GetContent(webRequest);
             tex.wrapMode = intention.WrapMode;
             tex.filterMode = intention.FilterMode;
+
+            cache.Add(intention, tex);
+
             return new StreamableLoadingResult<Texture2D>(tex);
         }
     }

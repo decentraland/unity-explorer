@@ -2,6 +2,7 @@
   "name": "PerformanceBudgeting",
   "references": [
     "GUID:56e8195b069a4dca9c4c4f313c65f526",
-    "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
+    "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+    "GUID:8459d066c849f9541b802e2f2b145f6f"
   ]
 }

@@ -26,7 +26,7 @@ namespace ECS.StreamableLoading.Common.Systems
                                                                      .WithAll<TIntention, IPartitionComponent, StreamableLoadingState>()
                                                                      .WithNone<StreamableLoadingResult<TAsset>>();
 
-        private readonly IStreamableCache<TAsset, TIntention> cache;
+        protected readonly IStreamableCache<TAsset, TIntention> cache;
 
         private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, TIntention> cachedInternalFlowDelegate;
 
