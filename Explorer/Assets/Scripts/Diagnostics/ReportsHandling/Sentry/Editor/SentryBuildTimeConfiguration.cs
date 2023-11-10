@@ -9,6 +9,7 @@ namespace Diagnostics.ReportsHandling.Sentry.Editor
     public class SentryBuildTimeConfiguration : SentryBuildTimeOptionsConfiguration
     {
         private const string SENTRY_ASSET_PATH = "Assets/Resources/Sentry/SentryOptions.asset";
+        private const string CLI_ASSET_PATH = "Assets/Plugins/Sentry/SentryCliOptions.asset";
 
         // This file should be never committed since it may contain secrets
         [SerializeField] private string configJsonFilePath = "./.sentryconfig.json";
@@ -19,6 +20,8 @@ namespace Diagnostics.ReportsHandling.Sentry.Editor
         /// Learn more at https://docs.sentry.io/platforms/unity/configuration/options/#programmatic-configuration
         public override void Configure(SentryUnityOptions options, SentryCliOptions cliOptions)
         {
+            // Force options to enabled=true to be able to deploy debug symbols during build-time
+            options.Enabled = true;
             options.Release = Application.version ?? options.Release;
 
             try { ApplyFromEnvironmentVars(options, cliOptions); }
@@ -34,6 +37,7 @@ namespace Diagnostics.ReportsHandling.Sentry.Editor
             {
                 // SentryOptions.asset must be modified so the app is built with the expected information
                 PersistIntoAssetFile(SENTRY_ASSET_PATH, options);
+                PersistIntoCliAssetFile(CLI_ASSET_PATH, cliOptions);
             }
             catch (Exception e) { Debug.LogException(e); }
         }
@@ -85,6 +89,14 @@ namespace Diagnostics.ReportsHandling.Sentry.Editor
             asset.ReleaseOverride = options.Release;
             asset.Dsn = options.Dsn;
             asset.EnvironmentOverride = options.Environment;
+            EditorUtility.SetDirty(asset);
+        }
+
+        private void PersistIntoCliAssetFile(string path, SentryCliOptions cliOptions)
+        {
+            SentryCliOptions asset = AssetDatabase.LoadAssetAtPath<SentryCliOptions>(path);
+            if (asset == null) return;
+            asset.Auth = cliOptions.Auth;
             EditorUtility.SetDirty(asset);
         }
     }
