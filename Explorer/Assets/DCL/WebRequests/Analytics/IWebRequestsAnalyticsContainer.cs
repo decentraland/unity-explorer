@@ -1,3 +1,5 @@
+using System;
+
 namespace DCL.WebRequests.Analytics
 {
     /// <summary>
@@ -5,6 +7,8 @@ namespace DCL.WebRequests.Analytics
     /// </summary>
     public interface IWebRequestsAnalyticsContainer
     {
+        public int GetMetric(Type requestType);
+
         internal void OnRequestStarted<T>(T request) where T: ITypedWebRequest;
 
         internal void OnRequestFinished<T>(T request) where T: ITypedWebRequest;

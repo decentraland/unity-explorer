@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
 using ECS;
 using ECS.StreamableLoading.Tests;
+using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using System;
@@ -34,7 +35,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             IRealmData realmData = Substitute.For<IRealmData>();
             realmData.Configured.Returns(true);
 
-            return new LoadWearablesByParamSystem(world, cache, realmData,
+            return new LoadWearablesByParamSystem(world, TestWebRequestController.INSTANCE, cache, realmData,
                 URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), wearableCatalog, new MutexSync());
         }
 

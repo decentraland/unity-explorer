@@ -29,9 +29,10 @@ namespace ECS.StreamableLoading.Textures
         {
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             GetTextureWebRequest request = await webRequestController.GetTextureAsync(
-                new CommonArguments(intention.CommonArguments.URL, attemptsCount: 1),
+                intention.CommonArguments,
                 new GetTextureArguments(intention.IsReadable),
-                ct);
+                ct,
+                reportCategory: ReportCategory.TEXTURES);
 
             return new StreamableLoadingResult<Texture2D>(request.CreateTexture(intention.WrapMode, intention.FilterMode));
         }

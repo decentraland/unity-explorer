@@ -1,7 +1,10 @@
-﻿using ECS.SceneLifeCycle.SceneDefinition;
+﻿using DCL.WebRequests;
+using DCL.WebRequests.Analytics;
+using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
 using Ipfs;
+using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
 using Utility.Multithreading;
@@ -25,7 +28,7 @@ namespace ECS.SceneLifeCycle.Tests
             new (new CommonLoadingArguments(wrongTypePath), new IpfsTypes.IpfsPath());
 
         protected override LoadSceneDefinitionSystem CreateSystem() =>
-            new (world, cache, new MutexSync());
+            new (world, new WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>()), cache, new MutexSync());
 
         protected override void AssertSuccess(IpfsTypes.SceneEntityDefinition asset)
         {

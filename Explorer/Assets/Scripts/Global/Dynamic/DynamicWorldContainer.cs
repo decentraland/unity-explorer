@@ -5,6 +5,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.Builders;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.WebRequests.Analytics;
 using ECS;
 using ECS.Prioritization.Components;
 using MVC;
@@ -66,16 +67,17 @@ namespace Global.Dynamic
                 new GlobalInteractionPlugin(dclInput, rootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.CameraSamplingData, exposedGlobalDataContainer.ExposedCameraData),
                 new ProfilingPlugin(staticContainer.ProfilingProvider, debugBuilder),
-                new WearablePlugin(staticContainer.AssetsProvisioner, realmData, ASSET_BUNDLES_URL),
+                new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, realmData, ASSET_BUNDLES_URL),
                 new AvatarPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, realmData, debugBuilder),
                 new ExplorePanelPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer),
-                new MinimapPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer)
+                new MinimapPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer),
+                new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
-            container.RealmController = new RealmController(sceneLoadRadius, staticLoadPositions, realmData);
+            container.RealmController = new RealmController(staticContainer.WebRequestsContainer.WebRequestController, sceneLoadRadius, staticLoadPositions, realmData);
 
             container.GlobalWorldFactory = new GlobalWorldFactory(in staticContainer, staticContainer.RealmPartitionSettings,
                 exposedGlobalDataContainer.CameraSamplingData, realmSamplingData, ASSET_BUNDLES_URL, realmData, globalPlugins);

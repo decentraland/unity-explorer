@@ -12,6 +12,8 @@ namespace DCL.WebRequests
     public class WebRequestController : IWebRequestController
     {
         private static readonly InitializeRequest<GetTextureArguments, GetTextureWebRequest> GET_TEXTURE = GetTextureWebRequest.Initialize;
+        private static readonly InitializeRequest<GenericGetArguments, GenericGetRequest> GET_GENERIC = GenericGetRequest.Initialize;
+        private static readonly InitializeRequest<GenericPostArguments, GenericPostRequest> POST_GENERIC = GenericPostRequest.Initialize;
 
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
 
@@ -19,6 +21,23 @@ namespace DCL.WebRequests
         {
             this.analyticsContainer = analyticsContainer;
         }
+
+        public UniTask<GenericGetRequest> GetAsync(
+            CommonArguments commonArguments,
+            CancellationToken ct,
+            string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
+            WebRequestHeadersInfo? headersInfo = null,
+            WebRequestSignInfo? signInfo = null) =>
+            Send(GET_GENERIC, commonArguments, default(GenericGetArguments), ct, reportCategory, headersInfo, signInfo);
+
+        public UniTask<GenericPostRequest> PostAsync(
+            CommonArguments commonArguments,
+            GenericPostArguments arguments,
+            CancellationToken ct,
+            string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
+            WebRequestHeadersInfo? headersInfo = null,
+            WebRequestSignInfo? signInfo = null) =>
+            Send(POST_GENERIC, commonArguments, arguments, ct, reportCategory, headersInfo, signInfo);
 
         public UniTask<GetTextureWebRequest> GetTextureAsync(
             CommonArguments commonArguments,

@@ -1,21 +1,21 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.WebRequests;
 using Diagnostics.ReportsHandling;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
-using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Networking;
 using Utility.Multithreading;
 using Utility.Pool;
 using Utility.ThreadSafePool;
@@ -33,7 +33,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private readonly StringBuilder bodyBuilder = new ();
 
-        internal LoadWearablesDTOByPointersSystem(World world, IStreamableCache<WearablesDTOList, GetWearableDTOByPointersIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync) { }
+        private readonly IWebRequestController webRequestController;
+
+        internal LoadWearablesDTOByPointersSystem(World world, IWebRequestController webRequestController, IStreamableCache<WearablesDTOList, GetWearableDTOByPointersIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync)
+        {
+            this.webRequestController = webRequestController;
+        }
 
         protected override async UniTask<StreamableLoadingResult<WearablesDTOList>> FlowInternalAsync(GetWearableDTOByPointersIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
@@ -48,7 +53,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 int numberOfWearablesToRequest = Mathf.Min(intention.Pointers.Count - pointer, MAX_WEARABLES_PER_REQUEST);
 
                 await DoPartialRequestAsync(intention.CommonArguments.URL, intention.Pointers,
-                    pointer, pointer + numberOfWearablesToRequest, finalTargetList, partition, ct);
+                    pointer, pointer + numberOfWearablesToRequest, finalTargetList, ct);
 
                 pointer += numberOfWearablesToRequest;
             }
@@ -56,9 +61,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
             return new StreamableLoadingResult<WearablesDTOList>(new WearablesDTOList(finalTargetList));
         }
 
-        private async UniTask DoPartialRequestAsync(string url,
-            IReadOnlyList<string> wearablesToRequest, int startIndex, int endIndex, List<WearableDTO> results,
-            IPartitionComponent partition, CancellationToken ct)
+        private async UniTask DoPartialRequestAsync(URLAddress url,
+            IReadOnlyList<string> wearablesToRequest, int startIndex, int endIndex, List<WearableDTO> results, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
 
@@ -78,23 +82,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             bodyBuilder.Append("]}");
 
-            var subIntent = new SubIntention(new CommonLoadingArguments(url));
-
-            async UniTask<StreamableLoadingResult<string>> InnerFlowAsync(SubIntention subIntention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
-            {
-                using UnityWebRequest request = await UnityWebRequest.Post(subIntent.CommonArguments.URL, bodyBuilder.ToString(), "application/json").SendWebRequest().WithCancellation(ct);
-                return new StreamableLoadingResult<string>(request.downloadHandler.text);
-            }
-
-            string response = (await subIntent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, partition, InnerFlowAsync, GetReportCategory(), ct)).UnwrapAndRethrow();
-
-            await UniTask.SwitchToThreadPool();
-
-            // Parse and add into results
-
             using PoolExtensions.Scope<List<WearableDTO>> dtoPooledList = DTO_POOL.AutoScope();
 
-            JsonConvert.PopulateObject(response, dtoPooledList.Value);
+            (await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct))
+               .OverwriteFromJson(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 
             // List is not concurrent
             lock (results) { results.AddRange(dtoPooledList.Value); }

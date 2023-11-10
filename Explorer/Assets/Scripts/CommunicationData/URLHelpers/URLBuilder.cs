@@ -130,6 +130,9 @@ namespace CommunicationData.URLHelpers
             return this;
         }
 
+        public URLAddress Build() =>
+            new (GetResult());
+
         public string GetResult() =>
             stringBuilder.ToString();
 

@@ -11,7 +11,7 @@ namespace Global.Dynamic
 
         public static async UniTask<MapRendererContainer> Create(StaticContainer staticContainer, MapRendererSettings settings, CancellationToken ct)
         {
-            var mapRenderer = new MapRenderer(new MapRendererChunkComponentsFactory(staticContainer.AssetsProvisioner, settings, staticContainer.WebRequestController));
+            var mapRenderer = new MapRenderer(new MapRendererChunkComponentsFactory(staticContainer.AssetsProvisioner, settings, staticContainer.WebRequestsContainer.WebRequestController));
             await mapRenderer.InitializeAsync(ct);
             return new MapRendererContainer { MapRenderer = mapRenderer };
         }
