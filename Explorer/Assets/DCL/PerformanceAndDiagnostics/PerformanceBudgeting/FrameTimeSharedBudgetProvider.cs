@@ -8,7 +8,7 @@ namespace DCL.PerformanceBudgeting
         private readonly float totalBudgetAvailable;
         private readonly IProfilingProvider profilingProvider;
         private double currentAvailableBudget;
-        private long startTime;
+        private ulong startTime;
         private bool outOfBudget;
 
         private int currentFrameNumber;

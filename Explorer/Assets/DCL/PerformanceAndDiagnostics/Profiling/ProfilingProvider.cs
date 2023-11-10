@@ -8,7 +8,7 @@ namespace DCL.Profiling
     /// </summary>
     public class ProfilingProvider : IProfilingProvider
     {
-        public const long BYTES_IN_MEGABYTE = 1024 * 1024;
+
         private const int HICCUP_THRESHOLD_IN_NS = 50_000_000;
         private const int HICCUP_BUFFER_SIZE = 1_000;
 
@@ -17,10 +17,9 @@ namespace DCL.Profiling
         private readonly ProfilerRecorder totalUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Used Memory");
         private ProfilerRecorder mainThreadTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", 15);
 
-        public long TotalUsedMemoryInBytes => totalUsedMemoryRecorder.LastValue;
-        public float TotalUsedMemoryInMB => TotalUsedMemoryInBytes / BYTES_IN_MEGABYTE;
+        public ulong TotalUsedMemoryInBytes => (ulong)totalUsedMemoryRecorder.LastValue;
 
-        public long CurrentFrameTimeValueInNS => mainThreadTimeRecorder.CurrentValue;
+        public ulong CurrentFrameTimeValueInNS => (ulong)mainThreadTimeRecorder.CurrentValue;
 
         public double AverageFrameTimeValueInNS => GetRecorderFPSAverage(mainThreadTimeRecorder);
 

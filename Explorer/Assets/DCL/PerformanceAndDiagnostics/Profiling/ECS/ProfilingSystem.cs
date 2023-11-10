@@ -46,16 +46,16 @@ namespace DCL.PerformanceAndDiagnostics.Profiling.ECS
                                                             .AddMarker("Hiccups last 1000 frames:", hiccups = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat);
 
                 if (!Debug.isDebugBuild)
-                    perfWidget.AddCustomMarker("Total Used Memory:", usedMemory = new ElementBinding<string>(string.Empty))
-                              .AddCustomMarker("Memory Budget Thresholds:", memoryCheckpoints = new ElementBinding<string>(string.Empty));
+                    perfWidget.AddCustomMarker("Total Used Memory [MB]:", usedMemory = new ElementBinding<string>(string.Empty))
+                              .AddCustomMarker("Memory Budget Thresholds [MB]:", memoryCheckpoints = new ElementBinding<string>(string.Empty));
                 else
                     debugBuilder.AddWidget("Memory")
                                 .SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
-                                .AddCustomMarker("Total Used Memory:", usedMemory = new ElementBinding<string>(string.Empty))
-                                .AddCustomMarker("Memory Budget Thresholds:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
-                                .AddSingleButton("Memory NORMAL", () => MemoryBudgetProvider.DebugMode = MemoryUsageStatus.Normal)
-                                .AddSingleButton("Memory WARNING", () => MemoryBudgetProvider.DebugMode = MemoryUsageStatus.Warning)
-                                .AddSingleButton("Memory FULL", () => MemoryBudgetProvider.DebugMode = MemoryUsageStatus.Full);
+                                .AddCustomMarker("Total Used Memory [MB]:", usedMemory = new ElementBinding<string>(string.Empty))
+                                .AddCustomMarker("Memory Budget Thresholds [MB]:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
+                                .AddSingleButton("Memory NORMAL", () => MemoryBudgetProvider.SimulatedMemoryUsage = MemoryUsageStatus.Normal)
+                                .AddSingleButton("Memory WARNING", () => MemoryBudgetProvider.SimulatedMemoryUsage = MemoryUsageStatus.Warning)
+                                .AddSingleButton("Memory FULL", () => MemoryBudgetProvider.SimulatedMemoryUsage = MemoryUsageStatus.Full);
             }
         }
 
@@ -75,7 +75,7 @@ namespace DCL.PerformanceAndDiagnostics.Profiling.ECS
         private void UpdateView()
         {
             hiccups.Value = profilingProvider.HiccupCountInBuffer;
-            usedMemory.Value = $"<color={GetMemoryUsageColor()}>{profilingProvider.TotalUsedMemoryInMB}</color> MB";
+            usedMemory.Value = $"<color={GetMemoryUsageColor()}>{profilingProvider.TotalUsedMemoryInBytes / 1024 / 1024}</color>";
 
             (float warning, float full) memoryRanges = memoryBudgetProvider.GetMemoryRanges();
             memoryCheckpoints.Value = $"<color=green>{memoryRanges.warning}</color> | <color=red>{memoryRanges.full}</color>";

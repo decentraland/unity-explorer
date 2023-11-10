@@ -2,11 +2,9 @@ namespace DCL.Profiling
 {
     public interface IProfilingProvider
     {
-        long TotalUsedMemoryInBytes { get; }
+        ulong TotalUsedMemoryInBytes { get; }
 
-        float TotalUsedMemoryInMB { get; }
-
-        long CurrentFrameTimeValueInNS { get; }
+        ulong CurrentFrameTimeValueInNS { get; }
 
         double AverageFrameTimeValueInNS { get; }
 
