@@ -59,6 +59,7 @@ namespace DCL.Navmap
                     });
             }
             navmapView.TabSelectorViews[0].TabSelectorToggle.isOn = true;
+            Debug.Log("Navmap");
             cameraController = mapRenderer.RentCamera(
                 new MapCameraInput(
                     this,
@@ -69,6 +70,8 @@ namespace DCL.Navmap
                     navmapView.zoomView.zoomVerticalRange
                 ));
 
+            this.navmapView.SatelliteRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
+            this.navmapView.StreetViewRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
             this.navmapView.SatelliteRenderImage.texture = cameraController.GetRenderTexture();
             this.navmapView.StreetViewRenderImage.texture = cameraController.GetRenderTexture();
             Activate();
@@ -78,6 +81,8 @@ namespace DCL.Navmap
         {
             navmapView.SatellitePixelPerfectMapRendererTextureProvider.Activate(cameraController);
             navmapView.StreetViewPixelPerfectMapRendererTextureProvider.Activate(cameraController);
+            navmapView.StreetViewRenderImage.Activate(null, cameraController.GetRenderTexture(), cameraController);
+            navmapView.SatelliteRenderImage.Activate(null, cameraController.GetRenderTexture(), cameraController);
             zoomController.Activate(cameraController);
         }
 

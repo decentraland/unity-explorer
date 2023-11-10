@@ -45,6 +45,7 @@ namespace DCLServices.MapRenderer.MapCameraController
         public void Initialize(MapLayer layers)
         {
             HighlightEnabled = EnumUtils.HasFlag(layers, MapLayer.ParcelHoverHighlight);
+            Debug.Log($"Init and {HighlightEnabled}");
 
             if (HighlightEnabled)
                 marker = markersPool.Get();
