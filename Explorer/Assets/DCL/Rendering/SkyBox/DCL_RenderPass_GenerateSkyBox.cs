@@ -1,6 +1,8 @@
 using Diagnostics.ReportsHandling;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -18,8 +20,6 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             CubeMapFace_Front = 4,
             CubeMapFace_Back = 5,
         }
-
-        private DCL_StarBox_Compute starsCompute = new DCL_StarBox_Compute();
 
         private const string profilerSkyBoxTag = "Custom Pass: GenerateSkyBox";
         private const string profilerStarBoxTag = "Custom Pass: GenerateStarBox";
@@ -40,8 +40,12 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         private static readonly int s_StarArraySRA0ID = Shader.PropertyToID("_starArraySRA0");
         private static readonly int s_StarArraySDEC0ID = Shader.PropertyToID("_starArraySDEC0");
 
-        private float[] SRA0_Array;
-        private float[] SDEC0_Array;
+        private int nDimensions = 1024;
+        //private int nArraySize = 6;
+        private ComputeShader StarsComputeShader;
+        private RTHandle CubemapTextureArray;
+        private ComputeBuffer starBuffer;
+        private Vector2[] starList;
 
         // Statics
         //private static readonly int s_SkyBoxCubemapTextureID = Shader.PropertyToID(k_SkyBoxCubemapTextureName);
@@ -61,27 +65,28 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             {
                 BSC5 starlist = BSC5.Parse(asset.bytes);
 
-                SRA0_Array = new float[starlist.entries.Length];
-                SDEC0_Array = new float[starlist.entries.Length];
+                starList = new Vector2[starlist.entries.Length];
 
                 for (int i = 0; i < starlist.entries.Length; ++i)
                 {
-                    SRA0_Array[i] = Convert.ToSingle(starlist.entries[i].SRA0);
-                    SDEC0_Array[i] = Convert.ToSingle(starlist.entries[i].SDEC0);
+                    starList[i].x = Convert.ToSingle(starlist.entries[i].SRA0);
+                    starList[i].y = Convert.ToSingle(starlist.entries[i].SDEC0);
                 }
             }
         }
 
-        internal void Setup(ProceduralSkyBoxSettings_Generate _featureSettings, Material _skyboxMaterial, Material _starboxMaterial, RTHandle _SkyBoxRTHandle, RTHandle _StarBoxRTHandle)
+        internal void Setup(ProceduralSkyBoxSettings_Generate _featureSettings, Material _skyboxMaterial, Material _starboxMaterial, RTHandle _SkyBoxRTHandle, RTHandle _StarBoxRTHandle, ComputeShader _StarsComputeShader, RTHandle _CubemapTextureArray)
         {
             m_Material_SkyBox_Generate = _skyboxMaterial;
             m_Material_StarBox_Generate = _starboxMaterial;
             m_Settings_Generate = _featureSettings;
             m_SkyBoxCubeMap_RTHandle = _SkyBoxRTHandle;
             m_StarBoxCubeMap_RTHandle = _StarBoxRTHandle;
+            StarsComputeShader = _StarsComputeShader;
+            CubemapTextureArray = _CubemapTextureArray;
 
-            starsCompute.Start();
-            starsCompute.Update();
+            starBuffer = new ComputeBuffer(9110, sizeof(float) * 2, ComputeBufferType.Structured, ComputeBufferMode.Immutable);
+            starBuffer.SetData(starList);
         }
 
         // This method is called before executing the render pass.
@@ -101,11 +106,6 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             m_Material_SkyBox_Generate.SetFloat(s_SunSizeConvergenceID, m_Settings_Generate.SunSizeConvergence);
             m_Material_SkyBox_Generate.SetFloat(s_AtmosphereThicknessID, m_Settings_Generate.AtmosphereThickness);
             m_Material_SkyBox_Generate.SetFloat(s_ExposureID, m_Settings_Generate.Exposure);
-
-            //Shader.SetGlobalFloatArray(s_StarArraySRA0ID, SRA0_Array);
-            //Shader.SetGlobalFloatArray(s_StarArraySDEC0ID, SDEC0_Array);
-            //m_Material_StarBox_Generate.SetFloatArray(s_StarArraySRA0ID, SRA0_Array);
-            //m_Material_StarBox_Generate.SetFloatArray(s_StarArraySDEC0ID, SDEC0_Array);
         }
 
         public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
@@ -132,6 +132,21 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
                 ReportHub.LogError(m_ReportData, $"{GetType().Name}.Execute(): Missing material. DCL_RenderPass_GenerateSkyBox pass will not execute. Check for missing reference in the renderer resources.");
                 return;
             }
+
+            CommandBuffer cmdStarBox = CommandBufferPool.Get();
+            using (new ProfilingScope(cmdStarBox, new ProfilingSampler(profilerStarBoxTag)))
+            {
+                string kernelName = "CSMain";
+                int kernelIndex = StarsComputeShader.FindKernel(kernelName);
+                StarsComputeShader.GetKernelThreadGroupSizes(kernelIndex, out uint xGroupSize, out uint yGroupSize, out uint zGroupSize);
+                cmdStarBox.SetComputeTextureParam(StarsComputeShader, kernelIndex, "o_cubeMap", CubemapTextureArray);
+                cmdStarBox.SetComputeIntParam(StarsComputeShader, "i_dimensions", nDimensions);
+                cmdStarBox.SetComputeBufferParam(StarsComputeShader, kernelIndex, "StarBuffer", starBuffer);
+                cmdStarBox.DispatchCompute(StarsComputeShader, kernelIndex, 9110 / (int)xGroupSize, (int)yGroupSize, (int)zGroupSize);
+            }
+            context.ExecuteCommandBuffer(cmdStarBox);
+            cmdStarBox.Clear();
+            CommandBufferPool.Release(cmdStarBox);
 
             // CommandBuffer cmdStarBox = CommandBufferPool.Get();
             // using (new ProfilingScope(cmdStarBox, new ProfilingSampler(profilerStarBoxTag)))
@@ -215,6 +230,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         {
             m_SkyBoxCubeMap_RTHandle?.Release();
             m_StarBoxCubeMap_RTHandle?.Release();
+            CubemapTextureArray?.Release();
         }
     }
 }

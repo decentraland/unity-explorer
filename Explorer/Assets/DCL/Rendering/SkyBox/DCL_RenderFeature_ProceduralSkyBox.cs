@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using Object = UnityEngine.Object;
 
 [Serializable]
 internal class ProceduralSkyBoxSettings_Generate
@@ -17,6 +18,7 @@ internal class ProceduralSkyBoxSettings_Generate
     [SerializeField] internal float Exposure = 1.3f;
     [SerializeField] internal Vector4 SunPos = new (-0.04f, -0.02f, 0.0f, 1.0f);
     [SerializeField] internal Vector4 SunColour = new (1.0f, 1.0f, 1.0f, 1.0f);
+    [SerializeField] internal ComputeShader starsComputeShader;
 }
 
 [Serializable]
@@ -42,6 +44,10 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
     [SerializeField] [HideInInspector] private Shader m_ShaderStarBoxGenerate;
     [SerializeField] [HideInInspector] private Shader m_ShaderDraw;
 
+    private int nDimensions = 1024;
+    //private int nArraySize = 6;
+    private ComputeShader StarsComputeShader;
+
     // Materials
     private Material m_Material_SkyBox_Generate;
     private Material m_Material_StarBox_Generate;
@@ -54,6 +60,8 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
     // RenderTarget Handles
     private RTHandle m_SkyBoxCubeMap_RTHandle;
     private RTHandle m_StarBoxCubeMap_RTHandle;
+    private RTHandle m_CubemapTextureArray_RTHandle;
+
 
     public DCL_RenderFeature_ProceduralSkyBox()
     {
@@ -80,6 +88,8 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         GetMaterial_SkyBox_Generate();
         GetMaterial_StarBox_Generate();
         GetMaterial_Draw();
+
+        StarsComputeShader = Object.Instantiate(m_SettingsGenerate.starsComputeShader);
     }
 
     // Here you can inject one or multiple render passes in the renderer.
@@ -110,32 +120,59 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
 
     public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
     {
-        var desc = new RenderTextureDescriptor();
-        desc.autoGenerateMips = false;
-        desc.bindMS = false;
-        desc.colorFormat = RenderTextureFormat.ARGB32;
-        desc.depthBufferBits = 0;
-        desc.depthStencilFormat = GraphicsFormat.None;
-        desc.dimension = TextureDimension.Cube;
-        desc.enableRandomWrite = false;
-        desc.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
-        desc.height = 1024;
-        desc.memoryless = RenderTextureMemoryless.None;
-        desc.mipCount = 0;
-        desc.msaaSamples = 1;
-        desc.shadowSamplingMode = ShadowSamplingMode.None;
-        desc.sRGB = false;
-        desc.stencilFormat = GraphicsFormat.None;
-        desc.useDynamicScale = false;
-        desc.useMipMap = false;
-        desc.volumeDepth = 0;
-        desc.vrUsage = VRTextureUsage.None;
-        desc.width = 1024;
+        {
+            var desc = new RenderTextureDescriptor();
+            desc.autoGenerateMips = false;
+            desc.bindMS = false;
+            desc.colorFormat = RenderTextureFormat.ARGB32;
+            desc.depthBufferBits = 0;
+            desc.depthStencilFormat = GraphicsFormat.None;
+            desc.dimension = TextureDimension.Cube;
+            desc.enableRandomWrite = false;
+            desc.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
+            desc.height = 1024;
+            desc.memoryless = RenderTextureMemoryless.None;
+            desc.mipCount = 0;
+            desc.msaaSamples = 1;
+            desc.shadowSamplingMode = ShadowSamplingMode.None;
+            desc.sRGB = false;
+            desc.stencilFormat = GraphicsFormat.None;
+            desc.useDynamicScale = false;
+            desc.useMipMap = false;
+            desc.volumeDepth = 0;
+            desc.vrUsage = VRTextureUsage.None;
+            desc.width = 1024;
 
-        RenderingUtils.ReAllocateIfNeeded(ref m_SkyBoxCubeMap_RTHandle, desc, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_SkyBoxCubeMapTex");
-        RenderingUtils.ReAllocateIfNeeded(ref m_StarBoxCubeMap_RTHandle, desc, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_StarBoxCubeMapTex");
+            RenderingUtils.ReAllocateIfNeeded(ref m_SkyBoxCubeMap_RTHandle, desc, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_SkyBoxCubeMapTex");
+            RenderingUtils.ReAllocateIfNeeded(ref m_StarBoxCubeMap_RTHandle, desc, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_StarBoxCubeMapTex");
+        }
 
-        m_GeneratePass.Setup(m_SettingsGenerate, m_Material_SkyBox_Generate, m_Material_StarBox_Generate, m_SkyBoxCubeMap_RTHandle, m_StarBoxCubeMap_RTHandle);
+        {
+            var desc = new RenderTextureDescriptor();
+            desc.autoGenerateMips = false;
+            desc.bindMS = false;
+            desc.colorFormat = RenderTextureFormat.ARGB32;
+            desc.depthBufferBits = 0;
+            desc.depthStencilFormat = GraphicsFormat.None;
+            desc.dimension = TextureDimension.Tex2DArray;
+            desc.enableRandomWrite = true;
+            desc.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
+            desc.height = nDimensions;
+            desc.memoryless = RenderTextureMemoryless.None;
+            desc.mipCount = 0;
+            desc.msaaSamples = 1;
+            desc.shadowSamplingMode = ShadowSamplingMode.None;
+            desc.sRGB = false;
+            desc.stencilFormat = GraphicsFormat.None;
+            desc.useDynamicScale = false;
+            desc.useMipMap = false;
+            desc.volumeDepth = 6;
+            desc.vrUsage = VRTextureUsage.None;
+            desc.width = nDimensions;
+            RenderingUtils.ReAllocateIfNeeded(ref m_CubemapTextureArray_RTHandle, desc, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_CubemapTextureArray");
+        }
+
+        m_GeneratePass.Setup(m_SettingsGenerate, m_Material_SkyBox_Generate, m_Material_StarBox_Generate, m_SkyBoxCubeMap_RTHandle, m_StarBoxCubeMap_RTHandle, StarsComputeShader, m_CubemapTextureArray_RTHandle);
         m_DrawPass.Setup(m_SettingsDraw, m_Material_Draw, renderer.cameraColorTargetHandle, renderer.cameraDepthTargetHandle, m_SkyBoxCubeMap_RTHandle, m_StarBoxCubeMap_RTHandle);
     }
 
@@ -143,8 +180,10 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
     {
         m_StarBoxCubeMap_RTHandle?.Release();
         m_SkyBoxCubeMap_RTHandle?.Release();
+        m_CubemapTextureArray_RTHandle?.Release();
         m_GeneratePass?.dispose();
         m_DrawPass?.dispose();
+        CoreUtils.Destroy(StarsComputeShader);
         CoreUtils.Destroy(m_Material_SkyBox_Generate);
         CoreUtils.Destroy(m_Material_StarBox_Generate);
         CoreUtils.Destroy(m_Material_Draw);

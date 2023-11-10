@@ -2,9 +2,27 @@
 
 // Inputs
 int i_dimensions;
+StructuredBuffer<float2> StarBuffer;
 
 // Outputs
 RWTexture2DArray<float4> o_cubeMap;
+
+#define PI 3.14159f
+
+float3 LatlongToDirectionCoordinate(float2 coord)
+{
+    float theta = coord.y * PI;
+    float phi = (coord.x * 2.f * PI - PI*0.5f);
+
+    float cosTheta = cos(theta);
+    float sinTheta = sqrt(1.0 - min(1.0, cosTheta*cosTheta));
+    float cosPhi = cos(phi);
+    float sinPhi = sin(phi);
+
+    float3 direction = float3(sinTheta*cosPhi, cosTheta, sinTheta*sinPhi);
+    direction.xy *= -1.0;
+    return direction;
+}
 
 // Convert an xyz vector to a uvw Texture2DArray sample as if it were a cubemap
 float3 xyz_to_uvw(float3 xyz)
@@ -106,28 +124,42 @@ float3 uvw_to_xyz(float3 uvw)
     return useComponents;
 }
 
-[numthreads(8,8,1)]
+[numthreads(64,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    [unroll]
+    // [unroll]
+    // for (int i = 0; i < 6; ++i)
+    // {
+    //     // Colors the texture based on the xyz of the cubemap
+    //     float3 uvw = float3(float(id.x) / (i_dimensions-1), float(id.y) / (i_dimensions-1), i);
+    //     float3 xyz = abs(uvw_to_xyz(uvw));
+    //
+    //     // This just puts a unique colored dot in the middle of the texture for each side
+    //     // (Not important)
+    //     {
+    //         float dist = length(xyz);
+    //         float3 centerColor = float3( // Find the color of the dot for this side
+    //             i / 2 == 0 || (i & 1 && i / 2 == 1),
+    //             i / 2 == 1 || (i & 1 && i / 2 == 2),
+    //             i / 2 == 2 || (i & 1 && i / 2 == 0));
+    //         if (dist < 1.03) xyz = float3(0, 0, 0); // Outline
+    //         if (dist < 1.02) xyz = centerColor; // Dot
+    //     }
+    //
+    //     o_cubeMap[int3(id.x, id.y, i)] = float4(xyz, 1);
+    // }
+    
+    //o_cubeMap[int3(starPos_CubeMap.x, starPos_CubeMap.y, starPos_CubeMap.z)] = float4(1.0, 1.0, 1.0, 1.0);
+    const uint t = id.x;
+
+    if (t >= 9110)
+    {
+        return;
+    }
+    //float3 starPos = LatlongToDirectionCoordinate(StarBuffer[id.x].xy);
+    //float3 starPos_CubeMap = xyz_to_uvw(starPos);
     for (int i = 0; i < 6; ++i)
     {
-        // Colors the texture based on the xyz of the cubemap
-        float3 uvw = float3(float(id.x) / (i_dimensions-1), float(id.y) / (i_dimensions-1), i);
-        float3 xyz = abs(uvw_to_xyz(uvw));
-
-        // This just puts a unique colored dot in the middle of the texture for each side
-        // (Not important)
-        {
-            float dist = length(xyz);
-            float3 centerColor = float3( // Find the color of the dot for this side
-                i / 2 == 0 || (i & 1 && i / 2 == 1),
-                i / 2 == 1 || (i & 1 && i / 2 == 2),
-                i / 2 == 2 || (i & 1 && i / 2 == 0));
-            if (dist < 1.03) xyz = float3(0, 0, 0); // Outline
-            if (dist < 1.02) xyz = centerColor; // Dot
-        }
-
-        o_cubeMap[int3(id.x, id.y, i)] = float4(xyz, 1);
+        o_cubeMap[uint3(t, t, i)] = float4(1.0, 1.0, 1.0, 1.0);
     }
 }

@@ -158,7 +158,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
                 // BACK Side Render
                 back, back, back, back,
 
-                // RIGTH Side Render
+                // RIGHT Side Render
                 right, right, right, right,
 
                 // UP Side Render
