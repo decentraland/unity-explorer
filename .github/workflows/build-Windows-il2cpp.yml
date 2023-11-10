@@ -84,6 +84,7 @@ jobs:
           projectPath: Explorer
           targetPlatform: ${{ matrix.targetPlatform }}
           versioning: Semantic
+          customImage: unityci/editor:windows-2022.3.12f1-windows-il2cpp-2
 
       # Upload artifact
       - name: Upload windows artifact
