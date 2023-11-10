@@ -58,6 +58,7 @@ namespace Global.Dynamic
         private readonly URLDomain assetBundlesURL;
         private readonly IReadOnlyList<IDCLGlobalPlugin> globalPlugins;
         private readonly IConcurrentBudgetProvider memoryBudgetProvider;
+        private readonly StaticSettings staticSettings;
 
         public GlobalWorldFactory(in StaticContainer staticContainer, IRealmPartitionSettings realmPartitionSettings,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
@@ -66,6 +67,7 @@ namespace Global.Dynamic
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
             partitionSettings = staticContainer.PartitionSettings;
+            staticSettings = staticContainer.StaticSettings;
             this.realmPartitionSettings = realmPartitionSettings;
             this.cameraSamplingData = cameraSamplingData;
             this.realmSamplingData = realmSamplingData;
@@ -103,7 +105,7 @@ namespace Global.Dynamic
                 }
             );
 
-            IConcurrentBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(BudgetingConfig.SCENES_LOADING_BUDGET);
+            IConcurrentBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(staticSettings.ScenesLoadingBudget);
 
             LoadSceneDefinitionListSystem.InjectToWorld(ref builder, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
             LoadSceneDefinitionSystem.InjectToWorld(ref builder, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);

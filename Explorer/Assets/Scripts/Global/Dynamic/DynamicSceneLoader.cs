@@ -74,6 +74,7 @@ namespace Global.Dynamic
             {
                 // First load the common global plugin
                 bool isLoaded;
+
                 (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, ct);
 
                 if (!isLoaded)

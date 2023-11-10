@@ -1,7 +1,7 @@
 ﻿using DCL.Profiling;
+using System.Collections.Generic;
 using UnityEngine;
 using static DCL.PerformanceBudgeting.MemoryUsageStatus;
-using static DCL.PerformanceBudgeting.BudgetingConfig;
 
 namespace DCL.PerformanceBudgeting
 {
@@ -20,18 +20,20 @@ namespace DCL.PerformanceBudgeting
         public static MemoryUsageStatus SimulatedMemoryUsage;
 
         private readonly IProfilingProvider profilingProvider;
+        private readonly Dictionary<MemoryUsageStatus, float> memThreshold;
         private readonly ISystemMemory systemMemory;
 
         private readonly bool isReleaseBuild = !Debug.isDebugBuild;
 
         private ulong actualSystemMemory => systemMemory.TotalSizeInMB;
 
-        public MemoryBudgetProvider(IProfilingProvider profilingProvider)
+        public MemoryBudgetProvider(IProfilingProvider profilingProvider, Dictionary<MemoryUsageStatus, float> memThreshold)
         {
             SimulatedMemoryUsage = Normal;
             systemMemory = new StandaloneSystemMemory();
 
             this.profilingProvider = profilingProvider;
+            this.memThreshold = memThreshold;
         }
 
         public MemoryUsageStatus GetMemoryUsageStatus()
@@ -41,8 +43,8 @@ namespace DCL.PerformanceBudgeting
 
             return usedMemory switch
                    {
-                       _ when usedMemory > totalSystemMemory * MEM_THRESHOLD[Full] => Full,
-                       _ when usedMemory > totalSystemMemory * MEM_THRESHOLD[Warning] => Warning,
+                       _ when usedMemory > totalSystemMemory * memThreshold[Full] => Full,
+                       _ when usedMemory > totalSystemMemory * memThreshold[Warning] => Warning,
                        _ => Normal,
                    };
         }
@@ -50,7 +52,7 @@ namespace DCL.PerformanceBudgeting
         public (float warning, float full) GetMemoryRanges()
         {
             ulong totalSizeInMB = GetTotalSystemMemory();
-            return (totalSizeInMB * MEM_THRESHOLD[Warning], totalSizeInMB * MEM_THRESHOLD[Full]);
+            return (totalSizeInMB * memThreshold[Warning], totalSizeInMB * memThreshold[Full]);
         }
 
         public bool TrySpendBudget() =>
@@ -72,7 +74,7 @@ namespace DCL.PerformanceBudgeting
 
             // ReSharper disable once PossibleLossOfFraction
             ulong CalculateSystemMemoryForWarningThreshold() => // 10% higher than Warning threshold for current usedMemory
-                (ulong)(profilingProvider.TotalUsedMemoryInBytes / BYTES_IN_MEGABYTE / (MEM_THRESHOLD[Warning] * 1.1f));
+                (ulong)(profilingProvider.TotalUsedMemoryInBytes / BYTES_IN_MEGABYTE / (memThreshold[Warning] * 1.1f));
         }
     }
 }

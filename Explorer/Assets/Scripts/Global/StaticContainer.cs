@@ -60,6 +60,7 @@ namespace Global
         public IPartitionSettings PartitionSettings => partitionSettings.Value;
 
         public IRealmPartitionSettings RealmPartitionSettings => realmPartitionSettings.Value;
+        public StaticSettings StaticSettings { get; private set; }
 
         public void Dispose()
         {
@@ -72,6 +73,8 @@ namespace Global
 
         public async UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
         {
+            StaticSettings = settings;
+
             (characterObject, reportHandlingSettings, partitionSettings, realmPartitionSettings) =
                 await UniTask.WhenAll(
                     AssetsProvisioner.ProvideInstanceAsync(settings.CharacterObject, new Vector3(0f, settings.StartYPosition, 0f), Quaternion.identity, ct: ct),
@@ -95,14 +98,16 @@ namespace Global
             if (!result)
                 return (null, false);
 
+            var staticSettings = settingsContainer.GetSettings<StaticSettings>();
+
             var sharedDependencies = new ECSWorldSingletonSharedDependencies(
                 componentsContainer.ComponentPoolsRegistry,
                 container.ReportHandlingSettings,
                 new SceneEntityFactory(),
                 new PartitionedWorldsAggregate.Factory(),
-                new ConcurrentLoadingBudgetProvider(BudgetingConfig.ASSETS_LOADING_BUDGET),
-                new FrameTimeCapBudgetProvider(BudgetingConfig.FPS_CAP, profilingProvider),
-                new MemoryBudgetProvider(profilingProvider)
+                new ConcurrentLoadingBudgetProvider(staticSettings.AssetsLoadingBudget),
+                new FrameTimeCapBudgetProvider(staticSettings.FPSCap, profilingProvider),
+                new MemoryBudgetProvider(profilingProvider, staticSettings.MemoryThresholds)
             );
 
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
