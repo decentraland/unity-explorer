@@ -1,6 +1,12 @@
 name: Acquire activation file
 on:
-  workflow_dispatch: {}
+  pull_request: 
+      types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+  push: { branches: [main] }
 jobs:
   activation:
     name: Request manual activation file 🔑
