@@ -11,6 +11,8 @@ jobs:
   activation:
     name: Request manual activation file 🔑
     runs-on: ubuntu-latest
+    with:
+     unityVersion: '2022.3.12f1'
     steps:
       # Request manual activation file
       - name: Request manual activation file
