@@ -1,6 +1,5 @@
 using Arch.SystemGroups;
-using Diagnostics;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using System;
 using System.Linq;
 using UnityEngine;

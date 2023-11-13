@@ -4,7 +4,7 @@ using CRDT.Protocol;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.OutgoingMessages;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using Google.Protobuf;
 using System.Buffers;
 

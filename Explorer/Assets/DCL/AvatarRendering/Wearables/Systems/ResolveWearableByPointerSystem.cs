@@ -7,7 +7,7 @@ using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;

@@ -1,7 +1,7 @@
 ﻿using Arch.Core;
 using DCL.ECSComponents;
+using DCL.PerformanceBudgeting;
 using ECS.ComponentsPooling;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.TestSuite;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.PrimitiveRenderer.MeshPrimitive;

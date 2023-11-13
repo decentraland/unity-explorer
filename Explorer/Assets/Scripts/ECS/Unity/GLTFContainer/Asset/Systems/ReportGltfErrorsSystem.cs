@@ -1,6 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.Common.Systems;
 using ECS.Unity.GLTFContainer.Asset.Components;
