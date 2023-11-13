@@ -671,6 +671,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ff97ea308f26403d80e4fc93a5f3f8b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  floatingPanelView: {fileID: 6116657360967466757}
   satellite: {fileID: 2723043980555199245}
   streetView: {fileID: 6160499980858837278}
   zoomView: {fileID: 5363161542596086617}
@@ -1014,6 +1015,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 25544740848074249, guid: dc095fdc2631c4557bb7133c59237bee, type: 3}
   m_PrefabInstance: {fileID: 1201169811830311155}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &6116657360967466757 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4920695936791869430, guid: dc095fdc2631c4557bb7133c59237bee, type: 3}
+  m_PrefabInstance: {fileID: 1201169811830311155}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 012f041e27e094d8493d954aebe3d51c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &2714252146397133178
 PrefabInstance:
   m_ObjectHideFlags: 0

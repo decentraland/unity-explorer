@@ -5,6 +5,7 @@ using DCLServices.MapRenderer.ConsumerUtils;
 using DCLServices.MapRenderer.MapCameraController;
 using DCLServices.MapRenderer.MapLayers;
 using DCLServices.MapRenderer.MapLayers.PlayerMarker;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -25,13 +26,14 @@ namespace DCL.Navmap
         private IMapCameraController cameraController;
         private IMapRenderer mapRenderer;
         private NavmapZoomController zoomController;
-        private MapCameraDragBehavior mapCameraDragBehavior;
+        private FloatingPanelController floatingPanelController;
 
         public NavmapController(NavmapView navmapView, IMapRenderer mapRenderer)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
             zoomController = new NavmapZoomController(navmapView.zoomView);
+            floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView);
             Dictionary<ExploreSections, GameObject> mapSections = new ()
             {
                 { ExploreSections.Satellite, navmapView.satellite },
@@ -59,22 +61,29 @@ namespace DCL.Navmap
                     });
             }
             navmapView.TabSelectorViews[0].TabSelectorToggle.isOn = true;
-            Debug.Log("Navmap");
+
             cameraController = mapRenderer.RentCamera(
                 new MapCameraInput(
                     this,
                     ACTIVE_MAP_LAYERS,
-                    ParcelMathHelper.WorldToGridPosition(new Vector3(0,0,0)),//DataStore.i.player.playerWorldPosition.Get()),
+                    ParcelMathHelper.WorldToGridPosition(new Vector3(0,0,0)),
                     zoomController.ResetZoomToMidValue(),
                     this.navmapView.SatellitePixelPerfectMapRendererTextureProvider.GetPixelPerfectTextureResolution(),
                     navmapView.zoomView.zoomVerticalRange
                 ));
 
             this.navmapView.SatelliteRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
+            this.navmapView.SatelliteRenderImage.ParcelClicked += OnParcelClicked;
             this.navmapView.StreetViewRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
+            this.navmapView.StreetViewRenderImage.ParcelClicked += OnParcelClicked;
             this.navmapView.SatelliteRenderImage.texture = cameraController.GetRenderTexture();
             this.navmapView.StreetViewRenderImage.texture = cameraController.GetRenderTexture();
             Activate();
+        }
+
+        private void OnParcelClicked(MapRenderImage.ParcelClickData obj)
+        {
+            floatingPanelController.ShowPanel();
         }
 
         private void Activate()

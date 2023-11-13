@@ -7,6 +7,9 @@ namespace DCL.Navmap
     public class NavmapView : MonoBehaviour
     {
         [field: SerializeField]
+        public FloatingPanelView floatingPanelView;
+
+        [field: SerializeField]
         public GameObject satellite;
 
         [field: SerializeField]
