@@ -2,11 +2,11 @@
 using Arch.System;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Transform;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
-using Diagnostics.ReportsHandling;
+using DCL.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.ComponentsPooling;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Groups;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.PrimitiveRenderer.MeshPrimitive;

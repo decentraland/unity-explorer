@@ -2,11 +2,11 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.PlayerOriginated.Utility;
 using DCL.Interaction.Utility;
-using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using System.Collections.Generic;
 

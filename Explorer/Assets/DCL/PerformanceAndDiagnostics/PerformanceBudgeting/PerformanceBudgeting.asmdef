@@ -1,0 +1,18 @@
+{
+  "name": "PerformanceBudgeting",
+  "rootNamespace": "",
+  "references": [
+    "GUID:56e8195b069a4dca9c4c4f313c65f526",
+    "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+    "GUID:be9e12417fb45c44aa8de9872453e8ab"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

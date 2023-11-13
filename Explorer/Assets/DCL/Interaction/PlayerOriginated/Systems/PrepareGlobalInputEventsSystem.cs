@@ -1,8 +1,8 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
-using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using System.Collections.Generic;
 

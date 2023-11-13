@@ -1,8 +1,8 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using Diagnostics.ReportsHandling;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -74,6 +74,7 @@ namespace Global.Dynamic
             {
                 // First load the common global plugin
                 bool isLoaded;
+
                 (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, ct);
 
                 if (!isLoaded)

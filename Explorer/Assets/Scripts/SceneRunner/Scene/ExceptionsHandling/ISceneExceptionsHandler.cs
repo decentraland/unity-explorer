@@ -1,5 +1,5 @@
 ﻿using Arch.SystemGroups;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using System;
 
 namespace SceneRunner.Scene.ExceptionsHandling
