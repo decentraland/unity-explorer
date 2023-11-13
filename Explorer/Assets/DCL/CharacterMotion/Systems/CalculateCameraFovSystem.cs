@@ -6,7 +6,7 @@ using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using ECS.Abstract;
 using UnityEngine;
 

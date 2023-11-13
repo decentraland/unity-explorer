@@ -5,7 +5,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using CrdtEcsBridge.Physics;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
