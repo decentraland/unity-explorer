@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using Object = UnityEngine.Object;
+using Utility.ComputeShaders;
 
 [Serializable]
 internal class ProceduralSkyBoxSettings_Generate
@@ -27,7 +27,7 @@ internal class ProceduralSkyBoxSettings_Draw
     // Parameters
 }
 
-public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeature
+public partial class DCL_RenderFeature_ProceduralSkyBox
 {
     // Shaders
     private const string k_ShaderName_SkyBox_Generate = "DCL/SkyBox_Procedural_Generate";
@@ -47,6 +47,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
     private int nDimensions = 1024;
     //private int nArraySize = 6;
     private ComputeShader StarsComputeShader;
+    private ComputeShader m_Current_Compute_Shader_Asset;
 
     // Materials
     private Material m_Material_SkyBox_Generate;
@@ -89,7 +90,18 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         GetMaterial_StarBox_Generate();
         GetMaterial_Draw();
 
-        StarsComputeShader = Object.Instantiate(m_SettingsGenerate.starsComputeShader);
+        // Create is called on Unity's validate
+
+        if (m_Current_Compute_Shader_Asset)
+            ComputeShaderHotReload.Unsubscribe(m_Current_Compute_Shader_Asset, SetupStarsComputeShader);
+
+        m_Current_Compute_Shader_Asset = m_SettingsGenerate.starsComputeShader;
+
+        if (m_Current_Compute_Shader_Asset)
+        {
+            StarsComputeShader = Instantiate(m_SettingsGenerate.starsComputeShader);
+            ComputeShaderHotReload.Subscribe(m_Current_Compute_Shader_Asset, SetupStarsComputeShader);
+        }
     }
 
     // Here you can inject one or multiple render passes in the renderer.
@@ -176,13 +188,23 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         m_DrawPass.Setup(m_SettingsDraw, m_Material_Draw, renderer.cameraColorTargetHandle, renderer.cameraDepthTargetHandle, m_SkyBoxCubeMap_RTHandle, m_StarBoxCubeMap_RTHandle);
     }
 
+    private void SetupStarsComputeShader(ComputeShader computeShader)
+    {
+        StarsComputeShader = Instantiate(m_SettingsGenerate.starsComputeShader);
+        m_GeneratePass.SetStarsComputeShader(StarsComputeShader);
+    }
+
     protected override void Dispose(bool disposing)
     {
+        if (m_Current_Compute_Shader_Asset)
+            ComputeShaderHotReload.Unsubscribe(m_Current_Compute_Shader_Asset, SetupStarsComputeShader);
+
         m_StarBoxCubeMap_RTHandle?.Release();
         m_SkyBoxCubeMap_RTHandle?.Release();
         m_CubemapTextureArray_RTHandle?.Release();
         m_GeneratePass?.dispose();
         m_DrawPass?.dispose();
+
         CoreUtils.Destroy(StarsComputeShader);
         CoreUtils.Destroy(m_Material_SkyBox_Generate);
         CoreUtils.Destroy(m_Material_StarBox_Generate);

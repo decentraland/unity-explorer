@@ -75,6 +75,9 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             }
         }
 
+        internal void SetStarsComputeShader(ComputeShader computeShader) =>
+            StarsComputeShader = computeShader;
+
         internal void Setup(ProceduralSkyBoxSettings_Generate _featureSettings, Material _skyboxMaterial, Material _starboxMaterial, RTHandle _SkyBoxRTHandle, RTHandle _StarBoxRTHandle, ComputeShader _StarsComputeShader, RTHandle _CubemapTextureArray)
         {
             m_Material_SkyBox_Generate = _skyboxMaterial;
