@@ -10,6 +10,9 @@ namespace DCL.Navmap
         public FloatingPanelView floatingPanelView;
 
         [field: SerializeField]
+        public NavmapFilterView filterView;
+
+        [field: SerializeField]
         public GameObject satellite;
 
         [field: SerializeField]

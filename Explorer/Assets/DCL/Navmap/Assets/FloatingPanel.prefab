@@ -734,6 +734,9 @@ MonoBehaviour:
   placeImage: {fileID: 3532656630585342090}
   closeButton: {fileID: 336449712889304881}
   jumpInButton: {fileID: 7544780555329989278}
+  placeName: {fileID: 8555938453398587054}
+  placeCreator: {fileID: 1460150922797621082}
+  placeDescription: {fileID: 3864418057313609595}
 --- !u!1 &2945859757405099506
 GameObject:
   m_ObjectHideFlags: 0
@@ -1495,7 +1498,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 319}
+  m_AnchoredPosition: {x: 0, y: 320}
   m_SizeDelta: {x: 410, y: 287}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4169640113008290519
@@ -1548,7 +1551,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_ShowMaskGraphic: 1
+  m_ShowMaskGraphic: 0
 --- !u!1 &4041016205516819919
 GameObject:
   m_ObjectHideFlags: 0

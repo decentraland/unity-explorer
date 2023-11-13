@@ -1,5 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,4 +15,13 @@ public class FloatingPanelView : MonoBehaviour
 
     [field: SerializeField]
     public Button jumpInButton;
+
+    [field: SerializeField]
+    public TMP_Text placeName;
+
+    [field: SerializeField]
+    public TMP_Text placeCreator;
+
+    [field: SerializeField]
+    public TMP_Text placeDescription;
 }

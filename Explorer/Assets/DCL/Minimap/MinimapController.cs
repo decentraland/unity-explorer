@@ -46,7 +46,6 @@ namespace DCL.Minimap
         {
             if (mapCameraController == null)
             {
-                Debug.Log("Minimap");
                 mapCameraController = mapRenderer.RentCamera(new MapCameraInput(
                     this,
                     RENDER_LAYERS,

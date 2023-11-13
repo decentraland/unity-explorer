@@ -20,20 +20,20 @@ namespace DCL.Navmap
         private const MapLayer ACTIVE_MAP_LAYERS =
             MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.HomePoint | MapLayer.ScenesOfInterest | MapLayer.PlayerMarker | MapLayer.HotUsersMarkers | MapLayer.ColdUsersMarkers | MapLayer.ParcelHoverHighlight;
 
-        private NavmapView navmapView;
-        private SectionSelectorController sectionSelectorController;
+        private readonly NavmapView navmapView;
+        private readonly SectionSelectorController sectionSelectorController;
         private CancellationTokenSource animationCts;
-        private IMapCameraController cameraController;
-        private IMapRenderer mapRenderer;
-        private NavmapZoomController zoomController;
-        private FloatingPanelController floatingPanelController;
+        private readonly IMapCameraController cameraController;
+        private readonly NavmapZoomController zoomController;
+        private readonly FloatingPanelController floatingPanelController;
+        private readonly NavmapFilterController filterController;
 
         public NavmapController(NavmapView navmapView, IMapRenderer mapRenderer)
         {
             this.navmapView = navmapView;
-            this.mapRenderer = mapRenderer;
             zoomController = new NavmapZoomController(navmapView.zoomView);
             floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView);
+            filterController = new NavmapFilterController(this.navmapView.filterView);
             Dictionary<ExploreSections, GameObject> mapSections = new ()
             {
                 { ExploreSections.Satellite, navmapView.satellite },
