@@ -53,9 +53,9 @@ namespace DCL.PerformanceAndDiagnostics.Profiling.ECS
                                 .SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
                                 .AddCustomMarker("Total Used Memory [MB]:", usedMemory = new ElementBinding<string>(string.Empty))
                                 .AddCustomMarker("Memory Budget Thresholds [MB]:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
-                                .AddSingleButton("Memory NORMAL", () => MemoryBudgetProvider.SimulatedMemoryUsage = MemoryUsageStatus.Normal)
-                                .AddSingleButton("Memory WARNING", () => MemoryBudgetProvider.SimulatedMemoryUsage = MemoryUsageStatus.Warning)
-                                .AddSingleButton("Memory FULL", () => MemoryBudgetProvider.SimulatedMemoryUsage = MemoryUsageStatus.Full);
+                                .AddSingleButton("Memory NORMAL", () => memoryBudgetProvider.SimulatedMemoryUsage = MemoryUsageStatus.Normal)
+                                .AddSingleButton("Memory WARNING", () => memoryBudgetProvider.SimulatedMemoryUsage = MemoryUsageStatus.Warning)
+                                .AddSingleButton("Memory FULL", () => memoryBudgetProvider.SimulatedMemoryUsage = MemoryUsageStatus.Full);
             }
         }
 
@@ -75,7 +75,7 @@ namespace DCL.PerformanceAndDiagnostics.Profiling.ECS
         private void UpdateView()
         {
             hiccups.Value = profilingProvider.HiccupCountInBuffer;
-            usedMemory.Value = $"<color={GetMemoryUsageColor()}>{profilingProvider.TotalUsedMemoryInBytes / 1024 / 1024}</color>";
+            usedMemory.Value = $"<color={GetMemoryUsageColor()}>{(ulong)BytesFormatter.Convert(profilingProvider.TotalUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte)}</color>";
 
             (float warning, float full) memoryRanges = memoryBudgetProvider.GetMemoryRanges();
             memoryCheckpoints.Value = $"<color=green>{memoryRanges.warning}</color> | <color=red>{memoryRanges.full}</color>";

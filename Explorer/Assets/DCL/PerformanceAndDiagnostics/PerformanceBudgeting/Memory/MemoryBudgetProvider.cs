@@ -17,7 +17,7 @@ namespace DCL.PerformanceBudgeting
         private const ulong BYTES_IN_MEGABYTE = 1024 * 1024;
         private const ulong NO_MEMORY = 0;
 
-        public static MemoryUsageStatus SimulatedMemoryUsage;
+        public MemoryUsageStatus SimulatedMemoryUsage { get; set; }
 
         private readonly IProfilingProvider profilingProvider;
         private readonly Dictionary<MemoryUsageStatus, float> memThreshold;

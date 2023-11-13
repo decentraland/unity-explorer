@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace DCL.DebugUtilities
@@ -79,7 +80,7 @@ namespace DCL.DebugUtilities
             Exabyte,
         }
 
-        private const int DEFAULT_PRECISION = 3;
+        private const int DEFAULT_PRECISION = 2;
 
         private static readonly IFormatProvider FORMAT_PROVIDER = CreateFormatProvider(DEFAULT_PRECISION);
 
@@ -98,10 +99,12 @@ namespace DCL.DebugUtilities
             ulong inputBytes = isBit ? numberOfUnits / 8 : numberOfUnits;
             var orderOfMagnitude = (int)Mathf.Max(0, Mathf.Floor(Mathf.Log(Mathf.Abs(inputBytes), isBit ? 1000 : 1024)));
             DataSizeUnit outputUnit = ForMagnitude(orderOfMagnitude, isBit);
-            ulong convertedUnits = numberOfUnits * CountBitsInUnit(originalDataSize);
-
-            return convertedUnits.ToString("N", FORMAT_PROVIDER) + " " + outputUnit.ToAbbreviation();
+            return Convert(numberOfUnits, originalDataSize, outputUnit).ToString("N", FORMAT_PROVIDER) + " " + outputUnit.ToAbbreviation();
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double Convert(ulong numberOfUnits, DataSizeUnit dataSize, DataSizeUnit destination) =>
+            numberOfUnits * CountBitsInUnit(dataSize) / (double)CountBitsInUnit(destination);
 
         private static ulong CountBitsInUnit(DataSizeUnit sourceUnit)
         {
