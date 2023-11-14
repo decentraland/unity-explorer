@@ -25,7 +25,6 @@ namespace DCL.CharacterMotion.Systems
         private readonly ElementBinding<float> wallDistance;
         private readonly ElementBinding<float> ikWeightSpeed;
 
-        private readonly ElementBinding<Vector3> elbowHintOffset;
         private bool isInitialized;
         private SingleInstanceEntity settingsEntity;
 
@@ -52,13 +51,11 @@ namespace DCL.CharacterMotion.Systems
                 wallDistance.Value = settings.HandsIKWallHitDistance;
                 ikWeightSpeed.Value = settings.HandsIKWeightSpeed;
 
-                elbowHintOffset.Value = settings.HandsIKElbowOffset;
                 isInitialized = true;
             }
 
             settings.HandsIKWallHitDistance = wallDistance.Value;
             settings.HandsIKWeightSpeed = ikWeightSpeed.Value;
-            settings.HandsIKElbowOffset = elbowHintOffset.Value;
 
             UpdateIKQuery(World, t);
         }

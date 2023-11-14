@@ -29,6 +29,8 @@ namespace DCL.CharacterMotion.Systems
         private readonly ElementBinding<float> ikPositionChangeSpeed;
         private readonly ElementBinding<float> ikDistance;
         private readonly ElementBinding<float> spherecastWidth;
+        private readonly ElementBinding<float> twistLimitX;
+        private readonly ElementBinding<float> twistLimitY;
         private SingleInstanceEntity settingsEntity;
         private bool isInitialized;
 
@@ -41,7 +43,9 @@ namespace DCL.CharacterMotion.Systems
                         .AddFloatField("IK Change Speed", ikWeightChangeSpeed = new ElementBinding<float>(0))
                         .AddFloatField("IK Position Speed", ikPositionChangeSpeed = new ElementBinding<float>(0))
                         .AddFloatField("IK Distance", ikDistance = new ElementBinding<float>(0))
-                        .AddFloatField("Spherecast Width", spherecastWidth = new ElementBinding<float>(0));
+                        .AddFloatField("Spherecast Width", spherecastWidth = new ElementBinding<float>(0))
+                        .AddFloatField("Twist Limit X", twistLimitX = new ElementBinding<float>(0))
+                        .AddFloatField("Twist Limit Y", twistLimitY = new ElementBinding<float>(0));
         }
 
         public override void Initialize()
@@ -53,6 +57,8 @@ namespace DCL.CharacterMotion.Systems
         {
             ICharacterControllerSettings settings = settingsEntity.GetCharacterSettings(World);
 
+            Vector2 twistLimits = settings.FeetIKTwistAngleLimits;
+
             if (!isInitialized)
             {
                 isInitialized = true;
@@ -60,12 +66,17 @@ namespace DCL.CharacterMotion.Systems
                 ikPositionChangeSpeed.Value = settings.IKPositionSpeed;
                 ikDistance.Value = settings.FeetIKHipsPullMaxDistance;
                 spherecastWidth.Value = settings.FeetIKSphereSize;
+                twistLimitX.Value = twistLimits.x;
+                twistLimitY.Value = twistLimits.y;
             }
 
             settings.IKWeightSpeed = ikWeightChangeSpeed.Value;
             settings.IKPositionSpeed = ikPositionChangeSpeed.Value;
             settings.FeetIKHipsPullMaxDistance = ikDistance.Value;
             settings.FeetIKSphereSize = spherecastWidth.Value;
+            twistLimits.x = twistLimitX.Value;
+            twistLimits.y = twistLimitY.Value;
+            settings.FeetIKTwistAngleLimits = twistLimits;
 
             UpdateIKQuery(World, t);
         }
@@ -82,6 +93,7 @@ namespace DCL.CharacterMotion.Systems
             UpdateToggleStatus(ref feetIKComponent, avatarBase);
 
             if (feetIKComponent.IsDisabled) return;
+
             if (!feetIKComponent.Initialized)
                 InitializeFeetComponent(ref feetIKComponent, avatarBase);
 
@@ -90,8 +102,8 @@ namespace DCL.CharacterMotion.Systems
             Transform rightLegConstraint = avatarBase.RightLegConstraint;
             Transform leftLegConstraint = avatarBase.LeftLegConstraint;
 
-            ApplyLegIK(rightLegConstraint, rightLegConstraint.forward, avatarBase.RightLegIKTarget, ref feetIKComponent.Right, settings, dt);
-            ApplyLegIK(leftLegConstraint, leftLegConstraint.forward, avatarBase.LeftLegIKTarget, ref feetIKComponent.Left, settings, dt);
+            ApplyLegIK(rightLegConstraint, rightLegConstraint.forward, avatarBase.RightLegIKTarget, ref feetIKComponent.Right, settings, dt, settings.FeetIKVerticalAngleLimits, settings.FeetIKTwistAngleLimits);
+            ApplyLegIK(leftLegConstraint, leftLegConstraint.forward, avatarBase.LeftLegIKTarget, ref feetIKComponent.Left, settings, dt, settings.FeetIKVerticalAngleLimits, new Vector2(settings.FeetIKTwistAngleLimits.y, settings.FeetIKTwistAngleLimits.x));
 
             // Second: Calculate IK feet weight based on the constrained local-Y
             ApplyIKWeight(avatarBase.RightLegIK, rightLegConstraint.localPosition, ref feetIKComponent.Right, rigidTransform.IsGrounded, settings, dt);
@@ -158,7 +170,8 @@ namespace DCL.CharacterMotion.Systems
             Transform legIKTarget,
             ref FeetIKComponent.FeetComponent feetComponent,
             ICharacterControllerSettings settings,
-            float dt)
+            float dt,
+            Vector2 verticalLimits, Vector2 twistLimits)
         {
             float pullDist = settings.FeetIKHipsPullMaxDistance;
             Vector3 origin = legConstraintPosition.position;
@@ -166,14 +179,19 @@ namespace DCL.CharacterMotion.Systems
             Vector3 rayDirection = Vector3.down;
             float rayDistance = pullDist * 2;
 
-            Debug.DrawRay(rayOrigin, rayDirection * rayDistance, Color.red);
-
             if (Physics.SphereCast(rayOrigin, settings.FeetIKSphereSize, rayDirection, out RaycastHit hitInfo, rayDistance, PhysicsLayers.CHARACTER_ONLY_MASK))
             {
                 legIKTarget.position = Vector3.MoveTowards(legIKTarget.position, hitInfo.point, settings.IKPositionSpeed * dt);
                 var rotationCorrection = Quaternion.FromToRotation(Vector3.up, hitInfo.normal);
                 legConstraintForward.y = 0;
-                legIKTarget.rotation = rotationCorrection * Quaternion.LookRotation(legConstraintForward, Vector3.up);
+                Quaternion targetRotation = rotationCorrection * Quaternion.LookRotation(legConstraintForward, Vector3.up);
+
+                // we first apply the rotation
+                legIKTarget.rotation = targetRotation;
+
+                // then we limit the angles using the local rotations
+                ApplyRotationLimit(legIKTarget, verticalLimits, twistLimits);
+
                 feetComponent.isGrounded = true;
                 feetComponent.distance = FEET_HEIGHT_CORRECTION + hitInfo.distance - pullDist - legConstraintPosition.localPosition.y;
                 return;
@@ -183,6 +201,21 @@ namespace DCL.CharacterMotion.Systems
             legIKTarget.localRotation = feetComponent.TargetInitialRotation;
             feetComponent.isGrounded = false;
             feetComponent.distance = 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void ApplyRotationLimit(Transform legIKTarget, Vector2 verticalLimits, Vector2 twistLimits)
+        {
+            Vector3 eulerAngles = legIKTarget.localEulerAngles;
+
+            // euler angles range from 0 to 360, so we use DeltaAngle to turn them into 180 to -180
+            eulerAngles.x = Mathf.Clamp(-Mathf.DeltaAngle(eulerAngles.x, 0), verticalLimits.x, verticalLimits.y);
+
+            // left and right legs have their limits inverted so we deal with that logic with Min and Max
+            eulerAngles.z = Mathf.Clamp(-Mathf.DeltaAngle(eulerAngles.z, 0), Mathf.Min(twistLimits.x, twistLimits.y),
+                Mathf.Max(twistLimits.x, twistLimits.y));
+
+            legIKTarget.localEulerAngles = eulerAngles;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
