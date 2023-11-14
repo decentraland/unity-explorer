@@ -30,15 +30,6 @@ namespace DCL.DebugUtilities
             return builder;
         }
 
-        public static DebugWidgetBuilder AddVectorField(this DebugWidgetBuilder builder, string labelName, ElementBinding<Vector3> elementBinding)
-        {
-            var label = new DebugConstLabelDef(labelName);
-            var field = new DebugVector3FieldDef(elementBinding);
-            builder.AddControl(label, field);
-            return builder;
-        }
-
-
         public static DebugWidgetBuilder AddMarker(this DebugWidgetBuilder builder, string markerName, ElementBinding<ulong> binding, DebugLongMarkerDef.Unit unit)
         {
             var label = new DebugConstLabelDef(markerName);

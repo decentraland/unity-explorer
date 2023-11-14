@@ -6,9 +6,9 @@ using CrdtEcsBridge.Physics;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
-using DCL.DebugUtilities.Builders;
+using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -34,8 +34,7 @@ namespace DCL.CharacterMotion.Systems
             debugBuilder.AddWidget("Locomotion: Hands IK")
                         .AddSingleButton("Toggle Enable", () => disableWasToggled = true)
                         .AddFloatField("Wall Distance", wallDistance = new ElementBinding<float>(0))
-                        .AddFloatField("IK Weight Speed", ikWeightSpeed = new ElementBinding<float>(0))
-                        .AddVectorField("Elbow Hint Offset", elbowHintOffset = new ElementBinding<Vector3>(Vector3.zero));
+                        .AddFloatField("IK Weight Speed", ikWeightSpeed = new ElementBinding<float>(0));
         }
 
         public override void Initialize()

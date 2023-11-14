@@ -5,7 +5,7 @@ using DCL.Character;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
-using DCL.DebugUtilities.Builders;
+using DCL.DebugUtilities;
 using System.Threading;
 
 namespace DCL.PluginSystem.Global
