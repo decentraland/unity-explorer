@@ -14,12 +14,15 @@ namespace DCL.CharacterMotion.Animation
             in IAvatarView view,
             in StunComponent stunComponent)
         {
-            animationComponent.States.IsGrounded = rigidTransform.IsGrounded;
-            animationComponent.States.IsFalling = !rigidTransform.IsGrounded && rigidTransform.NonInterpolatedVelocity.y < settings.AnimationFallSpeed;
-            animationComponent.States.IsLongFall = !rigidTransform.IsGrounded && rigidTransform.NonInterpolatedVelocity.y < settings.AnimationLongFallSpeed;
-            animationComponent.States.IsLongJump = rigidTransform.NonInterpolatedVelocity.y > settings.RunJumpHeight * settings.RunJumpHeight * settings.JumpGravityFactor;
+            bool isGrounded = rigidTransform.IsGrounded && !rigidTransform.IsOnASteepSlope;
+            float verticalVelocity = rigidTransform.GravityVelocity.y + rigidTransform.MoveVelocity.Velocity.y;
 
-            bool jumpState = !rigidTransform.IsGrounded && (rigidTransform.NonInterpolatedVelocity.y > -settings.AnimationFallSpeed || animationComponent.States.IsLongJump);
+            animationComponent.States.IsGrounded = isGrounded;
+            animationComponent.States.IsFalling = !isGrounded && verticalVelocity < settings.AnimationFallSpeed;
+            animationComponent.States.IsLongFall = !isGrounded && verticalVelocity < settings.AnimationLongFallSpeed;
+            animationComponent.States.IsLongJump = verticalVelocity > settings.RunJumpHeight * settings.RunJumpHeight * settings.JumpGravityFactor;
+
+            bool jumpState = !isGrounded && (verticalVelocity > -settings.AnimationFallSpeed || animationComponent.States.IsLongJump);
 
             if (jumpState && !animationComponent.States.IsJumping)
                 view.SetAnimatorTrigger(AnimationHashes.JUMP);

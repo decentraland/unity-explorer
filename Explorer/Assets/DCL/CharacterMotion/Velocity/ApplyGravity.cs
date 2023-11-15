@@ -1,5 +1,6 @@
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
+using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
@@ -14,23 +15,33 @@ namespace DCL.CharacterMotion
             int physicsTick,
             float deltaTime)
         {
-            if (!characterPhysics.IsGrounded)
+            Vector3 gravityDirection = characterPhysics.GravityDirection;
+
+            // when grounded and on a steep slope, we tilt the gravity towards the slope downwards direction using the current magnitude to maintain momentum
+            if (characterPhysics.IsOnASteepSlope && characterPhysics.IsGrounded)
             {
-                float gravity = settings.Gravity;
+                float currentGravityMagnitude = characterPhysics.GravityVelocity.magnitude;
+                characterPhysics.GravityVelocity = gravityDirection * currentGravityMagnitude;
+            }
+
+            if (!characterPhysics.IsGrounded || characterPhysics.IsOnASteepSlope)
+            {
+                // gravity in settings is negative, since we now use directions, we need it positive
+                float gravity = Math.Abs(settings.Gravity);
 
                 if (jumpInputComponent.IsPressed && PhysicsToDeltaTime(physicsTick - jumpInputComponent.Trigger.TickWhenJumpOccurred) < settings.LongJumpTime)
                     gravity *= settings.LongJumpGravityScale;
 
-                if (characterPhysics.NonInterpolatedVelocity.y > 0)
+                if (characterPhysics.GravityVelocity.y > 0)
                     gravity *= settings.JumpGravityFactor;
 
-                // Gravity is already negative
-                characterPhysics.NonInterpolatedVelocity += Vector3.up * gravity * deltaTime;
+                characterPhysics.GravityVelocity += gravityDirection * gravity * deltaTime;
             }
             else
-
+            {
                 // Gravity should always affect the character, otherwise we are unable to ground it properly
-                characterPhysics.NonInterpolatedVelocity.y = settings.Gravity * deltaTime;
+                characterPhysics.GravityVelocity = gravityDirection * Math.Abs(settings.Gravity) * deltaTime;
+            }
         }
 
         private static float PhysicsToDeltaTime(int ticks) =>

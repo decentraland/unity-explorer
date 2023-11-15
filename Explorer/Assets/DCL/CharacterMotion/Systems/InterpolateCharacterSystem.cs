@@ -32,16 +32,18 @@ namespace DCL.CharacterMotion.Systems
         public override void Initialize()
         {
             time = World.CacheTime();
+            fixedTick = World.CachePhysicsTick();
         }
 
         protected override void Update(float t)
         {
-            InterpolateQuery(World, t);
+            InterpolateQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick);
         }
 
         [Query]
         private void Interpolate(
             [Data] float dt,
+            [Data] int physicsTick,
             in ICharacterControllerSettings settings,
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController,
@@ -54,19 +56,18 @@ namespace DCL.CharacterMotion.Systems
 
             ApplyVelocityStun.Execute(ref rigidTransform, in stunComponent);
 
-            Vector3 movementDelta = (rigidTransform.MoveVelocity.Velocity + rigidTransform.NonInterpolatedVelocity) * dt;
+            Vector3 movementDelta = rigidTransform.MoveVelocity.Velocity * dt;
+            Vector3 gravityDelta = rigidTransform.GravityVelocity * dt;
 
-            CollisionFlags collisionFlags = characterController.Move(movementDelta + slopeModifier);
+            CollisionFlags horizontalCollisionFlags = characterController.Move(movementDelta);
+            CollisionFlags verticalCollisionFlags = characterController.Move(gravityDelta + slopeModifier);
 
-            bool hasGroundedFlag = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
+            Debug.DrawLine(characterController.transform.position, characterController.transform.position + (gravityDelta + slopeModifier).normalized, Color.red, dt);
 
-            if (!Mathf.Approximately(movementDelta.y, 0f))
-            {
+            bool hasGroundedFlag = EnumUtils.HasFlag(verticalCollisionFlags, CollisionFlags.Below) || EnumUtils.HasFlag(horizontalCollisionFlags, CollisionFlags.Below);
+
+            if (!Mathf.Approximately(gravityDelta.y, 0f))
                 rigidTransform.IsGrounded = hasGroundedFlag || characterController.isGrounded;
-
-                if (rigidTransform.IsGrounded)
-                    rigidTransform.LastGroundedFrame = Mathf.CeilToInt(time.GetTimeComponent(World).Time / UnityEngine.Time.fixedDeltaTime);
-            }
 
             SaveLocalPosition.Execute(ref platformComponent, characterController.transform.position);
         }

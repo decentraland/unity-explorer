@@ -106,8 +106,9 @@ namespace DCL.CharacterMotion.Systems
             ApplyLegIK(leftLegConstraint, leftLegConstraint.forward, avatarBase.LeftLegIKTarget, ref feetIKComponent.Left, settings, dt, settings.FeetIKVerticalAngleLimits, new Vector2(settings.FeetIKTwistAngleLimits.y, settings.FeetIKTwistAngleLimits.x));
 
             // Second: Calculate IK feet weight based on the constrained local-Y
-            ApplyIKWeight(avatarBase.RightLegIK, rightLegConstraint.localPosition, ref feetIKComponent.Right, rigidTransform.IsGrounded, settings, dt);
-            ApplyIKWeight(avatarBase.LeftLegIK, leftLegConstraint.localPosition, ref feetIKComponent.Left, rigidTransform.IsGrounded, settings, dt);
+            bool isGrounded = rigidTransform.IsGrounded && !rigidTransform.IsOnASteepSlope;
+            ApplyIKWeight(avatarBase.RightLegIK, rightLegConstraint.localPosition, ref feetIKComponent.Right, isGrounded, settings, dt);
+            ApplyIKWeight(avatarBase.LeftLegIK, leftLegConstraint.localPosition, ref feetIKComponent.Left, isGrounded, settings, dt);
 
             // Fix/Remove those strings allocations
             leftIKWeightBinding.Value = $"{avatarBase.LeftLegIK.weight:F2}";

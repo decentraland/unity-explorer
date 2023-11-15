@@ -38,7 +38,7 @@ namespace DCL.CharacterMotion.Tests
             ApplyJump.Execute(settings, ref characterRigidTransform, in jumpInputComponent, in movementInputComponent, physicsTick);
 
             Assert.IsFalse(characterRigidTransform.IsGrounded, "Is Grounded");
-            Assert.IsTrue(characterRigidTransform.NonInterpolatedVelocity.y < 0, "Is Falling");
+            Assert.IsTrue(characterRigidTransform.GravityVelocity.y < 0, "Is Falling");
 
             characterRigidTransform.IsGrounded = true;
 
@@ -46,7 +46,7 @@ namespace DCL.CharacterMotion.Tests
             ApplyJump.Execute(settings, ref characterRigidTransform, in jumpInputComponent, in movementInputComponent, physicsTick + 1);
 
             Assert.AreEqual(physicsTick + 1, characterRigidTransform.LastJumpFrame, "Jump Frame");
-            Assert.IsTrue(characterRigidTransform.NonInterpolatedVelocity.y > 0, "Is Jumping");
+            Assert.IsTrue(characterRigidTransform.GravityVelocity.y > 0, "Is Jumping");
         }
 
         // Coyote Timer: Pressing Jump before touching ground
@@ -77,7 +77,7 @@ namespace DCL.CharacterMotion.Tests
             ApplyJump.Execute(settings, ref characterRigidTransform, in jumpInputComponent, in movementInputComponent, physicsTick);
 
             Assert.AreEqual(physicsTick, characterRigidTransform.LastJumpFrame, "Jump Frame");
-            Assert.IsTrue(characterRigidTransform.NonInterpolatedVelocity.y > 0, "Is Jumping");
+            Assert.IsTrue(characterRigidTransform.GravityVelocity.y > 0, "Is Jumping");
         }
 
         // Coyote Timer: Pressing Jump after being ungrounded
@@ -92,7 +92,7 @@ namespace DCL.CharacterMotion.Tests
             characterRigidTransform.LastGroundedFrame = physicsTick - BONUS_FRAMES - 1;
             ApplyJump.Execute(settings, ref characterRigidTransform, in jumpInputComponent, in movementInputComponent, physicsTick);
 
-            Assert.IsFalse(characterRigidTransform.NonInterpolatedVelocity.y > 0, "Is Jumping");
+            Assert.IsFalse(characterRigidTransform.GravityVelocity.y > 0, "Is Jumping");
         }
 
         // Coyote Timer: Pressing Jump after being ungrounded
@@ -104,7 +104,7 @@ namespace DCL.CharacterMotion.Tests
             var physicsTick = 10;
             SetupJumpFrameAt(physicsTick);
 
-            characterRigidTransform.NonInterpolatedVelocity = Vector3.up;
+            characterRigidTransform.GravityVelocity = Vector3.up;
 
             // Setup the last grounded frame to be inside the bonus frames range
             characterRigidTransform.LastGroundedFrame = physicsTick - BONUS_FRAMES + 1;
@@ -115,7 +115,7 @@ namespace DCL.CharacterMotion.Tests
             ApplyJump.Execute(settings, ref characterRigidTransform, in jumpInputComponent, in movementInputComponent, physicsTick);
 
             Assert.AreEqual(characterRigidTransform.LastGroundedFrame - 1, characterRigidTransform.LastJumpFrame, "Jump Frame");
-            Assert.IsTrue(characterRigidTransform.NonInterpolatedVelocity.magnitude < 1.5f, "Velocity didn't Change");
+            Assert.IsTrue(characterRigidTransform.GravityVelocity.magnitude < 1.5f, "Velocity didn't Change");
         }
 
         private void SetupJumpFrameAt(int frame)
@@ -128,7 +128,7 @@ namespace DCL.CharacterMotion.Tests
             characterRigidTransform = new CharacterRigidTransform
             {
                 IsGrounded = false,
-                NonInterpolatedVelocity = new Vector3(0, -10, 0),
+                GravityVelocity = new Vector3(0, -10, 0),
             };
 
             jumpInputComponent = new JumpInputComponent();

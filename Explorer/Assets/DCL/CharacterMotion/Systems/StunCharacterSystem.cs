@@ -55,7 +55,7 @@ namespace DCL.CharacterMotion.Systems
                     }
                 }
 
-                float currentVerticalVelocity = rigidTransform.NonInterpolatedVelocity.y;
+                float currentVerticalVelocity = rigidTransform.GravityVelocity.y;
 
                 if (stunComponent.LastVerticalVelocity >= 0 && currentVerticalVelocity < 0)
                     stunComponent.TopUngroundedHeight = currentPosition.y;

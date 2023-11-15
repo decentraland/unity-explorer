@@ -65,6 +65,7 @@ namespace DCL.CharacterMotion.Systems
             [Data] float dt,
             ref HandsIKComponent handsIKComponent,
             ref AvatarBase avatarBase,
+            in CharacterRigidTransform rigidTransform,
             in ICharacterControllerSettings settings
         )
         {
@@ -74,7 +75,8 @@ namespace DCL.CharacterMotion.Systems
                 handsIKComponent.IsDisabled = !handsIKComponent.IsDisabled;
             }
 
-            avatarBase.HandsIKRig.weight = handsIKComponent.IsDisabled ? 0 : 1;
+            bool isDisabled = handsIKComponent.IsDisabled || !rigidTransform.IsGrounded || rigidTransform.IsOnASteepSlope;
+            avatarBase.HandsIKRig.weight = Mathf.MoveTowards(avatarBase.HandsIKRig.weight, isDisabled ? 0 : 1, settings.HandsIKWeightSpeed * dt);
 
             if (handsIKComponent.IsDisabled) return;
 

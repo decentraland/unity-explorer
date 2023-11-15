@@ -8,6 +8,7 @@ using DCL.CharacterMotion.Settings;
 using DCL.Input;
 using DCL.Time.Systems;
 using ECS.Abstract;
+using UnityEngine;
 
 namespace DCL.CharacterMotion.Systems
 {
@@ -38,14 +39,16 @@ namespace DCL.CharacterMotion.Systems
         private void ResolveVelocity(
             [Data] float dt,
             [Data] int physicsTick,
-            [Data] in CameraComponent camera,
+            [Data] in CameraComponent cameraComponent,
             ref ICharacterControllerSettings characterControllerSettings,
             ref CharacterRigidTransform rigidTransform,
+            ref CharacterController characterController,
             in JumpInputComponent jump,
             in MovementInputComponent movementInput)
         {
             // Apply all velocities
-            ApplyCharacterMovementVelocity.Execute(characterControllerSettings, ref rigidTransform, in camera, in movementInput, dt);
+            ApplyCharacterMovementVelocity.Execute(characterControllerSettings, ref rigidTransform, in cameraComponent, in movementInput, dt);
+            ApplyEdgeSlip.Execute(characterControllerSettings, ref rigidTransform, characterController);
             ApplyJump.Execute(characterControllerSettings, ref rigidTransform, in jump, in movementInput, physicsTick);
             ApplyGravity.Execute(characterControllerSettings, ref rigidTransform, in jump, physicsTick, dt);
             ApplyAirDrag.Execute(characterControllerSettings, ref rigidTransform, dt);

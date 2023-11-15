@@ -40,7 +40,7 @@ namespace DCL.CharacterMotion.Settings
 
         [field: SerializeField, Header("Edge slip")] public float NoSlipDistance { get; private set; } = 0.1f;
         [field: SerializeField] public float EdgeSlipSpeed { get; private set; } = 1.2f;
-
+        [field: SerializeField] public float EdgeSlipSafeDistance { get; private set; } = 0.4f;
         [field: SerializeField] public float DownwardsSlopeJogRaycastDistance { get; private set; } = 0.45f;
         [field: SerializeField] public float DownwardsSlopeRunRaycastDistance { get; private set; } = 0.55f;
         [field: SerializeField, Header("Animation")] public float RotationSpeed { get; private set; } = 360f;

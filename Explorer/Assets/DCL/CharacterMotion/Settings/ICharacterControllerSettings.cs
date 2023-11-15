@@ -32,6 +32,7 @@ namespace DCL.CharacterMotion.Settings
         float LongFallStunTime { get; }
         float NoSlipDistance { get; }
         float EdgeSlipSpeed { get; }
+        float EdgeSlipSafeDistance { get; }
         float RotationSpeed { get; }
         float MovAnimBlendSpeed { get; }
         float JumpPadForce { get; }

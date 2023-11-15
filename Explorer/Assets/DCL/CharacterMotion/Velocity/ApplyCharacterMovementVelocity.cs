@@ -53,7 +53,7 @@ namespace DCL.CharacterMotion
             Vector3 targetForward = (cameraForward * rigidTransform.MoveVelocity.ZVelocity) + (cameraRight * rigidTransform.MoveVelocity.XVelocity);
             targetForward = Vector3.ClampMagnitude(targetForward, speedLimit);
 
-            if (rigidTransform.IsGrounded)
+            if (rigidTransform.IsGrounded && !rigidTransform.IsOnASteepSlope)
             {
                 // Grounded velocity change is instant
                 rigidTransform.MoveVelocity.Velocity = targetForward;
@@ -65,13 +65,17 @@ namespace DCL.CharacterMotion
             }
 
             if (Mathf.Abs(input.Axes.x) > 0 || Mathf.Abs(input.Axes.y) > 0)
-                rigidTransform.LookDirection = rigidTransform.MoveVelocity.Velocity.normalized;
+            {
+                Vector3 flatVelocity = rigidTransform.MoveVelocity.Velocity;
+                flatVelocity.y = 0;
+                rigidTransform.LookDirection = flatVelocity.normalized;
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static float GetAcceleration(CharacterRigidTransform rigidTransform, ICharacterControllerSettings settings, CharacterRigidTransform.MovementVelocity moveVelocity)
         {
-            if (rigidTransform.IsGrounded)
+            if (rigidTransform.IsGrounded && !rigidTransform.IsOnASteepSlope)
                 return Mathf.Lerp(settings.Acceleration, settings.MaxAcceleration, settings.AccelerationCurve.Evaluate(moveVelocity.AccelerationWeight));
             else
                 return Mathf.Lerp(settings.AirAcceleration, settings.MaxAirAcceleration, settings.AccelerationCurve.Evaluate(moveVelocity.AccelerationWeight));

@@ -21,6 +21,8 @@ namespace DCL.CharacterMotion.Components
         /// </summary>
         public bool IsGrounded;
 
+        public bool IsOnASteepSlope;
+
         public int LastGroundedFrame;
 
         public int LastJumpFrame;
@@ -28,7 +30,9 @@ namespace DCL.CharacterMotion.Components
         /// <summary>
         ///     Every velocity that is applied as is
         /// </summary>
-        public Vector3 NonInterpolatedVelocity;
+        public Vector3 GravityVelocity;
+
+        public Vector3 GravityDirection;
 
         public Vector3 LookDirection = Vector3.forward;
 
