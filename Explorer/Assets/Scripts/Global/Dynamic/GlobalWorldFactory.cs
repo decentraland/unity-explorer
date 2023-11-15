@@ -12,6 +12,7 @@ using DCL.GlobalPartitioning;
 using DCL.PerformanceBudgeting;
 using DCL.PluginSystem.Global;
 using DCL.Systems;
+using DCL.Time.Systems;
 using ECS;
 using ECS.ComponentsPooling;
 using ECS.Groups;
@@ -144,6 +145,9 @@ namespace Global.Dynamic
             SortWorldsAggregateSystem.InjectToWorld(ref builder, partitionedWorldsAggregateFactory, realmPartitionSettings);
 
             DestroyEntitiesSystem.InjectToWorld(ref builder);
+
+            UpdatePhysicsTickSystem.InjectToWorld(ref builder);
+            UpdateTimeSystem.InjectToWorld(ref builder);
 
             var pluginArgs = new GlobalPluginArguments(playerEntity);
 

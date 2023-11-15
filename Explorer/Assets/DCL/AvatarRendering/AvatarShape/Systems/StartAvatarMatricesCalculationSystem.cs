@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Systems;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine.PlayerLoop;

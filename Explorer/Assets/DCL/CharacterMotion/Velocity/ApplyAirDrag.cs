@@ -1,6 +1,7 @@
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using System.Runtime.CompilerServices;
+using UnityEngine;
 
 namespace DCL.CharacterMotion
 {
@@ -12,7 +13,25 @@ namespace DCL.CharacterMotion
             float deltaTime)
         {
             if (!characterPhysics.IsGrounded)
-                characterPhysics.NonInterpolatedVelocity *= 1f / (1f + (characterControllerSettings.AirDrag * deltaTime));
+            {
+                var tempVelocity = characterPhysics.MoveVelocity.Velocity;
+                tempVelocity.y = 0;
+                tempVelocity = ApplyDrag(tempVelocity, characterControllerSettings.AirDrag * characterControllerSettings.JumpVelocityDrag, deltaTime);
+                tempVelocity.y = characterPhysics.MoveVelocity.Velocity.y;
+
+                characterPhysics.MoveVelocity.Velocity = tempVelocity;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static Vector3 ApplyDrag(Vector3 vector, float drag, float deltaTime)
+        {
+            float velocityMagnitude = vector.magnitude;
+            float dragMagnitude = drag * velocityMagnitude * velocityMagnitude;
+            Vector3 dragDirection = -vector.normalized;
+            Vector3 dragForce = dragDirection * dragMagnitude;
+            vector += dragForce * deltaTime;
+            return vector;
         }
     }
 }
