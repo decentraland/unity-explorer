@@ -17,6 +17,8 @@ namespace DCL.CharacterMotion
             CharacterController characterController)
         {
             rigidTransform.GravityDirection = Vector3.down;
+            rigidTransform.CurrentSlopeNormal = Vector3.up;
+
             rigidTransform.IsOnASteepSlope = false;
 
             if (!rigidTransform.IsGrounded) return;
@@ -29,6 +31,8 @@ namespace DCL.CharacterMotion
 
             if (!Physics.SphereCast(rayPosition, characterController.radius, rayDirection.normalized, out RaycastHit sphereCastHitInfo, characterController.height * 0.6f, PhysicsLayers.CHARACTER_ONLY_MASK))
                 return;
+
+            rigidTransform.CurrentSlopeNormal = sphereCastHitInfo.normal;
 
             Vector3 relativeHitPoint = sphereCastHitInfo.point - (currentPosition + characterController.center);
             relativeHitPoint.y = 0;
@@ -53,14 +57,10 @@ namespace DCL.CharacterMotion
             if (!rigidTransform.IsOnASteepSlope && Physics.Raycast(groundRay, settings.EdgeSlipSafeDistance, PhysicsLayers.CHARACTER_ONLY_MASK))
                 return;
 
-            //relativeHitPoint.y = -height * 0.5f;
-            // var edgeSlipDelta = -relativeHitPoint.normalized * relativeHitPoint.sqrMagnitude * settings.EdgeSlipSpeed;
-            //rigidTransform.MoveVelocity.Velocity += edgeSlipDelta;
-
             // in order to get the perpendicular direction
             rigidTransform.GravityDirection = -Vector3.Cross(hitNormal, Vector3.Cross(Vector3.up, hitNormal)).normalized;
 
-            Debug.DrawLine(currentPosition, currentPosition + rigidTransform.GravityDirection, Color.magenta, UnityEngine.Time.deltaTime);
+
         }
     }
 }

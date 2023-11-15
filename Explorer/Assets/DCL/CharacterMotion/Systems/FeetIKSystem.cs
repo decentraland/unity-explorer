@@ -106,9 +106,10 @@ namespace DCL.CharacterMotion.Systems
             ApplyLegIK(leftLegConstraint, leftLegConstraint.forward, avatarBase.LeftLegIKTarget, ref feetIKComponent.Left, settings, dt, settings.FeetIKVerticalAngleLimits, new Vector2(settings.FeetIKTwistAngleLimits.y, settings.FeetIKTwistAngleLimits.x));
 
             // Second: Calculate IK feet weight based on the constrained local-Y
-            bool isGrounded = rigidTransform.IsGrounded && !rigidTransform.IsOnASteepSlope;
-            ApplyIKWeight(avatarBase.RightLegIK, rightLegConstraint.localPosition, ref feetIKComponent.Right, isGrounded, settings, dt);
-            ApplyIKWeight(avatarBase.LeftLegIK, leftLegConstraint.localPosition, ref feetIKComponent.Left, isGrounded, settings, dt);
+            bool isEnabled = rigidTransform.IsGrounded && !rigidTransform.IsOnASteepSlope && rigidTransform.MoveVelocity.Velocity.sqrMagnitude < 0.01f;
+
+            ApplyIKWeight(avatarBase.RightLegIK, rightLegConstraint.localPosition, ref feetIKComponent.Right, isEnabled, settings, dt);
+            ApplyIKWeight(avatarBase.LeftLegIK, leftLegConstraint.localPosition, ref feetIKComponent.Left, isEnabled, settings, dt);
 
             // Fix/Remove those strings allocations
             leftIKWeightBinding.Value = $"{avatarBase.LeftLegIK.weight:F2}";
@@ -145,17 +146,15 @@ namespace DCL.CharacterMotion.Systems
             TwoBoneIKConstraint ik,
             Vector3 rightLegPosition,
             ref FeetIKComponent.FeetComponent feetComponent,
-            bool isGrounded,
+            bool isEnabled,
             ICharacterControllerSettings settings,
             float dt)
         {
-            int groundedWeight = isGrounded ? 1 : 0;
-
             // 0.08 is the distance between the ground and the foot bone when "standing still"
             // 0.10 is the height when we dont want the foot to have IK enabled
             // Games configure this weight trough Animation Curves on each animation, but since we cant do that here, we just do magic math
             float ikWeightRight = !feetComponent.isGrounded ? 0 : 1f - ((rightLegPosition.y - 0.08f) / 0.10f);
-            float targetWeight = Mathf.RoundToInt(ikWeightRight) * groundedWeight;
+            float targetWeight = Mathf.RoundToInt(ikWeightRight) * (isEnabled ? 1 : 0);
 
             // We apply ik weight speed only if its increasing, decreasing it is instant, this avoids being partially snapped into the ground when suddenly jumping
             if (ik.weight < targetWeight)

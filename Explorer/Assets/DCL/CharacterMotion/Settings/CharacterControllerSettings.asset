@@ -77,10 +77,44 @@ MonoBehaviour:
   <JumpGraceTime>k__BackingField: 0.15
   <JumpHeightStun>k__BackingField: 10
   <LongFallStunTime>k__BackingField: 0.75
-  <NoSlipDistance>k__BackingField: 0.15
-  <EdgeSlipSpeed>k__BackingField: 7
+  <NoSlipDistance>k__BackingField: 0.1
+  <EdgeSlipSpeed>k__BackingField: 2
+  <EdgeSlipSafeDistance>k__BackingField: 0.4
   <DownwardsSlopeJogRaycastDistance>k__BackingField: 0.45
   <DownwardsSlopeRunRaycastDistance>k__BackingField: 0.55
+  <SlopeVelocityModifier>k__BackingField:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: -55
+      value: 1.9047455
+      inSlope: -0.016449917
+      outSlope: -0.016449917
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: -0.016406776
+      outSlope: -0.016406776
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 55
+      value: 0.1
+      inSlope: -0.016363636
+      outSlope: -0.016363636
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   <RotationSpeed>k__BackingField: 400
   <MovAnimBlendSpeed>k__BackingField: 5
   <AnimationFallSpeed>k__BackingField: -5

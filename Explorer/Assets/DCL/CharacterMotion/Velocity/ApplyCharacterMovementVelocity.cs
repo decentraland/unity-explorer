@@ -26,6 +26,13 @@ namespace DCL.CharacterMotion
             cameraRight.y = 0;
 
             float speedLimit = SpeedLimit.Get(settings, input.Kind);
+
+            // Apply movement speed increase/decrease based on the current slope angle
+            var slopeForward = Vector3.Cross(rigidTransform.CurrentSlopeNormal, Vector3.Cross(rigidTransform.LookDirection, rigidTransform.CurrentSlopeNormal));
+            float slopeAngle = Vector3.SignedAngle(rigidTransform.LookDirection, slopeForward, Vector3.Cross(rigidTransform.LookDirection, Vector3.up));
+            float movementSpeedModifier = settings.SlopeVelocityModifier.Evaluate(slopeAngle);
+            speedLimit *= movementSpeedModifier;
+
             float yAxis = speedLimit * input.Axes.y;
             float xAxis = speedLimit * input.Axes.x;
 

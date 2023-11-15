@@ -57,5 +57,6 @@ namespace DCL.CharacterMotion.Settings
         float HeadIKVerticalAngleLimit { get; set; }
         float HeadIKHorizontalAngleLimit { get; set; }
         float HeadIKRotationSpeed { get; set; }
+        AnimationCurve SlopeVelocityModifier { get; }
     }
 }

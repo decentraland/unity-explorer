@@ -62,8 +62,6 @@ namespace DCL.CharacterMotion.Systems
             CollisionFlags horizontalCollisionFlags = characterController.Move(movementDelta);
             CollisionFlags verticalCollisionFlags = characterController.Move(gravityDelta + slopeModifier);
 
-            Debug.DrawLine(characterController.transform.position, characterController.transform.position + (gravityDelta + slopeModifier).normalized, Color.red, dt);
-
             bool hasGroundedFlag = EnumUtils.HasFlag(verticalCollisionFlags, CollisionFlags.Below) || EnumUtils.HasFlag(horizontalCollisionFlags, CollisionFlags.Below);
 
             if (!Mathf.Approximately(gravityDelta.y, 0f))

@@ -35,6 +35,7 @@ namespace DCL.CharacterMotion.Components
         public Vector3 GravityDirection;
 
         public Vector3 LookDirection = Vector3.forward;
+        public Vector3 CurrentSlopeNormal { get; set; }
 
         public struct MovementVelocity
         {
@@ -68,5 +69,6 @@ namespace DCL.CharacterMotion.Components
             /// </summary>
             public Vector3 Velocity;
         }
+
     }
 }

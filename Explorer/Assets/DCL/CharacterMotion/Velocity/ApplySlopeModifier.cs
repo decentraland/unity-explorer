@@ -8,6 +8,7 @@ namespace DCL.CharacterMotion
 {
     public static class ApplySlopeModifier
     {
+        // This function returns the height modifier of the velocity for the character to stick to downward slopes
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Execute(
             in ICharacterControllerSettings settings,
