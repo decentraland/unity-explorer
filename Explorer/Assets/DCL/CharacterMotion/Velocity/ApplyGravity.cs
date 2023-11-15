@@ -8,18 +8,32 @@ namespace DCL.CharacterMotion
     public static class ApplyGravity
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(ICharacterControllerSettings characterControllerSettings,
+        public static void Execute(ICharacterControllerSettings settings,
             ref CharacterRigidTransform characterPhysics,
+            in JumpInputComponent jumpInputComponent,
+            int physicsTick,
             float deltaTime)
         {
             if (!characterPhysics.IsGrounded)
+            {
+                float gravity = settings.Gravity;
+
+                if (jumpInputComponent.IsPressed && PhysicsToDeltaTime(physicsTick - jumpInputComponent.Trigger.TickWhenJumpOccurred) < settings.LongJumpTime)
+                    gravity *= settings.LongJumpGravityScale;
+
+                if (characterPhysics.NonInterpolatedVelocity.y > 0)
+                    gravity *= settings.JumpGravityFactor;
 
                 // Gravity is already negative
-                characterPhysics.NonInterpolatedVelocity += Vector3.up * characterControllerSettings.Gravity * deltaTime;
+                characterPhysics.NonInterpolatedVelocity += Vector3.up * gravity * deltaTime;
+            }
             else
 
                 // Gravity should always affect the character, otherwise we are unable to ground it properly
-                characterPhysics.NonInterpolatedVelocity.y = characterControllerSettings.Gravity * deltaTime;
+                characterPhysics.NonInterpolatedVelocity.y = settings.Gravity * deltaTime;
         }
+
+        private static float PhysicsToDeltaTime(int ticks) =>
+            UnityEngine.Time.fixedDeltaTime * ticks;
     }
 }

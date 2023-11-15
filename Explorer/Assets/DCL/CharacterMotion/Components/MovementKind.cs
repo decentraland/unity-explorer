@@ -8,6 +8,11 @@ namespace DCL.CharacterMotion.Components
         Walk,
 
         /// <summary>
+        ///     Jog
+        /// </summary>
+        Jog,
+
+        /// <summary>
         ///     Run
         /// </summary>
         Run,

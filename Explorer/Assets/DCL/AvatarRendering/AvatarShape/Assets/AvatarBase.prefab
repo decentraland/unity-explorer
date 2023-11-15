@@ -476,7 +476,7 @@ Transform:
   m_GameObject: {fileID: 2561918839770535189}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.01, y: 0.01, z: 0.01}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 174017465429567360}
@@ -493,7 +493,7 @@ Animator:
   m_GameObject: {fileID: 2561918839770535189}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: acef92320d301c14d9df6983262b5fea, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -2045,10 +2045,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2645e75a453f6954f8aa7b950093750d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <AvatarSkinnedMeshRenderer>k__BackingField: {fileID: 918335364077391645}
   avatarAnimator: {fileID: 6654053651110562472}
-  playerAnimator: {fileID: 9100000, guid: 3662049975e2d0549a312769ab17ad07, type: 2}
+  playerAnimator: {fileID: 9100000, guid: acef92320d301c14d9df6983262b5fea, type: 2}
   randomAnimator: {fileID: 9100000, guid: aab64a77806b44a43b6f5d0da6de94c6, type: 2}
+  <AvatarSkinnedMeshRenderer>k__BackingField: {fileID: 918335364077391645}
 --- !u!1 &8230367895675129645
 GameObject:
   m_ObjectHideFlags: 0

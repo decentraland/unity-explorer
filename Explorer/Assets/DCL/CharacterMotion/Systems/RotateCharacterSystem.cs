@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Platforms;
 using DCL.CharacterMotion.Settings;
 using DCL.Diagnostics;
 using ECS.Abstract;
@@ -15,46 +16,33 @@ namespace DCL.CharacterMotion.Systems
     /// <summary>
     ///     Rotates character outside of physics update as it does not impact collisions or any other interactions
     /// </summary>
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.MOTION)]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(CameraGroup))]
+    [UpdateAfter(typeof(InterpolateCharacterSystem))]
     public partial class RotateCharacterSystem : BaseUnityLoopSystem
     {
-        private SingleInstanceEntity camera;
-
-        internal RotateCharacterSystem(World world) : base(world) { }
-
-        public override void Initialize()
-        {
-            camera = World.CacheCamera();
-        }
+        private RotateCharacterSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
-            LerpRotationQuery(World, t, in camera.GetCameraComponent(World));
+            LerpRotationQuery(World, t);
         }
 
         [Query]
         private void LerpRotation(
             [Data] float dt,
-            [Data] in CameraComponent camera,
-            ref ICharacterControllerSettings characterControllerSettings,
+            ref ICharacterControllerSettings settings,
+            ref CharacterRigidTransform rigidTransform,
             ref TransformComponent transform,
-            ref MovementInputComponent input)
+            ref CharacterPlatformComponent platformComponent)
         {
-            Transform cameraTransform = camera.Camera.transform;
-            Vector3 forward = cameraTransform.forward;
-            forward.y = 0;
-            Vector3 right = cameraTransform.right;
-            right.y = 0;
-
-            Vector3 targetForward = ((forward * input.Axes.y) + (right * input.Axes.x)).normalized;
-
             Transform characterTransform = transform.Transform;
-            Vector3 characterForward = characterTransform.forward;
+            var targetRotation = Quaternion.LookRotation(rigidTransform.LookDirection);
+            characterTransform.rotation = Quaternion.RotateTowards(characterTransform.rotation, targetRotation, settings.RotationSpeed * dt);
 
-            if (targetForward != Vector3.zero)
-                characterTransform.forward = Vector3.Slerp(characterForward, targetForward, characterControllerSettings.RotationAngularSpeed * dt);
+            SaveLocalRotation.Execute(ref platformComponent, characterTransform.forward);
         }
+
     }
 }
