@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using System;
 using UnityEngine;
 
 namespace DCL.Navmap
@@ -7,13 +8,33 @@ namespace DCL.Navmap
     public class FloatingPanelController
     {
         private readonly FloatingPanelView view;
+        private readonly MultiStateButtonController likeButtonController;
+        private readonly MultiStateButtonController dislikeButtonController;
+        private MultiStateButtonController favoriteButtonController;
 
         public FloatingPanelController(FloatingPanelView view)
         {
             this.view = view;
             view.closeButton.onClick.RemoveAllListeners();
             view.closeButton.onClick.AddListener(HidePanel);
+            likeButtonController = new MultiStateButtonController(view.likeButton, true);
+            dislikeButtonController = new MultiStateButtonController(view.dislikeButton, true);
+            favoriteButtonController = new MultiStateButtonController(view.favoriteButton, true);
+            likeButtonController.OnButtonClicked += OnLike;
+            dislikeButtonController.OnButtonClicked += OnDislike;
             view.gameObject.SetActive(false);
+        }
+
+        private void OnDislike(bool isDisliked)
+        {
+            if(isDisliked)
+                likeButtonController.SetButtonState(false);
+        }
+
+        private void OnLike(bool isLiked)
+        {
+            if(isLiked)
+                dislikeButtonController.SetButtonState(false);
         }
 
         public void ShowPanel()

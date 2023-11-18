@@ -24,4 +24,13 @@ public class FloatingPanelView : MonoBehaviour
 
     [field: SerializeField]
     public TMP_Text placeDescription;
+
+    [field: SerializeField]
+    public MultiStateButtonView likeButton;
+
+    [field: SerializeField]
+    public MultiStateButtonView dislikeButton;
+
+    [field: SerializeField]
+    public MultiStateButtonView favoriteButton;
 }
