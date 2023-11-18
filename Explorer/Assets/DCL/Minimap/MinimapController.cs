@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
+using DCL.ExplorePanel;
 using DCLServices.MapRenderer;
 using DCLServices.MapRenderer.CommonBehavior;
 using DCLServices.MapRenderer.ConsumerUtils;
@@ -12,6 +13,7 @@ using DCLServices.MapRenderer.MapLayers;
 using DCLServices.MapRenderer.MapLayers.PlayerMarker;
 using ECS.Unity.Transforms.Components;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -30,14 +32,30 @@ namespace DCL.Minimap
 
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController mapCameraController;
+        private readonly MVCManager mvcManager;
 
         public MinimapController(
             ViewFactoryMethod viewFactory,
-            IMapRenderer mapRenderer
+            IMapRenderer mapRenderer,
+            MVCManager mvcManager
         ) : base(viewFactory)
         {
             this.mapRenderer = mapRenderer;
+            this.mvcManager = mvcManager;
             SystemBinding = AddModule(new BridgeSystemBinding<TrackPlayerPositionSystem>(this, QueryPlayerPositionQuery));
+        }
+
+        protected override void OnViewInstantiated()
+        {
+            viewInstance.expandMinimapButton.onClick.RemoveAllListeners();
+            viewInstance.expandMinimapButton.onClick.AddListener(ExpandMinimap);
+            viewInstance.minimapRendererButton.onClick.RemoveAllListeners();
+            viewInstance.minimapRendererButton.onClick.AddListener(()=>mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(null))).Forget());
+        }
+
+        private void ExpandMinimap()
+        {
+            viewInstance.minimapContainer.gameObject.SetActive(!viewInstance.minimapContainer.gameObject.activeSelf);
         }
 
         [All(typeof(PlayerComponent))]

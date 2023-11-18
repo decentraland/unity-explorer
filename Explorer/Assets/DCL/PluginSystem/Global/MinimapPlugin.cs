@@ -31,7 +31,7 @@ namespace DCL.PluginSystem.Global
         {
             minimapController = new MinimapController(
                 MinimapController.CreateLazily(
-                    (await assetsProvisioner.ProvideMainAssetAsync(settings.MinimapPrefab, ct: ct)).Value.GetComponent<MinimapView>(), null), mapRendererContainer.MapRenderer);
+                    (await assetsProvisioner.ProvideMainAssetAsync(settings.MinimapPrefab, ct: ct)).Value.GetComponent<MinimapView>(), null), mapRendererContainer.MapRenderer, mvcManager);
 
             mvcManager.RegisterController(minimapController);
             mvcManager.ShowAsync(MinimapController.IssueCommand()).Forget();
