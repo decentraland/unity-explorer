@@ -1,5 +1,5 @@
 ﻿using Arch.SystemGroups;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using Microsoft.ClearScript;
 using System;
 

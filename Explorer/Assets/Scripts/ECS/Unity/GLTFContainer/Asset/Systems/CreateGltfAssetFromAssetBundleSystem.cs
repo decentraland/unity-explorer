@@ -1,7 +1,8 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
+using DCL.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
@@ -25,10 +26,12 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     public partial class CreateGltfAssetFromAssetBundleSystem : BaseUnityLoopSystem
     {
         private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
+        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
 
-        internal CreateGltfAssetFromAssetBundleSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider) : base(world)
+        internal CreateGltfAssetFromAssetBundleSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider) : base(world)
         {
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
+            this.memoryBudgetProvider = memoryBudgetProvider;
         }
 
         protected override void Update(float t)
@@ -43,7 +46,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         [None(typeof(StreamableLoadingResult<GltfContainerAsset>))]
         private void ConvertFromAssetBundle(in Entity entity, ref GetGltfContainerAssetIntention assetIntention, ref StreamableLoadingResult<AssetBundleData> assetBundleResult)
         {
-            if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
+            if (!instantiationFrameTimeBudgetProvider.TrySpendBudget() || !memoryBudgetProvider.TrySpendBudget())
                 return;
 
             if (assetIntention.CancellationTokenSource.IsCancellationRequested)
@@ -69,7 +72,12 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             // Create a new container root
             // It will be cached and pooled
+            GltfContainerAsset result = CreateGltfObject(assetBundleData);
+            World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
+        }
 
+        private static GltfContainerAsset CreateGltfObject(AssetBundleData assetBundleData)
+        {
             var container = new GameObject($"AB:{assetBundleData.AssetBundle.name}");
 
             // Let the upper layer decide what to do with the root
@@ -107,7 +115,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 FilterVisibleColliderCandidate(result.VisibleColliderMeshes, meshFilter);
             }
 
-            World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
+            return result;
         }
 
         /// <summary>

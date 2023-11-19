@@ -1,12 +1,12 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
+using DCL.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using Ipfs;
 using SceneRunner;
 using SceneRunner.Scene;

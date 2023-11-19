@@ -27,7 +27,7 @@ namespace DCL.PluginSystem.World
         {
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);
-            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudgetProvider);
+            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudgetProvider, globalDeps.MemoryBudgetProvider);
             ReportGltfErrorsSystem.InjectToWorld(ref builder, globalDeps.ReportsHandlingSettings);
 
             // GLTF Container
@@ -49,7 +49,7 @@ namespace DCL.PluginSystem.World
         {
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);
-            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudgetProvider);
+            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudgetProvider, globalDeps.MemoryBudgetProvider);
             ReportGltfErrorsSystem.InjectToWorld(ref builder, globalDeps.ReportsHandlingSettings);
 
             // GLTF Container

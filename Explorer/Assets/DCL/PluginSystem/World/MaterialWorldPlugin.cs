@@ -1,9 +1,9 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.PerformanceBudgeting;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.LifeCycle;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Materials;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Systems;

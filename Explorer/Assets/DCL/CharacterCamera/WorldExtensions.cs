@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.CharacterCamera.Components;
 using ECS.Abstract;
 
 namespace DCL.CharacterCamera
@@ -12,5 +13,8 @@ namespace DCL.CharacterCamera
 
         public static ref readonly CameraComponent GetCameraComponent(this in SingleInstanceEntity instance, World world) =>
             ref world.Get<CameraComponent>(instance);
+
+        public static ref CameraFieldOfViewComponent GetCameraFovComponent(this in SingleInstanceEntity instance, World world) =>
+            ref world.Get<CameraFieldOfViewComponent>(instance);
     }
 }

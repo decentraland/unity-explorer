@@ -1,5 +1,0 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
-    <DCL.DebugUtilities.Views.DebugIntFieldElement>
-        <ui:IntegerField value="72392320" />
-    </DCL.DebugUtilities.Views.DebugIntFieldElement>
-</ui:UXML>

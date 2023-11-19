@@ -1,4 +1,4 @@
-﻿using Diagnostics.ReportsHandling;
+﻿using DCL.Diagnostics;
 using NSubstitute;
 using System;
 using System.Collections.Generic;
