@@ -22,7 +22,12 @@ namespace DCL.Navmap
             favoriteButtonController = new MultiStateButtonController(view.favoriteButton, true);
             likeButtonController.OnButtonClicked += OnLike;
             dislikeButtonController.OnButtonClicked += OnDislike;
+            favoriteButtonController.OnButtonClicked += OnFavorite;
             view.gameObject.SetActive(false);
+        }
+
+        private void OnFavorite(bool isFavorite)
+        {
         }
 
         private void OnDislike(bool isDisliked)

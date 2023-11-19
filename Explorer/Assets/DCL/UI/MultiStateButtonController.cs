@@ -20,16 +20,21 @@ public class MultiStateButtonController
     private void ButtonClicked()
     {
         isButtonOn = !isButtonOn;
-        SetButtonState(isButtonOn);
+        SetButtonGraphic(isButtonOn);
         OnButtonClicked?.Invoke(isButtonOn);
     }
 
     public void SetButtonState(bool isOn)
     {
         isButtonOn = isOn;
+        SetButtonGraphic(isOn);
+    }
+
+    private void SetButtonGraphic(bool isOn)
+    {
         view.buttonImageFill.SetActive(isOn);
 
-        if(replacesImage)
-            view.buttonImageOutline.SetActive(isOn);
+        if (replacesImage)
+            view.buttonImageOutline.SetActive(!isOn);
     }
 }
