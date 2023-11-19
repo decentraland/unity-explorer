@@ -5,7 +5,6 @@ using DCLServices.MapRenderer.ConsumerUtils;
 using DCLServices.MapRenderer.MapCameraController;
 using DCLServices.MapRenderer.MapLayers;
 using DCLServices.MapRenderer.MapLayers.PlayerMarker;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;

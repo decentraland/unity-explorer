@@ -5,12 +5,12 @@ using UnityEngine;
 
 namespace DCL.Navmap
 {
-    public class FloatingPanelController
+    public class FloatingPanelController : IDisposable
     {
         private readonly FloatingPanelView view;
         private readonly MultiStateButtonController likeButtonController;
         private readonly MultiStateButtonController dislikeButtonController;
-        private MultiStateButtonController favoriteButtonController;
+        private readonly MultiStateButtonController favoriteButtonController;
 
         public FloatingPanelController(FloatingPanelView view)
         {
@@ -55,8 +55,11 @@ namespace DCL.Navmap
             view.rectTransform.DOScale(Vector3.zero, 0.5f).SetEase(Ease.OutCirc).OnComplete(()=>view.gameObject.SetActive(false));
         }
 
-        private async UniTaskVoid AnimatePanelShow()
+        public void Dispose()
         {
+            likeButtonController.OnButtonClicked -= OnLike;
+            dislikeButtonController.OnButtonClicked -= OnDislike;
+            favoriteButtonController.OnButtonClicked -= OnFavorite;
         }
     }
 }

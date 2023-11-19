@@ -45,9 +45,7 @@ namespace DCL.ExplorePanel
 
         protected override void OnViewShow()
         {
-            foreach (var tabSelector in viewInstance.TabSelectorViews)
-                if (tabSelector.section == inputData.Section)
-                    tabSelector.TabSelectorToggle.isOn = true;
+            viewInstance.TabSelectorViews[0].TabSelectorToggle.isOn = true;
         }
 
         protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
