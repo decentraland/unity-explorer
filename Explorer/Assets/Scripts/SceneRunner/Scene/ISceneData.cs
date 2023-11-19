@@ -1,5 +1,5 @@
 ﻿using CommunicationData.URLHelpers;
-using Diagnostics;
+using DCL.Diagnostics;
 using Utility;
 
 namespace SceneRunner.Scene

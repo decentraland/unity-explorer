@@ -9,10 +9,8 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.Time;
-using Diagnostics;
-using Diagnostics.ReportsHandling;
 using DCL.Profiling;
+using DCL.Time;
 using ECS.Prioritization;
 using System.Collections.Generic;
 using System.Threading;
@@ -49,7 +47,7 @@ namespace Global
 
         public IProfilingProvider ProfilingProvider { get; private set; }
 
-        public IPhysicsTickProvider PhysicsTickProvider { get; }
+        public PhysicsTickProvider PhysicsTickProvider { get; }
 
         public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
 

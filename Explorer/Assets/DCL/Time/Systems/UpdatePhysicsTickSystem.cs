@@ -12,7 +12,7 @@ namespace DCL.Time.Systems
     {
         private readonly PhysicsTickProvider physicsTickProvider;
 
-        internal UpdatePhysicsTickSystem(World world, PhysicsTickProvider physicsTickProvider) : base(world)
+        public UpdatePhysicsTickSystem(World world, PhysicsTickProvider physicsTickProvider) : base(world)
         {
             this.physicsTickProvider = physicsTickProvider;
             World.Create<PhysicsTickComponent>();
