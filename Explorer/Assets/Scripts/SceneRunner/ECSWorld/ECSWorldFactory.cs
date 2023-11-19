@@ -44,7 +44,7 @@ namespace SceneRunner.ECSWorld
         {
             ISystemGroupsUpdateGate systemGroupsUpdateGate = args.SystemGroupsUpdateGate;
             ECSWorldInstanceSharedDependencies sharedDependencies = args.SharedDependencies;
-            IPartitionComponent scenePartition = args.ScenePartition;
+            IPartitionComponent scenePartition = sharedDependencies.ScenePartition;
 
             // Worlds uses Pooled Collections under the hood so the memory impact is minimized
             var world = World.Create();

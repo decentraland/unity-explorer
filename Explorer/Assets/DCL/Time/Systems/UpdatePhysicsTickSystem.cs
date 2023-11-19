@@ -5,13 +5,16 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Time.Components;
 using ECS.Abstract;
 
-namespace DCL.Input.Systems
+namespace DCL.Time.Systems
 {
     [UpdateInGroup(typeof(PhysicsSystemGroup))]
-    public partial class UpdateInputPhysicsTickSystem : BaseUnityLoopSystem
+    public partial class UpdatePhysicsTickSystem : BaseUnityLoopSystem
     {
-        public UpdateInputPhysicsTickSystem(World world) : base(world)
+        private readonly PhysicsTickProvider physicsTickProvider;
+
+        internal UpdatePhysicsTickSystem(World world, PhysicsTickProvider physicsTickProvider) : base(world)
         {
+            this.physicsTickProvider = physicsTickProvider;
             World.Create<PhysicsTickComponent>();
         }
 
@@ -24,6 +27,7 @@ namespace DCL.Input.Systems
         private void UpdateTick(ref PhysicsTickComponent tickComponent)
         {
             tickComponent.Tick++;
+            physicsTickProvider.Tick++;
         }
     }
 }

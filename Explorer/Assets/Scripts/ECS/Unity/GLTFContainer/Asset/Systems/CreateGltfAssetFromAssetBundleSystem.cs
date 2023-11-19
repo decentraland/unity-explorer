@@ -7,6 +7,7 @@ using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
+using ECS.Unity.CollidersBoundsChecker;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
 using System.Collections.Generic;
@@ -118,7 +119,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 results.Add(meshFilter);
         }
 
-        private static void CreateInvisibleColliders(List<Collider> results, GameObject meshFilterGo, MeshFilter meshFilter)
+        private static void CreateInvisibleColliders(List<SDKCollider> results, GameObject meshFilterGo, MeshFilter meshFilter)
         {
             // Asset Bundle converter creates Colliders during the processing in some cases
             Collider collider = meshFilterGo.GetComponent<Collider>();
@@ -126,9 +127,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             if (collider)
             {
                 // Disable it as its activity controlled by another system based on PBGltfContainer component
-                collider.enabled = false;
-
-                results.Add(collider);
+                results.Add(new SDKCollider(collider));
                 return;
             }
 
@@ -147,9 +146,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             MeshCollider newCollider = meshFilterGo.AddComponent<MeshCollider>();
             newCollider.sharedMesh = meshFilter.sharedMesh;
-            newCollider.enabled = false;
 
-            results.Add(newCollider);
+            results.Add(new SDKCollider(newCollider));
         }
     }
 }

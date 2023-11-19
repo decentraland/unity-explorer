@@ -113,6 +113,16 @@ namespace Utility
             );
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool Intersects(this in SceneCircumscribedPlanes boundingPlanes, Bounds bounds)
+        {
+            Vector3 min = bounds.min;
+            Vector3 max = bounds.max;
+
+            return boundingPlanes.MinX <= min.x && boundingPlanes.MaxX >= max.x
+                                                && boundingPlanes.MinZ <= min.z && boundingPlanes.MaxZ >= max.z;
+        }
+
         public readonly struct ParcelCorners
         {
             public readonly Vector3 minXZ;

@@ -1,5 +1,6 @@
 ﻿using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
+using ECS.Unity.CollidersBoundsChecker;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using System.Collections.Generic;
@@ -35,25 +36,45 @@ namespace ECS.Unity.GLTFContainer.Systems
                 DisableColliders(asset.VisibleMeshesColliders);
         }
 
-        private static void EnableColliders(IReadOnlyList<Collider> colliders, ColliderLayer colliderLayer)
+        internal static void SetActiveByEntity(this ref SDKCollider sdkCollider, bool isActive)
+        {
+            sdkCollider.IsActiveByEntity = isActive;
+        }
+
+        internal static void SetActiveBySceneBounds(this ref SDKCollider sdkCollider, bool isActive)
+        {
+            sdkCollider.IsActiveBySceneBounds = isActive;
+        }
+
+        private static void EnableColliders(List<SDKCollider> colliders, ColliderLayer colliderLayer)
         {
             bool hasUnityLayer = PhysicsLayers.TryGetUnityLayerFromSDKLayer(colliderLayer, out int unityLayer);
 
             for (var i = 0; i < colliders.Count; i++)
             {
-                Collider collider = colliders[i];
+                SDKCollider collider = colliders[i];
 
-                collider.enabled = hasUnityLayer;
+                collider.IsActiveByEntity = hasUnityLayer;
 
                 if (hasUnityLayer)
-                    collider.gameObject.layer = unityLayer;
+                    collider.Collider.gameObject.layer = unityLayer;
+
+                // write the structure back
+                colliders[i] = collider;
             }
         }
 
-        private static void DisableColliders(IReadOnlyList<Collider> colliders)
+        private static void DisableColliders(List<SDKCollider> colliders)
         {
             for (var i = 0; i < colliders.Count; i++)
-                colliders[i].enabled = false;
+            {
+                SDKCollider collider = colliders[i];
+
+                collider.IsActiveByEntity = false;
+
+                // write the structure back
+                colliders[i] = collider;
+            }
         }
 
         private static void TryInstantiateVisibleMeshesColliders(GltfContainerAsset asset)
@@ -74,7 +95,7 @@ namespace ECS.Unity.GLTFContainer.Systems
 
                 newCollider.sharedMesh = meshFilter.sharedMesh;
 
-                asset.VisibleMeshesColliders.Add(newCollider);
+                asset.VisibleMeshesColliders.Add(new SDKCollider(newCollider));
             }
         }
     }

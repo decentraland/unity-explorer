@@ -7,6 +7,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.Time;
 using Diagnostics;
 using Diagnostics.ReportsHandling;
 using ECS.Prioritization;
@@ -46,6 +47,8 @@ namespace Global
         public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
 
         public IProfilingProvider ProfilingProvider { get; private set; }
+
+        public IPhysicsTickProvider PhysicsTickProvider { get; }
 
         public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
 
@@ -118,7 +121,7 @@ namespace Global
             {
                 new TransformsPlugin(sharedDependencies),
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
-                new PrimitiveCollidersPlugin(sharedDependencies),
+                new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
                 new TexturesLoadingPlugin(),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),

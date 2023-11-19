@@ -128,7 +128,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             GltfContainerAsset promiseAsset = component.Promise.Result.Value.Asset;
 
             Assert.That(promiseAsset.VisibleMeshesColliders.Count, Is.EqualTo(196));
-            Assert.That(promiseAsset.VisibleMeshesColliders.All(c => c.gameObject.layer == PhysicsLayers.ON_POINTER_EVENT_LAYER), Is.True);
+            Assert.That(promiseAsset.VisibleMeshesColliders.All(c => c.Collider.gameObject.layer == PhysicsLayers.ON_POINTER_EVENT_LAYER), Is.True);
         }
 
         [Test]
@@ -153,8 +153,8 @@ namespace ECS.Unity.GLTFContainer.Tests
             GltfContainerAsset promiseAsset = component.Promise.Result.Value.Asset;
 
             // 1 Collider
-            Assert.That(promiseAsset.InvisibleColliders.All(c => c.enabled), Is.True);
-            Assert.That(promiseAsset.InvisibleColliders.All(c => c.gameObject.layer == PhysicsLayers.ON_POINTER_EVENT_LAYER), Is.True);
+            Assert.That(promiseAsset.InvisibleColliders.All(c => c.IsActiveByEntity), Is.True);
+            Assert.That(promiseAsset.InvisibleColliders.All(c => c.Collider.gameObject.layer == PhysicsLayers.ON_POINTER_EVENT_LAYER), Is.True);
 
             // No visible colliders created
             Assert.That(promiseAsset.VisibleMeshesColliders, Is.Null);

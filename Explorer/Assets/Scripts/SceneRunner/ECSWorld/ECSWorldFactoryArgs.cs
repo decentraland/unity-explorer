@@ -1,6 +1,5 @@
 ﻿using CrdtEcsBridge.UpdateGate;
 using DCL.PluginSystem.World.Dependencies;
-using ECS.Prioritization.Components;
 
 namespace SceneRunner.ECSWorld
 {
@@ -8,13 +7,11 @@ namespace SceneRunner.ECSWorld
     {
         public readonly ECSWorldInstanceSharedDependencies SharedDependencies;
         public readonly ISystemGroupsUpdateGate SystemGroupsUpdateGate;
-        public readonly IPartitionComponent ScenePartition;
 
-        public ECSWorldFactoryArgs(ECSWorldInstanceSharedDependencies sharedDependencies, ISystemGroupsUpdateGate systemGroupsUpdateGate, IPartitionComponent scenePartition)
+        public ECSWorldFactoryArgs(ECSWorldInstanceSharedDependencies sharedDependencies, ISystemGroupsUpdateGate systemGroupsUpdateGate)
         {
             SharedDependencies = sharedDependencies;
             SystemGroupsUpdateGate = systemGroupsUpdateGate;
-            ScenePartition = scenePartition;
         }
     }
 }
