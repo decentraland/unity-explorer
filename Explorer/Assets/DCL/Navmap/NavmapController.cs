@@ -20,7 +20,6 @@ namespace DCL.Navmap
             MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.HomePoint | MapLayer.ScenesOfInterest | MapLayer.PlayerMarker | MapLayer.HotUsersMarkers | MapLayer.ColdUsersMarkers | MapLayer.ParcelHoverHighlight;
 
         private readonly NavmapView navmapView;
-        private readonly SectionSelectorController sectionSelectorController;
         private CancellationTokenSource animationCts;
         private readonly IMapCameraController cameraController;
         private readonly NavmapZoomController zoomController;
@@ -39,7 +38,7 @@ namespace DCL.Navmap
                 { ExploreSections.StreetView, navmapView.streetView },
             };
 
-            sectionSelectorController = new SectionSelectorController(mapSections, ExploreSections.Satellite);
+            var sectionSelectorController = new SectionSelectorController(mapSections, ExploreSections.Satellite);
             foreach (var tabSelector in navmapView.TabSelectorViews)
             {
                 tabSelector.TabSelectorToggle.onValueChanged.RemoveAllListeners();

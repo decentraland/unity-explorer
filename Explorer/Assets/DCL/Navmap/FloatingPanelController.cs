@@ -8,22 +8,39 @@ namespace DCL.Navmap
     public class FloatingPanelController : IDisposable
     {
         private readonly FloatingPanelView view;
-        private readonly MultiStateButtonController likeButtonController;
-        private readonly MultiStateButtonController dislikeButtonController;
-        private readonly MultiStateButtonController favoriteButtonController;
+        private MultiStateButtonController likeButtonController;
+        private MultiStateButtonController dislikeButtonController;
+        private MultiStateButtonController favoriteButtonController;
 
         public FloatingPanelController(FloatingPanelView view)
         {
             this.view = view;
             view.closeButton.onClick.RemoveAllListeners();
             view.closeButton.onClick.AddListener(HidePanel);
+            view.gameObject.SetActive(false);
+            InitButtons();
+        }
+
+        private void InitButtons()
+        {
             likeButtonController = new MultiStateButtonController(view.likeButton, true);
             dislikeButtonController = new MultiStateButtonController(view.dislikeButton, true);
             favoriteButtonController = new MultiStateButtonController(view.favoriteButton, true);
             likeButtonController.OnButtonClicked += OnLike;
             dislikeButtonController.OnButtonClicked += OnDislike;
             favoriteButtonController.OnButtonClicked += OnFavorite;
-            view.gameObject.SetActive(false);
+        }
+
+        public void SetPanelData()
+        {
+
+        }
+
+        public void ShowPanel()
+        {
+            view.rectTransform.localScale = Vector3.zero;
+            view.gameObject.SetActive(true);
+            view.rectTransform.DOScale(Vector3.one, 0.5f).SetEase(Ease.InCirc);
         }
 
         private void OnFavorite(bool isFavorite)
@@ -40,13 +57,6 @@ namespace DCL.Navmap
         {
             if(isLiked)
                 dislikeButtonController.SetButtonState(false);
-        }
-
-        public void ShowPanel()
-        {
-            view.rectTransform.localScale = Vector3.zero;
-            view.gameObject.SetActive(true);
-            view.rectTransform.DOScale(Vector3.one, 0.5f).SetEase(Ease.InCirc);
         }
 
         private void HidePanel()

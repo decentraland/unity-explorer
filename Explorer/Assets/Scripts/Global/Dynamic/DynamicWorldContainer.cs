@@ -6,6 +6,7 @@ using DCL.DebugUtilities.Builders;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.WebRequests.Analytics;
+using DCLServices.PlacesAPIService;
 using ECS;
 using ECS.Prioritization.Components;
 using MVC;
@@ -59,6 +60,7 @@ namespace Global.Dynamic
             PopupCloserView popupCloserView = Object.Instantiate((await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
             MVCManager mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
             MapRendererContainer mapRendererContainer = await MapRendererContainer.Create(staticContainer, dynamicSettings.MapRendererSettings, ct);
+            var placesAPIClient = new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {

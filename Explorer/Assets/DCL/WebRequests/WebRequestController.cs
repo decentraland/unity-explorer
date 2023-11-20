@@ -14,6 +14,8 @@ namespace DCL.WebRequests
         private static readonly InitializeRequest<GetTextureArguments, GetTextureWebRequest> GET_TEXTURE = GetTextureWebRequest.Initialize;
         private static readonly InitializeRequest<GenericGetArguments, GenericGetRequest> GET_GENERIC = GenericGetRequest.Initialize;
         private static readonly InitializeRequest<GenericPostArguments, GenericPostRequest> POST_GENERIC = GenericPostRequest.Initialize;
+        private static readonly InitializeRequest<GenericPutArguments, GenericPutRequest> PUT_GENERIC = GenericPutRequest.Initialize;
+        private static readonly InitializeRequest<GenericPatchArguments, GenericPatchRequest> PATCH_GENERIC = GenericPatchRequest.Initialize;
 
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
 
@@ -38,6 +40,24 @@ namespace DCL.WebRequests
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
             Send(POST_GENERIC, commonArguments, arguments, ct, reportCategory, headersInfo, signInfo);
+
+        public UniTask<GenericPutRequest> PutAsync(
+            CommonArguments commonArguments,
+            GenericPutArguments arguments,
+            CancellationToken ct,
+            string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
+            WebRequestHeadersInfo? headersInfo = null,
+            WebRequestSignInfo? signInfo = null) =>
+            Send(PUT_GENERIC, commonArguments, arguments, ct, reportCategory, headersInfo, signInfo);
+
+        public UniTask<GenericPatchRequest> PatchAsync(
+            CommonArguments commonArguments,
+            GenericPatchArguments arguments,
+            CancellationToken ct,
+            string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
+            WebRequestHeadersInfo? headersInfo = null,
+            WebRequestSignInfo? signInfo = null) =>
+            Send(PATCH_GENERIC, commonArguments, arguments, ct, reportCategory, headersInfo, signInfo);
 
         public UniTask<GetTextureWebRequest> GetTextureAsync(
             CommonArguments commonArguments,
