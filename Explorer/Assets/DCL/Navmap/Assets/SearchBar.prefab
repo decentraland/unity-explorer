@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 5321577865132267882}
   - component: {fileID: 6459324867536094026}
   - component: {fileID: 7152686171439982118}
+  - component: {fileID: 4581470978530328835}
   m_Layer: 5
   m_Name: SearchBar
   m_TagString: Untagged
@@ -178,6 +179,21 @@ MonoBehaviour:
   m_isRichTextEditingAllowed: 0
   m_LineLimit: 0
   m_InputValidator: {fileID: 0}
+--- !u!114 &4581470978530328835
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 836569618237506586}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22a8baac599fe4236850ead80a895fd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  inputField: {fileID: 7152686171439982118}
+  placeHolderText: {fileID: 6847896572102695487}
+  clearSearchButton: {fileID: 591611072373950417}
 --- !u!1 &1684105793296059905
 GameObject:
   m_ObjectHideFlags: 0

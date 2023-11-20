@@ -526,6 +526,7 @@ GameObject:
   - component: {fileID: 8480862731773226024}
   - component: {fileID: 4469117476958373798}
   - component: {fileID: 4885775388727539516}
+  - component: {fileID: 4372287486427564535}
   m_Layer: 5
   m_Name: FullSearchResult
   m_TagString: Untagged
@@ -639,6 +640,23 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &4372287486427564535
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6387876269227726029}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba83d7adf60d44269b6c0cbe9d595bc4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  placeImage: {fileID: 2701094405387924080}
+  placeName: {fileID: 2002816853083840902}
+  placeCreator: {fileID: 6778867409167324581}
+  playersCount: {fileID: 8529440838006717089}
+  resultButton: {fileID: 4885775388727539516}
 --- !u!1 &7655836477635243875
 GameObject:
   m_ObjectHideFlags: 0

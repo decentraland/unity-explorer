@@ -61,7 +61,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.101960786, g: 0.101960786, b: 0.101960786, a: 1}
+  m_Color: {r: 0.101960786, g: 0.101960786, b: 0.101960786, a: 0.62352943}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1959,12 +1959,28 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5175090512098182137}
     m_Modifications:
+    - target: {fileID: 85566942900833079, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 145861463570281605, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_Group
       value: 
       objectReference: {fileID: 8693397134789102259}
     - target: {fileID: 145861463570281605, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_Colors.m_NormalColor.a
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 145861463570281605, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
+      propertyPath: m_Colors.m_NormalColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 145861463570281605, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
+      propertyPath: m_Colors.m_NormalColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 145861463570281605, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
+      propertyPath: m_Colors.m_NormalColor.r
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 145861463570281605, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
@@ -1999,6 +2015,10 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: 3d1a7d8ef5469443399d73d565f8d862, type: 3}
+    - target: {fileID: 1340690018881578410, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1392556527029171851, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_Name
       value: SatelliteMap
@@ -2038,6 +2058,14 @@ PrefabInstance:
     - target: {fileID: 3278519586392893701, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 17.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 3388056574719437513, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4246933139551001886, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4755743825679548413, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_Pivot.x
@@ -2123,6 +2151,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4839327010481083885, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5288072022237423886, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_text
       value: Satellite View
@@ -2152,6 +2184,14 @@ PrefabInstance:
       value: Satellite View
       objectReference: {fileID: 0}
     - target: {fileID: 6425377980552986654, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
+    - target: {fileID: 6425377980552986654, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4294967295
+      objectReference: {fileID: 0}
+    - target: {fileID: 6425377980552986654, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_VerticalAlignment
       value: 512
       objectReference: {fileID: 0}
@@ -2171,6 +2211,10 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: 3d1a7d8ef5469443399d73d565f8d862, type: 3}
+    - target: {fileID: 8732905702710159863, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8873916236923606513, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: section
       value: 2

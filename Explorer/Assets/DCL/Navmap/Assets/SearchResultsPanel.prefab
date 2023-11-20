@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 4768726199192219151}
   - component: {fileID: 2987506387484067971}
   - component: {fileID: 1552153521963411784}
-  - component: {fileID: 450070903284066288}
   m_Layer: 5
   m_Name: SearchResultsPanel
   m_TagString: Untagged
@@ -78,28 +77,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &450070903284066288
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7279776787525905429}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 012f041e27e094d8493d954aebe3d51c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  rectTransform: {fileID: 4768726199192219151}
-  placeImage: {fileID: 0}
-  closeButton: {fileID: 0}
-  jumpInButton: {fileID: 0}
-  placeName: {fileID: 0}
-  placeCreator: {fileID: 0}
-  placeDescription: {fileID: 0}
-  likeButton: {fileID: 0}
-  dislikeButton: {fileID: 0}
-  favoriteButton: {fileID: 0}
 --- !u!1 &7744301998278568505
 GameObject:
   m_ObjectHideFlags: 0

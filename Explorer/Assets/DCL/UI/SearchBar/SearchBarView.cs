@@ -11,8 +11,5 @@ public class SearchBarView : MonoBehaviour
     internal TMP_Text placeHolderText;
 
     [field: SerializeField]
-    internal GameObject searchSpinner;
-
-    [field: SerializeField]
     internal Button clearSearchButton;
 }

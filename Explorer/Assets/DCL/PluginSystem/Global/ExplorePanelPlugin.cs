@@ -2,7 +2,6 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.ExplorePanel;
-using DCL.Minimap;
 using DCL.Navmap;
 using Global.Dynamic;
 using MVC;
