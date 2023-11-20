@@ -26,7 +26,7 @@ namespace ECS.StreamableLoading.Common.Systems
                                                                      .WithAll<TIntention, IPartitionComponent, StreamableLoadingState>()
                                                                      .WithNone<StreamableLoadingResult<TAsset>>();
 
-        private readonly IStreamableCache<TAsset, TIntention> cache;
+        protected readonly IStreamableCache<TAsset, TIntention> cache;
 
         private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, TIntention> cachedInternalFlowDelegate;
 
@@ -168,7 +168,10 @@ namespace ECS.StreamableLoading.Common.Systems
                 World.Add(entity, result.Value);
 
                 if (result.Value.Succeeded)
+                {
+                    OnAssetSuccessfullyLoaded(result.Value.Asset);
                     ReportHub.Log(GetReportCategory(), $"{intention}'s successfully loaded from {source}");
+                }
             }
             else if (intention.CancellationTokenSource.IsCancellationRequested) { World.Destroy(entity); }
             else
@@ -177,6 +180,8 @@ namespace ECS.StreamableLoading.Common.Systems
                 state.Value = StreamableLoadingState.Status.NotStarted;
             }
         }
+
+        protected virtual void OnAssetSuccessfullyLoaded(TAsset asset) { }
 
         /// <summary>
         ///     All exceptions are handled by the upper functions, just do pure work

@@ -65,9 +65,9 @@ namespace Global.Dynamic
                 new GlobalInteractionPlugin(dclInput, rootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.CameraSamplingData, exposedGlobalDataContainer.ExposedCameraData),
                 new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.MemoryBudgetProvider as MemoryBudgetProvider, debugBuilder),
-                new WearablePlugin(staticContainer.AssetsProvisioner, realmData, ASSET_BUNDLES_URL),
+                new WearablePlugin(staticContainer.AssetsProvisioner, realmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner),
                 new AvatarPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner,
-                    staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, realmData, debugBuilder),
+                    staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, realmData, debugBuilder, staticContainer.CacheCleaner),
                 new ExplorePanelPlugin(staticContainer.AssetsProvisioner, mvcManager)
             };
 

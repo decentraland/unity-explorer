@@ -70,6 +70,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             // Create a new container root
             // It will be cached and pooled
+            // if (memoryBudgetProvider.TrySpendBudget())
             GltfContainerAsset result = CreateGltfObject(assetBundleData);
             World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
         }
@@ -82,7 +83,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             container.SetActive(false);
             Transform containerTransform = container.transform;
 
-            var result = GltfContainerAsset.Create(container);
+            var result = GltfContainerAsset.Create(container, assetBundleData);
 
             GameObject instance = Object.Instantiate(assetBundleData.GameObject, containerTransform);
 

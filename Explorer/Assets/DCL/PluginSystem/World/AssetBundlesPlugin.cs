@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.ResourcesUnloading;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.AssetBundles;
 using System;
@@ -30,11 +31,13 @@ namespace DCL.PluginSystem.World
         private readonly AssetBundleCache assetBundleCache;
         private readonly AssetBundleLoadingMutex assetBundleLoadingMutex;
 
-        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings)
+        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner)
         {
             this.reportsHandlingSettings = reportsHandlingSettings;
             assetBundleCache = new AssetBundleCache();
             assetBundleLoadingMutex = new AssetBundleLoadingMutex();
+
+            cacheCleaner.Register(assetBundleCache);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)

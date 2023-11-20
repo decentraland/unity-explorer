@@ -10,6 +10,7 @@ using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiling;
+using DCL.ResourcesUnloading;
 using ECS.Prioritization;
 using System.Collections.Generic;
 using System.Threading;
@@ -61,6 +62,7 @@ namespace Global
 
         public IRealmPartitionSettings RealmPartitionSettings => realmPartitionSettings.Value;
         public StaticSettings StaticSettings { get; private set; }
+        public CacheCleaner CacheCleaner { get; private set; }
 
         public void Dispose()
         {
@@ -85,6 +87,8 @@ namespace Global
 
         public static async UniTask<(StaticContainer container, bool success)> CreateAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
         {
+            ProfilingCounters.CleanAllCounters();
+
             var componentsContainer = ComponentsContainer.Create();
             var exposedGlobalDataContainer = ExposedGlobalDataContainer.Create();
             var profilingProvider = new ProfilingProvider();
@@ -110,6 +114,8 @@ namespace Global
                 new MemoryBudgetProvider(profilingProvider, staticSettings.MemoryThresholds)
             );
 
+            container.CacheCleaner = new CacheCleaner();
+
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
@@ -117,24 +123,25 @@ namespace Global
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
 
-            var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings);
+            var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, container.CacheCleaner);
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
                 new TransformsPlugin(sharedDependencies),
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
                 new PrimitiveCollidersPlugin(sharedDependencies),
-                new TexturesLoadingPlugin(),
+                new TexturesLoadingPlugin(container.CacheCleaner),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 assetBundlePlugin,
-                new GltfContainerPlugin(sharedDependencies),
+                new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
             };
 
             container.SharedPlugins = new IDCLGlobalPlugin[]
             {
                 assetBundlePlugin,
+                new ResourceUnloadingPlugin(sharedDependencies.MemoryBudgetProvider, container.CacheCleaner),
             };
 
             return (container, true);

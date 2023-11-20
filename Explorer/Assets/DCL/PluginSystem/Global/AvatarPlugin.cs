@@ -12,6 +12,7 @@ using DCL.Character.Components;
 using DCL.DebugUtilities;
 using DCL.ECSComponents;
 using DCL.PerformanceBudgeting;
+using DCL.ResourcesUnloading;
 using ECS;
 using ECS.ComponentsPooling;
 using System;
@@ -37,8 +38,9 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly TextureArrayContainer textureArrayContainer;
         private readonly IDebugContainerBuilder debugContainerBuilder;
+        private readonly CacheCleaner cacheCleaner;
 
-        private readonly WearableAssetsCache wearableAssetsCache = new (3, 100);
+        private readonly WearableAssetsCache wearableAssetsCache = new (100);
 
         private IComponentPool<AvatarBase> avatarPoolRegistry;
 
@@ -47,14 +49,17 @@ namespace DCL.PluginSystem.Global
 
         public AvatarPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner,
             IConcurrentBudgetProvider frameTimeCapBudgetProvider, IRealmData realmData,
-            IDebugContainerBuilder debugContainerBuilder)
+            IDebugContainerBuilder debugContainerBuilder, CacheCleaner cacheCleaner)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudgetProvider = frameTimeCapBudgetProvider;
             this.realmData = realmData;
             this.debugContainerBuilder = debugContainerBuilder;
+            this.cacheCleaner = cacheCleaner;
             componentPoolsRegistry = poolsRegistry;
             textureArrayContainer = new TextureArrayContainer();
+
+            cacheCleaner.Register(wearableAssetsCache);
         }
 
         public void Dispose()
@@ -95,7 +100,13 @@ namespace DCL.PluginSystem.Global
 
             AvatarLoaderSystem.InjectToWorld(ref builder);
 
-            AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudgetProvider, componentPoolsRegistry.GetReferenceTypePool<AvatarBase>(), celShadingMaterialPool,
+            avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>();
+
+            cacheCleaner.Register(avatarPoolRegistry);
+            cacheCleaner.Register(celShadingMaterialPool);
+            cacheCleaner.Register(computeShaderPool);
+
+            AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudgetProvider, avatarPoolRegistry, celShadingMaterialPool,
                 computeShaderPool, textureArrayContainer, wearableAssetsCache, skinningStrategy, vertOutBuffer);
 
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);

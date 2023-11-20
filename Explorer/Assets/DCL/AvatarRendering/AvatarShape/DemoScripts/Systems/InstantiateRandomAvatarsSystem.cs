@@ -174,9 +174,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             var density = 2.0f;
             float spawnArea = (float)Math.Sqrt(randomAvatarsToInstantiate) * density;
 
-            var currentXCounter = 0;
-            var currentYCounter = 0;
-
             for (var i = 0; i < randomAvatarsToInstantiate; i++)
             {
                 AvatarRandomizer currentRandomizer = randomizers[Random.Range(0, randomizers.Length)];
@@ -194,10 +191,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 Transform transform = new GameObject($"RANDOM_AVATAR_{i}").transform;
 
                 var pos = new Vector3(startXPosition + randomX, 500, startZPosition + randomZ);
-                var hitInfo = new RaycastHit();
-                var distance = 1000.0f;
+                const float DISTANCE = 1000.0f;
 
-                if (Physics.Raycast(pos, Vector3.down, out hitInfo, distance))
+                if (Physics.Raycast(pos, Vector3.down, out RaycastHit hitInfo, DISTANCE))
                     transform.localPosition = hitInfo.point;
                 else
                     transform.localPosition = new Vector3(pos.x, 0.0f, pos.z);

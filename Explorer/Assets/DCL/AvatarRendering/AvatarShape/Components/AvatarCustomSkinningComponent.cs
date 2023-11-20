@@ -3,6 +3,7 @@ using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 using Utility.Pool;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
@@ -73,7 +74,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             for (var i = 0; i < materials.Count; i++)
             {
                 materials[i].usedTextureArraySlot?.FreeSlot();
-                objectPool.Release(materials[i].celShadingMaterial);
+
+                // objectPool.Release(materials[i].celShadingMaterial);
+                UnityObjectUtils.SafeDestroy(materials[i].celShadingMaterial);
             }
 
             buffers.DisposeBuffers();

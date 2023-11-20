@@ -1,4 +1,7 @@
-﻿using JetBrains.Annotations;
+﻿using DCL.Profiling;
+using ECS.StreamableLoading.AssetBundles;
+using JetBrains.Annotations;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,8 +12,69 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     /// <summary>
     ///     Represents an original wearable asset
     /// </summary>
-    public readonly struct WearableAsset : IDisposable
+    public class WearableAsset : IDisposable
     {
+        internal static readonly ListObjectPool<RendererInfo> RENDERER_INFO_POOL = new (listInstanceDefaultCapacity: 3, defaultCapacity: 500);
+
+        /// <summary>
+        ///     Can be null in case of a texture
+        /// </summary>
+        [CanBeNull] public readonly GameObject GameObject;
+        private readonly AssetBundleData assetBundleData;
+        private readonly List<RendererInfo> rendererInfos;
+
+        private bool disposed;
+
+        public int ReferenceCount { get; private set; }
+
+        public IReadOnlyList<RendererInfo> RendererInfos => rendererInfos;
+
+        public WearableAsset(GameObject gameObject, List<RendererInfo> rendererInfos, AssetBundleData assetBundleData)
+        {
+            GameObject = gameObject;
+            this.rendererInfos = rendererInfos;
+
+            this.assetBundleData = assetBundleData;
+
+            ProfilingCounters.WearablesAssetsAmount.Value++;
+        }
+
+        /// <summary>
+        ///     Currently not called, we don't clean-up assets themselves
+        /// </summary>
+        public void Dispose()
+        {
+            if (disposed)
+                return;
+
+            disposed = true;
+
+            RENDERER_INFO_POOL.Release(rendererInfos);
+            assetBundleData.Dereference();
+
+            if (ReferenceCount > 0)
+                ProfilingCounters.WearablesAssetsReferencedAmount.Value--;
+
+            ProfilingCounters.WearablesAssetsAmount.Value--;
+        }
+
+        public void AddReference()
+        {
+            ReferenceCount++;
+
+            if (ReferenceCount == 1)
+                ProfilingCounters.WearablesAssetsReferencedAmount.Value++;
+        }
+
+        public void Dereference()
+        {
+            ReferenceCount--;
+            Assert.IsTrue(ReferenceCount >= 0, "Reference count should never be negative");
+
+            if (ReferenceCount == 0)
+                ProfilingCounters.WearablesAssetsReferencedAmount.Value--;
+        }
+
         public readonly struct RendererInfo
         {
             public readonly SkinnedMeshRenderer SkinnedMeshRenderer;
@@ -21,31 +85,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 SkinnedMeshRenderer = skinnedMeshRenderer;
                 Material = material;
             }
-        }
-
-        internal static readonly ListObjectPool<RendererInfo> RENDERER_INFO_POOL = new (listInstanceDefaultCapacity: 3, defaultCapacity: 500);
-
-        /// <summary>
-        ///     Can be null in case of a texture
-        /// </summary>
-        [CanBeNull]
-        public readonly GameObject GameObject;
-        private readonly List<RendererInfo> rendererInfos;
-
-        internal WearableAsset(GameObject gameObject, List<RendererInfo> rendererInfos)
-        {
-            GameObject = gameObject;
-            this.rendererInfos = rendererInfos;
-        }
-
-        public IReadOnlyList<RendererInfo> RendererInfos => rendererInfos;
-
-        /// <summary>
-        ///     Currently not called, we don't clean-up assets themselves
-        /// </summary>
-        public void Dispose()
-        {
-            RENDERER_INFO_POOL.Release(rendererInfos);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
@@ -14,7 +15,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
     /// <summary>
     ///     Individual pool for each GltfContainer source. LRU cache
     ///     <para>Gltf Containers can't be reused</para>
-    ///     TODO At the moment it is a draft and not cleaned-up at all
     /// </summary>
     public class GltfContainerAssetsCache : IStreamableCache<GltfContainerAsset, string>
     {
@@ -56,6 +56,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
                 // Remove from the tail of the list
                 asset = list[^1];
                 list.RemoveAt(list.Count - 1);
+
+                ProfilingCounters.GltfInCacheAmount.Value--;
                 return true;
             }
 
@@ -75,12 +77,29 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
                 cache[key] = list = new List<GltfContainerAsset>(maxSize / 10);
 
             list.Add(asset);
+            ProfilingCounters.GltfInCacheAmount.Value++;
 
             // This logic should not be executed if the application is quitting
             if (UnityObjectUtils.IsQuitting) return;
 
             asset.Root.SetActive(false);
             asset.Root.transform.SetParent(parentContainer);
+        }
+
+        public void Unload()
+        {
+            var unloaded = 0;
+
+            foreach (List<GltfContainerAsset> gltfList in cache.Values)
+            foreach (GltfContainerAsset gltfAsset in gltfList)
+            {
+                gltfAsset.Dispose();
+                unloaded++;
+            }
+
+            cache.Clear();
+
+            ProfilingCounters.GltfInCacheAmount.Value -= unloaded;
         }
 
         bool IEqualityComparer<string>.Equals(string x, string y) =>

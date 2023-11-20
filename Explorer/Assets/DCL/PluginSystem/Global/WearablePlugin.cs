@@ -9,6 +9,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.ResourcesUnloading;
 using ECS;
 using ECS.StreamableLoading.Cache;
 using Newtonsoft.Json;
@@ -35,12 +36,14 @@ namespace DCL.AvatarRendering.Wearables
 
         private WearablesDTOList defaultWearablesDTOs;
 
-        public WearablePlugin(IAssetsProvisioner assetsProvisioner, IRealmData realmData, URLDomain assetBundleURL)
+        public WearablePlugin(IAssetsProvisioner assetsProvisioner, IRealmData realmData, URLDomain assetBundleURL, CacheCleaner cacheCleaner)
         {
             wearableCatalog = new WearableCatalog();
             this.assetsProvisioner = assetsProvisioner;
             this.realmData = realmData;
             this.assetBundleURL = assetBundleURL;
+
+            cacheCleaner.Register(wearableCatalog);
         }
 
         public void Dispose() { }

@@ -24,6 +24,20 @@ namespace DCL.PerformanceBudgeting
             return false;
         }
 
+        public bool TrySpendBudget(out IAcquiredBudget acquiredBudget)
+        {
+            acquiredBudget = null; // Initialize the out parameter
+
+            if (currentBudget > 0)
+            {
+                currentBudget--;
+                acquiredBudget = AcquiredBudget.Create(this);
+                return true;
+            }
+
+            return false;
+        }
+
         public void ReleaseBudget()
         {
             if (currentBudget + 1 > maxBudget)
