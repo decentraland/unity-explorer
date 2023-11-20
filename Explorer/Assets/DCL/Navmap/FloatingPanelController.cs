@@ -1,6 +1,8 @@
 using Cysharp.Threading.Tasks;
+using DCLServices.PlacesAPIService;
 using DG.Tweening;
 using System;
+using System.Threading;
 using UnityEngine;
 
 namespace DCL.Navmap
@@ -8,13 +10,18 @@ namespace DCL.Navmap
     public class FloatingPanelController : IDisposable
     {
         private readonly FloatingPanelView view;
+        private readonly IPlacesAPIClient placesAPIClient;
         private MultiStateButtonController likeButtonController;
         private MultiStateButtonController dislikeButtonController;
         private MultiStateButtonController favoriteButtonController;
 
-        public FloatingPanelController(FloatingPanelView view)
+        private CancellationTokenSource cts;
+
+        public FloatingPanelController(FloatingPanelView view, IPlacesAPIClient placesAPIClient)
         {
             this.view = view;
+            this.placesAPIClient = placesAPIClient;
+
             view.closeButton.onClick.RemoveAllListeners();
             view.closeButton.onClick.AddListener(HidePanel);
             view.gameObject.SetActive(false);
@@ -31,16 +38,21 @@ namespace DCL.Navmap
             favoriteButtonController.OnButtonClicked += OnFavorite;
         }
 
-        public void SetPanelData()
-        {
-
-        }
-
-        public void ShowPanel()
+        public void ShowPanel(Vector2Int parcel)
         {
             view.rectTransform.localScale = Vector3.zero;
             view.gameObject.SetActive(true);
             view.rectTransform.DOScale(Vector3.one, 0.5f).SetEase(Ease.InCirc);
+            cts = new CancellationTokenSource();
+            GetPlaceInfo(parcel).Forget();
+        }
+
+        private async UniTaskVoid GetPlaceInfo(Vector2Int parcel)
+        {
+            PlacesData.PlaceInfo placeInfo = await placesAPIClient.GetPlace(parcel, cts.Token);
+            view.placeName.text = placeInfo.title;
+            view.placeCreator.text = $"created by <b>{placeInfo.owner}</b>";
+            view.placeDescription.text = placeInfo.description;
         }
 
         private void OnFavorite(bool isFavorite)

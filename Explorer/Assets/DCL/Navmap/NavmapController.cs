@@ -5,6 +5,7 @@ using DCLServices.MapRenderer.ConsumerUtils;
 using DCLServices.MapRenderer.MapCameraController;
 using DCLServices.MapRenderer.MapLayers;
 using DCLServices.MapRenderer.MapLayers.PlayerMarker;
+using DCLServices.PlacesAPIService;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -20,17 +21,23 @@ namespace DCL.Navmap
             MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.HomePoint | MapLayer.ScenesOfInterest | MapLayer.PlayerMarker | MapLayer.HotUsersMarkers | MapLayer.ColdUsersMarkers | MapLayer.ParcelHoverHighlight;
 
         private readonly NavmapView navmapView;
+        private readonly IPlacesAPIClient placesAPIClient;
         private CancellationTokenSource animationCts;
         private readonly IMapCameraController cameraController;
         private readonly NavmapZoomController zoomController;
         private readonly FloatingPanelController floatingPanelController;
         private readonly NavmapFilterController filterController;
 
-        public NavmapController(NavmapView navmapView, IMapRenderer mapRenderer)
+        public NavmapController(
+            NavmapView navmapView,
+            IMapRenderer mapRenderer,
+            IPlacesAPIClient placesAPIClient)
         {
             this.navmapView = navmapView;
+            this.placesAPIClient = placesAPIClient;
+
             zoomController = new NavmapZoomController(navmapView.zoomView);
-            floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView);
+            floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIClient);
             filterController = new NavmapFilterController(this.navmapView.filterView);
             Dictionary<ExploreSections, GameObject> mapSections = new ()
             {
@@ -79,9 +86,9 @@ namespace DCL.Navmap
             Activate();
         }
 
-        private void OnParcelClicked(MapRenderImage.ParcelClickData obj)
+        private void OnParcelClicked(MapRenderImage.ParcelClickData clickedParcel)
         {
-            floatingPanelController.ShowPanel();
+            floatingPanelController.ShowPanel(clickedParcel.Parcel);
         }
 
         private void Activate()

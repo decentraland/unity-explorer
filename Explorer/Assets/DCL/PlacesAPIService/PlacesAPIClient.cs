@@ -84,7 +84,8 @@ namespace DCLServices.PlacesAPIService
 
         public async UniTask<PlacesData.PlaceInfo> GetPlace(Vector2Int coords, CancellationToken ct)
         {
-            const string URL = BASE_URL + "?positions={0},{1}&with_realms_detail=true";
+            const string URL = BASE_URL + "?position={0},{1}&with_realms_detail=true";
+            
             var result = await webRequestController.GetAsync(
                 new CommonArguments(URLDomain.FromString(string.Format(URL, coords.x, coords.y))),
                 ct);
