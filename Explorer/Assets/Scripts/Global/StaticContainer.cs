@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
 using DCL.Diagnostics;
+using DCL.Gizmos.Plugin;
 using DCL.Interaction.Utility;
 using DCL.PerformanceBudgeting;
 using DCL.PluginSystem;
@@ -101,7 +102,7 @@ namespace Global
             if (!result)
                 return (null, false);
 
-            var staticSettings = settingsContainer.GetSettings<StaticSettings>();
+            StaticSettings staticSettings = settingsContainer.GetSettings<StaticSettings>();
 
             var sharedDependencies = new ECSWorldSingletonSharedDependencies(
                 componentsContainer.ComponentPoolsRegistry,
@@ -134,6 +135,9 @@ namespace Global
                 assetBundlePlugin,
                 new GltfContainerPlugin(sharedDependencies),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
+#if UNITY_EDITOR
+                new GizmosWorldPlugin(),
+#endif
             };
 
             container.SharedPlugins = new IDCLGlobalPlugin[]

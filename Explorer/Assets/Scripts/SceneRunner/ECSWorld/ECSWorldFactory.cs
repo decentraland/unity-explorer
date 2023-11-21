@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
+using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.UpdateGate;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
@@ -51,7 +52,7 @@ namespace SceneRunner.ECSWorld
 
             IComponentPoolsRegistry componentPoolsRegistry = singletonDependencies.ComponentPoolsRegistry;
 
-            Entity sceneRootEntity = world.Create(SpecialEntitiesID.SCENE_ROOT_ENTITY, world);
+            Entity sceneRootEntity = world.Create(new SceneRootComponent(), world);
             var persistentEntities = new PersistentEntities(sceneRootEntity);
 
             sharedDependencies.EntitiesMap[SpecialEntitiesID.SCENE_ROOT_ENTITY] = sceneRootEntity;

@@ -2,7 +2,8 @@
   "name": "DCL.Editor",
   "rootNamespace": "",
   "references": [
-    "GUID:fc4fd35fb877e904d8cedee73b2256f6"
+    "GUID:fc4fd35fb877e904d8cedee73b2256f6",
+    "GUID:d07d357721497c3469c49e00cf077f4d"
   ],
   "includePlatforms": [
     "Editor"
