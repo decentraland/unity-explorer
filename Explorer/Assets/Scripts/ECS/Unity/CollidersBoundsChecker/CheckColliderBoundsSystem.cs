@@ -25,7 +25,7 @@ namespace ECS.Unity.CollidersBoundsChecker
         ///     We should take care only about asset which are close enough.
         ///     No assets farther than this bucket will be checked
         /// </summary>
-        private const byte BUCKET_THRESHOLD = 0;
+        internal const byte BUCKET_THRESHOLD = 0;
 
         private readonly IPartitionComponent scenePartition;
         private readonly ParcelMathHelper.SceneGeometry sceneGeometry;
