@@ -84,7 +84,10 @@ namespace ECS.Unity.SceneBoundsChecker
 
             // Process all colliders
 
-            ProcessColliders(asset.VisibleMeshesColliders);
+            // Visible meshes colliders are created on demand
+            if (asset.VisibleMeshesColliders != null)
+                ProcessColliders(asset.VisibleMeshesColliders);
+
             ProcessColliders(asset.InvisibleColliders);
             return;
 
