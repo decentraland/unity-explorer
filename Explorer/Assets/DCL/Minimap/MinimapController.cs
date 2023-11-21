@@ -29,14 +29,12 @@ namespace DCL.Minimap
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
 
         public readonly BridgeSystemBinding<TrackPlayerPositionSystem> SystemBinding;
-
         private readonly IMapRenderer mapRenderer;
-
         private readonly MVCManager mvcManager;
         private readonly IPlacesAPIService placesAPIService;
+
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController mapCameraController;
-
         private Vector2Int previousParcelPosition;
 
         public MinimapController(
@@ -60,10 +58,8 @@ namespace DCL.Minimap
             viewInstance.minimapRendererButton.onClick.AddListener(()=>mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(null))).Forget());
         }
 
-        private void ExpandMinimap()
-        {
+        private void ExpandMinimap() =>
             viewInstance.minimapContainer.gameObject.SetActive(!viewInstance.minimapContainer.gameObject.activeSelf);
-        }
 
         [All(typeof(PlayerComponent))]
         [Query]
@@ -96,7 +92,6 @@ namespace DCL.Minimap
         private async UniTaskVoid GetPlaceInfo(Vector3 playerPosition)
         {
             Vector2Int playerParcelPosition = ParcelMathHelper.WorldToGridPosition(playerPosition);
-
             if (previousParcelPosition == playerParcelPosition)
                 return;
 

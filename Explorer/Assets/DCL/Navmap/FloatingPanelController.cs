@@ -2,8 +2,10 @@ using Cysharp.Threading.Tasks;
 using DCLServices.PlacesAPIService;
 using DG.Tweening;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.Navmap
 {
@@ -16,6 +18,7 @@ namespace DCL.Navmap
         private MultiStateButtonController favoriteButtonController;
 
         private CancellationTokenSource cts;
+        private Dictionary<string, GameObject> categoriesDictionary;
 
         public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService)
         {
@@ -25,6 +28,11 @@ namespace DCL.Navmap
             view.closeButton.onClick.RemoveAllListeners();
             view.closeButton.onClick.AddListener(HidePanel);
             view.gameObject.SetActive(false);
+            categoriesDictionary = new Dictionary<string, GameObject>();
+            for (var i = 0; i < view.categories.Length; i++)
+                categoriesDictionary.Add(view.categoryNames[i], view.categories[i]);
+
+            ResetCategories();
             InitButtons();
         }
 
@@ -52,14 +60,33 @@ namespace DCL.Navmap
             PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlace(parcel, cts.Token);
             view.placeName.text = placeInfo.title;
             view.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
-            view.placeDescription.text = placeInfo.description;
+            view.placeDescription.text = string.IsNullOrEmpty(placeInfo.description)
+                ? "This place doesn't have a description set"
+                : placeInfo.description;
             view.location.text = placeInfo.base_position;
             view.visits.text = placeInfo.user_visits.ToString();
             view.upvotes.text = placeInfo.like_rate_as_float != null ? $"{placeInfo.like_rate_as_float.Value * 100:0}%" : "-%";
-            foreach (string placeInfoCategory in placeInfo.categories)
-            {
+            view.parcelsCount.text = placeInfo.Positions.Length.ToString();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(view.contentViewport);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(view.descriptionContent);
+            ResetCategories();
 
-            }
+            if (placeInfo.categories.Length == 0)
+                return;
+
+            foreach (string placeInfoCategory in placeInfo.categories)
+                if (categoriesDictionary.TryGetValue(placeInfoCategory, out GameObject categoryGameObject))
+                    categoryGameObject.SetActive(true);
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(view.categoriesContainer);
+        }
+
+        private void ResetCategories()
+        {
+            foreach (KeyValuePair<string, GameObject> keyValuePair in categoriesDictionary)
+                keyValuePair.Value.SetActive(false);
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(view.categoriesContainer);
         }
 
         private void OnFavorite(bool isFavorite)

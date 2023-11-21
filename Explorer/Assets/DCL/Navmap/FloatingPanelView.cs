@@ -5,7 +5,25 @@ using UnityEngine.UI;
 public class FloatingPanelView : MonoBehaviour
 {
     [field: SerializeField]
+    public GameObject[] categories;
+
+    [field: SerializeField]
+    public string[] categoryNames;
+
+    [field: SerializeField]
+    public RectTransform contentViewport;
+
+    [field: SerializeField]
+    public RectTransform descriptionContent;
+
+    [field: SerializeField]
     public RectTransform rectTransform;
+
+    [field: SerializeField]
+    public RectTransform categoriesContainer;
+
+    [field: SerializeField]
+    public VerticalLayoutGroup categoriesLayout;
 
     [field: SerializeField]
     public Image placeImage;
@@ -33,6 +51,9 @@ public class FloatingPanelView : MonoBehaviour
 
     [field: SerializeField]
     public TMP_Text placeDescription;
+
+    [field: SerializeField]
+    public TMP_Text parcelsCount;
 
     [field: SerializeField]
     public MultiStateButtonView likeButton;
