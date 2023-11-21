@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
+using Object = UnityEngine.Object;
 
 namespace ECS.Unity.Transforms.Components
 {
@@ -25,7 +26,7 @@ namespace ECS.Unity.Transforms.Components
         public CachedTransform Cached;
 
         public Transform Transform;
-        public HashSet<EntityReference> Children;
+        public readonly HashSet<EntityReference> Children;
         public EntityReference Parent;
 
         public TransformComponent(Transform transform)
@@ -42,6 +43,12 @@ namespace ECS.Unity.Transforms.Components
                 LocalRotation = transform.localRotation,
                 LocalScale = transform.localScale,
             };
+        }
+
+        public TransformComponent(Transform transform, string name, Vector3 startPosition) : this(transform)
+        {
+            transform.name = name;
+            transform.localPosition = startPosition;
         }
 
         public void SetTransform(Vector3 localPosition, Quaternion localRotation, Vector3 localScale)
@@ -64,6 +71,7 @@ namespace ECS.Unity.Transforms.Components
         public void Dispose()
         {
             HashSetPool<EntityReference>.Release(Children);
+            Object.Destroy(Transform.gameObject);
         }
     }
 }

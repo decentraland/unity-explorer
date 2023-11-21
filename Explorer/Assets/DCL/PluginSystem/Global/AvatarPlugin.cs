@@ -18,6 +18,7 @@ using ECS.ComponentsPooling;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
@@ -43,6 +44,7 @@ namespace DCL.PluginSystem.Global
         private readonly WearableAssetsCache wearableAssetsCache = new (100);
 
         private IComponentPool<AvatarBase> avatarPoolRegistry;
+        private IComponentPool<Transform> transformPoolRegistry;
 
         private IObjectPool<Material> celShadingMaterialPool;
         private IObjectPool<ComputeShader> computeShaderPool;
@@ -69,9 +71,21 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
+            await CreateAvatarBasePool(settings, ct);
+            await CreateMaterialPoolPrewarmed(settings, ct);
+            await CreateComputeShaderPoolPrewarmed(settings, ct);
+
+            transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>();
+        }
+
+        private async Task CreateAvatarBasePool(AvatarShapeSettings settings, CancellationToken ct)
+        {
             AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.avatarBase, ct: ct)).Value.GetComponent<AvatarBase>();
             componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity));
+        }
 
+        private async Task CreateMaterialPoolPrewarmed(AvatarShapeSettings settings, CancellationToken ct)
+        {
             ProvidedAsset<Material> providedMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.celShadingMaterial, ct: ct);
             celShadingMaterialPool = new ObjectPool<Material>(() => new Material(providedMaterial.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.defaultMaterialCapacity);
 
@@ -80,7 +94,10 @@ namespace DCL.PluginSystem.Global
                 Material prewarmedMaterial = celShadingMaterialPool.Get();
                 celShadingMaterialPool.Release(prewarmedMaterial);
             }
+        }
 
+        private async Task CreateComputeShaderPoolPrewarmed(AvatarShapeSettings settings, CancellationToken ct)
+        {
             ProvidedAsset<ComputeShader> providedComputeShader = await assetsProvisioner.ProvideMainAssetAsync(settings.computeShader, ct: ct);
             computeShaderPool = new ObjectPool<ComputeShader>(() => Object.Instantiate(providedComputeShader.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.defaultMaterialCapacity);
 
@@ -115,7 +132,7 @@ namespace DCL.PluginSystem.Global
             FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy);
 
             //Debug scripts
-            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY);
+            InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);
         }
 
         [Serializable]

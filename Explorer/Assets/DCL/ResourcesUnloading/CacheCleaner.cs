@@ -17,9 +17,10 @@ namespace DCL.ResourcesUnloading
         private IWearableAssetsCache wearableAssetsCache;
         private WearableCatalog wearableCatalog;
         private TexturesCache texturesCache;
-        private IComponentPool<AvatarBase> avatarPoolRegistry;
+
         private IObjectPool<Material> materialPool;
         private IObjectPool<ComputeShader> computeShaderPool;
+        private IComponentPool<AvatarBase> avatarPoolRegistry;
 
         public void UnloadCache()
         {
@@ -52,20 +53,16 @@ namespace DCL.ResourcesUnloading
         public void Register(IComponentPool<AvatarBase> avatarPoolRegistry) =>
             this.avatarPoolRegistry = avatarPoolRegistry;
 
+        public void Register(IObjectPool<Material> celShadingMaterialPool) =>
+            materialPool = celShadingMaterialPool;
+
+        public void Register(IObjectPool<ComputeShader> computeShaderPool) =>
+            this.computeShaderPool = computeShaderPool;
+
         public void UpdateProfilingCounters()
         {
             ProfilingCounters.WearablesAssetsInCatalogAmount.Value = wearableCatalog.WearableAssetsInCatalog;
             ProfilingCounters.WearablesAssetsInCacheAmount.Value = wearableAssetsCache.Cache.Keys.Count;
-        }
-
-        public void Register(IObjectPool<Material> celShadingMaterialPool)
-        {
-            materialPool = celShadingMaterialPool;
-        }
-
-        public void Register(IObjectPool<ComputeShader> computeShaderPool)
-        {
-            this.computeShaderPool = computeShaderPool;
         }
     }
 }

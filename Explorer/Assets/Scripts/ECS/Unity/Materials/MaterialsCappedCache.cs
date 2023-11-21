@@ -24,7 +24,7 @@ namespace ECS.Unity.Materials
 
         public MaterialsCappedCache(int maxSize, DestroyMaterial destroyMaterial)
         {
-            maxSize = Mathf.Min(MIN_SIZE, maxSize);
+            maxSize = 0; //Mathf.Min(MIN_SIZE, maxSize);
 
             this.maxSize = maxSize;
             this.destroyMaterial = destroyMaterial;

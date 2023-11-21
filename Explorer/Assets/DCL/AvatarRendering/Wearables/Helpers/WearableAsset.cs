@@ -1,10 +1,10 @@
 ﻿using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using JetBrains.Annotations;
-using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Assertions;
 using Utility.Pool;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
