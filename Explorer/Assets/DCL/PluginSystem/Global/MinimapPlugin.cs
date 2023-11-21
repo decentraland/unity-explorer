@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Minimap;
+using DCLServices.PlacesAPIService;
 using Global.Dynamic;
 using MVC;
 using System.Threading;
@@ -15,14 +16,16 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly MVCManager mvcManager;
         private readonly MapRendererContainer mapRendererContainer;
+        private readonly IPlacesAPIService placesAPIService;
 
         private MinimapController minimapController;
 
-        public MinimapPlugin(IAssetsProvisioner assetsProvisioner, MVCManager mvcManager, MapRendererContainer mapRendererContainer)
+        public MinimapPlugin(IAssetsProvisioner assetsProvisioner, MVCManager mvcManager, MapRendererContainer mapRendererContainer, IPlacesAPIService placesAPIService)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.mapRendererContainer = mapRendererContainer;
+            this.placesAPIService = placesAPIService;
         }
 
         public void Dispose() { }
@@ -31,7 +34,7 @@ namespace DCL.PluginSystem.Global
         {
             minimapController = new MinimapController(
                 MinimapController.CreateLazily(
-                    (await assetsProvisioner.ProvideMainAssetAsync(settings.MinimapPrefab, ct: ct)).Value.GetComponent<MinimapView>(), null), mapRendererContainer.MapRenderer, mvcManager);
+                    (await assetsProvisioner.ProvideMainAssetAsync(settings.MinimapPrefab, ct: ct)).Value.GetComponent<MinimapView>(), null), mapRendererContainer.MapRenderer, mvcManager, placesAPIService);
 
             mvcManager.RegisterController(minimapController);
             mvcManager.ShowAsync(MinimapController.IssueCommand()).Forget();

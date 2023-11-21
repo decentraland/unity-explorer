@@ -27,7 +27,7 @@ namespace DCLServices.PlacesAPIService
         UniTask<List<string>> GetPointsOfInterestCoords(CancellationToken ct);
     }
 
-    public class PlacesAPIClient: IPlacesAPIClient
+    public class PlacesAPIClient : IPlacesAPIClient
     {
         private const string BASE_URL = "https://places.decentraland.org/api/places";
         private const string BASE_URL_ZONE = "https://places.decentraland.zone/api/places";
@@ -84,8 +84,8 @@ namespace DCLServices.PlacesAPIService
 
         public async UniTask<PlacesData.PlaceInfo> GetPlace(Vector2Int coords, CancellationToken ct)
         {
-            const string URL = BASE_URL + "?position={0},{1}&with_realms_detail=true";
-            
+            const string URL = BASE_URL + "?positions={0},{1}&with_realms_detail=true";
+
             var result = await webRequestController.GetAsync(
                 new CommonArguments(URLDomain.FromString(string.Format(URL, coords.x, coords.y))),
                 ct);

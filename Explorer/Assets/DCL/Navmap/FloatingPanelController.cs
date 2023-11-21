@@ -10,17 +10,17 @@ namespace DCL.Navmap
     public class FloatingPanelController : IDisposable
     {
         private readonly FloatingPanelView view;
-        private readonly IPlacesAPIClient placesAPIClient;
+        private readonly IPlacesAPIService placesAPIService;
         private MultiStateButtonController likeButtonController;
         private MultiStateButtonController dislikeButtonController;
         private MultiStateButtonController favoriteButtonController;
 
         private CancellationTokenSource cts;
 
-        public FloatingPanelController(FloatingPanelView view, IPlacesAPIClient placesAPIClient)
+        public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService)
         {
             this.view = view;
-            this.placesAPIClient = placesAPIClient;
+            this.placesAPIService = placesAPIService;
 
             view.closeButton.onClick.RemoveAllListeners();
             view.closeButton.onClick.AddListener(HidePanel);
@@ -49,10 +49,17 @@ namespace DCL.Navmap
 
         private async UniTaskVoid GetPlaceInfo(Vector2Int parcel)
         {
-            PlacesData.PlaceInfo placeInfo = await placesAPIClient.GetPlace(parcel, cts.Token);
+            PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlace(parcel, cts.Token);
             view.placeName.text = placeInfo.title;
-            view.placeCreator.text = $"created by <b>{placeInfo.owner}</b>";
+            view.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
             view.placeDescription.text = placeInfo.description;
+            view.location.text = placeInfo.base_position;
+            view.visits.text = placeInfo.user_visits.ToString();
+            view.upvotes.text = placeInfo.like_rate_as_float != null ? $"{placeInfo.like_rate_as_float.Value * 100:0}%" : "-%";
+            foreach (string placeInfoCategory in placeInfo.categories)
+            {
+
+            }
         }
 
         private void OnFavorite(bool isFavorite)

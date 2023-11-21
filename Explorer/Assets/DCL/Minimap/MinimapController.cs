@@ -11,12 +11,14 @@ using DCLServices.MapRenderer.ConsumerUtils;
 using DCLServices.MapRenderer.MapCameraController;
 using DCLServices.MapRenderer.MapLayers;
 using DCLServices.MapRenderer.MapLayers.PlayerMarker;
+using DCLServices.PlacesAPIService;
 using ECS.Unity.Transforms.Components;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Minimap
 {
@@ -30,18 +32,23 @@ namespace DCL.Minimap
 
         private readonly IMapRenderer mapRenderer;
 
+        private readonly MVCManager mvcManager;
+        private readonly IPlacesAPIService placesAPIService;
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController mapCameraController;
-        private readonly MVCManager mvcManager;
+
+        private Vector2Int previousParcelPosition;
 
         public MinimapController(
             ViewFactoryMethod viewFactory,
             IMapRenderer mapRenderer,
-            MVCManager mvcManager
+            MVCManager mvcManager,
+            IPlacesAPIService placesAPIService
         ) : base(viewFactory)
         {
             this.mapRenderer = mapRenderer;
             this.mvcManager = mvcManager;
+            this.placesAPIService = placesAPIService;
             SystemBinding = AddModule(new BridgeSystemBinding<TrackPlayerPositionSystem>(this, QueryPlayerPositionQuery));
         }
 
@@ -62,12 +69,13 @@ namespace DCL.Minimap
         [Query]
         private void QueryPlayerPosition(in TransformComponent transformComponent)
         {
+            var position = transformComponent.Transform.position;
             if (mapCameraController == null)
             {
                 mapCameraController = mapRenderer.RentCamera(new MapCameraInput(
                     this,
                     RENDER_LAYERS,
-                    Vector2Int.RoundToInt(MapRendererTrackPlayerPosition.GetPlayerCentricCoords(transformComponent.Transform.position)),
+                    Vector2Int.RoundToInt(MapRendererTrackPlayerPosition.GetPlayerCentricCoords(position)),
                     1,
                     viewInstance.pixelPerfectMapRendererTextureProvider.GetPixelPerfectTextureResolution(),
                     new Vector2Int(viewInstance.mapRendererVisibleParcels, viewInstance.mapRendererVisibleParcels)
@@ -76,8 +84,31 @@ namespace DCL.Minimap
                 mapRendererTrackPlayerPosition = new MapRendererTrackPlayerPosition(mapCameraController);
                 viewInstance.mapRendererTargetImage.texture = mapCameraController.GetRenderTexture();
                 viewInstance.pixelPerfectMapRendererTextureProvider.Activate(mapCameraController);
+                GetPlaceInfo(position).Forget();
             }
-            else { mapRendererTrackPlayerPosition.OnPlayerPositionChanged(transformComponent.Transform.position); }
+            else
+            {
+                mapRendererTrackPlayerPosition.OnPlayerPositionChanged(position);
+                GetPlaceInfo(position).Forget();
+            }
+        }
+
+        private async UniTaskVoid GetPlaceInfo(Vector3 playerPosition)
+        {
+            Vector2Int playerParcelPosition = ParcelMathHelper.WorldToGridPosition(playerPosition);
+
+            if (previousParcelPosition == playerParcelPosition)
+                return;
+
+            previousParcelPosition = playerParcelPosition;
+
+            try
+            {
+                PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlace(playerParcelPosition, CancellationToken.None);
+                viewInstance.placeNameText.text = placeInfo.title;
+            }
+            catch (Exception) { viewInstance.placeNameText.text = "Unknown place"; }
+            finally { viewInstance.placeCoordinatesText.text = playerParcelPosition.ToString(); }
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;

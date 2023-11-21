@@ -17,6 +17,15 @@ public class FloatingPanelView : MonoBehaviour
     public Button jumpInButton;
 
     [field: SerializeField]
+    public TMP_Text visits;
+
+    [field: SerializeField]
+    public TMP_Text upvotes;
+
+    [field: SerializeField]
+    public TMP_Text location;
+
+    [field: SerializeField]
     public TMP_Text placeName;
 
     [field: SerializeField]

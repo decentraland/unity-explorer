@@ -21,7 +21,7 @@ namespace DCL.Navmap
             MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.HomePoint | MapLayer.ScenesOfInterest | MapLayer.PlayerMarker | MapLayer.HotUsersMarkers | MapLayer.ColdUsersMarkers | MapLayer.ParcelHoverHighlight;
 
         private readonly NavmapView navmapView;
-        private readonly IPlacesAPIClient placesAPIClient;
+        private readonly IPlacesAPIService placesAPIService;
         private CancellationTokenSource animationCts;
         private readonly IMapCameraController cameraController;
         private readonly NavmapZoomController zoomController;
@@ -31,13 +31,13 @@ namespace DCL.Navmap
         public NavmapController(
             NavmapView navmapView,
             IMapRenderer mapRenderer,
-            IPlacesAPIClient placesAPIClient)
+            IPlacesAPIService placesAPIService)
         {
             this.navmapView = navmapView;
-            this.placesAPIClient = placesAPIClient;
+            this.placesAPIService = placesAPIService;
 
             zoomController = new NavmapZoomController(navmapView.zoomView);
-            floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIClient);
+            floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService);
             filterController = new NavmapFilterController(this.navmapView.filterView);
             Dictionary<ExploreSections, GameObject> mapSections = new ()
             {
