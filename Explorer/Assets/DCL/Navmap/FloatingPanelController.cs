@@ -13,12 +13,13 @@ namespace DCL.Navmap
     {
         private readonly FloatingPanelView view;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly Dictionary<string, GameObject> categoriesDictionary;
+
         private MultiStateButtonController likeButtonController;
         private MultiStateButtonController dislikeButtonController;
         private MultiStateButtonController favoriteButtonController;
 
         private CancellationTokenSource cts;
-        private Dictionary<string, GameObject> categoriesDictionary;
 
         public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService)
         {
@@ -28,6 +29,7 @@ namespace DCL.Navmap
             view.closeButton.onClick.RemoveAllListeners();
             view.closeButton.onClick.AddListener(HidePanel);
             view.gameObject.SetActive(false);
+
             categoriesDictionary = new Dictionary<string, GameObject>();
             for (var i = 0; i < view.categories.Length; i++)
                 categoriesDictionary.Add(view.categoryNames[i], view.categories[i]);
@@ -58,6 +60,12 @@ namespace DCL.Navmap
         private async UniTaskVoid GetPlaceInfo(Vector2Int parcel)
         {
             PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlace(parcel, cts.Token);
+            ResetCategories();
+            SetFloatingPanelInfo(placeInfo);
+        }
+
+        private void SetFloatingPanelInfo(PlacesData.PlaceInfo placeInfo)
+        {
             view.placeName.text = placeInfo.title;
             view.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
             view.placeDescription.text = string.IsNullOrEmpty(placeInfo.description)
@@ -67,9 +75,9 @@ namespace DCL.Navmap
             view.visits.text = placeInfo.user_visits.ToString();
             view.upvotes.text = placeInfo.like_rate_as_float != null ? $"{placeInfo.like_rate_as_float.Value * 100:0}%" : "-%";
             view.parcelsCount.text = placeInfo.Positions.Length.ToString();
+
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.contentViewport);
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.descriptionContent);
-            ResetCategories();
 
             if (placeInfo.categories.Length == 0)
                 return;
