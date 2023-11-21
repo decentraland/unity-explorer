@@ -7,12 +7,13 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
-using ECS.Unity.CollidersBoundsChecker;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
+using ECS.Unity.SceneBoundsChecker;
 using NSubstitute;
 using NUnit.Framework;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
@@ -37,8 +38,8 @@ namespace ECS.Unity.GLTFContainer.Tests
             var c = new GltfContainerComponent();
             c.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention("1", new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY);
             var asset = GltfContainerAsset.Create(new GameObject());
-            asset.VisibleMeshesColliders.Add(new SDKCollider());
-            asset.VisibleMeshesColliders.Add(new SDKCollider());
+
+            asset.VisibleMeshesColliders = new List<SDKCollider> { new (), new () };
             world.Add(c.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
             c.State.Set(LoadingState.Finished);
 

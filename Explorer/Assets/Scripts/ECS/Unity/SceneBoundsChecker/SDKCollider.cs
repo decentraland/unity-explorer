@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace ECS.Unity.CollidersBoundsChecker
+namespace ECS.Unity.SceneBoundsChecker
 {
     /// <summary>
     ///     Contains information about a collider that was created from an SDK entity

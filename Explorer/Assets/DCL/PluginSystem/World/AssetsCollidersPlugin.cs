@@ -4,9 +4,9 @@ using DCL.Time;
 using ECS.ComponentsPooling;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
-using ECS.Unity.CollidersBoundsChecker;
 using ECS.Unity.PrimitiveColliders.Components;
 using ECS.Unity.PrimitiveColliders.Systems;
+using ECS.Unity.SceneBoundsChecker;
 using System.Collections.Generic;
 using UnityEngine;
 

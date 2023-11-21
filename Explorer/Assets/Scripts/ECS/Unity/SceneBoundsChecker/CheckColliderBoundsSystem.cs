@@ -14,7 +14,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 
-namespace ECS.Unity.CollidersBoundsChecker
+namespace ECS.Unity.SceneBoundsChecker
 {
     [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     [UpdateAfter(typeof(GltfContainerGroup))]

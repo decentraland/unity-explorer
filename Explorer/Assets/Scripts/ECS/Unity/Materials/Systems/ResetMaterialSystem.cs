@@ -6,7 +6,8 @@ using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
-using Utility.Primitives;
+using ECS.Unity.SceneBoundsChecker;
+using SceneRunner.Scene;
 
 namespace ECS.Unity.Materials.Systems
 {
@@ -19,10 +20,12 @@ namespace ECS.Unity.Materials.Systems
     public partial class ResetMaterialSystem : BaseUnityLoopSystem
     {
         private readonly DestroyMaterial destroyMaterial;
+        private readonly ISceneData sceneData;
 
-        internal ResetMaterialSystem(World world, DestroyMaterial destroyMaterial) : base(world)
+        internal ResetMaterialSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData) : base(world)
         {
             this.destroyMaterial = destroyMaterial;
+            this.sceneData = sceneData;
         }
 
         protected override void Update(float t)
@@ -35,7 +38,7 @@ namespace ECS.Unity.Materials.Systems
         [None(typeof(PBMaterial))]
         private void Reset(ref PrimitiveMeshRendererComponent meshRendererComponent, ref MaterialComponent materialComponent)
         {
-            meshRendererComponent.MeshRenderer.sharedMaterial = DefaultMaterial.Shared;
+            meshRendererComponent.SetDefaultMaterial(sceneData.Geometry.CircumscribedPlanes);
             ReleaseMaterial.Execute(World, ref materialComponent, destroyMaterial);
         }
     }

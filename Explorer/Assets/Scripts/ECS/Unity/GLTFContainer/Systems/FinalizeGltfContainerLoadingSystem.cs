@@ -9,6 +9,7 @@ using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
+using ECS.Unity.SceneBoundsChecker;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using Utility;
@@ -75,7 +76,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                 }
 
                 ConfigureGltfContainerColliders.SetupColliders(ref component, result.Asset);
-                ConfigureGltfMaterials.EnableSceneBounds(in result.Asset, in sceneCircumscribedPlanes);
+                ConfigureSceneMaterial.EnableSceneBounds(in result.Asset, in sceneCircumscribedPlanes);
 
                 entityCollidersSceneCache.Associate(in component, World.Reference(entity), sdkEntity);
 

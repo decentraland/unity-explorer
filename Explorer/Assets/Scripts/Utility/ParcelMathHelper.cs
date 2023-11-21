@@ -119,8 +119,8 @@ namespace Utility
             Vector3 min = bounds.min;
             Vector3 max = bounds.max;
 
-            return boundingPlanes.MinX <= min.x && boundingPlanes.MaxX >= max.x
-                                                && boundingPlanes.MinZ <= min.z && boundingPlanes.MaxZ >= max.z;
+            return boundingPlanes.MinX < min.x && boundingPlanes.MaxX > max.x
+                                               && boundingPlanes.MinZ < min.z && boundingPlanes.MaxZ > max.z;
         }
 
         public readonly struct ParcelCorners

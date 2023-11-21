@@ -1,4 +1,4 @@
-﻿using ECS.Unity.CollidersBoundsChecker;
+﻿using ECS.Unity.SceneBoundsChecker;
 using System;
 using System.Collections.Generic;
 using UnityEngine;

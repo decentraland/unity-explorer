@@ -47,7 +47,7 @@ namespace Global
 
         public IProfilingProvider ProfilingProvider { get; private set; }
 
-        public PhysicsTickProvider PhysicsTickProvider { get; }
+        public PhysicsTickProvider PhysicsTickProvider { get; private set; }
 
         public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
 
@@ -119,6 +119,7 @@ namespace Global
             container.ProfilingProvider = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
+            container.PhysicsTickProvider = new PhysicsTickProvider();
 
             var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings);
 

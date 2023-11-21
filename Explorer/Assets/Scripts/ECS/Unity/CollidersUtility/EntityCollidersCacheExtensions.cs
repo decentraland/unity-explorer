@@ -1,8 +1,8 @@
 ﻿using Arch.Core;
 using CRDT;
-using ECS.Unity.CollidersBoundsChecker;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
+using ECS.Unity.SceneBoundsChecker;
 using System.Collections.Generic;
 
 namespace DCL.Interaction.Utility

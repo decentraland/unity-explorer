@@ -7,7 +7,7 @@ using NUnit.Framework;
 using UnityEngine;
 using Utility;
 
-namespace ECS.Unity.CollidersBoundsChecker.Tests
+namespace ECS.Unity.SceneBoundsChecker.Tests
 {
     public class ColliderBoundsCheckerShould : UnitySystemTestBase<CheckColliderBoundsSystem>
     {
