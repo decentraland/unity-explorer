@@ -32,10 +32,10 @@ public class NavmapSearchBarController : IDisposable
         cts?.Cancel();
         cts?.Dispose();
         cts = new CancellationTokenSource();
-        SearchAndShow(searchText).Forget();
+        SearchAndShowAsync(searchText).Forget();
     }
 
-    private async UniTaskVoid SearchAndShow(string searchText)
+    private async UniTaskVoid SearchAndShowAsync(string searchText)
     {
         await UniTask.Delay(1000, cancellationToken: cts.Token);
         searchResultPanelController.ShowLoading();

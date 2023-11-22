@@ -46,7 +46,7 @@ namespace DCLServices.MapRenderer.MapLayers.Atlas.SatelliteAtlas
                 UnityObjectUtils.SafeDestroy(spriteRenderer.gameObject);
         }
 
-        public async UniTask LoadImage(Vector2Int chunkId, float chunkWorldSize, CancellationToken ct)
+        public async UniTask LoadImageAsync(Vector2Int chunkId, float chunkWorldSize, CancellationToken ct)
         {
             webRequestAttempts = 0;
             linkedCts = CancellationTokenSource.CreateLinkedTokenSource(internalCts.Token, ct);

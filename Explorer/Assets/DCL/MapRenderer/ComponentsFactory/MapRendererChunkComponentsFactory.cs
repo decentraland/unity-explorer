@@ -39,7 +39,7 @@ namespace DCLServices.MapRenderer.ComponentsFactory
             this.webRequestController = webRequestController;
         }
 
-        async UniTask<MapRendererComponents> IMapRendererComponentsFactory.Create(CancellationToken cancellationToken)
+        async UniTask<MapRendererComponents> IMapRendererComponentsFactory.CreateAsync(CancellationToken cancellationToken)
         {
             MapRendererConfiguration configuration = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapRendererConfiguration, ct: CancellationToken.None)).Value.GetComponent<MapRendererConfiguration>());
             var coordsUtils = new ChunkCoordsUtils(PARCEL_SIZE);
@@ -47,7 +47,7 @@ namespace DCLServices.MapRenderer.ComponentsFactory
             var layers = new Dictionary<MapLayer, IMapLayerController>();
             var zoomScalingLayers = new List<IZoomScalingLayer>();
 
-            ParcelHighlightMarkerObject highlightMarkerPrefab = await GetParcelHighlightMarkerPrefab(cancellationToken);
+            ParcelHighlightMarkerObject highlightMarkerPrefab = await GetParcelHighlightMarkerPrefabAsync(cancellationToken);
 
             var highlightMarkersPool = new ObjectPool<IParcelHighlightMarker>(
                 () => CreateHighlightMarker(highlightMarkerPrefab, configuration, coordsUtils),
@@ -67,9 +67,9 @@ namespace DCLServices.MapRenderer.ComponentsFactory
             );
 
             await UniTask.WhenAll(
-                CreateAtlas(layers, configuration, coordsUtils, cullingController, cancellationToken),
-                CreateSatelliteAtlas(layers, configuration, coordsUtils, cullingController, cancellationToken),
-                playerMarkerInstaller.Install(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, cancellationToken)
+                CreateAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
+                CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
+                playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, cancellationToken)
                 /* List of other creators that can be executed in parallel */);
 
             return new MapRendererComponents(configuration, layers, zoomScalingLayers, cullingController, cameraControllersPool);
@@ -83,47 +83,47 @@ namespace DCLServices.MapRenderer.ComponentsFactory
             }
         }
 
-        private async UniTask CreateSatelliteAtlas(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, CancellationToken cancellationToken)
+        private async UniTask CreateSatelliteAtlasAsync(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, CancellationToken cancellationToken)
         {
             const int GRID_SIZE = 8; // satellite images are provided by 8x8 grid.
             const int PARCELS_INSIDE_CHUNK = 40; // One satellite image contains 40 parcels.
 
-            var chunkAtlas = new SatelliteChunkAtlasController(configuration.SatelliteAtlasRoot, GRID_SIZE, PARCELS_INSIDE_CHUNK, coordsUtils, cullingController, chunkBuilder: CreateSatelliteChunk);
+            var chunkAtlas = new SatelliteChunkAtlasController(configuration.SatelliteAtlasRoot, GRID_SIZE, PARCELS_INSIDE_CHUNK, coordsUtils, cullingController, chunkBuilder: CreateSatelliteChunkAsync);
 
             // initialize Atlas but don't block the flow (to accelerate loading time)
-            chunkAtlas.Initialize(cancellationToken).SuppressCancellationThrow().Forget();
+            chunkAtlas.InitializeAsync(cancellationToken).SuppressCancellationThrow().Forget();
 
             layers.Add(MapLayer.SatelliteAtlas, chunkAtlas);
             return;
 
-            async UniTask<IChunkController> CreateSatelliteChunk(Vector3 chunkLocalPosition, Vector2Int chunkId, Transform parent, CancellationToken ct)
+            async UniTask<IChunkController> CreateSatelliteChunkAsync(Vector3 chunkLocalPosition, Vector2Int chunkId, Transform parent, CancellationToken ct)
             {
-                SpriteRenderer atlasChunkPrefab = await GetAtlasChunkPrefab(ct);
+                SpriteRenderer atlasChunkPrefab = await GetAtlasChunkPrefabAsync(ct);
 
                 var chunk = new SatelliteChunkController(atlasChunkPrefab, webRequestController, chunkLocalPosition, chunkId, parent, MapRendererDrawOrder.SATELLITE_ATLAS);
-                await chunk.LoadImage(chunkId, PARCELS_INSIDE_CHUNK * coordsUtils.ParcelSize, ct);
+                await chunk.LoadImageAsync(chunkId, PARCELS_INSIDE_CHUNK * coordsUtils.ParcelSize, ct);
 
                 return chunk;
             }
         }
 
-        private async UniTask CreateAtlas(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, CancellationToken cancellationToken)
+        private async UniTask CreateAtlasAsync(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, CancellationToken cancellationToken)
         {
-            var chunkAtlas = new ParcelChunkAtlasController(configuration.AtlasRoot, ATLAS_CHUNK_SIZE, coordsUtils, cullingController, chunkBuilder: CreateChunk);
+            var chunkAtlas = new ParcelChunkAtlasController(configuration.AtlasRoot, ATLAS_CHUNK_SIZE, coordsUtils, cullingController, chunkBuilder: CreateChunkAsync);
 
             // initialize Atlas but don't block the flow (to accelerate loading time)
-            chunkAtlas.Initialize(cancellationToken).SuppressCancellationThrow().Forget();
+            chunkAtlas.InitializeAsync(cancellationToken).SuppressCancellationThrow().Forget();
 
             layers.Add(MapLayer.ParcelsAtlas, chunkAtlas);
             return;
 
-            async UniTask<IChunkController> CreateChunk(Vector3 chunkLocalPosition, Vector2Int coordsCenter, Transform parent, CancellationToken ct)
+            async UniTask<IChunkController> CreateChunkAsync(Vector3 chunkLocalPosition, Vector2Int coordsCenter, Transform parent, CancellationToken ct)
             {
-                SpriteRenderer atlasChunkPrefab = await GetAtlasChunkPrefab(ct);
+                SpriteRenderer atlasChunkPrefab = await GetAtlasChunkPrefabAsync(ct);
 
                 var chunk = new ParcelChunkController(webRequestController, atlasChunkPrefab, chunkLocalPosition, coordsCenter, parent);
                 chunk.SetDrawOrder(MapRendererDrawOrder.ATLAS);
-                await chunk.LoadImage(ATLAS_CHUNK_SIZE, PARCEL_SIZE, coordsCenter, ct);
+                await chunk.LoadImageAsync(ATLAS_CHUNK_SIZE, PARCEL_SIZE, coordsCenter, ct);
 
                 return chunk;
             }
@@ -141,10 +141,10 @@ namespace DCLServices.MapRenderer.ComponentsFactory
             return new ParcelHighlightMarker(obj);
         }
 
-        internal async Task<SpriteRenderer> GetAtlasChunkPrefab(CancellationToken cancellationToken) =>
+        internal async Task<SpriteRenderer> GetAtlasChunkPrefabAsync(CancellationToken cancellationToken) =>
             (await assetsProvisioner.ProvideInstanceAsync(mapSettings.AtlasChunk, ct: CancellationToken.None)).Value.GetComponent<SpriteRenderer>();
 
-        private async UniTask<ParcelHighlightMarkerObject> GetParcelHighlightMarkerPrefab(CancellationToken cancellationToken) =>
+        private async UniTask<ParcelHighlightMarkerObject> GetParcelHighlightMarkerPrefabAsync(CancellationToken cancellationToken) =>
             (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.ParcelHighlight, ct: CancellationToken.None)).Value.GetComponent<ParcelHighlightMarkerObject>();
     }
 }

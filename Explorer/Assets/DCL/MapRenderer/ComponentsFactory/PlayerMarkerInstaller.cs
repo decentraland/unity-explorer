@@ -15,7 +15,7 @@ namespace DCLServices.MapRenderer.ComponentsFactory
         private IAssetsProvisioner assetsProvisioner;
         private MapRendererSettings mapSettings;
 
-        public async UniTask Install(
+        public async UniTask InstallAsync(
             Dictionary<MapLayer, IMapLayerController> writer,
             List<IZoomScalingLayer> zoomScalingWriter,
             MapRendererConfiguration configuration,
@@ -27,7 +27,7 @@ namespace DCLServices.MapRenderer.ComponentsFactory
         {
             this.mapSettings = settings;
             this.assetsProvisioner = assetProv;
-            PlayerMarkerObject prefab = await GetPrefab(cancellationToken);
+            PlayerMarkerObject prefab = await GetPrefabAsync(cancellationToken);
 
             var controller = new PlayerMarkerController(
                 CreateMarker,
@@ -53,7 +53,7 @@ namespace DCLServices.MapRenderer.ComponentsFactory
             }
         }
 
-        internal async UniTask<PlayerMarkerObject> GetPrefab(CancellationToken cancellationToken) =>
+        internal async UniTask<PlayerMarkerObject> GetPrefabAsync(CancellationToken cancellationToken) =>
             (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.PlayerMarker, ct: CancellationToken.None)).Value.GetComponent<PlayerMarkerObject>();
 
     }

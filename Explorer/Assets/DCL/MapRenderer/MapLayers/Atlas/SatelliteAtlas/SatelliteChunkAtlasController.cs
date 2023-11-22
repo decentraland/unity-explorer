@@ -33,7 +33,7 @@ namespace DCLServices.MapRenderer.MapLayers.SatelliteAtlas
             chunks = new List<IChunkController>(chunkAmounts.x * chunkAmounts.y);
         }
 
-        public async UniTask Initialize(CancellationToken ct)
+        public async UniTask InitializeAsync(CancellationToken ct)
         {
             int chunkSpriteSize = parcelsInsideChunk * coordsUtils.ParcelSize;
             Vector3 offset = SatelliteMapOffset();

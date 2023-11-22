@@ -80,12 +80,12 @@ namespace DCL.Minimap
                 mapRendererTrackPlayerPosition = new MapRendererTrackPlayerPosition(mapCameraController);
                 viewInstance.mapRendererTargetImage.texture = mapCameraController.GetRenderTexture();
                 viewInstance.pixelPerfectMapRendererTextureProvider.Activate(mapCameraController);
-                GetPlaceInfo(position).Forget();
+                GetPlaceInfoAsync(position).Forget();
             }
             else
             {
                 mapRendererTrackPlayerPosition.OnPlayerPositionChanged(position);
-                GetPlaceInfo(position).Forget();
+                GetPlaceInfoAsync(position).Forget();
             }
         }
 
@@ -102,7 +102,7 @@ namespace DCL.Minimap
             mapRenderer.SetSharedLayer(MapLayer.ParcelsAtlas, false);
         }
 
-        private async UniTaskVoid GetPlaceInfo(Vector3 playerPosition)
+        private async UniTaskVoid GetPlaceInfoAsync(Vector3 playerPosition)
         {
             Vector2Int playerParcelPosition = ParcelMathHelper.WorldToGridPosition(playerPosition);
             if (previousParcelPosition == playerParcelPosition)

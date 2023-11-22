@@ -9,6 +9,6 @@ namespace DCLServices.MapRenderer.ComponentsFactory
     /// </summary>
     public interface IMapRendererComponentsFactory
     {
-        internal UniTask<MapRendererComponents> Create(CancellationToken cancellationToken);
+        internal UniTask<MapRendererComponents> CreateAsync(CancellationToken cancellationToken);
     }
 }

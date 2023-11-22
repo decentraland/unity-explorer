@@ -154,7 +154,7 @@ namespace DCL.Navmap
                 return;
 
             SetZoomLevel(currentZoomLevel + (zoomIn ? 1 : -1));
-            ScaleOverTime(cameraController.Zoom, targetNormalizedZoom, cts.Token).Forget();
+            ScaleOverTimeAsync(cameraController.Zoom, targetNormalizedZoom, cts.Token).Forget();
 
             SetUiButtonsInteractivity();
         }
@@ -165,7 +165,7 @@ namespace DCL.Navmap
             view.ZoomOut.SetUiInteractable(isInteractable: currentZoomLevel > 0);
         }
 
-        private async UniTaskVoid ScaleOverTime(float from, float to, CancellationToken ct)
+        private async UniTaskVoid ScaleOverTimeAsync(float from, float to, CancellationToken ct)
         {
             isScaling = true;
             float scaleDuration = view.scaleDuration;

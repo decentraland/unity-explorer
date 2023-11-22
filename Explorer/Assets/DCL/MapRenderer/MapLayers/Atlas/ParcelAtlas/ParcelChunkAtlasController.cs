@@ -35,7 +35,7 @@ namespace DCLServices.MapRenderer.MapLayers.Atlas
             parcelsInsideChunk = Mathf.Max(1, chunkSize / parcelSize);
         }
 
-        public async UniTask Initialize(CancellationToken ct)
+        public async UniTask InitializeAsync(CancellationToken ct)
         {
             var linkedCt = CancellationTokenSource.CreateLinkedTokenSource(ctsDisposing.Token, ct).Token;
 

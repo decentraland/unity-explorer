@@ -59,7 +59,7 @@ namespace DCLServices.MapRenderer
 
             try
             {
-                MapRendererComponents components = await componentsFactory.Create(ct);
+                MapRendererComponents components = await componentsFactory.CreateAsync(ct);
                 cullingController = components.CullingController;
                 mapCameraPool = components.MapCameraControllers;
                 configurationInstance = components.ConfigurationInstance;

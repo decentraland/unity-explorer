@@ -52,7 +52,7 @@ namespace DCL.Navmap
         {
             if (view.gameObject.activeInHierarchy)
             {
-                GetPlaceInfo(parcel).Forget();
+                GetPlaceInfoAsync(parcel).Forget();
             }
             else
             {
@@ -66,10 +66,10 @@ namespace DCL.Navmap
             view.gameObject.SetActive(true);
             view.rectTransform.DOScale(Vector3.one, 0.5f).SetEase(Ease.InCirc);
             cts = new CancellationTokenSource();
-            GetPlaceInfo(parcel).Forget();
+            GetPlaceInfoAsync(parcel).Forget();
         }
 
-        private async UniTaskVoid GetPlaceInfo(Vector2Int parcel)
+        private async UniTaskVoid GetPlaceInfoAsync(Vector2Int parcel)
         {
             try
             {

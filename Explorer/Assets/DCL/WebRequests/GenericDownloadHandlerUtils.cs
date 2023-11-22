@@ -10,7 +10,7 @@ namespace DCL.WebRequests
 {
     public static class GenericDownloadHandlerUtils
     {
-        public static async UniTask<T> OverwriteFromJson<T>(UnityWebRequest webRequest, T targetObject, WRJsonParser jsonParser,
+        public static async UniTask<T> OverwriteFromJsonAsync<T>(UnityWebRequest webRequest, T targetObject, WRJsonParser jsonParser,
             WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread) where T: class
         {
             string text = webRequest.downloadHandler.text;
@@ -18,7 +18,7 @@ namespace DCL.WebRequests
             // Finalize the request immediately
             webRequest.Dispose();
 
-            await SwitchToThread(threadFlags);
+            await SwitchToThreadAsync(threadFlags);
 
             try
             {
@@ -38,10 +38,10 @@ namespace DCL.WebRequests
                     default: throw new ArgumentOutOfRangeException(nameof(jsonParser), jsonParser, null);
                 }
             }
-            finally { await SwitchToMainThread(threadFlags); }
+            finally { await SwitchToMainThreadAsync(threadFlags); }
         }
 
-        public static async UniTask<T> CreateFromJson<T>(UnityWebRequest webRequest, WRJsonParser jsonParser,
+        public static async UniTask<T> CreateFromJsonAsync<T>(UnityWebRequest webRequest, WRJsonParser jsonParser,
             WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread)
         {
             string text = webRequest.downloadHandler.text;
@@ -49,7 +49,7 @@ namespace DCL.WebRequests
             // Finalize the request immediately
             webRequest.Dispose();
 
-            await SwitchToThread(threadFlags);
+            await SwitchToThreadAsync(threadFlags);
 
             try
             {
@@ -68,7 +68,7 @@ namespace DCL.WebRequests
                         throw new ArgumentOutOfRangeException(nameof(jsonParser), jsonParser, null);
                 }
             }
-            finally { await SwitchToMainThread(threadFlags); }
+            finally { await SwitchToMainThreadAsync(threadFlags); }
         }
 
         /// <summary>
@@ -84,14 +84,14 @@ namespace DCL.WebRequests
             return data;
         }
 
-        private static async UniTask SwitchToMainThread(WRThreadFlags flags)
+        private static async UniTask SwitchToMainThreadAsync(WRThreadFlags flags)
         {
             if (EnumUtils.HasFlag(flags, WRThreadFlags.SwitchBackToMainThread))
                 await UniTask.SwitchToMainThread();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static async UniTask SwitchToThread(WRThreadFlags deserializationThreadFlags)
+        private static async UniTask SwitchToThreadAsync(WRThreadFlags deserializationThreadFlags)
         {
             if (EnumUtils.HasFlag(deserializationThreadFlags, WRThreadFlags.SwitchToThreadPool))
                 await UniTask.SwitchToThreadPool();

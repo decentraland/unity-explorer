@@ -27,12 +27,12 @@ namespace DCL.WebRequests
             T targetObject,
             WRJsonParser jsonParser,
             WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread) where T: class =>
-            GenericDownloadHandlerUtils.OverwriteFromJson(UnityWebRequest, targetObject, jsonParser, threadFlags);
+            GenericDownloadHandlerUtils.OverwriteFromJsonAsync(UnityWebRequest, targetObject, jsonParser, threadFlags);
 
         public UniTask<T> CreateFromJson<T>(
             WRJsonParser jsonParser,
             WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread) =>
-            GenericDownloadHandlerUtils.CreateFromJson<T>(UnityWebRequest, jsonParser, threadFlags);
+            GenericDownloadHandlerUtils.CreateFromJsonAsync<T>(UnityWebRequest, jsonParser, threadFlags);
 
         public byte[] GetDataCopy() =>
             GenericDownloadHandlerUtils.GetDataCopy(UnityWebRequest);

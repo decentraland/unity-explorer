@@ -72,7 +72,7 @@ namespace DCLServices.MapRenderer.ConsumerUtils
             {
                 StopInertia();
                 inertiaLoopCTS = new CancellationTokenSource();
-                InertiaLoop(inertiaLoopCTS.Token).Forget();
+                InertiaLoopAsync(inertiaLoopCTS.Token).Forget();
             }
         }
 
@@ -104,7 +104,7 @@ namespace DCLServices.MapRenderer.ConsumerUtils
             inertiaLoopCTS = null;
         }
 
-        private async UniTaskVoid InertiaLoop(CancellationToken ct)
+        private async UniTaskVoid InertiaLoopAsync(CancellationToken ct)
         {
             var prevPosition = mapCameraController.LocalPosition;
             var inertialVelocity = Vector2.zero;
