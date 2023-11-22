@@ -31,7 +31,8 @@ public class NavmapSearchBarController : IDisposable
 
     private void OnValueChanged(string searchText)
     {
-        if (searchText.Length < 3) return;
+        if (string.IsNullOrEmpty(searchText) || searchText.Length < 3)
+            searchResultPanelController.Hide();
 
         cts?.Cancel();
         cts?.Dispose();
@@ -42,13 +43,15 @@ public class NavmapSearchBarController : IDisposable
     private async UniTaskVoid SearchAndShow(string searchText)
     {
         await UniTask.Delay(1000, cancellationToken: cts.Token);
-        (IReadOnlyList<PlacesData.PlaceInfo> places, int total) searchPlaces = await placesAPIService.SearchPlaces(searchText, 1, 8, cts.Token);
+        searchResultPanelController.ShowLoading();
+        (IReadOnlyList<PlacesData.PlaceInfo> places, int total) searchPlaces = await placesAPIService.SearchPlaces(searchText, 0, 8, cts.Token);
 
         searchResultPanelController.SetResults(searchPlaces.places);
     }
 
     private void ClearSearch()
     {
+        view.inputField.SetTextWithoutNotify("");
         searchResultPanelController.Hide();
     }
 

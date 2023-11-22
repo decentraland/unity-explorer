@@ -31,6 +31,13 @@ public class SearchResultPanelController
         );
     }
 
+    public void ShowLoading()
+    {
+        ReleasePool();
+        view.LoadingContainer.SetActive(true);
+        view.gameObject.SetActive(true);
+    }
+
     public void Hide()
     {
         view.gameObject.SetActive(false);
@@ -38,7 +45,6 @@ public class SearchResultPanelController
 
     public void SetResults(IReadOnlyList<PlacesData.PlaceInfo> places)
     {
-        view.gameObject.SetActive(true);
         ReleasePool();
         foreach (PlacesData.PlaceInfo placeInfo in places)
         {
@@ -48,6 +54,7 @@ public class SearchResultPanelController
             fullSearchResultsView.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
             fullSearchResultsView.playersCount.text = placeInfo.user_count.ToString();
         }
+        view.LoadingContainer.SetActive(false);
     }
 
     private void ReleasePool()
