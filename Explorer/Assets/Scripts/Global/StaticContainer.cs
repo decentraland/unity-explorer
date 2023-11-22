@@ -2,17 +2,16 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
+using DCL.Diagnostics;
 using DCL.Interaction.Utility;
+using DCL.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.WebRequests.Analytics;
-using Diagnostics;
-using Diagnostics.ReportsHandling;
+using DCL.Profiling;
 using ECS.Prioritization;
-using ECS.Profiling;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -64,6 +63,7 @@ namespace Global
         public IPartitionSettings PartitionSettings => partitionSettings.Value;
 
         public IRealmPartitionSettings RealmPartitionSettings => realmPartitionSettings.Value;
+        public StaticSettings StaticSettings { get; private set; }
 
         public void Dispose()
         {
@@ -76,6 +76,8 @@ namespace Global
 
         public async UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
         {
+            StaticSettings = settings;
+
             (characterObject, reportHandlingSettings, partitionSettings, realmPartitionSettings) =
                 await UniTask.WhenAll(
                     AssetsProvisioner.ProvideInstanceAsync(settings.CharacterObject, new Vector3(0f, settings.StartYPosition, 0f), Quaternion.identity, ct: ct),
@@ -99,13 +101,16 @@ namespace Global
             if (!result)
                 return (null, false);
 
+            var staticSettings = settingsContainer.GetSettings<StaticSettings>();
+
             var sharedDependencies = new ECSWorldSingletonSharedDependencies(
                 componentsContainer.ComponentPoolsRegistry,
                 container.ReportHandlingSettings,
                 new SceneEntityFactory(),
                 new PartitionedWorldsAggregate.Factory(),
-                new ConcurrentLoadingBudgetProvider(50),
-                new FrameTimeCapBudgetProvider(40, profilingProvider)
+                new ConcurrentLoadingBudgetProvider(staticSettings.AssetsLoadingBudget),
+                new FrameTimeCapBudgetProvider(staticSettings.FPSCap, profilingProvider),
+                new MemoryBudgetProvider(profilingProvider, staticSettings.MemoryThresholds)
             );
 
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);

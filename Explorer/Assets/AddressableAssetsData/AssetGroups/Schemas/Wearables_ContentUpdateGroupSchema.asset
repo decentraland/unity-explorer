@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: Wearables_ContentUpdateGroupSchema
   m_EditorClassIdentifier: 
   m_Group: {fileID: 11400000, guid: f79a626e4753e19409657b7be5170ae9, type: 2}
-  m_StaticContent: 0
+  m_StaticContent: 1

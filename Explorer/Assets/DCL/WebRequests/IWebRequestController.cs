@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using System.Threading;
 
 namespace DCL.WebRequests

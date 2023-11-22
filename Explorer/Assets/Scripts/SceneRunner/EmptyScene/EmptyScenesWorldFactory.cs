@@ -65,7 +65,7 @@ namespace SceneRunner.EmptyScene
             DestroyEntitiesSystem.InjectToWorld(ref builder);
 
             // No partitioning - will be inherited from the parent
-            AssetsDeferredLoadingSystem.InjectToWorld(ref builder, sharedDependencies.LoadingBudgetProvider);
+            AssetsDeferredLoadingSystem.InjectToWorld(ref builder, sharedDependencies.LoadingBudgetProvider, sharedDependencies.MemoryBudgetProvider);
 
             var dependencies = new EmptyScenesWorldSharedDependencies(
                 fakeEntitiesMap,

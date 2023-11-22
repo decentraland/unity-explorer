@@ -1,5 +1,5 @@
 ﻿using CommunicationData.URLHelpers;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using Ipfs;
 using System;
 using System.Collections.Generic;

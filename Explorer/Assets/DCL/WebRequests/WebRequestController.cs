@@ -1,6 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.WebRequests.Analytics;
-using Diagnostics.ReportsHandling;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;

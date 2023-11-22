@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: Avatar_ContentUpdateGroupSchema
   m_EditorClassIdentifier: 
   m_Group: {fileID: 11400000, guid: dfcf8d697a676564cba6e67051b21967, type: 2}
-  m_StaticContent: 0
+  m_StaticContent: 1

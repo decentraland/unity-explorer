@@ -2,12 +2,12 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
+using DCL.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;

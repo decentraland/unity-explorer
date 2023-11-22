@@ -1,8 +1,8 @@
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
-using Diagnostics;
 using ECS.TestSuite;
+using DCL.Diagnostics;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRuntime.Apis.Modules;

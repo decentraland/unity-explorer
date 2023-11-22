@@ -15,11 +15,13 @@ namespace DCL.CharacterMotion.Systems
     {
         private readonly InputAction movementAxis;
         private readonly InputAction sprintAction;
+        private readonly InputAction walkAction;
 
         public UpdateInputMovementSystem(World world, DCLInput dclInput) : base(world)
         {
             movementAxis = dclInput.Player.Movement;
             sprintAction = dclInput.Player.Sprint;
+            walkAction = dclInput.Player.Walk;
         }
 
         protected override void Update(float t)
@@ -31,7 +33,10 @@ namespace DCL.CharacterMotion.Systems
         private void UpdateInput(ref MovementInputComponent inputToUpdate)
         {
             inputToUpdate.Axes = movementAxis.ReadValue<Vector2>();
-            inputToUpdate.Kind = sprintAction.IsPressed() ? MovementKind.Walk : MovementKind.Run;
+
+            // Running action wins over walking
+            inputToUpdate.Kind = sprintAction.IsPressed() ? MovementKind.Run :
+                walkAction.IsPressed() ? MovementKind.Walk : MovementKind.Jog;
         }
     }
 }

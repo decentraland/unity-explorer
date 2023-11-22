@@ -13,6 +13,5 @@ namespace DCL.PluginSystem.Global
 
         [field: SerializeField]
         public MapRendererSettings MapRendererSettings { get; private set; }
-
     }
 }

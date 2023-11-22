@@ -1,7 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using DCL.Diagnostics;
 using DCL.Interaction.Utility;
-using Diagnostics.ReportsHandling;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;

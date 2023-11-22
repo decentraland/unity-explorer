@@ -2,7 +2,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using ECS;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;

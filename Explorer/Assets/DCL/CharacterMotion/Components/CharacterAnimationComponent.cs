@@ -1,0 +1,21 @@
+﻿using DCL.CharacterMotion.Animation;
+using UnityEngine;
+
+namespace DCL.CharacterMotion.Components
+{
+    public struct CharacterAnimationComponent
+    {
+        public struct AnimationStates
+        {
+            public float MovementBlendValue;
+            public bool IsGrounded;
+            public bool IsJumping;
+            public bool IsLongJump;
+            public bool IsLongFall;
+            public bool IsFalling;
+            public bool IsStunned;
+        }
+
+        public AnimationStates States;
+    }
+}

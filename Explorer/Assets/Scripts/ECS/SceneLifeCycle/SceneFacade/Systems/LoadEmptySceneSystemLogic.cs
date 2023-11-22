@@ -1,7 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.WebRequests;
-using Diagnostics.ReportsHandling;
 using ECS.ComponentsPooling;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;

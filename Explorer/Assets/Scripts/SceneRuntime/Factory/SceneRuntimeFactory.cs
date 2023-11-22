@@ -3,7 +3,7 @@ using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
 using DCL.WebRequests;
-using Diagnostics;
+using DCL.Diagnostics;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;

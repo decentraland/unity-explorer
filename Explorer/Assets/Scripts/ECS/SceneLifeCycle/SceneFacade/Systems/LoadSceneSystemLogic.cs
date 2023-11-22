@@ -1,9 +1,9 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
-using Diagnostics.ReportsHandling;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
+using DCL.Diagnostics;
 using Ipfs;
 using SceneRunner;
 using SceneRunner.Scene;

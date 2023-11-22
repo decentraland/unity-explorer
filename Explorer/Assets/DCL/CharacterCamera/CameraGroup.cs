@@ -1,6 +1,6 @@
 ﻿using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 
 namespace DCL.CharacterCamera
 {

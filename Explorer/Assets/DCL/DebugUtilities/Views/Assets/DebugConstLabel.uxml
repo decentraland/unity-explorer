@@ -1,5 +1,0 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
-    <DCL.DebugUtilities.Views.DebugConstLabelElement>
-        <ui:Label tabindex="-1" text="Label Name" display-tooltip-when-elided="true" class="debug-text--normal" />
-    </DCL.DebugUtilities.Views.DebugConstLabelElement>
-</ui:UXML>
