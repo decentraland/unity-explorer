@@ -2,6 +2,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.PerformanceBudgeting;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
@@ -31,10 +32,10 @@ namespace DCL.PluginSystem.World
         private readonly AssetBundleCache assetBundleCache;
         private readonly AssetBundleLoadingMutex assetBundleLoadingMutex;
 
-        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner)
+        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, IConcurrentBudgetProvider frameTimeBudgetProvider, CacheCleaner cacheCleaner)
         {
             this.reportsHandlingSettings = reportsHandlingSettings;
-            assetBundleCache = new AssetBundleCache();
+            assetBundleCache = new AssetBundleCache(frameTimeBudgetProvider);
             assetBundleLoadingMutex = new AssetBundleLoadingMutex();
 
             cacheCleaner.Register(assetBundleCache);

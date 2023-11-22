@@ -36,29 +36,17 @@ namespace DCL.ResourcesUnloading
             if (fpsCapBudgetProvider.TrySpendBudget())
                 assetBundleCache.Unload();
 
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                gltfContainerAssetsCache.Unload();
+            gltfContainerAssetsCache.Unload();
 
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                texturesCache.Unload();
+            texturesCache.Unload();
 
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                avatarPoolRegistry.Clear();
+            avatarPoolRegistry.Clear();
+            computeShaderPool.Clear();
+            AvatarCustomSkinningComponent.USED_SLOTS_POOL.Clear();
+            materialPool.Clear();
 
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                computeShaderPool.Clear();
-
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                AvatarCustomSkinningComponent.USED_SLOTS_POOL.Clear();
-
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                materialPool.Clear();
-
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                wearableCatalog.UnloadWearableAssets();
-
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                wearableAssetsCache.Unload();
+            wearableCatalog.UnloadWearableAssets();
+            wearableAssetsCache.Unload();
         }
 
         public void Register(AssetBundleCache assetBundleCache) =>

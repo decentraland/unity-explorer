@@ -9,7 +9,7 @@ namespace DCL.PerformanceBudgeting
         private readonly float totalBudgetAvailable;
 
         // Debug
-        public bool SimulateCappedFrameTime { private get; set; } = true;
+        public bool SimulateCappedFrameTime { private get; set; }
 
         public FrameTimeCapBudgetProvider(float budgetCapInMS, IProfilingProvider profilingProvider)
         {
