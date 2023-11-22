@@ -92,7 +92,7 @@ namespace DCL.Navmap
 
         private void OnParcelClicked(MapRenderImage.ParcelClickData clickedParcel)
         {
-            floatingPanelController.ShowPanel(clickedParcel.Parcel);
+            floatingPanelController.HandlePanelVisibility(clickedParcel.Parcel);
         }
 
         public void Activate()

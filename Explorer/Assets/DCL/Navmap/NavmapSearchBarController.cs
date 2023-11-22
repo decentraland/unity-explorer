@@ -7,26 +7,21 @@ using System.Threading;
 
 public class NavmapSearchBarController : IDisposable
 {
-    private SearchBarView view;
-    private readonly SearchResultPanelView searchResultPanelView;
+    private readonly SearchBarView view;
     private readonly IPlacesAPIService placesAPIService;
-    private readonly IAssetsProvisioner assetsProvisioner;
-    private SearchResultPanelController searchResultPanelController;
+    private readonly SearchResultPanelController searchResultPanelController;
+
     private CancellationTokenSource cts;
 
     public NavmapSearchBarController(SearchBarView view, SearchResultPanelView searchResultPanelView, IPlacesAPIService placesAPIService, IAssetsProvisioner assetsProvisioner)
     {
         this.view = view;
-        this.searchResultPanelView = searchResultPanelView;
         this.placesAPIService = placesAPIService;
-        this.assetsProvisioner = assetsProvisioner;
 
-        searchResultPanelController = new SearchResultPanelController(searchResultPanelView, this.assetsProvisioner);
+        searchResultPanelController = new SearchResultPanelController(searchResultPanelView, assetsProvisioner);
 
         view.inputField.onValueChanged.AddListener(OnValueChanged);
-        view.inputField.onSubmit.AddListener(s => SubmitSearch(s));
-        view.clearSearchButton.onClick.AddListener(() => ClearSearch());
-        //view.inputField.onSelect.AddListener((text)=>OnSelected?.Invoke(true));
+        view.clearSearchButton.onClick.AddListener(ClearSearch);
     }
 
     private void OnValueChanged(string searchText)
@@ -53,10 +48,6 @@ public class NavmapSearchBarController : IDisposable
     {
         view.inputField.SetTextWithoutNotify("");
         searchResultPanelController.Hide();
-    }
-
-    private void SubmitSearch(string searchString)
-    {
     }
 
     public void Dispose()

@@ -48,7 +48,19 @@ namespace DCL.Navmap
             favoriteButtonController.OnButtonClicked += OnFavorite;
         }
 
-        public void ShowPanel(Vector2Int parcel)
+        public void HandlePanelVisibility(Vector2Int parcel)
+        {
+            if (view.gameObject.activeInHierarchy)
+            {
+                GetPlaceInfo(parcel).Forget();
+            }
+            else
+            {
+                ShowPanel(parcel);
+            }
+        }
+
+        private void ShowPanel(Vector2Int parcel)
         {
             view.rectTransform.localScale = Vector3.zero;
             view.gameObject.SetActive(true);
@@ -59,9 +71,31 @@ namespace DCL.Navmap
 
         private async UniTaskVoid GetPlaceInfo(Vector2Int parcel)
         {
-            PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlace(parcel, cts.Token);
+            try
+            {
+                PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlace(parcel, cts.Token);
+                ResetCategories();
+                SetFloatingPanelInfo(placeInfo);
+            }
+            catch (Exception ex)
+            {
+                SetEmptyParcelInfo(parcel);
+            }
+        }
+
+        private void SetEmptyParcelInfo(Vector2Int parcel)
+        {
+            view.placeName.text = "Empty parcel";
+            view.placeCreator.text = $"created by <b>Unknown</b>";
+            view.placeDescription.text = "This place doesn't have a description set";
+            view.location.text = parcel.ToString();
+            view.visits.text = "-";
+            view.upvotes.text = "-";
+            view.parcelsCount.text = "1";
+
             ResetCategories();
-            SetFloatingPanelInfo(placeInfo);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(view.contentViewport);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(view.descriptionContent);
         }
 
         private void SetFloatingPanelInfo(PlacesData.PlaceInfo placeInfo)
@@ -87,6 +121,7 @@ namespace DCL.Navmap
                     categoryGameObject.SetActive(true);
 
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.CategoriesContainer);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(view.descriptionContent);
         }
 
         private void ResetCategories()
