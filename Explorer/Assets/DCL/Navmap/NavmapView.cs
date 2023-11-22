@@ -19,12 +19,6 @@ namespace DCL.Navmap
         public NavmapFilterView filterView;
 
         [field: SerializeField]
-        public GameObject satellite;
-
-        [field: SerializeField]
-        public GameObject streetView;
-
-        [field: SerializeField]
         public NavmapZoomView zoomView;
 
         [field: SerializeField]
@@ -38,9 +32,6 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public MapRenderImage StreetViewRenderImage { get; private set; }
-
-        [field: SerializeField]
-        public PixelPerfectMapRendererTextureProvider StreetViewPixelPerfectMapRendererTextureProvider { get; private set; }
 
         [field: SerializeField]
         public MapCameraDragBehavior.MapCameraDragBehaviorData MapCameraDragBehaviorData { get; private set; }

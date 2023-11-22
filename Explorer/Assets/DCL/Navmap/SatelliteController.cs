@@ -13,29 +13,34 @@ namespace DCL.Navmap
         private readonly SatelliteView view;
         private readonly MapCameraDragBehavior.MapCameraDragBehaviorData mapCameraDragBehaviorData;
         private readonly RectTransform rectTransform;
-        private readonly IMapCameraController cameraController;
         private readonly IMapRenderer mapRenderer;
+
+        private IMapCameraController cameraController;
 
         public SatelliteController(
             SatelliteView view,
             MapCameraDragBehavior.MapCameraDragBehaviorData mapCameraDragBehaviorData,
-            IMapCameraController cameraController,
             IMapRenderer mapRenderer)
         {
             this.view = view;
             this.mapCameraDragBehaviorData = mapCameraDragBehaviorData;
-            this.cameraController = cameraController;
             this.mapRenderer = mapRenderer;
 
             rectTransform = view.GetComponent<RectTransform>();
             view.SatelliteRenderImage.EmbedMapCameraDragBehavior(mapCameraDragBehaviorData);
-            view.SatelliteRenderImage.texture = cameraController.GetRenderTexture();
+        }
+
+        public void InjectCameraController(IMapCameraController controller)
+        {
+            this.cameraController = controller;
         }
 
         public void Activate()
         {
             mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, true);
+            view.SatelliteRenderImage.texture = cameraController.GetRenderTexture();
             view.SatellitePixelPerfectMapRendererTextureProvider.Activate(cameraController);
+            view.SatelliteRenderImage.Activate(null, cameraController.GetRenderTexture(), cameraController);
             view.gameObject.SetActive(true);
         }
 
@@ -43,6 +48,7 @@ namespace DCL.Navmap
         {
             mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, false);
             view.SatellitePixelPerfectMapRendererTextureProvider.Deactivate();
+            view.SatelliteRenderImage.Deactivate();
             view.gameObject.SetActive(false);
         }
 

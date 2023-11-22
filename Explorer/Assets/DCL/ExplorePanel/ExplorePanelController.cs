@@ -5,6 +5,7 @@ using DCL.UI;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.ExplorePanel
 {
@@ -15,6 +16,8 @@ namespace DCL.ExplorePanel
         private SectionSelectorController sectionSelectorController;
         private CancellationTokenSource animationCts;
         private TabSelectorView previousSelector;
+
+        private Dictionary<ExploreSections, ISection> exploreSections;
 
         public ExplorePanelController(
             ViewFactoryMethod viewFactory,
@@ -29,18 +32,16 @@ namespace DCL.ExplorePanel
 
         protected override void OnViewInstantiated()
         {
-            Dictionary<ExploreSections, ISection> exploreSections = new ()
+            exploreSections = new ()
             {
                 { ExploreSections.Navmap, navmapController },
                 { ExploreSections.Settings, settingsController },
             };
 
             sectionSelectorController = new SectionSelectorController(exploreSections, ExploreSections.Navmap);
+
             foreach (var keyValuePair in exploreSections)
-            {
                 keyValuePair.Value.Deactivate();
-            }
-            exploreSections[ExploreSections.Navmap].Activate();
 
             foreach (var tabSelector in viewInstance.TabSelectorViews)
             {
@@ -58,9 +59,16 @@ namespace DCL.ExplorePanel
             }
         }
 
-        protected override void OnViewShow()
+        protected override void OnBeforeViewShow()
         {
             viewInstance.TabSelectorViews[0].TabSelectorToggle.isOn = true;
+            exploreSections[ExploreSections.Navmap].Activate();
+        }
+
+        protected override void OnViewClose()
+        {
+            foreach (ISection exploreSectionsValue in exploreSections.Values)
+                exploreSectionsValue.Deactivate();
         }
 
         protected override UniTask WaitForCloseIntent(CancellationToken ct) =>

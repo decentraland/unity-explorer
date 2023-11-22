@@ -222,8 +222,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Genesis City Map
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
-  m_sharedMaterial: {fileID: 1701868249614554837, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
+  m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -685,7 +685,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -565, y: -2}
+  m_AnchoredPosition: {x: -550, y: -2}
   m_SizeDelta: {x: 100, y: 56}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &207743625829902405
@@ -859,8 +859,6 @@ MonoBehaviour:
   SearchBarResultPanel: {fileID: 2692722469671586730}
   floatingPanelView: {fileID: 6116657360967466757}
   filterView: {fileID: 7028833074500842829}
-  satellite: {fileID: 2723043980555199245}
-  streetView: {fileID: 6160499980858837278}
   zoomView: {fileID: 5363161542596086617}
   <TabSelectorViews>k__BackingField:
   - {fileID: 3289875574004561177}
@@ -868,7 +866,6 @@ MonoBehaviour:
   <SatelliteRenderImage>k__BackingField: {fileID: 1016802245327051856}
   <SatellitePixelPerfectMapRendererTextureProvider>k__BackingField: {fileID: 5012019790087633832}
   <StreetViewRenderImage>k__BackingField: {fileID: 4556225041539844487}
-  <StreetViewPixelPerfectMapRendererTextureProvider>k__BackingField: {fileID: 6610987039939177811}
   <MapCameraDragBehaviorData>k__BackingField:
     inertia: 0
     decelerationRate: 0

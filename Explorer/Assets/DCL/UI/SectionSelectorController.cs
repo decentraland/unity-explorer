@@ -48,6 +48,8 @@ namespace DCL.UI
             {
                 sections[previousSection].Deactivate();
                 sections[selectorToggle.section].Activate();
+                sections[previousSection].GetRectTransform().gameObject.SetActive(false);
+                sections[selectorToggle.section].GetRectTransform().gameObject.SetActive(true);
                 SetPanelsPosition(sections[previousSection].GetRectTransform(), sections[selectorToggle.section].GetRectTransform());
                 previousSection = selectorToggle.section;
             }
@@ -65,6 +67,7 @@ namespace DCL.UI
 
             RectTransform openingRectTransform = panelOpening.GetRectTransform();
             RectTransform closingRectTransform = panelClosing.GetRectTransform();
+            openingRectTransform.gameObject.SetActive(true);
 
             closingRectTransform.anchoredPosition = Vector2.zero;
             openingRectTransform.anchoredPosition = new Vector2(closingRectTransform.rect.width, 0);
@@ -78,6 +81,7 @@ namespace DCL.UI
                                          //Ensures that if cancelled the closing panel is in the correct position and disabled
                                          closingRectTransform.anchoredPosition = new Vector2(-closingRectTransform.rect.width, 0);
                                          panelClosing.Deactivate();
+                                         closingRectTransform.gameObject.SetActive(false);
                                      }),
                 openingRectTransform.DOAnchorPos(Vector2.zero, 1f)
                                     .SetEase(Ease.OutCubic)

@@ -89,6 +89,19 @@ namespace DCL.Minimap
             }
         }
 
+        protected override void OnBlur()
+        {
+            mapCameraController.SuspendRendering();
+        }
+
+        protected override void OnFocus()
+        {
+            mapCameraController.ResumeRendering();
+
+            mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, true);
+            mapRenderer.SetSharedLayer(MapLayer.ParcelsAtlas, false);
+        }
+
         private async UniTaskVoid GetPlaceInfo(Vector3 playerPosition)
         {
             Vector2Int playerParcelPosition = ParcelMathHelper.WorldToGridPosition(playerPosition);

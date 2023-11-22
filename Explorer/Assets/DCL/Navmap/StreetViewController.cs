@@ -13,22 +13,25 @@ namespace DCL.Navmap
         private readonly StreetViewView view;
         private readonly RectTransform rectTransform;
         private readonly MapCameraDragBehavior.MapCameraDragBehaviorData mapCameraDragBehaviorData;
-        private readonly IMapCameraController cameraController;
         private readonly IMapRenderer mapRenderer;
+
+        private IMapCameraController cameraController;
 
         public StreetViewController(StreetViewView view,
             MapCameraDragBehavior.MapCameraDragBehaviorData mapCameraDragBehaviorData,
-            IMapCameraController cameraController,
             IMapRenderer mapRenderer)
         {
             this.view = view;
             this.mapCameraDragBehaviorData = mapCameraDragBehaviorData;
-            this.cameraController = cameraController;
             this.mapRenderer = mapRenderer;
 
             rectTransform = view.GetComponent<RectTransform>();;
             view.StreetViewRenderImage.EmbedMapCameraDragBehavior(mapCameraDragBehaviorData);
-            view.StreetViewRenderImage.texture = cameraController.GetRenderTexture();
+        }
+
+        public void InjectCameraController(IMapCameraController controller)
+        {
+            this.cameraController = controller;
         }
 
         public void Activate()
@@ -36,12 +39,15 @@ namespace DCL.Navmap
             mapRenderer.SetSharedLayer(MapLayer.ParcelsAtlas, true);
             view.gameObject.SetActive(true);
             view.StreetViewPixelPerfectMapRendererTextureProvider.Activate(cameraController);
+            view.StreetViewRenderImage.texture = cameraController.GetRenderTexture();
+            view.StreetViewRenderImage.Activate(null, cameraController.GetRenderTexture(), cameraController);
         }
 
         public void Deactivate()
         {
             mapRenderer.SetSharedLayer(MapLayer.ParcelsAtlas, false);
             view.StreetViewPixelPerfectMapRendererTextureProvider.Deactivate();
+            view.StreetViewRenderImage.Deactivate();
             view.gameObject.SetActive(false);
         }
 

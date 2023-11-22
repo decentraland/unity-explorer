@@ -23,15 +23,19 @@ namespace DCL.Navmap
             MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.HomePoint | MapLayer.ScenesOfInterest | MapLayer.PlayerMarker | MapLayer.HotUsersMarkers | MapLayer.ColdUsersMarkers | MapLayer.ParcelHoverHighlight;
 
         private readonly NavmapView navmapView;
+        private readonly IMapRenderer mapRenderer;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IAssetsProvisioner assetsProvisioner;
         private CancellationTokenSource animationCts;
-        private readonly IMapCameraController cameraController;
+        private IMapCameraController cameraController;
         private readonly NavmapZoomController zoomController;
         private readonly FloatingPanelController floatingPanelController;
         private readonly NavmapFilterController filterController;
         private readonly NavmapSearchBarController searchBarController;
-        private RectTransform rectTransform;
+        private readonly RectTransform rectTransform;
+        private readonly SatelliteController satelliteController;
+        private readonly StreetViewController streetViewController;
+        private readonly Dictionary<ExploreSections, ISection> mapSections;
 
         public NavmapController(
             NavmapView navmapView,
@@ -40,6 +44,7 @@ namespace DCL.Navmap
             IAssetsProvisioner assetsProvisioner)
         {
             this.navmapView = navmapView;
+            this.mapRenderer = mapRenderer;
             this.placesAPIService = placesAPIService;
             this.assetsProvisioner = assetsProvisioner;
             rectTransform = this.navmapView.transform.parent.GetComponent<RectTransform>();
@@ -49,19 +54,11 @@ namespace DCL.Navmap
             filterController = new NavmapFilterController(this.navmapView.filterView);
             searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, placesAPIService, assetsProvisioner);
 
-            cameraController = mapRenderer.RentCamera(
-                new MapCameraInput(
-                    this,
-                    ACTIVE_MAP_LAYERS,
-                    ParcelMathHelper.WorldToGridPosition(new Vector3(0,0,0)),
-                    zoomController.ResetZoomToMidValue(),
-                    this.navmapView.SatellitePixelPerfectMapRendererTextureProvider.GetPixelPerfectTextureResolution(),
-                    navmapView.zoomView.zoomVerticalRange
-                ));
+            satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer);
+            streetViewController = new StreetViewController(navmapView.GetComponentInChildren<StreetViewView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer);
 
-            SatelliteController satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, cameraController, mapRenderer);
-            StreetViewController streetViewController = new StreetViewController(navmapView.GetComponentInChildren<StreetViewView>(), this.navmapView.MapCameraDragBehaviorData, cameraController, mapRenderer);
-            Dictionary<ExploreSections, ISection> mapSections = new ()
+
+            mapSections = new ()
             {
                 { ExploreSections.Satellite, satelliteController },
                 { ExploreSections.StreetView, streetViewController },
@@ -80,14 +77,11 @@ namespace DCL.Navmap
                         sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector, animationCts.Token, false).Forget();
                     });
             }
-            mapSections[ExploreSections.Satellite].Activate();
 
             this.navmapView.SatelliteRenderImage.ParcelClicked += OnParcelClicked;
             this.navmapView.StreetViewRenderImage.ParcelClicked += OnParcelClicked;
             this.navmapView.SatelliteRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
             this.navmapView.StreetViewRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
-            this.navmapView.SatelliteRenderImage.texture = cameraController.GetRenderTexture();
-            this.navmapView.StreetViewRenderImage.texture = cameraController.GetRenderTexture();
         }
 
         private void OnParcelClicked(MapRenderImage.ParcelClickData clickedParcel)
@@ -97,18 +91,29 @@ namespace DCL.Navmap
 
         public void Activate()
         {
-            navmapView.StreetViewRenderImage.Activate(null, cameraController.GetRenderTexture(), cameraController);
-            navmapView.SatelliteRenderImage.Activate(null, cameraController.GetRenderTexture(), cameraController);
-            navmapView.gameObject.SetActive(true);
+            navmapView.TabSelectorViews[0].TabSelectorToggle.isOn = true;
+            cameraController = mapRenderer.RentCamera(
+                new MapCameraInput(
+                    this,
+                    ACTIVE_MAP_LAYERS,
+                    ParcelMathHelper.WorldToGridPosition(new Vector3(0,0,0)),
+                    zoomController.ResetZoomToMidValue(),
+                    this.navmapView.SatellitePixelPerfectMapRendererTextureProvider.GetPixelPerfectTextureResolution(),
+                    navmapView.zoomView.zoomVerticalRange
+                ));
+            satelliteController.InjectCameraController(cameraController);
+            streetViewController.InjectCameraController(cameraController);
+            mapSections[ExploreSections.Satellite].Activate();
             zoomController.Activate(cameraController);
         }
 
         public void Deactivate()
         {
-            navmapView.StreetViewRenderImage.Deactivate();
-            navmapView.SatelliteRenderImage.Deactivate();
+            foreach (ISection mapSectionsValue in mapSections.Values)
+                mapSectionsValue.Deactivate();
+
             zoomController.Deactivate();
-            navmapView.gameObject.SetActive(false);
+            cameraController?.Release(this);
         }
 
         public RectTransform GetRectTransform() =>
