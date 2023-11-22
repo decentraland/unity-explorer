@@ -52,6 +52,7 @@ namespace DCL.CharacterMotion.Systems
             ApplyJump.Execute(characterControllerSettings, ref rigidTransform, in jump, in movementInput, physicsTick);
             ApplyGravity.Execute(characterControllerSettings, ref rigidTransform, in jump, physicsTick, dt);
             ApplyAirDrag.Execute(characterControllerSettings, ref rigidTransform, dt);
+            ApplyLookDirection.Execute(rigidTransform, in movementInput);
         }
     }
 }

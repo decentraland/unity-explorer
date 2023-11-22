@@ -35,11 +35,14 @@ namespace DCL.CharacterMotion.Systems
             ref ICharacterControllerSettings settings,
             ref CharacterRigidTransform rigidTransform,
             ref TransformComponent transform,
-            ref CharacterPlatformComponent platformComponent)
+            ref CharacterPlatformComponent platformComponent,
+            in StunComponent stunComponent)
         {
             Transform characterTransform = transform.Transform;
             var targetRotation = Quaternion.LookRotation(rigidTransform.LookDirection);
-            characterTransform.rotation = Quaternion.RotateTowards(characterTransform.rotation, targetRotation, settings.RotationSpeed * dt);
+
+            if (!stunComponent.IsStunned)
+                characterTransform.rotation = Quaternion.RotateTowards(characterTransform.rotation, targetRotation, settings.RotationSpeed * dt);
 
             SaveLocalRotation.Execute(ref platformComponent, characterTransform.forward);
         }

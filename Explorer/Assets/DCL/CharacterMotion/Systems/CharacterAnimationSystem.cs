@@ -31,8 +31,8 @@ namespace DCL.CharacterMotion.Systems
             in StunComponent stunComponent
         )
         {
-            ApplyMovementBlend.Execute(dt, ref animationComponent, in settings, in rigidTransform, in movementInput, in view);
-            ApplyJumpState.Execute(ref animationComponent, in settings, in rigidTransform, in view, in stunComponent);
+            ApplyAnimationMovementBlend.Execute(dt, ref animationComponent, in settings, in rigidTransform, in movementInput, in view);
+            ApplyAnimationState.Execute(ref animationComponent, in settings, in rigidTransform, in view, in stunComponent);
         }
     }
 }

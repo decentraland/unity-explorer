@@ -70,14 +70,8 @@ namespace DCL.CharacterMotion
                 // Air velocity change is updated slowly in order for drag to work, in the real world the velocity should not increase every frame because we cant "move" in the air, but we do here
                 rigidTransform.MoveVelocity.Velocity = Vector3.MoveTowards(rigidTransform.MoveVelocity.Velocity, targetForward, currentAcceleration * dt);
             }
-
-            if (Mathf.Abs(input.Axes.x) > 0 || Mathf.Abs(input.Axes.y) > 0)
-            {
-                Vector3 flatVelocity = rigidTransform.MoveVelocity.Velocity;
-                flatVelocity.y = 0;
-                rigidTransform.LookDirection = flatVelocity.normalized;
-            }
         }
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static float GetAcceleration(CharacterRigidTransform rigidTransform, ICharacterControllerSettings settings, CharacterRigidTransform.MovementVelocity moveVelocity)

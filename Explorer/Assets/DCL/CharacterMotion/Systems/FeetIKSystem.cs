@@ -87,7 +87,8 @@ namespace DCL.CharacterMotion.Systems
             ref FeetIKComponent feetIKComponent,
             ref AvatarBase avatarBase,
             in CharacterRigidTransform rigidTransform,
-            in ICharacterControllerSettings settings
+            in ICharacterControllerSettings settings,
+            in StunComponent stunComponent
         )
         {
             UpdateToggleStatus(ref feetIKComponent, avatarBase);
@@ -106,7 +107,10 @@ namespace DCL.CharacterMotion.Systems
             ApplyLegIK(leftLegConstraint, leftLegConstraint.forward, avatarBase.LeftLegIKTarget, ref feetIKComponent.Left, settings, dt, settings.FeetIKVerticalAngleLimits, new Vector2(settings.FeetIKTwistAngleLimits.y, settings.FeetIKTwistAngleLimits.x));
 
             // Second: Calculate IK feet weight based on the constrained local-Y
-            bool isEnabled = rigidTransform.IsGrounded && !rigidTransform.IsOnASteepSlope && rigidTransform.MoveVelocity.Velocity.sqrMagnitude < 0.01f;
+            bool isEnabled = rigidTransform.IsGrounded
+                             && !rigidTransform.IsOnASteepSlope
+                             && rigidTransform.MoveVelocity.Velocity.sqrMagnitude < 0.01f
+                             && !stunComponent.IsStunned;
 
             ApplyIKWeight(avatarBase.RightLegIK, rightLegConstraint.localPosition, ref feetIKComponent.Right, isEnabled, settings, dt);
             ApplyIKWeight(avatarBase.LeftLegIK, leftLegConstraint.localPosition, ref feetIKComponent.Left, isEnabled, settings, dt);

@@ -13,7 +13,6 @@ namespace DCL.CharacterMotion.Components
             public bool IsLongJump;
             public bool IsLongFall;
             public bool IsFalling;
-            public bool IsStunned;
         }
 
         public AnimationStates States;
