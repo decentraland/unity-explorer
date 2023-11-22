@@ -1,6 +1,7 @@
 ﻿using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.PerformanceBudgeting;
 using DCL.Profiling;
 using ECS.ComponentsPooling;
 using ECS.StreamableLoading.AssetBundles;
@@ -13,6 +14,8 @@ namespace DCL.ResourcesUnloading
 {
     public class CacheCleaner
     {
+        private readonly IConcurrentBudgetProvider fpsCapBudgetProvider;
+
         private GltfContainerAssetsCache gltfContainerAssetsCache;
         private AssetBundleCache assetBundleCache;
         private IWearableAssetsCache wearableAssetsCache;
@@ -23,20 +26,39 @@ namespace DCL.ResourcesUnloading
         private IObjectPool<ComputeShader> computeShaderPool;
         private IComponentPool<AvatarBase> avatarPoolRegistry;
 
+        public CacheCleaner(IConcurrentBudgetProvider fpsCapBudgetProvider)
+        {
+            this.fpsCapBudgetProvider = fpsCapBudgetProvider;
+        }
+
         public void UnloadCache()
         {
-            avatarPoolRegistry.Clear();
-            computeShaderPool.Clear();
-            AvatarCustomSkinningComponent.USED_SLOTS_POOL.Clear();
-            materialPool.Clear();
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                assetBundleCache.Unload();
 
-            wearableCatalog.UnloadWearableAssets();
-            wearableAssetsCache.Unload();
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                gltfContainerAssetsCache.Unload();
 
-            gltfContainerAssetsCache.Unload();
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                texturesCache.Unload();
 
-            texturesCache.Unload();
-            assetBundleCache.Unload();
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                avatarPoolRegistry.Clear();
+
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                computeShaderPool.Clear();
+
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                AvatarCustomSkinningComponent.USED_SLOTS_POOL.Clear();
+
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                materialPool.Clear();
+
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                wearableCatalog.UnloadWearableAssets();
+
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                wearableAssetsCache.Unload();
         }
 
         public void Register(AssetBundleCache assetBundleCache) =>

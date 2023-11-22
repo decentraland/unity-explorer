@@ -151,11 +151,10 @@ namespace Global.Dynamic
 
             var pluginArgs = new GlobalPluginArguments(playerEntity);
 
-            for (var i = 0; i < globalPlugins.Count; i++)
-                globalPlugins[i].InjectToWorld(ref builder, pluginArgs);
+            foreach (IDCLGlobalPlugin plugin in globalPlugins)
+                plugin.InjectToWorld(ref builder, pluginArgs);
 
-            var finalizeWorldSystems = new IFinalizeWorldSystem[]
-                { new ReleaseRealmPooledComponentSystem(componentPoolsRegistry) };
+            var finalizeWorldSystems = new IFinalizeWorldSystem[] { new ReleaseRealmPooledComponentSystem(componentPoolsRegistry) };
 
             SystemGroupWorld worldSystems = builder.Finish();
             worldSystems.Initialize();

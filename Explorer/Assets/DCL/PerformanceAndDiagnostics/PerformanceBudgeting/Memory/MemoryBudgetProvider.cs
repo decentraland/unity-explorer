@@ -17,23 +17,23 @@ namespace DCL.PerformanceBudgeting
         private const ulong BYTES_IN_MEGABYTE = 1024 * 1024;
         private const ulong NO_MEMORY = 0;
 
-        public MemoryUsageStatus SimulatedMemoryUsage { get; set; }
-
         private readonly IProfilingProvider profilingProvider;
-        private readonly Dictionary<MemoryUsageStatus, float> memThreshold;
+        private readonly Dictionary<MemoryUsageStatus, float> memoryThreshold;
         private readonly ISystemMemory systemMemory;
 
+        // Debug
         private readonly bool isReleaseBuild = !Debug.isDebugBuild;
+        public MemoryUsageStatus SimulatedMemoryUsage { private get; set; }
 
         private ulong actualSystemMemory => systemMemory.TotalSizeInMB;
 
-        public MemoryBudgetProvider(IProfilingProvider profilingProvider, Dictionary<MemoryUsageStatus, float> memThreshold)
+        public MemoryBudgetProvider(IProfilingProvider profilingProvider, Dictionary<MemoryUsageStatus, float> memoryThreshold)
         {
             SimulatedMemoryUsage = Normal;
             systemMemory = new StandaloneSystemMemory();
 
             this.profilingProvider = profilingProvider;
-            this.memThreshold = memThreshold;
+            this.memoryThreshold = memoryThreshold;
         }
 
         public MemoryUsageStatus GetMemoryUsageStatus()
@@ -43,8 +43,8 @@ namespace DCL.PerformanceBudgeting
 
             return usedMemory switch
                    {
-                       _ when usedMemory > totalSystemMemory * memThreshold[Full] => Full,
-                       _ when usedMemory > totalSystemMemory * memThreshold[Warning] => Warning,
+                       _ when usedMemory > totalSystemMemory * memoryThreshold[Full] => Full,
+                       _ when usedMemory > totalSystemMemory * memoryThreshold[Warning] => Warning,
                        _ => Normal,
                    };
         }
@@ -52,7 +52,7 @@ namespace DCL.PerformanceBudgeting
         public (float warning, float full) GetMemoryRanges()
         {
             ulong totalSizeInMB = GetTotalSystemMemory();
-            return (totalSizeInMB * memThreshold[Warning], totalSizeInMB * memThreshold[Full]);
+            return (totalSizeInMB * memoryThreshold[Warning], totalSizeInMB * memoryThreshold[Full]);
         }
 
         public bool TrySpendBudget() =>
@@ -74,7 +74,7 @@ namespace DCL.PerformanceBudgeting
 
             // ReSharper disable once PossibleLossOfFraction
             ulong CalculateSystemMemoryForWarningThreshold() => // 10% higher than Warning threshold for current usedMemory
-                (ulong)(profilingProvider.TotalUsedMemoryInBytes / BYTES_IN_MEGABYTE / (memThreshold[Warning] * 1.1f));
+                (ulong)(profilingProvider.TotalUsedMemoryInBytes / BYTES_IN_MEGABYTE / (memoryThreshold[Warning] * 1.1f));
         }
     }
 }

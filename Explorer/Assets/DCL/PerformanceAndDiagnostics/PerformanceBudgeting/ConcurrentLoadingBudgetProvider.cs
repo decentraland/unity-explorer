@@ -15,13 +15,10 @@ namespace DCL.PerformanceBudgeting
 
         public bool TrySpendBudget()
         {
-            if (currentBudget > 0)
-            {
-                currentBudget--;
-                return true;
-            }
+            if (currentBudget <= 0) return false;
 
-            return false;
+            currentBudget--;
+            return true;
         }
 
         public void ReleaseBudget()

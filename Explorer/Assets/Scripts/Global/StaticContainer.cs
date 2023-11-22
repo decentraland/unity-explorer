@@ -114,7 +114,7 @@ namespace Global
                 new MemoryBudgetProvider(profilingProvider, staticSettings.MemoryThresholds)
             );
 
-            container.CacheCleaner = new CacheCleaner();
+            container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudgetProvider);
 
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
             container.ComponentsContainer = componentsContainer;

@@ -128,7 +128,7 @@ namespace ECS.StreamableLoading.AssetBundles
             var gameObjects = new List<GameObject>(asyncOp.allAssets.Cast<GameObject>());
 
             if (gameObjects.Count > 1)
-                ReportHub.LogError(GetReportCategory(), $"AssetBundle {assetBundle.name} contains more than one root gameobject. Only the first one will be used.");
+                ReportHub.LogError(GetReportCategory(), $"AssetBundle {assetBundle.name} contains more than one root GameObject. Only the first one will be used.");
 
             GameObject rootGameObject = gameObjects.Count > 0 ? gameObjects[0] : null;
 

@@ -103,10 +103,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             List<MeshFilter> list = meshFilterScope.Value;
             instance.GetComponentsInChildren(true, list);
 
-            for (var j = 0; j < list.Count; j++)
+            foreach (MeshFilter meshFilter in list)
             {
-                MeshFilter meshFilter = list[j];
-
                 GameObject meshFilterGameObject = meshFilter.gameObject;
 
                 // gather invisible colliders
@@ -141,16 +139,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 return;
             }
 
-            // Compatibility layer for old GLTF importer and GLTFast // TODO do we need it?
-            static bool IsCollider(GameObject go)
-            {
-                const StringComparison IGNORE_CASE = StringComparison.CurrentCultureIgnoreCase;
-                const string COLLIDER_SUFFIX = "_collider";
-
-                return go.name.Contains(COLLIDER_SUFFIX, IGNORE_CASE)
-                       || go.transform.parent.name.Contains(COLLIDER_SUFFIX, IGNORE_CASE);
-            }
-
             if (!IsCollider(meshFilterGo))
                 return;
 
@@ -159,6 +147,18 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             newCollider.enabled = false;
 
             results.Add(newCollider);
+            return;
+
+            // Compatibility layer for old GLTF importer and GLTFast
+            // TODO do we need it?
+            static bool IsCollider(GameObject go)
+            {
+                const StringComparison IGNORE_CASE = StringComparison.CurrentCultureIgnoreCase;
+                const string COLLIDER_SUFFIX = "_collider";
+
+                return go.name.Contains(COLLIDER_SUFFIX, IGNORE_CASE)
+                       || go.transform.parent.name.Contains(COLLIDER_SUFFIX, IGNORE_CASE);
+            }
         }
     }
 }
