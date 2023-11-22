@@ -61,7 +61,7 @@ namespace ECS.StreamableLoading.Textures
 
         public void Add(in GetTextureIntention key, Texture2D asset)
         {
-            cache.Add(key, asset);
+            cache.TryAdd(key, asset);
             ProfilingCounters.TexturesInCache.Value = cache.Count;
         }
 

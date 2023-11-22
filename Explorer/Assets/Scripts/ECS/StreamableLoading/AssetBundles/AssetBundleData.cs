@@ -60,7 +60,7 @@ namespace ECS.StreamableLoading.AssetBundles
         public void Dereference()
         {
             referencesCount--;
-            Assert.IsFalse(referencesCount < 0, "VV:: ReferencesCount < 0");
+            Assert.IsFalse(referencesCount < 0, "References count of asset bundle cannot be less then zero!");
 
             if (referencesCount == 0)
                 ProfilingCounters.ABReferencedAmount.Value--;

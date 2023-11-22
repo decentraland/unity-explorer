@@ -185,12 +185,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             MeshRenderer meshRenderer = go.AddComponent<MeshRenderer>();
             meshRenderer.renderingLayerMask = 2;
 
-            // List<Material> materialPool = MATERIAL_POOL.Get();
-            // skin.GetMaterials(materialPool);
-            // meshRenderer.material = materialPool[0];
-            // Debug.Log($"VV: {meshRenderer.material.name}");
-            // MATERIAL_POOL.Release(materialPool);
-
             Object.Destroy(skin);
             return (meshRenderer, filter);
         }

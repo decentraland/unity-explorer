@@ -27,15 +27,15 @@ namespace DCL.ResourcesUnloading
         {
             avatarPoolRegistry.Clear();
             computeShaderPool.Clear();
-
             AvatarCustomSkinningComponent.USED_SLOTS_POOL.Clear();
             materialPool.Clear();
 
-            gltfContainerAssetsCache.Unload();
             wearableCatalog.UnloadWearableAssets();
             wearableAssetsCache.Unload();
 
-            // texturesCache.Unload();
+            gltfContainerAssetsCache.Unload();
+
+            texturesCache.Unload();
             assetBundleCache.Unload();
         }
 

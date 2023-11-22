@@ -56,9 +56,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         internal readonly int vertCount;
 
-        internal Buffers buffers;
+        internal readonly Buffers buffers;
         internal readonly List<MaterialSetup> materials;
-        internal UnityEngine.ComputeShader computeShaderInstance;
+        internal readonly UnityEngine.ComputeShader computeShaderInstance;
 
         internal AvatarCustomSkinningComponent(int vertCount, Buffers buffers, List<MaterialSetup> materials, UnityEngine.ComputeShader computeShaderInstance)
         {
@@ -80,7 +80,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             }
 
             computeShaderSkinningPool.Release(computeShaderInstance);
-            computeShaderInstance = null;
 
             buffers.DisposeBuffers();
             USED_SLOTS_POOL.Release(materials);

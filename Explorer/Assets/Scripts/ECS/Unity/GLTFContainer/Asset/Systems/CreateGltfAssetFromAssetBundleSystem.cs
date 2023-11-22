@@ -68,11 +68,12 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 return;
             }
 
-            // Create a new container root
-            // It will be cached and pooled
-            // if (memoryBudgetProvider.TrySpendBudget())
-            GltfContainerAsset result = CreateGltfObject(assetBundleData);
-            World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
+            // Create a new container root. It will be cached and pooled
+            if (memoryBudgetProvider.TrySpendBudget())
+            {
+                GltfContainerAsset result = CreateGltfObject(assetBundleData);
+                World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
+            }
         }
 
         private static GltfContainerAsset CreateGltfObject(AssetBundleData assetBundleData)

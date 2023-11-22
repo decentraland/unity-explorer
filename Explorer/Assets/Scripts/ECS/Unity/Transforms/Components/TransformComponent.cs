@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
-using Object = UnityEngine.Object;
 
 namespace ECS.Unity.Transforms.Components
 {
@@ -71,7 +70,6 @@ namespace ECS.Unity.Transforms.Components
         public void Dispose()
         {
             HashSetPool<EntityReference>.Release(Children);
-            Object.Destroy(Transform.gameObject);
         }
     }
 }

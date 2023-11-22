@@ -18,7 +18,6 @@ using ECS.ComponentsPooling;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
@@ -39,9 +38,9 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly TextureArrayContainer textureArrayContainer;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private readonly CacheCleaner cacheCleaner;
 
         private readonly WearableAssetsCache wearableAssetsCache = new (100);
+        private readonly CacheCleaner cacheCleaner;
 
         private IComponentPool<AvatarBase> avatarPoolRegistry;
         private IComponentPool<Transform> transformPoolRegistry;
@@ -78,13 +77,14 @@ namespace DCL.PluginSystem.Global
             transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>();
         }
 
-        private async Task CreateAvatarBasePool(AvatarShapeSettings settings, CancellationToken ct)
+        private async UniTask CreateAvatarBasePool(AvatarShapeSettings settings, CancellationToken ct)
         {
             AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.avatarBase, ct: ct)).Value.GetComponent<AvatarBase>();
             componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity));
+            avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>();
         }
 
-        private async Task CreateMaterialPoolPrewarmed(AvatarShapeSettings settings, CancellationToken ct)
+        private async UniTask CreateMaterialPoolPrewarmed(AvatarShapeSettings settings, CancellationToken ct)
         {
             ProvidedAsset<Material> providedMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.celShadingMaterial, ct: ct);
             celShadingMaterialPool = new ObjectPool<Material>(() => new Material(providedMaterial.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.defaultMaterialCapacity);
@@ -96,7 +96,7 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-        private async Task CreateComputeShaderPoolPrewarmed(AvatarShapeSettings settings, CancellationToken ct)
+        private async UniTask CreateComputeShaderPoolPrewarmed(AvatarShapeSettings settings, CancellationToken ct)
         {
             ProvidedAsset<ComputeShader> providedComputeShader = await assetsProvisioner.ProvideMainAssetAsync(settings.computeShader, ct: ct);
             computeShaderPool = new ObjectPool<ComputeShader>(() => Object.Instantiate(providedComputeShader.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.defaultMaterialCapacity);
@@ -116,8 +116,6 @@ namespace DCL.PluginSystem.Global
             var skinningStrategy = new ComputeShaderSkinning();
 
             AvatarLoaderSystem.InjectToWorld(ref builder);
-
-            avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>();
 
             cacheCleaner.Register(avatarPoolRegistry);
             cacheCleaner.Register(celShadingMaterialPool);
