@@ -7,6 +7,12 @@ namespace DCL.Navmap
     public class NavmapView : MonoBehaviour
     {
         [field: SerializeField]
+        public SearchBarView SearchBarView;
+
+        [field: SerializeField]
+        public SearchResultPanelView SearchBarResultPanel;
+
+        [field: SerializeField]
         public FloatingPanelView floatingPanelView;
 
         [field: SerializeField]

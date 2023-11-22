@@ -5,11 +5,11 @@ using UnityEngine.UI;
 public class SearchBarView : MonoBehaviour
 {
     [field: SerializeField]
-    internal TMP_InputField inputField;
+    public TMP_InputField inputField;
 
     [field: SerializeField]
-    internal TMP_Text placeHolderText;
+    public TMP_Text placeHolderText;
 
     [field: SerializeField]
-    internal Button clearSearchButton;
+    public Button clearSearchButton;
 }

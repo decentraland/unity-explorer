@@ -1,3 +1,4 @@
+using DCL.AssetsProvision;
 using DCL.UI;
 using DCLServices.MapRenderer;
 using DCLServices.MapRenderer.CommonBehavior;
@@ -22,23 +23,28 @@ namespace DCL.Navmap
 
         private readonly NavmapView navmapView;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly IAssetsProvisioner assetsProvisioner;
         private CancellationTokenSource animationCts;
         private readonly IMapCameraController cameraController;
         private readonly NavmapZoomController zoomController;
         private readonly FloatingPanelController floatingPanelController;
         private readonly NavmapFilterController filterController;
+        private readonly NavmapSearchBarController searchBarController;
 
         public NavmapController(
             NavmapView navmapView,
             IMapRenderer mapRenderer,
-            IPlacesAPIService placesAPIService)
+            IPlacesAPIService placesAPIService,
+            IAssetsProvisioner assetsProvisioner)
         {
             this.navmapView = navmapView;
             this.placesAPIService = placesAPIService;
+            this.assetsProvisioner = assetsProvisioner;
 
             zoomController = new NavmapZoomController(navmapView.zoomView);
             floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService);
             filterController = new NavmapFilterController(this.navmapView.filterView);
+            searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, placesAPIService, assetsProvisioner);
             Dictionary<ExploreSections, GameObject> mapSections = new ()
             {
                 { ExploreSections.Satellite, navmapView.satellite },
