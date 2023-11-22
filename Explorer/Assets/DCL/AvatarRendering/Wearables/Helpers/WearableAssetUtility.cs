@@ -4,7 +4,6 @@ using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-using UnityEngine.Pool;
 using Utility;
 using Utility.Pool;
 
@@ -38,7 +37,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return new StreamableLoadingResult<WearableAsset>(new WearableAsset(result.Asset.GameObject, rendererInfos, result.Asset));
         }
 
-        public static void TryReleaseAssets(this IWearableAssetsCache cache, IList<CachedWearable> instantiatedWearables, IObjectPool<Material> materialPool)
+        public static void TryReleaseAssets(this IWearableAssetsCache cache, IList<CachedWearable> instantiatedWearables)
         {
             foreach (CachedWearable cachedWearable in instantiatedWearables)
                 cache.TryRelease(cachedWearable);

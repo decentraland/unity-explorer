@@ -183,8 +183,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private void CommonAvatarRelease(AvatarShapeComponent avatarShapeComponent, AvatarCustomSkinningComponent skinningComponent)
         {
             vertOutBuffer.Release(skinningComponent.VertsOutRegion);
-            skinningComponent.Dispose(avatarMaterialPool);
-            wearableAssetsCache.TryReleaseAssets(avatarShapeComponent.InstantiatedWearables, avatarMaterialPool);
+            skinningComponent.Dispose(avatarMaterialPool, computeShaderSkinningPool);
+            wearableAssetsCache.TryReleaseAssets(avatarShapeComponent.InstantiatedWearables);
         }
 
         public override void Dispose()

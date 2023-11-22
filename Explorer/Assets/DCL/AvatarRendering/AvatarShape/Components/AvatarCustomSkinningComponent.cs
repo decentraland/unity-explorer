@@ -1,9 +1,9 @@
 ﻿using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
+using DCL.Profiling;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
-using Utility;
 using Utility.Pool;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
@@ -32,7 +32,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             }
         }
 
-        internal struct MaterialSetup
+        public struct MaterialSetup
         {
             internal readonly TextureArraySlot? usedTextureArraySlot;
             /// <summary>
@@ -47,7 +47,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             }
         }
 
-        internal static readonly ListObjectPool<MaterialSetup> USED_SLOTS_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: PoolConstants.AVATARS_COUNT);
+        public static readonly ListObjectPool<MaterialSetup> USED_SLOTS_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: PoolConstants.AVATARS_COUNT);
 
         /// <summary>
         ///     Acquired Region of the common buffer, it may change during defragmentation
@@ -56,9 +56,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         internal readonly int vertCount;
 
-        internal readonly Buffers buffers;
+        internal Buffers buffers;
         internal readonly List<MaterialSetup> materials;
-        internal readonly UnityEngine.ComputeShader computeShaderInstance;
+        internal UnityEngine.ComputeShader computeShaderInstance;
 
         internal AvatarCustomSkinningComponent(int vertCount, Buffers buffers, List<MaterialSetup> materials, UnityEngine.ComputeShader computeShaderInstance)
         {
@@ -67,20 +67,25 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             this.materials = materials;
             this.computeShaderInstance = computeShaderInstance;
             VertsOutRegion = default(FixedComputeBufferHandler.Slice);
+
+            ProfilingCounters.AvatarCustomSkinningComponent.Value++;
         }
 
-        public void Dispose(IObjectPool<Material> objectPool)
+        public void Dispose(IObjectPool<Material> objectPool, IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool)
         {
             for (var i = 0; i < materials.Count; i++)
             {
                 materials[i].usedTextureArraySlot?.FreeSlot();
-
-                // objectPool.Release(materials[i].celShadingMaterial);
-                UnityObjectUtils.SafeDestroy(materials[i].celShadingMaterial);
+                objectPool.Release(materials[i].celShadingMaterial);
             }
+
+            computeShaderSkinningPool.Release(computeShaderInstance);
+            computeShaderInstance = null;
 
             buffers.DisposeBuffers();
             USED_SLOTS_POOL.Release(materials);
+
+            ProfilingCounters.AvatarCustomSkinningComponent.Value--;
         }
     }
 }

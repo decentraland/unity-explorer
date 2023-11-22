@@ -14,12 +14,11 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public class ComputeShaderSkinning : CustomSkinning
     {
-        internal static readonly ListObjectPool<Material> MATERIAL_POOL = new (defaultCapacity: 50, listInstanceDefaultCapacity: 5);
-
         public override AvatarCustomSkinningComponent Initialize(IReadOnlyList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer,
             UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterialPool, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer, AvatarShapeComponent avatarShapeComponent)
         {
             List<MeshData> meshesData = ListPool<MeshData>.Get();
+
             CreateMeshData(meshesData, gameObjects);
 
             (int vertCount, int boneCount) = SetupCounters(meshesData);
@@ -186,10 +185,11 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             MeshRenderer meshRenderer = go.AddComponent<MeshRenderer>();
             meshRenderer.renderingLayerMask = 2;
 
-            List<Material> materialPool = MATERIAL_POOL.Get();
-            skin.GetMaterials(materialPool);
-            meshRenderer.material = materialPool[0];
-            MATERIAL_POOL.Release(materialPool);
+            // List<Material> materialPool = MATERIAL_POOL.Get();
+            // skin.GetMaterials(materialPool);
+            // meshRenderer.material = materialPool[0];
+            // Debug.Log($"VV: {meshRenderer.material.name}");
+            // MATERIAL_POOL.Release(materialPool);
 
             Object.Destroy(skin);
             return (meshRenderer, filter);
@@ -218,7 +218,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             avatarMaterial.SetInteger(ComputeShaderConstants.LAST_WEARABLE_VERT_COUNT_ID, lastWearableVertCount);
             SetAvatarColors(avatarMaterial, originalMaterial, avatarShapeComponent);
             meshRenderer.material = avatarMaterial;
-
             return new AvatarCustomSkinningComponent.MaterialSetup(usedIndex, avatarMaterial);
         }
 

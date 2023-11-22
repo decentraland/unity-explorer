@@ -46,6 +46,10 @@ namespace DCL.Profiling
         public static ProfilerCounterValue<int> TexturesInCache =
             new (MEMORY, "Textures In Cache", ProfilerMarkerDataUnit.Count);
 
+        // Materials cache
+        public static ProfilerCounterValue<int> AvatarCustomSkinningComponent =
+            new (MEMORY, "AvatarCustomSkinningComponent", ProfilerMarkerDataUnit.Count);
+
         public static void CleanAllCounters()
         {
             ABDataAmount.Value = 0;

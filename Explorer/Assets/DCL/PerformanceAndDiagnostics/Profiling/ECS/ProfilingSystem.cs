@@ -51,6 +51,8 @@ namespace DCL.PerformanceAndDiagnostics.Profiling.ECS
                 else
                     debugBuilder.AddWidget("Memory")
                                 .SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
+                                .AddSingleButton(nameof(Resources.UnloadUnusedAssets), () => Resources.UnloadUnusedAssets())
+                                .AddSingleButton(nameof(GC.Collect), GC.Collect)
                                 .AddCustomMarker("Total Used Memory [MB]:", usedMemory = new ElementBinding<string>(string.Empty))
                                 .AddCustomMarker("Memory Budget Thresholds [MB]:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
                                 .AddSingleButton("Memory NORMAL", () => memoryBudgetProvider.SimulatedMemoryUsage = MemoryUsageStatus.Normal)

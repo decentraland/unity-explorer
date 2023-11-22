@@ -1,4 +1,5 @@
-﻿using DCL.AvatarRendering.AvatarShape.UnityInterface;
+﻿using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Profiling;
 using ECS.ComponentsPooling;
@@ -24,14 +25,17 @@ namespace DCL.ResourcesUnloading
 
         public void UnloadCache()
         {
-            materialPool.Clear();
-            computeShaderPool.Clear();
             avatarPoolRegistry.Clear();
+            computeShaderPool.Clear();
+
+            AvatarCustomSkinningComponent.USED_SLOTS_POOL.Clear();
+            materialPool.Clear();
 
             gltfContainerAssetsCache.Unload();
-            wearableAssetsCache.Unload();
             wearableCatalog.UnloadWearableAssets();
-            texturesCache.Unload();
+            wearableAssetsCache.Unload();
+
+            // texturesCache.Unload();
             assetBundleCache.Unload();
         }
 
