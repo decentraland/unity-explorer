@@ -9,7 +9,8 @@ namespace DCL.CharacterMotion.Animation
     public static class ApplyAnimationState
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(ref CharacterAnimationComponent animationComponent,
+        public static void Execute(
+            ref CharacterAnimationComponent animationComponent,
             in ICharacterControllerSettings settings,
             in CharacterRigidTransform rigidTransform,
             in IAvatarView view,
@@ -19,7 +20,7 @@ namespace DCL.CharacterMotion.Animation
             float verticalVelocity = rigidTransform.GravityVelocity.y + rigidTransform.MoveVelocity.Velocity.y;
 
             animationComponent.States.IsGrounded = isGrounded;
-            animationComponent.States.IsFalling = !isGrounded && (verticalVelocity < settings.AnimationFallSpeed || rigidTransform.IsOnASteepSlope);
+            animationComponent.States.IsFalling = !isGrounded && verticalVelocity < settings.AnimationFallSpeed;
             animationComponent.States.IsLongFall = !isGrounded && verticalVelocity < settings.AnimationLongFallSpeed;
             animationComponent.States.IsLongJump = verticalVelocity > settings.RunJumpHeight * settings.RunJumpHeight * settings.JumpGravityFactor;
 

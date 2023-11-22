@@ -18,6 +18,7 @@ namespace DCL.CharacterMotion.Animation
         public static readonly int ANGLE_DIR = Animator.StringToHash("AngleDir");
         public static readonly int LONG_FALL = Animator.StringToHash("IsLongFall");
         public static readonly int STUNNED = Animator.StringToHash("IsStunned");
+        public static readonly int SLIDE_BLEND = Animator.StringToHash("SlideBlend");
         public static readonly int AFK = Animator.StringToHash("AFK");
     }
 }

@@ -33,6 +33,7 @@ namespace DCL.CharacterMotion.Systems
         {
             ApplyAnimationMovementBlend.Execute(dt, ref animationComponent, in settings, in rigidTransform, in movementInput, in view);
             ApplyAnimationState.Execute(ref animationComponent, in settings, in rigidTransform, in view, in stunComponent);
+            ApplyAnimationSlideBlend.Execute(dt, ref animationComponent, in rigidTransform, in view);
         }
     }
 }

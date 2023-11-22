@@ -36,6 +36,11 @@ namespace DCL.CharacterMotion.Animation
             }
 
             animationComponent.States.MovementBlendValue = Mathf.MoveTowards(animationComponent.States.MovementBlendValue, targetBlend, dt * settings.MovAnimBlendSpeed);
+
+            // we avoid updating the animator value when not grounded to avoid changing the blend tree states based on our speed
+            if (!rigidTransform.IsGrounded)
+                return;
+
             view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animationComponent.States.MovementBlendValue);
         }
 

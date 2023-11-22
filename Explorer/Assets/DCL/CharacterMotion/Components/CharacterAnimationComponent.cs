@@ -8,6 +8,7 @@ namespace DCL.CharacterMotion.Components
         public struct AnimationStates
         {
             public float MovementBlendValue;
+            public float SlideBlendValue;
             public bool IsGrounded;
             public bool IsJumping;
             public bool IsLongJump;

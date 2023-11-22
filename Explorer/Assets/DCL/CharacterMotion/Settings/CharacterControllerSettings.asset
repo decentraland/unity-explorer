@@ -75,7 +75,7 @@ MonoBehaviour:
   <LongJumpGravityScale>k__BackingField: 0.5
   <JumpGravityFactor>k__BackingField: 4
   <JumpGraceTime>k__BackingField: 0.15
-  <JumpHeightStun>k__BackingField: 10
+  <JumpHeightStun>k__BackingField: 8
   <LongFallStunTime>k__BackingField: 0.75
   <NoSlipDistance>k__BackingField: 0.1
   <EdgeSlipSpeed>k__BackingField: 2
