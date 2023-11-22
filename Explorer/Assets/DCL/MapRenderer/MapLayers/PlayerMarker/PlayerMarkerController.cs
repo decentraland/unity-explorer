@@ -41,29 +41,26 @@ namespace DCLServices.MapRenderer.MapLayers.PlayerMarker
         {
             system = TrackPlayerPositionSystem.InjectToWorld(ref builder);
             system.SetQueryMethod(SetPlayerTransformQuery);
+            system.Activate();
         }
 
         [All(typeof(PlayerComponent))]
         [Query]
         private void SetPlayerTransform(in TransformComponent transformComponent)
         {
-            var position = transformComponent.Transform.position;
-            var rotation = transformComponent.Transform.rotation.eulerAngles;
-            SetPosition(position);
-            SetRotation(rotation);
+            SetPosition(transformComponent.Transform.position);
+            SetRotation(transformComponent.Transform.rotation);
         }
 
         public UniTask Enable(CancellationToken cancellationToken)
         {
             playerMarker.SetActive(true);
-            system.Activate();
             return UniTask.CompletedTask;
         }
 
         public UniTask Disable(CancellationToken cancellationToken)
         {
             playerMarker.SetActive(false);
-            system.Deactivate();
             return UniTask.CompletedTask;
         }
 
@@ -78,10 +75,9 @@ namespace DCLServices.MapRenderer.MapLayers.PlayerMarker
             playerMarker.SetPosition(coordsUtils.PivotPosition(playerMarker, coordsUtils.CoordsToPositionWithOffset(gridPosition)));
         }
 
-        private void SetRotation(Vector3 rotation)
+        private void SetRotation(Quaternion rotation)
         {
-            var markerRot = Quaternion.Euler(0, 0, Mathf.Atan2(-rotation.x, rotation.z) * Mathf.Rad2Deg);
-            playerMarker.SetRotation(markerRot);
+            playerMarker.SetRotation(Quaternion.AngleAxis(rotation.eulerAngles.y, Vector3.back));
         }
 
         public void ApplyCameraZoom(float baseZoom, float zoom)
@@ -98,7 +94,6 @@ namespace DCLServices.MapRenderer.MapLayers.PlayerMarker
         {
             playerMarker?.Dispose();
         }
-
     }
 
 
