@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.ExplorePanel;
 using DCL.Navmap;
+using DCL.Settings;
 using DCLServices.PlacesAPIService;
 using Global.Dynamic;
 using MVC;
@@ -33,16 +34,20 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
         {
-            mvcManager.RegisterController(new ExplorePanelController(
-                ExplorePanelController.Preallocate(
-                    (await assetsProvisioner.ProvideMainAssetAsync(settings.ExplorePanelPrefab, ct: ct)).Value.GetComponent<ExplorePanelView>(), null, out var explorePanelView)));
+            ExplorePanelView panelView = (await assetsProvisioner.ProvideMainAssetAsync(settings.ExplorePanelPrefab, ct: ct)).Value.GetComponent<ExplorePanelView>();
+            ControllerBase<ExplorePanelView,ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelView, null, out var explorePanelView);
+
+            NavmapController navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, assetsProvisioner);
+            SettingsController settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
+
+            mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController));
 
             mvcManager.RegisterController(new PersistentExplorePanelOpenerController(
                 PersistentExplorePanelOpenerController.CreateLazily(
                     (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>(), null), mvcManager)
             );
 
-            NavmapController navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, assetsProvisioner);
+            //Create here navmap plugin and pass a setting with reference to the navmapview
 
             mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter())).Forget();
         }

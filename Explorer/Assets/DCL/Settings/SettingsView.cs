@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DCL.ExplorePanel
+namespace DCL.Settings
 {
     public class SettingsView : MonoBehaviour
     {

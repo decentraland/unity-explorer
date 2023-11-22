@@ -225,6 +225,7 @@ GameObject:
   - component: {fileID: 2153850179971682729}
   - component: {fileID: 1016802245327051856}
   - component: {fileID: 5012019790087633832}
+  - component: {fileID: 9011448481558939890}
   m_Layer: 5
   m_Name: SatelliteView
   m_TagString: Untagged
@@ -299,6 +300,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28407059c31940cfa0d064b806a39a0e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &9011448481558939890
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2723043980555199245}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e0377de8b444804a5a73d9f12524107, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <SatelliteRenderImage>k__BackingField: {fileID: 1016802245327051856}
+  <SatellitePixelPerfectMapRendererTextureProvider>k__BackingField: {fileID: 5012019790087633832}
 --- !u!1 &2938943016236382281
 GameObject:
   m_ObjectHideFlags: 0
@@ -391,6 +406,7 @@ GameObject:
   - component: {fileID: 2927297934738643266}
   - component: {fileID: 4556225041539844487}
   - component: {fileID: 6610987039939177811}
+  - component: {fileID: 3716621039490418309}
   m_Layer: 5
   m_Name: StreetView
   m_TagString: Untagged
@@ -465,6 +481,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28407059c31940cfa0d064b806a39a0e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &3716621039490418309
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6160499980858837278}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13d8d8644bff44578f11100ea5c089bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <StreetViewRenderImage>k__BackingField: {fileID: 4556225041539844487}
+  <StreetViewPixelPerfectMapRendererTextureProvider>k__BackingField: {fileID: 6610987039939177811}
 --- !u!1 &6424304946329823578
 GameObject:
   m_ObjectHideFlags: 0

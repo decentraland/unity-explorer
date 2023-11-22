@@ -1,32 +1,35 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
+using Cysharp.Threading.Tasks;
+using DCL.Character.Components;
 using DCLServices.MapRenderer.CoordsUtils;
 using DCLServices.MapRenderer.Culling;
+using ECS.Unity.Transforms.Components;
+using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
 
 namespace DCLServices.MapRenderer.MapLayers.PlayerMarker
 {
-    internal class PlayerMarkerController : MapLayerControllerBase, IMapLayerController<PlayerMarkerParameter>, IZoomScalingLayer
+    public partial class PlayerMarkerController : MapLayerControllerBase, IMapLayerController<PlayerMarkerParameter>, IZoomScalingLayer
     {
         internal delegate IPlayerMarker PlayerMarkerBuilder(Transform parent);
 
         private readonly PlayerMarkerBuilder builder;
-        //TODO find solution for base variable and vectorvariable
-        //private readonly BaseVariable<Vector3> playerWorldPosition;
-        //private readonly Vector3Variable playerRotation;
 
         private IPlayerMarker playerMarker;
+        private TrackPlayerPositionSystem system;
 
-        public PlayerMarkerController(
+        internal PlayerMarkerController(
             PlayerMarkerBuilder builder,
-            //BaseVariable<Vector3> playerWorldPosition, Vector3Variable playerRotation,
             Transform instantiationParent, ICoordsUtils coordsUtils, IMapCullingController cullingController)
             : base(instantiationParent, coordsUtils, cullingController)
         {
             this.builder = builder;
-            //this.playerWorldPosition = playerWorldPosition;
-            //this.playerRotation = playerRotation;
         }
 
         public void Initialize()
@@ -34,24 +37,33 @@ namespace DCLServices.MapRenderer.MapLayers.PlayerMarker
             playerMarker = builder(instantiationParent);
         }
 
+        public void CreateSystems(ref ArchSystemsWorldBuilder<World> builder)
+        {
+            system = TrackPlayerPositionSystem.InjectToWorld(ref builder);
+            system.SetQueryMethod(SetPlayerTransformQuery);
+        }
+
+        [All(typeof(PlayerComponent))]
+        [Query]
+        private void SetPlayerTransform(in TransformComponent transformComponent)
+        {
+            var position = transformComponent.Transform.position;
+            var rotation = transformComponent.Transform.rotation.eulerAngles;
+            SetPosition(position);
+            SetRotation(rotation);
+        }
+
         public UniTask Enable(CancellationToken cancellationToken)
         {
             playerMarker.SetActive(true);
-
-            SetRotation();
-            SetPosition();
-
-            //playerWorldPosition.OnChange += OnPlayerWorldPositionChange;
-            //playerRotation.OnChange += OnPlayerRotationChange;
+            system.Activate();
             return UniTask.CompletedTask;
         }
 
         public UniTask Disable(CancellationToken cancellationToken)
         {
             playerMarker.SetActive(false);
-
-            //playerWorldPosition.OnChange -= OnPlayerWorldPositionChange;
-            //playerRotation.OnChange -= OnPlayerRotationChange;
+            system.Deactivate();
             return UniTask.CompletedTask;
         }
 
@@ -60,22 +72,16 @@ namespace DCLServices.MapRenderer.MapLayers.PlayerMarker
             playerMarker?.SetBackgroundVisibility(param.BackgroundIsActive);
         }
 
-        private void SetPosition()
+        private void SetPosition(Vector3 position)
         {
-            //var gridPosition = ParcelMathHelper.WorldToGridPositionUnclamped(playerWorldPosition.Get());
-            //playerMarker.SetPosition(coordsUtils.PivotPosition(playerMarker, coordsUtils.CoordsToPositionWithOffset(gridPosition)));
+            var gridPosition = ParcelMathHelper.WorldToGridPositionUnclamped(position);
+            playerMarker.SetPosition(coordsUtils.PivotPosition(playerMarker, coordsUtils.CoordsToPositionWithOffset(gridPosition)));
         }
 
-        private void OnPlayerRotationChange(Vector3 current, Vector3 previous)
+        private void SetRotation(Vector3 rotation)
         {
-            SetRotation();
-        }
-
-        private void SetRotation()
-        {
-            //var playerRot = playerRotation.Get();
-            //var markerRot = Quaternion.Euler(0, 0, Mathf.Atan2(-playerRot.x, playerRot.z) * Mathf.Rad2Deg);
-            //playerMarker.SetRotation(markerRot);
+            var markerRot = Quaternion.Euler(0, 0, Mathf.Atan2(-rotation.x, rotation.z) * Mathf.Rad2Deg);
+            playerMarker.SetRotation(markerRot);
         }
 
         public void ApplyCameraZoom(float baseZoom, float zoom)
@@ -88,14 +94,17 @@ namespace DCLServices.MapRenderer.MapLayers.PlayerMarker
             playerMarker.ResetToBaseScale();
         }
 
-        private void OnPlayerWorldPositionChange(Vector3 current, Vector3 previous)
-        {
-            SetPosition();
-        }
-
         protected override void DisposeImpl()
         {
             playerMarker?.Dispose();
         }
+
+    }
+
+
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    public partial class TrackPlayerPositionSystem : ControllerECSBridgeSystem
+    {
+        internal TrackPlayerPositionSystem(World world) : base(world) { }
     }
 }

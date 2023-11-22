@@ -1,31 +1,46 @@
 using Cysharp.Threading.Tasks;
+using DCL.Navmap;
+using DCL.Settings;
 using DCL.UI;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.ExplorePanel
 {
     public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>
     {
+        private readonly NavmapController navmapController;
+        private readonly SettingsController settingsController;
         private SectionSelectorController sectionSelectorController;
         private CancellationTokenSource animationCts;
         private TabSelectorView previousSelector;
 
-        public ExplorePanelController(ViewFactoryMethod viewFactory) : base(viewFactory) { }
+        public ExplorePanelController(
+            ViewFactoryMethod viewFactory,
+            NavmapController navmapController,
+            SettingsController settingsController) : base(viewFactory)
+        {
+            this.navmapController = navmapController;
+            this.settingsController = settingsController;
+        }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
         protected override void OnViewInstantiated()
         {
-            Dictionary<ExploreSections, GameObject> exploreSections = new ();
-
-            //TODO: improve as soon as we have a serializable dictionary to avoid key and values list
-            for (var i = 0; i < viewInstance.Sections.Length; i++)
-                exploreSections.Add(viewInstance.Sections[i], viewInstance.SectionsObjects[i]);
+            Dictionary<ExploreSections, ISection> exploreSections = new ()
+            {
+                { ExploreSections.Navmap, navmapController },
+                { ExploreSections.Settings, settingsController },
+            };
 
             sectionSelectorController = new SectionSelectorController(exploreSections, ExploreSections.Navmap);
+            foreach (var keyValuePair in exploreSections)
+            {
+                keyValuePair.Value.Deactivate();
+            }
+            exploreSections[ExploreSections.Navmap].Activate();
 
             foreach (var tabSelector in viewInstance.TabSelectorViews)
             {

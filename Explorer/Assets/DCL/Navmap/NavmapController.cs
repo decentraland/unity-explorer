@@ -7,6 +7,7 @@ using DCLServices.MapRenderer.MapCameraController;
 using DCLServices.MapRenderer.MapLayers;
 using DCLServices.MapRenderer.MapLayers.PlayerMarker;
 using DCLServices.PlacesAPIService;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -14,7 +15,7 @@ using Utility;
 
 namespace DCL.Navmap
 {
-    public class NavmapController : IMapActivityOwner
+    public class NavmapController : IMapActivityOwner, ISection
     {
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters  { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter {BackgroundIsActive = true} } };
@@ -30,6 +31,7 @@ namespace DCL.Navmap
         private readonly FloatingPanelController floatingPanelController;
         private readonly NavmapFilterController filterController;
         private readonly NavmapSearchBarController searchBarController;
+        private RectTransform rectTransform;
 
         public NavmapController(
             NavmapView navmapView,
@@ -40,15 +42,29 @@ namespace DCL.Navmap
             this.navmapView = navmapView;
             this.placesAPIService = placesAPIService;
             this.assetsProvisioner = assetsProvisioner;
+            rectTransform = this.navmapView.transform.parent.GetComponent<RectTransform>();
 
             zoomController = new NavmapZoomController(navmapView.zoomView);
             floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService);
             filterController = new NavmapFilterController(this.navmapView.filterView);
             searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, placesAPIService, assetsProvisioner);
-            Dictionary<ExploreSections, GameObject> mapSections = new ()
+
+            cameraController = mapRenderer.RentCamera(
+                new MapCameraInput(
+                    this,
+                    ACTIVE_MAP_LAYERS,
+                    ParcelMathHelper.WorldToGridPosition(new Vector3(0,0,0)),
+                    zoomController.ResetZoomToMidValue(),
+                    this.navmapView.SatellitePixelPerfectMapRendererTextureProvider.GetPixelPerfectTextureResolution(),
+                    navmapView.zoomView.zoomVerticalRange
+                ));
+
+            SatelliteController satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, cameraController, mapRenderer);
+            StreetViewController streetViewController = new StreetViewController(navmapView.GetComponentInChildren<StreetViewView>(), this.navmapView.MapCameraDragBehaviorData, cameraController, mapRenderer);
+            Dictionary<ExploreSections, ISection> mapSections = new ()
             {
-                { ExploreSections.Satellite, navmapView.satellite },
-                { ExploreSections.StreetView, navmapView.streetView },
+                { ExploreSections.Satellite, satelliteController },
+                { ExploreSections.StreetView, streetViewController },
             };
 
             var sectionSelectorController = new SectionSelectorController(mapSections, ExploreSections.Satellite);
@@ -62,34 +78,16 @@ namespace DCL.Navmap
                         animationCts?.Dispose();
                         animationCts = new CancellationTokenSource();
                         sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector, animationCts.Token, false).Forget();
-
-                        if (isOn)
-                        {
-                            mapRenderer.SetSharedLayer(MapLayer.ParcelsAtlas, tabSelector.section == ExploreSections.StreetView);
-                            mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, tabSelector.section == ExploreSections.Satellite);
-                        }
-
                     });
             }
-            navmapView.TabSelectorViews[0].TabSelectorToggle.isOn = true;
+            mapSections[ExploreSections.Satellite].Activate();
 
-            cameraController = mapRenderer.RentCamera(
-                new MapCameraInput(
-                    this,
-                    ACTIVE_MAP_LAYERS,
-                    ParcelMathHelper.WorldToGridPosition(new Vector3(0,0,0)),
-                    zoomController.ResetZoomToMidValue(),
-                    this.navmapView.SatellitePixelPerfectMapRendererTextureProvider.GetPixelPerfectTextureResolution(),
-                    navmapView.zoomView.zoomVerticalRange
-                ));
-
-            this.navmapView.SatelliteRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
             this.navmapView.SatelliteRenderImage.ParcelClicked += OnParcelClicked;
-            this.navmapView.StreetViewRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
             this.navmapView.StreetViewRenderImage.ParcelClicked += OnParcelClicked;
+            this.navmapView.SatelliteRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
+            this.navmapView.StreetViewRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
             this.navmapView.SatelliteRenderImage.texture = cameraController.GetRenderTexture();
             this.navmapView.StreetViewRenderImage.texture = cameraController.GetRenderTexture();
-            Activate();
         }
 
         private void OnParcelClicked(MapRenderImage.ParcelClickData clickedParcel)
@@ -97,20 +95,23 @@ namespace DCL.Navmap
             floatingPanelController.ShowPanel(clickedParcel.Parcel);
         }
 
-        private void Activate()
+        public void Activate()
         {
-            navmapView.SatellitePixelPerfectMapRendererTextureProvider.Activate(cameraController);
-            navmapView.StreetViewPixelPerfectMapRendererTextureProvider.Activate(cameraController);
             navmapView.StreetViewRenderImage.Activate(null, cameraController.GetRenderTexture(), cameraController);
             navmapView.SatelliteRenderImage.Activate(null, cameraController.GetRenderTexture(), cameraController);
+            navmapView.gameObject.SetActive(true);
             zoomController.Activate(cameraController);
         }
 
-        private void Deactivate()
+        public void Deactivate()
         {
-            navmapView.SatellitePixelPerfectMapRendererTextureProvider.Deactivate();
-            navmapView.StreetViewPixelPerfectMapRendererTextureProvider.Deactivate();
+            navmapView.StreetViewRenderImage.Deactivate();
+            navmapView.SatelliteRenderImage.Deactivate();
             zoomController.Deactivate();
+            navmapView.gameObject.SetActive(false);
         }
+
+        public RectTransform GetRectTransform() =>
+            rectTransform;
     }
 }

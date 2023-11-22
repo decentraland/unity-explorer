@@ -6,12 +6,21 @@ using UnityEngine;
 
 namespace DCL.UI
 {
+    public interface ISection
+    {
+        void Activate();
+
+        void Deactivate();
+
+        RectTransform GetRectTransform();
+    }
+
     public class SectionSelectorController
     {
-        private readonly Dictionary<ExploreSections, GameObject> sections;
+        private readonly Dictionary<ExploreSections, ISection> sections;
         private ExploreSections previousSection;
 
-        public SectionSelectorController(Dictionary<ExploreSections, GameObject> sections, ExploreSections initialSection)
+        public SectionSelectorController(Dictionary<ExploreSections, ISection> sections, ExploreSections initialSection)
         {
             this.sections = sections;
             previousSection = initialSection;
@@ -30,14 +39,17 @@ namespace DCL.UI
             if (animate)
             {
                 await AnimatePanelsAsync(
-                    sections[previousSection].transform as RectTransform,
-                    sections[selectorToggle.section].transform as RectTransform,
+                    sections[previousSection],
+                    sections[selectorToggle.section],
                     selectorToggle.section,
                     ct);
             }
             else
             {
-                SetPanelsPosition(sections[previousSection].transform as RectTransform, sections[selectorToggle.section].transform as RectTransform);
+                sections[previousSection].Deactivate();
+                sections[selectorToggle.section].Activate();
+                SetPanelsPosition(sections[previousSection].GetRectTransform(), sections[selectorToggle.section].GetRectTransform());
+                previousSection = selectorToggle.section;
             }
         }
 
@@ -47,33 +59,35 @@ namespace DCL.UI
             panelOpening.anchoredPosition = Vector2.zero;
         }
 
-        private async UniTask AnimatePanelsAsync(RectTransform panelClosing, RectTransform panelOpening, ExploreSections newSection, CancellationToken ct)
+        private async UniTask AnimatePanelsAsync(ISection panelClosing, ISection panelOpening, ExploreSections newSection, CancellationToken ct)
         {
-            panelClosing.gameObject.SetActive(true);
-            panelOpening.gameObject.SetActive(true);
+            panelOpening.Activate();
 
-            panelClosing.anchoredPosition = Vector2.zero;
-            panelOpening.anchoredPosition = new Vector2(panelClosing.rect.width, 0);
+            RectTransform openingRectTransform = panelOpening.GetRectTransform();
+            RectTransform closingRectTransform = panelClosing.GetRectTransform();
+
+            closingRectTransform.anchoredPosition = Vector2.zero;
+            openingRectTransform.anchoredPosition = new Vector2(closingRectTransform.rect.width, 0);
 
             await UniTask.WhenAll(
-                panelClosing.DOAnchorPos(new Vector2(-panelClosing.rect.width, 0), 1f)
-                            .SetEase(Ease.OutCubic)
-                            .ToUniTask(cancellationToken: ct)
-                            .ContinueWith(() =>
-                             {
-                                 //Ensures that if cancelled the closing panel is in the correct position and disabled
-                                 panelClosing.anchoredPosition = new Vector2(-panelClosing.rect.width, 0);
-                                 panelClosing.gameObject.SetActive(false);
-                             }),
-                panelOpening.DOAnchorPos(Vector2.zero, 1f)
-                            .SetEase(Ease.OutCubic)
-                            .ToUniTask(cancellationToken: ct)
-                            .ContinueWith(() =>
-                             {
-                                 //Ensures that if cancelled the panel is in the correct position
-                                 panelOpening.anchoredPosition = Vector2.zero;
-                                 previousSection = newSection;
-                             })
+                closingRectTransform.DOAnchorPos(new Vector2(-closingRectTransform.rect.width, 0), 1f)
+                                    .SetEase(Ease.OutCubic)
+                                    .ToUniTask(cancellationToken: ct)
+                                    .ContinueWith(() =>
+                                     {
+                                         //Ensures that if cancelled the closing panel is in the correct position and disabled
+                                         closingRectTransform.anchoredPosition = new Vector2(-closingRectTransform.rect.width, 0);
+                                         panelClosing.Deactivate();
+                                     }),
+                openingRectTransform.DOAnchorPos(Vector2.zero, 1f)
+                                    .SetEase(Ease.OutCubic)
+                                    .ToUniTask(cancellationToken: ct)
+                                    .ContinueWith(() =>
+                                     {
+                                         //Ensures that if cancelled the panel is in the correct position
+                                         closingRectTransform.anchoredPosition = Vector2.zero;
+                                         previousSection = newSection;
+                                     })
             );
         }
     }

@@ -5,14 +5,14 @@ using UnityEngine;
 
 namespace DCLServices.MapRenderer.MapLayers
 {
-    internal abstract class MapLayerControllerBase
+    public abstract class MapLayerControllerBase
     {
-        protected ICoordsUtils coordsUtils { get; }
+        internal ICoordsUtils coordsUtils { get; }
         protected CancellationTokenSource ctsDisposing { get; }
         protected Transform instantiationParent { get; }
-        protected IMapCullingController mapCullingController { get; }
+        internal IMapCullingController mapCullingController { get; }
 
-        protected MapLayerControllerBase(Transform instantiationParent, ICoordsUtils coordsUtils, IMapCullingController cullingController)
+        internal MapLayerControllerBase(Transform instantiationParent, ICoordsUtils coordsUtils, IMapCullingController cullingController)
         {
             ctsDisposing = new CancellationTokenSource();
             this.coordsUtils = coordsUtils;

@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
 using DCLServices.MapRenderer.MapCameraController;
 using System;
 using System.Threading;
@@ -15,6 +16,8 @@ namespace DCLServices.MapRenderer.MapLayers
 
     internal interface IMapLayerController : IDisposable
     {
+        void CreateSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder) { }
+
         /// <summary>
         /// Enable layer
         /// </summary>

@@ -86,7 +86,7 @@ namespace DCL.Navmap
                 if (categoriesDictionary.TryGetValue(placeInfoCategory, out GameObject categoryGameObject))
                     categoryGameObject.SetActive(true);
 
-            LayoutRebuilder.ForceRebuildLayoutImmediate(view.categoriesContainer);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(view.CategoriesContainer);
         }
 
         private void ResetCategories()
@@ -94,7 +94,7 @@ namespace DCL.Navmap
             foreach (KeyValuePair<string, GameObject> keyValuePair in categoriesDictionary)
                 keyValuePair.Value.SetActive(false);
 
-            LayoutRebuilder.ForceRebuildLayoutImmediate(view.categoriesContainer);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(view.CategoriesContainer);
         }
 
         private void OnFavorite(bool isFavorite)

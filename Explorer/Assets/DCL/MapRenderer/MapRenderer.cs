@@ -1,4 +1,6 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using Arch.Core;
+using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
 using DCLServices.MapRenderer.CommonBehavior;
 using DCLServices.MapRenderer.ComponentsFactory;
 using DCLServices.MapRenderer.Culling;
@@ -138,6 +140,14 @@ namespace DCLServices.MapRenderer
                     mapLayerStatus.MapLayerController.Enable(mapLayerStatus.CTS.Token).SuppressCancellationThrow().Forget();
                 else
                     mapLayerStatus.MapLayerController.Disable(mapLayerStatus.CTS.Token).SuppressCancellationThrow().Forget();
+            }
+        }
+
+        public void CreateSystems(ref ArchSystemsWorldBuilder<World> builder)
+        {
+            foreach (MapLayerStatus mapLayerStatus in layers.Values)
+            {
+                mapLayerStatus.MapLayerController.CreateSystems(ref builder);
             }
         }
 

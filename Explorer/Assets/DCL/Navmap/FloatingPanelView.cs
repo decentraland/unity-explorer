@@ -20,10 +20,7 @@ public class FloatingPanelView : MonoBehaviour
     public RectTransform rectTransform;
 
     [field: SerializeField]
-    public RectTransform categoriesContainer;
-
-    [field: SerializeField]
-    public VerticalLayoutGroup categoriesLayout;
+    public RectTransform CategoriesContainer { get; private set; }
 
     [field: SerializeField]
     public Image placeImage;

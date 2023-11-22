@@ -838,7 +838,7 @@ MonoBehaviour:
   contentViewport: {fileID: 5059492403272567976}
   descriptionContent: {fileID: 4673463797054126884}
   rectTransform: {fileID: 25544740848074249}
-  categoriesContainer: {fileID: 0}
+  <CategoriesContainer>k__BackingField: {fileID: 2627153927686046327}
   categoriesLayout: {fileID: 0}
   placeImage: {fileID: 3532656630585342090}
   closeButton: {fileID: 336449712889304881}

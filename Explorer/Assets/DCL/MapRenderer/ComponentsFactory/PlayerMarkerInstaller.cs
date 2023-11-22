@@ -31,8 +31,6 @@ namespace DCLServices.MapRenderer.ComponentsFactory
 
             var controller = new PlayerMarkerController(
                 CreateMarker,
-                //DataStore.i.player.playerWorldPosition,
-                //CommonScriptableObjects.cameraForward,
                 configuration.PlayerMarkerRoot,
                 coordsUtils,
                 cullingController
