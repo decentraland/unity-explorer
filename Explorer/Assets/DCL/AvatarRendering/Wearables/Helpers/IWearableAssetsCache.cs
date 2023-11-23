@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using DCL.PerformanceBudgeting;
+using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
@@ -18,12 +19,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         }
 
         List<CachedWearable> AllCachedWearables { get; }
-        Dictionary<WearableAsset, List<CachedWearable>> Cache { get; }
+        Dictionary<WearableAsset, (uint LastUsedFrame, List<CachedWearable> Assets)> Cache { get; }
 
         bool TryGet(WearableAsset asset, out CachedWearable instance);
 
         ReleaseResult TryRelease(CachedWearable cachedWearable);
 
-        void Unload();
+        void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider);
     }
 }

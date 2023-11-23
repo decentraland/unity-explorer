@@ -96,7 +96,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             using (ListPool<KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)>>.Get(out List<KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)>> sortedCache))
             {
                 PrepareListSortedByLastUsage(sortedCache);
-                int totalUnloadedAssets = UnloadGltfAssets(frameTimeBudgetProvider, sortedCache);
+                int totalUnloadedAssets = UnloadAssets(frameTimeBudgetProvider, sortedCache);
 
                 ProfilingCounters.GltfInCacheAmount.Value -= totalUnloadedAssets;
             }
@@ -112,7 +112,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             }
         }
 
-        private int UnloadGltfAssets(IConcurrentBudgetProvider frameTimeBudgetProvider, List<KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)>> sortedCache)
+        private int UnloadAssets(IConcurrentBudgetProvider frameTimeBudgetProvider, List<KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)>> sortedCache)
         {
             var totalUnloadedAssets = 0;
 

@@ -35,18 +35,18 @@ namespace DCL.ResourcesUnloading
         {
             if (!fpsCapBudgetProvider.TrySpendBudget()) return;
 
+            texturesCache.Unload(fpsCapBudgetProvider);
+
             assetBundleCache.Unload(fpsCapBudgetProvider);
             gltfContainerAssetsCache.Unload(fpsCapBudgetProvider);
 
-            texturesCache.Unload(fpsCapBudgetProvider);
+            wearableCatalog.UnloadWearableAssets();
+            wearableAssetsCache.Unload(fpsCapBudgetProvider);
 
             avatarPoolRegistry.Clear();
             computeShaderPool.Clear();
             AvatarCustomSkinningComponent.USED_SLOTS_POOL.Clear();
             materialPool.Clear();
-
-            wearableCatalog.UnloadWearableAssets();
-            wearableAssetsCache.Unload();
         }
 
         public void Register(AssetBundleCache assetBundleCache) =>
