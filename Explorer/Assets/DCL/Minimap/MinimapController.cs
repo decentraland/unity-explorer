@@ -55,7 +55,7 @@ namespace DCL.Minimap
             viewInstance.expandMinimapButton.onClick.RemoveAllListeners();
             viewInstance.expandMinimapButton.onClick.AddListener(ExpandMinimap);
             viewInstance.minimapRendererButton.onClick.RemoveAllListeners();
-            viewInstance.minimapRendererButton.onClick.AddListener(()=>mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(null))).Forget());
+            viewInstance.minimapRendererButton.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(null))).Forget());
         }
 
         private void ExpandMinimap() =>
@@ -66,6 +66,7 @@ namespace DCL.Minimap
         private void QueryPlayerPosition(in TransformComponent transformComponent)
         {
             var position = transformComponent.Transform.position;
+
             if (mapCameraController == null)
             {
                 mapCameraController = mapRenderer.RentCamera(new MapCameraInput(
@@ -80,12 +81,12 @@ namespace DCL.Minimap
                 mapRendererTrackPlayerPosition = new MapRendererTrackPlayerPosition(mapCameraController);
                 viewInstance.mapRendererTargetImage.texture = mapCameraController.GetRenderTexture();
                 viewInstance.pixelPerfectMapRendererTextureProvider.Activate(mapCameraController);
-                GetPlaceInfoAsync(position).Forget();
+                GetPlaceInfoAsync(position);
             }
             else
             {
                 mapRendererTrackPlayerPosition.OnPlayerPositionChanged(position);
-                GetPlaceInfoAsync(position).Forget();
+                GetPlaceInfoAsync(position);
             }
         }
 
@@ -102,21 +103,28 @@ namespace DCL.Minimap
             mapRenderer.SetSharedLayer(MapLayer.ParcelsAtlas, false);
         }
 
-        private async UniTaskVoid GetPlaceInfoAsync(Vector3 playerPosition)
+        private void GetPlaceInfoAsync(Vector3 playerPosition)
         {
             Vector2Int playerParcelPosition = ParcelMathHelper.WorldToGridPosition(playerPosition);
+
             if (previousParcelPosition == playerParcelPosition)
                 return;
 
             previousParcelPosition = playerParcelPosition;
 
-            try
+            RetrieveParcelInfo(playerParcelPosition).Forget();
+            return;
+
+            async UniTaskVoid RetrieveParcelInfo(Vector2Int playerParcelPosition)
             {
-                PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlace(playerParcelPosition, CancellationToken.None);
-                viewInstance.placeNameText.text = placeInfo.title;
+                try
+                {
+                    PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlace(playerParcelPosition, CancellationToken.None);
+                    viewInstance.placeNameText.text = placeInfo.title;
+                }
+                catch (Exception) { viewInstance.placeNameText.text = "Unknown place"; }
+                finally { viewInstance.placeCoordinatesText.text = playerParcelPosition.ToString(); }
             }
-            catch (Exception) { viewInstance.placeNameText.text = "Unknown place"; }
-            finally { viewInstance.placeCoordinatesText.text = playerParcelPosition.ToString(); }
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
