@@ -19,17 +19,23 @@ namespace DCL.CharacterMotion.Components
         // General physics flags
         public bool IsGrounded;
         public bool IsOnASteepSlope;
+        public float SteepSlopeTime;
+        public float SteepSlopeAngle;
         public bool IsCollidingWithWall;
 
         // Buffers used to decide if the character can jump
         public int LastGroundedFrame;
         public int LastJumpFrame;
+        public bool JustJumped;
 
         // Current velocity of the gravity
         public Vector3 GravityVelocity;
 
         // This is a modifier to the gravity direction, used by slope falling to ensure a smooth slide
         public Vector3 GravityDirection;
+
+        // The result gravity when on a slope
+        public Vector3 SlopeGravity;
 
         // Current Look direction of the character
         public Vector3 LookDirection = Vector3.forward;

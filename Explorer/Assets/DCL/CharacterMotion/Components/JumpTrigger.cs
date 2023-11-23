@@ -6,5 +6,8 @@ namespace DCL.CharacterMotion.Components
 
         public readonly bool IsAvailable(int physicsTick, int bonusFrames) =>
             physicsTick == TickWhenJumpOccurred || physicsTick <= TickWhenJumpOccurred + bonusFrames;
+
+        public void Reset() =>
+            TickWhenJumpOccurred = -999;
     }
 }

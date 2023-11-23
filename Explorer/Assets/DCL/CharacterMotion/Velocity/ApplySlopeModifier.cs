@@ -19,7 +19,7 @@ namespace DCL.CharacterMotion
             float dt)
         {
             // disabled when jumping or not grounded
-            if (!rigidTransform.IsGrounded || jump.IsPressed)
+            if (!rigidTransform.IsGrounded || jump.IsPressed || rigidTransform.IsOnASteepSlope)
                 return Vector3.zero;
 
             Vector3 position = characterController.transform.position;

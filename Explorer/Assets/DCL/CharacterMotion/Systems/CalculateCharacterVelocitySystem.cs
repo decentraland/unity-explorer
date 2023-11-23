@@ -43,20 +43,20 @@ namespace DCL.CharacterMotion.Systems
             ref ICharacterControllerSettings characterControllerSettings,
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController,
-            in JumpInputComponent jump,
+            ref JumpInputComponent jump,
             in MovementInputComponent movementInput)
         {
             // Apply velocity based on input
             ApplyCharacterMovementVelocity.Execute(characterControllerSettings, ref rigidTransform, in cameraComponent, in movementInput, dt);
 
             // Apply velocity based on edge slip
-            ApplyEdgeSlip.Execute(characterControllerSettings, ref rigidTransform, characterController);
+            ApplyEdgeSlip.Execute(dt, characterControllerSettings, ref rigidTransform, characterController);
 
             // Apply velocity multiplier based on walls
             ApplyWallSlide.Execute(ref rigidTransform, characterController);
 
             // Apply vertical velocity
-            ApplyJump.Execute(characterControllerSettings, ref rigidTransform, in jump, in movementInput, physicsTick);
+            ApplyJump.Execute(characterControllerSettings, ref rigidTransform, ref jump, in movementInput, physicsTick);
             ApplyGravity.Execute(characterControllerSettings, ref rigidTransform, in jump, physicsTick, dt);
             ApplyAirDrag.Execute(characterControllerSettings, ref rigidTransform, dt);
 

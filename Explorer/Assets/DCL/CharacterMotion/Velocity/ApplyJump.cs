@@ -12,10 +12,12 @@ namespace DCL.CharacterMotion
         public static void Execute(
             ICharacterControllerSettings settings,
             ref CharacterRigidTransform characterPhysics,
-            in JumpInputComponent jump,
+            ref JumpInputComponent jump,
             in MovementInputComponent inputComponent,
             int physicsTick)
         {
+            characterPhysics.JustJumped = false;
+
             // update the grounded frame from last frame
             if (characterPhysics.IsGrounded && !characterPhysics.IsOnASteepSlope)
                 characterPhysics.LastGroundedFrame = physicsTick;
@@ -48,6 +50,10 @@ namespace DCL.CharacterMotion
 
                 characterPhysics.IsGrounded = false;
                 characterPhysics.LastJumpFrame = physicsTick;
+
+                // We "consume" the jump input
+                jump.Trigger.TickWhenJumpOccurred = -999;
+                characterPhysics.JustJumped = true;
             }
         }
 

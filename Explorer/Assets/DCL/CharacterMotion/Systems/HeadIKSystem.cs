@@ -92,7 +92,8 @@ namespace DCL.CharacterMotion.Systems
             bool isEnabled = !stunComponent.IsStunned
                              && rigidTransform.IsGrounded
                              && !rigidTransform.IsOnASteepSlope
-                             && !headIK.IsDisabled;
+                             && !headIK.IsDisabled
+                             && !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f);
 
             avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, isEnabled ? 1 : 0, 2 * dt);
 

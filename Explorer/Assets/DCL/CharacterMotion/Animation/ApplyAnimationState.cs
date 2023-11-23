@@ -25,12 +25,10 @@ namespace DCL.CharacterMotion.Animation
             animationComponent.States.IsLongFall = !isGrounded && verticalVelocity < settings.AnimationLongFallSpeed;
             animationComponent.States.IsLongJump = verticalVelocity > settings.RunJumpHeight * settings.RunJumpHeight * settings.JumpGravityFactor;
 
-            bool jumpState = !isGrounded && (verticalVelocity > -settings.AnimationFallSpeed || animationComponent.States.IsLongJump);
-
-            if (jumpState && !animationComponent.States.IsJumping)
+            if (rigidTransform.JustJumped && !animationComponent.States.IsJumping)
                 view.SetAnimatorTrigger(AnimationHashes.JUMP);
 
-            animationComponent.States.IsJumping = jumpState;
+            animationComponent.States.IsJumping = rigidTransform.JustJumped;
 
             view.SetAnimatorBool(AnimationHashes.STUNNED, stunComponent.IsStunned);
             view.SetAnimatorBool(AnimationHashes.GROUNDED, animationComponent.States.IsGrounded);

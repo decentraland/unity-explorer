@@ -161,6 +161,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""AutoWalk"",
+                    ""type"": ""Button"",
+                    ""id"": ""b4656ae5-6783-44e3-aab6-f47c82bbb0b5"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -590,6 +599,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Walk"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""ce03bf46-b4a6-4780-b639-6cf34b8a35cc"",
+                    ""path"": ""<Keyboard>/capsLock"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""AutoWalk"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1710,6 +1730,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Player_ActionBackward = m_Player.FindAction("ActionBackward", throwIfNotFound: true);
         m_Player_ActionRight = m_Player.FindAction("ActionRight", throwIfNotFound: true);
         m_Player_ActionLeft = m_Player.FindAction("ActionLeft", throwIfNotFound: true);
+        m_Player_AutoWalk = m_Player.FindAction("AutoWalk", throwIfNotFound: true);
         // Camera
         m_Camera = asset.FindActionMap("Camera", throwIfNotFound: true);
         m_Camera_ZoomOut = m_Camera.FindAction("ZoomOut", throwIfNotFound: true);
@@ -1815,6 +1836,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_ActionBackward;
     private readonly InputAction m_Player_ActionRight;
     private readonly InputAction m_Player_ActionLeft;
+    private readonly InputAction m_Player_AutoWalk;
     public struct PlayerActions
     {
         private @DCLInput m_Wrapper;
@@ -1834,6 +1856,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ActionBackward => m_Wrapper.m_Player_ActionBackward;
         public InputAction @ActionRight => m_Wrapper.m_Player_ActionRight;
         public InputAction @ActionLeft => m_Wrapper.m_Player_ActionLeft;
+        public InputAction @AutoWalk => m_Wrapper.m_Player_AutoWalk;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1888,6 +1911,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ActionLeft.started += instance.OnActionLeft;
             @ActionLeft.performed += instance.OnActionLeft;
             @ActionLeft.canceled += instance.OnActionLeft;
+            @AutoWalk.started += instance.OnAutoWalk;
+            @AutoWalk.performed += instance.OnAutoWalk;
+            @AutoWalk.canceled += instance.OnAutoWalk;
         }
 
         private void UnregisterCallbacks(IPlayerActions instance)
@@ -1937,6 +1963,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ActionLeft.started -= instance.OnActionLeft;
             @ActionLeft.performed -= instance.OnActionLeft;
             @ActionLeft.canceled -= instance.OnActionLeft;
+            @AutoWalk.started -= instance.OnAutoWalk;
+            @AutoWalk.performed -= instance.OnAutoWalk;
+            @AutoWalk.canceled -= instance.OnAutoWalk;
         }
 
         public void RemoveCallbacks(IPlayerActions instance)
@@ -2278,6 +2307,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnActionBackward(InputAction.CallbackContext context);
         void OnActionRight(InputAction.CallbackContext context);
         void OnActionLeft(InputAction.CallbackContext context);
+        void OnAutoWalk(InputAction.CallbackContext context);
     }
     public interface ICameraActions
     {

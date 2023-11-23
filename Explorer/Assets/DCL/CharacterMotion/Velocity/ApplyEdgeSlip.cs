@@ -12,6 +12,7 @@ namespace DCL.CharacterMotion
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Execute(
+            float dt,
             in ICharacterControllerSettings settings,
             ref CharacterRigidTransform rigidTransform,
             CharacterController characterController)
@@ -29,7 +30,10 @@ namespace DCL.CharacterMotion
             Vector3 rayDirection = Vector3.down * characterController.height * 0.6f;
 
             if (!Physics.SphereCast(rayPosition, characterController.radius, rayDirection.normalized, out RaycastHit sphereCastHitInfo, characterController.height * 0.6f, PhysicsLayers.CHARACTER_ONLY_MASK))
+            {
+                rigidTransform.SteepSlopeTime = 0;
                 return;
+            }
 
             rigidTransform.CurrentSlopeNormal = sphereCastHitInfo.normal;
 
@@ -37,7 +41,11 @@ namespace DCL.CharacterMotion
             relativeHitPoint.y = 0;
 
             // if the distance is not enough, we bail out
-            if (!(relativeHitPoint.magnitude > settings.NoSlipDistance)) return;
+            if (!(relativeHitPoint.magnitude > settings.NoSlipDistance))
+            {
+                rigidTransform.SteepSlopeTime = 0;
+                return;
+            }
 
             Vector3 hitNormal = sphereCastHitInfo.normal;
             float angle = Vector3.Angle(Vector3.up, hitNormal);
@@ -54,10 +62,15 @@ namespace DCL.CharacterMotion
 
             // to avoid sliding on slopes, we added an additional raycast check
             if (!rigidTransform.IsOnASteepSlope && Physics.Raycast(groundRay, settings.EdgeSlipSafeDistance, PhysicsLayers.CHARACTER_ONLY_MASK))
+            {
+                rigidTransform.SteepSlopeTime = 0;
                 return;
+            }
 
             // in order to slide correctly we change the gravity direction using the perpendicular direction of the normal based on the global up vector
             rigidTransform.GravityDirection = -Vector3.Cross(hitNormal, Vector3.Cross(Vector3.up, hitNormal)).normalized;
+            rigidTransform.SteepSlopeTime += dt;
+            rigidTransform.SteepSlopeAngle = angle;
         }
     }
 }

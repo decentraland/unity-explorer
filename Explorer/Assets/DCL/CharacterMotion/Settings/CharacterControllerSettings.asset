@@ -68,8 +68,8 @@ MonoBehaviour:
   <Acceleration>k__BackingField: 20
   <MaxAcceleration>k__BackingField: 25
   <AccelerationTime>k__BackingField: 0.5
-  <AirAcceleration>k__BackingField: 7
-  <MaxAirAcceleration>k__BackingField: 10
+  <AirAcceleration>k__BackingField: 8.5
+  <MaxAirAcceleration>k__BackingField: 15
   <StopTimeSec>k__BackingField: 0.12
   <LongJumpTime>k__BackingField: 0.5
   <LongJumpGravityScale>k__BackingField: 0.5
@@ -87,9 +87,9 @@ MonoBehaviour:
     m_Curve:
     - serializedVersion: 3
       time: -55
-      value: 1.5
-      inSlope: -0.009090909
-      outSlope: -0.009090909
+      value: 1.35
+      inSlope: -0.006363637
+      outSlope: -0.006363637
       tangentMode: 34
       weightedMode: 0
       inWeight: 0.33333334
@@ -97,17 +97,17 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 0
       value: 1
-      inSlope: -0.012727272
-      outSlope: -0.012727272
+      inSlope: -0.006363637
+      outSlope: -0.006363637
       tangentMode: 34
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
       time: 55
-      value: 0.1
-      inSlope: -0.016363636
-      outSlope: -0.016363636
+      value: 0.65
+      inSlope: -0.006363637
+      outSlope: -0.006363637
       tangentMode: 34
       weightedMode: 0
       inWeight: 0.33333334
@@ -124,8 +124,8 @@ MonoBehaviour:
   <FOVChangeSpeed>k__BackingField: 60
   <FeetIKHipsPullMaxDistance>k__BackingField: 0.6
   <FeetIKSphereSize>k__BackingField: 0.1
-  <IKWeightSpeed>k__BackingField: 3
-  <IKPositionSpeed>k__BackingField: 4
+  <IKWeightSpeed>k__BackingField: 100
+  <IKPositionSpeed>k__BackingField: 100
   <FeetIKVerticalAngleLimits>k__BackingField: {x: -30, y: 50}
   <FeetIKTwistAngleLimits>k__BackingField: {x: -30, y: 15}
   <HandsIKWallHitDistance>k__BackingField: 0.5

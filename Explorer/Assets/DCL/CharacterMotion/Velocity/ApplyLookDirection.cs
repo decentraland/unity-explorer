@@ -16,12 +16,16 @@ namespace DCL.CharacterMotion
                 rigidTransform.LookDirection = flatVelocity.normalized;
             }
 
-            if (rigidTransform.IsOnASteepSlope)
-            {
-                Vector3 gravityDirection = rigidTransform.GravityDirection;
-                gravityDirection.y = 0;
-                rigidTransform.LookDirection = gravityDirection.normalized;
-            }
+            if (!rigidTransform.IsOnASteepSlope) return;
+
+            bool isTimeToRotate = rigidTransform.SteepSlopeTime > 0.25f;
+            bool isAngleNotThatSteep = rigidTransform.SteepSlopeAngle < 80f;
+
+            if (!isTimeToRotate || !isAngleNotThatSteep) return;
+
+            Vector3 gravityDirection = rigidTransform.GravityDirection;
+            gravityDirection.y = 0;
+            rigidTransform.LookDirection = gravityDirection.normalized;
         }
     }
 }

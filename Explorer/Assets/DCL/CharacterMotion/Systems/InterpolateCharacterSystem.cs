@@ -47,7 +47,14 @@ namespace DCL.CharacterMotion.Systems
             ApplyVelocityStun.Execute(ref rigidTransform, in stunComponent);
 
             Vector3 movementDelta = rigidTransform.MoveVelocity.Velocity * dt;
-            Vector3 gravityDelta = rigidTransform.GravityVelocity * dt;
+            Vector3 finalGravity = rigidTransform.IsOnASteepSlope ? rigidTransform.SlopeGravity : rigidTransform.GravityVelocity;
+            Vector3 gravityDelta = finalGravity * dt;
+
+            // before moving we check if we are able to step up
+            bool canStepUp = !rigidTransform.IsGrounded
+                             && !rigidTransform.IsOnASteepSlope;
+
+            characterController.stepOffset = canStepUp ? 0.35f : 0f;
 
             // In order for some systems to work correctly we move the character horizontally and then vertically
             CollisionFlags horizontalCollisionFlags = characterController.Move(movementDelta);

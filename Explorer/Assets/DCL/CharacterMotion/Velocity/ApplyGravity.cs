@@ -21,7 +21,7 @@ namespace DCL.CharacterMotion
             if (characterPhysics.IsOnASteepSlope && characterPhysics.IsGrounded)
             {
                 float currentGravityMagnitude = characterPhysics.GravityVelocity.magnitude;
-                characterPhysics.GravityVelocity = gravityDirection * currentGravityMagnitude;
+                characterPhysics.SlopeGravity = gravityDirection * currentGravityMagnitude;
             }
 
             // If we are falling
@@ -39,11 +39,13 @@ namespace DCL.CharacterMotion
                     gravity *= settings.JumpGravityFactor;
 
                 characterPhysics.GravityVelocity += gravityDirection * gravity * deltaTime;
+                characterPhysics.SlopeGravity += gravityDirection * gravity * deltaTime;
             }
             else
             {
                 // Gravity should always affect the character, otherwise we are unable to ground it properly
                 characterPhysics.GravityVelocity = gravityDirection * Math.Abs(settings.Gravity) * deltaTime;
+                characterPhysics.SlopeGravity = characterPhysics.GravityVelocity;
             }
         }
 
