@@ -23,6 +23,8 @@ namespace DCL.CharacterMotion.Components
 
         public bool IsOnASteepSlope;
 
+        public bool IsCollidingWithWall { get; set; }
+
         public int LastGroundedFrame;
 
         public int LastJumpFrame;

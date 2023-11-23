@@ -62,6 +62,9 @@ namespace DCL.CharacterMotion.Systems
                 verticalLimit.Value = charSettings.HeadIKVerticalAngleLimit;
                 horizontalLimit.Value = charSettings.HeadIKHorizontalAngleLimit;
                 speed.Value = charSettings.HeadIKRotationSpeed;
+
+                // TODO: Remove this once this system is properly tied up to a look-up system, this flag will just disable it by default
+                disableWasToggled = true;
             }
 
             charSettings.HeadIKVerticalAngleLimit = verticalLimit.Value;

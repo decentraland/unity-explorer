@@ -49,6 +49,7 @@ namespace DCL.CharacterMotion.Systems
             // Apply all velocities
             ApplyCharacterMovementVelocity.Execute(characterControllerSettings, ref rigidTransform, in cameraComponent, in movementInput, dt);
             ApplyEdgeSlip.Execute(characterControllerSettings, ref rigidTransform, characterController);
+            ApplyWallSlide.Execute(ref rigidTransform, characterController);
             ApplyJump.Execute(characterControllerSettings, ref rigidTransform, in jump, in movementInput, physicsTick);
             ApplyGravity.Execute(characterControllerSettings, ref rigidTransform, in jump, physicsTick, dt);
             ApplyAirDrag.Execute(characterControllerSettings, ref rigidTransform, dt);

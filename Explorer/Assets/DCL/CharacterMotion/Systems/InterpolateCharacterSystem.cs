@@ -67,6 +67,8 @@ namespace DCL.CharacterMotion.Systems
             if (!Mathf.Approximately(gravityDelta.y, 0f))
                 rigidTransform.IsGrounded = hasGroundedFlag || characterController.isGrounded;
 
+            rigidTransform.IsCollidingWithWall = EnumUtils.HasFlag(horizontalCollisionFlags, CollisionFlags.Sides);
+
             SaveLocalPosition.Execute(ref platformComponent, characterController.transform.position);
         }
     }
