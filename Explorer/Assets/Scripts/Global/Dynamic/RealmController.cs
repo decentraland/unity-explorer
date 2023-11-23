@@ -1,8 +1,8 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.WebRequests;
 using DCL.Diagnostics;
+using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -54,7 +54,7 @@ namespace Global.Dynamic
             await UnloadCurrentRealmAsync(globalWorld);
 
             IpfsTypes.ServerAbout result = await (await webRequestController.GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM))
-               .OverwriteFromJson(serverAbout, WRJsonParser.Unity);
+               .OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
             realmData.Reconfigure(new IpfsRealm(realm, result));
 

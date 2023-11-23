@@ -10,12 +10,11 @@ namespace DCLServices.Lambdas
     /// Caches paginated results until `Dispose` is called
     /// assuming the results are immutable while iterating
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public class LambdaResponsePagePointer<T> : IDisposable where T : PaginatedResponse
+    public class LambdaResponsePagePointer<T, TAdditionalData> : IDisposable where T: PaginatedResponse
     {
         private readonly int pageSize;
         internal readonly Dictionary<int, (T page, DateTime retrievalTime)> cachedPages;
-        private readonly ILambdaServiceConsumer<T> serviceConsumer;
+        private readonly ILambdaServiceConsumer<T, TAdditionalData> serviceConsumer;
         private readonly TimeSpan cacheExpiration;
         private readonly CancellationToken cancellationToken;
         private readonly string constEndPoint;
@@ -29,7 +28,7 @@ namespace DCLServices.Lambdas
         /// <param name="cancellationToken">Pass Cancellation Token so the pointer will be automatically disposed on cancellation</param>
         /// <param name="consumer"></param>
         public LambdaResponsePagePointer(string constEndpoint, int pageSize, CancellationToken cancellationToken,
-            ILambdaServiceConsumer<T> consumer) : this(constEndpoint, pageSize, cancellationToken, consumer, TimeSpan.FromDays(2))
+            ILambdaServiceConsumer<T, TAdditionalData> consumer) : this(constEndpoint, pageSize, cancellationToken, consumer, TimeSpan.FromDays(2))
         {
         }
 
@@ -37,8 +36,9 @@ namespace DCLServices.Lambdas
         /// <param name="pageSize"></param>
         /// <param name="cancellationToken">Pass Cancellation Token so the pointer will be automatically disposed on cancellation</param>
         /// <param name="consumer"></param>
+        /// <param name="cacheExpiration">Cache Lifetime</param>
         public LambdaResponsePagePointer(string constEndpoint, int pageSize, CancellationToken cancellationToken,
-            ILambdaServiceConsumer<T> consumer, TimeSpan cacheExpiration )
+            ILambdaServiceConsumer<T, TAdditionalData> consumer, TimeSpan cacheExpiration)
         {
             this.pageSize = pageSize;
             this.cancellationToken = cancellationToken;
@@ -56,11 +56,10 @@ namespace DCLServices.Lambdas
         /// </summary>
         /// <exception cref="ObjectDisposedException"></exception>
         /// <exception cref="OperationCanceledException"></exception>
-        public async UniTask<(T response, bool success)> GetPageAsync(int pageNum, CancellationToken localCancellationToken = default, Dictionary<string, string> additionalData = null)
+        public async UniTask<(T response, bool success)> GetPageAsync(int pageNum, TAdditionalData additionalData, CancellationToken localCancellationToken = default)
         {
             if (isDisposed)
-                throw new ObjectDisposedException(nameof(LambdaResponsePagePointer<T>));
-
+                throw new ObjectDisposedException(nameof(LambdaResponsePagePointer<T, TAdditionalData>));
 
             if (cachedPages.TryGetValue(pageNum, out var cachedPage))
             {

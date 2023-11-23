@@ -29,5 +29,11 @@ namespace DCL.WebRequests
             AttemptsCount = attemptsCount;
             Timeout = timeout;
         }
+
+        public static implicit operator CommonArguments(URLAddress url) =>
+            new (url);
+
+        public static implicit operator CommonArguments(string url) =>
+            new (URLAddress.FromString(url));
     }
 }

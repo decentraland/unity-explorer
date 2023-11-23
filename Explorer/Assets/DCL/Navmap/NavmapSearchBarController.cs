@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.PlacesAPIService;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 
 public class NavmapSearchBarController : IDisposable
@@ -39,9 +38,8 @@ public class NavmapSearchBarController : IDisposable
     {
         await UniTask.Delay(1000, cancellationToken: cts.Token);
         searchResultPanelController.ShowLoading();
-        (IReadOnlyList<PlacesData.PlaceInfo> places, int total) searchPlaces = await placesAPIService.SearchPlaces(searchText, 0, 8, cts.Token);
-
-        searchResultPanelController.SetResults(searchPlaces.places);
+        using PlacesData.IPlacesAPIResponse response = await placesAPIService.SearchPlaces(searchText, 0, 8, cts.Token);
+        searchResultPanelController.SetResults(response.Data);
     }
 
     private void ClearSearch()

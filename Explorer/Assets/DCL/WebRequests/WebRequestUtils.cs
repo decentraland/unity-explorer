@@ -1,10 +1,17 @@
 using Cysharp.Threading.Tasks;
+using System;
 using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
     public static class WebRequestUtils
     {
+        public static async UniTask<T> WithCustomException<T>(this UniTask<T> webRequestFlow, Func<UnityWebRequestException, Exception> newExceptionFactoryMethod) where T: ITypedWebRequest
+        {
+            try { return await webRequestFlow; }
+            catch (UnityWebRequestException e) { throw newExceptionFactoryMethod(e); }
+        }
+
         public static bool IsIrrecoverableError(this UnityWebRequestException exception, int attemptLeft) =>
             attemptLeft <= 0 || ((exception.IsAborted() || exception.IsServerError()) && !exception.IsUnableToCompleteSSLConnection());
 

@@ -1,9 +1,9 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
-using DCL.Diagnostics;
 using Ipfs;
 using SceneRunner;
 using SceneRunner.Scene;
@@ -95,8 +95,8 @@ namespace ECS.SceneLifeCycle.Systems
 
             IpfsTypes.SceneMetadata target = intention.Definition.metadata;
 
-            (await webRequestController.GetAsync(new CommonArguments(sceneJsonUrl), ct, reportCategory))
-               .OverwriteFromJson(target, WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+            await (await webRequestController.GetAsync(new CommonArguments(sceneJsonUrl), ct, reportCategory))
+               .OverwriteFromJsonAsync(target, WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
             intention.Definition.id = intention.IpfsPath.EntityId;
 

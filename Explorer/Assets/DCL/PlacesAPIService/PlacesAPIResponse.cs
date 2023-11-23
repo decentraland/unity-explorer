@@ -4,11 +4,22 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using UnityEngine;
+using UnityEngine.Pool;
+using Utility.Pool;
 
 namespace DCL.PlacesAPIService
 {
     public static class PlacesData
     {
+        internal static readonly ListObjectPool<PlaceInfo> PLACE_INFO_LIST_POOL = new (listInstanceDefaultCapacity: 100, defaultCapacity: 4);
+
+        public static readonly ObjectPool<PlaceInfo> PLACE_INFO_POOL = new (() => new PlaceInfo(), defaultCapacity: 10, maxSize: 1000);
+
+        // Preallocate the list so it will be reused every time it's parsed into
+        internal static readonly ObjectPool<PlacesAPIResponse> PLACES_API_RESPONSE_POOL = new (() => new PlacesAPIResponse { data = new List<PlaceInfo>(200) }, actionOnRelease: p => p.data.Clear(), defaultCapacity: 4);
+
+        internal static readonly ObjectPool<ReportPlaceAPIResponse> REPORT_PLACE_API_RESPONSE_POOL = new (() => new ReportPlaceAPIResponse(), defaultCapacity: 4);
+
         [Serializable]
         public class PlaceInfo : ISerializationCallbackReceiver
         {
@@ -106,11 +117,29 @@ namespace DCL.PlacesAPIService
 
         // TODO: This class should be moved to the PlacesAPIService folder
         [Serializable]
-        public class PlacesAPIResponse : PaginatedResponse
+        public class PlacesAPIResponse : PaginatedResponse, IPlacesAPIResponse
         {
             public bool ok;
             public int total;
             public List<PlaceInfo> data;
+
+            int IPlacesAPIResponse.Total => total;
+            IReadOnlyList<PlaceInfo> IPlacesAPIResponse.Data => data;
+
+            public void Dispose()
+            {
+                PLACES_API_RESPONSE_POOL.Release(this);
+            }
+        }
+
+        /// <summary>
+        ///     To keep things non-mutable
+        /// </summary>
+        public interface IPlacesAPIResponse : IDisposable
+        {
+            int Total { get; }
+
+            IReadOnlyList<PlaceInfo> Data { get; }
         }
 
         // TODO: This class should be moved to the PlacesAPIService folder

@@ -3,7 +3,7 @@ using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
-    public readonly struct GenericPostRequest : ITypedWebRequest
+    public readonly struct GenericPostRequest : ITypedWebRequest, GenericDownloadHandlerUtils.IGenericDownloadHandlerRequest
     {
         public UnityWebRequest UnityWebRequest { get; }
 
@@ -20,18 +20,10 @@ namespace DCL.WebRequests
             UnityWebRequest = unityWebRequest;
         }
 
-        public UniTask<T> OverwriteFromJson<T>(
-            T targetObject,
-            WRJsonParser jsonParser,
-            WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread) where T: class =>
-            GenericDownloadHandlerUtils.OverwriteFromJsonAsync(UnityWebRequest, targetObject, jsonParser, threadFlags);
-
         public UniTask<T> CreateFromJson<T>(
             WRJsonParser jsonParser,
-            WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread) =>
-            GenericDownloadHandlerUtils.CreateFromJsonAsync<T>(UnityWebRequest, jsonParser, threadFlags);
-
-        public byte[] GetDataCopy() =>
-            GenericDownloadHandlerUtils.GetDataCopy(UnityWebRequest);
+            WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
+            GenericDownloadHandlerUtils.CreateExceptionOnParseFail createCustomExceptionOnFailure = null) =>
+            this.CreateFromJsonAsync<GenericPostRequest, T>(jsonParser, threadFlags, createCustomExceptionOnFailure);
     }
 }

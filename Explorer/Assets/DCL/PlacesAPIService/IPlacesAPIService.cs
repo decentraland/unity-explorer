@@ -7,7 +7,7 @@ namespace DCL.PlacesAPIService
 {
     public interface IPlacesAPIService
     {
-        UniTask<(IReadOnlyList<PlacesData.PlaceInfo> places, int total)> SearchPlaces(string searchText, int pageNumber, int pageSize, CancellationToken ct, bool renewCache = false);
+        UniTask<PlacesData.IPlacesAPIResponse> SearchPlaces(string searchText, int pageNumber, int pageSize, CancellationToken ct);
 
         UniTask<(IReadOnlyList<PlacesData.PlaceInfo> places, int total)> GetMostActivePlaces(int pageNumber, int pageSize, string filter = "", string sort = "", CancellationToken ct = default,
             bool renewCache = false);

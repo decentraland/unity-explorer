@@ -3,14 +3,14 @@ using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
-    public readonly struct GenericPutRequest : ITypedWebRequest
+    public readonly struct GenericPutRequest : ITypedWebRequest, GenericDownloadHandlerUtils.IGenericDownloadHandlerRequest
     {
         public UnityWebRequest UnityWebRequest { get; }
 
         internal static GenericPutRequest Initialize(in CommonArguments commonArguments, GenericPutArguments arguments)
         {
-            var unityWebRequest = arguments.MultipartFormSections != null ?
-                UnityWebRequest.Post(commonArguments.URL, arguments.MultipartFormSections)
+            UnityWebRequest unityWebRequest = arguments.MultipartFormSections != null
+                ? UnityWebRequest.Post(commonArguments.URL, arguments.MultipartFormSections)
                 : UnityWebRequest.Post(commonArguments.URL, arguments.PutData, arguments.ContentType);
 
             unityWebRequest.method = "PUT";
@@ -23,18 +23,9 @@ namespace DCL.WebRequests
             UnityWebRequest = unityWebRequest;
         }
 
-        public UniTask<T> OverwriteFromJson<T>(
-            T targetObject,
-            WRJsonParser jsonParser,
-            WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread) where T: class =>
-            GenericDownloadHandlerUtils.OverwriteFromJsonAsync(UnityWebRequest, targetObject, jsonParser, threadFlags);
-
         public UniTask<T> CreateFromJson<T>(
             WRJsonParser jsonParser,
             WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread) =>
-            GenericDownloadHandlerUtils.CreateFromJsonAsync<T>(UnityWebRequest, jsonParser, threadFlags);
-
-        public byte[] GetDataCopy() =>
-            GenericDownloadHandlerUtils.GetDataCopy(UnityWebRequest);
+            this.CreateFromJsonAsync<GenericPutRequest, T>(jsonParser, threadFlags);
     }
 }

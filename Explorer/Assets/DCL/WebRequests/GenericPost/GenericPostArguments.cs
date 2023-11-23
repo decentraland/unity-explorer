@@ -23,6 +23,8 @@ namespace DCL.WebRequests
             ContentType = contentType;
         }
 
+        public static GenericPostArguments Empty => new (string.Empty, "application/json");
+
         public static GenericPostArguments CreateMultipartForm(List<IMultipartFormSection> multipartFormSections) =>
             new (multipartFormSections);
 

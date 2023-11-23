@@ -10,9 +10,17 @@ namespace DCL.WebRequests
 {
     public static class GenericDownloadHandlerUtils
     {
-        public static async UniTask<T> OverwriteFromJsonAsync<T>(UnityWebRequest webRequest, T targetObject, WRJsonParser jsonParser,
-            WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread) where T: class
+        public delegate Exception CreateExceptionOnParseFail(Exception exception, string text);
+
+        public interface IGenericDownloadHandlerRequest { }
+
+        public static async UniTask<T> OverwriteFromJsonAsync<TRequest, T>(this TRequest typedWebRequest, T targetObject, WRJsonParser jsonParser,
+            WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
+            CreateExceptionOnParseFail createCustomExceptionOnFailure = null)
+            where T: class where TRequest: ITypedWebRequest, IGenericDownloadHandlerRequest
         {
+            UnityWebRequest webRequest = typedWebRequest.UnityWebRequest;
+
             string text = webRequest.downloadHandler.text;
 
             // Finalize the request immediately
@@ -38,12 +46,21 @@ namespace DCL.WebRequests
                     default: throw new ArgumentOutOfRangeException(nameof(jsonParser), jsonParser, null);
                 }
             }
+            catch (Exception e)
+            {
+                if (createCustomExceptionOnFailure != null)
+                    throw createCustomExceptionOnFailure(e, text);
+                else
+                    throw;
+            }
             finally { await SwitchToMainThreadAsync(threadFlags); }
         }
 
-        public static async UniTask<T> CreateFromJsonAsync<T>(UnityWebRequest webRequest, WRJsonParser jsonParser,
-            WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread)
+        public static async UniTask<T> CreateFromJsonAsync<TRequest, T>(this TRequest typedWebRequest, WRJsonParser jsonParser,
+            WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread, CreateExceptionOnParseFail createCustomExceptionOnFailure = null)
+            where TRequest: ITypedWebRequest, IGenericDownloadHandlerRequest
         {
+            UnityWebRequest webRequest = typedWebRequest.UnityWebRequest;
             string text = webRequest.downloadHandler.text;
 
             // Finalize the request immediately
@@ -68,6 +85,13 @@ namespace DCL.WebRequests
                         throw new ArgumentOutOfRangeException(nameof(jsonParser), jsonParser, null);
                 }
             }
+            catch (Exception e)
+            {
+                if (createCustomExceptionOnFailure != null)
+                    throw createCustomExceptionOnFailure(e, text);
+                else
+                    throw;
+            }
             finally { await SwitchToMainThreadAsync(threadFlags); }
         }
 
@@ -75,10 +99,10 @@ namespace DCL.WebRequests
         ///     Get data array from UnityWebRequest.downloadHandler.data without modifying the original array
         ///     and finalize the request
         /// </summary>
-        /// <param name="unityWebRequest"></param>
         /// <returns></returns>
-        public static byte[] GetDataCopy(UnityWebRequest unityWebRequest)
+        public static byte[] GetDataCopy<TRequest>(this TRequest request) where TRequest: ITypedWebRequest, IGenericDownloadHandlerRequest
         {
+            UnityWebRequest unityWebRequest = request.UnityWebRequest;
             byte[] data = unityWebRequest.downloadHandler.data;
             unityWebRequest.Dispose();
             return data;

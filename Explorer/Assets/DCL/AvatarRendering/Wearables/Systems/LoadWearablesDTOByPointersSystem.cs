@@ -5,14 +5,13 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.WebRequests;
 using DCL.Diagnostics;
 using DCL.PerformanceBudgeting;
+using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -85,8 +84,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             using PoolExtensions.Scope<List<WearableDTO>> dtoPooledList = DTO_POOL.AutoScope();
 
-            (await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct))
-               .OverwriteFromJson(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+            await (await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct))
+               .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 
             // List is not concurrent
             lock (results) { results.AddRange(dtoPooledList.Value); }
