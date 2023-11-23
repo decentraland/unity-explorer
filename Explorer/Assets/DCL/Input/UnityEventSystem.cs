@@ -4,14 +4,14 @@ using UnityEngine.EventSystems;
 
 namespace DCL.Input
 {
-    public class UIRaycaster : IUIRaycaster
+    public class UnityEventSystem : IEventSystem
     {
         private const int SCREEN_SAFE_MARGIN = 15;
         private readonly EventSystem eventSystem;
         private readonly PointerEventData pointerEventData;
         private readonly List<RaycastResult> raycastResults;
 
-        public UIRaycaster(EventSystem eventSystem)
+        public UnityEventSystem(EventSystem eventSystem)
         {
             this.eventSystem = eventSystem;
             pointerEventData = new PointerEventData(eventSystem);
@@ -37,7 +37,7 @@ namespace DCL.Input
         }
     }
 
-    public interface IUIRaycaster
+    public interface IEventSystem
     {
         IReadOnlyList<RaycastResult> RaycastAll(Vector2 position);
     }

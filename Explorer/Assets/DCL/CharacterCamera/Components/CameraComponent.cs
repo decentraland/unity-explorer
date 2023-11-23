@@ -17,6 +17,8 @@ namespace DCL.CharacterCamera
         /// </summary>
         public bool CursorIsLocked;
 
+        public Vector2 CursorPosition;
+
         public CameraComponent(Camera camera) : this()
         {
             Camera = camera;

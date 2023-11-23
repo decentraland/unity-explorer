@@ -26,10 +26,10 @@ namespace DCL.CharacterCamera.Tests
             dlcInput.Enable();
 
             entity = world.Create(new CameraComponent());
-            uiRaycaster = Substitute.For<IUIRaycaster>();
+            eventSystem = Substitute.For<IEventSystem>();
             cursor = Substitute.For<ICursor>();
 
-            system = new UpdateCursorInputSystem(world, dlcInput, uiRaycaster, cursor);
+            system = new UpdateCursorInputSystem(world, dlcInput, eventSystem, cursor);
             system.Initialize();
         }
 
@@ -45,7 +45,7 @@ namespace DCL.CharacterCamera.Tests
         private Entity entity;
         private Keyboard keyboard;
         private Mouse mouse;
-        private IUIRaycaster uiRaycaster;
+        private IEventSystem eventSystem;
         private ICursor cursor;
 
         [Test]
@@ -53,7 +53,7 @@ namespace DCL.CharacterCamera.Tests
         {
             world.Set(entity, new CameraComponent { CursorIsLocked = false });
 
-            uiRaycaster.RaycastAll(Arg.Any<Vector2>()).Returns(new List<RaycastResult> { new () });
+            eventSystem.RaycastAll(Arg.Any<Vector2>()).Returns(new List<RaycastResult> { new () });
 
             Press(mouse.leftButton);
 
@@ -85,7 +85,7 @@ namespace DCL.CharacterCamera.Tests
 
             system.Update(0);
 
-            uiRaycaster.DidNotReceive().RaycastAll(Arg.Any<Vector2>());
+            eventSystem.DidNotReceive().RaycastAll(Arg.Any<Vector2>());
         }
 
         [Test]
