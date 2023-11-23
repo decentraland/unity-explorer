@@ -1,6 +1,11 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Explorer/Assets/DCL/AvatarRendering/AvatarShape/Assets/Animations/desktop.ini.meta
 guid: 117619c6d8fc1a641ac473224df4cbe2
 DefaultImporter:
+========
+guid: 78e0b5197588c4841a6544409324031c
+AssemblyDefinitionImporter:
+>>>>>>>> origin:Explorer/Assets/DCL/Time/DCL.Time.asmdef.meta
   externalObjects: {}
   userData: 
   assetBundleName: 
