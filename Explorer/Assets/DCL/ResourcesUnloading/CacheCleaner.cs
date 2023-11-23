@@ -35,10 +35,10 @@ namespace DCL.ResourcesUnloading
         {
             if (!fpsCapBudgetProvider.TrySpendBudget()) return;
 
-            assetBundleCache.Unload();
-            gltfContainerAssetsCache.Unload();
+            assetBundleCache.Unload(fpsCapBudgetProvider);
+            gltfContainerAssetsCache.Unload(fpsCapBudgetProvider);
 
-            texturesCache.Unload();
+            texturesCache.Unload(fpsCapBudgetProvider);
 
             avatarPoolRegistry.Clear();
             computeShaderPool.Clear();

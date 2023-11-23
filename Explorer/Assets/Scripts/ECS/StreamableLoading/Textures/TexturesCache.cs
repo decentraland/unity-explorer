@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.PerformanceBudgeting;
 using DCL.Profiling;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
@@ -11,7 +12,7 @@ namespace ECS.StreamableLoading.Textures
 {
     public class TexturesCache : IStreamableCache<Texture2D, GetTextureIntention>
     {
-        private readonly Dictionary<GetTextureIntention, Texture2D> cache;
+        private readonly Dictionary<GetTextureIntention, (uint LastUsedFrame, Texture2D Texture)> cache;
 
         public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<Texture2D>?>> OngoingRequests { get; }
 
@@ -21,7 +22,8 @@ namespace ECS.StreamableLoading.Textures
 
         public TexturesCache()
         {
-            cache = new Dictionary<GetTextureIntention, Texture2D>(256, this);
+            cache = new Dictionary<GetTextureIntention, (uint LastUsedFrame, Texture2D Texture)>(this);
+
             IrrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<Texture2D>>.Get();
             OngoingRequests = DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<Texture2D>?>>.Get();
         }
@@ -37,34 +39,65 @@ namespace ECS.StreamableLoading.Textures
             disposed = true;
         }
 
-        public void Unload()
+        public void Add(in GetTextureIntention key, Texture2D asset)
         {
-            foreach (Texture2D texture in cache.Values)
-            {
-                UnityObjectUtils.SafeDestroy(texture);
-                ProfilingCounters.TexturesAmount.Value--;
-            }
-
-            cache.Clear();
+            cache.TryAdd(key, ((uint)Time.frameCount, asset));
 
             ProfilingCounters.TexturesInCache.Value = cache.Count;
         }
+
+        public bool TryGet(in GetTextureIntention key, out Texture2D asset)
+        {
+            if (cache.TryGetValue(key, out (uint LastUsedFrame, Texture2D Texture) value))
+            {
+                asset = value.Texture;
+                cache[key] = ((uint)Time.frameCount, asset);
+
+                return true;
+            }
+
+            asset = null;
+            return false;
+        }
+
+        public void Dereference(in GetTextureIntention key, Texture2D asset) { }
+
+        public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider)
+        {
+            using (ListPool<KeyValuePair<GetTextureIntention, (uint LastUsedFrame, Texture2D texture)>>.Get(out List<KeyValuePair<GetTextureIntention, (uint LastUsedFrame, Texture2D Texture)>> sortedCache))
+            {
+                PrepareListSortedByLastUsage(sortedCache);
+
+                foreach (KeyValuePair<GetTextureIntention, (uint LastUsedFrame, Texture2D Texture)> pair in sortedCache)
+                {
+                    if (!frameTimeBudgetProvider.TrySpendBudget()) break;
+
+                    UnityObjectUtils.SafeDestroy(pair.Value.Texture);
+                    ProfilingCounters.TexturesAmount.Value--;
+
+                    cache.Remove(pair.Key);
+                }
+            }
+
+            ProfilingCounters.TexturesInCache.Value = cache.Count;
+            return;
+
+            void PrepareListSortedByLastUsage(List<KeyValuePair<GetTextureIntention, (uint LastUsedFrame, Texture2D Texture)>> sortedCache)
+            {
+                foreach (KeyValuePair<GetTextureIntention, (uint LastUsedFrame, Texture2D Texture)> item in cache)
+                    sortedCache.Add(item);
+
+                sortedCache.Sort(CompareByLastUsedFrame);
+            }
+        }
+
+        private static int CompareByLastUsedFrame(KeyValuePair<GetTextureIntention, (uint LastUsedFrame, Texture2D texture)> pair1, KeyValuePair<GetTextureIntention, (uint LastUsedFrame, Texture2D texture)> pair2) =>
+            pair1.Value.LastUsedFrame.CompareTo(pair2.Value.LastUsedFrame);
 
         public bool Equals(GetTextureIntention x, GetTextureIntention y) =>
             x.Equals(y);
 
         public int GetHashCode(GetTextureIntention obj) =>
             obj.GetHashCode();
-
-        public bool TryGet(in GetTextureIntention key, out Texture2D asset) =>
-            cache.TryGetValue(key, out asset);
-
-        public void Add(in GetTextureIntention key, Texture2D asset)
-        {
-            cache.TryAdd(key, asset);
-            ProfilingCounters.TexturesInCache.Value = cache.Count;
-        }
-
-        public void Dereference(in GetTextureIntention key, Texture2D asset) { }
     }
 }

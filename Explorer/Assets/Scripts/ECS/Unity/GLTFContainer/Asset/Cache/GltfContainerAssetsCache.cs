@@ -19,7 +19,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
     /// </summary>
     public class GltfContainerAssetsCache : IStreamableCache<GltfContainerAsset, string>
     {
-        private readonly IConcurrentBudgetProvider frameTimeBudgetProvider;
         private readonly Transform parentContainer;
 
         private readonly Dictionary<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)> cache;
@@ -29,10 +28,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
         private bool isDisposed { get; set; }
 
-        public GltfContainerAssetsCache(IConcurrentBudgetProvider frameTimeBudgetProvider)
+        public GltfContainerAssetsCache()
         {
-            this.frameTimeBudgetProvider = frameTimeBudgetProvider;
-
             parentContainer = new GameObject($"POOL_CONTAINER_{nameof(GltfContainerAsset)}").transform;
             parentContainer.gameObject.SetActive(false);
 
@@ -94,40 +91,63 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             asset.Root.transform.SetParent(parentContainer);
         }
 
-        public void Unload()
+        public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider)
         {
             using (ListPool<KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)>>.Get(out List<KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)>> sortedCache))
+            {
+                PrepareListSortedByLastUsage(sortedCache);
+                int totalUnloadedAssets = UnloadGltfAssets(frameTimeBudgetProvider, sortedCache);
+
+                ProfilingCounters.GltfInCacheAmount.Value -= totalUnloadedAssets;
+            }
+
+            return;
+
+            void PrepareListSortedByLastUsage(List<KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)>> sortedCache)
             {
                 foreach (KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)> item in cache)
                     sortedCache.Add(item);
 
                 sortedCache.Sort(CompareByLastUsedFrame);
+            }
+        }
 
-                var unloaded = 0;
+        private int UnloadGltfAssets(IConcurrentBudgetProvider frameTimeBudgetProvider, List<KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)>> sortedCache)
+        {
+            var totalUnloadedAssets = 0;
 
-                foreach (KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)> pair in sortedCache)
+            foreach (KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)> pair in sortedCache)
+            {
+                if (!frameTimeBudgetProvider.TrySpendBudget()) break;
+
+                int disposedGltfAssets = DisposeGltfAssetsInSortedList(pair);
+                ClearCache(pair, disposedGltfAssets);
+
+                totalUnloadedAssets += disposedGltfAssets;
+            }
+
+            return totalUnloadedAssets;
+
+            int DisposeGltfAssetsInSortedList(KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)> pair)
+            {
+                var i = 0;
+
+                for (; i < pair.Value.Assets.Count; i++)
                 {
                     if (!frameTimeBudgetProvider.TrySpendBudget()) break;
 
-                    var i = 0;
-
-                    for (; i < pair.Value.Assets.Count; i++)
-                    {
-                        GltfContainerAsset gltfAsset = pair.Value.Assets[i];
-                        if (!frameTimeBudgetProvider.TrySpendBudget()) break;
-
-                        gltfAsset.Dispose();
-                    }
-
-                    cache[pair.Key].Assets.RemoveRange(0, i);
-
-                    if (cache[pair.Key].Assets.Count == 0)
-                        cache.Remove(pair.Key);
-
-                    unloaded = i;
+                    pair.Value.Assets[i].Dispose();
                 }
 
-                ProfilingCounters.GltfInCacheAmount.Value -= unloaded;
+                return i;
+            }
+
+            void ClearCache(KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)> pair, int disposeGltfAssets)
+            {
+                cache[pair.Key].Assets.RemoveRange(0, disposeGltfAssets);
+
+                if (cache[pair.Key].Assets.Count == 0)
+                    cache.Remove(pair.Key);
             }
         }
 

@@ -1,7 +1,6 @@
 using Arch.SystemGroups;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
-using DCL.PerformanceBudgeting;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
 using ECS.LifeCycle;
@@ -18,10 +17,10 @@ namespace DCL.PluginSystem.World
         private readonly ECSWorldSingletonSharedDependencies globalDeps;
         private readonly GltfContainerAssetsCache assetsCache;
 
-        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, IConcurrentBudgetProvider frameTimeBudgetProvider, CacheCleaner cacheCleaner)
+        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner)
         {
             this.globalDeps = globalDeps;
-            assetsCache = new GltfContainerAssetsCache(frameTimeBudgetProvider);
+            assetsCache = new GltfContainerAssetsCache();
 
             cacheCleaner.Register(assetsCache);
         }

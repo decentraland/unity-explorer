@@ -13,21 +13,19 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleCache : IStreamableCache<AssetBundleData, GetAssetBundleIntention>
     {
-        private readonly IConcurrentBudgetProvider frameTimeBudgetProvider;
         private readonly Dictionary<GetAssetBundleIntention, AssetBundleData> cache;
         private readonly List<KeyValuePair<GetAssetBundleIntention, AssetBundleData>> sortedCache;
+
         public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>> OngoingRequests { get; }
         public IDictionary<string, StreamableLoadingResult<AssetBundleData>> IrrecoverableFailures { get; }
 
         private bool disposed { get; set; }
 
-        public AssetBundleCache(IConcurrentBudgetProvider frameTimeBudgetProvider)
+        public AssetBundleCache()
         {
-            this.frameTimeBudgetProvider = frameTimeBudgetProvider;
-
             cache = new Dictionary<GetAssetBundleIntention, AssetBundleData>(this);
-            sortedCache = new List<KeyValuePair<GetAssetBundleIntention, AssetBundleData>>();
 
+            sortedCache = ListPool<KeyValuePair<GetAssetBundleIntention, AssetBundleData>>.Get();
             IrrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Get();
             OngoingRequests = DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>.Get();
         }
@@ -37,17 +35,12 @@ namespace ECS.StreamableLoading.AssetBundles
             if (disposed)
                 return;
 
+            ListPool<KeyValuePair<GetAssetBundleIntention, AssetBundleData>>.Release(sortedCache);
             DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Release(IrrecoverableFailures as Dictionary<string, StreamableLoadingResult<AssetBundleData>>);
             DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>.Release(OngoingRequests as Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>);
 
             disposed = true;
         }
-
-        public bool Equals(GetAssetBundleIntention x, GetAssetBundleIntention y) =>
-            StringComparer.OrdinalIgnoreCase.Equals(x.Hash, y.Hash);
-
-        public int GetHashCode(GetAssetBundleIntention obj) =>
-            StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Hash);
 
         public bool TryGet(in GetAssetBundleIntention key, out AssetBundleData asset) =>
             cache.TryGetValue(key, out asset);
@@ -60,7 +53,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public void Dereference(in GetAssetBundleIntention key, AssetBundleData asset) { }
 
-        public void Unload()
+        public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider)
         {
             using (ListPool<KeyValuePair<GetAssetBundleIntention, AssetBundleData>>.Get(out List<KeyValuePair<GetAssetBundleIntention, AssetBundleData>> unloadedPairs))
             {
@@ -89,5 +82,11 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private static int CompareByLastUsedFrame(KeyValuePair<GetAssetBundleIntention, AssetBundleData> pair1, KeyValuePair<GetAssetBundleIntention, AssetBundleData> pair2) =>
             pair1.Value.LastUsedFrame.CompareTo(pair2.Value.LastUsedFrame);
+
+        public bool Equals(GetAssetBundleIntention x, GetAssetBundleIntention y) =>
+            StringComparer.OrdinalIgnoreCase.Equals(x.Hash, y.Hash);
+
+        public int GetHashCode(GetAssetBundleIntention obj) =>
+            StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Hash);
     }
 }
