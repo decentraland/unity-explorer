@@ -18,7 +18,6 @@ namespace DCL.CharacterMotion
         {
             rigidTransform.GravityDirection = Vector3.down;
             rigidTransform.CurrentSlopeNormal = Vector3.up;
-
             rigidTransform.IsOnASteepSlope = false;
 
             if (!rigidTransform.IsGrounded) return;
@@ -57,10 +56,8 @@ namespace DCL.CharacterMotion
             if (!rigidTransform.IsOnASteepSlope && Physics.Raycast(groundRay, settings.EdgeSlipSafeDistance, PhysicsLayers.CHARACTER_ONLY_MASK))
                 return;
 
-            // in order to get the perpendicular direction
+            // in order to slide correctly we change the gravity direction using the perpendicular direction of the normal based on the global up vector
             rigidTransform.GravityDirection = -Vector3.Cross(hitNormal, Vector3.Cross(Vector3.up, hitNormal)).normalized;
-
-
         }
     }
 }

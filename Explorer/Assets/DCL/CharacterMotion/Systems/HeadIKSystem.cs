@@ -89,15 +89,19 @@ namespace DCL.CharacterMotion.Systems
                 disableWasToggled = false;
             }
 
-            bool isEnabled = !stunComponent.IsStunned && rigidTransform.IsGrounded && !rigidTransform.IsOnASteepSlope && !headIK.IsDisabled;
-            int targetWeight = isEnabled ? 1 : 0;
-            avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, targetWeight, 2 * dt);
+            bool isEnabled = !stunComponent.IsStunned
+                             && rigidTransform.IsGrounded
+                             && !rigidTransform.IsOnASteepSlope
+                             && !headIK.IsDisabled;
+
+            avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, isEnabled ? 1 : 0, 2 * dt);
 
             // TODO: When enabling and disabling we should reset the reference position
             if (headIK.IsDisabled) return;
 
             // TODO: Tie this to a proper look-at system to decide what to look at
             Vector3 targetDirection = cameraComponent.Camera.transform.forward;
+
             ApplyHeadLookAt.Execute(targetDirection, avatarBase, dt, settings);
         }
     }

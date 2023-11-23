@@ -24,26 +24,16 @@ namespace DCL.CharacterMotion.Systems
     [UpdateBefore(typeof(CameraGroup))]
     public partial class InterpolateCharacterSystem : BaseUnityLoopSystem
     {
-        private SingleInstanceEntity fixedTick;
-        private SingleInstanceEntity time;
-
         private InterpolateCharacterSystem(World world) : base(world) { }
-
-        public override void Initialize()
-        {
-            time = World.CacheTime();
-            fixedTick = World.CachePhysicsTick();
-        }
 
         protected override void Update(float t)
         {
-            InterpolateQuery(World, t, fixedTick.GetPhysicsTickComponent(World).Tick);
+            InterpolateQuery(World, t);
         }
 
         [Query]
         private void Interpolate(
             [Data] float dt,
-            [Data] int physicsTick,
             in ICharacterControllerSettings settings,
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController,
@@ -59,6 +49,7 @@ namespace DCL.CharacterMotion.Systems
             Vector3 movementDelta = rigidTransform.MoveVelocity.Velocity * dt;
             Vector3 gravityDelta = rigidTransform.GravityVelocity * dt;
 
+            // In order for some systems to work correctly we move the character horizontally and then vertically
             CollisionFlags horizontalCollisionFlags = characterController.Move(movementDelta);
             CollisionFlags verticalCollisionFlags = characterController.Move(gravityDelta + slopeModifier);
 
@@ -69,7 +60,8 @@ namespace DCL.CharacterMotion.Systems
 
             rigidTransform.IsCollidingWithWall = EnumUtils.HasFlag(horizontalCollisionFlags, CollisionFlags.Sides);
 
-            SaveLocalPosition.Execute(ref platformComponent, characterController.transform.position);
+            // If we are on a platform we save our local position
+            PlatformSaveLocalPosition.Execute(ref platformComponent, characterController.transform.position);
         }
     }
 }

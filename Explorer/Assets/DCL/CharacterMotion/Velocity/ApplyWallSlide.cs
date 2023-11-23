@@ -1,11 +1,15 @@
 ﻿using CrdtEcsBridge.Physics;
 using DCL.CharacterMotion.Components;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace DCL.CharacterMotion
 {
     public static class ApplyWallSlide
     {
+        // We apply a multiplier to the current speed based on the dot product of the forward direction and the normal of the wall,
+        // to get this normal we do a sphere cast forward form our character center using the characterController radius
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Execute(ref CharacterRigidTransform rigidTransform, CharacterController characterController)
         {
             if (!rigidTransform.IsGrounded || !rigidTransform.IsCollidingWithWall)

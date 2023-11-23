@@ -75,8 +75,12 @@ namespace DCL.CharacterMotion.Systems
                 handsIKComponent.IsDisabled = !handsIKComponent.IsDisabled;
             }
 
-            bool isDisabled = handsIKComponent.IsDisabled || !rigidTransform.IsGrounded || rigidTransform.IsOnASteepSlope;
-            avatarBase.HandsIKRig.weight = Mathf.MoveTowards(avatarBase.HandsIKRig.weight, isDisabled ? 0 : 1, settings.HandsIKWeightSpeed * dt);
+            // To avoid using the Hands IK during any special state we update this
+            bool isEnabled = !handsIKComponent.IsDisabled
+                             && rigidTransform.IsGrounded
+                             && !rigidTransform.IsOnASteepSlope;
+
+            avatarBase.HandsIKRig.weight = Mathf.MoveTowards(avatarBase.HandsIKRig.weight, isEnabled ? 1 : 0, settings.HandsIKWeightSpeed * dt);
 
             if (handsIKComponent.IsDisabled) return;
 
@@ -105,8 +109,6 @@ namespace DCL.CharacterMotion.Systems
             Vector3 rayOrigin = origin;
             Vector3 rayDirection = raycastTransform.forward;
             float rayDistance = settings.HandsIKWallHitDistance;
-
-            Debug.DrawRay(rayOrigin, rayDirection * rayDistance, Color.red);
 
             var targetWeight = 0;
 

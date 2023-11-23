@@ -8,6 +8,7 @@ namespace DCL.CharacterMotion.Animation
 {
     public static class ApplyAnimationState
     {
+        // General Animation Controller flags update
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Execute(
             ref CharacterAnimationComponent animationComponent,

@@ -44,7 +44,8 @@ namespace DCL.CharacterMotion.Systems
             if (!stunComponent.IsStunned)
                 characterTransform.rotation = Quaternion.RotateTowards(characterTransform.rotation, targetRotation, settings.RotationSpeed * dt);
 
-            SaveLocalRotation.Execute(ref platformComponent, characterTransform.forward);
+            // If we are on a platform we save our local rotation
+            PlatformSaveLocalRotation.Execute(ref platformComponent, characterTransform.forward);
         }
 
     }

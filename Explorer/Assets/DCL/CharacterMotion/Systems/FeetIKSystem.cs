@@ -21,10 +21,11 @@ namespace DCL.CharacterMotion.Systems
     [UpdateAfter(typeof(InterpolateCharacterSystem))]
     public partial class FeetIKSystem : BaseUnityLoopSystem
     {
-        private const float FEET_HEIGHT_CORRECTION = 0.09f;
+        // The feet bone never touches the ground at Idle position, this is the average height of the idle animation and we use it to decide whether the bone is on the ground or not
+        private const float FEET_HEIGHT_CORRECTION = 0.08f;
+        private const float FEET_HEIGHT_DISABLE_IK = 0.10f;
+
         private bool disableWasToggled;
-        private readonly ElementBinding<string> leftIKWeightBinding;
-        private readonly ElementBinding<string> rightIKWeightBinding;
         private readonly ElementBinding<float> ikWeightChangeSpeed;
         private readonly ElementBinding<float> ikPositionChangeSpeed;
         private readonly ElementBinding<float> ikDistance;
@@ -38,8 +39,6 @@ namespace DCL.CharacterMotion.Systems
         {
             debugBuilder.AddWidget("Locomotion: Feet IK")
                         .AddSingleButton("Toggle Enable", () => disableWasToggled = true)
-                        .AddCustomMarker("Left IK Weight", leftIKWeightBinding = new ElementBinding<string>("0"))
-                        .AddCustomMarker("Right IK Weight", rightIKWeightBinding = new ElementBinding<string>("0"))
                         .AddFloatField("IK Change Speed", ikWeightChangeSpeed = new ElementBinding<float>(0))
                         .AddFloatField("IK Position Speed", ikPositionChangeSpeed = new ElementBinding<float>(0))
                         .AddFloatField("IK Distance", ikDistance = new ElementBinding<float>(0))
@@ -91,35 +90,32 @@ namespace DCL.CharacterMotion.Systems
             in StunComponent stunComponent
         )
         {
+            // Debug stuff and enable/disable mechanic
             UpdateToggleStatus(ref feetIKComponent, avatarBase);
-
             if (feetIKComponent.IsDisabled) return;
-
             if (!feetIKComponent.Initialized)
                 InitializeFeetComponent(ref feetIKComponent, avatarBase);
-
-            // First: Raycast down from right/left constraints and update IK targets
 
             Transform rightLegConstraint = avatarBase.RightLegConstraint;
             Transform leftLegConstraint = avatarBase.LeftLegConstraint;
 
-            ApplyLegIK(rightLegConstraint, rightLegConstraint.forward, avatarBase.RightLegIKTarget, ref feetIKComponent.Right, settings, dt, settings.FeetIKVerticalAngleLimits, settings.FeetIKTwistAngleLimits);
-            ApplyLegIK(leftLegConstraint, leftLegConstraint.forward, avatarBase.LeftLegIKTarget, ref feetIKComponent.Left, settings, dt, settings.FeetIKVerticalAngleLimits, new Vector2(settings.FeetIKTwistAngleLimits.y, settings.FeetIKTwistAngleLimits.x));
-
-            // Second: Calculate IK feet weight based on the constrained local-Y
+            // Enable flags: when disabled we lerp the IK weight towards 0
             bool isEnabled = rigidTransform.IsGrounded
                              && !rigidTransform.IsOnASteepSlope
                              && rigidTransform.MoveVelocity.Velocity.sqrMagnitude < 0.01f
                              && !stunComponent.IsStunned;
 
+            // && !emotes?
+
+            // First: Raycast down from right/left constraints and update IK targets
+            ApplyLegIK(rightLegConstraint, rightLegConstraint.forward, avatarBase.RightLegIKTarget, ref feetIKComponent.Right, settings, dt, settings.FeetIKVerticalAngleLimits, settings.FeetIKTwistAngleLimits);
+            ApplyLegIK(leftLegConstraint, leftLegConstraint.forward, avatarBase.LeftLegIKTarget, ref feetIKComponent.Left, settings, dt, settings.FeetIKVerticalAngleLimits, new Vector2(settings.FeetIKTwistAngleLimits.y, settings.FeetIKTwistAngleLimits.x));
+
+            // Second: Calculate IK feet weight based on the constrained local-Y
             ApplyIKWeight(avatarBase.RightLegIK, rightLegConstraint.localPosition, ref feetIKComponent.Right, isEnabled, settings, dt);
             ApplyIKWeight(avatarBase.LeftLegIK, leftLegConstraint.localPosition, ref feetIKComponent.Left, isEnabled, settings, dt);
 
-            // Fix/Remove those strings allocations
-            leftIKWeightBinding.Value = $"{avatarBase.LeftLegIK.weight:F2}";
-            rightIKWeightBinding.Value = $"{avatarBase.RightLegIK.weight:F2}";
-
-            // Third: Calculate the "pull" distance and update the hips
+            // Third: Calculate the "pull" distance and update the hips, in order to extend the feet downwards so the character can have one feet a step higher depending on the ground complexity
             ApplyHipsHeightCorrection(dt, ref feetIKComponent, avatarBase, settings);
         }
 
@@ -154,10 +150,10 @@ namespace DCL.CharacterMotion.Systems
             ICharacterControllerSettings settings,
             float dt)
         {
-            // 0.08 is the distance between the ground and the foot bone when "standing still"
-            // 0.10 is the height when we dont want the foot to have IK enabled
+            // FEET_HEIGHT_CORRECTION is the distance between the ground and the foot bone when "standing still"
+            // FEET_HEIGHT_DISABLE_IK is the height when we dont want the foot to have IK enabled
             // Games configure this weight trough Animation Curves on each animation, but since we cant do that here, we just do magic math
-            float ikWeightRight = !feetComponent.isGrounded ? 0 : 1f - ((rightLegPosition.y - 0.08f) / 0.10f);
+            float ikWeightRight = !feetComponent.IsGrounded ? 0 : 1f - ((rightLegPosition.y - FEET_HEIGHT_CORRECTION) / FEET_HEIGHT_DISABLE_IK);
             float targetWeight = Mathf.RoundToInt(ikWeightRight) * (isEnabled ? 1 : 0);
 
             // We apply ik weight speed only if its increasing, decreasing it is instant, this avoids being partially snapped into the ground when suddenly jumping
@@ -167,6 +163,7 @@ namespace DCL.CharacterMotion.Systems
                 ik.weight = targetWeight;
         }
 
+        // We do a SphereCast downwards from the current feet position (after animated) and then apply the position and rotation to the IK Target
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void ApplyLegIK(
             Transform legConstraintPosition,
@@ -179,12 +176,15 @@ namespace DCL.CharacterMotion.Systems
         {
             float pullDist = settings.FeetIKHipsPullMaxDistance;
             Vector3 origin = legConstraintPosition.position;
+
+            // Since we are pulling the hips down in order to have our feet past our human limit, we add that height to the raycast origin to avoid casting from within meshes
             Vector3 rayOrigin = origin + (Vector3.up * pullDist);
             Vector3 rayDirection = Vector3.down;
             float rayDistance = pullDist * 2;
 
             if (Physics.SphereCast(rayOrigin, settings.FeetIKSphereSize, rayDirection, out RaycastHit hitInfo, rayDistance, PhysicsLayers.CHARACTER_ONLY_MASK))
             {
+                // lerp towards the target position
                 legIKTarget.position = Vector3.MoveTowards(legIKTarget.position, hitInfo.point, settings.IKPositionSpeed * dt);
                 var rotationCorrection = Quaternion.FromToRotation(Vector3.up, hitInfo.normal);
                 legConstraintForward.y = 0;
@@ -196,15 +196,15 @@ namespace DCL.CharacterMotion.Systems
                 // then we limit the angles using the local rotations
                 ApplyRotationLimit(legIKTarget, verticalLimits, twistLimits);
 
-                feetComponent.isGrounded = true;
-                feetComponent.distance = FEET_HEIGHT_CORRECTION + hitInfo.distance - pullDist - legConstraintPosition.localPosition.y;
+                feetComponent.IsGrounded = true;
+                feetComponent.Distance = FEET_HEIGHT_CORRECTION + hitInfo.distance - pullDist - legConstraintPosition.localPosition.y;
                 return;
             }
 
             legIKTarget.localPosition = feetComponent.TargetInitialPosition;
             legIKTarget.localRotation = feetComponent.TargetInitialRotation;
-            feetComponent.isGrounded = false;
-            feetComponent.distance = 0;
+            feetComponent.IsGrounded = false;
+            feetComponent.Distance = 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -219,6 +219,8 @@ namespace DCL.CharacterMotion.Systems
             eulerAngles.z = Mathf.Clamp(-Mathf.DeltaAngle(eulerAngles.z, 0), Mathf.Min(twistLimits.x, twistLimits.y),
                 Mathf.Max(twistLimits.x, twistLimits.y));
 
+            // we dont have a horizontal limit since the feet horizontal angle is based on the animation
+
             legIKTarget.localEulerAngles = eulerAngles;
         }
 
@@ -230,7 +232,7 @@ namespace DCL.CharacterMotion.Systems
             ICharacterControllerSettings settings)
         {
             // Get the most stretched feet distance
-            float highestDist = Mathf.Max(feetIKComponent.Right.distance, feetIKComponent.Left.distance);
+            float highestDist = Mathf.Max(feetIKComponent.Right.Distance, feetIKComponent.Left.Distance);
 
             // Calculate the target weight based ond both feet weight
             float weight = (avatarBase.RightLegIK.weight + avatarBase.LeftLegIK.weight) / 2;

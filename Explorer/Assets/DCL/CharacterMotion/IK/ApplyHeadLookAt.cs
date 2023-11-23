@@ -7,6 +7,7 @@ namespace DCL.CharacterMotion.IK
 {
     public static class ApplyHeadLookAt
     {
+        // This method updates the head IK targets (horizontal and vertical) based on a target look-at direction
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void Execute(Vector3 targetDirection, AvatarBase avatarBase, float dt, ICharacterControllerSettings settings)
         {

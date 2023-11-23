@@ -13,8 +13,8 @@ namespace DCL.CharacterMotion.Components
         {
             public Vector3 TargetInitialPosition;
             public Quaternion TargetInitialRotation;
-            public bool isGrounded;
-            public float distance;
+            public bool IsGrounded;
+            public float Distance;
         }
     }
 }

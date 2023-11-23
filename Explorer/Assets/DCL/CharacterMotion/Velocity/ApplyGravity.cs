@@ -24,14 +24,17 @@ namespace DCL.CharacterMotion
                 characterPhysics.GravityVelocity = gravityDirection * currentGravityMagnitude;
             }
 
+            // If we are falling
             if (!characterPhysics.IsGrounded || characterPhysics.IsOnASteepSlope)
             {
-                // gravity in settings is negative, since we now use directions, we need it positive
+                // gravity in settings is negative, since we now use directions, we need it to be absolute
                 float gravity = Math.Abs(settings.Gravity);
 
+                // In order to jump higher when pressing the jump button, we reduce the gravity
                 if (jumpInputComponent.IsPressed && PhysicsToDeltaTime(physicsTick - jumpInputComponent.Trigger.TickWhenJumpOccurred) < settings.LongJumpTime)
                     gravity *= settings.LongJumpGravityScale;
 
+                // In order to feel less floaty when jumping, we increase the gravity when going up ( the jump velocity is also scaled up )
                 if (characterPhysics.GravityVelocity.y > 0)
                     gravity *= settings.JumpGravityFactor;
 

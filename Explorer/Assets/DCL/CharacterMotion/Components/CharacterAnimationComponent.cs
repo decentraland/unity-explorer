@@ -5,6 +5,7 @@ namespace DCL.CharacterMotion.Components
 {
     public struct CharacterAnimationComponent
     {
+        // buffer values for animation states
         public struct AnimationStates
         {
             public float MovementBlendValue;
