@@ -64,7 +64,7 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             using (ListPool<KeyValuePair<GetAssetBundleIntention, AssetBundleData>>.Get(out List<KeyValuePair<GetAssetBundleIntention, AssetBundleData>> unloadedPairs))
             {
-                sortedCache.Sort((pair1, pair2) => pair1.Value.LastUsedFrame.CompareTo(pair2.Value.LastUsedFrame));
+                sortedCache.Sort(CompareByLastUsedFrame);
 
                 foreach (KeyValuePair<GetAssetBundleIntention, AssetBundleData> pair in sortedCache)
                 {
@@ -86,5 +86,8 @@ namespace ECS.StreamableLoading.AssetBundles
                 }
             }
         }
+
+        private static int CompareByLastUsedFrame(KeyValuePair<GetAssetBundleIntention, AssetBundleData> pair1, KeyValuePair<GetAssetBundleIntention, AssetBundleData> pair2) =>
+            pair1.Value.LastUsedFrame.CompareTo(pair2.Value.LastUsedFrame);
     }
 }

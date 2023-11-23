@@ -134,7 +134,7 @@ namespace Global
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 assetBundlePlugin,
-                new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
+                new GltfContainerPlugin(sharedDependencies, container.SingletonSharedDependencies.FrameTimeBudgetProvider, container.CacheCleaner),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
             };
 

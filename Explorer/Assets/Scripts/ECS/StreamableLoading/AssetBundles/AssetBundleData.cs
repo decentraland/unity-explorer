@@ -23,7 +23,7 @@ namespace ECS.StreamableLoading.AssetBundles
         ///     Root assets - Game Objects
         /// </summary>
         public GameObject GameObject { get; }
-        public int LastUsedFrame { get; private set; }
+        public uint LastUsedFrame { get; private set; }
 
         public AssetBundleData(AssetBundle assetBundle, [CanBeNull] AssetBundleMetrics? metrics, GameObject gameObject, AssetBundleData[] dependencies)
         {
@@ -33,7 +33,7 @@ namespace ECS.StreamableLoading.AssetBundles
             GameObject = gameObject;
             Dependencies = dependencies;
 
-            LastUsedFrame = Time.frameCount;
+            LastUsedFrame = (uint)Time.frameCount;
 
             ProfilingCounters.ABDataAmount.Value++;
         }
@@ -63,7 +63,7 @@ namespace ECS.StreamableLoading.AssetBundles
         public void Dereference()
         {
             referencesCount--;
-            LastUsedFrame = Time.frameCount;
+            LastUsedFrame = (uint)Time.frameCount;
 
             Assert.IsFalse(referencesCount < 0, "References count of asset bundle cannot be less then zero!");
 

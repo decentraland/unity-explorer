@@ -33,9 +33,9 @@ namespace DCL.ResourcesUnloading
 
         public void UnloadCache()
         {
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                assetBundleCache.Unload();
+            if (!fpsCapBudgetProvider.TrySpendBudget()) return;
 
+            assetBundleCache.Unload();
             gltfContainerAssetsCache.Unload();
 
             texturesCache.Unload();
