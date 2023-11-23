@@ -3,6 +3,7 @@ using ECS.StreamableLoading.AssetBundles;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 using Utility.Pool;
 
 namespace ECS.Unity.GLTFContainer.Asset.Components
@@ -57,6 +58,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
 
             if (VisibleMeshesColliders != null)
                 COLLIDERS_POOL.Release(VisibleMeshesColliders);
+
+            UnityObjectUtils.SafeDestroy(Root);
 
             ProfilingCounters.GLTFContainerAssetsAmount.Value--;
         }
