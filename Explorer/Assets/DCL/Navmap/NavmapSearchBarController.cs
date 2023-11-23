@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCLServices.PlacesAPIService;
+using DCL.PlacesAPIService;
 using System;
 using System.Collections.Generic;
 using System.Threading;

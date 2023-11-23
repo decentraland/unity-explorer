@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace DCLServices.PlacesAPIService
+namespace DCL.PlacesAPIService
 {
     [Serializable]
     public class PointsOfInterestCoordsAPIResponse

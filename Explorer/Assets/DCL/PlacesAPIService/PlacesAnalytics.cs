@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace DCLServices.PlacesAPIService
+namespace DCL.PlacesAPIService
 {
     public interface IPlacesAnalytics
     {
@@ -26,13 +26,20 @@ namespace DCLServices.PlacesAPIService
         }
 
         void AddFavorite(string placeUUID, ActionSource source, bool isWorld = false);
+
         void RemoveFavorite(string placeUUID, ActionSource source, bool isWorld = false);
-        void Like(string placeUUID, IPlacesAnalytics.ActionSource source, bool isWorld = false);
-        void Dislike(string placeUUID, IPlacesAnalytics.ActionSource source, bool isWorld = false);
-        void RemoveVote(string placeUUID, IPlacesAnalytics.ActionSource source, bool isWorld = false);
+
+        void Like(string placeUUID, ActionSource source, bool isWorld = false);
+
+        void Dislike(string placeUUID, ActionSource source, bool isWorld = false);
+
+        void RemoveVote(string placeUUID, ActionSource source, bool isWorld = false);
+
         void Filter(FilterType filterType);
-        void Sort(IPlacesAnalytics.SortingType sortingType);
-        void SortWorlds(IPlacesAnalytics.SortingType sortingType);
+
+        void Sort(SortingType sortingType);
+
+        void SortWorlds(SortingType sortingType);
     }
 
     public class PlacesAnalytics : IPlacesAnalytics
@@ -54,6 +61,7 @@ namespace DCLServices.PlacesAPIService
                 ["source"] = source.ToString(),
                 ["is_world"] = isWorld.ToString()
             };
+
             //GenericAnalytics.SendAnalytic(ADD_FAVORITE_PLACE, data);
         }
 
@@ -65,6 +73,7 @@ namespace DCLServices.PlacesAPIService
                 ["source"] = source.ToString(),
                 ["is_world"] = isWorld.ToString()
             };
+
             //GenericAnalytics.SendAnalytic(REMOVE_FAVORITE_PLACE, data);
         }
 
@@ -76,6 +85,7 @@ namespace DCLServices.PlacesAPIService
                 ["source"] = source.ToString(),
                 ["is_world"] = isWorld.ToString()
             };
+
             //GenericAnalytics.SendAnalytic(LIKE_PLACE, data);
         }
 
@@ -87,6 +97,7 @@ namespace DCLServices.PlacesAPIService
                 ["source"] = source.ToString(),
                 ["is_world"] = isWorld.ToString()
             };
+
             //GenericAnalytics.SendAnalytic(DISLIKE_PLACE, data);
         }
 
@@ -98,6 +109,7 @@ namespace DCLServices.PlacesAPIService
                 ["source"] = source.ToString(),
                 ["is_world"] = isWorld.ToString()
             };
+
             //GenericAnalytics.SendAnalytic(REMOVE_VOTE_PLACE, data);
         }
 
@@ -107,6 +119,7 @@ namespace DCLServices.PlacesAPIService
             {
                 ["type"] = filterType.ToString()
             };
+
             //GenericAnalytics.SendAnalytic(FILTER_PLACES, data);
         }
 
@@ -116,6 +129,7 @@ namespace DCLServices.PlacesAPIService
             {
                 ["type"] = sortingType.ToString()
             };
+
             //GenericAnalytics.SendAnalytic(SORT_PLACES, data);
         }
 
@@ -125,6 +139,7 @@ namespace DCLServices.PlacesAPIService
             {
                 ["type"] = sortingType.ToString()
             };
+
             //GenericAnalytics.SendAnalytic(SORT_WORLDS, data);
         }
     }

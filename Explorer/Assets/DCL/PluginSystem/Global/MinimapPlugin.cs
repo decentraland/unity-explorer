@@ -2,7 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Minimap;
-using DCLServices.PlacesAPIService;
+using DCL.PlacesAPIService;
 using Global.Dynamic;
 using MVC;
 using System.Threading;

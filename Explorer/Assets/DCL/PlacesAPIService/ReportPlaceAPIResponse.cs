@@ -1,7 +1,6 @@
 ﻿using System;
-using UnityEngine.Serialization;
 
-namespace DCLServices.PlacesAPIService
+namespace DCL.PlacesAPIService
 {
     [Serializable]
     public class ReportPlaceAPIResponse

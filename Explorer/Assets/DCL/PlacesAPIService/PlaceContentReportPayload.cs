@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DCLServices.PlacesAPIService
+namespace DCL.PlacesAPIService
 {
     [Serializable]
     public class PlaceContentReportPayload

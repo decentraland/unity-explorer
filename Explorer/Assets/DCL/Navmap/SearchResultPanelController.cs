@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using System.Collections;
+using DCL.PlacesAPIService;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -24,6 +24,7 @@ public class SearchResultPanelController
     private async UniTaskVoid InitPoolAsync()
     {
         FullSearchResultsView asset = (await assetsProvisioner.ProvideMainAssetAsync(view.ResultAssetReference, ct: CancellationToken.None)).Value.GetComponent<FullSearchResultsView>();
+
         resultsPool = new ObjectPool<FullSearchResultsView>(
             () => Object.Instantiate(asset, view.searchResultsContainer),
             _ => { },
@@ -46,6 +47,7 @@ public class SearchResultPanelController
     public void SetResults(IReadOnlyList<PlacesData.PlaceInfo> places)
     {
         ReleasePool();
+
         foreach (PlacesData.PlaceInfo placeInfo in places)
         {
             FullSearchResultsView fullSearchResultsView = resultsPool.Get();
@@ -54,16 +56,14 @@ public class SearchResultPanelController
             fullSearchResultsView.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
             fullSearchResultsView.playersCount.text = placeInfo.user_count.ToString();
         }
+
         view.LoadingContainer.SetActive(false);
     }
 
     private void ReleasePool()
     {
-        foreach (FullSearchResultsView fullSearchResultsView in usedPoolElements)
-        {
-            resultsPool.Release(fullSearchResultsView);
-        }
+        foreach (FullSearchResultsView fullSearchResultsView in usedPoolElements) { resultsPool.Release(fullSearchResultsView); }
+
         usedPoolElements.Clear();
     }
-
 }

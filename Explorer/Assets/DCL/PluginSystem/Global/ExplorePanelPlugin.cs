@@ -3,8 +3,8 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.ExplorePanel;
 using DCL.Navmap;
+using DCL.PlacesAPIService;
 using DCL.Settings;
-using DCLServices.PlacesAPIService;
 using Global.Dynamic;
 using MVC;
 using System.Threading;
@@ -35,7 +35,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
         {
             ExplorePanelView panelView = (await assetsProvisioner.ProvideMainAssetAsync(settings.ExplorePanelPrefab, ct: ct)).Value.GetComponent<ExplorePanelView>();
-            ControllerBase<ExplorePanelView,ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelView, null, out var explorePanelView);
+            ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelView, null, out ExplorePanelView explorePanelView);
 
             NavmapController navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, assetsProvisioner);
             SettingsController settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
@@ -52,14 +52,9 @@ namespace DCL.PluginSystem.Global
             mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter())).Forget();
         }
 
-        public void Dispose()
-        {
-        }
+        public void Dispose() { }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        {
-        }
-
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public class ExplorePanelSettings : IDCLPluginSettings
         {

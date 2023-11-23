@@ -1,4 +1,5 @@
 using DCL.AssetsProvision;
+using DCL.PlacesAPIService;
 using DCL.UI;
 using DCLServices.MapRenderer;
 using DCLServices.MapRenderer.CommonBehavior;
@@ -6,8 +7,6 @@ using DCLServices.MapRenderer.ConsumerUtils;
 using DCLServices.MapRenderer.MapCameraController;
 using DCLServices.MapRenderer.MapLayers;
 using DCLServices.MapRenderer.MapLayers.PlayerMarker;
-using DCLServices.PlacesAPIService;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;

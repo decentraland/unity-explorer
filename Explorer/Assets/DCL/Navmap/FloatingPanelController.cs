@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCLServices.PlacesAPIService;
+using DCL.PlacesAPIService;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
@@ -31,6 +31,7 @@ namespace DCL.Navmap
             view.gameObject.SetActive(false);
 
             categoriesDictionary = new Dictionary<string, GameObject>();
+
             for (var i = 0; i < view.categories.Length; i++)
                 categoriesDictionary.Add(view.categoryNames[i], view.categories[i]);
 
@@ -50,14 +51,8 @@ namespace DCL.Navmap
 
         public void HandlePanelVisibility(Vector2Int parcel)
         {
-            if (view.gameObject.activeInHierarchy)
-            {
-                GetPlaceInfoAsync(parcel).Forget();
-            }
-            else
-            {
-                ShowPanel(parcel);
-            }
+            if (view.gameObject.activeInHierarchy) { GetPlaceInfoAsync(parcel).Forget(); }
+            else { ShowPanel(parcel); }
         }
 
         private void ShowPanel(Vector2Int parcel)
@@ -77,10 +72,7 @@ namespace DCL.Navmap
                 ResetCategories();
                 SetFloatingPanelInfo(placeInfo);
             }
-            catch (Exception ex)
-            {
-                SetEmptyParcelInfo(parcel);
-            }
+            catch (Exception ex) { SetEmptyParcelInfo(parcel); }
         }
 
         private void SetEmptyParcelInfo(Vector2Int parcel)
@@ -102,9 +94,11 @@ namespace DCL.Navmap
         {
             view.placeName.text = placeInfo.title;
             view.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
+
             view.placeDescription.text = string.IsNullOrEmpty(placeInfo.description)
                 ? "This place doesn't have a description set"
                 : placeInfo.description;
+
             view.location.text = placeInfo.base_position;
             view.visits.text = placeInfo.user_visits.ToString();
             view.upvotes.text = placeInfo.like_rate_as_float != null ? $"{placeInfo.like_rate_as_float.Value * 100:0}%" : "-%";
@@ -132,26 +126,24 @@ namespace DCL.Navmap
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.CategoriesContainer);
         }
 
-        private void OnFavorite(bool isFavorite)
-        {
-        }
+        private void OnFavorite(bool isFavorite) { }
 
         private void OnDislike(bool isDisliked)
         {
-            if(isDisliked)
+            if (isDisliked)
                 likeButtonController.SetButtonState(false);
         }
 
         private void OnLike(bool isLiked)
         {
-            if(isLiked)
+            if (isLiked)
                 dislikeButtonController.SetButtonState(false);
         }
 
         private void HidePanel()
         {
             view.rectTransform.localScale = Vector3.one;
-            view.rectTransform.DOScale(Vector3.zero, 0.5f).SetEase(Ease.OutCirc).OnComplete(()=>view.gameObject.SetActive(false));
+            view.rectTransform.DOScale(Vector3.zero, 0.5f).SetEase(Ease.OutCirc).OnComplete(() => view.gameObject.SetActive(false));
         }
 
         public void Dispose()
