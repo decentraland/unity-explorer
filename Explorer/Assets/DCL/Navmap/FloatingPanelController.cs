@@ -101,11 +101,9 @@ namespace DCL.Navmap
 
             view.location.text = placeInfo.base_position;
             view.visits.text = placeInfo.user_visits.ToString();
+            //Check all .text
             view.upvotes.text = placeInfo.like_rate_as_float != null ? $"{placeInfo.like_rate_as_float.Value * 100:0}%" : "-%";
             view.parcelsCount.text = placeInfo.Positions.Length.ToString();
-
-            LayoutRebuilder.ForceRebuildLayoutImmediate(view.contentViewport);
-            LayoutRebuilder.ForceRebuildLayoutImmediate(view.descriptionContent);
 
             if (placeInfo.categories.Length == 0)
                 return;
@@ -113,17 +111,12 @@ namespace DCL.Navmap
             foreach (string placeInfoCategory in placeInfo.categories)
                 if (categoriesDictionary.TryGetValue(placeInfoCategory, out GameObject categoryGameObject))
                     categoryGameObject.SetActive(true);
-
-            LayoutRebuilder.ForceRebuildLayoutImmediate(view.CategoriesContainer);
-            LayoutRebuilder.ForceRebuildLayoutImmediate(view.descriptionContent);
         }
 
         private void ResetCategories()
         {
             foreach (KeyValuePair<string, GameObject> keyValuePair in categoriesDictionary)
                 keyValuePair.Value.SetActive(false);
-
-            LayoutRebuilder.ForceRebuildLayoutImmediate(view.CategoriesContainer);
         }
 
         private void OnFavorite(bool isFavorite) { }

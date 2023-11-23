@@ -52,7 +52,7 @@ namespace DCL.Navmap
             floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService);
             filterController = new NavmapFilterController(this.navmapView.filterView);
             searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, placesAPIService, assetsProvisioner);
-
+            searchBarController.OnResultClicked += OnResultClicked;
             satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer);
             streetViewController = new StreetViewController(navmapView.GetComponentInChildren<StreetViewView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer);
 
@@ -81,6 +81,12 @@ namespace DCL.Navmap
             this.navmapView.StreetViewRenderImage.ParcelClicked += OnParcelClicked;
             this.navmapView.SatelliteRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
             this.navmapView.StreetViewRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
+        }
+
+        private void OnResultClicked(string coordinates)
+        {
+            VectorUtilities.TryParseVector2Int(coordinates, out Vector2Int result);
+            floatingPanelController.HandlePanelVisibility(result);
         }
 
         private void OnParcelClicked(MapRenderImage.ParcelClickData clickedParcel)
