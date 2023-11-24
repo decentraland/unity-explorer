@@ -4,8 +4,9 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Platforms;
 using DCL.CharacterMotion.Settings;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using ECS.Abstract;
 using UnityEngine;
 using Utility;
@@ -23,7 +24,15 @@ namespace DCL.CharacterMotion.Systems
     [UpdateBefore(typeof(CameraGroup))]
     public partial class InterpolateCharacterSystem : BaseUnityLoopSystem
     {
-        internal InterpolateCharacterSystem(World world) : base(world) { }
+        private SingleInstanceEntity fixedTick;
+        private SingleInstanceEntity time;
+
+        private InterpolateCharacterSystem(World world) : base(world) { }
+
+        public override void Initialize()
+        {
+            time = World.CacheTime();
+        }
 
         protected override void Update(float t)
         {
@@ -33,24 +42,33 @@ namespace DCL.CharacterMotion.Systems
         [Query]
         private void Interpolate(
             [Data] float dt,
-            ref ICharacterControllerSettings settings,
+            in ICharacterControllerSettings settings,
             ref CharacterRigidTransform rigidTransform,
-            ref CharacterController characterController)
+            ref CharacterController characterController,
+            ref CharacterPlatformComponent platformComponent,
+            ref StunComponent stunComponent,
+            in JumpInputComponent jump,
+            in MovementInputComponent movementInput)
         {
-            float acceleration = GetAcceleration(settings, in rigidTransform);
-            rigidTransform.MoveVelocity.Interpolated = Vector3.MoveTowards(rigidTransform.MoveVelocity.Interpolated, rigidTransform.MoveVelocity.Target, acceleration * dt);
+            Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
 
-            Vector3 delta = (rigidTransform.MoveVelocity.Interpolated + rigidTransform.NonInterpolatedVelocity) * dt;
+            ApplyVelocityStun.Execute(ref rigidTransform, in stunComponent);
 
-            CollisionFlags collisionFlags = characterController.Move(delta);
+            Vector3 movementDelta = (rigidTransform.MoveVelocity.Velocity + rigidTransform.NonInterpolatedVelocity) * dt;
+
+            CollisionFlags collisionFlags = characterController.Move(movementDelta + slopeModifier);
 
             bool hasGroundedFlag = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
 
-            if (!Mathf.Approximately(delta.y, 0f))
-                rigidTransform.IsGrounded = hasGroundedFlag;
-        }
+            if (!Mathf.Approximately(movementDelta.y, 0f))
+            {
+                rigidTransform.IsGrounded = hasGroundedFlag || characterController.isGrounded;
 
-        private static float GetAcceleration(ICharacterControllerSettings characterControllerSettings, in CharacterRigidTransform physics) =>
-            physics.IsGrounded ? characterControllerSettings.GroundAcceleration : characterControllerSettings.AirAcceleration;
+                if (rigidTransform.IsGrounded)
+                    rigidTransform.LastGroundedFrame = Mathf.CeilToInt(time.GetTimeComponent(World).Time / UnityEngine.Time.fixedDeltaTime);
+            }
+
+            SaveLocalPosition.Execute(ref platformComponent, characterController.transform.position);
+        }
     }
 }

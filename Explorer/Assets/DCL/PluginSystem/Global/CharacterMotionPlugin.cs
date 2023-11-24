@@ -40,11 +40,18 @@ namespace DCL.PluginSystem.Global
             world.Add(arguments.PlayerEntity,
                 new CharacterRigidTransform(),
                 (ICharacterControllerSettings)settings.Value,
-                characterObject.Controller);
+                characterObject.Controller,
+                new CharacterAnimationComponent(),
+                new CharacterPlatformComponent(),
+                new StunComponent());
 
             InterpolateCharacterSystem.InjectToWorld(ref builder);
             RotateCharacterSystem.InjectToWorld(ref builder);
             CalculateCharacterVelocitySystem.InjectToWorld(ref builder);
+            CharacterAnimationSystem.InjectToWorld(ref builder);
+            CharacterPlatformSystem.InjectToWorld(ref builder);
+            StunCharacterSystem.InjectToWorld(ref builder);
+            CalculateCameraFovSystem.InjectToWorld(ref builder);
         }
     }
 }

@@ -4,7 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CRDT;
 using CrdtEcsBridge.Components.Transform;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;

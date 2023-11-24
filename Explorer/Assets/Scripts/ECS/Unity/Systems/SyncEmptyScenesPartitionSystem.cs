@@ -1,7 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Prioritization.Components;

@@ -1,0 +1,45 @@
+﻿using UnityEngine.Pool;
+using Utility.ThreadSafePool;
+
+namespace DCL.PerformanceBudgeting
+{
+    /// <summary>
+    ///     Identifies budget that was acquired, it must be a reference type so
+    ///     it can be passed to the async flow and be released from there
+    /// </summary>
+    public class AcquiredBudget : IAcquiredBudget
+    {
+        private static readonly IObjectPool<AcquiredBudget> POOL = new ThreadSafeObjectPool<AcquiredBudget>(
+            () => new AcquiredBudget(), defaultCapacity: 1000, maxSize: 1_000_000);
+
+        private IConcurrentBudgetProvider provider;
+        private bool released;
+
+        private AcquiredBudget() { }
+
+        public void Dispose()
+        {
+            Release();
+            POOL.Release(this);
+        }
+
+        /// <summary>
+        ///     Must be called from the main thread
+        /// </summary>
+        public void Release()
+        {
+            if (!released)
+                provider.ReleaseBudget();
+
+            released = true;
+        }
+
+        public static IAcquiredBudget Create(IConcurrentBudgetProvider concurrentBudgetProvider)
+        {
+            AcquiredBudget b = POOL.Get();
+            b.provider = concurrentBudgetProvider;
+            b.released = false;
+            return b;
+        }
+    }
+}

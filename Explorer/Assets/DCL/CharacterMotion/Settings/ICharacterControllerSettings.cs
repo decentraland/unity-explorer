@@ -8,13 +8,41 @@ namespace DCL.CharacterMotion.Settings
     public interface ICharacterControllerSettings
     {
         float WalkSpeed { get; }
+        float JogSpeed { get; }
         float RunSpeed { get; }
-        float GroundAcceleration { get; }
         float AirAcceleration { get; }
-        float RotationAngularSpeed { get; }
+        float MaxAirAcceleration { get; }
         float Gravity { get; }
-        Vector2 JumpHeight { get; }
+        float JogJumpHeight { get; }
+        float RunJumpHeight { get; }
+        float CharacterControllerRadius { get; }
+        float GroundDrag { get; }
         float AirDrag { get; }
-        float HoldJumpTime { get; }
+        float MinImpulse { get; }
+        float JumpVelocityDrag { get; }
+        float Acceleration { get; }
+        float MaxAcceleration { get; }
+        float AccelerationTime { get; }
+        float StopTimeSec { get; }
+        float LongJumpTime { get; }
+        float LongJumpGravityScale { get; }
+        float JumpGravityFactor { get; }
+        float JumpGraceTime { get; }
+        float JumpHeightStun { get; }
+        float LongFallStunTime { get; }
+        float NoSlipDistance { get; }
+        float EdgeSlipSpeed { get; }
+        float RotationSpeed { get; }
+        float MovAnimBlendSpeed { get; }
+        float JumpPadForce { get; }
+        float AnimationSpeed { get; }
+        public AnimationCurve AccelerationCurve { get; }
+        float CameraFOVWhileRunning { get; }
+        float FOVChangeSpeed { get; }
+        float AnimationFallSpeed { get; }
+        float AnimationLongFallSpeed { get; }
+        float PlatformRaycastLength { get; }
+        float DownwardsSlopeJogRaycastDistance { get; }
+        float DownwardsSlopeRunRaycastDistance { get; }
     }
 }

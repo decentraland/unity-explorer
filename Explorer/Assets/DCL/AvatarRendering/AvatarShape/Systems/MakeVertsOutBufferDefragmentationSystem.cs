@@ -4,7 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using ECS.Abstract;
 using System.Collections.Generic;
 

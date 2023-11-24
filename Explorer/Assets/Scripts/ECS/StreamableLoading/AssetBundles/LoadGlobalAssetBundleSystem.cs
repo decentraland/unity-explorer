@@ -1,7 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using ECS.StreamableLoading.Cache;
 using Utility.Multithreading;
 

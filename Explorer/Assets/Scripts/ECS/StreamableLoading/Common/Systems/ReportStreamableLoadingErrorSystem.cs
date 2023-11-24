@@ -1,5 +1,5 @@
 ﻿using Arch.Core;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using UnityEngine;

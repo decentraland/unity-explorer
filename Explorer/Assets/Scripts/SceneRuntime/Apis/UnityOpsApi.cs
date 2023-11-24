@@ -1,5 +1,4 @@
-﻿using Diagnostics;
-using Diagnostics.ReportsHandling;
+﻿using DCL.Diagnostics;
 using JetBrains.Annotations;
 using Microsoft.ClearScript.V8;
 
