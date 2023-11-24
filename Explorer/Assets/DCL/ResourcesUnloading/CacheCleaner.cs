@@ -2,13 +2,13 @@
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.PerformanceBudgeting;
+using DCL.Pools;
 using DCL.Profiling;
 using ECS.ComponentsPooling;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using UnityEngine;
-using UnityEngine.Pool;
 
 namespace DCL.ResourcesUnloading
 {
@@ -22,8 +22,8 @@ namespace DCL.ResourcesUnloading
         private WearableCatalog wearableCatalog;
         private TexturesCache texturesCache;
 
-        private IObjectPool<Material> materialPool;
-        private IObjectPool<ComputeShader> computeShaderPool;
+        private IObjectPoolDCL<Material> materialPool;
+        private IObjectPoolDCL<ComputeShader> computeShaderPool;
         private IComponentPool<AvatarBase> avatarPoolRegistry;
 
         public CacheCleaner(IConcurrentBudgetProvider fpsCapBudgetProvider)
@@ -67,10 +67,10 @@ namespace DCL.ResourcesUnloading
         public void Register(IComponentPool<AvatarBase> avatarPoolRegistry) =>
             this.avatarPoolRegistry = avatarPoolRegistry;
 
-        public void Register(IObjectPool<Material> celShadingMaterialPool) =>
+        public void Register(IObjectPoolDCL<Material> celShadingMaterialPool) =>
             materialPool = celShadingMaterialPool;
 
-        public void Register(IObjectPool<ComputeShader> computeShaderPool) =>
+        public void Register(IObjectPoolDCL<ComputeShader> computeShaderPool) =>
             this.computeShaderPool = computeShaderPool;
 
         public void UpdateProfilingCounters()

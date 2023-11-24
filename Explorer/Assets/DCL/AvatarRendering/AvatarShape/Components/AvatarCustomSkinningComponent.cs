@@ -1,9 +1,9 @@
 ﻿using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
+using DCL.Pools;
 using DCL.Profiling;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Pool;
 using Utility.Pool;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
@@ -71,7 +71,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             ProfilingCounters.AvatarCustomSkinningComponent.Value++;
         }
 
-        public void Dispose(IObjectPool<Material> objectPool, IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool)
+        public void Dispose(IObjectPoolDCL<Material> objectPool, IObjectPoolDCL<UnityEngine.ComputeShader> computeShaderSkinningPool)
         {
             for (var i = 0; i < materials.Count; i++)
             {

@@ -9,6 +9,7 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.PerformanceBudgeting;
+using DCL.Pools;
 using ECS.ComponentsPooling;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -21,7 +22,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.Pool;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Tests
@@ -53,11 +53,11 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             UnityEngine.ComputeShader computeShader = await Addressables.LoadAssetAsync<UnityEngine.ComputeShader>("ComputeShaderSkinning_TestAsset");
 
-            IObjectPool<UnityEngine.ComputeShader> computeShaderPool = Substitute.For<IObjectPool<UnityEngine.ComputeShader>>();
+            IObjectPoolDCL<UnityEngine.ComputeShader> computeShaderPool = Substitute.For<IObjectPoolDCL<UnityEngine.ComputeShader>>();
             computeShaderPool.Get().Returns(Object.Instantiate(computeShader));
 
             Material celShadingMaterial = await Addressables.LoadAssetAsync<Material>("Avatar_CelShading_TestAsset");
-            IObjectPool<Material> materialPool = Substitute.For<IObjectPool<Material>>();
+            IObjectPoolDCL<Material> materialPool = Substitute.For<IObjectPoolDCL<Material>>();
             materialPool.Get().Returns(new Material(celShadingMaterial), new Material(celShadingMaterial), new Material(celShadingMaterial));
 
             var promise = Promise.Create(world,

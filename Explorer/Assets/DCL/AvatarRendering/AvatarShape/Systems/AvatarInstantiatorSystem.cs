@@ -12,6 +12,7 @@ using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.PerformanceBudgeting;
+using DCL.Pools;
 using ECS.Abstract;
 using ECS.ComponentsPooling;
 using ECS.LifeCycle.Components;
@@ -30,9 +31,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [LogCategory(ReportCategory.AVATAR)]
     public partial class AvatarInstantiatorSystem : BaseUnityLoopSystem
     {
-        private readonly IObjectPool<Material> avatarMaterialPool;
         private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
-        private readonly IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool;
+        private readonly IObjectPoolDCL<Material> avatarMaterialPool;
+        private readonly IObjectPoolDCL<UnityEngine.ComputeShader> computeShaderSkinningPool;
         private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
 
         private readonly CustomSkinning skinningStrategy;
@@ -42,7 +43,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly IWearableAssetsCache wearableAssetsCache;
 
         public AvatarInstantiatorSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider,
-            IComponentPool<AvatarBase> avatarPoolRegistry, IObjectPool<Material> avatarMaterialPool, IObjectPool<UnityEngine.ComputeShader> computeShaderPool, TextureArrayContainer textureArrayContainer,
+            IComponentPool<AvatarBase> avatarPoolRegistry, IObjectPoolDCL<Material> avatarMaterialPool, IObjectPoolDCL<UnityEngine.ComputeShader> computeShaderPool, TextureArrayContainer textureArrayContainer,
             IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer) : base(world)
         {
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
