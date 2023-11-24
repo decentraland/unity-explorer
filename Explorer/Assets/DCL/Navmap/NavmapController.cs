@@ -1,4 +1,5 @@
 using DCL.AssetsProvision;
+using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCLServices.MapRenderer;
@@ -35,21 +36,25 @@ namespace DCL.Navmap
         private readonly SatelliteController satelliteController;
         private readonly StreetViewController streetViewController;
         private readonly Dictionary<ExploreSections, ISection> mapSections;
+        private readonly ITeleportController teleportController;
 
         public NavmapController(
             NavmapView navmapView,
             IMapRenderer mapRenderer,
             IPlacesAPIService placesAPIService,
-            IAssetsProvisioner assetsProvisioner)
+            IAssetsProvisioner assetsProvisioner,
+            ITeleportController teleportController)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
             this.placesAPIService = placesAPIService;
             this.assetsProvisioner = assetsProvisioner;
+            this.teleportController = teleportController;
+
             rectTransform = this.navmapView.transform.parent.GetComponent<RectTransform>();
 
             zoomController = new NavmapZoomController(navmapView.zoomView);
-            floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService);
+            floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, this.teleportController);
             filterController = new NavmapFilterController(this.navmapView.filterView);
             searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, placesAPIService, assetsProvisioner);
             searchBarController.OnResultClicked += OnResultClicked;

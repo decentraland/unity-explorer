@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DG.Tweening;
 using System;
@@ -13,6 +14,7 @@ namespace DCL.Navmap
     {
         private readonly FloatingPanelView view;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly ITeleportController teleportController;
         private readonly Dictionary<string, GameObject> categoriesDictionary;
 
         private MultiStateButtonController likeButtonController;
@@ -21,10 +23,11 @@ namespace DCL.Navmap
 
         private CancellationTokenSource cts;
 
-        public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService)
+        public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService, ITeleportController teleportController)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
+            this.teleportController = teleportController;
 
             view.closeButton.onClick.RemoveAllListeners();
             view.closeButton.onClick.AddListener(HidePanel);
@@ -68,6 +71,8 @@ namespace DCL.Navmap
         {
             try
             {
+                view.jumpInButton.onClick.RemoveAllListeners();
+                view.jumpInButton.onClick.AddListener(()=>teleportController.TeleportToParcel(parcel));
                 PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlace(parcel, cts.Token);
                 ResetCategories();
                 SetFloatingPanelInfo(placeInfo);
