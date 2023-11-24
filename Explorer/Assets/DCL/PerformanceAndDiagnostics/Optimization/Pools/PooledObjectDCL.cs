@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DCL.Pools
+namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
 {
     /// <summary>
     ///     DCL replication of Unity object pooling codebase

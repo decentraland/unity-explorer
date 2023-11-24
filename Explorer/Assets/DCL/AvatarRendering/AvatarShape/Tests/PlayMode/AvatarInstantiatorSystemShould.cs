@@ -8,9 +8,8 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.PerformanceBudgeting;
-using DCL.Pools;
-using ECS.ComponentsPooling;
+using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
@@ -43,7 +42,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             GameObject avatarBaseGameObject = await Addressables.LoadAssetAsync<GameObject>("AvatarBase_TestAsset");
             AvatarBase instantiatedAvatarBase = Object.Instantiate(avatarBaseGameObject.GetComponent<AvatarBase>());
-            IComponentPool<AvatarBase> avatarPoolRegistry = Substitute.For<IComponentPool<AvatarBase>>();
+            IComponentPoolDCL<AvatarBase> avatarPoolRegistry = Substitute.For<IComponentPoolDCL<AvatarBase>>();
             avatarPoolRegistry.Get().Returns(instantiatedAvatarBase);
 
             avatarMesh = await Addressables.LoadAssetAsync<Mesh>("Avatar_Male_Mesh_TestAsset");

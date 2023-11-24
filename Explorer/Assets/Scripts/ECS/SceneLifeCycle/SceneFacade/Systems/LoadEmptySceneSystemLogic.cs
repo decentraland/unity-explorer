@@ -1,5 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
-using ECS.ComponentsPooling;
+using DCL.PerformanceAndDiagnostics.Optimization.Pools;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using SceneRunner.EmptyScene;

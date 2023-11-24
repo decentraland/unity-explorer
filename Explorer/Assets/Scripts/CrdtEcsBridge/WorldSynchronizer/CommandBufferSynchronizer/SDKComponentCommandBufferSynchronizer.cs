@@ -1,7 +1,7 @@
 using Arch.CommandBuffer;
 using Arch.Core;
 using CRDT.Protocol;
-using ECS.ComponentsPooling;
+using DCL.PerformanceAndDiagnostics.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using JetBrains.Annotations;
 

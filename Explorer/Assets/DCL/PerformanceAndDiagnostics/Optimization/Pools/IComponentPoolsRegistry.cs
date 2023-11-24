@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace ECS.ComponentsPooling
+namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
 {
     /// <summary>
     ///     The registry of the pools of components including both SDK ones and non-SDK ones. <br />
@@ -20,9 +20,13 @@ namespace ECS.ComponentsPooling
         /// <returns></returns>
         IComponentPool<T> GetReferenceTypePool<T>() where T: class;
 
+        IComponentPoolDCL<T> GetReferenceTypePoolDCL<T>() where T: class;
+
         IComponentPool GetPool(Type type);
 
         void AddGameObjectPool<T>(Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 1024) where T: Component;
+
+        void AddGameObjectPoolDCL<T>(Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 1024) where T: Component;
 
         void AddComponentPool<T>(Action<T> onGet = null, Action<T> onRelease = null) where T: class, new();
     }

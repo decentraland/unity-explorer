@@ -1,10 +1,9 @@
 ﻿using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.PerformanceBudgeting;
-using DCL.Pools;
+using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Optimization.Pools;
 using DCL.Profiling;
-using ECS.ComponentsPooling;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;
@@ -24,7 +23,9 @@ namespace DCL.ResourcesUnloading
 
         private IObjectPoolDCL<Material> materialPool;
         private IObjectPoolDCL<ComputeShader> computeShaderPool;
-        private IComponentPool<AvatarBase> avatarPoolRegistry;
+        private IComponentPoolDCL<AvatarBase> avatarPoolRegistry;
+
+        private const int UNLOAD_CHUNK_SIZE = 10;
 
         public CacheCleaner(IConcurrentBudgetProvider fpsCapBudgetProvider)
         {
@@ -43,10 +44,10 @@ namespace DCL.ResourcesUnloading
             wearableCatalog.Unload(fpsCapBudgetProvider);
             wearableAssetsCache.Unload(fpsCapBudgetProvider);
 
-            avatarPoolRegistry.Clear();
-            computeShaderPool.Clear();
-            AvatarCustomSkinningComponent.USED_SLOTS_POOL.Clear();
-            materialPool.Clear();
+            avatarPoolRegistry.Clear(UNLOAD_CHUNK_SIZE);
+            computeShaderPool.Clear(UNLOAD_CHUNK_SIZE);
+            AvatarCustomSkinningComponent.USED_SLOTS_POOL.Clear(UNLOAD_CHUNK_SIZE);
+            materialPool.Clear(UNLOAD_CHUNK_SIZE);
         }
 
         public void Register(AssetBundleCache assetBundleCache) =>
@@ -64,7 +65,7 @@ namespace DCL.ResourcesUnloading
         public void Register(TexturesCache texturesCache) =>
             this.texturesCache = texturesCache;
 
-        public void Register(IComponentPool<AvatarBase> avatarPoolRegistry) =>
+        public void Register(IComponentPoolDCL<AvatarBase> avatarPoolRegistry) =>
             this.avatarPoolRegistry = avatarPoolRegistry;
 
         public void Register(IObjectPoolDCL<Material> celShadingMaterialPool) =>

@@ -1,4 +1,4 @@
-﻿using DCL.PerformanceBudgeting;
+﻿using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Wearables.Helpers

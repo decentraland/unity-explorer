@@ -1,5 +1,5 @@
 ﻿using Arch.Core;
-using ECS.ComponentsPooling;
+using DCL.PerformanceAndDiagnostics.Optimization.Pools;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;

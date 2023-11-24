@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace ECS.ComponentsPooling
+namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
 {
     public class ComponentPoolsRegistry : IComponentPoolsRegistry
     {
@@ -37,6 +37,11 @@ namespace ECS.ComponentsPooling
             lock (pools) { return (IComponentPool<T>)pools[typeof(T)]; }
         }
 
+        public IComponentPoolDCL<T> GetReferenceTypePoolDCL<T>() where T: class
+        {
+            lock (pools) { return (IComponentPoolDCL<T>)pools[typeof(T)]; }
+        }
+
         public IComponentPool GetPool(Type type)
         {
             lock (pools) { return pools[type]; }
@@ -53,6 +58,20 @@ namespace ECS.ComponentsPooling
                 }
 
                 pools.Add(typeof(T), new GameObjectPool<T>(rootContainer, creationHandler, onRelease, maxSize: maxSize));
+            }
+        }
+
+        public void AddGameObjectPoolDCL<T>(Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 1024) where T: Component
+        {
+            lock (pools)
+            {
+                if (pools.ContainsKey(typeof(T)))
+                {
+                    ReportHub.LogError("ComponentPoolsRegistry", $"Pool for type {typeof(T)} already exists!");
+                    return;
+                }
+
+                pools.Add(typeof(T), new GameObjectPoolDCL<T>(rootContainer, creationHandler, onRelease, maxSize: maxSize));
             }
         }
 

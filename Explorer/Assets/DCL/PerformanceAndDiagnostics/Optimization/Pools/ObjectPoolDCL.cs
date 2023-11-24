@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace DCL.Pools
+namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
 {
     /// <summary>
     ///     DCL replication of Unity object pooling codebase
@@ -94,6 +94,27 @@ namespace DCL.Pools
 
             list.Clear();
             CountAll = 0;
+        }
+
+        public void Clear(int maxChunkSize)
+        {
+            var removedAmount = 0;
+
+            if (actionOnDestroy != null)
+            {
+                int maxAmount = Math.Min(maxChunkSize, list.Count);
+
+                // Iterate backward to safely remove items from the list
+                for (int index = maxAmount - 1; index >= 0; index--, removedAmount++)
+                {
+                    T obj = list[index];
+                    actionOnDestroy(obj);
+
+                    list.RemoveAt(index);
+                }
+            }
+
+            CountAll -= removedAmount;
         }
     }
 }

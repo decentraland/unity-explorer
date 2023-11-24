@@ -1,4 +1,4 @@
-﻿namespace DCL.Pools
+﻿namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
 {
     /// <summary>
     ///     DCL replication of Unity object pooling codebase
@@ -14,5 +14,7 @@
         void Release(T element);
 
         void Clear();
+
+        void Clear(int maxChunkSize);
     }
 }

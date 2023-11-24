@@ -1,6 +1,6 @@
 using CrdtEcsBridge.Serialization;
 using CrdtEcsBridge.WorldSynchronizer.CommandBuffer;
-using ECS.ComponentsPooling;
+using DCL.PerformanceAndDiagnostics.Optimization.Pools;
 
 namespace CrdtEcsBridge.Components
 {

@@ -1,6 +1,6 @@
 ﻿using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
-using DCL.Pools;
+using DCL.PerformanceAndDiagnostics.Optimization.Pools;
 using DCL.Profiling;
 using System.Collections.Generic;
 using UnityEngine;
@@ -47,7 +47,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             }
         }
 
-        public static readonly ListObjectPool<MaterialSetup> USED_SLOTS_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: PoolConstants.AVATARS_COUNT);
+        public static readonly ListObjectPoolDCL<MaterialSetup> USED_SLOTS_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: PoolConstants.AVATARS_COUNT);
 
         /// <summary>
         ///     Acquired Region of the common buffer, it may change during defragmentation

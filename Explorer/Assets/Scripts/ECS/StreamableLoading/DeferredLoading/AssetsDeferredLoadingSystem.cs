@@ -1,6 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
-using DCL.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Textures;
 using UnityEngine;

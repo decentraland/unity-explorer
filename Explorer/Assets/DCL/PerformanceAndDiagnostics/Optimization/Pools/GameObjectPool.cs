@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 
-namespace ECS.ComponentsPooling
+namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
 {
     public class GameObjectPool<T> : IComponentPool<T> where T: Component
     {

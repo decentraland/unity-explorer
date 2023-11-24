@@ -1,6 +1,6 @@
 using System;
 
-namespace DCL.PerformanceBudgeting
+namespace DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting
 {
     public interface IAcquiredBudget : IDisposable
     {

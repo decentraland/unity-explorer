@@ -1,5 +1,5 @@
 using Arch.Core;
-using ECS.ComponentsPooling;
+using DCL.PerformanceAndDiagnostics.Optimization.Pools;
 using System;
 using System.Collections.Generic;
 using UnityEngine;

@@ -1,8 +1,8 @@
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
 using DCL.Diagnostics;
-using DCL.PerformanceBudgeting;
-using ECS.ComponentsPooling;
+using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Optimization.Pools;
 using ECS.Prioritization.Components;
 
 namespace DCL.PluginSystem.World.Dependencies

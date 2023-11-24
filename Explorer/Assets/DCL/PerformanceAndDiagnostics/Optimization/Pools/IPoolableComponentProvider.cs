@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ECS.ComponentsPooling
+namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
 {
     public interface IPoolableComponentProvider<out T> : IDisposable where T: class
     {

@@ -4,7 +4,7 @@ using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
-using DCL.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;

@@ -1,5 +1,5 @@
 ﻿using Arch.SystemGroups;
-using DCL.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using DCL.ResourcesUnloading;
 using ECS.Abstract;
 using ECS.Groups;

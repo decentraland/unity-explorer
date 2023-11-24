@@ -1,7 +1,7 @@
 ﻿using Arch.Core;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
-using ECS.ComponentsPooling;
+using DCL.PerformanceAndDiagnostics.Optimization.Pools;
 using ECS.TestSuite;
 using ECS.Unity.PrimitiveColliders.Components;
 using ECS.Unity.PrimitiveColliders.Systems;

@@ -1,7 +1,7 @@
 ﻿using UnityEngine.Pool;
 using Utility.ThreadSafePool;
 
-namespace DCL.PerformanceBudgeting
+namespace DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting
 {
     /// <summary>
     ///     Identifies budget that was acquired, it must be a reference type so

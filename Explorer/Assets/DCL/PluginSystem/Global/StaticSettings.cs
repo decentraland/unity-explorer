@@ -1,7 +1,7 @@
 ﻿using DCL.AssetsProvision;
 using DCL.Character;
 using DCL.Diagnostics;
-using DCL.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using ECS.Prioritization;
 using System;
 using System.Collections.Generic;
@@ -30,7 +30,7 @@ namespace DCL.PluginSystem.Global
         public RealmPartitionSettingsRef RealmPartitionSettings { get; private set; }
 
         // Performance budgeting
-        [field: Header(nameof(PerformanceBudgeting))] [field: Space]
+        [field: Header("Performance Budgeting")] [field: Space]
         [field: SerializeField]
         public int FPSCap { get; private set; } = 40; // [ms]
 

@@ -1,7 +1,7 @@
 using NUnit.Framework;
 using UnityEngine;
 
-namespace ECS.ComponentsPooling.Tests
+namespace DCL.PerformanceAndDiagnostics.Optimization.Pools.Tests
 {
     [TestFixture]
     public class UnityComponentPoolShould

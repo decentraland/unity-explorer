@@ -1,4 +1,4 @@
-﻿using DCL.PerformanceBudgeting;
+﻿using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using DCL.Profiling;
 using System;
 using System.Collections.Generic;

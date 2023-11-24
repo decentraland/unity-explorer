@@ -2,7 +2,7 @@ using System;
 using UnityEngine.Pool;
 using Utility.ThreadSafePool;
 
-namespace ECS.ComponentsPooling
+namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
 {
     public class ComponentPool<T> : IComponentPool<T> where T: class, new()
     {

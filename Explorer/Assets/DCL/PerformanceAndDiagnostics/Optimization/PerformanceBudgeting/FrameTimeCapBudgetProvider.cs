@@ -1,7 +1,7 @@
 using DCL.Profiling;
 using UnityEngine;
 
-namespace DCL.PerformanceBudgeting
+namespace DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting
 {
     public class FrameTimeCapBudgetProvider : IConcurrentBudgetProvider
     {

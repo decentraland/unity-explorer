@@ -2,7 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
-using DCL.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;

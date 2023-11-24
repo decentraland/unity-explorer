@@ -1,7 +1,7 @@
 ﻿using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.Pools;
+using DCL.PerformanceAndDiagnostics.Optimization.Pools;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;

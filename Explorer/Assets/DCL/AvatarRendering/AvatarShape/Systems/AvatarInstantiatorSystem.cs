@@ -11,10 +11,9 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
-using DCL.PerformanceBudgeting;
-using DCL.Pools;
+using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Optimization.Pools;
 using ECS.Abstract;
-using ECS.ComponentsPooling;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.Transforms.Components;
@@ -31,7 +30,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [LogCategory(ReportCategory.AVATAR)]
     public partial class AvatarInstantiatorSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
+        private readonly IComponentPoolDCL<AvatarBase> avatarPoolRegistry;
         private readonly IObjectPoolDCL<Material> avatarMaterialPool;
         private readonly IObjectPoolDCL<UnityEngine.ComputeShader> computeShaderSkinningPool;
         private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
@@ -43,7 +42,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly IWearableAssetsCache wearableAssetsCache;
 
         public AvatarInstantiatorSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider,
-            IComponentPool<AvatarBase> avatarPoolRegistry, IObjectPoolDCL<Material> avatarMaterialPool, IObjectPoolDCL<UnityEngine.ComputeShader> computeShaderPool, TextureArrayContainer textureArrayContainer,
+            IComponentPoolDCL<AvatarBase> avatarPoolRegistry, IObjectPoolDCL<Material> avatarMaterialPool, IObjectPoolDCL<UnityEngine.ComputeShader> computeShaderPool, TextureArrayContainer textureArrayContainer,
             IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer) : base(world)
         {
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;

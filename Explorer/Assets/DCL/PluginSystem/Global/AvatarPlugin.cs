@@ -11,11 +11,10 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.DebugUtilities;
 using DCL.ECSComponents;
-using DCL.PerformanceBudgeting;
-using DCL.Pools;
+using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Optimization.Pools;
 using DCL.ResourcesUnloading;
 using ECS;
-using ECS.ComponentsPooling;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -42,9 +41,9 @@ namespace DCL.PluginSystem.Global
         private readonly WearableAssetsCache wearableAssetsCache = new (100);
         private readonly CacheCleaner cacheCleaner;
 
-        private IComponentPool<AvatarBase> avatarPoolRegistry;
         private IComponentPool<Transform> transformPoolRegistry;
 
+        private IComponentPoolDCL<AvatarBase> avatarPoolRegistry;
         private IObjectPoolDCL<Material> celShadingMaterialPool;
         private IObjectPoolDCL<ComputeShader> computeShaderPool;
 
@@ -80,8 +79,9 @@ namespace DCL.PluginSystem.Global
         private async UniTask CreateAvatarBasePool(AvatarShapeSettings settings, CancellationToken ct)
         {
             AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.avatarBase, ct: ct)).Value.GetComponent<AvatarBase>();
-            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity));
-            avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>();
+
+            componentPoolsRegistry.AddGameObjectPoolDCL(() => Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity));
+            avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePoolDCL<AvatarBase>();
         }
 
         private async UniTask CreateMaterialPoolPrewarmed(AvatarShapeSettings settings, CancellationToken ct)

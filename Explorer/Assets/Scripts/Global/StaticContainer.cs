@@ -4,7 +4,7 @@ using DCL.AssetsProvision;
 using DCL.Character;
 using DCL.Diagnostics;
 using DCL.Interaction.Utility;
-using DCL.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
