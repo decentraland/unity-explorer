@@ -52,7 +52,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public async Task ConcludeSuccessOnExistingWearable()
         {
-            wearableCatalog.WearableDictionary.Add(existingURN, Substitute.For<IWearable>());
+            wearableCatalog.WearableDictionary.Add(existingURN, (1, Substitute.For<IWearable>()));
             await ConcludeSuccess();
         }
 

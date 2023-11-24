@@ -40,7 +40,7 @@ namespace DCL.ResourcesUnloading
             assetBundleCache.Unload(fpsCapBudgetProvider);
             gltfContainerAssetsCache.Unload(fpsCapBudgetProvider);
 
-            wearableCatalog.UnloadWearableAssets();
+            wearableCatalog.Unload(fpsCapBudgetProvider);
             wearableAssetsCache.Unload(fpsCapBudgetProvider);
 
             avatarPoolRegistry.Clear();
