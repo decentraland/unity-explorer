@@ -2,7 +2,7 @@ using Sentry;
 using Sentry.Unity;
 using UnityEngine;
 
-namespace Diagnostics.ReportsHandling.Sentry
+namespace DCL.Diagnostics.Sentry
 {
     [CreateAssetMenu(fileName = "SentryRuntimeConfiguration.asset", menuName = "Sentry/SentryRuntimeConfiguration", order = 999)]
     public class SentryRuntimeConfiguration : SentryRuntimeOptionsConfiguration

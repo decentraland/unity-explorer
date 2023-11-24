@@ -1,5 +1,4 @@
-using Diagnostics.ReportsHandling;
-using Diagnostics.ReportsHandling.Sentry;
+using DCL.Diagnostics.Sentry;
 using System;
 using System.Collections.Generic;
 using UnityEngine;

@@ -3,7 +3,7 @@ using Sentry.Unity;
 using System;
 using System.IO;
 
-namespace Diagnostics.ReportsHandling.Sentry
+namespace DCL.Diagnostics.Sentry
 {
     public static class SentryJsonConfigLoader
     {

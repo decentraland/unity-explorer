@@ -4,7 +4,7 @@ using System;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace Diagnostics.ReportsHandling.Sentry
+namespace DCL.Diagnostics.Sentry
 {
     public class SentryReportHandler : ReportHandlerBase
     {

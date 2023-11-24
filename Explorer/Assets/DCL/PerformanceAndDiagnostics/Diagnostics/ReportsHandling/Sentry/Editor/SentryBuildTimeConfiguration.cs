@@ -1,9 +1,10 @@
+using DCL.Diagnostics.Sentry;
 using Sentry.Unity;
 using System;
 using UnityEditor;
 using UnityEngine;
 
-namespace Diagnostics.ReportsHandling.Sentry.Editor
+namespace DCL.PerformanceAndDiagnostics.Diagnostics.ReportsHandling.Sentry.Editor
 {
     [CreateAssetMenu(fileName = "SentryBuildTimeConfiguration.asset", menuName = "Sentry/SentryBuildTimeConfiguration", order = 999)]
     public class SentryBuildTimeConfiguration : SentryBuildTimeOptionsConfiguration
