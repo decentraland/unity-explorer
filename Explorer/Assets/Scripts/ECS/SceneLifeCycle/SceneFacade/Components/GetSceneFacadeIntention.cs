@@ -22,7 +22,7 @@ namespace ECS.SceneLifeCycle.Components
         public readonly IpfsTypes.SceneEntityDefinition Definition;
         public readonly IReadOnlyList<Vector2Int> Parcels;
 
-        internal GetSceneFacadeIntention(IIpfsRealm ipfsRealm, IpfsTypes.IpfsPath ipfsPath, IpfsTypes.SceneEntityDefinition definition, IReadOnlyList<Vector2Int> parcels, bool isEmpty)
+        public GetSceneFacadeIntention(IIpfsRealm ipfsRealm, IpfsTypes.IpfsPath ipfsPath, IpfsTypes.SceneEntityDefinition definition, IReadOnlyList<Vector2Int> parcels, bool isEmpty)
         {
             IpfsPath = ipfsPath;
             Definition = definition;

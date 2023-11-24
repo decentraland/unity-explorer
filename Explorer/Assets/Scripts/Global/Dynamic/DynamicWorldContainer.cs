@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables;
 using DCL.DebugUtilities;
+using DCL.ParcelsService;
 using DCL.PerformanceBudgeting;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
@@ -57,6 +58,9 @@ namespace Global.Dynamic
             var dclInput = new DCLInput();
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
             var realmData = new RealmData();
+
+            var parcelServiceContainer = ParcelServiceContainer.Create(realmData, staticContainer.CharacterObject, debugBuilder);
+
             PopupCloserView popupCloserView = Object.Instantiate((await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
             MVCManager mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
             MapRendererContainer mapRendererContainer = await MapRendererContainer.Create(staticContainer, dynamicSettings.MapRendererSettings, ct);
@@ -80,7 +84,12 @@ namespace Global.Dynamic
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
-            container.RealmController = new RealmController(staticContainer.WebRequestsContainer.WebRequestController, sceneLoadRadius, staticLoadPositions, realmData);
+            container.RealmController = new RealmController(
+                staticContainer.WebRequestsContainer.WebRequestController,
+                parcelServiceContainer.TeleportController,
+                parcelServiceContainer.RetrieveSceneFromFixedRealm,
+                parcelServiceContainer.RetrieveSceneFromVolatileWorld,
+                sceneLoadRadius, staticLoadPositions, realmData);
 
             container.GlobalWorldFactory = new GlobalWorldFactory(in staticContainer, staticContainer.RealmPartitionSettings,
                 exposedGlobalDataContainer.CameraSamplingData, realmSamplingData, ASSET_BUNDLES_URL, realmData, globalPlugins);

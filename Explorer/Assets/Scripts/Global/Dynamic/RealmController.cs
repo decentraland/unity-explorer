@@ -2,6 +2,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.ParcelsService;
 using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle.Components;
@@ -34,12 +35,20 @@ namespace Global.Dynamic
         private readonly IReadOnlyList<int2> staticLoadPositions;
         private readonly RealmData realmData;
 
-        public RealmController(IWebRequestController webRequestController, int sceneLoadRadius, IReadOnlyList<int2> staticLoadPositions, RealmData realmData)
+        private readonly RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm;
+        private readonly RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld;
+        private readonly TeleportController teleportController;
+
+        public RealmController(IWebRequestController webRequestController, TeleportController teleportController, RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm, RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld, int sceneLoadRadius,
+            IReadOnlyList<int2> staticLoadPositions, RealmData realmData)
         {
             this.webRequestController = webRequestController;
             this.sceneLoadRadius = sceneLoadRadius;
             this.staticLoadPositions = staticLoadPositions;
             this.realmData = realmData;
+            this.teleportController = teleportController;
+            this.retrieveSceneFromFixedRealm = retrieveSceneFromFixedRealm;
+            this.retrieveSceneFromVolatileWorld = retrieveSceneFromVolatileWorld;
         }
 
         /// <summary>
@@ -66,6 +75,8 @@ namespace Global.Dynamic
 
             if (!ComplimentWithStaticPointers(world, realmEntity) && !realmComp.ScenesAreFixed)
                 ComplimentWithVolatilePointers(world, realmEntity);
+
+            teleportController.OnRealmLoaded(realmData.ScenesAreFixed ? retrieveSceneFromFixedRealm : retrieveSceneFromVolatileWorld, globalWorld.EcsWorld);
 
             // Hide loading screen
         }
@@ -102,6 +113,7 @@ namespace Global.Dynamic
 
             globalWorld.Clear();
 
+            teleportController.InvalidateRealm();
             realmData.Invalidate();
 
             await UniTask.WhenAll(allScenes.Select(s => s.DisposeAsync()));

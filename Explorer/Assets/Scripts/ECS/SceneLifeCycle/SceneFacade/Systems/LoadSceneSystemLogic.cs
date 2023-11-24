@@ -43,7 +43,7 @@ namespace ECS.SceneLifeCycle.Systems
             (SceneAssetBundleManifest manifest, _, ReadOnlyMemory<byte> mainCrdt) = await UniTask.WhenAll(loadAssetBundleManifest, loadSceneMetadata, loadMainCrdt);
 
             // Create scene data
-            var sceneData = new SceneData(hashedContent, intention.Definition, manifest, IpfsHelper.DecodePointer(intention.Definition.metadata.scene.baseParcel), new StaticSceneMessages(mainCrdt));
+            var sceneData = new SceneData(hashedContent, intention.Definition, manifest, intention.Definition.metadata.scene.DecodedBase, new StaticSceneMessages(mainCrdt));
 
             // Calculate partition immediately
 

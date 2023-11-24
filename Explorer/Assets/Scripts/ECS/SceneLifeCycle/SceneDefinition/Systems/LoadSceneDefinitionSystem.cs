@@ -2,9 +2,9 @@
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.WebRequests;
 using DCL.Diagnostics;
 using DCL.PerformanceBudgeting;
+using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
@@ -12,9 +12,7 @@ using ECS.StreamableLoading.Common.Systems;
 using Ipfs;
 using System.Threading;
 using Utility.Multithreading;
-
 #if UNITY_EDITOR
-using Newtonsoft.Json;
 
 #else
 using UnityEngine;
@@ -41,7 +39,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         {
             IpfsTypes.SceneEntityDefinition sceneEntityDefinition = await
                 (await webRequestController.GetAsync(intention.CommonArguments, ct, GetReportCategory()))
-               .CreateFromJson<IpfsTypes.SceneEntityDefinition>(WRJsonParser.NewtonsoftInEditor, WRThreadFlags.SwitchToThreadPool);
+               .CreateFromJson<IpfsTypes.SceneEntityDefinition>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 
             sceneEntityDefinition.id ??= intention.IpfsPath.EntityId;
 

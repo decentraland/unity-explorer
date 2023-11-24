@@ -30,6 +30,8 @@ namespace DCL.WebRequests.Analytics
             {
                 typeof(GenericGetRequest),
                 typeof(GenericPostRequest),
+                typeof(GenericPutRequest),
+                typeof(GenericPatchRequest),
                 typeof(GetTextureWebRequest),
             });
         }

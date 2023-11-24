@@ -32,12 +32,12 @@ namespace ECS.SceneLifeCycle.Tests
 
         protected override void AssertSuccess(IpfsTypes.SceneEntityDefinition asset)
         {
-            Assert.That(asset.metadata.scene.parcels, Is.EquivalentTo(new[]
+            Assert.That(asset.metadata.scene.DecodedParcels, Is.EquivalentTo(new Vector2Int[]
             {
-                "78,-1",
-                "78,0",
-                "79,-1",
-                "79,0",
+                new (78, -1),
+                new (78, 0),
+                new (79, -1),
+                new (79, 0),
             }));
         }
     }
