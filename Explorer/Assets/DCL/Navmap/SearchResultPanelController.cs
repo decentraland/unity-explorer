@@ -1,13 +1,17 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.PlacesAPIService;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using Object = UnityEngine.Object;
 
 public class SearchResultPanelController
 {
+    public event Action<string> OnResultClicked;
+
     private readonly SearchResultPanelView view;
     private readonly IAssetsProvisioner assetsProvisioner;
     private ObjectPool<FullSearchResultsView> resultsPool;
@@ -55,6 +59,8 @@ public class SearchResultPanelController
             fullSearchResultsView.placeName.text = placeInfo.title;
             fullSearchResultsView.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
             fullSearchResultsView.playersCount.text = placeInfo.user_count.ToString();
+            string placeInfoBasePosition = placeInfo.base_position;
+            fullSearchResultsView.resultButton.onClick.AddListener(()=> OnResultClicked?.Invoke(placeInfoBasePosition));
         }
 
         view.LoadingContainer.SetActive(false);
@@ -62,7 +68,11 @@ public class SearchResultPanelController
 
     private void ReleasePool()
     {
-        foreach (FullSearchResultsView fullSearchResultsView in usedPoolElements) { resultsPool.Release(fullSearchResultsView); }
+        foreach (FullSearchResultsView fullSearchResultsView in usedPoolElements)
+        {
+            fullSearchResultsView.resultButton.onClick.RemoveAllListeners();
+            resultsPool.Release(fullSearchResultsView);
+        }
 
         usedPoolElements.Clear();
     }

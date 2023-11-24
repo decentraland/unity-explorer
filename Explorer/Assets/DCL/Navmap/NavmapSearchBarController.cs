@@ -6,6 +6,8 @@ using System.Threading;
 
 public class NavmapSearchBarController : IDisposable
 {
+    public event Action<string> OnResultClicked;
+
     private readonly SearchBarView view;
     private readonly IPlacesAPIService placesAPIService;
     private readonly SearchResultPanelController searchResultPanelController;
@@ -18,9 +20,14 @@ public class NavmapSearchBarController : IDisposable
         this.placesAPIService = placesAPIService;
 
         searchResultPanelController = new SearchResultPanelController(searchResultPanelView, assetsProvisioner);
-
+        searchResultPanelController.OnResultClicked += ClickedResult;
         view.inputField.onValueChanged.AddListener(OnValueChanged);
         view.clearSearchButton.onClick.AddListener(ClearSearch);
+    }
+
+    private void ClickedResult(string coordinates)
+    {
+        OnResultClicked?.Invoke(coordinates);
     }
 
     private void OnValueChanged(string searchText)
@@ -54,5 +61,6 @@ public class NavmapSearchBarController : IDisposable
         view.inputField.onValueChanged.RemoveAllListeners();
         view.inputField.onSubmit.RemoveAllListeners();
         view.clearSearchButton.onClick.RemoveAllListeners();
+        searchResultPanelController.OnResultClicked -= ClickedResult;
     }
 }
