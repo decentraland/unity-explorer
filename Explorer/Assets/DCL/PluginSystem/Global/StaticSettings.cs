@@ -32,13 +32,13 @@ namespace DCL.PluginSystem.Global
         // Performance budgeting
         [field: Header("Performance Budgeting")] [field: Space]
         [field: SerializeField]
-        public int FPSCap { get; private set; } = 40; // [ms]
+        public int FPSCap { get; private set; } = 11; // [ms]
 
         [field: SerializeField]
-        public  int ScenesLoadingBudget { get; private set; } =  100;
+        public int ScenesLoadingBudget { get; private set; } = 100;
 
         [field: SerializeField]
-        public  int AssetsLoadingBudget { get; private set; } =  50;
+        public int AssetsLoadingBudget { get; private set; } = 50;
 
         public Dictionary<MemoryUsageStatus, float> MemoryThresholds { get; private set; } = new ()
         {

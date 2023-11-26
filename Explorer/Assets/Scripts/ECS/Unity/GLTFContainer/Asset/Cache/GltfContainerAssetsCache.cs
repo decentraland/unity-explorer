@@ -91,12 +91,24 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             asset.Root.transform.SetParent(parentContainer);
         }
 
-        public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider)
+        public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount)
         {
             using (ListPool<KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)>>.Get(out List<KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)>> sortedCache))
             {
                 PrepareListSortedByLastUsage(sortedCache);
-                int totalUnloadedAssets = UnloadAssets(frameTimeBudgetProvider, sortedCache);
+
+                var totalUnloadedAssets = 0;
+
+                foreach (KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)> pair in sortedCache)
+                {
+                    if (!frameTimeBudgetProvider.TrySpendBudget()) break;
+                    if (maxUnloadAmount-- <= 0) break;
+
+                    int disposedGltfAssets = DisposeGltfAssetsInSortedList(pair);
+                    ClearCache(pair, disposedGltfAssets);
+
+                    totalUnloadedAssets += disposedGltfAssets;
+                }
 
                 ProfilingCounters.GltfInCacheAmount.Value -= totalUnloadedAssets;
             }
@@ -110,23 +122,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
                 sortedCache.Sort(CompareByLastUsedFrame);
             }
-        }
-
-        private int UnloadAssets(IConcurrentBudgetProvider frameTimeBudgetProvider, List<KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)>> sortedCache)
-        {
-            var totalUnloadedAssets = 0;
-
-            foreach (KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)> pair in sortedCache)
-            {
-                if (!frameTimeBudgetProvider.TrySpendBudget()) break;
-
-                int disposedGltfAssets = DisposeGltfAssetsInSortedList(pair);
-                ClearCache(pair, disposedGltfAssets);
-
-                totalUnloadedAssets += disposedGltfAssets;
-            }
-
-            return totalUnloadedAssets;
 
             int DisposeGltfAssetsInSortedList(KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)> pair)
             {

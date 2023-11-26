@@ -83,12 +83,23 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return IWearableAssetsCache.ReleaseResult.ReturnedToPool;
         }
 
-        public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider)
+        public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount)
         {
             using (ListPool<KeyValuePair<WearableAsset, (uint LastUsedFrame, List<CachedWearable> Assets)>>.Get(out List<KeyValuePair<WearableAsset, (uint LastUsedFrame, List<CachedWearable> Assets)>> sortedCache))
             {
                 PrepareListSortedByLastUsage(sortedCache);
-                int totalUnloadedAssets = UnloadAssets(frameTimeBudgetProvider, sortedCache);
+                var totalUnloadedAssets = 0;
+
+                foreach (KeyValuePair<WearableAsset, (uint LastUsedFrame, List<CachedWearable> Assets)> pair in sortedCache)
+                {
+                    if (!frameTimeBudgetProvider.TrySpendBudget()) break;
+                    if (maxUnloadAmount-- <= 0) break;
+
+                    int disposedGltfAssets = DisposeAssetsInSortedList(pair);
+                    ClearCache(pair, disposedGltfAssets);
+
+                    totalUnloadedAssets += disposedGltfAssets;
+                }
 
                 ProfilingCounters.CachedWearablesInCacheAmount.Value -= totalUnloadedAssets;
             }
@@ -102,23 +113,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
                 sortedCache.Sort(CompareByLastUsedFrame);
             }
-        }
-
-        private int UnloadAssets(IConcurrentBudgetProvider frameTimeBudgetProvider, List<KeyValuePair<WearableAsset, (uint LastUsedFrame, List<CachedWearable> Assets)>> sortedCache)
-        {
-            var totalUnloadedAssets = 0;
-
-            foreach (KeyValuePair<WearableAsset, (uint LastUsedFrame, List<CachedWearable> Assets)> pair in sortedCache)
-            {
-                if (!frameTimeBudgetProvider.TrySpendBudget()) break;
-
-                int disposedGltfAssets = DisposeAssetsInSortedList(pair);
-                ClearCache(pair, disposedGltfAssets);
-
-                totalUnloadedAssets += disposedGltfAssets;
-            }
-
-            return totalUnloadedAssets;
 
             int DisposeAssetsInSortedList(KeyValuePair<WearableAsset, (uint LastUsedFrame, List<CachedWearable> Assets)> pair)
             {

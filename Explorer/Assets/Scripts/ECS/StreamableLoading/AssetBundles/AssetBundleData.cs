@@ -41,7 +41,7 @@ namespace ECS.StreamableLoading.AssetBundles
         public void Dispose()
         {
             if (AssetBundle != null)
-                AssetBundle.Unload(unloadAllLoadedObjects: true);
+                AssetBundle.UnloadAsync(unloadAllLoadedObjects: true);
 
             if (referencesCount > 0)
                 ProfilingCounters.ABReferencedAmount.Value--;

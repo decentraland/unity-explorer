@@ -7,13 +7,28 @@ using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace DCL.ResourcesUnloading
 {
     public class CacheCleaner
     {
+        private const int UNLOAD_CHUNK_SIZE = 30;
+
+        private static readonly ProfilerMarker texturesCacheMarker = new ("CacheCleanup.texturesCache");
+        private static readonly ProfilerMarker assetBundleCacheMarker = new ("CacheCleanup.assetBundleCache");
+        private static readonly ProfilerMarker gltfContainerAssetsCacheMarker = new ("CacheCleanup.gltfContainerAssetsCache");
+        private static readonly ProfilerMarker wearableCatalogMarker = new ("CacheCleanup.wearableCatalog");
+        private static readonly ProfilerMarker wearableAssetsCacheMarker = new ("CacheCleanup.wearableAssetsCache");
+
+        private static readonly ProfilerMarker avatarPoolRegistryMarker = new ("CacheCleanup.avatarPoolRegistry");
+        private static readonly ProfilerMarker computeShaderPoolMarker = new ("CacheCleanup.computeShaderPool");
+        private static readonly ProfilerMarker USED_SLOTS_POOLCacheMarker = new ("CacheCleanup.USED_SLOTS_POOL");
+        private static readonly ProfilerMarker materialPoolCacheMarker = new ("CacheCleanup.materialPool");
+
         private readonly IConcurrentBudgetProvider fpsCapBudgetProvider;
+        private readonly IProfilingProvider profilingProvider;
 
         private GltfContainerAssetsCache gltfContainerAssetsCache;
         private AssetBundleCache assetBundleCache;
@@ -25,29 +40,53 @@ namespace DCL.ResourcesUnloading
         private IObjectPoolDCL<ComputeShader> computeShaderPool;
         private IComponentPoolDCL<AvatarBase> avatarPoolRegistry;
 
-        private const int UNLOAD_CHUNK_SIZE = 10;
-
-        public CacheCleaner(IConcurrentBudgetProvider fpsCapBudgetProvider)
+        public CacheCleaner(IConcurrentBudgetProvider fpsCapBudgetProvider, IProfilingProvider profilingProvider)
         {
             this.fpsCapBudgetProvider = fpsCapBudgetProvider;
+            this.profilingProvider = profilingProvider;
         }
 
         public void UnloadCache()
         {
             if (!fpsCapBudgetProvider.TrySpendBudget()) return;
 
-            texturesCache.Unload(fpsCapBudgetProvider);
+            // Debug.Log(profilingProvider.CurrentFrameTimeValueInNS);
 
-            assetBundleCache.Unload(fpsCapBudgetProvider);
-            gltfContainerAssetsCache.Unload(fpsCapBudgetProvider);
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                using (texturesCacheMarker.Auto())
+                    texturesCache.Unload(fpsCapBudgetProvider, 1);
 
-            wearableCatalog.Unload(fpsCapBudgetProvider);
-            wearableAssetsCache.Unload(fpsCapBudgetProvider);
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                using (assetBundleCacheMarker.Auto())
+                    assetBundleCache.Unload(fpsCapBudgetProvider, 1);
 
-            avatarPoolRegistry.Clear(UNLOAD_CHUNK_SIZE);
-            computeShaderPool.Clear(UNLOAD_CHUNK_SIZE);
-            AvatarCustomSkinningComponent.USED_SLOTS_POOL.Clear(UNLOAD_CHUNK_SIZE);
-            materialPool.Clear(UNLOAD_CHUNK_SIZE);
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                using (gltfContainerAssetsCacheMarker.Auto())
+                    gltfContainerAssetsCache.Unload(fpsCapBudgetProvider, 1);
+
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                using (wearableCatalogMarker.Auto())
+                    wearableCatalog.Unload(fpsCapBudgetProvider);
+
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                using (wearableAssetsCacheMarker.Auto())
+                    wearableAssetsCache.Unload(fpsCapBudgetProvider, 1);
+
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                using (avatarPoolRegistryMarker.Auto())
+                    avatarPoolRegistry.Clear(UNLOAD_CHUNK_SIZE);
+
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                using (computeShaderPoolMarker.Auto())
+                    computeShaderPool.Clear(UNLOAD_CHUNK_SIZE);
+
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                using (USED_SLOTS_POOLCacheMarker.Auto())
+                    AvatarCustomSkinningComponent.USED_SLOTS_POOL.Clear(UNLOAD_CHUNK_SIZE);
+
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                using (materialPoolCacheMarker.Auto())
+                    materialPool.Clear(UNLOAD_CHUNK_SIZE);
         }
 
         public void Register(AssetBundleCache assetBundleCache) =>

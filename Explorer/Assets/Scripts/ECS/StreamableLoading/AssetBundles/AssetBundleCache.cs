@@ -47,7 +47,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public void Dereference(in GetAssetBundleIntention key, AssetBundleData asset) { }
 
-        public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider)
+        public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount)
         {
             using (ListPool<KeyValuePair<GetAssetBundleIntention, AssetBundleData>>.Get(out List<KeyValuePair<GetAssetBundleIntention, AssetBundleData>> sortedCache))
             {
@@ -57,6 +57,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 {
                     if (!frameTimeBudgetProvider.TrySpendBudget()) break;
                     if (!abData.CanBeDisposed()) continue;
+                    if (maxUnloadAmount-- <= 0) break;
 
                     foreach (AssetBundleData child in abData.Dependencies)
                         child?.Dereference();

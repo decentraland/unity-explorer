@@ -62,7 +62,7 @@ namespace ECS.StreamableLoading.Textures
 
         public void Dereference(in GetTextureIntention key, Texture2D asset) { }
 
-        public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider)
+        public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount)
         {
             using (ListPool<KeyValuePair<GetTextureIntention, (uint LastUsedFrame, Texture2D texture)>>.Get(out List<KeyValuePair<GetTextureIntention, (uint LastUsedFrame, Texture2D Texture)>> sortedCache))
             {
@@ -71,6 +71,7 @@ namespace ECS.StreamableLoading.Textures
                 foreach (KeyValuePair<GetTextureIntention, (uint LastUsedFrame, Texture2D Texture)> pair in sortedCache)
                 {
                     if (!frameTimeBudgetProvider.TrySpendBudget()) break;
+                    if (maxUnloadAmount-- <= 0) break;
 
                     UnityObjectUtils.SafeDestroy(pair.Value.Texture);
                     ProfilingCounters.TexturesAmount.Value--;
