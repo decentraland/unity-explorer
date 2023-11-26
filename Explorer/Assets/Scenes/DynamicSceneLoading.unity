@@ -281,9 +281,7 @@ MonoBehaviour:
   debugUiRoot: {fileID: 946305963}
   StartPosition: {x: 0, y: 0}
   SceneLoadRadius: 0
-  StaticLoadPositions:
-  - x: 0
-    y: 0
+  StaticLoadPositions: []
   realmLauncher: {fileID: 234607244}
   realms:
   - https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main

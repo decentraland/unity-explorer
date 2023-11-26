@@ -1,18 +1,18 @@
-﻿using DCL.Profiling;
+﻿using DCL.PerformanceAndDiagnostics.Optimization.Pools;
+using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
-using Utility.Pool;
 
 namespace ECS.Unity.GLTFContainer.Asset.Components
 {
     public class GltfContainerAsset : IDisposable
     {
-        internal static readonly ListObjectPool<Collider> COLLIDERS_POOL = new (listInstanceDefaultCapacity: 50);
-        internal static readonly ListObjectPool<MeshFilter> MESH_FILTERS_POOL = new (listInstanceDefaultCapacity: 50);
-        internal static readonly ListObjectPool<Renderer> RENDERERS_POOL = new (listInstanceDefaultCapacity: 50);
+        public static readonly ListObjectPoolDCL<Collider> COLLIDERS_POOL = new (listInstanceDefaultCapacity: 50);
+        public static readonly ListObjectPoolDCL<MeshFilter> MESH_FILTERS_POOL = new (listInstanceDefaultCapacity: 50);
+        public static readonly ListObjectPoolDCL<Renderer> RENDERERS_POOL = new (listInstanceDefaultCapacity: 50);
 
         public readonly GameObject Root;
 

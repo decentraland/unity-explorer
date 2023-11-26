@@ -7,12 +7,14 @@ using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;
+using ECS.Unity.GLTFContainer.Asset.Components;
 using UnityEngine;
 
 namespace DCL.ResourcesUnloading
 {
     public class CacheCleaner
     {
+        private const int UNLOAD_CHUNK_SIZE = 10;
         private readonly IConcurrentBudgetProvider fpsCapBudgetProvider;
 
         private GltfContainerAssetsCache gltfContainerAssetsCache;
@@ -24,8 +26,6 @@ namespace DCL.ResourcesUnloading
         private IObjectPoolDCL<Material> materialPool;
         private IObjectPoolDCL<ComputeShader> computeShaderPool;
         private IComponentPoolDCL<AvatarBase> avatarPoolRegistry;
-
-        private const int UNLOAD_CHUNK_SIZE = 10;
 
         public CacheCleaner(IConcurrentBudgetProvider fpsCapBudgetProvider)
         {
@@ -39,7 +39,11 @@ namespace DCL.ResourcesUnloading
             texturesCache.Unload(fpsCapBudgetProvider);
 
             assetBundleCache.Unload(fpsCapBudgetProvider);
+
             gltfContainerAssetsCache.Unload(fpsCapBudgetProvider);
+            GltfContainerAsset.COLLIDERS_POOL.Clear(UNLOAD_CHUNK_SIZE);
+            GltfContainerAsset.RENDERERS_POOL.Clear(UNLOAD_CHUNK_SIZE);
+            GltfContainerAsset.MESH_FILTERS_POOL.Clear(UNLOAD_CHUNK_SIZE);
 
             wearableCatalog.Unload(fpsCapBudgetProvider);
             wearableAssetsCache.Unload(fpsCapBudgetProvider);
