@@ -93,7 +93,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 foreach (KeyValuePair<WearableAsset, (uint LastUsedFrame, List<CachedWearable> Assets)> pair in sortedCache)
                 {
                     if (!frameTimeBudgetProvider.TrySpendBudget()) break;
-                    if (maxUnloadAmount-- <= 0) break;
 
                     int disposedGltfAssets = DisposeAssetsInSortedList(pair);
                     ClearCache(pair, disposedGltfAssets);
@@ -121,6 +120,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 for (; i < pair.Value.Assets.Count; i++)
                 {
                     if (!frameTimeBudgetProvider.TrySpendBudget()) break;
+                    if (maxUnloadAmount-- <= 0) break;
 
                     pair.Value.Assets[i].Dispose();
                 }

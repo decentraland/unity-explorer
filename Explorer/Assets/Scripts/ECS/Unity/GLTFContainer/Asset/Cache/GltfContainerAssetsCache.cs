@@ -102,7 +102,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
                 foreach (KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)> pair in sortedCache)
                 {
                     if (!frameTimeBudgetProvider.TrySpendBudget()) break;
-                    if (maxUnloadAmount-- <= 0) break;
 
                     int disposedGltfAssets = DisposeGltfAssetsInSortedList(pair);
                     ClearCache(pair, disposedGltfAssets);
@@ -130,6 +129,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
                 for (; i < pair.Value.Assets.Count; i++)
                 {
                     if (!frameTimeBudgetProvider.TrySpendBudget()) break;
+                    if (maxUnloadAmount-- <= 0) break;
 
                     pair.Value.Assets[i].Dispose();
                 }
