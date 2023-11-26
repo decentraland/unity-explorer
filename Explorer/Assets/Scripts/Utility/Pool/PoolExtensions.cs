@@ -1,5 +1,4 @@
-﻿using DCL.PerformanceAndDiagnostics.Optimization.Pools;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -18,9 +17,6 @@ namespace Utility.Pool
         public static Scope<TElement> AutoScope<TElement>(this IObjectPool<TElement> pool) where TElement: class =>
             new (pool.Get(), pool);
 
-        public static ScopeDCL<TElement> AutoScope<TElement>(this IObjectPoolDCL<TElement> pool) where TElement: class =>
-            new (pool.Get(), pool);
-
         internal class UnityComponentPool<T> : ListObjectPool<T>
         {
             internal static readonly UnityComponentPool<T> INSTANCE = new ();
@@ -32,24 +28,6 @@ namespace Utility.Pool
             public TElement Value { get; private set; }
 
             internal Scope(TElement value, IObjectPool<TElement> pool)
-            {
-                this.pool = pool;
-                Value = value;
-            }
-
-            public void Dispose()
-            {
-                pool.Release(Value);
-                Value = null;
-            }
-        }
-
-        public struct ScopeDCL<TElement> : IDisposable where TElement: class
-        {
-            private readonly IObjectPoolDCL<TElement> pool;
-            public TElement Value { get; private set; }
-
-            internal ScopeDCL(TElement value, IObjectPoolDCL<TElement> pool)
             {
                 this.pool = pool;
                 Value = value;
