@@ -2,23 +2,24 @@ using System;
 using Newtonsoft.Json;
 using UnityEngine;
 
-public static class JsonUtils
+namespace Utility
 {
-    public static T FromJsonWithNulls<T>(string json)
+    public static class JsonUtils
     {
-        return JsonConvert.DeserializeObject<T>(json);
-    }
+        public static T FromJsonWithNulls<T>(string json) =>
+            JsonConvert.DeserializeObject<T>(json);
 
-    public static T SafeFromJson<T>(string json)
-    {
-        T returningValue = default(T);
-
-        if (!string.IsNullOrEmpty(json))
+        public static T SafeFromJson<T>(string json)
         {
-            try { returningValue = JsonUtility.FromJson<T>(json); }
-            catch (ArgumentException e) { Debug.LogError("ArgumentException Fail!... Json = " + json + " " + e.ToString()); }
-        }
+            T returningValue = default(T);
 
-        return returningValue;
+            if (!string.IsNullOrEmpty(json))
+            {
+                try { returningValue = JsonUtility.FromJson<T>(json); }
+                catch (ArgumentException e) { Debug.LogError(string.Format("ArgumentException Fail!... Json = {0} {1}", json, e)); }
+            }
+
+            return returningValue;
+        }
     }
 }

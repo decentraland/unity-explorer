@@ -10,7 +10,7 @@ namespace DCL.PlacesAPIService
     {
         internal readonly Dictionary<ActivePlaceKey, LambdaResponsePagePointer<PlacesData.PlacesAPIResponse, ActivePlaceKey>> activePlacesPagePointers = new ();
 
-        public async UniTask<(IReadOnlyList<PlacesData.PlaceInfo> places, int total)> GetMostActivePlaces(int pageNumber, int pageSize, string filter = "", string sort = "", CancellationToken ct = default,
+        public async UniTask<(IReadOnlyList<PlacesData.PlaceInfo> places, int total)> GetMostActivePlacesAsync(int pageNumber, int pageSize, string filter = "", string sort = "", CancellationToken ct = default,
             bool renewCache = false)
         {
             var createNewPointer = false;
@@ -40,9 +40,9 @@ namespace DCL.PlacesAPIService
             return (response.data, response.total);
         }
 
-        async UniTask<(PlacesData.PlacesAPIResponse response, bool success)> ILambdaServiceConsumer<PlacesData.PlacesAPIResponse, ActivePlaceKey>.CreateRequest(string endPoint, int pageSize, int pageNumber, ActivePlaceKey additionalData, CancellationToken ct = default)
+        async UniTask<(PlacesData.PlacesAPIResponse response, bool success)> ILambdaServiceConsumer<PlacesData.PlacesAPIResponse, ActivePlaceKey>.CreateRequestAsync(string endPoint, int pageSize, int pageNumber, ActivePlaceKey additionalData, CancellationToken ct = default)
         {
-            PlacesData.PlacesAPIResponse response = await client.GetMostActivePlaces(pageNumber, pageSize, additionalData.Filter, additionalData.Sort, ct);
+            PlacesData.PlacesAPIResponse response = await client.GetMostActivePlacesAsync(pageNumber, pageSize, additionalData.Filter, additionalData.Sort, ct);
 
             // Client will handle most of the error handling and throw if needed
             return (response, true);

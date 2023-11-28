@@ -112,14 +112,14 @@ namespace DCL.Minimap
 
             previousParcelPosition = playerParcelPosition;
 
-            RetrieveParcelInfo(playerParcelPosition).Forget();
+            RetrieveParcelInfoAsync(playerParcelPosition).Forget();
             return;
 
-            async UniTaskVoid RetrieveParcelInfo(Vector2Int playerParcelPosition)
+            async UniTaskVoid RetrieveParcelInfoAsync(Vector2Int playerParcelPosition)
             {
                 try
                 {
-                    PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlace(playerParcelPosition, CancellationToken.None);
+                    PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlaceAsync(playerParcelPosition, CancellationToken.None);
                     viewInstance.placeNameText.text = placeInfo.title;
                 }
                 catch (Exception) { viewInstance.placeNameText.text = "Unknown place"; }

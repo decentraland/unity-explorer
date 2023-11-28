@@ -35,12 +35,12 @@ namespace DCL.PlacesAPIService
             return urlBuilder;
         }
 
-        public async UniTask<PlacesData.PlacesAPIResponse> SearchPlaces(string searchString, int pageNumber, int pageSize, CancellationToken ct)
+        public async UniTask<PlacesData.PlacesAPIResponse> SearchPlacesAsync(string searchString, int pageNumber, int pageSize, CancellationToken ct)
         {
             const string URL = BASE_URL + "?search={0}&offset={1}&limit={2}";
 
             GenericGetRequest result = await webRequestController.GetAsync(string.Format(URL, searchString.Replace(" ", "+"), pageNumber * pageSize, pageSize), ct)
-                                                                 .WithCustomException(static exc => new PlacesAPIException(exc, "Error fetching search places info:"));
+                                                                 .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching search places info:"));
 
             PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
 
@@ -53,12 +53,12 @@ namespace DCL.PlacesAPIService
             return response;
         }
 
-        public async UniTask<PlacesData.PlacesAPIResponse> GetMostActivePlaces(int pageNumber, int pageSize, string filter = "", string sort = "", CancellationToken ct = default)
+        public async UniTask<PlacesData.PlacesAPIResponse> GetMostActivePlacesAsync(int pageNumber, int pageSize, string filter = "", string sort = "", CancellationToken ct = default)
         {
             const string URL = BASE_URL + "?order_by={3}&order=desc&with_realms_detail=true&offset={0}&limit={1}&{2}";
 
             GenericGetRequest result = await webRequestController.GetAsync(string.Format(URL, pageNumber * pageSize, pageSize, filter, sort), ct)
-                                                                 .WithCustomException(static exc => new PlacesAPIException(exc, "Error fetching most active places info:"));
+                                                                 .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching most active places info:"));
 
             PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
 
@@ -71,12 +71,12 @@ namespace DCL.PlacesAPIService
             return response;
         }
 
-        public async UniTask<PlacesData.PlaceInfo> GetPlace(Vector2Int coords, CancellationToken ct)
+        public async UniTask<PlacesData.PlaceInfo> GetPlaceAsync(Vector2Int coords, CancellationToken ct)
         {
             const string URL = BASE_URL + "?positions={0},{1}&with_realms_detail=true";
 
             GenericGetRequest result = await webRequestController.GetAsync(string.Format(URL, coords.x, coords.y), ct)
-                                                                 .WithCustomException(static exc => new PlacesAPIException(exc, "Error fetching place info:"));
+                                                                 .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching place info:"));
 
             using PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
 
@@ -89,12 +89,12 @@ namespace DCL.PlacesAPIService
             return response.data[0];
         }
 
-        public async UniTask<PlacesData.PlaceInfo> GetPlace(string placeUUID, CancellationToken ct)
+        public async UniTask<PlacesData.PlaceInfo> GetPlaceAsync(string placeUUID, CancellationToken ct)
         {
             var url = $"{BASE_URL}/{placeUUID}?with_realms_detail=true";
 
             GenericGetRequest result = await webRequestController.GetAsync(url, ct)
-                                                                 .WithCustomException(static exc => new PlacesAPIException(exc, "Error fetching place info:"));
+                                                                 .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching place info:"));
 
             PlacesData.PlacesAPIGetParcelResponse response = await result.CreateFromJson<PlacesData.PlacesAPIGetParcelResponse>(WRJsonParser.Unity,
                 createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing place info:", text));
@@ -109,7 +109,7 @@ namespace DCL.PlacesAPIService
             return response.data;
         }
 
-        public async UniTask<List<PlacesData.PlaceInfo>> GetPlacesByCoordsList(IReadOnlyList<Vector2Int> coordsList, List<PlacesData.PlaceInfo> targetList, CancellationToken ct)
+        public async UniTask<List<PlacesData.PlaceInfo>> GetPlacesByCoordsListAsync(IReadOnlyList<Vector2Int> coordsList, List<PlacesData.PlaceInfo> targetList, CancellationToken ct)
         {
             targetList.Clear();
 
@@ -123,7 +123,7 @@ namespace DCL.PlacesAPIService
                 url.AppendParameter(("positions", $"{coords.x},{coords.y}")).AppendParameter(WITH_REALMS_DETAIL);
 
             GenericGetRequest result = await webRequestController.GetAsync(new CommonArguments(url.Build()), ct)
-                                                                 .WithCustomException(static exc => new PlacesAPIException(exc, "Error fetching places info:"));
+                                                                 .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching places info:"));
 
             using PoolExtensions.Scope<PlacesData.PlacesAPIResponse> rentedList = PlacesData.PLACES_API_RESPONSE_POOL.AutoScope();
 
@@ -135,7 +135,7 @@ namespace DCL.PlacesAPIService
             return targetList;
         }
 
-        public async UniTask<PlacesData.IPlacesAPIResponse> GetFavorites(int pageNumber, int pageSize, CancellationToken ct)
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
             const string URL = BASE_URL + "?only_favorites=true&with_realms_detail=true&offset={0}&limit={1}";
 
@@ -152,12 +152,12 @@ namespace DCL.PlacesAPIService
             return response;
         }
 
-        public async UniTask<PlacesData.IPlacesAPIResponse> GetAllFavorites(CancellationToken ct)
+        public async UniTask<PlacesData.IPlacesAPIResponse> GetAllFavoritesAsync(CancellationToken ct)
         {
             const string URL = BASE_URL + "?only_favorites=true&with_realms_detail=true";
 
             GenericGetRequest result = await webRequestController.GetAsync(URL, ct)
-                                                                 .WithCustomException(static exc => new PlacesAPIException(exc, "Error fetching favorites info:"));
+                                                                 .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching favorites info:"));
 
             PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
 
@@ -170,17 +170,17 @@ namespace DCL.PlacesAPIService
             return response;
         }
 
-        public async UniTask SetPlaceFavorite(string placeUUID, bool isFavorite, CancellationToken ct)
+        public async UniTask SetPlaceFavoriteAsync(string placeUUID, bool isFavorite, CancellationToken ct)
         {
             const string URL = BASE_URL + "/{0}/favorites";
             const string FAVORITE_PAYLOAD = "{\"favorites\": true}";
             const string NOT_FAVORITE_PAYLOAD = "{\"favorites\": false}";
 
             await webRequestController.PatchAsync(string.Format(URL, placeUUID), GenericPatchArguments.CreateJson(isFavorite ? FAVORITE_PAYLOAD : NOT_FAVORITE_PAYLOAD), ct)
-                                      .WithCustomException(static exc => new PlacesAPIException(exc, "Error setting place favorite:"));
+                                      .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error setting place favorite:"));
         }
 
-        public async UniTask SetPlaceVote(bool? isUpvote, string placeUUID, CancellationToken ct)
+        public async UniTask SetPlaceVoteAsync(bool? isUpvote, string placeUUID, CancellationToken ct)
         {
             const string URL = BASE_URL + "/{0}/likes";
             const string LIKE_PAYLOAD = "{\"like\": true}";
@@ -195,10 +195,10 @@ namespace DCL.PlacesAPIService
                 payload = isUpvote == true ? LIKE_PAYLOAD : DISLIKE_PAYLOAD;
 
             await webRequestController.PostAsync(string.Format(URL, placeUUID), GenericPostArguments.CreateJson(payload), ct)
-                                      .WithCustomException(static exc => new PlacesAPIException(exc, "Error setting place vote:"));
+                                      .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error setting place vote:"));
         }
 
-        public async UniTask<List<string>> GetPointsOfInterestCoords(CancellationToken ct)
+        public async UniTask<List<string>> GetPointsOfInterestCoordsAsync(CancellationToken ct)
         {
             GenericPostRequest result = await webRequestController.PostAsync(POI_URL, GenericPostArguments.Empty, ct);
 
@@ -211,11 +211,11 @@ namespace DCL.PlacesAPIService
             return response.data;
         }
 
-        public async UniTask ReportPlace(PlaceContentReportPayload placeContentReportPayload, CancellationToken ct)
+        public async UniTask ReportPlaceAsync(PlaceContentReportPayload placeContentReportPayload, CancellationToken ct)
         {
             // POST for getting a signed url
             GenericPostRequest postResult = await webRequestController.PostAsync(CONTENT_MODERATION_REPORT_URL, GenericPostArguments.Empty, ct)
-                                                                      .WithCustomException(static exc => new PlacesAPIException(exc, "Error reporting place:"));
+                                                                      .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error reporting place:"));
 
             using PoolExtensions.Scope<ReportPlaceAPIResponse> responseRental = PlacesData.REPORT_PLACE_API_RESPONSE_POOL.AutoScope();
             ReportPlaceAPIResponse response = responseRental.Value;
@@ -234,7 +234,7 @@ namespace DCL.PlacesAPIService
             await UniTask.SwitchToMainThread();
 
             await webRequestController.PutAsync(response.data.signed_url, GenericPutArguments.CreateJson(putData), ct)
-                                      .WithCustomException(static exc => new PlacesAPIException(exc, "Error reporting place:"));
+                                      .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error reporting place:"));
         }
     }
 }

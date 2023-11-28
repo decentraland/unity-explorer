@@ -1,19 +1,22 @@
 using UnityEngine;
 
-public static class VectorUtilities
+namespace Utility
 {
-    public static Vector2 OneHalf = new (0.5f, 0.5f);
-
-    public static bool TryParseVector2Int(string input, out Vector2Int result)
+    public static class VectorUtilities
     {
-        result = Vector2Int.zero;
-        string[] components = input.Split(',');
+        public static Vector2 OneHalf = new (0.5f, 0.5f);
 
-        if (components.Length != 2) return false;
-        if (!int.TryParse(components[0], out int x) || !int.TryParse(components[1], out int y)) return false;
+        public static bool TryParseVector2Int(string input, out Vector2Int result)
+        {
+            result = Vector2Int.zero;
+            string[] components = input.Split(',');
 
-        result = new Vector2Int(x, y);
-        return true;
+            if (components.Length != 2) return false;
+            if (!int.TryParse(components[0], out int x) || !int.TryParse(components[1], out int y)) return false;
 
+            result = new Vector2Int(x, y);
+            return true;
+
+        }
     }
 }

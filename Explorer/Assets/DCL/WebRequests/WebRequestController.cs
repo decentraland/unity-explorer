@@ -30,7 +30,7 @@ namespace DCL.WebRequests
             string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            Send(GET_GENERIC, commonArguments, default(GenericGetArguments), ct, reportCategory, headersInfo, signInfo);
+            SendAsync(GET_GENERIC, commonArguments, default(GenericGetArguments), ct, reportCategory, headersInfo, signInfo);
 
         public UniTask<GenericPostRequest> PostAsync(
             CommonArguments commonArguments,
@@ -39,7 +39,7 @@ namespace DCL.WebRequests
             string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            Send(POST_GENERIC, commonArguments, arguments, ct, reportCategory, headersInfo, signInfo);
+            SendAsync(POST_GENERIC, commonArguments, arguments, ct, reportCategory, headersInfo, signInfo);
 
         public UniTask<GenericPutRequest> PutAsync(
             CommonArguments commonArguments,
@@ -48,7 +48,7 @@ namespace DCL.WebRequests
             string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            Send(PUT_GENERIC, commonArguments, arguments, ct, reportCategory, headersInfo, signInfo);
+            SendAsync(PUT_GENERIC, commonArguments, arguments, ct, reportCategory, headersInfo, signInfo);
 
         public UniTask<GenericPatchRequest> PatchAsync(
             CommonArguments commonArguments,
@@ -57,7 +57,7 @@ namespace DCL.WebRequests
             string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            Send(PATCH_GENERIC, commonArguments, arguments, ct, reportCategory, headersInfo, signInfo);
+            SendAsync(PATCH_GENERIC, commonArguments, arguments, ct, reportCategory, headersInfo, signInfo);
 
         public UniTask<GetTextureWebRequest> GetTextureAsync(
             CommonArguments commonArguments,
@@ -66,9 +66,9 @@ namespace DCL.WebRequests
             string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            Send(GET_TEXTURE, commonArguments, args, ct, reportCategory, headersInfo, signInfo);
+            SendAsync(GET_TEXTURE, commonArguments, args, ct, reportCategory, headersInfo, signInfo);
 
-        private async UniTask<TWebRequest> Send<TWebRequest, TWebRequestArgs>(
+        private async UniTask<TWebRequest> SendAsync<TWebRequest, TWebRequestArgs>(
             InitializeRequest<TWebRequestArgs, TWebRequest> initializeRequest,
             CommonArguments commonArguments, TWebRequestArgs args,
             CancellationToken ct,

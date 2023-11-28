@@ -19,9 +19,9 @@ namespace DCLServices.MapRenderer.ConsumerUtils
             public Vector2 WorldPosition;
         }
 
-        private static readonly string DRAG_SAMPLE_NAME = $"{nameof(MapRenderImage)}.{nameof(OnDrag)}";
-        private static readonly string POINTER_MOVE_SAMPLE_NAME = $"{nameof(MapRenderImage)}.{nameof(OnPointerMove)}";
-        private static readonly string POINTER_CLICK_SAMPLE_NAME = $"{nameof(MapRenderImage)}.{nameof(OnPointerClick)}";
+        private static readonly string DRAG_SAMPLE_NAME = string.Format("{0}.{1}", nameof(MapRenderImage), nameof(OnDrag));
+        private static readonly string POINTER_MOVE_SAMPLE_NAME = string.Format("{0}.{1}", nameof(MapRenderImage), nameof(OnPointerMove));
+        private static readonly string POINTER_CLICK_SAMPLE_NAME = string.Format("{0}.{1}", nameof(MapRenderImage), nameof(OnPointerClick));
 
         public event Action<ParcelClickData> ParcelClicked;
 

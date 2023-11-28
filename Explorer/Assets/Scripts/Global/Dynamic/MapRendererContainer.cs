@@ -9,7 +9,7 @@ namespace Global.Dynamic
     {
         public IMapRenderer MapRenderer { get; private set; }
 
-        public static async UniTask<MapRendererContainer> Create(StaticContainer staticContainer, MapRendererSettings settings, CancellationToken ct)
+        public static async UniTask<MapRendererContainer> CreateAsync(StaticContainer staticContainer, MapRendererSettings settings, CancellationToken ct)
         {
             var mapRenderer = new MapRenderer(new MapRendererChunkComponentsFactory(staticContainer.AssetsProvisioner, settings, staticContainer.WebRequestsContainer.WebRequestController));
             await mapRenderer.InitializeAsync(ct);

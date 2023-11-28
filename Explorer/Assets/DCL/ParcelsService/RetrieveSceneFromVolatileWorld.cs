@@ -30,7 +30,7 @@ namespace DCL.ParcelsService
 
         public World World { private get; set; }
 
-        public async UniTask<IpfsTypes.SceneEntityDefinition> ByParcel(Vector2Int parcel, CancellationToken ct)
+        public async UniTask<IpfsTypes.SceneEntityDefinition> ByParcelAsync(Vector2Int parcel, CancellationToken ct)
         {
             if (!realmData.Configured)
                 return null;

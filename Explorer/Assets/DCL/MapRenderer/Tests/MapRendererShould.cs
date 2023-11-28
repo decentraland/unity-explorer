@@ -86,7 +86,7 @@ namespace DCL.MapRenderer.Tests
         }
 
         [Test]
-        [Ignore("")] 
+        [Ignore("")]
         public void NotDisableLayerIfStillUsed([ValueSource(nameof(TEST_MAP_LAYERS))] MapLayer mask)
         {
             IMapActivityOwner owner = Substitute.For<IMapActivityOwner>();

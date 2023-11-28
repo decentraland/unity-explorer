@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
+using DCL.UI;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
@@ -73,7 +74,7 @@ namespace DCL.Navmap
             {
                 view.jumpInButton.onClick.RemoveAllListeners();
                 view.jumpInButton.onClick.AddListener(()=>teleportController.TeleportToParcel(parcel));
-                PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlace(parcel, cts.Token);
+                PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);
                 ResetCategories();
                 SetFloatingPanelInfo(placeInfo);
             }

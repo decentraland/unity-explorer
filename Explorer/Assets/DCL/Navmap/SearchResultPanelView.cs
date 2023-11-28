@@ -1,16 +1,17 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-public class SearchResultPanelView : MonoBehaviour
+namespace DCL.Navmap
 {
-    [field: SerializeField]
-    public GameObject LoadingContainer { get; private set; }
+    public class SearchResultPanelView : MonoBehaviour
+    {
+        [field: SerializeField]
+        public GameObject LoadingContainer { get; private set; }
 
-    [field: SerializeField]
-    public AssetReferenceGameObject ResultAssetReference { get; private set; }
+        [field: SerializeField]
+        public AssetReferenceGameObject ResultAssetReference { get; private set; }
 
-    [field: SerializeField]
-    public RectTransform searchResultsContainer;
+        [field: SerializeField]
+        public RectTransform searchResultsContainer;
+    }
 }

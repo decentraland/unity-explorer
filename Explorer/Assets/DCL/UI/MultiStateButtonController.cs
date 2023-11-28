@@ -1,40 +1,43 @@
 using System;
 
-public class MultiStateButtonController
+namespace DCL.UI
 {
-    public event Action<bool> OnButtonClicked;
-
-    private readonly MultiStateButtonView view;
-    private readonly bool replacesImage;
-
-    private bool isButtonOn;
-
-    public MultiStateButtonController(MultiStateButtonView view, bool replacesImage)
+    public class MultiStateButtonController
     {
-        this.view = view;
-        this.replacesImage = replacesImage;
-        view.button.onClick.RemoveAllListeners();
-        view.button.onClick.AddListener(ButtonClicked);
-    }
+        public event Action<bool> OnButtonClicked;
 
-    private void ButtonClicked()
-    {
-        isButtonOn = !isButtonOn;
-        SetButtonGraphic(isButtonOn);
-        OnButtonClicked?.Invoke(isButtonOn);
-    }
+        private readonly MultiStateButtonView view;
+        private readonly bool replacesImage;
 
-    public void SetButtonState(bool isOn)
-    {
-        isButtonOn = isOn;
-        SetButtonGraphic(isOn);
-    }
+        private bool isButtonOn;
 
-    private void SetButtonGraphic(bool isOn)
-    {
-        view.buttonImageFill.SetActive(isOn);
+        public MultiStateButtonController(MultiStateButtonView view, bool replacesImage)
+        {
+            this.view = view;
+            this.replacesImage = replacesImage;
+            view.button.onClick.RemoveAllListeners();
+            view.button.onClick.AddListener(ButtonClicked);
+        }
 
-        if (replacesImage)
-            view.buttonImageOutline.SetActive(!isOn);
+        private void ButtonClicked()
+        {
+            isButtonOn = !isButtonOn;
+            SetButtonGraphic(isButtonOn);
+            OnButtonClicked?.Invoke(isButtonOn);
+        }
+
+        public void SetButtonState(bool isOn)
+        {
+            isButtonOn = isOn;
+            SetButtonGraphic(isOn);
+        }
+
+        private void SetButtonGraphic(bool isOn)
+        {
+            view.buttonImageFill.SetActive(isOn);
+
+            if (replacesImage)
+                view.buttonImageOutline.SetActive(!isOn);
+        }
     }
 }

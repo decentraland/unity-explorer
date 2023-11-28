@@ -7,33 +7,33 @@ namespace DCL.PlacesAPIService
 {
     public interface IPlacesAPIService
     {
-        UniTask<PlacesData.IPlacesAPIResponse> SearchPlaces(string searchText, int pageNumber, int pageSize, CancellationToken ct);
+        UniTask<PlacesData.IPlacesAPIResponse> SearchPlacesAsync(string searchText, int pageNumber, int pageSize, CancellationToken ct);
 
-        UniTask<(IReadOnlyList<PlacesData.PlaceInfo> places, int total)> GetMostActivePlaces(int pageNumber, int pageSize, string filter = "", string sort = "", CancellationToken ct = default,
+        UniTask<(IReadOnlyList<PlacesData.PlaceInfo> places, int total)> GetMostActivePlacesAsync(int pageNumber, int pageSize, string filter = "", string sort = "", CancellationToken ct = default,
             bool renewCache = false);
 
-        UniTask<PlacesData.PlaceInfo> GetPlace(Vector2Int coords, CancellationToken ct, bool renewCache = false);
+        UniTask<PlacesData.PlaceInfo> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false);
 
-        UniTask<PlacesData.PlaceInfo> GetPlace(string placeUUID, CancellationToken ct, bool renewCache = false);
+        UniTask<PlacesData.PlaceInfo> GetPlaceAsync(string placeUUID, CancellationToken ct, bool renewCache = false);
 
-        UniTask<IReadOnlyList<PlacesData.PlaceInfo>> GetFavorites(int pageNumber, int pageSize, CancellationToken ct, bool renewCache = false);
+        UniTask<IReadOnlyList<PlacesData.PlaceInfo>> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct, bool renewCache = false);
 
-        UniTask<List<PlacesData.PlaceInfo>> GetPlacesByCoordsList(IEnumerable<Vector2Int> coordsList, CancellationToken ct, bool renewCache = false);
+        UniTask<List<PlacesData.PlaceInfo>> GetPlacesByCoordsListAsync(IEnumerable<Vector2Int> coordsList, CancellationToken ct, bool renewCache = false);
 
-        UniTask SetPlaceFavorite(string placeUUID, bool isFavorite, CancellationToken ct);
+        UniTask SetPlaceFavoriteAsync(string placeUUID, bool isFavorite, CancellationToken ct);
 
-        UniTask SetPlaceVote(bool? isUpvote, string placeUUID, CancellationToken ct);
+        UniTask SetPlaceVoteAsync(bool? isUpvote, string placeUUID, CancellationToken ct);
 
-        UniTask SetPlaceFavorite(Vector2Int coords, bool isFavorite, CancellationToken ct);
+        UniTask SetPlaceFavoriteAsync(Vector2Int coords, bool isFavorite, CancellationToken ct);
 
-        UniTask<bool> IsFavoritePlace(PlacesData.PlaceInfo placeInfo, CancellationToken ct, bool renewCache = false);
+        UniTask<bool> IsFavoritePlaceAsync(PlacesData.PlaceInfo placeInfo, CancellationToken ct, bool renewCache = false);
 
-        UniTask<bool> IsFavoritePlace(Vector2Int coords, CancellationToken ct, bool renewCache = false);
+        UniTask<bool> IsFavoritePlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false);
 
-        UniTask<bool> IsFavoritePlace(string placeUUID, CancellationToken ct, bool renewCache = false);
+        UniTask<bool> IsFavoritePlaceAsync(string placeUUID, CancellationToken ct, bool renewCache = false);
 
-        UniTask<IReadOnlyList<string>> GetPointsOfInterestCoords(CancellationToken ct, bool renewCache = false);
+        UniTask<IReadOnlyList<string>> GetPointsOfInterestCoordsAsync(CancellationToken ct, bool renewCache = false);
 
-        UniTask ReportPlace(PlaceContentReportPayload placeContentReportPayload, CancellationToken ct);
+        UniTask ReportPlaceAsync(PlaceContentReportPayload placeContentReportPayload, CancellationToken ct);
     }
 }

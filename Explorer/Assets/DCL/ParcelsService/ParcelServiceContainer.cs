@@ -35,7 +35,7 @@ namespace DCL.ParcelsService
                                  .AddControl(new DebugVector2IntFieldDef(binding), null)
                                  .AddControl(
                                       new DebugButtonDef("To Parcel", () => teleportController.TeleportToParcel(binding.Value)),
-                                      new DebugButtonDef("To Spawn Point", () => teleportController.TeleportToSceneSpawnPoint(binding.Value, CancellationToken.None)));
+                                      new DebugButtonDef("To Spawn Point", () => teleportController.TeleportToSceneSpawnPointAsync(binding.Value, CancellationToken.None)));
         }
     }
 }

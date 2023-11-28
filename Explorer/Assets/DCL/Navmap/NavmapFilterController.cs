@@ -1,22 +1,21 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
-public class NavmapFilterController
+namespace DCL.Navmap
 {
-    private readonly NavmapFilterView filterView;
-
-    public NavmapFilterController(NavmapFilterView filterView)
+    public class NavmapFilterController
     {
-        this.filterView = filterView;
-        filterView.filterButton.onClick.RemoveAllListeners();
-        filterView.filterButton.onClick.AddListener(ToggleFilterContent);
-    }
+        private readonly NavmapFilterView filterView;
 
-    private void ToggleFilterContent()
-    {
-        //Add animations
-        filterView.filterContentTransform.gameObject.SetActive(!filterView.filterContentTransform.gameObject.activeSelf);
+        public NavmapFilterController(NavmapFilterView filterView)
+        {
+            this.filterView = filterView;
+            filterView.filterButton.onClick.RemoveAllListeners();
+            filterView.filterButton.onClick.AddListener(ToggleFilterContent);
+        }
+
+        private void ToggleFilterContent()
+        {
+            //Add animations
+            filterView.filterContentTransform.gameObject.SetActive(!filterView.filterContentTransform.gameObject.activeSelf);
+        }
     }
 }

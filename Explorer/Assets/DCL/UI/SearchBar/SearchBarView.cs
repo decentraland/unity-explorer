@@ -2,14 +2,17 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class SearchBarView : MonoBehaviour
+namespace DCL.UI
 {
-    [field: SerializeField]
-    public TMP_InputField inputField;
+    public class SearchBarView : MonoBehaviour
+    {
+        [field: SerializeField]
+        public TMP_InputField inputField;
 
-    [field: SerializeField]
-    public TMP_Text placeHolderText;
+        [field: SerializeField]
+        public TMP_Text placeHolderText;
 
-    [field: SerializeField]
-    public Button clearSearchButton;
+        [field: SerializeField]
+        public Button clearSearchButton;
+    }
 }

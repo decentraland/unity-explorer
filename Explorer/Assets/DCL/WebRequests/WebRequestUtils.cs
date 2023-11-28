@@ -6,7 +6,7 @@ namespace DCL.WebRequests
 {
     public static class WebRequestUtils
     {
-        public static async UniTask<T> WithCustomException<T>(this UniTask<T> webRequestFlow, Func<UnityWebRequestException, Exception> newExceptionFactoryMethod) where T: ITypedWebRequest
+        public static async UniTask<T> WithCustomExceptionAsync<T>(this UniTask<T> webRequestFlow, Func<UnityWebRequestException, Exception> newExceptionFactoryMethod) where T: ITypedWebRequest
         {
             try { return await webRequestFlow; }
             catch (UnityWebRequestException e) { throw newExceptionFactoryMethod(e); }

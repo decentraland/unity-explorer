@@ -1,13 +1,14 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class NavmapFilterView : MonoBehaviour
+namespace DCL.Navmap
 {
-    [field: SerializeField]
-    public RectTransform filterContentTransform;
+    public class NavmapFilterView : MonoBehaviour
+    {
+        [field: SerializeField]
+        public RectTransform filterContentTransform;
 
-    [field: SerializeField]
-    public Button filterButton;
+        [field: SerializeField]
+        public Button filterButton;
+    }
 }

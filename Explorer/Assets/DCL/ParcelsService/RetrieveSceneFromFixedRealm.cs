@@ -17,7 +17,7 @@ namespace DCL.ParcelsService
         /// </summary>
         public World World { private get; set; }
 
-        public async UniTask<IpfsTypes.SceneEntityDefinition> ByParcel(Vector2Int parcel, CancellationToken ct)
+        public async UniTask<IpfsTypes.SceneEntityDefinition> ByParcelAsync(Vector2Int parcel, CancellationToken ct)
         {
             // Wait for all pointers resolution, they should be resolved at start-up
 

@@ -75,7 +75,7 @@ namespace DCLServices.Lambdas
             if (localCancellationToken != CancellationToken.None && !localCancellationToken.Equals(ct))
                 ct = CancellationTokenSource.CreateLinkedTokenSource(this.cancellationToken, localCancellationToken).Token;
 
-            var res = await serviceConsumer.CreateRequest(constEndPoint, pageSize, pageNum, additionalData, ct);
+            var res = await serviceConsumer.CreateRequestAsync(constEndPoint, pageSize, pageNum, additionalData, ct);
 
             if (res.success)
             {

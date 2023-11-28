@@ -31,7 +31,7 @@ namespace DCL.ParcelsService
             this.retrieveScene.World = world;
         }
 
-        public async UniTask TeleportToSceneSpawnPoint(Vector2Int parcel, CancellationToken ct)
+        public async UniTask TeleportToSceneSpawnPointAsync(Vector2Int parcel, CancellationToken ct)
         {
             // If type of retrieval is not set yet
             if (retrieveScene == null)
@@ -40,7 +40,7 @@ namespace DCL.ParcelsService
                 return;
             }
 
-            IpfsTypes.SceneEntityDefinition sceneDef = await retrieveScene.ByParcel(parcel, ct);
+            IpfsTypes.SceneEntityDefinition sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
 
             Vector3 targetPosition;
 

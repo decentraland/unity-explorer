@@ -6,7 +6,7 @@ namespace DCL.ParcelsService
 {
     public interface ITeleportController
     {
-        UniTask TeleportToSceneSpawnPoint(Vector2Int parcel, CancellationToken ct);
+        UniTask TeleportToSceneSpawnPointAsync(Vector2Int parcel, CancellationToken ct);
 
         void TeleportToParcel(Vector2Int parcel);
     }

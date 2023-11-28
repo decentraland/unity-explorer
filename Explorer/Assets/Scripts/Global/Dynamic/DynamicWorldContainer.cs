@@ -63,7 +63,7 @@ namespace Global.Dynamic
 
             PopupCloserView popupCloserView = Object.Instantiate((await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
             MVCManager mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
-            MapRendererContainer mapRendererContainer = await MapRendererContainer.Create(staticContainer, dynamicSettings.MapRendererSettings, ct);
+            MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, dynamicSettings.MapRendererSettings, ct);
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController));
 
             var globalPlugins = new List<IDCLGlobalPlugin>

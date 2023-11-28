@@ -31,34 +31,34 @@ namespace DCL.PlacesAPIService
             this.client = client;
         }
 
-        public async UniTask<PlacesData.IPlacesAPIResponse> SearchPlaces(string searchText, int pageNumber, int pageSize, CancellationToken ct) =>
-            await client.SearchPlaces(searchText, pageNumber, pageSize, ct);
+        public async UniTask<PlacesData.IPlacesAPIResponse> SearchPlacesAsync(string searchText, int pageNumber, int pageSize, CancellationToken ct) =>
+            await client.SearchPlacesAsync(searchText, pageNumber, pageSize, ct);
 
-        public async UniTask<PlacesData.PlaceInfo> GetPlace(Vector2Int coords, CancellationToken ct, bool renewCache = false)
+        public async UniTask<PlacesData.PlaceInfo> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false)
         {
             if (renewCache)
                 placesByCoords.Remove(coords);
             else if (placesByCoords.TryGetValue(coords, out PlacesData.PlaceInfo placeInfo))
                 return placeInfo;
 
-            PlacesData.PlaceInfo place = await client.GetPlace(coords, ct);
+            PlacesData.PlaceInfo place = await client.GetPlaceAsync(coords, ct);
             CachePlace(place);
             return place;
         }
 
-        public async UniTask<PlacesData.PlaceInfo> GetPlace(string placeUUID, CancellationToken ct, bool renewCache = false)
+        public async UniTask<PlacesData.PlaceInfo> GetPlaceAsync(string placeUUID, CancellationToken ct, bool renewCache = false)
         {
             if (renewCache)
                 placesById.Remove(placeUUID);
             else if (placesById.TryGetValue(placeUUID, out PlacesData.PlaceInfo placeInfo))
                 return placeInfo;
 
-            PlacesData.PlaceInfo place = await client.GetPlace(placeUUID, ct);
+            PlacesData.PlaceInfo place = await client.GetPlaceAsync(placeUUID, ct);
             CachePlace(place);
             return place;
         }
 
-        public async UniTask<List<PlacesData.PlaceInfo>> GetPlacesByCoordsList(IEnumerable<Vector2Int> coordsList, CancellationToken ct, bool renewCache = false)
+        public async UniTask<List<PlacesData.PlaceInfo>> GetPlacesByCoordsListAsync(IEnumerable<Vector2Int> coordsList, CancellationToken ct, bool renewCache = false)
         {
             using PoolExtensions.Scope<List<PlacesData.PlaceInfo>> rentedAlreadyCachedPlaces = PlacesData.PLACE_INFO_LIST_POOL.AutoScope();
             using PoolExtensions.Scope<List<Vector2Int>> coordsToRequest = COORDS_TO_REQ_POOL.AutoScope();
@@ -86,7 +86,7 @@ namespace DCL.PlacesAPIService
 
             if (coordsToRequest.Value.Count > 0)
             {
-                places = await client.GetPlacesByCoordsList(coordsToRequest.Value, places, ct);
+                places = await client.GetPlacesByCoordsListAsync(coordsToRequest.Value, places, ct);
 
                 foreach (PlacesData.PlaceInfo place in places)
                     CachePlace(place);
@@ -97,18 +97,18 @@ namespace DCL.PlacesAPIService
             return places;
         }
 
-        public async UniTask<IReadOnlyList<PlacesData.PlaceInfo>> GetFavorites(int pageNumber, int pageSize, CancellationToken ct, bool renewCache = false)
+        public async UniTask<IReadOnlyList<PlacesData.PlaceInfo>> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct, bool renewCache = false)
         {
             const int CACHE_EXPIRATION = 30; // Seconds
 
             // We need to pass the source to avoid conflicts with parallel calls forcing renewCache
-            async UniTask RetrieveFavorites(UniTaskCompletionSource<PlacesData.IPlacesAPIResponse> source)
+            async UniTask RetrieveFavoritesAsync(UniTaskCompletionSource<PlacesData.IPlacesAPIResponse> source)
             {
                 PlacesData.IPlacesAPIResponse favorites;
 
                 // We dont use the ct param, otherwise the whole flow would be cancel if the first call is cancelled
-                if (pageNumber == -1 && pageSize == -1) favorites = await client.GetAllFavorites(ct);
-                else { favorites = await client.GetFavorites(pageNumber, pageSize, disposeCts.Token); }
+                if (pageNumber == -1 && pageSize == -1) favorites = await client.GetAllFavoritesAsync(ct);
+                else { favorites = await client.GetFavoritesAsync(pageNumber, pageSize, disposeCts.Token); }
 
                 foreach (PlacesData.PlaceInfo place in favorites.Data)
                     CachePlace(place);
@@ -122,7 +122,7 @@ namespace DCL.PlacesAPIService
                 localFavorites.Clear();
                 serverFavoritesLastRetrieval = DateTime.Now;
                 serverFavoritesCompletionSource = new UniTaskCompletionSource<PlacesData.IPlacesAPIResponse>();
-                RetrieveFavorites(serverFavoritesCompletionSource).Forget();
+                RetrieveFavoritesAsync(serverFavoritesCompletionSource).Forget();
             }
 
             using PlacesData.IPlacesAPIResponse serverFavorites = await serverFavoritesCompletionSource.Task.AttachExternalCancellation(ct);
@@ -155,27 +155,27 @@ namespace DCL.PlacesAPIService
             return composedFavorites;
         }
 
-        public async UniTask SetPlaceFavorite(string placeUUID, bool isFavorite, CancellationToken ct)
+        public async UniTask SetPlaceFavoriteAsync(string placeUUID, bool isFavorite, CancellationToken ct)
         {
             localFavorites[placeUUID] = isFavorite;
             composedFavoritesDirty = true;
-            await client.SetPlaceFavorite(placeUUID, isFavorite, ct);
+            await client.SetPlaceFavoriteAsync(placeUUID, isFavorite, ct);
         }
 
-        public async UniTask SetPlaceVote(bool? isUpvote, string placeUUID, CancellationToken ct)
+        public async UniTask SetPlaceVoteAsync(bool? isUpvote, string placeUUID, CancellationToken ct)
         {
-            await client.SetPlaceVote(isUpvote, placeUUID, ct);
+            await client.SetPlaceVoteAsync(isUpvote, placeUUID, ct);
         }
 
-        public async UniTask SetPlaceFavorite(Vector2Int coords, bool isFavorite, CancellationToken ct)
+        public async UniTask SetPlaceFavoriteAsync(Vector2Int coords, bool isFavorite, CancellationToken ct)
         {
-            PlacesData.PlaceInfo place = await GetPlace(coords, ct);
-            await SetPlaceFavorite(place.id, isFavorite, ct);
+            PlacesData.PlaceInfo place = await GetPlaceAsync(coords, ct);
+            await SetPlaceFavoriteAsync(place.id, isFavorite, ct);
         }
 
-        public async UniTask<bool> IsFavoritePlace(PlacesData.PlaceInfo placeInfo, CancellationToken ct, bool renewCache = false)
+        public async UniTask<bool> IsFavoritePlaceAsync(PlacesData.PlaceInfo placeInfo, CancellationToken ct, bool renewCache = false)
         {
-            IReadOnlyList<PlacesData.PlaceInfo> favorites = await GetFavorites(-1, -1, ct, renewCache);
+            IReadOnlyList<PlacesData.PlaceInfo> favorites = await GetFavoritesAsync(-1, -1, ct, renewCache);
 
             foreach (PlacesData.PlaceInfo favorite in favorites)
             {
@@ -186,10 +186,10 @@ namespace DCL.PlacesAPIService
             return false;
         }
 
-        public async UniTask<bool> IsFavoritePlace(Vector2Int coords, CancellationToken ct, bool renewCache = false)
+        public async UniTask<bool> IsFavoritePlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false)
         {
             // We could call IsFavoritePlace with the placeInfo and avoid code repetition, but this way we can have the calls in parallel
-            (PlacesData.PlaceInfo placeInfo, IReadOnlyList<PlacesData.PlaceInfo> favorites) = await UniTask.WhenAll(GetPlace(coords, ct, renewCache), GetFavorites(0, 1000, ct, renewCache));
+            (PlacesData.PlaceInfo placeInfo, IReadOnlyList<PlacesData.PlaceInfo> favorites) = await UniTask.WhenAll(GetPlaceAsync(coords, ct, renewCache), GetFavoritesAsync(0, 1000, ct, renewCache));
 
             foreach (PlacesData.PlaceInfo favorite in favorites)
             {
@@ -200,10 +200,10 @@ namespace DCL.PlacesAPIService
             return false;
         }
 
-        public async UniTask<bool> IsFavoritePlace(string placeUUID, CancellationToken ct, bool renewCache = false)
+        public async UniTask<bool> IsFavoritePlaceAsync(string placeUUID, CancellationToken ct, bool renewCache = false)
         {
             // We could call IsFavoritePlace with the placeInfo and avoid code repetition, but this way we can have the calls in parallel
-            (PlacesData.PlaceInfo placeInfo, IReadOnlyList<PlacesData.PlaceInfo> favorites) = await UniTask.WhenAll(GetPlace(placeUUID, ct, renewCache), GetFavorites(0, 1000, ct, renewCache));
+            (PlacesData.PlaceInfo placeInfo, IReadOnlyList<PlacesData.PlaceInfo> favorites) = await UniTask.WhenAll(GetPlaceAsync(placeUUID, ct, renewCache), GetFavoritesAsync(0, 1000, ct, renewCache));
 
             foreach (PlacesData.PlaceInfo favorite in favorites)
             {
@@ -221,16 +221,16 @@ namespace DCL.PlacesAPIService
             foreach (Vector2Int placeInfoPosition in placeInfo.Positions) { placesByCoords[placeInfoPosition] = placeInfo; }
         }
 
-        public async UniTask<IReadOnlyList<string>> GetPointsOfInterestCoords(CancellationToken ct, bool renewCache = false)
+        public async UniTask<IReadOnlyList<string>> GetPointsOfInterestCoordsAsync(CancellationToken ct, bool renewCache = false)
         {
             if (renewCache || pointsOfInterestCoords == null)
-                pointsOfInterestCoords = await client.GetPointsOfInterestCoords(ct);
+                pointsOfInterestCoords = await client.GetPointsOfInterestCoordsAsync(ct);
 
             return pointsOfInterestCoords;
         }
 
-        public async UniTask ReportPlace(PlaceContentReportPayload placeContentReportPayload, CancellationToken ct) =>
-            await client.ReportPlace(placeContentReportPayload, ct);
+        public async UniTask ReportPlaceAsync(PlaceContentReportPayload placeContentReportPayload, CancellationToken ct) =>
+            await client.ReportPlaceAsync(placeContentReportPayload, ct);
 
         public void Dispose()
         {
