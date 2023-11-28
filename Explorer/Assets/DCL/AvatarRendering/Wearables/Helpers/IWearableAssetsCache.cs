@@ -19,7 +19,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         }
 
         List<CachedWearable> AllCachedWearables { get; }
-        Dictionary<WearableAsset, (uint LastUsedFrame, List<CachedWearable> Assets)> Cache { get; }
+
+        Dictionary<WearableAsset, List<CachedWearable>> Cache { get; }
 
         bool TryGet(WearableAsset asset, out CachedWearable instance);
 

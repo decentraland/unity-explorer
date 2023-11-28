@@ -100,7 +100,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
         {
             var unloadedAmount = 0;
 
-            for (; frameTimeBudgetProvider.TrySpendBudget() && unloadedAmount < maxUnloadAmount && unloadQueue.Count > 0 && unloadQueue.TryDequeue(out string key) && cache.TryGetValue(key, out List<GltfContainerAsset> assets);)
+            while (frameTimeBudgetProvider.TrySpendBudget()
+                   && unloadedAmount < maxUnloadAmount && unloadQueue.Count > 0
+                   && unloadQueue.TryDequeue(out string key) && cache.TryGetValue(key, out List<GltfContainerAsset> assets))
             {
                 unloadedAmount += assets.Count;
 

@@ -1,9 +1,9 @@
 ﻿using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Optimization.Priority_Queue;
 using DCL.Profiling;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Pool;
 using Utility;
 using Utility.Pool;
 
@@ -24,7 +24,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         private readonly Transform parentContainer;
 
-        public Dictionary<WearableAsset, (uint LastUsedFrame, List<CachedWearable> Assets)> Cache { get; }
+        private readonly SimplePriorityQueue<WearableAsset, uint> unloadQueue = new ();
+
+        public Dictionary<WearableAsset, List<CachedWearable>> Cache { get; }
         public List<CachedWearable> AllCachedWearables { get; } = new ();
 
         public WearableAssetsCache(int initialCapacity)
@@ -33,7 +35,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             parentContainerGo.SetActive(false);
             parentContainer = parentContainerGo.transform;
 
-            Cache = new Dictionary<WearableAsset, (uint LastUsedFrame, List<CachedWearable> Assets)>(initialCapacity);
+            Cache = new Dictionary<WearableAsset, List<CachedWearable>>(initialCapacity);
 
             // instantiate a couple of lists to prevent runtime allocations
             listPool = new ListObjectPool<CachedWearable>(defaultCapacity: initialCapacity);
@@ -46,16 +48,19 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public bool TryGet(WearableAsset asset, out CachedWearable instance)
         {
-            if (Cache.TryGetValue(asset, out (uint LastUsedFrame, List<CachedWearable> list) value) && value.list.Count > 0)
+            if (Cache.TryGetValue(asset, out List<CachedWearable> list) && list.Count > 0)
             {
                 // Remove from the tail of the list
-                instance = value.list[^1];
+                instance = list[^1];
+                list.RemoveAt(list.Count - 1);
 
-                value.list.RemoveAt(value.list.Count - 1);
-                value.LastUsedFrame = (uint)Time.frameCount;
-
-                if (value.list.Count == 0)
+                if (list.Count == 0)
+                {
                     Cache.Remove(asset);
+                    unloadQueue.Remove(asset);
+                }
+                else
+                    unloadQueue.TryUpdatePriority(asset, (uint)Time.frameCount);
 
                 ProfilingCounters.CachedWearablesInCacheAmount.Value--;
                 return true;
@@ -69,10 +74,16 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             WearableAsset asset = cachedWearable.OriginalAsset;
 
-            if (!Cache.TryGetValue(asset, out (uint LastUsedFrame, List<CachedWearable> list) value))
-                Cache[asset] = value = ((uint)Time.frameCount, listPool.Get());
+            if (!Cache.TryGetValue(asset, out List<CachedWearable> list))
+            {
+                Cache[asset] = list = listPool.Get();
+                unloadQueue.Enqueue(asset, (uint)Time.frameCount);
+            }
+            else
+                unloadQueue.TryUpdatePriority(asset, (uint)Time.frameCount);
 
-            value.list.Add(cachedWearable);
+            list.Add(cachedWearable);
+
             ProfilingCounters.CachedWearablesInCacheAmount.Value++;
 
             // This logic should not be executed if the application is quitting
@@ -85,59 +96,22 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount)
         {
-            using (ListPool<KeyValuePair<WearableAsset, (uint LastUsedFrame, List<CachedWearable> Assets)>>.Get(out List<KeyValuePair<WearableAsset, (uint LastUsedFrame, List<CachedWearable> Assets)>> sortedCache))
+            var unloadedAmount = 0;
+
+            while (frameTimeBudgetProvider.TrySpendBudget()
+                   && unloadedAmount < maxUnloadAmount && unloadQueue.Count > 0
+                   && unloadQueue.TryDequeue(out WearableAsset key) && Cache.TryGetValue(key, out List<CachedWearable> assets))
             {
-                PrepareListSortedByLastUsage(sortedCache);
-                var totalUnloadedAssets = 0;
+                unloadedAmount += assets.Count;
 
-                foreach (KeyValuePair<WearableAsset, (uint LastUsedFrame, List<CachedWearable> Assets)> pair in sortedCache)
-                {
-                    if (!frameTimeBudgetProvider.TrySpendBudget()) break;
+                foreach (CachedWearable asset in assets)
+                    asset.Dispose();
 
-                    int disposedGltfAssets = DisposeAssetsInSortedList(pair);
-                    ClearCache(pair, disposedGltfAssets);
-
-                    totalUnloadedAssets += disposedGltfAssets;
-                }
-
-                ProfilingCounters.CachedWearablesInCacheAmount.Value -= totalUnloadedAssets;
+                assets.Clear();
+                Cache.Remove(key);
             }
 
-            return;
-
-            void PrepareListSortedByLastUsage(List<KeyValuePair<WearableAsset, (uint LastUsedFrame, List<CachedWearable> Assets)>> sortedCache)
-            {
-                foreach (KeyValuePair<WearableAsset, (uint LastUsedFrame, List<CachedWearable> Assets)> item in Cache)
-                    sortedCache.Add(item);
-
-                sortedCache.Sort(CompareByLastUsedFrame);
-            }
-
-            int DisposeAssetsInSortedList(KeyValuePair<WearableAsset, (uint LastUsedFrame, List<CachedWearable> Assets)> pair)
-            {
-                var i = 0;
-
-                for (; i < pair.Value.Assets.Count; i++)
-                {
-                    if (!frameTimeBudgetProvider.TrySpendBudget()) break;
-                    if (maxUnloadAmount-- <= 0) break;
-
-                    pair.Value.Assets[i].Dispose();
-                }
-
-                return i;
-            }
-
-            void ClearCache(KeyValuePair<WearableAsset, (uint LastUsedFrame, List<CachedWearable> Assets)> pair, int disposedAssets)
-            {
-                Cache[pair.Key].Assets.RemoveRange(0, disposedAssets);
-
-                if (Cache[pair.Key].Assets.Count == 0)
-                    Cache.Remove(pair.Key);
-            }
+            ProfilingCounters.CachedWearablesInCacheAmount.Value -= unloadedAmount;
         }
-
-        private static int CompareByLastUsedFrame(KeyValuePair<WearableAsset, (uint LastUsedFrame, List<CachedWearable> Assets)> pair1, KeyValuePair<WearableAsset, (uint LastUsedFrame, List<CachedWearable> Assets)> pair2) =>
-            pair1.Value.LastUsedFrame.CompareTo(pair2.Value.LastUsedFrame);
     }
 }
