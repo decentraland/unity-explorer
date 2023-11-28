@@ -20,12 +20,10 @@ namespace DCL.Navmap
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters  { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter {BackgroundIsActive = true} } };
         private const MapLayer ACTIVE_MAP_LAYERS =
-            MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.HomePoint | MapLayer.ScenesOfInterest | MapLayer.PlayerMarker | MapLayer.HotUsersMarkers | MapLayer.ColdUsersMarkers | MapLayer.ParcelHoverHighlight;
+            MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ParcelHoverHighlight;
 
         private readonly NavmapView navmapView;
         private readonly IMapRenderer mapRenderer;
-        private readonly IPlacesAPIService placesAPIService;
-        private readonly IAssetsProvisioner assetsProvisioner;
         private CancellationTokenSource animationCts;
         private IMapCameraController cameraController;
         private readonly NavmapZoomController zoomController;
@@ -36,7 +34,6 @@ namespace DCL.Navmap
         private readonly SatelliteController satelliteController;
         private readonly StreetViewController streetViewController;
         private readonly Dictionary<ExploreSections, ISection> mapSections;
-        private readonly ITeleportController teleportController;
 
         public NavmapController(
             NavmapView navmapView,
@@ -47,14 +44,11 @@ namespace DCL.Navmap
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
-            this.placesAPIService = placesAPIService;
-            this.assetsProvisioner = assetsProvisioner;
-            this.teleportController = teleportController;
 
             rectTransform = this.navmapView.transform.parent.GetComponent<RectTransform>();
 
             zoomController = new NavmapZoomController(navmapView.zoomView);
-            floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, this.teleportController);
+            floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, teleportController);
             filterController = new NavmapFilterController(this.navmapView.filterView);
             searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, placesAPIService, assetsProvisioner);
             searchBarController.OnResultClicked += OnResultClicked;
