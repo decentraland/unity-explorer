@@ -49,24 +49,21 @@ namespace DCL.ResourcesUnloading
             if (!fpsCapBudgetProvider.TrySpendBudget()) return;
 
             // Debug.Log(profilingProvider.CurrentFrameTimeValueInNS);
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                using (texturesCacheMarker.Auto())
-                    texturesCache.Unload(3);
 
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                using (assetBundleCacheMarker.Auto())
-                    assetBundleCache.Unload(fpsCapBudgetProvider, 1);
+            using (texturesCacheMarker.Auto())
+                texturesCache.Unload(fpsCapBudgetProvider, 3);
+
+            using (assetBundleCacheMarker.Auto())
+                assetBundleCache.Unload(fpsCapBudgetProvider, 1);
 
             using (gltfContainerAssetsCacheMarker.Auto())
                 gltfContainerAssetsCache.Unload(fpsCapBudgetProvider, 3);
 
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                using (wearableCatalogMarker.Auto())
-                    wearableCatalog.Unload(fpsCapBudgetProvider);
+            using (wearableCatalogMarker.Auto())
+                wearableCatalog.Unload(fpsCapBudgetProvider);
 
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                using (wearableAssetsCacheMarker.Auto())
-                    wearableAssetsCache.Unload(fpsCapBudgetProvider, 10);
+            using (wearableAssetsCacheMarker.Auto())
+                wearableAssetsCache.Unload(fpsCapBudgetProvider, 10);
 
             ClearAvatarsRelatedPools();
         }
