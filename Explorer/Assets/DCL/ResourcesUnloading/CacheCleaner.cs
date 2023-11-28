@@ -1,4 +1,5 @@
-﻿using DCL.AvatarRendering.AvatarShape.UnityInterface;
+﻿using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Optimization.Pools;
@@ -53,38 +54,37 @@ namespace DCL.ResourcesUnloading
                 using (texturesCacheMarker.Auto())
                     texturesCache.Unload(fpsCapBudgetProvider, 3);
 
-            //
-            // if (fpsCapBudgetProvider.TrySpendBudget())
-            //     using (assetBundleCacheMarker.Auto())
-            //         assetBundleCache.Unload(fpsCapBudgetProvider, 1);
-            //
-            // if (fpsCapBudgetProvider.TrySpendBudget())
-            //     using (gltfContainerAssetsCacheMarker.Auto())
-            //         gltfContainerAssetsCache.Unload(fpsCapBudgetProvider, 3);
-            //
-            // if (fpsCapBudgetProvider.TrySpendBudget())
-            //     using (wearableCatalogMarker.Auto())
-            //         wearableCatalog.Unload(fpsCapBudgetProvider);
-            //
-            // if (fpsCapBudgetProvider.TrySpendBudget())
-            //     using (wearableAssetsCacheMarker.Auto())
-            //         wearableAssetsCache.Unload(fpsCapBudgetProvider, 10);
-            //
-            // if (fpsCapBudgetProvider.TrySpendBudget())
-            //     using (avatarPoolRegistryMarker.Auto())
-            //         avatarPoolRegistry.Clear(10);
-            //
-            // if (fpsCapBudgetProvider.TrySpendBudget())
-            //     using (computeShaderPoolMarker.Auto())
-            //         computeShaderPool.Clear(10);
-            //
-            // if (fpsCapBudgetProvider.TrySpendBudget())
-            //     using (USED_SLOTS_POOLCacheMarker.Auto())
-            //         AvatarCustomSkinningComponent.USED_SLOTS_POOL.Clear(10);
-            //
-            // if (fpsCapBudgetProvider.TrySpendBudget())
-            //     using (materialPoolCacheMarker.Auto())
-            //         materialPool.Clear(10);
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                using (assetBundleCacheMarker.Auto())
+                    assetBundleCache.Unload(fpsCapBudgetProvider, 1);
+
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                using (gltfContainerAssetsCacheMarker.Auto())
+                    gltfContainerAssetsCache.Unload(fpsCapBudgetProvider, 3);
+
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                using (wearableCatalogMarker.Auto())
+                    wearableCatalog.Unload(fpsCapBudgetProvider);
+
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                using (wearableAssetsCacheMarker.Auto())
+                    wearableAssetsCache.Unload(fpsCapBudgetProvider, 10);
+
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                using (avatarPoolRegistryMarker.Auto())
+                    avatarPoolRegistry.Clear(10);
+
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                using (computeShaderPoolMarker.Auto())
+                    computeShaderPool.Clear(10);
+
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                using (USED_SLOTS_POOLCacheMarker.Auto())
+                    AvatarCustomSkinningComponent.USED_SLOTS_POOL.Clear(10);
+
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                using (materialPoolCacheMarker.Auto())
+                    materialPool.Clear(10);
         }
 
         public void Register(AssetBundleCache assetBundleCache) =>
