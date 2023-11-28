@@ -49,18 +49,16 @@ namespace DCL.ResourcesUnloading
             if (!fpsCapBudgetProvider.TrySpendBudget()) return;
 
             // Debug.Log(profilingProvider.CurrentFrameTimeValueInNS);
-
             if (fpsCapBudgetProvider.TrySpendBudget())
                 using (texturesCacheMarker.Auto())
-                    texturesCache.Unload(fpsCapBudgetProvider, 3);
+                    texturesCache.Unload(3);
 
             if (fpsCapBudgetProvider.TrySpendBudget())
                 using (assetBundleCacheMarker.Auto())
                     assetBundleCache.Unload(fpsCapBudgetProvider, 1);
 
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                using (gltfContainerAssetsCacheMarker.Auto())
-                    gltfContainerAssetsCache.Unload(fpsCapBudgetProvider, 3);
+            using (gltfContainerAssetsCacheMarker.Auto())
+                gltfContainerAssetsCache.Unload(fpsCapBudgetProvider, 3);
 
             if (fpsCapBudgetProvider.TrySpendBudget())
                 using (wearableCatalogMarker.Auto())
@@ -70,6 +68,11 @@ namespace DCL.ResourcesUnloading
                 using (wearableAssetsCacheMarker.Auto())
                     wearableAssetsCache.Unload(fpsCapBudgetProvider, 10);
 
+            ClearAvatarsRelatedPools();
+        }
+
+        private void ClearAvatarsRelatedPools()
+        {
             if (fpsCapBudgetProvider.TrySpendBudget())
                 using (avatarPoolRegistryMarker.Auto())
                     avatarPoolRegistry.Clear(10);

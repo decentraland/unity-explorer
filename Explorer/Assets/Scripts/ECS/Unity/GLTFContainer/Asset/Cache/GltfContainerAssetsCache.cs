@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Optimization.Priority_Queue;
 using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
@@ -21,7 +22,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
     {
         private readonly Transform parentContainer;
 
-        private readonly Dictionary<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)> cache;
+        private readonly Dictionary<string, List<GltfContainerAsset>> cache;
+        private readonly SimplePriorityQueue<string, uint> unloadQueue = new ();
 
         public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>> OngoingRequests { get; }
         public IDictionary<string, StreamableLoadingResult<GltfContainerAsset>> IrrecoverableFailures { get; }
@@ -33,7 +35,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             parentContainer = new GameObject($"POOL_CONTAINER_{nameof(GltfContainerAsset)}").transform;
             parentContainer.gameObject.SetActive(false);
 
-            cache = new Dictionary<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)>(this);
+            cache = new Dictionary<string, List<GltfContainerAsset>>(this);
 
             OngoingRequests = new FakeDictionaryCache<UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>>();
             IrrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<GltfContainerAsset>>.Get();
@@ -48,39 +50,25 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             isDisposed = true;
         }
 
-        public bool TryGet(in string key, out GltfContainerAsset asset)
-        {
-            if (cache.TryGetValue(key, out (uint LastUsedFrame, List<GltfContainerAsset> Assets) value) && value.Assets.Count > 0)
-            {
-                // Remove from the tail of the list
-                asset = value.Assets[^1];
-                value.Assets.RemoveAt(value.Assets.Count - 1);
-                value.LastUsedFrame = (uint)Time.frameCount;
-
-                ProfilingCounters.GltfInCacheAmount.Value--;
-                return true;
-            }
-
-            asset = default(GltfContainerAsset);
-            return false;
-        }
-
         public void Add(in string key, GltfContainerAsset asset)
         {
             // Nothing to do, we don't reuse the existing instantiated game objects
         }
 
+        /// <summary>
+        ///     Return to the pool
+        /// </summary>
         public void Dereference(in string key, GltfContainerAsset asset)
         {
-            // Return to the pool
-            if (!cache.TryGetValue(key, out (uint LastUsedFrame, List<GltfContainerAsset> Assets) value))
+            if (!cache.TryGetValue(key, out List<GltfContainerAsset> assets))
             {
-                value.Assets = new List<GltfContainerAsset>();
-                cache[key] = value;
+                assets = new List<GltfContainerAsset>();
+                cache[key] = assets;
+                unloadQueue.Enqueue(key, (uint)Time.frameCount);
             }
 
-            value.LastUsedFrame = (uint)Time.frameCount;
-            value.Assets.Add(asset);
+            assets.Add(asset);
+            unloadQueue.TryUpdatePriority(key, (uint)Time.frameCount);
 
             ProfilingCounters.GltfInCacheAmount.Value++;
 
@@ -91,59 +79,39 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             asset.Root.transform.SetParent(parentContainer);
         }
 
+        public bool TryGet(in string key, out GltfContainerAsset asset)
+        {
+            if (cache.TryGetValue(key, out List<GltfContainerAsset> assets) && assets.Count > 0)
+            {
+                // Remove from the tail of the list
+                asset = assets[^1];
+                assets.RemoveAt(assets.Count - 1);
+                unloadQueue.TryUpdatePriority(key, (uint)Time.frameCount);
+
+                ProfilingCounters.GltfInCacheAmount.Value--;
+                return true;
+            }
+
+            asset = default(GltfContainerAsset);
+            return false;
+        }
+
         public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount)
         {
-            using (ListPool<KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)>>.Get(out List<KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)>> sortedCache))
+            var unloadedAmount = 0;
+
+            for (; frameTimeBudgetProvider.TrySpendBudget() && unloadedAmount < maxUnloadAmount && unloadQueue.Count > 0 && unloadQueue.TryDequeue(out string key) && cache.TryGetValue(key, out List<GltfContainerAsset> assets);)
             {
-                PrepareListSortedByLastUsage(sortedCache);
+                unloadedAmount += assets.Count;
 
-                var totalUnloadedAssets = 0;
+                foreach (GltfContainerAsset asset in assets)
+                    asset.Dispose();
 
-                foreach (KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)> pair in sortedCache)
-                {
-                    if (!frameTimeBudgetProvider.TrySpendBudget()) break;
-
-                    int disposedGltfAssets = DisposeGltfAssetsInSortedList(pair);
-                    ClearCache(pair, disposedGltfAssets);
-
-                    totalUnloadedAssets += disposedGltfAssets;
-                }
-
-                ProfilingCounters.GltfInCacheAmount.Value -= totalUnloadedAssets;
+                assets.Clear();
+                cache.Remove(key);
             }
 
-            return;
-
-            void PrepareListSortedByLastUsage(List<KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)>> sortedCache)
-            {
-                foreach (KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)> item in cache)
-                    sortedCache.Add(item);
-
-                sortedCache.Sort(CompareByLastUsedFrame);
-            }
-
-            int DisposeGltfAssetsInSortedList(KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)> pair)
-            {
-                var i = 0;
-
-                for (; i < pair.Value.Assets.Count; i++)
-                {
-                    if (!frameTimeBudgetProvider.TrySpendBudget()) break;
-                    if (maxUnloadAmount-- <= 0) break;
-
-                    pair.Value.Assets[i].Dispose();
-                }
-
-                return i;
-            }
-
-            void ClearCache(KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)> pair, int disposeGltfAssets)
-            {
-                cache[pair.Key].Assets.RemoveRange(0, disposeGltfAssets);
-
-                if (cache[pair.Key].Assets.Count == 0)
-                    cache.Remove(pair.Key);
-            }
+            ProfilingCounters.GltfInCacheAmount.Value -= unloadedAmount;
         }
 
         bool IEqualityComparer<string>.Equals(string x, string y) =>
@@ -151,8 +119,5 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
         int IEqualityComparer<string>.GetHashCode(string obj) =>
             obj.GetHashCode(StringComparison.OrdinalIgnoreCase);
-
-        private static int CompareByLastUsedFrame(KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)> pair1, KeyValuePair<string, (uint LastUsedFrame, List<GltfContainerAsset> Assets)> pair2) =>
-            pair1.Value.LastUsedFrame.CompareTo(pair2.Value.LastUsedFrame);
     }
 }

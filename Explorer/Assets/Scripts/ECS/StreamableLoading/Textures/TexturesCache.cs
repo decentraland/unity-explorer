@@ -1,5 +1,4 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Optimization.Priority_Queue;
 using DCL.Profiling;
 using ECS.StreamableLoading.Cache;
@@ -59,19 +58,14 @@ namespace ECS.StreamableLoading.Textures
 
         public void Dereference(in GetTextureIntention key, Texture2D asset) { }
 
-        public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount)
+        public void Unload(int maxUnloadAmount)
         {
-            for (var i = 0; i < maxUnloadAmount || unloadQueue.Count == 0; i++)
+            for (var i = 0; i < maxUnloadAmount && unloadQueue.Count > 0 && unloadQueue.TryDequeue(out GetTextureIntention key); i++)
             {
-                if (!frameTimeBudgetProvider.TrySpendBudget()) break;
+                UnityObjectUtils.SafeDestroy(cache[key]);
+                ProfilingCounters.TexturesAmount.Value--;
 
-                if (unloadQueue.TryDequeue(out GetTextureIntention key))
-                {
-                    UnityObjectUtils.SafeDestroy(cache[key]);
-                    ProfilingCounters.TexturesAmount.Value--;
-
-                    cache.Remove(key);
-                }
+                cache.Remove(key);
             }
 
             ProfilingCounters.TexturesInCache.Value = cache.Count;
