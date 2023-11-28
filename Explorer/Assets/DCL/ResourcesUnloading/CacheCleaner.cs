@@ -51,7 +51,7 @@ namespace DCL.ResourcesUnloading
             // Debug.Log(profilingProvider.CurrentFrameTimeValueInNS);
 
             using (texturesCacheMarker.Auto())
-                texturesCache.Unload(fpsCapBudgetProvider, 3);
+                texturesCache.Unload(fpsCapBudgetProvider, 1);
 
             using (assetBundleCacheMarker.Auto())
                 assetBundleCache.Unload(fpsCapBudgetProvider, 1);

@@ -33,8 +33,6 @@ namespace ECS.StreamableLoading.AssetBundles
             GameObject = gameObject;
             Dependencies = dependencies;
 
-            LastUsedFrame = (uint)Time.frameCount;
-
             ProfilingCounters.ABDataAmount.Value++;
         }
 
@@ -55,6 +53,7 @@ namespace ECS.StreamableLoading.AssetBundles
         public void AddReference()
         {
             referencesCount++;
+            LastUsedFrame = (uint)Time.frameCount;
 
             if (referencesCount == 1)
                 ProfilingCounters.ABReferencedAmount.Value++;
