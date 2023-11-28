@@ -9,6 +9,8 @@ namespace DCL.Diagnostics
         /// </summary>
         bool DebounceEnabled { get; }
 
+        bool IsEnabled(ReportHandler handler);
+
         /// <summary>
         ///     Category is enabled for any reporter
         /// </summary>
