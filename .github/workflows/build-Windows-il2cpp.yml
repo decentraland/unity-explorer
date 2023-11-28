@@ -67,7 +67,7 @@ jobs:
       - name: Enable sentry debug symbols upload
         #if: github.ref == 'refs/heads/main'
         run: |
-          $AUTH_TOKEN = ${{ secrets.SENTRY_CLI_AUTH_TOKEN }}          
+          $AUTH_TOKEN = "${{ secrets.SENTRY_CLI_AUTH_TOKEN }}"          
           Add-Content -Value "SENTRY_CLI_AUTH_TOKEN=$AUTH_TOKEN" -Path $env:GITHUB_ENV
           Write-Output $AUTH_TOKEN
 
