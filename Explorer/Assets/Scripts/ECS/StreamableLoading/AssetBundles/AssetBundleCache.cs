@@ -13,10 +13,11 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleCache : IStreamableCache<AssetBundleData, GetAssetBundleIntention>
     {
-        private static readonly Comparison<KeyValuePair<GetAssetBundleIntention, AssetBundleData>> compareByLastUsedFrameReversed =
-            (pair1, pair2) => pair2.Value.LastUsedFrame.CompareTo(pair1.Value.LastUsedFrame);
+        private static readonly Comparison<(GetAssetBundleIntention intention, AssetBundleData abData)> compareByLastUsedFrameReversed =
+            (pair1, pair2) => pair2.abData.LastUsedFrame.CompareTo(pair1.abData.LastUsedFrame);
+
         private readonly Dictionary<GetAssetBundleIntention, AssetBundleData> cache;
-        private readonly List<KeyValuePair<GetAssetBundleIntention, AssetBundleData>> listedCache;
+        private readonly List<(GetAssetBundleIntention intention, AssetBundleData abData)> listedCache = new ();
 
         public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>> OngoingRequests { get; }
         public IDictionary<string, StreamableLoadingResult<AssetBundleData>> IrrecoverableFailures { get; }
@@ -29,7 +30,6 @@ namespace ECS.StreamableLoading.AssetBundles
 
             IrrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Get();
             OngoingRequests = DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>.Get();
-            listedCache = ListPool<KeyValuePair<GetAssetBundleIntention, AssetBundleData>>.Get();
         }
 
         public void Dispose()
@@ -39,7 +39,6 @@ namespace ECS.StreamableLoading.AssetBundles
 
             DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Release(IrrecoverableFailures as Dictionary<string, StreamableLoadingResult<AssetBundleData>>);
             DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>.Release(OngoingRequests as Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>);
-            ListPool<KeyValuePair<GetAssetBundleIntention, AssetBundleData>>.Release(listedCache);
 
             disposed = true;
         }
@@ -49,8 +48,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public void Add(in GetAssetBundleIntention key, AssetBundleData asset)
         {
-            cache.Add(key, asset);
-            listedCache.Add(new KeyValuePair<GetAssetBundleIntention, AssetBundleData>(key, asset));
+            if (cache.TryAdd(key, asset))
+                listedCache.Add((key, asset));
         }
 
         public void Dereference(in GetAssetBundleIntention key, AssetBundleData asset) { }
@@ -71,7 +70,6 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 abData.Dispose();
                 cache.Remove(key);
-
                 listedCache.RemoveAt(i);
 
                 maxUnloadAmount--;
