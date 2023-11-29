@@ -64,12 +64,11 @@ jobs:
           Add-Content -Value "SENTRY_ENVIRONMENT=$SENTRY_ENVIRONMENT" -Path $env:GITHUB_ENV
           Write-Output $SENTRY_ENVIRONMENT
           
-      - name: Enable sentry debug symbols upload
-        if: github.ref == 'refs/heads/main'
+      - name: Enable or disable the upload of sentry debug symbols
         run: |
-          $AUTH_TOKEN = "${{ secrets.SENTRY_CLI_AUTH_TOKEN }}"          
-          Add-Content -Value "SENTRY_CLI_AUTH_TOKEN=$AUTH_TOKEN" -Path $env:GITHUB_ENV
-          Write-Output $AUTH_TOKEN
+          $uploadSymbols = github.ref == 'refs/heads/main'
+          Add-Content -Value "SENTRY_UPLOAD_DEBUG_SYMBOLS=$uploadSymbols" -Path $env:GITHUB_ENV
+          Write-Output $uploadSymbols
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -106,8 +105,7 @@ jobs:
           projectPath: Explorer
           targetPlatform: ${{ matrix.targetPlatform }}
           versioning: Semantic
-          # pass sentry cli auth token so debug symbols are uploaded during build-time
-          customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ env.SENTRY_CLI_AUTH_TOKEN }}
+          customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }}
 
       # Upload artifact
       - name: Upload windows artifact
