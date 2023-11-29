@@ -87,8 +87,8 @@ namespace SceneRunner
             SetTargetFPS(targetFPS);
 
             // Start the scene
-
             await runtimeInstance.StartScene();
+
             AssertIsNotMainThread(nameof(SceneRuntimeImpl.StartScene));
 
             var stopWatch = new Stopwatch();
@@ -105,8 +105,18 @@ namespace SceneRunner
 
                     stopWatch.Restart();
 
-                    // We can't guarantee that the thread is preserved between updates
-                    await runtimeInstance.UpdateScene(deltaTime);
+                    try
+                    {
+                        // We can't guarantee that the thread is preserved between updates
+                        await runtimeInstance.UpdateScene(deltaTime);
+                    }
+                    catch (OperationCanceledException) { throw; }
+                    catch (Exception e)
+                    {
+                        sceneExceptionsHandler.OnJavaScriptException(e.Message);
+                        break;
+                    }
+
                     sceneStateProvider.TickNumber++;
 
                     AssertIsNotMainThread(nameof(SceneRuntimeImpl.UpdateScene));

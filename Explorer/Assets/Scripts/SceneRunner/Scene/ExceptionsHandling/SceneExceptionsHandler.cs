@@ -114,8 +114,10 @@ namespace SceneRunner.Scene.ExceptionsHandling
         public void OnJavaScriptException(string message)
         {
             // For javascript no tolerance
-            // TODO Log a proper exception
             sceneState.State = SceneState.JavaScriptError;
+
+            ReportHub.LogException(new SceneExecutionException(new[] { new Exception(message) },
+                new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo)));
         }
 
         public static SceneExceptionsHandler Create(ISceneStateProvider sceneState, SceneShortInfo sceneShortInfo)
