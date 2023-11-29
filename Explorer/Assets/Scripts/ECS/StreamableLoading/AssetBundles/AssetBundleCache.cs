@@ -56,11 +56,9 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount)
         {
-            if (!frameTimeBudgetProvider.TrySpendBudget()) return;
-
             listedCache.Sort(compareByLastUsedFrameReversed);
 
-            for (int i = listedCache.Count - 1; i >= 0 && maxUnloadAmount > 0; i--)
+            for (int i = listedCache.Count - 1; frameTimeBudgetProvider.TrySpendBudget() && i >= 0 && maxUnloadAmount > 0; i--)
             {
                 (GetAssetBundleIntention key, AssetBundleData abData) = listedCache[i];
                 if (!abData.CanBeDisposed()) continue;

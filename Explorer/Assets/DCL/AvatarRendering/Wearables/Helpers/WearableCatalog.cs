@@ -10,8 +10,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public class WearableCatalog : IDisposable
     {
-        private static readonly Comparison<(string key, uint lastUsedFrame)> compareByLastUsedFrameReversed =
-            (pair1, pair2) => pair2.lastUsedFrame.CompareTo(pair1.lastUsedFrame);
+        private static readonly Comparison<(string key, uint lastUsedFrame)> compareByLastUsedFrame =
+            (pair1, pair2) => pair1.lastUsedFrame.CompareTo(pair2.lastUsedFrame);
 
         private readonly List<(string key, uint lastUsedFrame)> listedCacheKeys = ListPool<(string, uint)>.Get();
 
@@ -83,23 +83,25 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider)
         {
-            listedCacheKeys.Sort(compareByLastUsedFrameReversed);
+            listedCacheKeys.Sort(compareByLastUsedFrame);
 
-            for (int i = listedCacheKeys.Count - 1; i >= 0; i--)
-            {
+            for (var i = 0; frameTimeBudgetProvider.TrySpendBudget() && i < listedCacheKeys.Count; i++)
                 if (wearableDictionary.TryGetValue(listedCacheKeys[i].key, out IWearable wearable))
-                {
-                    for (var i1 = 0; i1 < wearable.WearableAssets?.Length; i1++)
-                    {
-                        WearableAsset wearableAsset = wearable.WearableAssets[i1]?.Asset;
+                    UnloadWearableAssets(wearable);
+        }
 
-                        if (wearableAsset == null) { wearable.WearableAssets[i1] = null; }
-                        else if (wearableAsset.ReferenceCount == 0)
-                        {
-                            wearableAsset.Dispose();
-                            wearable.WearableAssets[i1] = null;
-                        }
-                    }
+        private static void UnloadWearableAssets(IWearable wearable)
+        {
+            for (var i = 0; i < wearable.WearableAssets?.Length; i++)
+            {
+                WearableAsset wearableAsset = wearable.WearableAssets[i]?.Asset;
+
+                if (wearableAsset == null)
+                    wearable.WearableAssets[i] = null;
+                else if (wearableAsset.ReferenceCount == 0)
+                {
+                    wearableAsset.Dispose();
+                    wearable.WearableAssets[i] = null;
                 }
             }
         }

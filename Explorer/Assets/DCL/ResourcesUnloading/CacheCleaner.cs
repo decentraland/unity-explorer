@@ -14,6 +14,7 @@ namespace DCL.ResourcesUnloading
 {
     public class CacheCleaner
     {
+        // TODO: remove markers before merge to main
         private static readonly ProfilerMarker texturesCacheMarker = new ("CacheCleanup.texturesCache");
         private static readonly ProfilerMarker assetBundleCacheMarker = new ("CacheCleanup.assetBundleCache");
         private static readonly ProfilerMarker gltfContainerAssetsCacheMarker = new ("CacheCleanup.gltfContainerAssetsCache");
