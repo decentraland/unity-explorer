@@ -97,7 +97,10 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 // Parse off the main thread
                 await UniTask.SwitchToThreadPool();
-                return new SceneAssetBundleManifest(assetBundleURL, JsonUtility.FromJson<SceneAbDto>(result.Asset));
+                SceneAbDto sceneAbDto = JsonUtility.FromJson<SceneAbDto>(result.Asset);
+
+                if (sceneAbDto.ValidateVersion())
+                    return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto);
             }
 
             // Don't block the scene if the loading manifest failed, just use NULL
