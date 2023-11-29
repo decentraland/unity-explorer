@@ -370,6 +370,13 @@
       },
       "url": "https://packages.unity.com"
     },
+    "io.sentry.unity": {
+      "version": "https://github.com/getsentry/unity.git#1.6.0",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "3403952ec61923574ca845654a6cc3dd03255fdb"
+    },
     "net.tnrd.nsubstitute": {
       "version": "https://github.com/decentraland/Unity3D-NSubstitute.git",
       "depth": 0,
