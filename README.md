@@ -1,12 +1,6 @@
 # unity-explorer
 
-Explorer PoC
-
-# Goals
-
-- Implement the current Decentraland protocol
-- Execute an SDK7 scene
-- Dynamically load the world
+Explorer renderer 
 
 # Protocol Generation
 ## Update protocol
@@ -17,6 +11,77 @@ cd scripts
 npm install @dcl/protocol@next
 npm run build-protocol
 ```
+
+## SDK7 Integration Progress
+
+### Components 
+- [ ] `Animator`
+- [ ] `AudioSource`
+- [ ] `AudioStream`
+- [ ] `AvatarAttach`
+- [ ] `AvatarModifierArea`
+- [ ] `AvatarShape`
+- [ ] `Billboard`
+- [ ] `CRDT_MESSAGE_HEADER_LENGTH`
+- [ ] `CameraMode`
+- [ ] `CameraModeArea`
+- [x] `EngineInfo`
+- [ ] `GltfContainer`
+- [ ] `GltfContainerLoadingState`
+- [x] `Material`
+- [x] `MeshCollider`
+- [x] `MeshRenderer`
+- [ ] `Name`
+- [ ] `NftShape`
+- [ ] `PointerEvents`
+- [ ] `PointerEventsResult`
+- [ ] `PointerLock`
+- [ ] `RESERVED_LOCAL_ENTITIES`
+- [ ] `RESERVED_STATIC_ENTITIES`
+- [x] `Raycast`
+- [ ] `RaycastResult`
+- [ ] `SYSTEMS_REGULAR_PRIORITY`
+- [ ] `SyncComponents`
+- [ ] `TextShape`
+- [x] `Transform`
+- [ ] `Tween`
+- [ ] `TweenSequence`
+- [ ] `TweenState`
+- [ ] `UiBackground`
+- [ ] `UiCanvasInformation`
+- [ ] `UiDropdown`
+- [ ] `UiDropdownResult`
+- [ ] `UiInput`
+- [ ] `UiInputResult`
+- [ ] `UiText`
+- [ ] `UiTransform`
+- [ ] `VideoEvent`
+- [ ] `VideoPlayer`
+- [ ] `VisibilityComponent`
+- [ ] `componentDefinitionByName`
+- [ ] `engine`
+- [ ] `inputSystem`
+- [ ] `pointerEventsSystem`
+- [ ] `raycastSystem`
+- [ ] `tweenSystem`
+- [ ] `videoEventsSystem`
+
+
+## Runtime API
+- [ ] `CommsApi`
+- [ ] `CommunicationsController`
+- [ ] `EngineApi`
+- [ ] `EnvironmentApi`
+- [ ] `EthereumController`
+- [ ] `Players`
+- [ ] `PortableExperiences`
+- [ ] `RestrictedActions`
+- [x] `Runtime`
+- [x] `Scene`
+- [ ] `SignedFetch`
+- [ ] `Testing`
+- [ ] `UserActionModule`
+- [ ] `UserIdentity`
 
 ## Regenerate protocol
 
