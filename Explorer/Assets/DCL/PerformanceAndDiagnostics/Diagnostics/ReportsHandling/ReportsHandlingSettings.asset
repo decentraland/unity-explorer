@@ -327,3 +327,5 @@ MonoBehaviour:
     - Category: UNSPECIFIED
       Severity: 1
   debounceEnabled: 1
+  isSentryEnabled: 1
+  isDebugLogEnabled: 1
