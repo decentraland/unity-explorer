@@ -66,8 +66,9 @@ jobs:
           
       - name: Enable or disable the upload of sentry debug symbols
         run: |
+          $branchName = "${{ github.ref }}"
           $uploadSymbols = "false"
-          if (github.ref == 'refs/heads/main') {
+          if ($branchName -eq 'refs/heads/main') {
             $uploadSymbols = "true"
           }
           Add-Content -Value "SENTRY_UPLOAD_DEBUG_SYMBOLS=$uploadSymbols" -Path $env:GITHUB_ENV
