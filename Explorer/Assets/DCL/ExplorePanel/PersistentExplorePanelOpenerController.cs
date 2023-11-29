@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.UI;
 using MVC;
 using System.Threading;
 
@@ -23,7 +24,7 @@ namespace DCL.ExplorePanel
             viewInstance.OpenExploreButton.onClick.RemoveAllListeners();
 
             viewInstance.OpenExploreButton.onClick.AddListener(() =>
-                mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(null))).Forget());
+                mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
         }
     }
 }

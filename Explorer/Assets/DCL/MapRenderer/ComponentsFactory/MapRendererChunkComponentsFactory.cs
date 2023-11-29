@@ -19,8 +19,6 @@ namespace DCL.MapRenderer.ComponentsFactory
 {
     public class MapRendererChunkComponentsFactory : IMapRendererComponentsFactory
     {
-
-
         private PlayerMarkerInstaller playerMarkerInstaller { get; }
 
         private readonly IAssetsProvisioner assetsProvisioner;
@@ -94,7 +92,7 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             async UniTask<IChunkController> CreateSatelliteChunkAsync(Vector3 chunkLocalPosition, Vector2Int chunkId, Transform parent, CancellationToken ct)
             {
-                SpriteRenderer atlasChunkPrefab = await GetAtlasChunkPrefabAsync(ct);
+                SpriteRenderer atlasChunkPrefab = await GetAtlasChunkPrefabAsync(parent, ct);
 
                 var chunk = new SatelliteChunkController(atlasChunkPrefab, webRequestController, chunkLocalPosition, chunkId, parent, MapRendererDrawOrder.SATELLITE_ATLAS);
                 await chunk.LoadImageAsync(chunkId, PARCELS_INSIDE_CHUNK * coordsUtils.ParcelSize, ct);
@@ -115,7 +113,7 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             async UniTask<IChunkController> CreateChunkAsync(Vector3 chunkLocalPosition, Vector2Int coordsCenter, Transform parent, CancellationToken ct)
             {
-                SpriteRenderer atlasChunkPrefab = await GetAtlasChunkPrefabAsync(ct);
+                SpriteRenderer atlasChunkPrefab = await GetAtlasChunkPrefabAsync(parent, ct);
 
                 var chunk = new ParcelChunkController(webRequestController, atlasChunkPrefab, chunkLocalPosition, coordsCenter, parent);
                 chunk.SetDrawOrder(MapRendererDrawOrder.ATLAS);
@@ -137,10 +135,10 @@ namespace DCL.MapRenderer.ComponentsFactory
             return new ParcelHighlightMarker(obj);
         }
 
-        internal async Task<SpriteRenderer> GetAtlasChunkPrefabAsync(CancellationToken cancellationToken) =>
-            (await assetsProvisioner.ProvideInstanceAsync(mapSettings.AtlasChunk, ct: CancellationToken.None)).Value.GetComponent<SpriteRenderer>();
+        internal async Task<SpriteRenderer> GetAtlasChunkPrefabAsync(Transform parent, CancellationToken ct) =>
+            (await assetsProvisioner.ProvideInstanceAsync(mapSettings.AtlasChunk, parent, ct: ct)).Value.GetComponent<SpriteRenderer>();
 
-        private async UniTask<ParcelHighlightMarkerObject> GetParcelHighlightMarkerPrefabAsync(CancellationToken cancellationToken) =>
-            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.ParcelHighlight, ct: CancellationToken.None)).Value.GetComponent<ParcelHighlightMarkerObject>();
+        private async UniTask<ParcelHighlightMarkerObject> GetParcelHighlightMarkerPrefabAsync(CancellationToken ct) =>
+            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.ParcelHighlight, ct: ct)).Value.GetComponent<ParcelHighlightMarkerObject>();
     }
 }

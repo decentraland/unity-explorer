@@ -12,6 +12,7 @@ using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.PlacesAPIService;
+using DCL.UI;
 using ECS.Unity.Transforms.Components;
 using MVC;
 using System;
@@ -53,7 +54,7 @@ namespace DCL.Minimap
         protected override void OnViewInstantiated()
         {
             viewInstance.expandMinimapButton.onClick.AddListener(ExpandMinimap);
-            viewInstance.minimapRendererButton.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(null))).Forget());
+            viewInstance.minimapRendererButton.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
         }
 
         private void ExpandMinimap() =>
