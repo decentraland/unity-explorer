@@ -156,5 +156,13 @@ namespace MVC
             do { await popupCloser.CloseButton.OnClickAsync(ct); }
             while (currentController != windowsStackManager.TopMostPopup);
         }
+
+        public void Dispose()
+        {
+            foreach (IController controllersValue in controllers.Values)
+                controllersValue.Dispose();
+
+            destructionCancellationTokenSource?.Dispose();
+        }
     }
 }

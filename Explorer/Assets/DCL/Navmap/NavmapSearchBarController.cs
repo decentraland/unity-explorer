@@ -4,6 +4,7 @@ using DCL.PlacesAPIService;
 using DCL.UI;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Navmap
@@ -60,6 +61,7 @@ namespace DCL.Navmap
 
         public void Dispose()
         {
+            cts.SafeCancelAndDispose();
             view.inputField.onSelect.RemoveAllListeners();
             view.inputField.onValueChanged.RemoveAllListeners();
             view.inputField.onSubmit.RemoveAllListeners();

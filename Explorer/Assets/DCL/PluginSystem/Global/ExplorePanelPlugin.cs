@@ -21,6 +21,7 @@ namespace DCL.PluginSystem.Global
         private readonly MapRendererContainer mapRendererContainer;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ITeleportController teleportController;
+        private NavmapController navmapController;
 
         public ExplorePanelPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -41,7 +42,7 @@ namespace DCL.PluginSystem.Global
             ExplorePanelView panelView = (await assetsProvisioner.ProvideMainAssetAsync(settings.ExplorePanelPrefab, ct: ct)).Value.GetComponent<ExplorePanelView>();
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelView, null, out ExplorePanelView explorePanelView);
 
-            NavmapController navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, assetsProvisioner, teleportController);
+            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, assetsProvisioner, teleportController);
             SettingsController settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
 
             mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController));
@@ -56,7 +57,10 @@ namespace DCL.PluginSystem.Global
             mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter())).Forget();
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            navmapController.Dispose();
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 

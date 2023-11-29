@@ -145,5 +145,7 @@ namespace MVC
         protected virtual void OnViewClose() { }
 
         protected abstract UniTask WaitForCloseIntent(CancellationToken ct);
+
+        public void Dispose() { }
     }
 }

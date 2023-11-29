@@ -8,6 +8,7 @@ using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.UI;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -15,7 +16,7 @@ using Utility;
 
 namespace DCL.Navmap
 {
-    public class NavmapController : IMapActivityOwner, ISection
+    public class NavmapController : IMapActivityOwner, ISection, IDisposable
     {
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters  { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter {BackgroundIsActive = true} } };
@@ -121,5 +122,13 @@ namespace DCL.Navmap
 
         public RectTransform GetRectTransform() =>
             rectTransform;
+
+        public void Dispose()
+        {
+            animationCts?.Dispose();
+            zoomController?.Dispose();
+            floatingPanelController?.Dispose();
+            searchBarController?.Dispose();
+        }
     }
 }

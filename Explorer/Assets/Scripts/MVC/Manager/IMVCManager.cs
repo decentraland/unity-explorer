@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using System;
 using UnityEngine;
 
 namespace MVC
@@ -6,7 +7,7 @@ namespace MVC
     /// <summary>
     ///     An entry point to show the view
     /// </summary>
-    public interface IMVCManager
+    public interface IMVCManager : IDisposable
     {
         /// <summary>
         ///     Called externally to schedule a view opening

@@ -36,7 +36,12 @@ namespace Global.Dynamic
 
         public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; }
 
-        public void Dispose() { }
+        private MVCManager mvcManager;
+
+        public void Dispose()
+        {
+            mvcManager.Dispose();
+        }
 
         public static async UniTask<(DynamicWorldContainer container, bool success)> CreateAsync(
             StaticContainer staticContainer,
