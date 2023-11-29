@@ -69,14 +69,14 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
-            await CreateAvatarBasePool(settings, ct);
-            await CreateMaterialPoolPrewarmed(settings, ct);
-            await CreateComputeShaderPoolPrewarmed(settings, ct);
+            await CreateAvatarBasePoolAsync(settings, ct);
+            await CreateMaterialPoolPrewarmedAsync(settings, ct);
+            await CreateComputeShaderPoolPrewarmedAsync(settings, ct);
 
             transformPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<Transform>();
         }
 
-        private async UniTask CreateAvatarBasePool(AvatarShapeSettings settings, CancellationToken ct)
+        private async UniTask CreateAvatarBasePoolAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
             AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.avatarBase, ct: ct)).Value.GetComponent<AvatarBase>();
 
@@ -84,7 +84,7 @@ namespace DCL.PluginSystem.Global
             avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePoolDCL<AvatarBase>();
         }
 
-        private async UniTask CreateMaterialPoolPrewarmed(AvatarShapeSettings settings, CancellationToken ct)
+        private async UniTask CreateMaterialPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
             ProvidedAsset<Material> providedMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.celShadingMaterial, ct: ct);
             celShadingMaterialPool = new ObjectPoolDCL<Material>(() => new Material(providedMaterial.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.defaultMaterialCapacity);
@@ -96,7 +96,7 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-        private async UniTask CreateComputeShaderPoolPrewarmed(AvatarShapeSettings settings, CancellationToken ct)
+        private async UniTask CreateComputeShaderPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
             ProvidedAsset<ComputeShader> providedComputeShader = await assetsProvisioner.ProvideMainAssetAsync(settings.computeShader, ct: ct);
             computeShaderPool = new ObjectPoolDCL<ComputeShader>(() => Object.Instantiate(providedComputeShader.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.defaultMaterialCapacity);
