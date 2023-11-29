@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Profiling;
+using Utility;
 
 namespace DCL.MapRenderer.Culling
 {
@@ -219,9 +220,7 @@ namespace DCL.MapRenderer.Culling
 
         public void Dispose()
         {
-            disposingCts?.Cancel();
-            disposingCts?.Dispose();
-            disposingCts = null;
+            disposingCts.SafeCancelAndDispose();
         }
 
         IReadOnlyList<CameraState> IMapCullingController.CameraStates => cameraStates;

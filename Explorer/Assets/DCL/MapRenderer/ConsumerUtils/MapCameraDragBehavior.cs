@@ -4,6 +4,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Utility;
 
 namespace DCL.MapRenderer.ConsumerUtils
 {
@@ -99,8 +100,7 @@ namespace DCL.MapRenderer.ConsumerUtils
 
         private void StopInertia()
         {
-            inertiaLoopCTS?.Cancel();
-            inertiaLoopCTS?.Dispose();
+            inertiaLoopCTS.SafeCancelAndDispose();
             inertiaLoopCTS = null;
         }
 

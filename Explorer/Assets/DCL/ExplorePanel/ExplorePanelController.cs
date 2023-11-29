@@ -6,6 +6,7 @@ using MVC;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.ExplorePanel
 {
@@ -50,8 +51,7 @@ namespace DCL.ExplorePanel
                 tabSelector.TabSelectorToggle.onValueChanged.AddListener(
                     (isOn) =>
                     {
-                        animationCts?.Cancel();
-                        animationCts?.Dispose();
+                        animationCts.SafeCancelAndDispose();
                         animationCts = new CancellationTokenSource();
                         sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector, animationCts.Token).Forget();
                     }
@@ -62,7 +62,7 @@ namespace DCL.ExplorePanel
         protected override void OnBeforeViewShow()
         {
             viewInstance.TabSelectorViews[0].TabSelectorToggle.isOn = true;
-            exploreSections[ExploreSections.Navmap].Activate();
+            exploreSections[inputData.Section].Activate();
         }
 
         protected override void OnViewClose()
@@ -77,9 +77,9 @@ namespace DCL.ExplorePanel
 
     public readonly struct ExplorePanelParameter
     {
-        public readonly ExploreSections? Section;
+        public readonly ExploreSections Section;
 
-        public ExplorePanelParameter(ExploreSections? section)
+        public ExplorePanelParameter(ExploreSections section)
         {
             Section = section;
         }

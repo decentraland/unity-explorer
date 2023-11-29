@@ -69,8 +69,7 @@ namespace DCL.Navmap
                 tabSelector.TabSelectorToggle.onValueChanged.AddListener(
                     (isOn) =>
                     {
-                        animationCts?.Cancel();
-                        animationCts?.Dispose();
+                        animationCts.SafeCancelAndDispose();
                         animationCts = new CancellationTokenSource();
                         sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector, animationCts.Token, false).Forget();
                     });

@@ -4,6 +4,7 @@ using DCL.PlacesAPIService;
 using DCL.UI;
 using System;
 using System.Threading;
+using Utility;
 
 namespace DCL.Navmap
 {
@@ -38,8 +39,7 @@ namespace DCL.Navmap
             if (string.IsNullOrEmpty(searchText) || searchText.Length < 3)
                 searchResultPanelController.Hide();
 
-            cts?.Cancel();
-            cts?.Dispose();
+            cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
             SearchAndShowAsync(searchText).Forget();
         }
