@@ -33,6 +33,7 @@ using SceneRunner.EmptyScene;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
+using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
 using Utility.Multithreading;
@@ -159,6 +160,10 @@ namespace Global.Dynamic
 
             SystemGroupWorld worldSystems = builder.Finish();
             worldSystems.Initialize();
+
+#if UNITY_EDITOR
+            SystemGroupSnapshot.Instance.Register(GlobalWorld.WORLD_NAME, worldSystems);
+#endif
 
             return new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
         }

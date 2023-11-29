@@ -5,6 +5,7 @@ using ECS.Prioritization.Components;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using SystemGroups.Visualiser;
 
 namespace Global.Dynamic
 {
@@ -13,6 +14,7 @@ namespace Global.Dynamic
     /// </summary>
     public class GlobalWorld : IDisposable
     {
+        public static readonly string WORLD_NAME = "GLOBAL";
         public readonly World EcsWorld;
         public readonly IReadOnlyList<IFinalizeWorldSystem> FinalizeWorldSystems;
 
@@ -39,6 +41,9 @@ namespace Global.Dynamic
         {
             destroyCancellationSource.Cancel();
             worldSystems.Dispose();
+#if UNITY_EDITOR
+            SystemGroupSnapshot.Instance.Unregister(GlobalWorld.WORLD_NAME, worldSystems);
+#endif
             EcsWorld.Dispose();
         }
 

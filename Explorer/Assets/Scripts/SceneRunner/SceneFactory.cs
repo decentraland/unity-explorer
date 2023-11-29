@@ -125,7 +125,7 @@ namespace SceneRunner
             /* Pass dependencies here if they are needed by the systems */
             var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, ecsToCrdtWriter, entitiesMap, exceptionsHandler, entityCollidersCache, sceneStateProvider, ecsMutexSync);
 
-            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(instanceDependencies, systemGroupThrottler, partitionProvider));
+            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(instanceDependencies, systemGroupThrottler, partitionProvider, sceneData));
             ecsWorldFacade.Initialize();
 
             entityCollidersGlobalCache.AddSceneInfo(entityCollidersCache, new SceneEcsExecutor(ecsWorldFacade.EcsWorld, ecsMutexSync));

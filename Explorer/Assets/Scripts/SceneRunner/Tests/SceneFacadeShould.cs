@@ -49,7 +49,7 @@ namespace SceneRunner.Tests
 
                                 InitializationTestSystem1.InjectToWorld(ref builder);
                                 SimulationTestSystem1.InjectToWorld(ref builder);
-                                return new ECSWorldFacade(builder.Finish(), world, Array.Empty<IFinalizeWorldSystem>());
+                                return new ECSWorldFacade("",builder.Finish(), world, Array.Empty<IFinalizeWorldSystem>());
                             });
 
             sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>();
