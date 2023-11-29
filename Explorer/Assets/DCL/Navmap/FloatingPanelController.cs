@@ -5,6 +5,7 @@ using DCL.UI;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
@@ -106,8 +107,9 @@ namespace DCL.Navmap
             view.location.text = placeInfo.base_position;
             view.visits.text = placeInfo.user_visits.ToString();
             //Check all .text
-            view.upvotes.text = placeInfo.like_rate_as_float != null ? string.Format("{0:0}%", placeInfo.like_rate_as_float.Value * 100) : "-%";
+            //view.upvotes.text = placeInfo.like_rate_as_float != null ? string.Format("{0:0}%", placeInfo.like_rate_as_float.Value * 100) : "-%";
             view.parcelsCount.text = placeInfo.Positions.Length.ToString();
+            SetUpvotes(placeInfo);
 
             if (placeInfo.categories.Length == 0)
                 return;
@@ -115,6 +117,16 @@ namespace DCL.Navmap
             foreach (string placeInfoCategory in placeInfo.categories)
                 if (categoriesDictionary.TryGetValue(placeInfoCategory, out GameObject categoryGameObject))
                     categoryGameObject.SetActive(true);
+        }
+
+        private void SetUpvotes(PlacesData.PlaceInfo placeInfo)
+        {
+            string likeRate = placeInfo.like_rate;
+
+            if (string.IsNullOrEmpty(likeRate) || !float.TryParse(likeRate, NumberStyles.Float, CultureInfo.InvariantCulture, out float result))
+                view.upvotes.SetText("-%");
+            else
+                view.upvotes.SetText("{0:0}%", result * 100);
         }
 
         private void ResetCategories()

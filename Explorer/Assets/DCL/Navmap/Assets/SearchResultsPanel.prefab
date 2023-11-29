@@ -169,7 +169,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <LoadingContainer>k__BackingField: {fileID: 7081154919696655005}
-  <ResultAssetReference>k__BackingField:
+  <ResultRef>k__BackingField:
     m_AssetGUID: 028bf9eb42404424bbd1df5cd802720e
     m_SubObjectName: 
     m_SubObjectType: 
