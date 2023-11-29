@@ -3,25 +3,26 @@ using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Pool;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public class WearableCatalog
     {
+        internal List<(string key, uint lastUsedFrame)> lastUsedList = new ();
+
         public int WearableAssetsInCatalog
         {
             get
             {
                 var sum = 0;
 
-                foreach ((uint LastUsedFrame, IWearable wearable) value in wearableDictionary.Values)
+                foreach (IWearable wearable in wearableDictionary.Values)
                 {
-                    if (value.wearable.WearableAssets != null)
+                    if (wearable.WearableAssets != null)
                     {
                         var count = 0;
 
-                        foreach (StreamableLoadingResult<WearableAsset>? result in value.wearable.WearableAssets)
+                        foreach (StreamableLoadingResult<WearableAsset>? result in wearable.WearableAssets)
                             if (result is { Asset: not null })
                                 count++;
 
@@ -33,15 +34,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
         }
 
-        internal Dictionary<string, (uint LastUsedFrame, IWearable wearable)> wearableDictionary { get; } = new ();
+        internal Dictionary<string, IWearable> wearableDictionary { get; } = new ();
 
         public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto)
         {
-            if (wearableDictionary.TryGetValue(wearableDto.metadata.id, out (uint LastUsedFrame, IWearable wearable) exitingWearable))
-            {
-                wearableDictionary[wearableDto.metadata.id] = (0, exitingWearable.wearable);
-                return exitingWearable.wearable;
-            }
+            if (wearableDictionary.TryGetValue(wearableDto.metadata.id, out IWearable exitingWearable)) { return exitingWearable; }
 
             var wearable = new Wearable
             {
@@ -49,76 +46,73 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 IsLoading = false,
             };
 
-            wearableDictionary.Add(wearable.GetUrn(), (0, wearable));
+            wearableDictionary.Add(wearable.GetUrn(), wearable);
+            lastUsedList.Add((wearable.GetUrn(), 0));
+
             return wearable;
         }
 
         public void AddEmptyWearable(string loadingIntentionPointer)
         {
-            wearableDictionary.Add(loadingIntentionPointer, ((uint)Time.frameCount, new Wearable()));
+            wearableDictionary.Add(loadingIntentionPointer, new Wearable());
+            lastUsedList.Add((loadingIntentionPointer, (uint)Time.frameCount));
         }
 
         public bool TryGetWearable(string wearableURN, out IWearable wearable)
         {
-            if (wearableDictionary.TryGetValue(wearableURN, out (uint LastUsedFrame, IWearable wearable) resultWearable))
+            if (wearableDictionary.TryGetValue(wearableURN, out wearable))
             {
-                wearable = resultWearable.wearable;
-                wearableDictionary[wearableURN] = ((uint)Time.frameCount, wearable);
+                int tupleIdx = lastUsedList.FindIndex(x => x.key == wearableURN);
+                lastUsedList[tupleIdx] = (wearableURN, (uint)Time.frameCount);
 
                 return true;
             }
 
-            wearable = null;
             return false;
         }
 
         public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider)
         {
-            using (ListPool<KeyValuePair<string, (uint LastUsedFrame, IWearable Wearable)>>.Get(out List<KeyValuePair<string, (uint LastUsedFrame, IWearable Wearable)>> sortedCache))
-            {
-                PrepareListSortedByLastUsage(sortedCache);
+            lastUsedList.Sort((pair1, pair2) => pair1.lastUsedFrame.CompareTo(pair2.lastUsedFrame));
 
-                foreach (KeyValuePair<string, (uint LastUsedFrame, IWearable Wearable)> pair in sortedCache)
-                {
-                    if (!frameTimeBudgetProvider.TrySpendBudget()) break;
+            foreach ((string key, uint _) in lastUsedList)
 
-                    UnloadWearableAssets(pair.Value.Wearable, frameTimeBudgetProvider);
-                }
-            }
-
-            return;
-
-            void PrepareListSortedByLastUsage(List<KeyValuePair<string, (uint LastUsedFrame, IWearable Wearable)>> sortedCache)
-            {
-                foreach (KeyValuePair<string, (uint LastUsedFrame, IWearable Wearable)> item in wearableDictionary)
-                    sortedCache.Add(item);
-
-                sortedCache.Sort(CompareByLastUsedFrame);
-            }
+                UnloadWearableAssets(key);
         }
 
-        private static int CompareByLastUsedFrame(KeyValuePair<string, (uint LastUsedFrame, IWearable Wearable)> pair1, KeyValuePair<string, (uint LastUsedFrame, IWearable Wearable)> pair2) =>
-            pair1.Value.LastUsedFrame.CompareTo(pair2.Value.LastUsedFrame);
-
-        private static void UnloadWearableAssets(IWearable wearable, IConcurrentBudgetProvider frameTimeBudgetProvider)
+        private void UnloadWearableAssets(string key)
         {
+            if (!wearableDictionary.TryGetValue(key, out IWearable wearable)) return;
+
+            var nullifiedCount = 0;
+
             for (var i = 0; i < wearable.WearableAssets?.Length; i++)
             {
-                if (!frameTimeBudgetProvider.TrySpendBudget()) break;
-
                 WearableAsset wearableAsset = wearable.WearableAssets[i]?.Asset;
 
                 if (wearableAsset == null)
+                {
                     wearable.WearableAssets[i] = null;
+                    nullifiedCount++;
+                }
                 else if (wearableAsset.ReferenceCount == 0)
                 {
                     wearableAsset.Dispose();
                     wearable.WearableAssets[i] = null;
+                    nullifiedCount++;
                 }
+            }
+
+            if (nullifiedCount == wearable.WearableAssets?.Length)
+            {
+                wearableDictionary.Remove(key);
+
+                // int tupleIdx = lastUsedList.FindIndex(x => x.key == key);
+                // lastUsedList.Remove(lastUsedList[tupleIdx]);
             }
         }
 
         public IWearable GetDefaultWearable(BodyShape bodyShape, string category) =>
-            wearableDictionary[WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category)].wearable;
+            wearableDictionary[WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category)];
     }
 }

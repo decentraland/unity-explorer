@@ -12,7 +12,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using Utility.Multithreading;
-using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.Wearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
 
 namespace DCL.AvatarRendering.Wearables.Tests
 {
@@ -52,7 +51,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [Test]
         public async Task ConcludeSuccessOnExistingWearable()
         {
-            wearableCatalog.wearableDictionary.Add(existingURN, (1, Substitute.For<IWearable>()));
+            wearableCatalog.wearableDictionary.Add(existingURN, Substitute.For<IWearable>());
             await ConcludeSuccess();
         }
 
