@@ -1,4 +1,4 @@
-﻿namespace DCLServices.MapRenderer.MapLayers
+﻿namespace DCL.MapRenderer.MapLayers
 {
     public interface IZoomScalingLayer
     {

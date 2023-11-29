@@ -1,11 +1,11 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCLServices.MapRenderer.CommonBehavior;
-using DCLServices.MapRenderer.ComponentsFactory;
-using DCLServices.MapRenderer.Culling;
-using DCLServices.MapRenderer.MapCameraController;
-using DCLServices.MapRenderer.MapLayers;
+using DCL.MapRenderer.CommonBehavior;
+using DCL.MapRenderer.ComponentsFactory;
+using DCL.MapRenderer.Culling;
+using DCL.MapRenderer.MapCameraController;
+using DCL.MapRenderer.MapLayers;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -13,7 +13,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 
-namespace DCLServices.MapRenderer
+namespace DCL.MapRenderer
 {
     public partial class MapRenderer : IMapRenderer
     {

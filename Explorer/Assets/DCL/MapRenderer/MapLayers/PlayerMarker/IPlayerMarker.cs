@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace DCLServices.MapRenderer.MapLayers.PlayerMarker
+namespace DCL.MapRenderer.MapLayers.PlayerMarker
 {
     internal interface IPlayerMarker : IMapRendererMarker, IDisposable
     {

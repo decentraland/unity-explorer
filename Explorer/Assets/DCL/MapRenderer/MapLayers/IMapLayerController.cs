@@ -1,10 +1,10 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCLServices.MapRenderer.MapCameraController;
+using DCL.MapRenderer.MapCameraController;
 using System;
 using System.Threading;
 
-namespace DCLServices.MapRenderer.MapLayers
+namespace DCL.MapRenderer.MapLayers
 {
     internal interface IMapLayerController<in T> : IMapLayerController
     {

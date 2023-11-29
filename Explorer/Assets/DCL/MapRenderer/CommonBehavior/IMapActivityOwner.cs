@@ -1,8 +1,8 @@
-﻿using DCLServices.MapRenderer.MapCameraController;
-using DCLServices.MapRenderer.MapLayers;
+﻿using DCL.MapRenderer.MapCameraController;
+using DCL.MapRenderer.MapLayers;
 using System.Collections.Generic;
 
-namespace DCLServices.MapRenderer.CommonBehavior
+namespace DCL.MapRenderer.CommonBehavior
 {
     public interface IMapActivityOwner
     {

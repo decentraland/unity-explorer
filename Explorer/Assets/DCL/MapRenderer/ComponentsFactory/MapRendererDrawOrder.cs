@@ -1,4 +1,4 @@
-﻿namespace DCLServices.MapRenderer.ComponentsFactory
+﻿namespace DCL.MapRenderer.ComponentsFactory
 {
     /// <summary>
     /// Corresponds to the sprites sorting order of map elements

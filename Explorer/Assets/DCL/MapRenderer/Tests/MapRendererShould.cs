@@ -1,9 +1,9 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCLServices.MapRenderer.CommonBehavior;
-using DCLServices.MapRenderer.ComponentsFactory;
-using DCLServices.MapRenderer.Culling;
-using DCLServices.MapRenderer.MapCameraController;
-using DCLServices.MapRenderer.MapLayers;
+using DCL.MapRenderer.CommonBehavior;
+using DCL.MapRenderer.ComponentsFactory;
+using DCL.MapRenderer.Culling;
+using DCL.MapRenderer.MapCameraController;
+using DCL.MapRenderer.MapLayers;
 using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -19,7 +19,7 @@ namespace DCL.MapRenderer.Tests
     [TestFixture]
     public class MapRendererShould
     {
-        private DCLServices.MapRenderer.MapRenderer mapRenderer;
+        private DCL.MapRenderer.MapRenderer mapRenderer;
 
         private Dictionary<MapLayer, IMapLayerController> layers;
 
@@ -43,7 +43,7 @@ namespace DCL.MapRenderer.Tests
                                           Substitute.For<IMapCullingController>(),
                                           Substitute.For<IObjectPool<IMapCameraControllerInternal>>())));
 
-            mapRenderer = new DCLServices.MapRenderer.MapRenderer(componentsFactory);
+            mapRenderer = new DCL.MapRenderer.MapRenderer(componentsFactory);
             await mapRenderer.InitializeAsync(CancellationToken.None);
 
             layers = mapRenderer.layersDictionary_Test;

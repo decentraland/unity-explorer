@@ -1,4 +1,4 @@
-namespace DCLServices.MapRenderer.MapCameraController
+namespace DCL.MapRenderer.MapCameraController
 {
     public interface IMapLayerParameter
     {

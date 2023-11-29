@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace DCLServices.MapRenderer.Culling
+namespace DCL.MapRenderer.Culling
 {
     internal class MapCullingRectVisibilityChecker : IMapCullingVisibilityChecker
     {

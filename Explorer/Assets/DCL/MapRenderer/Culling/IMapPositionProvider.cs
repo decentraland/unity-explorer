@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace DCLServices.MapRenderer.Culling
+namespace DCL.MapRenderer.Culling
 {
     public interface IMapPositionProvider
     {

@@ -1,4 +1,4 @@
-﻿namespace DCLServices.MapRenderer.Culling
+﻿namespace DCL.MapRenderer.Culling
 {
     internal class DummyMapCullingControllerVisibilityChecker : IMapCullingVisibilityChecker
     {

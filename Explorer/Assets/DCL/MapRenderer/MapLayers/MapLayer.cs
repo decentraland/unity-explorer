@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DCLServices.MapRenderer.MapLayers
+namespace DCL.MapRenderer.MapLayers
 {
     [Flags]
     public enum MapLayer

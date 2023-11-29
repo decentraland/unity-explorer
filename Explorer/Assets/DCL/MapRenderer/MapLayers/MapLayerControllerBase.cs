@@ -1,9 +1,9 @@
-﻿using DCLServices.MapRenderer.CoordsUtils;
-using DCLServices.MapRenderer.Culling;
+﻿using DCL.MapRenderer.CoordsUtils;
+using DCL.MapRenderer.Culling;
 using System.Threading;
 using UnityEngine;
 
-namespace DCLServices.MapRenderer.MapLayers
+namespace DCL.MapRenderer.MapLayers
 {
     public abstract class MapLayerControllerBase
     {

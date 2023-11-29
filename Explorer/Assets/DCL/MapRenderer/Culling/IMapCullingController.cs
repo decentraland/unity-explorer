@@ -1,8 +1,8 @@
-﻿using DCLServices.MapRenderer.MapCameraController;
+﻿using DCL.MapRenderer.MapCameraController;
 using System;
 using System.Collections.Generic;
 
-namespace DCLServices.MapRenderer.Culling
+namespace DCL.MapRenderer.Culling
 {
     internal interface IMapCullingController : IDisposable
     {

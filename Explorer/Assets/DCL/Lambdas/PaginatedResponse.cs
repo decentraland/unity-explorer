@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 
-namespace DCLServices.Lambdas
+namespace DCL.Lambdas
 {
     [Serializable]
     public abstract class PaginatedResponse

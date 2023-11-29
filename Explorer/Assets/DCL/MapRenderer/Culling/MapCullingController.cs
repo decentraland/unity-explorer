@@ -1,11 +1,11 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCLServices.MapRenderer.MapCameraController;
+using DCL.MapRenderer.MapCameraController;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Profiling;
 
-namespace DCLServices.MapRenderer.Culling
+namespace DCL.MapRenderer.Culling
 {
     public partial class MapCullingController : IMapCullingController
     {

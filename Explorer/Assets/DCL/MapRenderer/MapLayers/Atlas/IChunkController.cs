@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DCLServices.MapRenderer.MapLayers.Atlas
+namespace DCL.MapRenderer.MapLayers.Atlas
 {
     public interface IChunkController : IDisposable { }
 }

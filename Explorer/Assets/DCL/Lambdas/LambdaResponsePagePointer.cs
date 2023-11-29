@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
 
-namespace DCLServices.Lambdas
+namespace DCL.Lambdas
 {
     /// <summary>
     /// Caches paginated results until `Dispose` is called

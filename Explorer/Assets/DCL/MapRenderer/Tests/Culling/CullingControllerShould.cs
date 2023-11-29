@@ -1,5 +1,5 @@
-﻿using DCLServices.MapRenderer.Culling;
-using DCLServices.MapRenderer.MapCameraController;
+﻿using DCL.MapRenderer.Culling;
+using DCL.MapRenderer.MapCameraController;
 using NSubstitute;
 using NUnit.Framework;
 using System;

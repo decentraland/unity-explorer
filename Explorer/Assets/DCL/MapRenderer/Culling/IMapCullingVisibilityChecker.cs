@@ -1,7 +1,5 @@
-﻿using DCLServices.MapRenderer.MapCameraController;
-using System;
-
-namespace DCLServices.MapRenderer.Culling
+﻿
+namespace DCL.MapRenderer.Culling
 {
     internal interface IMapCullingVisibilityChecker
     {

@@ -1,9 +1,9 @@
-﻿using DCLServices.MapRenderer.CommonBehavior;
-using DCLServices.MapRenderer.MapLayers;
+﻿using DCL.MapRenderer.CommonBehavior;
+using DCL.MapRenderer.MapLayers;
 using System;
 using UnityEngine;
 
-namespace DCLServices.MapRenderer.MapCameraController
+namespace DCL.MapRenderer.MapCameraController
 {
     /// <summary>
     /// Contains methods that are not exposed publicly to consumers

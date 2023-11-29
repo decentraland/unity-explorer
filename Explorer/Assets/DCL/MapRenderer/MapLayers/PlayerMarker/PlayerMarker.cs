@@ -2,7 +2,7 @@
 using UnityEngine;
 using Utility;
 
-namespace DCLServices.MapRenderer.MapLayers.PlayerMarker
+namespace DCL.MapRenderer.MapLayers.PlayerMarker
 {
     internal class PlayerMarker : IPlayerMarker
     {

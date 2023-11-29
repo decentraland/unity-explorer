@@ -1,7 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using System.Threading;
 
-namespace DCLServices.Lambdas
+namespace DCL.Lambdas
 {
     public interface ILambdaServiceConsumer<TResponse, in TAdditionalData> where TResponse: PaginatedResponse
     {

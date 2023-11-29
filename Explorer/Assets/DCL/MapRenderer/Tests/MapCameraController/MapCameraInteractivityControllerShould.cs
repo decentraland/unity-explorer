@@ -1,7 +1,7 @@
-﻿using DCLServices.MapRenderer.CoordsUtils;
-using DCLServices.MapRenderer.MapCameraController;
-using DCLServices.MapRenderer.MapLayers;
-using DCLServices.MapRenderer.MapLayers.ParcelHighlight;
+﻿using DCL.MapRenderer.CoordsUtils;
+using DCL.MapRenderer.MapCameraController;
+using DCL.MapRenderer.MapLayers;
+using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;

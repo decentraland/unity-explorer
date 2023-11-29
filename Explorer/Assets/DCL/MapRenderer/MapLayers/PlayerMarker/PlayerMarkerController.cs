@@ -4,16 +4,15 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
-using DCLServices.MapRenderer.CoordsUtils;
-using DCLServices.MapRenderer.Culling;
+using DCL.MapRenderer.CoordsUtils;
+using DCL.MapRenderer.Culling;
 using ECS.Unity.Transforms.Components;
 using MVC;
-using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
 
-namespace DCLServices.MapRenderer.MapLayers.PlayerMarker
+namespace DCL.MapRenderer.MapLayers.PlayerMarker
 {
     public partial class PlayerMarkerController : MapLayerControllerBase, IMapLayerController<PlayerMarkerParameter>, IZoomScalingLayer
     {

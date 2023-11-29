@@ -1,11 +1,11 @@
-﻿using DCLServices.MapRenderer.CoordsUtils;
-using DCLServices.MapRenderer.MapLayers;
-using DCLServices.MapRenderer.MapLayers.ParcelHighlight;
+﻿using DCL.MapRenderer.CoordsUtils;
+using DCL.MapRenderer.MapLayers;
+using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 
-namespace DCLServices.MapRenderer.MapCameraController
+namespace DCL.MapRenderer.MapCameraController
 {
     internal class MapCameraInteractivityController : IMapInteractivityControllerInternal
     {

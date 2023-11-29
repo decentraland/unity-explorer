@@ -1,4 +1,4 @@
-using DCLServices.MapRenderer;
+using DCL.MapRenderer;
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;

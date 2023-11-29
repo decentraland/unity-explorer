@@ -1,6 +1,5 @@
 using Arch.SystemGroups;
-using DCLServices.MapRenderer;
-using System;
+using DCL.MapRenderer;
 
 namespace DCL.PluginSystem.Global
 {

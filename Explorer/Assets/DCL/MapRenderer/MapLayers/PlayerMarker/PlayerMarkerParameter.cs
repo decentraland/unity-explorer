@@ -1,6 +1,6 @@
-using DCLServices.MapRenderer.MapCameraController;
+using DCL.MapRenderer.MapCameraController;
 
-namespace DCLServices.MapRenderer.MapLayers.PlayerMarker
+namespace DCL.MapRenderer.MapLayers.PlayerMarker
 {
     public class PlayerMarkerParameter : IMapLayerParameter
     {

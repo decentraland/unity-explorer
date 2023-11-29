@@ -1,14 +1,14 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCLServices.MapRenderer.CoordsUtils;
-using DCLServices.MapRenderer.Culling;
-using DCLServices.MapRenderer.MapLayers;
-using DCLServices.MapRenderer.MapLayers.PlayerMarker;
+using DCL.MapRenderer.CoordsUtils;
+using DCL.MapRenderer.Culling;
+using DCL.MapRenderer.MapLayers;
+using DCL.MapRenderer.MapLayers.PlayerMarker;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
-namespace DCLServices.MapRenderer.ComponentsFactory
+namespace DCL.MapRenderer.ComponentsFactory
 {
     internal struct PlayerMarkerInstaller
     {

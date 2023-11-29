@@ -1,14 +1,13 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCLServices.MapRenderer.CoordsUtils;
-using DCLServices.MapRenderer.Culling;
-using DCLServices.MapRenderer.MapLayers.Atlas;
-using DCLServices.MapRenderer.MapCameraController;
+using DCL.MapRenderer.CoordsUtils;
+using DCL.MapRenderer.Culling;
+using DCL.MapRenderer.MapLayers.Atlas;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
-namespace DCLServices.MapRenderer.MapLayers.SatelliteAtlas
+namespace DCL.MapRenderer.MapLayers.SatelliteAtlas
 {
     internal class SatelliteChunkAtlasController : MapLayerControllerBase, IAtlasController
     {

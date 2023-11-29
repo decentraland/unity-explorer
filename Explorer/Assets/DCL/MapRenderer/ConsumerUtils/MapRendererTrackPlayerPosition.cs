@@ -1,9 +1,8 @@
-﻿using DCLServices.MapRenderer.MapCameraController;
-using System;
+﻿using DCL.MapRenderer.MapCameraController;
 using UnityEngine;
 using Utility;
 
-namespace DCLServices.MapRenderer.ConsumerUtils
+namespace DCL.MapRenderer.ConsumerUtils
 {
     /// <summary>
     /// Updates Map Camera Controller's position accordingly to the player position

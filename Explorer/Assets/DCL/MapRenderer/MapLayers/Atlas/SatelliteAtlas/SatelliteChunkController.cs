@@ -5,7 +5,7 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 
-namespace DCLServices.MapRenderer.MapLayers.Atlas.SatelliteAtlas
+namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 {
     public class SatelliteChunkController : IChunkController
     {

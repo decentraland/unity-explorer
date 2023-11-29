@@ -5,7 +5,7 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 
-namespace DCLServices.MapRenderer.MapLayers.Atlas
+namespace DCL.MapRenderer.MapLayers.Atlas
 {
     public class ParcelChunkController : IChunkController
     {

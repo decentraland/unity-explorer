@@ -1,13 +1,11 @@
 using Cysharp.Threading.Tasks;
-using DCLServices.MapRenderer.CoordsUtils;
-using DCLServices.MapRenderer.Culling;
-using DCLServices.MapRenderer.MapCameraController;
-using System;
+using DCL.MapRenderer.CoordsUtils;
+using DCL.MapRenderer.Culling;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
-namespace DCLServices.MapRenderer.MapLayers.Atlas
+namespace DCL.MapRenderer.MapLayers.Atlas
 {
     internal class ParcelChunkAtlasController : MapLayerControllerBase, IAtlasController
     {

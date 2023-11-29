@@ -1,7 +1,7 @@
-﻿using DCLServices.MapRenderer.MapLayers;
+﻿using DCL.MapRenderer.MapLayers;
 using UnityEngine;
 
-namespace DCLServices.MapRenderer.CoordsUtils
+namespace DCL.MapRenderer.CoordsUtils
 {
     internal static class CoordsExtensions
     {

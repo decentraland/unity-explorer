@@ -1,4 +1,4 @@
-using DCLServices.MapRenderer.ConsumerUtils;
+using DCL.MapRenderer.ConsumerUtils;
 using UnityEngine;
 
 namespace DCL.Navmap

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace DCLServices.MapRenderer.MapCameraController
+namespace DCL.MapRenderer.MapCameraController
 {
     public interface IMapInteractivityController
     {

@@ -1,13 +1,13 @@
-﻿using DCLServices.MapRenderer.CommonBehavior;
-using DCLServices.MapRenderer.CoordsUtils;
-using DCLServices.MapRenderer.Culling;
-using DCLServices.MapRenderer.MapLayers;
+﻿using DCL.MapRenderer.CommonBehavior;
+using DCL.MapRenderer.CoordsUtils;
+using DCL.MapRenderer.Culling;
+using DCL.MapRenderer.MapLayers;
 using DG.Tweening;
 using System;
 using UnityEngine;
 using Utility;
 
-namespace DCLServices.MapRenderer.MapCameraController
+namespace DCL.MapRenderer.MapCameraController
 {
     internal partial class MapCameraController : IMapCameraControllerInternal
     {

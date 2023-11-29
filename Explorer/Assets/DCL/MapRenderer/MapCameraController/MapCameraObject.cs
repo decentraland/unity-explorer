@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace DCLServices.MapRenderer.MapCameraController
+namespace DCL.MapRenderer.MapCameraController
 {
     internal class MapCameraObject : MonoBehaviour
     {

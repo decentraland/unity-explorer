@@ -1,9 +1,9 @@
-﻿using DCLServices.MapRenderer.MapCameraController;
+﻿using DCL.MapRenderer.MapCameraController;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCLServices.MapRenderer.ConsumerUtils
+namespace DCL.MapRenderer.ConsumerUtils
 {
     [RequireComponent(typeof(RawImage))]
     [RequireComponent(typeof(RectTransform))]

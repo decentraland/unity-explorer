@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace DCLServices.MapRenderer.MapLayers.ParcelHighlight
+namespace DCL.MapRenderer.MapLayers.ParcelHighlight
 {
     internal interface IParcelHighlightMarker : IMapRendererMarker, IDisposable
     {

@@ -1,7 +1,7 @@
-﻿using DCLServices.MapRenderer.CoordsUtils;
-using DCLServices.MapRenderer.Culling;
-using DCLServices.MapRenderer.MapCameraController;
-using DCLServices.MapRenderer.MapLayers;
+﻿using DCL.MapRenderer.CoordsUtils;
+using DCL.MapRenderer.Culling;
+using DCL.MapRenderer.MapCameraController;
+using DCL.MapRenderer.MapLayers;
 using NSubstitute;
 using NUnit.Framework;
 using System;
@@ -12,7 +12,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
     [Category("EditModeCI")]
     public class MapCameraControllerShould
     {
-        private DCLServices.MapRenderer.MapCameraController.MapCameraController mapCamera;
+        private DCL.MapRenderer.MapCameraController.MapCameraController mapCamera;
         private MapCameraObject mapCameraObject;
         private ICoordsUtils coordsUtils;
         private IMapCullingController culling;
@@ -30,7 +30,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
 
             culling = Substitute.For<IMapCullingController>();
 
-            mapCamera = new DCLServices.MapRenderer.MapCameraController.MapCameraController(
+            mapCamera = new DCL.MapRenderer.MapCameraController.MapCameraController(
                 Substitute.For<IMapInteractivityControllerInternal>(), mapCameraObject, coordsUtils, culling);
         }
 

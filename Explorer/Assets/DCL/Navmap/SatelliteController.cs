@@ -1,9 +1,8 @@
+using DCL.MapRenderer;
+using DCL.MapRenderer.ConsumerUtils;
+using DCL.MapRenderer.MapCameraController;
+using DCL.MapRenderer.MapLayers;
 using DCL.UI;
-using DCLServices.MapRenderer;
-using DCLServices.MapRenderer.ConsumerUtils;
-using DCLServices.MapRenderer.MapCameraController;
-using DCLServices.MapRenderer.MapLayers;
-using System;
 using UnityEngine;
 
 namespace DCL.Navmap

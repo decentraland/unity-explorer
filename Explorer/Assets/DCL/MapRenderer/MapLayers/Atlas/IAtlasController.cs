@@ -2,7 +2,7 @@ using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
 
-namespace DCLServices.MapRenderer.MapLayers.Atlas
+namespace DCL.MapRenderer.MapLayers.Atlas
 {
     internal interface IAtlasController : IMapLayerController
     {

@@ -1,9 +1,8 @@
-﻿using DCLServices.MapRenderer.CommonBehavior;
-using DCLServices.MapRenderer.MapLayers;
-using System.Collections.Generic;
+﻿using DCL.MapRenderer.CommonBehavior;
+using DCL.MapRenderer.MapLayers;
 using UnityEngine;
 
-namespace DCLServices.MapRenderer.MapCameraController
+namespace DCL.MapRenderer.MapCameraController
 {
     public readonly struct MapCameraInput
     {

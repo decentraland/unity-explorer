@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace DCLServices.MapRenderer.ComponentsFactory
+namespace DCL.MapRenderer.ComponentsFactory
 {
     /// <summary>
     /// Placed on the prefab, contains the hierarchical structure needed for Map Layers

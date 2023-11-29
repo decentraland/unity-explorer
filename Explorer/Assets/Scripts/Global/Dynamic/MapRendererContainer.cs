@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
-using DCLServices.MapRenderer;
-using DCLServices.MapRenderer.ComponentsFactory;
+using DCL.MapRenderer;
+using DCL.MapRenderer.ComponentsFactory;
 using System.Threading;
 
 namespace Global.Dynamic

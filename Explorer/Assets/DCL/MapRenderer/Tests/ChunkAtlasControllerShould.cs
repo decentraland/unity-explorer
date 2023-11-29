@@ -1,7 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCLServices.MapRenderer.CoordsUtils;
-using DCLServices.MapRenderer.Culling;
-using DCLServices.MapRenderer.MapLayers.Atlas;
+using DCL.MapRenderer.CoordsUtils;
+using DCL.MapRenderer.Culling;
+using DCL.MapRenderer.MapLayers.Atlas;
 using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;

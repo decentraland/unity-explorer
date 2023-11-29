@@ -1,11 +1,9 @@
-﻿using Cysharp.Threading.Tasks;
-using DCLServices.MapRenderer.CommonBehavior;
-using DCLServices.MapRenderer.MapLayers;
+﻿using DCL.MapRenderer.CommonBehavior;
+using DCL.MapRenderer.MapLayers;
 using System;
-using System.Threading;
 using UnityEngine;
 
-namespace DCLServices.MapRenderer.MapCameraController
+namespace DCL.MapRenderer.MapCameraController
 {
     public interface IMapCameraController
     {

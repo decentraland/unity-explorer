@@ -1,5 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCLServices.Lambdas;
+using DCL.Lambdas;
 using System;
 using System.Collections.Generic;
 using System.Threading;

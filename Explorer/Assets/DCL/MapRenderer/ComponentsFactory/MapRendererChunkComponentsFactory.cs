@@ -1,21 +1,21 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.MapRenderer.CoordsUtils;
+using DCL.MapRenderer.Culling;
+using DCL.MapRenderer.MapCameraController;
+using DCL.MapRenderer.MapLayers;
+using DCL.MapRenderer.MapLayers.Atlas;
+using DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas;
+using DCL.MapRenderer.MapLayers.ParcelHighlight;
+using DCL.MapRenderer.MapLayers.SatelliteAtlas;
 using DCL.WebRequests;
-using DCLServices.MapRenderer.CoordsUtils;
-using DCLServices.MapRenderer.Culling;
-using DCLServices.MapRenderer.MapCameraController;
-using DCLServices.MapRenderer.MapLayers;
-using DCLServices.MapRenderer.MapLayers.Atlas;
-using DCLServices.MapRenderer.MapLayers.Atlas.SatelliteAtlas;
-using DCLServices.MapRenderer.MapLayers.ParcelHighlight;
-using DCLServices.MapRenderer.MapLayers.SatelliteAtlas;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Pool;
 
-namespace DCLServices.MapRenderer.ComponentsFactory
+namespace DCL.MapRenderer.ComponentsFactory
 {
     public class MapRendererChunkComponentsFactory : IMapRendererComponentsFactory
     {

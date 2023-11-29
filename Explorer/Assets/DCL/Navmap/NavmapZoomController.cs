@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCLServices.MapRenderer.MapCameraController;
+using DCL.MapRenderer.MapCameraController;
 using System;
 using System.Threading;
 using UnityEngine;

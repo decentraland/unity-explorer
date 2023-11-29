@@ -1,7 +1,7 @@
-﻿using DCLServices.MapRenderer.MapCameraController;
+﻿using DCL.MapRenderer.MapCameraController;
 using UnityEngine;
 
-namespace DCLServices.MapRenderer.Culling
+namespace DCL.MapRenderer.Culling
 {
     internal class CameraState
     {

@@ -1,7 +1,7 @@
 ﻿using DG.Tweening;
 using UnityEngine;
 
-namespace DCLServices.MapRenderer.MapLayers.PlayerMarker
+namespace DCL.MapRenderer.MapLayers.PlayerMarker
 {
     public class PlayerMarkerCircleAnimation : MonoBehaviour
     {

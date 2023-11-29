@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace DCLServices.MapRenderer.Culling
+namespace DCL.MapRenderer.Culling
 {
     public partial class MapCullingController
     {

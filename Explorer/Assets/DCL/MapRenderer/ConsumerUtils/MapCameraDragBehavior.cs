@@ -1,11 +1,11 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCLServices.MapRenderer.MapCameraController;
+using DCL.MapRenderer.MapCameraController;
 using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace DCLServices.MapRenderer.ConsumerUtils
+namespace DCL.MapRenderer.ConsumerUtils
 {
     public class MapCameraDragBehavior : IDisposable
     {

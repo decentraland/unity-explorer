@@ -1,7 +1,7 @@
-﻿using DCLServices.MapRenderer.MapCameraController;
+﻿using DCL.MapRenderer.MapCameraController;
 using System.Collections.Generic;
 
-namespace DCLServices.MapRenderer.Culling
+namespace DCL.MapRenderer.Culling
 {
     /// <summary>
     /// Exposing private methods to tests

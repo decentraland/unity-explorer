@@ -1,4 +1,4 @@
-﻿using DCLServices.MapRenderer.Culling;
+﻿using DCL.MapRenderer.Culling;
 using NSubstitute;
 using NUnit.Framework;
 

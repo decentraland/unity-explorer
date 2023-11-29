@@ -1,10 +1,10 @@
-﻿using DCLServices.MapRenderer.Culling;
-using DCLServices.MapRenderer.MapCameraController;
-using DCLServices.MapRenderer.MapLayers;
+﻿using DCL.MapRenderer.Culling;
+using DCL.MapRenderer.MapCameraController;
+using DCL.MapRenderer.MapLayers;
 using System.Collections.Generic;
 using UnityEngine.Pool;
 
-namespace DCLServices.MapRenderer.ComponentsFactory
+namespace DCL.MapRenderer.ComponentsFactory
 {
     internal readonly struct MapRendererComponents
     {

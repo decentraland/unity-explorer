@@ -1,9 +1,9 @@
-﻿using DCLServices.MapRenderer.CommonBehavior;
-using DCLServices.MapRenderer.MapLayers;
+﻿using DCL.MapRenderer.CommonBehavior;
+using DCL.MapRenderer.MapLayers;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DCLServices.MapRenderer
+namespace DCL.MapRenderer
 {
     /// <summary>
     /// Contains methods and properties that must be exposed to Unit Tests without exposing them in the original file

@@ -1,7 +1,7 @@
-﻿using DCLServices.MapRenderer.CoordsUtils;
+﻿using DCL.MapRenderer.CoordsUtils;
 using UnityEngine;
 
-namespace DCLServices.MapRenderer.MapCameraController
+namespace DCL.MapRenderer.MapCameraController
 {
     internal partial class MapCameraController
     {

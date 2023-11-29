@@ -1,8 +1,8 @@
 ﻿using Arch.SystemGroups;
-using DCLServices.MapRenderer.MapCameraController;
-using DCLServices.MapRenderer.MapLayers;
+using DCL.MapRenderer.MapCameraController;
+using DCL.MapRenderer.MapLayers;
 
-namespace DCLServices.MapRenderer
+namespace DCL.MapRenderer
 {
     public interface IMapRenderer
     {

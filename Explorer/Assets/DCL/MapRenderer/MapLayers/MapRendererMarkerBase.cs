@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace DCLServices.MapRenderer.MapLayers
+namespace DCL.MapRenderer.MapLayers
 {
     internal class MapRendererMarkerBase : MonoBehaviour
     {

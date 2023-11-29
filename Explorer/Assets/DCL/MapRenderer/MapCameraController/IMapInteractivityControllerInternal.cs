@@ -1,7 +1,7 @@
-﻿using DCLServices.MapRenderer.MapLayers;
+﻿using DCL.MapRenderer.MapLayers;
 using System;
 
-namespace DCLServices.MapRenderer.MapCameraController
+namespace DCL.MapRenderer.MapCameraController
 {
     internal interface IMapInteractivityControllerInternal : IMapInteractivityController, IDisposable
     {

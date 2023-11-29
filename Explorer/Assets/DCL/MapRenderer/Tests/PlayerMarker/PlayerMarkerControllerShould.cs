@@ -1,6 +1,6 @@
-﻿using DCLServices.MapRenderer.CoordsUtils;
-using DCLServices.MapRenderer.Culling;
-using DCLServices.MapRenderer.MapLayers.PlayerMarker;
+﻿using DCL.MapRenderer.CoordsUtils;
+using DCL.MapRenderer.Culling;
+using DCL.MapRenderer.MapLayers.PlayerMarker;
 using NSubstitute;
 using NUnit.Framework;
 using System.Threading;

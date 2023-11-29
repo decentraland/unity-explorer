@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace DCLServices.MapRenderer.CoordsUtils
+namespace DCL.MapRenderer.CoordsUtils
 {
     internal interface ICoordsUtils
     {

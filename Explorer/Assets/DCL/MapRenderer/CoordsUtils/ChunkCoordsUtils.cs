@@ -2,7 +2,7 @@
 using System.Linq;
 using UnityEngine;
 
-namespace DCLServices.MapRenderer.CoordsUtils
+namespace DCL.MapRenderer.CoordsUtils
 {
     internal class ChunkCoordsUtils : ICoordsUtils
     {

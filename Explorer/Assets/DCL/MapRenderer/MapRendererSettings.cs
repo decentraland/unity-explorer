@@ -3,7 +3,7 @@ using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-namespace DCLServices.MapRenderer
+namespace DCL.MapRenderer
 {
     [Serializable]
     public class MapRendererSettings

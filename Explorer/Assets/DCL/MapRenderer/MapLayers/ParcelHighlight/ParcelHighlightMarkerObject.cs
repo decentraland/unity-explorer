@@ -2,7 +2,7 @@
 using TMPro;
 using UnityEngine;
 
-namespace DCLServices.MapRenderer.MapLayers.ParcelHighlight
+namespace DCL.MapRenderer.MapLayers.ParcelHighlight
 {
     internal class ParcelHighlightMarkerObject : MapRendererMarkerBase
     {

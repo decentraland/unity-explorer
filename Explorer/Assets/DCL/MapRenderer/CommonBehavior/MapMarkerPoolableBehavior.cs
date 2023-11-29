@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Pool;
 
-namespace DCLServices.MapRenderer.CommonBehavior
+namespace DCL.MapRenderer.CommonBehavior
 {
     /// <summary>
     /// Represents Poolable behaviour of the map object

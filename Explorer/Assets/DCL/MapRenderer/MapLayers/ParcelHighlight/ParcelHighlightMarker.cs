@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using Utility;
 
-namespace DCLServices.MapRenderer.MapLayers.ParcelHighlight
+namespace DCL.MapRenderer.MapLayers.ParcelHighlight
 {
     internal class ParcelHighlightMarker : IParcelHighlightMarker
     {
