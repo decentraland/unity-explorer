@@ -62,7 +62,7 @@ namespace SceneRuntime
                     await __internalScene.onUpdate(dt)
                     __resetableSource.Completed()
                 } catch(e) {
-                    __resetableSource.Reject(e)
+                    __resetableSource.Reject(e.message)
                 }
             }
         ");
