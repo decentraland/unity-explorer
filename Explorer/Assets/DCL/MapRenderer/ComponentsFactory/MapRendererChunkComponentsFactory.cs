@@ -19,13 +19,9 @@ namespace DCL.MapRenderer.ComponentsFactory
 {
     public class MapRendererChunkComponentsFactory : IMapRendererComponentsFactory
     {
-        private const int ATLAS_CHUNK_SIZE = 1020;
-        private const int PARCEL_SIZE = 20;
 
-        // it is quite expensive to disable TextMeshPro so larger bounds should help keeping the right balance
-        private const float CULLING_BOUNDS_IN_PARCELS = 10;
 
-        internal PlayerMarkerInstaller playerMarkerInstaller { get; }
+        private PlayerMarkerInstaller playerMarkerInstaller { get; }
 
         private readonly IAssetsProvisioner assetsProvisioner;
 
@@ -42,8 +38,8 @@ namespace DCL.MapRenderer.ComponentsFactory
         async UniTask<MapRendererComponents> IMapRendererComponentsFactory.CreateAsync(CancellationToken cancellationToken)
         {
             MapRendererConfiguration configuration = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapRendererConfiguration, ct: CancellationToken.None)).Value.GetComponent<MapRendererConfiguration>());
-            var coordsUtils = new ChunkCoordsUtils(PARCEL_SIZE);
-            IMapCullingController cullingController = new MapCullingController(new MapCullingRectVisibilityChecker(CULLING_BOUNDS_IN_PARCELS * PARCEL_SIZE));
+            var coordsUtils = new ChunkCoordsUtils(MapRendererSettings.PARCEL_SIZE);
+            IMapCullingController cullingController = new MapCullingController(new MapCullingRectVisibilityChecker(MapRendererSettings.CULLING_BOUNDS_IN_PARCELS * MapRendererSettings.PARCEL_SIZE));
             var layers = new Dictionary<MapLayer, IMapLayerController>();
             var zoomScalingLayers = new List<IZoomScalingLayer>();
 
@@ -109,7 +105,7 @@ namespace DCL.MapRenderer.ComponentsFactory
 
         private async UniTask CreateAtlasAsync(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, CancellationToken cancellationToken)
         {
-            var chunkAtlas = new ParcelChunkAtlasController(configuration.AtlasRoot, ATLAS_CHUNK_SIZE, coordsUtils, cullingController, chunkBuilder: CreateChunkAsync);
+            var chunkAtlas = new ParcelChunkAtlasController(configuration.AtlasRoot, MapRendererSettings.ATLAS_CHUNK_SIZE, coordsUtils, cullingController, chunkBuilder: CreateChunkAsync);
 
             // initialize Atlas but don't block the flow (to accelerate loading time)
             chunkAtlas.InitializeAsync(cancellationToken).SuppressCancellationThrow().Forget();
@@ -123,7 +119,7 @@ namespace DCL.MapRenderer.ComponentsFactory
 
                 var chunk = new ParcelChunkController(webRequestController, atlasChunkPrefab, chunkLocalPosition, coordsCenter, parent);
                 chunk.SetDrawOrder(MapRendererDrawOrder.ATLAS);
-                await chunk.LoadImageAsync(ATLAS_CHUNK_SIZE, PARCEL_SIZE, coordsCenter, ct);
+                await chunk.LoadImageAsync(MapRendererSettings.ATLAS_CHUNK_SIZE, MapRendererSettings.PARCEL_SIZE, coordsCenter, ct);
 
                 return chunk;
             }

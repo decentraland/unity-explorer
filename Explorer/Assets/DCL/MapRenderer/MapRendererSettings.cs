@@ -8,6 +8,11 @@ namespace DCL.MapRenderer
     [Serializable]
     public class MapRendererSettings
     {
+        public const int ATLAS_CHUNK_SIZE = 1020;
+        public const int PARCEL_SIZE = 20;
+        // it is quite expensive to disable TextMeshPro so larger bounds should help keeping the right balance
+        public const float CULLING_BOUNDS_IN_PARCELS = 10;
+
         [field: SerializeField]
         public AssetReferenceGameObject MapRendererConfiguration { get; private set; }
 

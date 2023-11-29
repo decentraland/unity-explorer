@@ -92,8 +92,6 @@ namespace DCL.Navmap
             view.parcelsCount.text = "1";
 
             ResetCategories();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(view.contentViewport);
-            LayoutRebuilder.ForceRebuildLayoutImmediate(view.descriptionContent);
         }
 
         private void SetFloatingPanelInfo(PlacesData.PlaceInfo placeInfo)
@@ -108,7 +106,7 @@ namespace DCL.Navmap
             view.location.text = placeInfo.base_position;
             view.visits.text = placeInfo.user_visits.ToString();
             //Check all .text
-            view.upvotes.text = placeInfo.like_rate_as_float != null ? $"{placeInfo.like_rate_as_float.Value * 100:0}%" : "-%";
+            view.upvotes.text = placeInfo.like_rate_as_float != null ? string.Format("{0:0}%", placeInfo.like_rate_as_float.Value * 100) : "-%";
             view.parcelsCount.text = placeInfo.Positions.Length.ToString();
 
             if (placeInfo.categories.Length == 0)

@@ -52,9 +52,7 @@ namespace DCL.Minimap
 
         protected override void OnViewInstantiated()
         {
-            viewInstance.expandMinimapButton.onClick.RemoveAllListeners();
             viewInstance.expandMinimapButton.onClick.AddListener(ExpandMinimap);
-            viewInstance.minimapRendererButton.onClick.RemoveAllListeners();
             viewInstance.minimapRendererButton.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(null))).Forget());
         }
 
@@ -130,7 +128,7 @@ namespace DCL.Minimap
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
-            UniTask.CompletedTask;
+            UniTask.Never(ct);
     }
 
     [UpdateInGroup(typeof(PresentationSystemGroup))]
