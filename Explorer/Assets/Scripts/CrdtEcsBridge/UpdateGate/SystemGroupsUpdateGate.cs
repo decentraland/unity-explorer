@@ -2,7 +2,6 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using Arch.SystemGroups.UnityBridge;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using Utility.Multithreading;
 using Utility.Pool;
 using Utility.ThreadSafePool;
@@ -44,7 +43,7 @@ namespace CrdtEcsBridge.UpdateGate
             lock (openGroups)
             {
                 // Let systems run in the remaining of the current frame
-                if (Time.frameCount < keepOpenFrame)
+                if (MultithreadingUtility.FrameCount < keepOpenFrame)
                     return false;
 
                 // Otherwise, just let them run once

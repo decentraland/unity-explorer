@@ -8,13 +8,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
+using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.Textures
 {
     public class TexturesCache : IStreamableCache<Texture2D, GetTextureIntention>
     {
         private readonly Dictionary<GetTextureIntention, Texture2D> cache;
-        private readonly SimplePriorityQueue<GetTextureIntention, uint> unloadQueue = new ();
+        private readonly SimplePriorityQueue<GetTextureIntention, long> unloadQueue = new ();
 
         public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<Texture2D>?>> OngoingRequests { get; }
 
@@ -44,7 +45,7 @@ namespace ECS.StreamableLoading.Textures
         public void Add(in GetTextureIntention key, Texture2D asset)
         {
             if (cache.TryAdd(key, asset))
-                unloadQueue.Enqueue(key, (uint)Time.frameCount);
+                unloadQueue.Enqueue(key, MultithreadingUtility.FrameCount);
 
             ProfilingCounters.TexturesInCache.Value = cache.Count;
         }
@@ -53,7 +54,7 @@ namespace ECS.StreamableLoading.Textures
         {
             if (!cache.TryGetValue(key, out texture)) return false;
 
-            unloadQueue.TryUpdatePriority(key, (uint)Time.frameCount);
+            unloadQueue.TryUpdatePriority(key, MultithreadingUtility.FrameCount);
             return true;
         }
 

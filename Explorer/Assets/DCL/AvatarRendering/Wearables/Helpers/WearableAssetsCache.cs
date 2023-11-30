@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
+using Utility.Multithreading;
 using Utility.Pool;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
@@ -24,7 +25,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         private readonly Transform parentContainer;
 
-        private readonly SimplePriorityQueue<WearableAsset, uint> unloadQueue = new ();
+        private readonly SimplePriorityQueue<WearableAsset, long> unloadQueue = new ();
 
         public Dictionary<WearableAsset, List<CachedWearable>> Cache { get; }
         public List<CachedWearable> AllCachedWearables { get; } = new ();
@@ -60,7 +61,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     unloadQueue.Remove(asset);
                 }
                 else
-                    unloadQueue.TryUpdatePriority(asset, (uint)Time.frameCount);
+                    unloadQueue.TryUpdatePriority(asset, MultithreadingUtility.FrameCount);
 
                 ProfilingCounters.CachedWearablesInCacheAmount.Value--;
                 return true;
@@ -77,10 +78,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             if (!Cache.TryGetValue(asset, out List<CachedWearable> list))
             {
                 Cache[asset] = list = listPool.Get();
-                unloadQueue.Enqueue(asset, (uint)Time.frameCount);
+                unloadQueue.Enqueue(asset, MultithreadingUtility.FrameCount);
             }
             else
-                unloadQueue.TryUpdatePriority(asset, (uint)Time.frameCount);
+                unloadQueue.TryUpdatePriority(asset, MultithreadingUtility.FrameCount);
 
             list.Add(cachedWearable);
 

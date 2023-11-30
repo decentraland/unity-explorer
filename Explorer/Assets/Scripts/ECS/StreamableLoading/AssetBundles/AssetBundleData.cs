@@ -3,6 +3,7 @@ using JetBrains.Annotations;
 using System;
 using UnityEngine;
 using UnityEngine.Assertions;
+using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
@@ -23,7 +24,7 @@ namespace ECS.StreamableLoading.AssetBundles
         ///     Root assets - Game Objects
         /// </summary>
         public GameObject GameObject { get; }
-        public uint LastUsedFrame { get; private set; }
+        public long LastUsedFrame { get; private set; }
 
         public AssetBundleData(AssetBundle assetBundle, [CanBeNull] AssetBundleMetrics? metrics, GameObject gameObject, AssetBundleData[] dependencies)
         {
@@ -53,7 +54,7 @@ namespace ECS.StreamableLoading.AssetBundles
         public void AddReference()
         {
             referencesCount++;
-            LastUsedFrame = (uint)Time.frameCount;
+            LastUsedFrame = MultithreadingUtility.FrameCount;
 
             if (referencesCount == 1)
                 ProfilingCounters.ABReferencedAmount.Value++;
@@ -62,7 +63,7 @@ namespace ECS.StreamableLoading.AssetBundles
         public void Dereference()
         {
             referencesCount--;
-            LastUsedFrame = (uint)Time.frameCount;
+            LastUsedFrame = MultithreadingUtility.FrameCount;
 
             Assert.IsFalse(referencesCount < 0, "References count of asset bundle cannot be less then zero!");
 

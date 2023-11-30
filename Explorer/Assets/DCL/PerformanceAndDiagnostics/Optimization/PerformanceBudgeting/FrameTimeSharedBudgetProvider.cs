@@ -1,5 +1,5 @@
 using DCL.Profiling;
-using UnityEngine;
+using Utility.Multithreading;
 
 namespace DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting
 {
@@ -11,7 +11,7 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting
         private ulong startTime;
         private bool outOfBudget;
 
-        private int currentFrameNumber;
+        private long currentFrameNumber;
 
         public FrameTimeSharedBudgetProvider(float totalBudgetAvailableInMiliseconds, IProfilingProvider profilingProvider)
         {
@@ -20,7 +20,7 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting
             currentAvailableBudget = totalBudgetAvailable;
             this.profilingProvider = profilingProvider;
 
-            currentFrameNumber = Time.frameCount;
+            currentFrameNumber = MultithreadingUtility.FrameCount;
         }
 
         public bool TrySpendBudget()
@@ -45,11 +45,11 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting
 
         private void TryResetBudget()
         {
-            if (currentFrameNumber != Time.frameCount)
+            if (currentFrameNumber != MultithreadingUtility.FrameCount)
             {
                 currentAvailableBudget = totalBudgetAvailable;
                 outOfBudget = false;
-                currentFrameNumber = Time.frameCount;
+                currentFrameNumber = MultithreadingUtility.FrameCount;
             }
         }
     }

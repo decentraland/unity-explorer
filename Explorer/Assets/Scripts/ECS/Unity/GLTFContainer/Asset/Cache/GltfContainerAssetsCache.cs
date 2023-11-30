@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
+using Utility.Multithreading;
 
 namespace ECS.Unity.GLTFContainer.Asset.Cache
 {
@@ -23,7 +24,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
         private readonly Transform parentContainer;
 
         private readonly Dictionary<string, List<GltfContainerAsset>> cache;
-        private readonly SimplePriorityQueue<string, uint> unloadQueue = new ();
+        private readonly SimplePriorityQueue<string, long> unloadQueue = new ();
 
         public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>> OngoingRequests { get; }
         public IDictionary<string, StreamableLoadingResult<GltfContainerAsset>> IrrecoverableFailures { get; }
@@ -64,11 +65,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             {
                 assets = new List<GltfContainerAsset>();
                 cache[key] = assets;
-                unloadQueue.Enqueue(key, (uint)Time.frameCount);
+                unloadQueue.Enqueue(key, MultithreadingUtility.FrameCount);
             }
 
             assets.Add(asset);
-            unloadQueue.TryUpdatePriority(key, (uint)Time.frameCount);
+            unloadQueue.TryUpdatePriority(key, MultithreadingUtility.FrameCount);
 
             ProfilingCounters.GltfInCacheAmount.Value++;
 
@@ -86,7 +87,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
                 // Remove from the tail of the list
                 asset = assets[^1];
                 assets.RemoveAt(assets.Count - 1);
-                unloadQueue.TryUpdatePriority(key, (uint)Time.frameCount);
+                unloadQueue.TryUpdatePriority(key, MultithreadingUtility.FrameCount);
 
                 ProfilingCounters.GltfInCacheAmount.Value--;
                 return true;
