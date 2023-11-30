@@ -18,7 +18,6 @@ using ECS.Unity.EngineInfo;
 using ECS.Unity.Systems;
 using System.Collections.Generic;
 using SystemGroups.Visualiser;
-using UnityEditor;
 
 namespace SceneRunner.ECSWorld
 {
@@ -87,9 +86,7 @@ namespace SceneRunner.ECSWorld
             // Add other systems here
             SystemGroupWorld systemsWorld = builder.Finish(singletonDependencies.AggregateFactory, scenePartition);
 
-#if UNITY_EDITOR
             SystemGroupSnapshot.Instance.Register(args.SceneData.SceneShortInfo.ToString(),systemsWorld);
-#endif
 
             return new ECSWorldFacade(systemsWorld, world, finalizeWorldSystems);
         }
