@@ -3,17 +3,17 @@ using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.Pool;
+using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public class WearableCatalog : IDisposable
     {
-        private static readonly Comparison<(string key, uint lastUsedFrame)> compareByLastUsedFrame =
+        private static readonly Comparison<(string key, long lastUsedFrame)> compareByLastUsedFrame =
             (pair1, pair2) => pair1.lastUsedFrame.CompareTo(pair2.lastUsedFrame);
 
-        private readonly List<(string key, uint lastUsedFrame)> listedCacheKeys = ListPool<(string, uint)>.Get();
+        private readonly List<(string key, long lastUsedFrame)> listedCacheKeys = ListPool<(string, long)>.Get();
 
         public int WearableAssetsInCatalog
         {
@@ -43,42 +43,55 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public void Dispose()
         {
-            ListPool<(string, uint)>.Release(listedCacheKeys);
+            ListPool<(string, long)>.Release(listedCacheKeys);
         }
 
         public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto)
         {
-            if (wearableDictionary.TryGetValue(wearableDto.metadata.id, out IWearable exitingWearable)) { return exitingWearable; }
+            if (TryGetWearable(wearableDto.metadata.id, out IWearable existingWearable))
+                return existingWearable;
 
-            var wearable = new Wearable
+            return AddWearable(wearableDto.metadata.id, new Wearable
             {
                 WearableDTO = new StreamableLoadingResult<WearableDTO>(wearableDto),
                 IsLoading = false,
-            };
-
-            wearableDictionary.Add(wearable.GetUrn(), wearable);
-            listedCacheKeys.Add((wearable.GetUrn(), 0));
-
-            return wearable;
+            });
         }
 
-        public void AddEmptyWearable(string loadingIntentionPointer)
+        public void AddEmptyWearable(string loadingIntentionPointer) =>
+            AddWearable(loadingIntentionPointer, new Wearable());
+
+        private IWearable AddWearable(string loadingIntentionPointer, IWearable wearable)
         {
-            wearableDictionary.Add(loadingIntentionPointer, new Wearable());
-            listedCacheKeys.Add((loadingIntentionPointer, (uint)Time.frameCount));
+            wearableDictionary.Add(loadingIntentionPointer, wearable);
+            listedCacheKeys.Add((loadingIntentionPointer, MultithreadingUtility.FrameCount));
+
+            return wearable;
         }
 
         public bool TryGetWearable(string wearableURN, out IWearable wearable)
         {
             if (wearableDictionary.TryGetValue(wearableURN, out wearable))
             {
-                int tupleIdx = listedCacheKeys.FindIndex(x => x.key == wearableURN);
-                listedCacheKeys[tupleIdx] = (wearableURN, (uint)Time.frameCount);
-
+                UpdateListedCachePriority(@for: wearableURN);
                 return true;
             }
 
             return false;
+        }
+
+        public IWearable GetDefaultWearable(BodyShape bodyShape, string category)
+        {
+            string wearableURN = WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category);
+
+            UpdateListedCachePriority(@for: wearableURN);
+            return wearableDictionary[wearableURN];
+        }
+
+        private void UpdateListedCachePriority(string @for)
+        {
+            int tupleIdx = listedCacheKeys.FindIndex(x => x.key == @for);
+            listedCacheKeys[tupleIdx] = (@for, MultithreadingUtility.FrameCount);
         }
 
         public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider)
@@ -105,8 +118,5 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 }
             }
         }
-
-        public IWearable GetDefaultWearable(BodyShape bodyShape, string category) =>
-            wearableDictionary[WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category)];
     }
 }

@@ -133,7 +133,7 @@ GameObject:
   m_Component:
   - component: {fileID: 43281827}
   m_Layer: 0
-  m_Name: ------------ Runtime Objects -------
+  m_Name: ----------------- Runtime Objects ----------------
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -281,9 +281,7 @@ MonoBehaviour:
   debugUiRoot: {fileID: 946305963}
   StartPosition: {x: 0, y: 0}
   SceneLoadRadius: 4
-  StaticLoadPositions:
-  - x: 0
-    y: 0
+  StaticLoadPositions: []
   realmLauncher: {fileID: 234607244}
   realms:
   - https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main
@@ -717,7 +715,7 @@ GameObject:
   m_Component:
   - component: {fileID: 754476364}
   m_Layer: 0
-  m_Name: -------------- UI ------------------
+  m_Name: ----------------------- UI -----------------------
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
