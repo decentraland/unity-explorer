@@ -100,18 +100,15 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
         {
             var removedAmount = 0;
 
-            if (actionOnDestroy != null)
+            int maxAmount = Math.Min(maxChunkSize, list.Count);
+
+            // Iterate backward to safely remove items from the list
+            for (int index = maxAmount - 1; index >= 0; index--, removedAmount++)
             {
-                int maxAmount = Math.Min(maxChunkSize, list.Count);
+                T obj = list[index];
+                actionOnDestroy?.Invoke(obj);
 
-                // Iterate backward to safely remove items from the list
-                for (int index = maxAmount - 1; index >= 0; index--, removedAmount++)
-                {
-                    T obj = list[index];
-                    actionOnDestroy(obj);
-
-                    list.RemoveAt(index);
-                }
+                list.RemoveAt(index);
             }
 
             CountAll -= removedAmount;

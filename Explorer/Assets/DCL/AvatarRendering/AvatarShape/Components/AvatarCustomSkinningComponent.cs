@@ -1,7 +1,6 @@
 ﻿using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.PerformanceAndDiagnostics.Optimization.Pools;
-using DCL.Profiling;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility.Pool;
@@ -67,8 +66,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             this.materials = materials;
             this.computeShaderInstance = computeShaderInstance;
             VertsOutRegion = default(FixedComputeBufferHandler.Slice);
-
-            ProfilingCounters.AvatarCustomSkinningComponent.Value++;
         }
 
         public void Dispose(IObjectPoolDCL<Material> objectPool, IObjectPoolDCL<UnityEngine.ComputeShader> computeShaderSkinningPool)
@@ -83,8 +80,6 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             buffers.DisposeBuffers();
             USED_SLOTS_POOL.Release(materials);
-
-            ProfilingCounters.AvatarCustomSkinningComponent.Value--;
         }
     }
 }
