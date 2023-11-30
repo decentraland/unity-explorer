@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Profiling;
+using SystemGroups.Visualiser;
+
 
 namespace SceneRunner.ECSWorld
 {
@@ -45,6 +47,8 @@ namespace SceneRunner.ECSWorld
             }
 
             Profiler.EndSample();
+
+            SystemGroupSnapshot.Instance.Unregister(systemGroupWorld);
 
             systemGroupWorld.Dispose();
             EcsWorld.Dispose();
