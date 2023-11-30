@@ -1,42 +1,15 @@
 ﻿using DCL.AvatarRendering.Wearables.Components;
 using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
-using System;
 using System.Collections.Generic;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
-    public class WearableCatalog
+    public partial class WearableCatalog
     {
-        private static readonly Comparison<(string key, long lastUsedFrame)> compareByLastUsedFrame =
-            (pair1, pair2) => pair1.lastUsedFrame.CompareTo(pair2.lastUsedFrame);
-
-        private readonly List<(string key, long lastUsedFrame)> listedCacheKeys = new ();
-
-        public int WearableAssetsInCatalog
-        {
-            get
-            {
-                var sum = 0;
-
-                foreach (IWearable wearable in wearableDictionary.Values)
-                {
-                    if (wearable.WearableAssets != null)
-                    {
-                        var count = 0;
-
-                        foreach (StreamableLoadingResult<WearableAsset>? result in wearable.WearableAssets)
-                            if (result is { Asset: not null })
-                                count++;
-
-                        sum += count;
-                    }
-                }
-
-                return sum;
-            }
-        }
+        private readonly LinkedList<(string key, long lastUsedFrame)> listedCacheKeys = new ();
+        private readonly Dictionary<string, LinkedListNode<(string key, long lastUsedFrame)>> cacheKeysDictionary = new ();
 
         internal Dictionary<string, IWearable> wearableDictionary { get; } = new ();
 
@@ -58,7 +31,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         private IWearable AddWearable(string loadingIntentionPointer, IWearable wearable)
         {
             wearableDictionary.Add(loadingIntentionPointer, wearable);
-            listedCacheKeys.Add((loadingIntentionPointer, MultithreadingUtility.FrameCount));
+            cacheKeysDictionary[loadingIntentionPointer] = listedCacheKeys.AddLast((loadingIntentionPointer, MultithreadingUtility.FrameCount));
 
             return wearable;
         }
@@ -84,16 +57,17 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         private void UpdateListedCachePriority(string @for)
         {
-            int tupleIdx = listedCacheKeys.FindIndex(x => x.key == @for);
-            listedCacheKeys[tupleIdx] = (@for, MultithreadingUtility.FrameCount);
+            if (cacheKeysDictionary.TryGetValue(@for, out LinkedListNode<(string key, long lastUsedFrame)> node))
+            {
+                listedCacheKeys.Remove(node);
+                cacheKeysDictionary[@for] = listedCacheKeys.AddLast((@for, MultithreadingUtility.FrameCount));
+            }
         }
 
         public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider)
         {
-            listedCacheKeys.Sort(compareByLastUsedFrame);
-
-            for (var i = 0; frameTimeBudgetProvider.TrySpendBudget() && i < listedCacheKeys.Count; i++)
-                if (wearableDictionary.TryGetValue(listedCacheKeys[i].key, out IWearable wearable))
+            for (LinkedListNode<(string key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudgetProvider.TrySpendBudget() && node != null; node = node.Next)
+                if (wearableDictionary.TryGetValue(node.Value.key, out IWearable wearable))
                     UnloadWearableAssets(wearable);
         }
 

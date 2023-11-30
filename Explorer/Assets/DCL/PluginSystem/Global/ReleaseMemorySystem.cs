@@ -27,5 +27,3 @@ namespace DCL.PluginSystem.Global
         }
     }
 }
-
-namespace DCL.PluginSystem.Global { }
