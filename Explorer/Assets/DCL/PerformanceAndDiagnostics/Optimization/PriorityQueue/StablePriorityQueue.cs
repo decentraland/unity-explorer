@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace DCL.PerformanceAndDiagnostics.Optimization.Priority_Queue
+namespace DCL.PerformanceAndDiagnostics.Optimization.PriorityQueue
 {
     /// <summary>
     ///     A copy of FastPriorityQueue which is also stable - that is, when two nodes are enqueued with the same priority, they

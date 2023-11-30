@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace DCL.PerformanceAndDiagnostics.Optimization.Priority_Queue
+namespace DCL.PerformanceAndDiagnostics.Optimization.PriorityQueue
 {
     /// <summary>
     ///     An implementation of a min-Priority Queue using a heap.  Has O(1) .Contains()!

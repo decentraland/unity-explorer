@@ -1,4 +1,4 @@
-﻿namespace DCL.PerformanceAndDiagnostics.Optimization.Priority_Queue
+﻿namespace DCL.PerformanceAndDiagnostics.Optimization.PriorityQueue
 {
     public class FastPriorityQueueNode
     {

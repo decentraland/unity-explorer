@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace DCL.PerformanceAndDiagnostics.Optimization.Priority_Queue
+namespace DCL.PerformanceAndDiagnostics.Optimization.PriorityQueue
 {
     /// <summary>
     ///     The IPriorityQueue interface.  This is mainly here for purists, and in case I decide to add more implementations later.
