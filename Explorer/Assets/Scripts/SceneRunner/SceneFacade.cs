@@ -95,7 +95,7 @@ namespace SceneRunner
             catch (OperationCanceledException) { return; }
             catch (ScriptEngineException e)
             {
-                sceneExceptionsHandler.OnJavaScriptException(e.Message);
+                sceneExceptionsHandler.OnJavaScriptException(e);
                 return;
             }
             catch (Exception e)
@@ -128,7 +128,7 @@ namespace SceneRunner
                     catch (OperationCanceledException) { throw; }
                     catch (ScriptEngineException e)
                     {
-                        sceneExceptionsHandler.OnJavaScriptException(e.Message);
+                        sceneExceptionsHandler.OnJavaScriptException(e);
                         break;
                     }
                     catch (Exception e)

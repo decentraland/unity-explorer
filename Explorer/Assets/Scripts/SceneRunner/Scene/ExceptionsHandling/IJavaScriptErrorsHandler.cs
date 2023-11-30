@@ -1,7 +1,9 @@
-﻿namespace SceneRunner.Scene.ExceptionsHandling
+﻿using System;
+
+namespace SceneRunner.Scene.ExceptionsHandling
 {
     public interface IJavaScriptErrorsHandler
     {
-        void OnJavaScriptException(string message);
+        void OnJavaScriptException(Exception exception);
     }
 }
