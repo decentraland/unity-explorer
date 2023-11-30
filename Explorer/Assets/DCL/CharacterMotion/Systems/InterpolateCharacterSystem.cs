@@ -51,8 +51,7 @@ namespace DCL.CharacterMotion.Systems
             Vector3 gravityDelta = finalGravity * dt;
 
             // before moving we check if we are able to step up
-            bool canStepUp = !rigidTransform.IsGrounded
-                             && !rigidTransform.IsOnASteepSlope;
+            bool canStepUp = !rigidTransform.IsGrounded;
 
             characterController.stepOffset = canStepUp ? 0.35f : 0f;
 

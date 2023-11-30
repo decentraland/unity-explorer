@@ -31,7 +31,7 @@ namespace DCL.CharacterMotion
                 float gravity = Math.Abs(settings.Gravity);
 
                 // In order to jump higher when pressing the jump button, we reduce the gravity
-                if (jumpInputComponent.IsPressed && PhysicsToDeltaTime(physicsTick - jumpInputComponent.Trigger.TickWhenJumpOccurred) < settings.LongJumpTime)
+                if (jumpInputComponent.IsPressed && PhysicsToDeltaTime(physicsTick - jumpInputComponent.Trigger.TickWhenJumpWasConsumed) < settings.LongJumpTime)
                     gravity *= settings.LongJumpGravityScale;
 
                 // In order to feel less floaty when jumping, we increase the gravity when going up ( the jump velocity is also scaled up )

@@ -35,7 +35,7 @@ namespace DCL.CharacterMotion.Systems
             ApplyAnimationMovementBlend.Execute(dt, ref animationComponent, in settings, in rigidTransform, in movementInput, in view);
 
             // Update slide blend value, ranges from 0 to 1
-            ApplyAnimationSlideBlend.Execute(dt, ref animationComponent, in rigidTransform, in view);
+            ApplyAnimationSlideBlend.Execute(dt, ref animationComponent, in rigidTransform, in view, in settings);
 
             // Apply other states
             ApplyAnimationState.Execute(ref animationComponent, in settings, in rigidTransform, in view, in stunComponent);

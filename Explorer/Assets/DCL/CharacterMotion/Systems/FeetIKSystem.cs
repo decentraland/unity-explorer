@@ -10,6 +10,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using ECS.Abstract;
+using System.Drawing;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
@@ -102,7 +103,8 @@ namespace DCL.CharacterMotion.Systems
             // Enable flags: when disabled we lerp the IK weight towards 0
             bool isEnabled = rigidTransform.IsGrounded
                              && !rigidTransform.IsOnASteepSlope
-                             && rigidTransform.MoveVelocity.Velocity.sqrMagnitude < 0.01f
+
+                             //&& rigidTransform.MoveVelocity.Velocity.sqrMagnitude < 0.01f
                              && !stunComponent.IsStunned;
 
             // && !emotes?
@@ -154,6 +156,7 @@ namespace DCL.CharacterMotion.Systems
             // FEET_HEIGHT_DISABLE_IK is the height when we dont want the foot to have IK enabled
             // Games configure this weight trough Animation Curves on each animation, but since we cant do that here, we just do magic math
             float ikWeightRight = !feetComponent.IsGrounded ? 0 : 1f - ((rightLegPosition.y - FEET_HEIGHT_CORRECTION) / FEET_HEIGHT_DISABLE_IK);
+            ikWeightRight = feetComponent.IsInsideMesh ? 1 : ikWeightRight;
             float targetWeight = Mathf.RoundToInt(ikWeightRight) * (isEnabled ? 1 : 0);
 
             // We apply ik weight speed only if its increasing, decreasing it is instant, this avoids being partially snapped into the ground when suddenly jumping
@@ -197,6 +200,7 @@ namespace DCL.CharacterMotion.Systems
                 ApplyRotationLimit(legIKTarget, verticalLimits, twistLimits);
 
                 feetComponent.IsGrounded = true;
+                feetComponent.IsInsideMesh = hitInfo.point.y > origin.y;
                 feetComponent.Distance = FEET_HEIGHT_CORRECTION + hitInfo.distance - pullDist - legConstraintPosition.localPosition.y;
                 return;
             }

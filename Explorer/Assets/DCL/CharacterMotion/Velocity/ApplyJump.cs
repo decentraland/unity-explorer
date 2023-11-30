@@ -53,6 +53,7 @@ namespace DCL.CharacterMotion
 
                 // We "consume" the jump input
                 jump.Trigger.TickWhenJumpOccurred = -999;
+                jump.Trigger.TickWhenJumpWasConsumed = physicsTick;
                 characterPhysics.JustJumped = true;
             }
         }

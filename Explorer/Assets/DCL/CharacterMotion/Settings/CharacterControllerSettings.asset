@@ -124,8 +124,8 @@ MonoBehaviour:
   <FOVChangeSpeed>k__BackingField: 60
   <FeetIKHipsPullMaxDistance>k__BackingField: 0.6
   <FeetIKSphereSize>k__BackingField: 0.1
-  <IKWeightSpeed>k__BackingField: 100
-  <IKPositionSpeed>k__BackingField: 100
+  <IKWeightSpeed>k__BackingField: 10
+  <IKPositionSpeed>k__BackingField: 10
   <FeetIKVerticalAngleLimits>k__BackingField: {x: -30, y: 50}
   <FeetIKTwistAngleLimits>k__BackingField: {x: -30, y: 15}
   <HandsIKWallHitDistance>k__BackingField: 0.5
