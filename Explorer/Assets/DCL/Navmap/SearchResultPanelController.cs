@@ -26,9 +26,11 @@ namespace DCL.Navmap
             InitPoolAsync().Forget();
         }
 
+        //TODO: Consider init method with assetprovider and ct
+
         private async UniTaskVoid InitPoolAsync()
         {
-            FullSearchResultsView asset = (await assetsProvisioner.ProvideInstanceAsync(view.ResultRef, ct: CancellationToken.None)).Value.GetComponent<FullSearchResultsView>();
+            FullSearchResultsView asset = (await assetsProvisioner.ProvideInstanceAsync(view.ResultRef, ct: CancellationToken.None)).Value;
 
             resultsPool = new ObjectPool<FullSearchResultsView>(
                 () => Object.Instantiate(asset, view.searchResultsContainer),

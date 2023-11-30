@@ -34,7 +34,7 @@ namespace DCL.Navmap
         private readonly RectTransform rectTransform;
         private readonly SatelliteController satelliteController;
         private readonly StreetViewController streetViewController;
-        private readonly Dictionary<ExploreSections, ISection> mapSections;
+        private readonly Dictionary<NavmapSections, ISection> mapSections;
 
         public NavmapController(
             NavmapView navmapView,
@@ -59,20 +59,20 @@ namespace DCL.Navmap
 
             mapSections = new ()
             {
-                { ExploreSections.Satellite, satelliteController },
-                { ExploreSections.StreetView, streetViewController },
+                { NavmapSections.Satellite, satelliteController },
+                { NavmapSections.StreetView, streetViewController },
             };
 
-            var sectionSelectorController = new SectionSelectorController(mapSections, ExploreSections.Satellite);
-            foreach (var tabSelector in navmapView.TabSelectorViews)
+            var sectionSelectorController = new SectionSelectorController<NavmapSections>(mapSections, NavmapSections.Satellite);
+            foreach (var tabSelector in navmapView.TabSelectorMappedViews)
             {
-                tabSelector.TabSelectorToggle.onValueChanged.RemoveAllListeners();
-                tabSelector.TabSelectorToggle.onValueChanged.AddListener(
+                tabSelector.TabSelectorViews.TabSelectorToggle.onValueChanged.RemoveAllListeners();
+                tabSelector.TabSelectorViews.TabSelectorToggle.onValueChanged.AddListener(
                     (isOn) =>
                     {
                         animationCts.SafeCancelAndDispose();
                         animationCts = new CancellationTokenSource();
-                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector, animationCts.Token, false).Forget();
+                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, tabSelector.Section, animationCts.Token, false).Forget();
                     });
             }
 
@@ -95,7 +95,6 @@ namespace DCL.Navmap
 
         public void Activate()
         {
-            navmapView.TabSelectorViews[0].TabSelectorToggle.isOn = true;
             cameraController = mapRenderer.RentCamera(
                 new MapCameraInput(
                     this,
@@ -107,7 +106,7 @@ namespace DCL.Navmap
                 ));
             satelliteController.InjectCameraController(cameraController);
             streetViewController.InjectCameraController(cameraController);
-            mapSections[ExploreSections.Satellite].Activate();
+            mapSections[NavmapSections.Satellite].Activate();
             zoomController.Activate(cameraController);
         }
 

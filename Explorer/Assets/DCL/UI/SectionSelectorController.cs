@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -15,18 +16,18 @@ namespace DCL.UI
         RectTransform GetRectTransform();
     }
 
-    public class SectionSelectorController
+    public class SectionSelectorController<T> where T : unmanaged, Enum
     {
-        private readonly Dictionary<ExploreSections, ISection> sections;
-        private ExploreSections previousSection;
+        private readonly Dictionary<T, ISection> sections;
+        private T previousSection;
 
-        public SectionSelectorController(Dictionary<ExploreSections, ISection> sections, ExploreSections initialSection)
+        public SectionSelectorController(Dictionary<T, ISection> sections, T initialSection)
         {
             this.sections = sections;
             previousSection = initialSection;
         }
 
-        public async UniTaskVoid OnTabSelectorToggleValueChangedAsync(bool isOn, TabSelectorView selectorToggle, CancellationToken ct, bool animate = true)
+        public async UniTaskVoid OnTabSelectorToggleValueChangedAsync(bool isOn, TabSelectorView selectorToggle, T section, CancellationToken ct, bool animate = true)
         {
             selectorToggle.SelectedImage.gameObject.SetActive(isOn);
             selectorToggle.UnselectedImage.gameObject.SetActive(!isOn);
@@ -34,24 +35,24 @@ namespace DCL.UI
             selectorToggle.UnselectedText.SetActive(!isOn);
             selectorToggle.SelectedBackground.gameObject.SetActive(isOn);
 
-            if (!isOn || selectorToggle.section == previousSection) return;
+            if (!isOn || Utility.EnumUtils.Equals(section, previousSection)) return;
 
             if (animate)
             {
                 await AnimatePanelsAsync(
                     sections[previousSection],
-                    sections[selectorToggle.section],
-                    selectorToggle.section,
+                    sections[section],
+                    section,
                     ct);
             }
             else
             {
                 sections[previousSection].Deactivate();
-                sections[selectorToggle.section].Activate();
+                sections[section].Activate();
                 sections[previousSection].GetRectTransform().gameObject.SetActive(false);
-                sections[selectorToggle.section].GetRectTransform().gameObject.SetActive(true);
-                SetPanelsPosition(sections[previousSection].GetRectTransform(), sections[selectorToggle.section].GetRectTransform());
-                previousSection = selectorToggle.section;
+                sections[section].GetRectTransform().gameObject.SetActive(true);
+                SetPanelsPosition(sections[previousSection].GetRectTransform(), sections[section].GetRectTransform());
+                previousSection = section;
             }
         }
 
@@ -61,7 +62,7 @@ namespace DCL.UI
             panelOpening.anchoredPosition = Vector2.zero;
         }
 
-        private async UniTask AnimatePanelsAsync(ISection panelClosing, ISection panelOpening, ExploreSections newSection, CancellationToken ct)
+        private async UniTask AnimatePanelsAsync(ISection panelClosing, ISection panelOpening, T newSection, CancellationToken ct)
         {
             panelOpening.Activate();
 

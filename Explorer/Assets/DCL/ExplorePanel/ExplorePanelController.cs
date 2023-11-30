@@ -3,6 +3,7 @@ using DCL.Navmap;
 using DCL.Settings;
 using DCL.UI;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -14,7 +15,7 @@ namespace DCL.ExplorePanel
     {
         private readonly NavmapController navmapController;
         private readonly SettingsController settingsController;
-        private SectionSelectorController sectionSelectorController;
+        private SectionSelectorController<ExploreSections> sectionSelectorController;
         private CancellationTokenSource animationCts;
         private TabSelectorView previousSelector;
 
@@ -39,21 +40,21 @@ namespace DCL.ExplorePanel
                 { ExploreSections.Settings, settingsController },
             };
 
-            sectionSelectorController = new SectionSelectorController(exploreSections, ExploreSections.Navmap);
+            sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
 
             foreach (var keyValuePair in exploreSections)
                 keyValuePair.Value.Deactivate();
 
-            foreach (var tabSelector in viewInstance.TabSelectorViews)
+            foreach (var tabSelector in viewInstance.TabSelectorMappedViews)
             {
-                tabSelector.TabSelectorToggle.onValueChanged.RemoveAllListeners();
+                tabSelector.TabSelectorViews.TabSelectorToggle.onValueChanged.RemoveAllListeners();
 
-                tabSelector.TabSelectorToggle.onValueChanged.AddListener(
+                tabSelector.TabSelectorViews.TabSelectorToggle.onValueChanged.AddListener(
                     (isOn) =>
                     {
                         animationCts.SafeCancelAndDispose();
                         animationCts = new CancellationTokenSource();
-                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector, animationCts.Token).Forget();
+                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, tabSelector.Section, animationCts.Token).Forget();
                     }
                 );
             }
@@ -61,7 +62,6 @@ namespace DCL.ExplorePanel
 
         protected override void OnBeforeViewShow()
         {
-            viewInstance.TabSelectorViews[0].TabSelectorToggle.isOn = true;
             exploreSections[inputData.Section].Activate();
         }
 

@@ -860,9 +860,11 @@ MonoBehaviour:
   floatingPanelView: {fileID: 6116657360967466757}
   filterView: {fileID: 7028833074500842829}
   zoomView: {fileID: 5363161542596086617}
-  <TabSelectorViews>k__BackingField:
-  - {fileID: 3289875574004561177}
-  - {fileID: 459497944378133901}
+  <TabSelectorMappedViews>k__BackingField:
+  - <TabSelectorViews>k__BackingField: {fileID: 3289875574004561177}
+    <Section>k__BackingField: 0
+  - <TabSelectorViews>k__BackingField: {fileID: 459497944378133901}
+    <Section>k__BackingField: 1
   <SatelliteRenderImage>k__BackingField: {fileID: 1016802245327051856}
   <SatellitePixelPerfectMapRendererTextureProvider>k__BackingField: {fileID: 5012019790087633832}
   <StreetViewRenderImage>k__BackingField: {fileID: 4556225041539844487}

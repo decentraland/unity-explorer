@@ -109,7 +109,7 @@ namespace DCL.Navmap
             //Check all .text
             //view.upvotes.text = placeInfo.like_rate_as_float != null ? string.Format("{0:0}%", placeInfo.like_rate_as_float.Value * 100) : "-%";
             view.parcelsCount.text = placeInfo.Positions.Length.ToString();
-            SetUpvotes(placeInfo);
+            SetUpVotes(placeInfo);
 
             if (placeInfo.categories.Length == 0)
                 return;
@@ -119,7 +119,7 @@ namespace DCL.Navmap
                     categoryGameObject.SetActive(true);
         }
 
-        private void SetUpvotes(PlacesData.PlaceInfo placeInfo)
+        private void SetUpVotes(PlacesData.PlaceInfo placeInfo)
         {
             string likeRate = placeInfo.like_rate;
 
