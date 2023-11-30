@@ -4,6 +4,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Profiling;
 using ECS.Abstract;
 using System;
 using System.Runtime.CompilerServices;

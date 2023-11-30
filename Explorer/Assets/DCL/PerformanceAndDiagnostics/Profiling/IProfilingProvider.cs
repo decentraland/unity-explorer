@@ -1,4 +1,4 @@
-namespace DCL.Profiling
+namespace DCL.PerformanceAndDiagnostics.Profiling
 {
     public interface IProfilingProvider
     {

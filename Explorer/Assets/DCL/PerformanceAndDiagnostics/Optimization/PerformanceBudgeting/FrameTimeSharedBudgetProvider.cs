@@ -1,4 +1,4 @@
-using DCL.Profiling;
+using DCL.PerformanceAndDiagnostics.Profiling;
 using Utility.Multithreading;
 
 namespace DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting

@@ -1,4 +1,4 @@
-using DCL.Profiling;
+using DCL.PerformanceAndDiagnostics.Profiling;
 using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting

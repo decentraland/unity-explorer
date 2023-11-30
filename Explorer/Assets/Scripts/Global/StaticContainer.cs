@@ -5,6 +5,7 @@ using DCL.Character;
 using DCL.Diagnostics;
 using DCL.Interaction.Utility;
 using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Profiling;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
