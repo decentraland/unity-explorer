@@ -1,4 +1,6 @@
-﻿using System;
+using DCL.Diagnostics.Sentry;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Diagnostics
@@ -19,12 +21,15 @@ namespace DCL.Diagnostics
 
         public static DiagnosticsContainer Create(IReportsHandlingSettings settings)
         {
-            var logger = new ReportHubLogger(new (ReportHandler, IReportHandler)[]
-            {
-                (ReportHandler.DebugLog, new DebugLogReportHandler(Debug.unityLogger.logHandler, settings.GetMatrix(ReportHandler.DebugLog), settings.DebounceEnabled)),
+            List<(ReportHandler, IReportHandler)> handlers = new (2);
 
-                // Insert Sentry Logger when implemented
-            });
+            if (settings.IsEnabled(ReportHandler.DebugLog))
+                handlers.Add((ReportHandler.DebugLog, new DebugLogReportHandler(Debug.unityLogger.logHandler, settings.GetMatrix(ReportHandler.DebugLog), settings.DebounceEnabled)));
+
+            if (settings.IsEnabled(ReportHandler.Sentry))
+                handlers.Add((ReportHandler.Sentry, new SentryReportHandler(settings.GetMatrix(ReportHandler.Sentry), settings.DebounceEnabled)));
+
+            var logger = new ReportHubLogger(handlers);
 
             ILogHandler defaultLogHandler = Debug.unityLogger.logHandler;
 
