@@ -4,7 +4,6 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Optimization.Pools;
 using DCL.PerformanceAndDiagnostics.Profiling;
-using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;

@@ -1,4 +1,4 @@
-﻿using DCL.Profiling;
+﻿using DCL.PerformanceAndDiagnostics.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using System;
 using System.Collections.Generic;

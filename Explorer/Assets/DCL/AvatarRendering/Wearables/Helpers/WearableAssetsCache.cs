@@ -1,6 +1,6 @@
 ﻿using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Optimization.PriorityQueue;
-using DCL.Profiling;
+using DCL.PerformanceAndDiagnostics.Profiling;
 using System;
 using System.Collections.Generic;
 using UnityEngine;

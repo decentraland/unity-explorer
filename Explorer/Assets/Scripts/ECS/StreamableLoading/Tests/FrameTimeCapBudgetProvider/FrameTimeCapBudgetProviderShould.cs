@@ -1,7 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
-using DCL.Profiling;
+using DCL.PerformanceAndDiagnostics.Profiling;
 using NUnit.Framework;
 using System.Threading.Tasks;
 using UnityEngine;

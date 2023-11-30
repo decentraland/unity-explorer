@@ -1,6 +1,6 @@
 ﻿using Unity.Profiling;
 
-namespace DCL.Profiling
+namespace DCL.PerformanceAndDiagnostics.Profiling
 {
     public static class ProfilingCounters
     {
