@@ -17,6 +17,7 @@ using DCL.Interaction.Utility;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.Prioritization.Components;
 using Ipfs;
+using Microsoft.ClearScript;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -140,7 +141,15 @@ namespace SceneRunner
                 sceneData.TryGetMainScriptUrl(out sceneCodeUrl);
             }
 
-            SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(sceneCodeUrl, instancePoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool);
+            SceneRuntimeImpl sceneRuntime;
+
+            try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(sceneCodeUrl, instancePoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
+            catch (ScriptEngineException e)
+            {
+                // ScriptEngineException.ErrorDetails is ignored through the logging process which is vital in the reporting information
+                exceptionsHandler.OnJavaScriptException(new Exception(e.ErrorDetails));
+                throw;
+            }
 
             ct.ThrowIfCancellationRequested();
 
