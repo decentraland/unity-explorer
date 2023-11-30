@@ -1,10 +1,10 @@
 ﻿using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
-using System;
+using Microsoft.ClearScript;
 
 namespace SceneRuntime.Apis
 {
-    public class TaskResolverResetable
+    public class JSTaskResolverResetable
     {
         private AutoResetUniTaskCompletionSource source;
 
@@ -24,7 +24,7 @@ namespace SceneRuntime.Apis
         [UsedImplicitly]
         public void Reject(string message)
         {
-            source.TrySetException(new Exception(message));
+            source.TrySetException(new ScriptEngineException(message));
         }
     }
 }

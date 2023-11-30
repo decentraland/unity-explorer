@@ -5,6 +5,7 @@ using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
+using Microsoft.ClearScript;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -92,9 +93,14 @@ namespace SceneRunner
                 await runtimeInstance.StartScene();
             }
             catch (OperationCanceledException) { return; }
-            catch (Exception e)
+            catch (ScriptEngineException e)
             {
                 sceneExceptionsHandler.OnJavaScriptException(e.Message);
+                return;
+            }
+            catch (Exception e)
+            {
+                sceneExceptionsHandler.OnEngineException(e);
                 return;
             }
 
@@ -120,9 +126,14 @@ namespace SceneRunner
                         await runtimeInstance.UpdateScene(deltaTime);
                     }
                     catch (OperationCanceledException) { throw; }
-                    catch (Exception e)
+                    catch (ScriptEngineException e)
                     {
                         sceneExceptionsHandler.OnJavaScriptException(e.Message);
+                        break;
+                    }
+                    catch (Exception e)
+                    {
+                        sceneExceptionsHandler.OnEngineException(e);
                         break;
                     }
 

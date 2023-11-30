@@ -26,7 +26,7 @@ namespace SceneRuntime
         private readonly ScriptObject startFunc;
 
         // ResetableSource is an optimization to reduce 11kb of memory allocation per Update (reduces 15kb to 4kb per update)
-        private readonly TaskResolverResetable resetableSource;
+        private readonly JSTaskResolverResetable resetableSource;
 
         private EngineApiWrapper engineApi;
 
@@ -37,7 +37,7 @@ namespace SceneRuntime
             SceneShortInfo sceneShortInfo)
         {
             this.instancePoolsProvider = instancePoolsProvider;
-            resetableSource = new TaskResolverResetable();
+            resetableSource = new JSTaskResolverResetable();
             moduleLoader = new SceneModuleLoader();
             engine = V8EngineFactory.Create();
 
