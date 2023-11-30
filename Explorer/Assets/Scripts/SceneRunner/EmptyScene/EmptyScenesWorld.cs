@@ -24,6 +24,7 @@ namespace SceneRunner.EmptyScene
 
         public void Dispose()
         {
+            SystemGroupSnapshot.Instance.Unregister(systemGroupWorlds);
             SystemGroupWorld.Dispose();
             EcsWorld.Dispose();
         }
