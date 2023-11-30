@@ -50,6 +50,15 @@ namespace Utility
                 circumscribedPlaneMaxZ = Mathf.Max(corners.maxXZ.z, circumscribedPlaneMaxZ);
             }
 
+            // to prevent on-boundary flickering (float accuracy) extend the circumscribed planes a little bit
+
+            const float EXTEND_AMOUNT = 0.05f;
+
+            circumscribedPlaneMinX -= EXTEND_AMOUNT;
+            circumscribedPlaneMaxX += EXTEND_AMOUNT;
+            circumscribedPlaneMinZ -= EXTEND_AMOUNT;
+            circumscribedPlaneMaxZ += EXTEND_AMOUNT;
+
             Vector3 baseParcelPosition = GetPositionByParcelPosition(baseParcel);
 
             return new SceneGeometry(
