@@ -41,9 +41,9 @@ namespace Global.Dynamic
         {
             destroyCancellationSource.Cancel();
             worldSystems.Dispose();
-#if UNITY_EDITOR
-            SystemGroupSnapshot.Instance.Unregister(GlobalWorld.WORLD_NAME, worldSystems);
-#endif
+
+            SystemGroupSnapshot.Instance.Unregister(worldSystems);
+
             EcsWorld.Dispose();
         }
 

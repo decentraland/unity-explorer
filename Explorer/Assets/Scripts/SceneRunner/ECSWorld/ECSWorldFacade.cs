@@ -16,16 +16,13 @@ namespace SceneRunner.ECSWorld
         public readonly World EcsWorld;
         private readonly IReadOnlyList<IFinalizeWorldSystem> finalizeWorldSystems;
 
-        private readonly string sceneShortInfo;
         private readonly SystemGroupWorld systemGroupWorld;
 
         public ECSWorldFacade(
-            string sceneShortInfo,
             SystemGroupWorld systemGroupWorld,
             World ecsWorld,
             IReadOnlyList<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            this.sceneShortInfo = sceneShortInfo;
             this.systemGroupWorld = systemGroupWorld;
             EcsWorld = ecsWorld;
             this.finalizeWorldSystems = finalizeWorldSystems;
@@ -51,9 +48,7 @@ namespace SceneRunner.ECSWorld
 
             Profiler.EndSample();
 
-#if UNITY_EDITOR
-            SystemGroupSnapshot.Instance.Unregister(this.sceneShortInfo,systemGroupWorld);
-#endif
+            SystemGroupSnapshot.Instance.Unregister(systemGroupWorld);
 
             systemGroupWorld.Dispose();
             EcsWorld.Dispose();

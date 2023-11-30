@@ -91,7 +91,7 @@ namespace SceneRunner.ECSWorld
             SystemGroupSnapshot.Instance.Register(args.SceneData.SceneShortInfo.ToString(),systemsWorld);
 #endif
 
-            return new ECSWorldFacade(args.SceneData.SceneShortInfo.ToString(), systemsWorld, world, finalizeWorldSystems);
+            return new ECSWorldFacade(systemsWorld, world, finalizeWorldSystems);
         }
     }
 }

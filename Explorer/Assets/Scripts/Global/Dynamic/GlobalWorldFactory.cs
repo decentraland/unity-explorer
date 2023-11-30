@@ -161,9 +161,7 @@ namespace Global.Dynamic
             SystemGroupWorld worldSystems = builder.Finish();
             worldSystems.Initialize();
 
-#if UNITY_EDITOR
             SystemGroupSnapshot.Instance.Register(GlobalWorld.WORLD_NAME, worldSystems);
-#endif
 
             return new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
         }
