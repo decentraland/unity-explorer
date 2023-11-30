@@ -86,8 +86,17 @@ namespace SceneRunner
 
             SetTargetFPS(targetFPS);
 
-            // Start the scene
-            await runtimeInstance.StartScene();
+            try
+            {
+                // Start the scene
+                await runtimeInstance.StartScene();
+            }
+            catch (OperationCanceledException) { return; }
+            catch (Exception e)
+            {
+                sceneExceptionsHandler.OnJavaScriptException(e.Message);
+                return;
+            }
 
             AssertIsNotMainThread(nameof(SceneRuntimeImpl.StartScene));
 

@@ -57,6 +57,14 @@ namespace SceneRuntime
 
             engine.Execute(@"
             const __internalScene = require('~scene.js')
+            const __internalOnStart = async function () {
+                try {
+                    await __internalScene.onStart()
+                    __resetableSource.Completed()
+                } catch (e) {
+                    __resetableSource.Reject(e.stack)
+                }
+            }
             const __internalOnUpdate = async function (dt) {
                 try {
                     await __internalScene.onUpdate(dt)
@@ -68,7 +76,7 @@ namespace SceneRuntime
         ");
 
             updateFunc = (ScriptObject)engine.Evaluate("__internalOnUpdate");
-            startFunc = (ScriptObject)engine.Evaluate("__internalScene.onStart");
+            startFunc = (ScriptObject)engine.Evaluate("__internalOnStart");
         }
 
         public void Dispose()
@@ -93,8 +101,12 @@ namespace SceneRuntime
             engineApi?.SetIsDisposing();
         }
 
-        public UniTask StartScene() =>
-            startFunc.InvokeAsFunction().ToTask().AsUniTask(); // It must use the current synchronization context
+        public UniTask StartScene()
+        {
+            resetableSource.Reset();
+            startFunc.InvokeAsFunction();
+            return resetableSource.Task;
+        }
 
         public UniTask UpdateScene(float dt)
         {
