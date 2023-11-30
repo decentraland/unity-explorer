@@ -3,7 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Profiling;
-using DCL.Profiling.ECS;
+using DCL.PerformanceAndDiagnostics.Profiling.ECS;
 using System;
 using System.Threading;
 

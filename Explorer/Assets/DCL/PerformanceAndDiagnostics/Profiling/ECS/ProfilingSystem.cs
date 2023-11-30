@@ -4,13 +4,12 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
-using DCL.PerformanceAndDiagnostics.Profiling;
 using ECS.Abstract;
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace DCL.Profiling.ECS
+namespace DCL.PerformanceAndDiagnostics.Profiling.ECS
 {
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial class ProfilingSystem : BaseUnityLoopSystem
@@ -18,7 +17,6 @@ namespace DCL.Profiling.ECS
         private readonly IProfilingProvider profilingProvider;
         private readonly FrameTimeCapBudgetProvider frameTimeBudget;
         private readonly MemoryBudgetProvider memoryBudget;
-        private readonly bool isReleaseBuild = !Debug.isDebugBuild;
 
         private DebugWidgetVisibilityBinding visibilityBinding;
         private DebugWidgetVisibilityBinding memoryVisibilityBinding;
@@ -37,35 +35,29 @@ namespace DCL.Profiling.ECS
             memoryBudget = memoryBudgetProvider;
 
             CreateView();
+            return;
 
             void CreateView()
             {
                 var version = new ElementBinding<string>(Application.version);
 
-                DebugWidgetBuilder perfWidget = debugBuilder.AddWidget("Performance")
-                                                            .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true))
-                                                            .AddCustomMarker("Version:", version)
-                                                            .AddCustomMarker("Frame Rate:", fps = new ElementBinding<string>(string.Empty))
-                                                            .AddMarker("Hiccups last 1000 frames:", hiccups = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat);
+                debugBuilder.AddWidget("Performance")
+                            .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true))
+                            .AddCustomMarker("Version:", version)
+                            .AddCustomMarker("Frame Rate:", fps = new ElementBinding<string>(string.Empty))
+                            .AddMarker("Hiccups last 1000 frames:", hiccups = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat)
+                            .AddSingleButton("FrameTime CAPPED", () => frameTimeBudget.SimulateCappedFrameTime = true)
+                            .AddSingleButton("FrameTime NORMAL", () => frameTimeBudget.SimulateCappedFrameTime = false);
 
-                if (isReleaseBuild)
-                    perfWidget.AddCustomMarker("Total Used Memory [MB]:", usedMemory = new ElementBinding<string>(string.Empty))
-                              .AddCustomMarker("Memory Budget Thresholds [MB]:", memoryCheckpoints = new ElementBinding<string>(string.Empty));
-                else
-                {
-                    perfWidget.AddSingleButton("FrameTime CAPPED", () => frameTimeBudget.SimulateCappedFrameTime = true)
-                              .AddSingleButton("FrameTime NORMAL", () => frameTimeBudget.SimulateCappedFrameTime = false);
-
-                    debugBuilder.AddWidget("Memory")
-                                .SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
-                                .AddSingleButton("Resources.UnloadUnusedAssets", () => Resources.UnloadUnusedAssets())
-                                .AddSingleButton("GC.Collect", GC.Collect)
-                                .AddCustomMarker("Total Used Memory [MB]:", usedMemory = new ElementBinding<string>(string.Empty))
-                                .AddCustomMarker("Memory Budget Thresholds [MB]:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
-                                .AddSingleButton("Memory NORMAL", () => memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.Normal)
-                                .AddSingleButton("Memory WARNING", () => memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.Warning)
-                                .AddSingleButton("Memory FULL", () => memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.Full);
-                }
+                debugBuilder.AddWidget("Memory")
+                            .SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
+                            .AddSingleButton("Resources.UnloadUnusedAssets", () => Resources.UnloadUnusedAssets())
+                            .AddSingleButton("GC.Collect", GC.Collect)
+                            .AddCustomMarker("Total Used Memory [MB]:", usedMemory = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Memory Budget Thresholds [MB]:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
+                            .AddSingleButton("Memory NORMAL", () => memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.Normal)
+                            .AddSingleButton("Memory WARNING", () => memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.Warning)
+                            .AddSingleButton("Memory FULL", () => memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.Full);
             }
         }
 
@@ -91,6 +83,7 @@ namespace DCL.Profiling.ECS
             memoryCheckpoints.Value = $"<color=green>{memoryRanges.warning}</color> | <color=red>{memoryRanges.full}</color>";
 
             SetFPS();
+            return;
 
             void SetFPS()
             {
