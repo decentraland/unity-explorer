@@ -3,17 +3,16 @@ using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
-using UnityEngine.Pool;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
-    public class WearableCatalog : IDisposable
+    public class WearableCatalog
     {
         private static readonly Comparison<(string key, long lastUsedFrame)> compareByLastUsedFrame =
             (pair1, pair2) => pair1.lastUsedFrame.CompareTo(pair2.lastUsedFrame);
 
-        private readonly List<(string key, long lastUsedFrame)> listedCacheKeys = ListPool<(string, long)>.Get();
+        private readonly List<(string key, long lastUsedFrame)> listedCacheKeys = new ();
 
         public int WearableAssetsInCatalog
         {
@@ -40,11 +39,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         }
 
         internal Dictionary<string, IWearable> wearableDictionary { get; } = new ();
-
-        public void Dispose()
-        {
-            ListPool<(string, long)>.Release(listedCacheKeys);
-        }
 
         public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto)
         {
