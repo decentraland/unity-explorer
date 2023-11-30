@@ -3,7 +3,9 @@ using Arch.SystemGroups;
 using CRDT;
 using System;
 using System.Collections.Generic;
+using SystemGroups.Visualiser;
 using Utility.Multithreading;
+
 
 namespace SceneRunner.EmptyScene
 {
@@ -24,6 +26,7 @@ namespace SceneRunner.EmptyScene
 
         public void Dispose()
         {
+            SystemGroupSnapshot.Instance.Unregister(SystemGroupWorld);
             SystemGroupWorld.Dispose();
             EcsWorld.Dispose();
         }

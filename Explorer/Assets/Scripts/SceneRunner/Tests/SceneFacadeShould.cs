@@ -146,7 +146,7 @@ namespace SceneRunner.Tests
             sceneRuntime.Received().UpdateScene(Arg.Is<float>(dt => EqualWithTolerance(dt, expectedDT, tolerance)));
             sceneRuntime.DidNotReceive().UpdateScene(Arg.Is<float>(dt => dt != 0 && !EqualWithTolerance(dt, expectedDT, tolerance)));
 
-            int callsCount = sceneRuntime.ReceivedCalls().Count() - 1; // -1 stands for StartScene
+            int callsCount = sceneRuntime.ReceivedCalls().Count() - 1; // -1 stands for  StartScene
 
             Assert.AreEqual(expectedCallsCount, callsCount, expectedCallsCountTolerance);
         }

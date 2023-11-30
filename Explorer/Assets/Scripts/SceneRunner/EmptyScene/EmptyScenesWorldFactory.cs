@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 using Utility.Multithreading;
+using SystemGroups.Visualiser;
 
 namespace SceneRunner.EmptyScene
 {
@@ -77,7 +78,11 @@ namespace SceneRunner.EmptyScene
             for (var i = 0; i < ecsWorldPlugins.Count; i++)
                 ecsWorldPlugins[i].InjectToEmptySceneWorld(ref builder, in dependencies);
 
-            return new EmptyScenesWorld(builder.Finish(), fakeEntitiesMap, world, mutex);
+            var systemGroupWorlds = builder.Finish();
+
+            SystemGroupSnapshot.Instance.Register(emptySceneData.SceneShortInfo.ToString(), systemGroupWorlds);
+
+            return new EmptyScenesWorld(systemGroupWorlds, fakeEntitiesMap, world, mutex);
         }
     }
 }
