@@ -1,5 +1,6 @@
 ﻿using CrdtEcsBridge.UpdateGate;
 using DCL.PluginSystem.World.Dependencies;
+using SceneRunner.Scene;
 
 namespace SceneRunner.ECSWorld
 {
@@ -7,11 +8,17 @@ namespace SceneRunner.ECSWorld
     {
         public readonly ECSWorldInstanceSharedDependencies SharedDependencies;
         public readonly ISystemGroupsUpdateGate SystemGroupsUpdateGate;
+        public readonly ISceneData SceneData;
 
-        public ECSWorldFactoryArgs(ECSWorldInstanceSharedDependencies sharedDependencies, ISystemGroupsUpdateGate systemGroupsUpdateGate)
+
+        public ECSWorldFactoryArgs(
+            ECSWorldInstanceSharedDependencies sharedDependencies,
+            ISystemGroupsUpdateGate systemGroupsUpdateGate,
+            ISceneData sceneData)
         {
             SharedDependencies = sharedDependencies;
             SystemGroupsUpdateGate = systemGroupsUpdateGate;
+            SceneData = sceneData;
         }
     }
 }

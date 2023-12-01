@@ -29,6 +29,8 @@ namespace SceneRunner.EmptyScene
         {
             Mappings = mappings;
 
+            SceneShortInfo = new SceneShortInfo(Vector2Int.zero, "Empty Scene");
+
             fileToHash = new Dictionary<string, string>(mappings.Count * 2, StringComparer.OrdinalIgnoreCase);
 
             foreach (EmptySceneMapping mapping in mappings)
