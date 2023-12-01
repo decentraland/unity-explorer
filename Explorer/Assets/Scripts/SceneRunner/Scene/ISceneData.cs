@@ -1,6 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
-using UnityEngine;
+using Utility;
 
 namespace SceneRunner.Scene
 {
@@ -11,7 +11,7 @@ namespace SceneRunner.Scene
         /// <summary>
         ///     Position of the base parcel in the world
         /// </summary>
-        Vector3 BasePosition { get; }
+        ParcelMathHelper.SceneGeometry Geometry { get; }
 
         SceneAssetBundleManifest AssetBundleManifest { get; }
 

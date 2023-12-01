@@ -11,6 +11,7 @@ using ECS.Unity.GLTFContainer.Asset.Systems;
 using ECS.Unity.GLTFContainer.Asset.Tests;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
+using ECS.Unity.SceneBoundsChecker;
 using ECS.Unity.Transforms.Components;
 using NSubstitute;
 using NUnit.Framework;
@@ -99,14 +100,22 @@ namespace ECS.Unity.GLTFContainer.Tests
             result.Asset.Root.SetActive(true);
 
             GltfContainerAsset promiseAsset = result.Asset;
-            Assert.That(promiseAsset.InvisibleColliders.All(c => c.enabled), Is.EqualTo(from));
+
+            for (var i = 0; i < promiseAsset.InvisibleColliders.Count; i++)
+            {
+                SDKCollider c = promiseAsset.InvisibleColliders[i];
+                c.IsActiveBySceneBounds = true;
+                promiseAsset.InvisibleColliders[i] = c;
+            }
+
+            Assert.That(promiseAsset.InvisibleColliders.All(c => c.Collider.enabled), Is.EqualTo(from));
 
             // then modify the component to disable colliders
 
             world.Set(e, new PBGltfContainer { Src = GltfContainerTestResources.SCENE_WITH_COLLIDER, InvisibleMeshesCollisionMask = (uint)(to ? ColliderLayer.ClPointer : ColliderLayer.ClNone), IsDirty = true });
             system.Update(0);
 
-            Assert.That(promiseAsset.InvisibleColliders.All(c => c.enabled), Is.EqualTo(to));
+            Assert.That(promiseAsset.InvisibleColliders.All(c => c.Collider.enabled), Is.EqualTo(to));
         }
 
         [Test]

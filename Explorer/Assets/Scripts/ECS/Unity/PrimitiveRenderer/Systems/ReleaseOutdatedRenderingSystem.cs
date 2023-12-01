@@ -9,6 +9,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;
+using ECS.Unity.Materials;
 using ECS.Unity.PrimitiveRenderer.Components;
 
 namespace ECS.Unity.PrimitiveRenderer.Systems
@@ -40,6 +41,8 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         [None(typeof(PBMeshRenderer), typeof(DeleteEntityIntention))]
         private void HandleComponentRemoval(ref PrimitiveMeshRendererComponent rendererComponent)
         {
+            ReleaseMaterial.TryReleaseDefault(ref rendererComponent);
+
             if (poolsRegistry.TryGetPool(rendererComponent.PrimitiveMesh.GetType(), out IComponentPool componentPool))
                 componentPool.Release(rendererComponent.PrimitiveMesh);
         }
@@ -51,6 +54,8 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         {
             if (meshRenderer.IsDirty && meshRenderer.MeshCase != rendererComponent.SDKType && rendererComponent.PrimitiveMesh != null)
             {
+                ReleaseMaterial.TryReleaseDefault(ref rendererComponent);
+
                 if (poolsRegistry.TryGetPool(rendererComponent.PrimitiveMesh.GetType(), out IComponentPool componentPool))
                     componentPool.Release(rendererComponent.PrimitiveMesh);
 

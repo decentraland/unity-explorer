@@ -84,7 +84,7 @@ namespace ECS.SceneLifeCycle.Systems
             }
 
             // pick one of available scenes randomly based on coordinates
-            Vector2Int parcel = intent.Parcels[0];
+            Vector2Int parcel = intent.DefinitionComponent.Parcels[0];
             EmptySceneMapping choice = emptySceneData.Mappings[Mathf.Abs(parcel.GetHashCode()) % emptySceneData.Mappings.Count];
 
             var emptyScene = EmptySceneFacade.Create(

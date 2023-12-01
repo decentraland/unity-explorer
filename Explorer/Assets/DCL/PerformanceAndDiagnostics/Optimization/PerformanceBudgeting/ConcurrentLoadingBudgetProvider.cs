@@ -1,6 +1,6 @@
 using System;
 
-namespace DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting
+namespace DCL.PerformanceBudgeting
 {
     public class ConcurrentLoadingBudgetProvider : IConcurrentBudgetProvider
     {
@@ -15,18 +15,27 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting
 
         public bool TrySpendBudget()
         {
-            if (currentBudget <= 0) return false;
+            lock (this)
+            {
+                if (currentBudget > 0)
+                {
+                    currentBudget--;
+                    return true;
+                }
 
-            currentBudget--;
-            return true;
+                return false;
+            }
         }
 
         public void ReleaseBudget()
         {
-            if (currentBudget + 1 > maxBudget)
-                throw new Exception("Tried to release more budget than the max budget allows");
+            lock (this)
+            {
+                if (currentBudget + 1 > maxBudget)
+                    throw new Exception("Tried to release more budget than the max budget allows");
 
-            currentBudget = Math.Clamp(currentBudget + 1, 0, maxBudget);
+                currentBudget = Math.Clamp(currentBudget + 1, 0, maxBudget);
+            }
         }
     }
 }

@@ -15,6 +15,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
         public static readonly int _BaseMapArr_ShaderID = Shader.PropertyToID("_BaseMapArr_ID");
         public static readonly int _BaseMapArrTex_ShaderID = Shader.PropertyToID("_BaseMapArr");
+
+        //Compute shader properties
         public static readonly int BONE_COUNT = 62;
         public static readonly int VERT_COUNT_ID = Shader.PropertyToID("g_VertCount");
         public static readonly int LAST_AVATAR_VERT_COUNT_ID = Shader.PropertyToID("_lastAvatarVertCount");
@@ -27,8 +29,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         public static readonly int BIND_POSES_INDEX_ID = Shader.PropertyToID("g_BindPosesIndex");
         public static readonly int BONES_ID = Shader.PropertyToID("g_mBones");
 
-        public static readonly string HAIR_MATERIAL_NAME = "hair";
-        public static readonly string SKIN_MATERIAL_NAME = "skin";
+        public const string HAIR_MATERIAL_NAME = "hair";
+        public const string SKIN_MATERIAL_NAME = "skin";
 
         //TODO Avatar Material. Add this textures arrays to the material
         public static int _AlphaTextureArr_ShaderID = Shader.PropertyToID("_AlphaTextureArr_ID");
@@ -41,6 +43,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         public static int _BaseColour_ShaderID = Shader.PropertyToID("_BaseColor");
 
         //Compute shader properties
-        public static string SKINNING_KERNEL_NAME = "main";
+        public const string SKINNING_KERNEL_NAME = "main";
     }
 }

@@ -67,18 +67,7 @@ namespace ECS.SceneLifeCycle.Tests
         {
             IPartitionComponent partition = Substitute.For<IPartitionComponent>();
 
-            var intent = new GetSceneFacadeIntention(Substitute.For<IIpfsRealm>(), default(IpfsTypes.IpfsPath), new IpfsTypes.SceneEntityDefinition
-                {
-                    id = $"empty-parcel-{parcel.x}-{parcel.y}",
-                    metadata = new IpfsTypes.SceneMetadata
-                    {
-                        main = "bin/game.js",
-                        scene = SceneDefinitionComponent.EMPTY_METADATA,
-                    },
-
-                    // content will be filled by the loading system
-                },
-                new[] { parcel }, true);
+            var intent = new GetSceneFacadeIntention(Substitute.For<IIpfsRealm>(), new SceneDefinitionComponent(parcel));
 
             ISceneFacade facade = await loadEmptySceneSystemLogic.FlowAsync(intent, partition, CancellationToken.None);
             Assert.NotNull(facade);

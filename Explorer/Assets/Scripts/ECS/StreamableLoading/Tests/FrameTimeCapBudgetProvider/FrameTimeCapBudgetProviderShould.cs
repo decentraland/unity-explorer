@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Profiling;
 using NUnit.Framework;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -58,8 +59,7 @@ namespace ECS.StreamableLoading.Tests
             Assert.AreEqual(1, world.Get<DummyComponent>(e).timesUpdated);
 
             //We are blocking the main thread
-            for (var i = 0; i < 1_000; i++)
-                GameObject.CreatePrimitive(PrimitiveType.Cube);
+            Thread.Sleep(15);
 
             world.Query(new QueryDescription().WithAll<DummyComponent>(), (ref DummyComponent dummy) => DummySystem(ref dummy));
             Assert.AreEqual(1, world.Get<DummyComponent>(e).timesUpdated);

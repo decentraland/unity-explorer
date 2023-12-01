@@ -14,13 +14,18 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting
 
         private IConcurrentBudgetProvider provider;
         private bool released;
+        private bool disposed;
 
         private AcquiredBudget() { }
 
         public void Dispose()
         {
+            if (disposed) return;
+
             Release();
             POOL.Release(this);
+
+            disposed = true;
         }
 
         /// <summary>
@@ -39,6 +44,7 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting
             AcquiredBudget b = POOL.Get();
             b.provider = concurrentBudgetProvider;
             b.released = false;
+            b.disposed = false;
             return b;
         }
     }

@@ -12,6 +12,7 @@ namespace ECS.Unity.PrimitiveRenderer.Components
         public IPrimitiveMesh PrimitiveMesh;
         public MeshRenderer MeshRenderer;
         public PBMeshRenderer.MeshOneofCase SDKType;
+        public bool DefaultMaterialIsUsed;
 
         Type IPoolableComponentProvider<IPrimitiveMesh>.PoolableComponentType => PrimitiveMesh.GetType();
 

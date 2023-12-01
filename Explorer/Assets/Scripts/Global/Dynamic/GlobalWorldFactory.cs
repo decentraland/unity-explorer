@@ -13,6 +13,7 @@ using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Optimization.Pools;
 using DCL.PluginSystem.Global;
 using DCL.Systems;
+using DCL.Time;
 using DCL.Time.Systems;
 using ECS;
 using ECS.Groups;
@@ -33,6 +34,7 @@ using SceneRunner.EmptyScene;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
+using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
 using Utility.Multithreading;
@@ -57,6 +59,7 @@ namespace Global.Dynamic
         private readonly RealmSamplingData realmSamplingData;
         private readonly IRealmData realmData;
         private readonly URLDomain assetBundlesURL;
+        private readonly PhysicsTickProvider physicsTickProvider;
         private readonly IReadOnlyList<IDCLGlobalPlugin> globalPlugins;
         private readonly IConcurrentBudgetProvider memoryBudgetProvider;
         private readonly StaticSettings staticSettings;
@@ -77,6 +80,7 @@ namespace Global.Dynamic
             this.realmData = realmData;
 
             memoryBudgetProvider = staticContainer.SingletonSharedDependencies.MemoryBudgetProvider;
+            physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
         public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory, ICharacterObject characterObject)
@@ -146,7 +150,7 @@ namespace Global.Dynamic
 
             DestroyEntitiesSystem.InjectToWorld(ref builder);
 
-            UpdatePhysicsTickSystem.InjectToWorld(ref builder);
+            UpdatePhysicsTickSystem.InjectToWorld(ref builder, physicsTickProvider);
             UpdateTimeSystem.InjectToWorld(ref builder);
 
             var pluginArgs = new GlobalPluginArguments(playerEntity);
@@ -158,6 +162,8 @@ namespace Global.Dynamic
 
             SystemGroupWorld worldSystems = builder.Finish();
             worldSystems.Initialize();
+
+            SystemGroupSnapshot.Instance.Register(GlobalWorld.WORLD_NAME, worldSystems);
 
             return new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
         }

@@ -10,6 +10,7 @@ using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Utility;
 using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.Common.Systems
@@ -38,6 +39,8 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private CancellationTokenSource cancellationTokenSource;
 
+        private bool systemIsDisposed;
+
         protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync) : base(world)
         {
             this.cache = cache;
@@ -57,7 +60,7 @@ namespace ECS.StreamableLoading.Common.Systems
             cancellationTokenSource.Cancel();
             cancellationTokenSource.Dispose();
 
-            cache.Dispose();
+            systemIsDisposed = true;
         }
 
         protected override void Update(float t)
@@ -93,13 +96,13 @@ namespace ECS.StreamableLoading.Common.Systems
             intention.RemoveCurrentSource();
 
             // Try load from cache first
-            if (TryLoadFromCache(in entity, in intention, currentSource))
+            if (TryLoadFromCache(in entity, in intention, state.AcquiredBudget, currentSource))
                 return;
 
             // If the given URL failed irrecoverably just return the failure
             if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset> failure))
             {
-                FinalizeLoading(entity, intention, failure, currentSource);
+                FinalizeLoading(entity, intention, failure, currentSource, state.AcquiredBudget);
                 return;
             }
 
@@ -119,7 +122,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 var requestIsNotFulfilled = true;
 
                 // if the request is cached wait for it
-                if (cache.OngoingRequests.TryGetValue(intention.CommonArguments.URL, out UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> cachedSource))
+                if (cache.OngoingRequests.SyncTryGetValue(intention.CommonArguments.URL, out UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> cachedSource))
                 {
                     // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
                     acquiredBudget.Release();
@@ -146,16 +149,23 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (e is not OperationCanceledException)
                     ReportException(e);
             }
-            finally
-            {
-                await UniTask.SwitchToMainThread();
-                FinalizeLoading(entity, intention, result, source);
-            }
+            finally { FinalizeLoading(entity, intention, result, source, acquiredBudget); }
         }
 
-        private void FinalizeLoading(in Entity entity, TIntention intention, StreamableLoadingResult<TAsset>? result, AssetSource source)
+        private void FinalizeLoading(in Entity entity, TIntention intention,
+            StreamableLoadingResult<TAsset>? result, AssetSource source,
+            IAcquiredBudget acquiredBudget)
         {
             using MutexSync.Scope sync = mutexSync.GetScope();
+
+            if (systemIsDisposed)
+            {
+                // World is no longer valid, can't call World.Get
+                // Just Free the budget
+                acquiredBudget.Dispose();
+                return;
+            }
+
             ref StreamableLoadingState state = ref World.Get<StreamableLoadingState>(entity);
 
             state.DisposeBudget();
@@ -202,7 +212,7 @@ namespace ECS.StreamableLoading.Common.Systems
         private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlowAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             var source = new UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
-            cache.OngoingRequests.Add(intention.CommonArguments.URL, source);
+            cache.OngoingRequests.SyncAdd(intention.CommonArguments.URL, source);
 
             try
             {
@@ -235,10 +245,8 @@ namespace ECS.StreamableLoading.Common.Systems
             }
             finally
             {
-                // If we don't switch to the main thread in finally we are in trouble because of
-                // race conditions in non-concurrent collections
-                await UniTask.SwitchToMainThread();
-                cache.OngoingRequests.Remove(intention.CommonArguments.URL);
+                // We need to remove the request the same frame to prevent de-sync with new requests
+                cache.OngoingRequests.SyncRemove(intention.CommonArguments.URL);
             }
         }
 
@@ -254,11 +262,11 @@ namespace ECS.StreamableLoading.Common.Systems
             return failure;
         }
 
-        private bool TryLoadFromCache(in Entity entity, in TIntention intention, AssetSource source)
+        private bool TryLoadFromCache(in Entity entity, in TIntention intention, IAcquiredBudget acquiredBudget, AssetSource source)
         {
             if (cache.TryGet(in intention, out TAsset asset))
             {
-                FinalizeLoading(entity, intention, new StreamableLoadingResult<TAsset>(asset), source);
+                FinalizeLoading(entity, intention, new StreamableLoadingResult<TAsset>(asset), source, acquiredBudget);
                 return true;
             }
 

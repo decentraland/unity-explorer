@@ -2,12 +2,13 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
-using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
+using DCL.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Components;
+using ECS.Unity.SceneBoundsChecker;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -122,7 +123,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 results.Add(meshFilter);
         }
 
-        private static void CreateInvisibleColliders(List<Collider> results, GameObject meshFilterGo, MeshFilter meshFilter)
+        private static void CreateInvisibleColliders(List<SDKCollider> results, GameObject meshFilterGo, MeshFilter meshFilter)
         {
             // Asset Bundle converter creates Colliders during the processing in some cases
             Collider collider = meshFilterGo.GetComponent<Collider>();
@@ -132,7 +133,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 // Disable it as its activity controlled by another system based on PBGltfContainer component
                 collider.enabled = false;
 
-                results.Add(collider);
+                results.Add(new SDKCollider(newCollider));
                 return;
             }
 
@@ -143,7 +144,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             newCollider.sharedMesh = meshFilter.sharedMesh;
             newCollider.enabled = false;
 
-            results.Add(newCollider);
+            results.Add(new SDKCollider(newCollider));
             return;
 
             // Compatibility layer for old GLTF importer and GLTFast

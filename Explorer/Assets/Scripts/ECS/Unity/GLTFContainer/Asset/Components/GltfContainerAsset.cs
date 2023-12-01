@@ -1,16 +1,13 @@
-﻿using DCL.PerformanceAndDiagnostics.Profiling;
-using ECS.StreamableLoading.AssetBundles;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Utility;
 using Utility.Pool;
 
 namespace ECS.Unity.GLTFContainer.Asset.Components
 {
     public class GltfContainerAsset : IDisposable
     {
-        internal static readonly ListObjectPool<Collider> COLLIDERS_POOL = new (listInstanceDefaultCapacity: 50);
+        internal static readonly ListObjectPool<SDKCollider> COLLIDERS_POOL = new (listInstanceDefaultCapacity: 50);
         internal static readonly ListObjectPool<MeshFilter> MESH_FILTERS_POOL = new (listInstanceDefaultCapacity: 50);
         internal static readonly ListObjectPool<Renderer> RENDERERS_POOL = new (listInstanceDefaultCapacity: 50);
 
@@ -33,10 +30,10 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         ///     Visible meshes colliders are created on demand and then become a part of cached data.
         ///     They are decoded from <see cref="VisibleColliderMeshes" /> that are prepared beforehand.
         /// </summary>
-        public List<Collider> VisibleMeshesColliders;
+        public List<SDKCollider> VisibleMeshesColliders;
         private AssetBundleData assetBundleReference;
 
-        private GltfContainerAsset(GameObject root, AssetBundleData assetBundleReference, List<Collider> invisibleColliders, List<MeshFilter> visibleColliderMeshes, List<Renderer> renderers)
+        private GltfContainerAsset(GameObject root, AssetBundleData assetBundleReference, List<SDKCollider> invisibleColliders, List<MeshFilter> visibleColliderMeshes, List<Renderer> renderers)
         {
             this.assetBundleReference = assetBundleReference;
 
