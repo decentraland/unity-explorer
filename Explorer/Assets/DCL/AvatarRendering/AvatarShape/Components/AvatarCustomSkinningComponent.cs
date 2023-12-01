@@ -3,6 +3,7 @@ using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.PerformanceAndDiagnostics.Optimization.Pools;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility.Pool;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
@@ -46,7 +47,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             }
         }
 
-        public static readonly ListObjectPoolDCL<MaterialSetup> USED_SLOTS_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: PoolConstants.AVATARS_COUNT);
+        public static readonly ListExtendedObjectPool<MaterialSetup> USED_SLOTS_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: PoolConstants.AVATARS_COUNT);
 
         /// <summary>
         ///     Acquired Region of the common buffer, it may change during defragmentation
@@ -68,7 +69,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             VertsOutRegion = default(FixedComputeBufferHandler.Slice);
         }
 
-        public void Dispose(IObjectPoolDCL<Material> objectPool, IObjectPoolDCL<UnityEngine.ComputeShader> computeShaderSkinningPool)
+        public void Dispose(IObjectPool<Material> objectPool, IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool)
         {
             for (var i = 0; i < materials.Count; i++)
             {

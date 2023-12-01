@@ -1,11 +1,11 @@
 ﻿using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.PerformanceAndDiagnostics.Optimization.Pools;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility;
 
 namespace DCL.AvatarRendering.AvatarShape.ComputeShader
@@ -13,13 +13,13 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     public abstract class CustomSkinning
     {
         public abstract AvatarCustomSkinningComponent Initialize(IReadOnlyList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer,
-            UnityEngine.ComputeShader skinningShader, IObjectPoolDCL<Material> avatarMaterial,
+            UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterial,
             SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer,
             AvatarShapeComponent avatarShapeComponent);
 
         public abstract void ComputeSkinning(NativeArray<float4x4> bonesResult, ref AvatarCustomSkinningComponent skinning);
 
-        private protected abstract AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, IObjectPoolDCL<Material> celShadingMaterial,
+        private protected abstract AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount, TextureArrayContainer textureArrayContainer, IObjectPool<Material> celShadingMaterial,
             AvatarShapeComponent shapeComponent);
 
         public abstract void SetVertOutRegion(FixedComputeBufferHandler.Slice region, ref AvatarCustomSkinningComponent skinningComponent);

@@ -30,9 +30,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [LogCategory(ReportCategory.AVATAR)]
     public partial class AvatarInstantiatorSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPoolDCL<AvatarBase> avatarPoolRegistry;
-        private readonly IObjectPoolDCL<Material> avatarMaterialPool;
-        private readonly IObjectPoolDCL<UnityEngine.ComputeShader> computeShaderSkinningPool;
+        private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
+        private readonly IObjectPool<Material> avatarMaterialPool;
+        private readonly IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool;
         private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
 
         private readonly CustomSkinning skinningStrategy;
@@ -43,7 +43,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly IConcurrentBudgetProvider memoryBudgetProvider;
 
         public AvatarInstantiatorSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider,
-            IComponentPoolDCL<AvatarBase> avatarPoolRegistry, IObjectPoolDCL<Material> avatarMaterialPool, IObjectPoolDCL<UnityEngine.ComputeShader> computeShaderPool,
+            IComponentPool<AvatarBase> avatarPoolRegistry, IObjectPool<Material> avatarMaterialPool, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
             TextureArrayContainer textureArrayContainer, IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer) : base(world)
         {
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;

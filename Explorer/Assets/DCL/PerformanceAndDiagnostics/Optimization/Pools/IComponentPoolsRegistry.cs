@@ -20,7 +20,7 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
         /// <returns></returns>
         IComponentPool<T> GetReferenceTypePool<T>() where T: class;
 
-        IComponentPoolDCL<T> GetReferenceTypePoolDCL<T>() where T: class;
+        IComponentPool<T> GetReferenceTypePoolDCL<T>() where T: class;
 
         IComponentPool GetPool(Type type);
 

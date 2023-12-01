@@ -1,5 +1,4 @@
-﻿using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.AvatarShape.UnityInterface;
+﻿using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Optimization.Pools;
@@ -9,6 +8,7 @@ using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using Unity.Profiling;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace DCL.ResourcesUnloading
 {
@@ -35,9 +35,9 @@ namespace DCL.ResourcesUnloading
         private WearableCatalog wearableCatalog;
         private TexturesCache texturesCache;
 
-        private IObjectPoolDCL<Material> materialPool;
-        private IObjectPoolDCL<ComputeShader> computeShaderPool;
-        private IComponentPoolDCL<AvatarBase> avatarPoolRegistry;
+        private IObjectPool<Material> materialPool;
+        private IObjectPool<ComputeShader> computeShaderPool;
+        private IComponentPool<AvatarBase> avatarPoolRegistry;
 
         public CacheCleaner(IConcurrentBudgetProvider fpsCapBudgetProvider, IProfilingProvider profilingProvider)
         {
@@ -71,21 +71,21 @@ namespace DCL.ResourcesUnloading
 
         private void ClearAvatarsRelatedPools()
         {
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                using (avatarPoolRegistryMarker.Auto())
-                    avatarPoolRegistry.Clear(10);
-
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                using (computeShaderPoolMarker.Auto())
-                    computeShaderPool.Clear(10);
-
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                using (USED_SLOTS_POOLCacheMarker.Auto())
-                    AvatarCustomSkinningComponent.USED_SLOTS_POOL.Clear(10);
-
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                using (materialPoolCacheMarker.Auto())
-                    materialPool.Clear(10);
+            // if (fpsCapBudgetProvider.TrySpendBudget())
+            //     using (avatarPoolRegistryMarker.Auto())
+            //         avatarPoolRegistry.Clear(10);
+            //
+            // if (fpsCapBudgetProvider.TrySpendBudget())
+            //     using (computeShaderPoolMarker.Auto())
+            //         computeShaderPool.Clear(10);
+            //
+            // if (fpsCapBudgetProvider.TrySpendBudget())
+            //     using (USED_SLOTS_POOLCacheMarker.Auto())
+            //         AvatarCustomSkinningComponent.USED_SLOTS_POOL.Clear(10);
+            //
+            // if (fpsCapBudgetProvider.TrySpendBudget())
+            //     using (materialPoolCacheMarker.Auto())
+            //         materialPool.Clear(10);
         }
 
         public void Register(AssetBundleCache assetBundleCache) =>
@@ -103,13 +103,13 @@ namespace DCL.ResourcesUnloading
         public void Register(TexturesCache texturesCache) =>
             this.texturesCache = texturesCache;
 
-        public void Register(IComponentPoolDCL<AvatarBase> avatarPoolRegistry) =>
+        public void Register(IComponentPool<AvatarBase> avatarPoolRegistry) =>
             this.avatarPoolRegistry = avatarPoolRegistry;
 
-        public void Register(IObjectPoolDCL<Material> celShadingMaterialPool) =>
+        public void Register(IObjectPool<Material> celShadingMaterialPool) =>
             materialPool = celShadingMaterialPool;
 
-        public void Register(IObjectPoolDCL<ComputeShader> computeShaderPool) =>
+        public void Register(IObjectPool<ComputeShader> computeShaderPool) =>
             this.computeShaderPool = computeShaderPool;
 
         public void UpdateProfilingCounters()

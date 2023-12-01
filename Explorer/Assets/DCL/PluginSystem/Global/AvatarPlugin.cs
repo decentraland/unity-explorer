@@ -20,6 +20,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Pool;
 using Utility;
 using Utility.Pool;
 using Object = UnityEngine.Object;
@@ -44,9 +45,9 @@ namespace DCL.PluginSystem.Global
 
         private IComponentPool<Transform> transformPoolRegistry;
 
-        private IComponentPoolDCL<AvatarBase> avatarPoolRegistry;
-        private IObjectPoolDCL<Material> celShadingMaterialPool;
-        private IObjectPoolDCL<ComputeShader> computeShaderPool;
+        private IComponentPool<AvatarBase> avatarPoolRegistry;
+        private IObjectPool<Material> celShadingMaterialPool;
+        private IObjectPool<ComputeShader> computeShaderPool;
 
         public AvatarPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner,
             IConcurrentBudgetProvider frameTimeCapBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider,
@@ -89,7 +90,7 @@ namespace DCL.PluginSystem.Global
         private async UniTask CreateMaterialPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
             ProvidedAsset<Material> providedMaterial = await assetsProvisioner.ProvideMainAssetAsync(settings.celShadingMaterial, ct: ct);
-            celShadingMaterialPool = new ObjectPoolDCL<Material>(() => new Material(providedMaterial.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.defaultMaterialCapacity);
+            celShadingMaterialPool = new ExtendedObjectPool<Material>(() => new Material(providedMaterial.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.defaultMaterialCapacity);
 
             for (var i = 0; i < settings.defaultMaterialCapacity; i++)
             {
@@ -101,7 +102,7 @@ namespace DCL.PluginSystem.Global
         private async UniTask CreateComputeShaderPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)
         {
             ProvidedAsset<ComputeShader> providedComputeShader = await assetsProvisioner.ProvideMainAssetAsync(settings.computeShader, ct: ct);
-            computeShaderPool = new ObjectPoolDCL<ComputeShader>(() => Object.Instantiate(providedComputeShader.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.defaultMaterialCapacity);
+            computeShaderPool = new ExtendedObjectPool<ComputeShader>(() => Object.Instantiate(providedComputeShader.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.defaultMaterialCapacity);
 
             for (var i = 0; i < PoolConstants.COMPUTE_SHADER_COUNT; i++)
             {

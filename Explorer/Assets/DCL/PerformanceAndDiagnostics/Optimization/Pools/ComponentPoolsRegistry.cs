@@ -37,9 +37,9 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
             lock (pools) { return (IComponentPool<T>)pools[typeof(T)]; }
         }
 
-        public IComponentPoolDCL<T> GetReferenceTypePoolDCL<T>() where T: class
+        public IComponentPool<T> GetReferenceTypePoolDCL<T>() where T: class
         {
-            lock (pools) { return (IComponentPoolDCL<T>)pools[typeof(T)]; }
+            lock (pools) { return (IComponentPool<T>)pools[typeof(T)]; }
         }
 
         public IComponentPool GetPool(Type type)
@@ -71,7 +71,7 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
                     return;
                 }
 
-                pools.Add(typeof(T), new GameObjectPoolDCL<T>(rootContainer, creationHandler, onRelease, maxSize: maxSize));
+                pools.Add(typeof(T), new GameObjectPool<T>(rootContainer, creationHandler, onRelease, maxSize: maxSize));
             }
         }
 

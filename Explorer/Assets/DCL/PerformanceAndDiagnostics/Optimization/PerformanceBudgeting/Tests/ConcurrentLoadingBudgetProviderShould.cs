@@ -1,4 +1,4 @@
-using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
+using DCL.PerformanceBudgeting;
 using NUnit.Framework;
 using System;
 

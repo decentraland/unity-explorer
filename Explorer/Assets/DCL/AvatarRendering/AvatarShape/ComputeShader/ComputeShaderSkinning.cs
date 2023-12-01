@@ -1,7 +1,6 @@
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.PerformanceAndDiagnostics.Optimization.Pools;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Collections;
@@ -16,7 +15,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     public class ComputeShaderSkinning : CustomSkinning
     {
         public override AvatarCustomSkinningComponent Initialize(IReadOnlyList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer,
-            UnityEngine.ComputeShader skinningShader, IObjectPoolDCL<Material> avatarMaterialPool, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer, AvatarShapeComponent avatarShapeComponent)
+            UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterialPool, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer, AvatarShapeComponent avatarShapeComponent)
         {
             List<MeshData> meshesData = ListPool<MeshData>.Get();
 
@@ -128,7 +127,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         }
 
         private List<AvatarCustomSkinningComponent.MaterialSetup> SetupMeshRenderer(IReadOnlyList<MeshData> gameObjects, TextureArrayContainer textureArrayContainer,
-            IObjectPoolDCL<Material> avatarMaterial, AvatarShapeComponent avatarShapeComponent)
+            IObjectPool<Material> avatarMaterial, AvatarShapeComponent avatarShapeComponent)
         {
             var auxVertCounter = 0;
 
@@ -191,7 +190,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         }
 
         private protected override AvatarCustomSkinningComponent.MaterialSetup SetupMaterial(Renderer meshRenderer, Material originalMaterial, int lastWearableVertCount,
-            TextureArrayContainer textureArrayContainer, IObjectPoolDCL<Material> celShadingMaterial, AvatarShapeComponent avatarShapeComponent)
+            TextureArrayContainer textureArrayContainer, IObjectPool<Material> celShadingMaterial, AvatarShapeComponent avatarShapeComponent)
         {
             Material avatarMaterial = celShadingMaterial.Get();
             var albedoTexture = (Texture2D)originalMaterial.mainTexture;

@@ -4,11 +4,11 @@ using System.Collections.Generic;
 namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
 {
     /// <summary>
-    ///     Provides functionality similarly <see cref="ObjectPoolDCL{T}" /> in an instance manner (unlike static <see cref="ListPool{T}" />)
+    ///     Provides functionality similarly <see cref="ExtendedObjectPool{T}" /> in an instance manner (unlike static <see cref="ListPool{T}" />)
     /// </summary>
-    public class ListObjectPoolDCL<T> : ObjectPoolDCL<List<T>>
+    public class ListExtendedObjectPool<T> : ExtendedObjectPool<List<T>>
     {
-        public ListObjectPoolDCL(
+        public ListExtendedObjectPool(
             Action<List<T>> actionOnGet = null,
             Action<List<T>> actionOnDestroy = null,
             bool collectionCheck = true,
