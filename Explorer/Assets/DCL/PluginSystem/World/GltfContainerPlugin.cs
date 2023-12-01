@@ -22,6 +22,11 @@ namespace DCL.PluginSystem.World
             assetsCache = new GltfContainerAssetsCache(1000);
         }
 
+        public void Dispose()
+        {
+            assetsCache.Dispose();
+        }
+
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
             in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
