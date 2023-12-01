@@ -2,7 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
-using DCL.PerformanceBudgeting;
+using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
@@ -133,7 +133,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 // Disable it as its activity controlled by another system based on PBGltfContainer component
                 collider.enabled = false;
 
-                results.Add(new SDKCollider(newCollider));
+                results.Add(new SDKCollider(collider));
                 return;
             }
 

@@ -37,7 +37,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             var sdkComponent = new PBGltfContainer { IsDirty = true, Src = "2" };
             var c = new GltfContainerComponent();
             c.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention("1", new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY);
-            var asset = GltfContainerAsset.Create(new GameObject());
+            var asset = GltfContainerAsset.Create(new GameObject(), null);
             asset.VisibleMeshesColliders = new List<SDKCollider> { new () };
             world.Add(c.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
             c.State.Set(LoadingState.Finished);
@@ -60,7 +60,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             var c = new GltfContainerComponent();
             c.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention("1", new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY);
 
-            var asset = GltfContainerAsset.Create(new GameObject());
+            var asset = GltfContainerAsset.Create(new GameObject(), null);
             asset.VisibleMeshesColliders = new List<SDKCollider> { new () };
 
             world.Add(c.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));

@@ -11,6 +11,7 @@ using DCL.ECSComponents;
 using DCL.GlobalPartitioning;
 using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Optimization.Pools;
+using DCL.PerformanceBudgeting;
 using DCL.PluginSystem.Global;
 using DCL.Systems;
 using DCL.Time;

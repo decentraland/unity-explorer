@@ -1,3 +1,4 @@
+using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using System;
 
 namespace DCL.PerformanceBudgeting

@@ -1,6 +1,10 @@
-﻿using System;
+﻿using DCL.PerformanceAndDiagnostics.Profiling;
+using ECS.StreamableLoading.AssetBundles;
+using ECS.Unity.SceneBoundsChecker;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 using Utility.Pool;
 
 namespace ECS.Unity.GLTFContainer.Asset.Components
@@ -14,7 +18,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         public readonly GameObject Root;
 
         // Should be pooled
-        public readonly List<Collider> InvisibleColliders;
+        public readonly List<SDKCollider> InvisibleColliders;
 
         /// <summary>
         ///     The list of mesh filters that can act as visible colliders
