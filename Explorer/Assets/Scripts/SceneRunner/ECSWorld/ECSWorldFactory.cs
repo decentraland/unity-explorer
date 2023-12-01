@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
+using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.UpdateGate;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
@@ -45,14 +46,14 @@ namespace SceneRunner.ECSWorld
         {
             ISystemGroupsUpdateGate systemGroupsUpdateGate = args.SystemGroupsUpdateGate;
             ECSWorldInstanceSharedDependencies sharedDependencies = args.SharedDependencies;
-            IPartitionComponent scenePartition = args.ScenePartition;
+            IPartitionComponent scenePartition = sharedDependencies.ScenePartition;
 
             // Worlds uses Pooled Collections under the hood so the memory impact is minimized
             var world = World.Create();
 
             IComponentPoolsRegistry componentPoolsRegistry = singletonDependencies.ComponentPoolsRegistry;
 
-            Entity sceneRootEntity = world.Create(SpecialEntitiesID.SCENE_ROOT_ENTITY, world);
+            Entity sceneRootEntity = world.Create(new SceneRootComponent(), world);
             var persistentEntities = new PersistentEntities(sceneRootEntity);
 
             sharedDependencies.EntitiesMap[SpecialEntitiesID.SCENE_ROOT_ENTITY] = sceneRootEntity;
