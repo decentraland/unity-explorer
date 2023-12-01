@@ -15,21 +15,27 @@ namespace DCL.PerformanceBudgeting
 
         public bool TrySpendBudget()
         {
-            if (currentBudget > 0)
+            lock (this)
             {
-                currentBudget--;
-                return true;
-            }
+                if (currentBudget > 0)
+                {
+                    currentBudget--;
+                    return true;
+                }
 
-            return false;
+                return false;
+            }
         }
 
         public void ReleaseBudget()
         {
-            if (currentBudget + 1 > maxBudget)
-                throw new Exception("Tried to release more budget than the max budget allows");
+            lock (this)
+            {
+                if (currentBudget + 1 > maxBudget)
+                    throw new Exception("Tried to release more budget than the max budget allows");
 
-            currentBudget = Math.Clamp(currentBudget + 1, 0, maxBudget);
+                currentBudget = Math.Clamp(currentBudget + 1, 0, maxBudget);
+            }
         }
     }
 }

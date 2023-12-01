@@ -39,6 +39,8 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private CancellationTokenSource cancellationTokenSource;
 
+        private bool systemIsDisposed;
+
         protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync) : base(world)
         {
             this.cache = cache;
@@ -57,6 +59,8 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             cancellationTokenSource.Cancel();
             cancellationTokenSource.Dispose();
+
+            systemIsDisposed = true;
         }
 
         protected override void Update(float t)
@@ -92,13 +96,13 @@ namespace ECS.StreamableLoading.Common.Systems
             intention.RemoveCurrentSource();
 
             // Try load from cache first
-            if (TryLoadFromCache(in entity, in intention, currentSource))
+            if (TryLoadFromCache(in entity, in intention, state.AcquiredBudget, currentSource))
                 return;
 
             // If the given URL failed irrecoverably just return the failure
             if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset> failure))
             {
-                FinalizeLoading(entity, intention, failure, currentSource);
+                FinalizeLoading(entity, intention, failure, currentSource, state.AcquiredBudget);
                 return;
             }
 
@@ -145,16 +149,23 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (e is not OperationCanceledException)
                     ReportException(e);
             }
-            finally
-            {
-                await UniTask.SwitchToMainThread();
-                FinalizeLoading(entity, intention, result, source);
-            }
+            finally { FinalizeLoading(entity, intention, result, source, acquiredBudget); }
         }
 
-        private void FinalizeLoading(in Entity entity, TIntention intention, StreamableLoadingResult<TAsset>? result, AssetSource source)
+        private void FinalizeLoading(in Entity entity, TIntention intention,
+            StreamableLoadingResult<TAsset>? result, AssetSource source,
+            IAcquiredBudget acquiredBudget)
         {
             using MutexSync.Scope sync = mutexSync.GetScope();
+
+            if (systemIsDisposed)
+            {
+                // World is no longer valid, can't call World.Get
+                // Just Free the budget
+                acquiredBudget.Dispose();
+                return;
+            }
+
             ref StreamableLoadingState state = ref World.Get<StreamableLoadingState>(entity);
 
             state.DisposeBudget();
@@ -246,11 +257,11 @@ namespace ECS.StreamableLoading.Common.Systems
             return failure;
         }
 
-        private bool TryLoadFromCache(in Entity entity, in TIntention intention, AssetSource source)
+        private bool TryLoadFromCache(in Entity entity, in TIntention intention, IAcquiredBudget acquiredBudget, AssetSource source)
         {
             if (cache.TryGet(in intention, out TAsset asset))
             {
-                FinalizeLoading(entity, intention, new StreamableLoadingResult<TAsset>(asset), source);
+                FinalizeLoading(entity, intention, new StreamableLoadingResult<TAsset>(asset), source, acquiredBudget);
                 return true;
             }
 
