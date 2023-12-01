@@ -147,7 +147,7 @@ namespace SceneRunner
             catch (ScriptEngineException e)
             {
                 // ScriptEngineException.ErrorDetails is ignored through the logging process which is vital in the reporting information
-                exceptionsHandler.OnJavaScriptException(new Exception(e.ErrorDetails));
+                exceptionsHandler.OnJavaScriptException(new ScriptEngineException(e.ErrorDetails));
                 throw;
             }
 

@@ -92,15 +92,9 @@ namespace SceneRunner
                 // Start the scene
                 await runtimeInstance.StartScene();
             }
-            catch (OperationCanceledException) { return; }
             catch (ScriptEngineException e)
             {
                 sceneExceptionsHandler.OnJavaScriptException(e);
-                return;
-            }
-            catch (Exception e)
-            {
-                sceneExceptionsHandler.OnEngineException(e);
                 return;
             }
 
@@ -125,15 +119,9 @@ namespace SceneRunner
                         // We can't guarantee that the thread is preserved between updates
                         await runtimeInstance.UpdateScene(deltaTime);
                     }
-                    catch (OperationCanceledException) { throw; }
                     catch (ScriptEngineException e)
                     {
                         sceneExceptionsHandler.OnJavaScriptException(e);
-                        break;
-                    }
-                    catch (Exception e)
-                    {
-                        sceneExceptionsHandler.OnEngineException(e);
                         break;
                     }
 
