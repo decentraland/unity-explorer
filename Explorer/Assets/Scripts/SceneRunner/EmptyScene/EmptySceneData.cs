@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using Utility;
 
 namespace SceneRunner.EmptyScene
@@ -39,6 +40,7 @@ namespace SceneRunner.EmptyScene
                 fileToHash[mapping.environment.file] = mapping.environment.hash;
             }
         }
+
         public bool HasRequiredPermission(string permission) =>
             throw new NotImplementedException();
 
