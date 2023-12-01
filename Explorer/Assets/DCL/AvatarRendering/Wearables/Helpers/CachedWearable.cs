@@ -18,8 +18,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             OriginalAsset = originalAsset;
             Instance = instance;
 
-            originalAsset.AddReference();
-
             ProfilingCounters.CachedWearablesAmount.Value++;
         }
 

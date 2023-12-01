@@ -121,8 +121,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             {
                 IWearable resultWearable = wearablesResult.Asset[i];
 
-                if (wearablesToHide.Contains(resultWearable.GetCategory()))
-                    continue;
+                if (wearablesToHide.Contains(resultWearable.GetCategory())) continue;
 
                 if (resultWearable.isFacialFeature())
                 {
@@ -186,7 +185,12 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             vertOutBuffer.Release(skinningComponent.VertsOutRegion);
             skinningComponent.Dispose(avatarMaterialPool, computeShaderSkinningPool);
-            wearableAssetsCache.TryReleaseAssets(avatarShapeComponent.InstantiatedWearables);
+
+            if (avatarShapeComponent.WearablePromise.IsConsumed)
+                wearableAssetsCache.TryReleaseAssets(avatarShapeComponent.InstantiatedWearables);
+            else
+                foreach (IWearable wearable in avatarShapeComponent.WearablePromise.LoadingIntention.Results)
+                    wearable?.WearableAssetResults[avatarShapeComponent.BodyShape]?.Asset.Dereference();
         }
 
         public override void Dispose()

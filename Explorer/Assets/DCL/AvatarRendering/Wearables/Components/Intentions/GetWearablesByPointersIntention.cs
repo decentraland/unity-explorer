@@ -41,7 +41,7 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
         public void Dispose()
         {
             POINTERS_POOL.Release(Pointers);
-            RESULTS_POOL.Return(Results);
+            RESULTS_POOL.Return(Results, clearArray: true);
         }
     }
 }

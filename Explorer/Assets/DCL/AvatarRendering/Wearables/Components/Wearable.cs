@@ -12,7 +12,7 @@ namespace DCL.AvatarRendering.Wearables.Components
     public class Wearable : IWearable
     {
         public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
-        public StreamableLoadingResult<WearableAsset>?[] WearableAssets { get; private set; } = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
+        public StreamableLoadingResult<WearableAsset>?[] WearableAssetResults { get; private set; } = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
         public StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }
         public bool IsLoading { get; set; } = true;
 

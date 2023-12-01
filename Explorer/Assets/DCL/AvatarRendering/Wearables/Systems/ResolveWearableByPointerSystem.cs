@@ -98,10 +98,15 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                 if (CreatePromiseIfRequired(component, wearablesByPointersIntention, partitionComponent)) continue;
 
-                if (component.WearableAssets[wearablesByPointersIntention.BodyShape] is { Succeeded: true })
+                if (component.WearableAssetResults[wearablesByPointersIntention.BodyShape] is { Succeeded: true })
                 {
                     successfulResults++;
-                    wearablesByPointersIntention.Results[index] = component;
+
+                    if (wearablesByPointersIntention.Results[index] == null)
+                    {
+                        component.WearableAssetResults[wearablesByPointersIntention.BodyShape].Value.Asset.AddReference();
+                        wearablesByPointersIntention.Results[index] = component;
+                    }
                 }
             }
 
@@ -214,7 +219,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 return true;
             }
 
-            if (component.WearableAssets[intention.BodyShape] == null)
+            if (component.WearableAssetResults[intention.BodyShape] == null)
             {
                 SceneAssetBundleManifest manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : component.ManifestResult?.Asset;
 
@@ -254,11 +259,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                 if (wearable.IsUnisex())
                 {
-                    wearable.WearableAssets[BodyShape.MALE] = failedResult;
-                    wearable.WearableAssets[BodyShape.FEMALE] = failedResult;
+                    wearable.WearableAssetResults[BodyShape.MALE] = failedResult;
+                    wearable.WearableAssetResults[BodyShape.FEMALE] = failedResult;
                 }
                 else
-                    wearable.WearableAssets[bodyShape] = failedResult;
+                    wearable.WearableAssetResults[bodyShape] = failedResult;
 
                 return;
             }
@@ -269,24 +274,24 @@ namespace DCL.AvatarRendering.Wearables.Systems
             // Waiting for the default wearable should be moved to the loading screen
             if (wearable.IsUnisex())
             {
-                wearable.WearableAssets[BodyShape.MALE] = wearableCatalog.GetDefaultWearable(BodyShape.MALE, wearable.GetCategory()).WearableAssets[BodyShape.MALE];
-                wearable.WearableAssets[BodyShape.FEMALE] = wearableCatalog.GetDefaultWearable(BodyShape.FEMALE, wearable.GetCategory()).WearableAssets[BodyShape.FEMALE];
+                wearable.WearableAssetResults[BodyShape.MALE] = wearableCatalog.GetDefaultWearable(BodyShape.MALE, wearable.GetCategory()).WearableAssetResults[BodyShape.MALE];
+                wearable.WearableAssetResults[BodyShape.FEMALE] = wearableCatalog.GetDefaultWearable(BodyShape.FEMALE, wearable.GetCategory()).WearableAssetResults[BodyShape.FEMALE];
             }
             else
-                wearable.WearableAssets[bodyShape] = wearableCatalog.GetDefaultWearable(bodyShape, wearable.GetCategory()).WearableAssets[bodyShape];
+                wearable.WearableAssetResults[bodyShape] = wearableCatalog.GetDefaultWearable(bodyShape, wearable.GetCategory()).WearableAssetResults[bodyShape];
         }
 
         private void SetWearableResult(IWearable wearable, StreamableLoadingResult<AssetBundleData> result, in BodyShape bodyShape)
         {
-            StreamableLoadingResult<WearableAsset> wearableAsset = result.ToWearableAsset();
+            StreamableLoadingResult<WearableAsset> wearableResult = result.ToWearableAsset();
 
             if (wearable.IsUnisex())
             {
-                wearable.WearableAssets[BodyShape.MALE] = wearableAsset;
-                wearable.WearableAssets[BodyShape.FEMALE] = wearableAsset;
+                wearable.WearableAssetResults[BodyShape.MALE] = wearableResult;
+                wearable.WearableAssetResults[BodyShape.FEMALE] = wearableResult;
             }
             else
-                wearable.WearableAssets[bodyShape] = wearableAsset;
+                wearable.WearableAssetResults[bodyShape] = wearableResult;
         }
     }
 }

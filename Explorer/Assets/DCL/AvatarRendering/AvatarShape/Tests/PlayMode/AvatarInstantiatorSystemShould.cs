@@ -107,7 +107,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
                     new List<WearableAsset.RendererInfo>
                         { rendererInfo }, null));
 
-            mockWearable.WearableAssets.Returns(assetBundleData);
+            mockWearable.WearableAssetResults.Returns(assetBundleData);
             mockWearable.GetCategory().Returns(category);
             return mockWearable;
         }
