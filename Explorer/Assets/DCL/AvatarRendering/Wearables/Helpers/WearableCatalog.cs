@@ -59,8 +59,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             if (cacheKeysDictionary.TryGetValue(@for, out LinkedListNode<(string key, long lastUsedFrame)> node))
             {
+                node.Value = (@for, MultithreadingUtility.FrameCount);
+
                 listedCacheKeys.Remove(node);
-                cacheKeysDictionary[@for] = listedCacheKeys.AddLast((@for, MultithreadingUtility.FrameCount));
+                cacheKeysDictionary[@for] = node;
+                listedCacheKeys.AddLast(node);
             }
         }
 
