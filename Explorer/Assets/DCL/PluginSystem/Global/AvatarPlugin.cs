@@ -40,6 +40,7 @@ namespace DCL.PluginSystem.Global
 
         private readonly WearableAssetsCache wearableAssetsCache = new (100);
         private readonly CacheCleaner cacheCleaner;
+        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
 
         private IComponentPool<Transform> transformPoolRegistry;
 
@@ -48,14 +49,15 @@ namespace DCL.PluginSystem.Global
         private IObjectPoolDCL<ComputeShader> computeShaderPool;
 
         public AvatarPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner,
-            IConcurrentBudgetProvider frameTimeCapBudgetProvider, IRealmData realmData,
-            IDebugContainerBuilder debugContainerBuilder, CacheCleaner cacheCleaner)
+            IConcurrentBudgetProvider frameTimeCapBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider,
+            IRealmData realmData, IDebugContainerBuilder debugContainerBuilder, CacheCleaner cacheCleaner)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudgetProvider = frameTimeCapBudgetProvider;
             this.realmData = realmData;
             this.debugContainerBuilder = debugContainerBuilder;
             this.cacheCleaner = cacheCleaner;
+            this.memoryBudgetProvider = memoryBudgetProvider;
             componentPoolsRegistry = poolsRegistry;
             textureArrayContainer = new TextureArrayContainer();
 
@@ -121,7 +123,7 @@ namespace DCL.PluginSystem.Global
             cacheCleaner.Register(celShadingMaterialPool);
             cacheCleaner.Register(computeShaderPool);
 
-            AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudgetProvider, avatarPoolRegistry, celShadingMaterialPool,
+            AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudgetProvider, memoryBudgetProvider, avatarPoolRegistry, celShadingMaterialPool,
                 computeShaderPool, textureArrayContainer, wearableAssetsCache, skinningStrategy, vertOutBuffer);
 
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);

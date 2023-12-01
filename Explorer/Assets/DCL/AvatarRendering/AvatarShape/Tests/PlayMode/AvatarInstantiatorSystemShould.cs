@@ -74,7 +74,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             avatarShapeComponent = new AvatarShapeComponent("TEST_AVATAR", "TEST_ID", BodyShape.MALE, promise,
                 randomSkinColor, randomHairColor);
 
-            system = new AvatarInstantiatorSystem(world, budgetProvider, avatarPoolRegistry, materialPool, computeShaderPool,
+            system = new AvatarInstantiatorSystem(world, budgetProvider, budgetProvider, avatarPoolRegistry, materialPool, computeShaderPool,
                 new TextureArrayContainer(), Substitute.For<IWearableAssetsCache>(), new ComputeShaderSkinning(), new FixedComputeBufferHandler(10000, 4, 4));
         }
 

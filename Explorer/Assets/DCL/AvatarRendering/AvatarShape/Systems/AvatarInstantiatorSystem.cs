@@ -40,10 +40,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly TextureArrayContainer textureArrays;
         private readonly FixedComputeBufferHandler vertOutBuffer;
         private readonly IWearableAssetsCache wearableAssetsCache;
+        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
 
-        public AvatarInstantiatorSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider,
-            IComponentPoolDCL<AvatarBase> avatarPoolRegistry, IObjectPoolDCL<Material> avatarMaterialPool, IObjectPoolDCL<UnityEngine.ComputeShader> computeShaderPool, TextureArrayContainer textureArrayContainer,
-            IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer) : base(world)
+        public AvatarInstantiatorSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider,
+            IComponentPoolDCL<AvatarBase> avatarPoolRegistry, IObjectPoolDCL<Material> avatarMaterialPool, IObjectPoolDCL<UnityEngine.ComputeShader> computeShaderPool,
+            TextureArrayContainer textureArrayContainer, IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer) : base(world)
         {
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
             this.avatarPoolRegistry = avatarPoolRegistry;
@@ -52,6 +53,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             this.wearableAssetsCache = wearableAssetsCache;
             this.skinningStrategy = skinningStrategy;
             this.vertOutBuffer = vertOutBuffer;
+            this.memoryBudgetProvider = memoryBudgetProvider;
             this.avatarMaterialPool = avatarMaterialPool;
             computeShaderSkinningPool = computeShaderPool;
         }
@@ -160,7 +162,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         private bool ReadyToInstantiateNewAvatar(ref AvatarShapeComponent avatarShapeComponent) =>
-            avatarShapeComponent.IsDirty && instantiationFrameTimeBudgetProvider.TrySpendBudget();
+            avatarShapeComponent.IsDirty && instantiationFrameTimeBudgetProvider.TrySpendBudget() && memoryBudgetProvider.TrySpendBudget();
 
         //We only care to release AvatarShapeComponent with AvatarBase; since this are the ones that got instantiated.
         //The ones that dont have AvatarBase never got instantiated and therefore we have nothing to release

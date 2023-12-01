@@ -66,7 +66,7 @@ namespace Global.Dynamic
                 new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, staticContainer.SingletonSharedDependencies.MemoryBudgetProvider, debugBuilder),
                 new WearablePlugin(staticContainer.AssetsProvisioner, realmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner),
                 new AvatarPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner,
-                    staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, realmData, debugBuilder, staticContainer.CacheCleaner),
+                    staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, staticContainer.SingletonSharedDependencies.MemoryBudgetProvider, realmData, debugBuilder, staticContainer.CacheCleaner),
                 new ExplorePanelPlugin(staticContainer.AssetsProvisioner, mvcManager)
             };
 
