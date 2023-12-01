@@ -1,5 +1,4 @@
 ﻿using System;
-using UnityEngine.Pool;
 
 namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
 {
@@ -14,7 +13,7 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
     ///     Thread-safe Component Pool
     /// </summary>
     /// <typeparam name="T">Type of Component</typeparam>
-    public interface IComponentPool<T> : IObjectPool<T>, IComponentPool where T: class
+    public interface IComponentPool<T> : IExtendedObjectPool<T>, IComponentPool where T: class
     {
         void IComponentPool.Release(object component) =>
             Release((T)component);

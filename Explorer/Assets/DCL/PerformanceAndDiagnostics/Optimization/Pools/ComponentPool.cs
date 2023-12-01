@@ -35,5 +35,8 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
 
         public void Clear() =>
             objectPool.Clear();
+
+        public void ClearThrottled(int maxUnloadAmount) =>
+            objectPool.ClearThrottled(maxUnloadAmount);
     }
 }

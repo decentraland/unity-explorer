@@ -8,7 +8,7 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
     public class GameObjectPool<T> : IComponentPool<T> where T: Component
     {
         private readonly string DEFAULT_COMPONENT_NAME = $"POOL_OBJECT_{typeof(T).Name}";
-        private readonly ObjectPool<T> gameObjectPool;
+        private readonly IExtendedObjectPool<T> gameObjectPool;
         private readonly Transform parentContainer;
         private readonly Transform rootContainer;
 
@@ -21,7 +21,7 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
             parentContainer = new GameObject($"POOL_CONTAINER_{typeof(T).Name}").transform;
             parentContainer.SetParent(rootContainer);
             this.onRelease += onRelease;
-            gameObjectPool = new ObjectPool<T>(creationHandler ?? HandleCreation, actionOnGet: HandleGet, actionOnRelease: HandleRelease, actionOnDestroy: UnityObjectUtils.SafeDestroyGameObject, defaultCapacity: maxSize / 4, maxSize: maxSize);
+            gameObjectPool = new ExtendedObjectPool<T>(creationHandler ?? HandleCreation, actionOnGet: HandleGet, actionOnRelease: HandleRelease, actionOnDestroy: UnityObjectUtils.SafeDestroyGameObject, defaultCapacity: maxSize / 4, maxSize: maxSize);
         }
 
         public void Dispose() =>
@@ -38,6 +38,9 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
 
         public void Clear() =>
             gameObjectPool.Clear();
+
+        public void ClearThrottled(int maxChunkSize) =>
+            gameObjectPool.ClearThrottled(maxChunkSize);
 
         private T HandleCreation()
         {

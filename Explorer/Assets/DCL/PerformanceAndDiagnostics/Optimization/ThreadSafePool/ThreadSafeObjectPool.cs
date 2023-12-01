@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.PerformanceAndDiagnostics.Optimization.Pools;
+using System;
 using UnityEngine.Pool;
 
 namespace Utility.ThreadSafePool
@@ -7,9 +8,9 @@ namespace Utility.ThreadSafePool
     ///     Represents a pool that can be shared between multiple threads
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class ThreadSafeObjectPool<T> : IObjectPool<T> where T: class
+    public class ThreadSafeObjectPool<T> : IExtendedObjectPool<T> where T: class
     {
-        private readonly IObjectPool<T> objectPoolImplementation;
+        private readonly IExtendedObjectPool<T> objectPoolImplementation;
 
         public int CountInactive
         {
@@ -22,7 +23,7 @@ namespace Utility.ThreadSafePool
         public ThreadSafeObjectPool(Func<T> createFunc, Action<T> actionOnGet = null, Action<T> actionOnRelease = null, Action<T> actionOnDestroy = null, bool collectionCheck = true,
             int defaultCapacity = 10, int maxSize = 10000)
         {
-            objectPoolImplementation = new ObjectPool<T>(createFunc, actionOnGet, actionOnRelease, actionOnDestroy, collectionCheck, defaultCapacity, maxSize);
+            objectPoolImplementation = new ExtendedObjectPool<T>(createFunc, actionOnGet, actionOnRelease, actionOnDestroy, collectionCheck, defaultCapacity, maxSize);
         }
 
         public T Get()
@@ -43,6 +44,11 @@ namespace Utility.ThreadSafePool
         public void Clear()
         {
             lock (objectPoolImplementation) { objectPoolImplementation.Clear(); }
+        }
+
+        public void ClearThrottled(int maxUnloadAmount)
+        {
+            lock (objectPoolImplementation) { objectPoolImplementation.ClearThrottled(maxUnloadAmount); }
         }
     }
 }

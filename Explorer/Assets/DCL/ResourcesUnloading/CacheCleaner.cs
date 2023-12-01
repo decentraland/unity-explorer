@@ -1,4 +1,5 @@
-﻿using DCL.AvatarRendering.AvatarShape.UnityInterface;
+﻿using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Optimization.Pools;
@@ -8,7 +9,6 @@ using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using Unity.Profiling;
 using UnityEngine;
-using UnityEngine.Pool;
 
 namespace DCL.ResourcesUnloading
 {
@@ -28,6 +28,7 @@ namespace DCL.ResourcesUnloading
 
         private readonly IConcurrentBudgetProvider fpsCapBudgetProvider;
         private readonly IProfilingProvider profilingProvider;
+        private readonly IThrottledClearable avatarMaterialSetupPool;
 
         private GltfContainerAssetsCache gltfContainerAssetsCache;
         private AssetBundleCache assetBundleCache;
@@ -35,14 +36,16 @@ namespace DCL.ResourcesUnloading
         private WearableCatalog wearableCatalog;
         private TexturesCache texturesCache;
 
-        private IObjectPool<Material> materialPool;
-        private IObjectPool<ComputeShader> computeShaderPool;
-        private IComponentPool<AvatarBase> avatarPoolRegistry;
+        private IThrottledClearable materialPool;
+        private IThrottledClearable computeShaderPool;
+        private IThrottledClearable avatarPoolRegistry;
 
         public CacheCleaner(IConcurrentBudgetProvider fpsCapBudgetProvider, IProfilingProvider profilingProvider)
         {
             this.fpsCapBudgetProvider = fpsCapBudgetProvider;
             this.profilingProvider = profilingProvider;
+
+            avatarMaterialSetupPool = AvatarCustomSkinningComponent.USED_SLOTS_POOL;
         }
 
         public void UnloadCache()
@@ -71,21 +74,21 @@ namespace DCL.ResourcesUnloading
 
         private void ClearAvatarsRelatedPools()
         {
-            // if (fpsCapBudgetProvider.TrySpendBudget())
-            //     using (avatarPoolRegistryMarker.Auto())
-            //         avatarPoolRegistry.Clear(10);
-            //
-            // if (fpsCapBudgetProvider.TrySpendBudget())
-            //     using (computeShaderPoolMarker.Auto())
-            //         computeShaderPool.Clear(10);
-            //
-            // if (fpsCapBudgetProvider.TrySpendBudget())
-            //     using (USED_SLOTS_POOLCacheMarker.Auto())
-            //         AvatarCustomSkinningComponent.USED_SLOTS_POOL.Clear(10);
-            //
-            // if (fpsCapBudgetProvider.TrySpendBudget())
-            //     using (materialPoolCacheMarker.Auto())
-            //         materialPool.Clear(10);
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                using (avatarPoolRegistryMarker.Auto())
+                    avatarPoolRegistry.ClearThrottled(10);
+
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                using (computeShaderPoolMarker.Auto())
+                    computeShaderPool.ClearThrottled(10);
+
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                using (USED_SLOTS_POOLCacheMarker.Auto())
+                    avatarMaterialSetupPool.ClearThrottled(10);
+
+            if (fpsCapBudgetProvider.TrySpendBudget())
+                using (materialPoolCacheMarker.Auto())
+                    materialPool.ClearThrottled(10);
         }
 
         public void Register(AssetBundleCache assetBundleCache) =>
@@ -106,10 +109,10 @@ namespace DCL.ResourcesUnloading
         public void Register(IComponentPool<AvatarBase> avatarPoolRegistry) =>
             this.avatarPoolRegistry = avatarPoolRegistry;
 
-        public void Register(IObjectPool<Material> celShadingMaterialPool) =>
+        public void Register(IExtendedObjectPool<Material> celShadingMaterialPool) =>
             materialPool = celShadingMaterialPool;
 
-        public void Register(IObjectPool<ComputeShader> computeShaderPool) =>
+        public void Register(IExtendedObjectPool<ComputeShader> computeShaderPool) =>
             this.computeShaderPool = computeShaderPool;
 
         public void UpdateProfilingCounters()

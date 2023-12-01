@@ -9,7 +9,7 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
     /// <summary>
     ///     Extension of Unity built-in ObjectPool for throttled clearing
     /// </summary>
-    public class ExtendedObjectPool<T> : ObjectPool<T> where T: class
+    public class ExtendedObjectPool<T> : ObjectPool<T>, IExtendedObjectPool<T> where T: class
     {
         private readonly List<T> list;
         private readonly Action<T> onDestroyAction;
@@ -40,6 +40,7 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
         public void ClearThrottled(int maxUnloadAmount)
         {
             int itemsToRemove = Math.Min(maxUnloadAmount, list.Count);
+            if (itemsToRemove == 0) return;
 
             for (var i = 0; i < itemsToRemove; i++)
                 onDestroyAction?.Invoke(list[i]);

@@ -20,7 +20,6 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.Pool;
 using Utility;
 using Utility.Pool;
 using Object = UnityEngine.Object;
@@ -46,8 +45,8 @@ namespace DCL.PluginSystem.Global
         private IComponentPool<Transform> transformPoolRegistry;
 
         private IComponentPool<AvatarBase> avatarPoolRegistry;
-        private IObjectPool<Material> celShadingMaterialPool;
-        private IObjectPool<ComputeShader> computeShaderPool;
+        private IExtendedObjectPool<Material> celShadingMaterialPool;
+        private IExtendedObjectPool<ComputeShader> computeShaderPool;
 
         public AvatarPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner,
             IConcurrentBudgetProvider frameTimeCapBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider,
