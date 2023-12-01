@@ -31,15 +31,6 @@ namespace DCL.Interaction.Utility
             globalCache.Associate(collider, this, entityInfo);
         }
 
-        public void Associate(IEnumerable<Collider> colliders, ColliderEntityInfo entityInfo)
-        {
-            foreach (Collider collider in colliders)
-            {
-                map[collider] = entityInfo;
-                globalCache.Associate(collider, this, entityInfo);
-            }
-        }
-
         public void Remove(Collider collider)
         {
             if (collider)
@@ -47,12 +38,6 @@ namespace DCL.Interaction.Utility
                 map.Remove(collider);
                 globalCache.RemoveAssociation(collider);
             }
-        }
-
-        public void Remove(IEnumerable<Collider> colliders)
-        {
-            foreach (Collider collider in colliders)
-                Remove(collider);
         }
 
         public static EntityCollidersSceneCache Create(IEntityCollidersGlobalCache globalCache)

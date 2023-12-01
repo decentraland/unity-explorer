@@ -4,6 +4,7 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 
 namespace SceneRunner.EmptyScene
 {
@@ -15,9 +16,12 @@ namespace SceneRunner.EmptyScene
         public readonly IReadOnlyList<EmptySceneMapping> Mappings;
         private readonly Dictionary<string, string> fileToHash;
 
+        /// <summary>
+        ///     Per scene data is not resolved as empty scenes use the shared world for all instances
+        /// </summary>
         public SceneShortInfo SceneShortInfo { get; }
 
-        public Vector3 BasePosition { get; }
+        public ParcelMathHelper.SceneGeometry Geometry => ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY;
 
         public SceneAssetBundleManifest AssetBundleManifest => SceneAssetBundleManifest.NULL;
         public StaticSceneMessages StaticSceneMessages => StaticSceneMessages.EMPTY;
