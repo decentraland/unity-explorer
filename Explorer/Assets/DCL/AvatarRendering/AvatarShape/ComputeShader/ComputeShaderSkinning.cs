@@ -16,7 +16,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
     {
         internal static readonly ListObjectPool<Material> MATERIAL_POOL = new (defaultCapacity: 50, listInstanceDefaultCapacity: 5);
 
-        public override AvatarCustomSkinningComponent Initialize(IReadOnlyList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer,
+        public override AvatarCustomSkinningComponent Initialize(IList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer,
             UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterialPool, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer, AvatarShapeComponent avatarShapeComponent)
         {
             List<MeshData> meshesData = ListPool<MeshData>.Get();
@@ -145,17 +145,18 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             return list;
         }
 
-        private void CreateMeshData(List<MeshData> targetList, IReadOnlyList<CachedWearable> wearables)
+        private void CreateMeshData(List<MeshData> targetList, IList<CachedWearable> wearables)
         {
-            foreach (CachedWearable cachedWearable in wearables)
+            for (var i = 0; i < wearables.Count; i++)
             {
+                CachedWearable cachedWearable = wearables[i];
                 GameObject instance = cachedWearable.Instance;
 
                 using (PoolExtensions.Scope<List<Renderer>> pooledList = instance.GetComponentsInChildrenIntoPooledList<Renderer>(true))
                 {
-                    for (var i = 0; i < pooledList.Value.Count; i++)
+                    for (var j = 0; j < pooledList.Value.Count; j++)
                     {
-                        Renderer meshRenderer = pooledList.Value[i];
+                        Renderer meshRenderer = pooledList.Value[j];
                         if (!meshRenderer.gameObject.activeSelf) continue;
 
                         if (meshRenderer is SkinnedMeshRenderer renderer)
@@ -163,17 +164,23 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                             // From Asset Bundle
                             (MeshRenderer, MeshFilter) tuple = SetupMesh(renderer);
 
+                            cachedWearable.Renderers.Add(tuple.Item1);
+
                             targetList.Add(new MeshData(tuple.Item2, tuple.Item1, tuple.Item1.transform, instance.transform,
-                                cachedWearable.OriginalAsset.RendererInfos[i].Material));
+                                cachedWearable.OriginalAsset.RendererInfos[j].Material));
                         }
                         else
                         {
+                            cachedWearable.Renderers.Add(meshRenderer);
+
                             // From Pooled Object
                             targetList.Add(new MeshData(meshRenderer.GetComponent<MeshFilter>(), meshRenderer, meshRenderer.transform, instance.transform,
-                                cachedWearable.OriginalAsset.RendererInfos[i].Material));
+                                cachedWearable.OriginalAsset.RendererInfos[j].Material));
                         }
                     }
                 }
+
+                wearables[i] = cachedWearable;
             }
         }
 

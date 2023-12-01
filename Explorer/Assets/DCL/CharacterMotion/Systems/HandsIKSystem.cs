@@ -25,7 +25,6 @@ namespace DCL.CharacterMotion.Systems
         private readonly ElementBinding<float> wallDistance;
         private readonly ElementBinding<float> ikWeightSpeed;
 
-        private bool isInitialized;
         private SingleInstanceEntity settingsEntity;
 
         private HandsIKSystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
@@ -38,22 +37,17 @@ namespace DCL.CharacterMotion.Systems
 
         public override void Initialize()
         {
-            isInitialized = false;
             settingsEntity = World.CacheCharacterSettings();
+
+            ICharacterControllerSettings settings = settingsEntity.GetCharacterSettings(World);
+
+            wallDistance.Value = settings.HandsIKWallHitDistance;
+            ikWeightSpeed.Value = settings.HandsIKWeightSpeed;
         }
 
         protected override void Update(float t)
         {
             ICharacterControllerSettings settings = settingsEntity.GetCharacterSettings(World);
-
-            if (!isInitialized)
-            {
-                wallDistance.Value = settings.HandsIKWallHitDistance;
-                ikWeightSpeed.Value = settings.HandsIKWeightSpeed;
-
-                isInitialized = true;
-            }
-
             settings.HandsIKWallHitDistance = wallDistance.Value;
             settings.HandsIKWeightSpeed = ikWeightSpeed.Value;
 

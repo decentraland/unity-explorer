@@ -27,7 +27,6 @@ namespace DCL.CharacterMotion.Systems
         private readonly ElementBinding<float> horizontalLimit;
         private readonly ElementBinding<float> speed;
         private SingleInstanceEntity settingsEntity;
-        private bool isInitialized;
 
         private HeadIKSystem(World world, IDebugContainerBuilder builder) : base(world)
         {
@@ -40,7 +39,6 @@ namespace DCL.CharacterMotion.Systems
 
         public override void Initialize()
         {
-            isInitialized = false;
             camera = World.CacheCamera();
             settingsEntity = World.CacheCharacterSettings();
         }
@@ -49,24 +47,20 @@ namespace DCL.CharacterMotion.Systems
         {
             UpdateDebugValues();
             UpdateIKQuery(World, t, in camera.GetCameraComponent(World));
+
+            ICharacterControllerSettings charSettings = settingsEntity.GetCharacterSettings(World);
+            verticalLimit.Value = charSettings.HeadIKVerticalAngleLimit;
+            horizontalLimit.Value = charSettings.HeadIKHorizontalAngleLimit;
+            speed.Value = charSettings.HeadIKRotationSpeed;
+
+            // TODO: Remove this once this system is properly tied up to a look-up system, this flag will just disable it by default
+            disableWasToggled = true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateDebugValues()
         {
             ICharacterControllerSettings charSettings = settingsEntity.GetCharacterSettings(World);
-
-            if (!isInitialized)
-            {
-                isInitialized = true;
-                verticalLimit.Value = charSettings.HeadIKVerticalAngleLimit;
-                horizontalLimit.Value = charSettings.HeadIKHorizontalAngleLimit;
-                speed.Value = charSettings.HeadIKRotationSpeed;
-
-                // TODO: Remove this once this system is properly tied up to a look-up system, this flag will just disable it by default
-                disableWasToggled = true;
-            }
-
             charSettings.HeadIKVerticalAngleLimit = verticalLimit.Value;
             charSettings.HeadIKHorizontalAngleLimit = horizontalLimit.Value;
             charSettings.HeadIKRotationSpeed = speed.Value;

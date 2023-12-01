@@ -1,4 +1,5 @@
 ﻿using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Settings;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
@@ -7,7 +8,7 @@ namespace DCL.CharacterMotion
     public static class ApplyLookDirection
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(CharacterRigidTransform rigidTransform, in MovementInputComponent input)
+        public static void Execute(CharacterRigidTransform rigidTransform, in MovementInputComponent input, in ICharacterControllerSettings settings)
         {
             if (Mathf.Abs(input.Axes.x) > 0 || Mathf.Abs(input.Axes.y) > 0)
             {
@@ -18,8 +19,8 @@ namespace DCL.CharacterMotion
 
             if (!rigidTransform.IsOnASteepSlope) return;
 
-            bool isTimeToRotate = rigidTransform.SteepSlopeTime > 0.25f;
-            bool isAngleNotThatSteep = rigidTransform.SteepSlopeAngle < 80f;
+            bool isTimeToRotate = rigidTransform.SteepSlopeTime > settings.SlopeCharacterRotationDelay;
+            bool isAngleNotThatSteep = rigidTransform.SteepSlopeAngle < settings.MaxSlopeAngle;
 
             if (!isTimeToRotate || !isAngleNotThatSteep) return;
 

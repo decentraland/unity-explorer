@@ -7,25 +7,25 @@ namespace DCL.CharacterMotion.Settings
     /// </summary>
     public interface ICharacterControllerSettings
     {
-        float WalkSpeed { get; }
-        float JogSpeed { get; }
-        float RunSpeed { get; }
-        float AirAcceleration { get; }
-        float MaxAirAcceleration { get; }
-        float Gravity { get; }
-        float JogJumpHeight { get; }
-        float RunJumpHeight { get; }
+        float WalkSpeed { get; set; }
+        float JogSpeed { get; set; }
+        float RunSpeed { get; set; }
+        float AirAcceleration { get; set; }
+        float MaxAirAcceleration { get; set; }
+        float Gravity { get; set; }
+        float JogJumpHeight { get; set; }
+        float RunJumpHeight { get; set; }
         float CharacterControllerRadius { get; }
         float GroundDrag { get; }
-        float AirDrag { get; }
+        float AirDrag { get; set; }
         float MinImpulse { get; }
         float JumpVelocityDrag { get; }
         float Acceleration { get; }
         float MaxAcceleration { get; }
         float AccelerationTime { get; }
-        float StopTimeSec { get; }
-        float LongJumpTime { get; }
-        float LongJumpGravityScale { get; }
+        float StopTimeSec { get; set; }
+        float LongJumpTime { get; set; }
+        float LongJumpGravityScale { get; set; }
         float JumpGravityFactor { get; }
         float JumpGraceTime { get; }
         float JumpHeightStun { get; }
@@ -38,8 +38,8 @@ namespace DCL.CharacterMotion.Settings
         float JumpPadForce { get; }
         float AnimationSpeed { get; }
         public AnimationCurve AccelerationCurve { get; }
-        float CameraFOVWhileRunning { get; }
-        float FOVChangeSpeed { get; }
+        float CameraFOVWhileRunning { get; set; }
+        float FOVChangeSpeed { get; set; }
         float FeetIKHipsPullMaxDistance { get; set; }
         float FeetIKSphereSize { get; set; }
         float IKWeightSpeed { get; set; }
@@ -58,5 +58,11 @@ namespace DCL.CharacterMotion.Settings
         float HeadIKHorizontalAngleLimit { get; set; }
         float HeadIKRotationSpeed { get; set; }
         AnimationCurve SlopeVelocityModifier { get; }
+        float SlideAnimationBlendSpeed { get; }
+        float MinSlopeAngle { get; }
+        float MaxSlopeAngle { get; }
+        float SlopeCharacterRotationDelay { get; }
+        float WallSlideDetectionDistance { get; }
+        float WallSlideMaxMoveSpeedMultiplier { get; }
     }
 }

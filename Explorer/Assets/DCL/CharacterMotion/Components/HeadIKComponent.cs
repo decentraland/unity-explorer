@@ -3,6 +3,5 @@
     public struct HeadIKComponent
     {
         public bool IsDisabled;
-        public bool IsInitialized;
     }
 }

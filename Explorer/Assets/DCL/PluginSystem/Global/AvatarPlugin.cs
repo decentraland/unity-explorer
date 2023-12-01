@@ -103,6 +103,8 @@ namespace DCL.PluginSystem.Global
             StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder);
             FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy);
 
+            AvatarShapeVisibilitySystem.InjectToWorld(ref builder);
+
             //Debug scripts
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY);
         }

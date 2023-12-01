@@ -34,7 +34,6 @@ namespace DCL.CharacterMotion.Systems
         private readonly ElementBinding<float> twistLimitX;
         private readonly ElementBinding<float> twistLimitY;
         private SingleInstanceEntity settingsEntity;
-        private bool isInitialized;
 
         private FeetIKSystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
         {
@@ -51,6 +50,16 @@ namespace DCL.CharacterMotion.Systems
         public override void Initialize()
         {
             settingsEntity = World.CacheCharacterSettings();
+
+            ICharacterControllerSettings settings = settingsEntity.GetCharacterSettings(World);
+
+            Vector2 twistLimits = settings.FeetIKTwistAngleLimits;
+            ikWeightChangeSpeed.Value = settings.IKWeightSpeed;
+            ikPositionChangeSpeed.Value = settings.IKPositionSpeed;
+            ikDistance.Value = settings.FeetIKHipsPullMaxDistance;
+            spherecastWidth.Value = settings.FeetIKSphereSize;
+            twistLimitX.Value = twistLimits.x;
+            twistLimitY.Value = twistLimits.y;
         }
 
         protected override void Update(float t)
@@ -58,18 +67,6 @@ namespace DCL.CharacterMotion.Systems
             ICharacterControllerSettings settings = settingsEntity.GetCharacterSettings(World);
 
             Vector2 twistLimits = settings.FeetIKTwistAngleLimits;
-
-            if (!isInitialized)
-            {
-                isInitialized = true;
-                ikWeightChangeSpeed.Value = settings.IKWeightSpeed;
-                ikPositionChangeSpeed.Value = settings.IKPositionSpeed;
-                ikDistance.Value = settings.FeetIKHipsPullMaxDistance;
-                spherecastWidth.Value = settings.FeetIKSphereSize;
-                twistLimitX.Value = twistLimits.x;
-                twistLimitY.Value = twistLimits.y;
-            }
-
             settings.IKWeightSpeed = ikWeightChangeSpeed.Value;
             settings.IKPositionSpeed = ikPositionChangeSpeed.Value;
             settings.FeetIKHipsPullMaxDistance = ikDistance.Value;

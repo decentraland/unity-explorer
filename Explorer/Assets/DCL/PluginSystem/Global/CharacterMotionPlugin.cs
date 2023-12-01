@@ -53,7 +53,7 @@ namespace DCL.PluginSystem.Global
 
             InterpolateCharacterSystem.InjectToWorld(ref builder);
             RotateCharacterSystem.InjectToWorld(ref builder);
-            CalculateCharacterVelocitySystem.InjectToWorld(ref builder);
+            CalculateCharacterVelocitySystem.InjectToWorld(ref builder, debugContainerBuilder);
             CharacterAnimationSystem.InjectToWorld(ref builder);
             CharacterPlatformSystem.InjectToWorld(ref builder);
             StunCharacterSystem.InjectToWorld(ref builder);
