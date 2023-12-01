@@ -23,15 +23,8 @@ namespace DCL.Interaction.Utility
         void Associate(Collider collider, ColliderEntityInfo entityInfo);
 
         /// <summary>
-        ///     Associate multiple colliders with a single entity (GLTF Case)
-        /// </summary>
-        void Associate([NotNull] IEnumerable<Collider> colliders, ColliderEntityInfo entityInfo);
-
-        /// <summary>
         ///     Remove collider association
         /// </summary>
         void Remove([CanBeNull] Collider collider);
-
-        void Remove([NotNull] IEnumerable<Collider> colliders);
     }
 }

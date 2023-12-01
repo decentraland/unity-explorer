@@ -12,6 +12,7 @@ using DCL.GlobalPartitioning;
 using DCL.PerformanceBudgeting;
 using DCL.PluginSystem.Global;
 using DCL.Systems;
+using DCL.Time;
 using DCL.Time.Systems;
 using ECS;
 using ECS.ComponentsPooling;
@@ -58,6 +59,7 @@ namespace Global.Dynamic
         private readonly RealmSamplingData realmSamplingData;
         private readonly IRealmData realmData;
         private readonly URLDomain assetBundlesURL;
+        private readonly PhysicsTickProvider physicsTickProvider;
         private readonly IReadOnlyList<IDCLGlobalPlugin> globalPlugins;
         private readonly IConcurrentBudgetProvider memoryBudgetProvider;
         private readonly StaticSettings staticSettings;
@@ -78,6 +80,7 @@ namespace Global.Dynamic
             this.realmData = realmData;
 
             memoryBudgetProvider = staticContainer.SingletonSharedDependencies.MemoryBudgetProvider;
+            physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
         public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory, ICharacterObject characterObject)
@@ -147,7 +150,7 @@ namespace Global.Dynamic
 
             DestroyEntitiesSystem.InjectToWorld(ref builder);
 
-            UpdatePhysicsTickSystem.InjectToWorld(ref builder);
+            UpdatePhysicsTickSystem.InjectToWorld(ref builder, physicsTickProvider);
             UpdateTimeSystem.InjectToWorld(ref builder);
 
             var pluginArgs = new GlobalPluginArguments(playerEntity);

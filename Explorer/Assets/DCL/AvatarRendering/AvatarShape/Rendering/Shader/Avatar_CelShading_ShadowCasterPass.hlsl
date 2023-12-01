@@ -1,8 +1,8 @@
-#ifndef UNIVERSAL_SHADOW_CASTER_PASS_INCLUDED
-#define UNIVERSAL_SHADOW_CASTER_PASS_INCLUDED
+#ifndef AVATAR_SHADOW_CASTER_PASS_INCLUDED
+#define AVATAR_SHADOW_CASTER_PASS_INCLUDED
 
-#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
+#include "Avatar_CelShading_Core.hlsl"
+#include "Avatar_CelShading_Shadows.hlsl"
 #if defined(LOD_FADE_CROSSFADE)
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl"
 #endif
@@ -64,7 +64,7 @@ Varyings ShadowPassVertex(Attributes input)
     Varyings output;
     UNITY_SETUP_INSTANCE_ID(input);
 
-    //output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
+    output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
     output.positionCS = GetShadowPositionHClip(input);
     return output;
 }

@@ -11,6 +11,10 @@ namespace Utility
 
         public const float SQR_PARCEL_SIZE = PARCEL_SIZE * PARCEL_SIZE;
 
+        public static readonly SceneGeometry UNDEFINED_SCENE_GEOMETRY = new (
+            Vector3.zero,
+            new SceneCircumscribedPlanes(float.MinValue, float.MaxValue, float.MinValue, float.MaxValue));
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2 ToInt2(this Vector2Int vector2Int) =>
             new (vector2Int.x, vector2Int.y);
@@ -25,6 +29,42 @@ namespace Utility
 
         public static Vector3 GetPositionByParcelPosition(Vector2Int parcelPosition) =>
             new (parcelPosition.x * PARCEL_SIZE, 0.0f, parcelPosition.y * PARCEL_SIZE);
+
+        /// <summary>
+        ///     Creates scene geometry from multiple occupied parcels
+        /// </summary>
+        public static SceneGeometry CreateSceneGeometry(IReadOnlyList<ParcelCorners> parcelsCorners, Vector2Int baseParcel)
+        {
+            float circumscribedPlaneMinX = float.MaxValue;
+            float circumscribedPlaneMaxX = float.MinValue;
+            float circumscribedPlaneMinZ = float.MaxValue;
+            float circumscribedPlaneMaxZ = float.MinValue;
+
+            for (var i = 0; i < parcelsCorners.Count; i++)
+            {
+                ParcelCorners corners = parcelsCorners[i];
+
+                circumscribedPlaneMinX = Mathf.Min(corners.minXZ.x, circumscribedPlaneMinX);
+                circumscribedPlaneMaxX = Mathf.Max(corners.maxXZ.x, circumscribedPlaneMaxX);
+                circumscribedPlaneMinZ = Mathf.Min(corners.minXZ.z, circumscribedPlaneMinZ);
+                circumscribedPlaneMaxZ = Mathf.Max(corners.maxXZ.z, circumscribedPlaneMaxZ);
+            }
+
+            // to prevent on-boundary flickering (float accuracy) extend the circumscribed planes a little bit
+
+            const float EXTEND_AMOUNT = 0.05f;
+
+            circumscribedPlaneMinX -= EXTEND_AMOUNT;
+            circumscribedPlaneMaxX += EXTEND_AMOUNT;
+            circumscribedPlaneMinZ -= EXTEND_AMOUNT;
+            circumscribedPlaneMaxZ += EXTEND_AMOUNT;
+
+            Vector3 baseParcelPosition = GetPositionByParcelPosition(baseParcel);
+
+            return new SceneGeometry(
+                baseParcelPosition,
+                new SceneCircumscribedPlanes(circumscribedPlaneMinX, circumscribedPlaneMaxX, circumscribedPlaneMinZ, circumscribedPlaneMaxZ));
+        }
 
         public static ParcelCorners CalculateCorners(Vector2Int parcelPosition)
         {
@@ -82,6 +122,16 @@ namespace Utility
             );
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool Intersects(this in SceneCircumscribedPlanes boundingPlanes, Bounds bounds)
+        {
+            Vector3 min = bounds.min;
+            Vector3 max = bounds.max;
+
+            return boundingPlanes.MinX < min.x && boundingPlanes.MaxX > max.x
+                                               && boundingPlanes.MinZ < min.z && boundingPlanes.MaxZ > max.z;
+        }
+
         public readonly struct ParcelCorners
         {
             public readonly Vector3 minXZ;
@@ -95,6 +145,44 @@ namespace Utility
                 this.minXmaxZ = minXmaxZ;
                 this.maxXZ = maxXZ;
                 this.maxXminZ = maxXminZ;
+            }
+        }
+
+        /// <summary>
+        ///     Rectangular area around all scene parcels
+        /// </summary>
+        public readonly struct SceneCircumscribedPlanes
+        {
+            public readonly float MinX;
+            public readonly float MaxX;
+            public readonly float MinZ;
+            public readonly float MaxZ;
+
+            public SceneCircumscribedPlanes(float minX, float maxX, float minZ, float maxZ)
+            {
+                MinX = minX;
+                MaxX = maxX;
+                MinZ = minZ;
+                MaxZ = maxZ;
+            }
+        }
+
+        public readonly struct SceneGeometry
+        {
+            /// <summary>
+            ///     Scene is instantiated at this position
+            /// </summary>
+            public readonly Vector3 BaseParcelPosition;
+
+            /// <summary>
+            ///     <inheritdoc cref="SceneCircumscribedPlanes" />
+            /// </summary>
+            public readonly SceneCircumscribedPlanes CircumscribedPlanes;
+
+            public SceneGeometry(Vector3 baseParcelPosition, SceneCircumscribedPlanes circumscribedPlanes)
+            {
+                BaseParcelPosition = baseParcelPosition;
+                CircumscribedPlanes = circumscribedPlanes;
             }
         }
     }
