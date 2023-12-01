@@ -27,7 +27,7 @@ namespace ECS.Unity.SceneBoundsChecker
             for (var i = 0; i < asset.Renderers.Count; i++)
             {
                 Renderer renderer = asset.Renderers[i];
-                renderer.GetMaterials(TEMP_MATERIALS);
+                renderer.SafeGetMaterials(TEMP_MATERIALS);
 
                 for (var j = 0; j < TEMP_MATERIALS.Count; j++)
                     TEMP_MATERIALS[j].SetVector(PLANE_CLIPPING_ID, vector);
