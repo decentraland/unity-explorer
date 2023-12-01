@@ -14,6 +14,7 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
         private readonly List<T> list;
         private readonly Action<T> onDestroyAction;
         private readonly FieldInfo countAllReflected;
+        private ExtendedObjectPool<T> instance;
 
         public ExtendedObjectPool(
             Func<T> createFunc,
@@ -35,6 +36,8 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
             countAllReflected = poolType.GetField("<CountAll>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
 
             Assert.IsNotNull(countAllReflected, "Couldn't find <CountAll>k__BackingField field in Unity built-in ObjectPool<T> type");
+
+            instance = this;
         }
 
         public void ClearThrottled(int maxUnloadAmount)
@@ -48,7 +51,7 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
             list.RemoveRange(0, itemsToRemove);
 
             int newCountAll = CountAll - itemsToRemove;
-            countAllReflected.SetValue(this, newCountAll);
+            countAllReflected.SetValueDirect(__makeref(instance), newCountAll);
         }
     }
 }
