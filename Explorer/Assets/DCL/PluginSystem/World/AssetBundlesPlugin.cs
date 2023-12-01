@@ -76,7 +76,10 @@ namespace DCL.PluginSystem.World
         UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
             UniTask.CompletedTask;
 
-        void IDisposable.Dispose() { }
+        void IDisposable.Dispose()
+        {
+            assetBundleCache.Dispose();
+        }
 #endregion
     }
 }
