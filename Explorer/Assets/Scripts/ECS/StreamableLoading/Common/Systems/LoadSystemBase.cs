@@ -158,7 +158,7 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             using MutexSync.Scope sync = mutexSync.GetScope();
 
-            if (systemIsDisposed)
+            if (systemIsDisposed || !World.IsAlive(entity))
             {
                 // World is no longer valid, can't call World.Get
                 // Just Free the budget
