@@ -1,12 +1,10 @@
 ﻿using Cysharp.Threading.Tasks;
-using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Pool;
 using Utility;
 
 namespace ECS.Unity.GLTFContainer.Asset.Cache
@@ -37,7 +35,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             parentContainer = parentContainerGo.transform;
 
             OngoingRequests = new FakeDictionaryCache<UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>>();
-            IrrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<GltfContainerAsset>>.Get();
+            IrrecoverableFailures = new Dictionary<string, StreamableLoadingResult<GltfContainerAsset>>();
         }
 
         public void Dispose()
@@ -45,7 +43,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             if (disposed)
                 return;
 
-            DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Release(IrrecoverableFailures as Dictionary<string, StreamableLoadingResult<AssetBundleData>>);
+            IrrecoverableFailures.Clear();
             disposed = true;
         }
 
