@@ -13,7 +13,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static WearableAsset GetOriginalAsset(this IWearable wearable, BodyShape bodyShape) =>
-            wearable.WearableAssetResults[bodyShape]?.Asset;
+            wearable.WearableAssetResults[bodyShape].Value.Asset;
 
         public static StreamableLoadingResult<WearableAsset> ToWearableAsset(this StreamableLoadingResult<AssetBundleData> result)
         {
@@ -28,11 +28,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             using PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = result.Asset.GameObject.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>();
 
-            for (var i = 0; i < pooledList.Value.Count; i++)
-            {
-                SkinnedMeshRenderer skinnedMeshRenderer = pooledList.Value[i];
+            foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
                 rendererInfos.Add(new WearableAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
-            }
 
             return new StreamableLoadingResult<WearableAsset>(new WearableAsset(result.Asset.GameObject, rendererInfos, result.Asset));
         }

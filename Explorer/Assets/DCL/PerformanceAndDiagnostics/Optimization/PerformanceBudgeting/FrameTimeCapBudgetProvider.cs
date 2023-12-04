@@ -1,5 +1,4 @@
 using DCL.Profiling;
-using UnityEngine;
 
 namespace DCL.Optimization.PerformanceBudgeting
 {
@@ -8,9 +7,6 @@ namespace DCL.Optimization.PerformanceBudgeting
         private readonly IProfilingProvider profilingProvider;
         private readonly float totalBudgetAvailable;
 
-        // Debug
-        public bool SimulateCappedFrameTime { private get; set; }
-
         public FrameTimeCapBudgetProvider(float budgetCapInMS, IProfilingProvider profilingProvider)
         {
             //FrameTime return CurrentValue in nanoseconds, so we are converting milliseconds to nanoseconds
@@ -18,13 +14,8 @@ namespace DCL.Optimization.PerformanceBudgeting
             this.profilingProvider = profilingProvider;
         }
 
-        public bool TrySpendBudget()
-        {
-            if (Debug.isDebugBuild && SimulateCappedFrameTime)
-                return false;
-
-            return profilingProvider.CurrentFrameTimeValueInNS < totalBudgetAvailable;
-        }
+        public bool TrySpendBudget() =>
+            profilingProvider.CurrentFrameTimeValueInNS < totalBudgetAvailable;
 
         public void ReleaseBudget() { }
     }

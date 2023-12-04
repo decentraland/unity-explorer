@@ -45,9 +45,7 @@ namespace DCL.Profiling.ECS
                             .SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true))
                             .AddCustomMarker("Version:", version)
                             .AddCustomMarker("Frame Rate:", fps = new ElementBinding<string>(string.Empty))
-                            .AddMarker("Hiccups last 1000 frames:", hiccups = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat)
-                            .AddSingleButton("FrameTime CAPPED", () => frameTimeBudget.SimulateCappedFrameTime = true)
-                            .AddSingleButton("FrameTime NORMAL", () => frameTimeBudget.SimulateCappedFrameTime = false);
+                            .AddMarker("Hiccups last 1000 frames:", hiccups = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat);
 
                 debugBuilder.AddWidget("Memory")
                             .SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
