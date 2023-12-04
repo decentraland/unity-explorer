@@ -16,6 +16,8 @@ namespace DCL.ResourcesUnloading
         private const int POOLS_UNLOAD_CHUNK = 10;
         private const int WEARABLES_UNLOAD_CHUNK = 10;
         private const int GLTF_UNLOAD_CHUNK = 3;
+        private const int AB_UNLOAD_CHUNK = 1;
+        private const int TEXTURE_UNLOAD_CHUNK = 1;
 
         // TODO: remove markers before merge to main
         private static readonly ProfilerMarker texturesCacheMarker = new ("CacheCleanup.texturesCache");
@@ -23,7 +25,6 @@ namespace DCL.ResourcesUnloading
         private static readonly ProfilerMarker gltfContainerAssetsCacheMarker = new ("CacheCleanup.gltfContainerAssetsCache");
         private static readonly ProfilerMarker wearableCatalogMarker = new ("CacheCleanup.wearableCatalog");
         private static readonly ProfilerMarker wearableAssetsCacheMarker = new ("CacheCleanup.wearableAssetsCache");
-
         private static readonly ProfilerMarker avatarPoolsMarker = new ("CacheCleanup.avatarPools");
 
         private readonly IConcurrentBudgetProvider fpsCapBudgetProvider;
@@ -47,10 +48,10 @@ namespace DCL.ResourcesUnloading
             if (!fpsCapBudgetProvider.TrySpendBudget()) return;
 
             using (texturesCacheMarker.Auto())
-                texturesCache.Unload(fpsCapBudgetProvider, 1);
+                texturesCache.Unload(fpsCapBudgetProvider, TEXTURE_UNLOAD_CHUNK);
 
             using (assetBundleCacheMarker.Auto())
-                assetBundleCache.Unload(fpsCapBudgetProvider, 1);
+                assetBundleCache.Unload(fpsCapBudgetProvider, AB_UNLOAD_CHUNK);
 
             using (gltfContainerAssetsCacheMarker.Auto())
                 gltfContainerAssetsCache.Unload(fpsCapBudgetProvider, GLTF_UNLOAD_CHUNK);

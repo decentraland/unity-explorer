@@ -27,7 +27,10 @@ namespace DCL.AvatarRendering.Wearables.Tests
             var asset = new WearableAsset(new GameObject("ORIGINAL"), new List<WearableAsset.RendererInfo>(), null);
 
             for (var i = 0; i < 2; i++)
-                Assert.That(cache.TryRelease(new CachedWearable(asset, new GameObject("INSTANCE" + i))), Is.EqualTo(IWearableAssetsCache.ReleaseResult.ReturnedToPool));
+                cache.Release(new CachedWearable(asset, new GameObject("INSTANCE" + i)));
+
+            for (var i = 0; i < 2; i++)
+                Assert.That(cache.TryGet(asset, out _), Is.True);
         }
 
         [Test]
@@ -36,7 +39,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             var asset = new WearableAsset(new GameObject("ORIGINAL"), new List<WearableAsset.RendererInfo>(), null);
 
             for (var i = 0; i < 2; i++)
-                cache.TryRelease(new CachedWearable(asset, new GameObject("INSTANCE" + i)));
+                cache.Release(new CachedWearable(asset, new GameObject("INSTANCE" + i)));
 
             for (var i = 0; i < 2; i++)
                 Assert.That(cache.TryGet(asset, out _), Is.True);

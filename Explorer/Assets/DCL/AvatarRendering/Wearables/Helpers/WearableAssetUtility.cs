@@ -40,7 +40,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         public static void TryReleaseAssets(this IWearableAssetsCache cache, IList<CachedWearable> instantiatedWearables)
         {
             foreach (CachedWearable cachedWearable in instantiatedWearables)
-                cache.TryRelease(cachedWearable);
+                cache.Release(cachedWearable);
 
             instantiatedWearables.Clear();
         }

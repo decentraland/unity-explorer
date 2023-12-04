@@ -71,7 +71,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return false;
         }
 
-        public IWearableAssetsCache.ReleaseResult TryRelease(CachedWearable cachedWearable)
+        public void Release(CachedWearable cachedWearable)
         {
             WearableAsset asset = cachedWearable.OriginalAsset;
 
@@ -88,11 +88,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             ProfilingCounters.CachedWearablesInCacheAmount.Value++;
 
             // This logic should not be executed if the application is quitting
-            if (UnityObjectUtils.IsQuitting) return IWearableAssetsCache.ReleaseResult.EnvironmentIsDisposing;
-
-            cachedWearable.Instance.SetActive(false);
-            cachedWearable.Instance.transform.SetParent(parentContainer);
-            return IWearableAssetsCache.ReleaseResult.ReturnedToPool;
+            if (!UnityObjectUtils.IsQuitting)
+            {
+                cachedWearable.Instance.SetActive(false);
+                cachedWearable.Instance.transform.SetParent(parentContainer);
+            }
         }
 
         public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount)
