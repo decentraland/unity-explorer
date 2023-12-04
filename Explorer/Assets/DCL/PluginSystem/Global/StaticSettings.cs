@@ -42,7 +42,7 @@ namespace DCL.PluginSystem.Global
 
         public Dictionary<MemoryUsageStatus, float> MemoryThresholds { get; private set; } = new ()
         {
-            { MemoryUsageStatus.Warning, 0.5f },
+            { MemoryUsageStatus.Warning, 0.8f },
             { MemoryUsageStatus.Full, 0.95f },
         };
 
