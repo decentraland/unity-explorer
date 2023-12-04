@@ -63,8 +63,8 @@ namespace DCL.PluginSystem.World
             // LoadMaterialFromCacheSystem.InjectToWorld(ref builder, materialsCache);
             CreateBasicMaterialSystem.InjectToWorld(ref builder, basicMatPool, capFrameTimeBudgetProvider);
             CreatePBRMaterialSystem.InjectToWorld(ref builder, pbrMatPool, capFrameTimeBudgetProvider);
-            ApplyMaterialSystem.InjectToWorld(ref builder);
-            ResetMaterialSystem.InjectToWorld(ref builder, destroyMaterial);
+            ApplyMaterialSystem.InjectToWorld(ref builder, sharedDependencies.SceneData);
+            ResetMaterialSystem.InjectToWorld(ref builder, destroyMaterial, sharedDependencies.SceneData);
             CleanUpMaterialsSystem.InjectToWorld(ref builder, destroyMaterial);
         }
 

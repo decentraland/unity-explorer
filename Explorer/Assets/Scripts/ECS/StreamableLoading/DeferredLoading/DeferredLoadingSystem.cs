@@ -95,7 +95,6 @@ namespace ECS.StreamableLoading.DeferredLoading
 
         public override void Dispose()
         {
-            base.Dispose();
             ListPool<IntentionData>.Release(loadingIntentions);
         }
 

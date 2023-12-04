@@ -9,6 +9,7 @@ using ECS.Unity.PrimitiveRenderer.MeshSetup;
 using ECS.Unity.PrimitiveRenderer.Systems;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -53,7 +54,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
             IConcurrentBudgetProvider budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
             budgetProvider.TrySpendBudget().Returns(true);
 
-            system = new InstantiatePrimitiveRenderingSystem(world, poolsRegistry, budgetProvider, setupMeshes);
+            system = new InstantiatePrimitiveRenderingSystem(world, poolsRegistry, budgetProvider, Substitute.For<ISceneData>(), setupMeshes);
 
             entity = world.Create();
             AddTransformToEntity(entity);

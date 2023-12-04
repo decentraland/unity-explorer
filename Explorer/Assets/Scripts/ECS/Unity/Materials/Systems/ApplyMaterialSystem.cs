@@ -5,6 +5,8 @@ using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
+using ECS.Unity.SceneBoundsChecker;
+using SceneRunner.Scene;
 using UnityEngine.Rendering;
 
 namespace ECS.Unity.Materials.Systems
@@ -17,7 +19,12 @@ namespace ECS.Unity.Materials.Systems
     [UpdateAfter(typeof(CreatePBRMaterialSystem))]
     public partial class ApplyMaterialSystem : BaseUnityLoopSystem
     {
-        internal ApplyMaterialSystem(World world) : base(world) { }
+        private readonly ISceneData sceneData;
+
+        internal ApplyMaterialSystem(World world, ISceneData sceneData) : base(world)
+        {
+            this.sceneData = sceneData;
+        }
 
         protected override void Update(float t)
         {
@@ -36,6 +43,9 @@ namespace ECS.Unity.Materials.Systems
                 // If Material was applied once but renderer is dirty
                 case MaterialComponent.LifeCycle.MaterialApplied when pbMeshRenderer.IsDirty:
                     materialComponent.Status = MaterialComponent.LifeCycle.MaterialApplied;
+
+                    ReleaseMaterial.TryReleaseDefault(ref meshRendererComponent);
+                    ConfigureSceneMaterial.EnableSceneBounds(materialComponent.Result, sceneData.Geometry.CircumscribedPlanes);
 
                     meshRendererComponent.MeshRenderer.sharedMaterial = materialComponent.Result;
                     meshRendererComponent.MeshRenderer.shadowCastingMode = materialComponent.Data.CastShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
