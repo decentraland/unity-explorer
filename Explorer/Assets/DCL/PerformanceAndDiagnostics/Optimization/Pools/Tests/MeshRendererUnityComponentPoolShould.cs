@@ -5,7 +5,7 @@ using UnityEngine;
 using Utility;
 using Utility.Primitives;
 
-namespace DCL.PerformanceAndDiagnostics.Optimization.Pools.Tests
+namespace DCL.Optimization.Pools.Tests
 {
     [TestFixture]
     public class MeshRendererUnityComponentPoolShould

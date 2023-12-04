@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine.Pool;
 
-namespace Utility.Pool
+namespace DCL.Optimization.Pools
 {
     /// <summary>
     ///     Provides functionality similarly <see cref="ObjectPool{T}" /> in an instance manner (unlike static <see cref="ListPool{T}" />)

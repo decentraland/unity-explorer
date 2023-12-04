@@ -5,7 +5,7 @@ using CRDT.Memory;
 using CRDT.Protocol;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Serialization;
-using DCL.PerformanceAndDiagnostics.Optimization.Pools;
+using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using NSubstitute;
 using NUnit.Framework;

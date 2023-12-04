@@ -8,7 +8,7 @@ using CrdtEcsBridge.Physics;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
-using DCL.PerformanceAndDiagnostics.Optimization.Pools;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Unity.Groups;
 using ECS.Unity.PrimitiveColliders.Components;

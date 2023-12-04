@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 
-namespace Utility.Pool
+namespace DCL.Optimization.Pools
 {
     public static class PoolExtensions
     {

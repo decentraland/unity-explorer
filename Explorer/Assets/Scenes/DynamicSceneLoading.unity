@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
+  m_IndirectSpecularColor: {r: 0.16788375, g: 0.21073635, b: 0.28994125, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -281,7 +281,9 @@ MonoBehaviour:
   debugUiRoot: {fileID: 946305963}
   StartPosition: {x: 0, y: 0}
   SceneLoadRadius: 4
-  StaticLoadPositions: []
+  StaticLoadPositions:
+  - x: 0
+    y: 0
   realmLauncher: {fileID: 234607244}
   realms:
   - https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main

@@ -1,7 +1,7 @@
 ﻿using DCL.AssetsProvision;
 using DCL.Character;
 using DCL.Diagnostics;
-using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization;
 using System;
 using System.Collections.Generic;

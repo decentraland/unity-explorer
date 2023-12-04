@@ -1,7 +1,7 @@
 ﻿using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
-using DCL.PerformanceAndDiagnostics.Optimization.Pools;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using DCL.PerformanceAndDiagnostics.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Textures;

@@ -5,7 +5,7 @@ using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace DCL.PerformanceAndDiagnostics.Optimization.Pools.Tests
+namespace DCL.Optimization.Pools.Tests
 {
     [TestFixture]
     public class ReleasePoolableComponentSystemShould

@@ -1,6 +1,6 @@
 ﻿using UnityEngine.Pool;
 
-namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
+namespace DCL.Optimization.Pools
 {
     public interface IExtendedObjectPool<T> : IThrottledClearable, IObjectPool<T> where T: class { }
 

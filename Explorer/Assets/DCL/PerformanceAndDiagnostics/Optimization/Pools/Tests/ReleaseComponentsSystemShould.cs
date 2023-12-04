@@ -6,7 +6,7 @@ using NUnit.Framework;
 using System;
 using Random = UnityEngine.Random;
 
-namespace DCL.PerformanceAndDiagnostics.Optimization.Pools.Tests
+namespace DCL.Optimization.Pools.Tests
 {
     [TestFixture]
     public class ReleaseComponentsSystemShould

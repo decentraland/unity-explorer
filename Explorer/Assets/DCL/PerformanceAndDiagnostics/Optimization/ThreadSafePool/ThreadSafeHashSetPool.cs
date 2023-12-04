@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Utility.ThreadSafePool
+namespace DCL.Optimization.ThreadSafePool
 {
     public class ThreadSafeHashSetPool<TItem> : ThreadSafeCollectionPool<HashSet<TItem>, TItem>
     {

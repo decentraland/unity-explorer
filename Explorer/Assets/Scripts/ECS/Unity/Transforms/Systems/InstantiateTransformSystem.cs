@@ -3,7 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CrdtEcsBridge.Components.Transform;
-using DCL.PerformanceAndDiagnostics.Optimization.Pools;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Transforms.Components;

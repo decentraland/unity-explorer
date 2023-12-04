@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Utility.ThreadSafePool
+namespace DCL.Optimization.ThreadSafePool
 {
     public class ThreadSafeListPool<TItem> : ThreadSafeCollectionPool<List<TItem>, TItem>
     {

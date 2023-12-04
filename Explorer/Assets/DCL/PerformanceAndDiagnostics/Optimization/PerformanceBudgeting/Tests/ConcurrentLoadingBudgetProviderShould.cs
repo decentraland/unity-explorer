@@ -1,8 +1,8 @@
-using DCL.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
 using NUnit.Framework;
 using System;
 
-namespace ECS.StreamableLoading.DeferredLoading.Tests
+namespace DCL.Optimization.Tests
 {
     [TestFixture]
     public class ConcurrentLoadingBudgetProviderShould

@@ -2,7 +2,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Profiling;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;

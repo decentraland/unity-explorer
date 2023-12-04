@@ -1,9 +1,9 @@
 ﻿using DCL.PerformanceAndDiagnostics.Profiling;
 using System.Collections.Generic;
 using UnityEngine;
-using static DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting.MemoryUsageStatus;
+using static DCL.Optimization.PerformanceBudgeting.MemoryUsageStatus;
 
-namespace DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting
+namespace DCL.Optimization.PerformanceBudgeting
 {
     public enum MemoryUsageStatus
     {

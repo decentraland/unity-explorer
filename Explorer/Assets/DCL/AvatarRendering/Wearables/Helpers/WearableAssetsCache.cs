@@ -1,12 +1,12 @@
-﻿using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
-using DCL.PerformanceAndDiagnostics.Optimization.PriorityQueue;
+﻿using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
+using DCL.Optimization.PriorityQueue;
 using DCL.PerformanceAndDiagnostics.Profiling;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 using Utility.Multithreading;
-using Utility.Pool;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {

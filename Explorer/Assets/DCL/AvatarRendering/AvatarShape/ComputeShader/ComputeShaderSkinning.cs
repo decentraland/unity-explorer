@@ -1,6 +1,7 @@
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Optimization.Pools;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Collections;
@@ -8,7 +9,6 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.Profiling;
-using Utility.Pool;
 
 namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {

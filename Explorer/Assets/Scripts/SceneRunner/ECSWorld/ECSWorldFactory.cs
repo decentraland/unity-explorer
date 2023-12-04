@@ -5,7 +5,7 @@ using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.UpdateGate;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
-using DCL.PerformanceAndDiagnostics.Optimization.Pools;
+using DCL.Optimization.Pools;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.ComponentsPooling.Systems;
@@ -87,7 +87,7 @@ namespace SceneRunner.ECSWorld
             // Add other systems here
             SystemGroupWorld systemsWorld = builder.Finish(singletonDependencies.AggregateFactory, scenePartition);
 
-            SystemGroupSnapshot.Instance.Register(args.SceneData.SceneShortInfo.ToString(),systemsWorld);
+            SystemGroupSnapshot.Instance.Register(args.SceneData.SceneShortInfo.ToString(), systemsWorld);
 
             return new ECSWorldFacade(systemsWorld, world, finalizeWorldSystems);
         }

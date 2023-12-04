@@ -1,6 +1,6 @@
 using Arch.Core;
 using CrdtEcsBridge.Components.Transform;
-using DCL.PerformanceAndDiagnostics.Optimization.Pools;
+using DCL.Optimization.Pools;
 using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;

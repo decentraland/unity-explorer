@@ -1,10 +1,9 @@
 ﻿using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
-using DCL.PerformanceAndDiagnostics.Optimization.Pools;
+using DCL.Optimization.Pools;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
-using Utility.Pool;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
 {

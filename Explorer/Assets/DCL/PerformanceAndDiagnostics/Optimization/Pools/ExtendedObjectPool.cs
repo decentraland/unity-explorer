@@ -4,7 +4,7 @@ using System.Reflection;
 using UnityEngine.Assertions;
 using UnityEngine.Pool;
 
-namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
+namespace DCL.Optimization.Pools
 {
     public class ExtendedObjectPool<T> : ObjectPool<T>, IExtendedObjectPool<T> where T: class
     {

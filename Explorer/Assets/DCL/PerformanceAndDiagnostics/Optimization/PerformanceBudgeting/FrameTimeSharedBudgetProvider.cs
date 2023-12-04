@@ -1,7 +1,7 @@
 using DCL.PerformanceAndDiagnostics.Profiling;
 using Utility.Multithreading;
 
-namespace DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting
+namespace DCL.Optimization.PerformanceBudgeting
 {
     public class FrameTimeSharedBudgetProvider : IConcurrentBudgetProvider
     {

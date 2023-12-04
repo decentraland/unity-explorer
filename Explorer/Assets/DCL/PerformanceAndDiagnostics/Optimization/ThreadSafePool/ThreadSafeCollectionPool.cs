@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Utility.ThreadSafePool
+namespace DCL.Optimization.ThreadSafePool
 {
     public abstract class ThreadSafeCollectionPool<TCollection, TItem> : ThreadSafeObjectPool<TCollection> where TCollection: class, ICollection<TItem>, new()
     {

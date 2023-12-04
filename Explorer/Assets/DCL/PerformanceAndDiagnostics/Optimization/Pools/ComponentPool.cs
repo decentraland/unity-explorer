@@ -1,8 +1,8 @@
+using DCL.Optimization.ThreadSafePool;
 using System;
 using UnityEngine.Pool;
-using Utility.ThreadSafePool;
 
-namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
+namespace DCL.Optimization.Pools
 {
     public class ComponentPool<T> : IComponentPool<T> where T: class, new()
     {

@@ -4,7 +4,7 @@ using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Transform;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.PerformanceAndDiagnostics.Optimization.Pools;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Prioritization;

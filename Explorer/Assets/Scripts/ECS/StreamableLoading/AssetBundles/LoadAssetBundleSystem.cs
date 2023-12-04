@@ -3,7 +3,9 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
@@ -17,8 +19,6 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility.Multithreading;
-using Utility.Pool;
-using Utility.ThreadSafePool;
 
 namespace ECS.StreamableLoading.AssetBundles
 {

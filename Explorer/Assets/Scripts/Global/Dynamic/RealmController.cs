@@ -2,7 +2,8 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
@@ -17,7 +18,6 @@ using System.Threading;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Networking;
-using Utility.Pool;
 
 namespace Global.Dynamic
 {

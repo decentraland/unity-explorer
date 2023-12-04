@@ -1,4 +1,4 @@
-namespace Utility.Pool
+namespace DCL.Optimization.Pools
 {
     public static class PoolConstants
     {

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
+namespace DCL.Optimization.Pools
 {
     /// <summary>
     ///     The registry of the pools of components including both SDK ones and non-SDK ones. <br />

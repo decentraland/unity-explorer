@@ -1,5 +1,5 @@
 ﻿using DCL.AvatarRendering.Wearables.Components;
-using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using Utility.Multithreading;

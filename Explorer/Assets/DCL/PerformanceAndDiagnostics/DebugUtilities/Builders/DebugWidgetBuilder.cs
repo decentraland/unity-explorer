@@ -1,10 +1,10 @@
 ﻿using DCL.DebugUtilities.UIBindings;
 using DCL.DebugUtilities.Views;
+using DCL.Optimization.Pools;
 using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
-using Utility.Pool;
 using Utility.UIToolkit;
 
 namespace DCL.DebugUtilities

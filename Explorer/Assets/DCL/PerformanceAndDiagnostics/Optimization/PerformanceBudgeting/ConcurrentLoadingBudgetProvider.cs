@@ -1,7 +1,6 @@
-using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using System;
 
-namespace DCL.PerformanceBudgeting
+namespace DCL.Optimization.PerformanceBudgeting
 {
     public class ConcurrentLoadingBudgetProvider : IConcurrentBudgetProvider
     {

@@ -1,5 +1,5 @@
 ﻿using Arch.Core;
-using DCL.PerformanceAndDiagnostics.Optimization.Pools;
+using DCL.Optimization.Pools;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 

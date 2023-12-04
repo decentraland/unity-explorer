@@ -1,6 +1,6 @@
 ﻿using Arch.Core;
 using DCL.ECSComponents;
-using DCL.PerformanceAndDiagnostics.Optimization.Pools;
+using DCL.Optimization.Pools;
 using ECS.TestSuite;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.PrimitiveRenderer.MeshPrimitive;

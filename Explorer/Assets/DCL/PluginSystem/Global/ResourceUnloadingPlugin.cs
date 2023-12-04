@@ -1,5 +1,5 @@
 ﻿using Arch.SystemGroups;
-using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.ResourcesUnloading;
 
 namespace DCL.PluginSystem.Global

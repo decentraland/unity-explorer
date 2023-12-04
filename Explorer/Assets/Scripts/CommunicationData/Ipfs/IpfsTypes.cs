@@ -1,9 +1,9 @@
 using CommunicationData.URLHelpers;
+using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
-using Utility.Pool;
 
 namespace Ipfs
 {

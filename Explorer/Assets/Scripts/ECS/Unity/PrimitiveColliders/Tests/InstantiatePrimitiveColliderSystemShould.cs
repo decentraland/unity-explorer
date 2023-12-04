@@ -2,7 +2,7 @@
 using CRDT;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
-using DCL.PerformanceAndDiagnostics.Optimization.Pools;
+using DCL.Optimization.Pools;
 using ECS.TestSuite;
 using ECS.Unity.PrimitiveColliders.Components;
 using ECS.Unity.PrimitiveColliders.Systems;

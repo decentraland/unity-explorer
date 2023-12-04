@@ -3,7 +3,7 @@ using Arch.SystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
-using DCL.PerformanceAndDiagnostics.Optimization.Pools;
+using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;

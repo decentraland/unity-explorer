@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Utility.ThreadSafePool
+namespace DCL.Optimization.ThreadSafePool
 {
     public class ThreadSafeDictionaryPool<TKey, TValue> : ThreadSafeCollectionPool<Dictionary<TKey, TValue>, KeyValuePair<TKey, TValue>>
     {

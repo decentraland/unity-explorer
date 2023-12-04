@@ -5,7 +5,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace DCL.PerformanceAndDiagnostics.Optimization.Pools.Tests
+namespace DCL.Optimization.Pools.Tests
 {
     [TestFixture]
     public class ComponentPoolShould

@@ -1,10 +1,10 @@
 using Arch.SystemGroups;
 using DCL.Diagnostics;
+using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Linq;
 using UnityEngine;
-using Utility.Pool;
-using Utility.ThreadSafePool;
 
 namespace SceneRunner.Scene.ExceptionsHandling
 {

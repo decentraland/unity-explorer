@@ -1,7 +1,7 @@
 ﻿using Arch.Core;
 using CrdtEcsBridge.Components.Special;
 using DCL.ECSComponents;
-using DCL.PerformanceAndDiagnostics.Optimization.Pools;
+using DCL.Optimization.Pools;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;

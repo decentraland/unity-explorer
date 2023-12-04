@@ -1,12 +1,12 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.LifeCycle;
 using ECS.Unity.SceneBoundsChecker;
 using System.Collections.Generic;
-using Utility.Pool;
-using Utility.ThreadSafePool;
 
 namespace DCL.Gizmos.Plugin
 {

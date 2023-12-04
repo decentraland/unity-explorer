@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
+namespace DCL.Optimization.Pools
 {
     /// <summary>
     ///     Provides functionality similarly <see cref="ExtendedObjectPool{T}" /> in an instance manner (unlike static <see cref="ListPool{T}" />)

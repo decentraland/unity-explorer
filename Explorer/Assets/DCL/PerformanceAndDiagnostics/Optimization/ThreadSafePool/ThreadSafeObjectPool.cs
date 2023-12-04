@@ -1,8 +1,8 @@
-﻿using DCL.PerformanceAndDiagnostics.Optimization.Pools;
+﻿using DCL.Optimization.Pools;
 using System;
 using UnityEngine.Pool;
 
-namespace Utility.ThreadSafePool
+namespace DCL.Optimization.ThreadSafePool
 {
     /// <summary>
     ///     Represents a pool that can be shared between multiple threads

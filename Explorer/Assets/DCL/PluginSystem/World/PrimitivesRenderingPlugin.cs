@@ -1,7 +1,7 @@
 ﻿using Arch.SystemGroups;
 using DCL.ECSComponents;
-using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
-using DCL.PerformanceAndDiagnostics.Optimization.Pools;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;

@@ -2,7 +2,8 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
-using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
@@ -12,7 +13,6 @@ using ECS.Unity.SceneBoundsChecker;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Utility.Pool;
 using Object = UnityEngine.Object;
 
 namespace ECS.Unity.GLTFContainer.Asset.Systems

@@ -2,7 +2,7 @@
 using Arch.Core;
 using CRDT.Protocol;
 using CrdtEcsBridge.WorldSynchronizer.CommandBuffer;
-using DCL.PerformanceAndDiagnostics.Optimization.Pools;
+using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using NSubstitute;
 using NUnit.Framework;

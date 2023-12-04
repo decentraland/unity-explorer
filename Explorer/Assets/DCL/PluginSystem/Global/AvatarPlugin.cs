@@ -11,8 +11,8 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.DebugUtilities;
 using DCL.ECSComponents;
-using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
-using DCL.PerformanceAndDiagnostics.Optimization.Pools;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
 using ECS;
 using System;
@@ -21,7 +21,6 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility;
-using Utility.Pool;
 using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global

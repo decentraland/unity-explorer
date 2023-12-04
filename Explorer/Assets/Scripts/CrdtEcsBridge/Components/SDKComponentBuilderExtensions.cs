@@ -1,6 +1,6 @@
 using CrdtEcsBridge.Serialization;
 using DCL.ECSComponents;
-using DCL.PerformanceAndDiagnostics.Optimization.Pools;
+using DCL.Optimization.Pools;
 using Google.Protobuf;
 using Google.Protobuf.Reflection;
 using System;

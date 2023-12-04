@@ -1,11 +1,11 @@
 ﻿using DCL.AvatarRendering.Wearables.Components;
+using DCL.Optimization.Pools;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using Utility;
-using Utility.Pool;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {

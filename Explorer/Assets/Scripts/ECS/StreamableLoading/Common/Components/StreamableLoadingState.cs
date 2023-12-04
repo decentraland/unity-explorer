@@ -1,4 +1,4 @@
-using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
 using JetBrains.Annotations;
 using UnityEngine.Assertions;
 
