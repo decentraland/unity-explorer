@@ -22,24 +22,24 @@ npm run build-protocol
 - [ ] `AvatarModifierArea`
 - [ ] `AvatarShape`
 - [ ] `Billboard`
-- [ ] `CRDT_MESSAGE_HEADER_LENGTH`
+- [x] `CRDT_MESSAGE_HEADER_LENGTH`
 - [ ] `CameraMode`
 - [ ] `CameraModeArea`
 - [x] `EngineInfo`
-- [ ] `GltfContainer`
-- [ ] `GltfContainerLoadingState`
+- [x] `GltfContainer`
+- [x] `GltfContainerLoadingState`
 - [x] `Material`
 - [x] `MeshCollider`
 - [x] `MeshRenderer`
 - [ ] `Name`
 - [ ] `NftShape`
-- [ ] `PointerEvents`
-- [ ] `PointerEventsResult`
+- [x] `PointerEvents`
+- [x] `PointerEventsResult`
 - [ ] `PointerLock`
 - [ ] `RESERVED_LOCAL_ENTITIES`
 - [ ] `RESERVED_STATIC_ENTITIES`
 - [x] `Raycast`
-- [ ] `RaycastResult`
+- [x] `RaycastResult`
 - [ ] `SYSTEMS_REGULAR_PRIORITY`
 - [ ] `SyncComponents`
 - [ ] `TextShape`
@@ -57,27 +57,19 @@ npm run build-protocol
 - [ ] `UiTransform`
 - [ ] `VideoEvent`
 - [ ] `VideoPlayer`
-- [ ] `VisibilityComponent`
-- [ ] `componentDefinitionByName`
-- [ ] `engine`
-- [ ] `inputSystem`
-- [ ] `pointerEventsSystem`
-- [ ] `raycastSystem`
-- [ ] `tweenSystem`
-- [ ] `videoEventsSystem`
-
+- [x] `VisibilityComponent`
 
 ## Runtime API
 - [ ] `CommsApi`
 - [ ] `CommunicationsController`
-- [ ] `EngineApi`
+- [x] `EngineApi`
 - [ ] `EnvironmentApi`
 - [ ] `EthereumController`
 - [ ] `Players`
 - [ ] `PortableExperiences`
 - [ ] `RestrictedActions`
-- [x] `Runtime`
-- [x] `Scene`
+- [x] `Runtime` (partially)
+- [ ] `Scene`
 - [ ] `SignedFetch`
 - [ ] `Testing`
 - [ ] `UserActionModule`
