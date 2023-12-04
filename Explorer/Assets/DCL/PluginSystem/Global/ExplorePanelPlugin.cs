@@ -42,7 +42,8 @@ namespace DCL.PluginSystem.Global
             ExplorePanelView panelView = (await assetsProvisioner.ProvideMainAssetAsync(settings.ExplorePanelPrefab, ct: ct)).Value.GetComponent<ExplorePanelView>();
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelView, null, out ExplorePanelView explorePanelView);
 
-            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, assetsProvisioner, teleportController);
+            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, teleportController);
+            await navmapController.InitialiseAssetsAsync(assetsProvisioner, ct);
             SettingsController settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
 
             mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController));

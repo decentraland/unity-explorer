@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.MapRenderer;
 using DCL.MapRenderer.CommonBehavior;
@@ -40,7 +41,6 @@ namespace DCL.Navmap
             NavmapView navmapView,
             IMapRenderer mapRenderer,
             IPlacesAPIService placesAPIService,
-            IAssetsProvisioner assetsProvisioner,
             ITeleportController teleportController)
         {
             this.navmapView = navmapView;
@@ -51,11 +51,10 @@ namespace DCL.Navmap
             zoomController = new NavmapZoomController(navmapView.zoomView);
             floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, teleportController);
             filterController = new NavmapFilterController(this.navmapView.filterView);
-            searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, placesAPIService, assetsProvisioner);
+            searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, placesAPIService);
             searchBarController.OnResultClicked += OnResultClicked;
             satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer);
             streetViewController = new StreetViewController(navmapView.GetComponentInChildren<StreetViewView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer);
-
 
             mapSections = new ()
             {
@@ -81,6 +80,9 @@ namespace DCL.Navmap
             this.navmapView.SatelliteRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
             this.navmapView.StreetViewRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
         }
+
+        public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct) =>
+            await searchBarController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
         private void OnResultClicked(string coordinates)
         {

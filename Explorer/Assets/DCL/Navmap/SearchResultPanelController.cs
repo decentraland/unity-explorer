@@ -14,23 +14,18 @@ namespace DCL.Navmap
         public event Action<string> OnResultClicked;
 
         private readonly SearchResultPanelView view;
-        private readonly IAssetsProvisioner assetsProvisioner;
         private ObjectPool<FullSearchResultsView> resultsPool;
         private readonly List<FullSearchResultsView> usedPoolElements;
 
-        public SearchResultPanelController(SearchResultPanelView view, IAssetsProvisioner assetsProvisioner)
+        public SearchResultPanelController(SearchResultPanelView view)
         {
             this.view = view;
-            this.assetsProvisioner = assetsProvisioner;
             usedPoolElements = new List<FullSearchResultsView>();
-            InitPoolAsync().Forget();
         }
 
-        //TODO: Consider init method with assetprovider and ct
-
-        private async UniTaskVoid InitPoolAsync()
+        public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
         {
-            FullSearchResultsView asset = (await assetsProvisioner.ProvideInstanceAsync(view.ResultRef, ct: CancellationToken.None)).Value;
+            FullSearchResultsView asset = (await assetsProvisioner.ProvideInstanceAsync(view.ResultRef, ct: ct)).Value;
 
             resultsPool = new ObjectPool<FullSearchResultsView>(
                 () => Object.Instantiate(asset, view.searchResultsContainer),

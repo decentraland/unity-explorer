@@ -19,16 +19,19 @@ namespace DCL.Navmap
 
         private CancellationTokenSource cts;
 
-        public NavmapSearchBarController(SearchBarView view, SearchResultPanelView searchResultPanelView, IPlacesAPIService placesAPIService, IAssetsProvisioner assetsProvisioner)
+        public NavmapSearchBarController(SearchBarView view, SearchResultPanelView searchResultPanelView, IPlacesAPIService placesAPIService)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
 
-            searchResultPanelController = new SearchResultPanelController(searchResultPanelView, assetsProvisioner);
+            searchResultPanelController = new SearchResultPanelController(searchResultPanelView);
             searchResultPanelController.OnResultClicked += ClickedResult;
             view.inputField.onValueChanged.AddListener(OnValueChanged);
             view.clearSearchButton.onClick.AddListener(ClearSearch);
         }
+
+        public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct) =>
+            await searchResultPanelController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
         private void ClickedResult(string coordinates)
         {
