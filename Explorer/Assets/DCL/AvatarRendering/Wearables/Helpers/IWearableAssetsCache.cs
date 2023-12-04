@@ -1,13 +1,10 @@
 ﻿using DCL.Optimization.PerformanceBudgeting;
-using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public interface IWearableAssetsCache
     {
-        List<CachedWearable> AllCachedWearables { get; }
-
-        Dictionary<WearableAsset, List<CachedWearable>> Cache { get; }
+        int WearablesAssesCount { get; }
 
         bool TryGet(WearableAsset asset, out CachedWearable instance);
 

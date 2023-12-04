@@ -95,7 +95,7 @@ namespace DCL.ResourcesUnloading
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             ProfilingCounters.WearablesAssetsInCatalogAmount.Value = wearableCatalog.WearableAssetsInCatalog;
-            ProfilingCounters.WearablesAssetsInCacheAmount.Value = wearableAssetsCache.Cache.Keys.Count;
+            ProfilingCounters.WearablesAssetsInCacheAmount.Value = wearableAssetsCache.WearablesAssesCount;
 #endif
         }
     }
