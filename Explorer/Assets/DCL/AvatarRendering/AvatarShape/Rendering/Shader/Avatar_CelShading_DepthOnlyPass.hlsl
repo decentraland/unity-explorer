@@ -1,7 +1,7 @@
-#ifndef UNIVERSAL_DEPTH_ONLY_PASS_INCLUDED
-#define UNIVERSAL_DEPTH_ONLY_PASS_INCLUDED
+#ifndef AVATAR_DEPTH_ONLY_PASS_INCLUDED
+#define AVATAR_DEPTH_ONLY_PASS_INCLUDED
 
-#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+#include "Avatar_CelShading_Core.hlsl"
 #if defined(LOD_FADE_CROSSFADE)
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl"
 #endif

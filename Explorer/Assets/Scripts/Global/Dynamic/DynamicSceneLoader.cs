@@ -26,7 +26,7 @@ namespace Global.Dynamic
         [SerializeField] private UIDocument uiToolkitRoot;
         [SerializeField] private UIDocument debugUiRoot;
         [SerializeField] private Vector2Int StartPosition;
-        [SerializeField] private int SceneLoadRadius = 4;
+        [SerializeField] [Obsolete] private int SceneLoadRadius = 4;
 
         // If it's 0, it will load every parcel in the range
         [SerializeField] private List<int2> StaticLoadPositions;

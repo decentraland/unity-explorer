@@ -1,5 +1,7 @@
 ﻿using Arch.Core;
 using ECS.Unity.Materials.Components;
+using ECS.Unity.PrimitiveRenderer.Components;
+using Utility.Primitives;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.Unity.Materials
@@ -28,6 +30,14 @@ namespace ECS.Unity.Materials
             }
 
             materialComponent.Status = MaterialComponent.LifeCycle.LoadingNotStarted;
+        }
+
+        public static void TryReleaseDefault(ref PrimitiveMeshRendererComponent primitiveMeshRendererComponent)
+        {
+            if (!primitiveMeshRendererComponent.DefaultMaterialIsUsed) return;
+
+            DefaultMaterial.Release(primitiveMeshRendererComponent.MeshRenderer.sharedMaterial);
+            primitiveMeshRendererComponent.DefaultMaterialIsUsed = false;
         }
 
         public static void Execute(World world, ref MaterialComponent materialComponent, DestroyMaterial destroyMaterial)

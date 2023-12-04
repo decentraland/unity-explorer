@@ -1,8 +1,9 @@
-﻿using CrdtEcsBridge.Components;
+using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
 using DCL.Diagnostics;
+using DCL.Gizmos.Plugin;
 using DCL.Interaction.Utility;
 using DCL.PerformanceBudgeting;
 using DCL.PluginSystem;
@@ -11,6 +12,7 @@ using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.WebRequests.Analytics;
 using DCL.Profiling;
+using DCL.Time;
 using ECS.Prioritization;
 using System.Collections.Generic;
 using System.Threading;
@@ -48,6 +50,8 @@ namespace Global
         public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
 
         public IProfilingProvider ProfilingProvider { get; private set; }
+
+        public PhysicsTickProvider PhysicsTickProvider { get; private set; }
 
         public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
 
@@ -101,7 +105,7 @@ namespace Global
             if (!result)
                 return (null, false);
 
-            var staticSettings = settingsContainer.GetSettings<StaticSettings>();
+            StaticSettings staticSettings = settingsContainer.GetSettings<StaticSettings>();
 
             var sharedDependencies = new ECSWorldSingletonSharedDependencies(
                 componentsContainer.ComponentPoolsRegistry,
@@ -120,6 +124,7 @@ namespace Global
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
             container.WebRequestsContainer = WebRequestsContainer.Create();
+            container.PhysicsTickProvider = new PhysicsTickProvider();
 
             var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings);
 
@@ -129,11 +134,15 @@ namespace Global
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
                 new PrimitiveCollidersPlugin(sharedDependencies),
                 new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController),
+                new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 assetBundlePlugin,
                 new GltfContainerPlugin(sharedDependencies),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
+#if UNITY_EDITOR
+                new GizmosWorldPlugin(),
+#endif
             };
 
             container.SharedPlugins = new IDCLGlobalPlugin[]

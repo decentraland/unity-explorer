@@ -47,7 +47,7 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     World.Add(entity,
                         AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                            new GetSceneFacadeIntention(realm, definition.IpfsPath, definition.Definition, definition.Parcels, definition.IsEmpty), partitionComponent));
+                            new GetSceneFacadeIntention(realm, definition), partitionComponent));
 
                     return;
                 }

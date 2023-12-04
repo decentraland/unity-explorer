@@ -1,9 +1,9 @@
-#ifndef UNIVERSAL_FORWARD_LIT_PASS_INCLUDED
-#define UNIVERSAL_FORWARD_LIT_PASS_INCLUDED
+#ifndef AVATAR_LIT_FORWARD_PASS_INCLUDED
+#define AVATAR_LIT_FORWARD_PASS_INCLUDED
 
-#include "InputData_Avatar.hlsl"
-#include "SurfaceData_Avatar.hlsl"
-#include "Packages/com.decentraland.unity-shared-dependencies/Runtime/Shaders/URP/Lighting.hlsl"
+#include "Avatar_CelShading_Input.hlsl"
+#include "Avatar_CelShading_SurfaceData.hlsl"
+#include "Avatar_CelShading_Lighting.hlsl"
 #include "Packages/com.decentraland.unity-shared-dependencies/Runtime/Shaders/URP/FadeDithering.hlsl"
 
 #if (defined(_NORMALMAP) || (defined(_PARALLAXMAP) && !defined(REQUIRES_TANGENT_SPACE_VIEW_DIR_INTERPOLATOR))) || defined(_DETAIL)
