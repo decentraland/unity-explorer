@@ -114,7 +114,7 @@ namespace Global
                 new SceneEntityFactory(),
                 new PartitionedWorldsAggregate.Factory(),
                 new ConcurrentLoadingBudgetProvider(staticSettings.AssetsLoadingBudget),
-                new FrameTimeCapBudgetProvider(staticSettings.FPSCap, profilingProvider),
+                new FrameTimeCapBudgetProvider(staticSettings.FrameTimeCap, profilingProvider),
                 new MemoryBudgetProvider(profilingProvider, staticSettings.MemoryThresholds)
             );
 

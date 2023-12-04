@@ -32,7 +32,7 @@ namespace DCL.PluginSystem.Global
         // Performance budgeting
         [field: Header("Performance Budgeting")] [field: Space]
         [field: SerializeField]
-        public int FPSCap { get; private set; } = 11; // [ms]
+        public int FrameTimeCap { get; private set; } = 33; // in [ms]. Table: 33ms ~ 30fps | 16ms ~ 60fps | 11ms ~ 90 fps | 8ms ~ 120fps
 
         [field: SerializeField]
         public int ScenesLoadingBudget { get; private set; } = 100;
