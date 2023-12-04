@@ -72,7 +72,7 @@ namespace DCL.CharacterMotion.Systems
             // To avoid using the Hands IK during any special state we update this
             bool isEnabled = !handsIKComponent.IsDisabled
                              && rigidTransform.IsGrounded
-                             && !rigidTransform.IsOnASteepSlope;
+                             && (!rigidTransform.IsOnASteepSlope || rigidTransform.IsStuck);
 
             avatarBase.HandsIKRig.weight = Mathf.MoveTowards(avatarBase.HandsIKRig.weight, isEnabled ? 1 : 0, settings.HandsIKWeightSpeed * dt);
 

@@ -18,14 +18,14 @@ namespace DCL.CharacterMotion
             Vector3 gravityDirection = characterPhysics.GravityDirection;
 
             // when grounded and on a steep slope, we tilt the gravity towards the slope downwards direction using the current magnitude to maintain momentum
-            if (characterPhysics.IsOnASteepSlope && characterPhysics.IsGrounded)
+            if (characterPhysics.IsOnASteepSlope && characterPhysics.IsGrounded && !characterPhysics.IsStuck)
             {
                 float currentGravityMagnitude = characterPhysics.GravityVelocity.magnitude;
                 characterPhysics.SlopeGravity = gravityDirection * currentGravityMagnitude;
             }
 
             // If we are falling
-            if (!characterPhysics.IsGrounded || characterPhysics.IsOnASteepSlope)
+            if (!characterPhysics.IsGrounded || characterPhysics.JustJumped || (characterPhysics.IsOnASteepSlope && !characterPhysics.IsStuck))
             {
                 // gravity in settings is negative, since we now use directions, we need it to be absolute
                 float gravity = Math.Abs(settings.Gravity);

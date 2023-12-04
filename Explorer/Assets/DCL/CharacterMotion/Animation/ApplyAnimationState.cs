@@ -17,7 +17,7 @@ namespace DCL.CharacterMotion.Animation
             in IAvatarView view,
             in StunComponent stunComponent)
         {
-            bool isGrounded = rigidTransform.IsGrounded && !rigidTransform.IsOnASteepSlope;
+            bool isGrounded = (rigidTransform.IsGrounded && !rigidTransform.IsOnASteepSlope) || rigidTransform.IsStuck;
             float verticalVelocity = rigidTransform.GravityVelocity.y + rigidTransform.MoveVelocity.Velocity.y;
 
             animationComponent.States.IsGrounded = isGrounded;

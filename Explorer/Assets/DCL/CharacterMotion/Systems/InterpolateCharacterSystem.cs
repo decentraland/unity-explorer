@@ -42,12 +42,13 @@ namespace DCL.CharacterMotion.Systems
             in JumpInputComponent jump,
             in MovementInputComponent movementInput)
         {
+            Transform transform = characterController.transform;
             Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
 
             ApplyVelocityStun.Execute(ref rigidTransform, in stunComponent);
 
             Vector3 movementDelta = rigidTransform.MoveVelocity.Velocity * dt;
-            Vector3 finalGravity = rigidTransform.IsOnASteepSlope ? rigidTransform.SlopeGravity : rigidTransform.GravityVelocity;
+            Vector3 finalGravity = rigidTransform.IsOnASteepSlope && !rigidTransform.IsStuck ? rigidTransform.SlopeGravity : rigidTransform.GravityVelocity;
             Vector3 gravityDelta = finalGravity * dt;
 
             // before moving we check if we are able to step up
@@ -57,7 +58,9 @@ namespace DCL.CharacterMotion.Systems
 
             // In order for some systems to work correctly we move the character horizontally and then vertically
             CollisionFlags horizontalCollisionFlags = characterController.Move(movementDelta);
+            Vector3 prevPos = transform.position;
             CollisionFlags verticalCollisionFlags = characterController.Move(gravityDelta + slopeModifier);
+            Vector3 fallDiff = transform.position - prevPos;
 
             bool hasGroundedFlag = EnumUtils.HasFlag(verticalCollisionFlags, CollisionFlags.Below) || EnumUtils.HasFlag(horizontalCollisionFlags, CollisionFlags.Below);
 
@@ -67,7 +70,13 @@ namespace DCL.CharacterMotion.Systems
             rigidTransform.IsCollidingWithWall = EnumUtils.HasFlag(horizontalCollisionFlags, CollisionFlags.Sides);
 
             // If we are on a platform we save our local position
-            PlatformSaveLocalPosition.Execute(ref platformComponent, characterController.transform.position);
+            PlatformSaveLocalPosition.Execute(ref platformComponent, transform.position);
+
+            // In order to detect if we got stuck between 2 slopes we just check if our vertical delta movement is zero when on a slope
+            if (rigidTransform.IsOnASteepSlope && Mathf.Approximately(fallDiff.sqrMagnitude, 0f))
+                rigidTransform.IsStuck = true;
+            else
+                rigidTransform.IsStuck = false;
         }
     }
 }

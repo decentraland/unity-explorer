@@ -68,7 +68,9 @@ namespace DCL.CharacterMotion
             }
 
             // in order to slide correctly we change the gravity direction using the perpendicular direction of the normal based on the global up vector
-            rigidTransform.GravityDirection = -Vector3.Cross(hitNormal, Vector3.Cross(Vector3.up, hitNormal)).normalized;
+            if (!rigidTransform.IsStuck)
+                rigidTransform.GravityDirection = -Vector3.Cross(hitNormal, Vector3.Cross(Vector3.up, hitNormal)).normalized;
+
             rigidTransform.SteepSlopeTime += dt;
             rigidTransform.SteepSlopeAngle = angle;
         }

@@ -17,7 +17,7 @@ namespace DCL.CharacterMotion
                 rigidTransform.LookDirection = flatVelocity.normalized;
             }
 
-            if (!rigidTransform.IsOnASteepSlope) return;
+            if (!rigidTransform.IsOnASteepSlope || rigidTransform.IsStuck) return;
 
             bool isTimeToRotate = rigidTransform.SteepSlopeTime > settings.SlopeCharacterRotationDelay;
             bool isAngleNotThatSteep = rigidTransform.SteepSlopeAngle < settings.MaxSlopeAngle;

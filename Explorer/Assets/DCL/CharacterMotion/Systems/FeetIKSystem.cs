@@ -99,9 +99,7 @@ namespace DCL.CharacterMotion.Systems
 
             // Enable flags: when disabled we lerp the IK weight towards 0
             bool isEnabled = rigidTransform.IsGrounded
-                             && !rigidTransform.IsOnASteepSlope
-
-                             //&& rigidTransform.MoveVelocity.Velocity.sqrMagnitude < 0.01f
+                             && (!rigidTransform.IsOnASteepSlope || rigidTransform.IsStuck)
                              && !stunComponent.IsStunned;
 
             // && !emotes?

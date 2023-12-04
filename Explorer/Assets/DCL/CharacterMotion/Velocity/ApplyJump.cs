@@ -18,8 +18,10 @@ namespace DCL.CharacterMotion
         {
             characterPhysics.JustJumped = false;
 
+            bool isJumpDisabled = characterPhysics.IsOnASteepSlope && !characterPhysics.IsStuck;
+
             // update the grounded frame from last frame
-            if (characterPhysics.IsGrounded && !characterPhysics.IsOnASteepSlope)
+            if (characterPhysics.IsGrounded && !isJumpDisabled)
                 characterPhysics.LastGroundedFrame = physicsTick;
 
             // (Coyote Timer: Pressing Jump before touching ground)
@@ -40,7 +42,7 @@ namespace DCL.CharacterMotion
 
             // (Coyote Timer: Pressing Jump late after starting to fall, to give the player a chance to jump after not being grounded)
 
-            if (canJump && wantsToJump && !characterPhysics.IsOnASteepSlope)
+            if (canJump && wantsToJump && !isJumpDisabled)
             {
                 float jumpHeight = GetJumpHeight(characterPhysics.MoveVelocity.Velocity, settings, inputComponent);
                 float gravity = settings.Gravity * settings.JumpGravityFactor;
