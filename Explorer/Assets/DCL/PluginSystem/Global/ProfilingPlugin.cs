@@ -2,10 +2,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.PerformanceAndDiagnostics.Profiling;
-using DCL.PerformanceAndDiagnostics.Profiling.ECS;
+using DCL.Profiling;
 using System;
 using System.Threading;
+using ProfilingSystem = DCL.Profiling.ECS.ProfilingSystem;
 
 namespace DCL.PluginSystem.Global
 {

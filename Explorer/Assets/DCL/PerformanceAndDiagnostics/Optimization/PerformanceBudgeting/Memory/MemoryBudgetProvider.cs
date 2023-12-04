@@ -1,4 +1,4 @@
-﻿using DCL.PerformanceAndDiagnostics.Profiling;
+﻿using DCL.Profiling;
 using System.Collections.Generic;
 using UnityEngine;
 using static DCL.Optimization.PerformanceBudgeting.MemoryUsageStatus;

@@ -1,6 +1,6 @@
 ﻿using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
-using DCL.PerformanceAndDiagnostics.Profiling;
+using DCL.Profiling;
 using System;
 using System.Collections.Generic;
 using UnityEngine;

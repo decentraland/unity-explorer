@@ -1,4 +1,4 @@
-﻿using DCL.PerformanceAndDiagnostics.Profiling;
+﻿using DCL.Profiling;
 using JetBrains.Annotations;
 using System;
 using UnityEngine;

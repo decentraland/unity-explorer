@@ -1,6 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.PerformanceAndDiagnostics.Profiling;
+using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;

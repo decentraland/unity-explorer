@@ -1,5 +1,5 @@
 ﻿using DCL.Optimization.Pools;
-using DCL.PerformanceAndDiagnostics.Profiling;
+using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using JetBrains.Annotations;
 using System;

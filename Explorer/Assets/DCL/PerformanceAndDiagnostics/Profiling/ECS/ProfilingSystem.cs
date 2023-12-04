@@ -9,7 +9,7 @@ using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace DCL.PerformanceAndDiagnostics.Profiling.ECS
+namespace DCL.Profiling.ECS
 {
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial class ProfilingSystem : BaseUnityLoopSystem
