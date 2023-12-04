@@ -1,5 +1,4 @@
 ﻿using DCL.AvatarRendering.AvatarShape.Components;
-using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.PerformanceAndDiagnostics.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.Optimization.Pools;
@@ -7,13 +6,17 @@ using DCL.PerformanceAndDiagnostics.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;
+using System.Collections.Generic;
 using Unity.Profiling;
-using UnityEngine;
 
 namespace DCL.ResourcesUnloading
 {
     public class CacheCleaner
     {
+        private const int POOLS_UNLOAD_CHUNK = 10;
+        private const int WEARABLES_UNLOAD_CHUNK = 10;
+        private const int GLTF_UNLOAD_CHUNK = 3;
+
         // TODO: remove markers before merge to main
         private static readonly ProfilerMarker texturesCacheMarker = new ("CacheCleanup.texturesCache");
         private static readonly ProfilerMarker assetBundleCacheMarker = new ("CacheCleanup.assetBundleCache");
@@ -21,14 +24,10 @@ namespace DCL.ResourcesUnloading
         private static readonly ProfilerMarker wearableCatalogMarker = new ("CacheCleanup.wearableCatalog");
         private static readonly ProfilerMarker wearableAssetsCacheMarker = new ("CacheCleanup.wearableAssetsCache");
 
-        private static readonly ProfilerMarker avatarPoolRegistryMarker = new ("CacheCleanup.avatarPoolRegistry");
-        private static readonly ProfilerMarker computeShaderPoolMarker = new ("CacheCleanup.computeShaderPool");
-        private static readonly ProfilerMarker USED_SLOTS_POOLCacheMarker = new ("CacheCleanup.USED_SLOTS_POOL");
-        private static readonly ProfilerMarker materialPoolCacheMarker = new ("CacheCleanup.materialPool");
+        private static readonly ProfilerMarker avatarPoolsMarker = new ("CacheCleanup.avatarPools");
 
         private readonly IConcurrentBudgetProvider fpsCapBudgetProvider;
-        private readonly IProfilingProvider profilingProvider;
-        private readonly IThrottledClearable avatarMaterialSetupPool;
+        private readonly List<IThrottledClearable> avatarPools;
 
         private GltfContainerAssetsCache gltfContainerAssetsCache;
         private AssetBundleCache assetBundleCache;
@@ -36,23 +35,16 @@ namespace DCL.ResourcesUnloading
         private WearableCatalog wearableCatalog;
         private TexturesCache texturesCache;
 
-        private IThrottledClearable materialPool;
-        private IThrottledClearable computeShaderPool;
-        private IThrottledClearable avatarPoolRegistry;
-
-        public CacheCleaner(IConcurrentBudgetProvider fpsCapBudgetProvider, IProfilingProvider profilingProvider)
+        public CacheCleaner(IConcurrentBudgetProvider fpsCapBudgetProvider)
         {
             this.fpsCapBudgetProvider = fpsCapBudgetProvider;
-            this.profilingProvider = profilingProvider;
 
-            avatarMaterialSetupPool = AvatarCustomSkinningComponent.USED_SLOTS_POOL;
+            avatarPools = new List<IThrottledClearable> { AvatarCustomSkinningComponent.USED_SLOTS_POOL };
         }
 
         public void UnloadCache()
         {
             if (!fpsCapBudgetProvider.TrySpendBudget()) return;
-
-            // Debug.Log(profilingProvider.CurrentFrameTimeValueInNS);
 
             using (texturesCacheMarker.Auto())
                 texturesCache.Unload(fpsCapBudgetProvider, 1);
@@ -61,34 +53,23 @@ namespace DCL.ResourcesUnloading
                 assetBundleCache.Unload(fpsCapBudgetProvider, 1);
 
             using (gltfContainerAssetsCacheMarker.Auto())
-                gltfContainerAssetsCache.Unload(fpsCapBudgetProvider, 3);
+                gltfContainerAssetsCache.Unload(fpsCapBudgetProvider, GLTF_UNLOAD_CHUNK);
 
             using (wearableCatalogMarker.Auto())
                 wearableCatalog.Unload(fpsCapBudgetProvider);
 
             using (wearableAssetsCacheMarker.Auto())
-                wearableAssetsCache.Unload(fpsCapBudgetProvider, 10);
+                wearableAssetsCache.Unload(fpsCapBudgetProvider, WEARABLES_UNLOAD_CHUNK);
 
             ClearAvatarsRelatedPools();
         }
 
         private void ClearAvatarsRelatedPools()
         {
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                using (avatarPoolRegistryMarker.Auto())
-                    avatarPoolRegistry.ClearThrottled(10);
-
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                using (computeShaderPoolMarker.Auto())
-                    computeShaderPool.ClearThrottled(10);
-
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                using (USED_SLOTS_POOLCacheMarker.Auto())
-                    avatarMaterialSetupPool.ClearThrottled(10);
-
-            if (fpsCapBudgetProvider.TrySpendBudget())
-                using (materialPoolCacheMarker.Auto())
-                    materialPool.ClearThrottled(10);
+            foreach (IThrottledClearable pool in avatarPools)
+                using (avatarPoolsMarker.Auto())
+                    if (fpsCapBudgetProvider.TrySpendBudget())
+                        pool.ClearThrottled(POOLS_UNLOAD_CHUNK);
         }
 
         public void Register(AssetBundleCache assetBundleCache) =>
@@ -106,14 +87,8 @@ namespace DCL.ResourcesUnloading
         public void Register(TexturesCache texturesCache) =>
             this.texturesCache = texturesCache;
 
-        public void Register(IComponentPool<AvatarBase> avatarPoolRegistry) =>
-            this.avatarPoolRegistry = avatarPoolRegistry;
-
-        public void Register(IExtendedObjectPool<Material> celShadingMaterialPool) =>
-            materialPool = celShadingMaterialPool;
-
-        public void Register(IExtendedObjectPool<ComputeShader> computeShaderPool) =>
-            this.computeShaderPool = computeShaderPool;
+        public void Register<T>(IExtendedObjectPool<T> extendedObjectPool) where T: class =>
+            avatarPools.Add(extendedObjectPool);
 
         public void UpdateProfilingCounters()
         {

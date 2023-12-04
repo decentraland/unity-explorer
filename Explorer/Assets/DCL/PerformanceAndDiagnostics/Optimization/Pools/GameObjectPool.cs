@@ -7,7 +7,8 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
 {
     public class GameObjectPool<T> : IComponentPool<T> where T: Component
     {
-        private readonly string DEFAULT_COMPONENT_NAME = $"POOL_OBJECT_{typeof(T).Name}";
+        private static readonly string DEFAULT_COMPONENT_NAME = $"POOL_OBJECT_{typeof(T).Name}";
+
         private readonly IExtendedObjectPool<T> gameObjectPool;
         private readonly Transform parentContainer;
         private readonly Transform rootContainer;

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq.Expressions;
 using System.Reflection;
 using UnityEngine.Assertions;
 using UnityEngine.Pool;
@@ -11,7 +10,7 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
     {
         private readonly List<T> list;
         private readonly Action<T> onDestroyAction;
-        private readonly Action<ObjectPool<T>, int> setCountAllDelegate;
+        private readonly FieldInfo countAllField;
 
         public ExtendedObjectPool(
             Func<T> createFunc,
@@ -26,14 +25,13 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
             onDestroyAction = actionOnDestroy;
 
             Type poolType = typeof(ObjectPool<T>);
+
             FieldInfo listField = poolType.GetField("m_List", BindingFlags.NonPublic | BindingFlags.Instance);
             list = listField?.GetValue(this) as List<T>;
-            Assert.IsNotNull(list, "Couldn't find m_List field in Unity built-in ObjectPool<T> type");
+            Assert.IsNotNull(list, "Couldn't find m_List field in Unity built-in ObjectPool<T> type. Pool ClearThrottled will not work.");
 
-            FieldInfo countAllReflected = poolType.GetField("<CountAll>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
-            Assert.IsNotNull(countAllReflected, "Couldn't find <CountAll>k__BackingField field in Unity built-in ObjectPool<T> type");
-
-            setCountAllDelegate = CreateSetFieldDelegate<ObjectPool<T>, int>(countAllReflected);
+            countAllField = poolType.GetField("<CountAll>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.IsNotNull(countAllField, "Couldn't find <CountAll>k__BackingField field in Unity built-in ObjectPool<T> type. Pool ClearThrottled will not work.");
         }
 
         public void ClearThrottled(int maxUnloadAmount)
@@ -46,19 +44,7 @@ namespace DCL.PerformanceAndDiagnostics.Optimization.Pools
 
             list.RemoveRange(0, itemsToRemove);
 
-            int newCountAll = CountAll - itemsToRemove;
-            setCountAllDelegate(this, newCountAll);
-        }
-
-        // Allocation free version of .SetValue() for fields (avoids boxing)
-        private static Action<TTarget, TValue> CreateSetFieldDelegate<TTarget, TValue>(FieldInfo field)
-        {
-            ParameterExpression targetExp = Expression.Parameter(typeof(TTarget), "target");
-            ParameterExpression valueExp = Expression.Parameter(typeof(TValue), "value");
-            MemberExpression fieldExp = Expression.Field(targetExp, field);
-            BinaryExpression assignExp = Expression.Assign(fieldExp, valueExp);
-
-            return Expression.Lambda<Action<TTarget, TValue>>(assignExp, targetExp, valueExp).Compile();
+            countAllField.SetValue(this, CountAll - itemsToRemove);
         }
     }
 }
