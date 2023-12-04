@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace DCL.Optimization.PriorityQueue
+namespace Utility.PriorityQueue
 {
     /// <summary>
     ///     A simplified priority queue implementation.  Is stable, auto-resizes, and thread-safe, at the cost of being slightly slower than

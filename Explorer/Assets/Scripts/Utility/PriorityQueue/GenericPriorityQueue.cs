@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace DCL.Optimization.PriorityQueue
+namespace Utility.PriorityQueue
 {
     /// <summary>
     ///     A copy of StablePriorityQueue which also has generic priority-type

@@ -1,4 +1,4 @@
-﻿namespace DCL.Optimization.PriorityQueue
+﻿namespace Utility.PriorityQueue
 {
     /// <summary>
     ///     A helper-interface only needed to make writing unit tests a bit easier (hence the 'internal' access modifier)

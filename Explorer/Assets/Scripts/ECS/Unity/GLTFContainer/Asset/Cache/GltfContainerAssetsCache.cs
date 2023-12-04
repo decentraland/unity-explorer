@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Optimization.PriorityQueue;
 using DCL.PerformanceAndDiagnostics.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
@@ -12,6 +11,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using Utility.Multithreading;
+using Utility.PriorityQueue;
 
 namespace ECS.Unity.GLTFContainer.Asset.Cache
 {

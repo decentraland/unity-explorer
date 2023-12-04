@@ -2,23 +2,25 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace DCL.Optimization.PriorityQueue
+namespace Utility.PriorityQueue
 {
     /// <summary>
-    ///     An implementation of a min-Priority Queue using a heap.  Has O(1) .Contains()!
+    ///     A copy of FastPriorityQueue which is also stable - that is, when two nodes are enqueued with the same priority, they
+    ///     are always dequeued in the same order.
     ///     See https://github.com/BlueRaja/High-Speed-Priority-Queue-for-C-Sharp/wiki/Getting-Started for more information
     /// </summary>
-    /// <typeparam name="T">The values in the queue.  Must extend the FastPriorityQueueNode class</typeparam>
-    public sealed class FastPriorityQueue<T> : IFixedSizePriorityQueue<T, float>
-        where T: FastPriorityQueueNode
+    /// <typeparam name="T">The values in the queue.  Must extend the StablePriorityQueueNode class</typeparam>
+    public sealed class StablePriorityQueue<T> : IFixedSizePriorityQueue<T, float>
+        where T: StablePriorityQueueNode
     {
         private T[] _nodes;
+        private long _numNodesEverEnqueued;
 
         /// <summary>
         ///     Instantiate a new Priority Queue
         /// </summary>
         /// <param name="maxNodes">The max nodes ever allowed to be enqueued (going over this will cause undefined behavior)</param>
-        public FastPriorityQueue(int maxNodes)
+        public StablePriorityQueue(int maxNodes)
         {
 #if DEBUG
             if (maxNodes <= 0) { throw new InvalidOperationException("New queue size cannot be smaller than 1"); }
@@ -26,6 +28,7 @@ namespace DCL.Optimization.PriorityQueue
 
             Count = 0;
             _nodes = new T[maxNodes + 1];
+            _numNodesEverEnqueued = 0;
         }
 
         /// <summary>
@@ -68,14 +71,14 @@ namespace DCL.Optimization.PriorityQueue
 
             if (node.Queue != null && !Equals(node.Queue)) { throw new InvalidOperationException("node.Contains was called on a node from another queue.  Please call originalQueue.ResetNode() first"); }
 
-            if (node.QueueIndex < 0 || node.QueueIndex >= _nodes.Length) { throw new InvalidOperationException("node.QueueIndex has been corrupted. Did you change it manually? Or add this node to another queue?"); }
+            if (node.QueueIndex < 0 || node.QueueIndex >= _nodes.Length) { throw new InvalidOperationException("node.QueueIndex has been corrupted. Did you change it manually?"); }
 #endif
 
             return _nodes[node.QueueIndex] == node;
         }
 
         /// <summary>
-        ///     Enqueue a node to the priority queue.  Lower values are placed in front. Ties are broken arbitrarily.
+        ///     Enqueue a node to the priority queue.  Lower values are placed in front. Ties are broken by first-in-first-out.
         ///     If the queue is full, the result is undefined.
         ///     If the node is already enqueued, the result is undefined.
         ///     If node is or has been previously added to another queue, the result is undefined unless oldQueue.ResetNode(node) has been called
@@ -102,9 +105,11 @@ namespace DCL.Optimization.PriorityQueue
             Count++;
             _nodes[Count] = node;
             node.QueueIndex = Count;
+            node.InsertionIndex = _numNodesEverEnqueued++;
             CascadeUp(node);
         }
 
+        //Performance appears to be slightly better when this is NOT inlined o_O
 #if NET_VERSION_4_5
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
@@ -118,7 +123,7 @@ namespace DCL.Optimization.PriorityQueue
                 parent = node.QueueIndex >> 1;
                 T parentNode = _nodes[parent];
 
-                if (HasHigherOrEqualPriority(parentNode, node))
+                if (HasHigherPriority(parentNode, node))
                     return;
 
                 //Node has lower priority value, so move parent down the heap to make room
@@ -134,7 +139,7 @@ namespace DCL.Optimization.PriorityQueue
                 parent >>= 1;
                 T parentNode = _nodes[parent];
 
-                if (HasHigherOrEqualPriority(parentNode, node))
+                if (HasHigherPriority(parentNode, node))
                     break;
 
                 //Node has lower priority value, so move parent down the heap to make room
@@ -298,23 +303,12 @@ namespace DCL.Optimization.PriorityQueue
 #endif
         private bool HasHigherPriority(T higher, T lower)
         {
-            return higher.Priority < lower.Priority;
+            return higher.Priority < lower.Priority ||
+                   (higher.Priority == lower.Priority && higher.InsertionIndex < lower.InsertionIndex);
         }
 
         /// <summary>
-        ///     Returns true if 'higher' has higher priority than 'lower', false otherwise.
-        ///     Note that calling HasHigherOrEqualPriority(node, node) (ie. both arguments the same node) will return true
-        /// </summary>
-#if NET_VERSION_4_5
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
-        private bool HasHigherOrEqualPriority(T higher, T lower)
-        {
-            return higher.Priority <= lower.Priority;
-        }
-
-        /// <summary>
-        ///     Removes the head of the queue and returns it.
+        ///     Removes the head of the queue (node with minimum priority; ties are broken by order of insertion), and returns it.
         ///     If queue is empty, result is undefined
         ///     O(log n)
         /// </summary>
@@ -470,7 +464,6 @@ namespace DCL.Optimization.PriorityQueue
         /// <summary>
         ///     By default, nodes that have been previously added to one queue cannot be added to another queue.
         ///     If you need to do this, please call originalQueue.ResetNode(node) before attempting to add it in the new queue
-        ///     If the node is currently in the queue or belongs to another queue, the result is undefined
         /// </summary>
 #if NET_VERSION_4_5
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

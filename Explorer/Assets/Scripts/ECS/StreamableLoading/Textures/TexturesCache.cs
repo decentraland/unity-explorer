@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Optimization.PriorityQueue;
 using DCL.PerformanceAndDiagnostics.Profiling;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
@@ -9,6 +8,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using Utility.Multithreading;
+using Utility.PriorityQueue;
 
 namespace ECS.StreamableLoading.Textures
 {

@@ -1,4 +1,4 @@
-﻿namespace DCL.Optimization.PriorityQueue
+﻿namespace Utility.PriorityQueue
 {
     public class StablePriorityQueueNode : FastPriorityQueueNode
     {
