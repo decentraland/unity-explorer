@@ -132,7 +132,6 @@ namespace Global
             {
                 new TransformsPlugin(sharedDependencies),
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
-                new PrimitiveCollidersPlugin(sharedDependencies),
                 new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController),
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
                 new PrimitivesRenderingPlugin(sharedDependencies),

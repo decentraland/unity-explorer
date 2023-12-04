@@ -5,13 +5,12 @@ using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.Common.Systems;
 using Ipfs;
 using SceneRunner;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -50,7 +49,7 @@ namespace ECS.SceneLifeCycle.Systems
             (SceneAssetBundleManifest manifest, _, ReadOnlyMemory<byte> mainCrdt) = await UniTask.WhenAll(loadAssetBundleManifest, loadSceneMetadata, loadMainCrdt);
 
             // Create scene data
-            var baseParcel = intention.Definition.metadata.scene.DecodedBase;
+            Vector2Int baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
             ParcelMathHelper.SceneGeometry sceneGeometry = ParcelMathHelper.CreateSceneGeometry(intention.DefinitionComponent.ParcelsCorners, baseParcel);
             var sceneData = new SceneData(hashedContent, definitionComponent.Definition, manifest, baseParcel, sceneGeometry, new StaticSceneMessages(mainCrdt));
 
@@ -106,7 +105,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (!sceneContent.TryGetContentUrl(NAME, out URLAddress sceneJsonUrl))
                 throw new ArgumentException("scene.json does not exist in the content");
 
-            IpfsTypes.SceneMetadata target = intention.Definition.metadata;
+            IpfsTypes.SceneMetadata target = intention.DefinitionComponent.Definition.metadata;
 
             await (await webRequestController.GetAsync(new CommonArguments(sceneJsonUrl), ct, reportCategory))
                .OverwriteFromJsonAsync(target, WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
