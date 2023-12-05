@@ -30,7 +30,7 @@ namespace Global
             {
                 SceneFactory = new SceneFactory(
                     ecsWorldFactory,
-                    new SceneRuntimeFactory(),
+                    new SceneRuntimeFactory(staticContainer.WebRequestsContainer.WebRequestController),
                     new SharedPoolsProvider(),
                     new CRDTSerializer(),
                     staticContainer.ComponentsContainer.SDKComponentsRegistry,

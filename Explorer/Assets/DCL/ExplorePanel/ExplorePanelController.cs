@@ -1,53 +1,74 @@
 using Cysharp.Threading.Tasks;
 using DCL.Navmap;
+using DCL.Settings;
 using DCL.UI;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace DCL.ExplorePanel
 {
     public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>
     {
-        private SectionSelectorController sectionSelectorController;
+        private readonly NavmapController navmapController;
+        private readonly SettingsController settingsController;
+        private SectionSelectorController<ExploreSections> sectionSelectorController;
         private CancellationTokenSource animationCts;
         private TabSelectorView previousSelector;
 
-        public ExplorePanelController(ViewFactoryMethod viewFactory) : base(viewFactory)
+        private Dictionary<ExploreSections, ISection> exploreSections;
+
+        public ExplorePanelController(
+            ViewFactoryMethod viewFactory,
+            NavmapController navmapController,
+            SettingsController settingsController) : base(viewFactory)
         {
+            this.navmapController = navmapController;
+            this.settingsController = settingsController;
         }
 
-        public override CanvasOrdering.SortingLayer SortLayers => CanvasOrdering.SortingLayer.Fullscreen;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
         protected override void OnViewInstantiated()
         {
-            Dictionary<ExploreSections, GameObject> exploreSections = new ();
-            //TODO: improve as soon as we have a serializable dictionary to avoid key and values list
-            for (var i = 0; i < viewInstance.Sections.Length; i++)
-                exploreSections.Add(viewInstance.Sections[i], viewInstance.SectionsObjects[i]);
-
-            sectionSelectorController = new SectionSelectorController(exploreSections, ExploreSections.Navmap);
-            foreach (var tabSelector in viewInstance.TabSelectorViews)
+            exploreSections = new ()
             {
-                tabSelector.TabSelectorToggle.onValueChanged.RemoveAllListeners();
-                tabSelector.TabSelectorToggle.onValueChanged.AddListener(
+                { ExploreSections.Navmap, navmapController },
+                { ExploreSections.Settings, settingsController },
+            };
+
+            sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
+
+            foreach (var keyValuePair in exploreSections)
+                keyValuePair.Value.Deactivate();
+
+            foreach (var tabSelector in viewInstance.TabSelectorMappedViews)
+            {
+                tabSelector.TabSelectorViews.TabSelectorToggle.onValueChanged.RemoveAllListeners();
+
+                tabSelector.TabSelectorViews.TabSelectorToggle.onValueChanged.AddListener(
                     (isOn) =>
                     {
-                        animationCts?.Cancel();
-                        animationCts?.Dispose();
+                        animationCts.SafeCancelAndDispose();
                         animationCts = new CancellationTokenSource();
-                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector, animationCts.Token).Forget();
+                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, tabSelector.Section, animationCts.Token).Forget();
                     }
                 );
             }
         }
 
-        protected override void OnViewShow()
+        protected override void OnBeforeViewShow()
         {
-            foreach (var tabSelector in viewInstance.TabSelectorViews)
-                if (tabSelector.section == inputData.Section)
-                    tabSelector.TabSelectorToggle.isOn = true;
+            exploreSections[inputData.Section].Activate();
+        }
+
+        protected override void OnViewClose()
+        {
+            foreach (ISection exploreSectionsValue in exploreSections.Values)
+                exploreSectionsValue.Deactivate();
         }
 
         protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
@@ -56,9 +77,9 @@ namespace DCL.ExplorePanel
 
     public readonly struct ExplorePanelParameter
     {
-        public readonly ExploreSections? Section;
+        public readonly ExploreSections Section;
 
-        public ExplorePanelParameter(ExploreSections? section)
+        public ExplorePanelParameter(ExploreSections section)
         {
             Section = section;
         }

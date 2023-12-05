@@ -1,12 +1,9 @@
-using Cysharp.Threading.Tasks;
 using MVC.PopupsController.PopupCloser;
 using NSubstitute;
-using NSubstitute.ReceivedExtensions;
 using NUnit.Framework;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEngine;
 
 namespace MVC.Tests
 {
@@ -58,7 +55,7 @@ namespace MVC.Tests
         public async Task Show(CanvasOrdering.SortingLayer layer)
         {
             IController<ITestView, TestInputData> controller = Substitute.For<IController<ITestView, TestInputData>>();
-            controller.SortLayers.Returns(layer);
+            controller.Layer.Returns(layer);
 
             mvcManager.RegisterController(controller);
 
@@ -84,34 +81,9 @@ namespace MVC.Tests
                     break;
             }
         }
-
-    }
-
-    public class TestController : IController<ITestView, TestInputData>
-    {
-        public UniTask LaunchViewLifeCycleAsync(CanvasOrdering ordering, TestInputData inputData, CancellationToken ct) =>
-            throw new NotImplementedException();
-
-        public CanvasOrdering.SortingLayer SortLayers { get; }
-
-        public void OnFocus()
-        {
-
-        }
-
-        public void OnBlur()
-        {
-
-        }
-
-        UniTask IController.HideViewAsync(CancellationToken ct) =>
-            throw new NotImplementedException();
     }
 
     public class TestInputData { }
 
-    public interface ITestView : IView
-    {
-    }
-
+    public interface ITestView : IView { }
 }

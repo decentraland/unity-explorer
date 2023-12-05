@@ -8,7 +8,7 @@ namespace MVC
         {
             Fullscreen,
             Popup,
-            Persistent,
+            Persistent, //TODO: persistend needs blur handling on fullscreen and Overlay
             Overlay
         }
 

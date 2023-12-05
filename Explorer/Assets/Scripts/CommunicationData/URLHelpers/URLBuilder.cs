@@ -131,7 +131,7 @@ namespace CommunicationData.URLHelpers
         }
 
         public URLAddress Build() =>
-            new (ToString());
+            new (GetResult());
 
         public string GetResult() =>
             stringBuilder.ToString();

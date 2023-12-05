@@ -6,6 +6,8 @@
 
         void Clear();
 
+        URLAddress Build();
+
         IURLBuilder AppendDomainWithReplacedPath(in URLDomain domain, in URLSubdirectory newPath);
 
         IURLBuilder AppendSubDirectory(in URLSubdirectory subdirectory);

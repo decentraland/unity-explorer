@@ -1,3 +1,4 @@
+using DCL.MapRenderer;
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -9,5 +10,8 @@ namespace DCL.PluginSystem.Global
     {
         [field: SerializeField]
         public AssetReferenceGameObject PopupCloserView { get; private set; }
+
+        [field: SerializeField]
+        public MapRendererSettings MapRendererSettings { get; private set; }
     }
 }

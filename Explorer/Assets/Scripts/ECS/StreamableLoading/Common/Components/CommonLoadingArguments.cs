@@ -1,5 +1,6 @@
 ﻿using AssetManagement;
 using CommunicationData.URLHelpers;
+using DCL.WebRequests;
 using System.Threading;
 
 namespace ECS.StreamableLoading.Common.Components
@@ -56,5 +57,9 @@ namespace ECS.StreamableLoading.Common.Components
             AssetSource currentSource = AssetSource.WEB,
             CancellationTokenSource cancellationTokenSource = null) :
             this(URLAddress.FromString(url), customEmbeddedSubDirectory, timeout, attempts, permittedSources, currentSource, cancellationTokenSource) { }
+
+        // Always override attempts count for streamable assets as repetitions are handled in LoadSystemBase
+        public static implicit operator CommonArguments(in CommonLoadingArguments commonLoadingArguments) =>
+            new (commonLoadingArguments.URL, attemptsCount: 1, timeout: commonLoadingArguments.Timeout);
     }
 }

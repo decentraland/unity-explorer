@@ -1,7 +1,10 @@
-﻿using ECS.SceneLifeCycle.SceneDefinition;
+﻿using DCL.WebRequests;
+using DCL.WebRequests.Analytics;
+using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
 using Ipfs;
+using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
 using Utility.Multithreading;
@@ -25,16 +28,16 @@ namespace ECS.SceneLifeCycle.Tests
             new (new CommonLoadingArguments(wrongTypePath), new IpfsTypes.IpfsPath());
 
         protected override LoadSceneDefinitionSystem CreateSystem() =>
-            new (world, cache, new MutexSync());
+            new (world, new WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>()), cache, new MutexSync());
 
         protected override void AssertSuccess(IpfsTypes.SceneEntityDefinition asset)
         {
-            Assert.That(asset.metadata.scene.parcels, Is.EquivalentTo(new[]
+            Assert.That(asset.metadata.scene.DecodedParcels, Is.EquivalentTo(new Vector2Int[]
             {
-                "78,-1",
-                "78,0",
-                "79,-1",
-                "79,0",
+                new (78, -1),
+                new (78, 0),
+                new (79, -1),
+                new (79, 0),
             }));
         }
     }
