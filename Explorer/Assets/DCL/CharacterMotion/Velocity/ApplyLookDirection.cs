@@ -17,12 +17,14 @@ namespace DCL.CharacterMotion
                 rigidTransform.LookDirection = flatVelocity.normalized;
             }
 
-            if (!rigidTransform.IsOnASteepSlope || rigidTransform.IsStuck) return;
+            if (rigidTransform.IsStuck)
+                return;
 
-            bool isTimeToRotate = rigidTransform.SteepSlopeTime > settings.SlopeCharacterRotationDelay;
-            bool isAngleNotThatSteep = rigidTransform.SteepSlopeAngle < settings.MaxSlopeAngle;
+            bool isTimeToRotate = rigidTransform.SteepSlopeTime >= settings.SlopeCharacterRotationDelay;
+            bool angleIsTooSteep = rigidTransform.SteepSlopeAngle >= settings.MaxSlopeAngle;
 
-            if (!isTimeToRotate || !isAngleNotThatSteep) return;
+            if (!isTimeToRotate || angleIsTooSteep)
+                return;
 
             Vector3 gravityDirection = rigidTransform.GravityDirection;
             gravityDirection.y = 0;

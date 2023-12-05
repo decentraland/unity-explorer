@@ -17,8 +17,7 @@ namespace DCL.CharacterMotion
             ref CharacterRigidTransform rigidTransform,
             CharacterController characterController)
         {
-            rigidTransform.GravityDirection = Vector3.down;
-            rigidTransform.CurrentSlopeNormal = Vector3.up;
+
             rigidTransform.IsOnASteepSlope = false;
 
             if (!rigidTransform.IsGrounded) return;
@@ -31,7 +30,7 @@ namespace DCL.CharacterMotion
 
             if (!Physics.SphereCast(rayPosition, characterController.radius, rayDirection.normalized, out RaycastHit sphereCastHitInfo, characterController.height * 0.6f, PhysicsLayers.CHARACTER_ONLY_MASK))
             {
-                rigidTransform.SteepSlopeTime = 0;
+                ReduceSlopeTime(dt, settings, ref rigidTransform);
                 return;
             }
 
@@ -43,7 +42,7 @@ namespace DCL.CharacterMotion
             // if the distance is not enough, we bail out
             if (!(relativeHitPoint.magnitude > settings.NoSlipDistance))
             {
-                rigidTransform.SteepSlopeTime = 0;
+                ReduceSlopeTime(dt, settings, ref rigidTransform);
                 return;
             }
 
@@ -63,7 +62,7 @@ namespace DCL.CharacterMotion
             // to avoid sliding on slopes, we added an additional raycast check
             if (!rigidTransform.IsOnASteepSlope && Physics.Raycast(groundRay, settings.EdgeSlipSafeDistance, PhysicsLayers.CHARACTER_ONLY_MASK))
             {
-                rigidTransform.SteepSlopeTime = 0;
+                ReduceSlopeTime(dt, settings, ref rigidTransform);
                 return;
             }
 
@@ -71,8 +70,18 @@ namespace DCL.CharacterMotion
             if (!rigidTransform.IsStuck)
                 rigidTransform.GravityDirection = -Vector3.Cross(hitNormal, Vector3.Cross(Vector3.up, hitNormal)).normalized;
 
-            rigidTransform.SteepSlopeTime += dt;
+            AddSlopeTime(dt, settings, ref rigidTransform);
             rigidTransform.SteepSlopeAngle = angle;
+        }
+
+        private static void AddSlopeTime(float dt, ICharacterControllerSettings settings, ref CharacterRigidTransform rigidTransform)
+        {
+            rigidTransform.SteepSlopeTime = Mathf.Clamp(rigidTransform.SteepSlopeTime + dt, 0, settings.SlopeCharacterRotationDelay + 0.1f);
+        }
+
+        private static void ReduceSlopeTime(float dt, ICharacterControllerSettings settings, ref CharacterRigidTransform rigidTransform)
+        {
+            rigidTransform.SteepSlopeTime = Mathf.Clamp(rigidTransform.SteepSlopeTime - dt, 0, settings.SlopeCharacterRotationDelay + 0.1f);
         }
     }
 }

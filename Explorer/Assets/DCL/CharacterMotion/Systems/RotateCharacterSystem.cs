@@ -39,6 +39,9 @@ namespace DCL.CharacterMotion.Systems
             in StunComponent stunComponent)
         {
             Transform characterTransform = transform.Transform;
+
+            if (Mathf.Approximately(rigidTransform.LookDirection.sqrMagnitude, 0)) return;
+
             var targetRotation = Quaternion.LookRotation(rigidTransform.LookDirection);
 
             if (!stunComponent.IsStunned)

@@ -16,6 +16,9 @@ namespace DCL.CharacterMotion
             if (!rigidTransform.IsGrounded || !rigidTransform.IsCollidingWithWall)
                 return;
 
+            if (rigidTransform.IsOnASteepSlope && rigidTransform.SteepSlopeAngle > settings.MaxSlopeAngle)
+                return;
+
             Transform transform = characterController.transform;
 
             // To avoid doing the capsule cast from inside a mesh we reduce the size just a bit
@@ -33,7 +36,9 @@ namespace DCL.CharacterMotion
                     PhysicsLayers.CHARACTER_ONLY_MASK))
                 return;
 
-            float dot = Mathf.Abs(Vector3.Dot(transform.forward, hit.normal));
+            Vector3 hitInfoNormal = hit.normal;
+            hitInfoNormal.y = 0;
+            float dot = Mathf.Abs(Vector3.Dot(transform.forward, hitInfoNormal.normalized));
             float moveSpeedMultiplier = Mathf.Lerp(1f, settings.WallSlideMaxMoveSpeedMultiplier, dot);
             rigidTransform.MoveVelocity.Velocity *= moveSpeedMultiplier;
         }

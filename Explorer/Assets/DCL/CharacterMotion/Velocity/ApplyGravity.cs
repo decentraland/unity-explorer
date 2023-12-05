@@ -15,7 +15,7 @@ namespace DCL.CharacterMotion
             int physicsTick,
             float deltaTime)
         {
-            Vector3 gravityDirection = characterPhysics.GravityDirection;
+            Vector3 gravityDirection = characterPhysics.IsOnASteepSlope ? characterPhysics.GravityDirection : Vector3.down;
 
             // when grounded and on a steep slope, we tilt the gravity towards the slope downwards direction using the current magnitude to maintain momentum
             if (characterPhysics.IsOnASteepSlope && characterPhysics.IsGrounded && !characterPhysics.IsStuck)
