@@ -1,5 +1,19 @@
 {
   "dependencies": {
+    "arch.systemgroups.visualiser": {
+      "version": "https://github.com/m3taphysics/Arch.SystemGroups.Visualiser.git?path=/Packages/arch.systemgroups.visualiser",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "63fbb65d15d5f25772ac106b0818e942e0df0e2d"
+    },
+    "com.arch.systemgroups": {
+      "version": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "3d2186e909b1bccf1d7b3dadbd1d75df6ed77fb3"
+    },
     "com.atteneder.draco": {
       "version": "4.0.2",
       "depth": 0,
@@ -19,7 +33,7 @@
         "com.unity.mathematics": "1.2.6",
         "com.unity.burst": "1.6.6"
       },
-      "hash": "8d18b6ed3ccd923c02116f4a72f7a41c8c7fd0e3"
+      "hash": "76b63cdf60ffbc04c2f2851ffde777496e5ef25e"
     },
     "com.cysharp.unitask": {
       "version": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
@@ -33,7 +47,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "1b462119ed2ca0a100d22cea1e482d28dde41dc8"
+      "hash": "a31ce587c60180d6bfa804507acac7d2ad94f2d1"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",

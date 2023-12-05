@@ -18,11 +18,13 @@ using ECS.Unity.GLTFContainer.Systems;
 using ECS.Unity.Transforms.Components;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine.TestTools;
+using Utility;
 
 namespace ECS.Unity.GLTFContainer.Tests
 {
@@ -39,7 +41,9 @@ namespace ECS.Unity.GLTFContainer.Tests
             AddTransformToEntity(sceneRoot);
             IConcurrentBudgetProvider concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
             concurrentBudgetProvider.TrySpendBudget().Returns(true);
-            system = new FinalizeGltfContainerLoadingSystem(world, world.Reference(sceneRoot), concurrentBudgetProvider, NullEntityCollidersSceneCache.INSTANCE);
+            ISceneData sceneData = Substitute.For<ISceneData>();
+            sceneData.Geometry.Returns(ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY);
+            system = new FinalizeGltfContainerLoadingSystem(world, world.Reference(sceneRoot), concurrentBudgetProvider, NullEntityCollidersSceneCache.INSTANCE, sceneData);
             IConcurrentBudgetProvider budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
             budgetProvider.TrySpendBudget().Returns(true);
             createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budgetProvider, budgetProvider);
@@ -122,7 +126,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             GltfContainerAsset promiseAsset = component.Promise.Result.Value.Asset;
 
             Assert.That(promiseAsset.VisibleMeshesColliders.Count, Is.EqualTo(196));
-            Assert.That(promiseAsset.VisibleMeshesColliders.All(c => c.gameObject.layer == PhysicsLayers.ON_POINTER_EVENT_LAYER), Is.True);
+            Assert.That(promiseAsset.VisibleMeshesColliders.All(c => c.Collider.gameObject.layer == PhysicsLayers.ON_POINTER_EVENT_LAYER), Is.True);
         }
 
         [Test]
@@ -146,8 +150,8 @@ namespace ECS.Unity.GLTFContainer.Tests
             GltfContainerAsset promiseAsset = component.Promise.Result.Value.Asset;
 
             // 1 Collider
-            Assert.That(promiseAsset.InvisibleColliders.All(c => c.enabled), Is.True);
-            Assert.That(promiseAsset.InvisibleColliders.All(c => c.gameObject.layer == PhysicsLayers.ON_POINTER_EVENT_LAYER), Is.True);
+            Assert.That(promiseAsset.InvisibleColliders.All(c => c.IsActiveByEntity), Is.True);
+            Assert.That(promiseAsset.InvisibleColliders.All(c => c.Collider.gameObject.layer == PhysicsLayers.ON_POINTER_EVENT_LAYER), Is.True);
 
             // No visible colliders created
             Assert.That(promiseAsset.VisibleMeshesColliders, Is.Null);

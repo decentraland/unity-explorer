@@ -1,11 +1,11 @@
-#ifndef UNIVERSAL_DEPTH_NORMALS_PASS_INCLUDED
-#define UNIVERSAL_DEPTH_NORMALS_PASS_INCLUDED
+#ifndef AVATAR_DEPTH_NORMALS_PASS_INCLUDED
+#define AVATAR_DEPTH_NORMALS_PASS_INCLUDED
 
-#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+#include "Avatar_CelShading_Core.hlsl"
 #if defined(LOD_FADE_CROSSFADE)
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl"
 #endif
-#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RealtimeLights.hlsl"
+#include "Avatar_CelShading_RealtimeLights.hlsl"
 
 // Skinning structure
 struct VertexInfo

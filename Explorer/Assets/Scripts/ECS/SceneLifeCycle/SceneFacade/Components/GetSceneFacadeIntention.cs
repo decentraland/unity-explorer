@@ -1,9 +1,8 @@
-﻿using ECS.StreamableLoading.Common.Components;
+﻿using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.Common.Components;
 using Ipfs;
 using System;
-using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Components
 {
@@ -16,34 +15,28 @@ namespace ECS.SceneLifeCycle.Components
 
         public CommonLoadingArguments CommonArguments { get; set; }
 
-        public readonly bool IsEmpty;
         public readonly IIpfsRealm IpfsRealm;
-        public readonly IpfsTypes.IpfsPath IpfsPath;
-        public readonly IpfsTypes.SceneEntityDefinition Definition;
-        public readonly IReadOnlyList<Vector2Int> Parcels;
+        public readonly SceneDefinitionComponent DefinitionComponent;
 
-        internal GetSceneFacadeIntention(IIpfsRealm ipfsRealm, IpfsTypes.IpfsPath ipfsPath, IpfsTypes.SceneEntityDefinition definition, IReadOnlyList<Vector2Int> parcels, bool isEmpty)
+        internal GetSceneFacadeIntention(IIpfsRealm ipfsRealm, SceneDefinitionComponent definitionComponent)
         {
-            IpfsPath = ipfsPath;
-            Definition = definition;
-            Parcels = parcels;
-            IsEmpty = isEmpty;
             IpfsRealm = ipfsRealm;
+            DefinitionComponent = definitionComponent;
 
             // URL = EntityId just for identification, it is used by LoadSystemBase, it won't be used as a URL
-            CommonArguments = new CommonLoadingArguments(ipfsPath.EntityId);
+            CommonArguments = new CommonLoadingArguments(definitionComponent.IpfsPath.EntityId);
         }
 
         public bool Equals(GetSceneFacadeIntention other) =>
-            Equals(IpfsRealm, other.IpfsRealm) && Equals(Definition, other.Definition);
+            Equals(IpfsRealm, other.IpfsRealm) && Equals(DefinitionComponent.Definition, other.DefinitionComponent.Definition);
 
         public override bool Equals(object obj) =>
             obj is GetSceneFacadeIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(IpfsRealm, Definition);
+            HashCode.Combine(IpfsRealm, DefinitionComponent.Definition);
 
         public override string ToString() =>
-            $"Get Scene Facade: {Definition?.id}";
+            $"Get Scene Facade: {DefinitionComponent.Definition?.id}";
     }
 }
