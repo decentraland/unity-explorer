@@ -40,7 +40,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             cameraGo.transform.ResetLocalTRS();
 
             // Z oriented
-            cameraEntity = world.Create(new CameraComponent(camera = cameraGo.AddComponent<Camera>()));
+            cameraEntity = world.Create(new CameraComponent(camera = cameraGo.AddComponent<Camera>()), new CursorComponent());
             input.Set(mouse.position, new Vector2(camera.pixelWidth / 2f, camera.pixelHeight / 2f));
         }
 
