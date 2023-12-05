@@ -64,5 +64,6 @@ namespace DCL.CharacterMotion.Settings
         float SlopeCharacterRotationDelay { get; }
         float WallSlideDetectionDistance { get; }
         float WallSlideMaxMoveSpeedMultiplier { get; }
+        float StepOffset { get; set; }
     }
 }

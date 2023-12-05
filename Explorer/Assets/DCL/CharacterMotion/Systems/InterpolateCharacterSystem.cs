@@ -51,11 +51,6 @@ namespace DCL.CharacterMotion.Systems
             Vector3 finalGravity = rigidTransform.IsOnASteepSlope && !rigidTransform.IsStuck ? rigidTransform.SlopeGravity : rigidTransform.GravityVelocity;
             Vector3 gravityDelta = finalGravity * dt;
 
-            // before moving we check if we are able to step up
-            bool canStepUp = !rigidTransform.IsGrounded;
-
-            characterController.stepOffset = canStepUp ? 0.35f : 0f;
-
             // In order for some systems to work correctly we move the character horizontally and then vertically
             CollisionFlags horizontalCollisionFlags = characterController.Move(movementDelta);
             Vector3 prevPos = transform.position;
