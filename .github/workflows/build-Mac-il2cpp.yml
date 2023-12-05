@@ -41,6 +41,16 @@ jobs:
           
           Add-Content -Value "SENTRY_ENVIRONMENT=$SENTRY_ENVIRONMENT" -Path $env:GITHUB_ENV
           Write-Output $SENTRY_ENVIRONMENT
+          
+      - name: Enable or disable the upload of sentry debug symbols
+        run: |
+          $branchName = "${{ github.ref }}"
+          $uploadSymbols = "false"
+          if ($branchName -eq 'refs/heads/main') {
+            $uploadSymbols = "true"
+          }
+          Add-Content -Value "SENTRY_UPLOAD_DEBUG_SYMBOLS=$uploadSymbols" -Path $env:GITHUB_ENV
+          Write-Output $uploadSymbols
             
       - name: Checkout code
         uses: actions/checkout@v3
@@ -81,7 +91,7 @@ jobs:
           projectPath: Explorer
           targetPlatform: ${{ matrix.targetPlatform }}
           versioning: Semantic
-          customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }}
+          customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }}
           
       # Tar build files to maintain file permissions
       - name: Tar MacOSX/Linux build files
