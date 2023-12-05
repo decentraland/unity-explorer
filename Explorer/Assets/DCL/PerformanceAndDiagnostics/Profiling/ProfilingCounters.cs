@@ -2,13 +2,17 @@
 
 namespace DCL.Profiling
 {
-    public static class ProfilingCounters
+    public static class
+        ProfilingCounters
     {
         private static readonly ProfilerCategory MEMORY = ProfilerCategory.Memory;
 
         // Asset Bundle cache
         public static ProfilerCounterValue<int> ABDataAmount =
             new (MEMORY, "AB Data Amount", ProfilerMarkerDataUnit.Count);
+
+        public static ProfilerCounterValue<int> AssetBundlesInCache =
+            new (MEMORY, "AB Data in Cache", ProfilerMarkerDataUnit.Count);
 
         public static ProfilerCounterValue<int> ABReferencedAmount =
             new (MEMORY, "AB Referenced Amount", ProfilerMarkerDataUnit.Count);

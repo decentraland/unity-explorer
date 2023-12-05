@@ -246,9 +246,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 source.TrySetResult(result);
 
                 if (!result.HasValue)
-
-                    // it will be decided by another source
-                    return null;
+                    return null; // it will be decided by another source
 
                 StreamableLoadingResult<TAsset> resultValue = result.Value;
 

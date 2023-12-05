@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Profiling;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using System;
@@ -48,6 +49,8 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             if (cache.TryAdd(key, asset))
                 listedCache.Add((key, asset));
+
+            ProfilingCounters.AssetBundlesInCache.Value = cache.Count;
         }
 
         public void Dereference(in GetAssetBundleIntention key, AssetBundleData asset) { }
@@ -70,6 +73,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 maxUnloadAmount--;
             }
+
+            ProfilingCounters.AssetBundlesInCache.Value = cache.Count;
         }
 
         public bool Equals(GetAssetBundleIntention x, GetAssetBundleIntention y) =>

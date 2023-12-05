@@ -90,29 +90,28 @@ namespace ECS.StreamableLoading.AssetBundles
 
             try
             {
-            // get metrics
+                // get metrics
 
-            TextAsset metricsFile;
+                TextAsset metricsFile;
 
-            using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
-                metricsFile = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME);
+                using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
+                    metricsFile = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME);
 
-            // Switch to thread pool to parse JSONs
+                // Switch to thread pool to parse JSONs
 
-            await UniTask.SwitchToThreadPool();
-            ct.ThrowIfCancellationRequested();
+                await UniTask.SwitchToThreadPool();
+                ct.ThrowIfCancellationRequested();
 
-            AssetBundleMetrics? metrics = metricsFile != null ? JsonUtility.FromJson<AssetBundleMetrics>(metricsFile.text) : null;
+                AssetBundleMetrics? metrics = metricsFile != null ? JsonUtility.FromJson<AssetBundleMetrics>(metricsFile.text) : null;
 
-            AssetBundleData[] dependencies = await LoadDependenciesAsync(intention.Manifest, partition, intention.CommonArguments.CustomEmbeddedSubDirectory, assetBundle, ct);
+                AssetBundleData[] dependencies = await LoadDependenciesAsync(intention.Manifest, partition, intention.CommonArguments.CustomEmbeddedSubDirectory, assetBundle, ct);
 
-            await UniTask.SwitchToMainThread();
-            ct.ThrowIfCancellationRequested();
+                await UniTask.SwitchToMainThread();
+                ct.ThrowIfCancellationRequested();
 
-            GameObject gameObjects = await LoadAllAssetsAsync(assetBundle, ct);
+                GameObject gameObjects = await LoadAllAssetsAsync(assetBundle, ct);
 
-            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, gameObjects, dependencies));
-
+                return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, gameObjects, dependencies));
             }
             catch (Exception)
             {
