@@ -1,19 +1,18 @@
 using DCL.Lambdas;
+using DCL.Optimization.Pools;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using UnityEngine;
 using UnityEngine.Pool;
-using Utility.Pool;
 
 namespace DCL.PlacesAPIService
 {
     public static class PlacesData
     {
-        internal static readonly ListObjectPool<PlaceInfo> PLACE_INFO_LIST_POOL = new (listInstanceDefaultCapacity: 100, defaultCapacity: 4);
-
         public static readonly ObjectPool<PlaceInfo> PLACE_INFO_POOL = new (() => new PlaceInfo(), defaultCapacity: 10, maxSize: 1000);
+        internal static readonly ListObjectPool<PlaceInfo> PLACE_INFO_LIST_POOL = new (listInstanceDefaultCapacity: 100, defaultCapacity: 4);
 
         // Preallocate the list so it will be reused every time it's parsed into
         internal static readonly ObjectPool<PlacesAPIResponse> PLACES_API_RESPONSE_POOL = new (() => new PlacesAPIResponse { data = new List<PlaceInfo>(200) }, actionOnRelease: p => p.data.Clear(), defaultCapacity: 4);
@@ -23,24 +22,12 @@ namespace DCL.PlacesAPIService
         [Serializable]
         public class PlaceInfo : ISerializationCallbackReceiver
         {
-            [Serializable]
-            public class Realm
-            {
-                public string serverName;
-                public string layer;
-                public string url;
-                public int usersCount;
-                public int maxUsers;
-                public Vector2Int[] userParcels;
-            }
-
             public string id;
             public string title;
             public string description;
             public string image;
             public string owner;
             public string[] tags;
-            [SerializeField] private string[] positions;
             public string world_name;
 
             public Vector2Int[] Positions;
@@ -70,6 +57,7 @@ namespace DCL.PlacesAPIService
             public Realm[] realms_detail;
 
             public string like_rate;
+            [SerializeField] private string[] positions;
 
             [JsonIgnore]
             public float? like_rate_as_float
@@ -112,6 +100,17 @@ namespace DCL.PlacesAPIService
                     string[] split = positions[i].Split(',');
                     Positions[i] = new Vector2Int(int.Parse(split[0]), int.Parse(split[1]));
                 }
+            }
+
+            [Serializable]
+            public class Realm
+            {
+                public string serverName;
+                public string layer;
+                public string url;
+                public int usersCount;
+                public int maxUsers;
+                public Vector2Int[] userParcels;
             }
         }
 

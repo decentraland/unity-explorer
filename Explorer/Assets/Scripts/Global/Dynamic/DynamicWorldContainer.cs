@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables;
 using DCL.DebugUtilities;
 using DCL.ParcelsService;
-using DCL.PerformanceBudgeting;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -26,6 +25,8 @@ namespace Global.Dynamic
     {
         private static readonly URLDomain ASSET_BUNDLES_URL = URLDomain.FromString("https://ab-cdn.decentraland.org/");
 
+        private static MVCManager mvcManager;
+
         public DebugUtilitiesContainer DebugContainer { get; private set; }
 
         public IRealmController RealmController { get; private set; }
@@ -35,8 +36,6 @@ namespace Global.Dynamic
         public EmptyScenesWorldFactory EmptyScenesWorldFactory { get; private set; }
 
         public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; }
-
-        private static MVCManager mvcManager;
 
         public void Dispose()
         {

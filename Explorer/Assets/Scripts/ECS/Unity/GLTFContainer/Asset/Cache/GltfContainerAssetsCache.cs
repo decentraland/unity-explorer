@@ -1,7 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiling;
-using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Components;
@@ -52,11 +51,14 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
         public bool TryGet(in string key, out GltfContainerAsset asset)
         {
-            if (cache.TryGetValue(key, out List<GltfContainerAsset> list) && list.Count > 0)
+            if (cache.TryGetValue(key, out List<GltfContainerAsset> assets) && assets.Count > 0)
             {
                 // Remove from the tail of the list
-                asset = list[^1];
-                list.RemoveAt(list.Count - 1);
+                asset = assets[^1];
+                assets.RemoveAt(assets.Count - 1);
+                unloadQueue.TryUpdatePriority(key, MultithreadingUtility.FrameCount);
+
+                ProfilingCounters.GltfInCacheAmount.Value--;
                 return true;
             }
 
@@ -91,23 +93,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
             asset.Root.SetActive(false);
             asset.Root.transform.SetParent(parentContainer);
-        }
-
-        public bool TryGet(in string key, out GltfContainerAsset asset)
-        {
-            if (cache.TryGetValue(key, out List<GltfContainerAsset> assets) && assets.Count > 0)
-            {
-                // Remove from the tail of the list
-                asset = assets[^1];
-                assets.RemoveAt(assets.Count - 1);
-                unloadQueue.TryUpdatePriority(key, MultithreadingUtility.FrameCount);
-
-                ProfilingCounters.GltfInCacheAmount.Value--;
-                return true;
-            }
-
-            asset = default(GltfContainerAsset);
-            return false;
         }
 
         public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount)
