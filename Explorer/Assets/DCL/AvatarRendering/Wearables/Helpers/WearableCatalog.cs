@@ -76,7 +76,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         private static void UnloadWearableAssets(IWearable wearable)
         {
-            for (var i = 0; i < wearable.WearableAssetResults?.Length; i++)
+            for (var i = 0; i < wearable.WearableAssetResults.Length; i++)
             {
                 WearableAsset wearableAsset = wearable.WearableAssetResults[i]?.Asset;
 

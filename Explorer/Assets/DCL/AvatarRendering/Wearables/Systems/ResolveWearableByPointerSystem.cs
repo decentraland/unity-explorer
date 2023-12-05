@@ -74,11 +74,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             // Instead of checking particular resolution, for simplicity just check if the default wearables are resolved
             // if it is required
-
             if (wearablesByPointersIntention.FallbackToDefaultWearables && !defaultWearablesResolved)
-
-                // Wait for default wearables to be resolved
-                return;
+                return; // Wait for default wearables to be resolved
 
             List<string> missingPointers = WearableComponentsUtils.POINTERS_POOL.Get();
             var successfulResults = 0;
@@ -116,7 +113,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 return;
             }
 
-            //If there are no missing pointers, we release the list
+            // If there are no missing pointers, we release the list
             WearableComponentsUtils.POINTERS_POOL.Release(missingPointers);
 
             if (successfulResults == wearablesByPointersIntention.Pointers.Count)

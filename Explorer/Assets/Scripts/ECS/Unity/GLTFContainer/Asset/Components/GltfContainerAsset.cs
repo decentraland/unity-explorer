@@ -46,7 +46,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
             VisibleColliderMeshes = visibleColliderMeshes;
             Renderers = renderers;
 
-            ProfilingCounters.GLTFContainerAssetsAmount.Value++;
+            ProfilingCounters.GltfContainerAssetsAmount.Value++;
         }
 
         public void Dispose()
@@ -62,7 +62,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
 
             UnityObjectUtils.SafeDestroy(Root);
 
-            ProfilingCounters.GLTFContainerAssetsAmount.Value--;
+            ProfilingCounters.GltfContainerAssetsAmount.Value--;
         }
 
         public static GltfContainerAsset Create(GameObject root, AssetBundleData assetBundleReference) =>

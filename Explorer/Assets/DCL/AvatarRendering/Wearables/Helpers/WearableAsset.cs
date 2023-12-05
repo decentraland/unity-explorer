@@ -36,6 +36,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             this.assetBundleData = assetBundleData;
 
+            if (gameObject == null)
+                ProfilingCounters.EmptyWearablesAssetsAmount.Value++;
+
             ProfilingCounters.WearablesAssetsAmount.Value++;
         }
 
@@ -54,6 +57,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             if (ReferenceCount > 0)
                 ProfilingCounters.WearablesAssetsReferencedAmount.Value--;
+
+            if (GameObject == null)
+                ProfilingCounters.EmptyWearablesAssetsAmount.Value--;
 
             ProfilingCounters.WearablesAssetsAmount.Value--;
         }
