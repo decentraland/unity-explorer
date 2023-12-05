@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CrdtEcsBridge.Physics;
 using DCL.CharacterCamera;
+using DCL.CharacterCamera.Components;
 using DCL.Diagnostics;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
@@ -48,9 +49,9 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         }
 
         [Query]
-        private void RaycastFromCamera(ref CameraComponent camera)
+        private void RaycastFromCamera(ref CameraComponent camera, in CursorComponent cursorComponent)
         {
-            Ray ray = CreateRay(in camera);
+            Ray ray = CreateRay(in camera, in cursorComponent);
 
             // we are interested in one hit only
 
@@ -72,8 +73,8 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private Ray CreateRay(in CameraComponent cameraComponent) =>
-            cameraComponent.Camera.ScreenPointToRay(cameraComponent.CursorIsLocked
+        private Ray CreateRay(in CameraComponent cameraComponent, in CursorComponent cursorComponent) =>
+            cameraComponent.Camera.ScreenPointToRay(cursorComponent.CursorIsLocked
                 ? new Vector3(cameraComponent.Camera.pixelWidth / 2f, cameraComponent.Camera.pixelHeight / 2f, 0)
                 : pointInput.ReadValue<Vector2>());
     }

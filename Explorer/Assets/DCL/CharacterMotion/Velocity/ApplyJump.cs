@@ -12,16 +12,24 @@ namespace DCL.CharacterMotion
         public static void Execute(
             ICharacterControllerSettings settings,
             ref CharacterRigidTransform characterPhysics,
-            in JumpInputComponent jump,
+            ref JumpInputComponent jump,
             in MovementInputComponent inputComponent,
             int physicsTick)
         {
+            characterPhysics.JustJumped = false;
+
+            bool isJumpDisabled = characterPhysics.IsOnASteepSlope && !characterPhysics.IsStuck;
+
+            // update the grounded frame from last frame
+            if (characterPhysics.IsGrounded && !isJumpDisabled)
+                characterPhysics.LastGroundedFrame = physicsTick;
+
             // (Coyote Timer: Pressing Jump before touching ground)
             // We calculate the bonus frames that we have after we decide to jump, settings.JumpGraceTime is in seconds, we convert it into physics ticks
             int bonusFrames = Mathf.RoundToInt(settings.JumpGraceTime / UnityEngine.Time.fixedDeltaTime);
 
             // no bonus frames if we are already going up
-            if (characterPhysics.NonInterpolatedVelocity.y > 0)
+            if (characterPhysics.GravityVelocity.y > 0)
                 bonusFrames = 0;
 
             // avoid triggering jump on the first frames
@@ -34,16 +42,21 @@ namespace DCL.CharacterMotion
 
             // (Coyote Timer: Pressing Jump late after starting to fall, to give the player a chance to jump after not being grounded)
 
-            if (canJump && wantsToJump)
+            if (canJump && wantsToJump && !isJumpDisabled)
             {
                 float jumpHeight = GetJumpHeight(characterPhysics.MoveVelocity.Velocity, settings, inputComponent);
                 float gravity = settings.Gravity * settings.JumpGravityFactor;
 
                 // Override velocity in a jump direction
-                characterPhysics.NonInterpolatedVelocity.y = Mathf.Sqrt(-2 * jumpHeight * gravity);
+                characterPhysics.GravityVelocity.y = Mathf.Sqrt(-2 * jumpHeight * gravity);
 
                 characterPhysics.IsGrounded = false;
                 characterPhysics.LastJumpFrame = physicsTick;
+
+                // We "consume" the jump input
+                jump.Trigger.TickWhenJumpOccurred = int.MinValue;
+                jump.Trigger.TickWhenJumpWasConsumed = physicsTick;
+                characterPhysics.JustJumped = true;
             }
         }
 

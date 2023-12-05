@@ -62,6 +62,7 @@ namespace DCL.PluginSystem.Global
             world.Create(
                 new CRDTEntity(SpecialEntitiesID.CAMERA_ENTITY),
                 new CameraComponent(cinemachinePreset.Brain.OutputCamera),
+                new CursorComponent(),
                 new CameraFieldOfViewComponent(),
                 exposedCameraData,
                 cinemachinePreset,

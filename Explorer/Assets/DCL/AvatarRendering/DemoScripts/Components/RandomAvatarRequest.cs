@@ -2,7 +2,7 @@
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using ECS.StreamableLoading.Common;
 
-namespace DCL.AvatarRendering.AvatarShape.Systems
+namespace DCL.AvatarRendering.DemoScripts.Components
 {
     public class RandomAvatarRequest
     {

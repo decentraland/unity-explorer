@@ -7,6 +7,7 @@ using DCL.AvatarRendering.AvatarShape.GPUSkinning;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.DemoScripts.Systems;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
 using DCL.DebugUtilities;
@@ -129,6 +130,8 @@ namespace DCL.PluginSystem.Global
 
             StartAvatarMatricesCalculationSystem.InjectToWorld(ref builder);
             FinishAvatarMatricesCalculationSystem.InjectToWorld(ref builder, skinningStrategy);
+
+            AvatarShapeVisibilitySystem.InjectToWorld(ref builder);
 
             //Debug scripts
             InstantiateRandomAvatarsSystem.InjectToWorld(ref builder, debugContainerBuilder, realmData, AVATARS_QUERY, transformPoolRegistry);

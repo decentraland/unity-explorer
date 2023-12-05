@@ -1,5 +1,6 @@
-﻿using DCL.Profiling;
+using DCL.Profiling;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 
@@ -12,11 +13,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     {
         public readonly WearableAsset OriginalAsset;
         public readonly GameObject Instance;
+        public readonly List<Renderer> Renderers;
 
         public CachedWearable(WearableAsset originalAsset, GameObject instance)
         {
             OriginalAsset = originalAsset;
             Instance = instance;
+            Renderers = new List<Renderer>();
 
             ProfilingCounters.CachedWearablesAmount.Value++;
         }
