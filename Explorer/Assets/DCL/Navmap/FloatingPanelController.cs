@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace DCL.Navmap
 {
@@ -74,7 +73,7 @@ namespace DCL.Navmap
             try
             {
                 view.jumpInButton.onClick.RemoveAllListeners();
-                view.jumpInButton.onClick.AddListener(()=>teleportController.TeleportToParcel(parcel));
+                view.jumpInButton.onClick.AddListener(() => teleportController.TeleportToParcel(parcel));
                 PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);
                 ResetCategories();
                 SetFloatingPanelInfo(placeInfo);
@@ -105,10 +104,8 @@ namespace DCL.Navmap
                 : placeInfo.description;
 
             view.location.text = placeInfo.base_position;
-            view.visits.text = placeInfo.user_visits.ToString();
-            //Check all .text
-            //view.upvotes.text = placeInfo.like_rate_as_float != null ? string.Format("{0:0}%", placeInfo.like_rate_as_float.Value * 100) : "-%";
-            view.parcelsCount.text = placeInfo.Positions.Length.ToString();
+            view.visits.SetText("{0:0}", placeInfo.user_visits);
+            view.parcelsCount.SetText("{0:0}", placeInfo.Positions.Length);
             SetUpVotes(placeInfo);
 
             if (placeInfo.categories.Length == 0)
