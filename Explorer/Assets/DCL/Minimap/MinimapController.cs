@@ -33,6 +33,7 @@ namespace DCL.Minimap
         private readonly IMapRenderer mapRenderer;
         private readonly MVCManager mvcManager;
         private readonly IPlacesAPIService placesAPIService;
+        private CancellationTokenSource cts;
 
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController mapCameraController;
@@ -110,7 +111,8 @@ namespace DCL.Minimap
                 return;
 
             previousParcelPosition = playerParcelPosition;
-
+            cts.SafeCancelAndDispose();
+            cts = new CancellationTokenSource();
             RetrieveParcelInfoAsync(playerParcelPosition).Forget();
             return;
 
@@ -118,7 +120,7 @@ namespace DCL.Minimap
             {
                 try
                 {
-                    PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlaceAsync(playerParcelPosition, CancellationToken.None);
+                    PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlaceAsync(playerParcelPosition, cts.Token);
                     viewInstance.placeNameText.text = placeInfo.title;
                 }
                 catch (Exception) { viewInstance.placeNameText.text = "Unknown place"; }
@@ -127,6 +129,11 @@ namespace DCL.Minimap
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
+
+        public override void Dispose()
+        {
+            cts.SafeCancelAndDispose();
+        }
 
         protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
             UniTask.Never(ct);

@@ -36,7 +36,7 @@ namespace Global.Dynamic
 
         public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; }
 
-        private MVCManager mvcManager;
+        private static MVCManager mvcManager;
 
         public void Dispose()
         {
@@ -67,7 +67,7 @@ namespace Global.Dynamic
             var parcelServiceContainer = ParcelServiceContainer.Create(realmData, staticContainer.CharacterObject, debugBuilder);
 
             PopupCloserView popupCloserView = Object.Instantiate((await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
-            MVCManager mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
+            mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
             MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, dynamicSettings.MapRendererSettings, ct);
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController));
 

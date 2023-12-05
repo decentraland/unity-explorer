@@ -146,6 +146,6 @@ namespace MVC
 
         protected abstract UniTask WaitForCloseIntent(CancellationToken ct);
 
-        public void Dispose() { }
+        public virtual void Dispose() { }
     }
 }

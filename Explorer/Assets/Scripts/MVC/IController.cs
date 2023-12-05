@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace MVC
 {
-    public interface IController : IDisposable
+    public interface IController
     {
         ControllerState State { get; }
 
@@ -24,10 +24,12 @@ namespace MVC
         ///     Should be called from <see cref="IMVCManager" /> only
         /// </summary>
         internal UniTask HideViewAsync(CancellationToken ct);
+
+        void Dispose();
     }
 
     // ReSharper disable once UnusedTypeParameter TView it's used for registering a proper association in MVC Manager
-    public interface IController<TView, in TInputData> : IDisposable, IController where TView: IView
+    public interface IController<TView, in TInputData> : IController where TView: IView
     {
         /// <summary>
         ///     Shows the views and keeps spinning until the close intention is sent (e.g. by button)

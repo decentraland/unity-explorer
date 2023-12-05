@@ -52,6 +52,7 @@ namespace Global.Dynamic
             {
                 if (dynamicWorldContainer != null)
                 {
+                    dynamicWorldContainer.Dispose();
                     foreach (IDCLGlobalPlugin plugin in dynamicWorldContainer.GlobalPlugins)
                         plugin.Dispose();
                 }
