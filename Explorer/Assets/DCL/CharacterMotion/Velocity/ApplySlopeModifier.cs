@@ -19,8 +19,7 @@ namespace DCL.CharacterMotion
             float dt)
         {
             // before moving we check if we are able to step up
-            bool canStepUp = !rigidTransform.IsGrounded;
-            characterController.stepOffset = canStepUp ? settings.StepOffset : 0f;
+            characterController.stepOffset = settings.StepOffset;
 
             // disabled when jumping or not grounded
             if (!rigidTransform.IsGrounded || jump.IsPressed || rigidTransform.IsOnASteepSlope)
