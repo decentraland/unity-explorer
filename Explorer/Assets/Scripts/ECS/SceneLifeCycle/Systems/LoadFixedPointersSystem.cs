@@ -8,6 +8,7 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using Ipfs;
+using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 
@@ -69,9 +70,10 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     if (result.Succeeded)
                     {
-                        CreateSceneEntity(result.Asset, promise.LoadingIntention.IpfsPath, out Vector2Int[] parcels);
+                        CreateSceneEntity(result.Asset, promise.LoadingIntention.IpfsPath);
+                        IReadOnlyList<Vector2Int> parcels = result.Asset.metadata.scene.DecodedParcels;
 
-                        for (var j = 0; j < parcels.Length; j++)
+                        for (var j = 0; j < parcels.Count; j++)
                             processesScenePointers.Value.Add(parcels[j].ToInt2());
                     }
                 }

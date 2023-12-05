@@ -26,11 +26,20 @@ namespace MVC
         public FullscreenPushInfo PushFullscreen(IController controller)
         {
             fullscreenController = controller;
+
+            foreach (IController persistentController in persistentStack)
+                persistentController.Blur();
+
             return new FullscreenPushInfo(popupStack, new CanvasOrdering(CanvasOrdering.SortingLayer.Fullscreen, 0));
         }
 
-        public void PopFullscreen(IController controller) =>
+        public void PopFullscreen(IController controller)
+        {
+            foreach (IController persistentController in persistentStack)
+                persistentController.Focus();
+
             fullscreenController = null;
+        }
 
         public PersistentPushInfo PushPersistent(IController controller)
         {

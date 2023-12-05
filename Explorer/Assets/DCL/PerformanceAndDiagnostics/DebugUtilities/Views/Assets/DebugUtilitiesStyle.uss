@@ -203,6 +203,27 @@ DebugToggleElement > .unity-toggle #unity-checkmark {
     -unity-font-style: normal;
 }
 
+Vector2IntField > VisualElement {
+    flex-direction: row;
+    flex-grow: 1;
+}
+
+Vector2IntField > VisualElement > IntegerField {
+    width: 49%;
+}
+
+#unity-x-input > Label {
+    min-width: 15px;
+}
+
+#unity-y-input > Label {
+    min-width: 15px;
+}
+
+Vector2IntField > VisualElement > .unity-composite-field__field-spacer {
+    display: none;
+}
+
 .debug-hint--info > #Sign {
     background-image: url('project://database/Assets/DCL/DebugUtilities/Views/Assets/info.png');
 }

@@ -6,6 +6,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.WebRequests;
 using DCL.Diagnostics;
 using DCL.PerformanceBudgeting;
 using ECS;
@@ -15,8 +16,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System;
 using System.Threading;
-using UnityEngine;
-using UnityEngine.Networking;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Systems
@@ -30,18 +29,20 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private readonly IRealmData realmData;
         private readonly URLSubdirectory wearablesSubdirectory;
         private readonly WearableCatalog wearableCatalog;
+        private readonly IWebRequestController webRequestController;
 
         private readonly Func<bool> isRealmDataReady;
         internal IURLBuilder urlBuilder = new URLBuilder();
 
         public LoadWearablesByParamSystem(
-            World world, IStreamableCache<IWearable[], GetWearableByParamIntention> cache, IRealmData realmData,
-            URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory, WearableCatalog wearableCatalog,
-            MutexSync mutexSync) : base(world, cache, mutexSync)
+            World world, IWebRequestController webRequestController, IStreamableCache<IWearable[], GetWearableByParamIntention> cache,
+            IRealmData realmData, URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory,
+            WearableCatalog wearableCatalog, MutexSync mutexSync) : base(world, cache, mutexSync)
         {
             this.realmData = realmData;
             this.lambdaSubdirectory = lambdaSubdirectory;
             this.wearableCatalog = wearableCatalog;
+            this.webRequestController = webRequestController;
             this.wearablesSubdirectory = wearablesSubdirectory;
 
             isRealmDataReady = () => realmData.Configured;
@@ -51,18 +52,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             await UniTask.WaitUntil(isRealmDataReady, cancellationToken: ct);
 
-            string response;
-
-            using (var request = UnityWebRequest.Get(BuildURL(intention.UserID, intention.Params)))
-            {
-                await request.SendWebRequest().WithCancellation(ct);
-                response = request.downloadHandler.text;
-            }
-
-            //Deserialize out of the main thread
-            await UniTask.SwitchToThreadPool();
-
-            WearableDTO.LambdaResponse lambdaResponse = JsonUtility.FromJson<WearableDTO.LambdaResponse>(response);
+            WearableDTO.LambdaResponse lambdaResponse =
+                await (await webRequestController.GetAsync(new CommonArguments(BuildURL(intention.UserID, intention.Params), attemptsCount: 1), ct, GetReportCategory()))
+                   .CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
             for (var i = 0; i < lambdaResponse.elements.Count; i++)
             {
@@ -73,7 +65,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             return new StreamableLoadingResult<IWearable[]>(intention.Results.ToArray());
         }
 
-        private string BuildURL(string userID, (string paramName, string paramValue)[] urlEncodedParams)
+        private URLAddress BuildURL(string userID, (string paramName, string paramValue)[] urlEncodedParams)
         {
             urlBuilder.Clear();
 
@@ -87,7 +79,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     urlBuilder.AppendParameter(urlEncodedParams[i]);
             }
 
-            return urlBuilder.GetResult();
+            return urlBuilder.Build();
         }
     }
 }

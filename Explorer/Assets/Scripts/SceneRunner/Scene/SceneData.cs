@@ -36,10 +36,10 @@ namespace SceneRunner.Scene
 
         public bool HasRequiredPermission(string permission)
         {
-            if (sceneDefinition.metadata.scene.requiredPermissions == null)
+            if (sceneDefinition.metadata.requiredPermissions == null)
                 return false;
 
-            foreach (string requiredPermission in sceneDefinition.metadata.scene.requiredPermissions)
+            foreach (string requiredPermission in sceneDefinition.metadata.requiredPermissions)
             {
                 if (requiredPermission == permission)
                     return true;
@@ -83,7 +83,7 @@ namespace SceneRunner.Scene
         {
             if (Uri.TryCreate(url, UriKind.Absolute, out Uri uri))
             {
-                foreach (string allowedMediaHostname in sceneDefinition.metadata.scene.allowedMediaHostnames)
+                foreach (string allowedMediaHostname in sceneDefinition.metadata.allowedMediaHostnames)
                 {
                     if (string.Equals(allowedMediaHostname, uri.Host, StringComparison.CurrentCultureIgnoreCase))
                         return true;

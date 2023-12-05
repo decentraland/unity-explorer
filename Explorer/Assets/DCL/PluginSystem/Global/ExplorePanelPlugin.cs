@@ -3,11 +3,14 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.ExplorePanel;
 using DCL.Navmap;
+using DCL.ParcelsService;
+using DCL.PlacesAPIService;
+using DCL.Settings;
+using Global.Dynamic;
 using MVC;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using static UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {
@@ -15,43 +18,52 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
+        private readonly MapRendererContainer mapRendererContainer;
+        private readonly IPlacesAPIService placesAPIService;
+        private readonly ITeleportController teleportController;
+        private NavmapController navmapController;
 
-        public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner, IMVCManager mvcManager)
+        public ExplorePanelPlugin(
+            IAssetsProvisioner assetsProvisioner,
+            IMVCManager mvcManager,
+            MapRendererContainer mapRendererContainer,
+            IPlacesAPIService placesAPIService,
+            ITeleportController teleportController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
+            this.mapRendererContainer = mapRendererContainer;
+            this.placesAPIService = placesAPIService;
+            this.teleportController = teleportController;
         }
 
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
         {
-            mvcManager.RegisterController(new ExplorePanelController(
-                ExplorePanelController.Preallocate(
-                    (await assetsProvisioner.ProvideMainAssetAsync(settings.ExplorePanelPrefab, ct: ct)).Value.GetComponent<ExplorePanelView>(), null, out var explorePanelView)));
+            ExplorePanelView panelView = (await assetsProvisioner.ProvideMainAssetAsync(settings.ExplorePanelPrefab, ct: ct)).Value.GetComponent<ExplorePanelView>();
+            ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelView, null, out ExplorePanelView explorePanelView);
+
+            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, teleportController);
+            await navmapController.InitialiseAssetsAsync(assetsProvisioner, ct);
+            SettingsController settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
+
+            mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController));
 
             mvcManager.RegisterController(new PersistentExplorePanelOpenerController(
                 PersistentExplorePanelOpenerController.CreateLazily(
                     (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>(), null), mvcManager)
             );
 
-            mvcManager.RegisterController(new MinimapController(
-                MinimapController.CreateLazily(
-                    (await assetsProvisioner.ProvideMainAssetAsync(settings.MinimapPrefab, ct: ct)).Value.GetComponent<MinimapView>(), null), mvcManager)
-            );
-
-            NavmapController navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>());
+            //Create here navmap plugin and pass a setting with reference to the navmapview
 
             mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter())).Forget();
-            mvcManager.ShowAsync(MinimapController.IssueCommand(new EmptyParameter())).Forget();
         }
 
         public void Dispose()
         {
+            navmapController.Dispose();
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        {
-        }
-
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public class ExplorePanelSettings : IDCLPluginSettings
         {

@@ -95,17 +95,6 @@ namespace ECS.StreamableLoading.Common.Systems
             // it indicates that the current source was used
             intention.RemoveCurrentSource();
 
-            // Try load from cache first
-            if (TryLoadFromCache(in entity, in intention, state.AcquiredBudget, currentSource))
-                return;
-
-            // If the given URL failed irrecoverably just return the failure
-            if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset> failure))
-            {
-                FinalizeLoading(entity, intention, failure, currentSource, state.AcquiredBudget);
-                return;
-            }
-
             // Indicate that loading has started
             state.Value = StreamableLoadingState.Status.InProgress;
 
@@ -122,6 +111,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 var requestIsNotFulfilled = true;
 
                 // if the request is cached wait for it
+                // If there is an ongoing request it means that the result is neither cached, nor failed
                 if (cache.OngoingRequests.SyncTryGetValue(intention.CommonArguments.URL, out UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> cachedSource))
                 {
                     // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
@@ -129,6 +119,20 @@ namespace ECS.StreamableLoading.Common.Systems
 
                     // if the cached request is cancelled it does not mean failure for the new intent
                     (requestIsNotFulfilled, result) = await cachedSource.Task.SuppressCancellationThrow();
+                }
+
+                // Try load from cache first
+                if (cache.TryGet(intention, out TAsset asset))
+                {
+                    result = new StreamableLoadingResult<TAsset>(asset);
+                    return;
+                }
+
+                // If the given URL failed irrecoverably just return the failure
+                if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset> failure))
+                {
+                    result = failure;
+                    return;
                 }
 
                 // if this request must be cancelled by `intention.CommonArguments.CancellationToken` it will be cancelled after `if (!requestIsNotFulfilled)`
@@ -158,7 +162,7 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             using MutexSync.Scope sync = mutexSync.GetScope();
 
-            if (systemIsDisposed)
+            if (systemIsDisposed || !World.IsAlive(entity))
             {
                 // World is no longer valid, can't call World.Get
                 // Just Free the budget
@@ -207,16 +211,33 @@ namespace ECS.StreamableLoading.Common.Systems
         private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlowAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             var source = new UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
+
+            // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncAdd {intention.CommonArguments.URL}");
             cache.OngoingRequests.SyncAdd(intention.CommonArguments.URL, source);
+
+            var ongoingRequestRemoved = false;
+
+            void TryRemoveOngoingRequest()
+            {
+                if (!ongoingRequestRemoved)
+                {
+                    // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncRemove {intention.CommonArguments.URL}");
+                    cache.OngoingRequests.SyncRemove(intention.CommonArguments.URL);
+                    ongoingRequestRemoved = true;
+                }
+            }
 
             try
             {
                 StreamableLoadingResult<TAsset>? result = await RepeatLoopAsync(intention, acquiredBudget, partition, ct);
 
                 // Ensure that we returned to the main thread
-                await UniTask.SwitchToMainThread();
+                await UniTask.SwitchToMainThread(ct);
 
                 // Set result for the reusable source
+                // Remove from the ongoing requests immediately because finally will be called later than
+                // continuation of cachedSource.Task.SuppressCancellationThrow();
+                TryRemoveOngoingRequest();
                 source.TrySetResult(result);
 
                 if (!result.HasValue)
@@ -234,6 +255,10 @@ namespace ECS.StreamableLoading.Common.Systems
             }
             catch (OperationCanceledException operationCanceledException)
             {
+                // Remove from the ongoing requests immediately because finally will be called later than
+                // continuation of cachedSource.Task.SuppressCancellationThrow();
+                TryRemoveOngoingRequest();
+
                 // Cancellation does not produce asset result
                 source.TrySetCanceled(operationCanceledException.CancellationToken);
                 throw;
@@ -241,7 +266,7 @@ namespace ECS.StreamableLoading.Common.Systems
             finally
             {
                 // We need to remove the request the same frame to prevent de-sync with new requests
-                cache.OngoingRequests.SyncRemove(intention.CommonArguments.URL);
+                TryRemoveOngoingRequest();
             }
         }
 
@@ -255,17 +280,6 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             cache.IrrecoverableFailures.Add(intention.CommonArguments.URL, failure);
             return failure;
-        }
-
-        private bool TryLoadFromCache(in Entity entity, in TIntention intention, IAcquiredBudget acquiredBudget, AssetSource source)
-        {
-            if (cache.TryGet(in intention, out TAsset asset))
-            {
-                FinalizeLoading(entity, intention, new StreamableLoadingResult<TAsset>(asset), source, acquiredBudget);
-                return true;
-            }
-
-            return false;
         }
 
         private void AddToCache(in TIntention intention, TAsset asset)
