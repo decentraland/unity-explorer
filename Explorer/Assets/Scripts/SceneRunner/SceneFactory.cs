@@ -143,7 +143,7 @@ namespace SceneRunner
 
             SceneRuntimeImpl sceneRuntime;
 
-            try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(sceneCodeUrl, instancePoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
+            try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(sceneCodeUrl, exceptionsHandler, instancePoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
             catch (ScriptEngineException e)
             {
                 // ScriptEngineException.ErrorDetails is ignored through the logging process which is vital in the reporting information

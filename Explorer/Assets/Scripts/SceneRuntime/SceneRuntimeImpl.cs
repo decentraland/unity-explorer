@@ -17,6 +17,7 @@ namespace SceneRuntime
     public class SceneRuntimeImpl : ISceneRuntime, IJsOperations
     {
         internal readonly V8ScriptEngine engine;
+        private readonly ISceneExceptionsHandler sceneExceptionsHandler;
         private readonly IInstancePoolsProvider instancePoolsProvider;
 
         private readonly SceneModuleLoader moduleLoader;
@@ -32,10 +33,13 @@ namespace SceneRuntime
 
         private RuntimeWrapper runtimeWrapper;
 
-        public SceneRuntimeImpl(string sourceCode, string jsInitCode,
+        public SceneRuntimeImpl(
+            ISceneExceptionsHandler sceneExceptionsHandler,
+            string sourceCode, string jsInitCode,
             Dictionary<string, string> jsModules, IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo)
         {
+            this.sceneExceptionsHandler = sceneExceptionsHandler;
             this.instancePoolsProvider = instancePoolsProvider;
             resetableSource = new JSTaskResolverResetable();
             moduleLoader = new SceneModuleLoader();
@@ -88,12 +92,12 @@ namespace SceneRuntime
 
         public void RegisterEngineApi(IEngineApi api)
         {
-            engine.AddHostObject("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, new RethrowSceneExceptionsHandler()));
+            engine.AddHostObject("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, sceneExceptionsHandler));
         }
 
         public void RegisterRuntime(IRuntime api)
         {
-            engine.AddHostObject("UnityRuntime", runtimeWrapper = new RuntimeWrapper(api, new RethrowSceneExceptionsHandler()));
+            engine.AddHostObject("UnityRuntime", runtimeWrapper = new RuntimeWrapper(api, sceneExceptionsHandler));
         }
 
         public void SetIsDisposing()

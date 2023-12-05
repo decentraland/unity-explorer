@@ -3,6 +3,7 @@ using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
 using DCL.Diagnostics;
+using SceneRunner.Scene.ExceptionsHandling;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -30,7 +31,9 @@ namespace SceneRuntime.Factory
         /// <summary>
         ///     Must be called on the main thread
         /// </summary>
-        public async UniTask<SceneRuntimeImpl> CreateBySourceCodeAsync(string sourceCode,
+        public async UniTask<SceneRuntimeImpl> CreateBySourceCodeAsync(
+            string sourceCode,
+            ISceneExceptionsHandler sceneExceptionsHandler,
             IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo,
             CancellationToken ct,
@@ -47,13 +50,14 @@ namespace SceneRuntime.Factory
             // Provide basic Thread Pool synchronization context
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
 
-            return new SceneRuntimeImpl(WrapInModuleCommonJs(sourceCode), initSourceCode, moduleDictionary, instancePoolsProvider, sceneShortInfo);
+            return new SceneRuntimeImpl(sceneExceptionsHandler, WrapInModuleCommonJs(sourceCode), initSourceCode, moduleDictionary, instancePoolsProvider, sceneShortInfo);
         }
 
         /// <summary>
         ///     Must be called on the main thread
         /// </summary>
         public async UniTask<SceneRuntimeImpl> CreateByPathAsync(URLAddress path,
+            ISceneExceptionsHandler sceneExceptionsHandler,
             IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo,
             CancellationToken ct,
@@ -62,7 +66,7 @@ namespace SceneRuntime.Factory
             AssertCalledOnTheMainThread();
 
             string sourceCode = await LoadJavaScriptSourceCodeAsync(path, ct);
-            return await CreateBySourceCodeAsync(sourceCode, instancePoolsProvider, sceneShortInfo, ct, instantiationBehavior);
+            return await CreateBySourceCodeAsync(sourceCode, sceneExceptionsHandler, instancePoolsProvider, sceneShortInfo, ct, instantiationBehavior);
         }
 
         private void AssertCalledOnTheMainThread()
