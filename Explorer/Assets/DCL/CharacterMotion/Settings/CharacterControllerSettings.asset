@@ -85,7 +85,7 @@ MonoBehaviour:
   <SlideAnimationBlendSpeed>k__BackingField: 7
   <MinSlopeAngle>k__BackingField: 50
   <MaxSlopeAngle>k__BackingField: 80
-  <SlopeCharacterRotationDelay>k__BackingField: 0.25
+  <SlopeCharacterRotationDelay>k__BackingField: 0.05
   <SlopeVelocityModifier>k__BackingField:
     serializedVersion: 2
     m_Curve:
@@ -121,7 +121,7 @@ MonoBehaviour:
     m_RotationOrder: 4
   <WallSlideDetectionDistance>k__BackingField: 0.5
   <WallSlideMaxMoveSpeedMultiplier>k__BackingField: 0
-  <StepOffset>k__BackingField: 1
+  <StepOffset>k__BackingField: 0.35
   <RotationSpeed>k__BackingField: 400
   <MovAnimBlendSpeed>k__BackingField: 5
   <AnimationFallSpeed>k__BackingField: -3
