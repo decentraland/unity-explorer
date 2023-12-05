@@ -4,7 +4,9 @@ using ECS.TestSuite;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Systems;
 using ECS.Unity.PrimitiveRenderer.Components;
+using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Utility.Primitives;
@@ -16,7 +18,7 @@ namespace ECS.Unity.Materials.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new ApplyMaterialSystem(world);
+            system = new ApplyMaterialSystem(world, Substitute.For<ISceneData>());
         }
 
         [Test]

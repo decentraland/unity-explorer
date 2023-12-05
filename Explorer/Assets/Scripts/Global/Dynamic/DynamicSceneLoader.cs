@@ -1,11 +1,9 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using Unity.Mathematics;
 using UnityEngine;
@@ -26,7 +24,7 @@ namespace Global.Dynamic
         [SerializeField] private UIDocument uiToolkitRoot;
         [SerializeField] private UIDocument debugUiRoot;
         [SerializeField] private Vector2Int StartPosition;
-        [SerializeField] private int SceneLoadRadius = 4;
+        [SerializeField] [Obsolete] private int SceneLoadRadius = 4;
 
         // If it's 0, it will load every parcel in the range
         [SerializeField] private List<int2> StaticLoadPositions;
@@ -79,7 +77,7 @@ namespace Global.Dynamic
 
                 if (!isLoaded)
                 {
-                    PrintGameIsDead();
+                    GameReports.PrintIsDead();
                     return;
                 }
 
@@ -96,7 +94,7 @@ namespace Global.Dynamic
 
                 if (!isLoaded)
                 {
-                    PrintGameIsDead();
+                    GameReports.PrintIsDead();
                     return;
                 }
 
@@ -114,7 +112,7 @@ namespace Global.Dynamic
 
                 if (anyFailure)
                 {
-                    PrintGameIsDead();
+                    GameReports.PrintIsDead();
                     return;
                 }
 
@@ -136,15 +134,9 @@ namespace Global.Dynamic
             catch (Exception)
             {
                 // unhandled exception
-                PrintGameIsDead();
+                GameReports.PrintIsDead();
                 throw;
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void PrintGameIsDead()
-        {
-            ReportHub.LogError(ReportCategory.ENGINE, "Initialization Failed! Game is irrecoverably dead!");
         }
 
         private async UniTask ChangeRealmAsync(StaticContainer globalContainer, CancellationToken ct, string selectedRealm)
