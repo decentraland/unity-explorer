@@ -4,6 +4,7 @@ using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using Utility.Multithreading;
 
 namespace CrdtEcsBridge.UpdateGate
@@ -43,7 +44,7 @@ namespace CrdtEcsBridge.UpdateGate
             lock (openGroups)
             {
                 // Let systems run in the remaining of the current frame
-                if (MultithreadingUtility.FrameCount < keepOpenFrame)
+                if (Time.frameCount < keepOpenFrame)
                     return false;
 
                 // Otherwise, just let them run once
