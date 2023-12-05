@@ -87,28 +87,40 @@ namespace ECS.StreamableLoading.AssetBundles
                     throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {webRequest.downloadHandler.error}");
             }
 
-            // get metrics
+            try
+            {
+                // get metrics
 
-            TextAsset metricsFile;
+                TextAsset metricsFile;
 
-            using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
-                metricsFile = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME);
+                using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
+                    metricsFile = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME);
 
-            // Switch to thread pool to parse JSONs
+                // Switch to thread pool to parse JSONs
 
-            await UniTask.SwitchToThreadPool();
-            ct.ThrowIfCancellationRequested();
+                await UniTask.SwitchToThreadPool();
+                ct.ThrowIfCancellationRequested();
 
-            AssetBundleMetrics? metrics = metricsFile != null ? JsonUtility.FromJson<AssetBundleMetrics>(metricsFile.text) : null;
+                AssetBundleMetrics? metrics = metricsFile != null ? JsonUtility.FromJson<AssetBundleMetrics>(metricsFile.text) : null;
 
-            await LoadDependenciesAsync(intention.Manifest, partition, intention.CommonArguments.CustomEmbeddedSubDirectory, assetBundle, ct);
+                await LoadDependenciesAsync(intention.Manifest, partition, intention.CommonArguments.CustomEmbeddedSubDirectory, assetBundle, ct);
 
-            await UniTask.SwitchToMainThread();
-            ct.ThrowIfCancellationRequested();
+                await UniTask.SwitchToMainThread();
+                ct.ThrowIfCancellationRequested();
 
-            GameObject gameObjects = await LoadAllAssetsAsync(assetBundle, ct);
+                GameObject gameObjects = await LoadAllAssetsAsync(assetBundle, ct);
 
-            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, gameObjects));
+                return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, gameObjects));
+            }
+            catch (Exception)
+            {
+                // If the loading process didn't finish successfully unload the bundle
+                // Otherwise, it gets stuck in Unity's memory but not cached in our cache
+                if (assetBundle)
+                    assetBundle.Unload(true);
+
+                throw;
+            }
         }
 
         private async UniTask<GameObject> LoadAllAssetsAsync(AssetBundle assetBundle, CancellationToken ct)

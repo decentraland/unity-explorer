@@ -1,11 +1,9 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using Unity.Mathematics;
 using UnityEngine;
@@ -80,7 +78,7 @@ namespace Global.Dynamic
 
                 if (!isLoaded)
                 {
-                    PrintGameIsDead();
+                    GameReports.PrintIsDead();
                     return;
                 }
 
@@ -97,7 +95,7 @@ namespace Global.Dynamic
 
                 if (!isLoaded)
                 {
-                    PrintGameIsDead();
+                    GameReports.PrintIsDead();
                     return;
                 }
 
@@ -115,7 +113,7 @@ namespace Global.Dynamic
 
                 if (anyFailure)
                 {
-                    PrintGameIsDead();
+                    GameReports.PrintIsDead();
                     return;
                 }
 
@@ -137,15 +135,9 @@ namespace Global.Dynamic
             catch (Exception)
             {
                 // unhandled exception
-                PrintGameIsDead();
+                GameReports.PrintIsDead();
                 throw;
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void PrintGameIsDead()
-        {
-            ReportHub.LogError(ReportCategory.ENGINE, "Initialization Failed! Game is irrecoverably dead!");
         }
 
         private async UniTask ChangeRealmAsync(StaticContainer globalContainer, CancellationToken ct, string selectedRealm)
