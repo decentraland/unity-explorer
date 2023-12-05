@@ -18,16 +18,20 @@ namespace DCL.CharacterMotion
 
             Transform transform = characterController.transform;
 
-            Vector3 position = transform.position;
-            position += characterController.center;
+            // To avoid doing the capsule cast from inside a mesh we reduce the size just a bit
+            Vector3 smallOffset = Vector3.up * 0.1f;
+            Vector3 point1 = transform.position + smallOffset;
+            Vector3 point2 = point1 + (Vector3.up * characterController.height) - smallOffset;
 
-            var ray = new Ray
-            {
-                origin = position,
-                direction = transform.forward,
-            };
-
-            if (!Physics.SphereCast(ray, characterController.radius, out RaycastHit hit, settings.WallSlideDetectionDistance, PhysicsLayers.CHARACTER_ONLY_MASK)) return;
+            if (!Physics.CapsuleCast(
+                    point1,
+                    point2,
+                    characterController.radius - 0.09f, // radius reduction to avoid casting from inside meshes
+                    transform.forward,
+                    out RaycastHit hit,
+                    settings.WallSlideDetectionDistance,
+                    PhysicsLayers.CHARACTER_ONLY_MASK))
+                return;
 
             float dot = Mathf.Abs(Vector3.Dot(transform.forward, hit.normal));
             float moveSpeedMultiplier = Mathf.Lerp(1f, settings.WallSlideMaxMoveSpeedMultiplier, dot);
