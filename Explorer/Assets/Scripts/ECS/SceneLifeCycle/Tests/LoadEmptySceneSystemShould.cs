@@ -1,8 +1,11 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
+using DCL.WebRequests;
+using DCL.WebRequests.Analytics;
 using ECS.ComponentsPooling;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
@@ -23,7 +26,8 @@ namespace ECS.SceneLifeCycle.Tests
 {
     public class LoadEmptySceneSystemShould
     {
-        private static readonly string EMPTY_SCENES_MAPPINGS_URL = $"file://{Application.streamingAssetsPath}/EmptyScenes/mappings.json";
+        private static readonly URLAddress EMPTY_SCENES_MAPPINGS_URL =
+            URLAddress.FromString($"file://{Application.streamingAssetsPath}/EmptyScenes/mappings.json");
 
         private LoadEmptySceneSystemLogic loadEmptySceneSystemLogic;
         private IEmptyScenesWorldFactory emptyScenesWorldFactory;
@@ -42,6 +46,7 @@ namespace ECS.SceneLifeCycle.Tests
         public void SetUp()
         {
             loadEmptySceneSystemLogic = new LoadEmptySceneSystemLogic(
+                new WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>()),
                 emptyScenesWorldFactory = Substitute.For<IEmptyScenesWorldFactory>(),
                 Substitute.For<IComponentPoolsRegistry>(),
                 EMPTY_SCENES_MAPPINGS_URL);

@@ -1,4 +1,7 @@
-﻿using Cysharp.Threading.Tasks;
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.WebRequests;
 using ECS.ComponentsPooling;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
@@ -7,7 +10,6 @@ using SceneRunner.Scene;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Networking;
 using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -18,8 +20,9 @@ namespace ECS.SceneLifeCycle.Systems
     public class LoadEmptySceneSystemLogic : IDisposable
     {
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly IWebRequestController webRequestController;
         private readonly IEmptyScenesWorldFactory emptyScenesWorldFactory;
-        private readonly string mappingURL;
+        private readonly URLAddress mappingURL;
 
         private EmptyScenesWorld sharedWorld;
 
@@ -31,10 +34,12 @@ namespace ECS.SceneLifeCycle.Systems
         internal EmptySceneData emptySceneData { get; private set; }
 
         public LoadEmptySceneSystemLogic(
+            IWebRequestController webRequestController,
             IEmptyScenesWorldFactory emptyScenesWorldFactory,
             IComponentPoolsRegistry componentPoolsRegistry,
-            string mappingURL)
+            URLAddress mappingURL)
         {
+            this.webRequestController = webRequestController;
             this.emptyScenesWorldFactory = emptyScenesWorldFactory;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.mappingURL = mappingURL;
@@ -47,17 +52,9 @@ namespace ECS.SceneLifeCycle.Systems
 
         internal async UniTask LoadMappingAsync(CancellationToken ct)
         {
-            string text;
+            EmptySceneMappings mappings = await (await webRequestController.GetAsync(new CommonArguments(mappingURL), ct, ReportCategory.SCENE_LOADING))
+               .CreateFromJson<EmptySceneMappings>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
-            using (var webRequest = UnityWebRequest.Get(mappingURL))
-            {
-                await webRequest.SendWebRequest().WithCancellation(ct);
-                text = webRequest.downloadHandler.text;
-            }
-
-            await UniTask.SwitchToThreadPool();
-
-            EmptySceneMappings mappings = JsonUtility.FromJson<EmptySceneMappings>(text);
             emptySceneData = new EmptySceneData(mappings.mappings);
         }
 

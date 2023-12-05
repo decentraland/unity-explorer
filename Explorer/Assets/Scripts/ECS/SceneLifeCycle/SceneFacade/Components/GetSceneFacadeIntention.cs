@@ -18,7 +18,7 @@ namespace ECS.SceneLifeCycle.Components
         public readonly IIpfsRealm IpfsRealm;
         public readonly SceneDefinitionComponent DefinitionComponent;
 
-        internal GetSceneFacadeIntention(IIpfsRealm ipfsRealm, SceneDefinitionComponent definitionComponent)
+        public GetSceneFacadeIntention(IIpfsRealm ipfsRealm, SceneDefinitionComponent definitionComponent)
         {
             IpfsRealm = ipfsRealm;
             DefinitionComponent = definitionComponent;

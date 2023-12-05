@@ -1,0 +1,15 @@
+﻿using System;
+
+namespace DCL.MapRenderer.MapLayers
+{
+    [Flags]
+    public enum MapLayer
+    {
+        None,
+        ParcelsAtlas = 1,
+        SatelliteAtlas = 1 << 1,
+        ParcelHoverHighlight = 1 << 6,
+        PlayerMarker = 1 << 9,
+        // Add yours
+    }
+}

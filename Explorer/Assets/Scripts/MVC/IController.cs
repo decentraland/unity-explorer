@@ -1,27 +1,31 @@
 ﻿using Cysharp.Threading.Tasks;
+using System;
 using System.Threading;
-using UnityEngine;
 
 namespace MVC
 {
     public interface IController
     {
-        CanvasOrdering.SortingLayer SortLayers { get; }
+        ControllerState State { get; }
+
+        CanvasOrdering.SortingLayer Layer { get; }
 
         /// <summary>
         ///     View is focused when the obscuring view disappears
         /// </summary>
-        void OnFocus();
+        void Focus();
 
         /// <summary>
         ///     View is blurred when gets obscured by another view in the same stack
         /// </summary>
-        void OnBlur();
+        void Blur();
 
         /// <summary>
         ///     Should be called from <see cref="IMVCManager" /> only
         /// </summary>
         internal UniTask HideViewAsync(CancellationToken ct);
+
+        void Dispose();
     }
 
     // ReSharper disable once UnusedTypeParameter TView it's used for registering a proper association in MVC Manager

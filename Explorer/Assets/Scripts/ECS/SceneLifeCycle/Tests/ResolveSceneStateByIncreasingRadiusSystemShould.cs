@@ -42,8 +42,15 @@ namespace ECS.SceneLifeCycle.Tests
             // Create 4
             for (var i = 0; i < 4; i++)
             {
-                world.Create(new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition(),
-                    new Vector2Int[] { new (0, 0), new (0, 1), new (1, 0), new (2, 0), new (2, 1), new (3, 0), new (3, 1) },
+                world.Create(new SceneDefinitionComponent(
+                    new IpfsTypes.SceneEntityDefinition
+                    {
+                        metadata = new IpfsTypes.SceneMetadata
+                        {
+                            scene = new IpfsTypes.SceneMetadataScene
+                                { DecodedParcels = new Vector2Int[] { new (0, 0), new (0, 1), new (1, 0), new (2, 0), new (2, 1), new (3, 0), new (3, 1) } },
+                        },
+                    },
                     new IpfsTypes.IpfsPath()), new PartitionComponent { Bucket = (byte)i, RawSqrDistance = ParcelMathHelper.SQR_PARCEL_SIZE * i });
             }
 
@@ -65,8 +72,17 @@ namespace ECS.SceneLifeCycle.Tests
 
             for (byte i = 2; i <= 4; i++)
             {
-                world.Create(new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition(),
-                    new Vector2Int[] { new (0, 0), new (0, 1), new (1, 0), new (2, 0), new (2, 1), new (3, 0), new (3, 1) },
+                world.Create(new SceneDefinitionComponent(
+                    new IpfsTypes.SceneEntityDefinition
+                    {
+                        metadata = new IpfsTypes.SceneMetadata
+                        {
+                            scene = new IpfsTypes.SceneMetadataScene
+                            {
+                                DecodedParcels = new Vector2Int[] { new (0, 0), new (0, 1), new (1, 0), new (2, 0), new (2, 1), new (3, 0), new (3, 1) },
+                            },
+                        },
+                    },
                     new IpfsTypes.IpfsPath()), new PartitionComponent { Bucket = i });
             }
 

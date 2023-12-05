@@ -50,6 +50,7 @@ namespace Global.Dynamic
             {
                 if (dynamicWorldContainer != null)
                 {
+                    dynamicWorldContainer.Dispose();
                     foreach (IDCLGlobalPlugin plugin in dynamicWorldContainer.GlobalPlugins)
                         plugin.Dispose();
                 }
@@ -149,7 +150,7 @@ namespace Global.Dynamic
             Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(StartPosition);
             characterPos.y = 1f;
 
-            globalContainer.CharacterObject.Controller.Move(characterPos - globalContainer.CharacterObject.Transform.position);
+            globalContainer.CharacterObject.Move(characterPos);
 
             await dynamicWorldContainer.RealmController.SetRealmAsync(globalWorld, URLDomain.FromString(selectedRealm), ct);
         }

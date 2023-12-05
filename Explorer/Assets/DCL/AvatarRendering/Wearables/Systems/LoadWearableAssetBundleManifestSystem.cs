@@ -4,6 +4,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.WebRequests;
 using DCL.Diagnostics;
 using DCL.PerformanceBudgeting;
 using ECS.Prioritization.Components;
@@ -11,10 +12,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using SceneRunner.Scene;
-using System;
 using System.Threading;
-using UnityEngine;
-using UnityEngine.Networking;
 using Utility;
 using Utility.Multithreading;
 
@@ -28,11 +26,14 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private readonly URLBuilder urlBuilder = new ();
 
+        private readonly IWebRequestController webRequestController;
+
         internal LoadWearableAssetBundleManifestSystem(World world,
-            IStreamableCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention> cache,
-            MutexSync mutexSync, URLDomain assetBundleURL) : base(world, cache, mutexSync)
+            IWebRequestController webRequestController,
+            IStreamableCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention> cache, MutexSync mutexSync, URLDomain assetBundleURL) : base(world, cache, mutexSync)
         {
             this.assetBundleURL = assetBundleURL;
+            this.webRequestController = webRequestController;
         }
 
         protected override async UniTask<StreamableLoadingResult<SceneAssetBundleManifest>> FlowInternalAsync(GetWearableAssetBundleManifestIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
@@ -43,21 +44,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
                       .AppendSubDirectory(URLSubdirectory.FromString("manifest"))
                       .AppendPath(URLPath.FromString($"{intention.Hash}{PlatformUtils.GetPlatform()}.json"));
 
-            string response;
+            SceneAbDto sceneAbDto = await (await webRequestController.GetAsync(new CommonArguments(urlBuilder.Build(), attemptsCount: 1), ct, GetReportCategory()))
+               .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
-            using (var request = UnityWebRequest.Get(urlBuilder.ToString()))
-            {
-                await request.SendWebRequest().WithCancellation(ct);
-
-                if (request.result != UnityWebRequest.Result.Success)
-                    return new StreamableLoadingResult<SceneAssetBundleManifest>(new Exception($"Failed to load asset bundle manifest for intention: {intention.Hash}"));
-
-                response = request.downloadHandler.text;
-            }
-
-            //Deserialize out of the main thread
-            await UniTask.SwitchToThreadPool();
-            return new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(assetBundleURL, JsonUtility.FromJson<SceneAbDto>(response)));
+            return new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(assetBundleURL, sceneAbDto));
         }
     }
 }
