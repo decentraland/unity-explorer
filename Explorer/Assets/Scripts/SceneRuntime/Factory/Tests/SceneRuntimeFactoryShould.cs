@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
+using ECS.TestSuite;
 using DCL.Diagnostics;
 using NSubstitute;
 using NUnit.Framework;
@@ -22,7 +23,7 @@ namespace SceneRuntime.Factory.Tests
             UniTask.ToCoroutine(async () =>
             {
                 // Arrange
-                var factory = new SceneRuntimeFactory();
+                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
 
                 var sourceCode = @"
                 const engineApi = require('~system/EngineApi')
@@ -53,7 +54,7 @@ namespace SceneRuntime.Factory.Tests
             UniTask.ToCoroutine(async () =>
             {
                 // Arrange
-                var factory = new SceneRuntimeFactory();
+                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
                 var path = URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
 
                 // Act
@@ -75,7 +76,7 @@ namespace SceneRuntime.Factory.Tests
         public void WrapInModuleCommonJs()
         {
             // Arrange
-            var factory = new SceneRuntimeFactory();
+            var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
             var sourceCode = "console.log('Hello, world!');";
 
             // Act

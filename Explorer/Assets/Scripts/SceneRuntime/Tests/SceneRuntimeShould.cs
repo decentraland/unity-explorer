@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
+using ECS.TestSuite;
 using DCL.Diagnostics;
 using JetBrains.Annotations;
 using NSubstitute;
@@ -44,7 +45,7 @@ namespace SceneRuntime.Tests
             exports.onUpdate = async function(dt) {};
         ";
 
-                var sceneRuntimeFactory = new SceneRuntimeFactory();
+                var sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, sceneExceptionsHandler, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
                 sceneRuntime.RegisterEngineApi(engineApi);
@@ -70,7 +71,7 @@ namespace SceneRuntime.Tests
             };
         ";
 
-                var sceneRuntimeFactory = new SceneRuntimeFactory();
+                var sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, sceneExceptionsHandler, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
                 sceneRuntime.RegisterEngineApi(engineApi);
@@ -108,7 +109,7 @@ namespace SceneRuntime.Tests
             exports.onUpdate = async function(dt) {};
         ";
 
-                var sceneRuntimeFactory = new SceneRuntimeFactory();
+                var sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, sceneExceptionsHandler, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
                 await sceneRuntime.StartScene();
@@ -134,7 +135,7 @@ namespace SceneRuntime.Tests
             {
                 IEngineApi engineApi = Substitute.For<IEngineApi>();
 
-                var sceneRuntimeFactory = new SceneRuntimeFactory();
+                var sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
                 var path = URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(path, sceneExceptionsHandler, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
