@@ -73,7 +73,7 @@ namespace Global.Dynamic
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterObject),
+                new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput),
                 new GlobalInteractionPlugin(dclInput, rootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.CameraSamplingData, exposedGlobalDataContainer.ExposedCameraData),

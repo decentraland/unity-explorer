@@ -2,12 +2,18 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using CrdtEcsBridge.Physics;
+using DCL.AvatarRendering.AvatarShape.Systems;
+using DCL.AvatarRendering.DemoScripts.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
 using DCL.CharacterCamera;
+using DCL.CharacterMotion;
+using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Settings;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
@@ -21,12 +27,11 @@ using ECS.Unity.Transforms.Components;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using PointerPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
 using Random = UnityEngine.Random;
 using RaycastHit = UnityEngine.RaycastHit;
 
-namespace DCL.AvatarRendering.AvatarShape.Systems
+namespace DCL.AvatarRendering.DemoScripts.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateBefore(typeof(AvatarInstantiatorSystem))] // Updating before AvatarSystem allows it to react as soon as possible
@@ -46,6 +51,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private AvatarRandomizer[] randomizers;
         private bool randomizerInitialized;
+        private SingleInstanceEntity settings;
 
         internal InstantiateRandomAvatarsSystem(World world, IDebugContainerBuilder debugBuilder, IRealmData realmData, QueryDescription avatarsQuery) : base(world)
         {
@@ -65,6 +71,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             camera = World.CacheCamera();
             defaultWearableState = World.CacheDefaultWearablesState();
+            settings = World.CacheCharacterSettings();
         }
 
         private void SetViewActivity()
@@ -127,18 +134,22 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         protected override void Update(float t)
         {
             SetViewActivity();
-            FinalizeRandomAvatarInstantiationQuery(World, in camera.GetCameraComponent(World));
+            FinalizeRandomAvatarInstantiationQuery(World, in camera.GetCameraComponent(World), in settings.GetCharacterSettings(World));
         }
 
         [Query]
-        private void FinalizeRandomAvatarInstantiation(in Entity entity, [Data] in CameraComponent cameraComponent, ref RandomAvatarRequest randomAvatarRequest)
+        private void FinalizeRandomAvatarInstantiation(
+            in Entity entity,
+            [Data] in CameraComponent cameraComponent,
+            [Data] in ICharacterControllerSettings characterControllerSettings,
+            ref RandomAvatarRequest randomAvatarRequest)
         {
             if (randomAvatarRequest.BaseWearablesPromise.TryConsume(World, out StreamableLoadingResult<IWearable[]> baseWearables))
             {
                 if (baseWearables.Succeeded)
                 {
                     GenerateRandomizers(baseWearables);
-                    GenerateRandomAvatars(randomAvatarRequest.RandomAvatarsToInstantiate, cameraComponent.Camera.transform.position);
+                    GenerateRandomAvatars(randomAvatarRequest.RandomAvatarsToInstantiate, cameraComponent.Camera.transform.position, characterControllerSettings);
                 }
                 else
                     ReportHub.LogError(GetReportCategory(), "Base wearables could't be loaded!");
@@ -165,7 +176,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             randomizerInitialized = true;
         }
 
-        private void GenerateRandomAvatars(int randomAvatarsToInstantiate, Vector3 cameraPosition)
+        private void GenerateRandomAvatars(int randomAvatarsToInstantiate, Vector3 cameraPosition, ICharacterControllerSettings characterControllerSettings)
         {
             float startXPosition = cameraPosition.x;
             float startZPosition = cameraPosition.z;
@@ -204,6 +215,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
                 var transformComp = new TransformComponent(transform);
 
+                CharacterController characterController = transform.gameObject.AddComponent<CharacterController>();
+                characterController.radius = 0.4f;
+                characterController.height = 2;
+                characterController.center = Vector3.up;
+                characterController.slopeLimit = 50f;
+                characterController.gameObject.layer = PhysicsLayers.CHARACTER_LAYER;
+
                 var avatarShape = new PBAvatarShape
                 {
                     BodyShape = currentRandomizer.BodyShape,
@@ -212,7 +230,20 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     HairColor = WearablesConstants.DefaultColors.GetRandomHairColor3(),
                 };
 
-                World.Create(avatarShape, transformComp);
+                World.Create(avatarShape,
+                    transformComp,
+                    characterController,
+                    new CharacterRigidTransform(),
+                    new CharacterAnimationComponent(),
+                    new CharacterPlatformComponent(),
+                    new StunComponent(),
+                    new FeetIKComponent(),
+                    new HandsIKComponent(),
+                    new HeadIKComponent(),
+                    new JumpInputComponent(),
+                    new MovementInputComponent(),
+                    characterControllerSettings
+                );
             }
         }
     }

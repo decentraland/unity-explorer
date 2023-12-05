@@ -12,7 +12,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public abstract class CustomSkinning
     {
-        public abstract AvatarCustomSkinningComponent Initialize(IReadOnlyList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer,
+        public abstract AvatarCustomSkinningComponent Initialize(IList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer,
             UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterial,
             SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer,
             AvatarShapeComponent avatarShapeComponent);

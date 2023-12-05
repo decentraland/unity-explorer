@@ -7,6 +7,7 @@ using DCL.Input.Systems;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 
 namespace DCL.CharacterCamera.Systems
 {
@@ -14,15 +15,17 @@ namespace DCL.CharacterCamera.Systems
     [UpdateInGroup(typeof(InputGroup))]
     public partial class UpdateCursorInputSystem : UpdateInputSystem<CameraInput, CameraComponent>
     {
-        private readonly IUIRaycaster uiRaycaster;
+        private readonly IEventSystem eventSystem;
         private readonly ICursor cursor;
         private readonly DCLInput.CameraActions cameraActions;
+        private readonly DCLInput.UIActions uiActions;
 
-        internal UpdateCursorInputSystem(World world, DCLInput dclInput, IUIRaycaster uiRaycaster, ICursor cursor) : base(world)
+        internal UpdateCursorInputSystem(World world, DCLInput dclInput, IEventSystem eventSystem, ICursor cursor) : base(world)
         {
-            this.uiRaycaster = uiRaycaster;
+            this.eventSystem = eventSystem;
             this.cursor = cursor;
             cameraActions = dclInput.Camera;
+            uiActions = dclInput.UI;
         }
 
         protected override void Update(float t)
@@ -31,36 +34,56 @@ namespace DCL.CharacterCamera.Systems
         }
 
         [Query]
-        private void UpdateInput(ref CameraComponent cameraComponent)
+        private void UpdateInput(ref CursorComponent cursorComponent)
         {
-            Vector2 mousePos = cameraActions.Point.ReadValue<Vector2>();
+            Vector2 mousePos = Mouse.current.position.value;
+            Vector2 controllerDelta = uiActions.ControllerDelta.ReadValue<Vector2>();
+
+            UpdateCursorPositionForControllers(ref cursorComponent, controllerDelta, mousePos);
 
             bool inputWantsToLock = cameraActions.Lock.WasPerformedThisFrame() || cameraActions.TemporalLock.WasPressedThisFrame();
             bool inputWantsToUnlock = cameraActions.Unlock.WasPerformedThisFrame() || cameraActions.TemporalLock.WasReleasedThisFrame();
 
-            if (inputWantsToLock && !cameraComponent.CursorIsLocked)
+            if (inputWantsToLock && !cursorComponent.CursorIsLocked)
             {
-                IReadOnlyList<RaycastResult> results = uiRaycaster.RaycastAll(mousePos);
+                IReadOnlyList<RaycastResult> results = eventSystem.RaycastAll(mousePos);
 
                 if (results.Count == 0)
                 {
-                    cameraComponent.CursorIsLocked = true;
+                    cursorComponent.CursorIsLocked = true;
                     cursor.Lock();
                 }
             }
-
-            if (inputWantsToUnlock && cameraComponent.CursorIsLocked)
-            {
-                cameraComponent.CursorIsLocked = false;
-                cursor.Unlock();
-            }
+            else if (inputWantsToUnlock && cursorComponent.CursorIsLocked)
+                UnlockCursor(ref cursorComponent);
 
             // in case the cursor was unlocked externally
-            if (!cursor.IsLocked() && cameraComponent.CursorIsLocked)
+            if (!cursor.IsLocked() && cursorComponent.CursorIsLocked)
+                UnlockCursor(ref cursorComponent);
+
+            return;
+
+            void UnlockCursor(ref CursorComponent cursorComponent)
             {
-                cameraComponent.CursorIsLocked = false;
+                cursorComponent.CursorIsLocked = false;
                 cursor.Unlock();
+                cursorComponent.Position = mousePos;
             }
+        }
+
+        private void UpdateCursorPositionForControllers(ref CursorComponent cursorComponent, Vector2 controllerDelta, Vector2 mousePos)
+        {
+            if (!(controllerDelta.sqrMagnitude > 0) || cursorComponent.CursorIsLocked) return;
+
+            // If we unlock for the first time we update the mouse position
+            if (Mathf.Approximately(cursorComponent.Position.x, 0) &&
+                Mathf.Approximately(cursorComponent.Position.y, 0))
+                cursorComponent.Position = mousePos;
+
+            // Todo: extract the +1 to sensitivity settings for controllers
+            float fastCursor = uiActions.ControllerFastCursor.ReadValue<float>() + 1;
+            cursorComponent.Position += controllerDelta * fastCursor;
+            Mouse.current.WarpCursorPosition(cursorComponent.Position);
         }
     }
 }

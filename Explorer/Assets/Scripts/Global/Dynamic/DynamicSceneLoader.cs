@@ -150,7 +150,7 @@ namespace Global.Dynamic
             Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(StartPosition);
             characterPos.y = 1f;
 
-            globalContainer.CharacterObject.Move(characterPos);
+            globalContainer.CharacterObject.Controller.transform.position = characterPos;
 
             await dynamicWorldContainer.RealmController.SetRealmAsync(globalWorld, URLDomain.FromString(selectedRealm), ct);
         }

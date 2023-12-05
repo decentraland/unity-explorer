@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.CharacterCamera.Components;
 using ECS.Abstract;
 using UnityEngine;
 
@@ -21,10 +22,10 @@ namespace DCL.CharacterCamera.Systems
         }
 
         [Query]
-        private void Prepare(ref CameraComponent cameraComponent, ref ExposedCameraData exposedCameraData)
+        private void Prepare(ref CameraComponent cameraComponent, ref ExposedCameraData exposedCameraData, in CursorComponent cursorComponent)
         {
             exposedCameraData.CameraType = cameraComponent.Mode.ToSDKCameraType();
-            exposedCameraData.PointerIsLocked = cameraComponent.CursorIsLocked;
+            exposedCameraData.PointerIsLocked = cursorComponent.CursorIsLocked;
             Transform transform = cameraComponent.Camera.transform;
             exposedCameraData.WorldPosition = transform.position;
             exposedCameraData.WorldRotation = transform.rotation;
