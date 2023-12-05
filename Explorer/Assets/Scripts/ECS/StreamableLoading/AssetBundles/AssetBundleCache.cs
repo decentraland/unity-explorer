@@ -4,7 +4,6 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
-using UnityEngine.Pool;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
@@ -27,9 +26,8 @@ namespace ECS.StreamableLoading.AssetBundles
         public AssetBundleCache()
         {
             cache = new Dictionary<GetAssetBundleIntention, AssetBundleData>(this);
-
-            IrrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Get();
-            OngoingRequests = DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>.Get();
+            IrrecoverableFailures = new Dictionary<string, StreamableLoadingResult<AssetBundleData>>();
+            OngoingRequests = new Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>();
         }
 
         public void Dispose()
@@ -37,8 +35,8 @@ namespace ECS.StreamableLoading.AssetBundles
             if (disposed)
                 return;
 
-            DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Release(IrrecoverableFailures as Dictionary<string, StreamableLoadingResult<AssetBundleData>>);
-            DictionaryPool<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>.Release(OngoingRequests as Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>>);
+            IrrecoverableFailures.Clear();
+            OngoingRequests.Clear();
 
             disposed = true;
         }

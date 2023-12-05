@@ -9,11 +9,11 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using Ipfs;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using UnityEngine;
 using UnityEngine.Networking;
 
 namespace ECS.SceneLifeCycle.Tests
@@ -75,7 +75,7 @@ namespace ECS.SceneLifeCycle.Tests
                                                                                                              await request;
 
                                                                                                              world.Add(promise.Entity, new StreamableLoadingResult<IpfsTypes.SceneEntityDefinition>(
-                                                                                                                 JsonUtility.FromJson<IpfsTypes.SceneEntityDefinition>(request.webRequest.downloadHandler.text)));
+                                                                                                                 JsonConvert.DeserializeObject<IpfsTypes.SceneEntityDefinition>(request.webRequest.downloadHandler.text)));
 
                                                                                                              return promise;
                                                                                                          })

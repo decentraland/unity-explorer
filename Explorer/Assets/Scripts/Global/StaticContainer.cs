@@ -10,6 +10,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.WebRequests.Analytics;
 using DCL.Profiling;
 using DCL.ResourcesUnloading;
 using DCL.Time;
@@ -37,6 +38,8 @@ namespace Global
         public ComponentsContainer ComponentsContainer { get; private set; }
 
         public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
+
+        public WebRequestsContainer WebRequestsContainer { get; private set; }
 
         public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; }
 
@@ -126,6 +129,7 @@ namespace Global
             container.ProfilingProvider = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
+            container.WebRequestsContainer = WebRequestsContainer.Create();
             container.PhysicsTickProvider = new PhysicsTickProvider();
 
             var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, container.CacheCleaner);
@@ -134,7 +138,7 @@ namespace Global
             {
                 new TransformsPlugin(sharedDependencies),
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
-                new TexturesLoadingPlugin(container.CacheCleaner),
+                new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
 
                 new PrimitivesRenderingPlugin(sharedDependencies),

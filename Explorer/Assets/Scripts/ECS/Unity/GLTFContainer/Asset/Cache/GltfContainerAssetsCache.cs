@@ -8,7 +8,6 @@ using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Pool;
 using Utility;
 using Utility.Multithreading;
 using Utility.PriorityQueue;
@@ -39,7 +38,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             cache = new Dictionary<string, List<GltfContainerAsset>>(this);
 
             OngoingRequests = new FakeDictionaryCache<UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>>();
-            IrrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<GltfContainerAsset>>.Get();
+            IrrecoverableFailures = new Dictionary<string, StreamableLoadingResult<GltfContainerAsset>>();
         }
 
         public void Dispose()
@@ -47,8 +46,22 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             if (isDisposed)
                 return;
 
-            DictionaryPool<string, StreamableLoadingResult<AssetBundleData>>.Release(IrrecoverableFailures as Dictionary<string, StreamableLoadingResult<AssetBundleData>>);
+            IrrecoverableFailures.Clear();
             isDisposed = true;
+        }
+
+        public bool TryGet(in string key, out GltfContainerAsset asset)
+        {
+            if (cache.TryGetValue(key, out List<GltfContainerAsset> list) && list.Count > 0)
+            {
+                // Remove from the tail of the list
+                asset = list[^1];
+                list.RemoveAt(list.Count - 1);
+                return true;
+            }
+
+            asset = default(GltfContainerAsset);
+            return false;
         }
 
         public void Add(in string key, GltfContainerAsset asset)

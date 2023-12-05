@@ -1,9 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.PluginSystem;
 using SceneRunner.Scene;
 using System;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using UnityEngine;
 
@@ -44,7 +42,7 @@ namespace Global.Static
             catch (Exception)
             {
                 // unhandled exception
-                PrintGameIsDead();
+                GameReports.PrintIsDead();
                 throw;
             }
         }
@@ -58,19 +56,13 @@ namespace Global.Static
             (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer, ct);
 
             if (!isLoaded)
-                PrintGameIsDead();
+                GameReports.PrintIsDead();
 
             await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 
             var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
 
             return (staticContainer, sceneSharedContainer);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void PrintGameIsDead()
-        {
-            ReportHub.LogError(ReportCategory.ENGINE, "Initialization Failed! Game is irrecoverably dead!");
         }
     }
 }

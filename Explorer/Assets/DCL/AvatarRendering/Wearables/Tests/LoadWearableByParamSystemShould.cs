@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
 using ECS;
 using ECS.StreamableLoading.Tests;
+using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using System;
@@ -33,7 +34,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             IRealmData realmData = Substitute.For<IRealmData>();
             realmData.Configured.Returns(true);
 
-            return new LoadWearablesByParamSystem(world, cache, realmData,
+            return new LoadWearablesByParamSystem(world, TestWebRequestController.INSTANCE, cache, realmData,
                 URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), wearableCatalog, new MutexSync());
         }
 
@@ -61,6 +62,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             urlBuilder.AppendDomainWithReplacedPath(Arg.Any<URLDomain>(), Arg.Any<URLSubdirectory>()).Returns(urlBuilder);
             urlBuilder.AppendSubDirectory(Arg.Any<URLSubdirectory>()).Returns(urlBuilder);
             urlBuilder.GetResult().Returns(successPath);
+            urlBuilder.Build().Returns(URLAddress.FromString(successPath));
 
             system.urlBuilder = urlBuilder;
 

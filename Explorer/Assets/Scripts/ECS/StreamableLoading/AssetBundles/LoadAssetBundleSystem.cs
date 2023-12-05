@@ -88,6 +88,8 @@ namespace ECS.StreamableLoading.AssetBundles
                     throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {webRequest.downloadHandler.error}");
             }
 
+            try
+            {
             // get metrics
 
             TextAsset metricsFile;
@@ -110,6 +112,17 @@ namespace ECS.StreamableLoading.AssetBundles
             GameObject gameObjects = await LoadAllAssetsAsync(assetBundle, ct);
 
             return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, gameObjects, dependencies));
+
+            }
+            catch (Exception)
+            {
+                // If the loading process didn't finish successfully unload the bundle
+                // Otherwise, it gets stuck in Unity's memory but not cached in our cache
+                if (assetBundle)
+                    assetBundle.Unload(true);
+
+                throw;
+            }
         }
 
         protected override void OnAssetSuccessfullyLoaded(AssetBundleData asset) =>

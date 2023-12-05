@@ -11,7 +11,16 @@ ShaderVariantCollection:
   - first: {fileID: 4800000, guid: ccf99be97dbda744981e8b0ec1ef8faf, type: 3}
     second:
       variants:
+      - keywords: INSTANCING_ON _ALPHATEST_ON
+        passType: 8
       - keywords: _ALPHATEST_ON
+        passType: 8
+      - keywords: INSTANCING_ON _ADDITIONAL_LIGHT_SHADOWS _ALPHATEST_ON _FORWARD_PLUS
+          _MAIN_LIGHT_SHADOWS_CASCADE _SHADOWS_SOFT
         passType: 13
-      - keywords: _SURFACE_TYPE_TRANSPARENT
+      - keywords: _ADDITIONAL_LIGHT_SHADOWS _ALPHATEST_ON _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+          _SHADOWS_SOFT
+        passType: 13
+      - keywords: _ADDITIONAL_LIGHT_SHADOWS _ALPHATEST_ON _FORWARD_PLUS _MAIN_LIGHT_SHADOWS_CASCADE
+          _SHADOWS_SOFT _SURFACE_TYPE_TRANSPARENT
         passType: 13

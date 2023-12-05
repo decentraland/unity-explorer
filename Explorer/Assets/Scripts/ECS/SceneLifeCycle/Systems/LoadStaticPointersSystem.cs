@@ -49,7 +49,7 @@ namespace ECS.SceneLifeCycle.Systems
                     {
                         IpfsTypes.SceneEntityDefinition definition = result.Asset.Value[i];
                         var path = new IpfsTypes.IpfsPath(definition.id, URLDomain.EMPTY);
-                        CreateSceneEntity(definition, path, out _);
+                        CreateSceneEntity(definition, path);
                     }
                 }
 
