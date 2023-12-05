@@ -97,19 +97,24 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             skinnedMeshRenderer.sharedMesh.bindposes = new Matrix4x4[ComputeShaderConstants.BONE_COUNT];
 
             //Creating a fake standard material
-            var fakeABMaterial = new Material(Shader.Find("Standard"));
-            fakeABMaterial.name = materialName;
+            var fakeABMaterial = new Material(Shader.Find("Standard"))
+            {
+                name = materialName,
+            };
+
             skinnedMeshRenderer.material = fakeABMaterial;
 
             var rendererInfo = new WearableAsset.RendererInfo(skinnedMeshRenderer, fakeABMaterial);
 
+            var wearableAsset = new WearableAsset(avatarGameObject, new List<WearableAsset.RendererInfo> { rendererInfo }, null);
+            wearableAsset.AddReference();
+
             assetBundleData[BodyShape.MALE]
-                = new StreamableLoadingResult<WearableAsset>(new WearableAsset(avatarGameObject,
-                    new List<WearableAsset.RendererInfo>
-                        { rendererInfo }, null));
+                = new StreamableLoadingResult<WearableAsset>(wearableAsset);
 
             mockWearable.WearableAssetResults.Returns(assetBundleData);
             mockWearable.GetCategory().Returns(category);
+
             return mockWearable;
         }
 
@@ -135,10 +140,10 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         [Test]
         public async Task UpdateInstantiatedAvatar()
         {
-            //Arrange
+            // Arrange
             await InstantiateAvatar();
 
-            //Act
+            // Act
             var newPromise = Promise.Create(world,
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(BodyShape.MALE, new List<string>()),
                 new PartitionComponent());
@@ -147,9 +152,13 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             world.Get<AvatarShapeComponent>(avatarEntity).IsDirty = true;
             world.Get<AvatarShapeComponent>(avatarEntity).WearablePromise = newPromise;
+
             system.Update(0);
 
-            //Assert
+            foreach (CachedWearable wearable in world.Get<AvatarShapeComponent>(avatarEntity).InstantiatedWearables)
+                wearable.OriginalAsset.AddReference();
+
+            // Assert
             Assert.IsFalse(world.Get<AvatarShapeComponent>(avatarEntity).IsDirty);
             Assert.AreEqual(world.Get<AvatarShapeComponent>(avatarEntity).InstantiatedWearables.Count, 1);
         }
