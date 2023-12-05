@@ -24,15 +24,7 @@ namespace DCL.CharacterMotion.Systems
     [UpdateBefore(typeof(CameraGroup))]
     public partial class InterpolateCharacterSystem : BaseUnityLoopSystem
     {
-        private SingleInstanceEntity fixedTick;
-        private SingleInstanceEntity time;
-
         private InterpolateCharacterSystem(World world) : base(world) { }
-
-        public override void Initialize()
-        {
-            time = World.CacheTime();
-        }
 
         protected override void Update(float t)
         {
@@ -50,25 +42,36 @@ namespace DCL.CharacterMotion.Systems
             in JumpInputComponent jump,
             in MovementInputComponent movementInput)
         {
+            Transform transform = characterController.transform;
             Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
 
             ApplyVelocityStun.Execute(ref rigidTransform, in stunComponent);
 
-            Vector3 movementDelta = (rigidTransform.MoveVelocity.Velocity + rigidTransform.NonInterpolatedVelocity) * dt;
+            Vector3 movementDelta = rigidTransform.MoveVelocity.Velocity * dt;
+            Vector3 finalGravity = rigidTransform.IsOnASteepSlope && !rigidTransform.IsStuck ? rigidTransform.SlopeGravity : rigidTransform.GravityVelocity;
+            Vector3 gravityDelta = finalGravity * dt;
 
-            CollisionFlags collisionFlags = characterController.Move(movementDelta + slopeModifier);
+            // In order for some systems to work correctly we move the character horizontally and then vertically
+            CollisionFlags horizontalCollisionFlags = characterController.Move(movementDelta);
+            Vector3 prevPos = transform.position;
+            CollisionFlags verticalCollisionFlags = characterController.Move(gravityDelta + slopeModifier);
+            Vector3 fallDiff = transform.position - prevPos;
 
-            bool hasGroundedFlag = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
+            bool hasGroundedFlag = EnumUtils.HasFlag(verticalCollisionFlags, CollisionFlags.Below) || EnumUtils.HasFlag(horizontalCollisionFlags, CollisionFlags.Below);
 
-            if (!Mathf.Approximately(movementDelta.y, 0f))
-            {
+            if (!Mathf.Approximately(gravityDelta.y, 0f))
                 rigidTransform.IsGrounded = hasGroundedFlag || characterController.isGrounded;
 
-                if (rigidTransform.IsGrounded)
-                    rigidTransform.LastGroundedFrame = Mathf.CeilToInt(time.GetTimeComponent(World).Time / UnityEngine.Time.fixedDeltaTime);
-            }
+            rigidTransform.IsCollidingWithWall = EnumUtils.HasFlag(horizontalCollisionFlags, CollisionFlags.Sides);
 
-            SaveLocalPosition.Execute(ref platformComponent, characterController.transform.position);
+            // If we are on a platform we save our local position
+            PlatformSaveLocalPosition.Execute(ref platformComponent, transform.position);
+
+            // In order to detect if we got stuck between 2 slopes we just check if our vertical delta movement is zero when on a slope
+            if (rigidTransform.IsOnASteepSlope && Mathf.Approximately(fallDiff.sqrMagnitude, 0f))
+                rigidTransform.IsStuck = true;
+            else
+                rigidTransform.IsStuck = false;
         }
     }
 }

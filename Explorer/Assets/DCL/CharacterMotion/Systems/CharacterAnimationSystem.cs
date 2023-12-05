@@ -31,8 +31,14 @@ namespace DCL.CharacterMotion.Systems
             in StunComponent stunComponent
         )
         {
-            ApplyMovementBlend.Execute(dt, ref animationComponent, in settings, in rigidTransform, in movementInput, in view);
-            ApplyJumpState.Execute(ref animationComponent, in settings, in rigidTransform, in view, in stunComponent);
+            // Update the movement blend value, ranges from 0 to 3 (Idle = 0, Walk = 1, Jog = 2, Run = 3)
+            ApplyAnimationMovementBlend.Execute(dt, ref animationComponent, in settings, in rigidTransform, in movementInput, in view);
+
+            // Update slide blend value, ranges from 0 to 1
+            ApplyAnimationSlideBlend.Execute(dt, ref animationComponent, in rigidTransform, in view, in settings);
+
+            // Apply other states
+            ApplyAnimationState.Execute(ref animationComponent, in settings, in rigidTransform, in view, in stunComponent);
         }
     }
 }

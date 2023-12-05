@@ -1,5 +1,6 @@
 ﻿using DCL.DebugUtilities.UIBindings;
 using System;
+using UnityEngine;
 
 namespace DCL.DebugUtilities
 {
@@ -18,6 +19,14 @@ namespace DCL.DebugUtilities
 
             var buttonDef = new DebugButtonDef(buttonName, () => onClick?.Invoke(binding.Value));
             builder.AddControl(infFieldDef, buttonDef);
+            return builder;
+        }
+
+        public static DebugWidgetBuilder AddFloatField(this DebugWidgetBuilder builder, string labelName, ElementBinding<float> elementBinding)
+        {
+            var label = new DebugConstLabelDef(labelName);
+            var field = new DebugFloatFieldDef(elementBinding);
+            builder.AddControl(label, field);
             return builder;
         }
 

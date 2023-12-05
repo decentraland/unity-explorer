@@ -3,7 +3,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.AvatarRendering
+namespace DCL.AvatarRendering.DemoScripts
 {
     public class AvatarRandomizer
     {
