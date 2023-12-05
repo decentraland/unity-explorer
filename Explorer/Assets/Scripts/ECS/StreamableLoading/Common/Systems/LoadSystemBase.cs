@@ -232,7 +232,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 StreamableLoadingResult<TAsset>? result = await RepeatLoopAsync(intention, acquiredBudget, partition, ct);
 
                 // Ensure that we returned to the main thread
-                // await UniTask.SwitchToMainThread(ct);
+                await UniTask.SwitchToMainThread(ct);
 
                 // Set result for the reusable source
                 // Remove from the ongoing requests immediately because finally will be called later than
