@@ -114,8 +114,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             GameObject bodyShape = null;
 
-            //Using Pointer size for counter, since we dont know the size of the results array
-            //because it was pooled
+            // Using Pointer size for counter, since we dont know the size of the results array
+            // because it was pooled
             for (var i = 0; i < intention.Pointers.Count; i++)
             {
                 IWearable resultWearable = wearablesResult.Asset[i];
@@ -186,10 +186,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             skinningComponent.Dispose(avatarMaterialPool, computeShaderSkinningPool);
 
             if (avatarShapeComponent.WearablePromise.IsConsumed)
-                wearableAssetsCache.TryReleaseAssets(avatarShapeComponent.InstantiatedWearables);
-            else
-                foreach (IWearable wearable in avatarShapeComponent.WearablePromise.LoadingIntention.Results)
-                    wearable?.WearableAssetResults[avatarShapeComponent.BodyShape]?.Asset.Dereference();
+                wearableAssetsCache.ReleaseAssets(avatarShapeComponent.InstantiatedWearables);
+
+            // else
+            foreach (IWearable wearable in avatarShapeComponent.WearablePromise.Result.Value.Asset)
+                wearable?.WearableAssetResults[avatarShapeComponent.BodyShape]?.Asset.Dereference();
         }
 
         public override void Dispose()

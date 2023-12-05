@@ -108,7 +108,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             // Input events are processed before Update
             World.Add(in avatarsQuery, new DeleteEntityIntention());
-
             totalAvatarsInstantiated.Value = 0;
         }
 

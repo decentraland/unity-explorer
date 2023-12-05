@@ -84,25 +84,25 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 string loadingIntentionPointer = wearablesByPointersIntention.Pointers[index];
 
-                if (!wearableCatalog.TryGetWearable(loadingIntentionPointer, out IWearable component))
+                if (!wearableCatalog.TryGetWearable(loadingIntentionPointer, out IWearable wearable))
                 {
                     wearableCatalog.AddEmptyWearable(loadingIntentionPointer);
                     missingPointers.Add(loadingIntentionPointer);
                     continue;
                 }
 
-                if (component.IsLoading) continue;
+                if (wearable.IsLoading) continue;
 
-                if (CreatePromiseIfRequired(component, wearablesByPointersIntention, partitionComponent)) continue;
+                if (CreateAssetBundlePromiseIfRequired(wearable, wearablesByPointersIntention, partitionComponent)) continue;
 
-                if (component.WearableAssetResults[wearablesByPointersIntention.BodyShape] is { Succeeded: true })
+                if (wearable.WearableAssetResults[wearablesByPointersIntention.BodyShape] is { Succeeded: true })
                 {
                     successfulResults++;
 
                     if (wearablesByPointersIntention.Results[index] == null)
                     {
-                        component.WearableAssetResults[wearablesByPointersIntention.BodyShape].Value.Asset.AddReference();
-                        wearablesByPointersIntention.Results[index] = component;
+                        wearable.WearableAssetResults[wearablesByPointersIntention.BodyShape].Value.Asset.AddReference();
+                        wearablesByPointersIntention.Results[index] = wearable;
                     }
                 }
             }
@@ -201,7 +201,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             }
         }
 
-        private bool CreatePromiseIfRequired(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
+        private bool CreateAssetBundlePromiseIfRequired(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
             // Manifest is required for Web loading only
             if (component.ManifestResult == null && EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB))
@@ -278,7 +278,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 wearable.WearableAssetResults[bodyShape] = wearableCatalog.GetDefaultWearable(bodyShape, wearable.GetCategory()).WearableAssetResults[bodyShape];
         }
 
-        private void SetWearableResult(IWearable wearable, StreamableLoadingResult<AssetBundleData> result, in BodyShape bodyShape)
+        private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<AssetBundleData> result, in BodyShape bodyShape)
         {
             StreamableLoadingResult<WearableAsset> wearableResult = result.ToWearableAsset();
 

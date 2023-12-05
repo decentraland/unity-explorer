@@ -50,17 +50,17 @@ namespace DCL.ResourcesUnloading
             using (texturesCacheMarker.Auto())
                 texturesCache.Unload(fpsCapBudgetProvider, TEXTURE_UNLOAD_CHUNK);
 
-            using (assetBundleCacheMarker.Auto())
-                assetBundleCache.Unload(fpsCapBudgetProvider, AB_UNLOAD_CHUNK);
-
-            using (gltfContainerAssetsCacheMarker.Auto())
-                gltfContainerAssetsCache.Unload(fpsCapBudgetProvider, GLTF_UNLOAD_CHUNK);
+            using (wearableAssetsCacheMarker.Auto())
+                wearableAssetsCache.Unload(fpsCapBudgetProvider, WEARABLES_UNLOAD_CHUNK);
 
             using (wearableCatalogMarker.Auto())
                 wearableCatalog.Unload(fpsCapBudgetProvider);
 
-            using (wearableAssetsCacheMarker.Auto())
-                wearableAssetsCache.Unload(fpsCapBudgetProvider, WEARABLES_UNLOAD_CHUNK);
+            using (gltfContainerAssetsCacheMarker.Auto())
+                gltfContainerAssetsCache.Unload(fpsCapBudgetProvider, GLTF_UNLOAD_CHUNK);
+
+            using (assetBundleCacheMarker.Auto())
+                assetBundleCache.Unload(fpsCapBudgetProvider, AB_UNLOAD_CHUNK);
 
             ClearAvatarsRelatedPools();
         }

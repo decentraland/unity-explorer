@@ -42,6 +42,9 @@ namespace DCL.Profiling
         public static ProfilerCounterValue<int> CachedWearablesInCacheAmount =
             new (MEMORY, "Cached Wearables In Cache", ProfilerMarkerDataUnit.Count);
 
+        public static ProfilerCounterValue<int> GetWearablesIntentionAmount =
+            new (MEMORY, "GetWearables Intentions", ProfilerMarkerDataUnit.Count);
+
         // Textures cache
         public static ProfilerCounterValue<int> TexturesAmount =
             new (MEMORY, "Textures", ProfilerMarkerDataUnit.Count);
@@ -57,6 +60,7 @@ namespace DCL.Profiling
             GltfContainerAssetsAmount.Value = 0;
             GltfInCacheAmount.Value = 0;
 
+            GetWearablesIntentionAmount.Value = 0;
             WearablesAssetsAmount.Value = 0;
             EmptyWearablesAssetsAmount.Value = 0;
             WearablesAssetsReferencedAmount.Value = 0;

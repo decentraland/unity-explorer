@@ -34,7 +34,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return new StreamableLoadingResult<WearableAsset>(new WearableAsset(result.Asset.GameObject, rendererInfos, result.Asset));
         }
 
-        public static void TryReleaseAssets(this IWearableAssetsCache cache, IList<CachedWearable> instantiatedWearables)
+        public static void ReleaseAssets(this IWearableAssetsCache cache, IList<CachedWearable> instantiatedWearables)
         {
             foreach (CachedWearable cachedWearable in instantiatedWearables)
                 cache.Release(cachedWearable);

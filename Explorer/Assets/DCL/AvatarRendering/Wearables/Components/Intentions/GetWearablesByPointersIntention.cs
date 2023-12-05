@@ -1,4 +1,5 @@
 using AssetManagement;
+using DCL.Profiling;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
@@ -27,6 +28,8 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
             FallbackToDefaultWearables = fallbackToDefaultWearables;
             PermittedSources = permittedSources;
             CancellationTokenSource = new CancellationTokenSource();
+
+            ProfilingCounters.GetWearablesIntentionAmount.Value++;
         }
 
         public bool Equals(GetWearablesByPointersIntention other) =>
@@ -42,6 +45,8 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
         {
             POINTERS_POOL.Release(Pointers);
             RESULTS_POOL.Return(Results, clearArray: true);
+
+            ProfilingCounters.GetWearablesIntentionAmount.Value--;
         }
     }
 }

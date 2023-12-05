@@ -30,7 +30,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             wearableCatalog = new WearableCatalog();
             IWearable mockDefaultWearable = CreateMockWearable(defaultWearableUrn, false, true);
-            wearableCatalog.wearableDictionary.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
+            wearableCatalog.wearablesCache.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
 
             mockedAB = new StreamableLoadingResult<WearableAsset>(new WearableAsset(null, null, null));
             mockedDefaultAB = new StreamableLoadingResult<WearableAsset>(new WearableAsset(null, null, null));
@@ -106,7 +106,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             //Arrange
             IWearable mockWearable = CreateMockWearable(testUrn, false, false);
-            wearableCatalog.wearableDictionary.Add(mockWearable.GetUrn(), mockWearable);
+            wearableCatalog.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
 
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<string>
                 { testUrn }, new IWearable[1], BodyShape.MALE);
@@ -128,7 +128,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             //Arrange
             IWearable mockUnisexWearable = CreateMockWearable(unisexTestUrn, false, true);
-            wearableCatalog.wearableDictionary.Add(mockUnisexWearable.GetUrn(), mockUnisexWearable);
+            wearableCatalog.wearablesCache.Add(mockUnisexWearable.GetUrn(), mockUnisexWearable);
 
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<string>
                 { unisexTestUrn }, new IWearable[1], BodyShape.MALE);
@@ -151,7 +151,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             //Arrange
             IWearable mockWearable = CreateMockWearable(testUrn, false, false);
-            wearableCatalog.wearableDictionary.Add(mockWearable.GetUrn(), mockWearable);
+            wearableCatalog.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
 
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<string>
                 { testUrn }, new IWearable[1], BodyShape.MALE);
@@ -172,7 +172,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             //Arrange
             IWearable mockWearable = CreateMockWearable(testUrn, false, false);
-            wearableCatalog.wearableDictionary.Add(mockWearable.GetUrn(), mockWearable);
+            wearableCatalog.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
 
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<string>
                 { testUrn }, new IWearable[1], BodyShape.MALE);
@@ -194,7 +194,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             //Arrange
             IWearable mockWearable = CreateMockWearable(testUrn, false, false);
-            wearableCatalog.wearableDictionary.Add(mockWearable.GetUrn(), mockWearable);
+            wearableCatalog.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
 
             var getWearablesByPointersIntention
                 = new GetWearablesByPointersIntention(new List<string>
@@ -221,7 +221,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             //Arrange
             IWearable mockWearable = CreateMockWearable(testUrn, false, false);
-            wearableCatalog.wearableDictionary.Add(mockWearable.GetUrn(), mockWearable);
+            wearableCatalog.wearablesCache.Add(mockWearable.GetUrn(), mockWearable);
 
             var getWearablesByPointersIntention = new GetWearablesByPointersIntention(new List<string>
                 { testUrn }, new IWearable[1], BodyShape.MALE);
