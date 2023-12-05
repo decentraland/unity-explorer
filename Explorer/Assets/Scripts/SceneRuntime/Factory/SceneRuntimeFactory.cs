@@ -2,7 +2,9 @@ using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
+using DCL.WebRequests;
 using DCL.Diagnostics;
+using SceneRunner.Scene.ExceptionsHandling;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -21,16 +23,18 @@ namespace SceneRuntime.Factory
         private readonly JsCodeResolver codeContentResolver;
         private readonly Dictionary<string, string> sourceCodeCache;
 
-        public SceneRuntimeFactory()
+        public SceneRuntimeFactory(IWebRequestController webRequestController)
         {
-            codeContentResolver = new JsCodeResolver();
+            codeContentResolver = new JsCodeResolver(webRequestController);
             sourceCodeCache = new Dictionary<string, string>();
         }
 
         /// <summary>
         ///     Must be called on the main thread
         /// </summary>
-        public async UniTask<SceneRuntimeImpl> CreateBySourceCodeAsync(string sourceCode,
+        public async UniTask<SceneRuntimeImpl> CreateBySourceCodeAsync(
+            string sourceCode,
+            ISceneExceptionsHandler sceneExceptionsHandler,
             IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo,
             CancellationToken ct,
@@ -47,13 +51,14 @@ namespace SceneRuntime.Factory
             // Provide basic Thread Pool synchronization context
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
 
-            return new SceneRuntimeImpl(WrapInModuleCommonJs(sourceCode), initSourceCode, moduleDictionary, instancePoolsProvider, sceneShortInfo);
+            return new SceneRuntimeImpl(sceneExceptionsHandler, WrapInModuleCommonJs(sourceCode), initSourceCode, moduleDictionary, instancePoolsProvider, sceneShortInfo);
         }
 
         /// <summary>
         ///     Must be called on the main thread
         /// </summary>
         public async UniTask<SceneRuntimeImpl> CreateByPathAsync(URLAddress path,
+            ISceneExceptionsHandler sceneExceptionsHandler,
             IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo,
             CancellationToken ct,
@@ -62,7 +67,7 @@ namespace SceneRuntime.Factory
             AssertCalledOnTheMainThread();
 
             string sourceCode = await LoadJavaScriptSourceCodeAsync(path, ct);
-            return await CreateBySourceCodeAsync(sourceCode, instancePoolsProvider, sceneShortInfo, ct, instantiationBehavior);
+            return await CreateBySourceCodeAsync(sourceCode, sceneExceptionsHandler, instancePoolsProvider, sceneShortInfo, ct, instantiationBehavior);
         }
 
         private void AssertCalledOnTheMainThread()
@@ -72,10 +77,12 @@ namespace SceneRuntime.Factory
         }
 
         private UniTask<string> GetJsInitSourceCode(CancellationToken ct) =>
-            LoadJavaScriptSourceCodeAsync($"file://{Application.streamingAssetsPath}/Js/Init.js", ct);
+            LoadJavaScriptSourceCodeAsync(
+                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Init.js"), ct);
 
         private async UniTask AddModuleAsync(string moduleName, IDictionary<string, string> moduleDictionary, CancellationToken ct) =>
-            moduleDictionary.Add(moduleName, WrapInModuleCommonJs(await LoadJavaScriptSourceCodeAsync($"file://{Application.streamingAssetsPath}/Js/Modules/{moduleName}", ct)));
+            moduleDictionary.Add(moduleName, WrapInModuleCommonJs(await LoadJavaScriptSourceCodeAsync(
+                URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Modules/{moduleName}"), ct)));
 
         private async UniTask<Dictionary<string, string>> GetJsModuleDictionaryAsync(CancellationToken ct)
         {
@@ -95,7 +102,7 @@ namespace SceneRuntime.Factory
             return moduleDictionary;
         }
 
-        private async UniTask<string> LoadJavaScriptSourceCodeAsync(string path, CancellationToken ct)
+        private async UniTask<string> LoadJavaScriptSourceCodeAsync(URLAddress path, CancellationToken ct)
         {
             if (sourceCodeCache.TryGetValue(path, out string value)) return value;
 

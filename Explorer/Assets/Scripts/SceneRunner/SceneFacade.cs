@@ -5,6 +5,7 @@ using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
+using Microsoft.ClearScript;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -86,9 +87,17 @@ namespace SceneRunner
 
             SetTargetFPS(targetFPS);
 
-            // Start the scene
+            try
+            {
+                // Start the scene
+                await runtimeInstance.StartScene();
+            }
+            catch (ScriptEngineException e)
+            {
+                sceneExceptionsHandler.OnJavaScriptException(e);
+                return;
+            }
 
-            await runtimeInstance.StartScene();
             AssertIsNotMainThread(nameof(SceneRuntimeImpl.StartScene));
 
             var stopWatch = new Stopwatch();
@@ -105,8 +114,17 @@ namespace SceneRunner
 
                     stopWatch.Restart();
 
-                    // We can't guarantee that the thread is preserved between updates
-                    await runtimeInstance.UpdateScene(deltaTime);
+                    try
+                    {
+                        // We can't guarantee that the thread is preserved between updates
+                        await runtimeInstance.UpdateScene(deltaTime);
+                    }
+                    catch (ScriptEngineException e)
+                    {
+                        sceneExceptionsHandler.OnJavaScriptException(e);
+                        break;
+                    }
+
                     sceneStateProvider.TickNumber++;
 
                     AssertIsNotMainThread(nameof(SceneRuntimeImpl.UpdateScene));

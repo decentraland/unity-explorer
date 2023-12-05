@@ -1,18 +1,25 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.WebRequests;
 using System.Threading;
-using UnityEngine.Networking;
 
 namespace DCL.AssetsProvision.CodeResolver
 {
     public class WebJsCodeProvider : IJsCodeProvider
     {
-        public async UniTask<string> GetJsCodeAsync(string url, CancellationToken cancellationToken = default)
+        private readonly IWebRequestController webRequestController;
+
+        public WebJsCodeProvider(IWebRequestController webRequestController)
         {
-            using var request = UnityWebRequest.Get(url);
+            this.webRequestController = webRequestController;
+        }
 
-            await request.SendWebRequest().WithCancellation(cancellationToken);
-
-            return request.downloadHandler.text;
+        public async UniTask<string> GetJsCodeAsync(URLAddress url, CancellationToken cancellationToken = default)
+        {
+            GenericGetRequest rqs = await webRequestController.GetAsync(new CommonArguments(url), cancellationToken);
+            string text = rqs.UnityWebRequest.downloadHandler.text;
+            rqs.UnityWebRequest.Dispose();
+            return text;
         }
     }
 }

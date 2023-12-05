@@ -27,6 +27,7 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(NavmapSettings settings, CancellationToken ct)
         {
+
         }
 
         public void Dispose()

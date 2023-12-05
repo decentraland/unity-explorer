@@ -12,6 +12,7 @@ using DCL.GlobalPartitioning;
 using DCL.PerformanceBudgeting;
 using DCL.PluginSystem.Global;
 using DCL.Systems;
+using DCL.WebRequests;
 using DCL.Time;
 using DCL.Time.Systems;
 using ECS;
@@ -43,12 +44,13 @@ namespace Global.Dynamic
 {
     public class GlobalWorldFactory
     {
-        private static readonly string EMPTY_SCENES_MAPPINGS_URL =
+        private static readonly URLAddress EMPTY_SCENES_MAPPINGS_URL = URLAddress.FromString(
 #if UNITY_EDITOR || UNITY_STANDALONE
-            $"file://{Application.streamingAssetsPath}/EmptyScenes/mappings.json";
+            $"file://{Application.streamingAssetsPath}/EmptyScenes/mappings.json"
 #else
-            return $"{Application.streamingAssetsPath}/EmptyScenes/mappings.json";
+            return $"{Application.streamingAssetsPath}/EmptyScenes/mappings.json"
 #endif
+        );
 
         private readonly CameraSamplingData cameraSamplingData;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
@@ -60,6 +62,7 @@ namespace Global.Dynamic
         private readonly IRealmData realmData;
         private readonly URLDomain assetBundlesURL;
         private readonly PhysicsTickProvider physicsTickProvider;
+        private readonly IWebRequestController webRequestController;
         private readonly IReadOnlyList<IDCLGlobalPlugin> globalPlugins;
         private readonly IConcurrentBudgetProvider memoryBudgetProvider;
         private readonly StaticSettings staticSettings;
@@ -71,6 +74,7 @@ namespace Global.Dynamic
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
             partitionSettings = staticContainer.PartitionSettings;
+            webRequestController = staticContainer.WebRequestsContainer.WebRequestController;
             staticSettings = staticContainer.StaticSettings;
             this.realmPartitionSettings = realmPartitionSettings;
             this.cameraSamplingData = cameraSamplingData;
@@ -112,12 +116,12 @@ namespace Global.Dynamic
 
             IConcurrentBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(staticSettings.ScenesLoadingBudget);
 
-            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
-            LoadSceneDefinitionSystem.InjectToWorld(ref builder, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
+            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
+            LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
 
             LoadSceneSystem.InjectToWorld(ref builder,
-                new LoadSceneSystemLogic(assetBundlesURL),
-                new LoadEmptySceneSystemLogic(emptyScenesWorldFactory, componentPoolsRegistry, EMPTY_SCENES_MAPPINGS_URL),
+                new LoadSceneSystemLogic(webRequestController, assetBundlesURL),
+                new LoadEmptySceneSystemLogic(webRequestController, emptyScenesWorldFactory, componentPoolsRegistry, EMPTY_SCENES_MAPPINGS_URL),
                 sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex);
 
             GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider, memoryBudgetProvider);

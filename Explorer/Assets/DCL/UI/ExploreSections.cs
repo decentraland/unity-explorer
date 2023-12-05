@@ -4,7 +4,12 @@ namespace DCL.UI
     {
         Navmap,
         Settings,
-        Satellite,
-        StreetView
     }
+
+    public enum NavmapSections
+    {
+        Satellite,
+        StreetView,
+    }
+
 }

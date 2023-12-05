@@ -2,7 +2,6 @@
 using ECS.Abstract;
 using ECS.SceneLifeCycle.SceneDefinition;
 using Ipfs;
-using System;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -14,15 +13,8 @@ namespace ECS.SceneLifeCycle.Systems
     {
         protected LoadScenePointerSystemBase(World world) : base(world) { }
 
-        protected Entity CreateSceneEntity(IpfsTypes.SceneEntityDefinition definition, IpfsTypes.IpfsPath ipfsPath, out Vector2Int[] parcels)
-        {
-            parcels = new Vector2Int[definition.metadata.scene.parcels.Count];
-
-            for (var i = 0; i < definition.metadata.scene.parcels.Count; i++)
-                parcels[i] = IpfsHelper.DecodePointer(definition.metadata.scene.parcels[i]);
-
-            return World.Create(new SceneDefinitionComponent(definition, parcels, ipfsPath));
-        }
+        protected Entity CreateSceneEntity(IpfsTypes.SceneEntityDefinition definition, IpfsTypes.IpfsPath ipfsPath) =>
+            World.Create(new SceneDefinitionComponent(definition, ipfsPath));
 
         /// <summary>
         ///     Creates a scene entity if none of scene parcels were processed yet
@@ -31,13 +23,9 @@ namespace ECS.SceneLifeCycle.Systems
         {
             var shouldCreate = true;
 
-            // allocate a final array only if entity should be created, to hold an intermediate array use cheap stackalloc
-            Span<Vector2Int> parcels = stackalloc Vector2Int[definition.metadata.scene.parcels.Count];
-
-            for (var i = 0; i < definition.metadata.scene.parcels.Count; i++)
+            for (var i = 0; i < definition.metadata.scene.DecodedParcels.Count; i++)
             {
-                Vector2Int parcel = IpfsHelper.DecodePointer(definition.metadata.scene.parcels[i]);
-                parcels[i] = parcel;
+                Vector2Int parcel = definition.metadata.scene.DecodedParcels[i];
 
                 if (!processedParcels.Add(parcel.ToInt2()))
                     shouldCreate = false;
@@ -46,7 +34,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (shouldCreate)
             {
                 // Note: Span.ToArray is not LINQ
-                World.Create(new SceneDefinitionComponent(definition, parcels.ToArray(), ipfsPath));
+                World.Create(new SceneDefinitionComponent(definition, ipfsPath));
             }
         }
     }
