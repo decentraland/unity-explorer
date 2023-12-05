@@ -201,7 +201,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 var transformComp =
                     new TransformComponent(transformPool.Get(), $"RANDOM_AVATAR_{i}", StartPosition(spawnArea, startXPosition, startZPosition));
 
-                CharacterController characterController = transform.gameObject.AddComponent<CharacterController>();
+                CharacterController characterController = transformComp.Transform.gameObject.AddComponent<CharacterController>();
                 characterController.radius = 0.4f;
                 characterController.height = 2;
                 characterController.center = Vector3.up;
