@@ -5,6 +5,7 @@ using ECS.TestSuite;
 using DCL.Diagnostics;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules;
 using System.Collections;
 using System.Threading;
@@ -15,6 +16,8 @@ namespace SceneRuntime.Factory.Tests
 {
     public class SceneRuntimeFactoryShould
     {
+        private readonly ISceneExceptionsHandler sceneExceptionsHandler = new RethrowSceneExceptionsHandler();
+
         [UnityTest]
         public IEnumerator CreateBySourceCode() =>
             UniTask.ToCoroutine(async () =>
@@ -37,7 +40,7 @@ namespace SceneRuntime.Factory.Tests
                 IInstancePoolsProvider instancePoolsProvider = Substitute.For<IInstancePoolsProvider>();
                 instancePoolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new byte[c.Arg<int>()]);
 
-                SceneRuntimeImpl sceneRuntime = await factory.CreateBySourceCodeAsync(sourceCode, instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
+                SceneRuntimeImpl sceneRuntime = await factory.CreateBySourceCodeAsync(sourceCode, sceneExceptionsHandler, instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
 
                 // Assert
                 Assert.NotNull(sceneRuntime);
@@ -59,7 +62,7 @@ namespace SceneRuntime.Factory.Tests
                 IInstancePoolsProvider instancePoolsProvider = Substitute.For<IInstancePoolsProvider>();
                 instancePoolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new byte[c.Arg<int>()]);
 
-                SceneRuntimeImpl sceneRuntime = await factory.CreateByPathAsync(path, instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
+                SceneRuntimeImpl sceneRuntime = await factory.CreateByPathAsync(path, sceneExceptionsHandler, instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
                 sceneRuntime.RegisterEngineApi(engineApi);
 
                 // Assert
