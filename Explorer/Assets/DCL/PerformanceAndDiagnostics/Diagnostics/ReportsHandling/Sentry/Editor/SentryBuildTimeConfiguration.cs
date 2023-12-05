@@ -73,6 +73,9 @@ namespace DCL.PerformanceAndDiagnostics.Diagnostics.ReportsHandling.Sentry.Edito
                     case "-sentryCliAuthToken":
                         cliOptions.Auth = args[i + 1];
                         break;
+                    case "-sentryUploadDebugSymbols":
+                        cliOptions.UploadSymbols = bool.Parse(args[i + 1]);
+                        break;
                 }
             }
         }
@@ -98,6 +101,7 @@ namespace DCL.PerformanceAndDiagnostics.Diagnostics.ReportsHandling.Sentry.Edito
             SentryCliOptions asset = AssetDatabase.LoadAssetAtPath<SentryCliOptions>(path);
             if (asset == null) return;
             asset.Auth = cliOptions.Auth;
+            asset.UploadSymbols = cliOptions.UploadSymbols;
             EditorUtility.SetDirty(asset);
         }
     }
