@@ -212,18 +212,32 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             var source = new UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
 
+            // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncAdd {intention.CommonArguments.URL}");
             cache.OngoingRequests.SyncAdd(intention.CommonArguments.URL, source);
 
             var ongoingRequestRemoved = false;
+
+            void TryRemoveOngoingRequest()
+            {
+                if (!ongoingRequestRemoved)
+                {
+                    // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncRemove {intention.CommonArguments.URL}");
+                    cache.OngoingRequests.SyncRemove(intention.CommonArguments.URL);
+                    ongoingRequestRemoved = true;
+                }
+            }
 
             try
             {
                 StreamableLoadingResult<TAsset>? result = await RepeatLoopAsync(intention, acquiredBudget, partition, ct);
 
                 // Ensure that we returned to the main thread
-                await UniTask.SwitchToMainThread(ct);
+                // await UniTask.SwitchToMainThread(ct);
 
                 // Set result for the reusable source
+                // Remove from the ongoing requests immediately because finally will be called later than
+                // continuation of cachedSource.Task.SuppressCancellationThrow();
+                TryRemoveOngoingRequest();
                 source.TrySetResult(result);
 
                 if (!result.HasValue)
@@ -243,8 +257,7 @@ namespace ECS.StreamableLoading.Common.Systems
             {
                 // Remove from the ongoing requests immediately because finally will be called later than
                 // continuation of cachedSource.Task.SuppressCancellationThrow();
-                cache.OngoingRequests.SyncRemove(intention.CommonArguments.URL);
-                ongoingRequestRemoved = true;
+                TryRemoveOngoingRequest();
 
                 // Cancellation does not produce asset result
                 source.TrySetCanceled(operationCanceledException.CancellationToken);
@@ -253,8 +266,7 @@ namespace ECS.StreamableLoading.Common.Systems
             finally
             {
                 // We need to remove the request the same frame to prevent de-sync with new requests
-                if (!ongoingRequestRemoved)
-                    cache.OngoingRequests.SyncRemove(intention.CommonArguments.URL);
+                TryRemoveOngoingRequest();
             }
         }
 
