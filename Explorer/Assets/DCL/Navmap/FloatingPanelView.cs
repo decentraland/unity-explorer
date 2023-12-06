@@ -56,6 +56,9 @@ namespace DCL.Navmap
         public TMP_Text parcelsCount;
 
         [field: SerializeField]
+        public GameObject appearsIn;
+
+        [field: SerializeField]
         public MultiStateButtonView likeButton;
 
         [field: SerializeField]

@@ -109,11 +109,19 @@ namespace DCL.Navmap
             SetUpVotes(placeInfo);
 
             if (placeInfo.categories.Length == 0)
+            {
+                view.appearsIn.SetActive(false);
                 return;
+            }
 
+            var hasVisibleCategories = false;
             foreach (string placeInfoCategory in placeInfo.categories)
                 if (categoriesDictionary.TryGetValue(placeInfoCategory, out GameObject categoryGameObject))
+                {
+                    hasVisibleCategories = true;
                     categoryGameObject.SetActive(true);
+                }
+            view.appearsIn.SetActive(hasVisibleCategories);
         }
 
         private void SetUpVotes(PlacesData.PlaceInfo placeInfo)

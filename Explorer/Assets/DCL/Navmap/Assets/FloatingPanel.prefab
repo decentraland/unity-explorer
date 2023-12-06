@@ -31,13 +31,13 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7822276937066756086}
+  m_Father: {fileID: 6230703491170642000}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 205, y: -229}
-  m_SizeDelta: {x: 410, y: 1}
+  m_AnchoredPosition: {x: 205, y: -120}
+  m_SizeDelta: {x: 410, y: 2}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8759385398047388492
 CanvasRenderer:
@@ -60,7 +60,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.5019608}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.2}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -268,6 +268,7 @@ RectTransform:
   m_Children:
   - {fileID: 1999866565430665447}
   - {fileID: 7221442578145555331}
+  - {fileID: 434896116849333732}
   m_Father: {fileID: 7822276937066756086}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -855,6 +856,7 @@ MonoBehaviour:
   placeCreator: {fileID: 1460150922797621082}
   placeDescription: {fileID: 3864418057313609595}
   parcelsCount: {fileID: 8366091699912192815}
+  appearsIn: {fileID: 1317779633724293986}
   likeButton: {fileID: 4161873087057572890}
   dislikeButton: {fileID: 281949347637870519}
   favoriteButton: {fileID: 396524359607738612}
@@ -3524,7 +3526,6 @@ RectTransform:
   m_Children:
   - {fileID: 9003756089467195253}
   - {fileID: 6230703491170642000}
-  - {fileID: 434896116849333732}
   - {fileID: 4673463797054126884}
   m_Father: {fileID: 5059492403272567976}
   m_RootOrder: -1
