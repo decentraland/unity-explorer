@@ -156,7 +156,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     GenerateRandomAvatars(randomAvatarRequest.RandomAvatarsToInstantiate, cameraComponent.Camera.transform.position, characterControllerSettings);
                 }
                 else
-                    ReportHub.LogError(GetReportCategory(), "Base wearables could't be loaded!");
+                    ReportHub.LogError(GetReportCategory(), "Base wearables couldn't be loaded!");
 
                 World.Destroy(entity);
             }

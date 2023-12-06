@@ -120,7 +120,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             {
                 IWearable resultWearable = wearablesResult.Asset[i];
 
-                if (wearablesToHide.Contains(resultWearable.GetCategory())) continue;
+                if (wearablesToHide.Contains(resultWearable.GetCategory()))
+                {
+                    resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape).Dereference();
+                    continue;
+                }
 
                 if (resultWearable.isFacialFeature())
                 {
@@ -190,7 +194,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             // else
             foreach (IWearable wearable in avatarShapeComponent.WearablePromise.Result.Value.Asset)
+            {
                 wearable?.WearableAssetResults[avatarShapeComponent.BodyShape]?.Asset.Dereference();
+                Debug.Log("VV:: deref");
+            }
         }
 
         public override void Dispose()

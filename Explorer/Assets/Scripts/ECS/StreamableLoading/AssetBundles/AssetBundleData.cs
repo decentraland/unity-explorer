@@ -16,8 +16,10 @@ namespace ECS.StreamableLoading.AssetBundles
         public readonly AssetBundleData[] Dependencies;
 
         [CanBeNull] public readonly AssetBundleMetrics? Metrics;
+
         private GameObject gameObject;
         private bool gameObjectLoaded;
+
         private int referencesCount;
 
         /// <summary>
