@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DCLCrypto
+namespace DCL.Web3Authentication
 {
     public static class Authenticator
     {

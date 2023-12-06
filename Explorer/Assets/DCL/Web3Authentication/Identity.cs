@@ -1,6 +1,6 @@
 ﻿using Nethereum.Signer;
 
-namespace DCLCrypto
+namespace DCL.Web3Authentication
 {
     public class Identity
     {

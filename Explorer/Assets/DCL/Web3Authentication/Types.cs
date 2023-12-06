@@ -4,7 +4,7 @@ using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
 
-namespace DCLCrypto
+namespace DCL.Web3Authentication
 {
     [Serializable]
 
