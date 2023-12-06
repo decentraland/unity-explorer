@@ -7,7 +7,6 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using System.Collections.Generic;
-using Unity.Profiling;
 
 namespace DCL.ResourcesUnloading
 {
@@ -18,14 +17,6 @@ namespace DCL.ResourcesUnloading
         private const int GLTF_UNLOAD_CHUNK = 3;
         private const int AB_UNLOAD_CHUNK = 1;
         private const int TEXTURE_UNLOAD_CHUNK = 1;
-
-        // TODO: remove markers before merge to main
-        private static readonly ProfilerMarker texturesCacheMarker = new ("CacheCleanup.texturesCache");
-        private static readonly ProfilerMarker assetBundleCacheMarker = new ("CacheCleanup.assetBundleCache");
-        private static readonly ProfilerMarker gltfContainerAssetsCacheMarker = new ("CacheCleanup.gltfContainerAssetsCache");
-        private static readonly ProfilerMarker wearableCatalogMarker = new ("CacheCleanup.wearableCatalog");
-        private static readonly ProfilerMarker wearableAssetsCacheMarker = new ("CacheCleanup.wearableAssetsCache");
-        private static readonly ProfilerMarker avatarPoolsMarker = new ("CacheCleanup.avatarPools");
 
         private readonly IConcurrentBudgetProvider fpsCapBudgetProvider;
         private readonly List<IThrottledClearable> avatarPools;
@@ -47,20 +38,11 @@ namespace DCL.ResourcesUnloading
         {
             if (!fpsCapBudgetProvider.TrySpendBudget()) return;
 
-            using (texturesCacheMarker.Auto())
-                texturesCache.Unload(fpsCapBudgetProvider, TEXTURE_UNLOAD_CHUNK);
-
-            using (wearableAssetsCacheMarker.Auto())
-                wearableAssetsCache.Unload(fpsCapBudgetProvider, WEARABLES_UNLOAD_CHUNK);
-
-            using (wearableCatalogMarker.Auto())
-                wearableCatalog.Unload(fpsCapBudgetProvider);
-
-            using (gltfContainerAssetsCacheMarker.Auto())
-                gltfContainerAssetsCache.Unload(fpsCapBudgetProvider, GLTF_UNLOAD_CHUNK);
-
-            using (assetBundleCacheMarker.Auto())
-                assetBundleCache.Unload(fpsCapBudgetProvider, AB_UNLOAD_CHUNK);
+            texturesCache.Unload(fpsCapBudgetProvider, TEXTURE_UNLOAD_CHUNK);
+            wearableAssetsCache.Unload(fpsCapBudgetProvider, WEARABLES_UNLOAD_CHUNK);
+            wearableCatalog.Unload(fpsCapBudgetProvider);
+            gltfContainerAssetsCache.Unload(fpsCapBudgetProvider, GLTF_UNLOAD_CHUNK);
+            assetBundleCache.Unload(fpsCapBudgetProvider, AB_UNLOAD_CHUNK);
 
             ClearAvatarsRelatedPools();
         }
@@ -68,9 +50,8 @@ namespace DCL.ResourcesUnloading
         private void ClearAvatarsRelatedPools()
         {
             foreach (IThrottledClearable pool in avatarPools)
-                using (avatarPoolsMarker.Auto())
-                    if (fpsCapBudgetProvider.TrySpendBudget())
-                        pool.ClearThrottled(POOLS_UNLOAD_CHUNK);
+                if (fpsCapBudgetProvider.TrySpendBudget())
+                    pool.ClearThrottled(POOLS_UNLOAD_CHUNK);
         }
 
         public void Register(AssetBundleCache assetBundleCache) =>

@@ -22,7 +22,6 @@ namespace ECS.StreamableLoading.Textures
         public TexturesCache()
         {
             cache = new Dictionary<GetTextureIntention, Texture2D>(this);
-
             IrrecoverableFailures = new Dictionary<string, StreamableLoadingResult<Texture2D>>();
             OngoingRequests = new Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<Texture2D>?>>();
         }

@@ -1,5 +1,4 @@
-﻿using Arch.Core;
-using Arch.SystemGroups;
+﻿using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
@@ -12,10 +11,7 @@ using ECS.StreamableLoading.Common.Systems;
 using Ipfs;
 using System.Threading;
 using Utility.Multithreading;
-
-#if UNITY_EDITOR
-
-#else
+#if !UNITY_EDITOR
 using UnityEngine;
 #endif
 
