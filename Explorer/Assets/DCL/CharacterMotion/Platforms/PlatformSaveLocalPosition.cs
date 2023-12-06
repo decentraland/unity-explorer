@@ -4,14 +4,13 @@ using UnityEngine;
 
 namespace DCL.CharacterMotion.Platforms
 {
-    public static class SaveLocalRotation
+    public static class PlatformSaveLocalPosition
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(ref CharacterPlatformComponent platformComponent, Vector3 forward)
+        public static void Execute(ref CharacterPlatformComponent platformComponent, Vector3 position)
         {
             if (platformComponent.CurrentPlatform != null)
-                platformComponent.LastRotation =
-                    platformComponent.CurrentPlatform.transform.InverseTransformDirection(forward);
+                platformComponent.LastPosition = platformComponent.CurrentPlatform.transform.InverseTransformPoint(position);
         }
     }
 }

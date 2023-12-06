@@ -1,7 +1,7 @@
 using UnityEngine;
 
 // TODO: DELETE CLASS, TEMPORARY HELPER TO DEMO MULTIPLE ANIMATIONS
-namespace DCL.AvatarRendering.AvatarShape.DemoScripts
+namespace DCL.AvatarRendering.DemoScripts
 {
     public class RandomAnimatorController : MonoBehaviour
     {

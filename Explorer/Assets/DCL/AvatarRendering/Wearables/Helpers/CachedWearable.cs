@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
@@ -8,15 +9,18 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     public struct CachedWearable
     {
         public readonly WearableAsset OriginalAsset;
-        public GameObject Instance;
+        public readonly GameObject Instance;
+        public readonly List<Renderer> Renderers;
 
         public CachedWearable(WearableAsset originalAsset, GameObject instance)
         {
             OriginalAsset = originalAsset;
             Instance = instance;
+            Renderers = new List<Renderer>();
         }
 
         public static implicit operator GameObject(CachedWearable cachedWearable) =>
             cachedWearable.Instance;
+
     }
 }

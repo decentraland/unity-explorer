@@ -26,6 +26,13 @@ namespace DCL.CharacterMotion
             cameraRight.y = 0;
 
             float speedLimit = SpeedLimit.Get(settings, input.Kind);
+
+            // Apply movement speed increase/decrease based on the current slope angle
+            var slopeForward = Vector3.Cross(rigidTransform.CurrentSlopeNormal, Vector3.Cross(rigidTransform.LookDirection, rigidTransform.CurrentSlopeNormal));
+            float slopeAngle = Vector3.SignedAngle(rigidTransform.LookDirection, slopeForward, Vector3.Cross(rigidTransform.LookDirection, Vector3.up));
+            float movementSpeedModifier = settings.SlopeVelocityModifier.Evaluate(slopeAngle);
+            speedLimit *= movementSpeedModifier;
+
             float yAxis = speedLimit * input.Axes.y;
             float xAxis = speedLimit * input.Axes.x;
 
@@ -53,7 +60,7 @@ namespace DCL.CharacterMotion
             Vector3 targetForward = (cameraForward * rigidTransform.MoveVelocity.ZVelocity) + (cameraRight * rigidTransform.MoveVelocity.XVelocity);
             targetForward = Vector3.ClampMagnitude(targetForward, speedLimit);
 
-            if (rigidTransform.IsGrounded)
+            if (rigidTransform.IsGrounded && !rigidTransform.IsOnASteepSlope)
             {
                 // Grounded velocity change is instant
                 rigidTransform.MoveVelocity.Velocity = targetForward;
@@ -63,15 +70,13 @@ namespace DCL.CharacterMotion
                 // Air velocity change is updated slowly in order for drag to work, in the real world the velocity should not increase every frame because we cant "move" in the air, but we do here
                 rigidTransform.MoveVelocity.Velocity = Vector3.MoveTowards(rigidTransform.MoveVelocity.Velocity, targetForward, currentAcceleration * dt);
             }
-
-            if (Mathf.Abs(input.Axes.x) > 0 || Mathf.Abs(input.Axes.y) > 0)
-                rigidTransform.LookDirection = rigidTransform.MoveVelocity.Velocity.normalized;
         }
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static float GetAcceleration(CharacterRigidTransform rigidTransform, ICharacterControllerSettings settings, CharacterRigidTransform.MovementVelocity moveVelocity)
         {
-            if (rigidTransform.IsGrounded)
+            if (rigidTransform.IsGrounded && !rigidTransform.IsOnASteepSlope)
                 return Mathf.Lerp(settings.Acceleration, settings.MaxAcceleration, settings.AccelerationCurve.Evaluate(moveVelocity.AccelerationWeight));
             else
                 return Mathf.Lerp(settings.AirAcceleration, settings.MaxAirAcceleration, settings.AccelerationCurve.Evaluate(moveVelocity.AccelerationWeight));

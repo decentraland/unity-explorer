@@ -12,11 +12,6 @@ namespace DCL.CharacterCamera
 
         public CameraMode Mode;
 
-        /// <summary>
-        ///     Indicates if the cursor is locked or not.
-        /// </summary>
-        public bool CursorIsLocked;
-
         public CameraComponent(Camera camera) : this()
         {
             Camera = camera;

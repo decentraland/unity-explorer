@@ -26,18 +26,17 @@ namespace DCL.CharacterMotion.Systems
 
         protected override void Update(float t)
         {
-            CheckStunStatusQuery(World);
+            CheckStunStatusQuery(World, time.GetTimeComponent(World).Time);
         }
 
         [Query]
         private void CheckStunStatus(
+            [Data] float currentTime,
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController,
             ref ICharacterControllerSettings characterControllerSettings,
             ref StunComponent stunComponent)
         {
-            float currentTime = time.GetTimeComponent(World).Time;
-
             if (!stunComponent.IsStunned)
             {
                 Vector3 currentPosition = characterController.transform.position;
@@ -55,7 +54,7 @@ namespace DCL.CharacterMotion.Systems
                     }
                 }
 
-                float currentVerticalVelocity = rigidTransform.NonInterpolatedVelocity.y;
+                float currentVerticalVelocity = rigidTransform.GravityVelocity.y;
 
                 if (stunComponent.LastVerticalVelocity >= 0 && currentVerticalVelocity < 0)
                     stunComponent.TopUngroundedHeight = currentPosition.y;

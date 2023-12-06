@@ -12,7 +12,7 @@ namespace DCL.CharacterMotion
             ref CharacterRigidTransform characterPhysics,
             float deltaTime)
         {
-            if (!characterPhysics.IsGrounded)
+            if (!characterPhysics.IsGrounded || characterPhysics.IsOnASteepSlope)
             {
                 var tempVelocity = characterPhysics.MoveVelocity.Velocity;
                 tempVelocity.y = 0;

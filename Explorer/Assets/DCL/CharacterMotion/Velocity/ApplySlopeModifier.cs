@@ -1,12 +1,15 @@
 ﻿using CrdtEcsBridge.Physics;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace DCL.CharacterMotion
 {
     public static class ApplySlopeModifier
     {
+        // This function returns the height modifier of the velocity for the character to stick to downward slopes
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Execute(
             in ICharacterControllerSettings settings,
             in CharacterRigidTransform rigidTransform,
@@ -15,8 +18,11 @@ namespace DCL.CharacterMotion
             CharacterController characterController,
             float dt)
         {
+            // before moving we check if we are able to step up
+            characterController.stepOffset = settings.StepOffset;
+
             // disabled when jumping or not grounded
-            if (!rigidTransform.IsGrounded || jump.IsPressed)
+            if (!rigidTransform.IsGrounded || jump.IsPressed || rigidTransform.IsOnASteepSlope)
                 return Vector3.zero;
 
             Vector3 position = characterController.transform.position;

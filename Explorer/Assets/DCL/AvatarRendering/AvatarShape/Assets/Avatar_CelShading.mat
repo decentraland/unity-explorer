@@ -14,7 +14,7 @@ Material:
   m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
-  m_EnableInstancingVariants: 1
+  m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
@@ -149,6 +149,9 @@ Material:
     - _BumpMapArr_ID: 0
     - _EmissionMapArr_ID: 0
     - _MetallicGlossMapArr_ID: 0
+    - _OcclusionMapArr_ID: -1
+    - _lastAvatarVertCount: -1
+    - _lastWearableVertCount: -1
     m_Floats:
     - _AlphaClip: 0
     - _AlphaToMask: 0
