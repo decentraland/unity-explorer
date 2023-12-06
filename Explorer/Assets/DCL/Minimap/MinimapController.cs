@@ -56,6 +56,8 @@ namespace DCL.Minimap
         {
             viewInstance.expandMinimapButton.onClick.AddListener(ExpandMinimap);
             viewInstance.minimapRendererButton.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
+            viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
+            viewInstance.sideMenu.SetActive(false);
         }
 
         private void ExpandMinimap()
@@ -64,6 +66,11 @@ namespace DCL.Minimap
             (gameObject = viewInstance.minimapContainer.gameObject).SetActive(!viewInstance.minimapContainer.gameObject.activeSelf);
             viewInstance.arrowDown.SetActive(!gameObject.activeSelf);
             viewInstance.arrowUp.SetActive(gameObject.activeSelf);
+        }
+
+        private void OpenSideMenu()
+        {
+            viewInstance.sideMenu.SetActive(!viewInstance.sideMenu.activeSelf);
         }
 
         [All(typeof(PlayerComponent))]

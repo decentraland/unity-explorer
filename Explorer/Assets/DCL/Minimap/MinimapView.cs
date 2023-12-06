@@ -15,6 +15,12 @@ namespace DCL.Minimap
         internal Button minimapRendererButton { get; private set; }
 
         [field: SerializeField]
+        internal Button sideMenuButton { get; private set; }
+
+        [field: SerializeField]
+        internal GameObject sideMenu { get; private set; }
+
+        [field: SerializeField]
         internal PixelPerfectMapRendererTextureProvider pixelPerfectMapRendererTextureProvider { get; private set; }
 
         [field: SerializeField]
