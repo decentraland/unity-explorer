@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace DCL.Web3Authentication
 {
@@ -62,9 +64,20 @@ namespace DCL.Web3Authentication
         }
 
         // TODO: make proper initialization method and hook it into the application's flow
-        private static readonly IWeb3EntityPayloadSigningProtocol entityPayloadSigningProtocol =
-            new DecentralandEntityPayloadSigningProtocol(NethereumIdentity.CreateRandom(), NethereumIdentity.CreateRandom(),
+        private static IWeb3Authenticator authenticator;
+        private static IWeb3EntityPayloadSigningProtocol entityPayloadSigningProtocol;
+
+        public static async Task Login(CancellationToken cancellationToken)
+        {
+            authenticator = new FakeWeb3Authenticator();
+
+            (IWeb3Identity identity, IWeb3Identity ephemeralIdentity) = await authenticator.Login(cancellationToken);
+
+            entityPayloadSigningProtocol = new DecentralandEntityPayloadSigningProtocol(
+                identity,
+                ephemeralIdentity,
                 DateTime.Now.AddMinutes(600));
+        }
 
         public static AuthChain SignPayload(string entityId) =>
             entityPayloadSigningProtocol.Sign(entityId);
