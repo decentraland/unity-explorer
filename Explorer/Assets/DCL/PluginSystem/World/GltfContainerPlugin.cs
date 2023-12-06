@@ -1,11 +1,9 @@
 using Arch.SystemGroups;
 using DCL.ECSComponents;
+using DCL.Interaction.Utility;
 using DCL.PluginSystem.World.Dependencies;
-using Diagnostics.ReportsHandling;
-using ECS.ComponentsPooling;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Systems;
 using ECS.Unity.GLTFContainer.Systems;
@@ -15,17 +13,18 @@ namespace DCL.PluginSystem.World
 {
     public class GltfContainerPlugin : IDCLWorldPluginWithoutSettings
     {
+        private readonly ECSWorldSingletonSharedDependencies globalDeps;
         private readonly GltfContainerAssetsCache assetsCache;
-        private readonly IComponentPoolsRegistry componentPoolsRegistry;
-        private readonly IReportsHandlingSettings reportsHandlingSettings;
-        private readonly IConcurrentBudgetProvider capBudgetProvider;
 
-        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies)
+        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps)
         {
-            componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
-            reportsHandlingSettings = singletonSharedDependencies.ReportsHandlingSettings;
+            this.globalDeps = globalDeps;
             assetsCache = new GltfContainerAssetsCache(1000);
-            capBudgetProvider = singletonSharedDependencies.FrameTimeCapBudgetProvider;
+        }
+
+        public void Dispose()
+        {
+            assetsCache.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
@@ -33,20 +32,20 @@ namespace DCL.PluginSystem.World
         {
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);
-            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, capBudgetProvider);
-            ReportGltfErrorsSystem.InjectToWorld(ref builder, reportsHandlingSettings);
+            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudgetProvider, globalDeps.MemoryBudgetProvider);
+            ReportGltfErrorsSystem.InjectToWorld(ref builder, globalDeps.ReportsHandlingSettings);
 
             // GLTF Container
             LoadGltfContainerSystem.InjectToWorld(ref builder);
-            FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, capBudgetProvider);
+            FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, globalDeps.FrameTimeBudgetProvider, sharedDependencies.EntityCollidersSceneCache, sharedDependencies.SceneData);
 
-            ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache);
-            WriteGltfContainerLoadingStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, componentPoolsRegistry.GetReferenceTypePool<PBGltfContainerLoadingState>());
+            ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache);
+            WriteGltfContainerLoadingStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, globalDeps.ComponentPoolsRegistry.GetReferenceTypePool<PBGltfContainerLoadingState>());
 
             ResetDirtyFlagSystem<PBGltfContainer>.InjectToWorld(ref builder);
 
             var cleanUpGltfContainerSystem =
-                CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache);
+                CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache);
 
             finalizeWorldSystems.Add(cleanUpGltfContainerSystem);
         }
@@ -55,18 +54,18 @@ namespace DCL.PluginSystem.World
         {
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);
-            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, capBudgetProvider);
-            ReportGltfErrorsSystem.InjectToWorld(ref builder, reportsHandlingSettings);
+            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudgetProvider, globalDeps.MemoryBudgetProvider);
+            ReportGltfErrorsSystem.InjectToWorld(ref builder, globalDeps.ReportsHandlingSettings);
 
             // GLTF Container
             LoadGltfContainerSystem.InjectToWorld(ref builder);
-            FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, dependencies.SceneRoot, capBudgetProvider);
+            FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, dependencies.SceneRoot, globalDeps.FrameTimeBudgetProvider, NullEntityCollidersSceneCache.INSTANCE, dependencies.SceneData);
 
-            ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache);
+            ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache, NullEntityCollidersSceneCache.INSTANCE);
 
             ResetDirtyFlagSystem<PBGltfContainer>.InjectToWorld(ref builder);
 
-            CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache);
+            CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache, NullEntityCollidersSceneCache.INSTANCE);
         }
     }
 }

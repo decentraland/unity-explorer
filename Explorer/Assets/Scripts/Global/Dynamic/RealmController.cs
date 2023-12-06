@@ -1,20 +1,18 @@
 ﻿using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using Diagnostics.ReportsHandling;
-using ECS.Prioritization.Components;
+using DCL.Diagnostics;
+using DCL.ParcelsService;
+using DCL.WebRequests;
+using ECS;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.Common.Systems;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using Ipfs;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using Unity.Mathematics;
-using UnityEngine;
-using UnityEngine.Networking;
 using Utility.Pool;
 
 namespace Global.Dynamic
@@ -32,50 +30,53 @@ namespace Global.Dynamic
 
         private readonly IpfsTypes.ServerAbout serverAbout = new ();
 
+        private readonly IWebRequestController webRequestController;
         private readonly int sceneLoadRadius;
         private readonly IReadOnlyList<int2> staticLoadPositions;
+        private readonly RealmData realmData;
 
-        public RealmController(int sceneLoadRadius, IReadOnlyList<int2> staticLoadPositions)
+        private readonly RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm;
+        private readonly RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld;
+        private readonly TeleportController teleportController;
+
+        public RealmController(IWebRequestController webRequestController, TeleportController teleportController, RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm, RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld, int sceneLoadRadius,
+            IReadOnlyList<int2> staticLoadPositions, RealmData realmData)
         {
+            this.webRequestController = webRequestController;
             this.sceneLoadRadius = sceneLoadRadius;
             this.staticLoadPositions = staticLoadPositions;
+            this.realmData = realmData;
+            this.teleportController = teleportController;
+            this.retrieveSceneFromFixedRealm = retrieveSceneFromFixedRealm;
+            this.retrieveSceneFromVolatileWorld = retrieveSceneFromVolatileWorld;
         }
 
         /// <summary>
         ///     it is an async process so it should be executed before ECS kicks in
         /// </summary>
-        public async UniTask SetRealm(GlobalWorld globalWorld, string realm, CancellationToken ct)
+        public async UniTask SetRealmAsync(GlobalWorld globalWorld, URLDomain realm, CancellationToken ct)
         {
             World world = globalWorld.EcsWorld;
 
             // Show loading screen
 
-            await UnloadCurrentRealm(globalWorld);
+            await UnloadCurrentRealmAsync(globalWorld);
 
-            async UniTask<StreamableLoadingResult<IpfsTypes.ServerAbout>> CreateServerAboutRequest(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
-            {
-                string text;
+            IpfsTypes.ServerAbout result = await (await webRequestController.GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM))
+               .OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
-                using (UnityWebRequest wr = await UnityWebRequest.Get(intention.CommonArguments.URL).SendWebRequest().WithCancellation(ct))
-                    text = wr.downloadHandler.text;
-
-                await UniTask.SwitchToThreadPool();
-                JsonUtility.FromJsonOverwrite(text, serverAbout);
-                await UniTask.SwitchToMainThread();
-                return new StreamableLoadingResult<IpfsTypes.ServerAbout>(serverAbout);
-            }
-
-            var intent = new SubIntention(new CommonLoadingArguments(realm + "/about"));
-            IpfsTypes.ServerAbout result = (await intent.RepeatLoop(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateServerAboutRequest, ReportCategory.REALM, ct)).UnwrapAndRethrow();
+            realmData.Reconfigure(new IpfsRealm(realm, result));
 
             // Add the realm component
-            var realmComp = new RealmComponent(new IpfsRealm(realm, result));
+            var realmComp = new RealmComponent(realmData);
 
             Entity realmEntity = world.Create(realmComp,
                 new ParcelsInRange(new HashSet<int2>(100), sceneLoadRadius), ProcessesScenePointers.Create());
 
             if (!ComplimentWithStaticPointers(world, realmEntity) && !realmComp.ScenesAreFixed)
                 ComplimentWithVolatilePointers(world, realmEntity);
+
+            teleportController.OnRealmLoaded(realmData.ScenesAreFixed ? retrieveSceneFromFixedRealm : retrieveSceneFromVolatileWorld, globalWorld.EcsWorld);
 
             // Hide loading screen
         }
@@ -97,7 +98,7 @@ namespace Global.Dynamic
             return false;
         }
 
-        public async UniTask UnloadCurrentRealm(GlobalWorld globalWorld)
+        public async UniTask UnloadCurrentRealmAsync(GlobalWorld globalWorld)
         {
             World world = globalWorld.EcsWorld;
 
@@ -112,13 +113,16 @@ namespace Global.Dynamic
 
             globalWorld.Clear();
 
+            teleportController.InvalidateRealm();
+            realmData.Invalidate();
+
             await UniTask.WhenAll(allScenes.Select(s => s.DisposeAsync()));
 
             // Collect garbage, good moment to do it
             GC.Collect();
         }
 
-        public async UniTask DisposeGlobalWorld(GlobalWorld globalWorld)
+        public async UniTask DisposeGlobalWorldAsync(GlobalWorld globalWorld)
         {
             World world = globalWorld.EcsWorld;
             FindLoadedScenes(world);

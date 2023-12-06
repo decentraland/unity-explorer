@@ -1,10 +1,14 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using UnityEngine;
 
 namespace Utility
 {
     public static class UnityObjectUtils
     {
         private static bool isQuitting;
+
+        public static bool IsQuitting => Application.isPlaying && isQuitting;
 
         [RuntimeInitializeOnLoadMethod]
         private static void StartTrackingApplicationStatus()
@@ -17,8 +21,6 @@ namespace Utility
 
             Application.quitting += SetQuitting;
         }
-
-        public static bool IsQuitting => Application.isPlaying && isQuitting;
 
         /// <summary>
         ///     Tries to destroy Game Object based on the current state of the Application
@@ -45,6 +47,22 @@ namespace Utility
                 Object.DestroyImmediate(@object);
             else
                 Object.Destroy(@object);
+        }
+
+        /// <summary>
+        ///     Gets shared materials instead of materials if called when Application is not playing (from tests)
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void SafeGetMaterials(this Renderer renderer, List<Material> targetList)
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                renderer.GetSharedMaterials(targetList);
+                return;
+            }
+#endif
+            renderer.GetMaterials(targetList);
         }
     }
 }

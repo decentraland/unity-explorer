@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CommunicationData.URLHelpers;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
@@ -9,18 +10,20 @@ namespace SceneRunner.Scene
     public class SceneAssetBundleManifest
     {
         public static readonly SceneAssetBundleManifest NULL = new ();
-
-        private readonly string assetBundlesBaseUrl;
         internal readonly SceneAbDto dto;
-        internal readonly HashSet<string> convertedFiles;
+
+        private readonly URLDomain assetBundlesBaseUrl;
+        private readonly HashSet<string> convertedFiles;
 
         private readonly string versionHashPart;
 
-        public SceneAssetBundleManifest(string assetBundlesBaseUrl, SceneAbDto dto)
+        public IReadOnlyCollection<string> ConvertedFiles => convertedFiles;
+
+        public SceneAssetBundleManifest(URLDomain assetBundlesBaseUrl, SceneAbDto dto)
         {
             this.assetBundlesBaseUrl = assetBundlesBaseUrl;
             this.dto = dto;
-            convertedFiles = new HashSet<string>(dto.Files);
+            convertedFiles = new HashSet<string>(dto.Files, StringComparer.OrdinalIgnoreCase);
 
             versionHashPart = string.IsNullOrEmpty(dto.Version) ? ComputeVersionedHashPart(assetBundlesBaseUrl) : dto.Version;
         }
@@ -30,16 +33,16 @@ namespace SceneRunner.Scene
         /// </summary>
         private SceneAssetBundleManifest()
         {
-            assetBundlesBaseUrl = string.Empty;
+            assetBundlesBaseUrl = URLDomain.EMPTY;
             convertedFiles = new HashSet<string>();
         }
 
-        private static string ComputeVersionedHashPart(string assetBundlesUrl)
+        private static string ComputeVersionedHashPart(in URLDomain assetBundlesUrl)
         {
             StringBuilder hashBuilder = GenericPool<StringBuilder>.Get();
             hashBuilder.Clear();
 
-            ReadOnlySpan<char> span = assetBundlesUrl.AsSpan();
+            ReadOnlySpan<char> span = assetBundlesUrl.Value.AsSpan();
 
             // content URL always ends with '/'
             int indexOfVersionStart;
@@ -70,7 +73,7 @@ namespace SceneRunner.Scene
         public bool Contains(string hash) =>
             convertedFiles.Contains(hash);
 
-        public string GetAssetBundleURL(string hash) =>
-            $"{assetBundlesBaseUrl}{dto.Version}/{hash}";
+        public URLAddress GetAssetBundleURL(string hash) =>
+            assetBundlesBaseUrl.Append(new URLPath($"{dto.Version}/{hash}"));
     }
 }

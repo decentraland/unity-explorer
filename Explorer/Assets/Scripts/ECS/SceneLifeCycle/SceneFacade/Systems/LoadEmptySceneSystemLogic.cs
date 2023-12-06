@@ -1,4 +1,7 @@
-﻿using Cysharp.Threading.Tasks;
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.WebRequests;
 using ECS.ComponentsPooling;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
@@ -7,7 +10,6 @@ using SceneRunner.Scene;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Networking;
 using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -18,56 +20,51 @@ namespace ECS.SceneLifeCycle.Systems
     public class LoadEmptySceneSystemLogic : IDisposable
     {
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly IWebRequestController webRequestController;
         private readonly IEmptyScenesWorldFactory emptyScenesWorldFactory;
-        private readonly string mappingURL;
+        private readonly URLAddress mappingURL;
 
         private EmptyScenesWorld sharedWorld;
-
-        public LoadEmptySceneSystemLogic(
-            IEmptyScenesWorldFactory emptyScenesWorldFactory,
-            IComponentPoolsRegistry componentPoolsRegistry,
-            string mappingURL)
-        {
-            this.emptyScenesWorldFactory = emptyScenesWorldFactory;
-            this.componentPoolsRegistry = componentPoolsRegistry;
-            this.mappingURL = mappingURL;
-        }
-
-        internal EmptySceneData emptySceneData { get; private set; }
 
         /// <summary>
         ///     Indicates that mapping could not be loaded and the whole logic will be skipped
         /// </summary>
         public bool Inactive { get; private set; }
 
+        internal EmptySceneData emptySceneData { get; private set; }
+
+        public LoadEmptySceneSystemLogic(
+            IWebRequestController webRequestController,
+            IEmptyScenesWorldFactory emptyScenesWorldFactory,
+            IComponentPoolsRegistry componentPoolsRegistry,
+            URLAddress mappingURL)
+        {
+            this.webRequestController = webRequestController;
+            this.emptyScenesWorldFactory = emptyScenesWorldFactory;
+            this.componentPoolsRegistry = componentPoolsRegistry;
+            this.mappingURL = mappingURL;
+        }
+
         public void Dispose()
         {
             sharedWorld?.Dispose();
         }
 
-        internal async UniTask LoadMapping(CancellationToken ct)
+        internal async UniTask LoadMappingAsync(CancellationToken ct)
         {
-            string text;
+            EmptySceneMappings mappings = await (await webRequestController.GetAsync(new CommonArguments(mappingURL), ct, ReportCategory.SCENE_LOADING))
+               .CreateFromJson<EmptySceneMappings>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
-            using (var webRequest = UnityWebRequest.Get(mappingURL))
-            {
-                await webRequest.SendWebRequest().WithCancellation(ct);
-                text = webRequest.downloadHandler.text;
-            }
-
-            await UniTask.SwitchToThreadPool();
-
-            EmptySceneMappings mappings = JsonUtility.FromJson<EmptySceneMappings>(text);
             emptySceneData = new EmptySceneData(mappings.mappings);
         }
 
-        public async UniTask<ISceneFacade> Flow(GetSceneFacadeIntention intent, IPartitionComponent partition, CancellationToken ct)
+        public async UniTask<ISceneFacade> FlowAsync(GetSceneFacadeIntention intent, IPartitionComponent partition, CancellationToken ct)
         {
             if (emptySceneData == null)
             {
                 try
                 {
-                    await LoadMapping(ct);
+                    await LoadMappingAsync(ct);
                     await UniTask.SwitchToMainThread();
 
                     if (sharedWorld == null)
@@ -84,7 +81,7 @@ namespace ECS.SceneLifeCycle.Systems
             }
 
             // pick one of available scenes randomly based on coordinates
-            Vector2Int parcel = intent.Parcels[0];
+            Vector2Int parcel = intent.DefinitionComponent.Parcels[0];
             EmptySceneMapping choice = emptySceneData.Mappings[Mathf.Abs(parcel.GetHashCode()) % emptySceneData.Mappings.Count];
 
             var emptyScene = EmptySceneFacade.Create(

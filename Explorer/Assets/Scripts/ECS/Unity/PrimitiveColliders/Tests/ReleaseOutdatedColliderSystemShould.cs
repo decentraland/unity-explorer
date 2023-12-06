@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using DCL.ECSComponents;
+using DCL.Interaction.Utility;
 using ECS.ComponentsPooling;
 using ECS.TestSuite;
 using ECS.Unity.PrimitiveColliders.Components;
@@ -14,12 +15,13 @@ namespace ECS.Unity.PrimitiveColliders.Tests
     public class ReleaseOutdatedColliderSystemShould : UnitySystemTestBase<ReleaseOutdatedColliderSystem>
     {
         private IComponentPoolsRegistry poolsRegistry;
+        private IEntityCollidersSceneCache collidersSceneCache;
 
         [SetUp]
         public void SetUp()
         {
             poolsRegistry = Substitute.For<IComponentPoolsRegistry>();
-            system = new ReleaseOutdatedColliderSystem(world, poolsRegistry);
+            system = new ReleaseOutdatedColliderSystem(world, poolsRegistry, collidersSceneCache = Substitute.For<IEntityCollidersSceneCache>());
         }
 
         [Test]
@@ -41,6 +43,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             system.Update(0);
 
             poolsRegistry.Received(1).TryGetPool(typeof(BoxCollider), out Arg.Any<IComponentPool>());
+            collidersSceneCache.Received(1).Remove(Arg.Any<Collider>());
 
             Assert.AreEqual(null, world.Get<PrimitiveColliderComponent>(entity).Collider);
         }
@@ -63,6 +66,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             system.Update(0);
 
             poolsRegistry.Received(1).TryGetPool(typeof(BoxCollider), out Arg.Any<IComponentPool>());
+            collidersSceneCache.Received(1).Remove(Arg.Any<Collider>());
             Assert.That(world.Has<PrimitiveColliderComponent>(entity), Is.False);
         }
 
@@ -85,6 +89,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             system.Update(0);
 
             poolsRegistry.DidNotReceive().TryGetPool(Arg.Any<Type>(), out Arg.Any<IComponentPool>());
+            collidersSceneCache.DidNotReceive().Remove(Arg.Any<Collider>());
 
             Assert.AreEqual(comp.Collider, world.Get<PrimitiveColliderComponent>(entity).Collider);
         }

@@ -4,6 +4,8 @@ using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using DCL.Interaction.Utility;
+using Microsoft.ClearScript;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -12,6 +14,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Utility.Multithreading;
 
 namespace SceneRunner
 {
@@ -20,25 +23,29 @@ namespace SceneRunner
         internal readonly ISceneRuntime runtimeInstance;
         internal readonly ECSWorldFacade ecsWorldFacade;
         internal readonly ICRDTProtocol crdtProtocol;
-        internal readonly IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider;
+        internal readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
         internal readonly ICRDTWorldSynchronizer crdtWorldSynchronizer;
         internal readonly IInstancePoolsProvider instancePoolsProvider;
         internal readonly ICRDTMemoryAllocator crdtMemoryAllocator;
         internal readonly ISceneExceptionsHandler sceneExceptionsHandler;
+        internal readonly IEntityCollidersSceneCache entityCollidersSceneCache;
         private readonly ISceneStateProvider sceneStateProvider;
 
         private int intervalMS;
+
+        public ISceneData SceneData { get; }
 
         public SceneFacade(
             ISceneRuntime runtimeInstance,
             ECSWorldFacade ecsWorldFacade,
             ICRDTProtocol crdtProtocol,
-            IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider,
+            IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
             ICRDTWorldSynchronizer crdtWorldSynchronizer,
             IInstancePoolsProvider instancePoolsProvider,
             ICRDTMemoryAllocator crdtMemoryAllocator,
             ISceneExceptionsHandler sceneExceptionsHandler,
             ISceneStateProvider sceneStateProvider,
+            IEntityCollidersSceneCache entityCollidersSceneCache,
             ISceneData sceneData)
         {
             this.runtimeInstance = runtimeInstance;
@@ -50,10 +57,9 @@ namespace SceneRunner
             this.crdtMemoryAllocator = crdtMemoryAllocator;
             this.sceneExceptionsHandler = sceneExceptionsHandler;
             this.sceneStateProvider = sceneStateProvider;
+            this.entityCollidersSceneCache = entityCollidersSceneCache;
             SceneData = sceneData;
         }
-
-        public ISceneData SceneData { get; }
 
         public void SetTargetFPS(int fps)
         {
@@ -66,24 +72,32 @@ namespace SceneRunner
         UniTask ISceneFacade.Tick(float dt) =>
             runtimeInstance.UpdateScene(dt);
 
-        public async UniTask StartUpdateLoop(int targetFPS, CancellationToken ct)
+        public async UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
         {
-            AssertIsNotMainThread(nameof(StartUpdateLoop));
+            AssertIsNotMainThread(nameof(StartUpdateLoopAsync));
 
             if (sceneStateProvider.State != SceneState.NotStarted)
-                throw new ThreadStateException($"{nameof(StartUpdateLoop)} is already started!");
+                throw new ThreadStateException($"{nameof(StartUpdateLoopAsync)} is already started!");
 
             // Process "main.crdt" first
             if (SceneData.StaticSceneMessages.Data.Length > 0)
                 runtimeInstance.ApplyStaticMessages(SceneData.StaticSceneMessages.Data);
 
-            sceneStateProvider.State = SceneState.Running;
+            sceneStateProvider.SetRunning(new SceneEngineStartInfo(DateTime.Now, (int)MultithreadingUtility.FrameCount));
 
             SetTargetFPS(targetFPS);
 
-            // Start the scene
+            try
+            {
+                // Start the scene
+                await runtimeInstance.StartScene();
+            }
+            catch (ScriptEngineException e)
+            {
+                sceneExceptionsHandler.OnJavaScriptException(e);
+                return;
+            }
 
-            await runtimeInstance.StartScene();
             AssertIsNotMainThread(nameof(SceneRuntimeImpl.StartScene));
 
             var stopWatch = new Stopwatch();
@@ -100,15 +114,25 @@ namespace SceneRunner
 
                     stopWatch.Restart();
 
-                    // We can't guarantee that the thread is preserved between updates
-                    await runtimeInstance.UpdateScene(deltaTime);
+                    try
+                    {
+                        // We can't guarantee that the thread is preserved between updates
+                        await runtimeInstance.UpdateScene(deltaTime);
+                    }
+                    catch (ScriptEngineException e)
+                    {
+                        sceneExceptionsHandler.OnJavaScriptException(e);
+                        break;
+                    }
+
+                    sceneStateProvider.TickNumber++;
 
                     AssertIsNotMainThread(nameof(SceneRuntimeImpl.UpdateScene));
 
                     // Passing ct to Task.Delay allows to break the loop immediately
                     // as, otherwise, due to 0 or low FPS it can spin for much longer
 
-                    if (!await IdleWhileRunning(ct))
+                    if (!await IdleWhileRunningAsync(ct))
                         break;
 
                     int sleepMS = Math.Max(intervalMS - (int)stopWatch.ElapsedMilliseconds, 0);
@@ -123,7 +147,7 @@ namespace SceneRunner
             catch (OperationCanceledException) { }
         }
 
-        private async ValueTask<bool> IdleWhileRunning(CancellationToken ct)
+        private async ValueTask<bool> IdleWhileRunningAsync(CancellationToken ct)
         {
             bool TryComplete()
             {
@@ -150,7 +174,7 @@ namespace SceneRunner
         }
 
         /// <summary>
-        /// Must ensure that the execution does not jump between different threads
+        ///     Must ensure that the execution does not jump between different threads
         /// </summary>
         [Conditional("UNITY_EDITOR")]
         [Conditional("DEBUG")]
@@ -179,6 +203,7 @@ namespace SceneRunner
             instancePoolsProvider.Dispose();
             crdtMemoryAllocator.Dispose();
             sceneExceptionsHandler.Dispose();
+            entityCollidersSceneCache.Dispose();
 
             sceneStateProvider.State = SceneState.Disposed;
         }

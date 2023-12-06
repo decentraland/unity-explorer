@@ -3,10 +3,10 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
+using DCL.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Components.Defaults;
@@ -28,7 +28,7 @@ namespace ECS.Unity.Materials.Systems
         private readonly DestroyMaterial destroyMaterial;
         private readonly ISceneData sceneData;
         private readonly int attemptsCount;
-        private IConcurrentBudgetProvider capFrameTimeBudgetProvider;
+        private readonly IConcurrentBudgetProvider capFrameTimeBudgetProvider;
 
         public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData, int attemptsCount, IConcurrentBudgetProvider capFrameTimeBudgetProvider) : base(world)
         {

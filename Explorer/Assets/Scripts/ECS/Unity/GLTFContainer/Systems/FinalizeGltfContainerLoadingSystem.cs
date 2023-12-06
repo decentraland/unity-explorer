@@ -1,13 +1,17 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CRDT;
 using DCL.ECSComponents;
+using DCL.Interaction.Utility;
+using DCL.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
+using ECS.Unity.SceneBoundsChecker;
 using ECS.Unity.Transforms.Components;
+using SceneRunner.Scene;
 using Utility;
 
 namespace ECS.Unity.GLTFContainer.Systems
@@ -21,36 +25,42 @@ namespace ECS.Unity.GLTFContainer.Systems
     {
         private readonly Entity sceneRoot;
         private readonly IConcurrentBudgetProvider capBudget;
+        private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
+        private readonly ISceneData sceneData;
 
-        public FinalizeGltfContainerLoadingSystem(World world, Entity sceneRoot, IConcurrentBudgetProvider capBudget) : base(world)
+        public FinalizeGltfContainerLoadingSystem(World world, Entity sceneRoot, IConcurrentBudgetProvider capBudget,
+            IEntityCollidersSceneCache entityCollidersSceneCache, ISceneData sceneData) : base(world)
         {
             this.sceneRoot = sceneRoot;
             this.capBudget = capBudget;
+            this.entityCollidersSceneCache = entityCollidersSceneCache;
+            this.sceneData = sceneData;
         }
 
         protected override void Update(float t)
         {
             ref TransformComponent sceneTransform = ref World.Get<TransformComponent>(sceneRoot);
+            ParcelMathHelper.SceneCircumscribedPlanes sceneCircumscribedPlanes = sceneData.Geometry.CircumscribedPlanes;
 
-            FinalizeLoadingQuery(World);
-            FinalizeLoadingNoTransformQuery(World, ref sceneTransform);
+            FinalizeLoadingQuery(World, in sceneCircumscribedPlanes);
+            FinalizeLoadingNoTransformQuery(World, ref sceneTransform, in sceneCircumscribedPlanes);
         }
 
         /// <summary>
         ///     The overload that uses the scene transform as a parent
         /// </summary>
-        /// <param name="component"></param>
         [Query]
         [All(typeof(PBGltfContainer))]
         [None(typeof(TransformComponent))]
-        private void FinalizeLoadingNoTransform([Data] ref TransformComponent sceneTransform, ref GltfContainerComponent component)
+        private void FinalizeLoadingNoTransform([Data] ref TransformComponent sceneTransform, [Data] in ParcelMathHelper.SceneCircumscribedPlanes sceneCircumscribedPlanes,
+            in Entity entity, ref CRDTEntity sdkEntity, ref GltfContainerComponent component)
         {
-            FinalizeLoading(ref component, ref sceneTransform);
+            FinalizeLoading(in sceneCircumscribedPlanes, in entity, ref sdkEntity, ref component, ref sceneTransform);
         }
 
         [Query]
         [All(typeof(PBGltfContainer))]
-        private void FinalizeLoading(ref GltfContainerComponent component, ref TransformComponent transformComponent)
+        private void FinalizeLoading([Data] in ParcelMathHelper.SceneCircumscribedPlanes sceneCircumscribedPlanes, in Entity entity, ref CRDTEntity sdkEntity, ref GltfContainerComponent component, ref TransformComponent transformComponent)
         {
             if (!capBudget.TrySpendBudget())
                 return;
@@ -66,8 +76,11 @@ namespace ECS.Unity.GLTFContainer.Systems
                 }
 
                 ConfigureGltfContainerColliders.SetupColliders(ref component, result.Asset);
+                ConfigureSceneMaterial.EnableSceneBounds(in result.Asset, in sceneCircumscribedPlanes);
 
-                // Reparent to the current transform
+                entityCollidersSceneCache.Associate(in component, World.Reference(entity), sdkEntity);
+
+                // Re-parent to the current transform
                 result.Asset.Root.transform.SetParent(transformComponent.Transform);
                 result.Asset.Root.transform.ResetLocalTRS();
                 result.Asset.Root.SetActive(true);

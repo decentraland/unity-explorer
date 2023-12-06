@@ -4,22 +4,12 @@ using NUnit.Framework;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Random = UnityEngine.Random;
 
 namespace ECS.ComponentsPooling.Tests
 {
     [TestFixture]
     public class ComponentPoolShould
     {
-        public class TestClass
-        {
-            public int Value;
-        }
-
-        private ComponentPool<TestClass> componentPool;
-        private Action<TestClass> onRelease;
-        private Action<TestClass> onGet;
-
         [SetUp]
         public void SetUp()
         {
@@ -34,12 +24,21 @@ namespace ECS.ComponentsPooling.Tests
             componentPool.Clear();
         }
 
+        public class TestClass
+        {
+            public int Value;
+        }
+
+        private ComponentPool<TestClass> componentPool;
+        private Action<TestClass> onRelease;
+        private Action<TestClass> onGet;
+
         [Test]
         public async Task GetFromMultipleThreads()
         {
             async UniTask Run()
             {
-                var component = componentPool.Get();
+                TestClass component = componentPool.Get();
                 component.Value = 1;
                 await UniTask.SwitchToThreadPool();
                 await UniTask.Delay(100);
@@ -60,8 +59,8 @@ namespace ECS.ComponentsPooling.Tests
             async UniTask Run()
             {
                 await UniTask.SwitchToThreadPool();
-                var random = new System.Random();
-                var component = componentPool.Get();
+                var random = new Random();
+                TestClass component = componentPool.Get();
                 component.Value = 1;
                 await UniTask.Delay(TimeSpan.FromTicks(100 + (int)((random.NextDouble() * 20) - 10d)));
                 componentPool.Release(component);

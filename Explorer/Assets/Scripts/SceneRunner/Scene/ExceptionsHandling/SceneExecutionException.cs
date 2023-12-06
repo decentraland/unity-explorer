@@ -1,4 +1,4 @@
-﻿using Diagnostics.ReportsHandling;
+﻿using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 
@@ -12,18 +12,18 @@ namespace SceneRunner.Scene.ExceptionsHandling
         private readonly ReportData reportData;
         private string messagePrefix;
 
-        internal SceneExecutionException(IEnumerable<Exception> innerExceptions, ReportData reportData) : base(innerExceptions)
-        {
-            this.reportData = reportData;
-        }
-
         public override string Message => messagePrefix + base.Message;
+
+        public ref readonly ReportData ReportData => ref reportData;
 
         string IManagedEcsException.MessagePrefix
         {
             set => messagePrefix = value;
         }
 
-        public ref readonly ReportData ReportData => ref reportData;
+        internal SceneExecutionException(IEnumerable<Exception> innerExceptions, ReportData reportData) : base(innerExceptions)
+        {
+            this.reportData = reportData;
+        }
     }
 }

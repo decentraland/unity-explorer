@@ -34,7 +34,7 @@ namespace ECS.SceneLifeCycle.Tests
 
             var volatilePointers = new VolatileScenePointers(new List<IpfsTypes.SceneEntityDefinition>(), new List<int2>());
 
-            var realm = new RealmComponent(new TestIpfsRealm());
+            var realm = new RealmComponent(new RealmData(new TestIpfsRealm()));
 
             Entity e = world.Create(parcelsInRange, volatilePointers, realm, new ProcessesScenePointers { Value = new NativeHashSet<int2>(100, AllocatorManager.Persistent) });
 
@@ -67,7 +67,7 @@ namespace ECS.SceneLifeCycle.Tests
             foreach (int2 vector2Int in array)
                 processedParcels.Add(vector2Int);
 
-            var realm = new RealmComponent(new TestIpfsRealm());
+            var realm = new RealmComponent(new RealmData(new TestIpfsRealm()));
 
             Entity e = world.Create(parcelsInRange, volatilePointers, realm, new ProcessesScenePointers { Value = processedParcels });
 

@@ -1,5 +1,6 @@
-﻿using Diagnostics;
-using UnityEngine;
+﻿using CommunicationData.URLHelpers;
+using DCL.Diagnostics;
+using Utility;
 
 namespace SceneRunner.Scene
 {
@@ -10,12 +11,12 @@ namespace SceneRunner.Scene
         /// <summary>
         ///     Position of the base parcel in the world
         /// </summary>
-        Vector3 BasePosition { get; }
+        ParcelMathHelper.SceneGeometry Geometry { get; }
 
         SceneAssetBundleManifest AssetBundleManifest { get; }
 
         /// <summary>
-        /// Main.crdt file that should be applied first before launching the scene
+        ///     Main.crdt file that should be applied first before launching the scene
         /// </summary>
         StaticSceneMessages StaticSceneMessages { get; }
 
@@ -25,13 +26,13 @@ namespace SceneRunner.Scene
         ///     Translates URL encoded in SDK components into a path in the scene bundle
         ///     from which an asset can be downloaded from
         /// </summary>
-        bool TryGetMainScriptUrl(out string result);
+        bool TryGetMainScriptUrl(out URLAddress result);
 
         /// <summary>
         ///     Translates URL encoded in SDK components into a path in the scene bundle
         ///     from which an asset can be downloaded from
         /// </summary>
-        bool TryGetContentUrl(string url, out string result);
+        bool TryGetContentUrl(string url, out URLAddress result);
 
         /// <summary>
         ///     Translates the name of the scene asset into the hash, that can be used as part of URL
@@ -44,7 +45,7 @@ namespace SceneRunner.Scene
         /// <param name="url"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        bool TryGetMediaUrl(string url, out string result);
+        bool TryGetMediaUrl(string url, out URLAddress result);
 
         bool IsUrlDomainAllowed(string url);
 

@@ -4,7 +4,9 @@ using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
+using DCL.Interaction.Utility;
 using ECS.Prioritization.Components;
+using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.ECSWorld;
@@ -20,6 +22,32 @@ namespace SceneRunner.Tests
     [TestFixture]
     public class SceneFactoryShould
     {
+        [SetUp]
+        public void SetUp()
+        {
+            path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
+
+            ECSWorldFacade ecsWorldFacade = TestSystemsWorld.Create();
+
+            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
+
+            ecsWorldFactory = Substitute.For<IECSWorldFactory>();
+            ecsWorldFactory.CreateWorld(in Arg.Any<ECSWorldFactoryArgs>()).Returns(ecsWorldFacade);
+
+            sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>();
+            crdtSerializer = Substitute.For<ICRDTSerializer>();
+            componentsRegistry = Substitute.For<ISDKComponentsRegistry>();
+
+            sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry,
+                new SceneEntityFactory(), new EntityCollidersGlobalCache());
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            sceneFacade?.DisposeAsync().Forget();
+        }
+
         private SceneRuntimeFactory sceneRuntimeFactory;
         private IECSWorldFactory ecsWorldFactory;
         private ISharedPoolsProvider sharedPoolsProvider;
@@ -32,35 +60,10 @@ namespace SceneRunner.Tests
 
         private string path;
 
-        [SetUp]
-        public void SetUp()
-        {
-            path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
-
-            var ecsWorldFacade = TestSystemsWorld.Create();
-
-            sceneRuntimeFactory = new SceneRuntimeFactory();
-
-            ecsWorldFactory = Substitute.For<IECSWorldFactory>();
-            ecsWorldFactory.CreateWorld(in Arg.Any<ECSWorldFactoryArgs>()).Returns(ecsWorldFacade);
-
-            sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>();
-            crdtSerializer = Substitute.For<ICRDTSerializer>();
-            componentsRegistry = Substitute.For<ISDKComponentsRegistry>();
-
-            sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry, new EntityFactory());
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            sceneFacade?.DisposeAsync().Forget();
-        }
-
         [Test]
         public async Task CreateSceneFacadeForTestScene()
         {
-            sceneFacade = await sceneFactory.CreateSceneFromFile(path, Substitute.For<IPartitionComponent>(), CancellationToken.None);
+            sceneFacade = await sceneFactory.CreateSceneFromFileAsync(path, Substitute.For<IPartitionComponent>(), CancellationToken.None);
 
             var sceneFacadeImpl = (SceneFacade)sceneFacade;
 
@@ -68,7 +71,6 @@ namespace SceneRunner.Tests
 
             Assert.IsNotNull(sceneFacadeImpl.crdtProtocol);
             Assert.IsNotNull(sceneFacadeImpl.runtimeInstance);
-            Assert.IsNotNull(sceneFacadeImpl.outgoingCrtdMessagesProvider);
             Assert.IsNotNull(sceneFacadeImpl.crdtWorldSynchronizer);
             Assert.IsNotNull(sceneFacadeImpl.instancePoolsProvider);
             Assert.IsNotNull(sceneFacadeImpl.crdtMemoryAllocator);
@@ -80,9 +82,9 @@ namespace SceneRunner.Tests
         [Test]
         public async Task ReturnToTheThreadPool()
         {
-            var threadId = Thread.CurrentThread.ManagedThreadId;
+            int threadId = Thread.CurrentThread.ManagedThreadId;
 
-            sceneFacade = await sceneFactory.CreateSceneFromFile(path, Substitute.For<IPartitionComponent>(), CancellationToken.None);
+            sceneFacade = await sceneFactory.CreateSceneFromFileAsync(path, Substitute.For<IPartitionComponent>(), CancellationToken.None);
 
             Assert.AreNotEqual(threadId, Thread.CurrentThread.ManagedThreadId);
         }

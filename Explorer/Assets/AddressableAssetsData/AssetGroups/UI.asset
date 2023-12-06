@@ -17,8 +17,38 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 9d34671c4a9995044aa4b38f0c1c3570
   m_SerializeEntries:
-  - m_GUID: 03608bfcd31894b8daf215b6e82338bf
-    m_Address: Profiler View
+  - m_GUID: 8fd0fd0188702304689c461c6aacc7c5
+    m_Address: HoverCanvas
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7dc631660587a41589ba55c08ff7fa73
+    m_Address: ExplorePanel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dbfb7e67a438449f9a887f820f733868
+    m_Address: PopupCloser
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b55e2970d2dc94295ad8af70cb9d09f4
+    m_Address: PersistentExploreOpener
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ad0eada9babef44e5bb3f06b080eef83
+    m_Address: Navmap
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f2ef3a867ab2840cb9bc73b4762922fd
+    m_Address: Minimap
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 028bf9eb42404424bbd1df5cd802720e
+    m_Address: FullSearchResult
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

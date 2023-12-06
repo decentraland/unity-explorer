@@ -5,6 +5,7 @@ using DCL.Character;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
+using DCL.DebugUtilities;
 using System.Threading;
 
 namespace DCL.PluginSystem.Global
@@ -13,18 +14,25 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ICharacterObject characterObject;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
 
         private ProvidedAsset<CharacterControllerSettings> settings;
 
-        public CharacterMotionPlugin(IAssetsProvisioner assetsProvisioner, ICharacterObject characterObject)
+        public CharacterMotionPlugin(IAssetsProvisioner assetsProvisioner, ICharacterObject characterObject, IDebugContainerBuilder debugContainerBuilder)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.characterObject = characterObject;
+            this.debugContainerBuilder = debugContainerBuilder;
         }
 
-        public async UniTask Initialize(CharacterMotionSettings settings, CancellationToken ct)
+        public void Dispose()
         {
-            this.settings = await assetsProvisioner.ProvideMainAsset(settings.controllerSettings, ct);
+            settings.Dispose();
+        }
+
+        public async UniTask InitializeAsync(CharacterMotionSettings settings, CancellationToken ct)
+        {
+            this.settings = await assetsProvisioner.ProvideMainAssetAsync(settings.controllerSettings, ct);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -35,16 +43,24 @@ namespace DCL.PluginSystem.Global
             world.Add(arguments.PlayerEntity,
                 new CharacterRigidTransform(),
                 (ICharacterControllerSettings)settings.Value,
-                characterObject.Controller);
+                characterObject.Controller,
+                new CharacterAnimationComponent(),
+                new CharacterPlatformComponent(),
+                new StunComponent(),
+                new FeetIKComponent(),
+                new HandsIKComponent(),
+                new HeadIKComponent());
 
             InterpolateCharacterSystem.InjectToWorld(ref builder);
             RotateCharacterSystem.InjectToWorld(ref builder);
-            CalculateCharacterVelocitySystem.InjectToWorld(ref builder);
-        }
-
-        public void Dispose()
-        {
-            settings.Dispose();
+            CalculateCharacterVelocitySystem.InjectToWorld(ref builder, debugContainerBuilder);
+            CharacterAnimationSystem.InjectToWorld(ref builder);
+            CharacterPlatformSystem.InjectToWorld(ref builder);
+            StunCharacterSystem.InjectToWorld(ref builder);
+            CalculateCameraFovSystem.InjectToWorld(ref builder);
+            FeetIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
+            HandsIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
+            HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
         }
     }
 }

@@ -1,33 +1,12 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
+using DCL.Diagnostics;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using Diagnostics.ReportsHandling;
 
 public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeature
 {
     public class DCL_RenderPass_GenerateSkyBox : ScriptableRenderPass
     {
-        // Debug
-        private ReportData m_ReportData = new ReportData("DCL_RenderPass_GenerateSkyBox", ReportHint.SessionStatic);
-
-        private const string profilerTag = "Custom Pass: GenerateSkyBox";
-        private Material m_Material_Generate;
-        private ProceduralSkyBoxSettings_Generate m_Settings_Generate;
-        private RTHandle m_SkyBoxCubeMap_RTHandle;
-
-        private static readonly int s_ParamsID = Shader.PropertyToID("_CurrentCubeFace");
-        private static readonly int s_SunPosID = Shader.PropertyToID("_SunPos");
-        private static readonly int s_SunColID = Shader.PropertyToID("_SunColour");
-
-        // Constants
-        private const string k_SkyBoxCubemapTextureName = "_SkyBox_Cubemap_Texture";
-
-        // Statics
-        private static readonly int s_SkyBoxCubemapTextureID = Shader.PropertyToID(k_SkyBoxCubemapTextureName);
-        
         private enum ShaderPasses
         {
             CubeMapFace_Right = 0,
@@ -35,19 +14,34 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             CubeMapFace_Up = 2,
             CubeMapFace_Down = 3,
             CubeMapFace_Front = 4,
-            CubeMapFace_Back = 5
+            CubeMapFace_Back = 5,
         }
 
-        internal DCL_RenderPass_GenerateSkyBox()
-        {
+        private const string profilerTag = "Custom Pass: GenerateSkyBox";
 
-        }
+        // Constants
+        private const string k_SkyBoxCubemapTextureName = "_SkyBox_Cubemap_Texture";
+
+        private static readonly int s_ParamsID = Shader.PropertyToID("_CurrentCubeFace");
+        private static readonly int s_SunPosID = Shader.PropertyToID("_SunPos");
+        private static readonly int s_SunColID = Shader.PropertyToID("_SunColour");
+
+        // Statics
+        private static readonly int s_SkyBoxCubemapTextureID = Shader.PropertyToID(k_SkyBoxCubemapTextureName);
+
+        // Debug
+        private readonly ReportData m_ReportData = new ("DCL_RenderPass_GenerateSkyBox", ReportHint.SessionStatic);
+        private Material m_Material_Generate;
+        private ProceduralSkyBoxSettings_Generate m_Settings_Generate;
+        private RTHandle m_SkyBoxCubeMap_RTHandle;
+
+        internal DCL_RenderPass_GenerateSkyBox() { }
 
         internal void Setup(ProceduralSkyBoxSettings_Generate _featureSettings, Material _material, RTHandle _RTHandle)
         {
-            this.m_Material_Generate = _material;
-            this.m_Settings_Generate = _featureSettings;
-            this.m_SkyBoxCubeMap_RTHandle = _RTHandle;
+            m_Material_Generate = _material;
+            m_Settings_Generate = _featureSettings;
+            m_SkyBoxCubeMap_RTHandle = _RTHandle;
         }
 
         // This method is called before executing the render pass.
@@ -57,14 +51,14 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         // The render pipeline will ensure target setup and clearing happens in a performant manner.
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
-            m_Material_Generate.SetVector(s_SunPosID, this.m_Settings_Generate.SunPos);
-            m_Material_Generate.SetVector(s_SunColID, this.m_Settings_Generate.SunColour);
+            m_Material_Generate.SetVector(s_SunPosID, m_Settings_Generate.SunPos);
+            m_Material_Generate.SetVector(s_SunColID, m_Settings_Generate.SunColour);
         }
 
         public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
         {
             // Configure targets and clear color
-            ConfigureTarget(this.m_SkyBoxCubeMap_RTHandle);
+            ConfigureTarget(m_SkyBoxCubeMap_RTHandle);
         }
 
         // Here you can implement the rendering logic.
@@ -73,13 +67,14 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         // You don't have to call ScriptableRenderContext.submit, the render pipeline will call it at specific points in the pipeline.
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
-            if (this.m_Material_Generate == null)
+            if (m_Material_Generate == null)
             {
-                ReportHub.LogError(this.m_ReportData, $"{GetType().Name}.Execute(): Missing material. DCL_RenderPass_GenerateSkyBox pass will not execute. Check for missing reference in the renderer resources.");
+                ReportHub.LogError(m_ReportData, $"{GetType().Name}.Execute(): Missing material. DCL_RenderPass_GenerateSkyBox pass will not execute. Check for missing reference in the renderer resources.");
                 return;
             }
 
             CommandBuffer cmd = CommandBufferPool.Get();
+
             using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
             {
                 // Uncomment below line for testing only, unnecessary during release.
@@ -90,28 +85,28 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
                 // switch to this look up to reduce shader variants
                 // https://support.unity.com/hc/requests/1621458
                 //cmd.SetGlobalVector(s_ParamsID, new Vector4(0.0f, 0.0f, 0.0f, 0.0f));
-                CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.PositiveX, depthSlice: 0);
-                CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Right);
+                CoreUtils.SetRenderTarget(cmd, buffer: m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.PositiveX, depthSlice: 0);
+                CoreUtils.DrawFullScreen(cmd, m_Material_Generate, properties: null);
 
                 //cmd.SetGlobalVector(s_ParamsID, new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
-                CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.NegativeX, depthSlice: 0);
-                CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Left);
+                CoreUtils.SetRenderTarget(cmd, buffer: m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.NegativeX, depthSlice: 0);
+                CoreUtils.DrawFullScreen(cmd, m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Left);
 
                 //cmd.SetGlobalVector(s_ParamsID, new Vector4(2.0f, 0.0f, 0.0f, 0.0f));
-                CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.PositiveY, depthSlice: 0);
-                CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Up);
+                CoreUtils.SetRenderTarget(cmd, buffer: m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.PositiveY, depthSlice: 0);
+                CoreUtils.DrawFullScreen(cmd, m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Up);
 
                 //cmd.SetGlobalVector(s_ParamsID, new Vector4(3.0f, 0.0f, 0.0f, 0.0f));
-                CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.NegativeY, depthSlice: 0);
-                CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Down);
+                CoreUtils.SetRenderTarget(cmd, buffer: m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.NegativeY, depthSlice: 0);
+                CoreUtils.DrawFullScreen(cmd, m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Down);
 
                 //cmd.SetGlobalVector(s_ParamsID, new Vector4(4.0f, 0.0f, 0.0f, 0.0f));
-                CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.PositiveZ, depthSlice: 0);
-                CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Front);
+                CoreUtils.SetRenderTarget(cmd, buffer: m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.PositiveZ, depthSlice: 0);
+                CoreUtils.DrawFullScreen(cmd, m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Front);
 
                 //cmd.SetGlobalVector(s_ParamsID, new Vector4(5.0f, 0.0f, 0.0f, 0.0f));
-                CoreUtils.SetRenderTarget(cmd, buffer: this.m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.NegativeZ, depthSlice: 0);
-                CoreUtils.DrawFullScreen(cmd, this.m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Back);
+                CoreUtils.SetRenderTarget(cmd, buffer: m_SkyBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.NegativeZ, depthSlice: 0);
+                CoreUtils.DrawFullScreen(cmd, m_Material_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Back);
             }
 
             context.ExecuteCommandBuffer(cmd);
@@ -119,15 +114,11 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         }
 
         // Cleanup any allocated resources that were created during the execution of this render pass.
-        public override void OnCameraCleanup(CommandBuffer cmd)
-        {
-
-        }
+        public override void OnCameraCleanup(CommandBuffer cmd) { }
 
         public void dispose()
         {
-            this.m_SkyBoxCubeMap_RTHandle?.Release();
+            m_SkyBoxCubeMap_RTHandle?.Release();
         }
-
     }
 }

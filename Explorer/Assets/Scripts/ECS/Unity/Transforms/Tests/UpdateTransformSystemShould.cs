@@ -10,11 +10,6 @@ namespace ECS.Unity.Transforms.Tests
     [TestFixture]
     public class UpdateTransformSystemShould : UnitySystemTestBase<UpdateTransformSystem>
     {
-        private SDKTransform sdkTransform;
-        private TransformComponent testTransformComponent;
-
-        private readonly Vector3 TEST_VECTOR = new (1, 2, 3);
-
         [SetUp]
         public void SetUp()
         {
@@ -31,6 +26,17 @@ namespace ECS.Unity.Transforms.Tests
             system = new UpdateTransformSystem(world);
         }
 
+        [TearDown]
+        public void TearDown()
+        {
+            Object.DestroyImmediate(testTransformComponent.Transform.gameObject);
+        }
+
+        private SDKTransform sdkTransform;
+        private TransformComponent testTransformComponent;
+
+        private readonly Vector3 TEST_VECTOR = new (1, 2, 3);
+
         [Test]
         public void UpdateDirtyTransformComponent()
         {
@@ -40,12 +46,6 @@ namespace ECS.Unity.Transforms.Tests
             // Assert
             Assert.IsFalse(sdkTransform.IsDirty);
             Assert.AreEqual(testTransformComponent.Transform.position, TEST_VECTOR);
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            Object.DestroyImmediate(testTransformComponent.Transform.gameObject);
         }
     }
 }

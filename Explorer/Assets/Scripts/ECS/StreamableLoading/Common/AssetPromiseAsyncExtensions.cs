@@ -11,11 +11,11 @@ namespace ECS.StreamableLoading.Common
         /// <summary>
         ///     Wait and consume intention, leads to the entity removal
         /// </summary>
-        public static async UniTask<AssetPromise<TAsset, TLoadingIntention>> ToUniTask<TAsset, TLoadingIntention>(this AssetPromise<TAsset, TLoadingIntention> promise,
+        public static async UniTask<AssetPromise<TAsset, TLoadingIntention>> ToUniTaskAsync<TAsset, TLoadingIntention>(this AssetPromise<TAsset, TLoadingIntention> promise,
             World world,
             PlayerLoopTiming playerLoopTiming = PlayerLoopTiming.Update,
             CancellationToken cancellationToken = default)
-            where TLoadingIntention: ILoadingIntention, IEquatable<TLoadingIntention>
+            where TLoadingIntention: IAssetIntention, IEquatable<TLoadingIntention>
         {
             do await UniTask.Yield(playerLoopTiming, cancellationToken);
             while (!promise.TryConsume(world, out _));

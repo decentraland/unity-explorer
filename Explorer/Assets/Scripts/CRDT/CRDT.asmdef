@@ -1,16 +1,17 @@
 {
-    "name": "CRDT",
-    "rootNamespace": "",
-    "references": [
-        "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": true,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
+  "name": "CRDT",
+  "rootNamespace": "",
+  "references": [
+    "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+    "GUID:101b8b6ebaf64668909b49c4b7a1420d"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

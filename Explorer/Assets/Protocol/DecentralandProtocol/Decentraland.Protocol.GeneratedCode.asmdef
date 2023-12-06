@@ -1,19 +1,20 @@
 {
-  "name": "Decentraland.Protocol.GeneratedCode",
-  "rootNamespace": "",
-  "references": [
-    "GUID:f51ebe6a0ceec4240a699833d6309b23"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": true,
-  "precompiledReferences": [
-    "Google.Protobuf.dll",
-    "Google.Api.CommonProtos.dll"
-  ],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "Decentraland.Protocol.GeneratedCode",
+    "rootNamespace": "",
+    "references": [
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:e0cd26848372d4e5c891c569017e11f1"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Google.Protobuf.dll",
+        "Google.Api.CommonProtos.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e7669db769f7224e94ce1be19e8677e, type: 3}
+  m_Name: Integration Tests World Container
+  m_EditorClassIdentifier: 
+  settings:
+  - rid: 6784895267130048516
+  - rid: 1268264197252972545
+  references:
+    version: 2
+    RefIds:
+    - rid: 1268264197252972545
+      type: {class: InteractionPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        <RaycastBucketThreshold>k__BackingField: 3
+        <RaycastFrameBudgetMs>k__BackingField: 3
+        <PlayerOriginRaycastMaxDistance>k__BackingField: 200
+    - rid: 6784895267130048516
+      type: {class: MaterialsPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        <LoadingAttemptsCount>k__BackingField: 6
+        <PoolInitialCapacity>k__BackingField: 256
+        <PoolMaxSize>k__BackingField: 2048
+        basicMaterial:
+          m_AssetGUID: 0009549658aa1be40bbed401477fbd48
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        pbrMaterial:
+          m_AssetGUID: 60d3d51407bdce5449781acd4ee86781
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0

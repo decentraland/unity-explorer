@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using Arch.Core;
+﻿using Arch.Core;
 using DCL.ECSComponents;
+using DCL.PerformanceBudgeting;
 using ECS.ComponentsPooling;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.TestSuite;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
@@ -11,6 +9,9 @@ using ECS.Unity.PrimitiveRenderer.MeshSetup;
 using ECS.Unity.PrimitiveRenderer.Systems;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 
@@ -18,25 +19,24 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
 {
     public class InstantiatePrimitiveRenderingSystemShould : UnitySystemTestBase<InstantiatePrimitiveRenderingSystem>
     {
-        private IComponentPoolsRegistry poolsRegistry;
-
         private readonly Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshes
             = new ()
             {
                 { PBMeshRenderer.MeshOneofCase.Box, CreateSubstitute<BoxPrimitive>() },
                 { PBMeshRenderer.MeshOneofCase.Sphere, CreateSubstitute<SpherePrimitive>() },
                 { PBMeshRenderer.MeshOneofCase.Cylinder, CreateSubstitute<CylinderPrimitive>() },
-                { PBMeshRenderer.MeshOneofCase.Plane, CreateSubstitute<PlanePrimitive>() }
+                { PBMeshRenderer.MeshOneofCase.Plane, CreateSubstitute<PlanePrimitive>() },
             };
+        private IComponentPoolsRegistry poolsRegistry;
 
-        private static ISetupMesh CreateSubstitute<T>() where T : IPrimitiveMesh
+        private Entity entity;
+
+        private static ISetupMesh CreateSubstitute<T>() where T: IPrimitiveMesh
         {
-            var s = Substitute.For<ISetupMesh>();
+            ISetupMesh s = Substitute.For<ISetupMesh>();
             s.MeshType.Returns(typeof(T));
             return s;
         }
-
-        private Entity entity;
 
         [SetUp]
         public void SetUp()
@@ -44,17 +44,17 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
             poolsRegistry = new ComponentPoolsRegistry(
                 new Dictionary<Type, IComponentPool>
                 {
-                    { typeof(MeshRenderer), new UnityComponentPool<MeshRenderer>(null, MeshRendererPoolUtils.CreateMeshRendererComponent, MeshRendererPoolUtils.ReleaseMeshRendererComponent) },
+                    { typeof(MeshRenderer), new GameObjectPool<MeshRenderer>(null, MeshRendererPoolUtils.CreateMeshRendererComponent, MeshRendererPoolUtils.ReleaseMeshRendererComponent) },
                     { typeof(BoxPrimitive), new ComponentPool<BoxPrimitive>() },
                     { typeof(SpherePrimitive), new ComponentPool<SpherePrimitive>() },
                     { typeof(CylinderPrimitive), new ComponentPool<CylinderPrimitive>() },
-                    { typeof(PlanePrimitive), new ComponentPool<PlanePrimitive>() }
-                });
+                    { typeof(PlanePrimitive), new ComponentPool<PlanePrimitive>() },
+                }, new GameObject().transform);
 
             IConcurrentBudgetProvider budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
             budgetProvider.TrySpendBudget().Returns(true);
 
-            system = new InstantiatePrimitiveRenderingSystem(world, poolsRegistry, budgetProvider, setupMeshes);
+            system = new InstantiatePrimitiveRenderingSystem(world, poolsRegistry, budgetProvider, Substitute.For<ISceneData>(), setupMeshes);
 
             entity = world.Create();
             AddTransformToEntity(entity);
@@ -69,7 +69,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
             system.Update(0);
 
             //Act
-            ref var meshRendererComponent = ref world.Get<PrimitiveMeshRendererComponent>(entity);
+            ref PrimitiveMeshRendererComponent meshRendererComponent = ref world.Get<PrimitiveMeshRendererComponent>(entity);
 
             //Assert
             Assert.AreEqual(expectedType, meshRendererComponent.SDKType);
@@ -93,7 +93,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
             system.Update(0);
 
             //Assert
-            ref var meshRendererComponent = ref world.Get<PrimitiveMeshRendererComponent>(entity);
+            ref PrimitiveMeshRendererComponent meshRendererComponent = ref world.Get<PrimitiveMeshRendererComponent>(entity);
 
             Assert.AreEqual(expectedType, meshRendererComponent.SDKType);
             setupMeshes[input.MeshCase].Received(1).Execute(input, meshRendererComponent.PrimitiveMesh.Mesh);

@@ -21,6 +21,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
         private readonly Transform parentContainer;
 
+        public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>> OngoingRequests { get; }
+        public IDictionary<string, StreamableLoadingResult<GltfContainerAsset>> IrrecoverableFailures { get; }
+
+        private bool disposed { get; set; }
+
         public GltfContainerAssetsCache(int maxSize)
         {
             this.maxSize = Mathf.Min(500, maxSize);
@@ -28,9 +33,19 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             var parentContainerGo = new GameObject($"POOL_CONTAINER_{nameof(GltfContainerAsset)}");
             parentContainerGo.SetActive(false);
             parentContainer = parentContainerGo.transform;
+
+            OngoingRequests = new FakeDictionaryCache<UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>>();
+            IrrecoverableFailures = new Dictionary<string, StreamableLoadingResult<GltfContainerAsset>>();
         }
 
-        public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>> OngoingRequests => throw new NotImplementedException($"{nameof(GltfContainerAssetsCache)} doesn't support web requests directly");
+        public void Dispose()
+        {
+            if (disposed)
+                return;
+
+            IrrecoverableFailures.Clear();
+            disposed = true;
+        }
 
         public bool TryGet(in string key, out GltfContainerAsset asset)
         {

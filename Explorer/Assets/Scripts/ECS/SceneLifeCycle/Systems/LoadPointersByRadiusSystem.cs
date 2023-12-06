@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -9,7 +10,6 @@ using ECS.StreamableLoading.Common.Components;
 using Ipfs;
 using System.Collections.Generic;
 using Unity.Mathematics;
-using UnityEngine;
 using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -77,7 +77,7 @@ namespace ECS.SceneLifeCycle.Systems
                     IpfsTypes.SceneEntityDefinition scene = definitions[i];
                     if (scene.pointers.Count == 0) continue;
 
-                    TryCreateSceneEntity(scene, new IpfsTypes.IpfsPath(scene.id, string.Empty), processesScenePointers.Value);
+                    TryCreateSceneEntity(scene, new IpfsTypes.IpfsPath(scene.id, URLDomain.EMPTY), processesScenePointers.Value);
                 }
 
                 // Empty parcels = parcels for which no scene pointers were retrieved

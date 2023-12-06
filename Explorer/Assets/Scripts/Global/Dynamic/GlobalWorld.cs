@@ -5,6 +5,7 @@ using ECS.Prioritization.Components;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using SystemGroups.Visualiser;
 
 namespace Global.Dynamic
 {
@@ -13,6 +14,7 @@ namespace Global.Dynamic
     /// </summary>
     public class GlobalWorld : IDisposable
     {
+        public static readonly string WORLD_NAME = "GLOBAL";
         public readonly World EcsWorld;
         public readonly IReadOnlyList<IFinalizeWorldSystem> FinalizeWorldSystems;
 
@@ -35,17 +37,20 @@ namespace Global.Dynamic
             worldSystems = systemGroupWorld;
         }
 
-        public void Clear()
-        {
-            cameraSamplingData.Clear();
-            realmSamplingData.Clear();
-        }
-
         public void Dispose()
         {
             destroyCancellationSource.Cancel();
             worldSystems.Dispose();
+
+            SystemGroupSnapshot.Instance.Unregister(worldSystems);
+
             EcsWorld.Dispose();
+        }
+
+        public void Clear()
+        {
+            cameraSamplingData.Clear();
+            realmSamplingData.Clear();
         }
     }
 }

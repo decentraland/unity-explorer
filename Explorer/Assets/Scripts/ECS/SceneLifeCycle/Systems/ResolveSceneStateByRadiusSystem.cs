@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using ECS;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -57,7 +58,7 @@ namespace Realm
             if (SceneIsInRange(in definition, parcelsInRange))
                 World.Add(entity,
                     AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                        new GetSceneFacadeIntention(realm, definition.IpfsPath, definition.Definition, definition.Parcels, definition.IsEmpty), partitionComponent));
+                        new GetSceneFacadeIntention(realm, definition), partitionComponent));
         }
 
         [Query]
@@ -67,7 +68,7 @@ namespace Realm
             if (SceneIsInRange(definition, parcelsInRange))
                 return;
 
-            World.Add<DeleteEntityIntention>(entity);
+            World.Add(entity, DeleteEntityIntention.DeferredDeletion);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -1,4 +1,5 @@
-﻿using Ipfs;
+﻿using CommunicationData.URLHelpers;
+using Ipfs;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -11,26 +12,21 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     /// </summary>
     public struct SceneDefinitionComponent
     {
-        internal static readonly IpfsTypes.SceneMetadataScene EMPTY_METADATA = new ()
-        {
-            allowedMediaHostnames = new List<string>(),
-            requiredPermissions = new List<string>(),
-        };
+        public static readonly IpfsTypes.SceneMetadataScene EMPTY_METADATA = new ();
 
         public readonly IpfsTypes.SceneEntityDefinition Definition;
 
-        // This allocation is left on purpose as realm switching will lead to GC so we can keep things simple
         public readonly IReadOnlyList<Vector2Int> Parcels;
         public readonly IReadOnlyList<ParcelMathHelper.ParcelCorners> ParcelsCorners;
         public readonly IpfsTypes.IpfsPath IpfsPath;
         public readonly bool IsEmpty;
 
-        public SceneDefinitionComponent(IpfsTypes.SceneEntityDefinition definition, IReadOnlyList<Vector2Int> parcels, IpfsTypes.IpfsPath ipfsPath)
+        public SceneDefinitionComponent(IpfsTypes.SceneEntityDefinition definition, IpfsTypes.IpfsPath ipfsPath)
         {
             Definition = definition;
-            Parcels = parcels;
-            ParcelsCorners = new List<ParcelMathHelper.ParcelCorners>(parcels.Select(ParcelMathHelper.CalculateCorners));
+            ParcelsCorners = new List<ParcelMathHelper.ParcelCorners>(definition.metadata.scene.DecodedParcels.Select(ParcelMathHelper.CalculateCorners));
             IpfsPath = ipfsPath;
+            Parcels = definition.metadata.scene.DecodedParcels;
             IsEmpty = false;
         }
 
@@ -44,7 +40,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             ParcelsCorners = new[] { ParcelMathHelper.CalculateCorners(parcel) };
             Parcels = new[] { parcel };
             IsEmpty = true;
-            IpfsPath = new IpfsTypes.IpfsPath(id, string.Empty);
+            IpfsPath = new IpfsTypes.IpfsPath(id, URLDomain.EMPTY);
 
             Definition = new IpfsTypes.SceneEntityDefinition
             {

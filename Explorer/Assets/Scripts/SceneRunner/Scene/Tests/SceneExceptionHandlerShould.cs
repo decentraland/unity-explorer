@@ -1,8 +1,7 @@
 ﻿using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using Diagnostics;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -13,10 +12,6 @@ namespace SceneRunner.Scene.Tests
     [TestFixture]
     public class SceneExceptionHandlerShould
     {
-        private ISceneStateProvider sceneStateProvider;
-        private SceneExceptionsHandler sceneExceptionsHandler;
-        private MockedReportScope reportHandler;
-
         [SetUp]
         public void SetUp()
         {
@@ -30,6 +25,10 @@ namespace SceneRunner.Scene.Tests
         {
             reportHandler.Dispose();
         }
+
+        private ISceneStateProvider sceneStateProvider;
+        private SceneExceptionsHandler sceneExceptionsHandler;
+        private MockedReportScope reportHandler;
 
         [Test]
         public void SetStateOnEngineException()

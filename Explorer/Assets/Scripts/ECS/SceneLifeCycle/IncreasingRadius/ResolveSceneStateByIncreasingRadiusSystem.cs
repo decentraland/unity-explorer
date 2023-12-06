@@ -36,13 +36,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         private readonly IRealmPartitionSettings realmPartitionSettings;
 
-        private struct OrderedData
-        {
-            public Entity Entity;
-            public PartitionComponent PartitionComponent;
-            public SceneDefinitionComponent DefinitionComponent;
-        }
-
         private readonly List<OrderedData> orderedData;
 
         internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings) : base(world)
@@ -144,7 +137,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
                 World.Add(data.Entity,
                     AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                        new GetSceneFacadeIntention(ipfsRealm, data.DefinitionComponent.IpfsPath, data.DefinitionComponent.Definition, data.DefinitionComponent.Parcels, data.DefinitionComponent.IsEmpty),
+                        new GetSceneFacadeIntention(ipfsRealm, data.DefinitionComponent),
                         data.PartitionComponent));
             }
         }
@@ -155,7 +148,14 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private void StartUnloading(in Entity entity, ref PartitionComponent partitionComponent)
         {
             if (partitionComponent.Bucket < realmPartitionSettings.UnloadBucket) return;
-            World.Add(entity, new DeleteEntityIntention());
+            World.Add(entity, DeleteEntityIntention.DeferredDeletion);
+        }
+
+        private struct OrderedData
+        {
+            public Entity Entity;
+            public PartitionComponent PartitionComponent;
+            public SceneDefinitionComponent DefinitionComponent;
         }
     }
 }

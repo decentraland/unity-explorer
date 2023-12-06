@@ -1,0 +1,83 @@
+{
+	"elements": [
+		{
+			"type": "base-wearable",
+			"urn": "urn:decentraland:off-chain:base-avatars:aviatorstyle",
+			"name": "aviatorstyle",
+			"category": "eyewear",
+			"individualData": [
+				{
+					"id": "urn:decentraland:off-chain:base-avatars:aviatorstyle"
+				}
+			],
+			"amount": 1,
+			"entity": {
+				"version": "v3",
+				"id": "QmXUXheUrHtsR6j7PpnBdBzb9dyA1ew6MuQwtCZtuXKRjp",
+				"type": "wearable",
+				"pointers": [
+					"urn:decentraland:off-chain:base-avatars:aviatorstyle"
+				],
+				"timestamp": 1637005587098,
+				"content": [
+					{
+						"file": "AvatarWearables_TX.png",
+						"hash": "QmYktkLr5rnn9zPPARkavhVowvTNTih8uWq8BVscTGxtZD"
+					},
+					{
+						"file": "M_Eyewear_AviatorStyle.glb",
+						"hash": "QmXb4PnGmkpTLEfbrFrkupXjxj1AafyEX3k53iFnjsSmAk"
+					},
+					{
+						"file": "thumbnail.png",
+						"hash": "QmWEr5ttPDezxMjDHU1UKPPukHjLiNEi1EjznmaUXiaHgn"
+					}
+				],
+				"metadata": {
+					"id": "urn:decentraland:off-chain:base-avatars:aviatorstyle",
+					"description": "",
+					"thumbnail": "thumbnail.png",
+					"rarity": "",
+					"data": {
+						"tags": [
+							"accesories",
+							"male",
+							"man",
+							"base-wearable"
+						],
+						"category": "eyewear",
+						"representations": [
+							{
+								"bodyShapes": [
+									"urn:decentraland:off-chain:base-avatars:BaseMale"
+								],
+								"mainFile": "M_Eyewear_AviatorStyle.glb",
+								"overrideReplaces": [],
+								"overrideHides": [],
+								"contents": [
+									"AvatarWearables_TX.png",
+									"M_Eyewear_AviatorStyle.glb"
+								]
+							}
+						]
+					},
+					"i18n": [
+						{
+							"code": "en",
+							"text": "Aviator Sunglasses"
+						},
+						{
+							"code": "es",
+							"text": "Gafas de Aviador"
+						}
+					],
+					"createdAt": 1637005585914,
+					"updatedAt": 1637005585914
+				}
+			}
+		}
+	],
+	"totalAmount": 282,
+	"pageNum": 1,
+	"pageSize": 1
+}

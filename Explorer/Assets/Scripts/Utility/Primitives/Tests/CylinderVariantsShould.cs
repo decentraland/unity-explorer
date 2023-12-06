@@ -14,7 +14,7 @@ namespace Utility.Primitives.Tests
 
             var mesh = new Mesh();
 
-            CylinderVariantsFactory.Create(ref mesh, 0.5f, 0.5f, numVertices: verticesCount);
+            CylinderVariantsFactory.Create(ref mesh, numVertices: verticesCount);
 
             Assert.AreEqual(finalVerticesCount, mesh.vertexCount);
             Assert.AreEqual(finalVerticesCount, mesh.normals.Length);
@@ -30,7 +30,7 @@ namespace Utility.Primitives.Tests
 
             var mesh = new Mesh();
 
-            CylinderVariantsFactory.Create(ref mesh, 0f, 0.5f, numVertices: verticesCount);
+            CylinderVariantsFactory.Create(ref mesh, 0f, numVertices: verticesCount);
 
             Assert.AreEqual(finalVerticesCount, mesh.vertexCount);
             Assert.AreEqual(finalVerticesCount, mesh.normals.Length);
@@ -46,7 +46,7 @@ namespace Utility.Primitives.Tests
 
             var mesh = new Mesh();
 
-            CylinderVariantsFactory.Create(ref mesh, 0.25f, 0.5f, numVertices: verticesCount);
+            CylinderVariantsFactory.Create(ref mesh, 0.25f, numVertices: verticesCount);
 
             Assert.AreEqual(finalVerticesCount, mesh.vertexCount);
             Assert.AreEqual(finalVerticesCount, mesh.normals.Length);
@@ -72,7 +72,7 @@ namespace Utility.Primitives.Tests
 
             var mesh = new Mesh();
 
-            CylinderVariantsFactory.Create(ref mesh, 0.5f, 0.5f);
+            CylinderVariantsFactory.Create(ref mesh);
 
             // We don't clear buffer so if they are reused they should be filled with data
 

@@ -1,8 +1,11 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
+using DCL.WebRequests;
+using DCL.WebRequests.Analytics;
 using ECS.ComponentsPooling;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
@@ -23,7 +26,8 @@ namespace ECS.SceneLifeCycle.Tests
 {
     public class LoadEmptySceneSystemShould
     {
-        private static readonly string EMPTY_SCENES_MAPPINGS_URL = $"file://{Application.streamingAssetsPath}/EmptyScenes/mappings.json";
+        private static readonly URLAddress EMPTY_SCENES_MAPPINGS_URL =
+            URLAddress.FromString($"file://{Application.streamingAssetsPath}/EmptyScenes/mappings.json");
 
         private LoadEmptySceneSystemLogic loadEmptySceneSystemLogic;
         private IEmptyScenesWorldFactory emptyScenesWorldFactory;
@@ -42,6 +46,7 @@ namespace ECS.SceneLifeCycle.Tests
         public void SetUp()
         {
             loadEmptySceneSystemLogic = new LoadEmptySceneSystemLogic(
+                new WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>()),
                 emptyScenesWorldFactory = Substitute.For<IEmptyScenesWorldFactory>(),
                 Substitute.For<IComponentPoolsRegistry>(),
                 EMPTY_SCENES_MAPPINGS_URL);
@@ -55,7 +60,7 @@ namespace ECS.SceneLifeCycle.Tests
         [Test]
         public async Task LoadMapping()
         {
-            await loadEmptySceneSystemLogic.LoadMapping(CancellationToken.None);
+            await loadEmptySceneSystemLogic.LoadMappingAsync(CancellationToken.None);
 
             Assert.NotNull(loadEmptySceneSystemLogic.emptySceneData);
             Assert.That(loadEmptySceneSystemLogic.emptySceneData.Mappings.Count, Is.EqualTo(12));
@@ -67,20 +72,9 @@ namespace ECS.SceneLifeCycle.Tests
         {
             IPartitionComponent partition = Substitute.For<IPartitionComponent>();
 
-            var intent = new GetSceneFacadeIntention(Substitute.For<IIpfsRealm>(), default(IpfsTypes.IpfsPath), new IpfsTypes.SceneEntityDefinition
-                {
-                    id = $"empty-parcel-{parcel.x}-{parcel.y}",
-                    metadata = new IpfsTypes.SceneMetadata
-                    {
-                        main = "bin/game.js",
-                        scene = SceneDefinitionComponent.EMPTY_METADATA,
-                    },
+            var intent = new GetSceneFacadeIntention(Substitute.For<IIpfsRealm>(), new SceneDefinitionComponent(parcel));
 
-                    // content will be filled by the loading system
-                },
-                new[] { parcel }, true);
-
-            ISceneFacade facade = await loadEmptySceneSystemLogic.Flow(intent, partition, CancellationToken.None);
+            ISceneFacade facade = await loadEmptySceneSystemLogic.FlowAsync(intent, partition, CancellationToken.None);
             Assert.NotNull(facade);
         }
 
@@ -122,7 +116,7 @@ namespace ECS.SceneLifeCycle.Tests
 
             var facade = EmptySceneFacade.Create(args);
 
-            await facade.StartUpdateLoop(30, CancellationToken.None);
+            await facade.StartUpdateLoopAsync(30, CancellationToken.None);
 
             Assert.That(map.Count, Is.EqualTo(1));
 

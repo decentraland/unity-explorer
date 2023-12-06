@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using AssetManagement;
+using CommunicationData.URLHelpers;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using NSubstitute;
@@ -7,22 +8,25 @@ using NUnit.Framework;
 using SceneRunner.Scene;
 using System;
 using UnityEngine;
+using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
     [TestFixture]
     public class PrepareAssetBundleLoadingParametersSystemShould : UnitySystemTestBase<PrepareAssetBundleLoadingParametersSystem>
     {
-        private ISceneData sceneData;
-        private string path;
-
         [SetUp]
         public void SetUp()
         {
-            path = $"file://{Application.dataPath}" + "/../TestResources/AssetBundles/";
+            path = URLDomain.FromString($"file://{Application.dataPath}" + "/../TestResources/AssetBundles/");
             sceneData = Substitute.For<ISceneData>();
             system = new PrepareAssetBundleLoadingParametersSystem(world, sceneData, path);
         }
+
+        private ISceneData sceneData;
+        private URLDomain path;
+
+        private static readonly URLDomain FAKE_AB_PATH = URLDomain.FromString("http://www.fakepath.com/v1/");
 
         [Test]
         public void ResolveHashFromName()
@@ -44,7 +48,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             Assert.That(intent.CommonArguments.Attempts, Is.EqualTo(1));
             Assert.That(intent.CommonArguments.CurrentSource, Is.EqualTo(AssetSource.EMBEDDED));
-            Assert.That(intent.CommonArguments.URL, Is.EqualTo(path + "abcd" + PlatformUtils.GetPlatform()).Or.EqualTo(path + "abcd".GetHashCode()));
+            Assert.That(intent.CommonArguments.URL.Value, Is.EqualTo(path.Value + "abcd" + PlatformUtils.GetPlatform()).Or.EqualTo(path.Value + "abcd".GetHashCode()));
         }
 
         [Test]
@@ -66,7 +70,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void LoadFromWeb()
         {
-            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest("http://www.fakepath.com/v1/", new SceneAbDto { files = new[] { "abcd" }, version = "200" }));
+            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, new SceneAbDto { files = new[] { "abcd" }, version = "200" }));
 
             var intent = GetAssetBundleIntention.FromHash("abcd", permittedSources: AssetSource.WEB);
             Entity e = world.Create(intent, new StreamableLoadingState());
@@ -83,7 +87,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         [Test]
         public void FailIfAbsentInManifest()
         {
-            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest("http://www.fakepath.com/v1/", new SceneAbDto { files = Array.Empty<string>() }));
+            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(FAKE_AB_PATH, new SceneAbDto { files = Array.Empty<string>() }));
 
             var intent = GetAssetBundleIntention.FromHash("abcd", permittedSources: AssetSource.WEB);
             Entity e = world.Create(intent, new StreamableLoadingState());

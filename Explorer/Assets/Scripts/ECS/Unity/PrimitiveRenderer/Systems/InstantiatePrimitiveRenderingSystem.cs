@@ -2,20 +2,21 @@
 using Arch.System;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Transform;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
-using Diagnostics.ReportsHandling;
+using DCL.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.ComponentsPooling;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Groups;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
 using ECS.Unity.PrimitiveRenderer.MeshSetup;
+using ECS.Unity.SceneBoundsChecker;
 using ECS.Unity.Transforms.Components;
+using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
-using Utility.Primitives;
 
 namespace ECS.Unity.PrimitiveRenderer.Systems
 {
@@ -23,25 +24,26 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
     [LogCategory(ReportCategory.PRIMITIVE_MESHES)]
     public partial class InstantiatePrimitiveRenderingSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPool<MeshRenderer> rendererPoolRegistry;
-        private readonly IComponentPoolsRegistry poolRegistry;
-        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
-
         private static readonly Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> SETUP_MESH_LOGIC = new ()
         {
             { PBMeshRenderer.MeshOneofCase.Box, new MeshSetupBox() },
             { PBMeshRenderer.MeshOneofCase.Sphere, new MeshSetupSphere() },
             { PBMeshRenderer.MeshOneofCase.Cylinder, new MeshSetupCylinder() },
-            { PBMeshRenderer.MeshOneofCase.Plane, new MeshSetupPlane() }
+            { PBMeshRenderer.MeshOneofCase.Plane, new MeshSetupPlane() },
         };
+        private readonly IComponentPool<MeshRenderer> rendererPoolRegistry;
+        private readonly IComponentPoolsRegistry poolRegistry;
+        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
+        private readonly ISceneData sceneData;
 
         private readonly Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases;
 
         internal InstantiatePrimitiveRenderingSystem(World world, IComponentPoolsRegistry poolsRegistry,
-            IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases = null) : base(world)
+            IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, ISceneData sceneData, Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases = null) : base(world)
         {
             this.setupMeshCases = setupMeshCases ?? SETUP_MESH_LOGIC;
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
+            this.sceneData = sceneData;
             poolRegistry = poolsRegistry;
 
             rendererPoolRegistry = poolsRegistry.GetReferenceTypePool<MeshRenderer>();
@@ -65,8 +67,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
                 return;
 
             var meshRendererComponent = new PrimitiveMeshRendererComponent();
-            var meshRendererGo = rendererPoolRegistry.Get();
-            meshRendererGo.sharedMaterial = DefaultMaterial.Shared;
+            MeshRenderer meshRendererGo = rendererPoolRegistry.Get();
             Instantiate(setupMesh, ref meshRendererGo, ref meshRendererComponent, sdkComponent, ref transform);
             World.Add(entity, meshRendererComponent);
         }
@@ -120,6 +121,8 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             Transform rendererTransform = meshRendererGo.transform;
             rendererTransform.SetParent(transformComponent.Transform, false);
             rendererTransform.ResetLocalTRS();
+
+            rendererComponent.SetDefaultMaterial(sceneData.Geometry.CircumscribedPlanes);
         }
     }
 }

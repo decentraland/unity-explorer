@@ -1,16 +1,17 @@
 ﻿using Arch.SystemGroups;
 using DCL.ECSComponents;
+using DCL.PerformanceBudgeting;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.ComponentsPooling;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
 using ECS.Unity.PrimitiveRenderer.Systems;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 
 namespace DCL.PluginSystem.World
 {
@@ -22,12 +23,18 @@ namespace DCL.PluginSystem.World
         public PrimitivesRenderingPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies)
         {
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
-            capFrameTimeBudgetProvider = singletonSharedDependencies.FrameTimeCapBudgetProvider;
+            capFrameTimeBudgetProvider = singletonSharedDependencies.FrameTimeBudgetProvider;
+
+            componentPoolsRegistry.AddComponentPool<BoxPrimitive>();
+            componentPoolsRegistry.AddComponentPool<SpherePrimitive>();
+            componentPoolsRegistry.AddComponentPool<PlanePrimitive>();
+            componentPoolsRegistry.AddComponentPool<CylinderPrimitive>();
+            componentPoolsRegistry.AddGameObjectPool(MeshRendererPoolUtils.CreateMeshRendererComponent, MeshRendererPoolUtils.ReleaseMeshRendererComponent);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            InstantiatePrimitiveRenderingSystem.InjectToWorld(ref builder, componentPoolsRegistry, capFrameTimeBudgetProvider);
+            InstantiatePrimitiveRenderingSystem.InjectToWorld(ref builder, componentPoolsRegistry, capFrameTimeBudgetProvider, sharedDependencies.SceneData);
             ReleaseOutdatedRenderingSystem.InjectToWorld(ref builder, componentPoolsRegistry);
 
             ResetDirtyFlagSystem<PBMeshRenderer>.InjectToWorld(ref builder);

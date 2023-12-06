@@ -1,0 +1,130 @@
+﻿using Arch.Core;
+using CRDT;
+using CrdtEcsBridge.Components;
+using CrdtEcsBridge.Components.Special;
+using CrdtEcsBridge.ECSToCRDTWriter;
+using DCL.ECSComponents;
+using DCL.Interaction.PlayerOriginated.Systems;
+using ECS.TestSuite;
+using NSubstitute;
+using NUnit.Framework;
+using SceneRunner.Scene;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace DCL.Interaction.PlayerOriginated.Tests
+{
+    public class WritePointerEventResultsSystemShould : UnitySystemTestBase<WritePointerEventResultsSystem>
+    {
+        private readonly List<PBPointerEventsResult> results = new ();
+        private IECSToCRDTWriter writer;
+        private IGlobalInputEvents globalInputEvents;
+
+        [SetUp]
+        public void SetUp()
+        {
+            Entity rootEntity = world.Create(new SceneRootComponent());
+            AddTransformToEntity(rootEntity);
+
+            ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.TickNumber.Returns(123u);
+
+            system = new WritePointerEventResultsSystem(world, rootEntity,
+                writer = Substitute.For<IECSToCRDTWriter>(),
+                sceneStateProvider,
+                globalInputEvents = Substitute.For<IGlobalInputEvents>());
+        }
+
+        [TearDown]
+        public void ClearResults()
+        {
+            results.Clear();
+        }
+
+        [Test]
+        public void WriteGlobalEvents()
+        {
+            writer.When(w => w.AppendMessage(SpecialEntitiesID.SCENE_ROOT_ENTITY, Arg.Any<PBPointerEventsResult>(), Arg.Any<int>()))
+                  .Do(info => results.Add(info.Arg<PBPointerEventsResult>().Clone()));
+
+            globalInputEvents.Entries.Returns(new List<IGlobalInputEvents.Entry>
+            {
+                new (InputAction.IaBackward, PointerEventType.PetUp),
+                new (InputAction.IaAction6, PointerEventType.PetDown),
+            });
+
+            system.Update(0);
+
+            Assert.That(results.Count, Is.EqualTo(2));
+            PBPointerEventsResult first = results[0];
+            Assert.That(first.Button, Is.EqualTo(InputAction.IaBackward));
+            Assert.That(first.State, Is.EqualTo(PointerEventType.PetUp));
+            Assert.That(first.TickNumber, Is.EqualTo(123u));
+            Assert.That(first.Timestamp, Is.EqualTo(123u));
+            Assert.That(first.Hit, Is.Null);
+
+            PBPointerEventsResult second = results[1];
+            Assert.That(second.Button, Is.EqualTo(InputAction.IaAction6));
+            Assert.That(second.State, Is.EqualTo(PointerEventType.PetDown));
+            Assert.That(second.TickNumber, Is.EqualTo(123u));
+            Assert.That(second.Timestamp, Is.EqualTo(123u));
+            Assert.That(second.Hit, Is.Null);
+        }
+
+        [Test]
+        public void WriteValidResults()
+        {
+            var sdkEvents = new PBPointerEvents
+            {
+                AppendPointerEventResultsIntent = new AppendPointerEventResultsIntent(),
+                PointerEvents =
+                {
+                    CreateEntry(PointerEventType.PetHoverEnter, InputAction.IaPointer),
+                    CreateEntry(PointerEventType.PetHoverLeave, InputAction.IaForward),
+                    CreateEntry(PointerEventType.PetUp, InputAction.IaAction3),
+                    CreateEntry(PointerEventType.PetDown, InputAction.IaPrimary),
+                },
+            };
+
+            sdkEvents.AppendPointerEventResultsIntent.ValidIndices.Add(1);
+            sdkEvents.AppendPointerEventResultsIntent.ValidIndices.Add(3);
+
+            var sdkEntity = new CRDTEntity(100);
+
+            writer.When(w => w.AppendMessage(sdkEntity, Arg.Any<PBPointerEventsResult>(), Arg.Any<int>()))
+                  .Do(info => results.Add(info.Arg<PBPointerEventsResult>().Clone()));
+
+            world.Create(sdkEntity, sdkEvents);
+
+            system.Update(0);
+
+            AssertMessageAppended(1, 0);
+            AssertMessageAppended(3, 1);
+
+            void AssertMessageAppended(int originalIndex, uint counter)
+            {
+                PBPointerEvents.Types.Entry entry = sdkEvents.PointerEvents[originalIndex];
+                PBPointerEventsResult r = results[(int)counter];
+
+                Assert.That(r.Button, Is.EqualTo(entry.EventInfo.Button));
+                Assert.That(r.State, Is.EqualTo(entry.EventType));
+                Assert.That(r.TickNumber, Is.EqualTo(123u));
+                Assert.That(r.Timestamp, Is.EqualTo(123u));
+                Assert.That(r.Hit, Is.Not.Null);
+            }
+
+            Assert.That(writer.ReceivedCalls().Count(), Is.EqualTo(2));
+        }
+
+        private static PBPointerEvents.Types.Entry CreateEntry(PointerEventType eventType, InputAction button) =>
+            new ()
+            {
+                EventType = eventType,
+                EventInfo = new PBPointerEvents.Types.Info
+                {
+                    Button = button,
+                    MaxDistance = 100,
+                },
+            };
+    }
+}

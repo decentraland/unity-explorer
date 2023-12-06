@@ -3,8 +3,8 @@ using CRDT.Protocol.Factory;
 namespace CrdtEcsBridge.Engine
 {
     /// <summary>
-    /// Provides threads-synchronized pools for heavily-loaded bulk serialization and deserialization
-    /// shared between all scene instances (threads)
+    ///     Provides threads-synchronized pools for heavily-loaded bulk serialization and deserialization
+    ///     shared between all scene instances (threads)
     /// </summary>
     public interface ISharedPoolsProvider
     {

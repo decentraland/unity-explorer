@@ -19,11 +19,6 @@ namespace CrdtEcsBridge.Engine.Tests
 {
     public class EngineAPIImplementationShould
     {
-        private class CRDTSerializer : ICRDTSerializer
-        {
-            public void Serialize(ref Span<byte> destination, in ProcessedCRDTMessage processedMessage) { }
-        }
-
         private static readonly byte[] OUTPUT = { 10, 20, 30, 20, 10, 0 };
         private static readonly byte[] INPUT = { 0, 3, 5, 7, 10, 19, 20, 40, 76 };
 
@@ -33,7 +28,7 @@ namespace CrdtEcsBridge.Engine.Tests
         private ICRDTDeserializer crdtDeserializer;
         private ICRDTSerializer crdtSerializer;
         private ICRDTWorldSynchronizer crdtWorldSynchronizer;
-        private IOutgoingCRTDMessagesProvider outgoingCrtdMessagesProvider;
+        private IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
         private CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
 
         private EngineAPIImplementation engineAPIImplementation;
@@ -78,7 +73,7 @@ namespace CrdtEcsBridge.Engine.Tests
                 crdtDeserializer = Substitute.For<ICRDTDeserializer>(),
                 crdtSerializer = new CRDTSerializer(),
                 crdtWorldSynchronizer = Substitute.For<ICRDTWorldSynchronizer>(),
-                outgoingCrtdMessagesProvider = Substitute.For<IOutgoingCRTDMessagesProvider>(),
+                outgoingCrtdMessagesProvider = Substitute.For<IOutgoingCRDTMessagesProvider>(),
                 Substitute.For<ISystemGroupsUpdateGate>(),
                 new RethrowSceneExceptionsHandler(),
                 new MutexSync()
@@ -87,9 +82,9 @@ namespace CrdtEcsBridge.Engine.Tests
             crdtDeserializer.When(d => d.DeserializeBatch(ref Arg.Any<ReadOnlyMemory<byte>>(), Arg.Any<IList<CRDTMessage>>()))
                             .Do(c =>
                              {
-                                 var list = c.ArgAt<IList<CRDTMessage>>(1);
+                                 IList<CRDTMessage> list = c.ArgAt<IList<CRDTMessage>>(1);
 
-                                 foreach (var message in crdtMessages)
+                                 foreach (CRDTMessage message in crdtMessages)
                                      list.Add(message);
                              });
 
@@ -114,7 +109,7 @@ namespace CrdtEcsBridge.Engine.Tests
                                         .Returns(_ =>
                                          {
                                              mutex.WaitOne();
-                                             return new OutgoingCRDTMessagesSyncBlock(outgoingMessages, mutex);
+                                             return new OutgoingCRDTMessagesSyncBlock(outgoingMessages);
                                          });
         }
 
@@ -190,6 +185,11 @@ namespace CrdtEcsBridge.Engine.Tests
             engineAPIImplementation.CrdtGetState();
 
             sharedPoolsProvider.Received(1).ReleaseSerializedStateBytesPool(Arg.Any<byte[]>());
+        }
+
+        private class CRDTSerializer : ICRDTSerializer
+        {
+            public void Serialize(ref Span<byte> destination, in ProcessedCRDTMessage processedMessage) { }
         }
     }
 }

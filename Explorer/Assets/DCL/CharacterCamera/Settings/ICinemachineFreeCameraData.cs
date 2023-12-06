@@ -12,7 +12,7 @@ namespace DCL.CharacterCamera.Settings
         float Speed { get; }
 
         /// <summary>
-        /// Default free camera position on switch relative to the player
+        ///     Default free camera position on switch relative to the player
         /// </summary>
         Vector3 DefaultPosition { get; }
     }

@@ -1,11 +1,13 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CRDT;
 using CrdtEcsBridge.Components.Defaults;
 using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.Physics;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
-using Diagnostics.ReportsHandling;
+using DCL.Interaction.Utility;
 using ECS.Abstract;
 using ECS.ComponentsPooling;
 using ECS.Unity.Groups;
@@ -21,8 +23,6 @@ namespace ECS.Unity.PrimitiveColliders.Systems
     [LogCategory(ReportCategory.PRIMITIVE_COLLIDERS)]
     public partial class InstantiatePrimitiveColliderSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPoolsRegistry poolsRegistry;
-
         private static readonly Dictionary<PBMeshCollider.MeshOneofCase, ISetupCollider> SETUP_COLLIDER_LOGIC = new ()
         {
             { PBMeshCollider.MeshOneofCase.Box, new SetupBoxCollider() },
@@ -30,14 +30,17 @@ namespace ECS.Unity.PrimitiveColliders.Systems
             { PBMeshCollider.MeshOneofCase.Cylinder, new SetupCylinderCollider() },
             { PBMeshCollider.MeshOneofCase.Plane, new SetupPlaneCollider() },
         };
+        private readonly IComponentPoolsRegistry poolsRegistry;
 
         private readonly Dictionary<PBMeshCollider.MeshOneofCase, ISetupCollider> setupColliderCases;
+        private readonly IEntityCollidersSceneCache entityCollidersCache;
 
         internal InstantiatePrimitiveColliderSystem(World world, IComponentPoolsRegistry poolsRegistry,
-            Dictionary<PBMeshCollider.MeshOneofCase, ISetupCollider> setupColliderCases = null) : base(world)
+            IEntityCollidersSceneCache entityCollidersCache, Dictionary<PBMeshCollider.MeshOneofCase, ISetupCollider> setupColliderCases = null) : base(world)
         {
             this.setupColliderCases = setupColliderCases ?? SETUP_COLLIDER_LOGIC;
             this.poolsRegistry = poolsRegistry;
+            this.entityCollidersCache = entityCollidersCache;
         }
 
         protected override void Update(float t)
@@ -49,16 +52,18 @@ namespace ECS.Unity.PrimitiveColliders.Systems
         [Query]
         [All(typeof(PBMeshCollider), typeof(SDKTransform), typeof(TransformComponent))]
         [None(typeof(PrimitiveColliderComponent))]
-        private void InstantiateNonExistingCollider(in Entity entity, ref PBMeshCollider sdkComponent, ref TransformComponent transform)
+        private void InstantiateNonExistingCollider(in Entity entity, ref CRDTEntity crdtEntity, ref PBMeshCollider sdkComponent, ref TransformComponent transform)
         {
             var component = new PrimitiveColliderComponent();
-            Instantiate(setupColliderCases[sdkComponent.MeshCase], ref component, ref sdkComponent, ref transform);
+            Instantiate(entity, crdtEntity, setupColliderCases[sdkComponent.MeshCase], ref component, ref sdkComponent, ref transform);
             World.Add(entity, component);
         }
 
         [Query]
         [All(typeof(PBMeshCollider), typeof(SDKTransform), typeof(TransformComponent), typeof(PrimitiveColliderComponent))]
         private void TrySetupExistingCollider(
+            in Entity entity,
+            ref CRDTEntity crdtEntity,
             ref PrimitiveColliderComponent primitiveColliderComponent,
             ref PBMeshCollider sdkComponent,
             ref TransformComponent transformComponent)
@@ -69,23 +74,23 @@ namespace ECS.Unity.PrimitiveColliders.Systems
 
             // Prevent calling an overloaded comparison from UnityEngine.Object
             if (ReferenceEquals(primitiveColliderComponent.Collider, null))
-                Instantiate(setupCollider, ref primitiveColliderComponent, ref sdkComponent, ref transformComponent);
+                Instantiate(entity, crdtEntity, setupCollider, ref primitiveColliderComponent, ref sdkComponent, ref transformComponent);
             else
 
                 // Just a change of parameters
-                SetupCollider(setupCollider, primitiveColliderComponent.Collider, sdkComponent);
+                SetupCollider(entity, crdtEntity, setupCollider, primitiveColliderComponent.Collider, sdkComponent);
 
             sdkComponent.IsDirty = false;
         }
 
-        private void SetupCollider(ISetupCollider setupCollider, Collider collider, in PBMeshCollider sdkComponent)
+        private void SetupCollider(in Entity entity, CRDTEntity sdkEntity, ISetupCollider setupCollider, Collider collider, in PBMeshCollider sdkComponent)
         {
             // Setup collider only if it's gonna be enabled, otherwise there is no reason to [re]generate a shape
-            if (SetColliderLayer(collider, sdkComponent))
+            if (SetColliderLayer(entity, sdkEntity, collider, sdkComponent))
                 setupCollider.Execute(collider, sdkComponent);
         }
 
-        private bool SetColliderLayer(Collider collider, in PBMeshCollider sdkComponent)
+        private bool SetColliderLayer(in Entity entity, CRDTEntity sdkEntity, Collider collider, in PBMeshCollider sdkComponent)
         {
             ColliderLayer colliderLayer = sdkComponent.GetColliderLayer();
 
@@ -97,20 +102,24 @@ namespace ECS.Unity.PrimitiveColliders.Systems
                 colliderGameObject.layer = unityLayer;
 
             collider.enabled = enabled;
+
+            entityCollidersCache.Associate(collider, new ColliderEntityInfo(World.Reference(entity), sdkEntity, colliderLayer));
+
             return enabled;
         }
 
         /// <summary>
         ///     It is either called when there is no collider or collider was invalidated before (set to null)
         /// </summary>
-        private void Instantiate(ISetupCollider setupCollider, ref PrimitiveColliderComponent component, ref PBMeshCollider sdkComponent, ref TransformComponent transformComponent)
+        private void Instantiate(in Entity entity, CRDTEntity sdkEntity, ISetupCollider setupCollider, ref PrimitiveColliderComponent component, ref PBMeshCollider sdkComponent,
+            ref TransformComponent transformComponent)
         {
             component.ColliderType = setupCollider.ColliderType;
             component.SDKType = sdkComponent.MeshCase;
 
             var collider = (Collider)poolsRegistry.GetPool(setupCollider.ColliderType).Rent();
 
-            SetupCollider(setupCollider, collider, in sdkComponent);
+            SetupCollider(entity, sdkEntity, setupCollider, collider, in sdkComponent);
 
             // Parent collider to the entity's transform
 

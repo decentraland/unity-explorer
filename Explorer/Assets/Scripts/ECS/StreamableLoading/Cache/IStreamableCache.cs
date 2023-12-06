@@ -1,16 +1,20 @@
 ﻿using Cysharp.Threading.Tasks;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Common.Systems;
+using System;
 using System.Collections.Generic;
 
 namespace ECS.StreamableLoading.Cache
 {
-    public interface IStreamableCache<TAsset, TLoadingIntention> : IEqualityComparer<TLoadingIntention>
+    /// <summary>
+    ///     Streamable Cache is shared between multiple instances of <see cref="LoadSystemBase{TAsset,TIntention}" /> with the same arguments
+    /// </summary>
+    /// <typeparam name="TAsset"></typeparam>
+    /// <typeparam name="TLoadingIntention"></typeparam>
+    public interface IStreamableCache<TAsset, TLoadingIntention> : IEqualityComparer<TLoadingIntention>, IDisposable
     {
-        /// <summary>
-        ///     Resolves the problem of having multiple requests to the same URL at a time,
-        ///     should be shared across multiple scenes as their assets can be shared as well
-        /// </summary>
         IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>> OngoingRequests { get; }
+        IDictionary<string, StreamableLoadingResult<TAsset>> IrrecoverableFailures { get; }
 
         /// <summary>
         ///     Get the asset for referencing, it should be called one time and saved in the component,

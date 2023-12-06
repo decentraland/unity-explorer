@@ -1,17 +1,16 @@
 ﻿using Arch.Core;
 using AssetManagement;
 using Cysharp.Threading.Tasks;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
+using DCL.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using UnityEngine.Pool;
+using Utility;
 using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.Common.Systems
@@ -32,8 +31,6 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, TIntention> cachedInternalFlowDelegate;
 
-        private readonly Dictionary<string, StreamableLoadingResult<TAsset>> irrecoverableFailures;
-
         // asynchronous operations run independently on Update that is already synchronized
         // so they require explicit synchronisation
         private readonly MutexSync mutexSync;
@@ -42,14 +39,15 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private CancellationTokenSource cancellationTokenSource;
 
+        private bool systemIsDisposed;
+
         protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync) : base(world)
         {
             this.cache = cache;
             this.mutexSync = mutexSync;
             query = World.Query(in CREATE_WEB_REQUEST);
-            irrecoverableFailures = DictionaryPool<string, StreamableLoadingResult<TAsset>>.Get();
 
-            cachedInternalFlowDelegate = FlowInternal;
+            cachedInternalFlowDelegate = FlowInternalAsync;
         }
 
         public override void Initialize()
@@ -62,7 +60,7 @@ namespace ECS.StreamableLoading.Common.Systems
             cancellationTokenSource.Cancel();
             cancellationTokenSource.Dispose();
 
-            DictionaryPool<string, StreamableLoadingResult<TAsset>>.Release(irrecoverableFailures);
+            systemIsDisposed = true;
         }
 
         protected override void Update(float t)
@@ -97,24 +95,13 @@ namespace ECS.StreamableLoading.Common.Systems
             // it indicates that the current source was used
             intention.RemoveCurrentSource();
 
-            // Try load from cache first
-            if (TryLoadFromCache(in entity, in intention, currentSource))
-                return;
-
-            // If the given URL failed irrecoverably just return the failure
-            if (irrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset> failure))
-            {
-                FinalizeLoading(entity, intention, failure, currentSource);
-                return;
-            }
-
             // Indicate that loading has started
             state.Value = StreamableLoadingState.Status.InProgress;
 
-            Flow(entity, currentSource, intention, state.AcquiredBudget, partitionComponent, cancellationTokenSource.Token).Forget();
+            FlowAsync(entity, currentSource, intention, state.AcquiredBudget, partitionComponent, cancellationTokenSource.Token).Forget();
         }
 
-        private async UniTask Flow(Entity entity,
+        private async UniTask FlowAsync(Entity entity,
             AssetSource source, TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken disposalCt)
         {
             StreamableLoadingResult<TAsset>? result = null;
@@ -124,17 +111,33 @@ namespace ECS.StreamableLoading.Common.Systems
                 var requestIsNotFulfilled = true;
 
                 // if the request is cached wait for it
-                if (cache.OngoingRequests.TryGetValue(intention.CommonArguments.URL, out UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> cachedSource))
+                // If there is an ongoing request it means that the result is neither cached, nor failed
+                if (cache.OngoingRequests.SyncTryGetValue(intention.CommonArguments.URL, out UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> cachedSource))
                 {
                     // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
                     acquiredBudget.Release();
+
                     // if the cached request is cancelled it does not mean failure for the new intent
                     (requestIsNotFulfilled, result) = await cachedSource.Task.SuppressCancellationThrow();
                 }
 
+                // Try load from cache first
+                if (cache.TryGet(intention, out TAsset asset))
+                {
+                    result = new StreamableLoadingResult<TAsset>(asset);
+                    return;
+                }
+
+                // If the given URL failed irrecoverably just return the failure
+                if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset> failure))
+                {
+                    result = failure;
+                    return;
+                }
+
                 // if this request must be cancelled by `intention.CommonArguments.CancellationToken` it will be cancelled after `if (!requestIsNotFulfilled)`
                 if (requestIsNotFulfilled)
-                    result = await CacheableFlow(intention, acquiredBudget, partition, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
+                    result = await CacheableFlowAsync(intention, acquiredBudget, partition, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
 
                 if (!result.HasValue)
 
@@ -150,16 +153,23 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (e is not OperationCanceledException)
                     ReportException(e);
             }
-            finally
-            {
-                await UniTask.SwitchToMainThread();
-                FinalizeLoading(entity, intention, result, source);
-            }
+            finally { FinalizeLoading(entity, intention, result, source, acquiredBudget); }
         }
 
-        private void FinalizeLoading(in Entity entity, TIntention intention, StreamableLoadingResult<TAsset>? result, AssetSource source)
+        private void FinalizeLoading(in Entity entity, TIntention intention,
+            StreamableLoadingResult<TAsset>? result, AssetSource source,
+            IAcquiredBudget acquiredBudget)
         {
             using MutexSync.Scope sync = mutexSync.GetScope();
+
+            if (systemIsDisposed || !World.IsAlive(entity))
+            {
+                // World is no longer valid, can't call World.Get
+                // Just Free the budget
+                acquiredBudget.Dispose();
+                return;
+            }
+
             ref StreamableLoadingState state = ref World.Get<StreamableLoadingState>(entity);
 
             state.DisposeBudget();
@@ -174,6 +184,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (result.Value.Succeeded)
                     ReportHub.Log(GetReportCategory(), $"{intention}'s successfully loaded from {source}");
             }
+            else if (intention.CancellationTokenSource.IsCancellationRequested) { World.Destroy(entity); }
             else
             {
                 // Indicate that it should be reevaluated
@@ -184,7 +195,7 @@ namespace ECS.StreamableLoading.Common.Systems
         /// <summary>
         ///     All exceptions are handled by the upper functions, just do pure work
         /// </summary>
-        protected abstract UniTask<StreamableLoadingResult<TAsset>> FlowInternal(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct);
+        protected abstract UniTask<StreamableLoadingResult<TAsset>> FlowInternalAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct);
 
         /// <summary>
         ///     Can't move it to another system as the update cycle is not synchronized with systems but based on UniTasks
@@ -197,19 +208,36 @@ namespace ECS.StreamableLoading.Common.Systems
         /// <summary>
         ///     Part of the flow that can be reused by multiple intentions
         /// </summary>
-        private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlow(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlowAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             var source = new UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
-            cache.OngoingRequests[intention.CommonArguments.URL] = source;
+
+            // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncAdd {intention.CommonArguments.URL}");
+            cache.OngoingRequests.SyncAdd(intention.CommonArguments.URL, source);
+
+            var ongoingRequestRemoved = false;
+
+            void TryRemoveOngoingRequest()
+            {
+                if (!ongoingRequestRemoved)
+                {
+                    // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncRemove {intention.CommonArguments.URL}");
+                    cache.OngoingRequests.SyncRemove(intention.CommonArguments.URL);
+                    ongoingRequestRemoved = true;
+                }
+            }
 
             try
             {
-                StreamableLoadingResult<TAsset>? result = await RepeatLoop(intention, acquiredBudget, partition, ct);
+                StreamableLoadingResult<TAsset>? result = await RepeatLoopAsync(intention, acquiredBudget, partition, ct);
 
                 // Ensure that we returned to the main thread
-                await UniTask.SwitchToMainThread();
+                await UniTask.SwitchToMainThread(ct);
 
                 // Set result for the reusable source
+                // Remove from the ongoing requests immediately because finally will be called later than
+                // continuation of cachedSource.Task.SuppressCancellationThrow();
+                TryRemoveOngoingRequest();
                 source.TrySetResult(result);
 
                 if (!result.HasValue)
@@ -227,40 +255,31 @@ namespace ECS.StreamableLoading.Common.Systems
             }
             catch (OperationCanceledException operationCanceledException)
             {
+                // Remove from the ongoing requests immediately because finally will be called later than
+                // continuation of cachedSource.Task.SuppressCancellationThrow();
+                TryRemoveOngoingRequest();
+
                 // Cancellation does not produce asset result
                 source.TrySetCanceled(operationCanceledException.CancellationToken);
                 throw;
             }
             finally
             {
-                // If we don't switch to the main thread in finally we are in trouble because of
-                // race conditions in non-concurrent collections
-                await UniTask.SwitchToMainThread();
-                cache.OngoingRequests.Remove(intention.CommonArguments.URL);
+                // We need to remove the request the same frame to prevent de-sync with new requests
+                TryRemoveOngoingRequest();
             }
         }
 
-        private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoop(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            StreamableLoadingResult<TAsset>? result = await intention.RepeatLoop(acquiredBudget, partition, cachedInternalFlowDelegate, GetReportCategory(), ct);
+            StreamableLoadingResult<TAsset>? result = await intention.RepeatLoopAsync(acquiredBudget, partition, cachedInternalFlowDelegate, GetReportCategory(), ct);
             return result is { Succeeded: false } ? SetIrrecoverableFailure(intention, result.Value) : result;
         }
 
         private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention, StreamableLoadingResult<TAsset> failure)
         {
-            irrecoverableFailures[intention.CommonArguments.URL] = failure;
+            cache.IrrecoverableFailures.Add(intention.CommonArguments.URL, failure);
             return failure;
-        }
-
-        private bool TryLoadFromCache(in Entity entity, in TIntention intention, AssetSource source)
-        {
-            if (cache.TryGet(in intention, out TAsset asset))
-            {
-                FinalizeLoading(entity, intention, new StreamableLoadingResult<TAsset>(asset), source);
-                return true;
-            }
-
-            return false;
         }
 
         private void AddToCache(in TIntention intention, TAsset asset)

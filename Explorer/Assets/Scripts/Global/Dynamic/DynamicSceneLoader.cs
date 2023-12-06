@@ -1,13 +1,13 @@
-﻿using Cysharp.Threading.Tasks;
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using Diagnostics.ReportsHandling;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.UIElements;
 using Utility;
 
 namespace Global.Dynamic
@@ -21,13 +21,16 @@ namespace Global.Dynamic
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer;
         [Space]
+        [SerializeField] private UIDocument uiToolkitRoot;
+        [SerializeField] private UIDocument debugUiRoot;
         [SerializeField] private Vector2Int StartPosition;
-        [SerializeField] private int SceneLoadRadius = 4;
+        [SerializeField] [Obsolete] private int SceneLoadRadius = 4;
 
         // If it's 0, it will load every parcel in the range
         [SerializeField] private List<int2> StaticLoadPositions;
         [SerializeField] private RealmLauncher realmLauncher;
         [SerializeField] private string[] realms;
+        [SerializeField] private DynamicSettings dynamicSettings;
 
         private StaticContainer staticContainer;
         private DynamicWorldContainer dynamicWorldContainer;
@@ -38,7 +41,7 @@ namespace Global.Dynamic
         {
             realmLauncher.Initialize(realms);
 
-            InitializationFlow(destroyCancellationToken).Forget();
+            InitializationFlowAsync(destroyCancellationToken).Forget();
         }
 
         private void OnDestroy()
@@ -47,12 +50,13 @@ namespace Global.Dynamic
             {
                 if (dynamicWorldContainer != null)
                 {
+                    dynamicWorldContainer.Dispose();
                     foreach (IDCLGlobalPlugin plugin in dynamicWorldContainer.GlobalPlugins)
                         plugin.Dispose();
                 }
 
                 if (globalWorld != null)
-                    await dynamicWorldContainer.RealmController.DisposeGlobalWorld(globalWorld).SuppressCancellationThrow();
+                    await dynamicWorldContainer.RealmController.DisposeGlobalWorldAsync(globalWorld).SuppressCancellationThrow();
 
                 await UniTask.SwitchToMainThread();
 
@@ -63,26 +67,37 @@ namespace Global.Dynamic
             DisposeAsync().Forget();
         }
 
-        private async UniTask InitializationFlow(CancellationToken ct)
+        private async UniTask InitializationFlowAsync(CancellationToken ct)
         {
             try
             {
                 // First load the common global plugin
                 bool isLoaded;
-                (staticContainer, isLoaded) = await StaticContainer.Create(globalPluginSettingsContainer, ct);
+
+                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, ct);
 
                 if (!isLoaded)
                 {
-                    PrintGameIsDead();
+                    GameReports.PrintIsDead();
                     return;
                 }
 
                 var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
 
-                dynamicWorldContainer = DynamicWorldContainer.Create(
-                    in staticContainer,
+                (dynamicWorldContainer, isLoaded) = await DynamicWorldContainer.CreateAsync(
+                    staticContainer,
+                    scenePluginSettingsContainer,
+                    ct,
+                    uiToolkitRoot,
                     StaticLoadPositions,
-                    SceneLoadRadius);
+                    SceneLoadRadius,
+                    dynamicSettings);
+
+                if (!isLoaded)
+                {
+                    GameReports.PrintIsDead();
+                    return;
+                }
 
                 // Initialize global plugins
                 var anyFailure = false;
@@ -93,20 +108,22 @@ namespace Global.Dynamic
                         anyFailure = true;
                 }
 
-                await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePlugin(gp, ct).ContinueWith(OnPluginInitialized)));
-                await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePlugin(gp, ct).ContinueWith(OnPluginInitialized)));
+                await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
+                await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
 
                 if (anyFailure)
                 {
-                    PrintGameIsDead();
+                    GameReports.PrintIsDead();
                     return;
                 }
 
                 globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory, dynamicWorldContainer.EmptyScenesWorldFactory, staticContainer.CharacterObject);
 
+                dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
+
                 void SetRealm(string selectedRealm)
                 {
-                    ChangeRealm(staticContainer, destroyCancellationToken, selectedRealm).Forget();
+                    ChangeRealmAsync(staticContainer, destroyCancellationToken, selectedRealm).Forget();
                 }
 
                 realmLauncher.OnRealmSelected += SetRealm;
@@ -118,30 +135,24 @@ namespace Global.Dynamic
             catch (Exception)
             {
                 // unhandled exception
-                PrintGameIsDead();
+                GameReports.PrintIsDead();
                 throw;
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void PrintGameIsDead()
-        {
-            ReportHub.LogError(ReportCategory.ENGINE, "Initialization Failed! Game is irrecoverably dead!");
-        }
-
-        private async UniTask ChangeRealm(StaticContainer globalContainer, CancellationToken ct, string selectedRealm)
+        private async UniTask ChangeRealmAsync(StaticContainer globalContainer, CancellationToken ct, string selectedRealm)
         {
             if (globalWorld != null)
-                await dynamicWorldContainer.RealmController.UnloadCurrentRealm(globalWorld);
+                await dynamicWorldContainer.RealmController.UnloadCurrentRealmAsync(globalWorld);
 
             await UniTask.SwitchToMainThread();
 
             Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(StartPosition);
             characterPos.y = 1f;
 
-            globalContainer.CharacterObject.Controller.Move(characterPos - globalContainer.CharacterObject.Transform.position);
+            globalContainer.CharacterObject.Controller.transform.position = characterPos;
 
-            await dynamicWorldContainer.RealmController.SetRealm(globalWorld, selectedRealm, ct);
+            await dynamicWorldContainer.RealmController.SetRealmAsync(globalWorld, URLDomain.FromString(selectedRealm), ct);
         }
     }
 }

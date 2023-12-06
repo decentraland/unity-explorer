@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components;
+using CrdtEcsBridge.Components.Special;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.Groups;
@@ -14,6 +15,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 using Utility.Multithreading;
+using SystemGroups.Visualiser;
 
 namespace SceneRunner.EmptyScene
 {
@@ -57,14 +59,14 @@ namespace SceneRunner.EmptyScene
             Transform emptyScenesRoot = new GameObject("Empty Scenes").transform;
             emptyScenesRoot.ResetLocalTRS();
 
-            Entity sceneRootEntity = sharedDependencies.EntityFactory.Create(SpecialEntititiesID.SCENE_ROOT_ENTITY, world);
-            world.Add(sceneRootEntity, new TransformComponent(emptyScenesRoot));
+            // This entity may be further enriched by plugins
+            Entity sceneRootEntity = world.Create(SpecialEntitiesID.SCENE_ROOT_ENTITY, new SceneRootComponent(), new TransformComponent(emptyScenesRoot));
 
             SyncEmptyScenesPartitionSystem.InjectToWorld(ref builder);
             DestroyEntitiesSystem.InjectToWorld(ref builder);
 
             // No partitioning - will be inherited from the parent
-            AssetsDeferredLoadingSystem.InjectToWorld(ref builder, sharedDependencies.LoadingBudgetProvider);
+            AssetsDeferredLoadingSystem.InjectToWorld(ref builder, sharedDependencies.LoadingBudgetProvider, sharedDependencies.MemoryBudgetProvider);
 
             var dependencies = new EmptyScenesWorldSharedDependencies(
                 fakeEntitiesMap,
@@ -76,7 +78,11 @@ namespace SceneRunner.EmptyScene
             for (var i = 0; i < ecsWorldPlugins.Count; i++)
                 ecsWorldPlugins[i].InjectToEmptySceneWorld(ref builder, in dependencies);
 
-            return new EmptyScenesWorld(builder.Finish(), fakeEntitiesMap, world, mutex);
+            var systemGroupWorlds = builder.Finish();
+
+            SystemGroupSnapshot.Instance.Register(emptySceneData.SceneShortInfo.ToString(), systemGroupWorlds);
+
+            return new EmptyScenesWorld(systemGroupWorlds, fakeEntitiesMap, world, mutex);
         }
     }
 }

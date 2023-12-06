@@ -1,9 +1,10 @@
-﻿using DCL.ECSComponents;
+﻿using CommunicationData.URLHelpers;
+using DCL.ECSComponents;
+using DCL.PerformanceBudgeting;
 using Decentraland.Common;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
 using ECS.Unity.Materials.Components;
@@ -27,12 +28,12 @@ namespace ECS.Unity.Materials.Tests
     {
         private const int ATTEMPTS_COUNT = 5;
 
+        private ISceneData sceneData;
+        private DestroyMaterial destroyMaterial;
+
         private static string tex1 => $"file://{Application.dataPath + "/../TestResources/Images/alphaTexture.png"}";
         private static string tex2 => $"file://{Application.dataPath + "/../TestResources/Images/atlas.png"}";
         private static string tex3 => $"file://{Application.dataPath + "/../TestResources/Images/Gradient A4.png"}";
-
-        private ISceneData sceneData;
-        private DestroyMaterial destroyMaterial;
 
         [SetUp]
         public void SetUp()
@@ -44,10 +45,10 @@ namespace ECS.Unity.Materials.Tests
                 destroyMaterial = Substitute.For<DestroyMaterial>(),
                 sceneData = Substitute.For<ISceneData>(), ATTEMPTS_COUNT, concurrentBudgetProvider);
 
-            sceneData.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<string>())
+            sceneData.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<URLAddress>())
                      .Returns(c =>
                       {
-                          c[1] = c.ArgAt<string>(0);
+                          c[1] = URLAddress.FromString(c.ArgAt<string>(0));
                           return true;
                       });
         }

@@ -3,14 +3,15 @@
 namespace SceneRuntime.Apis.Modules
 {
     /// <summary>
-    /// The contracts correspond directly to the JS-SDK-Toolchain and its transport API.
-    /// They don't have Protobuf related stuff
+    ///     The contracts correspond directly to the JS-SDK-Toolchain and its transport API.
+    ///     They don't have Protobuf related stuff
     /// </summary>
     public interface IEngineApi : IDisposable
     {
         /// <param name="dataMemory"></param>
+        /// <param name="returnData"></param>
         /// <returns>A contiguous byte array of the CRDT Message representing the outgoing messages</returns>
-        public ArraySegment<byte> CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory);
+        public ArraySegment<byte> CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory, bool returnData = true);
 
         /// <returns>The full serialized CRDT State, A contiguous byte array of the CRDT Message</returns>
         public ArraySegment<byte> CrdtGetState();

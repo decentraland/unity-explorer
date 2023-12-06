@@ -1,13 +1,33 @@
-﻿using DCL.PluginSystem.Global;
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Wearables;
+using DCL.DebugUtilities;
+using DCL.ParcelsService;
+using DCL.PerformanceBudgeting;
+using DCL.PlacesAPIService;
+using DCL.PluginSystem;
+using DCL.PluginSystem.Global;
+using DCL.WebRequests.Analytics;
+using ECS;
 using ECS.Prioritization.Components;
+using MVC;
+using MVC.PopupsController.PopupCloser;
 using SceneRunner.EmptyScene;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using Unity.Mathematics;
+using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Global.Dynamic
 {
-    public class DynamicWorldContainer
+    public class DynamicWorldContainer : IDCLPlugin<DynamicWorldSettings>
     {
+        private static readonly URLDomain ASSET_BUNDLES_URL = URLDomain.FromString("https://ab-cdn.decentraland.org/");
+
+        public DebugUtilitiesContainer DebugContainer { get; private set; }
+
         public IRealmController RealmController { get; private set; }
 
         public GlobalWorldFactory GlobalWorldFactory { get; private set; }
@@ -16,28 +36,79 @@ namespace Global.Dynamic
 
         public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; }
 
-        public static DynamicWorldContainer Create(
-            in StaticContainer staticContainer,
-            IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius)
+        private static MVCManager mvcManager;
+
+        public void Dispose()
         {
+            mvcManager.Dispose();
+        }
+
+        public static async UniTask<(DynamicWorldContainer container, bool success)> CreateAsync(
+            StaticContainer staticContainer,
+            IPluginSettingsContainer settingsContainer,
+            CancellationToken ct,
+            UIDocument rootUIDocument,
+            IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius,
+            DynamicSettings dynamicSettings)
+        {
+            var container = new DynamicWorldContainer();
+            (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
+
+            if (!result)
+                return (null, false);
+
+            DebugContainerBuilder debugBuilder = container.DebugContainer.Builder;
+
             var realmSamplingData = new RealmSamplingData();
+            var dclInput = new DCLInput();
+            ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
+            var realmData = new RealmData();
 
-            var globalPlugins = new IDCLGlobalPlugin[]
+            var parcelServiceContainer = ParcelServiceContainer.Create(realmData, staticContainer.CharacterObject, debugBuilder);
+
+            PopupCloserView popupCloserView = Object.Instantiate((await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
+            mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
+            MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, dynamicSettings.MapRendererSettings, ct);
+            var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController));
+
+            var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterObject),
-                new InputPlugin(),
-                new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, staticContainer.CameraSamplingData),
-                new ProfilingPlugin(staticContainer.AssetsProvisioner, staticContainer.ProfilingProvider)
+                new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterObject, debugBuilder),
+                new InputPlugin(dclInput),
+                new GlobalInteractionPlugin(dclInput, rootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
+                new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.CameraSamplingData, exposedGlobalDataContainer.ExposedCameraData),
+                new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.MemoryBudgetProvider as MemoryBudgetProvider, debugBuilder),
+                new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, realmData, ASSET_BUNDLES_URL),
+                new AvatarPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner,
+                    staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, realmData, debugBuilder),
+                new MapRendererPlugin(mapRendererContainer.MapRenderer),
+                new MinimapPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer, placesAPIService),
+                new ExplorePanelPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer, placesAPIService, parcelServiceContainer.TeleportController),
+                new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
             };
 
-            return new DynamicWorldContainer
-            {
-                RealmController = new RealmController(sceneLoadRadius, staticLoadPositions),
-                GlobalWorldFactory = new GlobalWorldFactory(in staticContainer, staticContainer.RealmPartitionSettings,
-                    staticContainer.CameraSamplingData, realmSamplingData, globalPlugins),
-                GlobalPlugins = globalPlugins,
-                EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins),
-            };
+            globalPlugins.AddRange(staticContainer.SharedPlugins);
+
+            container.RealmController = new RealmController(
+                staticContainer.WebRequestsContainer.WebRequestController,
+                parcelServiceContainer.TeleportController,
+                parcelServiceContainer.RetrieveSceneFromFixedRealm,
+                parcelServiceContainer.RetrieveSceneFromVolatileWorld,
+                sceneLoadRadius, staticLoadPositions, realmData);
+
+            container.GlobalWorldFactory = new GlobalWorldFactory(in staticContainer, staticContainer.RealmPartitionSettings,
+                exposedGlobalDataContainer.CameraSamplingData, realmSamplingData, ASSET_BUNDLES_URL, realmData, globalPlugins);
+
+            container.GlobalPlugins = globalPlugins.Concat(staticContainer.SharedPlugins).ToList();
+            container.EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins);
+
+            return (container, true);
+        }
+
+        public UniTask InitializeAsync(DynamicWorldSettings settings, CancellationToken ct)
+        {
+            DebugContainer = DebugUtilitiesContainer.Create(settings.DebugViewsCatalog);
+            return UniTask.CompletedTask;
         }
     }
 }

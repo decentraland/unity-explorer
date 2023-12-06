@@ -1,15 +1,14 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
+using DCL.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
-using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules;
-using System.Collections.Generic;
 using System.Threading;
 using Unity.Collections;
 using UnityEngine.Networking;
@@ -18,7 +17,7 @@ using Utility;
 namespace CrdtEcsBridge.Engine
 {
     /// <summary>
-    /// Unique instance for each Scene Runtime
+    ///     Unique instance for each Scene Runtime
     /// </summary>
     public class RuntimeImplementation : IRuntime
     {
@@ -31,14 +30,16 @@ namespace CrdtEcsBridge.Engine
             this.sceneData = sceneData;
         }
 
-        public async UniTask<IRuntime.ReadFileResponse> ReadFile(string fileName, CancellationToken ct)
+        public void Dispose() { }
+
+        public async UniTask<IRuntime.ReadFileResponse> ReadFileAsync(string fileName, CancellationToken ct)
         {
-            sceneData.TryGetContentUrl(fileName, out string url);
+            sceneData.TryGetContentUrl(fileName, out URLAddress url);
             sceneData.TryGetHash(fileName, out string hash);
 
             await UniTask.SwitchToMainThread();
 
-            async UniTask<StreamableLoadingResult<ITypedArray<byte>>> CreateFileRequest(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
+            async UniTask<StreamableLoadingResult<ITypedArray<byte>>> CreateFileRequestAsync(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
             {
                 using UnityWebRequest wr = await UnityWebRequest.Get(intention.CommonArguments.URL).SendWebRequest().WithCancellation(ct);
                 NativeArray<byte>.ReadOnly nativeBytes = wr.downloadHandler.nativeData;
@@ -54,15 +55,13 @@ namespace CrdtEcsBridge.Engine
             }
 
             var intent = new SubIntention(new CommonLoadingArguments(url));
-            var content = (await intent.RepeatLoop(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateFileRequest, ReportCategory.ENGINE, ct)).UnwrapAndRethrow();
+            ITypedArray<byte> content = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateFileRequestAsync, ReportCategory.ENGINE, ct)).UnwrapAndRethrow();
 
-            return new IRuntime.ReadFileResponse()
+            return new IRuntime.ReadFileResponse
             {
                 content = content,
                 hash = hash,
             };
         }
-
-        public void Dispose() { }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using Arch.SystemGroups;
-using Diagnostics.ReportsHandling;
-using Microsoft.ClearScript;
+using DCL.Diagnostics;
 using System;
 
 namespace SceneRunner.Scene.ExceptionsHandling
@@ -10,15 +9,15 @@ namespace SceneRunner.Scene.ExceptionsHandling
     /// </summary>
     public class RethrowSceneExceptionsHandler : ISceneExceptionsHandler
     {
+        public void Dispose() { }
+
         public ISystemGroupExceptionHandler.Action Handle(Exception exception, Type systemGroupType) =>
             throw exception;
 
-        public void OnJavaScriptException(string message)
+        public void OnJavaScriptException(Exception exception)
         {
-            throw new ScriptEngineException(message);
+            throw exception;
         }
-
-        public void Dispose() { }
 
         public void OnEngineException(Exception exception, string category = ReportCategory.ENGINE)
         {

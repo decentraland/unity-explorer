@@ -1,4 +1,5 @@
-using Diagnostics;
+using CommunicationData.URLHelpers;
+using DCL.Diagnostics;
 using Ipfs;
 using JetBrains.Annotations;
 using System;
@@ -12,11 +13,17 @@ namespace SceneRunner.Scene
         private readonly ISceneContent sceneContent;
         private readonly IpfsTypes.SceneEntityDefinition sceneDefinition;
 
+        public StaticSceneMessages StaticSceneMessages { get; }
+        public SceneShortInfo SceneShortInfo { get; }
+        public ParcelMathHelper.SceneGeometry Geometry { get; }
+        public SceneAssetBundleManifest AssetBundleManifest { get; }
+
         public SceneData(
             ISceneContent sceneContent,
             IpfsTypes.SceneEntityDefinition sceneDefinition,
             [NotNull] SceneAssetBundleManifest assetBundleManifest,
             Vector2Int baseParcel,
+            ParcelMathHelper.SceneGeometry geometry,
             StaticSceneMessages staticSceneMessages)
         {
             this.sceneContent = sceneContent;
@@ -24,20 +31,15 @@ namespace SceneRunner.Scene
             AssetBundleManifest = assetBundleManifest;
             StaticSceneMessages = staticSceneMessages;
             SceneShortInfo = new SceneShortInfo(baseParcel, sceneDefinition.id);
-            BasePosition = ParcelMathHelper.GetPositionByParcelPosition(SceneShortInfo.BaseParcel);
+            Geometry = geometry;
         }
-
-        public StaticSceneMessages StaticSceneMessages { get; }
-        public SceneShortInfo SceneShortInfo { get; }
-        public Vector3 BasePosition { get; }
-        public SceneAssetBundleManifest AssetBundleManifest { get; }
 
         public bool HasRequiredPermission(string permission)
         {
-            if (sceneDefinition.metadata.scene.requiredPermissions == null)
+            if (sceneDefinition.metadata.requiredPermissions == null)
                 return false;
 
-            foreach (string requiredPermission in sceneDefinition.metadata.scene.requiredPermissions)
+            foreach (string requiredPermission in sceneDefinition.metadata.requiredPermissions)
             {
                 if (requiredPermission == permission)
                     return true;
@@ -46,20 +48,20 @@ namespace SceneRunner.Scene
             return false;
         }
 
-        public bool TryGetMainScriptUrl(out string result) =>
+        public bool TryGetMainScriptUrl(out URLAddress result) =>
             TryGetContentUrl(sceneDefinition.metadata.main, out result);
 
-        public bool TryGetContentUrl(string url, out string result) =>
+        public bool TryGetContentUrl(string url, out URLAddress result) =>
             sceneContent.TryGetContentUrl(url, out result);
 
         public bool TryGetHash(string name, out string hash) =>
             sceneContent.TryGetHash(name, out hash);
 
-        public bool TryGetMediaUrl(string url, out string result)
+        public bool TryGetMediaUrl(string url, out URLAddress result)
         {
             if (string.IsNullOrEmpty(url))
             {
-                result = string.Empty;
+                result = URLAddress.EMPTY;
                 return false;
             }
 
@@ -69,11 +71,11 @@ namespace SceneRunner.Scene
 
             if (HasRequiredPermission(ScenePermissionNames.ALLOW_MEDIA_HOSTNAMES) && IsUrlDomainAllowed(url))
             {
-                result = url;
+                result = URLAddress.FromString(url);
                 return true;
             }
 
-            result = string.Empty;
+            result = URLAddress.EMPTY;
             return false;
         }
 
@@ -81,7 +83,7 @@ namespace SceneRunner.Scene
         {
             if (Uri.TryCreate(url, UriKind.Absolute, out Uri uri))
             {
-                foreach (string allowedMediaHostname in sceneDefinition.metadata.scene.allowedMediaHostnames)
+                foreach (string allowedMediaHostname in sceneDefinition.metadata.allowedMediaHostnames)
                 {
                     if (string.Equals(allowedMediaHostname, uri.Host, StringComparison.CurrentCultureIgnoreCase))
                         return true;

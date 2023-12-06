@@ -9,11 +9,11 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using Ipfs;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using UnityEngine;
 using UnityEngine.Networking;
 
 namespace ECS.SceneLifeCycle.Tests
@@ -39,7 +39,7 @@ namespace ECS.SceneLifeCycle.Tests
         [Test]
         public void CreatePromises()
         {
-            Entity e = world.Create(new RealmComponent(new TestIpfsRealm(URNs)));
+            Entity e = world.Create(new RealmComponent(new RealmData(new TestIpfsRealm(URNs))));
 
             system.Update(0);
 
@@ -75,7 +75,7 @@ namespace ECS.SceneLifeCycle.Tests
                                                                                                              await request;
 
                                                                                                              world.Add(promise.Entity, new StreamableLoadingResult<IpfsTypes.SceneEntityDefinition>(
-                                                                                                                 JsonUtility.FromJson<IpfsTypes.SceneEntityDefinition>(request.webRequest.downloadHandler.text)));
+                                                                                                                 JsonConvert.DeserializeObject<IpfsTypes.SceneEntityDefinition>(request.webRequest.downloadHandler.text)));
 
                                                                                                              return promise;
                                                                                                          })
@@ -85,7 +85,7 @@ namespace ECS.SceneLifeCycle.Tests
 
             // Create realm + fixed pointers
 
-            Entity realm = world.Create(new RealmComponent(ipfsRealm), new FixedScenePointers(results), ProcessesScenePointers.Create());
+            Entity realm = world.Create(new RealmComponent(new RealmData(ipfsRealm)), new FixedScenePointers(results), ProcessesScenePointers.Create());
 
             system.Update(0);
 

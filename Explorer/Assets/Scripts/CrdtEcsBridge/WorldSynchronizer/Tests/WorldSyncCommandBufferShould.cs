@@ -18,36 +18,6 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
 {
     public class WorldSyncCommandBufferShould
     {
-        public class TestComponent
-        {
-            public byte[] Value;
-        }
-
-        public class TestComponent2
-        {
-            public byte[] Value;
-        }
-
-        public class TestComponentSerializer : IComponentSerializer<TestComponent>
-        {
-            public void DeserializeInto(TestComponent instance, in ReadOnlySpan<byte> data)
-            {
-                instance.Value = data.ToArray();
-            }
-
-            public void SerializeInto(TestComponent model, in Span<byte> span) { }
-        }
-
-        public class TestComponentSerializer2 : IComponentSerializer<TestComponent2>
-        {
-            public void DeserializeInto(TestComponent2 instance, in ReadOnlySpan<byte> data)
-            {
-                instance.Value = data.ToArray();
-            }
-
-            public void SerializeInto(TestComponent2 model, in Span<byte> span) { }
-        }
-
         private const int COMPONENT_ID_1 = 100;
         private const int COMPONENT_ID_2 = 200;
         private const int ENTITY_ID = 200;
@@ -60,7 +30,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
 
         private ISDKComponentsRegistry sdkComponentsRegistry;
         private WorldSyncCommandBuffer worldSyncCommandBuffer;
-        private IEntityFactory entityFactory;
+        private ISceneEntityFactory entityFactory;
         private WorldSyncCommandBufferCollectionsPool collectionsPool;
 
         [SetUp]
@@ -71,7 +41,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             sdkComponentsRegistry.TryGet(COMPONENT_ID_1, out Arg.Any<SDKComponentBridge>())
                                  .Returns(x =>
                                   {
-                                      var pool = Substitute.For<IComponentPool<TestComponent>>();
+                                      IComponentPool<TestComponent> pool = Substitute.For<IComponentPool<TestComponent>>();
                                       pool.Get().Returns(_ => new TestComponent());
                                       pool.Rent().Returns(_ => new TestComponent());
 
@@ -88,7 +58,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             sdkComponentsRegistry.TryGet(COMPONENT_ID_2, out Arg.Any<SDKComponentBridge>())
                                  .Returns(x =>
                                   {
-                                      var pool = Substitute.For<IComponentPool<TestComponent2>>();
+                                      IComponentPool<TestComponent2> pool = Substitute.For<IComponentPool<TestComponent2>>();
                                       pool.Get().Returns(_ => new TestComponent2());
                                       pool.Rent().Returns(_ => new TestComponent2());
 
@@ -102,7 +72,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                                       return true;
                                   });
 
-            entityFactory = Substitute.For<IEntityFactory>();
+            entityFactory = Substitute.For<ISceneEntityFactory>();
             entityFactory.Create(Arg.Any<CRDTEntity>(), Arg.Any<World>()).Returns(c => c.Arg<World>().Create());
 
             worldSyncCommandBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory, collectionsPool = WorldSyncCommandBufferCollectionsPool.Create());
@@ -150,7 +120,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             for (var i = 0; i < series.Length; i++)
             {
                 (CRDTMessage crdtMessage, CRDTReconciliationEffect effect, CRDTReconciliationEffect expected) = series[i];
-                var result = worldSyncCommandBuffer.SyncCRDTMessage(crdtMessage, effect);
+                CRDTReconciliationEffect result = worldSyncCommandBuffer.SyncCRDTMessage(crdtMessage, effect);
 
                 // check that the last status was correctly updated
                 Assert.AreEqual(effect, result, $"Mismatch at index {i}");
@@ -163,7 +133,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         public void FailGracefullyOnUnknownComponent()
         {
             var message = new CRDTMessage(CRDTMessageType.APPEND_COMPONENT, ENTITY_ID, 999, 0, DATA);
-            var result = worldSyncCommandBuffer.SyncCRDTMessage(message, CRDTReconciliationEffect.ComponentAdded);
+            CRDTReconciliationEffect result = worldSyncCommandBuffer.SyncCRDTMessage(message, CRDTReconciliationEffect.ComponentAdded);
             Assert.AreEqual(CRDTReconciliationEffect.NoChanges, result);
         }
 
@@ -179,7 +149,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                     (CreateTestMessage(), CRDTReconciliationEffect.ComponentDeleted, CRDTReconciliationEffect.NoChanges),
                     (CreateTestMessage(), CRDTReconciliationEffect.ComponentAdded, CRDTReconciliationEffect.ComponentAdded),
                     (CreateTestMessage(), CRDTReconciliationEffect.ComponentModified, CRDTReconciliationEffect.ComponentAdded),
-                    (CreateTestMessage(), CRDTReconciliationEffect.ComponentModified, CRDTReconciliationEffect.ComponentAdded)
+                    (CreateTestMessage(), CRDTReconciliationEffect.ComponentModified, CRDTReconciliationEffect.ComponentAdded),
                 },
                 new (CRDTMessage, CRDTReconciliationEffect effect, CRDTReconciliationEffect expected)[]
                 {
@@ -205,7 +175,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                     // special case for deleted entity
                     (CreateTestMessage(), CRDTReconciliationEffect.EntityDeleted, CRDTReconciliationEffect.NoChanges), // no changes to the component = no component
                     (new CRDTMessage(CRDTMessageType.DELETE_ENTITY, 123, 0, 123, EmptyMemoryOwner<byte>.EMPTY), CRDTReconciliationEffect.EntityDeleted, CRDTReconciliationEffect.NoChanges),
-                }
+                },
             };
         }
 
@@ -262,18 +232,18 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                     new Action<World, Dictionary<CRDTEntity, Entity>>((world, map) => { }),
                     new (CRDTMessage, CRDTReconciliationEffect)[]
                     {
-                        (CreateTestMessage(), CRDTReconciliationEffect.ComponentAdded)
+                        (CreateTestMessage(), CRDTReconciliationEffect.ComponentAdded),
                     },
                     new Action<World, Dictionary<CRDTEntity, Entity>>((world, map) => { Assert.IsTrue(world.Has<TestComponent>(map[ENTITY_ID])); }),
                 },
                 new object[]
                 {
                     new Action<World, Dictionary<CRDTEntity, Entity>>((world, map) => { }),
-                    new (CRDTMessage, CRDTReconciliationEffect)[]
+                    new[]
                     {
                         (CreateTestMessage(), CRDTReconciliationEffect.ComponentAdded),
                         (CreateTestMessage(), CRDTReconciliationEffect.ComponentModified),
-                        (CreateTestMessage(), CRDTReconciliationEffect.ComponentDeleted)
+                        (CreateTestMessage(), CRDTReconciliationEffect.ComponentDeleted),
                     },
 
                     // no entity should be created
@@ -309,7 +279,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                     new Action<World, Dictionary<CRDTEntity, Entity>>((world, map) =>
                     {
                         Assert.IsTrue(world.Has<TestComponent>(map[ENTITY_ID]));
-                        var c = world.Get<TestComponent>(map[ENTITY_ID]);
+                        TestComponent c = world.Get<TestComponent>(map[ENTITY_ID]);
 
                         // last data should be written
                         Assert.AreEqual(DATA.Memory.ToArray(), c.Value.ToArray());
@@ -344,7 +314,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
                         Assert.IsFalse(map.ContainsKey(ENTITY_ID));
 
                         // The entity was deleted, check that all entities has DeleteEntityIntention component
-                        var q = new QueryDescription().WithAll<DeleteEntityIntention>();
+                        QueryDescription q = new QueryDescription().WithAll<DeleteEntityIntention>();
 
                         Assert.AreEqual(1, world.CountEntities(in q));
                     }),
@@ -379,6 +349,36 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             var entitiesMap = new Dictionary<CRDTEntity, Entity>();
 
             Assert.Throws<InvalidOperationException>(() => worldSyncCommandBuffer.Apply(world, commandBuffer, entitiesMap));
+        }
+
+        public class TestComponent
+        {
+            public byte[] Value;
+        }
+
+        public class TestComponent2
+        {
+            public byte[] Value;
+        }
+
+        public class TestComponentSerializer : IComponentSerializer<TestComponent>
+        {
+            public void DeserializeInto(TestComponent instance, in ReadOnlySpan<byte> data)
+            {
+                instance.Value = data.ToArray();
+            }
+
+            public void SerializeInto(TestComponent model, in Span<byte> span) { }
+        }
+
+        public class TestComponentSerializer2 : IComponentSerializer<TestComponent2>
+        {
+            public void DeserializeInto(TestComponent2 instance, in ReadOnlySpan<byte> data)
+            {
+                instance.Value = data.ToArray();
+            }
+
+            public void SerializeInto(TestComponent2 model, in Span<byte> span) { }
         }
     }
 }

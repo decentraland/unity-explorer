@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using CommunicationData.URLHelpers;
 using CRDT;
 using CRDT.Deserializer;
 using CRDT.Memory;
@@ -12,9 +13,11 @@ using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using DCL.Interaction.Utility;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.Prioritization.Components;
 using Ipfs;
+using Microsoft.ClearScript;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -25,6 +28,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
+using Utility;
 using Utility.Multithreading;
 
 namespace SceneRunner
@@ -33,7 +37,8 @@ namespace SceneRunner
     {
         private readonly ICRDTSerializer crdtSerializer;
         private readonly IECSWorldFactory ecsWorldFactory;
-        private readonly IEntityFactory entityFactory;
+        private readonly ISceneEntityFactory entityFactory;
+        private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly SceneRuntimeFactory sceneRuntimeFactory;
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
         private readonly ISharedPoolsProvider sharedPoolsProvider;
@@ -44,7 +49,8 @@ namespace SceneRunner
             ISharedPoolsProvider sharedPoolsProvider,
             ICRDTSerializer crdtSerializer,
             ISDKComponentsRegistry sdkComponentsRegistry,
-            IEntityFactory entityFactory)
+            ISceneEntityFactory entityFactory,
+            IEntityCollidersGlobalCache entityCollidersGlobalCache)
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -52,33 +58,36 @@ namespace SceneRunner
             this.crdtSerializer = crdtSerializer;
             this.sdkComponentsRegistry = sdkComponentsRegistry;
             this.entityFactory = entityFactory;
+            this.entityCollidersGlobalCache = entityCollidersGlobalCache;
         }
 
-        public async UniTask<ISceneFacade> CreateSceneFromFile(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct)
+        public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct)
         {
             var sceneDefinition = new IpfsTypes.SceneEntityDefinition();
 
             int lastSlash = jsCodeUrl.LastIndexOf("/", StringComparison.Ordinal);
             string mainScenePath = jsCodeUrl.Substring(lastSlash + 1);
-            string baseUrl = jsCodeUrl.Substring(0, lastSlash + 1);
+            var baseUrl = URLDomain.FromString(jsCodeUrl.Substring(0, lastSlash + 1));
 
             sceneDefinition.metadata = new IpfsTypes.SceneMetadata
             {
                 main = mainScenePath,
+                runtimeVersion = "7",
             };
 
-            var sceneData = new SceneData(new SceneNonHashedContent(baseUrl), sceneDefinition, SceneAssetBundleManifest.NULL, Vector2Int.zero, StaticSceneMessages.EMPTY);
+            var sceneData = new SceneData(new SceneNonHashedContent(baseUrl), sceneDefinition, SceneAssetBundleManifest.NULL, Vector2Int.zero,
+                ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, StaticSceneMessages.EMPTY);
 
-            return await CreateScene(sceneData, partitionProvider, ct);
+            return await CreateSceneAsync(sceneData, partitionProvider, ct);
         }
 
-        public async UniTask<ISceneFacade> CreateSceneFromStreamableDirectory(string directoryName, IPartitionComponent partitionProvider, CancellationToken ct)
+        public async UniTask<ISceneFacade> CreateSceneFromStreamableDirectoryAsync(string directoryName, IPartitionComponent partitionProvider, CancellationToken ct)
         {
             const string SCENE_JSON_FILE_NAME = "scene.json";
 
-            var fullPath = $"file://{Application.streamingAssetsPath}/Scenes/{directoryName}/";
+            var fullPath = URLDomain.FromString($"file://{Application.streamingAssetsPath}/Scenes/{directoryName}/");
 
-            string rawSceneJsonPath = fullPath + SCENE_JSON_FILE_NAME;
+            string rawSceneJsonPath = fullPath.Value + SCENE_JSON_FILE_NAME;
 
             using var request = UnityWebRequest.Get(rawSceneJsonPath);
             await request.SendWebRequest().WithCancellation(ct);
@@ -91,49 +100,68 @@ namespace SceneRunner
                 metadata = sceneMetadata,
             };
 
-            var sceneData = new SceneData(new SceneNonHashedContent(fullPath), sceneDefinition, SceneAssetBundleManifest.NULL, Vector2Int.zero, StaticSceneMessages.EMPTY);
+            var sceneData = new SceneData(new SceneNonHashedContent(fullPath), sceneDefinition, SceneAssetBundleManifest.NULL,
+                Vector2Int.zero, ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, StaticSceneMessages.EMPTY);
 
-            return await CreateScene(sceneData, partitionProvider, ct);
+            return await CreateSceneAsync(sceneData, partitionProvider, ct);
         }
 
         public UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct) =>
-            CreateScene(sceneData, partitionProvider, ct);
+            CreateSceneAsync(sceneData, partitionProvider, ct);
 
-        private async UniTask<ISceneFacade> CreateScene(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)
+        private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)
         {
             var entitiesMap = new Dictionary<CRDTEntity, Entity>(1000, CRDTEntityComparer.INSTANCE);
 
             // Per scene instance dependencies
             var ecsMutexSync = new MutexSync();
             var crdtProtocol = new CRDTProtocol();
-            var outgoingCrtdMessagesProvider = new OutgoingCRTDMessagesProvider();
+            var outgoingCRDTMessagesProvider = new OutgoingCRDTMessagesProvider();
             var instancePoolsProvider = InstancePoolsProvider.Create();
             var crdtMemoryAllocator = CRDTPooledMemoryAllocator.Create();
             var crdtDeserializer = new CRDTDeserializer(crdtMemoryAllocator);
-            var ecsToCrdtWriter = new ECSToCRDTWriter(crdtProtocol, outgoingCrtdMessagesProvider, sdkComponentsRegistry, crdtMemoryAllocator);
+            var ecsToCrdtWriter = new ECSToCRDTWriter(crdtProtocol, outgoingCRDTMessagesProvider, sdkComponentsRegistry, crdtMemoryAllocator);
             var systemGroupThrottler = new SystemGroupsUpdateGate();
+            var entityCollidersCache = EntityCollidersSceneCache.Create(entityCollidersGlobalCache);
             var sceneStateProvider = new SceneStateProvider();
             var exceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider, sceneData.SceneShortInfo);
 
             /* Pass dependencies here if they are needed by the systems */
-            var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, ecsToCrdtWriter, entitiesMap, exceptionsHandler, ecsMutexSync);
+            var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, partitionProvider, ecsToCrdtWriter, entitiesMap, exceptionsHandler, entityCollidersCache, sceneStateProvider, ecsMutexSync);
 
-            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(instanceDependencies, systemGroupThrottler, partitionProvider, sceneStateProvider));
+            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(instanceDependencies, systemGroupThrottler, sceneData));
             ecsWorldFacade.Initialize();
 
-            string sceneCodeUrl;
+            entityCollidersGlobalCache.AddSceneInfo(entityCollidersCache, new SceneEcsExecutor(ecsWorldFacade.EcsWorld, ecsMutexSync));
+
+            URLAddress sceneCodeUrl;
 
             if (!sceneData.IsSdk7())
-            {
-                sceneCodeUrl = "https://renderer-artifacts.decentraland.org/sdk7-adaption-layer/main/index.js";
-            }
+                sceneCodeUrl = URLAddress.FromString("https://renderer-artifacts.decentraland.org/sdk7-adaption-layer/main/index.js");
             else
             {
                 // Create an instance of Scene Runtime on the thread pool
                 sceneData.TryGetMainScriptUrl(out sceneCodeUrl);
             }
 
-            SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPath(sceneCodeUrl, instancePoolsProvider, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool);
+            SceneRuntimeImpl sceneRuntime;
+
+            try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(sceneCodeUrl, exceptionsHandler, instancePoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
+            catch (ScriptEngineException e)
+            {
+                // ScriptEngineException.ErrorDetails is ignored through the logging process which is vital in the reporting information
+                exceptionsHandler.OnJavaScriptException(new ScriptEngineException(e.ErrorDetails));
+
+                ecsWorldFacade.Dispose();
+                crdtProtocol.Dispose();
+                outgoingCRDTMessagesProvider.Dispose();
+                instancePoolsProvider.Dispose();
+                crdtMemoryAllocator.Dispose();
+                exceptionsHandler.Dispose();
+                entityCollidersCache.Dispose();
+
+                throw;
+            }
 
             ct.ThrowIfCancellationRequested();
 
@@ -145,7 +173,7 @@ namespace SceneRunner
                 crdtDeserializer,
                 crdtSerializer,
                 crdtWorldSynchronizer,
-                outgoingCrtdMessagesProvider,
+                outgoingCRDTMessagesProvider,
                 systemGroupThrottler,
                 exceptionsHandler,
                 ecsMutexSync);
@@ -159,12 +187,13 @@ namespace SceneRunner
                 sceneRuntime,
                 ecsWorldFacade,
                 crdtProtocol,
-                outgoingCrtdMessagesProvider,
+                outgoingCRDTMessagesProvider,
                 crdtWorldSynchronizer,
                 instancePoolsProvider,
                 crdtMemoryAllocator,
                 exceptionsHandler,
                 sceneStateProvider,
+                entityCollidersCache,
                 sceneData);
         }
     }

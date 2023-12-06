@@ -1,8 +1,9 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
-using ECS.Profiling;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
+using DCL.PerformanceBudgeting;
+using DCL.Profiling;
 using NUnit.Framework;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -11,6 +12,12 @@ namespace ECS.StreamableLoading.Tests
     [TestFixture]
     public class FrameTimeCapBudgetProviderShould
     {
+        [SetUp]
+        public void SetUp()
+        {
+            profilingProvider = new ProfilingProvider();
+        }
+
         public struct DummyComponent
         {
             public int timesUpdated;
@@ -18,12 +25,6 @@ namespace ECS.StreamableLoading.Tests
 
         private FrameTimeCapBudgetProvider budgetProvider;
         private ProfilingProvider profilingProvider;
-
-        [SetUp]
-        public void SetUp()
-        {
-            profilingProvider = new ProfilingProvider();
-        }
 
         [Test]
         public async Task SpendBudget()
@@ -58,8 +59,7 @@ namespace ECS.StreamableLoading.Tests
             Assert.AreEqual(1, world.Get<DummyComponent>(e).timesUpdated);
 
             //We are blocking the main thread
-            for (var i = 0; i < 1_000; i++)
-                GameObject.CreatePrimitive(PrimitiveType.Cube);
+            Thread.Sleep(15);
 
             world.Query(new QueryDescription().WithAll<DummyComponent>(), (ref DummyComponent dummy) => DummySystem(ref dummy));
             Assert.AreEqual(1, world.Get<DummyComponent>(e).timesUpdated);

@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -47,8 +48,8 @@ namespace ECS.SceneLifeCycle.Systems
                     for (var i = 0; i < result.Asset.Value.Count; i++)
                     {
                         IpfsTypes.SceneEntityDefinition definition = result.Asset.Value[i];
-                        var path = new IpfsTypes.IpfsPath(definition.id, string.Empty);
-                        CreateSceneEntity(definition, path, out _);
+                        var path = new IpfsTypes.IpfsPath(definition.id, URLDomain.EMPTY);
+                        CreateSceneEntity(definition, path);
                     }
                 }
 

@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Profiling;
+using SystemGroups.Visualiser;
+
 
 namespace SceneRunner.ECSWorld
 {
@@ -22,7 +24,7 @@ namespace SceneRunner.ECSWorld
             IReadOnlyList<IFinalizeWorldSystem> finalizeWorldSystems)
         {
             this.systemGroupWorld = systemGroupWorld;
-            this.EcsWorld = ecsWorld;
+            EcsWorld = ecsWorld;
             this.finalizeWorldSystems = finalizeWorldSystems;
         }
 
@@ -33,7 +35,7 @@ namespace SceneRunner.ECSWorld
 
         public void Dispose()
         {
-            var finalizeSDKComponentsQuery = EcsWorld.Query(new QueryDescription().WithAll<CRDTEntity>());
+            Query finalizeSDKComponentsQuery = EcsWorld.Query(new QueryDescription().WithAll<CRDTEntity>());
 
             Profiler.BeginSample("FinalizeSDKComponents");
 
@@ -45,6 +47,8 @@ namespace SceneRunner.ECSWorld
             }
 
             Profiler.EndSample();
+
+            SystemGroupSnapshot.Instance.Unregister(systemGroupWorld);
 
             systemGroupWorld.Dispose();
             EcsWorld.Dispose();

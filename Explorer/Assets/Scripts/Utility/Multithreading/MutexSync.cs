@@ -4,21 +4,26 @@ using UnityEngine.Profiling;
 
 namespace Utility.Multithreading
 {
-    public class MutexSync
+    public class MutexSync : IDisposable
     {
         private static readonly CustomSampler SAMPLER;
 
-        private readonly Mutex mutex = new ();
+        public readonly Mutex Mutex = new ();
 
         static MutexSync()
         {
             SAMPLER = CustomSampler.Create("MutexSync.Wait");
         }
 
+        public void Dispose()
+        {
+            Mutex.Dispose();
+        }
+
         public Scope GetScope()
         {
             SAMPLER.Begin();
-            var scope = new Scope(mutex);
+            var scope = new Scope(Mutex);
             SAMPLER.End();
             return scope;
         }

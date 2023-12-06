@@ -5,6 +5,11 @@ namespace DCL.ECSComponents
         bool IsDirty { get; set; }
     }
 
+    public partial class PBAvatarShape : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
     public partial class PBVisibilityComponent : IDirtyMarker
     {
         public bool IsDirty { get; set; }
@@ -51,6 +56,11 @@ namespace DCL.ECSComponents
     }
 
     public partial class PBGltfContainerLoadingState : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
+    public partial class PBRaycast : IDirtyMarker
     {
         public bool IsDirty { get; set; }
     }

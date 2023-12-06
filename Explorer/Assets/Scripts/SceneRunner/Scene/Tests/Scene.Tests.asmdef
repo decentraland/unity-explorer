@@ -3,7 +3,9 @@
     "rootNamespace": "",
     "references": [
         "GUID:286980af24684da6acc1caa413039811",
-        "GUID:101b8b6ebaf64668909b49c4b7a1420d"
+        "GUID:101b8b6ebaf64668909b49c4b7a1420d",
+        "GUID:8322ea9340a544c59ddc56d4793eac74",
+        "GUID:275e22790c04e9b47a5085d7b0c4432a"
     ],
     "includePlatforms": [
         "Editor"
@@ -15,8 +17,7 @@
         "nunit.framework.dll",
         "NSubstitute.dll",
         "Arch.dll",
-        "Arch.System.dll",
-        "Arch.SystemGroups.dll"
+        "Arch.System.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [

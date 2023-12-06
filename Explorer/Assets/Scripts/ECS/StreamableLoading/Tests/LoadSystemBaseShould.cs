@@ -1,10 +1,10 @@
 ﻿using AssetManagement;
+using DCL.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
@@ -18,6 +18,13 @@ namespace ECS.StreamableLoading.Tests
         where TSystem: LoadSystemBase<TAsset, TIntention>
         where TIntention: struct, ILoadingIntention, IEquatable<TIntention>
     {
+        protected IStreamableCache<TAsset, TIntention> cache;
+
+        private MockedReportScope mockedReportScope;
+        private IAcquiredBudget budget;
+
+        protected AssetPromise<TAsset, TIntention> promise { get; private set; }
+
         protected abstract TIntention CreateSuccessIntention();
 
         protected abstract TIntention CreateNotFoundIntention();
@@ -25,13 +32,6 @@ namespace ECS.StreamableLoading.Tests
         protected abstract TIntention CreateWrongTypeIntention();
 
         protected abstract TSystem CreateSystem();
-
-        protected AssetPromise<TAsset, TIntention> promise { get; private set; }
-
-        protected IStreamableCache<TAsset, TIntention> cache;
-
-        private MockedReportScope mockedReportScope;
-        private IAcquiredBudget budget;
 
         [SetUp]
         public void BaseSetUp()
@@ -66,7 +66,7 @@ namespace ECS.StreamableLoading.Tests
             // Launch the flow
             system.Update(0);
 
-            promise = await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
+            promise = await promise.ToUniTaskAsync(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
 
             Assert.That(promise.TryGetResult(world, out StreamableLoadingResult<TAsset> result), Is.True);
             Assert.That(result.Succeeded, Is.True);
@@ -85,7 +85,7 @@ namespace ECS.StreamableLoading.Tests
             // Launch the flow
             system.Update(0);
 
-            promise = await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
+            promise = await promise.ToUniTaskAsync(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
 
             Assert.That(promise.TryGetResult(world, out StreamableLoadingResult<TAsset> result), Is.True);
             Assert.That(result.Succeeded, Is.False);
@@ -103,7 +103,7 @@ namespace ECS.StreamableLoading.Tests
             // Launch the flow
             system.Update(0);
 
-            promise = await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
+            promise = await promise.ToUniTaskAsync(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
 
             Assert.That(promise.TryGetResult(world, out StreamableLoadingResult<TAsset> result), Is.True);
             Assert.IsFalse(result.Succeeded);
@@ -123,7 +123,7 @@ namespace ECS.StreamableLoading.Tests
             system.Update(0);
 
             Assert.AreEqual(AssetSource.NONE, world.Get<TIntention>(promise.Entity).CommonArguments.PermittedSources);
-            await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
+            await promise.ToUniTaskAsync(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
         }
 
         [Test]
@@ -142,7 +142,7 @@ namespace ECS.StreamableLoading.Tests
             cache.Received(1).TryGet(checkIntent, out Arg.Any<TAsset>());
             cache.ClearReceivedCalls();
 
-            promise = await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
+            promise = await promise.ToUniTaskAsync(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
             Assert.That(promise.TryGetResult(world, out StreamableLoadingResult<TAsset> result), Is.True);
 
             // Second time
@@ -165,7 +165,7 @@ namespace ECS.StreamableLoading.Tests
             // should exit immediately
             Assert.That(world.Get<StreamableLoadingState>(promise.Entity).Value, Is.EqualTo(StreamableLoadingState.Status.Finished));
 
-            promise = await promise.ToUniTask(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
+            promise = await promise.ToUniTaskAsync(world, cancellationToken: promise.LoadingIntention.CommonArguments.CancellationToken);
 
             Assert.That(promise.TryGetResult(world, out result), Is.True);
             Assert.That(result.Succeeded, Is.True);

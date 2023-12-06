@@ -5,6 +5,7 @@ using ECS.Unity.Materials.Systems;
 using ECS.Unity.PrimitiveRenderer.Components;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Utility.Primitives;
@@ -21,13 +22,15 @@ namespace ECS.Unity.Materials.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new ResetMaterialSystem(world, destroyMaterial = Substitute.For<DestroyMaterial>());
+            system = new ResetMaterialSystem(world, destroyMaterial = Substitute.For<DestroyMaterial>(), Substitute.For<ISceneData>());
+
+            Material dm = DefaultMaterial.New();
 
             renderer = new GameObject(nameof(ResetMaterialSystemShould)).AddComponent<MeshRenderer>();
             renderer.shadowCastingMode = ShadowCastingMode.On;
-            renderer.sharedMaterial = new Material(Shader.Find("DCL/Universal Render Pipeline/Lit"));
+            renderer.sharedMaterial = dm;
 
-            var matComp = new MaterialComponent { Status = MaterialComponent.LifeCycle.MaterialApplied, Result = DefaultMaterial.Shared };
+            var matComp = new MaterialComponent { Status = MaterialComponent.LifeCycle.MaterialApplied, Result = dm };
             var rendComp = new PrimitiveMeshRendererComponent { MeshRenderer = renderer };
 
             entity = world.Create(matComp, rendComp);
@@ -36,9 +39,12 @@ namespace ECS.Unity.Materials.Tests
         [Test]
         public void SetDefaultMaterial()
         {
+            Material mat = DefaultMaterial.Get();
+            DefaultMaterial.Release(mat);
+
             system.Update(0);
 
-            Assert.That(renderer.sharedMaterial, Is.EqualTo(DefaultMaterial.Shared));
+            Assert.That(renderer.sharedMaterial, Is.EqualTo(mat));
         }
 
         [Test]

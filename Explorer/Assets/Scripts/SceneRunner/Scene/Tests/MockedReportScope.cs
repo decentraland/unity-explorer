@@ -1,4 +1,4 @@
-﻿using Diagnostics.ReportsHandling;
+﻿using DCL.Diagnostics;
 using NSubstitute;
 using System;
 using System.Collections.Generic;
@@ -10,9 +10,8 @@ namespace SceneRunner.Scene.Tests
     /// </summary>
     public class MockedReportScope : IDisposable
     {
-        private readonly ReportHubLogger savedInstance;
-
         public readonly IReportHandler Mock;
+        private readonly ReportHubLogger savedInstance;
 
         public MockedReportScope()
         {

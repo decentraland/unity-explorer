@@ -17,9 +17,119 @@ MonoBehaviour:
   - rid: 6784895265412481026
   - rid: 6784895265412481027
   - rid: 6784895267130048513
+  - rid: 1268264176566403074
+  - rid: 5215741520409264128
+  - rid: 5215741520409264129
+  - rid: 1501337502808539138
+  - rid: 2152807656697888768
   references:
     version: 2
     RefIds:
+    - rid: 1268264176566403074
+      type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <hoverCanvasSettings>k__BackingField:
+          <HoverCanvasAsset>k__BackingField:
+            m_AssetGUID: 8fd0fd0188702304689c461c6aacc7c5
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
+          <InputButtons>k__BackingField:
+          - InputAction: 0
+            Key: 
+            Icon: {fileID: 0}
+          - InputAction: 1
+            Key: E
+            Icon: {fileID: 0}
+          - InputAction: 2
+            Key: F
+            Icon: {fileID: 0}
+          - InputAction: 3
+            Key: 
+            Icon: {fileID: 0}
+          - InputAction: 4
+            Key: W
+            Icon: {fileID: 0}
+          - InputAction: 5
+            Key: S
+            Icon: {fileID: 0}
+          - InputAction: 6
+            Key: D
+            Icon: {fileID: 0}
+          - InputAction: 7
+            Key: A
+            Icon: {fileID: 0}
+          - InputAction: 8
+            Key: SPACE BAR
+            Icon: {fileID: 0}
+          - InputAction: 9
+            Key: LSHIFT
+            Icon: {fileID: 0}
+          - InputAction: 10
+            Key: 1
+            Icon: {fileID: 0}
+          - InputAction: 11
+            Key: 2
+            Icon: {fileID: 0}
+          - InputAction: 12
+            Key: 3
+            Icon: {fileID: 0}
+          - InputAction: 13
+            Key: 4
+            Icon: {fileID: 0}
+    - rid: 1501337502808539138
+      type: {class: ExplorePanelPlugin/ExplorePanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        ExplorePanelPrefab:
+          m_AssetGUID: 7dc631660587a41589ba55c08ff7fa73
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        PersistentExploreOpenerPrefab:
+          m_AssetGUID: b55e2970d2dc94295ad8af70cb9d09f4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        MinimapPrefab:
+          m_AssetGUID: f2ef3a867ab2840cb9bc73b4762922fd
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 2152807656697888768
+      type: {class: MinimapPlugin/MinimapSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        MinimapPrefab:
+          m_AssetGUID: f2ef3a867ab2840cb9bc73b4762922fd
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 5215741520409264128
+      type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        avatarBase:
+          m_AssetGUID: 8db46845fb5f52f44a71c2a0c2d92074
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        celShadingMaterial:
+          m_AssetGUID: 19373184c73f36042a55739551bb8298
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        defaultMaterialCapacity: 100
+        computeShader:
+          m_AssetGUID: e8cf73ccd47a385498b71ec58534d03c
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 5215741520409264129
+      type: {class: WearablePlugin/WearableSettings, ns: DCL.AvatarRendering.Wearables, asm: DCL.Plugins}
+      data:
+        defaultWearablesDefinition:
+          m_AssetGUID: 81ea8febf47eb484986af220584361dc
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 6784895264912310272
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -62,9 +172,3 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
     - rid: 6784895267130048513
       type: {class: ProfilingPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        <profilingViewRef>k__BackingField:
-          m_AssetGUID: 03608bfcd31894b8daf215b6e82338bf
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0

@@ -2,17 +2,21 @@
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
+using DCL.PerformanceBudgeting;
+using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using Ipfs;
 using System.Threading;
-using UnityEngine;
-using UnityEngine.Networking;
 using Utility.Multithreading;
+#if UNITY_EDITOR
+
+#else
+using UnityEngine;
+#endif
 
 namespace ECS.SceneLifeCycle.SceneDefinition
 {
@@ -23,24 +27,20 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     [LogCategory(ReportCategory.SCENE_LOADING)]
     public partial class LoadSceneDefinitionSystem : LoadSystemBase<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>
     {
-        internal LoadSceneDefinitionSystem(World world, IStreamableCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition> cache, MutexSync mutexSync)
-            : base(world, cache, mutexSync) { }
+        private readonly IWebRequestController webRequestController;
 
-        protected override async UniTask<StreamableLoadingResult<IpfsTypes.SceneEntityDefinition>> FlowInternal(GetSceneDefinition intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        internal LoadSceneDefinitionSystem(World world, IWebRequestController webRequestController, IStreamableCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition> cache, MutexSync mutexSync)
+            : base(world, cache, mutexSync)
         {
-            string text;
+            this.webRequestController = webRequestController;
+        }
 
-            using (var wr = UnityWebRequest.Get(intention.CommonArguments.URL))
-            {
-                await wr.SendWebRequest().WithCancellation(ct);
+        protected override async UniTask<StreamableLoadingResult<IpfsTypes.SceneEntityDefinition>> FlowInternalAsync(GetSceneDefinition intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        {
+            IpfsTypes.SceneEntityDefinition sceneEntityDefinition = await
+                (await webRequestController.GetAsync(intention.CommonArguments, ct, GetReportCategory()))
+               .CreateFromJson<IpfsTypes.SceneEntityDefinition>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 
-                // Get text on the main thread
-                text = wr.downloadHandler.text;
-            }
-
-            await UniTask.SwitchToThreadPool();
-
-            IpfsTypes.SceneEntityDefinition sceneEntityDefinition = JsonUtility.FromJson<IpfsTypes.SceneEntityDefinition>(text);
             sceneEntityDefinition.id ??= intention.IpfsPath.EntityId;
 
             // switching back is handled by the base class

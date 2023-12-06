@@ -1,9 +1,10 @@
 using Arch.Core;
+using DCL.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.StreamableLoading.Textures;
 using ECS.TestSuite;
+using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
 
@@ -13,13 +14,17 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
     {
         private List<Entity> entities;
         private ConcurrentLoadingBudgetProvider concurrentLoadingBudgetProvider;
+        private IConcurrentBudgetProvider memoryBudgetProviderMock;
 
         [SetUp]
         public void SetUp()
         {
             // We ll create a budget system that only allows 5 concurrent loading requests
             concurrentLoadingBudgetProvider = new ConcurrentLoadingBudgetProvider(5);
-            system = new AssetsDeferredLoadingSystem(world, concurrentLoadingBudgetProvider);
+            memoryBudgetProviderMock = Substitute.For<IConcurrentBudgetProvider>();
+            memoryBudgetProviderMock.TrySpendBudget().Returns(true);
+
+            system = new AssetsDeferredLoadingSystem(world, concurrentLoadingBudgetProvider, memoryBudgetProviderMock);
             entities = new List<Entity>();
         }
 
@@ -109,7 +114,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
                     world.Get<StreamableLoadingState>(entities[i]).Value == StreamableLoadingState.Status.Allowed);
 
             // We'll release 3 budget and check that additional 3 intentions are allowed
-            for (int i = 0; i < 3; i++)
+            for (var i = 0; i < 3; i++)
                 concurrentLoadingBudgetProvider.ReleaseBudget();
 
             system.Update(0);

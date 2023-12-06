@@ -6,9 +6,8 @@ namespace Global.Dynamic
 {
     public class RealmLauncher : MonoBehaviour
     {
-        [SerializeField] private TMP_Dropdown realmPicker;
-
         public Action<string> OnRealmSelected;
+        [SerializeField] private TMP_Dropdown realmPicker;
 
         public void Initialize(string[] realms)
         {

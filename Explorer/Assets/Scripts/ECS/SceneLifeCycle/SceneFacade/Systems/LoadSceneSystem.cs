@@ -2,13 +2,13 @@
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
+using DCL.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using SceneRunner;
 using SceneRunner.Scene;
 using System;
@@ -37,17 +37,17 @@ namespace ECS.SceneLifeCycle.Systems
             this.loadEmptySceneSystemLogic = loadEmptySceneSystemLogic;
         }
 
-        protected override async UniTask<StreamableLoadingResult<ISceneFacade>> FlowInternal(GetSceneFacadeIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<ISceneFacade>> FlowInternalAsync(GetSceneFacadeIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            if (intention.IsEmpty)
+            if (intention.DefinitionComponent.IsEmpty)
             {
                 if (loadEmptySceneSystemLogic.Inactive)
                     throw new ArgumentException("Empty scene loading is inactive");
 
-                return new StreamableLoadingResult<ISceneFacade>(await loadEmptySceneSystemLogic.Flow(intention, partition, ct));
+                return new StreamableLoadingResult<ISceneFacade>(await loadEmptySceneSystemLogic.FlowAsync(intention, partition, ct));
             }
 
-            return new StreamableLoadingResult<ISceneFacade>(await loadSceneSystemLogic.Flow(sceneFactory, intention, GetReportCategory(), partition, ct));
+            return new StreamableLoadingResult<ISceneFacade>(await loadSceneSystemLogic.FlowAsync(sceneFactory, intention, GetReportCategory(), partition, ct));
         }
 
         public override void Dispose()

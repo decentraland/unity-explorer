@@ -1,8 +1,10 @@
-﻿using Diagnostics;
+﻿using CommunicationData.URLHelpers;
+using DCL.Diagnostics;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 
 namespace SceneRunner.EmptyScene
 {
@@ -11,13 +13,24 @@ namespace SceneRunner.EmptyScene
     /// </summary>
     public class EmptySceneData : ISceneData
     {
+        public readonly IReadOnlyList<EmptySceneMapping> Mappings;
         private readonly Dictionary<string, string> fileToHash;
 
-        public readonly IReadOnlyList<EmptySceneMapping> Mappings;
+        /// <summary>
+        ///     Per scene data is not resolved as empty scenes use the shared world for all instances
+        /// </summary>
+        public SceneShortInfo SceneShortInfo { get; }
+
+        public ParcelMathHelper.SceneGeometry Geometry => ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY;
+
+        public SceneAssetBundleManifest AssetBundleManifest => SceneAssetBundleManifest.NULL;
+        public StaticSceneMessages StaticSceneMessages => StaticSceneMessages.EMPTY;
 
         public EmptySceneData(IReadOnlyList<EmptySceneMapping> mappings)
         {
             Mappings = mappings;
+
+            SceneShortInfo = new SceneShortInfo(Vector2Int.zero, "Empty Scene");
 
             fileToHash = new Dictionary<string, string>(mappings.Count * 2, StringComparer.OrdinalIgnoreCase);
 
@@ -28,26 +41,19 @@ namespace SceneRunner.EmptyScene
             }
         }
 
-        public SceneShortInfo SceneShortInfo { get; }
-
-        public Vector3 BasePosition { get; }
-
-        public SceneAssetBundleManifest AssetBundleManifest => SceneAssetBundleManifest.NULL;
-        public StaticSceneMessages StaticSceneMessages => StaticSceneMessages.EMPTY;
-
         public bool HasRequiredPermission(string permission) =>
             throw new NotImplementedException();
 
-        public bool TryGetMainScriptUrl(out string result) =>
+        public bool TryGetMainScriptUrl(out URLAddress result) =>
             throw new NotImplementedException();
 
-        public bool TryGetContentUrl(string url, out string result) =>
+        public bool TryGetContentUrl(string url, out URLAddress result) =>
             throw new NotImplementedException();
 
         public bool TryGetHash(string name, out string hash) =>
             fileToHash.TryGetValue(name, out hash);
 
-        public bool TryGetMediaUrl(string url, out string result) =>
+        public bool TryGetMediaUrl(string url, out URLAddress result) =>
             throw new NotImplementedException();
 
         public bool IsUrlDomainAllowed(string url) =>

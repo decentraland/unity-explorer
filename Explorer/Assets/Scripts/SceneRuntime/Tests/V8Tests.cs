@@ -1,4 +1,5 @@
 ﻿using Microsoft.ClearScript;
+using Microsoft.ClearScript.V8;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -9,7 +10,7 @@ namespace SceneRuntime.Tests
         [Test]
         public void CallInvokeAsFunction()
         {
-            var engine = V8EngineFactory.Create();
+            V8ScriptEngine engine = V8EngineFactory.Create();
 
             engine.AddHostType("Debug", typeof(Debug));
 
@@ -22,7 +23,7 @@ namespace SceneRuntime.Tests
         [Test]
         public void ConvertCSharpByteArrayToUint8Array()
         {
-            var engine = V8EngineFactory.Create();
+            V8ScriptEngine engine = V8EngineFactory.Create();
 
             engine.AddHostType("Assert", typeof(Assert));
 

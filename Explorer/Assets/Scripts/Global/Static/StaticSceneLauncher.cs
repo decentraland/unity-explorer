@@ -1,9 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
-using Diagnostics.ReportsHandling;
 using SceneRunner.Scene;
 using System;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using UnityEngine;
 
@@ -24,7 +22,7 @@ namespace Global.Static
 
         private void Awake()
         {
-            InitializationFlow(destroyCancellationToken).Forget();
+            InitializationFlowAsync(destroyCancellationToken).Forget();
         }
 
         private void OnDestroy()
@@ -32,45 +30,39 @@ namespace Global.Static
             staticContainer?.Dispose();
         }
 
-        public async UniTask InitializationFlow(CancellationToken ct)
+        public async UniTask InitializationFlowAsync(CancellationToken ct)
         {
             try
             {
                 SceneSharedContainer sceneSharedContainer;
-                (staticContainer, sceneSharedContainer) = await Install(globalPluginSettingsContainer, scenePluginSettingsContainer, ct);
+                (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettingsContainer, scenePluginSettingsContainer, ct);
                 sceneLauncher.Initialize(sceneSharedContainer, destroyCancellationToken);
             }
             catch (OperationCanceledException) { }
             catch (Exception)
             {
                 // unhandled exception
-                PrintGameIsDead();
+                GameReports.PrintIsDead();
                 throw;
             }
         }
 
-        public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> Install(
+        public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> InstallAsync(
             IPluginSettingsContainer globalSettingsContainer,
             IPluginSettingsContainer sceneSettingsContainer,
             CancellationToken ct)
         {
             // First load the common global plugin
-            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.Create(globalSettingsContainer, ct);
+            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer, ct);
 
             if (!isLoaded)
-                PrintGameIsDead();
+                GameReports.PrintIsDead();
 
-            await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePlugin(gp, ct)));
+            await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 
             var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
 
             return (staticContainer, sceneSharedContainer);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void PrintGameIsDead()
-        {
-            ReportHub.LogError(ReportCategory.ENGINE, "Initialization Failed! Game is irrecoverably dead!");
         }
     }
 }

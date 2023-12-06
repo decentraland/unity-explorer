@@ -1,4 +1,4 @@
-﻿using Diagnostics.ReportsHandling;
+﻿using DCL.Diagnostics;
 using JetBrains.Annotations;
 using Microsoft.ClearScript.V8;
 
@@ -9,30 +9,32 @@ namespace SceneRuntime.Apis
         private readonly V8ScriptEngine engine;
         private readonly SceneModuleLoader moduleLoader;
         private readonly V8Script sceneScript;
+        private readonly SceneShortInfo sceneShortInfo;
 
-        public UnityOpsApi(V8ScriptEngine engine, SceneModuleLoader moduleLoader, V8Script sceneScript)
+        public UnityOpsApi(V8ScriptEngine engine, SceneModuleLoader moduleLoader, V8Script sceneScript, SceneShortInfo sceneShortInfo)
         {
             this.engine = engine;
             this.moduleLoader = moduleLoader;
             this.sceneScript = sceneScript;
+            this.sceneShortInfo = sceneShortInfo;
         }
 
         [UsedImplicitly]
         public void Log(object message)
         {
-            ReportHub.Log(new ReportData(ReportCategory.JAVASCRIPT), message);
+            ReportHub.Log(new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo), message);
         }
 
         [UsedImplicitly]
         public void Warning(object message)
         {
-            ReportHub.LogWarning(new ReportData(ReportCategory.JAVASCRIPT), message);
+            ReportHub.LogWarning(new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo), message);
         }
 
         [UsedImplicitly]
         public void Error(object message)
         {
-            ReportHub.LogError(new ReportData(ReportCategory.JAVASCRIPT), message + " stackTrace: " + engine.GetStackTrace());
+            ReportHub.LogError(new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo), message + " stackTrace: " + engine.GetStackTrace());
         }
 
         [UsedImplicitly]
@@ -42,11 +44,11 @@ namespace SceneRuntime.Apis
             if (moduleName == "~scene.js")
                 return engine.Evaluate(sceneScript);
 
-            var dirname = moduleName.Substring(0, 1);
-            var filename = moduleName.Substring(1);
+            string dirname = moduleName.Substring(0, 1);
+            string filename = moduleName.Substring(1);
 
             // Load JavaScript wrapper in the Runtime
-            var moduleScript = moduleLoader.GetModuleScript(filename);
+            V8Script moduleScript = moduleLoader.GetModuleScript(filename);
 
             return engine.Evaluate(moduleScript);
         }

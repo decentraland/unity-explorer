@@ -1,14 +1,14 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Metadata;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using System;
 using UnityEngine.Profiling;
 
 namespace ECS.Abstract
 {
     /// <summary>
-    /// Provides additional functionality to `BaseSystem`
+    ///     Provides additional functionality to `BaseSystem`
     /// </summary>
     public abstract class BaseUnityLoopSystem : PlayerLoopSystem<World>
     {

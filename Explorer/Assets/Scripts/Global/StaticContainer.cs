@@ -1,17 +1,19 @@
-﻿using CrdtEcsBridge.Components;
+using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
+using DCL.Diagnostics;
+using DCL.Gizmos.Plugin;
+using DCL.Interaction.Utility;
+using DCL.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
-using Diagnostics;
-using Diagnostics.ReportsHandling;
+using DCL.WebRequests.Analytics;
+using DCL.Profiling;
+using DCL.Time;
 using ECS.Prioritization;
-using ECS.Prioritization.Components;
-using ECS.Profiling;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -34,32 +36,24 @@ namespace Global
 
         public ComponentsContainer ComponentsContainer { get; private set; }
 
-        public CameraSamplingData CameraSamplingData { get; private set; }
+        public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
+
+        public WebRequestsContainer WebRequestsContainer { get; private set; }
 
         public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; }
+
+        /// <summary>
+        ///     Some plugins may implement both interfaces
+        /// </summary>
+        public IReadOnlyList<IDCLGlobalPlugin> SharedPlugins { get; private set; }
 
         public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
 
         public IProfilingProvider ProfilingProvider { get; private set; }
 
-        public async UniTask Initialize(StaticSettings settings, CancellationToken ct)
-        {
-            (characterObject, reportHandlingSettings, partitionSettings, realmPartitionSettings) =
-                await UniTask.WhenAll(
-                    AssetsProvisioner.ProvideInstance(settings.CharacterObject, new Vector3(0f, settings.StartYPosition, 0f), Quaternion.identity, ct: ct),
-                    AssetsProvisioner.ProvideMainAsset(settings.ReportHandlingSettings, ct),
-                    AssetsProvisioner.ProvideMainAsset(settings.PartitionSettings, ct),
-                    AssetsProvisioner.ProvideMainAsset(settings.RealmPartitionSettings, ct));
-        }
+        public PhysicsTickProvider PhysicsTickProvider { get; private set; }
 
-        public void Dispose()
-        {
-            DiagnosticsContainer?.Dispose();
-            characterObject.Dispose();
-            realmPartitionSettings.Dispose();
-            partitionSettings.Dispose();
-            reportHandlingSettings.Dispose();
-        }
+        public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
 
         public IAssetsProvisioner AssetsProvisioner { get; private set; }
 
@@ -73,46 +67,86 @@ namespace Global
         public IPartitionSettings PartitionSettings => partitionSettings.Value;
 
         public IRealmPartitionSettings RealmPartitionSettings => realmPartitionSettings.Value;
+        public StaticSettings StaticSettings { get; private set; }
 
-        public static async UniTask<(StaticContainer container, bool success)> Create(IPluginSettingsContainer settingsContainer, CancellationToken ct)
+        public void Dispose()
+        {
+            DiagnosticsContainer?.Dispose();
+            characterObject.Dispose();
+            realmPartitionSettings.Dispose();
+            partitionSettings.Dispose();
+            reportHandlingSettings.Dispose();
+        }
+
+        public async UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
+        {
+            StaticSettings = settings;
+
+            (characterObject, reportHandlingSettings, partitionSettings, realmPartitionSettings) =
+                await UniTask.WhenAll(
+                    AssetsProvisioner.ProvideInstanceAsync(settings.CharacterObject, new Vector3(0f, settings.StartYPosition, 0f), Quaternion.identity, ct: ct),
+                    AssetsProvisioner.ProvideMainAssetAsync(settings.ReportHandlingSettings, ct),
+                    AssetsProvisioner.ProvideMainAssetAsync(settings.PartitionSettings, ct),
+                    AssetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct));
+        }
+
+        public static async UniTask<(StaticContainer container, bool success)> CreateAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
         {
             var componentsContainer = ComponentsContainer.Create();
+            var exposedGlobalDataContainer = ExposedGlobalDataContainer.Create();
             var profilingProvider = new ProfilingProvider();
 
             var container = new StaticContainer();
             var addressablesProvisioner = new AddressablesProvisioner();
             container.AssetsProvisioner = addressablesProvisioner;
 
-            (_, bool result) = await settingsContainer.InitializePlugin(container, ct);
+            (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
 
             if (!result)
                 return (null, false);
 
+            StaticSettings staticSettings = settingsContainer.GetSettings<StaticSettings>();
+
             var sharedDependencies = new ECSWorldSingletonSharedDependencies(
                 componentsContainer.ComponentPoolsRegistry,
                 container.ReportHandlingSettings,
-                new EntityFactory(),
+                new SceneEntityFactory(),
                 new PartitionedWorldsAggregate.Factory(),
-                new ConcurrentLoadingBudgetProvider(50),
-                new FrameTimeCapBudgetProvider(40, profilingProvider)
+                new ConcurrentLoadingBudgetProvider(staticSettings.AssetsLoadingBudget),
+                new FrameTimeCapBudgetProvider(staticSettings.FPSCap, profilingProvider),
+                new MemoryBudgetProvider(profilingProvider, staticSettings.MemoryThresholds)
             );
 
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
-            container.CameraSamplingData = new CameraSamplingData();
             container.ProfilingProvider = profilingProvider;
+            container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
+            container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
+            container.WebRequestsContainer = WebRequestsContainer.Create();
+            container.PhysicsTickProvider = new PhysicsTickProvider();
+
+            var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings);
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
                 new TransformsPlugin(sharedDependencies),
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
-                new PrimitiveCollidersPlugin(sharedDependencies),
-                new TexturesLoadingPlugin(),
+                new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController),
+                new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
-                new AssetBundlesPlugin(container.ReportHandlingSettings),
+                assetBundlePlugin,
                 new GltfContainerPlugin(sharedDependencies),
+                new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
+#if UNITY_EDITOR
+                new GizmosWorldPlugin(),
+#endif
+            };
+
+            container.SharedPlugins = new IDCLGlobalPlugin[]
+            {
+                assetBundlePlugin,
             };
 
             return (container, true);

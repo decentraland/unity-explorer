@@ -1,6 +1,5 @@
 using Arch.SystemGroups;
-using Diagnostics;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using System;
 using System.Linq;
 using UnityEngine;
@@ -25,6 +24,13 @@ namespace SceneRunner.Scene.ExceptionsHandling
         private SceneShortInfo sceneShortInfo;
 
         private SceneExceptionsHandler() { }
+
+        public void Dispose()
+        {
+            sceneState = null;
+            Array.Clear(ecsExceptionsBag, 0, ecsExceptionsBag.Length);
+            POOL.Release(this);
+        }
 
         public ISystemGroupExceptionHandler.Action Handle(Exception exception, Type systemGroupType)
         {
@@ -102,21 +108,16 @@ namespace SceneRunner.Scene.ExceptionsHandling
         public void OnEngineException(Exception exception, string category)
         {
             sceneState.State = SceneState.EngineError;
-            ReportHub.LogException(exception, new ReportData(category));
+            ReportHub.LogException(exception, new ReportData(category, sceneShortInfo: sceneShortInfo));
         }
 
-        public void OnJavaScriptException(string message)
+        public void OnJavaScriptException(Exception exception)
         {
             // For javascript no tolerance
-            // TODO Log a proper exception
             sceneState.State = SceneState.JavaScriptError;
-        }
 
-        public void Dispose()
-        {
-            sceneState = null;
-            Array.Clear(ecsExceptionsBag, 0, ecsExceptionsBag.Length);
-            POOL.Release(this);
+            ReportHub.LogException(exception,
+                new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo));
         }
 
         public static SceneExceptionsHandler Create(ISceneStateProvider sceneState, SceneShortInfo sceneShortInfo)

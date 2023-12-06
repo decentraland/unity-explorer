@@ -20,18 +20,17 @@ namespace SceneRunner.EmptyScene
 {
     public class EmptySceneFacade : ISceneFacade
     {
+        internal static readonly Vector3 GLTF_POSITION = new (8, 0, 8);
         private static readonly IObjectPool<EmptySceneFacade> POOL = new ThreadSafeObjectPool<EmptySceneFacade>(() => new EmptySceneFacade(), defaultCapacity: PoolConstants.EMPTY_SCENES_COUNT);
 
-        internal static readonly Vector3 GLTF_POSITION = new (8, 0, 8);
-
         private Args args;
-
-        private EmptySceneFacade() { }
 
         internal Entity sceneRoot { get; private set; } = Entity.Null;
 
         //internal Entity grass { get; private set; } = Entity.Null;
         internal Entity environment { get; private set; } = Entity.Null;
+
+        private EmptySceneFacade() { }
 
         public async UniTask DisposeAsync()
         {
@@ -53,7 +52,7 @@ namespace SceneRunner.EmptyScene
             args = default(Args);
         }
 
-        public UniTask StartUpdateLoop(int targetFPS, CancellationToken ct)
+        public UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
         {
             // Enable creating from the worker thread
             using MutexSync.Scope _ = args.MutexSync.GetScope();
@@ -77,6 +76,8 @@ namespace SceneRunner.EmptyScene
             // Add this root to the map so it can be processed by ParentingTransformSystem
             args.EntitiesMap.Add(sceneRoot.Id, sceneRoot);
 
+            var counter = 0;
+
             Entity CreateGltf(string file)
             {
                 SDKTransform transform = transformPool.Get();
@@ -86,7 +87,7 @@ namespace SceneRunner.EmptyScene
                 transform.ParentId = sceneRoot.Id;
                 PBGltfContainer grassGltf = gltfContainerPool.Get();
                 grassGltf.Src = file;
-                return sharedWorld.Create(transform, grassGltf, args.ParentPartition, partitionPool.Get());
+                return sharedWorld.Create(transform, grassGltf, new CRDTEntity(counter++), args.ParentPartition, partitionPool.Get());
             }
 
             // Logic transferred from JS, otherwise it creates significant overhead
