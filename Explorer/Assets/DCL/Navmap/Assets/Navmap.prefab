@@ -1140,6 +1140,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1552153521963411784, guid: c6e13002c67724245b08c6a8c648cd29, type: 3}
+      propertyPath: m_PixelsPerUnitMultiplier
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1987523554827997154, guid: c6e13002c67724245b08c6a8c648cd29, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 300.2381
+      objectReference: {fileID: 0}
     - target: {fileID: 2216182210825840176, guid: c6e13002c67724245b08c6a8c648cd29, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -1452,6 +1460,34 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7334680814849087379, guid: c6e13002c67724245b08c6a8c648cd29, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
+    - target: {fileID: 7334680814849087379, guid: c6e13002c67724245b08c6a8c648cd29, type: 3}
+      propertyPath: m_fontColor.b
+      value: 0.09411765
+      objectReference: {fileID: 0}
+    - target: {fileID: 7334680814849087379, guid: c6e13002c67724245b08c6a8c648cd29, type: 3}
+      propertyPath: m_fontColor.g
+      value: 0.08235294
+      objectReference: {fileID: 0}
+    - target: {fileID: 7334680814849087379, guid: c6e13002c67724245b08c6a8c648cd29, type: 3}
+      propertyPath: m_fontColor.r
+      value: 0.08627451
+      objectReference: {fileID: 0}
+    - target: {fileID: 7334680814849087379, guid: c6e13002c67724245b08c6a8c648cd29, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
+    - target: {fileID: 7334680814849087379, guid: c6e13002c67724245b08c6a8c648cd29, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4279768342
+      objectReference: {fileID: 0}
+    - target: {fileID: 7334680814849087379, guid: c6e13002c67724245b08c6a8c648cd29, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7633837038466965110, guid: c6e13002c67724245b08c6a8c648cd29, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -1732,6 +1768,10 @@ PrefabInstance:
     - target: {fileID: 2842296464104635411, guid: dc095fdc2631c4557bb7133c59237bee, type: 3}
       propertyPath: m_Name
       value: FloatingPanel
+      objectReference: {fileID: 0}
+    - target: {fileID: 2842296464104635411, guid: dc095fdc2631c4557bb7133c59237bee, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3533866535837742574, guid: dc095fdc2631c4557bb7133c59237bee, type: 3}
       propertyPath: m_AnchorMax.x
