@@ -7,6 +7,8 @@ namespace DCL.Web3Authentication
         private readonly EthECKey key;
         private static readonly EthereumMessageSigner Signer = new ();
 
+        public string Address => key.GetPublicAddress();
+
         public Identity(EthECKey key)
         {
             this.key = key;
@@ -21,10 +23,7 @@ namespace DCL.Web3Authentication
         public bool Verify(string message, string signature)
         {
             string address = Signer.EncodeUTF8AndEcRecover(message, signature);
-            return address == Address();
+            return address == Address;
         }
-
-        public string Address() =>
-            key.GetPublicAddress();
     }
 }

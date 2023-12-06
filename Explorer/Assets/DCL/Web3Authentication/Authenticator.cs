@@ -16,14 +16,14 @@ namespace DCL.Web3Authentication
 
             SignerFunc signerFunc = payload => identity.Sign(payload);
 
-            return InitializeAuthChain(identity.Address(), signerFunc, ephemeralIdentity, 600);
+            return InitializeAuthChain(identity.Address, signerFunc, ephemeralIdentity, 600);
         }
 
         public static AuthIdentity InitializeAuthChain(string ethAddress, SignerFunc signerFunc, Identity ephemeralIdentity, int ephemeralMinutesDuration)
         {
             DateTime expiration = DateTime.Now.AddMinutes(ephemeralMinutesDuration);
 
-            string ephemeralMessage = GetEphemeralMessage(ephemeralIdentity.Address(), expiration);
+            string ephemeralMessage = GetEphemeralMessage(ephemeralIdentity.Address, expiration);
             string firstSignature = signerFunc(ephemeralMessage);
 
             var authChain = new AuthChain
