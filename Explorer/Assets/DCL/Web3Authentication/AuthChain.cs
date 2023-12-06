@@ -17,12 +17,15 @@ namespace DCL.Web3Authentication
 
     public class AuthChain : List<AuthLink>
     {
-        public AuthChain Clone()
+        public AuthChain() { }
+
+        public AuthChain(AuthChain otherAuthChain)
+            : base(otherAuthChain)
         {
-            var newChain = new AuthChain();
-            newChain.AddRange(this);
-            return newChain;
         }
+
+        public AuthChain Clone() =>
+            new (this);
 
         // TODO: single responsibility issue
         public string ToJsonString() =>
