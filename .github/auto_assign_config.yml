@@ -18,4 +18,5 @@ reviewGroups:
 
 filterLabels:
   exclude:
+    - "no review"
     - "no QA needed"
