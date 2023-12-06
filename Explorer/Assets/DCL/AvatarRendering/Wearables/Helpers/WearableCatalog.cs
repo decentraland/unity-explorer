@@ -13,17 +13,14 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         internal Dictionary<string, IWearable> wearablesCache { get; } = new ();
 
-        public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto)
-        {
-            if (TryGetWearable(wearableDto.metadata.id, out IWearable existingWearable))
-                return existingWearable;
-
-            return AddWearable(wearableDto.metadata.id, new Wearable
-            {
-                WearableDTO = new StreamableLoadingResult<WearableDTO>(wearableDto),
-                IsLoading = false,
-            });
-        }
+        public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto) =>
+            TryGetWearable(wearableDto.metadata.id, out IWearable existingWearable)
+                ? existingWearable
+                : AddWearable(wearableDto.metadata.id, new Wearable
+                {
+                    WearableDTO = new StreamableLoadingResult<WearableDTO>(wearableDto),
+                    IsLoading = false,
+                });
 
         public void AddEmptyWearable(string loadingIntentionPointer) =>
             AddWearable(loadingIntentionPointer, new Wearable());
@@ -61,8 +58,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             {
                 node.Value = (@for, MultithreadingUtility.FrameCount);
 
-                listedCacheKeys.Remove(node);
                 cacheKeysDictionary[@for] = node;
+                listedCacheKeys.Remove(node);
                 listedCacheKeys.AddLast(node);
             }
         }
@@ -71,53 +68,34 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             for (LinkedListNode<(string key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudgetProvider.TrySpendBudget() && node != null; node = node.Next)
                 if (wearablesCache.TryGetValue(node.Value.key, out IWearable wearable))
-                {
-                    if (UnloadWearableAssets(wearable))
+                    if (TryUnloadAllWearableAssets(wearable))
                     {
                         wearablesCache.Remove(node.Value.key);
                         cacheKeysDictionary.Remove(node.Value.key);
                         listedCacheKeys.Remove(node);
                     }
-                }
         }
 
-        private static bool UnloadWearableAssets(IWearable wearable)
+        private static bool TryUnloadAllWearableAssets(IWearable wearable)
         {
+            var countNullOrEmpty = 0;
+
             for (var i = 0; i < wearable.WearableAssetResults.Length; i++)
             {
                 StreamableLoadingResult<WearableAsset>? result = wearable.WearableAssetResults[i];
-                WearableAsset wearableAsset = result?.Asset;
+                WearableAsset wearableAsset = wearable.WearableAssetResults[i]?.Asset;
 
-                if (wearableAsset == null)
-                    wearable.WearableAssetResults[i] = null;
-                else if (wearableAsset.ReferenceCount == 0)
+                if (wearableAsset == null || wearableAsset.ReferenceCount == 0)
                 {
-                    wearableAsset.Dispose();
+                    wearableAsset?.Dispose();
                     wearable.WearableAssetResults[i] = null;
                 }
+
+                if ((!wearable.IsLoading && result == null) || !result.HasValue || result.Value is { Succeeded: true, Asset: null })
+                    countNullOrEmpty++;
             }
 
-            var j = 0;
-
-            for (var i = 0; i < wearable.WearableAssetResults.Length; i++)
-            {
-                if (!wearable.IsLoading && wearable.WearableAssetResults[i] == null)
-                {
-                    j++;
-                    continue;
-                }
-
-                if (!wearable.WearableAssetResults[i].HasValue)
-                {
-                    j++;
-                    continue;
-                }
-
-                if (wearable.WearableAssetResults[i].Value.Succeeded && wearable.WearableAssetResults[i].Value.Asset == null)
-                    j++;
-            }
-
-            return j == wearable.WearableAssetResults.Length;
+            return countNullOrEmpty == wearable.WearableAssetResults.Length;
         }
     }
 }

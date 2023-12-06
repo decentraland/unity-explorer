@@ -191,13 +191,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             if (avatarShapeComponent.WearablePromise.IsConsumed)
                 wearableAssetsCache.ReleaseAssets(avatarShapeComponent.InstantiatedWearables);
-
-            // else
-            foreach (IWearable wearable in avatarShapeComponent.WearablePromise.Result.Value.Asset)
-            {
-                wearable?.WearableAssetResults[avatarShapeComponent.BodyShape]?.Asset.Dereference();
-                Debug.Log("VV:: deref");
-            }
+            else
+                foreach (IWearable wearable in avatarShapeComponent.WearablePromise.Result.Value.Asset)
+                    wearable?.WearableAssetResults[avatarShapeComponent.BodyShape]?.Asset.Dereference();
         }
 
         public override void Dispose()

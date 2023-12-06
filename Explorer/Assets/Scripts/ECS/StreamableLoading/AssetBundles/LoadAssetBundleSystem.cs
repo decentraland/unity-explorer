@@ -166,7 +166,11 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 return depResult.Asset;
             }
-            catch (OperationCanceledException) { throw new OperationCanceledException($"Dependency {hash} resolution cancelled"); }
+            catch (OperationCanceledException)
+            {
+                assetBundlePromise.ForgetLoading(World);
+                throw new OperationCanceledException($"Dependency {hash} resolution cancelled");
+            }
         }
 
         private static TextAsset GetMetadata(AssetBundle assetBundle) =>

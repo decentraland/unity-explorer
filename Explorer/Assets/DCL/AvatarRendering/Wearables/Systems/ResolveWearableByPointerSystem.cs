@@ -101,6 +101,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                     if (wearablesByPointersIntention.Results[index] == null)
                     {
+                        // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
                         wearable.WearableAssetResults[wearablesByPointersIntention.BodyShape].Value.Asset.AddReference();
                         wearablesByPointersIntention.Results[index] = wearable;
                     }
