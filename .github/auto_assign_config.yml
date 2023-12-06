@@ -18,6 +18,4 @@ reviewGroups:
 
 filterLabels:
   exclude:
-    - no_reviewers
-    - "Not QA Needed"
-    - "No QA Needed"
+    - "no QA needed"
