@@ -10,9 +10,6 @@ namespace DCL.UI
         public TMP_InputField inputField;
 
         [field: SerializeField]
-        public TMP_Text placeHolderText;
-
-        [field: SerializeField]
         public Button clearSearchButton;
     }
 }

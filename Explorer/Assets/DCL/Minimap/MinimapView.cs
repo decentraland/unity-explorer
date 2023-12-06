@@ -24,6 +24,12 @@ namespace DCL.Minimap
         internal Button expandMinimapButton { get; private set; }
 
         [field: SerializeField]
+        internal GameObject arrowDown { get; private set; }
+
+        [field: SerializeField]
+        internal GameObject arrowUp { get; private set; }
+
+        [field: SerializeField]
         internal TMP_Text placeNameText { get; private set; }
 
         [field: SerializeField]

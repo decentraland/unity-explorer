@@ -28,6 +28,7 @@ namespace DCL.Navmap
             searchResultPanelController.OnResultClicked += ClickedResult;
             view.inputField.onValueChanged.AddListener(OnValueChanged);
             view.clearSearchButton.onClick.AddListener(ClearSearch);
+            view.clearSearchButton.gameObject.SetActive(false);
         }
 
         public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct) =>
@@ -40,6 +41,7 @@ namespace DCL.Navmap
 
         private void OnValueChanged(string searchText)
         {
+            view.clearSearchButton.gameObject.SetActive(!string.IsNullOrEmpty(searchText));
             if (string.IsNullOrEmpty(searchText) || searchText.Length < 3)
                 searchResultPanelController.Hide();
 
@@ -60,6 +62,7 @@ namespace DCL.Navmap
         {
             view.inputField.SetTextWithoutNotify("");
             searchResultPanelController.Hide();
+            view.clearSearchButton.gameObject.SetActive(false);
         }
 
         public void Dispose()
