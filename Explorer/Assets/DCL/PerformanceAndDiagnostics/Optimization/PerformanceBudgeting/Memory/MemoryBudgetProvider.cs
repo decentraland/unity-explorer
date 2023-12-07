@@ -12,7 +12,7 @@ namespace DCL.Optimization.PerformanceBudgeting
         Full,
     }
 
-    public class MemoryBudgetProvider : IConcurrentBudgetProvider
+    public class MemoryBudgetProvider : IMemoryUsageProvider, IConcurrentBudgetProvider
     {
         private const ulong BYTES_IN_MEGABYTE = 1024 * 1024;
         private const ulong NO_MEMORY = 0;

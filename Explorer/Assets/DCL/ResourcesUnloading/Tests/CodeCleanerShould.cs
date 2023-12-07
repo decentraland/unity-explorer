@@ -10,15 +10,14 @@ using UnityEngine;
 
 namespace DCL.ResourcesUnloading.Tests
 {
-    public class CacheCleanerTest
+    public class CacheCleanerShould
     {
         private CacheCleaner cacheCleaner;
 
+        // Subs
         private IConcurrentBudgetProvider concurrentBudgetProvider;
-
         private IWearableCatalog wearableCatalog;
         private IWearableAssetsCache wearableAssetsCache;
-
         private IStreamableCache<Texture2D, GetTextureIntention> texturesCache;
         private IStreamableCache<GltfContainerAsset, string> gltfContainerAssetsCache;
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
@@ -46,7 +45,7 @@ namespace DCL.ResourcesUnloading.Tests
 
         [TestCase(true, 1)]
         [TestCase(false, 0)]
-        public void UnloadCallShouldBeBudgeted(bool hasBudget, int callsAmount)
+        public void RespectFrameBudget(bool hasBudget, int callsAmount)
         {
             // Arrange
             concurrentBudgetProvider.TrySpendBudget().Returns(hasBudget);

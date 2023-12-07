@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace DCL.ResourcesUnloading
 {
-    public class CacheCleaner
+    public class CacheCleaner : ICacheCleaner
     {
         private const int POOLS_UNLOAD_CHUNK = 10;
         private const int WEARABLES_UNLOAD_CHUNK = 10;
