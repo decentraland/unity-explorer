@@ -1,12 +1,12 @@
+using Cysharp.Threading.Tasks;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace DCL.Web3Authentication
 {
     public interface IWeb3Authenticator
     {
-        Task<IWeb3Identity> Login(CancellationToken cancellationToken);
+        UniTask<IWeb3Identity> Login(CancellationToken cancellationToken);
 
-        Task Logout(CancellationToken cancellationToken);
+        UniTask Logout(CancellationToken cancellationToken);
     }
 }

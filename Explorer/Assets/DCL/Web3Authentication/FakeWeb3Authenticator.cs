@@ -1,12 +1,12 @@
+using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace DCL.Web3Authentication
 {
     public class FakeWeb3Authenticator : IWeb3Authenticator
     {
-        public async Task<IWeb3Identity> Login(CancellationToken cancellationToken)
+        public async UniTask<IWeb3Identity> Login(CancellationToken cancellationToken)
         {
             var signer = NethereumAccount.CreateRandom();
             var ephemeralAccount = NethereumAccount.CreateRandom();
@@ -34,6 +34,6 @@ namespace DCL.Web3Authentication
             return new DecentralandIdentity(ephemeralAccount, expiration, authChain);
         }
 
-        public async Task Logout(CancellationToken cancellationToken) { }
+        public async UniTask Logout(CancellationToken cancellationToken) { }
     }
 }
