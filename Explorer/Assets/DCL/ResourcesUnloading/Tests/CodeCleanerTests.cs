@@ -3,7 +3,6 @@ using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Textures;
-using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using NSubstitute;
 using NUnit.Framework;
@@ -18,22 +17,23 @@ namespace DCL.ResourcesUnloading.Tests
         private IConcurrentBudgetProvider concurrentBudgetProvider;
 
         private IWearableCatalog wearableCatalog;
+        private IWearableAssetsCache wearableAssetsCache;
+
         private IStreamableCache<Texture2D, GetTextureIntention> texturesCache;
         private IStreamableCache<GltfContainerAsset, string> gltfContainerAssetsCache;
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
-        private IWearableAssetsCache wearableAssetsCache;
 
         [SetUp]
         public void SetUp()
         {
             concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
 
-            wearableAssetsCache = Substitute.For<IWearableAssetsCache>();
             wearableCatalog = Substitute.For<IWearableCatalog>();
+            wearableAssetsCache = Substitute.For<IWearableAssetsCache>();
 
-            texturesCache = Substitute.For<TexturesCache>();
-            assetBundleCache = Substitute.For<AssetBundleCache>();
-            gltfContainerAssetsCache = Substitute.For<GltfContainerAssetsCache>();
+            texturesCache = Substitute.For<IStreamableCache<Texture2D, GetTextureIntention>>();
+            assetBundleCache = Substitute.For<IStreamableCache<AssetBundleData, GetAssetBundleIntention>>();
+            gltfContainerAssetsCache = Substitute.For<IStreamableCache<GltfContainerAsset, string>>();
 
             cacheCleaner = new CacheCleaner(concurrentBudgetProvider);
 
@@ -46,7 +46,7 @@ namespace DCL.ResourcesUnloading.Tests
 
         [TestCase(true, 1)]
         [TestCase(false, 0)]
-        public void UnloadCallShouldBeBudgeted(bool hasBudget, int unloadCallsAmount)
+        public void UnloadCallShouldBeBudgeted(bool hasBudget, int callsAmount)
         {
             // Arrange
             concurrentBudgetProvider.TrySpendBudget().Returns(hasBudget);
@@ -56,12 +56,11 @@ namespace DCL.ResourcesUnloading.Tests
 
             // Assert
 
-            // texturesCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
-            // wearableAssetsCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
-            wearableCatalog.Received(unloadCallsAmount).Unload(Arg.Any<IConcurrentBudgetProvider>());
-
-            // gltfContainerAssetsCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
-            // assetBundleCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
+            texturesCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
+            wearableAssetsCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
+            wearableCatalog.Received(callsAmount).Unload(Arg.Any<IConcurrentBudgetProvider>());
+            gltfContainerAssetsCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
+            assetBundleCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
         }
     }
 }
