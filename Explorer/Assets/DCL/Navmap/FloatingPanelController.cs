@@ -24,6 +24,9 @@ namespace DCL.Navmap
 
         private CancellationTokenSource cts;
 
+        private readonly Vector2 rectTransformLocalPosition = new Vector3(1702, 480);
+        private readonly Vector2 rectTransformLocalPositionOutside = new Vector3(2100, 480);
+
         public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService, ITeleportController teleportController)
         {
             this.view = view;
@@ -51,19 +54,38 @@ namespace DCL.Navmap
             likeButtonController.OnButtonClicked += OnLike;
             dislikeButtonController.OnButtonClicked += OnDislike;
             favoriteButtonController.OnButtonClicked += OnFavorite;
+            view.backButton.onClick.AddListener(HideWithSlide);
         }
 
-        public void HandlePanelVisibility(Vector2Int parcel)
+        private void HideWithSlide()
         {
-            if (view.gameObject.activeInHierarchy) { GetPlaceInfoAsync(parcel).Forget(); }
-            else { ShowPanel(parcel); }
+            view.rectTransform.localPosition = rectTransformLocalPosition;
+            view.rectTransform.DOLocalMove(rectTransformLocalPositionOutside, 0.5f).SetEase(Ease.Linear).OnComplete(() => view.gameObject.SetActive(false));;
         }
 
-        private void ShowPanel(Vector2Int parcel)
+        public void HandlePanelVisibility(Vector2Int parcel, bool popAnimation = true)
+        {
+            view.rectTransform.localPosition = rectTransformLocalPosition;
+            if (view.gameObject.activeInHierarchy) { GetPlaceInfoAsync(parcel).Forget(); }
+            else { ShowPanel(parcel, popAnimation); }
+        }
+
+        private void ShowPanel(Vector2Int parcel, bool popAnimation)
         {
             view.rectTransform.localScale = Vector3.zero;
             view.gameObject.SetActive(true);
-            view.rectTransform.DOScale(Vector3.one, 0.5f).SetEase(Ease.InCirc);
+
+            if (popAnimation)
+            {
+                view.rectTransform.localScale = Vector3.zero;
+                view.rectTransform.DOScale(Vector3.one, 0.5f).SetEase(Ease.InCirc);
+            }
+            else
+            {
+                view.rectTransform.localScale = Vector3.one;
+                view.rectTransform.localPosition = rectTransformLocalPositionOutside;
+                view.rectTransform.DOLocalMove(rectTransformLocalPosition, 0.5f).SetEase(Ease.Linear);
+            }
             cts = new CancellationTokenSource();
             GetPlaceInfoAsync(parcel).Forget();
         }

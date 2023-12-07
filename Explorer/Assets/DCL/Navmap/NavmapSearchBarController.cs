@@ -15,20 +15,23 @@ namespace DCL.Navmap
 
         private readonly SearchBarView view;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly FloatingPanelView floatingPanelView;
         private readonly SearchResultPanelController searchResultPanelController;
 
         private CancellationTokenSource cts;
 
-        public NavmapSearchBarController(SearchBarView view, SearchResultPanelView searchResultPanelView, IPlacesAPIService placesAPIService)
+        public NavmapSearchBarController(SearchBarView view, SearchResultPanelView searchResultPanelView, IPlacesAPIService placesAPIService, FloatingPanelView floatingPanelView)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
+            this.floatingPanelView = floatingPanelView;
 
             searchResultPanelController = new SearchResultPanelController(searchResultPanelView);
             searchResultPanelController.OnResultClicked += ClickedResult;
             view.inputField.onValueChanged.AddListener(OnValueChanged);
             view.clearSearchButton.onClick.AddListener(ClearSearch);
             view.clearSearchButton.gameObject.SetActive(false);
+            floatingPanelView.closeButton.onClick.AddListener(ClearSearch);
         }
 
         public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct) =>
@@ -36,6 +39,7 @@ namespace DCL.Navmap
 
         private void ClickedResult(string coordinates)
         {
+            floatingPanelView.backButton.gameObject.SetActive(true);
             OnResultClicked?.Invoke(coordinates);
         }
 
@@ -53,6 +57,7 @@ namespace DCL.Navmap
         private async UniTaskVoid SearchAndShowAsync(string searchText)
         {
             await UniTask.Delay(1000, cancellationToken: cts.Token);
+            ResetFloatingPanelStatus();
             searchResultPanelController.ShowLoading();
             using PlacesData.IPlacesAPIResponse response = await placesAPIService.SearchPlacesAsync(searchText, 0, 8, cts.Token);
             searchResultPanelController.SetResults(response.Data);
@@ -63,6 +68,13 @@ namespace DCL.Navmap
             view.inputField.SetTextWithoutNotify("");
             searchResultPanelController.Hide();
             view.clearSearchButton.gameObject.SetActive(false);
+            ResetFloatingPanelStatus();
+        }
+
+        private void ResetFloatingPanelStatus()
+        {
+            floatingPanelView.gameObject.SetActive(false);
+            floatingPanelView.backButton.gameObject.SetActive(false);
         }
 
         public void Dispose()

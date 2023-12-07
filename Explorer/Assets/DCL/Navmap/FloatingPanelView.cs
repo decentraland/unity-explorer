@@ -32,6 +32,9 @@ namespace DCL.Navmap
         public Button closeButton;
 
         [field: SerializeField]
+        public Button backButton;
+
+        [field: SerializeField]
         public Button jumpInButton;
 
         [field: SerializeField]
