@@ -21,7 +21,6 @@
     "GUID:593a5b492d29ac6448b1ebf7f035ef33",
     "GUID:8322ea9340a544c59ddc56d4793eac74",
     "GUID:0f4c0f120707fb74497f5d581b9858f8",
-    "GUID:6e2b4bed29ad1c549ab19b744f36f388",
     "GUID:3c7b57a14671040bd8c549056adc04f5",
     "GUID:d414ef88f3b15f746a4b97636b50dfb4",
     "GUID:96825943f4e14954b5172da80fdee63d",
@@ -44,7 +43,8 @@
     "GUID:1d2c76eb8b48e0b40940e8b31a679ce1",
     "GUID:4a12c0b1b77ec6b418a8d7bd5c925be3",
     "GUID:15bc5ce9b9f747c8a365e7dff4e2ebd7",
-    "GUID:56e8195b069a4dca9c4c4f313c65f526"
+    "GUID:56e8195b069a4dca9c4c4f313c65f526",
+    "GUID:c0dd0d10738d4ad4a9de57c559d0ca1b"
   ],
   "includePlatforms": [
     "Editor"
@@ -57,7 +57,6 @@
     "NSubstitute.dll",
     "Arch.dll",
     "Arch.System.dll",
-    "Arch.SystemGroups.dll",
     "ClearScript.V8.dll",
     "ClearScript.Core.dll",
     "ClearScript.V8.ICUData.dll",

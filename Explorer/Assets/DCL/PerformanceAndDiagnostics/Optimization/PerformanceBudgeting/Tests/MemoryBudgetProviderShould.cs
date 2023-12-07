@@ -32,7 +32,7 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
         [TestCase((ulong)1000, (ulong)500, MemoryUsageStatus.Normal)]
         [TestCase((ulong)1000, (ulong)810, MemoryUsageStatus.Warning)]
         [TestCase((ulong)1000, (ulong)910, MemoryUsageStatus.Full)]
-        public void GetMemoryUsageStatus_ReturnsExpectedStatus_OnDifferentMemoryUsages(ulong systemMemoryInMB, ulong usedMemoryInMB, MemoryUsageStatus expectedUsage)
+        public void ReturnCorrectMemoryStatus_OnDifferentMemoryUsages(ulong systemMemoryInMB, ulong usedMemoryInMB, MemoryUsageStatus expectedUsage)
         {
             // Arrange
             systemMemory.TotalSizeInMB.Returns(systemMemoryInMB);
@@ -47,7 +47,7 @@ namespace DCL.Optimization.PerformanceBudgeting.Tests
         public void CanSpendBudgetOnlyWhenMemoryIsNotFull(ulong systemMemoryInMB, ulong usedMemoryInMB, bool canSpendBudget)
         {
             // Arrange
-            profilingProvider.TotalUsedMemoryInBytes.Returns(usedMemoryInMB * BYTES_IN_MEGABYTE); // 800 MB
+            profilingProvider.TotalUsedMemoryInBytes.Returns(usedMemoryInMB * BYTES_IN_MEGABYTE);
             systemMemory.TotalSizeInMB.Returns(systemMemoryInMB);
 
             // Act-Assert

@@ -7,15 +7,16 @@ using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using NSubstitute;
 using NUnit.Framework;
+using Unity.PerformanceTesting;
 using UnityEngine;
 
 namespace DCL.ResourcesUnloading.Tests
 {
-    public class CacheCleanerShould
+    public class CacheCleanerUnitTests
     {
         private CacheCleaner cacheCleaner;
 
-        // Subs
+        // Mocks
         private IConcurrentBudgetProvider concurrentBudgetProvider;
         private IWearableCatalog wearableCatalog;
         private IWearableAssetsCache wearableAssetsCache;
@@ -49,9 +50,21 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(materialPool);
         }
 
+        [Test] [Performance]
+        public void MockedCachesPerformanceMeasure()
+        {
+            // Arrange
+            concurrentBudgetProvider.TrySpendBudget().Returns(true);
+
+            // Measure
+            Measure.Method(() => { cacheCleaner.UnloadCache(); })
+                   .GC()
+                   .Run();
+        }
+
         [TestCase(true, 1)]
         [TestCase(false, 0)]
-        public void UnloadOnlyWhenHasFrameBudget(bool hasBudget, int callsAmount)
+        public void ShouldUnloadOnlyWhenHasFrameBudget(bool hasBudget, int callsAmount)
         {
             // Arrange
             concurrentBudgetProvider.TrySpendBudget().Returns(hasBudget);
