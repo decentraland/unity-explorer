@@ -54,10 +54,10 @@ namespace DCL.Web3Authentication
             AuthLink signer = authChain.Get(AuthLinkType.SIGNER);
 
             if (string.IsNullOrEmpty(signer.payload))
-                throw new Web3IdentityException(this, "Invalid auth chain. Missing address payload on SIGNER link");
+                throw new Web3IdentityException(this, "Invalid auth chain. SIGNER payload is empty");
 
             if (!string.IsNullOrEmpty(signer.signature))
-                throw new Web3IdentityException(this, "Invalid auth chain. Signature should be empty on SIGNER link");
+                throw new Web3IdentityException(this, "Invalid auth chain. SIGNER signature should be empty");
         }
 
         private void AssertEcdsaEphemeral(AuthChain authChain)
