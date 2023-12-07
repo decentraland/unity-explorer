@@ -1,4 +1,4 @@
-using CrdtEcsBridge.Components;
+﻿using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
@@ -131,6 +131,7 @@ namespace Global
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
                 new TransformsPlugin(sharedDependencies),
+                new BillboardPlugin(),
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
                 new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController),
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
