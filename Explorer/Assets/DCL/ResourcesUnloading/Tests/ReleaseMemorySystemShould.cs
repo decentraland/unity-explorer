@@ -26,7 +26,7 @@ namespace DCL.ResourcesUnloading.Tests
         [TestCase(MemoryUsageStatus.Normal, 0)]
         [TestCase(MemoryUsageStatus.Warning, 1)]
         [TestCase(MemoryUsageStatus.Full, 1)]
-        public void ShouldRespectMemoryBudget(MemoryUsageStatus memoryUsageStatus, int callsAmount)
+        public void UnloadCacheWhenMemoryUsageIsNotNormal(MemoryUsageStatus memoryUsageStatus, int callsAmount)
         {
             // Arrange
             memoryBudgetProvider.GetMemoryUsageStatus().Returns(memoryUsageStatus);

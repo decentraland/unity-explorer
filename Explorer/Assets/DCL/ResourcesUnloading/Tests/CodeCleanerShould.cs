@@ -1,5 +1,6 @@
 ﻿using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Textures;
@@ -22,10 +23,14 @@ namespace DCL.ResourcesUnloading.Tests
         private IStreamableCache<GltfContainerAsset, string> gltfContainerAssetsCache;
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
 
+        private IExtendedObjectPool<Material> materialPool;
+
         [SetUp]
         public void SetUp()
         {
             concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+
+            materialPool = Substitute.For<IExtendedObjectPool<Material>>();
 
             wearableCatalog = Substitute.For<IWearableCatalog>();
             wearableAssetsCache = Substitute.For<IWearableAssetsCache>();
@@ -41,11 +46,12 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(gltfContainerAssetsCache);
             cacheCleaner.Register(assetBundleCache);
             cacheCleaner.Register(wearableAssetsCache);
+            cacheCleaner.Register(materialPool);
         }
 
         [TestCase(true, 1)]
         [TestCase(false, 0)]
-        public void RespectFrameBudget(bool hasBudget, int callsAmount)
+        public void UnloadOnlyWhenHasFrameBudget(bool hasBudget, int callsAmount)
         {
             // Arrange
             concurrentBudgetProvider.TrySpendBudget().Returns(hasBudget);
@@ -54,12 +60,12 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.UnloadCache();
 
             // Assert
-
             texturesCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
             wearableAssetsCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
             wearableCatalog.Received(callsAmount).Unload(Arg.Any<IConcurrentBudgetProvider>());
             gltfContainerAssetsCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
             assetBundleCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
+            materialPool.Received(callsAmount).ClearThrottled(Arg.Any<int>());
         }
     }
 }
