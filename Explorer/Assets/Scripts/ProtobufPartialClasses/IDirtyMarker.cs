@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace DCL.ECSComponents
 {
     public interface IDirtyMarker
@@ -63,5 +65,14 @@ namespace DCL.ECSComponents
     public partial class PBRaycast : IDirtyMarker
     {
         public bool IsDirty { get; set; }
+    }
+
+    public static class DirtyMarkerExtensions
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsNotDirty(this IDirtyMarker dirtyMarker)
+        {
+            return dirtyMarker.IsDirty == false;
+        }
     }
 }
