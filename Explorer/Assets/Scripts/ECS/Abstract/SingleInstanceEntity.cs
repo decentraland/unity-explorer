@@ -35,9 +35,13 @@ namespace ECS.Abstract
 
         public static implicit operator Entity(SingleInstanceEntity singleInstanceEntity) =>
             singleInstanceEntity.entity;
+    }
 
-
-
-
+    public static class SingleInstanceEntityExtensions
+    {
+        public static Entity GetSingleInstanceEntity(this World world, in QueryDescription query)
+        {
+            return new SingleInstanceEntity(query, world);
+        }
     }
 }
