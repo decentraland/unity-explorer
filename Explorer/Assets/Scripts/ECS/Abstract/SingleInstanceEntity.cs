@@ -2,6 +2,7 @@
 using Arch.Core.Utils;
 using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace ECS.Abstract
 {
@@ -14,12 +15,12 @@ namespace ECS.Abstract
 
         private readonly Entity entity;
 
-        public SingleInstanceEntity(in QueryDescription query, World world)
+        public SingleInstanceEntity(in QueryDescription query, World world, bool strict = true)
         {
             TEMP[0] = Entity.Null;
             world.GetEntities(in query, TEMP);
 
-            if (TEMP[0] == Entity.Null)
+            if (strict && TEMP[0].IsNull())
             {
                 throw new Exception($"Entity not found for Query All: {Format(query.All)} Any: {Format(query.Any)} None: {Format(query.None)} Exclusive: {Format(query.Exclusive)}");
 
@@ -39,9 +40,15 @@ namespace ECS.Abstract
 
     public static class SingleInstanceEntityExtensions
     {
-        public static Entity GetSingleInstanceEntity(this World world, in QueryDescription query)
+        public static Entity GetSingleInstanceEntityOrNull(this World world, in QueryDescription query)
         {
-            return new SingleInstanceEntity(query, world);
+            return new SingleInstanceEntity(query, world, false);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsNull(this Entity entity)
+        {
+            return entity == Entity.Null;
         }
     }
 }
