@@ -1249,6 +1249,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   filterContentTransform: {fileID: 5861108329526840786}
   filterButton: {fileID: 1278919312715921938}
+  infoButton: {fileID: 8026640392531521398}
+  infoContent: {fileID: 2753175211535931739}
 --- !u!1 &4025075979653657280
 GameObject:
   m_ObjectHideFlags: 0
