@@ -7,7 +7,7 @@ namespace DCL.Web3Authentication
         string Sign(string message);
 
         /// <summary>
-        ///     Check the message has been signed by this identity's address
+        /// Check the message has been signed by this identity's address
         /// </summary>
         /// <param name="message">The original non-signed message</param>
         /// <param name="signature">The signed message generated from original message</param>

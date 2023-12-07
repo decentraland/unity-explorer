@@ -17,20 +17,18 @@ namespace DCL.Web3Authentication
         [CanBeNull] public string signature;
     }
 
-    public class AuthChain : IReadOnlyCollection<AuthLink>, IDisposable
+    public class AuthChain : IEnumerable<AuthLink>, IDisposable
     {
-        private static readonly ThreadSafeObjectPool<AuthChain> pool = new (() => new AuthChain(new AuthLink[3]));
+        private static readonly ThreadSafeObjectPool<AuthChain> pool = new (() => new AuthChain());
 
         private readonly AuthLink[] chain;
-
-        public int Count => chain.Length;
 
         public static AuthChain Create() =>
             pool.Get();
 
-        private AuthChain(AuthLink[] chain)
+        private AuthChain()
         {
-            this.chain = chain;
+            chain = new AuthLink[3];
         }
 
         public void Dispose()
@@ -38,11 +36,16 @@ namespace DCL.Web3Authentication
             pool.Release(this);
         }
 
-        public AuthLink Get(AuthLinkType index) =>
-            chain[(int)index];
+        public AuthLink Get(AuthLinkType type) =>
+            chain[(int)type];
 
-        public void Set(AuthLinkType index, AuthLink link) =>
-            chain[(int)index] = link;
+        public void Set(AuthLinkType type, AuthLink link)
+        {
+            if (link.type != type)
+                throw new AuthChainException(this, $"Invalid link type ${link.type}. Expected ${type}");
+
+            chain[(int)type] = link;
+        }
 
         public IEnumerator<AuthLink> GetEnumerator() =>
             ((IEnumerable<AuthLink>)chain).GetEnumerator();
