@@ -6,7 +6,7 @@ using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
-    public partial class WearableCatalog
+    public partial class WearableCatalog : IWearableCatalog
     {
         private readonly LinkedList<(string key, long lastUsedFrame)> listedCacheKeys = new ();
         private readonly Dictionary<string, LinkedListNode<(string key, long lastUsedFrame)>> cacheKeysDictionary = new ();

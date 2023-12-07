@@ -44,6 +44,7 @@ namespace DCL.Optimization.Pools
 
             list.RemoveRange(0, itemsToRemove);
 
+            // Can be optimized via unsafe approach: 'countAllField.SetValueDirect(__makeref(instance), newCountAll);' where 'instance = this' should be set in the constructor
             countAllField.SetValue(this, CountAll - itemsToRemove);
         }
     }

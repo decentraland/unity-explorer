@@ -4,9 +4,11 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Textures;
-using ECS.Unity.GLTFContainer.Asset.Cache;
+using ECS.Unity.GLTFContainer.Asset.Components;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.ResourcesUnloading
 {
@@ -21,11 +23,12 @@ namespace DCL.ResourcesUnloading
         private readonly IConcurrentBudgetProvider fpsCapBudgetProvider;
         private readonly List<IThrottledClearable> avatarPools;
 
-        private GltfContainerAssetsCache gltfContainerAssetsCache;
-        private AssetBundleCache assetBundleCache;
+        private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
+        private IStreamableCache<GltfContainerAsset, string> gltfContainerAssetsCache;
+        private IStreamableCache<Texture2D, GetTextureIntention> texturesCache;
+
         private IWearableAssetsCache wearableAssetsCache;
-        private WearableCatalog wearableCatalog;
-        private TexturesCache texturesCache;
+        private IWearableCatalog wearableCatalog;
 
         public CacheCleaner(IConcurrentBudgetProvider fpsCapBudgetProvider)
         {
@@ -54,20 +57,20 @@ namespace DCL.ResourcesUnloading
                     pool.ClearThrottled(POOLS_UNLOAD_CHUNK);
         }
 
-        public void Register(AssetBundleCache assetBundleCache) =>
+        public void Register(IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache) =>
             this.assetBundleCache = assetBundleCache;
 
-        public void Register(GltfContainerAssetsCache gltfContainerAssetsCache) =>
+        public void Register(IStreamableCache<GltfContainerAsset, string> gltfContainerAssetsCache) =>
             this.gltfContainerAssetsCache = gltfContainerAssetsCache;
 
         public void Register(IWearableAssetsCache wearableAssetsCache) =>
             this.wearableAssetsCache = wearableAssetsCache;
 
-        public void Register(WearableCatalog catalog) =>
-            wearableCatalog = catalog;
-
-        public void Register(TexturesCache texturesCache) =>
+        public void Register(IStreamableCache<Texture2D, GetTextureIntention> texturesCache) =>
             this.texturesCache = texturesCache;
+
+        public void Register(IWearableCatalog catalog) =>
+            wearableCatalog = catalog;
 
         public void Register<T>(IExtendedObjectPool<T> extendedObjectPool) where T: class =>
             avatarPools.Add(extendedObjectPool);
@@ -75,7 +78,7 @@ namespace DCL.ResourcesUnloading
         public void UpdateProfilingCounters()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            ProfilingCounters.WearablesAssetsInCatalogAmount.Value = wearableCatalog.WearableAssetsInCatalog;
+            ProfilingCounters.WearablesAssetsInCatalogAmount.Value = ((WearableCatalog)wearableCatalog).WearableAssetsInCatalog;
             ProfilingCounters.WearablesAssetsInCacheAmount.Value = wearableAssetsCache.WearablesAssesCount;
 #endif
         }
