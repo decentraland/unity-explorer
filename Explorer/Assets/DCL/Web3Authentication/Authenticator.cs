@@ -10,15 +10,15 @@ namespace DCL.Web3Authentication
         private static readonly IWeb3Authenticator authenticator = new FakeWeb3Authenticator();
         private static IWeb3Identity identity;
 
-        public static async UniTask<IWeb3Identity> Login(CancellationToken cancellationToken)
+        public static async UniTask<IWeb3Identity> LoginAsync(CancellationToken cancellationToken)
         {
-            identity = await authenticator.Login(cancellationToken);
+            identity = await authenticator.LoginAsync(cancellationToken);
             return identity;
         }
 
-        public static async UniTask Logout(CancellationToken cancellationToken)
+        public static async UniTask LogoutAsync(CancellationToken cancellationToken)
         {
-            await authenticator.Logout(cancellationToken);
+            await authenticator.LogoutAsync(cancellationToken);
             identity = null;
         }
 

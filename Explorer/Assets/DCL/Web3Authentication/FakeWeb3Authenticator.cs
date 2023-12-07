@@ -6,7 +6,7 @@ namespace DCL.Web3Authentication
 {
     public class FakeWeb3Authenticator : IWeb3Authenticator
     {
-        public async UniTask<IWeb3Identity> Login(CancellationToken cancellationToken)
+        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken cancellationToken)
         {
             var signer = NethereumAccount.CreateRandom();
             var ephemeralAccount = NethereumAccount.CreateRandom();
@@ -34,6 +34,6 @@ namespace DCL.Web3Authentication
             return new DecentralandIdentity(ephemeralAccount, expiration, authChain);
         }
 
-        public async UniTask Logout(CancellationToken cancellationToken) { }
+        public async UniTask LogoutAsync(CancellationToken cancellationToken) { }
     }
 }

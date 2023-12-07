@@ -5,8 +5,8 @@ namespace DCL.Web3Authentication
 {
     public interface IWeb3Authenticator
     {
-        UniTask<IWeb3Identity> Login(CancellationToken cancellationToken);
+        UniTask<IWeb3Identity> LoginAsync(CancellationToken cancellationToken);
 
-        UniTask Logout(CancellationToken cancellationToken);
+        UniTask LogoutAsync(CancellationToken cancellationToken);
     }
 }
