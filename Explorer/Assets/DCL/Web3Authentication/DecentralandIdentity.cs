@@ -24,8 +24,8 @@ namespace DCL.Web3Authentication
         {
             var chain = AuthChain.Create();
 
-            chain.Set(AuthLinkType.SIGNER, chain.Get((int)AuthLinkType.SIGNER));
-            chain.Set(AuthLinkType.ECDSA_EPHEMERAL, chain.Get(AuthLinkType.ECDSA_EPHEMERAL));
+            chain.Set(AuthLinkType.SIGNER, authChain.Get((int)AuthLinkType.SIGNER));
+            chain.Set(AuthLinkType.ECDSA_EPHEMERAL, authChain.Get(AuthLinkType.ECDSA_EPHEMERAL));
 
             chain.Set(AuthLinkType.ECDSA_SIGNED_ENTITY, new AuthLink
             {

@@ -1,5 +1,5 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
+using System.Threading;
 
 namespace DCL.Web3Authentication
 {
@@ -10,12 +10,13 @@ namespace DCL.Web3Authentication
         private static readonly IWeb3Authenticator authenticator = new FakeWeb3Authenticator();
         private static IWeb3Identity identity;
 
-        public static async Task Login(CancellationToken cancellationToken)
+        public static async UniTask<IWeb3Identity> Login(CancellationToken cancellationToken)
         {
             identity = await authenticator.Login(cancellationToken);
+            return identity;
         }
 
-        public static async Task Logout(CancellationToken cancellationToken)
+        public static async UniTask Logout(CancellationToken cancellationToken)
         {
             await authenticator.Logout(cancellationToken);
             identity = null;
