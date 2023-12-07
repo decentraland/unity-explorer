@@ -23,12 +23,5 @@ namespace DCL.Web3Authentication
             : base(otherAuthChain)
         {
         }
-
-        public AuthChain Clone() =>
-            new (this);
-
-        // TODO: single responsibility issue
-        public string ToJsonString() =>
-            JsonConvert.SerializeObject(this);
     }
 }

@@ -2,19 +2,19 @@
 
 namespace DCL.Web3Authentication
 {
-    public class NethereumIdentity : IWeb3Identity
+    public class NethereumAccount : IWeb3Account
     {
         private static readonly EthereumMessageSigner signer = new ();
         private readonly EthECKey key;
 
         public string Address => key.GetPublicAddress();
 
-        public NethereumIdentity(EthECKey key)
+        public NethereumAccount(EthECKey key)
         {
             this.key = key;
         }
 
-        public static NethereumIdentity CreateRandom() =>
+        public static NethereumAccount CreateRandom() =>
             new (EthECKey.GenerateKey());
 
         public string Sign(string message) =>
