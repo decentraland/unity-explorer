@@ -25,6 +25,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         // Debug
         private readonly ReportData m_ReportData = new ("DCL_RenderPass_GenerateSkyBox", ReportHint.SessionStatic);
         private Material m_Material_Draw;
+        private static readonly int s_SunPosID = Shader.PropertyToID("_SunPos");
         private ProceduralSkyBoxSettings_Draw m_Settings_Draw;
         private RTHandle m_SkyBoxCubeMap_RTHandle;
         private RTHandle m_StarBoxCubeMap_RTHandle;
@@ -52,7 +53,19 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         // When empty this render pass will render to the active camera render target.
         // You should never call CommandBuffer.SetRenderTarget. Instead call <c>ConfigureTarget</c> and <c>ConfigureClear</c>.
         // The render pipeline will ensure target setup and clearing happens in a performant manner.
-        public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData) { }
+
+        public override void OnCameraSetup(CommandBuffer _cmd, ref RenderingData _renderingData)
+        {
+            GameObject sun = GameObject.Find("Directional Light");
+            TimeOfDay tod = sun.GetComponent<TimeOfDay>();
+            var position = new Vector3(0.0f, 0.0f, -1.0f);
+            var rotation = tod.GetSunPosLocal();
+            var scale = new Vector3(1, 1, 1);
+
+            Matrix4x4 lightMat = Matrix4x4.TRS(position, Quaternion.Euler(rotation), scale);
+            //lightMat = Matrix4x4.Inverse(lightMat);
+            m_Material_Draw.SetMatrix(s_SunPosID, lightMat);
+        }
 
         public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
         {

@@ -17,8 +17,29 @@ internal class ProceduralSkyBoxSettings_Generate
     [SerializeField] internal Color SkyTint = new (0.5f, 0.5f, 0.5f, 1.0f);
     [SerializeField] internal float Exposure = 1.3f;
     [SerializeField] internal Vector4 SunPos = new (-0.04f, -0.02f, 0.0f, 1.0f);
-    [SerializeField] internal Vector4 SunColour = new (1.0f, 1.0f, 1.0f, 1.0f);
+    [SerializeField] internal Color SunColour = new (1.0f, 1.0f, 1.0f, 1.0f);
     [SerializeField] internal ComputeShader starsComputeShader;
+    [SerializeField] internal Vector4 _kDefaultScatteringWavelength = new (0.65f, 0.57f, 0.475f, 0.0f);
+    [SerializeField] internal Vector4 _kVariableRangeForScatteringWavelength = new (0.15f, 0.15f, 0.15f, 0.0f);
+    [SerializeField] internal float _OUTER_RADIUS = 1.025f;
+    [SerializeField] internal float _kInnerRadius = 1.0f;
+    [SerializeField] internal float _kInnerRadius2 =  1.0f;
+    [SerializeField] internal float _kCameraHeight =  0.000001f;
+    [SerializeField] internal float _kRAYLEIGH_MAX = 0.0025f;
+    [SerializeField] internal float _kRAYLEIGH_POW = 2.5f;
+    [SerializeField] internal float _kMIE = 0.0010f;
+    [SerializeField] internal float _kSUN_BRIGHTNESS = 20.0f;
+    [SerializeField] internal float _kMAX_SCATTER = 50.0f;
+    [SerializeField] internal float _kHDSundiskIntensityFactor =  15.0f;
+    [SerializeField] internal float _kSimpleSundiskIntensityFactor =  27.0f;
+    [SerializeField] internal float _kSunScale_Multiplier = 400.0f;
+    [SerializeField] internal float _kKm4PI_Multi = 4.0f;
+    [SerializeField] internal float _kScaleDepth = 0.25f;
+    [SerializeField] internal float _kScaleOverScaleDepth_Multi = 0.25f;
+    [SerializeField] internal float _kSamples = 2.0f;
+    [SerializeField] internal float _MIE_G = -0.990f;
+    [SerializeField] internal float _MIE_G2 = 0.9801f;
+    [SerializeField] internal float _SKY_GROUND_THRESHOLD = 0.02f;
 }
 
 [Serializable]
@@ -44,7 +65,10 @@ public partial class DCL_RenderFeature_ProceduralSkyBox
     [SerializeField] [HideInInspector] private Shader m_ShaderStarBoxGenerate;
     [SerializeField] [HideInInspector] private Shader m_ShaderDraw;
 
-    private int nDimensions = 1024;
+    private int nDimensions_StarBox_Array = 4096;
+    private int nDimensions_SkyBox_Cubemap = 1024;
+    private int nDimensions_StarBox_Cubemap = 4096;
+
     //private int nArraySize = 6;
     private ComputeShader StarsComputeShader;
     private ComputeShader m_Current_Compute_Shader_Asset;
@@ -132,6 +156,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox
 
     public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
     {
+        // StarBox Array(x6) Rendertarget
         {
             var desc = new RenderTextureDescriptor();
             desc.autoGenerateMips = false;
@@ -142,7 +167,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox
             desc.dimension = TextureDimension.Cube;
             desc.enableRandomWrite = false;
             desc.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
-            desc.height = 1024;
+            desc.height = nDimensions_StarBox_Array;
             desc.memoryless = RenderTextureMemoryless.None;
             desc.mipCount = 0;
             desc.msaaSamples = 1;
@@ -153,12 +178,39 @@ public partial class DCL_RenderFeature_ProceduralSkyBox
             desc.useMipMap = false;
             desc.volumeDepth = 0;
             desc.vrUsage = VRTextureUsage.None;
-            desc.width = 1024;
+            desc.width = nDimensions_StarBox_Array;
 
-            RenderingUtils.ReAllocateIfNeeded(ref m_SkyBoxCubeMap_RTHandle, desc, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_SkyBoxCubeMapTex");
             RenderingUtils.ReAllocateIfNeeded(ref m_StarBoxCubeMap_RTHandle, desc, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_StarBoxCubeMapTex");
         }
 
+        // SkyBox Cubemap Rendertarget
+        {
+            var desc = new RenderTextureDescriptor();
+            desc.autoGenerateMips = false;
+            desc.bindMS = false;
+            desc.colorFormat = RenderTextureFormat.ARGB32;
+            desc.depthBufferBits = 0;
+            desc.depthStencilFormat = GraphicsFormat.None;
+            desc.dimension = TextureDimension.Cube;
+            desc.enableRandomWrite = false;
+            desc.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
+            desc.height = nDimensions_SkyBox_Cubemap;
+            desc.memoryless = RenderTextureMemoryless.None;
+            desc.mipCount = 0;
+            desc.msaaSamples = 1;
+            desc.shadowSamplingMode = ShadowSamplingMode.None;
+            desc.sRGB = false;
+            desc.stencilFormat = GraphicsFormat.None;
+            desc.useDynamicScale = false;
+            desc.useMipMap = false;
+            desc.volumeDepth = 0;
+            desc.vrUsage = VRTextureUsage.None;
+            desc.width = nDimensions_SkyBox_Cubemap;
+
+            RenderingUtils.ReAllocateIfNeeded(ref m_SkyBoxCubeMap_RTHandle, desc, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_SkyBoxCubeMapTex");
+        }
+
+        // StarBox Cubemap Rendertarget
         {
             var desc = new RenderTextureDescriptor();
             desc.autoGenerateMips = false;
@@ -169,7 +221,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox
             desc.dimension = TextureDimension.Tex2DArray;
             desc.enableRandomWrite = true;
             desc.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
-            desc.height = nDimensions;
+            desc.height = nDimensions_StarBox_Cubemap;
             desc.memoryless = RenderTextureMemoryless.None;
             desc.mipCount = 0;
             desc.msaaSamples = 1;
@@ -180,7 +232,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox
             desc.useMipMap = false;
             desc.volumeDepth = 6;
             desc.vrUsage = VRTextureUsage.None;
-            desc.width = nDimensions;
+            desc.width = nDimensions_StarBox_Cubemap;
             RenderingUtils.ReAllocateIfNeeded(ref m_CubemapTextureArray_RTHandle, desc, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_CubemapTextureArray");
         }
 

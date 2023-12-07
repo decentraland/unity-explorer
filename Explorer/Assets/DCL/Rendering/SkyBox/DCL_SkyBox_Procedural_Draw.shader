@@ -8,7 +8,7 @@ Shader "DCL/DCL_SkyBox_Procedural_Draw"
 
     Properties
     {
-        //_SkyBox_Cubemap_Texture ("Cubemap", CUBE) = "" {}
+        
     }
 
     SubShader
@@ -42,13 +42,13 @@ Shader "DCL/DCL_SkyBox_Procedural_Draw"
         Pass
         {
             Name "SkyBox_Procedural_Draw_StarBox"
-
+            
             ZTest LEqual
             ZWrite Off
             Cull Off
 
             HLSLPROGRAM
-                #pragma vertex vert
+                #pragma vertex vert_stars
                 #pragma fragment frag_stars
                 #pragma target 3.0                
             ENDHLSL
@@ -62,7 +62,7 @@ Shader "DCL/DCL_SkyBox_Procedural_Draw"
             ZTest LEqual
             ZWrite Off
             Cull Off
-            Blend One SrcAlpha
+            Blend One OneMinusSrcAlpha
 
             HLSLPROGRAM
                 #pragma vertex vert
@@ -70,8 +70,6 @@ Shader "DCL/DCL_SkyBox_Procedural_Draw"
                 #pragma target 3.0                
             ENDHLSL
         }
-
-        
     }
 
     Fallback Off

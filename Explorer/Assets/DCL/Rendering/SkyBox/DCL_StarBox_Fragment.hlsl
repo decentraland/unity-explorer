@@ -6,46 +6,36 @@
 #include "UnityLightingCommon.cginc"
 #include "Lighting.cginc"
 
-#define PI 3.14159f
+#define DCL_DECLARE_TEX2DARRAY(tex) Texture2DArray tex; SamplerState sampler##tex
+#define DCL_SAMPLE_TEX2DARRAY(tex,coord) tex.Sample (sampler##tex,coord)
 
-float3 LatlongToDirectionCoordinate(float2 coord)
-{
-    float theta = coord.y * PI;
-    float phi = (coord.x * 2.f * PI - PI*0.5f);
-
-    float cosTheta = cos(theta);
-    float sinTheta = sqrt(1.0 - min(1.0, cosTheta*cosTheta));
-    float cosPhi = cos(phi);
-    float sinPhi = sin(phi);
-
-    float3 direction = float3(sinTheta*cosPhi, cosTheta, sinTheta*sinPhi);
-    direction.xy *= -1.0;
-    return direction;
-}
+DCL_DECLARE_TEX2DARRAY(_CubemapTextureArray);
+#define SAMPLE_CUBEMAP_ARRAY(uv, texArrayID)                  DCL_SAMPLE_TEX2DARRAY(_CubemapTextureArray, float3(uv, texArrayID))
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-float _starArraySRA0[1024];
-float _starArraySDEC0[1024];
 
 float4 st_frag(sk_v2f IN) : SV_Target
 {
-    half3 vOutputCol = half3(0.0, 0.0, 0.0);
-    half3 vStarCol = half3(1.0, 1.0, 1.0);
-    for (int i = 0; i < 1024; ++i)
-    {
-        float3 vLatLongCoord = LatlongToDirectionCoordinate(float2(_starArraySRA0[i], _starArraySDEC0[i]));
+    float3 ArrayColour = float3(0.0, 0.0, 0.0);
+    #if defined(_CUBEMAP_FACE_RIGHT)
+    ArrayColour = SAMPLE_CUBEMAP_ARRAY(IN.localTexcoord.xy, 0);
+    #elif defined(_CUBEMAP_FACE_LEFT)
+    ArrayColour = SAMPLE_CUBEMAP_ARRAY(IN.localTexcoord.xy, 1);
+    #elif defined(_CUBEMAP_FACE_UP)
+    ArrayColour = SAMPLE_CUBEMAP_ARRAY(IN.localTexcoord.xy, 2);
+    #elif defined(_CUBEMAP_FACE_DOWN)
+    ArrayColour = SAMPLE_CUBEMAP_ARRAY(IN.localTexcoord.xy, 3);
+    #elif defined(_CUBEMAP_FACE_FRONT)
+    ArrayColour = SAMPLE_CUBEMAP_ARRAY(IN.localTexcoord.xy, 4);
+    #elif defined(_CUBEMAP_FACE_BACK)
+    ArrayColour = SAMPLE_CUBEMAP_ARRAY(IN.localTexcoord.xy, 5);
+    #else
+    return float3(0, 0, 0);
+    #endif
 
-        float3 vEyeRay = normalize(IN.direction);
-        float fLdotV =pow(saturate(dot(vLatLongCoord.xyz, vEyeRay)), 10000);
-        if(fLdotV >= 0.99f)
-        {
-            vOutputCol += vStarCol.xyz;
-        }
-    }
-    
-    return half4(vOutputCol.rgb, 1.0);
+    return half4(ArrayColour.rgb, 1.0);
 }
 
 #endif // DCL_STARBOX_FRAGMENT_INCLUDED

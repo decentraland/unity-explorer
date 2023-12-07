@@ -2,7 +2,17 @@
 
 // Inputs
 int i_dimensions;
-StructuredBuffer<float2> StarBuffer;
+struct StarParam
+{
+    float XNO; // Catalog number of star
+    float SRA0; // B1950 Right Ascension (radians)
+    float SDEC0; // B1950 Declination (radians)
+    float3 IS; // Spectral type (2 characters)
+    float MAG; // V Magnitude * 100
+    float XRPM; // R.A. proper motion (radians per year)
+    float XDPM; // Dec. proper motion (radians per year)
+};
+StructuredBuffer<StarParam> StarBuffer;
 
 // Outputs
 RWTexture2DArray<float4> o_cubeMap;
@@ -124,42 +134,54 @@ float3 uvw_to_xyz(float3 uvw)
     return useComponents;
 }
 
+static float xy_offset[5] = {-0.2, -0.1, 0, 0.1, 0.2};
+//static float xy_alpha[5] = {0.1f, 0.3f, 1.0f, 0.3f, 0.1f};
+static float xy_fade[5][5] = {  {2.0f, 2.0f, 2.0f, 2.0f, 2.0f},
+                                {2.0f, 1.0f, 1.0f, 1.0f, 2.0f},
+                                {2.0f, 1.0f, 0.0f, 1.0f, 2.0f},
+                                {2.0f, 1.0f, 1.0f, 1.0f, 2.0f},
+                                {2.0f, 2.0f, 2.0f, 2.0f, 2.0f}};
+
 [numthreads(64,1,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    // [unroll]
-    // for (int i = 0; i < 6; ++i)
-    // {
-    //     // Colors the texture based on the xyz of the cubemap
-    //     float3 uvw = float3(float(id.x) / (i_dimensions-1), float(id.y) / (i_dimensions-1), i);
-    //     float3 xyz = abs(uvw_to_xyz(uvw));
-    //
-    //     // This just puts a unique colored dot in the middle of the texture for each side
-    //     // (Not important)
-    //     {
-    //         float dist = length(xyz);
-    //         float3 centerColor = float3( // Find the color of the dot for this side
-    //             i / 2 == 0 || (i & 1 && i / 2 == 1),
-    //             i / 2 == 1 || (i & 1 && i / 2 == 2),
-    //             i / 2 == 2 || (i & 1 && i / 2 == 0));
-    //         if (dist < 1.03) xyz = float3(0, 0, 0); // Outline
-    //         if (dist < 1.02) xyz = centerColor; // Dot
-    //     }
-    //
-    //     o_cubeMap[int3(id.x, id.y, i)] = float4(xyz, 1);
-    // }
-    
-    //o_cubeMap[int3(starPos_CubeMap.x, starPos_CubeMap.y, starPos_CubeMap.z)] = float4(1.0, 1.0, 1.0, 1.0);
     const uint t = id.x;
-
     if (t >= 9110)
     {
         return;
     }
-    //float3 starPos = LatlongToDirectionCoordinate(StarBuffer[id.x].xy);
-    //float3 starPos_CubeMap = xyz_to_uvw(starPos);
-    for (int i = 0; i < 6; ++i)
+
+    float ra = StarBuffer[id.x].SRA0;
+    float dec = StarBuffer[id.x].SDEC0;
+    float3 starPos;
+    starPos.x = cos(ra) * cos(dec);
+    starPos.y = sin(ra) * cos(dec);
+    starPos.z = sin(dec);
+    starPos = normalize(starPos);
+    float3 starPos_CubeMap = xyz_to_uvw(starPos);
+
+    int loopSize = 40;
+    int loopHalf = loopSize * 0.5f;
+    //[unroll]
+    for (int i = 0; i < loopSize; ++i)
     {
-        o_cubeMap[uint3(t, t, i)] = float4(1.0, 1.0, 1.0, 1.0);
+        //[unroll]
+        for(int j = 0; j < loopSize; ++j)
+        {
+            uint3 coord_pixel = uint3(  max(0,min(i_dimensions,(starPos_CubeMap.x * i_dimensions) + (i - loopHalf))),
+                                        max(0,min(i_dimensions,(starPos_CubeMap.y * i_dimensions) + (j - loopHalf))),
+                                        starPos_CubeMap.z);
+            float3 coord_uvw = coord_pixel;
+            coord_uvw.x /= i_dimensions;
+            coord_uvw.y /= i_dimensions;
+            float3 coord_xyz = uvw_to_xyz(float3(coord_uvw));
+            coord_xyz = normalize(coord_xyz);
+            half starSample = pow(saturate(abs(dot(starPos, coord_xyz))), 500.0f + (1000 * StarBuffer[id.x].MAG));
+            if (starSample > 0.99f)
+            {
+                float fade = pow(starSample, 800.0f); 
+                o_cubeMap[coord_pixel] += float4(StarBuffer[id.x].IS * fade, 1.0f);
+            }
+        }
     }
 }
