@@ -7,9 +7,9 @@ namespace DCL.Web3Authentication
     // ReSharper disable InconsistentNaming
     public enum AuthLinkType
     {
-        SIGNER,
-        ECDSA_EPHEMERAL,
-        ECDSA_SIGNED_ENTITY,
+        SIGNER = 0,
+        ECDSA_EPHEMERAL = 1,
+        ECDSA_SIGNED_ENTITY = 2,
         /**
          * See https://github.com/ethereum/EIPs/issues/1654
          */

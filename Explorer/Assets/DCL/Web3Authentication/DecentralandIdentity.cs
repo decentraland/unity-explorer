@@ -1,4 +1,5 @@
 using System;
+using Utility.ThreadSafePool;
 
 namespace DCL.Web3Authentication
 {
@@ -19,15 +20,21 @@ namespace DCL.Web3Authentication
             Expiration = expiration;
         }
 
-        public AuthChain Sign(string entityId) =>
-            new (authChain)
+        public AuthChain Sign(string entityId)
+        {
+            var chain = AuthChain.Create();
+
+            chain.Set(AuthLinkType.SIGNER, chain.Get((int)AuthLinkType.SIGNER));
+            chain.Set(AuthLinkType.ECDSA_EPHEMERAL, chain.Get(AuthLinkType.ECDSA_EPHEMERAL));
+
+            chain.Set(AuthLinkType.ECDSA_SIGNED_ENTITY, new AuthLink
             {
-                new AuthLink
-                {
-                    type = AuthLinkType.ECDSA_SIGNED_ENTITY,
-                    payload = entityId,
-                    signature = EphemeralAccount.Sign(entityId),
-                },
-            };
+                type = AuthLinkType.ECDSA_SIGNED_ENTITY,
+                payload = entityId,
+                signature = EphemeralAccount.Sign(entityId),
+            });
+
+            return chain;
+        }
     }
 }

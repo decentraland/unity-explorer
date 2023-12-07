@@ -15,21 +15,21 @@ namespace DCL.Web3Authentication
             var ephemeralMessage = $"Decentraland Login\nEphemeral address: {ephemeralAccount.Address}\nExpiration: {expiration:s}";
             string ephemeralSignature = signer.Sign(ephemeralMessage);
 
-            var authChain = new AuthChain
+            var authChain = AuthChain.Create();
+
+            authChain.Set(AuthLinkType.SIGNER, new AuthLink
             {
-                new ()
-                {
-                    type = AuthLinkType.SIGNER,
-                    payload = signer.Address,
-                    signature = "",
-                },
-                new ()
-                {
-                    type = AuthLinkType.ECDSA_EPHEMERAL,
-                    payload = ephemeralMessage,
-                    signature = ephemeralSignature,
-                },
-            };
+                type = AuthLinkType.SIGNER,
+                payload = signer.Address,
+                signature = "",
+            });
+
+            authChain.Set(AuthLinkType.ECDSA_EPHEMERAL, new AuthLink
+            {
+                type = AuthLinkType.ECDSA_EPHEMERAL,
+                payload = ephemeralMessage,
+                signature = ephemeralSignature,
+            });
 
             return new DecentralandIdentity(ephemeralAccount, expiration, authChain);
         }
