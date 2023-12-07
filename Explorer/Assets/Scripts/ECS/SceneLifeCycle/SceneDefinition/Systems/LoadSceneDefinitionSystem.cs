@@ -3,7 +3,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -12,9 +12,7 @@ using ECS.StreamableLoading.Common.Systems;
 using Ipfs;
 using System.Threading;
 using Utility.Multithreading;
-#if UNITY_EDITOR
-
-#else
+#if !UNITY_EDITOR
 using UnityEngine;
 #endif
 

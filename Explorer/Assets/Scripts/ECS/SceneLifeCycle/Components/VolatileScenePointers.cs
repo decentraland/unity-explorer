@@ -1,9 +1,9 @@
-﻿using ECS.SceneLifeCycle.SceneDefinition;
+﻿using DCL.Optimization.Pools;
+using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using Ipfs;
 using System.Collections.Generic;
 using Unity.Mathematics;
-using Utility.Pool;
 
 namespace ECS.SceneLifeCycle.Components
 {

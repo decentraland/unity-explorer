@@ -2,7 +2,8 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
-using DCL.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
@@ -12,7 +13,6 @@ using ECS.Unity.SceneBoundsChecker;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Utility.Pool;
 using Object = UnityEngine.Object;
 
 namespace ECS.Unity.GLTFContainer.Asset.Systems
@@ -69,8 +69,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 return;
             }
 
-            // Create a new container root
-            // It will be cached and pooled
+            // Create a new container root. It will be cached and pooled
             GltfContainerAsset result = CreateGltfObject(assetBundleData);
             World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
         }
@@ -83,7 +82,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             container.SetActive(false);
             Transform containerTransform = container.transform;
 
-            var result = GltfContainerAsset.Create(container);
+            var result = GltfContainerAsset.Create(container, assetBundleData);
 
             GameObject instance = Object.Instantiate(assetBundleData.GameObject, containerTransform);
 
@@ -102,10 +101,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             List<MeshFilter> list = meshFilterScope.Value;
             instance.GetComponentsInChildren(true, list);
 
-            for (var j = 0; j < list.Count; j++)
+            foreach (MeshFilter meshFilter in list)
             {
-                MeshFilter meshFilter = list[j];
-
                 GameObject meshFilterGameObject = meshFilter.gameObject;
 
                 // gather invisible colliders
@@ -134,11 +131,24 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             if (collider)
             {
                 // Disable it as its activity controlled by another system based on PBGltfContainer component
+                collider.enabled = false;
+
                 results.Add(new SDKCollider(collider));
                 return;
             }
 
-            // Compatibility layer for old GLTF importer and GLTFast // TODO do we need it?
+            if (!IsCollider(meshFilterGo))
+                return;
+
+            MeshCollider newCollider = meshFilterGo.AddComponent<MeshCollider>();
+            newCollider.sharedMesh = meshFilter.sharedMesh;
+            newCollider.enabled = false;
+
+            results.Add(new SDKCollider(newCollider));
+            return;
+
+            // Compatibility layer for old GLTF importer and GLTFast
+            // TODO do we need it?
             static bool IsCollider(GameObject go)
             {
                 const StringComparison IGNORE_CASE = StringComparison.CurrentCultureIgnoreCase;
@@ -147,14 +157,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 return go.name.Contains(COLLIDER_SUFFIX, IGNORE_CASE)
                        || go.transform.parent.name.Contains(COLLIDER_SUFFIX, IGNORE_CASE);
             }
-
-            if (!IsCollider(meshFilterGo))
-                return;
-
-            MeshCollider newCollider = meshFilterGo.AddComponent<MeshCollider>();
-            newCollider.sharedMesh = meshFilter.sharedMesh;
-
-            results.Add(new SDKCollider(newCollider));
         }
     }
 }

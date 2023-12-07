@@ -1,8 +1,11 @@
-﻿using ECS.Unity.SceneBoundsChecker;
+﻿using DCL.Optimization.Pools;
+using DCL.Profiling;
+using ECS.StreamableLoading.AssetBundles;
+using ECS.Unity.SceneBoundsChecker;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Utility.Pool;
+using Utility;
 
 namespace ECS.Unity.GLTFContainer.Asset.Components
 {
@@ -32,25 +35,37 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         ///     They are decoded from <see cref="VisibleColliderMeshes" /> that are prepared beforehand.
         /// </summary>
         public List<SDKCollider> VisibleMeshesColliders;
+        private AssetBundleData assetBundleReference;
 
-        private GltfContainerAsset(GameObject root, List<SDKCollider> invisibleColliders, List<MeshFilter> visibleColliderMeshes, List<Renderer> renderers)
+        private GltfContainerAsset(GameObject root, AssetBundleData assetBundleReference, List<SDKCollider> invisibleColliders, List<MeshFilter> visibleColliderMeshes, List<Renderer> renderers)
         {
+            this.assetBundleReference = assetBundleReference;
+
             Root = root;
             InvisibleColliders = invisibleColliders;
             VisibleColliderMeshes = visibleColliderMeshes;
             Renderers = renderers;
+
+            ProfilingCounters.GltfContainerAssetsAmount.Value++;
         }
 
         public void Dispose()
         {
+            assetBundleReference.Dereference();
+            assetBundleReference = null;
+
             COLLIDERS_POOL.Release(InvisibleColliders);
             MESH_FILTERS_POOL.Release(VisibleColliderMeshes);
 
             if (VisibleMeshesColliders != null)
                 COLLIDERS_POOL.Release(VisibleMeshesColliders);
+
+            UnityObjectUtils.SafeDestroy(Root);
+
+            ProfilingCounters.GltfContainerAssetsAmount.Value--;
         }
 
-        public static GltfContainerAsset Create(GameObject root) =>
-            new (root, COLLIDERS_POOL.Get(), MESH_FILTERS_POOL.Get(), RENDERERS_POOL.Get());
+        public static GltfContainerAsset Create(GameObject root, AssetBundleData assetBundleReference) =>
+            new (root, assetBundleReference, COLLIDERS_POOL.Get(), MESH_FILTERS_POOL.Get(), RENDERERS_POOL.Get());
     }
 }

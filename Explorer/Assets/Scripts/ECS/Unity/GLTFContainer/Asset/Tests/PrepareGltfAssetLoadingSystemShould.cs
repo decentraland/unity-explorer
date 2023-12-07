@@ -39,7 +39,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [Test]
         public void LoadFromCache()
         {
-            var asset = GltfContainerAsset.Create(new GameObject("GLTF_ROOT"));
+            var asset = GltfContainerAsset.Create(new GameObject("GLTF_ROOT"), null);
 
             cache.TryGet("TEST", out Arg.Any<GltfContainerAsset>())
                  .Returns(c =>

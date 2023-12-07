@@ -1,5 +1,5 @@
 using DCL.ECSComponents;
-using ECS.ComponentsPooling;
+using DCL.Optimization.Pools;
 using System;
 using UnityEngine;
 

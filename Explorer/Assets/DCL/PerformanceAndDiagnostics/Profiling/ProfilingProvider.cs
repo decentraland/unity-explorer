@@ -8,7 +8,6 @@ namespace DCL.Profiling
     /// </summary>
     public class ProfilingProvider : IProfilingProvider
     {
-
         private const int HICCUP_THRESHOLD_IN_NS = 50_000_000;
         private const int HICCUP_BUFFER_SIZE = 1_000;
 

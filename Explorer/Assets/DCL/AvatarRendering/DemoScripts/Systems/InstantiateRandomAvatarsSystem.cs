@@ -18,6 +18,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Optimization.Pools;
 using ECS;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -41,10 +42,12 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         private const int MAX_AVATAR_NUMBER = 1000;
 
         private readonly IRealmData realmData;
-        private readonly QueryDescription avatarsQuery;
+        private readonly IComponentPool<Transform> transformPool;
 
         private readonly DebugWidgetVisibilityBinding debugVisibilityBinding;
         private readonly ElementBinding<ulong> totalAvatarsInstantiated;
+
+        private readonly QueryDescription avatarsQuery;
 
         private SingleInstanceEntity camera;
         private SingleInstanceEntity defaultWearableState;
@@ -53,10 +56,11 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         private bool randomizerInitialized;
         private SingleInstanceEntity settings;
 
-        internal InstantiateRandomAvatarsSystem(World world, IDebugContainerBuilder debugBuilder, IRealmData realmData, QueryDescription avatarsQuery) : base(world)
+        internal InstantiateRandomAvatarsSystem(World world, IDebugContainerBuilder debugBuilder, IRealmData realmData, QueryDescription avatarsQuery, IComponentPool<Transform> componentPools) : base(world)
         {
             this.realmData = realmData;
             this.avatarsQuery = avatarsQuery;
+            transformPool = componentPools;
 
             debugBuilder.AddWidget("Avatar Debug")
                         .SetVisibilityBinding(debugVisibilityBinding = new DebugWidgetVisibilityBinding(false))
@@ -74,7 +78,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             settings = World.CacheCharacterSettings();
         }
 
-        private void SetViewActivity()
+        private void SetDebugViewActivity()
         {
             debugVisibilityBinding.SetVisible(realmData.Configured && defaultWearableState.GetDefaultWearablesState(World).ResolvedState == DefaultWearablesComponent.State.Success);
         }
@@ -133,7 +137,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
         protected override void Update(float t)
         {
-            SetViewActivity();
+            SetDebugViewActivity();
             FinalizeRandomAvatarInstantiationQuery(World, in camera.GetCameraComponent(World), in settings.GetCharacterSettings(World));
         }
 
@@ -152,7 +156,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     GenerateRandomAvatars(randomAvatarRequest.RandomAvatarsToInstantiate, cameraComponent.Camera.transform.position, characterControllerSettings);
                 }
                 else
-                    ReportHub.LogError(GetReportCategory(), "Base wearables could't be loaded!");
+                    ReportHub.LogError(GetReportCategory(), "Base wearables couldn't be loaded!");
 
                 World.Destroy(entity);
             }
@@ -185,37 +189,19 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             var density = 2.0f;
             float spawnArea = (float)Math.Sqrt(randomAvatarsToInstantiate) * density;
 
-            var currentXCounter = 0;
-            var currentYCounter = 0;
-
             for (var i = 0; i < randomAvatarsToInstantiate; i++)
             {
                 AvatarRandomizer currentRandomizer = randomizers[Random.Range(0, randomizers.Length)];
-
-                float halfSpawnArea = spawnArea / 2;
-                float randomX = Random.Range(-halfSpawnArea, halfSpawnArea);
-                float randomZ = Random.Range(-halfSpawnArea, halfSpawnArea);
-
                 var wearables = new List<string>();
 
                 foreach (string randomAvatarWearable in currentRandomizer.GetRandomAvatarWearables())
                     wearables.Add(randomAvatarWearable);
 
                 // Create a transform, normally it will be created either by JS Scene or by Comms
-                Transform transform = new GameObject($"RANDOM_AVATAR_{i}").transform;
+                var transformComp =
+                    new TransformComponent(transformPool.Get(), $"RANDOM_AVATAR_{i}", StartPosition(spawnArea, startXPosition, startZPosition));
 
-                var pos = new Vector3(startXPosition + randomX, 500, startZPosition + randomZ);
-                var hitInfo = new RaycastHit();
-                var distance = 1000.0f;
-
-                if (Physics.Raycast(pos, Vector3.down, out hitInfo, distance))
-                    transform.localPosition = hitInfo.point;
-                else
-                    transform.localPosition = new Vector3(pos.x, 0.0f, pos.z);
-
-                var transformComp = new TransformComponent(transform);
-
-                CharacterController characterController = transform.gameObject.AddComponent<CharacterController>();
+                CharacterController characterController = transformComp.Transform.gameObject.AddComponent<CharacterController>();
                 characterController.radius = 0.4f;
                 characterController.height = 2;
                 characterController.center = Vector3.up;
@@ -245,6 +231,20 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                     characterControllerSettings
                 );
             }
+        }
+
+        private static Vector3 StartPosition(float spawnArea, float startXPosition, float startZPosition)
+        {
+            float halfSpawnArea = spawnArea / 2;
+            float randomX = Random.Range(-halfSpawnArea, halfSpawnArea);
+            float randomZ = Random.Range(-halfSpawnArea, halfSpawnArea);
+            var pos = new Vector3(startXPosition + randomX, 500, startZPosition + randomZ);
+
+            const float RAYCAST_DIST = 1000.0f;
+
+            return Physics.Raycast(pos, Vector3.down, out RaycastHit hitInfo, RAYCAST_DIST)
+                ? hitInfo.point
+                : new Vector3(pos.x, 0.0f, pos.z);
         }
     }
 }

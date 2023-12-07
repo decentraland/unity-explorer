@@ -1,8 +1,8 @@
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
 using DCL.Diagnostics;
-using DCL.PerformanceBudgeting;
-using ECS.ComponentsPooling;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
 
 namespace DCL.PluginSystem.World.Dependencies
@@ -14,16 +14,16 @@ namespace DCL.PluginSystem.World.Dependencies
         public readonly ISystemGroupAggregate<IPartitionComponent>.IFactory AggregateFactory;
         public readonly ISceneEntityFactory EntityFactory;
         public readonly IConcurrentBudgetProvider LoadingBudgetProvider;
-        public readonly IConcurrentBudgetProvider FrameTimeBudgetProvider;
-        public readonly IConcurrentBudgetProvider MemoryBudgetProvider;
+        public readonly FrameTimeCapBudgetProvider FrameTimeBudgetProvider;
+        public readonly MemoryBudgetProvider MemoryBudgetProvider;
 
         public ECSWorldSingletonSharedDependencies(IComponentPoolsRegistry componentPoolsRegistry,
             IReportsHandlingSettings reportsHandlingSettings,
             ISceneEntityFactory entityFactory,
             ISystemGroupAggregate<IPartitionComponent>.IFactory aggregateFactory,
             IConcurrentBudgetProvider loadingBudgetProvider,
-            IConcurrentBudgetProvider frameTimeBudgetProvider,
-            IConcurrentBudgetProvider memoryBudgetProvider)
+            FrameTimeCapBudgetProvider frameTimeBudgetProvider,
+            MemoryBudgetProvider memoryBudgetProvider)
         {
             ComponentPoolsRegistry = componentPoolsRegistry;
             ReportsHandlingSettings = reportsHandlingSettings;

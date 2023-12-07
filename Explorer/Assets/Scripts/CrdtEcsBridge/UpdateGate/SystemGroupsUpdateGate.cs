@@ -1,11 +1,11 @@
 using Arch.SystemGroups.DefaultSystemGroups;
 using Arch.SystemGroups.UnityBridge;
+using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility.Multithreading;
-using Utility.Pool;
-using Utility.ThreadSafePool;
 
 namespace CrdtEcsBridge.UpdateGate
 {

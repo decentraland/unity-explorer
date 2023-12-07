@@ -1,8 +1,8 @@
 ﻿using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
+using DCL.Optimization.Pools;
 using System.Buffers;
 using System.Collections.Generic;
-using Utility.Pool;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
