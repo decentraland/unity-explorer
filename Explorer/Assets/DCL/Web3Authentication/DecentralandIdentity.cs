@@ -42,8 +42,8 @@ namespace DCL.Web3Authentication
                 signature = EphemeralAccount.Sign(entityId),
             });
 
-            AssertSigner(authChain);
-            AssertEcdsaEphemeral(authChain);
+            AssertSigner(chain);
+            AssertEcdsaEphemeral(chain);
             AssertEcdsaSignedEntity(chain);
 
             return chain;
