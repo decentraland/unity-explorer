@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Optimization.Pools;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -12,7 +13,6 @@ using System.Threading;
 using Unity.Mathematics;
 using UnityEngine;
 using Utility;
-using Utility.Pool;
 
 namespace DCL.ParcelsService
 {
@@ -23,12 +23,12 @@ namespace DCL.ParcelsService
 
         private readonly IRealmData realmData;
 
+        public World World { private get; set; }
+
         public RetrieveSceneFromVolatileWorld(IRealmData realmData)
         {
             this.realmData = realmData;
         }
-
-        public World World { private get; set; }
 
         public async UniTask<IpfsTypes.SceneEntityDefinition> ByParcelAsync(Vector2Int parcel, CancellationToken ct)
         {

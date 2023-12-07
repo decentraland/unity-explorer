@@ -1,11 +1,11 @@
 using CRDT;
+using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
-using Utility.Pool;
-using Utility.ThreadSafePool;
 
 namespace CrdtEcsBridge.WorldSynchronizer
 {

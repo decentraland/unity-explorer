@@ -1,6 +1,6 @@
-﻿using System;
+﻿using DCL.Optimization.Pools;
+using System;
 using System.Collections.Generic;
-using Utility.Pool;
 
 namespace DCL.WebRequests
 {

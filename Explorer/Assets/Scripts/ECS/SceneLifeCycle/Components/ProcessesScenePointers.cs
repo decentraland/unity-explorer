@@ -1,6 +1,6 @@
+using DCL.Optimization.Pools;
 using Unity.Collections;
 using Unity.Mathematics;
-using Utility.Pool;
 
 namespace ECS.SceneLifeCycle.Components
 {

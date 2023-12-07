@@ -3,7 +3,7 @@ using CrdtEcsBridge.Components.ResetExtensions;
 using CrdtEcsBridge.Components.Transform;
 using DCL.ECS7;
 using DCL.ECSComponents;
-using ECS.ComponentsPooling;
+using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
 using System;
 using System.Collections.Generic;

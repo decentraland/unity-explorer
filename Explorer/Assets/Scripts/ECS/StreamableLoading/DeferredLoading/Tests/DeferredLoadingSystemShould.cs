@@ -1,5 +1,5 @@
 using Arch.Core;
-using DCL.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;

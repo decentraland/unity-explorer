@@ -1,7 +1,7 @@
+using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Buffers;
 using UnityEngine.Pool;
-using Utility.ThreadSafePool;
 
 namespace CRDT.Memory
 {

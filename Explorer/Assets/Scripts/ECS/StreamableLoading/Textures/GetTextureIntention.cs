@@ -23,5 +23,8 @@ namespace ECS.StreamableLoading.Textures
 
         public override int GetHashCode() =>
             HashCode.Combine(IsReadable, (int)WrapMode, (int)FilterMode, CommonArguments.URL);
+
+        public override string ToString() =>
+            $"Get Texture: {CommonArguments.URL}";
     }
 }
