@@ -49,6 +49,7 @@ namespace DCL.Navmap
             if (string.IsNullOrEmpty(searchText) || searchText.Length < 3)
                 searchResultPanelController.Hide();
 
+            floatingPanelView.gameObject.SetActive(false);
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
             SearchAndShowAsync(searchText).Forget();
