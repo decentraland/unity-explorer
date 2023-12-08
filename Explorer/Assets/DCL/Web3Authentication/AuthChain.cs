@@ -1,10 +1,10 @@
+using DCL.Optimization.ThreadSafePool;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Utility.ThreadSafePool;
 
 namespace DCL.Web3Authentication
 {
