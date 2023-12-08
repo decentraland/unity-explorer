@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Web3Authentication;
 using DCL.WebRequests.Analytics;
 using System;
 using System.Runtime.CompilerServices;
@@ -18,10 +19,13 @@ namespace DCL.WebRequests
         private static readonly InitializeRequest<GenericPatchArguments, GenericPatchRequest> PATCH_GENERIC = GenericPatchRequest.Initialize;
 
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
+        private readonly IWeb3Authenticator web3Authenticator;
 
-        public WebRequestController(IWebRequestsAnalyticsContainer analyticsContainer)
+        public WebRequestController(IWebRequestsAnalyticsContainer analyticsContainer,
+            IWeb3Authenticator web3Authenticator)
         {
             this.analyticsContainer = analyticsContainer;
+            this.web3Authenticator = web3Authenticator;
         }
 
         public UniTask<GenericGetRequest> GetAsync(

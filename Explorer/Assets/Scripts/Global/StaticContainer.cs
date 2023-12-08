@@ -1,4 +1,4 @@
-using CrdtEcsBridge.Components;
+﻿using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
@@ -13,6 +13,7 @@ using DCL.PluginSystem.World.Dependencies;
 using DCL.WebRequests.Analytics;
 using DCL.Profiling;
 using DCL.Time;
+using DCL.Web3Authentication;
 using ECS.Prioritization;
 using System.Collections.Generic;
 using System.Threading;
@@ -90,7 +91,9 @@ namespace Global
                     AssetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct));
         }
 
-        public static async UniTask<(StaticContainer container, bool success)> CreateAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
+        public static async UniTask<(StaticContainer container, bool success)> CreateAsync(IPluginSettingsContainer settingsContainer,
+            IWeb3Authenticator web3Authenticator,
+            CancellationToken ct)
         {
             var componentsContainer = ComponentsContainer.Create();
             var exposedGlobalDataContainer = ExposedGlobalDataContainer.Create();
@@ -123,7 +126,7 @@ namespace Global
             container.ProfilingProvider = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
-            container.WebRequestsContainer = WebRequestsContainer.Create();
+            container.WebRequestsContainer = WebRequestsContainer.Create(web3Authenticator);
             container.PhysicsTickProvider = new PhysicsTickProvider();
 
             var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings);

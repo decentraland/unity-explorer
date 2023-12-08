@@ -1,4 +1,5 @@
-﻿using DCL.WebRequests;
+﻿using DCL.Web3Authentication;
+using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common.Components;
@@ -28,7 +29,8 @@ namespace ECS.SceneLifeCycle.Tests
             new (new CommonLoadingArguments(wrongTypePath), new IpfsTypes.IpfsPath());
 
         protected override LoadSceneDefinitionSystem CreateSystem() =>
-            new (world, new WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>()), cache, new MutexSync());
+            new (world, new WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(),
+                Substitute.For<IWeb3Authenticator>()), cache, new MutexSync());
 
         protected override void AssertSuccess(IpfsTypes.SceneEntityDefinition asset)
         {
