@@ -113,6 +113,9 @@ namespace SceneRunner.Scene.ExceptionsHandling
 
         public void OnJavaScriptException(Exception exception)
         {
+            // Can be already disposed of
+            if (sceneState == null) return;
+
             // For javascript no tolerance
             sceneState.State = SceneState.JavaScriptError;
 
