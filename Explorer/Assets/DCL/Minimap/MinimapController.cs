@@ -38,6 +38,7 @@ namespace DCL.Minimap
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController mapCameraController;
         private Vector2Int previousParcelPosition;
+        private SideMenuController sideMenuController;
 
         public MinimapController(
             ViewFactoryMethod viewFactory,
@@ -66,6 +67,7 @@ namespace DCL.Minimap
             (gameObject = viewInstance.minimapContainer.gameObject).SetActive(!viewInstance.minimapContainer.gameObject.activeSelf);
             viewInstance.arrowDown.SetActive(!gameObject.activeSelf);
             viewInstance.arrowUp.SetActive(gameObject.activeSelf);
+            sideMenuController = new SideMenuController(viewInstance.sideMenuView);
         }
 
         private void OpenSideMenu()

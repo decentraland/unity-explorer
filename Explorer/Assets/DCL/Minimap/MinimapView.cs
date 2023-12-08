@@ -43,5 +43,8 @@ namespace DCL.Minimap
 
         [field: SerializeField]
         internal RectTransform minimapContainer  { get; private set; }
+
+        [field: SerializeField]
+        internal SideMenuView sideMenuView  { get; private set; }
     }
 }
