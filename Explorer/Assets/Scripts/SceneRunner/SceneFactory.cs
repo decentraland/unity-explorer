@@ -152,6 +152,8 @@ namespace SceneRunner
                 // ScriptEngineException.ErrorDetails is ignored through the logging process which is vital in the reporting information
                 exceptionsHandler.OnJavaScriptException(new ScriptEngineException(e.ErrorDetails));
 
+                await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
+
                 ecsWorldFacade.Dispose();
                 crdtProtocol.Dispose();
                 outgoingCRDTMessagesProvider.Dispose();
