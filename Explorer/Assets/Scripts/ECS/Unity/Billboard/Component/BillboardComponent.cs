@@ -9,10 +9,12 @@ namespace ECS.Unity.Billboard.Component
         public bool UseY;
         public bool UseZ;
 
-        public BillboardComponent(PBBillboard pbBillboard) : this(
-            pbBillboard.BillboardMode.HasFlag(BillboardMode.BmX),
-            pbBillboard.BillboardMode.HasFlag(BillboardMode.BmY),
-            pbBillboard.BillboardMode.HasFlag(BillboardMode.BmZ)
+        public BillboardComponent(PBBillboard pbBillboard) : this(pbBillboard.BillboardMode) { }
+
+        public BillboardComponent(BillboardMode mode) : this(
+            mode.HasFlag(BillboardMode.BmX),
+            mode.HasFlag(BillboardMode.BmY),
+            mode.HasFlag(BillboardMode.BmZ)
         ) { }
 
         public BillboardComponent(bool useX, bool useY, bool useZ)

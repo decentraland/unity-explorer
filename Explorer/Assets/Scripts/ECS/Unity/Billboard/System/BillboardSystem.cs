@@ -56,13 +56,20 @@ namespace ECS.Unity.Billboard.System
             in BillboardComponent billboard
         )
         {
-            var delta = transform.Transform.position - cameraPosition;
-            delta.Scale(billboard.AsVector3());
+            var anglesLook = transform.Transform.rotation.eulerAngles;
+            var delta = cameraPosition - transform.Transform.position;
+            var anglesTarget = Quaternion.LookRotation(delta, Vector3.up).eulerAngles;
 
-            if (delta == Vector3.zero)
-                return;
+            if (billboard.UseX)
+                anglesLook.x = anglesTarget.x;
 
-            transform.Transform.rotation = Quaternion.LookRotation(delta, Vector3.up);
+            if (billboard.UseY)
+                anglesLook.y = anglesTarget.y;
+
+            if (billboard.UseZ)
+                anglesLook.z = anglesTarget.z;
+
+            transform.Transform.rotation = Quaternion.Euler(anglesLook);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
