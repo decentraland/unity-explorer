@@ -7,8 +7,8 @@ namespace DCL.Profiles
         public string ProfileId { get; }
         public int Version { get; }
 
-        public ProfileParseException(string profileId, int version, Exception innerException)
-            : base($"Cannot parse profile: {profileId} - {version}", innerException)
+        public ProfileParseException(string profileId, int version, string json, Exception innerException)
+            : base($"Cannot parse profile: {profileId} - {version}\n{json}", innerException)
         {
             ProfileId = profileId;
             Version = version;
