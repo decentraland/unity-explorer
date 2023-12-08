@@ -25,7 +25,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         public void AddEmptyWearable(string loadingIntentionPointer) =>
             AddWearable(loadingIntentionPointer, new Wearable());
 
-        private IWearable AddWearable(string loadingIntentionPointer, IWearable wearable)
+        internal IWearable AddWearable(string loadingIntentionPointer, IWearable wearable)
         {
             wearablesCache.Add(loadingIntentionPointer, wearable);
             cacheKeysDictionary[loadingIntentionPointer] = listedCacheKeys.AddLast((loadingIntentionPointer, MultithreadingUtility.FrameCount));

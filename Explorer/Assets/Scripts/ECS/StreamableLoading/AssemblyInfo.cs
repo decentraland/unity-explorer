@@ -2,4 +2,4 @@
 
 [assembly: InternalsVisibleTo("StreamableLoading.Tests")]
 [assembly: InternalsVisibleTo("SceneLifeCycle.Tests")]
-[assembly: InternalsVisibleTo("DCL.Tests")]
+[assembly: InternalsVisibleTo("DCL.EditMode.Tests")]

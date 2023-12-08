@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-[assembly: InternalsVisibleTo("DCL.Tests")]
+[assembly: InternalsVisibleTo("DCL.EditMode.Tests")]
 
 namespace Ipfs
 {
@@ -74,6 +74,13 @@ namespace Ipfs
             [JsonConverter(typeof(SpawnPointConverter))]
             public struct SpawnPoint
             {
+                public string name;
+
+                public bool @default;
+
+                [field: NonSerialized] public SinglePosition? SP { get; internal set; }
+                [field: NonSerialized] public MultiPosition? MP { get; internal set; }
+
                 [Serializable]
                 public struct SinglePosition
                 {
@@ -89,13 +96,6 @@ namespace Ipfs
                     public float[] y;
                     public float[] z;
                 }
-
-                public string name;
-
-                public bool @default;
-
-                [field: NonSerialized] public SinglePosition? SP { get; internal set; }
-                [field: NonSerialized] public MultiPosition? MP { get; internal set; }
             }
         }
 

@@ -27,7 +27,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public int WearablesAssesCount => cache.Count;
 
-        private Dictionary<WearableAsset, List<CachedWearable>> cache { get; }
+        internal Dictionary<WearableAsset, List<CachedWearable>> cache { get; }
 
         public WearableAssetsCache(int initialCapacity)
         {
