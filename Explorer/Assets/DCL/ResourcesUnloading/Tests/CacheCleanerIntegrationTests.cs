@@ -52,24 +52,7 @@ namespace DCL.ResourcesUnloading.Tests
         }
 
         [Test]
-        public void ReferencingShouldBeProperlyCounted()
-        {
-            // Arrange
-            var assetBundleData = new AssetBundleData(null, null, null, null);
-            var wearableAsset = new WearableAsset(new GameObject(), new List<WearableAsset.RendererInfo>(5), assetBundleData);
-
-            // Act
-            assetBundleData.AddReference();
-            assetBundleData.AddReference();
-            wearableAsset.AddReference();
-
-            // Assert
-            Assert.That(assetBundleData.referencesCount, Is.EqualTo(2));
-            Assert.That(wearableAsset.ReferenceCount, Is.EqualTo(1));
-        }
-
-        [Test]
-        public void DereferencingShouldBeProperlyCounted()
+        public void DisposingShouldProperlyDereferenceDependencyChain()
         {
             // Arrange
             var assetBundleData = new AssetBundleData(null, null, null, null);
@@ -84,9 +67,9 @@ namespace DCL.ResourcesUnloading.Tests
             wearableAsset.AddReference();
 
             // Act
-            gltfAsset.Dispose();
             cachedWearable.Dispose();
             wearableAsset.Dispose();
+            gltfAsset.Dispose();
 
             // Assert
             Assert.That(wearableAsset.ReferenceCount, Is.EqualTo(0));
@@ -98,7 +81,7 @@ namespace DCL.ResourcesUnloading.Tests
         {
             // Arrange
             concurrentBudgetProvider.TrySpendBudget().Returns(true);
-            FillCachesWithElements(5);
+            FillCachesWithElements(amount: 5);
 
             // Act
             cacheCleaner.UnloadCache();

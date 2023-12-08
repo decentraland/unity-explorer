@@ -4,20 +4,19 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 {
     public class AssetBundleDataShould
     {
-        private const int REF_COUNT = 5;
-
-        [Test]
-        public void ProperlyCountReferenceWhenAddReferenceCalled()
+        [TestCase(0)]
+        [TestCase(5)]
+        public void ProperlyCountReferenceWhenAddReferenceCalled(int refCount)
         {
             // Arrange
             var assetBundleData = new AssetBundleData(null, null, null, null);
 
             // Act
-            for (var i = 0; i < REF_COUNT; i++)
+            for (var i = 0; i < refCount; i++)
                 assetBundleData.AddReference();
 
             // Assert
-            Assert.That(assetBundleData.referencesCount, Is.EqualTo(REF_COUNT));
+            Assert.That(assetBundleData.referencesCount, Is.EqualTo(refCount));
         }
 
         [TestCase(13, 3, 10)]
