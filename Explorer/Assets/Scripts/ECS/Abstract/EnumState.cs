@@ -1,6 +1,6 @@
 ﻿using System;
-using UnityEngine;
 using Utility;
+using Utility.Multithreading;
 
 namespace ECS.Abstract
 {
@@ -16,20 +16,20 @@ namespace ECS.Abstract
 
         public EnumState(T value, bool setAsChanged = false)
         {
-            changeFrame = setAsChanged ? Time.frameCount : int.MinValue;
+            changeFrame = setAsChanged ? (int)MultithreadingUtility.FrameCount : int.MinValue;
             Value = value;
         }
 
         public bool ChangedThisFrame() =>
-            changeFrame == Time.frameCount;
+            changeFrame == MultithreadingUtility.FrameCount;
 
         public bool ChangedThisFrameTo(T value) =>
-            changeFrame == Time.frameCount && EnumUtils.Equals(value, Value);
+            changeFrame == MultithreadingUtility.FrameCount && EnumUtils.Equals(value, Value);
 
         public void Set(T value)
         {
             Value = value;
-            changeFrame = Time.frameCount;
+            changeFrame = (int)MultithreadingUtility.FrameCount;
         }
 
         public static implicit operator T(in EnumState<T> enumState) =>

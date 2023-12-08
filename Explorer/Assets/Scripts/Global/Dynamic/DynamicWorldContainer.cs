@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables;
 using DCL.DebugUtilities;
 using DCL.ParcelsService;
-using DCL.PerformanceBudgeting;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -15,7 +14,6 @@ using MVC;
 using MVC.PopupsController.PopupCloser;
 using SceneRunner.EmptyScene;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using Unity.Mathematics;
 using UnityEngine;
@@ -26,6 +24,8 @@ namespace Global.Dynamic
     public class DynamicWorldContainer : IDCLPlugin<DynamicWorldSettings>
     {
         private static readonly URLDomain ASSET_BUNDLES_URL = URLDomain.FromString("https://ab-cdn.decentraland.org/");
+
+        private static MVCManager mvcManager;
 
         public DebugUtilitiesContainer DebugContainer { get; private set; }
 
@@ -38,8 +38,6 @@ namespace Global.Dynamic
         public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; }
 
         public IWeb3Authenticator Web3Authenticator { get; private set; }
-
-        private static MVCManager mvcManager;
 
         public void Dispose()
         {
@@ -81,10 +79,10 @@ namespace Global.Dynamic
                 new InputPlugin(dclInput),
                 new GlobalInteractionPlugin(dclInput, rootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.CameraSamplingData, exposedGlobalDataContainer.ExposedCameraData),
-                new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.MemoryBudgetProvider as MemoryBudgetProvider, debugBuilder),
-                new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, realmData, ASSET_BUNDLES_URL),
+                new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, staticContainer.SingletonSharedDependencies.MemoryBudgetProvider, debugBuilder),
+                new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, realmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner),
                 new AvatarPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner,
-                    staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, realmData, debugBuilder),
+                    staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, staticContainer.SingletonSharedDependencies.MemoryBudgetProvider, realmData, debugBuilder, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer, placesAPIService),
                 new ExplorePanelPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer, placesAPIService, parcelServiceContainer.TeleportController),
@@ -103,7 +101,7 @@ namespace Global.Dynamic
             container.GlobalWorldFactory = new GlobalWorldFactory(in staticContainer, staticContainer.RealmPartitionSettings,
                 exposedGlobalDataContainer.CameraSamplingData, realmSamplingData, ASSET_BUNDLES_URL, realmData, globalPlugins);
 
-            container.GlobalPlugins = globalPlugins.Concat(staticContainer.SharedPlugins).ToList();
+            container.GlobalPlugins = globalPlugins;
             container.EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins);
 
             container.Web3Authenticator = web3Authenticator;

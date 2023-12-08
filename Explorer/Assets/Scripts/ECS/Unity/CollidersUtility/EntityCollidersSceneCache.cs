@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
+using System.Collections.Generic;
 using UnityEngine;
-using Utility.Pool;
-using Utility.ThreadSafePool;
 
 namespace DCL.Interaction.Utility
 {

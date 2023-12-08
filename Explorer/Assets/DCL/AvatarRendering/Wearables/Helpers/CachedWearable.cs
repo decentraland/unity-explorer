@@ -1,12 +1,15 @@
-﻿using System.Collections.Generic;
+using DCL.Profiling;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
     /// <summary>
     ///     We need to store the original asset to be able to release it later
     /// </summary>
-    public struct CachedWearable
+    public readonly struct CachedWearable : IDisposable
     {
         public readonly WearableAsset OriginalAsset;
         public readonly GameObject Instance;
@@ -17,10 +20,19 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             OriginalAsset = originalAsset;
             Instance = instance;
             Renderers = new List<Renderer>();
+
+            ProfilingCounters.CachedWearablesAmount.Value++;
+        }
+
+        public void Dispose()
+        {
+            OriginalAsset.Dereference();
+            UnityObjectUtils.SafeDestroy(Instance);
+
+            ProfilingCounters.CachedWearablesAmount.Value--;
         }
 
         public static implicit operator GameObject(CachedWearable cachedWearable) =>
             cachedWearable.Instance;
-
     }
 }

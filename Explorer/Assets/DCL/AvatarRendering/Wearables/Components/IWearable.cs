@@ -13,7 +13,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         ///     Might be never resolved if Wearable is loaded from the Embedded Source
         /// </summary>
         StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
-        StreamableLoadingResult<WearableAsset>?[] WearableAssets { get; set; }
+        StreamableLoadingResult<WearableAsset>?[] WearableAssetResults { get; }
         StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }
 
         string GetMainFileHash(BodyShape bodyShape);

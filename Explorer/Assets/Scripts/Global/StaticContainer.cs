@@ -5,13 +5,14 @@ using DCL.Character;
 using DCL.Diagnostics;
 using DCL.Gizmos.Plugin;
 using DCL.Interaction.Utility;
-using DCL.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.WebRequests.Analytics;
 using DCL.Profiling;
+using DCL.ResourcesUnloading;
 using DCL.Time;
 using DCL.Web3Authentication;
 using ECS.Prioritization;
@@ -69,6 +70,7 @@ namespace Global
 
         public IRealmPartitionSettings RealmPartitionSettings => realmPartitionSettings.Value;
         public StaticSettings StaticSettings { get; private set; }
+        public CacheCleaner CacheCleaner { get; private set; }
 
         public void Dispose()
         {
@@ -95,6 +97,8 @@ namespace Global
             IWeb3Authenticator web3Authenticator,
             CancellationToken ct)
         {
+            ProfilingCounters.CleanAllCounters();
+
             var componentsContainer = ComponentsContainer.Create();
             var exposedGlobalDataContainer = ExposedGlobalDataContainer.Create();
             var profilingProvider = new ProfilingProvider();
@@ -116,9 +120,11 @@ namespace Global
                 new SceneEntityFactory(),
                 new PartitionedWorldsAggregate.Factory(),
                 new ConcurrentLoadingBudgetProvider(staticSettings.AssetsLoadingBudget),
-                new FrameTimeCapBudgetProvider(staticSettings.FPSCap, profilingProvider),
+                new FrameTimeCapBudgetProvider(staticSettings.FrameTimeCap, profilingProvider),
                 new MemoryBudgetProvider(profilingProvider, staticSettings.MemoryThresholds)
             );
+
+            container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudgetProvider);
 
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
             container.ComponentsContainer = componentsContainer;
@@ -129,18 +135,19 @@ namespace Global
             container.WebRequestsContainer = WebRequestsContainer.Create(web3Authenticator);
             container.PhysicsTickProvider = new PhysicsTickProvider();
 
-            var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings);
+            var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, container.CacheCleaner);
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
                 new TransformsPlugin(sharedDependencies),
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
-                new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController),
+                new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
+
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 assetBundlePlugin,
-                new GltfContainerPlugin(sharedDependencies),
+                new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
@@ -150,6 +157,7 @@ namespace Global
             container.SharedPlugins = new IDCLGlobalPlugin[]
             {
                 assetBundlePlugin,
+                new ResourceUnloadingPlugin(sharedDependencies.MemoryBudgetProvider, container.CacheCleaner),
             };
 
             return (container, true);
