@@ -1,9 +1,9 @@
-﻿using System;
+﻿using DCL.Optimization.Pools;
+using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
-using Utility.Pool;
 
 namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {

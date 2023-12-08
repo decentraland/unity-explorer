@@ -4,7 +4,7 @@ using Arch.SystemGroups;
 using CRDT;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
-using DCL.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Components;

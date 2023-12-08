@@ -2,6 +2,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Optimization.Pools;
 using DCL.ParcelsService;
 using DCL.WebRequests;
 using ECS;
@@ -13,7 +14,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Unity.Mathematics;
-using Utility.Pool;
 
 namespace Global.Dynamic
 {

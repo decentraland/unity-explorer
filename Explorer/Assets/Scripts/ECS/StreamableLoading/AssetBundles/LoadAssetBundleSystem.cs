@@ -3,7 +3,9 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
@@ -17,8 +19,6 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility.Multithreading;
-using Utility.Pool;
-using Utility.ThreadSafePool;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
@@ -41,7 +41,7 @@ namespace ECS.StreamableLoading.AssetBundles
             this.loadingMutex = loadingMutex;
         }
 
-        private async UniTask LoadDependenciesAsync(SceneAssetBundleManifest manifest, IPartitionComponent partition, URLSubdirectory customEmbeddedSubdirectory, AssetBundle assetBundle, CancellationToken ct)
+        private async UniTask<AssetBundleData[]> LoadDependenciesAsync(SceneAssetBundleManifest manifest, IPartitionComponent partition, URLSubdirectory customEmbeddedSubdirectory, AssetBundle assetBundle, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
             string metadata;
@@ -60,9 +60,10 @@ namespace ECS.StreamableLoading.AssetBundles
                 // Switch to main thread to create dependency promises
                 await UniTask.SwitchToMainThread();
 
-                // WhenAll uses pool under the hood
-                await UniTask.WhenAll(reusableMetadata.Value.dependencies.Select(hash => WaitForDependencyAsync(manifest, hash, customEmbeddedSubdirectory, partition, ct)));
+                return await UniTask.WhenAll(reusableMetadata.Value.dependencies.Select(hash => WaitForDependencyAsync(manifest, hash, customEmbeddedSubdirectory, partition, ct)));
             }
+
+            return Array.Empty<AssetBundleData>();
         }
 
         protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
@@ -103,14 +104,14 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 AssetBundleMetrics? metrics = metricsFile != null ? JsonUtility.FromJson<AssetBundleMetrics>(metricsFile.text) : null;
 
-                await LoadDependenciesAsync(intention.Manifest, partition, intention.CommonArguments.CustomEmbeddedSubDirectory, assetBundle, ct);
+                AssetBundleData[] dependencies = await LoadDependenciesAsync(intention.Manifest, partition, intention.CommonArguments.CustomEmbeddedSubDirectory, assetBundle, ct);
 
                 await UniTask.SwitchToMainThread();
                 ct.ThrowIfCancellationRequested();
 
                 GameObject gameObjects = await LoadAllAssetsAsync(assetBundle, ct);
 
-                return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, gameObjects));
+                return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, gameObjects, dependencies));
             }
             catch (Exception)
             {
@@ -122,6 +123,9 @@ namespace ECS.StreamableLoading.AssetBundles
                 throw;
             }
         }
+
+        protected override void OnAssetSuccessfullyLoaded(AssetBundleData asset) =>
+            asset.AddReference();
 
         private async UniTask<GameObject> LoadAllAssetsAsync(AssetBundle assetBundle, CancellationToken ct)
         {
@@ -136,14 +140,14 @@ namespace ECS.StreamableLoading.AssetBundles
             var gameObjects = new List<GameObject>(asyncOp.allAssets.Cast<GameObject>());
 
             if (gameObjects.Count > 1)
-                ReportHub.LogError(GetReportCategory(), $"AssetBundle {assetBundle.name} contains more than one root gameobject. Only the first one will be used.");
+                ReportHub.LogError(GetReportCategory(), $"AssetBundle {assetBundle.name} contains more than one root GameObject. Only the first one will be used.");
 
             GameObject rootGameObject = gameObjects.Count > 0 ? gameObjects[0] : null;
 
             return rootGameObject;
         }
 
-        private async UniTask WaitForDependencyAsync(SceneAssetBundleManifest manifest,
+        private async UniTask<AssetBundleData> WaitForDependencyAsync(SceneAssetBundleManifest manifest,
             string hash, URLSubdirectory customEmbeddedSubdirectory,
             IPartitionComponent partition, CancellationToken ct)
         {
@@ -159,8 +163,14 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 if (!depResult.Succeeded)
                     throw new Exception($"Dependency {hash} resolution failed", depResult.Exception);
+
+                return depResult.Asset;
             }
-            catch (OperationCanceledException) { assetBundlePromise.ForgetLoading(World); }
+            catch (OperationCanceledException)
+            {
+                assetBundlePromise.ForgetLoading(World);
+                throw new OperationCanceledException($"Dependency {hash} resolution cancelled");
+            }
         }
 
         private static TextAsset GetMetadata(AssetBundle assetBundle) =>

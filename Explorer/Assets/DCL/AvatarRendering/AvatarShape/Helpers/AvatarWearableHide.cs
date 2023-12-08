@@ -1,10 +1,10 @@
 ﻿using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
+using DCL.Optimization.Pools;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
-using Utility.Pool;
 
 namespace DCL.AvatarRendering.AvatarShape.Helpers
 {

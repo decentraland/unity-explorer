@@ -1,8 +1,8 @@
-﻿using AssetManagement;
+using AssetManagement;
 using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
 using DCL.Diagnostics;
-using DCL.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using System;

@@ -1,3 +1,4 @@
+using DCL.Profiling;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -29,6 +30,7 @@ namespace DCL.WebRequests
 
             UnityWebRequest.Dispose();
 
+            ProfilingCounters.TexturesAmount.Value++;
             return tex;
         }
 

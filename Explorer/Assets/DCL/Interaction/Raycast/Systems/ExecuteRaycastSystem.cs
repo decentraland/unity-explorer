@@ -10,9 +10,9 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Interaction.Raycast.Components;
 using DCL.Interaction.Utility;
-using DCL.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
-using ECS.ComponentsPooling;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -23,7 +23,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
-using Utility.Pool;
 using RaycastHit = UnityEngine.RaycastHit;
 
 namespace DCL.Interaction.Raycast.Systems

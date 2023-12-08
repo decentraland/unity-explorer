@@ -1,7 +1,7 @@
+using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Collections.Generic;
-using Utility.Pool;
-using Utility.ThreadSafePool;
 
 namespace ECS.LifeCycle.Components
 {

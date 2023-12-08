@@ -1,10 +1,10 @@
 ﻿using CRDT.Protocol;
 using CrdtEcsBridge.Engine;
+using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using System.Buffers;
 using System.Collections.Generic;
 using UnityEngine.Pool;
-using Utility.Pool;
-using Utility.ThreadSafePool;
 
 namespace CrdtEcsBridge.PoolsProviders
 {

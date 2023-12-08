@@ -11,9 +11,9 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
-using DCL.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
-using ECS.ComponentsPooling;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.Transforms.Components;
@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -30,8 +29,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [LogCategory(ReportCategory.AVATAR)]
     public partial class AvatarInstantiatorSystem : BaseUnityLoopSystem
     {
-        private readonly IObjectPool<Material> avatarMaterialPool;
         private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
+        private readonly IObjectPool<Material> avatarMaterialPool;
         private readonly IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool;
         private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
 
@@ -40,10 +39,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly TextureArrayContainer textureArrays;
         private readonly FixedComputeBufferHandler vertOutBuffer;
         private readonly IWearableAssetsCache wearableAssetsCache;
+        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
 
-        public AvatarInstantiatorSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider,
-            IComponentPool<AvatarBase> avatarPoolRegistry, IObjectPool<Material> avatarMaterialPool, IObjectPool<UnityEngine.ComputeShader> computeShaderPool, TextureArrayContainer textureArrayContainer,
-            IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer) : base(world)
+        public AvatarInstantiatorSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider,
+            IComponentPool<AvatarBase> avatarPoolRegistry, IObjectPool<Material> avatarMaterialPool, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
+            TextureArrayContainer textureArrayContainer, IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer) : base(world)
         {
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
             this.avatarPoolRegistry = avatarPoolRegistry;
@@ -52,6 +52,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             this.wearableAssetsCache = wearableAssetsCache;
             this.skinningStrategy = skinningStrategy;
             this.vertOutBuffer = vertOutBuffer;
+            this.memoryBudgetProvider = memoryBudgetProvider;
             this.avatarMaterialPool = avatarMaterialPool;
             computeShaderSkinningPool = computeShaderPool;
         }
@@ -113,14 +114,17 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             GameObject bodyShape = null;
 
-            //Using Pointer size for counter, since we dont know the size of the results array
-            //because it was pooled
+            // Using Pointer size for counter, since we dont know the size of the results array
+            // because it was pooled
             for (var i = 0; i < intention.Pointers.Count; i++)
             {
                 IWearable resultWearable = wearablesResult.Asset[i];
 
                 if (wearablesToHide.Contains(resultWearable.GetCategory()))
+                {
+                    resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape).Dereference();
                     continue;
+                }
 
                 if (resultWearable.isFacialFeature())
                 {
@@ -160,7 +164,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         private bool ReadyToInstantiateNewAvatar(ref AvatarShapeComponent avatarShapeComponent) =>
-            avatarShapeComponent.IsDirty && instantiationFrameTimeBudgetProvider.TrySpendBudget();
+            avatarShapeComponent.IsDirty && instantiationFrameTimeBudgetProvider.TrySpendBudget() && memoryBudgetProvider.TrySpendBudget();
 
         //We only care to release AvatarShapeComponent with AvatarBase; since this are the ones that got instantiated.
         //The ones that dont have AvatarBase never got instantiated and therefore we have nothing to release
@@ -183,8 +187,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private void CommonAvatarRelease(AvatarShapeComponent avatarShapeComponent, AvatarCustomSkinningComponent skinningComponent)
         {
             vertOutBuffer.Release(skinningComponent.VertsOutRegion);
-            skinningComponent.Dispose(avatarMaterialPool);
-            wearableAssetsCache.TryReleaseAssets(avatarShapeComponent.InstantiatedWearables, avatarMaterialPool);
+            skinningComponent.Dispose(avatarMaterialPool, computeShaderSkinningPool);
+
+            if (avatarShapeComponent.WearablePromise.IsConsumed)
+                wearableAssetsCache.ReleaseAssets(avatarShapeComponent.InstantiatedWearables);
+            else
+                foreach (IWearable wearable in avatarShapeComponent.WearablePromise.Result.Value.Asset)
+                    wearable?.WearableAssetResults[avatarShapeComponent.BodyShape]?.Asset.Dereference();
         }
 
         public override void Dispose()
