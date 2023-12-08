@@ -13,7 +13,6 @@ using MVC;
 using MVC.PopupsController.PopupCloser;
 using SceneRunner.EmptyScene;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using Unity.Mathematics;
 using UnityEngine;
@@ -98,7 +97,7 @@ namespace Global.Dynamic
             container.GlobalWorldFactory = new GlobalWorldFactory(in staticContainer, staticContainer.RealmPartitionSettings,
                 exposedGlobalDataContainer.CameraSamplingData, realmSamplingData, ASSET_BUNDLES_URL, realmData, globalPlugins);
 
-            container.GlobalPlugins = globalPlugins.Concat(staticContainer.SharedPlugins).ToList();
+            container.GlobalPlugins = globalPlugins;
             container.EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins);
 
             return (container, true);
