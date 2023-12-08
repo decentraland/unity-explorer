@@ -15,6 +15,8 @@ namespace ECS.Unity.Billboard.DemoTest
     public class BillboardDemoTestBoot : MonoBehaviour
     {
         [SerializeField] private float cubeStep = 3;
+        [SerializeField] private Vector3 cubeSize = new Vector3(1.6f, 1, 0.5f);
+        [SerializeField] private int randomCounts = 5;
 
         private async void Start()
         {
@@ -34,12 +36,12 @@ namespace ECS.Unity.Billboard.DemoTest
 
         private void FillUp(World world)
         {
-            new[] { BillboardMode.BmAll, BillboardMode.BmNone, BillboardMode.BmX, BillboardMode.BmY, BillboardMode.BmZ }
-               .Select((e, i) => world.Create(new BillboardComponent(e), NewTransform(i)))
-               .ToList();
+            var billboards = new[] { BillboardMode.BmAll, BillboardMode.BmNone, BillboardMode.BmX, BillboardMode.BmY, BillboardMode.BmZ }
+                            .Select((e, i) => world.Create(new BillboardComponent(e), NewTransform(i)))
+                            .ToList();
 
             Enumerable
-               .Range(5, 5)
+               .Range(billboards.Count, randomCounts)
                .Select(i => world.Create(RandomBillboard(), NewTransform(i)))
                .ToList();
         }
@@ -47,7 +49,7 @@ namespace ECS.Unity.Billboard.DemoTest
         private TransformComponent NewTransform(int offset = 0)
         {
             var t = GameObject.CreatePrimitive(PrimitiveType.Cube)!.transform!;
-            t.localScale = new Vector3(1.6f, 1, 0.5f);
+            t.localScale = cubeSize;
             t.position = Vector3.right * cubeStep * offset;
             t.gameObject.AddComponent<GizmosForward>();
             return new TransformComponent(t);
