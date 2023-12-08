@@ -6,7 +6,9 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
-using DCL.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
@@ -17,8 +19,6 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
-using Utility.Pool;
-using Utility.ThreadSafePool;
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {

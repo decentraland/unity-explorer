@@ -5,7 +5,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "63fbb65d15d5f25772ac106b0818e942e0df0e2d"
+      "hash": "1eb735da57fd7e829ccc1d67518aeadcc8816fe6"
     },
     "com.arch.systemgroups": {
       "version": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
@@ -227,6 +227,13 @@
     "com.unity.performance.profile-analyzer": {
       "version": "1.2.2",
       "depth": 1,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.profiling.core": {
+      "version": "1.0.2",
+      "depth": 0,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"

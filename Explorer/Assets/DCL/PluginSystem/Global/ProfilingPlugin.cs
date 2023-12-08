@@ -1,23 +1,25 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
-using DCL.PerformanceAndDiagnostics.Profiling.ECS;
-using DCL.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiling;
 using System;
 using System.Threading;
+using ProfilingSystem = DCL.Profiling.ECS.ProfilingSystem;
 
 namespace DCL.PluginSystem.Global
 {
     public class ProfilingPlugin : IDCLGlobalPlugin<ProfilingPlugin.Settings>
     {
         private readonly IProfilingProvider profilingProvider;
+        private readonly FrameTimeCapBudgetProvider frameTimeCapBudgetProvider;
         private readonly MemoryBudgetProvider memoryBudgetProvider;
         private readonly IDebugContainerBuilder debugContainerBuilder;
 
-        public ProfilingPlugin(IProfilingProvider profilingProvider, MemoryBudgetProvider memoryBudgetProvider, IDebugContainerBuilder debugContainerBuilder)
+        public ProfilingPlugin(IProfilingProvider profilingProvider, FrameTimeCapBudgetProvider frameTimeCapBudgetProvider, MemoryBudgetProvider memoryBudgetProvider, IDebugContainerBuilder debugContainerBuilder)
         {
             this.profilingProvider = profilingProvider;
+            this.frameTimeCapBudgetProvider = frameTimeCapBudgetProvider;
             this.debugContainerBuilder = debugContainerBuilder;
             this.memoryBudgetProvider = memoryBudgetProvider;
         }
@@ -29,7 +31,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ProfilingSystem.InjectToWorld(ref builder, profilingProvider, memoryBudgetProvider, debugContainerBuilder);
+            ProfilingSystem.InjectToWorld(ref builder, profilingProvider, frameTimeCapBudgetProvider, memoryBudgetProvider, debugContainerBuilder);
         }
 
         [Serializable]

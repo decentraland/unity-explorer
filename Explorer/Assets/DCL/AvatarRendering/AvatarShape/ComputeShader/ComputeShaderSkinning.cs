@@ -1,6 +1,7 @@
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Rendering.Avatar;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Optimization.Pools;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Collections;
@@ -8,18 +9,18 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.Profiling;
-using Utility.Pool;
+using Object = UnityEngine.Object;
 
 namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public class ComputeShaderSkinning : CustomSkinning
     {
-        internal static readonly ListObjectPool<Material> MATERIAL_POOL = new (defaultCapacity: 50, listInstanceDefaultCapacity: 5);
-
         public override AvatarCustomSkinningComponent Initialize(IList<CachedWearable> gameObjects, TextureArrayContainer textureArrayContainer,
-            UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterialPool, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer, AvatarShapeComponent avatarShapeComponent)
+            UnityEngine.ComputeShader skinningShader, IObjectPool<Material> avatarMaterialPool, SkinnedMeshRenderer baseAvatarSkinnedMeshRenderer,
+            AvatarShapeComponent avatarShapeComponent)
         {
             List<MeshData> meshesData = ListPool<MeshData>.Get();
+
             CreateMeshData(meshesData, gameObjects);
 
             (int vertCount, int boneCount) = SetupCounters(meshesData);
@@ -192,11 +193,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
             MeshRenderer meshRenderer = go.AddComponent<MeshRenderer>();
             meshRenderer.renderingLayerMask = 2;
-
-            List<Material> materialPool = MATERIAL_POOL.Get();
-            skin.GetMaterials(materialPool);
-            meshRenderer.material = materialPool[0];
-            MATERIAL_POOL.Release(materialPool);
 
             Object.Destroy(skin);
             return (meshRenderer, filter);
