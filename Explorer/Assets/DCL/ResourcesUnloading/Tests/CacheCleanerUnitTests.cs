@@ -7,7 +7,6 @@ using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using NSubstitute;
 using NUnit.Framework;
-using Unity.PerformanceTesting;
 using UnityEngine;
 
 namespace DCL.ResourcesUnloading.Tests
@@ -48,18 +47,6 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(assetBundleCache);
             cacheCleaner.Register(wearableAssetsCache);
             cacheCleaner.Register(materialPool);
-        }
-
-        [Test] [Performance]
-        public void MockedCachesPerformanceMeasure()
-        {
-            // Arrange
-            concurrentBudgetProvider.TrySpendBudget().Returns(true);
-
-            // Measure
-            Measure.Method(() => { cacheCleaner.UnloadCache(); })
-                   .GC()
-                   .Run();
         }
 
         [TestCase(true, 1)]

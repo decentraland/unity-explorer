@@ -28,6 +28,7 @@ namespace DCL.ResourcesUnloading.Tests
         private WearableAssetsCache wearableAssetsCache;
         private TexturesCache texturesCache;
         private GltfContainerAssetsCache gltfContainerAssetsCache;
+
         private AssetBundleCache assetBundleCache;
 
         private IExtendedObjectPool<Material> materialPool;
@@ -49,6 +50,42 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(assetBundleCache);
             cacheCleaner.Register(wearableAssetsCache);
             cacheCleaner.Register(wearableCatalog);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            cacheCleaner.UnloadCache();
+
+            texturesCache.Dispose();
+            assetBundleCache.Dispose();
+            gltfContainerAssetsCache.Dispose();
+            wearableAssetsCache.Dispose();
+            wearableCatalog.Unload(concurrentBudgetProvider);
+        }
+
+        [Performance]
+        [TestCase(1)]
+        [TestCase(10)]
+        [TestCase(100)]
+        public void PerformanceMeasureWithElementsAmount(int cachedElementsAmount)
+        {
+            // Arrange
+            concurrentBudgetProvider.TrySpendBudget().Returns(true);
+
+            for (var i = 0; i < cachedElementsAmount; i++)
+                FillCachesWithElements(hashID: $"test{i}");
+
+            // Measure
+            Measure.Method(() =>
+                    {
+                        cacheCleaner.UnloadCache(); // Act
+                    })
+                   .WarmupCount(5)
+                   .IterationsPerMeasurement(10)
+                   .MeasurementCount(20)
+                   .GC()
+                   .Run();
         }
 
         [Test]
@@ -81,7 +118,7 @@ namespace DCL.ResourcesUnloading.Tests
         {
             // Arrange
             concurrentBudgetProvider.TrySpendBudget().Returns(true);
-            FillCachesWithElements(amount: 5);
+            FillCachesWithElements(hashID: "test");
 
             // Act
             cacheCleaner.UnloadCache();
@@ -94,72 +131,26 @@ namespace DCL.ResourcesUnloading.Tests
             Assert.That(assetBundleCache.cache.Count, Is.EqualTo(0));
         }
 
-        [Test] [Performance]
-        public void PerformanceMeasureWithEmptyCaches()
+        private void FillCachesWithElements(string hashID)
         {
-            // Arrange
-            concurrentBudgetProvider.TrySpendBudget().Returns(true);
+            var textureIntention = new GetTextureIntention { CommonArguments = new CommonLoadingArguments { URL = new URLAddress(hashID) } };
+            texturesCache.Add(textureIntention, new Texture2D(1, 1));
 
-            // Measure
-            Measure.Method(() =>
-                    {
-                        cacheCleaner.UnloadCache(); // Act
-                    })
-                   .WarmupCount(5)
-                   .IterationsPerMeasurement(10)
-                   .MeasurementCount(20)
-                   .GC()
-                   .Run();
-        }
+            var assetBundleData = new AssetBundleData(null, null, new GameObject(), Array.Empty<AssetBundleData>());
+            assetBundleCache.Add(new GetAssetBundleIntention { Hash = hashID }, assetBundleData);
 
-        [Performance]
-        [TestCase(1)]
-        [TestCase(10)]
-        [TestCase(100)]
-        public void PerformanceMeasureWithFullCaches(int cachedElementsAmount)
-        {
-            // Arrange
-            concurrentBudgetProvider.TrySpendBudget().Returns(true);
+            var gltfContainerAsset = GltfContainerAsset.Create(new GameObject(), assetBundleData);
+            assetBundleData.AddReference();
+            gltfContainerAssetsCache.Dereference(hashID, gltfContainerAsset);
 
-            FillCachesWithElements(cachedElementsAmount);
+            var wearableAsset = new WearableAsset(new GameObject(), new List<WearableAsset.RendererInfo>(10), assetBundleData);
+            assetBundleData.AddReference();
+            var wearable = new Wearable { WearableAssetResults = { [0] = new StreamableLoadingResult<WearableAsset>(wearableAsset) } };
+            wearableCatalog.AddWearable(hashID, wearable);
 
-            // Measure
-            Measure.Method(() =>
-                    {
-                        cacheCleaner.UnloadCache(); // Act
-                    })
-                   .WarmupCount(5)
-                   .IterationsPerMeasurement(10)
-                   .MeasurementCount(20)
-                   .GC()
-                   .Run();
-        }
-
-        private void FillCachesWithElements(int amount)
-        {
-            for (var i = 0; i < amount; i++)
-            {
-                var hashID = $"test {i}";
-
-                var textureIntention = new GetTextureIntention { CommonArguments = new CommonLoadingArguments { URL = new URLAddress(hashID) } };
-                texturesCache.Add(textureIntention, new Texture2D(1, 1));
-
-                var assetBundleData = new AssetBundleData(null, null, new GameObject(), Array.Empty<AssetBundleData>());
-                assetBundleCache.Add(new GetAssetBundleIntention { Hash = hashID }, assetBundleData);
-
-                var gltfContainerAsset = GltfContainerAsset.Create(new GameObject(), assetBundleData);
-                assetBundleData.AddReference();
-                gltfContainerAssetsCache.Dereference(hashID, gltfContainerAsset);
-
-                var wearableAsset = new WearableAsset(new GameObject(), new List<WearableAsset.RendererInfo>(10), assetBundleData);
-                assetBundleData.AddReference();
-                var wearable = new Wearable { WearableAssetResults = { [0] = new StreamableLoadingResult<WearableAsset>(wearableAsset) } };
-                wearableCatalog.AddWearable(hashID, wearable);
-
-                var cachedWearable = new CachedWearable(wearableAsset, new GameObject());
-                wearableAsset.AddReference();
-                wearableAssetsCache.Release(cachedWearable);
-            }
+            var cachedWearable = new CachedWearable(wearableAsset, new GameObject());
+            wearableAsset.AddReference();
+            wearableAssetsCache.Release(cachedWearable);
         }
     }
 }
