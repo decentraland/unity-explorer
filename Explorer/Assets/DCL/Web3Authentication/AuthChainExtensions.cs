@@ -6,5 +6,8 @@ namespace DCL.Web3Authentication
     {
         public static string ToJson(this AuthChain authChain) =>
             JsonConvert.SerializeObject(authChain);
+
+        public static string ToJson(this AuthLink link) =>
+            JsonConvert.SerializeObject(link);
     }
 }

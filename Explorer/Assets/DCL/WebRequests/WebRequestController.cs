@@ -144,7 +144,17 @@ namespace DCL.WebRequests
             }
         }
 
-        private UniTask SignRequest(WebRequestSignInfo signInfo, UnityWebRequest unityWebRequest) =>
-            throw new NotImplementedException("SignRequest is not implemented yet!");
+        private async UniTask SignRequest(WebRequestSignInfo signInfo, UnityWebRequest unityWebRequest)
+        {
+            AuthChain authChain = web3Authenticator.Identity.Sign(signInfo.SignUrl);
+
+            var i = 0;
+
+            foreach (AuthLink link in authChain)
+            {
+                unityWebRequest.SetRequestHeader($"x-identity-auth-chain-{i}", link.ToJson());
+                i++;
+            }
+        }
     }
 }

@@ -6,7 +6,7 @@ namespace DCL.Web3Authentication
 {
     public class FakeWeb3Authenticator : IWeb3Authenticator
     {
-        public IWeb3Identity Identity { get; private set; }
+        public IWeb3Identity? Identity { get; private set; }
 
         public async UniTask<IWeb3Identity> LoginAsync(CancellationToken cancellationToken)
         {
