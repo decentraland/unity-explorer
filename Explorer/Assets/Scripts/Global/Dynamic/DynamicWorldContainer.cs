@@ -6,6 +6,7 @@ using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.Profiles;
 using DCL.WebRequests.Analytics;
 using ECS;
 using ECS.Prioritization.Components;
@@ -35,6 +36,8 @@ namespace Global.Dynamic
         public EmptyScenesWorldFactory EmptyScenesWorldFactory { get; private set; }
 
         public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; }
+
+        public IProfileRepository ProfileRepository { get; private set; }
 
         public void Dispose()
         {
@@ -99,6 +102,8 @@ namespace Global.Dynamic
 
             container.GlobalPlugins = globalPlugins;
             container.EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins);
+
+            container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData);
 
             return (container, true);
         }
