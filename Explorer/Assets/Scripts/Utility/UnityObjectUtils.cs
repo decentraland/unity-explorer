@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Cysharp.Threading.Tasks;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
@@ -8,7 +9,8 @@ namespace Utility
     {
         private static bool isQuitting;
 
-        public static bool IsQuitting => Application.isPlaying && isQuitting;
+        // Can't check Application.isPlaying if called from the background thread
+        public static bool IsQuitting => (!PlayerLoopHelper.IsMainThread || Application.isPlaying) && isQuitting;
 
         [RuntimeInitializeOnLoadMethod]
         private static void StartTrackingApplicationStatus()
