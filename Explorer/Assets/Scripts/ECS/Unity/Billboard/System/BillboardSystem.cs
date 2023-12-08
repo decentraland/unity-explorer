@@ -17,16 +17,11 @@ namespace ECS.Unity.Billboard.System
     [ThrottlingEnabled]
     public partial class BillboardSystem : BaseUnityLoopSystem
     {
-        private readonly QueryDescription cameraQueryDescription;
+        private readonly IExposedCameraData exposedCameraData;
 
-        public BillboardSystem(World world) : this(
-            world,
-            new QueryDescription().WithAll<CameraComponent, TransformComponent>()
-        ) { }
-
-        public BillboardSystem(World world, QueryDescription cameraQueryDescription) : base(world)
+        public BillboardSystem(World world, IExposedCameraData exposedCameraData) : base(world)
         {
-            this.cameraQueryDescription = cameraQueryDescription;
+            this.exposedCameraData = exposedCameraData;
         }
 
         protected override void Update(float t)
@@ -37,6 +32,7 @@ namespace ECS.Unity.Billboard.System
         }
 
         [Query]
+        [All(typeof(TransformComponent))]
         [None(typeof(BillboardComponent))]
         private void InstantiateComponents(in Entity entity, ref PBBillboard pbBillboard)
         {
@@ -62,19 +58,17 @@ namespace ECS.Unity.Billboard.System
         {
             var delta = transform.Transform.position - cameraPosition;
             delta.Scale(billboard.AsVector3());
+
+            if (delta == Vector3.zero)
+                return;
+
             transform.Transform.rotation = Quaternion.LookRotation(delta, Vector3.up);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Vector3 CameraPosition()
         {
-            var cameraEntity = World.GetSingleInstanceEntityOrNull(cameraQueryDescription);
-
-            if (cameraEntity.IsNull())
-                return Vector3.zero;
-
-            var component = World.Get<TransformComponent>(cameraEntity);
-            return component.Transform.position;
+            return exposedCameraData.WorldPosition;
         }
     }
 }
