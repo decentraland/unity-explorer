@@ -5,24 +5,29 @@ namespace ECS.Unity.Billboard.Component
 {
     public struct BillboardComponent
     {
-        public bool BlockX;
-        public bool BlockY;
-        public bool BlockZ;
+        public bool UseX;
+        public bool UseY;
+        public bool UseZ;
 
-        public BillboardComponent(PBBillboard pbBillboard)
+        public BillboardComponent(PBBillboard pbBillboard) : this(
+            pbBillboard.BillboardMode.HasFlag(BillboardMode.BmX),
+            pbBillboard.BillboardMode.HasFlag(BillboardMode.BmY),
+            pbBillboard.BillboardMode.HasFlag(BillboardMode.BmZ)
+        ) { }
+
+        public BillboardComponent(bool useX, bool useY, bool useZ)
         {
-            var mode = pbBillboard.BillboardMode;
-            BlockX = mode.HasFlag(BillboardMode.BmX);
-            BlockY = mode.HasFlag(BillboardMode.BmY);
-            BlockZ = mode.HasFlag(BillboardMode.BmZ);
+            UseX = useX;
+            UseY = useY;
+            UseZ = useZ;
         }
 
         public void Apply(PBBillboard pbBillboard)
         {
             var mode = pbBillboard.BillboardMode;
-            BlockX = mode.HasFlag(BillboardMode.BmX);
-            BlockY = mode.HasFlag(BillboardMode.BmY);
-            BlockZ = mode.HasFlag(BillboardMode.BmZ);
+            UseX = mode.HasFlag(BillboardMode.BmX);
+            UseY = mode.HasFlag(BillboardMode.BmY);
+            UseZ = mode.HasFlag(BillboardMode.BmZ);
         }
 
         public Vector3 AsVector3()
@@ -33,10 +38,15 @@ namespace ECS.Unity.Billboard.Component
             }
 
             return new Vector3(
-                AsFloat(BlockX),
-                AsFloat(BlockY),
-                AsFloat(BlockZ)
+                AsFloat(UseX),
+                AsFloat(UseY),
+                AsFloat(UseZ)
             );
+        }
+
+        public override string ToString()
+        {
+            return $"Billboard: {{x: {UseX}; y: {UseY}; z: {UseZ}}}";
         }
     }
 }
