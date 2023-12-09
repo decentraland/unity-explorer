@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -24,19 +25,14 @@ namespace DCL.Profiles
         public Color Color { get; set; }
     }
 
-    public class Snapshot
-    {
-        public string Face256 { get; set; }
-        public string Body { get; set; }
-    }
-
     public class Avatar
     {
         public string BodyShape { get; set; }
         public HashSet<string> Wearables { get; set; }
         public HashSet<string> ForceRender { get; set; }
         public Dictionary<string, Emote> Emotes { get; set; }
-        public Snapshot Snapshot { get; set; }
+        public URLAddress FaceSnapshotUrl { get; set; }
+        public URLAddress BodySnapshotUrl { get; set; }
         public Eyes Eyes { get; set; }
         public Hair Hair { get; set; }
         public Skin Skin { get; set; }

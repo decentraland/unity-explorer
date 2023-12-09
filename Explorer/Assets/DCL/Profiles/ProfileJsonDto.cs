@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -72,13 +73,6 @@ namespace DCL.Profiles
     {
         public string face256;
         public string body;
-
-        public Snapshot ToSnapshot() =>
-            new ()
-            {
-                Body = body,
-                Face256 = face256,
-            };
     }
 
     [Serializable]
@@ -102,7 +96,8 @@ namespace DCL.Profiles
                 Eyes = eyes.ToEyes(),
                 Hair = hair.ToHair(),
                 Skin = skin.ToSkin(),
-                Snapshot = snapshots.ToSnapshot(),
+                FaceSnapshotUrl = URLAddress.FromString(snapshots.face256),
+                BodySnapshotUrl = URLAddress.FromString(snapshots.body),
                 BodyShape = bodyShape,
                 ForceRender = new HashSet<string>(forceRender),
             };
