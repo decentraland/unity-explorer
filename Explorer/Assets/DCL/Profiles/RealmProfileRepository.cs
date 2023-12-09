@@ -38,7 +38,7 @@ namespace DCL.Profiles
                 GenericGetRequest response = await webRequestController.GetAsync(new CommonArguments(url, timeout: 30), ct);
 
                 GetProfileJsonRootDto root = await response.CreateFromJson<GetProfileJsonRootDto>(WRJsonParser.Unity,
-                    createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, version, exception));
+                    createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, version, text, exception));
 
                 return root.avatars.Length == 0 ? null : root.avatars[0].ToProfile();
             }
