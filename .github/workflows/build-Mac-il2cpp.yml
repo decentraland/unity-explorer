@@ -30,7 +30,7 @@ jobs:
     runs-on: ${{ matrix.dockerImage }}
     steps:
       - name: Install PowerShell
-        run: brew install --cask powershell
+        run: brew install powershell
       # This step is required if PowerShell is not pre-installed on the runner.
 
       - name: Set SHA env variable
