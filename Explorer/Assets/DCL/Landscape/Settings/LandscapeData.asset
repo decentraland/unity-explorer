@@ -12,3 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea8585d6b62c43dc930571ffc5cd35f8, type: 3}
   m_Name: LandscapeData
   m_EditorClassIdentifier: 
+  density: 16
+  TreeNoiseData: {fileID: 11400000, guid: a38a82b2a2b243b4eab4e678a9ba4850, type: 2}
+  debugParcelObject: {fileID: 8748527604498463010, guid: b29dd135c932b9046bf7cefc66c1171e, type: 3}
+  debugSubEntityObject: {fileID: 4115403110872987972, guid: f94ab47697315f8429f676ab58d951d8, type: 3}

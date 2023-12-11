@@ -166,6 +166,7 @@ namespace Global
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif
+                new LandscapePlugin(addressablesProvisioner),
             };
 
             container.SharedPlugins = new IDCLGlobalPlugin[]
