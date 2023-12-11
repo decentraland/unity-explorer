@@ -63,6 +63,11 @@ namespace ECS.Unity.Transforms.Components
             Cached.WorldRotation = Transform.rotation;
         }
 
+        public void SetTransform(Transform transform)
+        {
+            SetTransform(transform.localPosition, transform.localRotation, transform.localScale);
+        }
+
         Transform IPoolableComponentProvider<Transform>.PoolableComponent => Transform;
 
         Type IPoolableComponentProvider<Transform>.PoolableComponentType => typeof(Transform);

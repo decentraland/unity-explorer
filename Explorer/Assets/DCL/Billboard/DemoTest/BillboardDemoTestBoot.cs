@@ -1,11 +1,12 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Billboard.Extensions;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
-using ECS.Unity.Billboard.Component;
 using ECS.Unity.Billboard.DebugTools;
 using ECS.Unity.Billboard.System;
 using ECS.Unity.Transforms.Components;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using UnityEngine;
 using CameraType = DCL.ECSComponents.CameraType;
@@ -17,6 +18,7 @@ namespace ECS.Unity.Billboard.DemoTest
         [SerializeField] private float cubeStep = 3;
         [SerializeField] private Vector3 cubeSize = new Vector3(1.6f, 1, 0.5f);
         [SerializeField] private int randomCounts = 5;
+        [SerializeField] private int countInRow = 10;
 
         private async void Start()
         {
@@ -24,8 +26,8 @@ namespace ECS.Unity.Billboard.DemoTest
             var system = new BillboardSystem(world, new FromTransformExposedCameraData());
             FillUp(world);
 
-            var query = new QueryDescription().WithAll<BillboardComponent, TransformComponent>();
-            world.Query(in query, (ref BillboardComponent b, ref TransformComponent t) => t.Transform.name = b.ToString());
+            var query = new QueryDescription().WithAll<PBBillboard, TransformComponent>();
+            world.Query(in query, (ref PBBillboard b, ref TransformComponent t) => t.Transform.name = b.AsString());
 
             while (this)
             {
@@ -37,7 +39,7 @@ namespace ECS.Unity.Billboard.DemoTest
         private void FillUp(World world)
         {
             var billboards = new[] { BillboardMode.BmAll, BillboardMode.BmNone, BillboardMode.BmX, BillboardMode.BmY, BillboardMode.BmZ }
-                            .Select((e, i) => world.Create(new BillboardComponent(e), NewTransform(i)))
+                            .Select((e, i) => world.Create(new PBBillboard { BillboardMode = e }, NewTransform(i)))
                             .ToList();
 
             Enumerable
@@ -50,19 +52,32 @@ namespace ECS.Unity.Billboard.DemoTest
         {
             var t = GameObject.CreatePrimitive(PrimitiveType.Cube)!.transform!;
             t.localScale = cubeSize;
-            t.position = Vector3.right * cubeStep * offset;
+            int row = offset % countInRow;
+            int column = offset / countInRow;
+
+            t.position = (Vector3.right * row) + (Vector3.forward * column);
+            t.position *= cubeStep;
             t.gameObject.AddComponent<GizmosForward>();
-            return new TransformComponent(t);
+            var component = new TransformComponent(t);
+            component.SetTransform(t);
+            return component;
         }
 
-        private static BillboardComponent RandomBillboard()
+        [SuppressMessage("ReSharper", "BitwiseOperatorOnEnumWithoutFlags")]
+        private static PBBillboard RandomBillboard()
         {
             static bool RandomBool()
             {
                 return Random.value > 0.5f;
             }
 
-            return new BillboardComponent(RandomBool(), RandomBool(), RandomBool());
+            var mode = BillboardMode.BmNone;
+
+            if (RandomBool()) mode |= BillboardMode.BmX;
+            if (RandomBool()) mode |= BillboardMode.BmY;
+            if (RandomBool()) mode |= BillboardMode.BmZ;
+
+            return new PBBillboard { BillboardMode = mode };
         }
 
         private class FromTransformExposedCameraData : IExposedCameraData

@@ -168,6 +168,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cubeStep: 3
+  cubeSize: {x: 1.6, y: 1, z: 0.5}
+  randomCounts: 500
+  countInRow: 22
 --- !u!1 &429651225
 GameObject:
   m_ObjectHideFlags: 0
