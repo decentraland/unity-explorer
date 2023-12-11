@@ -4,7 +4,7 @@ using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated;
 using DCL.Interaction.PlayerOriginated.Systems;
 using DCL.Interaction.Raycast.Systems;
-using DCL.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiling;
 using ECS.LifeCycle;

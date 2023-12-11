@@ -8,8 +8,8 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.PerformanceBudgeting;
-using ECS.ComponentsPooling;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
@@ -75,7 +75,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             avatarShapeComponent = new AvatarShapeComponent("TEST_AVATAR", "TEST_ID", BodyShape.MALE, promise,
                 randomSkinColor, randomHairColor);
 
-            system = new AvatarInstantiatorSystem(world, budgetProvider, avatarPoolRegistry, materialPool, computeShaderPool,
+            system = new AvatarInstantiatorSystem(world, budgetProvider, budgetProvider, avatarPoolRegistry, materialPool, computeShaderPool,
                 new TextureArrayContainer(), Substitute.For<IWearableAssetsCache>(), new ComputeShaderSkinning(), new FixedComputeBufferHandler(10000, 4, 4));
         }
 
@@ -97,19 +97,24 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
             skinnedMeshRenderer.sharedMesh.bindposes = new Matrix4x4[ComputeShaderConstants.BONE_COUNT];
 
             //Creating a fake standard material
-            var fakeABMaterial = new Material(Shader.Find("Standard"));
-            fakeABMaterial.name = materialName;
+            var fakeABMaterial = new Material(Shader.Find("Standard"))
+            {
+                name = materialName,
+            };
+
             skinnedMeshRenderer.material = fakeABMaterial;
 
             var rendererInfo = new WearableAsset.RendererInfo(skinnedMeshRenderer, fakeABMaterial);
 
-            assetBundleData[BodyShape.MALE]
-                = new StreamableLoadingResult<WearableAsset>(new WearableAsset(avatarGameObject,
-                    new List<WearableAsset.RendererInfo>
-                        { rendererInfo }));
+            var wearableAsset = new WearableAsset(avatarGameObject, new List<WearableAsset.RendererInfo> { rendererInfo }, null);
+            wearableAsset.AddReference();
 
-            mockWearable.WearableAssets.Returns(assetBundleData);
+            assetBundleData[BodyShape.MALE]
+                = new StreamableLoadingResult<WearableAsset>(wearableAsset);
+
+            mockWearable.WearableAssetResults.Returns(assetBundleData);
             mockWearable.GetCategory().Returns(category);
+
             return mockWearable;
         }
 
@@ -135,10 +140,10 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         [Test]
         public async Task UpdateInstantiatedAvatar()
         {
-            //Arrange
+            // Arrange
             await InstantiateAvatar();
 
-            //Act
+            // Act
             var newPromise = Promise.Create(world,
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(BodyShape.MALE, new List<string>()),
                 new PartitionComponent());
@@ -147,9 +152,13 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             world.Get<AvatarShapeComponent>(avatarEntity).IsDirty = true;
             world.Get<AvatarShapeComponent>(avatarEntity).WearablePromise = newPromise;
+
             system.Update(0);
 
-            //Assert
+            foreach (CachedWearable wearable in world.Get<AvatarShapeComponent>(avatarEntity).InstantiatedWearables)
+                wearable.OriginalAsset.AddReference();
+
+            // Assert
             Assert.IsFalse(world.Get<AvatarShapeComponent>(avatarEntity).IsDirty);
             Assert.AreEqual(world.Get<AvatarShapeComponent>(avatarEntity).InstantiatedWearables.Count, 1);
         }

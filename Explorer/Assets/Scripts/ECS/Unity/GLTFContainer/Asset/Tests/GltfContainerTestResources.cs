@@ -27,7 +27,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             assetBundle = DownloadHandlerAssetBundle.GetContent(wr);
 
             GameObject gameObject = assetBundle.LoadAllAssets<GameObject>().Length > 0 ? assetBundle.LoadAllAssets<GameObject>()[0] : null;
-            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, null, gameObject));
+            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, null, gameObject, null));
         }
 
         internal void UnloadBundle()

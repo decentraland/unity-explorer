@@ -1,7 +1,7 @@
-﻿using Google.Protobuf;
+﻿using DCL.Optimization.Pools;
+using Google.Protobuf;
 using System;
 using System.Collections.Generic;
-using Utility.Pool;
 
 namespace CrdtEcsBridge.Components
 {

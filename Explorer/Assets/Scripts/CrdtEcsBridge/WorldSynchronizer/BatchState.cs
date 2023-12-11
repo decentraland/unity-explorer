@@ -1,6 +1,6 @@
 using CRDT.Protocol;
 using CrdtEcsBridge.Components;
-using Utility.ThreadSafePool;
+using DCL.Optimization.ThreadSafePool;
 
 namespace CrdtEcsBridge.WorldSynchronizer
 {

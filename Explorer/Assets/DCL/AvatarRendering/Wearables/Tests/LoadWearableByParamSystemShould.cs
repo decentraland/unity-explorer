@@ -13,7 +13,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using Utility.Multithreading;
-using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.Wearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
 
 namespace DCL.AvatarRendering.Wearables.Tests
 {
@@ -43,17 +42,17 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             base.AssertSuccess(asset);
 
-            foreach (string wearableCatalogKey in wearableCatalog.wearableDictionary.Keys)
+            foreach (string wearableCatalogKey in wearableCatalog.wearablesCache.Keys)
                 Debug.Log(wearableCatalogKey);
 
-            Assert.AreEqual(wearableCatalog.wearableDictionary.Count, 1);
-            Assert.NotNull(wearableCatalog.wearableDictionary[existingURN]);
+            Assert.AreEqual(wearableCatalog.wearablesCache.Count, 1);
+            Assert.NotNull(wearableCatalog.wearablesCache[existingURN]);
         }
 
         [Test]
         public async Task ConcludeSuccessOnExistingWearable()
         {
-            wearableCatalog.wearableDictionary.Add(existingURN, Substitute.For<IWearable>());
+            wearableCatalog.wearablesCache.Add(existingURN, Substitute.For<IWearable>());
             await ConcludeSuccess();
         }
 

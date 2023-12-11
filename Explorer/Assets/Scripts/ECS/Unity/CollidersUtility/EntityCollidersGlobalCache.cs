@@ -1,7 +1,7 @@
+using DCL.Optimization.Pools;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
-using Utility.Pool;
 
 namespace DCL.Interaction.Utility
 {

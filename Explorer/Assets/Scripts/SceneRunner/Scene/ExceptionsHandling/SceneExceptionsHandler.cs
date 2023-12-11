@@ -1,10 +1,10 @@
 using Arch.SystemGroups;
 using DCL.Diagnostics;
+using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Linq;
 using UnityEngine;
-using Utility.Pool;
-using Utility.ThreadSafePool;
 
 namespace SceneRunner.Scene.ExceptionsHandling
 {
@@ -113,6 +113,9 @@ namespace SceneRunner.Scene.ExceptionsHandling
 
         public void OnJavaScriptException(Exception exception)
         {
+            // Can be already disposed of
+            if (sceneState == null) return;
+
             // For javascript no tolerance
             sceneState.State = SceneState.JavaScriptError;
 

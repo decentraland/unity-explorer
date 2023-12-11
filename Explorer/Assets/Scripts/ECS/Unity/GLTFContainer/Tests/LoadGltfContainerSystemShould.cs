@@ -1,6 +1,6 @@
 ﻿using Arch.Core;
 using DCL.ECSComponents;
-using DCL.PerformanceBudgeting;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;

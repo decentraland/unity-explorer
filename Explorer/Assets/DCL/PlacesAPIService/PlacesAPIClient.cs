@@ -1,11 +1,11 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Optimization.Pools;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using Utility.Pool;
 
 namespace DCL.PlacesAPIService
 {

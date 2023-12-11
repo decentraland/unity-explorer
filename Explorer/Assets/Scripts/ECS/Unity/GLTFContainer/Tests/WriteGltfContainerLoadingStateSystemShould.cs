@@ -1,7 +1,7 @@
 ﻿using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
-using ECS.ComponentsPooling;
+using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using ECS.Unity.GLTFContainer.Components;
