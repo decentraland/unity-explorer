@@ -17,7 +17,7 @@ namespace DCL.WebRequests.Analytics
         private readonly IWebRequestsAnalyticsContainer webRequestsAnalyticsContainer;
         private readonly Type[] requestTypes;
 
-        private readonly Dictionary<Type, ElementBinding<ulong>> ongoingRequests = new ();
+        private readonly Dictionary<Type, Dictionary<string, ElementBinding<ulong>>> ongoingRequests = new ();
         private readonly DebugWidgetVisibilityBinding visibilityBinding;
 
         private float lastTimeSinceMetricsUpdate;
@@ -35,10 +35,14 @@ namespace DCL.WebRequests.Analytics
 
             foreach (Type requestType in requestTypes)
             {
-                var binding = new ElementBinding<ulong>(0);
-                ongoingRequests[requestType] = binding;
+                var bindings = new Dictionary<string, ElementBinding<ulong>>(0);
+                var metrics = webRequestsAnalyticsContainer.GetMetric(requestType);
+                foreach (IRequestMetric metric in metrics)
+                {
+                    widget.AddMarker(requestType.Name + metric.Name, bindings[metric.Name], DebugLongMarkerDef.Unit.NoFormat);
+                }
 
-                widget.AddMarker(requestType.Name, binding, DebugLongMarkerDef.Unit.NoFormat);
+                ongoingRequests[requestType] = bindings;
             }
         }
 
@@ -49,7 +53,13 @@ namespace DCL.WebRequests.Analytics
                 lastTimeSinceMetricsUpdate = 0;
 
                 foreach (Type requestType in requestTypes)
-                    ongoingRequests[requestType].Value = (ulong)webRequestsAnalyticsContainer.GetMetric(requestType);
+                {
+                    var metrics = webRequestsAnalyticsContainer.GetMetric(requestType);
+                    foreach (var metric in metrics)
+                    {
+                        ongoingRequests[requestType][metric.Name].Value = (ulong)metric.GetMetric();
+                    }
+                }
             }
 
             lastTimeSinceMetricsUpdate += t;

@@ -9,6 +9,8 @@
         public static WebRequestsContainer Create()
         {
             var analyticsContainer = new WebRequestsAnalyticsContainer();
+            analyticsContainer.AddMetric<RequestMetricCounter>();
+
             var webRequestController = new WebRequestController(analyticsContainer);
             return new WebRequestsContainer { WebRequestController = webRequestController, AnalyticsContainer = analyticsContainer };
         }
