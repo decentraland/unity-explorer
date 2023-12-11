@@ -96,7 +96,7 @@ namespace DCL.WebRequests
                 unityWebRequest.timeout = commonArguments.Timeout;
 
                 if (signInfo.HasValue)
-                    await SignRequest(signInfo.Value, unityWebRequest);
+                    SignRequest(signInfo.Value, unityWebRequest);
 
                 if (headersInfo.HasValue)
                     SetHeaders(unityWebRequest, headersInfo.Value);
@@ -144,7 +144,7 @@ namespace DCL.WebRequests
             }
         }
 
-        private async UniTask SignRequest(WebRequestSignInfo signInfo, UnityWebRequest unityWebRequest)
+        private void SignRequest(WebRequestSignInfo signInfo, UnityWebRequest unityWebRequest)
         {
             AuthChain authChain = web3Authenticator.Identity.Sign(signInfo.SignUrl);
 
