@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Backpack;
 using DCL.Navmap;
 using DCL.Settings;
 using DCL.UI;
@@ -15,6 +16,7 @@ namespace DCL.ExplorePanel
     {
         private readonly NavmapController navmapController;
         private readonly SettingsController settingsController;
+        private readonly BackpackController backpackController;
         private SectionSelectorController<ExploreSections> sectionSelectorController;
         private CancellationTokenSource animationCts;
         private TabSelectorView previousSelector;
@@ -24,10 +26,12 @@ namespace DCL.ExplorePanel
         public ExplorePanelController(
             ViewFactoryMethod viewFactory,
             NavmapController navmapController,
-            SettingsController settingsController) : base(viewFactory)
+            SettingsController settingsController,
+            BackpackController backpackController) : base(viewFactory)
         {
             this.navmapController = navmapController;
             this.settingsController = settingsController;
+            this.backpackController = backpackController;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
@@ -38,6 +42,7 @@ namespace DCL.ExplorePanel
             {
                 { ExploreSections.Navmap, navmapController },
                 { ExploreSections.Settings, settingsController },
+                { ExploreSections.Backpack, backpackController }
             };
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);

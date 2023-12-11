@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Backpack;
 using DCL.ExplorePanel;
 using DCL.Navmap;
 using DCL.ParcelsService;
@@ -45,8 +46,9 @@ namespace DCL.PluginSystem.Global
             navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, teleportController);
             await navmapController.InitialiseAssetsAsync(assetsProvisioner, ct);
             SettingsController settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
+            BackpackController backpackController = new BackpackController(explorePanelView.GetComponentInChildren<BackpackView>());
 
-            mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController));
+            mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackController));
 
             mvcManager.RegisterController(new PersistentExplorePanelOpenerController(
                 PersistentExplorePanelOpenerController.CreateLazily(

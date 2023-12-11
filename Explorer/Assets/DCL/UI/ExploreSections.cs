@@ -3,7 +3,7 @@ namespace DCL.UI
     public enum ExploreSections
     {
         Navmap,
-        Settings,
+        Settings,Backpack
     }
 
     public enum NavmapSections
