@@ -15,6 +15,12 @@ namespace DCL.Minimap
         internal Button minimapRendererButton { get; private set; }
 
         [field: SerializeField]
+        internal Button sideMenuButton { get; private set; }
+
+        [field: SerializeField]
+        internal GameObject sideMenu { get; private set; }
+
+        [field: SerializeField]
         internal PixelPerfectMapRendererTextureProvider pixelPerfectMapRendererTextureProvider { get; private set; }
 
         [field: SerializeField]
@@ -24,6 +30,12 @@ namespace DCL.Minimap
         internal Button expandMinimapButton { get; private set; }
 
         [field: SerializeField]
+        internal GameObject arrowDown { get; private set; }
+
+        [field: SerializeField]
+        internal GameObject arrowUp { get; private set; }
+
+        [field: SerializeField]
         internal TMP_Text placeNameText { get; private set; }
 
         [field: SerializeField]
@@ -31,5 +43,8 @@ namespace DCL.Minimap
 
         [field: SerializeField]
         internal RectTransform minimapContainer  { get; private set; }
+
+        [field: SerializeField]
+        internal SideMenuView sideMenuView  { get; private set; }
     }
 }
