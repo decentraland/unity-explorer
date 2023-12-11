@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
+using DCL.Web3Authentication;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
@@ -34,8 +35,13 @@ namespace Global.Static
         {
             try
             {
+                var web3Authenticator = new FakeWeb3Authenticator();
+                await web3Authenticator.LoginAsync(ct);
+
                 SceneSharedContainer sceneSharedContainer;
-                (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettingsContainer, scenePluginSettingsContainer, ct);
+
+                (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettingsContainer, scenePluginSettingsContainer,
+                    web3Authenticator, ct);
                 sceneLauncher.Initialize(sceneSharedContainer, destroyCancellationToken);
             }
             catch (OperationCanceledException) { }
@@ -50,10 +56,12 @@ namespace Global.Static
         public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> InstallAsync(
             IPluginSettingsContainer globalSettingsContainer,
             IPluginSettingsContainer sceneSettingsContainer,
+            IWeb3Authenticator web3Authenticator,
             CancellationToken ct)
         {
             // First load the common global plugin
-            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer, ct);
+            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer,
+                web3Authenticator, ct);
 
             if (!isLoaded)
                 GameReports.PrintIsDead();
