@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   asset: {fileID: 5385978521614614692, guid: d68416e003109604cac4c67f82e2f109, type: 3}
   randomization:
-    randomRotationX: {x: -10, y: 10}
+    randomRotationX: {x: 0, y: 0}
     randomRotationY: {x: 0, y: 360}
-    randomRotationZ: {x: -10, y: 10}
+    randomRotationZ: {x: 0, y: 0}
     proportionalScale: 1
     randomScale: {x: 1, y: 4}
     randomScaleX: {x: 0, y: 0}
