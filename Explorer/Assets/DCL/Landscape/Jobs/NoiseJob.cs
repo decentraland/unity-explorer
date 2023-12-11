@@ -1,4 +1,5 @@
 ﻿using DCL.Landscape.Config;
+using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -15,7 +16,6 @@ namespace DCL.Landscape.Jobs
         SUBTRACT,
     }
 
-
     [BurstCompile(CompileSynchronously = true)]
     public struct NoiseJob : IJobParallelFor
     {
@@ -28,8 +28,14 @@ namespace DCL.Landscape.Jobs
         [ReadOnly] private readonly float2 offset;
         [ReadOnly] private readonly NoiseJobOperation operation;
 
-        public NoiseJob(ref NativeArray<float> result, in NativeArray<float2> octaveOffsets, int width, int height, in NoiseSettings noiseSettings,
-            float maxHeight, float2 offset, NoiseJobOperation operation)
+        public NoiseJob(ref NativeArray<float> result,
+            in NativeArray<float2> octaveOffsets,
+            int width,
+            int height,
+            in NoiseSettings noiseSettings,
+            float maxHeight,
+            float2 offset,
+            NoiseJobOperation operation)
         {
             this.offset = offset;
             this.operation = operation;
@@ -58,8 +64,24 @@ namespace DCL.Landscape.Jobs
                 float sampleX = (x - halfWidth + OctaveOffsets[i].x + offset.x) / NoiseSettings.scale * frequency;
                 float sampleY = (y - halfHeight + OctaveOffsets[i].y + offset.y) / NoiseSettings.scale * frequency;
 
-                float perlinValue = (Mathf.PerlinNoise(sampleX, sampleY) * 2) - 1;
-                noiseHeight += perlinValue * amplitude;
+                float noiseValue = 0;
+
+                switch (NoiseSettings.noiseType)
+                {
+                    case NoiseType.PERLIN:
+                        noiseValue = noise.cnoise(new float2(sampleX, sampleY));
+                        break;
+                    case NoiseType.SIMPLEX:
+                        noiseValue = noise.snoise(new float2(sampleX, sampleY));
+                        break;
+                    case NoiseType.CELLULAR:
+                        noiseValue = noise.cellular(new float2(sampleX, sampleY)).x;
+                        break;
+                    default: throw new ArgumentOutOfRangeException();
+                }
+
+                noiseValue = (noiseValue * 2) - 1;
+                noiseHeight += noiseValue * amplitude;
 
                 amplitude *= NoiseSettings.persistance;
                 frequency *= NoiseSettings.lacunarity;

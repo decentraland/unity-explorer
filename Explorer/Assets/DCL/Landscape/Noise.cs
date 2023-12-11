@@ -42,6 +42,7 @@ namespace DCL.Landscape.Config
         public int seed;
         public Vector2 offset;
         public float cutoff;
+        public NoiseType noiseType;
 
         public void ValidateValues()
         {
@@ -50,5 +51,12 @@ namespace DCL.Landscape.Config
             lacunarity = Mathf.Max(lacunarity, 1);
             persistance = Mathf.Clamp01(persistance);
         }
+    }
+
+    public enum NoiseType
+    {
+        PERLIN,
+        SIMPLEX,
+        CELLULAR,
     }
 }

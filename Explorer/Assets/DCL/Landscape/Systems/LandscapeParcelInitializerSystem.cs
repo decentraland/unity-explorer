@@ -20,10 +20,7 @@ namespace DCL.Landscape.Systems
     public partial class LandscapeParcelInitializerSystem : BaseUnityLoopSystem
     {
         private readonly LandscapeData landscapeData;
-        private NativeArray<float2> octaveOffsets;
-        private float maxPossibleHeight;
         private readonly int worldSeed;
-        private NoiseData noiseData;
 
         private LandscapeParcelInitializerSystem(World world, LandscapeData landscapeData) : base(world)
         {
@@ -31,17 +28,6 @@ namespace DCL.Landscape.Systems
             this.landscapeData = landscapeData;
         }
 
-        public override void Initialize()
-        {
-            noiseData = landscapeData.TreeNoiseData;
-            octaveOffsets = new NativeArray<float2>(noiseData.settings.octaves, Allocator.Persistent);
-            maxPossibleHeight = Noise.CalculateOctaves(worldSeed, ref noiseData.settings, ref octaveOffsets);
-        }
-
-        public override void Dispose()
-        {
-            octaveOffsets.Dispose();
-        }
 
         protected override void Update(float t)
         {
@@ -53,33 +39,50 @@ namespace DCL.Landscape.Systems
         [All(typeof(LandscapeParcelInitialization))]
         private void InitializeLandscapeJobs(in Entity entity, in LandscapeParcel landscapeParcel)
         {
-            var parcelNoiseJob = new LandscapeParcelNoiseJob();
-            parcelNoiseJob.Results = new NativeArray<float>(landscapeData.density * landscapeData.density, Allocator.Persistent);
+            foreach (LandscapeAsset landscapeAsset in landscapeData.assets)
+            {
+                NoiseSettings noiseSettings = landscapeAsset.noiseData.settings;
 
-            var offset = new float2(landscapeParcel.Position.x, landscapeParcel.Position.z);
+                var octaveOffsets = new NativeArray<float2>(noiseSettings.octaves, Allocator.Persistent);
+                float maxPossibleHeight = Noise.CalculateOctaves(worldSeed, ref noiseSettings, ref octaveOffsets);
 
-            var noiseJob = new NoiseJob(
-                ref parcelNoiseJob.Results,
-                in octaveOffsets,
-                landscapeData.density,
-                landscapeData.density,
-                in noiseData.settings,
-                maxPossibleHeight,
-                offset,
-                NoiseJobOperation.SET
-            );
+                var parcelNoiseJob = new LandscapeParcelNoiseJob
+                {
+                    Parcel = entity,
+                    Results = new NativeArray<float>(landscapeData.density * landscapeData.density, Allocator.Persistent),
+                    OctaveOffsets = octaveOffsets,
+                    MaxPossibleHeight = maxPossibleHeight,
+                    LandscapeAsset = landscapeAsset,
+                };
 
-            parcelNoiseJob.Handle = noiseJob.Schedule(landscapeData.density * landscapeData.density, 32);
+                var offset = new float2(landscapeParcel.Position.x, landscapeParcel.Position.z);
 
-            World.Add(entity, parcelNoiseJob);
+                var noiseJob = new NoiseJob(
+                    ref parcelNoiseJob.Results,
+                    in octaveOffsets,
+                    landscapeData.density,
+                    landscapeData.density,
+                    in noiseSettings,
+                    maxPossibleHeight,
+                    offset,
+                    NoiseJobOperation.SET
+                );
+
+                parcelNoiseJob.Handle = noiseJob.Schedule(landscapeData.density * landscapeData.density, 32);
+
+                World.Create(parcelNoiseJob);
+            }
+
             World.Remove<LandscapeParcelInitialization>(entity);
         }
 
         [Query]
-        private void InitializeLandscapeSubEntities(in Entity entity, in LandscapeParcel landscapeParcel, ref LandscapeParcelNoiseJob landscapeParcelNoiseJob)
+        private void InitializeLandscapeSubEntities(in Entity entity, ref LandscapeParcelNoiseJob landscapeParcelNoiseJob)
         {
             if (!landscapeParcelNoiseJob.Handle.IsCompleted) return;
             landscapeParcelNoiseJob.Handle.Complete();
+
+            LandscapeParcel landscapeParcel = World.Get<LandscapeParcel>(landscapeParcelNoiseJob.Parcel);
 
             float dist = 16f / landscapeData.density;
             Vector3 basePos = landscapeParcel.Position;
@@ -97,15 +100,19 @@ namespace DCL.Landscape.Systems
 
                     if (objHeight > 0)
                     {
-                        Transform objTransform = Object.Instantiate(landscapeData.debugSubEntityObject, finalPosition, Quaternion.identity);
-                        noiseData.Randomization.ApplyRandomness(objTransform, landscapeParcel.Random, objHeight);
+                        // TRACK ASSETS IN THE ORIGINAL ENTITY?
+                        Transform objTransform = Object.Instantiate(landscapeParcelNoiseJob.LandscapeAsset.asset, finalPosition, Quaternion.identity);
+                        landscapeParcelNoiseJob.LandscapeAsset.randomization.ApplyRandomness(objTransform, landscapeParcel.Random, objHeight);
+
+                        landscapeParcel.Assets.Add(objTransform);
                         World.Create(new LandscapeEntity(finalPosition));
                     }
                 }
             }
 
             landscapeParcelNoiseJob.Results.Dispose();
-            World.Remove<LandscapeParcelNoiseJob>(entity);
+            landscapeParcelNoiseJob.OctaveOffsets.Dispose();
+            World.Destroy(entity);
         }
     }
 }

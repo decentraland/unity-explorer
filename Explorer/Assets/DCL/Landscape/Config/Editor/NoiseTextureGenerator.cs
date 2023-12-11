@@ -7,8 +7,8 @@ namespace DCL.Landscape.Config.Editor
 {
     public abstract class NoiseTextureGenerator : UnityEditor.Editor
     {
-        private int currentResolutionIndex = 1;
-        private int lastResolutionIndex = 1;
+        private static int currentResolutionIndex = 1;
+        private static int lastResolutionIndex = 1;
         private RenderTexture texture;
         private bool isInitialized;
         private bool isRendered;
@@ -34,7 +34,7 @@ namespace DCL.Landscape.Config.Editor
             bool newChanges = DrawDefaultInspector();
 
             GUILayout.Space(30);
-            GUILayout.Label("Preview Size");
+            GUILayout.Label("Zoom");
             currentResolutionIndex = GUILayout.Toolbar(currentResolutionIndex, NoiseEditorUtils.TEXTURE_STRINGS);
             bool resolutionChanged = lastResolutionIndex != currentResolutionIndex;
             bool renderTexture = newChanges || !isInitialized || resolutionChanged;
