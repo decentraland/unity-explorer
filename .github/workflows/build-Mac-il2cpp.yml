@@ -1,6 +1,12 @@
 name: Unity Mac Build IL2CPP
 
 on:
+  pull_request: 
+      types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
   workflow_dispatch: {}
   
 env:
@@ -23,12 +29,30 @@ jobs:
     name: Build
     runs-on: ${{ matrix.dockerImage }}
     steps:
+      - name: Install PowerShell
+        run: brew install --cask powershell
+      # This step is required if PowerShell is not pre-installed on the runner.
+
       - name: Set SHA env variable
+        shell: pwsh
         run: |         
-            SHORT_SHA=$(git rev-parse --short ${{ github.sha }})
-            echo "CUSTOM_SHA=$SHORT_SHA" >> $GITHUB_ENV
+            $eventName = "${{ github.event_name }}"
+
+            if ($eventName -eq "push") {
+                $LONG_SHA = "${{ github.sha }}"
+                $SHORT_SHA = ($LONG_SHA).Substring(0, 7)
+                Add-Content -Value "CUSTOM_SHA=$SHORT_SHA" -Path $env:GITHUB_ENV
+                Write-Output $SHORT_SHA
+            }
+            elseif ($eventName -eq "pull_request") {
+                $LONG_SHA = "${{ github.event.pull_request.head.sha }}"
+                $SHORT_SHA = ($LONG_SHA).Substring(0, 7)
+                Add-Content -Value "CUSTOM_SHA=$SHORT_SHA" -Path $env:GITHUB_ENV
+                Write-Output $SHORT_SHA
+            }
           
       - name: Set sentry env var
+        shell: pwsh
         run: |
           $branchName = "${{ github.ref }}"
           $SENTRY_ENVIRONMENT = "branch"
@@ -43,6 +67,7 @@ jobs:
           Write-Output $SENTRY_ENVIRONMENT
           
       - name: Enable or disable the upload of sentry debug symbols
+        shell: pwsh
         run: |
           $branchName = "${{ github.ref }}"
           $uploadSymbols = "false"
