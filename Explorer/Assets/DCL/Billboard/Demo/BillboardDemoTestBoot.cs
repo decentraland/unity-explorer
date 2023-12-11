@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.Billboard.Demo.World;
 using UnityEngine;
 
@@ -10,10 +11,11 @@ namespace DCL.Billboard.Demo
         [SerializeField] private int randomCounts = 5;
         [SerializeField] private int countInRow = 10;
 
-        private async void Start()
+        private void Start()
         {
-            await new BillboardDemoWorld(Arch.Core.World.Create(), cubeSize, countInRow, randomCounts, cubeStep)
-               .Run(destroyCancellationToken);
+            new BillboardDemoWorld(Arch.Core.World.Create(), cubeSize, countInRow, randomCounts, cubeStep)
+               .RunAsync(destroyCancellationToken)
+               .Forget();
         }
     }
 }

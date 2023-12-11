@@ -10,7 +10,7 @@ namespace DCL.Billboard.Demo.World
 
     public static class DemoWorldExtensions
     {
-        public static async UniTask Run(this IDemoWorld world, CancellationToken token)
+        public static async UniTask RunAsync(this IDemoWorld world, CancellationToken token)
         {
             while (token.IsCancellationRequested is false)
             {

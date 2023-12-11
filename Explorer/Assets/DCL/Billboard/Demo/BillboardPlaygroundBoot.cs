@@ -13,7 +13,12 @@ namespace DCL.Billboard.Demo
         [SerializeField] private bool useY;
         [SerializeField] private bool useZ;
 
-        private async void Start()
+        private void Start()
+        {
+            StartAsync();
+        }
+
+        private async void StartAsync()
         {
             var world = Arch.Core.World.Create();
             var demoWorld = new BillboardDemoWorld(world, Vector3.one, randomCounts: 0, predefinedBillboards: BillboardMode.BmNone);
