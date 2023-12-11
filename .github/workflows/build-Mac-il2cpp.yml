@@ -12,12 +12,12 @@ on:
 env:
   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
-    concurrency: 
-      group: build-il2cpp
-      cancel-in-progress: false
-
     strategy:
       max-parallel: 1
       matrix:
@@ -35,7 +35,7 @@ jobs:
 
       - name: Set SHA env variable
         shell: pwsh
-        run: |         
+        run: |
             $eventName = "${{ github.event_name }}"
 
             if ($eventName -eq "push") {
