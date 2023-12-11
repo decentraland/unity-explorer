@@ -3,9 +3,9 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.LifeCycle;
-using ECS.Unity.Billboard.System;
 using System.Collections.Generic;
 using System.Threading;
+using BillboardSystem = DCL.Billboard.System.BillboardSystem;
 
 namespace DCL.PluginSystem.World
 {

@@ -8,10 +8,9 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace ECS.Unity.Billboard.System
+namespace DCL.Billboard.System
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateAfter(typeof(UpdateTransformSystem))]

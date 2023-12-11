@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace ECS.Unity.Billboard.DebugTools
+namespace DCL.Billboard.DebugTools
 {
     public class GizmosForward : MonoBehaviour
     {
