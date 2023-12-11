@@ -38,6 +38,7 @@ namespace DCL.Minimap
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController mapCameraController;
         private Vector2Int previousParcelPosition;
+        private SideMenuController sideMenuController;
 
         public MinimapController(
             ViewFactoryMethod viewFactory,
@@ -56,10 +57,23 @@ namespace DCL.Minimap
         {
             viewInstance.expandMinimapButton.onClick.AddListener(ExpandMinimap);
             viewInstance.minimapRendererButton.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
+            viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
+            viewInstance.sideMenu.SetActive(false);
         }
 
-        private void ExpandMinimap() =>
-            viewInstance.minimapContainer.gameObject.SetActive(!viewInstance.minimapContainer.gameObject.activeSelf);
+        private void ExpandMinimap()
+        {
+            GameObject gameObject;
+            (gameObject = viewInstance.minimapContainer.gameObject).SetActive(!viewInstance.minimapContainer.gameObject.activeSelf);
+            viewInstance.arrowDown.SetActive(!gameObject.activeSelf);
+            viewInstance.arrowUp.SetActive(gameObject.activeSelf);
+            sideMenuController = new SideMenuController(viewInstance.sideMenuView);
+        }
+
+        private void OpenSideMenu()
+        {
+            viewInstance.sideMenu.SetActive(!viewInstance.sideMenu.activeSelf);
+        }
 
         [All(typeof(PlayerComponent))]
         [Query]
