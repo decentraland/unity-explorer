@@ -2,7 +2,8 @@
     "name": "Backpack",
     "rootNamespace": "",
     "references": [
-        "GUID:e169fa6683c924c7e99a85981a91d953"
+        "GUID:e169fa6683c924c7e99a85981a91d953",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
