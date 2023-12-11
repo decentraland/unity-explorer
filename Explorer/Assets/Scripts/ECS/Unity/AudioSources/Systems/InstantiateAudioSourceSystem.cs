@@ -9,6 +9,7 @@ using ECS.Unity.AudioSources.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
 using UnityEngine;
+using Utility;
 
 namespace ECS.Unity.AudioSources.Systems
 {
@@ -33,14 +34,27 @@ namespace ECS.Unity.AudioSources.Systems
         [None(typeof(AudioSourceComponent))]
         private void InstantiateAudioSource(in Entity entity, ref PBAudioSource sdkAudioSource, ref TransformComponent entityTransform)
         {
-            // entityTransform.Transform.
-            Debug.Log($"VV: {sdkAudioSource.AudioClipUrl} {sdkAudioSource}");
+            // Debug.Log($"VV: {assetBundleResult.Asset}");
 
-            var audioSource = audioSourcesPool.Get();
+            AudioSource audioSource = audioSourcesPool.Get();
+
+            audioSource.loop = sdkAudioSource.Loop;
+            audioSource.pitch = sdkAudioSource.Pitch;
+            audioSource.volume = sdkAudioSource.Volume;
+
+            audioSource.playOnAwake = false;
+            if (sdkAudioSource.Playing && audioSource.clip != null)
+                audioSource.Play();
+
+            // sdkAudioSource.AudioClipUrl;
+
             var component = new AudioSourceComponent();
             component.AudioSource = audioSource;
 
-            // Instantiate(entity, crdtEntity, setupColliderCases[sdkComponent.MeshCase], ref component, ref sdkComponent, ref transform);
+            Transform rendererTransform = audioSource.transform;
+            rendererTransform.SetParent(entityTransform.Transform, false);
+            rendererTransform.ResetLocalTRS();
+
             World.Add(entity, component);
         }
     }
