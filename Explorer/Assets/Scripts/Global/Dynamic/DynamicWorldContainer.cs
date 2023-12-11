@@ -6,6 +6,7 @@ using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.Web3Authentication;
 using DCL.Profiles;
 using DCL.WebRequests.Analytics;
 using ECS;
@@ -37,6 +38,8 @@ namespace Global.Dynamic
 
         public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; }
 
+        public IWeb3Authenticator Web3Authenticator { get; private set; }
+
         public IProfileRepository ProfileRepository { get; private set; }
 
         public void Dispose()
@@ -50,7 +53,8 @@ namespace Global.Dynamic
             CancellationToken ct,
             UIDocument rootUIDocument,
             IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius,
-            DynamicSettings dynamicSettings)
+            DynamicSettings dynamicSettings,
+            IWeb3Authenticator web3Authenticator)
         {
             var container = new DynamicWorldContainer();
             (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
@@ -102,6 +106,8 @@ namespace Global.Dynamic
 
             container.GlobalPlugins = globalPlugins;
             container.EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins);
+
+            container.Web3Authenticator = web3Authenticator;
 
             container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData);
 

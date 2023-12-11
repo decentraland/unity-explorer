@@ -32,6 +32,9 @@ namespace DCL.Navmap
         public Button closeButton;
 
         [field: SerializeField]
+        public Button backButton;
+
+        [field: SerializeField]
         public Button jumpInButton;
 
         [field: SerializeField]
@@ -54,6 +57,9 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public TMP_Text parcelsCount;
+
+        [field: SerializeField]
+        public GameObject appearsIn;
 
         [field: SerializeField]
         public MultiStateButtonView likeButton;

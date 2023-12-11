@@ -1,6 +1,8 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
+using DCL.Web3Authentication;
 using Global.Static;
+using NSubstitute;
 using System.Threading;
 using UnityEngine.AddressableAssets;
 
@@ -15,7 +17,9 @@ namespace Global.Tests
         {
             PluginSettingsContainer globalSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(GLOBAL_CONTAINER_ADDRESS);
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
-            return await StaticSceneLauncher.InstallAsync(globalSettingsContainer, sceneSettingsContainer, CancellationToken.None);
+
+            return await StaticSceneLauncher.InstallAsync(globalSettingsContainer, sceneSettingsContainer,
+                Substitute.For<IWeb3Authenticator>(), CancellationToken.None);
         }
     }
 }
