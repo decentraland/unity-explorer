@@ -2,11 +2,17 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Landscape.Settings;
+using DCL.Landscape.Systems;
+using DCL.PluginSystem.World;
+using DCL.PluginSystem.World.Dependencies;
+using ECS.LifeCycle;
+using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace DCL.PluginSystem.Global
 {
-    public class LandscapePlugin : IDCLGlobalPlugin<LandscapeSettings>
+    public class LandscapePlugin : IDCLWorldPlugin<LandscapeSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private ProvidedAsset<LandscapeData> landscapeData;
@@ -21,19 +27,16 @@ namespace DCL.PluginSystem.Global
             landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        {
-            // Do we need the actual world or we can use a parallel one?
-            Arch.Core.World world = builder.World;
-
-            // add required entities
-
-            // add reqiored systems
-        }
-
         public void Dispose()
         {
             landscapeData.Dispose();
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems) { }
+
+        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies)
+        {
+            LandscapeParcelInitializerSystem.InjectToWorld(ref builder, landscapeData.Value);
         }
     }
 }

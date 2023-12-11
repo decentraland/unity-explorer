@@ -7,6 +7,15 @@ using UnityEngine;
 
 namespace DCL.Landscape.Jobs
 {
+    public enum NoiseJobOperation
+    {
+        SET,
+        ADD,
+        MULTIPLY,
+        SUBTRACT,
+    }
+
+
     [BurstCompile(CompileSynchronously = true)]
     public struct NoiseJob : IJobParallelFor
     {
@@ -16,6 +25,21 @@ namespace DCL.Landscape.Jobs
         [ReadOnly] public int Height;
         [ReadOnly] public NoiseSettings NoiseSettings;
         [ReadOnly] public float MaxHeight;
+        [ReadOnly] private readonly float2 offset;
+        [ReadOnly] private readonly NoiseJobOperation operation;
+
+        public NoiseJob(ref NativeArray<float> result, in NativeArray<float2> octaveOffsets, int width, int height, in NoiseSettings noiseSettings,
+            float maxHeight, float2 offset, NoiseJobOperation operation)
+        {
+            this.offset = offset;
+            this.operation = operation;
+            Result = result;
+            OctaveOffsets = octaveOffsets;
+            Width = width;
+            Height = height;
+            NoiseSettings = noiseSettings;
+            MaxHeight = maxHeight;
+        }
 
         public void Execute(int index)
         {
@@ -31,8 +55,8 @@ namespace DCL.Landscape.Jobs
 
             for (var i = 0; i < NoiseSettings.octaves; i++)
             {
-                float sampleX = (x - halfWidth + OctaveOffsets[i].x) / NoiseSettings.scale * frequency;
-                float sampleY = (y - halfHeight + OctaveOffsets[i].y) / NoiseSettings.scale * frequency;
+                float sampleX = (x - halfWidth + OctaveOffsets[i].x + offset.x) / NoiseSettings.scale * frequency;
+                float sampleY = (y - halfHeight + OctaveOffsets[i].y + offset.y) / NoiseSettings.scale * frequency;
 
                 float perlinValue = (Mathf.PerlinNoise(sampleX, sampleY) * 2) - 1;
                 noiseHeight += perlinValue * amplitude;
@@ -41,12 +65,31 @@ namespace DCL.Landscape.Jobs
                 frequency *= NoiseSettings.lacunarity;
             }
 
-            Result[index] = NoiseSettings.invert ? -noiseHeight : noiseHeight;
+            float tempValue = NoiseSettings.invert ? -noiseHeight : noiseHeight;
 
             if (NoiseSettings.normalize)
             {
-                float normalizedHeight = (Result[index] + 1) / (MaxHeight / 0.9f);
-                Result[index] = Mathf.Clamp(normalizedHeight, 0, int.MaxValue);
+                float normalizedHeight = (tempValue + 1) / MaxHeight;
+                tempValue = Mathf.Clamp(normalizedHeight, 0, 1);
+            }
+
+            if (tempValue < NoiseSettings.cutoff)
+                tempValue = 0;
+
+            switch (operation)
+            {
+                case NoiseJobOperation.SET:
+                    Result[index] = tempValue;
+                    break;
+                case NoiseJobOperation.ADD:
+                    Result[index] += tempValue;
+                    break;
+                case NoiseJobOperation.MULTIPLY:
+                    Result[index] *= tempValue;
+                    break;
+                case NoiseJobOperation.SUBTRACT:
+                    Result[index] -= tempValue;
+                    break;
             }
         }
     }
