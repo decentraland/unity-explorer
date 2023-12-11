@@ -8,7 +8,7 @@ namespace DCL.WebRequests.Analytics
     /// </summary>
     public interface IWebRequestsAnalyticsContainer
     {
-        public WebRequestsAnalyticsContainer AddTrackedMetric<T>() where T: IRequestMetric;
+        public WebRequestsAnalyticsContainer AddTrackedMetric<T>() where T: IRequestMetric, new();
 
         public IReadOnlyList<Type> GetTrackedMetrics();
 
