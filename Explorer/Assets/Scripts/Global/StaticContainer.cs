@@ -143,6 +143,7 @@ namespace Global
 
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
+                new AudioPlugin(),
                 assetBundlePlugin,
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),

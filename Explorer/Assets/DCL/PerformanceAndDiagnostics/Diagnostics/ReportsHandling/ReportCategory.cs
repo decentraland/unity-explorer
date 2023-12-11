@@ -91,6 +91,11 @@
         public const string PRIMITIVE_MESHES = nameof(PRIMITIVE_MESHES);
 
         /// <summary>
+        ///     Everything related to Scenes audio source components
+        /// </summary>
+        public const string AUDIO_SOURCES = nameof(AUDIO_SOURCES);
+
+        /// <summary>
         ///     Everything related to prioritization
         /// </summary>
         public const string PRIORITIZATION = nameof(PRIORITIZATION);
