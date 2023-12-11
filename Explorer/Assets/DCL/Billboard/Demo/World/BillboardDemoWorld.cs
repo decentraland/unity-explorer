@@ -1,16 +1,16 @@
 using Arch.Core;
+using DCL.Billboard.DebugTools;
+using DCL.Billboard.Demo.CameraData;
 using DCL.Billboard.Extensions;
+using DCL.Billboard.System;
 using DCL.ECSComponents;
-using ECS.Unity.Billboard.DebugTools;
-using ECS.Unity.Billboard.DemoTest.CameraData;
-using ECS.Unity.Billboard.System;
 using ECS.Unity.Transforms.Components;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace DCL.Billboard.DemoTest.World
+namespace DCL.Billboard.Demo.World
 {
     public class BillboardDemoWorld : IDemoWorld
     {

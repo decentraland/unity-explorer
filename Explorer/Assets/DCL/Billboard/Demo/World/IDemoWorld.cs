@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using System.Threading;
 
-namespace DCL.Billboard.DemoTest.World
+namespace DCL.Billboard.Demo.World
 {
     public interface IDemoWorld
     {

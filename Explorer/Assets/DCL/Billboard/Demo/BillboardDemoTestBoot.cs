@@ -1,8 +1,7 @@
-using Arch.Core;
-using DCL.Billboard.DemoTest.World;
+using DCL.Billboard.Demo.World;
 using UnityEngine;
 
-namespace ECS.Unity.Billboard.DemoTest
+namespace DCL.Billboard.Demo
 {
     public class BillboardDemoTestBoot : MonoBehaviour
     {
@@ -13,7 +12,7 @@ namespace ECS.Unity.Billboard.DemoTest
 
         private async void Start()
         {
-            await new BillboardDemoWorld(World.Create(), cubeSize, countInRow, randomCounts, cubeStep)
+            await new BillboardDemoWorld(Arch.Core.World.Create(), cubeSize, countInRow, randomCounts, cubeStep)
                .Run(destroyCancellationToken);
         }
     }

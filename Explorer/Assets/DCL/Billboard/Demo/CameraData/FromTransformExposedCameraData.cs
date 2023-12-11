@@ -2,7 +2,7 @@ using DCL.CharacterCamera;
 using System;
 using UnityEngine;
 
-namespace ECS.Unity.Billboard.DemoTest.CameraData
+namespace DCL.Billboard.Demo.CameraData
 {
     public class FromTransformExposedCameraData : IExposedCameraData
     {

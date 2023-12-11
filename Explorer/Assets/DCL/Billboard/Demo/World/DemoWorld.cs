@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Time = UnityEngine.Time;
 
-namespace DCL.Billboard.DemoTest.World
+namespace DCL.Billboard.Demo.World
 {
     public class DemoWorld : IDemoWorld
     {
