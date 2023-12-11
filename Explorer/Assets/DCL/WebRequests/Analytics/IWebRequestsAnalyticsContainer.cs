@@ -10,7 +10,7 @@ namespace DCL.WebRequests.Analytics
     {
         public WebRequestsAnalyticsContainer AddTrackedMetric<T>() where T: IRequestMetric;
 
-        public List<Type> GetTrackedMetrics();
+        public IReadOnlyList<Type> GetTrackedMetrics();
 
         public IReadOnlyList<IRequestMetric> GetMetric(Type requestType);
 

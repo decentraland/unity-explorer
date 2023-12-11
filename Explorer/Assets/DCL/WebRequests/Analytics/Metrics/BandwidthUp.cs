@@ -11,7 +11,6 @@ namespace DCL.WebRequests.Analytics
 
         public void OnRequestStarted(ITypedWebRequest request)
         {
-            // Do nothing
         }
 
         public void OnRequestEnded(ITypedWebRequest request)
