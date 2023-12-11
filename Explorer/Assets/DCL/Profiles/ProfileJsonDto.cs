@@ -36,36 +36,18 @@ namespace DCL.Profiles
     public class EyesJsonDto
     {
         public AvatarColorJsonDto color;
-
-        public Eyes ToEyes() =>
-            new ()
-            {
-                Color = color.ToColor(),
-            };
     }
 
     [Serializable]
     public class HairJsonDto
     {
         public AvatarColorJsonDto color;
-
-        public Hair ToHair() =>
-            new ()
-            {
-                Color = color.ToColor(),
-            };
     }
 
     [Serializable]
     public class SkinJsonDto
     {
         public AvatarColorJsonDto color;
-
-        public Skin ToSkin() =>
-            new ()
-            {
-                Color = color.ToColor(),
-            };
     }
 
     [Serializable]
@@ -93,9 +75,9 @@ namespace DCL.Profiles
             {
                 Wearables = new HashSet<string>(wearables),
                 Emotes = emotes.ToDictionary(dto => dto.urn, dto => dto.ToEmote()),
-                Eyes = eyes.ToEyes(),
-                Hair = hair.ToHair(),
-                Skin = skin.ToSkin(),
+                EyesColor = eyes.color.ToColor(),
+                HairColor = hair.color.ToColor(),
+                SkinColor = skin.color.ToColor(),
                 FaceSnapshotUrl = URLAddress.FromString(snapshots.face256),
                 BodySnapshotUrl = URLAddress.FromString(snapshots.body),
                 BodyShape = bodyShape,
