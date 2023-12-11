@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: LandscapeData
   m_EditorClassIdentifier: 
   density: 16
-  TreeNoiseData: {fileID: 11400000, guid: a38a82b2a2b243b4eab4e678a9ba4850, type: 2}
-  debugParcelObject: {fileID: 8748527604498463010, guid: b29dd135c932b9046bf7cefc66c1171e, type: 3}
-  debugSubEntityObject: {fileID: 4115403110872987972, guid: f94ab47697315f8429f676ab58d951d8, type: 3}
+  assets:
+  - {fileID: 11400000, guid: 7ec3e3a6c5d070242a00ad458969f6d9, type: 2}
+  - {fileID: 11400000, guid: 0176dea30bbb1a24e99f529e374e4c81, type: 2}
+  - {fileID: 11400000, guid: 4040beb28607f7a4ba895a7b0bd80cab, type: 2}
+  - {fileID: 11400000, guid: e80cb8f65ce79754fa831bc75f5fe445, type: 2}
+  - {fileID: 11400000, guid: b08cf778795a2b549b7942c86d93d322, type: 2}

@@ -7,7 +7,6 @@ namespace DCL.Landscape.Config
     [CreateAssetMenu(menuName = "Landscape/Noise Data", fileName = "NoiseData", order = 1)]
     public class NoiseData : ScriptableObject
     {
-        public ObjectRandomization Randomization;
         public NoiseSettings settings = new ()
         {
             scale = 100,
@@ -34,6 +33,10 @@ namespace DCL.Landscape.Config
         // Hide if bool proportionalScale
         public Vector2 randomScaleZ;
 
+        public Vector2 positionOffsetX;
+        public Vector2 positionOffsetY;
+        public Vector2 positionOffsetZ;
+
         public void ApplyRandomness(Transform transform, Random random, float objHeight)
         {
             transform.eulerAngles = RandomVector(random, randomRotationX, randomRotationY, randomRotationZ);
@@ -42,6 +45,8 @@ namespace DCL.Landscape.Config
                 transform.localScale = Vector3.one * RandomRange(random, in randomScale) * objHeight;
             else
                 transform.localScale = RandomVector(random, randomScaleX, randomScaleY, randomScaleZ);
+
+            transform.localPosition += RandomVector(random, positionOffsetX, positionOffsetY, positionOffsetZ);
         }
 
         private Vector3 RandomVector(Random random, in Vector2 rangeX, in Vector2 rangeY, in Vector2 rangeZ)
