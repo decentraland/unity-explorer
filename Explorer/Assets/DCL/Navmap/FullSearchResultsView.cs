@@ -1,10 +1,11 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.Navmap
 {
-    public class FullSearchResultsView : MonoBehaviour
+    public class FullSearchResultsView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         [field: SerializeField]
         public Image placeImage;
@@ -20,5 +21,18 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public Button resultButton;
+
+        [field: SerializeField]
+        public Image arrowImage;
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            arrowImage.gameObject.SetActive(true);
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            arrowImage.gameObject.SetActive(false);
+        }
     }
 }
