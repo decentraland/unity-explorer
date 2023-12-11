@@ -1,5 +1,4 @@
 using DCL.WebRequests.Analytics.Metrics;
-
 using DCL.Web3Authentication;
 
 namespace DCL.WebRequests.Analytics
