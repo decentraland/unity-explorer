@@ -26,7 +26,7 @@ namespace DCL.WebRequests.Analytics
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            ShowWebRequestsCountersSystem.InjectToWorld(ref builder, analyticsContainer, debugContainerBuilder, new[]
+            ShowWebRequestsAnalyticsSystem.InjectToWorld(ref builder, analyticsContainer, debugContainerBuilder, new[]
             {
                 typeof(GenericGetRequest),
                 typeof(GenericPostRequest),

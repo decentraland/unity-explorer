@@ -4,13 +4,11 @@ namespace DCL.WebRequests.Analytics
 {
     public class RequestMetricCounter : IRequestMetric
     {
-        public RequestMetricCounter() { }
+        private ulong counter { get; set; }
 
-        private int counter { get; set; }
+        public string Name => "RequestMetricCounter";
 
-        public string Name => "Active Request Counter";
-
-        public int GetMetric() =>
+        public ulong GetMetric() =>
             counter;
 
         public void OnRequestStarted(ITypedWebRequest request)
