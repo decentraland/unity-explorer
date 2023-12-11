@@ -1,24 +1,19 @@
-﻿using System;
-
-namespace DCL.WebRequests.Analytics
+﻿namespace DCL.WebRequests.Analytics.Metrics
 {
-    public class RequestMetricCounter : IRequestMetric
+    public class TotalCounter : IRequestMetric
     {
         private ulong counter { get; set; }
-
-        public string Name => "RequestMetricCounter";
 
         public ulong GetMetric() =>
             counter;
 
         public void OnRequestStarted(ITypedWebRequest request)
         {
-            counter++;
-        }
+       }
 
         public void OnRequestEnded(ITypedWebRequest request)
         {
-            counter--;
+            counter++;
         }
     }
 }

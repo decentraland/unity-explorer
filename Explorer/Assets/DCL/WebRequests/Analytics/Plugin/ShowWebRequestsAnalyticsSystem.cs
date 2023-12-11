@@ -60,9 +60,11 @@ namespace DCL.WebRequests.Analytics
 
                     foreach (var metric in metrics)
                     {
-                        if(ongoingRequests.TryGetValue(requestType, out Dictionary<string, ElementBinding<ulong>> bindings) &&
-                           bindings.TryGetValue(metric.Name, out ElementBinding<ulong> binding))
+                        if (ongoingRequests.TryGetValue(requestType, out Dictionary<string, ElementBinding<ulong>> bindings) &&
+                            bindings.TryGetValue(metric.GetType().Name, out ElementBinding<ulong> binding))
+                        {
                             binding.Value = metric.GetMetric();
+                        }
                     }
                 }
             }

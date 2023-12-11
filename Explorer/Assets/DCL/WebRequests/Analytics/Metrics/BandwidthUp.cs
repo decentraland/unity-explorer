@@ -3,13 +3,10 @@ using UnityEngine.Networking;
 
 namespace DCL.WebRequests.Analytics
 {
-    public class RequestMetricBandwidthUp : IRequestMetric
+    public class BandwidthUp : IRequestMetric
     {
         private ulong bandwidth { get; set; }
 
-        public string Name => "RequestMetricBandwidthUp";
-
-        // fix the INTEGER!
         public ulong GetMetric() => bandwidth;
 
         public void OnRequestStarted(ITypedWebRequest request)
