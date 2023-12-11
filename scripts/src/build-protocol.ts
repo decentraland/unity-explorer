@@ -125,10 +125,14 @@ async function buildProtocol() {
   await preProcessComponents()
 
   const protoFiles = [
-    ...getProtofiles('decentraland/common/**/*.proto'),
-    ...getProtofiles('decentraland/sdk/components/**/*.proto').filter((value) => !value.endsWith('id.proto')),
-    ...getProtofiles('decentraland/bff/**/*.proto')
+    ...getProtofiles('decentraland/**/*.proto')
+      .filter((value) => !value.endsWith('id.proto'))
+      .filter((value) => !value.endsWith('v1/comms.proto'))
+      .filter((value) => !value.endsWith('v2/comms.proto'))
+      .filter((value) => !value.endsWith('v3/comms.proto'))
   ].join(' ')
+
+  console.log(protoFiles)
 
   let command = `${protocPath}`
   command += ` --csharp_out "${protocolOutputPath}"`
