@@ -105,13 +105,9 @@ namespace DCL.Billboard.Demo.World
                 return Random.value > 0.5f;
             }
 
-            var mode = BillboardMode.BmNone;
-
-            if (RandomBool()) mode |= BillboardMode.BmX;
-            if (RandomBool()) mode |= BillboardMode.BmY;
-            if (RandomBool()) mode |= BillboardMode.BmZ;
-
-            return new PBBillboard { BillboardMode = mode };
+            var billboard = new PBBillboard();
+            billboard.Apply(RandomBool(), RandomBool(), RandomBool());
+            return billboard;
         }
     }
 }

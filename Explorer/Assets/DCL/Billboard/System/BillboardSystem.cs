@@ -25,30 +25,40 @@ namespace DCL.Billboard.System
 
         protected override void Update(float t)
         {
-            UpdateRotationQuery(World, exposedCameraData.WorldPosition);
+            Quaternion cameraRotationAxisZ = Quaternion.Euler(0, 0, exposedCameraData.WorldRotation.eulerAngles.z);
+            Vector3 cameraPosition = exposedCameraData.WorldPosition;
+            UpdateRotationQuery(World, cameraPosition, cameraRotationAxisZ);
         }
 
         [Query]
         private void UpdateRotation(
             [Data] in Vector3 cameraPosition,
+            [Data] in Quaternion cameraRotationAxisZ,
             ref TransformComponent transform,
             in PBBillboard billboard
         )
         {
-            var anglesLook = transform.Cached.WorldRotation.eulerAngles;
-            var delta = cameraPosition - transform.Transform.position;
-            var anglesTarget = Quaternion.LookRotation(delta, Vector3.up).eulerAngles;
+            if (billboard.BillboardMode is BillboardMode.BmNone)
+                return;
 
-            if (billboard.UseX())
-                anglesLook.x = anglesTarget.x;
+            Vector3 forward = transform.Transform.forward;
 
-            if (billboard.UseY())
-                anglesLook.y = anglesTarget.y;
+            if (billboard.UseX() || billboard.UseY())
+            {
+                forward = cameraPosition - transform.Cached.WorldPosition;
+
+                if (billboard.UseX() is false) forward.x = 0;
+                if (billboard.UseY() is false) forward.y = 0;
+
+                forward.Normalize();
+            }
+
+            Quaternion rotation = forward != Vector3.zero ? Quaternion.LookRotation(forward) : Quaternion.identity;
 
             if (billboard.UseZ())
-                anglesLook.z = anglesTarget.z;
+                rotation *= cameraRotationAxisZ;
 
-            transform.Transform.rotation = Quaternion.Euler(anglesLook);
+            transform.Transform.rotation = rotation;
         }
     }
 }
