@@ -10,5 +10,11 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public Button filterButton;
+
+        [field: SerializeField]
+        public Button infoButton;
+
+        [field: SerializeField]
+        public GameObject infoContent;
     }
 }
