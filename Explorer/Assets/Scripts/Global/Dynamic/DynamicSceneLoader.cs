@@ -3,9 +3,11 @@ using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Web3Authentication;
+using DCL.Profiles;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using TMPro;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -32,11 +34,12 @@ namespace Global.Dynamic
         [SerializeField] private RealmLauncher realmLauncher;
         [SerializeField] private string[] realms;
         [SerializeField] private DynamicSettings dynamicSettings;
+        [SerializeField] private TMP_InputField addressInput;
 
         private StaticContainer staticContainer;
         private DynamicWorldContainer dynamicWorldContainer;
-
         private GlobalWorld globalWorld;
+        private CancellationTokenSource fetchProfileCancellationToken;
 
         private void Awake()
         {
@@ -64,6 +67,8 @@ namespace Global.Dynamic
                 staticContainer?.Dispose();
             }
 
+            fetchProfileCancellationToken?.Cancel();
+            fetchProfileCancellationToken?.Dispose();
             realmLauncher.OnRealmSelected = null;
             DisposeAsync().Forget();
         }
@@ -74,7 +79,6 @@ namespace Global.Dynamic
             {
                 // TODO: create the real web3 authenticator, missing decentralized app
                 var web3Authenticator = new FakeWeb3Authenticator();
-                await web3Authenticator.LoginAsync(ct);
 
                 // First load the common global plugin
                 bool isLoaded;
@@ -86,6 +90,9 @@ namespace Global.Dynamic
                     GameReports.PrintIsDead();
                     return;
                 }
+
+                IWeb3Identity web3Identity = await web3Authenticator.LoginAsync(ct);
+                addressInput.text = web3Identity.EphemeralAccount.Address;
 
                 var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
 
@@ -132,7 +139,12 @@ namespace Global.Dynamic
                     ChangeRealmAsync(staticContainer, destroyCancellationToken, selectedRealm).Forget();
                 }
 
+                fetchProfileCancellationToken?.Cancel();
+                fetchProfileCancellationToken?.Dispose();
+                fetchProfileCancellationToken = new CancellationTokenSource();
+
                 realmLauncher.OnRealmSelected += SetRealm;
+                addressInput.onSubmit.AddListener(LoadProfile);
             }
             catch (OperationCanceledException)
             {
@@ -159,6 +171,21 @@ namespace Global.Dynamic
             globalContainer.CharacterObject.Controller.transform.position = characterPos;
 
             await dynamicWorldContainer.RealmController.SetRealmAsync(globalWorld, URLDomain.FromString(selectedRealm), ct);
+        }
+
+        private void LoadProfile(string profileId)
+        {
+            if (string.IsNullOrEmpty(profileId)) return;
+
+            async UniTask LoadProfileAsync(string profileId, CancellationToken ct)
+            {
+                Profile profile = await dynamicWorldContainer.ProfileRepository.Get(profileId, 0, ct);
+            }
+
+            fetchProfileCancellationToken?.Cancel();
+            fetchProfileCancellationToken?.Dispose();
+            fetchProfileCancellationToken = new CancellationTokenSource();
+            LoadProfileAsync(profileId, destroyCancellationToken).Forget();
         }
     }
 }

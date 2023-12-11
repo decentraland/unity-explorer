@@ -108,10 +108,10 @@ namespace DCL.Profiles
             {
                 UnclaimedName = unclaimedName,
                 Avatar = avatar.ToAvatar(),
-                Blocked = new HashSet<string>(blocked),
+                Blocked = blocked != null ? new HashSet<string>(blocked) : new HashSet<string>(),
                 Description = description,
                 Email = email,
-                Interests = new List<string>(interests),
+                Interests = interests != null ? new List<string>(interests) : new List<string>(),
                 Name = name,
                 Version = version,
                 EthAddress = ethAddress,
