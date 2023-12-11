@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Web3Authentication;
 using DCL.WebRequests.Analytics;
 using System;
 using System.Runtime.CompilerServices;
@@ -18,10 +19,13 @@ namespace DCL.WebRequests
         private static readonly InitializeRequest<GenericPatchArguments, GenericPatchRequest> PATCH_GENERIC = GenericPatchRequest.Initialize;
 
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
+        private readonly IWeb3Authenticator web3Authenticator;
 
-        public WebRequestController(IWebRequestsAnalyticsContainer analyticsContainer)
+        public WebRequestController(IWebRequestsAnalyticsContainer analyticsContainer,
+            IWeb3Authenticator web3Authenticator)
         {
             this.analyticsContainer = analyticsContainer;
+            this.web3Authenticator = web3Authenticator;
         }
 
         public UniTask<GenericGetRequest> GetAsync(
@@ -92,7 +96,7 @@ namespace DCL.WebRequests
                 unityWebRequest.timeout = commonArguments.Timeout;
 
                 if (signInfo.HasValue)
-                    await SignRequest(signInfo.Value, unityWebRequest);
+                    SignRequest(signInfo.Value, unityWebRequest);
 
                 if (headersInfo.HasValue)
                     SetHeaders(unityWebRequest, headersInfo.Value);
@@ -140,7 +144,17 @@ namespace DCL.WebRequests
             }
         }
 
-        private UniTask SignRequest(WebRequestSignInfo signInfo, UnityWebRequest unityWebRequest) =>
-            throw new NotImplementedException("SignRequest is not implemented yet!");
+        private void SignRequest(WebRequestSignInfo signInfo, UnityWebRequest unityWebRequest)
+        {
+            AuthChain authChain = web3Authenticator.Identity.Sign(signInfo.SignUrl);
+
+            var i = 0;
+
+            foreach (AuthLink link in authChain)
+            {
+                unityWebRequest.SetRequestHeader($"x-identity-auth-chain-{i}", link.ToJson());
+                i++;
+            }
+        }
     }
 }
