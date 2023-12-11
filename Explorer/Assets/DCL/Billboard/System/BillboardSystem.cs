@@ -47,8 +47,8 @@ namespace DCL.Billboard.System
             {
                 forward = cameraPosition - transform.Cached.WorldPosition;
 
-                if (billboard.UseX() is false) forward.x = 0;
-                if (billboard.UseY() is false) forward.y = 0;
+                if ((billboard.BillboardMode & BillboardMode.BmY) == 0) forward.x = 0;
+                if ((billboard.BillboardMode & BillboardMode.BmX) == 0) forward.y = 0;
 
                 forward.Normalize();
             }
