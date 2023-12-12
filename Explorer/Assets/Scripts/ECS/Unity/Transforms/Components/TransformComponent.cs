@@ -72,7 +72,7 @@ namespace ECS.Unity.Transforms.Components
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Apply(Quaternion rotation)
         {
-            Transform.rotation = rotation;
+            Cached.WorldRotation = Transform.rotation = rotation;
             Cached.LocalRotation = Transform.localRotation;
         }
 
