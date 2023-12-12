@@ -387,9 +387,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c797954f92e54fecb656b9a0ecdecde, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <focusedImage>k__BackingField: {fileID: 6608887254494201105}
   <Category>k__BackingField: 
+  <SlotButton>k__BackingField: {fileID: 1530800213892460375}
   <HoverTootlip>k__BackingField: {fileID: 1939663090140278769}
-  <SelectedBackground>k__BackingField: {fileID: 0}
+  <SelectedBackground>k__BackingField: {fileID: 1565898462633254641}
   <UnequipButton>k__BackingField: {fileID: 974693733676106512}
   <CategoryText>k__BackingField: {fileID: 3491566857406547017}
 --- !u!114 &1530800213892460375
@@ -575,7 +577,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &7705073270141640727
 RectTransform:
   m_ObjectHideFlags: 0
@@ -611,7 +613,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1565898462633254641}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
@@ -913,7 +915,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &5736153523530841486
 RectTransform:
   m_ObjectHideFlags: 0

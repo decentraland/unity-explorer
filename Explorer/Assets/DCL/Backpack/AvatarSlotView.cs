@@ -1,3 +1,4 @@
+using DG.Tweening;
 using System;
 using TMPro;
 using UnityEngine;
@@ -6,7 +7,11 @@ using UnityEngine.UI;
 
 public class AvatarSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
+    private const float ANIMATION_TIME = 0.2f;
     public event Action OnSlotButtonPressed;
+
+    [field: SerializeField]
+    internal Image focusedImage { get; private set; }
 
     [field: SerializeField]
     public string Category { get; private set; }
@@ -29,16 +34,31 @@ public class AvatarSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitH
     public void Start()
     {
         CategoryText.text = Category;
-        SlotButton.onClick.AddListener(() => OnSlotButtonPressed?.Invoke());
+        SlotButton.onClick.AddListener(InvokeSlotButtonPressed);
+    }
+
+    public void InvokeSlotButtonPressed()
+    {
+        OnSlotButtonPressed?.Invoke();
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
         HoverTootlip.SetActive(true);
+        focusedImage.enabled = true;
+        ScaleUpAnimation(focusedImage.transform);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
         HoverTootlip.SetActive(false);
+        focusedImage.enabled = false;
     }
+
+    private void ScaleUpAnimation(Transform targetTransform)
+    {
+        targetTransform.transform.localScale = new Vector3(0, 0, 0);
+        targetTransform.transform.DOScale(1, ANIMATION_TIME).SetEase(Ease.OutBack);
+    }
+
 }
