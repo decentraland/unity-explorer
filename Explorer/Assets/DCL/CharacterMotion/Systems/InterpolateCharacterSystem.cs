@@ -55,9 +55,9 @@ namespace DCL.CharacterMotion.Systems
             CollisionFlags horizontalCollisionFlags = characterController.Move(movementDelta);
             Vector3 prevPos = transform.position;
             CollisionFlags verticalCollisionFlags = characterController.Move(gravityDelta + slopeModifier);
-            Vector3 fallDiff = transform.position - prevPos;
+            Vector3 deltaMovement = transform.position - prevPos;
 
-            bool hasGroundedFlag = EnumUtils.HasFlag(verticalCollisionFlags, CollisionFlags.Below) || EnumUtils.HasFlag(horizontalCollisionFlags, CollisionFlags.Below);
+            bool hasGroundedFlag = deltaMovement.y <= 0 && (EnumUtils.HasFlag(verticalCollisionFlags, CollisionFlags.Below) || EnumUtils.HasFlag(horizontalCollisionFlags, CollisionFlags.Below));
 
             if (!Mathf.Approximately(gravityDelta.y, 0f))
                 rigidTransform.IsGrounded = hasGroundedFlag || characterController.isGrounded;
@@ -68,7 +68,7 @@ namespace DCL.CharacterMotion.Systems
             PlatformSaveLocalPosition.Execute(ref platformComponent, transform.position);
 
             // In order to detect if we got stuck between 2 slopes we just check if our vertical delta movement is zero when on a slope
-            if (rigidTransform.IsOnASteepSlope && Mathf.Approximately(fallDiff.sqrMagnitude, 0f))
+            if (rigidTransform.IsOnASteepSlope && Mathf.Approximately(deltaMovement.sqrMagnitude, 0f))
                 rigidTransform.IsStuck = true;
             else
                 rigidTransform.IsStuck = false;
