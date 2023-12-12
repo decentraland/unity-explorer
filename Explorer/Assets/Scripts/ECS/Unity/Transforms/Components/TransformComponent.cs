@@ -2,6 +2,7 @@ using Arch.Core;
 using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -68,6 +69,7 @@ namespace ECS.Unity.Transforms.Components
             SetTransform(transform.localPosition, transform.localRotation, transform.localScale);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Apply(Quaternion rotation)
         {
             Transform.rotation = rotation;
