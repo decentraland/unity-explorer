@@ -12,7 +12,7 @@ namespace DCL.Optimization.PerformanceBudgeting
         Full,
     }
 
-    public class MemoryBudgetProvider : IConcurrentBudgetProvider
+    public class MemoryBudgetProvider : IMemoryUsageProvider, IConcurrentBudgetProvider
     {
         private const ulong BYTES_IN_MEGABYTE = 1024 * 1024;
         private const ulong NO_MEMORY = 0;
@@ -27,11 +27,11 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         private ulong actualSystemMemory => systemMemory.TotalSizeInMB;
 
-        public MemoryBudgetProvider(IProfilingProvider profilingProvider, Dictionary<MemoryUsageStatus, float> memoryThreshold)
+        public MemoryBudgetProvider(ISystemMemory systemMemory, IProfilingProvider profilingProvider, Dictionary<MemoryUsageStatus, float> memoryThreshold)
         {
             SimulatedMemoryUsage = Normal;
-            systemMemory = new StandaloneSystemMemory();
 
+            this.systemMemory = systemMemory;
             this.profilingProvider = profilingProvider;
             this.memoryThreshold = memoryThreshold;
         }

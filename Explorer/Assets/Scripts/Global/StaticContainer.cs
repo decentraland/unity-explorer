@@ -10,10 +10,10 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.WebRequests.Analytics;
 using DCL.Profiling;
 using DCL.ResourcesUnloading;
 using DCL.Time;
+using DCL.WebRequests.Analytics;
 using DCL.Web3Authentication;
 using ECS.Prioritization;
 using System.Collections.Generic;
@@ -121,7 +121,7 @@ namespace Global
                 new PartitionedWorldsAggregate.Factory(),
                 new ConcurrentLoadingBudgetProvider(staticSettings.AssetsLoadingBudget),
                 new FrameTimeCapBudgetProvider(staticSettings.FrameTimeCap, profilingProvider),
-                new MemoryBudgetProvider(profilingProvider, staticSettings.MemoryThresholds)
+                new MemoryBudgetProvider(new StandaloneSystemMemory(), profilingProvider, staticSettings.MemoryThresholds)
             );
 
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudgetProvider);

@@ -20,10 +20,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
     public partial class LoadDefaultWearablesSystem : BaseUnityLoopSystem
     {
         private readonly WearablesDTOList defaultWearableDefinition;
-        private readonly WearableCatalog wearableCatalog;
+        private readonly IWearableCatalog wearableCatalog;
 
         internal LoadDefaultWearablesSystem(World world,
-            WearablesDTOList defaultWearableDefinition, WearableCatalog wearableCatalog) : base(world)
+            WearablesDTOList defaultWearableDefinition, IWearableCatalog wearableCatalog) : base(world)
         {
             this.defaultWearableDefinition = defaultWearableDefinition;
             this.wearableCatalog = wearableCatalog;
