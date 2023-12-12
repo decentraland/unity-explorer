@@ -34,7 +34,7 @@ namespace DCL.AvatarRendering.Wearables
         private readonly IWebRequestController webRequestController;
 
         private readonly IRealmData realmData;
-        private readonly WearableCatalog wearableCatalog;
+        private readonly IWearableCatalog wearableCatalog;
 
         private WearablesDTOList defaultWearablesDTOs;
 

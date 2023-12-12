@@ -28,7 +28,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private readonly IRealmData realmData;
         private readonly URLSubdirectory wearablesSubdirectory;
-        private readonly WearableCatalog wearableCatalog;
+        private readonly IWearableCatalog wearableCatalog;
         private readonly IWebRequestController webRequestController;
 
         private readonly Func<bool> isRealmDataReady;
@@ -37,7 +37,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         public LoadWearablesByParamSystem(
             World world, IWebRequestController webRequestController, IStreamableCache<IWearable[], GetWearableByParamIntention> cache,
             IRealmData realmData, URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory,
-            WearableCatalog wearableCatalog, MutexSync mutexSync) : base(world, cache, mutexSync)
+            IWearableCatalog wearableCatalog, MutexSync mutexSync) : base(world, cache, mutexSync)
         {
             this.realmData = realmData;
             this.lambdaSubdirectory = lambdaSubdirectory;
