@@ -56,6 +56,16 @@
         public const string GENERIC_WEB_REQUEST = nameof(GENERIC_WEB_REQUEST);
 
         /// <summary>
+        ///     Texture related web request
+        /// </summary>
+        public const string TEXTURE_WEB_REQUEST = nameof(TEXTURE_WEB_REQUEST);
+
+        /// <summary>
+        ///     Audio clip related web request
+        /// </summary>
+        public const string AUDIO_CLIP_WEB_REQUEST = nameof(AUDIO_CLIP_WEB_REQUEST);
+
+        /// <summary>
         ///     Non-granular Streamable category
         /// </summary>
         public const string STREAMABLE_LOADING = nameof(STREAMABLE_LOADING);

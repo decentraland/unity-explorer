@@ -1,13 +1,19 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
+using DCL.WebRequests;
+using DCL.WebRequests.AudioClips;
 using ECS.Abstract;
 using ECS.Unity.AudioSources.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
+using SceneRunner.Scene;
+using System.Threading;
 using UnityEngine;
 using Utility;
 
@@ -17,10 +23,14 @@ namespace ECS.Unity.AudioSources.Systems
     [LogCategory(ReportCategory.AUDIO_SOURCES)]
     public partial class InstantiateAudioSourceSystem : BaseUnityLoopSystem
     {
+        private readonly ISceneData sceneData;
+        private readonly IWebRequestController webRequestController;
         private readonly IComponentPool<AudioSource> audioSourcesPool;
 
-        internal InstantiateAudioSourceSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
+        private InstantiateAudioSourceSystem(World world, ISceneData sceneData, IComponentPoolsRegistry poolsRegistry, IWebRequestController webRequestController) : base(world)
         {
+            this.sceneData = sceneData;
+            this.webRequestController = webRequestController;
             audioSourcesPool = poolsRegistry.GetReferenceTypePool<AudioSource>();
         }
 
@@ -34,19 +44,19 @@ namespace ECS.Unity.AudioSources.Systems
         [None(typeof(AudioSourceComponent))]
         private void InstantiateAudioSource(in Entity entity, ref PBAudioSource sdkAudioSource, ref TransformComponent entityTransform)
         {
-            // Debug.Log($"VV: {assetBundleResult.Asset}");
-
             AudioSource audioSource = audioSourcesPool.Get();
+            audioSource.spatialBlend = 1;
+            audioSource.dopplerLevel = 0.1f;
+            audioSource.playOnAwake = false;
 
             audioSource.loop = sdkAudioSource.Loop;
             audioSource.pitch = sdkAudioSource.Pitch;
             audioSource.volume = sdkAudioSource.Volume;
 
-            audioSource.playOnAwake = false;
-            if (sdkAudioSource.Playing && audioSource.clip != null)
-                audioSource.Play();
+            // if (sdkAudioSource.Playing && audioSource.clip != null)
+            //     audioSource.Play();
 
-            // sdkAudioSource.AudioClipUrl;
+            TestAsyncLoading(sdkAudioSource, audioSource).Forget();
 
             var component = new AudioSourceComponent();
             component.AudioSource = audioSource;
@@ -56,6 +66,17 @@ namespace ECS.Unity.AudioSources.Systems
             rendererTransform.ResetLocalTRS();
 
             World.Add(entity, component);
+        }
+
+        private async UniTask TestAsyncLoading(PBAudioSource sdkAudioSource, AudioSource audioSource)
+        {
+            if (!sceneData.TryGetContentUrl(sdkAudioSource.AudioClipUrl, out URLAddress audioClipUrl)) return;
+
+            var a =  await webRequestController.GetAudioClipAsync(
+                new CommonArguments(audioClipUrl), new GetAudioClipArguments(sdkAudioSource.AudioClipUrl), ct: default(CancellationToken));
+
+            audioSource.clip = a.CreateAudioClip();
+            audioSource.Play();
         }
     }
 }
