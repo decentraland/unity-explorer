@@ -68,6 +68,12 @@ namespace ECS.Unity.Transforms.Components
             SetTransform(transform.localPosition, transform.localRotation, transform.localScale);
         }
 
+        public void Apply(Quaternion rotation)
+        {
+            Transform.rotation = rotation;
+            Cached.LocalRotation = Transform.localRotation;
+        }
+
         Transform IPoolableComponentProvider<Transform>.PoolableComponent => Transform;
 
         Type IPoolableComponentProvider<Transform>.PoolableComponentType => typeof(Transform);

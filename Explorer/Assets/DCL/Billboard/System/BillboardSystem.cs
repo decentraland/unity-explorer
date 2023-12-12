@@ -58,7 +58,7 @@ namespace DCL.Billboard.System
             if (billboard.UseZ())
                 rotation *= cameraRotationAxisZ;
 
-            transform.Transform.rotation = rotation;
+            transform.Apply(rotation);
         }
     }
 }
