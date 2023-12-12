@@ -92,9 +92,16 @@ namespace DCL.Billboard.Demo.World
             t.position = (Vector3.right * row) + (Vector3.forward * column);
             t.position *= spawnStep;
             t.gameObject.AddComponent<GizmosForward>();
+            DestroyCollider(t);
             var component = new TransformComponent(t);
             component.SetTransform(t);
             return component;
+        }
+
+        private static void DestroyCollider(Transform transform)
+        {
+            if (transform.TryGetComponent(out Collider collider))
+                Object.Destroy(collider!);
         }
 
         [SuppressMessage("ReSharper", "BitwiseOperatorOnEnumWithoutFlags")]
