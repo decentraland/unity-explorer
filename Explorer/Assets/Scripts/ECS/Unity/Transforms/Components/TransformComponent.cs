@@ -53,8 +53,7 @@ namespace ECS.Unity.Transforms.Components
 
         public void SetTransform(Vector3 localPosition, Quaternion localRotation, Vector3 localScale)
         {
-            Transform.localPosition = localPosition;
-            Transform.localRotation = localRotation;
+            Transform.SetLocalPositionAndRotation(localPosition, localRotation);
             Transform.localScale = localScale;
 
             Cached.LocalPosition = localPosition;
