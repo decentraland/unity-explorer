@@ -13,10 +13,10 @@ namespace ECS.StreamableLoading.AssetBundles
     /// </summary>
     public class AssetBundleCache : IStreamableCache<AssetBundleData, GetAssetBundleIntention>
     {
-        private static readonly Comparison<(GetAssetBundleIntention intention, AssetBundleData abData)> compareByLastUsedFrameReversed =
+        private static readonly Comparison<(GetAssetBundleIntention intention, AssetBundleData abData)> COMPARE_BY_LAST_USED_FRAME_REVERSED =
             (pair1, pair2) => pair2.abData.LastUsedFrame.CompareTo(pair1.abData.LastUsedFrame);
 
-        private readonly Dictionary<GetAssetBundleIntention, AssetBundleData> cache;
+        internal readonly Dictionary<GetAssetBundleIntention, AssetBundleData> cache;
         private readonly List<(GetAssetBundleIntention intention, AssetBundleData abData)> listedCache = new ();
 
         public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AssetBundleData>?>> OngoingRequests { get; }
@@ -57,7 +57,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount)
         {
-            listedCache.Sort(compareByLastUsedFrameReversed);
+            listedCache.Sort(COMPARE_BY_LAST_USED_FRAME_REVERSED);
 
             for (int i = listedCache.Count - 1; frameTimeBudgetProvider.TrySpendBudget() && i >= 0 && maxUnloadAmount > 0; i--)
             {
