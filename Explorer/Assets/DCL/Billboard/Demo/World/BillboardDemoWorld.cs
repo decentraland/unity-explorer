@@ -52,6 +52,9 @@ namespace DCL.Billboard.Demo.World
             );
         }
 
+        public void SetUp() =>
+            origin.SetUp();
+
         public void Update() =>
             origin.Update();
 

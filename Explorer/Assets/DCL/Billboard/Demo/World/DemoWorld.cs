@@ -13,7 +13,7 @@ namespace DCL.Billboard.Demo.World
         private readonly IReadOnlyList<Func<Arch.Core.World, BaseSystem<Arch.Core.World, float>>> systemConstructors;
         private readonly Action<Arch.Core.World> setUp;
 
-        private IReadOnlyList<BaseSystem<Arch.Core.World, float>>? systems;
+        private IReadOnlyList<BaseSystem<Arch.Core.World, float>> systems = new[] { new FakeSystem() };
 
         public DemoWorld(Action<Arch.Core.World> setUp, params Func<Arch.Core.World, BaseSystem<Arch.Core.World, float>>[] systemConstructors) : this(systemConstructors.AsReadOnly(), setUp) { }
 
@@ -30,17 +30,31 @@ namespace DCL.Billboard.Demo.World
             this.setUp = setUp;
         }
 
+        public void SetUp()
+        {
+            var world = worldConstructor();
+            systems = systemConstructors.Select(e => e(world)).ToList();
+            setUp(world);
+        }
+
         public void Update()
         {
-            if (systems is null)
-            {
-                var world = worldConstructor();
-                systems = systemConstructors.Select(e => e(world)).ToList();
-                setUp(world);
-            }
-
             foreach (var system in systems)
                 system.Update(Time.deltaTime);
+        }
+
+        private class FakeSystem : BaseSystem<Arch.Core.World, float>
+        {
+            public FakeSystem() : this(Arch.Core.World.Create())
+            {
+            }
+
+            public FakeSystem(Arch.Core.World world) : base(world) { }
+
+            public override void Update(in float t)
+            {
+                throw new Exception("I am fake!, set up world first");
+            }
         }
     }
 }

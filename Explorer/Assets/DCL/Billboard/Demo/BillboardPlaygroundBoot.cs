@@ -22,6 +22,7 @@ namespace DCL.Billboard.Demo
         {
             var world = Arch.Core.World.Create();
             var demoWorld = new BillboardDemoWorld(world, Vector3.one, randomCounts: 0, predefinedBillboards: BillboardMode.BmNone);
+            demoWorld.SetUp();
 
             while (this)
             {
