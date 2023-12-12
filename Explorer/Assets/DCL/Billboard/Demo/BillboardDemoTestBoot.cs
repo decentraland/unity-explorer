@@ -13,7 +13,7 @@ namespace DCL.Billboard.Demo
 
         private void Start()
         {
-            new BillboardDemoWorld(Arch.Core.World.Create(), cubeSize, countInRow, randomCounts, cubeStep)
+            new BillboardDemoWorld(Arch.Core.World.Create(), cubeSize, countInRow: countInRow, randomCounts: randomCounts, spawnStep: cubeStep)
                .SetUpAndRunAsync(destroyCancellationToken)
                .Forget();
         }

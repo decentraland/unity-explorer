@@ -5,6 +5,9 @@ using DCL.ECSComponents;
 using ECS.Unity.Transforms.Components;
 using NUnit.Framework;
 using UnityEngine;
+using DCL.Billboard.Demo.World;
+using System.Diagnostics.CodeAnalysis;
+using Unity.PerformanceTesting;
 using CameraType = DCL.ECSComponents.CameraType;
 
 namespace DCL.Billboard.Tests
@@ -71,6 +74,28 @@ namespace DCL.Billboard.Tests
             Assert.AreNotEqual(expected.x, actual.x);
             Assert.AreNotEqual(expected.y, actual.y);
             Assert.AreNotEqual(expected.z, actual.z);
+        }
+
+        [Test]
+        [Performance]
+        [TestCase(200)]
+        [TestCase(500)]
+        [TestCase(1000)]
+        [SuppressMessage("ReSharper", "PossibleNullReferenceException")]
+        public void BillboardPerformance(int randomCounts)
+        {
+            var world = new BillboardDemoWorld(
+                World.Create(),
+                cameraData: new IExposedCameraData.Random(),
+                randomCounts: randomCounts
+            );
+
+            world.SetUp();
+
+            Measure
+               .Method(world.Update)
+               .GC()
+               .Run();
         }
 
         private static (Transform transform, BillboardSystem system) Construct(BillboardMode mode)

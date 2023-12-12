@@ -3,6 +3,7 @@ using DCL.Billboard.DebugTools;
 using DCL.Billboard.Demo.CameraData;
 using DCL.Billboard.Extensions;
 using DCL.Billboard.System;
+using DCL.CharacterCamera;
 using DCL.ECSComponents;
 using ECS.Unity.Transforms.Components;
 using System.Diagnostics.CodeAnalysis;
@@ -20,10 +21,19 @@ namespace DCL.Billboard.Demo.World
         private readonly Vector3 cubeSize;
         private readonly BillboardMode[] predefinedBillboards;
         private readonly IDemoWorld origin;
+        private readonly IExposedCameraData cameraData;
 
-        public BillboardDemoWorld(Arch.Core.World world, Vector3 cubeSize = default, int countInRow = 10, int randomCounts = 50, float spawnStep = 3) : this(
+        public BillboardDemoWorld(
+            Arch.Core.World world,
+            Vector3 cubeSize = default,
+            IExposedCameraData? cameraData = null,
+            int countInRow = 10,
+            int randomCounts = 50,
+            float spawnStep = 3
+        ) : this(
             world,
             cubeSize,
+            cameraData,
             countInRow,
             randomCounts,
             spawnStep,
@@ -33,6 +43,7 @@ namespace DCL.Billboard.Demo.World
         public BillboardDemoWorld(
             Arch.Core.World world,
             Vector3 cubeSize,
+            IExposedCameraData? cameraData = null,
             int countInRow = 10,
             int randomCounts = 50,
             float spawnStep = 3,
@@ -44,6 +55,7 @@ namespace DCL.Billboard.Demo.World
             this.spawnStep = spawnStep;
             this.predefinedBillboards = predefinedBillboards;
             this.cubeSize = cubeSize;
+            this.cameraData = cameraData ?? new FromTransformExposedCameraData();
 
             origin = new DemoWorld(
                 world,
@@ -82,8 +94,8 @@ namespace DCL.Billboard.Demo.World
             world.Query(in query, (ref PBBillboard b, ref TransformComponent t) => t.Transform.name = b.AsString());
         }
 
-        private static BillboardSystem NewBillboardSystem(Arch.Core.World world) =>
-            new (world, new FromTransformExposedCameraData());
+        private BillboardSystem NewBillboardSystem(Arch.Core.World world) =>
+            new (world, cameraData);
 
         private TransformComponent NewTransform(int offset = 0)
         {
