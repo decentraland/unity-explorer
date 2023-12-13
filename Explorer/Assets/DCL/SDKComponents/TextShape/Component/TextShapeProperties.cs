@@ -53,6 +53,8 @@ namespace DCL.SDKComponents.TextShape.Component
             textShape.FontAutoSize = properties.fontAutoSize;
             textShape.FontSize = properties.fontSize;
 
+            //TODO solve issue with cannot set 'Has' values to PBTextShape, due it readonly, but they are required due logic
+
             //Frame
             textShape.Width = properties.width;
             textShape.Height = properties.height;
