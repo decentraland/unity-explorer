@@ -82,13 +82,11 @@ namespace DCL.SDKComponents.TextShape.Renderer
              */
         }
 
-        [ContextMenu(nameof(Show))]
         public void Show()
         {
             tmpText.enabled = true;
         }
 
-        [ContextMenu(nameof(Hide))]
         public void Hide()
         {
             tmpText.enabled = false;
