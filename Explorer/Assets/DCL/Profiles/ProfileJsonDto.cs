@@ -66,27 +66,6 @@ namespace DCL.Profiles
         public HairJsonDto hair;
         public SkinJsonDto skin;
 
-        public Avatar ToAvatar()
-        {
-            const int SHARED_WEARABLES_MAX_URN_PARTS = 6;
-
-            var sharedWearables = new HashSet<string>(wearables.Length);
-
-            foreach (string wearable in wearables)
-                sharedWearables.Add(wearable.ShortenURN(SHARED_WEARABLES_MAX_URN_PARTS));
-
-            return new Avatar(bodyShape,
-                // To avoid inconsistencies in the wearable references thus improving cache miss rate,
-                // we keep a list of shared wearables used by avatar shapes and most of the rendering systems
-                sharedWearables,
-                // The wearables urns retrieved in the profile follows https://adr.decentraland.org/adr/ADR-244
-                new HashSet<string>(wearables),
-                new HashSet<string>(forceRender),
-                emotes.ToDictionary(dto => dto.urn, dto => dto.ToEmote()),
-                URLAddress.FromString(snapshots.face256), URLAddress.FromString(snapshots.body),
-                eyes.color.ToColor(), hair.color.ToColor(), skin.color.ToColor());
-        }
-
         public void Reset()
         {
             bodyShape = default(string);
@@ -108,14 +87,12 @@ namespace DCL.Profiles
             foreach (string wearable in wearables)
                 sharedWearables.Add(wearable.ShortenURN(SHARED_WEARABLES_MAX_URN_PARTS));
 
-            avatar.BodyShape = bodyShape;
-
             // To avoid inconsistencies in the wearable references thus improving cache miss rate,
             // we keep a list of shared wearables used by avatar shapes and most of the rendering systems
             avatar.SharedWearables = sharedWearables;
-
             // The wearables urns retrieved in the profile follows https://adr.decentraland.org/adr/ADR-244
             avatar.UniqueWearables = new HashSet<string>(wearables);
+            avatar.BodyShape = bodyShape;
             avatar.Emotes = emotes.ToDictionary(dto => dto.urn, dto => dto.ToEmote());
             avatar.FaceSnapshotUrl = URLAddress.FromString(snapshots.face256);
             avatar.BodySnapshotUrl = URLAddress.FromString(snapshots.body);

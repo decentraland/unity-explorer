@@ -10,7 +10,7 @@ namespace DCL.Profiles
         public IReadOnlyCollection<string> SharedWearables { get; internal set; }
         public IReadOnlyCollection<string> UniqueWearables { get; internal set; }
         public IReadOnlyCollection<string> ForceRender { get; internal set; }
-        public Dictionary<string, Emote> Emotes { get; internal set; }
+        public IReadOnlyDictionary<string, Emote> Emotes { get; internal set; }
         public URLAddress FaceSnapshotUrl { get; internal set; }
         public URLAddress BodySnapshotUrl { get; internal set; }
         public Color EyesColor { get; internal set; }
