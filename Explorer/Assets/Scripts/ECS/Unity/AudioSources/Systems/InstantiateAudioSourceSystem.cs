@@ -44,39 +44,39 @@ namespace ECS.Unity.AudioSources.Systems
         [None(typeof(AudioSourceComponent))]
         private void InstantiateAudioSource(in Entity entity, ref PBAudioSource sdkAudioSource, ref TransformComponent entityTransform)
         {
-            AudioSource audioSource = audioSourcesPool.Get();
-            audioSource.spatialBlend = 1;
-            audioSource.dopplerLevel = 0.1f;
-            audioSource.playOnAwake = false;
-
-            audioSource.loop = sdkAudioSource.Loop;
-            audioSource.pitch = sdkAudioSource.Pitch;
-            audioSource.volume = sdkAudioSource.Volume;
-
-            // if (sdkAudioSource.Playing && audioSource.clip != null)
-            //     audioSource.Play();
-
-            TestAsyncLoading(sdkAudioSource, audioSource).Forget();
-
-            var component = new AudioSourceComponent();
-            component.AudioSource = audioSource;
-
-            Transform rendererTransform = audioSource.transform;
-            rendererTransform.SetParent(entityTransform.Transform, false);
-            rendererTransform.ResetLocalTRS();
-
-            World.Add(entity, component);
+            // AudioSource audioSource = audioSourcesPool.Get();
+            // audioSource.spatialBlend = 1;
+            // audioSource.dopplerLevel = 0.1f;
+            // audioSource.playOnAwake = false;
+            //
+            // audioSource.loop = sdkAudioSource.Loop;
+            // audioSource.pitch = sdkAudioSource.Pitch;
+            // audioSource.volume = sdkAudioSource.Volume;
+            //
+            // // if (sdkAudioSource.Playing && audioSource.clip != null)
+            // //     audioSource.Play();
+            //
+            // TestAsyncLoading(sdkAudioSource, audioSource).Forget();
+            //
+            // var component = new AudioSourceComponent();
+            // component.Result = audioSource;
+            //
+            // Transform rendererTransform = audioSource.transform;
+            // rendererTransform.SetParent(entityTransform.Transform, false);
+            // rendererTransform.ResetLocalTRS();
+            //
+            // World.Add(entity, component);
         }
 
-        private async UniTask TestAsyncLoading(PBAudioSource sdkAudioSource, AudioSource audioSource)
-        {
-            if (!sceneData.TryGetContentUrl(sdkAudioSource.AudioClipUrl, out URLAddress audioClipUrl)) return;
-
-            var a =  await webRequestController.GetAudioClipAsync(
-                new CommonArguments(audioClipUrl), new GetAudioClipArguments(sdkAudioSource.AudioClipUrl), ct: default(CancellationToken));
-
-            audioSource.clip = a.CreateAudioClip();
-            audioSource.Play();
-        }
+        // private async UniTask TestAsyncLoading(PBAudioSource sdkAudioSource, AudioSource audioSource)
+        // {
+        //     if (!sceneData.TryGetContentUrl(sdkAudioSource.AudioClipUrl, out URLAddress audioClipUrl)) return;
+        //
+        //     var a =  await webRequestController.GetAudioClipAsync(
+        //         new CommonArguments(audioClipUrl), new GetAudioClipArguments(sdkAudioSource.AudioClipUrl), ct: default(CancellationToken));
+        //
+        //     audioSource.clip = a.CreateAudioClip();
+        //     audioSource.Play();
+        // }
     }
 }

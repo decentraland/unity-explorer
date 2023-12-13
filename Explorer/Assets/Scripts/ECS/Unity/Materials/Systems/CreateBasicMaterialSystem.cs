@@ -36,7 +36,7 @@ namespace ECS.Unity.Materials.Systems
             if (!capFrameBudgetProvider.TrySpendBudget())
                 return;
 
-            if (materialComponent.Status == MaterialComponent.LifeCycle.LoadingInProgress)
+            if (materialComponent.Status == StreamableLoading.LifeCycle.LoadingInProgress)
                 ConstructMaterial(ref materialComponent);
         }
 
@@ -47,7 +47,7 @@ namespace ECS.Unity.Materials.Systems
 
             if (TryGetTextureResult(ref materialComponent.AlbedoTexPromise, out StreamableLoadingResult<Texture2D> albedoResult))
             {
-                materialComponent.Status = MaterialComponent.LifeCycle.LoadingFinished;
+                materialComponent.Status = StreamableLoading.LifeCycle.LoadingFinished;
 
                 materialComponent.Result ??= CreateNewMaterialInstance();
 

@@ -29,7 +29,7 @@ namespace ECS.Unity.Materials.Tests
                 Color.red,
                 true));
 
-            materialComponent.Status = MaterialComponent.LifeCycle.LoadingNotStarted;
+            materialComponent.Status = StreamableLoading.LifeCycle.LoadingNotStarted;
 
             materialsCache.TryReferenceMaterial(in materialComponent.Data, out Arg.Any<Material>())
                           .Returns(c =>
@@ -46,16 +46,13 @@ namespace ECS.Unity.Materials.Tests
 
             materialComponent = world.Get<MaterialComponent>(e);
 
-            Assert.That(materialComponent.Status, Is.EqualTo(MaterialComponent.LifeCycle.LoadingFinished));
+            Assert.That(materialComponent.Status, Is.EqualTo(StreamableLoading.LifeCycle.LoadingFinished));
             Assert.That(materialComponent.Result, Is.Not.Null);
         }
 
         [Test]
-        public void DoNothingIfLoadingStarted([Values(
-                MaterialComponent.LifeCycle.LoadingInProgress,
-                MaterialComponent.LifeCycle.LoadingFinished,
-                MaterialComponent.LifeCycle.MaterialApplied)]
-            MaterialComponent.LifeCycle status)
+        public void DoNothingIfLoadingStarted([Values(StreamableLoading.LifeCycle.LoadingInProgress, StreamableLoading.LifeCycle.LoadingFinished, StreamableLoading.LifeCycle.Applied)]
+            StreamableLoading.LifeCycle status)
         {
             var materialComponent = new MaterialComponent(MaterialData.CreateBasicMaterial(
                 new TextureComponent("test-texture", TextureWrapMode.Mirror, FilterMode.Bilinear),
@@ -106,7 +103,7 @@ namespace ECS.Unity.Materials.Tests
                 0
             ));
 
-            materialComponent.Status = MaterialComponent.LifeCycle.LoadingNotStarted;
+            materialComponent.Status = StreamableLoading.LifeCycle.LoadingNotStarted;
 
             materialsCache.TryReferenceMaterial(in materialComponent.Data, out Arg.Any<Material>())
                           .Returns(c =>
@@ -123,7 +120,7 @@ namespace ECS.Unity.Materials.Tests
 
             materialComponent = world.Get<MaterialComponent>(e);
 
-            Assert.That(materialComponent.Status, Is.EqualTo(MaterialComponent.LifeCycle.LoadingNotStarted));
+            Assert.That(materialComponent.Status, Is.EqualTo(StreamableLoading.LifeCycle.LoadingNotStarted));
             Assert.That(materialComponent.Result, Is.Null);
         }
     }

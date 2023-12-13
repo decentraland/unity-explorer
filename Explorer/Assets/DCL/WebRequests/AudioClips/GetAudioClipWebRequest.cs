@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using DCL.Profiling;
+using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
 
@@ -24,12 +25,16 @@ namespace DCL.WebRequests.AudioClips
         /// </summary>
         public AudioClip CreateAudioClip()
         {
+            // files bigger than 1MB will be treated as streaming
+            if (UnityWebRequest.downloadedBytes > 1000000)
+                ((DownloadHandlerAudioClip)UnityWebRequest.downloadHandler).streamAudio = true;
+
             AudioClip clip = DownloadHandlerAudioClip.GetContent(UnityWebRequest);
 
             UnityWebRequest.Dispose();
 
             clip.SetDebugName(url);
-            // ProfilingCounters.TexturesAmount.Value++;
+            ProfilingCounters.AudioClipsAmount.Value++;
 
             return clip;
         }
