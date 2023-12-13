@@ -215,40 +215,27 @@ namespace Global.Dynamic
             return new FakeWeb3Authenticator(addressInput.text);
         }
 
-        private async UniTask<Profile> EnsureProfileAsync(string profileId, CancellationToken ct)
+        private async UniTask<Profile> EnsureProfileAsync(string profileId, CancellationToken ct) =>
+            await dynamicWorldContainer.ProfileRepository.Get(profileId, 0, ct) ?? CreateRandomProfile(profileId);
+
+        private Profile CreateRandomProfile(string profileId)
         {
-            Profile profile = await dynamicWorldContainer.ProfileRepository.Get(profileId, 0, ct);
+            var name = $"Player#{profileId.Substring(profileId.Length - 4, 4)}";
 
-            if (profile == null)
-            {
-                var name = $"Player#{profileId.Substring(profileId.Length - 4, 4)}";
+            var avatar = new Avatar(BodyShape.MALE,
+                new HashSet<string>(WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE)),
+                new HashSet<string>(WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE)),
+                new HashSet<string>(),
+                new Dictionary<string, Emote>(),
+                URLAddress.EMPTY, URLAddress.EMPTY,
+                Color.white, WearablesConstants.DefaultColors.GetRandomHairColor(),
+                WearablesConstants.DefaultColors.GetRandomSkinColor());
 
-                profile = new Profile
-                {
-                    UserId = profileId,
-                    Name = name,
-                    Blocked = new HashSet<string>(),
-                    Description = "",
-                    Email = "",
-                    Interests = new List<string>(),
-                    Version = 0,
-                    TutorialStep = 0,
-                    UnclaimedName = name,
-                    HasClaimedName = false,
-                    Avatar = new Avatar
-                    {
-                        Emotes = new Dictionary<string, Emote>(),
-                        BodyShape = BodyShape.MALE,
-                        SharedWearables = new HashSet<string>(WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE)),
-                        HairColor = WearablesConstants.DefaultColors.GetRandomHairColor(),
-                        SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor(),
-                        EyesColor = Color.white,
-                        ForceRender = new HashSet<string>(),
-                    },
-                };
-            }
-
-            return profile;
+            return new Profile(profileId, name, name, false, "",
+                0, "", 0,
+                avatar,
+                new HashSet<string>(),
+                new List<string>());
         }
     }
 }

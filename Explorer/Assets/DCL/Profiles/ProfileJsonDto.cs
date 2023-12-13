@@ -78,23 +78,17 @@ namespace DCL.Profiles
             foreach (string wearable in wearables)
                 sharedWearables.Add(wearable.ShortenURN(SHARED_WEARABLES_MAX_URN_PARTS));
 
-            return new Avatar
-            {
-                // The wearables urns retrieved in the profile follows https://adr.decentraland.org/adr/ADR-244
-                UniqueWearables = new HashSet<string>(wearables),
+            return new Avatar(bodyShape,
 
                 // To avoid inconsistencies in the wearable references thus improving cache miss rate,
                 // we keep a list of shared wearables used by avatar shapes and most of the rendering systems
-                SharedWearables = sharedWearables,
-                Emotes = emotes.ToDictionary(dto => dto.urn, dto => dto.ToEmote()),
-                EyesColor = eyes.color.ToColor(),
-                HairColor = hair.color.ToColor(),
-                SkinColor = skin.color.ToColor(),
-                FaceSnapshotUrl = URLAddress.FromString(snapshots.face256),
-                BodySnapshotUrl = URLAddress.FromString(snapshots.body),
-                BodyShape = bodyShape,
-                ForceRender = new HashSet<string>(forceRender),
-            };
+                sharedWearables,
+                // The wearables urns retrieved in the profile follows https://adr.decentraland.org/adr/ADR-244
+                new HashSet<string>(wearables),
+                new HashSet<string>(forceRender),
+                emotes.ToDictionary(dto => dto.urn, dto => dto.ToEmote()),
+                URLAddress.FromString(snapshots.face256), URLAddress.FromString(snapshots.body),
+                eyes.color.ToColor(), hair.color.ToColor(), skin.color.ToColor());
         }
     }
 
@@ -116,19 +110,8 @@ namespace DCL.Profiles
         public bool hasConnectedWeb3;
 
         public Profile ToProfile() =>
-            new ()
-            {
-                UnclaimedName = unclaimedName,
-                Avatar = avatar.ToAvatar(),
-                Blocked = blocked != null ? new HashSet<string>(blocked) : new HashSet<string>(),
-                Description = description,
-                Email = email,
-                Interests = interests != null ? new List<string>(interests) : new List<string>(),
-                Name = name,
-                Version = version,
-                TutorialStep = tutorialStep,
-                UserId = userId,
-                HasClaimedName = hasClaimedName,
-            };
+            new (userId, name, unclaimedName, hasClaimedName, description, tutorialStep,
+                email, version, avatar.ToAvatar(), blocked != null ? new HashSet<string>(blocked) : new HashSet<string>(),
+                interests != null ? new List<string>(interests) : new List<string>());
     }
 }
