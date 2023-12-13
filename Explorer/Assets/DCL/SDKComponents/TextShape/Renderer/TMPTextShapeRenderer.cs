@@ -11,6 +11,7 @@ namespace DCL.SDKComponents.TextShape.Renderer
         private readonly TMP_Text tmpText;
         private readonly MeshRenderer meshRenderer;
         private readonly MaterialPropertyBlock materialPropertyBlock;
+        private readonly RectTransform rectTransform;
         private static readonly int ID_OUTLINE_COLOR = Shader.PropertyToID("_OutlineColor");
         private static readonly int ID_OUTLINE_WIDTH = Shader.PropertyToID("_OutlineWidth");
         private static readonly int ID_UNDERLAY_COLOR = Shader.PropertyToID("_UnderlayColor");
@@ -18,11 +19,12 @@ namespace DCL.SDKComponents.TextShape.Renderer
         private static readonly int ID_UNDERLAY_OFFSET_Y = Shader.PropertyToID("_UnderlayOffsetY");
         private static readonly int ID_UNDERLAY_OFFSET_X = Shader.PropertyToID("_UnderlayOffsetX");
 
-        public TMPTextShapeRenderer(TMP_Text tmpText, MeshRenderer meshRenderer, MaterialPropertyBlock materialPropertyBlock)
+        public TMPTextShapeRenderer(TMP_Text tmpText, MeshRenderer meshRenderer, MaterialPropertyBlock materialPropertyBlock, RectTransform rectTransform)
         {
             this.tmpText = tmpText;
             this.meshRenderer = meshRenderer;
             this.materialPropertyBlock = materialPropertyBlock;
+            this.rectTransform = rectTransform;
         }
 
         public void Apply(PBTextShape textShape)
@@ -71,15 +73,10 @@ namespace DCL.SDKComponents.TextShape.Renderer
 
             meshRenderer.SetPropertyBlock(materialPropertyBlock);
 
-            Debug.LogWarning("Applying is not finished");
-            /*
-                //TODO//
-                //Frame
-                //tmpText.font = textShape.Font;
+            rectTransform.sizeDelta = new Vector2(textShape.Width, textShape.Height);
 
-                Width = 100,
-                Height = 1,
-             */
+            Debug.LogWarning("Applying is not finished");
+            //TODO// tmpText.font = textShape.Font;
         }
 
         public void Show()
