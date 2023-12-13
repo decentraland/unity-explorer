@@ -71,7 +71,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             {
                 Id = profile.UserId,
                 BodyShape = profile.Avatar.BodyShape,
-                Wearables = { profile.Avatar.Wearables },
+                Wearables = { profile.Avatar.SharedWearables },
                 Name = profile.Name,
                 SkinColor = new Color3
                 {

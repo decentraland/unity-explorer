@@ -2,7 +2,7 @@ namespace CommunicationData.URLHelpers
 {
     public static class URNExtensions
     {
-        // TODO: would be ideal that urns are represented in a custom type so we keep extensions specific
+        // TODO: would be ideal that urns are type specific
         public static string ShortenURN(this string input, int parts)
         {
             int index = -1;

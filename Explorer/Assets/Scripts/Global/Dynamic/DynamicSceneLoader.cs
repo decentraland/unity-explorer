@@ -239,7 +239,7 @@ namespace Global.Dynamic
                     {
                         Emotes = new Dictionary<string, Emote>(),
                         BodyShape = BodyShape.MALE,
-                        Wearables = new HashSet<string>(WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE)),
+                        SharedWearables = new HashSet<string>(WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE)),
                         HairColor = WearablesConstants.DefaultColors.GetRandomHairColor(),
                         SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor(),
                         EyesColor = Color.white,

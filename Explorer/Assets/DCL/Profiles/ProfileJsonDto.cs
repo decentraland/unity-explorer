@@ -72,16 +72,20 @@ namespace DCL.Profiles
         public Avatar ToAvatar()
         {
             const int MAX_URN_PARTS = 6;
-            // TODO: remove shortened wearables from here, should only be required at LoadWearablesDTOByPointersSystem
-            // when querying wearables to the catalyst, but for some reason, messes up the urns and promises start to fail
-            var shortenedWearables = new HashSet<string>(wearables.Length);
+
+            var sharedWearables = new HashSet<string>(wearables.Length);
 
             foreach (string wearable in wearables)
-                shortenedWearables.Add(wearable.ShortenURN(MAX_URN_PARTS));
+                sharedWearables.Add(wearable.ShortenURN(MAX_URN_PARTS));
 
             return new Avatar
             {
-                Wearables = shortenedWearables,
+                // The wearables urns retrieved in the profile follows https://adr.decentraland.org/adr/ADR-244
+                UniqueWearables = new HashSet<string>(wearables),
+
+                // To avoid inconsistencies in the wearable references thus improving cache miss rate,
+                // we keep a list of shared wearables used by avatar shapes and most of the rendering systems
+                SharedWearables = sharedWearables,
                 Emotes = emotes.ToDictionary(dto => dto.urn, dto => dto.ToEmote()),
                 EyesColor = eyes.color.ToColor(),
                 HairColor = hair.color.ToColor(),

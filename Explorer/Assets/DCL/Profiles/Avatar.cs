@@ -7,7 +7,8 @@ namespace DCL.Profiles
     public class Avatar
     {
         public string BodyShape { get; set; }
-        public HashSet<string> Wearables { get; set; }
+        public HashSet<string> SharedWearables { get; set; }
+        public HashSet<string> UniqueWearables { get; set; }
         public HashSet<string> ForceRender { get; set; }
         public Dictionary<string, Emote> Emotes { get; set; }
         public URLAddress FaceSnapshotUrl { get; set; }

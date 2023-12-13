@@ -29,7 +29,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
         // When the number of wearables to request is greater than MAX_WEARABLES_PER_REQUEST, we split the request into several smaller ones.
         // In this way we avoid to send a very long url string that would fail due to the web request size limitations.
         private const int MAX_WEARABLES_PER_REQUEST = 200;
-        private const int MAX_URN_PARTS = 6;
 
         private static readonly ThreadSafeListPool<WearableDTO> DTO_POOL = new (MAX_WEARABLES_PER_REQUEST, 50);
 
@@ -75,7 +74,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 // String Builder has overloads for int to prevent allocations
                 bodyBuilder.Append('\"');
-                bodyBuilder.Append(wearablesToRequest[i].ShortenURN(MAX_URN_PARTS));
+                bodyBuilder.Append(wearablesToRequest[i]);
                 bodyBuilder.Append('\"');
 
                 if (i != wearablesToRequest.Count - 1)
