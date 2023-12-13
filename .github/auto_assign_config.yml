@@ -1,0 +1,22 @@
+addAssignees: author
+numberOfAssignees: 1
+
+addReviewers: true
+numberOfReviewers: 1
+useReviewGroups: true
+reviewGroups:
+  techleads:
+    - mikhail-dcl
+  devs:    
+    - sandrade-dcl    
+    - lorux0
+    - davidejensen
+    - popuz
+    - Kinerius
+    - pravusjif
+    - dalkia
+
+filterLabels:
+  exclude:
+    - "no review"
+    - "no QA needed"

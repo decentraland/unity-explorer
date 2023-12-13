@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.Web3Authentication;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -71,10 +72,14 @@ namespace Global.Dynamic
         {
             try
             {
+                // TODO: create the real web3 authenticator, missing decentralized app
+                var web3Authenticator = new FakeWeb3Authenticator();
+                await web3Authenticator.LoginAsync(ct);
+
                 // First load the common global plugin
                 bool isLoaded;
 
-                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, ct);
+                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, web3Authenticator, ct);
 
                 if (!isLoaded)
                 {
@@ -91,7 +96,8 @@ namespace Global.Dynamic
                     uiToolkitRoot,
                     StaticLoadPositions,
                     SceneLoadRadius,
-                    dynamicSettings);
+                    dynamicSettings,
+                    web3Authenticator);
 
                 if (!isLoaded)
                 {
