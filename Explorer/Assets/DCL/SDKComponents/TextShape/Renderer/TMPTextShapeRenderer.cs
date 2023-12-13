@@ -19,7 +19,7 @@ namespace DCL.SDKComponents.TextShape.Renderer
         {
             tmpText.text = textShape.Text;
 
-            if (textShape.FontAutoSize)
+            if (textShape.HasFontSize)
                 tmpText.enableAutoSizing = textShape.FontAutoSize;
 
             if (textShape.HasFontSize)
