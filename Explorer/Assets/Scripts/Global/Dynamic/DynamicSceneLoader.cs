@@ -24,6 +24,7 @@ namespace Global.Dynamic
         [Space]
         [SerializeField] private UIDocument uiToolkitRoot;
         [SerializeField] private UIDocument debugUiRoot;
+        [SerializeField] private UIDocument scenesUiRoot;
         [SerializeField] private Vector2Int StartPosition;
         [SerializeField] [Obsolete] private int SceneLoadRadius = 4;
 
@@ -79,7 +80,7 @@ namespace Global.Dynamic
                 // First load the common global plugin
                 bool isLoaded;
 
-                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, web3Authenticator, ct);
+                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, scenesUiRoot, web3Authenticator, ct);
 
                 if (!isLoaded)
                 {

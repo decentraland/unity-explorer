@@ -41,6 +41,11 @@
         public const string SCENE_LOADING = nameof(SCENE_LOADING);
 
         /// <summary>
+        ///     Messages related to the scene UI
+        /// </summary>
+        public const string SCENE_UI = nameof(SCENE_UI);
+
+        /// <summary>
         ///     Errors reported from JavaScript
         /// </summary>
         public const string JAVASCRIPT = nameof(JAVASCRIPT);

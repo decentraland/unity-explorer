@@ -5,6 +5,7 @@ using Global.Static;
 using NSubstitute;
 using System.Threading;
 using UnityEngine.AddressableAssets;
+using UnityEngine.UIElements;
 
 namespace Global.Tests
 {
@@ -12,14 +13,16 @@ namespace Global.Tests
     {
         private const string GLOBAL_CONTAINER_ADDRESS = "Integration Tests Global Container";
         private const string WORLD_CONTAINER_ADDRESS = "Integration Tests World Container";
+        private const string SCENES_UI_ROOT_CANVAS = "ScenesUIRootCanvas";
 
         public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> CreateStaticContainer()
         {
             PluginSettingsContainer globalSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(GLOBAL_CONTAINER_ADDRESS);
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
+            UIDocument scenesUIRootCanvas = await Addressables.LoadAssetAsync<UIDocument>(SCENES_UI_ROOT_CANVAS);
 
             return await StaticSceneLauncher.InstallAsync(globalSettingsContainer, sceneSettingsContainer,
-                Substitute.For<IWeb3Authenticator>(), CancellationToken.None);
+                scenesUIRootCanvas, Substitute.For<IWeb3Authenticator>(), CancellationToken.None);
         }
     }
 }

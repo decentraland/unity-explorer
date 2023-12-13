@@ -123,6 +123,17 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!114 &78723076 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3889322179606995116, guid: 2734962b32be95543bbfc82000f04fb4, type: 3}
+  m_PrefabInstance: {fileID: 3158676383174102666}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &158563621
 GameObject:
   m_ObjectHideFlags: 0
@@ -279,8 +290,9 @@ MonoBehaviour:
   scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
   uiToolkitRoot: {fileID: 1901323878}
   debugUiRoot: {fileID: 946305963}
+  scenesUiRoot: {fileID: 78723076}
   StartPosition: {x: 0, y: 0}
-  SceneLoadRadius: 4
+  SceneLoadRadius: 1
   StaticLoadPositions: []
   realmLauncher: {fileID: 234607244}
   realms:
@@ -289,6 +301,7 @@ MonoBehaviour:
   - https://sdk-test-scenes.decentraland.zone
   - https://peer.decentraland.org
   - https://worlds-content-server.decentraland.org/world/olavra.dcl.eth
+  - http://127.0.0.1:8000
   dynamicSettings:
     <PopupCloserView>k__BackingField:
       m_AssetGUID: dbfb7e67a438449f9a887f820f733868
@@ -1461,7 +1474,7 @@ RectTransform:
   - {fileID: 2095941040}
   - {fileID: 1277831542}
   m_Father: {fileID: 0}
-  m_RootOrder: 8
+  m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -2046,8 +2059,69 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 9
+  m_RootOrder: 10
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &3158676383174102666
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4780495006830554941, guid: 2734962b32be95543bbfc82000f04fb4, type: 3}
+      propertyPath: m_RootOrder
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4780495006830554941, guid: 2734962b32be95543bbfc82000f04fb4, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4780495006830554941, guid: 2734962b32be95543bbfc82000f04fb4, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4780495006830554941, guid: 2734962b32be95543bbfc82000f04fb4, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4780495006830554941, guid: 2734962b32be95543bbfc82000f04fb4, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4780495006830554941, guid: 2734962b32be95543bbfc82000f04fb4, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4780495006830554941, guid: 2734962b32be95543bbfc82000f04fb4, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4780495006830554941, guid: 2734962b32be95543bbfc82000f04fb4, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4780495006830554941, guid: 2734962b32be95543bbfc82000f04fb4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4780495006830554941, guid: 2734962b32be95543bbfc82000f04fb4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4780495006830554941, guid: 2734962b32be95543bbfc82000f04fb4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8765448689815683113, guid: 2734962b32be95543bbfc82000f04fb4, type: 3}
+      propertyPath: m_Name
+      value: ScenesUIRootCanvas
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 2734962b32be95543bbfc82000f04fb4, type: 3}
 --- !u!1001 &4363253906714060728
 PrefabInstance:
   m_ObjectHideFlags: 0

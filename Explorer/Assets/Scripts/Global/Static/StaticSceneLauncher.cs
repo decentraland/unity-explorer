@@ -5,6 +5,7 @@ using SceneRunner.Scene;
 using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Global.Static
 {
@@ -16,6 +17,7 @@ namespace Global.Static
         [SerializeField] private SceneLauncher sceneLauncher;
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer;
+        [SerializeField] private UIDocument scenesUiRoot;
 
         private ISceneFacade sceneFacade;
 
@@ -41,7 +43,7 @@ namespace Global.Static
                 SceneSharedContainer sceneSharedContainer;
 
                 (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettingsContainer, scenePluginSettingsContainer,
-                    web3Authenticator, ct);
+                    scenesUiRoot, web3Authenticator, ct);
                 sceneLauncher.Initialize(sceneSharedContainer, destroyCancellationToken);
             }
             catch (OperationCanceledException) { }
@@ -56,12 +58,13 @@ namespace Global.Static
         public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> InstallAsync(
             IPluginSettingsContainer globalSettingsContainer,
             IPluginSettingsContainer sceneSettingsContainer,
+            UIDocument scenesUiRoot,
             IWeb3Authenticator web3Authenticator,
             CancellationToken ct)
         {
             // First load the common global plugin
             (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer,
-                web3Authenticator, ct);
+                scenesUiRoot, web3Authenticator, ct);
 
             if (!isLoaded)
                 GameReports.PrintIsDead();

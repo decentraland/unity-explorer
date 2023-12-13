@@ -19,6 +19,7 @@ using ECS.Prioritization;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Global
 {
@@ -93,7 +94,9 @@ namespace Global
                     AssetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct));
         }
 
-        public static async UniTask<(StaticContainer container, bool success)> CreateAsync(IPluginSettingsContainer settingsContainer,
+        public static async UniTask<(StaticContainer container, bool success)> CreateAsync(
+            IPluginSettingsContainer settingsContainer,
+            UIDocument scenesUIDocument,
             IWeb3Authenticator web3Authenticator,
             CancellationToken ct)
         {
@@ -150,6 +153,7 @@ namespace Global
                 assetBundlePlugin,
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
+                new SceneUIPlugin(scenesUIDocument, sharedDependencies),
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif
