@@ -958,6 +958,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Sprint"",
+                    ""type"": ""Button"",
+                    ""id"": ""70553f39-c706-46ee-871c-a82610031995"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -1068,6 +1077,28 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""DropPlayer"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""0762bf1f-a3c2-4294-9e8e-6a22e87216f0"",
+                    ""path"": ""<Keyboard>/shift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Sprint"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""180e4e79-fdf3-4389-8493-eff13c47ea01"",
+                    ""path"": ""<XInputController>/rightTrigger"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Sprint"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1745,6 +1776,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_FreeCamera = asset.FindActionMap("FreeCamera", throwIfNotFound: true);
         m_FreeCamera_Movement = m_FreeCamera.FindAction("Movement", throwIfNotFound: true);
         m_FreeCamera_DropPlayer = m_FreeCamera.FindAction("DropPlayer", throwIfNotFound: true);
+        m_FreeCamera_Sprint = m_FreeCamera.FindAction("Sprint", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -2091,12 +2123,14 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private List<IFreeCameraActions> m_FreeCameraActionsCallbackInterfaces = new List<IFreeCameraActions>();
     private readonly InputAction m_FreeCamera_Movement;
     private readonly InputAction m_FreeCamera_DropPlayer;
+    private readonly InputAction m_FreeCamera_Sprint;
     public struct FreeCameraActions
     {
         private @DCLInput m_Wrapper;
         public FreeCameraActions(@DCLInput wrapper) { m_Wrapper = wrapper; }
         public InputAction @Movement => m_Wrapper.m_FreeCamera_Movement;
         public InputAction @DropPlayer => m_Wrapper.m_FreeCamera_DropPlayer;
+        public InputAction @Sprint => m_Wrapper.m_FreeCamera_Sprint;
         public InputActionMap Get() { return m_Wrapper.m_FreeCamera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -2112,6 +2146,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @DropPlayer.started += instance.OnDropPlayer;
             @DropPlayer.performed += instance.OnDropPlayer;
             @DropPlayer.canceled += instance.OnDropPlayer;
+            @Sprint.started += instance.OnSprint;
+            @Sprint.performed += instance.OnSprint;
+            @Sprint.canceled += instance.OnSprint;
         }
 
         private void UnregisterCallbacks(IFreeCameraActions instance)
@@ -2122,6 +2159,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @DropPlayer.started -= instance.OnDropPlayer;
             @DropPlayer.performed -= instance.OnDropPlayer;
             @DropPlayer.canceled -= instance.OnDropPlayer;
+            @Sprint.started -= instance.OnSprint;
+            @Sprint.performed -= instance.OnSprint;
+            @Sprint.canceled -= instance.OnSprint;
         }
 
         public void RemoveCallbacks(IFreeCameraActions instance)
@@ -2324,6 +2364,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     {
         void OnMovement(InputAction.CallbackContext context);
         void OnDropPlayer(InputAction.CallbackContext context);
+        void OnSprint(InputAction.CallbackContext context);
     }
     public interface IUIActions
     {

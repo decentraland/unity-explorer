@@ -8,10 +8,13 @@ using DCL.Landscape.Config;
 using DCL.Landscape.Jobs;
 using DCL.Landscape.Settings;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.Landscape.Systems
 {
@@ -20,22 +23,29 @@ namespace DCL.Landscape.Systems
     public partial class LandscapeParcelInitializerSystem : BaseUnityLoopSystem
     {
         private readonly LandscapeData landscapeData;
+        private readonly LandscapeAssetPoolManager poolManager;
         private readonly int worldSeed;
+        private readonly Transform landscapeParentObject;
 
-        private LandscapeParcelInitializerSystem(World world, LandscapeData landscapeData) : base(world)
+        private LandscapeParcelInitializerSystem(World world, LandscapeData landscapeData, LandscapeAssetPoolManager poolManager) : base(world)
         {
             worldSeed = 0;
             this.landscapeData = landscapeData;
+            this.poolManager = poolManager;
+            landscapeParentObject = new GameObject("Landscape").transform;
         }
-
 
         protected override void Update(float t)
         {
+            // This first query gets all LandscapeParcel and creates a Job which calculates what's going to spawn inside them
             InitializeLandscapeJobsQuery(World);
+
+            // This second query get's the job result and spawns all the needed objects
             InitializeLandscapeSubEntitiesQuery(World);
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         [All(typeof(LandscapeParcelInitialization))]
         private void InitializeLandscapeJobs(in Entity entity, in LandscapeParcel landscapeParcel)
         {
@@ -82,8 +92,15 @@ namespace DCL.Landscape.Systems
             if (!landscapeParcelNoiseJob.Handle.IsCompleted) return;
             landscapeParcelNoiseJob.Handle.Complete();
 
-            LandscapeParcel landscapeParcel = World.Get<LandscapeParcel>(landscapeParcelNoiseJob.Parcel);
+            // This means that the job ended and our parcel entity does not exist anymore
+            if (!World.Has<LandscapeParcel>(landscapeParcelNoiseJob.Parcel))
+            {
+                Debug.LogWarning("IT HAPPENED!");
+                DisposeEntityAndJob(in entity, ref landscapeParcelNoiseJob);
+                return;
+            }
 
+            LandscapeParcel landscapeParcel = World.Get<LandscapeParcel>(landscapeParcelNoiseJob.Parcel);
             float dist = 16f / landscapeData.density;
             Vector3 basePos = landscapeParcel.Position;
             Vector3 baseSubPos = (Vector3.right * dist / 2) + (Vector3.forward * dist / 2);
@@ -92,27 +109,39 @@ namespace DCL.Landscape.Systems
             {
                 for (var j = 0; j < landscapeData.density; j++)
                 {
-                    Vector3 subEntityPos = (Vector3.right * i * dist) + (Vector3.forward * j * dist);
-                    Vector3 finalPosition = basePos + baseSubPos + subEntityPos;
-
                     int index = i + (j * landscapeData.density);
+
+                    // This slow, can we find a workaround?
                     float objHeight = landscapeParcelNoiseJob.Results[index];
 
+                    // We probably want to setup some thresholds for this instead of bigger than zero
                     if (objHeight > 0)
                     {
-                        // TRACK ASSETS IN THE ORIGINAL ENTITY?
-                        Transform objTransform = Object.Instantiate(landscapeParcelNoiseJob.LandscapeAsset.asset, finalPosition, Quaternion.identity);
+                        Vector3 subEntityPos = (Vector3.right * i * dist) + (Vector3.forward * j * dist);
+                        Vector3 finalPosition = basePos + baseSubPos + subEntityPos;
+
+                        Transform objTransform = poolManager.Get(landscapeParcelNoiseJob.LandscapeAsset.asset);
+                        objTransform.SetParent(landscapeParentObject);
+                        objTransform.transform.position = finalPosition;
                         landscapeParcelNoiseJob.LandscapeAsset.randomization.ApplyRandomness(objTransform, landscapeParcel.Random, objHeight);
 
-                        landscapeParcel.Assets.Add(objTransform);
-                        World.Create(new LandscapeEntity(finalPosition));
+                        // can we avoid this allocation?
+                        if (!landscapeParcel.Assets.ContainsKey(landscapeParcelNoiseJob.LandscapeAsset.asset))
+                            landscapeParcel.Assets.Add(landscapeParcelNoiseJob.LandscapeAsset.asset, new List<Transform>());
+
+                        landscapeParcel.Assets[landscapeParcelNoiseJob.LandscapeAsset.asset].Add(objTransform);
                     }
                 }
             }
 
-            landscapeParcelNoiseJob.Results.Dispose();
-            landscapeParcelNoiseJob.OctaveOffsets.Dispose();
-            World.Destroy(entity);
+            DisposeEntityAndJob(in entity, ref landscapeParcelNoiseJob);
+
+            void DisposeEntityAndJob(in Entity entity, ref LandscapeParcelNoiseJob landscapeParcelNoiseJob)
+            {
+                landscapeParcelNoiseJob.Results.Dispose();
+                landscapeParcelNoiseJob.OctaveOffsets.Dispose();
+                World.Destroy(entity);
+            }
         }
     }
 }
