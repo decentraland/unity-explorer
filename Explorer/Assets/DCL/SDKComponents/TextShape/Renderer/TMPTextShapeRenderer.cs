@@ -46,6 +46,13 @@ namespace DCL.SDKComponents.TextShape.Renderer
             if (textShape.TextColor is not null)
                 tmpText.color = textShape.TextColor.ToUnityColor();
 
+            tmpText.margin = new Vector4(
+                textShape.PaddingLeft,
+                textShape.PaddingTop,
+                textShape.PaddingRight,
+                textShape.PaddingBottom
+            );
+
             Debug.LogWarning("Applying is not finished");
             /*
                 //TODO//
@@ -54,12 +61,6 @@ namespace DCL.SDKComponents.TextShape.Renderer
 
                 Width = 100,
                 Height = 1,
-
-                //Padding
-                PaddingTop = 1,
-                PaddingBottom = 1,
-                PaddingLeft = 1,
-                PaddingRight = 1,
 
                 //Shadow
                 ShadowColor = new Color3 { B = 1, G = 1, R = 1 },
