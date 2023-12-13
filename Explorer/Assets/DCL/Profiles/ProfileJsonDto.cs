@@ -71,17 +71,13 @@ namespace DCL.Profiles
 
         public Avatar ToAvatar()
         {
+            const int MAX_URN_PARTS = 6;
             // TODO: remove shortened wearables from here, should only be required at LoadWearablesDTOByPointersSystem
             // when querying wearables to the catalyst, but for some reason, messes up the urns and promises start to fail
             var shortenedWearables = new HashSet<string>(wearables.Length);
 
             foreach (string wearable in wearables)
-            {
-                string[] parts = wearable.Split(':');
-
-                if (parts.Length > 6)
-                    shortenedWearables.Add(string.Join(':', parts, 0, 6));
-            }
+                shortenedWearables.Add(wearable.ShortenURN(MAX_URN_PARTS));
 
             return new Avatar
             {
