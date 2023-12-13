@@ -142,6 +142,8 @@ float3 LatlongToDirectionCoordinate(float2 coord)
 
 float _SunSize;
 float _SunSizeConvergence;
+float _MoonSize;
+float _MoonSizeConvergence;
 float4 _SkyTint;
 float _AtmosphereThickness;
 float4 _GroundColor;
@@ -287,7 +289,7 @@ float4 sk_frag(sk_v2f IN) : SV_Target
     if(y > 0.0)
     {
         vCol += vSunColour_Intensity * calcSunAttenuation(vSunPos.xyz, vEyeRay, _SunSize, _SunSizeConvergence);
-        vCol += calcSunAttenuation(vMoonPos.xyz, vEyeRay, _SunSize, _SunSizeConvergence);
+        vCol += calcSunAttenuation(vMoonPos.xyz, vEyeRay, _MoonSize, _MoonSizeConvergence);
     }
 
     vCol = COLOR_2_LINEAR(vCol);

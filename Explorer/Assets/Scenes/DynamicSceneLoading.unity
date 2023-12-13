@@ -748,12 +748,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fLongitude_Sun: 0
   fLatitude_Sun: 0
-  vLightDir: {x: 0, y: 0, z: 0, w: 0}
-  fLongitude_Moon: 0
-  fLatitude_Moon: 0
   hour: 0
   minutes: 0
-  timeSpeed: 5000
+  timeSpeed: 100
   frameSteps: 1
 --- !u!1 &946305962
 GameObject:

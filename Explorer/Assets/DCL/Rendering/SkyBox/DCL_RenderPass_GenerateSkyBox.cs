@@ -127,6 +127,8 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         private static readonly int s_GroundColorID = Shader.PropertyToID("_GroundColor");
         private static readonly int s_SunSizeID = Shader.PropertyToID("_SunSize");
         private static readonly int s_SunSizeConvergenceID = Shader.PropertyToID("_SunSizeConvergence");
+        private static readonly int s_MoonSizeID = Shader.PropertyToID("_MoonSize");
+        private static readonly int s_MoonSizeConvergenceID = Shader.PropertyToID("_MoonSizeConvergence");
         private static readonly int s_AtmosphereThicknessID = Shader.PropertyToID("_AtmosphereThickness");
         private static readonly int s_ExposureID = Shader.PropertyToID("_Exposure");
 
@@ -271,9 +273,6 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
         // The render pipeline will ensure target setup and clearing happens in a performant manner.
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
-            Vector4 lightPos, lightColor, lightAttenuation, lightSpotDir, lightOcclusionChannel;
-            UniversalRenderPipeline.InitializeLightConstants_Common(renderingData.lightData.visibleLights, renderingData.lightData.mainLightIndex, out lightPos, out lightColor, out lightAttenuation, out lightSpotDir, out lightOcclusionChannel);
-
             GameObject sun = GameObject.Find("Directional Light");
             TimeOfDay tod = sun.GetComponent<TimeOfDay>();
             vSunPos = tod.GetSunPosition();
@@ -290,6 +289,8 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             m_Material_SkyBox_Generate.SetVector(s_GroundColorID, m_Settings_Generate.GroundColor);
             m_Material_SkyBox_Generate.SetFloat(s_SunSizeID, m_Settings_Generate.SunSize);
             m_Material_SkyBox_Generate.SetFloat(s_SunSizeConvergenceID, m_Settings_Generate.SunSizeConvergence);
+            m_Material_SkyBox_Generate.SetFloat(s_MoonSizeID, m_Settings_Generate.MoonSize);
+            m_Material_SkyBox_Generate.SetFloat(s_MoonSizeConvergenceID, m_Settings_Generate.MoonSizeConvergence);
             m_Material_SkyBox_Generate.SetFloat(s_AtmosphereThicknessID, m_Settings_Generate.AtmosphereThickness);
             m_Material_SkyBox_Generate.SetFloat(s_ExposureID, m_Settings_Generate.Exposure);
 

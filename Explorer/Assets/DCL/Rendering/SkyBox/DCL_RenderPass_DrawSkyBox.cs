@@ -63,7 +63,6 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             var scale = new Vector3(1, 1, 1);
 
             Matrix4x4 lightMat = Matrix4x4.TRS(position, Quaternion.Euler(rotation), scale);
-            //lightMat = Matrix4x4.Inverse(lightMat);
             m_Material_Draw.SetMatrix(s_SunPosID, lightMat);
         }
 
@@ -92,7 +91,7 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
                 cmd.SetGlobalTexture(s_SkyBoxCubemapTextureID, m_SkyBoxCubeMap_RTHandle);
                 cmd.SetGlobalTexture(s_StarBoxCubemapTextureID, m_StarBoxCubeMap_RTHandle);
 
-                //cmd.DrawMesh(m_cubeMesh, Matrix4x4.identity, m_Material_Draw, submeshIndex: 0, (int)ShaderPasses.Scenery, properties: null);
+                //cmd.DrawMesh(GetCube(), Matrix4x4.identity, m_Material_Draw, submeshIndex: 0, (int)ShaderPasses.Scenery, properties: null);
                 cmd.DrawMesh(GetCube(), Matrix4x4.identity, m_Material_Draw, submeshIndex: 0, (int)ShaderPasses.Stars, properties: null);
                 cmd.DrawMesh(GetCube(), Matrix4x4.identity, m_Material_Draw, submeshIndex: 0, (int)ShaderPasses.Sky, properties: null);
             }

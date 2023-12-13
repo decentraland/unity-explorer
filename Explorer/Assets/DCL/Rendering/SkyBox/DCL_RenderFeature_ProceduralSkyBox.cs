@@ -12,6 +12,8 @@ internal class ProceduralSkyBoxSettings_Generate
     // Parameters
     [SerializeField] internal float SunSize = 1.0f;
     [SerializeField] internal float SunSizeConvergence = 5.0f;
+    [SerializeField] internal float MoonSize = 0.06f;
+    [SerializeField] internal float MoonSizeConvergence = 100.0f;
     [SerializeField] internal float AtmosphereThickness = 1.0f;
     [SerializeField] internal Color GroundColor = new (0.369f, 0.349f, 0.341f, 1.0f);
     [SerializeField] internal Color SkyTint = new (0.5f, 0.5f, 0.5f, 1.0f);

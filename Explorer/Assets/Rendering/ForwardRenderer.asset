@@ -91,6 +91,8 @@ MonoBehaviour:
   m_SettingsGenerate:
     SunSize: 0.04
     SunSizeConvergence: 5
+    MoonSize: 0.06
+    MoonSizeConvergence: 100
     AtmosphereThickness: 1
     GroundColor: {r: 0.26666668, g: 0.41960785, b: 0.25882354, a: 1}
     SkyTint: {r: 0.5, g: 0.5, b: 0.5, a: 1}
