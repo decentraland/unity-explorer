@@ -7,11 +7,13 @@ namespace DCL.Backpack
     {
         private readonly BackpackView view;
         private readonly RectTransform rectTransform;
+        private readonly BackpackSlotsController slotsController;
 
         public BackpackController(BackpackView view)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
+            slotsController = new BackpackSlotsController(view.GetComponentsInChildren<AvatarSlotView>());
         }
 
         public void Activate()

@@ -8,7 +8,7 @@ using UnityEngine.UI;
 public class AvatarSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     private const float ANIMATION_TIME = 0.2f;
-    public event Action OnSlotButtonPressed;
+    public event Action<AvatarSlotView> OnSlotButtonPressed;
 
     [field: SerializeField]
     internal Image focusedImage { get; private set; }
@@ -39,7 +39,8 @@ public class AvatarSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitH
 
     public void InvokeSlotButtonPressed()
     {
-        OnSlotButtonPressed?.Invoke();
+        OnSlotButtonPressed?.Invoke(this);
+        ScaleUpAnimation(SelectedBackground.transform);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
