@@ -40,6 +40,7 @@ namespace DCL.SDKComponents.TextShape.Component
         public float shadowOffsetY = 10;
 
         [Header("Text")]
+        [Multiline]
         public string text = "Demo";
         public TextAlignMode textAlign = TextAlignMode.TamMiddleCenter;
         public bool textWrapping = true;
