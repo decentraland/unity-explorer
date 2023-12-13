@@ -13,7 +13,7 @@ namespace ECS.StreamableLoading.Textures
 {
     public class TexturesCache : IStreamableCache<Texture2D, GetTextureIntention>
     {
-        private readonly Dictionary<GetTextureIntention, Texture2D> cache;
+        internal readonly Dictionary<GetTextureIntention, Texture2D> cache;
         private readonly SimplePriorityQueue<GetTextureIntention, long> unloadQueue = new ();
 
         public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<Texture2D>?>> OngoingRequests { get; }

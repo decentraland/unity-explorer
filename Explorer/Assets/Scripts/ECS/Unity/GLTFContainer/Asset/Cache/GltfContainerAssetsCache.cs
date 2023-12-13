@@ -19,9 +19,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
     /// </summary>
     public class GltfContainerAssetsCache : IStreamableCache<GltfContainerAsset, string>
     {
+        internal readonly Dictionary<string, List<GltfContainerAsset>> cache;
         private readonly Transform parentContainer;
-
-        private readonly Dictionary<string, List<GltfContainerAsset>> cache;
         private readonly SimplePriorityQueue<string, long> unloadQueue = new ();
 
         public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>> OngoingRequests { get; }
@@ -35,7 +34,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             parentContainer.gameObject.SetActive(false);
 
             cache = new Dictionary<string, List<GltfContainerAsset>>(this);
-
             OngoingRequests = new FakeDictionaryCache<UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>>();
             IrrecoverableFailures = new Dictionary<string, StreamableLoadingResult<GltfContainerAsset>>();
         }
