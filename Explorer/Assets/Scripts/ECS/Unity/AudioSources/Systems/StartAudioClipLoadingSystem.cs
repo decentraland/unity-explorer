@@ -53,7 +53,7 @@ namespace ECS.Unity.AudioSources.Systems
             audioSourceComponent.ClipPromise = Promise.Create(World, new GetAudioClipIntention
             {
                 CommonArguments = new CommonLoadingArguments(audioClipUrl, attempts: attemptsCount),
-                AudioType = AudioUtils.GetAudioTypeFromUrlName(sdkAudioSource.AudioClipUrl),
+                AudioType = sdkAudioSource.AudioClipUrl.ToAudioType(),
             }, partitionComponent);
 
             audioSourceComponent.ClipLoadingStatus = StreamableLoading.LifeCycle.LoadingInProgress;

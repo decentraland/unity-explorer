@@ -4,7 +4,7 @@ namespace ECS.Unity.AudioSources
 {
     public static class AudioUtils
     {
-        public static AudioType GetAudioTypeFromUrlName(string url)
+        public static AudioType ToAudioType(this string url)
         {
             if (!string.IsNullOrEmpty(url))
                 return url[^3..].ToLower() switch
@@ -20,4 +20,3 @@ namespace ECS.Unity.AudioSources
         }
     }
 }
-
