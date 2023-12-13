@@ -23,8 +23,8 @@ namespace DCL.SDKComponents.TextShape.Component
         public float lineSpacing = 10;
 
         [Header("Outlines")]
-        public Color outlineColor = Color.white;
-        public float outlineWidth = 1;
+        public Color outlineColor = Color.black;
+        public float outlineWidth = 0.3f;
 
         [Header("Padding")]
         public float paddingTop = 1;

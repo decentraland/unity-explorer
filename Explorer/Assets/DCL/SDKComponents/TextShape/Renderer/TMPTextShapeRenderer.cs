@@ -9,10 +9,18 @@ namespace DCL.SDKComponents.TextShape.Renderer
     public class TMPTextShapeRenderer : ITextShapeRenderer
     {
         private readonly TMP_Text tmpText;
+        private readonly MeshRenderer meshRenderer;
+        private readonly MaterialPropertyBlock materialPropertyBlock;
+        private static readonly int ID_OUTLINE_COLOR = Shader.PropertyToID("_OutlineColor");
+        private static readonly int ID_OUTLINE_WIDTH = Shader.PropertyToID("_OutlineWidth");
+        private static readonly int ID_SCALE_RATIO_A_USE_OUTLINE = Shader.PropertyToID("_ScaleRatioA");
 
-        public TMPTextShapeRenderer(TMP_Text tmpText)
+        public TMPTextShapeRenderer(TMP_Text tmpText, MeshRenderer meshRenderer, MaterialPropertyBlock materialPropertyBlock)
         {
             this.tmpText = tmpText;
+            this.meshRenderer = meshRenderer;
+            this.materialPropertyBlock = materialPropertyBlock;
+            UseOutline();
         }
 
         public void Apply(PBTextShape textShape)
@@ -32,10 +40,9 @@ namespace DCL.SDKComponents.TextShape.Renderer
                 tmpText.maxVisibleLines = textShape.LineCount;
 
             if (textShape.OutlineColor is not null)
-                tmpText.outlineColor = textShape.OutlineColor.ToUnityColor();
+                materialPropertyBlock.SetColor(ID_OUTLINE_COLOR, textShape.OutlineColor.ToUnityColor());
 
-            if (textShape.HasOutlineWidth)
-                tmpText.outlineWidth = textShape.OutlineWidth;
+            materialPropertyBlock.SetFloat(ID_OUTLINE_WIDTH, textShape.OutlineWidth);
 
             if (textShape.HasTextAlign)
                 tmpText.alignment = TextAlignmentOptions(textShape.TextAlign);
@@ -52,6 +59,8 @@ namespace DCL.SDKComponents.TextShape.Renderer
                 textShape.PaddingRight,
                 textShape.PaddingBottom
             );
+
+            meshRenderer.SetPropertyBlock(materialPropertyBlock);
 
             Debug.LogWarning("Applying is not finished");
             /*
@@ -79,6 +88,11 @@ namespace DCL.SDKComponents.TextShape.Renderer
         public void Show()
         {
             tmpText.enabled = true;
+        }
+
+        private void UseOutline()
+        {
+            materialPropertyBlock.SetFloat(ID_SCALE_RATIO_A_USE_OUTLINE, 1);
         }
 
         private static TextAlignmentOptions TextAlignmentOptions(TextAlignMode mode) =>
