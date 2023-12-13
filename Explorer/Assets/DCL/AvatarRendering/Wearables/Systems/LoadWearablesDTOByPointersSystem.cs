@@ -74,6 +74,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 // String Builder has overloads for int to prevent allocations
                 bodyBuilder.Append('\"');
 
+                // TODO: would be ideal that urns are represented in a custom type, allowing shortening operations like this
                 string shortenedUrn = wearablesToRequest[i];
                 string[] parts = shortenedUrn.Split(':');
 
