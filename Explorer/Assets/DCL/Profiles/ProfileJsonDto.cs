@@ -71,9 +71,21 @@ namespace DCL.Profiles
 
         public Avatar ToAvatar()
         {
+            // TODO: remove shortened wearables from here, should only be required at LoadWearablesDTOByPointersSystem
+            // when querying wearables to the catalyst, but for some reason, messes up the urns and promises start to fail
+            var shortenedWearables = new HashSet<string>(wearables.Length);
+
+            foreach (string wearable in wearables)
+            {
+                string[] parts = wearable.Split(':');
+
+                if (parts.Length > 6)
+                    shortenedWearables.Add(string.Join(':', parts, 0, 6));
+            }
+
             return new Avatar
             {
-                Wearables = new HashSet<string>(wearables),
+                Wearables = shortenedWearables,
                 Emotes = emotes.ToDictionary(dto => dto.urn, dto => dto.ToEmote()),
                 EyesColor = eyes.color.ToColor(),
                 HairColor = hair.color.ToColor(),
@@ -114,7 +126,6 @@ namespace DCL.Profiles
                 Interests = interests != null ? new List<string>(interests) : new List<string>(),
                 Name = name,
                 Version = version,
-                EthAddress = ethAddress,
                 TutorialStep = tutorialStep,
                 UserId = userId,
                 HasClaimedName = hasClaimedName,

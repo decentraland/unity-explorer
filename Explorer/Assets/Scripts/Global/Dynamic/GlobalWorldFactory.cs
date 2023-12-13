@@ -13,9 +13,10 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
 using DCL.Systems;
-using DCL.WebRequests;
 using DCL.Time;
 using DCL.Time.Systems;
+using DCL.Web3Authentication;
+using DCL.WebRequests;
 using ECS;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -87,7 +88,8 @@ namespace Global.Dynamic
             physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
-        public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory, ICharacterObject characterObject)
+        public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory, ICharacterObject characterObject,
+            IWeb3Identity web3Identity)
         {
             var world = World.Create();
 
@@ -106,6 +108,7 @@ namespace Global.Dynamic
                 new TransformComponent { Transform = characterObject.Transform },
                 new PBAvatarShape
                 {
+                    Id = web3Identity.EphemeralAccount.Address,
                     BodyShape = BodyShape.MALE,
                     Wearables = { WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE) },
                     Name = "Player",

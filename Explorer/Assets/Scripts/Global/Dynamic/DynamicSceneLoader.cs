@@ -1,9 +1,15 @@
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.ECSComponents;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Web3Authentication;
 using DCL.Profiles;
+using Decentraland.Common;
+using ECS.Prioritization.Components;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -12,6 +18,9 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Utility;
+using Avatar = DCL.Profiles.Avatar;
+using Entity = Arch.Core.Entity;
+using Vector3 = UnityEngine.Vector3;
 
 namespace Global.Dynamic
 {
@@ -39,7 +48,6 @@ namespace Global.Dynamic
         private StaticContainer staticContainer;
         private DynamicWorldContainer dynamicWorldContainer;
         private GlobalWorld globalWorld;
-        private CancellationTokenSource fetchProfileCancellationToken;
 
         private void Awake()
         {
@@ -67,8 +75,6 @@ namespace Global.Dynamic
                 staticContainer?.Dispose();
             }
 
-            fetchProfileCancellationToken?.Cancel();
-            fetchProfileCancellationToken?.Dispose();
             realmLauncher.OnRealmSelected = null;
             DisposeAsync().Forget();
         }
@@ -77,8 +83,7 @@ namespace Global.Dynamic
         {
             try
             {
-                // TODO: create the real web3 authenticator, missing decentralized app
-                var web3Authenticator = new FakeWeb3Authenticator();
+                IWeb3Authenticator web3Authenticator = await CreateWeb3AuthenticatorAsync(ct);
 
                 // First load the common global plugin
                 bool isLoaded;
@@ -92,7 +97,6 @@ namespace Global.Dynamic
                 }
 
                 IWeb3Identity web3Identity = await web3Authenticator.LoginAsync(ct);
-                addressInput.text = web3Identity.EphemeralAccount.Address;
 
                 var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
 
@@ -130,21 +134,15 @@ namespace Global.Dynamic
                     return;
                 }
 
-                globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory, dynamicWorldContainer.EmptyScenesWorldFactory, staticContainer.CharacterObject);
+                globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory,
+                    dynamicWorldContainer.EmptyScenesWorldFactory, staticContainer.CharacterObject, web3Identity);
 
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
 
-                void SetRealm(string selectedRealm)
-                {
-                    ChangeRealmAsync(staticContainer, destroyCancellationToken, selectedRealm).Forget();
-                }
+                string selectedRealm = await WaitUntilRealmIsSelected(ct);
+                await ChangeRealmAsync(staticContainer, selectedRealm, ct);
 
-                fetchProfileCancellationToken?.Cancel();
-                fetchProfileCancellationToken?.Dispose();
-                fetchProfileCancellationToken = new CancellationTokenSource();
-
-                realmLauncher.OnRealmSelected += SetRealm;
-                addressInput.onSubmit.AddListener(LoadProfile);
+                UpdateOwnAvatarShape(await EnsureProfileAsync(web3Identity.EphemeralAccount.Address, ct));
             }
             catch (OperationCanceledException)
             {
@@ -158,7 +156,32 @@ namespace Global.Dynamic
             }
         }
 
-        private async UniTask ChangeRealmAsync(StaticContainer globalContainer, CancellationToken ct, string selectedRealm)
+        private void UpdateOwnAvatarShape(Profile profile)
+        {
+            globalWorld.EcsWorld.Query(in new QueryDescription().WithAll<PBAvatarShape>().WithNone<Profile>(),
+                (in Entity entity, ref PBAvatarShape avatarShape) =>
+                {
+                    // the catalyst converts the address to lower case
+                    if (!string.Equals(avatarShape.Id, profile.UserId, StringComparison.CurrentCultureIgnoreCase)) return;
+                    globalWorld.EcsWorld.Add(entity, profile);
+                });
+        }
+
+        private async UniTask<string> WaitUntilRealmIsSelected(CancellationToken ct)
+        {
+            string selectedRealm = null;
+
+            void SetRealm(string str) =>
+                selectedRealm = str;
+
+            realmLauncher.OnRealmSelected += SetRealm;
+
+            await UniTask.WaitUntil(() => !string.IsNullOrEmpty(selectedRealm), cancellationToken: ct);
+
+            return selectedRealm;
+        }
+
+        private async UniTask ChangeRealmAsync(StaticContainer globalContainer, string selectedRealm, CancellationToken ct)
         {
             if (globalWorld != null)
                 await dynamicWorldContainer.RealmController.UnloadCurrentRealmAsync(globalWorld);
@@ -173,19 +196,59 @@ namespace Global.Dynamic
             await dynamicWorldContainer.RealmController.SetRealmAsync(globalWorld, URLDomain.FromString(selectedRealm), ct);
         }
 
-        private void LoadProfile(string profileId)
+        private async UniTask<IWeb3Authenticator> CreateWeb3AuthenticatorAsync(CancellationToken ct)
         {
-            if (string.IsNullOrEmpty(profileId)) return;
+            // TODO: create the real web3 authenticator and remove addressInputField. Missing auth dapp
+            var isWeb3PublicAddressSet = false;
 
-            async UniTask LoadProfileAsync(string profileId, CancellationToken ct)
+            addressInput.onSubmit.AddListener(publicAddress =>
             {
-                Profile profile = await dynamicWorldContainer.ProfileRepository.Get(profileId, 0, ct);
+                if (string.IsNullOrEmpty(publicAddress)) return;
+                isWeb3PublicAddressSet = true;
+
+                // cannot reassign address in the same session
+                addressInput.gameObject.SetActive(false);
+            });
+
+            await UniTask.WaitUntil(() => isWeb3PublicAddressSet, cancellationToken: ct);
+
+            return new FakeWeb3Authenticator(addressInput.text);
+        }
+
+        private async UniTask<Profile> EnsureProfileAsync(string profileId, CancellationToken ct)
+        {
+            Profile profile = await dynamicWorldContainer.ProfileRepository.Get(profileId, 0, ct);
+
+            if (profile == null)
+            {
+                var name = $"Player#{profileId.Substring(profileId.Length - 4, 4)}";
+
+                profile = new Profile
+                {
+                    UserId = profileId,
+                    Name = name,
+                    Blocked = new HashSet<string>(),
+                    Description = "",
+                    Email = "",
+                    Interests = new List<string>(),
+                    Version = 0,
+                    TutorialStep = 0,
+                    UnclaimedName = name,
+                    HasClaimedName = false,
+                    Avatar = new Avatar
+                    {
+                        Emotes = new Dictionary<string, Emote>(),
+                        BodyShape = BodyShape.MALE,
+                        Wearables = new HashSet<string>(WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE)),
+                        HairColor = WearablesConstants.DefaultColors.GetRandomHairColor(),
+                        SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor(),
+                        EyesColor = Color.white,
+                        ForceRender = new HashSet<string>(),
+                    },
+                };
             }
 
-            fetchProfileCancellationToken?.Cancel();
-            fetchProfileCancellationToken?.Dispose();
-            fetchProfileCancellationToken = new CancellationTokenSource();
-            LoadProfileAsync(profileId, destroyCancellationToken).Forget();
+            return profile;
         }
     }
 }

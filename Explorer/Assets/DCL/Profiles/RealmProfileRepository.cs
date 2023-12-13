@@ -23,6 +23,8 @@ namespace DCL.Profiles
 
         public async UniTask<Profile?> Get(string id, int version, CancellationToken ct)
         {
+            if (string.IsNullOrEmpty(id)) return null;
+
             IIpfsRealm ipfs = realm.Ipfs;
 
             urlBuilder.Clear();

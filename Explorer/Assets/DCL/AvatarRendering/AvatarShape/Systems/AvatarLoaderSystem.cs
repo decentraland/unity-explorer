@@ -6,9 +6,13 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Profiles;
+using Decentraland.Common;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.Unity.ColorComponent;
+using UnityEngine;
+using Entity = Arch.Core.Entity;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<
     DCL.AvatarRendering.Wearables.Components.IWearable[],
     DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
@@ -25,8 +29,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             LoadNewAvatarQuery(World);
             UpdateAvatarQuery(World);
+            UpdateAvatarByProfileQuery(World);
         }
 
+        // TODO: remove PBAvatarShape as middleware, instead use Profile directly
         [Query]
         [None(typeof(AvatarShapeComponent))]
         private void LoadNewAvatar(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partition)
@@ -36,6 +42,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             World.Add(entity, new AvatarShapeComponent(pbAvatarShape.Name, pbAvatarShape.Id, pbAvatarShape, wearablePromise, pbAvatarShape.SkinColor.ToUnityColor(), pbAvatarShape.HairColor.ToUnityColor()));
         }
 
+        // TODO: remove PBAvatarShape as middleware, instead use Profile directly
         [Query]
         private void UpdateAvatar(ref PBAvatarShape pbAvatarShape, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
         {
@@ -51,6 +58,37 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarShapeComponent.BodyShape = pbAvatarShape;
             avatarShapeComponent.IsDirty = true;
             pbAvatarShape.IsDirty = false;
+        }
+
+        // TODO: remove PBAvatarShape as middleware, instead use Profile directly
+        [Query]
+        private void UpdateAvatarByProfile(in Entity entity, ref Profile profile, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partition)
+        {
+            Color avatarSkinColor = profile.Avatar.SkinColor;
+            Color avatarHairColor = profile.Avatar.HairColor;
+
+            World.Set(entity, new PBAvatarShape
+            {
+                Id = profile.UserId,
+                BodyShape = profile.Avatar.BodyShape,
+                Wearables = { profile.Avatar.Wearables },
+                Name = profile.Name,
+                SkinColor = new Color3
+                {
+                    R = avatarSkinColor.r,
+                    B = avatarSkinColor.b,
+                    G = avatarSkinColor.g,
+                },
+                HairColor = new Color3
+                {
+                    R = avatarHairColor.r,
+                    B = avatarHairColor.b,
+                    G = avatarHairColor.g,
+                },
+                IsDirty = true,
+            });
+
+            World.Remove<Profile>(entity);
         }
 
         private Promise CreateWearablePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition) =>

@@ -73,7 +73,14 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 // String Builder has overloads for int to prevent allocations
                 bodyBuilder.Append('\"');
-                bodyBuilder.Append(wearablesToRequest[i]);
+
+                string shortenedUrn = wearablesToRequest[i];
+                string[] parts = shortenedUrn.Split(':');
+
+                if (parts.Length > 6)
+                    shortenedUrn = string.Join(':', parts, 0, 6);
+
+                bodyBuilder.Append(shortenedUrn);
                 bodyBuilder.Append('\"');
 
                 if (i != wearablesToRequest.Count - 1)

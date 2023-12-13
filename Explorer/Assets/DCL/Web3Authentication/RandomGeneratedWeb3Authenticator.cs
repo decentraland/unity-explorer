@@ -4,31 +4,25 @@ using System.Threading;
 
 namespace DCL.Web3Authentication
 {
-    public class FakeWeb3Authenticator : IWeb3Authenticator
+    public class RandomGeneratedWeb3Authenticator : IWeb3Authenticator
     {
-        private readonly string ephemeralPublicAddress;
-
-        public IWeb3Identity Identity { get; private set; }
-
-        public FakeWeb3Authenticator(string ephemeralPublicAddress)
-        {
-            this.ephemeralPublicAddress = ephemeralPublicAddress;
-        }
+        public IWeb3Identity? Identity { get; private set; }
 
         public async UniTask<IWeb3Identity> LoginAsync(CancellationToken cancellationToken)
         {
-            var ephemeralAccount = new FakeWeb3Account(ephemeralPublicAddress);
+            var signer = NethereumAccount.CreateRandom();
+            var ephemeralAccount = NethereumAccount.CreateRandom();
             DateTime expiration = DateTime.Now.AddMinutes(600);
 
             var ephemeralMessage = $"Decentraland Login\nEphemeral address: {ephemeralAccount.Address}\nExpiration: {expiration:s}";
-            string ephemeralSignature = ephemeralAccount.Sign(ephemeralMessage);
+            string ephemeralSignature = signer.Sign(ephemeralMessage);
 
             var authChain = AuthChain.Create();
 
             authChain.Set(AuthLinkType.SIGNER, new AuthLink
             {
                 type = AuthLinkType.SIGNER,
-                payload = ephemeralAccount.Address,
+                payload = signer.Address,
                 signature = "",
             });
 
@@ -44,7 +38,9 @@ namespace DCL.Web3Authentication
             return Identity;
         }
 
-        public async UniTask LogoutAsync(CancellationToken cancellationToken) =>
+        public async UniTask LogoutAsync(CancellationToken cancellationToken)
+        {
             Identity = null;
+        }
     }
 }

@@ -96,8 +96,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     new (1.00f, 0.86f, 0.67f),
                 };
 
-            private static Color GetRandomSkinColor() =>
+            public static Color GetRandomSkinColor() =>
                 DEFAULT_SKIN_COLORS[Random.Range(0, DEFAULT_SKIN_COLORS.Length)];
+
+            public static Color GetRandomHairColor() =>
+                Random.ColorHSV();
 
             public static Color3 GetRandomSkinColor3()
             {

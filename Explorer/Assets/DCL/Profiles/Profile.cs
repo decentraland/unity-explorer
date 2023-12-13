@@ -11,7 +11,6 @@ namespace DCL.Profiles
         public string Description { get; set; }
         public int TutorialStep { get; set; }
         public string Email { get; set; }
-        public string EthAddress { get; set; }
         public int Version { get; set; }
         public Avatar Avatar { get; set; }
         public HashSet<string> Blocked { get; set; }
