@@ -131,6 +131,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1782996483300647931, guid: b4cf7030c2ac8dc49ab29146b19c7856, type: 3}
+      propertyPath: SceneLoadRadius
+      value: 15
+      objectReference: {fileID: 0}
     - target: {fileID: 2640445783820492243, guid: b4cf7030c2ac8dc49ab29146b19c7856, type: 3}
       propertyPath: m_Name
       value: System

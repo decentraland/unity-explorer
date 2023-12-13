@@ -8,5 +8,6 @@ namespace DCL.Landscape.Config
         public Transform asset;
         public ObjectRandomization randomization;
         public NoiseData noiseData;
+        public int poolPreWarmCount;
     }
 }

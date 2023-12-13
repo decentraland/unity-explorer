@@ -13,13 +13,13 @@ namespace DCL.Landscape.Components
     {
         public readonly Vector3 Position;
         public readonly Random Random;
-        public List<Transform> Assets;
+        public readonly Dictionary<Transform, List<Transform>> Assets;
 
         public LandscapeParcel(Vector3 basePosition)
         {
             Position = basePosition;
             Random = new Random(Position.GetHashCode());
-            Assets = new List<Transform>();
+            Assets = new Dictionary<Transform, List<Transform>>();
         }
     }
 

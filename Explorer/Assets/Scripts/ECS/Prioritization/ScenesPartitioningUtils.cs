@@ -1,6 +1,10 @@
-﻿using DCL.CharacterCamera;
+﻿using Arch.Core;
+using DCL.CharacterCamera;
 using ECS.Prioritization.Components;
+using System;
 using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Jobs;
 using UnityEngine;
 using Utility;
 
@@ -88,5 +92,23 @@ namespace ECS.Prioritization
             if (partitionComponent.IsDirty)
                 partitionComponent.RawSqrDistance = minSqrMagnitude;
         }
+    }
+
+    public struct ScenePartitionJob : IChunkJob
+    {
+        [ReadOnly] private IPartitionSettings partitionSettings;
+        [ReadOnly] private IReadOnlyList<ParcelMathHelper.ParcelCorners> parcelsCorners;
+        [ReadOnly] private IReadOnlyCameraSamplingData cameraData;
+
+        public ScenePartitionJob(IPartitionSettings partitionSettings,
+            IReadOnlyList<ParcelMathHelper.ParcelCorners> parcelsCorners,
+            IReadOnlyCameraSamplingData cameraData)
+        {
+            this.partitionSettings = partitionSettings;
+            this.parcelsCorners = parcelsCorners;
+            this.cameraData = cameraData;
+        }
+
+        public void Execute(int index, ref Chunk chunk) { }
     }
 }
