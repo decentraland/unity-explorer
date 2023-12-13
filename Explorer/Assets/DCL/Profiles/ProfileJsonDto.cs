@@ -71,12 +71,12 @@ namespace DCL.Profiles
 
         public Avatar ToAvatar()
         {
-            const int MAX_URN_PARTS = 6;
+            const int SHARED_WEARABLES_MAX_URN_PARTS = 6;
 
             var sharedWearables = new HashSet<string>(wearables.Length);
 
             foreach (string wearable in wearables)
-                sharedWearables.Add(wearable.ShortenURN(MAX_URN_PARTS));
+                sharedWearables.Add(wearable.ShortenURN(SHARED_WEARABLES_MAX_URN_PARTS));
 
             return new Avatar
             {
