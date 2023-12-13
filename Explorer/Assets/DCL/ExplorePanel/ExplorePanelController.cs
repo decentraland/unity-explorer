@@ -7,7 +7,6 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.ExplorePanel
@@ -16,7 +15,7 @@ namespace DCL.ExplorePanel
     {
         private readonly NavmapController navmapController;
         private readonly SettingsController settingsController;
-        private readonly BackpackController backpackController;
+        private readonly BackpackControler backpackController;
         private SectionSelectorController<ExploreSections> sectionSelectorController;
         private CancellationTokenSource animationCts;
         private TabSelectorView previousSelector;
@@ -27,7 +26,7 @@ namespace DCL.ExplorePanel
             ViewFactoryMethod viewFactory,
             NavmapController navmapController,
             SettingsController settingsController,
-            BackpackController backpackController) : base(viewFactory)
+            BackpackControler backpackController) : base(viewFactory)
         {
             this.navmapController = navmapController;
             this.settingsController = settingsController;

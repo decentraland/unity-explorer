@@ -46,7 +46,7 @@ namespace DCL.PluginSystem.Global
             navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, teleportController);
             await navmapController.InitialiseAssetsAsync(assetsProvisioner, ct);
             SettingsController settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
-            BackpackController backpackController = new BackpackController(explorePanelView.GetComponentInChildren<BackpackView>());
+            BackpackControler backpackController = new BackpackControler(explorePanelView.GetComponentInChildren<BackpackView>());
 
             mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackController));
 
