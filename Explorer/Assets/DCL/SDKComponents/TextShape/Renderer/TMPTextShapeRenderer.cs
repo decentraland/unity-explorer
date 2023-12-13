@@ -82,14 +82,16 @@ namespace DCL.SDKComponents.TextShape.Renderer
              */
         }
 
-        public void Hide()
-        {
-            tmpText.enabled = false;
-        }
-
+        [ContextMenu(nameof(Show))]
         public void Show()
         {
             tmpText.enabled = true;
+        }
+
+        [ContextMenu(nameof(Hide))]
+        public void Hide()
+        {
+            tmpText.enabled = false;
         }
 
         private static TextAlignmentOptions TextAlignmentOptions(TextAlignMode mode) =>
