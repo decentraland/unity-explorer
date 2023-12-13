@@ -24,6 +24,7 @@ namespace DCL.SDKComponents.TextShape.Component
 
         [Header("Outlines")]
         public Color outlineColor = Color.black;
+        [Range(0, 1)]
         public float outlineWidth = 0.3f;
 
         [Header("Padding")]
