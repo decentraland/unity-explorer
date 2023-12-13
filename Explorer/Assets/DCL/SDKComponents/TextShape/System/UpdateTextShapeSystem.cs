@@ -10,6 +10,7 @@ using ECS.Unity.Groups;
 namespace DCL.SDKComponents.TextShape.System
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
+    [UpdateAfter(typeof(InstantiateTextShapeSystem))]
     [ThrottlingEnabled]
     public partial class UpdateTextShapeSystem : BaseUnityLoopSystem
     {

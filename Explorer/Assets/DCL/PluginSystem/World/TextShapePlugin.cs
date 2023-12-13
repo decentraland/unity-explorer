@@ -1,5 +1,6 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.TextShape.Renderer.Factory;
 using DCL.SDKComponents.TextShape.System;
@@ -12,12 +13,16 @@ namespace DCL.PluginSystem.World
     public class TextShapePlugin : IDCLWorldPlugin
     {
         private readonly ITextShapeRendererFactory textShapeRendererFactory;
+        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
 
-        public TextShapePlugin() : this(new TextShapeRendererFactory()) { }
+        public TextShapePlugin(IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider) : this(new TextShapeRendererFactory(), instantiationFrameTimeBudgetProvider)
+        {
+        }
 
-        public TextShapePlugin(ITextShapeRendererFactory textShapeRendererFactory)
+        public TextShapePlugin(ITextShapeRendererFactory textShapeRendererFactory, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider)
         {
             this.textShapeRendererFactory = textShapeRendererFactory;
+            this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
         }
 
         public void Dispose()
@@ -30,14 +35,14 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            InstantiateTextShapeSystem.InjectToWorld(ref builder, textShapeRendererFactory);
+            InstantiateTextShapeSystem.InjectToWorld(ref builder, textShapeRendererFactory, instantiationFrameTimeBudgetProvider);
             UpdateTextShapeSystem.InjectToWorld(ref builder);
             VisibilityTextShapeSystem.InjectToWorld(ref builder);
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies)
         {
-            InstantiateTextShapeSystem.InjectToWorld(ref builder, textShapeRendererFactory);
+            InstantiateTextShapeSystem.InjectToWorld(ref builder, textShapeRendererFactory, instantiationFrameTimeBudgetProvider);
             UpdateTextShapeSystem.InjectToWorld(ref builder);
             VisibilityTextShapeSystem.InjectToWorld(ref builder);
         }
