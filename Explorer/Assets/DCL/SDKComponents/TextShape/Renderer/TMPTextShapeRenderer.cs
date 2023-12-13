@@ -13,14 +13,16 @@ namespace DCL.SDKComponents.TextShape.Renderer
         private readonly MaterialPropertyBlock materialPropertyBlock;
         private static readonly int ID_OUTLINE_COLOR = Shader.PropertyToID("_OutlineColor");
         private static readonly int ID_OUTLINE_WIDTH = Shader.PropertyToID("_OutlineWidth");
-        private static readonly int ID_SCALE_RATIO_A_USE_OUTLINE = Shader.PropertyToID("_ScaleRatioA");
+        private static readonly int ID_UNDERLAY_COLOR = Shader.PropertyToID("_UnderlayColor");
+        private static readonly int ID_UNDERLAY_SOFTNESS = Shader.PropertyToID("_UnderlaySoftness");
+        private static readonly int ID_UNDERLAY_OFFSET_Y = Shader.PropertyToID("_UnderlayOffsetY");
+        private static readonly int ID_UNDERLAY_OFFSET_X = Shader.PropertyToID("_UnderlayOffsetX");
 
         public TMPTextShapeRenderer(TMP_Text tmpText, MeshRenderer meshRenderer, MaterialPropertyBlock materialPropertyBlock)
         {
             this.tmpText = tmpText;
             this.meshRenderer = meshRenderer;
             this.materialPropertyBlock = materialPropertyBlock;
-            UseOutline();
         }
 
         public void Apply(PBTextShape textShape)
@@ -60,6 +62,13 @@ namespace DCL.SDKComponents.TextShape.Renderer
                 textShape.PaddingBottom
             );
 
+            if (textShape.ShadowColor is not null)
+                materialPropertyBlock.SetColor(ID_UNDERLAY_COLOR, textShape.ShadowColor.ToUnityColor());
+
+            materialPropertyBlock.SetFloat(ID_UNDERLAY_SOFTNESS, textShape.ShadowBlur);
+            materialPropertyBlock.SetFloat(ID_UNDERLAY_OFFSET_X, textShape.ShadowOffsetX);
+            materialPropertyBlock.SetFloat(ID_UNDERLAY_OFFSET_Y, textShape.ShadowOffsetY);
+
             meshRenderer.SetPropertyBlock(materialPropertyBlock);
 
             Debug.LogWarning("Applying is not finished");
@@ -70,13 +79,6 @@ namespace DCL.SDKComponents.TextShape.Renderer
 
                 Width = 100,
                 Height = 1,
-
-                //Shadow
-                ShadowColor = new Color3 { B = 1, G = 1, R = 1 },
-                ShadowBlur = 10,
-                ShadowOffsetX = 10,
-                ShadowOffsetY = 10,
-
              */
         }
 
@@ -88,11 +90,6 @@ namespace DCL.SDKComponents.TextShape.Renderer
         public void Show()
         {
             tmpText.enabled = true;
-        }
-
-        private void UseOutline()
-        {
-            materialPropertyBlock.SetFloat(ID_SCALE_RATIO_A_USE_OUTLINE, 1);
         }
 
         private static TextAlignmentOptions TextAlignmentOptions(TextAlignMode mode) =>
