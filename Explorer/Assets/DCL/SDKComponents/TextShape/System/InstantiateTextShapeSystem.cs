@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using DCL.SDKComponents.TextShape.Component;
 using DCL.SDKComponents.TextShape.Renderer.Factory;
@@ -11,6 +12,7 @@ using ECS.Unity.Transforms.Components;
 namespace DCL.SDKComponents.TextShape.System
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
+    [ThrottlingEnabled]
     public partial class InstantiateTextShapeSystem : BaseUnityLoopSystem
     {
         private readonly ITextShapeRendererFactory textShapeRendererFactory;

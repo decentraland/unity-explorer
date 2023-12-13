@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using DCL.SDKComponents.TextShape.Component;
 using ECS.Abstract;
@@ -9,6 +10,7 @@ using ECS.Unity.Groups;
 namespace DCL.SDKComponents.TextShape.System
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
+    [ThrottlingEnabled]
     public partial class UpdateTextShapeSystem : BaseUnityLoopSystem
     {
         public UpdateTextShapeSystem(World world) : base(world)
