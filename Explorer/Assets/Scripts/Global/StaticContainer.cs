@@ -140,6 +140,7 @@ namespace Global
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
                 new TransformsPlugin(sharedDependencies),
+                new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
                 new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
