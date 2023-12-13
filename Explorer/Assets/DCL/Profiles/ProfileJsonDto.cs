@@ -13,11 +13,7 @@ namespace DCL.Profiles
         public string urn;
 
         public Emote ToEmote() =>
-            new ()
-            {
-                Slot = slot,
-                Urn = urn,
-            };
+            new (slot, urn);
     }
 
     [Serializable]
@@ -79,7 +75,6 @@ namespace DCL.Profiles
                 sharedWearables.Add(wearable.ShortenURN(SHARED_WEARABLES_MAX_URN_PARTS));
 
             return new Avatar(bodyShape,
-
                 // To avoid inconsistencies in the wearable references thus improving cache miss rate,
                 // we keep a list of shared wearables used by avatar shapes and most of the rendering systems
                 sharedWearables,
