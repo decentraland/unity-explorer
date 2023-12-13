@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
 using ECS;
 using Ipfs;
-using System;
 using System.Threading;
 
 namespace DCL.Profiles
@@ -12,16 +11,19 @@ namespace DCL.Profiles
     {
         private readonly IWebRequestController webRequestController;
         private readonly IRealmData realm;
+        private readonly CacheProfileRepository cacheProfileRepository;
         private readonly URLBuilder urlBuilder = new ();
 
         public RealmProfileRepository(IWebRequestController webRequestController,
-            IRealmData realm)
+            IRealmData realm,
+            CacheProfileRepository cacheProfileRepository)
         {
             this.webRequestController = webRequestController;
             this.realm = realm;
+            this.cacheProfileRepository = cacheProfileRepository;
         }
 
-        public async UniTask<Profile?> Get(string id, int version, CancellationToken ct)
+        public async UniTask<Profile?> GetAsync(string id, int version, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(id)) return null;
 
@@ -39,10 +41,20 @@ namespace DCL.Profiles
             {
                 GenericGetRequest response = await webRequestController.GetAsync(new CommonArguments(url), ct);
 
-                GetProfileJsonRootDto root = await response.CreateFromJson<GetProfileJsonRootDto>(WRJsonParser.Unity,
+                using var root = GetProfileJsonRootDto.Create();
+
+                await response.OverwriteFromJsonAsync(root, WRJsonParser.Unity,
                     createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, version, text, exception));
 
-                return root.avatars.Length == 0 ? null : root.avatars[0].ToProfile();
+                if (root.avatars.Length == 0) return null;
+
+                // TODO: probable responsibility issues thus we might not want to affect the local cache
+                // but avoids extra allocations in case the profile already exists
+                Profile profile = await cacheProfileRepository.GetAsync(id, version, ct) ?? new Profile();
+                root.avatars[0].CopyTo(profile);
+                cacheProfileRepository.Set(id, profile);
+
+                return profile;
             }
             catch (UnityWebRequestException e)
             {
@@ -51,13 +63,6 @@ namespace DCL.Profiles
 
                 throw;
             }
-        }
-
-        [Serializable]
-        public class GetProfileJsonRootDto
-        {
-            public long timestamp;
-            public ProfileJsonDto[] avatars;
         }
     }
 }

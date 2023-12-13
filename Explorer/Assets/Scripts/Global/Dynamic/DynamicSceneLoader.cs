@@ -216,7 +216,7 @@ namespace Global.Dynamic
         }
 
         private async UniTask<Profile> EnsureProfileAsync(string profileId, CancellationToken ct) =>
-            await dynamicWorldContainer.ProfileRepository.Get(profileId, 0, ct) ?? CreateRandomProfile(profileId);
+            await dynamicWorldContainer.ProfileRepository.GetAsync(profileId, 0, ct) ?? CreateRandomProfile(profileId);
 
         private Profile CreateRandomProfile(string profileId)
         {

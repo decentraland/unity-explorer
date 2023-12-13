@@ -42,6 +42,8 @@ namespace Global.Dynamic
 
         public IProfileRepository ProfileRepository { get; private set; }
 
+        public CacheProfileRepository CacheProfileRepository { get; private set; }
+
         public void Dispose()
         {
             mvcManager.Dispose();
@@ -109,7 +111,10 @@ namespace Global.Dynamic
 
             container.Web3Authenticator = web3Authenticator;
 
-            container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData);
+            container.CacheProfileRepository = new CacheProfileRepository();
+
+            container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData,
+                container.CacheProfileRepository);
 
             return (container, true);
         }
