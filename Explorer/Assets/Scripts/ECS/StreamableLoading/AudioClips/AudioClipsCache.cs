@@ -58,12 +58,12 @@ namespace ECS.StreamableLoading.AudioClips
                             && i < maxUnloadAmount && unloadQueue.Count > 0
                             && unloadQueue.TryDequeue(out GetAudioClipIntention key); i++)
             {
-                if(cache[key].UnloadAudioData()) // immediate unloading of raw audio data; synchronously frees up the memory from larger part of the AudioClip's memory footprint.
-                    UnityObjectUtils.SafeDestroy(cache[key]); // Destroy the AudioClip object itself (metadata, ect.)
+                if (!cache[key].UnloadAudioData()) continue; // immediate unloading of raw audio data; synchronously frees up the memory from larger part of the AudioClip's memory footprint.
+
+                UnityObjectUtils.SafeDestroy(cache[key]); // Destroy the AudioClip object itself (metadata, ect.)
+                cache.Remove(key);
 
                 ProfilingCounters.AudioClipsAmount.Value--;
-
-                cache.Remove(key);
             }
 
             ProfilingCounters.AudioClipsInCache.Value = cache.Count;

@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Cache;
@@ -27,6 +28,7 @@ namespace DCL.ResourcesUnloading.Tests
         private WearableCatalog wearableCatalog;
         private WearableAssetsCache wearableAssetsCache;
         private TexturesCache texturesCache;
+        private AudioClipsCache audioClipsCache;
         private GltfContainerAssetsCache gltfContainerAssetsCache;
 
         private AssetBundleCache assetBundleCache;
@@ -39,6 +41,7 @@ namespace DCL.ResourcesUnloading.Tests
             concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
 
             texturesCache = new TexturesCache();
+            audioClipsCache = new AudioClipsCache();
             assetBundleCache = new AssetBundleCache();
             gltfContainerAssetsCache = new GltfContainerAssetsCache();
             wearableAssetsCache = new WearableAssetsCache(100);
@@ -46,6 +49,7 @@ namespace DCL.ResourcesUnloading.Tests
 
             cacheCleaner = new CacheCleaner(concurrentBudgetProvider);
             cacheCleaner.Register(texturesCache);
+            cacheCleaner.Register(audioClipsCache);
             cacheCleaner.Register(gltfContainerAssetsCache);
             cacheCleaner.Register(assetBundleCache);
             cacheCleaner.Register(wearableAssetsCache);
@@ -58,6 +62,7 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.UnloadCache();
 
             texturesCache.Dispose();
+            audioClipsCache.Dispose();
             assetBundleCache.Dispose();
             gltfContainerAssetsCache.Dispose();
             wearableAssetsCache.Dispose();
@@ -125,6 +130,7 @@ namespace DCL.ResourcesUnloading.Tests
 
             // Assert
             Assert.That(texturesCache.cache.Count, Is.EqualTo(0));
+            Assert.That(audioClipsCache.cache.Count, Is.EqualTo(0));
             Assert.That(wearableCatalog.WearableAssetsInCatalog, Is.EqualTo(0));
             Assert.That(wearableAssetsCache.cache.Count, Is.EqualTo(0));
             Assert.That(gltfContainerAssetsCache.cache.Count, Is.EqualTo(0));
@@ -136,21 +142,24 @@ namespace DCL.ResourcesUnloading.Tests
             var textureIntention = new GetTextureIntention { CommonArguments = new CommonLoadingArguments { URL = new URLAddress(hashID) } };
             texturesCache.Add(textureIntention, new Texture2D(1, 1));
 
+            var audioClipIntention = new GetAudioClipIntention { CommonArguments = new CommonLoadingArguments { URL = new URLAddress(hashID) } };
+            audioClipsCache.Add(audioClipIntention, AudioClip.Create(hashID, 1, 1, 2000, false));
+
             var assetBundleData = new AssetBundleData(null, null, new GameObject(), Array.Empty<AssetBundleData>());
             assetBundleCache.Add(new GetAssetBundleIntention { Hash = hashID }, assetBundleData);
 
             var gltfContainerAsset = GltfContainerAsset.Create(new GameObject(), assetBundleData);
             assetBundleData.AddReference();
-            gltfContainerAssetsCache.Dereference(hashID, gltfContainerAsset);
+            gltfContainerAssetsCache.Dereference(hashID, gltfContainerAsset); // add to cache
 
             var wearableAsset = new WearableAsset(new GameObject(), new List<WearableAsset.RendererInfo>(10), assetBundleData);
             assetBundleData.AddReference();
             var wearable = new Wearable { WearableAssetResults = { [0] = new StreamableLoadingResult<WearableAsset>(wearableAsset) } };
-            wearableCatalog.AddWearable(hashID, wearable);
+            wearableCatalog.AddWearable(hashID, wearable); // add to cache
 
             var cachedWearable = new CachedWearable(wearableAsset, new GameObject());
             wearableAsset.AddReference();
-            wearableAssetsCache.Release(cachedWearable);
+            wearableAssetsCache.Release(cachedWearable); // add to cache
         }
     }
 }

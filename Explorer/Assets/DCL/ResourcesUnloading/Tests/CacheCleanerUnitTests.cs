@@ -2,6 +2,7 @@
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Components;
@@ -20,6 +21,7 @@ namespace DCL.ResourcesUnloading.Tests
         private IWearableCatalog wearableCatalog;
         private IWearableAssetsCache wearableAssetsCache;
         private IStreamableCache<Texture2D, GetTextureIntention> texturesCache;
+        private IStreamableCache<AudioClip,GetAudioClipIntention> audioClipsCache;
         private IStreamableCache<GltfContainerAsset, string> gltfContainerAssetsCache;
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
 
@@ -36,6 +38,7 @@ namespace DCL.ResourcesUnloading.Tests
             wearableAssetsCache = Substitute.For<IWearableAssetsCache>();
 
             texturesCache = Substitute.For<IStreamableCache<Texture2D, GetTextureIntention>>();
+            audioClipsCache = Substitute.For<IStreamableCache<AudioClip, GetAudioClipIntention>>();
             assetBundleCache = Substitute.For<IStreamableCache<AssetBundleData, GetAssetBundleIntention>>();
             gltfContainerAssetsCache = Substitute.For<IStreamableCache<GltfContainerAsset, string>>();
 
@@ -43,6 +46,7 @@ namespace DCL.ResourcesUnloading.Tests
 
             cacheCleaner.Register(wearableCatalog);
             cacheCleaner.Register(texturesCache);
+            cacheCleaner.Register(audioClipsCache);
             cacheCleaner.Register(gltfContainerAssetsCache);
             cacheCleaner.Register(assetBundleCache);
             cacheCleaner.Register(wearableAssetsCache);
@@ -61,6 +65,7 @@ namespace DCL.ResourcesUnloading.Tests
 
             // Assert
             texturesCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
+            audioClipsCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
             wearableAssetsCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
             wearableCatalog.Received(callsAmount).Unload(Arg.Any<IConcurrentBudgetProvider>());
             gltfContainerAssetsCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());

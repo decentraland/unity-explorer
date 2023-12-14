@@ -11,9 +11,9 @@ namespace Utility
     public static class UnityObjectExtensions
     {
         [Conditional("DEBUG")]
-        public static void SetDebugName(this Object clip, string name)
+        public static void SetDebugName(this Object @object, string name)
         {
-            clip.name = $"{name} : {MultithreadingUtility.FrameCount}";
+            @object.name = $"{name} : {MultithreadingUtility.FrameCount}";
         }
     }
 }

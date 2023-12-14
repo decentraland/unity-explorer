@@ -36,13 +36,13 @@ namespace ECS.Unity.AudioSources.Systems
 
         protected override void Update(float t)
         {
-            CreateAudioSourceComponentQuery(World);
+            CreateAudioSourceComponentWithPromiseQuery(World);
         }
 
         [Query]
         [All(typeof(PBAudioSource))]
         [None(typeof(AudioSourceComponent))]
-        private void CreateAudioSourceComponent(in Entity entity, ref PBAudioSource sdkAudioSource, ref PartitionComponent partitionComponent)
+        private void CreateAudioSourceComponentWithPromise(in Entity entity, ref PBAudioSource sdkAudioSource, ref PartitionComponent partitionComponent)
         {
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
             if (!sceneData.TryGetContentUrl(sdkAudioSource.AudioClipUrl, out URLAddress audioClipUrl)) return;
