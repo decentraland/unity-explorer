@@ -16,12 +16,14 @@ namespace ECS.Unity.Materials.Systems
     [UpdateAfter(typeof(StartMaterialsLoadingSystem))]
     public partial class CreatePBRMaterialSystem : CreateMaterialSystemBase
     {
-        private readonly IConcurrentBudgetProvider capFrameBudgetProvider;
+        private readonly IConcurrentBudgetProvider frameTimeBudgetProvider;
+        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
 
         internal CreatePBRMaterialSystem(World world, IObjectPool<Material> materialsPool,
-            IConcurrentBudgetProvider capFrameBudgetProvider) : base(world, materialsPool)
+            IConcurrentBudgetProvider frameTimeBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider) : base(world, materialsPool)
         {
-            this.capFrameBudgetProvider = capFrameBudgetProvider;
+            this.frameTimeBudgetProvider = frameTimeBudgetProvider;
+            this.memoryBudgetProvider = memoryBudgetProvider;
         }
 
         protected override void Update(float t)
@@ -35,7 +37,7 @@ namespace ECS.Unity.Materials.Systems
             if (!materialComponent.Data.IsPbrMaterial)
                 return;
 
-            if (!capFrameBudgetProvider.TrySpendBudget())
+            if (!frameTimeBudgetProvider.TrySpendBudget() || !memoryBudgetProvider.TrySpendBudget())
                 return;
 
             // if there are no textures to load we can construct a material right away

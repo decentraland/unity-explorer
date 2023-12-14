@@ -31,7 +31,7 @@ namespace ECS.Unity.Materials.Tests
             IConcurrentBudgetProvider frameTimeBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
             frameTimeBudgetProvider.TrySpendBudget().Returns(true);
 
-            system = new CreatePBRMaterialSystem(world, pool, frameTimeBudgetProvider);
+            system = new CreatePBRMaterialSystem(world, pool, frameTimeBudgetProvider, frameTimeBudgetProvider);
             system.Initialize();
         }
 

@@ -1,5 +1,6 @@
 ﻿using Arch.SystemGroups;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.WebRequests;
 using ECS.LifeCycle;
@@ -11,21 +12,26 @@ using UnityEngine;
 
 namespace DCL.PluginSystem.World
 {
-    public class AudioClipsLoadingPlugin: IDCLWorldPluginWithoutSettings
+    public class AudioSourcesPlugin: IDCLWorldPluginWithoutSettings
     {
         private readonly ECSWorldSingletonSharedDependencies sharedDependencies;
         private readonly IWebRequestController webRequestController;
+        private readonly IComponentPoolsRegistry componentPoolsRegistry;
 
-        public AudioClipsLoadingPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IWebRequestController webRequestController)
+        public AudioSourcesPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IWebRequestController webRequestController)
         {
             this.sharedDependencies = sharedDependencies;
             this.webRequestController = webRequestController;
+
+            componentPoolsRegistry = sharedDependencies.ComponentPoolsRegistry;
+            componentPoolsRegistry.AddGameObjectPool<AudioSource>();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
             StartAudioClipLoadingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, 11, new NullBudgetProvider());
             LoadAudioClipSystem.InjectToWorld(ref builder, NoCache<AudioClip, GetAudioClipIntention>.INSTANCE, webRequestController, sharedDependencies.MutexSync);
+            CreateAudioSourceSystem.InjectToWorld(ref builder, componentPoolsRegistry, new NullBudgetProvider(), new NullBudgetProvider());
             // InstantiateAudioSourceSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, componentPoolsRegistry, webRequestController);
         }
 

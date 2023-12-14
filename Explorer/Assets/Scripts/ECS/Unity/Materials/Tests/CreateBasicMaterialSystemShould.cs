@@ -30,7 +30,7 @@ namespace ECS.Unity.Materials.Tests
 
             IConcurrentBudgetProvider budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
             budgetProvider.TrySpendBudget().Returns(true);
-            system = new CreateBasicMaterialSystem(world, pool, budgetProvider);
+            system = new CreateBasicMaterialSystem(world, pool, budgetProvider, budgetProvider);
             system.Initialize();
         }
 

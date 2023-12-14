@@ -24,13 +24,6 @@ namespace ECS.StreamableLoading.AudioClips
         internal LoadAudioClipSystem(World world, IStreamableCache<AudioClip, GetAudioClipIntention> cache, IWebRequestController webRequestController, MutexSync mutexSync) : base(world, cache, mutexSync)
         {
             this.webRequestController = webRequestController;
-            Debug.Log("VV: 0");
-        }
-
-        protected override void Update(float t)
-        {
-            Debug.Log("VV: 1");
-            base.Update(t);
         }
 
         protected override async UniTask<StreamableLoadingResult<AudioClip>> FlowInternalAsync(GetAudioClipIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)

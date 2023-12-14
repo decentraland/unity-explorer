@@ -30,10 +30,12 @@ namespace DCL.PluginSystem.World
         private DestroyMaterial destroyMaterial;
 
         private int loadingAttemptsCount;
+        private MemoryBudgetProvider memoryBudgetProvider;
 
         public MaterialsPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IAssetsProvisioner assetsProvisioner)
         {
             capFrameTimeBudgetProvider = sharedDependencies.FrameTimeBudgetProvider;
+            memoryBudgetProvider = sharedDependencies.MemoryBudgetProvider;
             this.assetsProvisioner = assetsProvisioner;
 
             // materialsCache = new MaterialsCappedCache(CACHE_CAPACITY, (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); });
@@ -61,8 +63,8 @@ namespace DCL.PluginSystem.World
             // the idea with cache didn't work out: the CPU pressure is too high and benefits are not clear
             // consider revising when and if needed
             // LoadMaterialFromCacheSystem.InjectToWorld(ref builder, materialsCache);
-            CreateBasicMaterialSystem.InjectToWorld(ref builder, basicMatPool, capFrameTimeBudgetProvider);
-            CreatePBRMaterialSystem.InjectToWorld(ref builder, pbrMatPool, capFrameTimeBudgetProvider);
+            CreateBasicMaterialSystem.InjectToWorld(ref builder, basicMatPool, capFrameTimeBudgetProvider, memoryBudgetProvider);
+            CreatePBRMaterialSystem.InjectToWorld(ref builder, pbrMatPool, capFrameTimeBudgetProvider, memoryBudgetProvider);
             ApplyMaterialSystem.InjectToWorld(ref builder, sharedDependencies.SceneData);
             ResetMaterialSystem.InjectToWorld(ref builder, destroyMaterial, sharedDependencies.SceneData);
             CleanUpMaterialsSystem.InjectToWorld(ref builder, destroyMaterial);

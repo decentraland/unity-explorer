@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using System;
@@ -26,6 +27,11 @@ namespace ECS.StreamableLoading.AudioClips
         }
 
         public void Dereference(in GetAudioClipIntention key, AudioClip asset) { }
+
+        public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount)
+        {
+            throw new NotImplementedException();
+        }
 
         public bool Equals(GetAudioClipIntention x, GetAudioClipIntention y) =>
             x.Equals(y);
