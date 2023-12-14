@@ -1,13 +1,16 @@
-﻿using UnityEngine.Networking;
+﻿using DCL.DebugUtilities;
+using System;
+using UnityEngine.Networking;
 
 namespace DCL.WebRequests.Analytics.Metrics
 {
-    public class BandwidthDown : IRequestMetric
+    public class BandwidthUp : IRequestMetric
     {
         private ulong bandwidth { get; set; }
 
-        public ulong GetMetric() =>
-            bandwidth;
+        public DebugLongMarkerDef.Unit GetUnit() => DebugLongMarkerDef.Unit.Bytes;
+
+        public ulong GetMetric() => bandwidth;
 
         public void OnRequestStarted(ITypedWebRequest request)
         {
@@ -17,7 +20,7 @@ namespace DCL.WebRequests.Analytics.Metrics
         {
             if (request.UnityWebRequest.result == UnityWebRequest.Result.Success)
             {
-                bandwidth += (request.UnityWebRequest.downloadedBytes);
+                bandwidth += request.UnityWebRequest.uploadedBytes;
             }
         }
     }

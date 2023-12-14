@@ -40,7 +40,8 @@ namespace DCL.WebRequests.Analytics
                 foreach (var metric in metrics)
                 {
                     bindings.Add(metric.Name, new ElementBinding<ulong>(0));
-                    widget.AddMarker(requestType.Name + "-" +  metric.Name, bindings[metric.Name], DebugLongMarkerDef.Unit.NoFormat);
+                    var formatting = (IRequestMetric)Activator.CreateInstance(metric);
+                    widget.AddMarker(requestType.Name + "-" +  metric.Name, bindings[metric.Name], formatting.GetUnit());
                 }
 
                 ongoingRequests[requestType] = bindings;

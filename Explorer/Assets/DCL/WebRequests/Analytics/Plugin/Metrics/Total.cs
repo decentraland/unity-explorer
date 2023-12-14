@@ -1,8 +1,12 @@
-﻿namespace DCL.WebRequests.Analytics.Metrics
+﻿using DCL.DebugUtilities;
+
+namespace DCL.WebRequests.Analytics.Metrics
 {
-    public class TotalCounter : IRequestMetric
+    public class Total : IRequestMetric
     {
         private ulong counter { get; set; }
+
+        public DebugLongMarkerDef.Unit GetUnit() => DebugLongMarkerDef.Unit.NoFormat;
 
         public ulong GetMetric() =>
             counter;

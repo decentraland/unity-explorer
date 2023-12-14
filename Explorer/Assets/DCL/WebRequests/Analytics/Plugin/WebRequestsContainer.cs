@@ -12,6 +12,8 @@ namespace DCL.WebRequests.Analytics
         public static WebRequestsContainer Create(IWeb3Authenticator web3Authenticator)
         {
             var analyticsContainer = new WebRequestsAnalyticsContainer().AddTrackedMetric<ActiveCounter>()
+                                                                        .AddTrackedMetric<Total>()
+                                                                        .AddTrackedMetric<TotalFailed>()
                                                                         .AddTrackedMetric<BandwidthDown>()
                                                                         .AddTrackedMetric<BandwidthUp>();
 
