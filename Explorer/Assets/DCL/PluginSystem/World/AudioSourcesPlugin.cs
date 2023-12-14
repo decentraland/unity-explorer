@@ -2,6 +2,7 @@
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.AudioClips;
@@ -14,25 +15,32 @@ namespace DCL.PluginSystem.World
 {
     public class AudioSourcesPlugin: IDCLWorldPluginWithoutSettings
     {
-        private readonly ECSWorldSingletonSharedDependencies sharedDependencies;
         private readonly IWebRequestController webRequestController;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly FrameTimeCapBudgetProvider frameTimeBudgetProvider;
+        private readonly MemoryBudgetProvider memoryBudgetProvider;
 
-        public AudioSourcesPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IWebRequestController webRequestController)
+        private readonly AudioClipsCache audioClipsCache;
+
+        public AudioSourcesPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IWebRequestController webRequestController, CacheCleaner cacheCleaner)
         {
-            this.sharedDependencies = sharedDependencies;
             this.webRequestController = webRequestController;
+
+            frameTimeBudgetProvider = sharedDependencies.FrameTimeBudgetProvider;
+            memoryBudgetProvider = sharedDependencies.MemoryBudgetProvider;
 
             componentPoolsRegistry = sharedDependencies.ComponentPoolsRegistry;
             componentPoolsRegistry.AddGameObjectPool<AudioSource>();
+
+            audioClipsCache = new AudioClipsCache();
+            cacheCleaner.Register(audioClipsCache);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            StartAudioClipLoadingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, 11, new NullBudgetProvider());
-            LoadAudioClipSystem.InjectToWorld(ref builder, NoCache<AudioClip, GetAudioClipIntention>.INSTANCE, webRequestController, sharedDependencies.MutexSync);
-            CreateAudioSourceSystem.InjectToWorld(ref builder, componentPoolsRegistry, new NullBudgetProvider(), new NullBudgetProvider());
-            // InstantiateAudioSourceSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, componentPoolsRegistry, webRequestController);
+            StartAudioClipLoadingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, 11, frameTimeBudgetProvider);
+            LoadAudioClipSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController, sharedDependencies.MutexSync);
+            CreateAudioSourceSystem.InjectToWorld(ref builder, componentPoolsRegistry, frameTimeBudgetProvider, memoryBudgetProvider);
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }

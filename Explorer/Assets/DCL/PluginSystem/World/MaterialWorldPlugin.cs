@@ -30,7 +30,7 @@ namespace DCL.PluginSystem.World
         private DestroyMaterial destroyMaterial;
 
         private int loadingAttemptsCount;
-        private MemoryBudgetProvider memoryBudgetProvider;
+        private readonly MemoryBudgetProvider memoryBudgetProvider;
 
         public MaterialsPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IAssetsProvisioner assetsProvisioner)
         {

@@ -25,13 +25,13 @@ namespace ECS.Unity.AudioSources.Systems
     {
         private readonly ISceneData sceneData;
         private readonly int attemptsCount;
-        private readonly IConcurrentBudgetProvider capFrameTimeBudgetProvider;
+        private readonly IConcurrentBudgetProvider frameTimeBudgetProvider;
 
-        public StartAudioClipLoadingSystem(World world, ISceneData sceneData, int attemptsCount, IConcurrentBudgetProvider capFrameTimeBudgetProvider) : base(world)
+        internal StartAudioClipLoadingSystem(World world, ISceneData sceneData, int attemptsCount, IConcurrentBudgetProvider frameTimeBudgetProvider) : base(world)
         {
             this.sceneData = sceneData;
             this.attemptsCount = attemptsCount;
-            this.capFrameTimeBudgetProvider = capFrameTimeBudgetProvider;
+            this.frameTimeBudgetProvider = frameTimeBudgetProvider;
         }
 
         protected override void Update(float t)
@@ -44,8 +44,7 @@ namespace ECS.Unity.AudioSources.Systems
         [None(typeof(AudioSourceComponent))]
         private void CreateAudioSourceComponent(in Entity entity, ref PBAudioSource sdkAudioSource, ref PartitionComponent partitionComponent)
         {
-            if (!capFrameTimeBudgetProvider.TrySpendBudget()) return;
-
+            if (!frameTimeBudgetProvider.TrySpendBudget()) return;
             if (!sceneData.TryGetContentUrl(sdkAudioSource.AudioClipUrl, out URLAddress audioClipUrl)) return;
 
             var audioSourceComponent = new AudioSourceComponent(sdkAudioSource, sceneData);

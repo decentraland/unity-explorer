@@ -16,13 +16,13 @@ namespace ECS.StreamableLoading.AudioClips
         public bool Equals(GetAudioClipIntention other) =>
             CommonArguments.URL == other.CommonArguments.URL;
 
-        public override bool Equals(object obj) =>
+        public override bool Equals(object? obj) =>
             obj is GetAudioClipIntention other && Equals(other);
 
         public override int GetHashCode() =>
             HashCode.Combine(AudioType, CommonArguments.URL);
 
         public override string ToString() =>
-            $"Get AudioClip: {CommonArguments.URL}";
+            $"Get AudioClip Intention: {CommonArguments.URL}";
     }
 }
