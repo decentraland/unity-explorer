@@ -13,6 +13,8 @@ namespace DCL.SDKComponents.TextShape.Demo
     {
         [SerializeField]
         private TextShapeProperties textShapeProperties = new ();
+        [SerializeField]
+        private bool visible = true;
 
         private void Start()
         {
@@ -24,19 +26,31 @@ namespace DCL.SDKComponents.TextShape.Demo
             var world = World.Create();
             var instantiateSystem = new InstantiateTextShapeSystem(world, new TextShapeRendererFactory());
             var updateSystem = new UpdateTextShapeSystem(world);
+            var visibilitySystem = new VisibilityTextShapeSystem(world);
 
             var textShape = new PBTextShape();
             textShapeProperties.ApplyOn(textShape);
 
-            world.Create(textShape, NewTransform());
+            var visibilityComponent = new PBVisibilityComponent();
+            ApplySettings(visibilityComponent);
+
+            world.Create(visibilityComponent, textShape, NewTransform());
             instantiateSystem.Update(Time.deltaTime);
 
             while (this)
             {
                 textShapeProperties.ApplyOn(textShape);
+                ApplySettings(visibilityComponent);
                 updateSystem.Update(Time.deltaTime);
+                visibilitySystem.Update(Time.deltaTime);
                 await UniTask.Yield();
             }
+        }
+
+        private void ApplySettings(PBVisibilityComponent visibilityComponent)
+        {
+            visibilityComponent.Visible = visible;
+            visibilityComponent.IsDirty = true;
         }
 
         private static TransformComponent NewTransform() =>
