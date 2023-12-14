@@ -72,6 +72,7 @@ namespace Global.Dynamic
             try
             {
                 IWeb3Authenticator web3Authenticator = new RandomGeneratedWeb3Authenticator();
+                IWeb3Identity web3Identity = await web3Authenticator.LoginAsync(ct);
 
                 // First load the common global plugin
                 bool isLoaded;
@@ -83,8 +84,6 @@ namespace Global.Dynamic
                     GameReports.PrintIsDead();
                     return;
                 }
-
-                IWeb3Identity web3Identity = await web3Authenticator.LoginAsync(ct);
 
                 var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
 
