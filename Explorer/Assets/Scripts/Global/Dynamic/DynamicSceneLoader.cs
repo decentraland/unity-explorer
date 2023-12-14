@@ -57,7 +57,7 @@ namespace Global.Dynamic
                 }
 
                 if (globalWorld != null)
-                    await dynamicWorldContainer.RealmController.DisposeGlobalWorldAsync(globalWorld).SuppressCancellationThrow();
+                    await dynamicWorldContainer.RealmController.DisposeGlobalWorldAsync().SuppressCancellationThrow();
 
                 await UniTask.SwitchToMainThread();
 
@@ -133,6 +133,8 @@ namespace Global.Dynamic
                 }
 
                 realmLauncher.OnRealmSelected += SetRealm;
+
+                dynamicWorldContainer.RealmController.SetupWorld(globalWorld);
             }
             catch (OperationCanceledException)
             {
@@ -149,7 +151,7 @@ namespace Global.Dynamic
         private async UniTask ChangeRealmAsync(StaticContainer globalContainer, CancellationToken ct, string selectedRealm)
         {
             if (globalWorld != null)
-                await dynamicWorldContainer.RealmController.UnloadCurrentRealmAsync(globalWorld);
+                await dynamicWorldContainer.RealmController.UnloadCurrentRealmAsync();
 
             await UniTask.SwitchToMainThread();
 
@@ -158,7 +160,7 @@ namespace Global.Dynamic
 
             globalContainer.CharacterObject.Controller.transform.position = characterPos;
 
-            await dynamicWorldContainer.RealmController.SetRealmAsync(globalWorld, URLDomain.FromString(selectedRealm), ct);
+            await dynamicWorldContainer.RealmController.SetRealmAsync(URLDomain.FromString(selectedRealm), ct);
         }
     }
 }
