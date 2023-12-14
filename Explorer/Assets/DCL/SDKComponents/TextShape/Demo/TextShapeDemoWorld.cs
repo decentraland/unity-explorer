@@ -2,10 +2,10 @@ using Arch.Core;
 using DCL.DemoWorlds;
 using DCL.DemoWorlds.Extensions;
 using DCL.ECSComponents;
+using DCL.Optimization.Pools;
 using DCL.SDKComponents.TextShape.Renderer.Factory;
 using DCL.SDKComponents.TextShape.System;
 using ECS.Unity.Transforms.Components;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -26,7 +26,7 @@ namespace DCL.SDKComponents.TextShape.Demo
                     foreach ((PBTextShape textShape, PBVisibilityComponent visibility) in list)
                         world.Create(textShape, visibility, NewTransform());
                 },
-                world => new InstantiateTextShapeSystem(world, new TextShapeRendererFactory()),
+                world => new InstantiateTextShapeSystem(world, new PoolTextShapeRendererFactory(new ComponentPoolsRegistry())),
                 world => new UpdateTextShapeSystem(world),
                 world => new VisibilityTextShapeSystem(world));
         }
