@@ -17,10 +17,10 @@ namespace ECS.StreamableLoading.AssetBundles
 
         [CanBeNull] public readonly AssetBundleMetrics? Metrics;
 
+        internal int referencesCount;
+
         private GameObject gameObject;
         private bool gameObjectLoaded;
-
-        private int referencesCount;
 
         /// <summary>
         ///     Root assets - Game Objects
@@ -41,6 +41,8 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public void Dispose()
         {
+            if (!CanBeDisposed()) return;
+
             if (AssetBundle != null)
                 AssetBundle.UnloadAsync(unloadAllLoadedObjects: true);
 

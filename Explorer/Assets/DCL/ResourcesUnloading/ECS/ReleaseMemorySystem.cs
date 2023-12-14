@@ -9,10 +9,10 @@ namespace DCL.PluginSystem.Global
     [UpdateInGroup(typeof(CleanUpGroup))]
     public partial class ReleaseMemorySystem : BaseUnityLoopSystem
     {
-        private readonly MemoryBudgetProvider memoryBudgetProvider;
-        private readonly CacheCleaner cacheCleaner;
+        private readonly IMemoryUsageProvider memoryBudgetProvider;
+        private readonly ICacheCleaner cacheCleaner;
 
-        private ReleaseMemorySystem(Arch.Core.World world, CacheCleaner cacheCleaner, MemoryBudgetProvider memoryBudgetProvider) : base(world)
+        internal ReleaseMemorySystem(Arch.Core.World world, ICacheCleaner cacheCleaner, IMemoryUsageProvider memoryBudgetProvider) : base(world)
         {
             this.cacheCleaner = cacheCleaner;
             this.memoryBudgetProvider = memoryBudgetProvider;

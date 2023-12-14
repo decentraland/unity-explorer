@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System;
@@ -30,5 +31,10 @@ namespace ECS.StreamableLoading.Cache
         ///     It is needed for cache with limited capacity based on LRU, reference counting
         /// </summary>
         void Dereference(in TLoadingIntention key, TAsset asset);
+
+        /// <summary>
+        ///     Unload assets from the cache to free memory
+        /// </summary>
+        void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount);
     }
 }

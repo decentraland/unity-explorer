@@ -18,7 +18,6 @@ namespace DCL.AvatarRendering.Wearables.Tests
     public class LoadDefaultWearablesSystemShould : UnitySystemTestBase<LoadDefaultWearablesSystem>
     {
         private readonly string definitionsPath = $"{Application.dataPath}/../TestResources/Wearables/DefaultWearableDefinition.txt";
-        private WearableCatalog wearableCatalog;
 
         [SetUp]
         public void Setup()
@@ -26,7 +25,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             var partialTargetList = new List<WearableDTO>(64);
             JsonConvert.PopulateObject(File.ReadAllText(definitionsPath), partialTargetList);
 
-            system = new LoadDefaultWearablesSystem(world, new WearablesDTOList(partialTargetList), wearableCatalog = new WearableCatalog());
+            system = new LoadDefaultWearablesSystem(world, new WearablesDTOList(partialTargetList), new WearableCatalog());
         }
 
         [Test]
