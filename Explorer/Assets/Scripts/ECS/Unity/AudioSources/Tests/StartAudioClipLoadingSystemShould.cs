@@ -1,0 +1,84 @@
+﻿using Arch.Core;
+using CommunicationData.URLHelpers;
+using DCL.ECSComponents;
+using DCL.Optimization.PerformanceBudgeting;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AudioClips;
+using ECS.StreamableLoading.Common;
+using ECS.TestSuite;
+using ECS.Unity.AudioSources.Components;
+using ECS.Unity.AudioSources.Systems;
+using NUnit.Framework;
+using NSubstitute;
+using SceneRunner.Scene;
+using UnityEngine;
+
+namespace ECS.Unity.AudioSources.Tests
+{
+    public class StartAudioClipLoadingSystemShould : UnitySystemTestBase<StartAudioClipLoadingSystem>
+    {
+        private const int ATTEMPTS_COUNT = 5;
+
+        [SetUp]
+        public void SetUp()
+        {
+            IConcurrentBudgetProvider concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+            concurrentBudgetProvider.TrySpendBudget().Returns(true);
+
+            ISceneData sceneData = Substitute.For<ISceneData>();
+
+            sceneData.TryGetContentUrl(Arg.Any<string>(), out Arg.Any<URLAddress>())
+                     .Returns(args =>
+                      {
+                          args[1] = URLAddress.FromString(args.ArgAt<string>(0));
+                          return true;
+                      });
+
+            system = new StartAudioClipLoadingSystem(world, sceneData, ATTEMPTS_COUNT, concurrentBudgetProvider);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            system = null;
+        }
+
+        [Test]
+        public void CreateAudioSourceComponentForPBAudioSource()
+        {
+            // Arrange
+            var pbAudioSource = CreatePBAudioSource();
+            Entity entity = world.Create(pbAudioSource, PartitionComponent.TOP_PRIORITY);
+
+            // Act
+            system.Update(0);
+
+            // Assert world
+            Assert.That(world.TryGet(entity, out AudioSourceComponent audioSourceComponent), Is.True);
+
+            // Assert component
+            Assert.That(audioSourceComponent.PBAudioSource, Is.EqualTo(pbAudioSource));
+            Assert.That(audioSourceComponent.ClipPromise, Is.Not.Null);
+            Assert.That(audioSourceComponent.Result, Is.Null);
+            Assert.That(audioSourceComponent.ClipLoadingStatus, Is.EqualTo(StreamableLoading.LifeCycle.LoadingInProgress));
+
+            // Assert promise
+            Assert.That(audioSourceComponent.ClipPromise!.Value, Is.Not.Null);
+            AssetPromise<AudioClip, GetAudioClipIntention> promiseValue = audioSourceComponent.ClipPromise.Value;
+            Assert.That(world.TryGet(promiseValue.Entity, out GetAudioClipIntention intention), Is.True);
+            Assert.That(intention.CommonArguments.URL, Is.EqualTo(pbAudioSource.AudioClipUrl));
+            Assert.That(intention.CommonArguments.Attempts, Is.EqualTo(ATTEMPTS_COUNT));
+            Assert.That(intention.AudioType, Is.EqualTo(pbAudioSource.AudioClipUrl.ToAudioType()));
+        }
+
+        private static PBAudioSource CreatePBAudioSource() =>
+            new()
+            {
+                AudioClipUrl = $"file://{Application.dataPath + "/../TestResources/Audio/Test.mp3"}",
+                Loop = false,
+                Pitch = 0.5f,
+                Volume = 0.5f,
+                Playing = true,
+            };
+    }
+}

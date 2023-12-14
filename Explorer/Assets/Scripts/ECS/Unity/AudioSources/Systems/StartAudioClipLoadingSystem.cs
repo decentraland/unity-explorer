@@ -16,8 +16,7 @@ using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip,
 namespace ECS.Unity.AudioSources.Systems
 {
     /// <summary>
-    ///     Places a loading intention that can be consumed by other systems in the pipeline.
-    ///     Does not provide support for Video Textures
+    ///     Places a loading intention for audio clip that can be consumed by other systems in the pipeline.
     /// </summary>
     [UpdateInGroup(typeof(AudioSourceLoadingGroup))]
     [ThrottlingEnabled]
@@ -47,7 +46,7 @@ namespace ECS.Unity.AudioSources.Systems
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
             if (!sceneData.TryGetContentUrl(sdkAudioSource.AudioClipUrl, out URLAddress audioClipUrl)) return;
 
-            var audioSourceComponent = new AudioSourceComponent(sdkAudioSource, sceneData);
+            var audioSourceComponent = new AudioSourceComponent(sdkAudioSource);
 
             audioSourceComponent.ClipPromise = Promise.Create(World, new GetAudioClipIntention
             {
