@@ -44,22 +44,24 @@ namespace ECS.Unity.AudioSources.Systems
             {
                 audioSourceComponent.ClipLoadingStatus = StreamableLoading.LifeCycle.LoadingFinished;
 
-                audioSourceComponent.Result ??= audioSourcesPool.Get();
+                if(audioSourceComponent.Result == null)
+                    audioSourceComponent.Result = audioSourcesPool.Get();
 
                 var sdkAudioSource = audioSourceComponent.PBAudioSource;
                 var audioSource = audioSourceComponent.Result;
 
-                audioSource.spatialBlend = 1;
-                audioSource.dopplerLevel = 0.1f;
+                audioSource.spatialize = false;
+                audioSource.spatialBlend = 0; //1;
+                // audioSource.dopplerLevel = 0.1f;
                 audioSource.playOnAwake = true; // for testing purposes
 
                 audioSource.loop = true; // sdkAudioSource.Loop;
-                audioSource.pitch = sdkAudioSource.Pitch;
-                audioSource.volume = sdkAudioSource.Volume;
-
+                // audioSource.pitch = sdkAudioSource.Pitch;
+                audioSource.volume = 1; //sdkAudioSource.Volume;
                 audioSource.clip = promiseResult.Asset;
 
-                if (sdkAudioSource.Playing && audioSource.clip != null)
+                // if (sdkAudioSource.Playing && audioSource.clip != null)
+                if (audioSource.clip != null)
                     audioSource.Play();
 
                 Transform rendererTransform = audioSource.transform;
