@@ -10,6 +10,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.Profiles;
 using DCL.WebRequests.Analytics;
 using DCL.Profiling;
 using DCL.ResourcesUnloading;

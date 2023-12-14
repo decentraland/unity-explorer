@@ -1,26 +1,15 @@
-using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Wearables;
-using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.ECSComponents;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Web3Authentication;
-using DCL.Profiles;
-using Decentraland.Common;
-using ECS.Prioritization.Components;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using TMPro;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Utility;
-using Avatar = DCL.Profiles.Avatar;
-using Entity = Arch.Core.Entity;
-using Vector3 = UnityEngine.Vector3;
 
 namespace Global.Dynamic
 {
@@ -43,7 +32,6 @@ namespace Global.Dynamic
         [SerializeField] private RealmLauncher realmLauncher;
         [SerializeField] private string[] realms;
         [SerializeField] private DynamicSettings dynamicSettings;
-        [SerializeField] private TMP_InputField addressInput;
 
         private StaticContainer staticContainer;
         private DynamicWorldContainer dynamicWorldContainer;
@@ -83,7 +71,7 @@ namespace Global.Dynamic
         {
             try
             {
-                IWeb3Authenticator web3Authenticator = await CreateWeb3AuthenticatorAsync(ct);
+                IWeb3Authenticator web3Authenticator = new RandomGeneratedWeb3Authenticator();
 
                 // First load the common global plugin
                 bool isLoaded;
@@ -139,10 +127,7 @@ namespace Global.Dynamic
 
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
 
-                string selectedRealm = await WaitUntilRealmIsSelected(ct);
-                await ChangeRealmAsync(staticContainer, selectedRealm, ct);
-
-                UpdateOwnAvatarShape(await EnsureProfileAsync(web3Identity.EphemeralAccount.Address, ct));
+                realmLauncher.OnRealmSelected += ChangeRealm;
             }
             catch (OperationCanceledException)
             {
@@ -156,86 +141,24 @@ namespace Global.Dynamic
             }
         }
 
-        private void UpdateOwnAvatarShape(Profile profile)
+        private void ChangeRealm(string selectedRealm)
         {
-            globalWorld.EcsWorld.Query(in new QueryDescription().WithAll<PBAvatarShape>().WithNone<Profile>(),
-                (in Entity entity, ref PBAvatarShape avatarShape) =>
-                {
-                    // the catalyst converts the address to lower case
-                    if (!string.Equals(avatarShape.Id, profile.UserId, StringComparison.CurrentCultureIgnoreCase)) return;
-                    globalWorld.EcsWorld.Add(entity, profile);
-                });
-        }
-
-        private async UniTask<string> WaitUntilRealmIsSelected(CancellationToken ct)
-        {
-            string selectedRealm = null;
-
-            void SetRealm(string str) =>
-                selectedRealm = str;
-
-            realmLauncher.OnRealmSelected += SetRealm;
-
-            await UniTask.WaitUntil(() => !string.IsNullOrEmpty(selectedRealm), cancellationToken: ct);
-
-            return selectedRealm;
-        }
-
-        private async UniTask ChangeRealmAsync(StaticContainer globalContainer, string selectedRealm, CancellationToken ct)
-        {
-            if (globalWorld != null)
-                await dynamicWorldContainer.RealmController.UnloadCurrentRealmAsync(globalWorld);
-
-            await UniTask.SwitchToMainThread();
-
-            Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(StartPosition);
-            characterPos.y = 1f;
-
-            globalContainer.CharacterObject.Controller.transform.position = characterPos;
-
-            await dynamicWorldContainer.RealmController.SetRealmAsync(globalWorld, URLDomain.FromString(selectedRealm), ct);
-        }
-
-        private async UniTask<IWeb3Authenticator> CreateWeb3AuthenticatorAsync(CancellationToken ct)
-        {
-            // TODO: create the real web3 authenticator and remove addressInputField. Missing auth dapp
-            var isWeb3PublicAddressSet = false;
-
-            addressInput.onSubmit.AddListener(publicAddress =>
+            async UniTask ChangeRealmAsync(StaticContainer globalContainer, string selectedRealm, CancellationToken ct)
             {
-                if (string.IsNullOrEmpty(publicAddress)) return;
-                isWeb3PublicAddressSet = true;
+                if (globalWorld != null)
+                    await dynamicWorldContainer.RealmController.UnloadCurrentRealmAsync(globalWorld);
 
-                // cannot reassign address in the same session
-                addressInput.gameObject.SetActive(false);
-            });
+                await UniTask.SwitchToMainThread();
 
-            await UniTask.WaitUntil(() => isWeb3PublicAddressSet, cancellationToken: ct);
+                Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(StartPosition);
+                characterPos.y = 1f;
 
-            return new FakeWeb3Authenticator(addressInput.text);
-        }
+                globalContainer.CharacterObject.Controller.transform.position = characterPos;
 
-        private async UniTask<Profile> EnsureProfileAsync(string profileId, CancellationToken ct) =>
-            await dynamicWorldContainer.ProfileRepository.GetAsync(profileId, 0, ct) ?? CreateRandomProfile(profileId);
+                await dynamicWorldContainer.RealmController.SetRealmAsync(globalWorld, URLDomain.FromString(selectedRealm), ct);
+            }
 
-        private Profile CreateRandomProfile(string profileId)
-        {
-            var name = $"Player#{profileId.Substring(profileId.Length - 4, 4)}";
-
-            var avatar = new Avatar(BodyShape.MALE,
-                new HashSet<string>(WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE)),
-                new HashSet<string>(WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE)),
-                new HashSet<string>(),
-                new Dictionary<string, Emote>(),
-                URLAddress.EMPTY, URLAddress.EMPTY,
-                Color.white, WearablesConstants.DefaultColors.GetRandomHairColor(),
-                WearablesConstants.DefaultColors.GetRandomSkinColor());
-
-            return new Profile(profileId, name, name, false, "",
-                0, "", 0,
-                avatar,
-                new HashSet<string>(),
-                new List<string>());
+            ChangeRealmAsync(staticContainer, selectedRealm, CancellationToken.None).Forget();
         }
     }
 }

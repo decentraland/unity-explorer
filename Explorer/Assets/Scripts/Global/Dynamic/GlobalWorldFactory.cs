@@ -3,10 +3,12 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components;
+using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character;
 using DCL.Character.Components;
+using DCL.DebugUtilities;
 using DCL.ECSComponents;
 using DCL.GlobalPartitioning;
 using DCL.Optimization.PerformanceBudgeting;
@@ -65,12 +67,15 @@ namespace Global.Dynamic
         private readonly PhysicsTickProvider physicsTickProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IReadOnlyList<IDCLGlobalPlugin> globalPlugins;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IConcurrentBudgetProvider memoryBudgetProvider;
         private readonly StaticSettings staticSettings;
 
-        public GlobalWorldFactory(in StaticContainer staticContainer, IRealmPartitionSettings realmPartitionSettings,
+        public GlobalWorldFactory(in StaticContainer staticContainer,
+            IRealmPartitionSettings realmPartitionSettings,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
-            URLDomain assetBundlesURL, IRealmData realmData, IReadOnlyList<IDCLGlobalPlugin> globalPlugins)
+            URLDomain assetBundlesURL, IRealmData realmData, IReadOnlyList<IDCLGlobalPlugin> globalPlugins,
+            IDebugContainerBuilder debugContainerBuilder)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -82,6 +87,7 @@ namespace Global.Dynamic
             this.realmSamplingData = realmSamplingData;
             this.assetBundlesURL = assetBundlesURL;
             this.globalPlugins = globalPlugins;
+            this.debugContainerBuilder = debugContainerBuilder;
             this.realmData = realmData;
 
             memoryBudgetProvider = staticContainer.SingletonSharedDependencies.MemoryBudgetProvider;
@@ -159,6 +165,8 @@ namespace Global.Dynamic
 
             UpdatePhysicsTickSystem.InjectToWorld(ref builder, physicsTickProvider);
             UpdateTimeSystem.InjectToWorld(ref builder);
+
+            OwnAvatarLoaderFromDebugMenuSystem.InjectToWorld(ref builder, playerEntity, debugContainerBuilder, realmData);
 
             var pluginArgs = new GlobalPluginArguments(playerEntity);
 
