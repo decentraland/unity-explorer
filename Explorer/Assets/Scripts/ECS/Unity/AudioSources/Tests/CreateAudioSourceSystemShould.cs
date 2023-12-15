@@ -10,14 +10,13 @@ using ECS.Unity.AudioSources.Components;
 using ECS.Unity.AudioSources.Systems;
 using NSubstitute;
 using NUnit.Framework;
-using UnityEditor;
 using UnityEngine;
+using static ECS.Unity.AudioSources.Tests.AudioSourceTestsUtils;
 
 namespace ECS.Unity.AudioSources.Tests
 {
     public class CreateAudioSourceSystemShould : UnitySystemTestBase<CreateAudioSourceSystem>
     {
-        private static AudioClip audioClip => AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Scripts/ECS/Unity/AudioSources/Tests/cuckoo-test-clip.mp3");
 
         private AudioSourceComponent component;
         private Entity entity;
@@ -47,7 +46,7 @@ namespace ECS.Unity.AudioSources.Tests
 
             void CreateComponent()
             {
-                component = new AudioSourceComponent(AudioSourceTestsUtils.CreatePBAudioSource());
+                component = new AudioSourceComponent(CreatePBAudioSource());
                 component.ClipLoadingStatus = StreamableLoading.LifeCycle.LoadingInProgress;
                 component.ClipPromise = AssetPromise<AudioClip, GetAudioClipIntention>.Create(world, new GetAudioClipIntention(), PartitionComponent.TOP_PRIORITY);
             }
@@ -81,7 +80,7 @@ namespace ECS.Unity.AudioSources.Tests
         public void CreateAudioSourceFromResolvedPromise()
         {
             // Arrange
-            world.Add(component.ClipPromise!.Value.Entity, new StreamableLoadingResult<AudioClip>(audioClip));
+            world.Add(component.ClipPromise!.Value.Entity, new StreamableLoadingResult<AudioClip>(TestAudioClip));
 
             // Act
             system.Update(0);
@@ -90,7 +89,7 @@ namespace ECS.Unity.AudioSources.Tests
             AudioSourceComponent afterUpdate = world.Get<AudioSourceComponent>(entity);
             Assert.That(afterUpdate.ClipLoadingStatus, Is.EqualTo(StreamableLoading.LifeCycle.LoadingFinished));
             Assert.That(afterUpdate.Result, Is.Not.Null);
-            Assert.That(afterUpdate.Result.clip, Is.EqualTo(audioClip));
+            Assert.That(afterUpdate.Result.clip, Is.EqualTo(TestAudioClip));
         }
     }
 }
