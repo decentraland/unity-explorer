@@ -1,6 +1,5 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
-using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
@@ -22,19 +21,24 @@ namespace ECS.Unity.AudioSources.Tests
         [SetUp]
         public void SetUp()
         {
-            IConcurrentBudgetProvider concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
-            concurrentBudgetProvider.TrySpendBudget().Returns(true);
+            CreateSystem();
+            return;
 
-            ISceneData sceneData = Substitute.For<ISceneData>();
+            void CreateSystem()
+            {
+                IConcurrentBudgetProvider concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+                concurrentBudgetProvider.TrySpendBudget().Returns(true);
 
-            sceneData.TryGetContentUrl(Arg.Any<string>(), out Arg.Any<URLAddress>())
-                     .Returns(args =>
-                      {
-                          args[1] = URLAddress.FromString(args.ArgAt<string>(0));
-                          return true;
-                      });
+                ISceneData sceneData = Substitute.For<ISceneData>();
+                sceneData.TryGetContentUrl(Arg.Any<string>(), out Arg.Any<URLAddress>())
+                         .Returns(args =>
+                          {
+                              args[1] = URLAddress.FromString(args.ArgAt<string>(0));
+                              return true;
+                          });
 
-            system = new StartAudioClipLoadingSystem(world, sceneData, ATTEMPTS_COUNT, concurrentBudgetProvider);
+                system = new StartAudioClipLoadingSystem(world, sceneData, ATTEMPTS_COUNT, concurrentBudgetProvider);
+            }
         }
 
         [TearDown]
@@ -47,7 +51,7 @@ namespace ECS.Unity.AudioSources.Tests
         public void CreateAudioSourceComponentForPBAudioSource()
         {
             // Arrange
-            var pbAudioSource = CreatePBAudioSource();
+            var pbAudioSource = AudioSourceTestsUtils.CreatePBAudioSource();
             Entity entity = world.Create(pbAudioSource, PartitionComponent.TOP_PRIORITY);
 
             // Act
@@ -70,15 +74,5 @@ namespace ECS.Unity.AudioSources.Tests
             Assert.That(intention.CommonArguments.Attempts, Is.EqualTo(ATTEMPTS_COUNT));
             Assert.That(intention.AudioType, Is.EqualTo(pbAudioSource.AudioClipUrl.ToAudioType()));
         }
-
-        private static PBAudioSource CreatePBAudioSource() =>
-            new()
-            {
-                AudioClipUrl = $"file://{Application.dataPath + "/../TestResources/Audio/Test.mp3"}",
-                Loop = false,
-                Pitch = 0.5f,
-                Volume = 0.5f,
-                Playing = true,
-            };
     }
 }

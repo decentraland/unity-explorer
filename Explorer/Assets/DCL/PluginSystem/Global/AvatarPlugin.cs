@@ -82,8 +82,8 @@ namespace DCL.PluginSystem.Global
         {
             AvatarBase avatarBasePrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.avatarBase, ct: ct)).Value.GetComponent<AvatarBase>();
 
-            componentPoolsRegistry.AddGameObjectPoolDCL(() => Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity));
-            avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePoolDCL<AvatarBase>();
+            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(avatarBasePrefab, Vector3.zero, Quaternion.identity));
+            avatarPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<AvatarBase>();
         }
 
         private async UniTask CreateMaterialPoolPrewarmedAsync(AvatarShapeSettings settings, CancellationToken ct)

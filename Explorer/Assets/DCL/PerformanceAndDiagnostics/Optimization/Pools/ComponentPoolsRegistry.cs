@@ -37,31 +37,12 @@ namespace DCL.Optimization.Pools
             lock (pools) { return (IComponentPool<T>)pools[typeof(T)]; }
         }
 
-        public IComponentPool<T> GetReferenceTypePoolDCL<T>() where T: class
-        {
-            lock (pools) { return (IComponentPool<T>)pools[typeof(T)]; }
-        }
-
         public IComponentPool GetPool(Type type)
         {
             lock (pools) { return pools[type]; }
         }
 
         public void AddGameObjectPool<T>(Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 1024) where T: Component
-        {
-            lock (pools)
-            {
-                if (pools.ContainsKey(typeof(T)))
-                {
-                    ReportHub.LogError("ComponentPoolsRegistry", $"Pool for type {typeof(T)} already exists!");
-                    return;
-                }
-
-                pools.Add(typeof(T), new GameObjectPool<T>(rootContainer, creationHandler, onRelease, maxSize: maxSize));
-            }
-        }
-
-        public void AddGameObjectPoolDCL<T>(Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 1024) where T: Component
         {
             lock (pools)
             {

@@ -7,7 +7,7 @@ using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip,
 
 namespace ECS.Unity.AudioSources.Components
 {
-    public struct AudioSourceComponent: IPoolableComponentProvider<AudioSource?>
+    public struct AudioSourceComponent : IPoolableComponentProvider<AudioSource?>
     {
         public readonly PBAudioSource PBAudioSource;
 
@@ -27,6 +27,8 @@ namespace ECS.Unity.AudioSources.Components
         AudioSource? IPoolableComponentProvider<AudioSource?>.PoolableComponent => Result;
         Type IPoolableComponentProvider<AudioSource?>.PoolableComponentType => typeof(AudioSource);
 
+        public bool ClipIsNotLoading => ClipLoadingStatus != StreamableLoading.LifeCycle.LoadingInProgress;
+
         public AudioSourceComponent(PBAudioSource pbAudioSource)
         {
             ClipPromise = null;
@@ -36,7 +38,6 @@ namespace ECS.Unity.AudioSources.Components
             Result = null;
         }
 
-        public void Dispose(){ }
-
+        public void Dispose() { }
     }
 }
