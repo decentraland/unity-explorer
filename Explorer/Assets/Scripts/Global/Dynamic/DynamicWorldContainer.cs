@@ -43,8 +43,6 @@ namespace Global.Dynamic
 
         public IProfileRepository ProfileRepository { get; private set; }
 
-        public CacheProfileRepository CacheProfileRepository { get; private set; }
-
         public void Dispose()
         {
             mvcManager.Dispose();
@@ -79,10 +77,8 @@ namespace Global.Dynamic
             MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, dynamicSettings.MapRendererSettings, ct);
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController));
 
-            container.CacheProfileRepository = new CacheProfileRepository();
-
             container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData,
-                container.CacheProfileRepository);
+                new DefaultProfileCache());
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {

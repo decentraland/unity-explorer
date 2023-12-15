@@ -11,16 +11,16 @@ namespace DCL.Profiles
     {
         private readonly IWebRequestController webRequestController;
         private readonly IRealmData realm;
-        private readonly CacheProfileRepository cacheProfileRepository;
+        private readonly IProfileCache profileCache;
         private readonly URLBuilder urlBuilder = new ();
 
         public RealmProfileRepository(IWebRequestController webRequestController,
             IRealmData realm,
-            CacheProfileRepository cacheProfileRepository)
+            IProfileCache profileCache)
         {
             this.webRequestController = webRequestController;
             this.realm = realm;
-            this.cacheProfileRepository = cacheProfileRepository;
+            this.profileCache = profileCache;
         }
 
         public async UniTask<Profile?> GetAsync(string id, int version, CancellationToken ct)
@@ -48,11 +48,11 @@ namespace DCL.Profiles
 
                 if (root.avatars.Length == 0) return null;
 
-                // TODO: probable responsibility issues thus we might not want to affect the local cache
+                // TODO: probable responsibility issues thus we might not want to affect the cache
                 // but avoids extra allocations in case the profile already exists
-                Profile profile = await cacheProfileRepository.GetAsync(id, version, ct) ?? new Profile();
+                Profile profile = profileCache.Get(id) ?? new Profile();
                 root.avatars[0].CopyTo(profile);
-                cacheProfileRepository.Set(id, profile);
+                profileCache.Set(id, profile);
 
                 return profile;
             }
