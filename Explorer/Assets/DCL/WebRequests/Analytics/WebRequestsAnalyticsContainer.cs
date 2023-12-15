@@ -1,20 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DCL.WebRequests.Analytics
 {
     public class WebRequestsAnalyticsContainer : IWebRequestsAnalyticsContainer
     {
         private readonly Dictionary<Type, List<IRequestMetric>> requestTypesWithMetrics = new ();
-        private readonly List<Type> requestMetricTypes = new ();
+        private readonly List<(Type type, Func<IRequestMetric> ctor)> requestMetricTypes = new ();
         public IReadOnlyList<IRequestMetric> GetMetric(Type requestType) =>
             requestTypesWithMetrics.GetValueOrDefault(requestType);
 
-        public IReadOnlyList<Type> GetTrackedMetrics() => requestMetricTypes;
+        public IEnumerable<Type> GetTrackedMetrics() =>
+            requestMetricTypes.Select(m => m.type);
 
-        public WebRequestsAnalyticsContainer AddTrackedMetric<T>() where T: IRequestMetric, new()
+        public WebRequestsAnalyticsContainer AddTrackedMetric<T>() where T: class, IRequestMetric, new()
         {
-            requestMetricTypes.Add(typeof(T));
+            requestMetricTypes.Add((typeof(T), () => new T()));
             return this;
         }
         void IWebRequestsAnalyticsContainer.OnRequestStarted<T>(T request)
@@ -23,10 +25,8 @@ namespace DCL.WebRequests.Analytics
             {
                 metrics = new List<IRequestMetric>();
 
-                foreach (Type metricType in requestMetricTypes)
-                {
-                    metrics.Add((IRequestMetric)Activator.CreateInstance(metricType));
-                }
+                foreach ((_, Func<IRequestMetric> ctor) in requestMetricTypes)
+                    metrics.Add(ctor());
 
                 requestTypesWithMetrics.Add(typeof(T), metrics);
             }

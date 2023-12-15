@@ -8,11 +8,11 @@ namespace DCL.WebRequests.Analytics
     /// </summary>
     public interface IWebRequestsAnalyticsContainer
     {
-        public WebRequestsAnalyticsContainer AddTrackedMetric<T>() where T: IRequestMetric, new();
+        WebRequestsAnalyticsContainer AddTrackedMetric<T>() where T: class, IRequestMetric, new();
 
-        public IReadOnlyList<Type> GetTrackedMetrics();
+        IEnumerable<Type> GetTrackedMetrics();
 
-        public IReadOnlyList<IRequestMetric> GetMetric(Type requestType);
+        IReadOnlyList<IRequestMetric> GetMetric(Type requestType);
 
         internal void OnRequestStarted<T>(T request) where T: ITypedWebRequest;
 
