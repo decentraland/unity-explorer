@@ -1,8 +1,11 @@
 using System;
 
-[Serializable]
-public class SerializableKeyValuePair<TKey, TValue>
+namespace Utility
 {
-   public TKey key;
-   public TValue value;
+    [Serializable]
+    public class SerializableKeyValuePair<TKey, TValue>
+    {
+        public TKey key;
+        public TValue value;
+    }
 }
