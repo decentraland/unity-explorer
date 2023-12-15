@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
+using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
@@ -17,43 +18,43 @@ namespace ECS.Unity.AudioSources.Tests
     public class StartAudioClipLoadingSystemShould : UnitySystemTestBase<StartAudioClipLoadingSystem>
     {
         private const int ATTEMPTS_COUNT = 5;
+        private PBAudioSource pbAudioSource;
+        private Entity entity;
 
         [SetUp]
         public void SetUp()
         {
-            CreateSystem();
-            return;
+            system = CreateSystem(world);
+            pbAudioSource = AudioSourceTestsUtils.CreatePBAudioSource(); // Create component
+            entity = world.Create(pbAudioSource, PartitionComponent.TOP_PRIORITY); // Create entity
+        }
 
-            void CreateSystem()
-            {
-                IConcurrentBudgetProvider concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
-                concurrentBudgetProvider.TrySpendBudget().Returns(true);
+        public static StartAudioClipLoadingSystem CreateSystem(World world)
+        {
+            IConcurrentBudgetProvider concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+            concurrentBudgetProvider.TrySpendBudget().Returns(true);
 
-                ISceneData sceneData = Substitute.For<ISceneData>();
-                sceneData.TryGetContentUrl(Arg.Any<string>(), out Arg.Any<URLAddress>())
-                         .Returns(args =>
-                          {
-                              args[1] = URLAddress.FromString(args.ArgAt<string>(0));
-                              return true;
-                          });
+            ISceneData sceneData = Substitute.For<ISceneData>();
 
-                system = new StartAudioClipLoadingSystem(world, sceneData, ATTEMPTS_COUNT, concurrentBudgetProvider);
-            }
+            sceneData.TryGetContentUrl(Arg.Any<string>(), out Arg.Any<URLAddress>())
+                     .Returns(args =>
+                      {
+                          args[1] = URLAddress.FromString(args.ArgAt<string>(0));
+                          return true;
+                      });
+
+            return new StartAudioClipLoadingSystem(world, sceneData, ATTEMPTS_COUNT, concurrentBudgetProvider);
         }
 
         [TearDown]
         public void TearDown()
         {
-            system = null;
+            system.Dispose();
         }
 
         [Test]
         public void CreateAudioSourceComponentForPBAudioSource()
         {
-            // Arrange
-            var pbAudioSource = AudioSourceTestsUtils.CreatePBAudioSource();
-            Entity entity = world.Create(pbAudioSource, PartitionComponent.TOP_PRIORITY);
-
             // Act
             system.Update(0);
 

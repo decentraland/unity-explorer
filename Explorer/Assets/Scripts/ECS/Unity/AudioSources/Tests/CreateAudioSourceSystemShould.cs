@@ -17,32 +17,16 @@ namespace ECS.Unity.AudioSources.Tests
 {
     public class CreateAudioSourceSystemShould : UnitySystemTestBase<CreateAudioSourceSystem>
     {
-
         private AudioSourceComponent component;
         private Entity entity;
 
         [SetUp]
         public void SetUp()
         {
-            CreateSystem();
+            system = CreateSystem(world);
             CreateComponent();
             CreateEntity();
             return;
-
-            void CreateSystem()
-            {
-                var poolsRegistry = Substitute.For<IComponentPoolsRegistry>();
-                var audioSourcesPool = Substitute.For<IComponentPool<AudioSource>>();
-
-                poolsRegistry.GetReferenceTypePool<AudioSource>().Returns(audioSourcesPool);
-                audioSourcesPool.Get().Returns(new GameObject().AddComponent<AudioSource>());
-
-                var budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
-                budgetProvider.TrySpendBudget().Returns(true);
-
-                system = new CreateAudioSourceSystem(world, poolsRegistry, budgetProvider, budgetProvider);
-                system.Initialize();
-            }
 
             void CreateComponent()
             {
@@ -56,6 +40,20 @@ namespace ECS.Unity.AudioSources.Tests
                 entity = world.Create(component);
                 AddTransformToEntity(entity);
             }
+        }
+
+        public static CreateAudioSourceSystem CreateSystem(World world)
+        {
+            var poolsRegistry = Substitute.For<IComponentPoolsRegistry>();
+            var audioSourcesPool = Substitute.For<IComponentPool<AudioSource>>();
+
+            poolsRegistry.GetReferenceTypePool<AudioSource>().Returns(audioSourcesPool);
+            audioSourcesPool.Get().Returns(new GameObject().AddComponent<AudioSource>());
+
+            var budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+            budgetProvider.TrySpendBudget().Returns(true);
+
+            return new CreateAudioSourceSystem(world, poolsRegistry, budgetProvider, budgetProvider);
         }
 
         [TearDown]

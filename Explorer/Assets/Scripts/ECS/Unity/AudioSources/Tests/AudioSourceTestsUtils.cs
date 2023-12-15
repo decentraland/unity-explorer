@@ -11,7 +11,7 @@ namespace ECS.Unity.AudioSources.Tests
         public static PBAudioSource CreatePBAudioSource() =>
             new()
             {
-                AudioClipUrl = $"file://{Application.dataPath + "/../TestResources/Audio/cuckoo-test-clip.mp3"}",
+                AudioClipUrl = $"file://{Application.dataPath + "/Scripts/ECS/Unity/AudioSources/Tests/cuckoo-test-clip.mp3"}",
                 Loop = false,
                 Pitch = 0.5f,
                 Volume = 0.5f,

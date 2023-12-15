@@ -1,6 +1,5 @@
 ﻿using DCL.ECSComponents;
 using DCL.Optimization.Pools;
-using SceneRunner.Scene;
 using System;
 using UnityEngine;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
