@@ -243,7 +243,6 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             }
 
             CommandBuffer cmdStarBox = CommandBufferPool.Get();
-
             using (new ProfilingScope(cmdStarBox, new ProfilingSampler(profilerStarBoxTag)))
             {
                 var kernelName = "CSMain";
@@ -260,7 +259,6 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             CommandBufferPool.Release(cmdStarBox);
 
             CommandBuffer cmdStarBoxCopy = CommandBufferPool.Get();
-
             using (new ProfilingScope(cmdStarBoxCopy, new ProfilingSampler(profilerStarBoxTag)))
             {
                 cmdStarBoxCopy.SetGlobalTexture("_CubemapTextureArray", CubemapTextureArray);
@@ -295,7 +293,6 @@ public partial class DCL_RenderFeature_ProceduralSkyBox : ScriptableRendererFeat
             CommandBufferPool.Release(cmdStarBoxCopy);
 
             CommandBuffer cmdSkyBox = CommandBufferPool.Get();
-
             using (new ProfilingScope(cmdSkyBox, new ProfilingSampler(profilerSkyBoxTag)))
             {
                 // Uncomment below line for testing only, unnecessary during release.
