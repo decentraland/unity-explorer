@@ -1,6 +1,7 @@
 using DCL.DemoWorlds;
 using DCL.ECSComponents;
 using DCL.SDKComponents.TextShape.Component;
+using DCL.SDKComponents.TextShape.Fonts;
 using System;
 
 namespace DCL.SDKComponents.TextShape.Demo
@@ -14,15 +15,15 @@ namespace DCL.SDKComponents.TextShape.Demo
         private readonly PBTextShape textShape;
         private readonly PBVisibilityComponent visibility;
 
-        public WarmUpSettingsTextShapeDemoWorld(TextShapeProperties textShapeProperties, Func<bool> visible) : this(new PBTextShape(), new PBVisibilityComponent(), textShapeProperties, visible) { }
+        public WarmUpSettingsTextShapeDemoWorld(TextShapeProperties textShapeProperties, Func<bool> visible, IFontsStorage fontsStorage) : this(new PBTextShape(), new PBVisibilityComponent(), textShapeProperties, visible, fontsStorage) { }
 
-        public WarmUpSettingsTextShapeDemoWorld(PBTextShape textShape, PBVisibilityComponent visibility, TextShapeProperties textShapeProperties, Func<bool> visible)
+        public WarmUpSettingsTextShapeDemoWorld(PBTextShape textShape, PBVisibilityComponent visibility, TextShapeProperties textShapeProperties, Func<bool> visible, IFontsStorage fontsStorage)
         {
             this.textShape = textShape;
             this.visibility = visibility;
             this.textShapeProperties = textShapeProperties;
             this.visible = visible;
-            this.origin = new TextShapeDemoWorld((textShape, visibility));
+            this.origin = new TextShapeDemoWorld(fontsStorage, (textShape, visibility));
         }
 
         public void SetUp()

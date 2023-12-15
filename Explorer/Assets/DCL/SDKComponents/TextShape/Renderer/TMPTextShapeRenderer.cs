@@ -1,4 +1,5 @@
 using DCL.ECSComponents;
+using DCL.SDKComponents.TextShape.Fonts;
 using ECS.Unity.ColorComponent;
 using System;
 using TMPro;
@@ -12,6 +13,7 @@ namespace DCL.SDKComponents.TextShape.Renderer
         private readonly MeshRenderer meshRenderer;
         private readonly MaterialPropertyBlock materialPropertyBlock;
         private readonly RectTransform rectTransform;
+        private readonly IFontsStorage fontsStorage;
         private static readonly int ID_OUTLINE_COLOR = Shader.PropertyToID("_OutlineColor");
         private static readonly int ID_OUTLINE_WIDTH = Shader.PropertyToID("_OutlineWidth");
         private static readonly int ID_UNDERLAY_COLOR = Shader.PropertyToID("_UnderlayColor");
@@ -19,17 +21,25 @@ namespace DCL.SDKComponents.TextShape.Renderer
         private static readonly int ID_UNDERLAY_OFFSET_Y = Shader.PropertyToID("_UnderlayOffsetY");
         private static readonly int ID_UNDERLAY_OFFSET_X = Shader.PropertyToID("_UnderlayOffsetX");
 
-        public TMPTextShapeRenderer(TMP_Text tmpText, MeshRenderer meshRenderer, MaterialPropertyBlock materialPropertyBlock, RectTransform rectTransform)
+        public TMPTextShapeRenderer(
+            TMP_Text tmpText,
+            MeshRenderer meshRenderer,
+            MaterialPropertyBlock materialPropertyBlock,
+            RectTransform rectTransform,
+            IFontsStorage fontsStorage
+        )
         {
             this.tmpText = tmpText;
             this.meshRenderer = meshRenderer;
             this.materialPropertyBlock = materialPropertyBlock;
             this.rectTransform = rectTransform;
+            this.fontsStorage = fontsStorage;
         }
 
         public void Apply(PBTextShape textShape)
         {
             tmpText.text = textShape.Text;
+            tmpText.font = fontsStorage.Font(textShape.Font) ?? tmpText.font;
 
             if (textShape.HasFontSize)
                 tmpText.enableAutoSizing = textShape.FontAutoSize;
@@ -74,9 +84,6 @@ namespace DCL.SDKComponents.TextShape.Renderer
             meshRenderer.SetPropertyBlock(materialPropertyBlock);
 
             rectTransform.sizeDelta = new Vector2(textShape.Width, textShape.Height);
-
-            Debug.LogWarning("Applying is not finished");
-            //TODO// tmpText.font = textShape.Font;
         }
 
         public void Show()

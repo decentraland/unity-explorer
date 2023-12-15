@@ -3,6 +3,7 @@ using DCL.DemoWorlds;
 using DCL.DemoWorlds.Extensions;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
+using DCL.SDKComponents.TextShape.Fonts;
 using DCL.SDKComponents.TextShape.Renderer.Factory;
 using DCL.SDKComponents.TextShape.System;
 using ECS.Unity.Transforms.Components;
@@ -15,9 +16,9 @@ namespace DCL.SDKComponents.TextShape.Demo
     {
         private readonly IDemoWorld origin;
 
-        public TextShapeDemoWorld(params (PBTextShape textShape, PBVisibilityComponent visibility)[] list) : this(list.AsReadOnly()) { }
+        public TextShapeDemoWorld(IFontsStorage fontsStorage, params (PBTextShape textShape, PBVisibilityComponent visibility)[] list) : this(fontsStorage, list.AsReadOnly()) { }
 
-        public TextShapeDemoWorld(IReadOnlyList<(PBTextShape textShape, PBVisibilityComponent visibility)> list)
+        public TextShapeDemoWorld(IFontsStorage fontsStorage, IReadOnlyList<(PBTextShape textShape, PBVisibilityComponent visibility)> list)
         {
             origin = new DemoWorld(
                 World.Create(),
@@ -26,7 +27,7 @@ namespace DCL.SDKComponents.TextShape.Demo
                     foreach ((PBTextShape textShape, PBVisibilityComponent visibility) in list)
                         world.Create(textShape, visibility, NewTransform());
                 },
-                world => new InstantiateTextShapeSystem(world, new PoolTextShapeRendererFactory(new ComponentPoolsRegistry())),
+                world => new InstantiateTextShapeSystem(world, new PoolTextShapeRendererFactory(new ComponentPoolsRegistry(), fontsStorage)),
                 world => new UpdateTextShapeSystem(world),
                 world => new VisibilityTextShapeSystem(world));
         }

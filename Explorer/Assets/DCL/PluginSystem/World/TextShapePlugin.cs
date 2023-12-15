@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.SDKComponents.TextShape.Fonts;
 using DCL.SDKComponents.TextShape.Renderer.Factory;
 using DCL.SDKComponents.TextShape.System;
 using ECS.LifeCycle;
@@ -16,8 +17,14 @@ namespace DCL.PluginSystem.World
         private readonly ITextShapeRendererFactory textShapeRendererFactory;
         private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
 
-        public TextShapePlugin(IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry) : this(
-            new PoolTextShapeRendererFactory(componentPoolsRegistry),
+        public TextShapePlugin(IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IPluginSettingsContainer settingsContainer) : this(
+            instantiationFrameTimeBudgetProvider,
+            componentPoolsRegistry,
+            settingsContainer.GetSettings<FontsSettings>().AsCached()
+        ) { }
+
+        public TextShapePlugin(IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IFontsStorage fontsStorage) : this(
+            new PoolTextShapeRendererFactory(componentPoolsRegistry, fontsStorage),
             instantiationFrameTimeBudgetProvider
         ) { }
 

@@ -1,4 +1,5 @@
 using DCL.Optimization.Pools;
+using DCL.SDKComponents.TextShape.Fonts;
 using UnityEngine;
 
 namespace DCL.SDKComponents.TextShape.Renderer.Factory
@@ -12,7 +13,7 @@ namespace DCL.SDKComponents.TextShape.Renderer.Factory
 
         private Transform tempTransform = null!;
 
-        public PoolTextShapeRendererFactory(IComponentPoolsRegistry componentPoolsRegistry) : this(new TextShapeRendererFactory(), componentPoolsRegistry) { }
+        public PoolTextShapeRendererFactory(IComponentPoolsRegistry componentPoolsRegistry, IFontsStorage fontsStorage) : this(new TextShapeRendererFactory(fontsStorage), componentPoolsRegistry) { }
 
         public PoolTextShapeRendererFactory(ITextShapeRendererFactory origin, IComponentPoolsRegistry componentPoolsRegistry)
         {

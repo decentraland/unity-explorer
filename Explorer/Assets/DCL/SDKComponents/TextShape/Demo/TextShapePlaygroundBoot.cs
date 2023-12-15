@@ -1,12 +1,15 @@
 using Cysharp.Threading.Tasks;
 using DCL.DemoWorlds;
+using DCL.DemoWorlds.Extensions;
 using DCL.SDKComponents.TextShape.Component;
+using DCL.SDKComponents.TextShape.Fonts.Settings;
 using UnityEngine;
 
 namespace DCL.SDKComponents.TextShape.Demo
 {
     public class TextShapePlaygroundBoot : MonoBehaviour
     {
+        [SerializeField] private SoFontList fontList = null!;
         [SerializeField]
         private TextShapeProperties textShapeProperties = new ();
         [SerializeField]
@@ -14,7 +17,7 @@ namespace DCL.SDKComponents.TextShape.Demo
 
         private void Start()
         {
-            new WarmUpSettingsTextShapeDemoWorld(textShapeProperties, () => visible)
+            new WarmUpSettingsTextShapeDemoWorld(textShapeProperties, () => visible, fontList.EnsureNotNull())
                .SetUpAndRunAsync(destroyCancellationToken)
                .Forget();
         }

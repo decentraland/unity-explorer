@@ -141,7 +141,7 @@ namespace Global
             {
                 new TransformsPlugin(sharedDependencies),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
-                new TextShapePlugin(sharedDependencies.FrameTimeBudgetProvider, componentsContainer.ComponentPoolsRegistry),
+                new TextShapePlugin(sharedDependencies.FrameTimeBudgetProvider, componentsContainer.ComponentPoolsRegistry, settingsContainer),
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
                 new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),

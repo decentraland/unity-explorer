@@ -167,6 +167,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a59b5bd0771a405aa9d899d9e7c6a421, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  fontList: {fileID: 11400000, guid: 353f2294734a94b57b061c9b83eb275d, type: 2}
   textShapeProperties:
     font: 1
     fontAutoSize: 1
@@ -189,6 +190,7 @@ MonoBehaviour:
     textAlign: 4
     textWrapping: 1
     textColor: {r: 1, g: 1, b: 1, a: 1}
+  visible: 1
 --- !u!1 &956698897
 GameObject:
   m_ObjectHideFlags: 0
