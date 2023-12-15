@@ -22,6 +22,7 @@ namespace DCL.PluginSystem.Global
         private readonly MapRendererContainer mapRendererContainer;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ITeleportController teleportController;
+        private readonly BackpackSettings backpackSettings;
         private NavmapController navmapController;
 
         public ExplorePanelPlugin(
@@ -29,13 +30,15 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             MapRendererContainer mapRendererContainer,
             IPlacesAPIService placesAPIService,
-            ITeleportController teleportController)
+            ITeleportController teleportController,
+            BackpackSettings backpackSettings)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.mapRendererContainer = mapRendererContainer;
             this.placesAPIService = placesAPIService;
             this.teleportController = teleportController;
+            this.backpackSettings = backpackSettings;
         }
 
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
@@ -46,7 +49,12 @@ namespace DCL.PluginSystem.Global
             navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, teleportController);
             await navmapController.InitialiseAssetsAsync(assetsProvisioner, ct);
             SettingsController settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
-            BackpackControler backpackController = new BackpackControler(explorePanelView.GetComponentInChildren<BackpackView>());
+
+            NftTypeIconSO rarityBackgrounds = (await assetsProvisioner.ProvideMainAssetAsync(backpackSettings.RarityBackgroundsMapping, ct: ct)).Value.GetComponent<NftTypeIconSO>();
+            NftTypeIconSO categoryIcons = (await assetsProvisioner.ProvideMainAssetAsync(backpackSettings.CategoryIconsMapping, ct: ct)).Value.GetComponent<NftTypeIconSO>();
+            NFTColorsSO rarityColors = (await assetsProvisioner.ProvideMainAssetAsync(backpackSettings.RarityColorMappings, ct: ct)).Value.GetComponent<NFTColorsSO>();
+
+            BackpackControler backpackController = new BackpackControler(explorePanelView.GetComponentInChildren<BackpackView>(), rarityBackgrounds, categoryIcons, rarityColors);
 
             mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackController));
 

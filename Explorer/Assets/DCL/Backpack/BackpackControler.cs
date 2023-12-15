@@ -12,14 +12,18 @@ namespace DCL.Backpack
             private readonly RectTransform rectTransform;
             private CancellationTokenSource animationCts;
 
-            public BackpackControler(BackpackView view)
+            public BackpackControler(
+                BackpackView view,
+                NftTypeIconSO rarityBackgrounds,
+                NftTypeIconSO categoryIcons,
+                NFTColorsSO rarityColors)
             {
                 this.view = view;
                 rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
                 Dictionary<BackpackSections, ISection> backpackSections = new ()
                 {
-                    { BackpackSections.Avatar, new AvatarController(view.GetComponentInChildren<AvatarView>(),view.GetComponentsInChildren<AvatarSlotView>()) },
+                    { BackpackSections.Avatar, new AvatarController(view.GetComponentInChildren<AvatarView>(),view.GetComponentsInChildren<AvatarSlotView>(), rarityBackgrounds, categoryIcons, rarityColors) },
                     { BackpackSections.Emotes,  new EmotesController(view.GetComponentInChildren<EmotesView>()) },
                 };
                 var sectionSelectorController = new SectionSelectorController<BackpackSections>(backpackSections, BackpackSections.Avatar);
