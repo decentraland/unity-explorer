@@ -1,4 +1,5 @@
 using Arch.Core;
+using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
@@ -6,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System;
@@ -29,18 +31,33 @@ namespace DCL.Profiles
             this.profileRepository = profileRepository;
         }
 
+        protected override void Update(float t)
+        {
+            base.Update(t);
+
+            ResolveProfilePromiseQuery(World);
+        }
+
         protected override async UniTask<StreamableLoadingResult<Profile>> FlowInternalAsync(GetProfileIntention intention,
             IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            try
-            {
-                Profile? profile = await profileRepository.GetAsync(intention.ProfileId, intention.Version, ct);
+            Profile? profile = await profileRepository.GetAsync(intention.ProfileId, intention.Version, ct);
 
-                return profile == null
-                    ? new StreamableLoadingResult<Profile>(new Exception($"Profile does not exist {intention.ProfileId}"))
-                    : new StreamableLoadingResult<Profile>(profile);
-            }
-            catch (Exception e) { return new StreamableLoadingResult<Profile>(e); }
+            if (profile == null)
+                throw new Exception($"Profile not found {intention.ProfileId}");
+
+            return new StreamableLoadingResult<Profile>(profile);
+        }
+
+        [Query]
+        private void ResolveProfilePromise(in Entity entity, ref AssetPromise<Profile, GetProfileIntention> promise)
+        {
+            if (promise.IsConsumed) return;
+            if (!promise.TryConsume(World, out StreamableLoadingResult<Profile> result)) return;
+            if (!result.Succeeded) return;
+
+            World.Add(entity, result.Asset);
+            World.Remove<AssetPromise<Profile, GetProfileIntention>>(entity);
         }
     }
 }

@@ -20,7 +20,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     [LogCategory(ReportCategory.AVATAR)]
     public partial class OwnAvatarLoaderFromDebugMenuSystem : BaseUnityLoopSystem
     {
-        private readonly World world;
         private readonly Entity ownPlayerEntity;
         private readonly IRealmData realmData;
         private readonly DebugWidgetVisibilityBinding widgetVisibility;
@@ -34,7 +33,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             IRealmData realmData)
             : base(world)
         {
-            this.world = world;
             this.ownPlayerEntity = ownPlayerEntity;
             this.realmData = realmData;
 
@@ -52,10 +50,12 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             const int VERSION = 0;
 
-            Promise.Create(world,
-                new GetProfileIntention(profileId, VERSION, world.Reference(ownPlayerEntity),
+            var promise = Promise.Create(World,
+                new GetProfileIntention(profileId, VERSION,
                     new CommonLoadingArguments($"profiles/{profileId}?version={VERSION}")),
                 PartitionComponent.TOP_PRIORITY);
+
+            World.Add(ownPlayerEntity, promise);
         }
     }
 }

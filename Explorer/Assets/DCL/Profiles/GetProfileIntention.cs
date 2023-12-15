@@ -1,4 +1,3 @@
-using Arch.Core;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Threading;
@@ -9,17 +8,14 @@ namespace DCL.Profiles
     {
         public string ProfileId { get; }
         public int Version { get; }
-        public EntityReference Entity { get; }
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
         public CommonLoadingArguments CommonArguments { get; set; }
 
         public GetProfileIntention(string profileId, int version,
-            EntityReference entity,
             CommonLoadingArguments commonArguments)
         {
             ProfileId = profileId;
             Version = version;
-            Entity = entity;
             CommonArguments = commonArguments;
         }
 

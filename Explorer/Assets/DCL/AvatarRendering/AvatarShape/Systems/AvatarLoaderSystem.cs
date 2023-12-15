@@ -10,8 +10,6 @@ using DCL.Profiles;
 using Decentraland.Common;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.ColorComponent;
 using UnityEngine;
 using Entity = Arch.Core.Entity;
@@ -29,7 +27,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         protected override void Update(float t)
         {
-            UpdateAvatarByProfileIntentionQuery(World);
             UpdateAvatarByProfileQuery(World);
             LoadNewAvatarQuery(World);
             UpdateAvatarQuery(World);
@@ -92,18 +89,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             });
 
             World.Remove<Profile>(entity);
-        }
-
-        [Query]
-        private void UpdateAvatarByProfileIntention(ref AssetPromise<Profile, GetProfileIntention> promise)
-        {
-            if (promise.IsConsumed) return;
-            if (!promise.TryConsume(World, out StreamableLoadingResult<Profile> result)) return;
-            if (!result.Succeeded) return;
-            if (!promise.LoadingIntention.Entity.IsAlive(World)) return;
-
-            // Trigger AvatarLoaderSystem to update the avatar shape from the profile information
-            World.Add(promise.LoadingIntention.Entity, result.Asset);
         }
 
         private Promise CreateWearablePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition) =>
