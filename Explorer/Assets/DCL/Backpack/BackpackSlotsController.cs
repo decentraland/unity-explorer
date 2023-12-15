@@ -3,33 +3,36 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BackpackSlotsController
+namespace DCL.Backpack
 {
-    private readonly Dictionary<string, AvatarSlotView> avatarSlots = new Dictionary<string, AvatarSlotView>();
-    private AvatarSlotView previousSlot;
-
-    public BackpackSlotsController(AvatarSlotView[] avatarSlotViews)
+    public class BackpackSlotsController
     {
-        foreach (var avatarSlotView in avatarSlotViews)
-        {
-            avatarSlots.Add(avatarSlotView.Category, avatarSlotView);
-            avatarSlotView.OnSlotButtonPressed += OnSlotButtonPressed;
-        }
-    }
+        private readonly Dictionary<string, AvatarSlotView> avatarSlots = new Dictionary<string, AvatarSlotView>();
+        private AvatarSlotView previousSlot;
 
-    private void OnSlotButtonPressed(AvatarSlotView avatarSlot)
-    {
-        if(previousSlot != null)
-            previousSlot.SelectedBackground.SetActive(false);
-
-        if (avatarSlot == previousSlot)
+        public BackpackSlotsController(AvatarSlotView[] avatarSlotViews)
         {
-            previousSlot.SelectedBackground.SetActive(false);
-            previousSlot = null;
-            return;
+            foreach (var avatarSlotView in avatarSlotViews)
+            {
+                avatarSlots.Add(avatarSlotView.Category, avatarSlotView);
+                avatarSlotView.OnSlotButtonPressed += OnSlotButtonPressed;
+            }
         }
 
-        previousSlot = avatarSlot;
-        avatarSlot.SelectedBackground.SetActive(true);
+        private void OnSlotButtonPressed(AvatarSlotView avatarSlot)
+        {
+            if (previousSlot != null)
+                previousSlot.SelectedBackground.SetActive(false);
+
+            if (avatarSlot == previousSlot)
+            {
+                previousSlot.SelectedBackground.SetActive(false);
+                previousSlot = null;
+                return;
+            }
+
+            previousSlot = avatarSlot;
+            avatarSlot.SelectedBackground.SetActive(true);
+        }
     }
 }

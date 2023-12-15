@@ -5,61 +5,64 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class AvatarSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+namespace DCL.Backpack
 {
-    private const float ANIMATION_TIME = 0.2f;
-    public event Action<AvatarSlotView> OnSlotButtonPressed;
-
-    [field: SerializeField]
-    internal Image focusedImage { get; private set; }
-
-    [field: SerializeField]
-    public string Category { get; private set; }
-
-    [field: SerializeField]
-    public Button SlotButton { get; private set; }
-
-    [field: SerializeField]
-    public GameObject HoverTootlip { get; private set; }
-
-    [field: SerializeField]
-    public GameObject SelectedBackground { get; private set; }
-
-    [field: SerializeField]
-    public Button UnequipButton { get; private set; }
-
-    [field: SerializeField]
-    public TMP_Text CategoryText { get; private set; }
-
-    public void Start()
+    public class AvatarSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        CategoryText.text = Category;
-        SlotButton.onClick.AddListener(InvokeSlotButtonPressed);
-    }
+        private const float ANIMATION_TIME = 0.2f;
+        public event Action<AvatarSlotView> OnSlotButtonPressed;
 
-    public void InvokeSlotButtonPressed()
-    {
-        OnSlotButtonPressed?.Invoke(this);
-        ScaleUpAnimation(SelectedBackground.transform);
-    }
+        [field: SerializeField]
+        internal Image focusedImage { get; private set; }
 
-    public void OnPointerEnter(PointerEventData eventData)
-    {
-        HoverTootlip.SetActive(true);
-        focusedImage.enabled = true;
-        ScaleUpAnimation(focusedImage.transform);
-    }
+        [field: SerializeField]
+        public string Category { get; private set; }
 
-    public void OnPointerExit(PointerEventData eventData)
-    {
-        HoverTootlip.SetActive(false);
-        focusedImage.enabled = false;
-    }
+        [field: SerializeField]
+        public Button SlotButton { get; private set; }
 
-    private void ScaleUpAnimation(Transform targetTransform)
-    {
-        targetTransform.transform.localScale = new Vector3(0, 0, 0);
-        targetTransform.transform.DOScale(1, ANIMATION_TIME).SetEase(Ease.OutBack);
-    }
+        [field: SerializeField]
+        public GameObject HoverTootlip { get; private set; }
 
+        [field: SerializeField]
+        public GameObject SelectedBackground { get; private set; }
+
+        [field: SerializeField]
+        public Button UnequipButton { get; private set; }
+
+        [field: SerializeField]
+        public TMP_Text CategoryText { get; private set; }
+
+        public void Start()
+        {
+            CategoryText.text = Category;
+            SlotButton.onClick.AddListener(InvokeSlotButtonPressed);
+        }
+
+        public void InvokeSlotButtonPressed()
+        {
+            OnSlotButtonPressed?.Invoke(this);
+            ScaleUpAnimation(SelectedBackground.transform);
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            HoverTootlip.SetActive(true);
+            focusedImage.enabled = true;
+            ScaleUpAnimation(focusedImage.transform);
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            HoverTootlip.SetActive(false);
+            focusedImage.enabled = false;
+        }
+
+        private void ScaleUpAnimation(Transform targetTransform)
+        {
+            targetTransform.transform.localScale = new Vector3(0, 0, 0);
+            targetTransform.transform.DOScale(1, ANIMATION_TIME).SetEase(Ease.OutBack);
+        }
+
+    }
 }

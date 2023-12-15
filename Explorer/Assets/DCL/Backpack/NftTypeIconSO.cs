@@ -1,17 +1,21 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "NftTypeIcons", menuName = "SO/NftTypeIcons")]
-public class NftTypeIconSO : ScriptableObject
+namespace DCL.Backpack
 {
-    [SerializeField] public SerializableKeyValuePair<string, Sprite>[] nftIcons;
-
-    public Sprite GetTypeImage(string nftType)
+    [CreateAssetMenu(fileName = "NftTypeIcons", menuName = "SO/NftTypeIcons")]
+    public class NftTypeIconSO : ScriptableObject
     {
-        foreach (var icon in nftIcons)
+        [SerializeField] public SerializableKeyValuePair<string, Sprite>[] nftIcons;
+
+        public Sprite GetTypeImage(string nftType)
         {
-            if(icon.key == nftType)
-                return icon.value;
+            foreach (var icon in nftIcons)
+            {
+                if (icon.key == nftType)
+                    return icon.value;
+            }
+
+            return null;
         }
-        return null;
     }
 }

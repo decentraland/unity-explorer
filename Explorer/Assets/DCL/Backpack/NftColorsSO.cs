@@ -1,30 +1,33 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "NFTColors", menuName = "SO/NFTColors")]
-public class NFTColorsSO : ScriptableObject
+namespace DCL.Backpack
 {
-    [SerializeField] private SerializableKeyValuePair<string, Color>[] nftColors;
-    [SerializeField] private Color defaultColor;
-
-    public Color GetColor(string rarity)
+    [CreateAssetMenu(fileName = "NFTColors", menuName = "SO/NFTColors")]
+    public class NFTColorsSO : ScriptableObject
     {
-        foreach (var color in nftColors)
+        [SerializeField] private SerializableKeyValuePair<string, Color>[] nftColors;
+        [SerializeField] private Color defaultColor;
+
+        public Color GetColor(string rarity)
         {
-            if (color.key == rarity)
-                return color.value;
+            foreach (var color in nftColors)
+            {
+                if (color.key == rarity)
+                    return color.value;
+            }
+
+            return defaultColor;
         }
 
-        return defaultColor;
-    }
-
-    public bool DoesRarityExist(string rarity)
-    {
-        foreach (var color in nftColors)
+        public bool DoesRarityExist(string rarity)
         {
-            if (color.key == rarity)
-                return true;
-        }
+            foreach (var color in nftColors)
+            {
+                if (color.key == rarity)
+                    return true;
+            }
 
-        return false;
+            return false;
+        }
     }
 }
