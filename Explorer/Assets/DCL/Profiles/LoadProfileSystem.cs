@@ -52,11 +52,11 @@ namespace DCL.Profiles
         [Query]
         private void ResolveProfilePromise(in Entity entity, ref AssetPromise<Profile, GetProfileIntention> promise)
         {
-            if (promise.IsConsumed) return;
             if (!promise.TryConsume(World, out StreamableLoadingResult<Profile> result)) return;
-            if (!result.Succeeded) return;
 
-            World.Add(entity, result.Asset);
+            if (result.Succeeded)
+                World.Add(entity, result.Asset);
+
             World.Remove<AssetPromise<Profile, GetProfileIntention>>(entity);
         }
     }
