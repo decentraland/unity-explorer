@@ -8,12 +8,12 @@ namespace DCL.Backpack
     public class BackpackSettings
     {
         [field: SerializeField]
-        public AssetReferenceGameObject CategoryIconsMapping { get; private set; }
+        public NftTypeIconSO CategoryIconsMapping { get; private set; }
 
         [field: SerializeField]
-        public AssetReferenceGameObject RarityBackgroundsMapping { get; private set; }
+        public NftTypeIconSO RarityBackgroundsMapping { get; private set; }
 
         [field: SerializeField]
-        public AssetReferenceGameObject RarityColorMappings { get; private set; }
+        public NFTColorsSO RarityColorMappings { get; private set; }
     }
 }
