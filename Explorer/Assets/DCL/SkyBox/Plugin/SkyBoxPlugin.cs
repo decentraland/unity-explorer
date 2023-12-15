@@ -1,7 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.DebugUtilities.Builders;
+using DCL.DebugUtilities;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using JetBrains.Annotations;

@@ -1,5 +1,5 @@
 ﻿using DCL.SkyBox;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using System;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;

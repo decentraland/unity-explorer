@@ -4,7 +4,6 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Web3Authentication;
 using DCL.SkyBox;
-using Diagnostics.ReportsHandling;
 using System;
 using System.Collections.Generic;
 using System.Threading;

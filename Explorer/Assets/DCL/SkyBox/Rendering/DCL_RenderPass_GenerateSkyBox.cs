@@ -1,11 +1,6 @@
 ﻿using DCL.SkyBox;
-using Diagnostics.ReportsHandling;
-using System;
-using System.Collections.Generic;
-using System.IO;
+using DCL.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;

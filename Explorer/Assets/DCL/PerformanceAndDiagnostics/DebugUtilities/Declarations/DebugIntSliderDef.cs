@@ -1,6 +1,6 @@
 ﻿using DCL.DebugUtilities.UIBindings;
 
-namespace DCL.DebugUtilities.Declarations
+namespace DCL.DebugUtilities
 {
     public class DebugIntSliderDef : DebugIntFieldDef
     {

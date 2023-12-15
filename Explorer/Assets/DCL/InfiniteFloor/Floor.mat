@@ -21,7 +21,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Floor
-  m_Shader: {fileID: 4800000, guid: 3b75227de96217540aae9be81fbd99f6, type: 3}
+  m_Shader: {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -161,6 +161,7 @@ Material:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _MainColor: {r: 0.5, g: 1, b: 1, a: 1}
+    - _PlaneClipping: {r: -2.1474836e+9, g: 2.1474836e+9, b: -2.1474836e+9, a: 2.1474836e+9}
     - _SecondaryColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
   m_BuildTextureStacks: []

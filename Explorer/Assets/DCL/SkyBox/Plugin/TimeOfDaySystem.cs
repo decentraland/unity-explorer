@@ -1,8 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.DebugUtilities.Builders;
-using DCL.DebugUtilities.Declarations;
+using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.SkyBox.Rendering;
 using ECS.Abstract;
