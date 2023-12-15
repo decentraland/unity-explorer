@@ -20,9 +20,14 @@ MonoBehaviour:
   - rid: 1268264176566403074
   - rid: 5215741520409264128
   - rid: 5215741520409264129
+  - rid: 56198586647707649
   references:
     version: 2
     RefIds:
+    - rid: 56198586647707649
+      type: {class: SkyBoxPlugin/Settings, ns: DCL.SkyBox, asm: DCL.Plugins}
+      data:
+        <ForwardRenderer>k__BackingField: {fileID: 11400000, guid: 4a526cc14a7bff94dbd03fa3c9c29720, type: 2}
     - rid: 1268264176566403074
       type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -94,11 +99,6 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        <avatarInstantiatorViewRef>k__BackingField:
-          m_AssetGUID: fdc0ac72e84d9534eafd826d7fdfb22a
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
     - rid: 5215741520409264129
       type: {class: WearablePlugin/WearableSettings, ns: DCL.AvatarRendering.Wearables, asm: DCL.Plugins}
       data:
@@ -149,9 +149,3 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
     - rid: 6784895267130048513
       type: {class: ProfilingPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        <profilingViewRef>k__BackingField:
-          m_AssetGUID: 03608bfcd31894b8daf215b6e82338bf
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0

@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.SkyBox;
 using Diagnostics.ReportsHandling;
 using System;
 using System.Collections.Generic;
@@ -30,6 +31,9 @@ namespace Global.Dynamic
 
         // If it's 0, it will load every parcel in the range
         [SerializeField] private List<int2> StaticLoadPositions;
+
+        [Space]
+        [SerializeField] private SkyBoxSceneData skyBoxSceneData;
         [SerializeField] private RealmLauncher realmLauncher;
         [SerializeField] private string[] realms;
 
@@ -88,6 +92,7 @@ namespace Global.Dynamic
                     scenePluginSettingsContainer,
                     ct,
                     uiToolkitRoot,
+                    skyBoxSceneData,
                     StaticLoadPositions,
                     SceneLoadRadius);
 

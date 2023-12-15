@@ -5,6 +5,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.Builders;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.SkyBox;
 using ECS;
 using ECS.Prioritization.Components;
 using SceneRunner.EmptyScene;
@@ -37,6 +38,7 @@ namespace Global.Dynamic
             IPluginSettingsContainer settingsContainer,
             CancellationToken ct,
             UIDocument rootUIDocument,
+            SkyBoxSceneData skyBoxSceneData,
             IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius)
         {
             var container = new DynamicWorldContainer();
@@ -62,6 +64,7 @@ namespace Global.Dynamic
                 new WearablePlugin(staticContainer.AssetsProvisioner, realmData, ASSET_BUNDLES_URL),
                 new AvatarPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, realmData, debugBuilder),
+                new SkyBoxPlugin(debugBuilder, skyBoxSceneData),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
