@@ -101,6 +101,20 @@ public partial class DCL_RenderFeature_ProceduralSkyBox
 
     public override void Create()
     {
+        {
+            // Create is called on Unity's validate
+            if (m_Current_Compute_Shader_Asset)
+                ComputeShaderHotReload.Unsubscribe(m_Current_Compute_Shader_Asset, SetupStarsComputeShader);
+
+            m_Current_Compute_Shader_Asset = m_SettingsGenerate.starsComputeShader;
+
+            if (m_Current_Compute_Shader_Asset)
+            {
+                StarsComputeShader = Instantiate(m_SettingsGenerate.starsComputeShader);
+                ComputeShaderHotReload.Subscribe(m_Current_Compute_Shader_Asset, SetupStarsComputeShader);
+            }
+        }
+
         // Create the Generate Pass...
         if (m_GeneratePass == null)
         {
@@ -227,20 +241,9 @@ public partial class DCL_RenderFeature_ProceduralSkyBox
             desc.width = nDimensions_StarBox_Cubemap;
             RenderingUtils.ReAllocateIfNeeded(ref m_CubemapTextureArray_RTHandle, desc, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_CubemapTextureArray");
         }
-
-        {
-            // Create is called on Unity's validate
-            if (m_Current_Compute_Shader_Asset)
-                ComputeShaderHotReload.Unsubscribe(m_Current_Compute_Shader_Asset, SetupStarsComputeShader);
-
-            m_Current_Compute_Shader_Asset = m_SettingsGenerate.starsComputeShader;
-
-            if (m_Current_Compute_Shader_Asset)
-            {
-                StarsComputeShader = Instantiate(m_SettingsGenerate.starsComputeShader);
-                ComputeShaderHotReload.Subscribe(m_Current_Compute_Shader_Asset, SetupStarsComputeShader);
-            }
-        }
+        
+        if (StarsComputeShader == null)
+            StarsComputeShader = Instantiate(m_SettingsGenerate.starsComputeShader);
 
         m_GeneratePass.Setup(m_SettingsGenerate, m_Material_SkyBox_Generate, m_Material_StarBox_Generate, m_SkyBoxCubeMap_RTHandle, m_StarBoxCubeMap_RTHandle, StarsComputeShader, m_CubemapTextureArray_RTHandle);
         m_DrawPass.Setup(m_SettingsDraw, m_Material_Draw, renderer.cameraColorTargetHandle, renderer.cameraDepthTargetHandle, m_SkyBoxCubeMap_RTHandle, m_StarBoxCubeMap_RTHandle);
