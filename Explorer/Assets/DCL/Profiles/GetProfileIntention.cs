@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace DCL.Profiles
 {
-    public struct LoadProfileIntention : ILoadingIntention, IEquatable<LoadProfileIntention>
+    public struct GetProfileIntention : ILoadingIntention, IEquatable<GetProfileIntention>
     {
         public string ProfileId { get; }
         public int Version { get; }
@@ -13,7 +13,7 @@ namespace DCL.Profiles
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
         public CommonLoadingArguments CommonArguments { get; set; }
 
-        public LoadProfileIntention(string profileId, int version,
+        public GetProfileIntention(string profileId, int version,
             EntityReference entity,
             CommonLoadingArguments commonArguments)
         {
@@ -23,16 +23,16 @@ namespace DCL.Profiles
             CommonArguments = commonArguments;
         }
 
-        public bool Equals(LoadProfileIntention other) =>
+        public bool Equals(GetProfileIntention other) =>
             ProfileId == other.ProfileId && Version == other.Version;
 
         public override bool Equals(object obj) =>
-            obj is LoadProfileIntention other && Equals(other);
+            obj is GetProfileIntention other && Equals(other);
 
         public override int GetHashCode() =>
             HashCode.Combine(ProfileId, Version);
 
         public override string ToString() =>
-            $"Get Profile: {ProfileId} {Version}";
+            $"Get Profile: {ProfileId} - {Version}";
     }
 }

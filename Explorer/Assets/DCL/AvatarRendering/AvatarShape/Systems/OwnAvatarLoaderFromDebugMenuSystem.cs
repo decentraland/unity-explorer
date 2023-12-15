@@ -12,7 +12,7 @@ using ECS.StreamableLoading.Common.Components;
 using System.Threading;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<
     DCL.Profiles.Profile,
-    DCL.Profiles.LoadProfileIntention>;
+    DCL.Profiles.GetProfileIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -50,9 +50,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private void UpdateProfileForOwnAvatar(string profileId)
         {
+            const int VERSION = 0;
+
             Promise.Create(world,
-                new LoadProfileIntention(profileId, 0, world.Reference(ownPlayerEntity),
-                    new CommonLoadingArguments($"profiles/{profileId}?version=0")),
+                new GetProfileIntention(profileId, VERSION, world.Reference(ownPlayerEntity),
+                    new CommonLoadingArguments($"profiles/{profileId}?version={VERSION}")),
                 PartitionComponent.TOP_PRIORITY);
         }
     }

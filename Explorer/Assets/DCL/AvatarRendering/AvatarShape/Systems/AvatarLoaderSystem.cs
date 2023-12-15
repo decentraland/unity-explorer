@@ -95,8 +95,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        private void UpdateAvatarByProfileIntention(ref AssetPromise<Profile, LoadProfileIntention> promise)
+        private void UpdateAvatarByProfileIntention(ref AssetPromise<Profile, GetProfileIntention> promise)
         {
+            if (promise.IsConsumed) return;
             if (!promise.TryConsume(World, out StreamableLoadingResult<Profile> result)) return;
             if (!result.Succeeded) return;
             if (!promise.LoadingIntention.Entity.IsAlive(World)) return;

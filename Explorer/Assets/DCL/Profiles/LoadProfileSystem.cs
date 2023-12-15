@@ -16,12 +16,12 @@ namespace DCL.Profiles
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.PROFILE)]
-    public partial class LoadProfileSystem : LoadSystemBase<Profile, LoadProfileIntention>
+    public partial class LoadProfileSystem : LoadSystemBase<Profile, GetProfileIntention>
     {
         private readonly IProfileRepository profileRepository;
 
         public LoadProfileSystem(World world,
-            IStreamableCache<Profile, LoadProfileIntention> cache,
+            IStreamableCache<Profile, GetProfileIntention> cache,
             MutexSync mutexSync,
             IProfileRepository profileRepository)
             : base(world, cache, mutexSync)
@@ -29,7 +29,7 @@ namespace DCL.Profiles
             this.profileRepository = profileRepository;
         }
 
-        protected override async UniTask<StreamableLoadingResult<Profile>> FlowInternalAsync(LoadProfileIntention intention,
+        protected override async UniTask<StreamableLoadingResult<Profile>> FlowInternalAsync(GetProfileIntention intention,
             IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             try
