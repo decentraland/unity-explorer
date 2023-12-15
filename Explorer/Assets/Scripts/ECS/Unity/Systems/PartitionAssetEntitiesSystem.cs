@@ -2,10 +2,10 @@
 using Arch.System;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Transform;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
-using Diagnostics.ReportsHandling;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
-using ECS.ComponentsPooling;
 using ECS.Groups;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;

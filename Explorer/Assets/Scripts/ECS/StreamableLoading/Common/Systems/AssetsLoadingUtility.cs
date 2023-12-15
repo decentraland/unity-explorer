@@ -1,9 +1,10 @@
-﻿using AssetManagement;
+using AssetManagement;
 using Cysharp.Threading.Tasks;
-using Diagnostics.ReportsHandling;
+using DCL.WebRequests;
+using DCL.Diagnostics;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System;
 using System.Threading;
 
@@ -55,9 +56,7 @@ namespace ECS.StreamableLoading.Common.Systems
                     // Decide if we can repeat or not
                     --attemptCount;
 
-                    bool isIrrecoverableError = !unityWebRequestException.IsServerError();
-
-                    if (attemptCount <= 0 || unityWebRequestException.IsAborted() || isIrrecoverableError)
+                    if (unityWebRequestException.IsIrrecoverableError(attemptCount))
                     {
                         if (intention.CommonArguments.PermittedSources == AssetSource.NONE)
 

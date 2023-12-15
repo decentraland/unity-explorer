@@ -69,7 +69,7 @@ namespace SceneRuntime.Apis.Modules
             }
             catch (Exception e)
             {
-                // Report an uncategorized exception
+                // Report an uncategorized MANAGED exception (don't propagate it further)
                 exceptionsHandler.OnEngineException(e);
                 return ScriptableByteArray.EMPTY;
             }
@@ -78,8 +78,17 @@ namespace SceneRuntime.Apis.Modules
         [UsedImplicitly]
         public ScriptableByteArray CrdtGetState()
         {
-            ArraySegment<byte> result = api.CrdtGetState();
-            return result.Count > 0 ? new ScriptableByteArray(result) : ScriptableByteArray.EMPTY;
+            try
+            {
+                ArraySegment<byte> result = api.CrdtGetState();
+                return result.Count > 0 ? new ScriptableByteArray(result) : ScriptableByteArray.EMPTY;
+            }
+            catch (Exception e)
+            {
+                // Report an uncategorized MANAGED exception (don't propagate it further)
+                exceptionsHandler.OnEngineException(e);
+                return ScriptableByteArray.EMPTY;
+            }
         }
 
         public void SetIsDisposing()

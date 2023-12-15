@@ -1,7 +1,8 @@
 using Arch.Core;
-using ECS.ComponentsPooling;
+using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -25,7 +26,7 @@ namespace ECS.Unity.Transforms.Components
         public CachedTransform Cached;
 
         public Transform Transform;
-        public HashSet<EntityReference> Children;
+        public readonly HashSet<EntityReference> Children;
         public EntityReference Parent;
 
         public TransformComponent(Transform transform)
@@ -44,10 +45,15 @@ namespace ECS.Unity.Transforms.Components
             };
         }
 
+        public TransformComponent(Transform transform, string name, Vector3 startPosition) : this(transform)
+        {
+            transform.name = name;
+            transform.localPosition = startPosition;
+        }
+
         public void SetTransform(Vector3 localPosition, Quaternion localRotation, Vector3 localScale)
         {
-            Transform.localPosition = localPosition;
-            Transform.localRotation = localRotation;
+            Transform.SetLocalPositionAndRotation(localPosition, localRotation);
             Transform.localScale = localScale;
 
             Cached.LocalPosition = localPosition;
@@ -55,6 +61,18 @@ namespace ECS.Unity.Transforms.Components
             Cached.LocalScale = localScale;
             Cached.WorldPosition = Transform.position;
             Cached.WorldRotation = Transform.rotation;
+        }
+
+        public void SetTransform(Transform transform)
+        {
+            SetTransform(transform.localPosition, transform.localRotation, transform.localScale);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Apply(Quaternion rotation)
+        {
+            Cached.WorldRotation = Transform.rotation = rotation;
+            Cached.LocalRotation = Transform.localRotation;
         }
 
         Transform IPoolableComponentProvider<Transform>.PoolableComponent => Transform;

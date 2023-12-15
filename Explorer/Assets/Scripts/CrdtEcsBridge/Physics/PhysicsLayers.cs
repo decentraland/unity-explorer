@@ -21,6 +21,7 @@ namespace CrdtEcsBridge.Physics
 
         public static readonly int DEFAULT_LAYER = LayerMask.NameToLayer("Default");
         public static readonly int ON_POINTER_EVENT_LAYER = LayerMask.NameToLayer("OnPointerEvent");
+        public static readonly int FLOOR_LAYER = LayerMask.NameToLayer("Floor");
 
         /// <summary>
         ///     Assigned to the player only
@@ -30,6 +31,7 @@ namespace CrdtEcsBridge.Physics
         public static readonly int SDK_CUSTOM_LAYER = LayerMask.NameToLayer("SDKCustomLayer");
 
         public static readonly LayerMask PLAYER_ORIGIN_RAYCAST_MASK = (1 << ON_POINTER_EVENT_LAYER) | (1 << DEFAULT_LAYER);
+        public static readonly LayerMask CHARACTER_ONLY_MASK = (1 << DEFAULT_LAYER) | (1 << FLOOR_LAYER);
 
         public static bool LayerMaskHasAnySDKCustomLayer(ColliderLayer layerMask) =>
             (layerMask & ~NON_CUSTOM_LAYERS) != 0;

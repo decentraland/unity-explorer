@@ -4,8 +4,9 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Platforms;
 using DCL.CharacterMotion.Settings;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using ECS.Abstract;
 using UnityEngine;
 using Utility;
@@ -23,7 +24,7 @@ namespace DCL.CharacterMotion.Systems
     [UpdateBefore(typeof(CameraGroup))]
     public partial class InterpolateCharacterSystem : BaseUnityLoopSystem
     {
-        internal InterpolateCharacterSystem(World world) : base(world) { }
+        private InterpolateCharacterSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
@@ -33,24 +34,44 @@ namespace DCL.CharacterMotion.Systems
         [Query]
         private void Interpolate(
             [Data] float dt,
-            ref ICharacterControllerSettings settings,
+            in ICharacterControllerSettings settings,
             ref CharacterRigidTransform rigidTransform,
-            ref CharacterController characterController)
+            ref CharacterController characterController,
+            ref CharacterPlatformComponent platformComponent,
+            ref StunComponent stunComponent,
+            in JumpInputComponent jump,
+            in MovementInputComponent movementInput)
         {
-            float acceleration = GetAcceleration(settings, in rigidTransform);
-            rigidTransform.MoveVelocity.Interpolated = Vector3.MoveTowards(rigidTransform.MoveVelocity.Interpolated, rigidTransform.MoveVelocity.Target, acceleration * dt);
+            Transform transform = characterController.transform;
+            Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
 
-            Vector3 delta = (rigidTransform.MoveVelocity.Interpolated + rigidTransform.NonInterpolatedVelocity) * dt;
+            ApplyVelocityStun.Execute(ref rigidTransform, in stunComponent);
 
-            CollisionFlags collisionFlags = characterController.Move(delta);
+            Vector3 movementDelta = rigidTransform.MoveVelocity.Velocity * dt;
+            Vector3 finalGravity = rigidTransform.IsOnASteepSlope && !rigidTransform.IsStuck ? rigidTransform.SlopeGravity : rigidTransform.GravityVelocity;
+            Vector3 gravityDelta = finalGravity * dt;
 
-            bool hasGroundedFlag = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
+            // In order for some systems to work correctly we move the character horizontally and then vertically
+            CollisionFlags horizontalCollisionFlags = characterController.Move(movementDelta);
+            Vector3 prevPos = transform.position;
+            CollisionFlags verticalCollisionFlags = characterController.Move(gravityDelta + slopeModifier);
+            Vector3 deltaMovement = transform.position - prevPos;
 
-            if (!Mathf.Approximately(delta.y, 0f))
-                rigidTransform.IsGrounded = hasGroundedFlag;
+            bool hasGroundedFlag = deltaMovement.y <= 0 && (EnumUtils.HasFlag(verticalCollisionFlags, CollisionFlags.Below) || EnumUtils.HasFlag(horizontalCollisionFlags, CollisionFlags.Below));
+
+            if (!Mathf.Approximately(gravityDelta.y, 0f))
+                rigidTransform.IsGrounded = hasGroundedFlag || characterController.isGrounded;
+
+            rigidTransform.IsCollidingWithWall = EnumUtils.HasFlag(horizontalCollisionFlags, CollisionFlags.Sides);
+
+            // If we are on a platform we save our local position
+            PlatformSaveLocalPosition.Execute(ref platformComponent, transform.position);
+
+            // In order to detect if we got stuck between 2 slopes we just check if our vertical delta movement is zero when on a slope
+            if (rigidTransform.IsOnASteepSlope && Mathf.Approximately(deltaMovement.sqrMagnitude, 0f))
+                rigidTransform.IsStuck = true;
+            else
+                rigidTransform.IsStuck = false;
         }
-
-        private static float GetAcceleration(ICharacterControllerSettings characterControllerSettings, in CharacterRigidTransform physics) =>
-            physics.IsGrounded ? characterControllerSettings.GroundAcceleration : characterControllerSettings.AirAcceleration;
     }
 }

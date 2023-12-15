@@ -2,4 +2,4 @@
 
 [assembly: InternalsVisibleTo("DCL.Plugins")]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
-[assembly: InternalsVisibleTo("DCL.Tests")]
+[assembly: InternalsVisibleTo("DCL.EditMode.Tests")]

@@ -1,17 +1,18 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.GLTFContainer.Asset.Components;
+using ECS.Unity.SceneBoundsChecker;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Utility.Pool;
 using Object = UnityEngine.Object;
 
 namespace ECS.Unity.GLTFContainer.Asset.Systems
@@ -24,10 +25,12 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     public partial class CreateGltfAssetFromAssetBundleSystem : BaseUnityLoopSystem
     {
         private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
+        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
 
-        internal CreateGltfAssetFromAssetBundleSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider) : base(world)
+        internal CreateGltfAssetFromAssetBundleSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider) : base(world)
         {
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
+            this.memoryBudgetProvider = memoryBudgetProvider;
         }
 
         protected override void Update(float t)
@@ -42,7 +45,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         [None(typeof(StreamableLoadingResult<GltfContainerAsset>))]
         private void ConvertFromAssetBundle(in Entity entity, ref GetGltfContainerAssetIntention assetIntention, ref StreamableLoadingResult<AssetBundleData> assetBundleResult)
         {
-            if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
+            if (!instantiationFrameTimeBudgetProvider.TrySpendBudget() || !memoryBudgetProvider.TrySpendBudget())
                 return;
 
             if (assetIntention.CancellationTokenSource.IsCancellationRequested)
@@ -66,16 +69,20 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 return;
             }
 
-            // Create a new container root
-            // It will be cached and pooled
+            // Create a new container root. It will be cached and pooled
+            GltfContainerAsset result = CreateGltfObject(assetBundleData);
+            World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
+        }
 
+        private static GltfContainerAsset CreateGltfObject(AssetBundleData assetBundleData)
+        {
             var container = new GameObject($"AB:{assetBundleData.AssetBundle.name}");
 
             // Let the upper layer decide what to do with the root
             container.SetActive(false);
             Transform containerTransform = container.transform;
 
-            var result = GltfContainerAsset.Create(container);
+            var result = GltfContainerAsset.Create(container, assetBundleData);
 
             GameObject instance = Object.Instantiate(assetBundleData.GameObject, containerTransform);
 
@@ -94,10 +101,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             List<MeshFilter> list = meshFilterScope.Value;
             instance.GetComponentsInChildren(true, list);
 
-            for (var j = 0; j < list.Count; j++)
+            foreach (MeshFilter meshFilter in list)
             {
-                MeshFilter meshFilter = list[j];
-
                 GameObject meshFilterGameObject = meshFilter.gameObject;
 
                 // gather invisible colliders
@@ -106,7 +111,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 FilterVisibleColliderCandidate(result.VisibleColliderMeshes, meshFilter);
             }
 
-            World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(result));
+            return result;
         }
 
         /// <summary>
@@ -118,7 +123,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 results.Add(meshFilter);
         }
 
-        private static void CreateInvisibleColliders(List<Collider> results, GameObject meshFilterGo, MeshFilter meshFilter)
+        private static void CreateInvisibleColliders(List<SDKCollider> results, GameObject meshFilterGo, MeshFilter meshFilter)
         {
             // Asset Bundle converter creates Colliders during the processing in some cases
             Collider collider = meshFilterGo.GetComponent<Collider>();
@@ -128,18 +133,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 // Disable it as its activity controlled by another system based on PBGltfContainer component
                 collider.enabled = false;
 
-                results.Add(collider);
+                results.Add(new SDKCollider(collider));
                 return;
-            }
-
-            // Compatibility layer for old GLTF importer and GLTFast // TODO do we need it?
-            static bool IsCollider(GameObject go)
-            {
-                const StringComparison IGNORE_CASE = StringComparison.CurrentCultureIgnoreCase;
-                const string COLLIDER_SUFFIX = "_collider";
-
-                return go.name.Contains(COLLIDER_SUFFIX, IGNORE_CASE)
-                       || go.transform.parent.name.Contains(COLLIDER_SUFFIX, IGNORE_CASE);
             }
 
             if (!IsCollider(meshFilterGo))
@@ -149,7 +144,19 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             newCollider.sharedMesh = meshFilter.sharedMesh;
             newCollider.enabled = false;
 
-            results.Add(newCollider);
+            results.Add(new SDKCollider(newCollider));
+            return;
+
+            // Compatibility layer for old GLTF importer and GLTFast
+            // TODO do we need it?
+            static bool IsCollider(GameObject go)
+            {
+                const StringComparison IGNORE_CASE = StringComparison.CurrentCultureIgnoreCase;
+                const string COLLIDER_SUFFIX = "_collider";
+
+                return go.name.Contains(COLLIDER_SUFFIX, IGNORE_CASE)
+                       || go.transform.parent.name.Contains(COLLIDER_SUFFIX, IGNORE_CASE);
+            }
         }
     }
 }

@@ -149,6 +149,9 @@ Material:
     - _BumpMapArr_ID: 0
     - _EmissionMapArr_ID: 0
     - _MetallicGlossMapArr_ID: 0
+    - _OcclusionMapArr_ID: -1
+    - _lastAvatarVertCount: -1
+    - _lastWearableVertCount: -1
     m_Floats:
     - _AlphaClip: 0
     - _AlphaToMask: 0

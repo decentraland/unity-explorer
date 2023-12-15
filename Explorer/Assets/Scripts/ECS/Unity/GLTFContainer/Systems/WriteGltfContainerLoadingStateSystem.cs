@@ -4,11 +4,10 @@ using Arch.SystemGroups;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
-using ECS.ComponentsPooling;
 using ECS.LifeCycle.Components;
 using ECS.Unity.GLTFContainer.Components;
-using Utility.Pool;
 
 namespace ECS.Unity.GLTFContainer.Systems
 {

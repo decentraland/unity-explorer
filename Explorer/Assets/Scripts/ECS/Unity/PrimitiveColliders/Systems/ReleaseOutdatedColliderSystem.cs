@@ -2,11 +2,11 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
-using Diagnostics.ReportsHandling;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
-using ECS.ComponentsPooling;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;

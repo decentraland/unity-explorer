@@ -12,12 +12,134 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 355a79a57f074a269424516ca6de7156, type: 3}
   m_Name: CharacterControllerSettings
   m_EditorClassIdentifier: 
-  <WalkSpeed>k__BackingField: 3.6
-  <RunSpeed>k__BackingField: 7
-  <GroundAcceleration>k__BackingField: 40
-  <AirAcceleration>k__BackingField: 10
-  <RotationAngularSpeed>k__BackingField: 10
-  <Gravity>k__BackingField: -9.8
-  <JumpHeight>k__BackingField: {x: 1.5, y: 2}
-  <AirDrag>k__BackingField: 0
-  <HoldJumpTime>k__BackingField: 0.5
+  <WalkSpeed>k__BackingField: 1.5
+  <JogSpeed>k__BackingField: 8
+  <RunSpeed>k__BackingField: 10
+  <Gravity>k__BackingField: -10
+  <JogJumpHeight>k__BackingField: 1
+  <RunJumpHeight>k__BackingField: 1.5
+  <CharacterControllerRadius>k__BackingField: 0.4
+  <GroundDrag>k__BackingField: 0.5
+  <AirDrag>k__BackingField: 0.05
+  <MinImpulse>k__BackingField: 1
+  <JumpVelocityDrag>k__BackingField: 4
+  <AccelerationCurve>k__BackingField:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.9
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  <Acceleration>k__BackingField: 20
+  <MaxAcceleration>k__BackingField: 25
+  <AccelerationTime>k__BackingField: 0.5
+  <AirAcceleration>k__BackingField: 15
+  <MaxAirAcceleration>k__BackingField: 20
+  <StopTimeSec>k__BackingField: 0.12
+  <LongJumpTime>k__BackingField: 0.5
+  <LongJumpGravityScale>k__BackingField: 0.5
+  <JumpGravityFactor>k__BackingField: 4
+  <JumpGraceTime>k__BackingField: 0.15
+  <JumpHeightStun>k__BackingField: 8
+  <LongFallStunTime>k__BackingField: 0.75
+  <NoSlipDistance>k__BackingField: 0.1
+  <EdgeSlipSpeed>k__BackingField: 2
+  <EdgeSlipSafeDistance>k__BackingField: 0.4
+  <DownwardsSlopeJogRaycastDistance>k__BackingField: 0.45
+  <DownwardsSlopeRunRaycastDistance>k__BackingField: 0.55
+  <SlideAnimationBlendSpeed>k__BackingField: 7
+  <MinSlopeAngle>k__BackingField: 50
+  <MaxSlopeAngle>k__BackingField: 80
+  <SlopeCharacterRotationDelay>k__BackingField: 0.05
+  <SlopeVelocityModifier>k__BackingField:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: -55
+      value: 1.35
+      inSlope: -0.006363637
+      outSlope: -0.006363637
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: -0.006363637
+      outSlope: -0.006363637
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 55
+      value: 0.65
+      inSlope: -0.006363637
+      outSlope: -0.006363637
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  <WallSlideDetectionDistance>k__BackingField: 0.5
+  <WallSlideMaxMoveSpeedMultiplier>k__BackingField: 0
+  <StepOffset>k__BackingField: 0.35
+  <RotationSpeed>k__BackingField: 400
+  <MovAnimBlendSpeed>k__BackingField: 5
+  <AnimationFallSpeed>k__BackingField: -3
+  <AnimationLongFallSpeed>k__BackingField: -8
+  <PlatformRaycastLength>k__BackingField: 0.3
+  <CameraFOVWhileRunning>k__BackingField: 20
+  <FOVChangeSpeed>k__BackingField: 30
+  <FeetIKHipsPullMaxDistance>k__BackingField: 0.6
+  <FeetIKSphereSize>k__BackingField: 0.1
+  <IKWeightSpeed>k__BackingField: 10
+  <IKPositionSpeed>k__BackingField: 10
+  <FeetIKVerticalAngleLimits>k__BackingField: {x: -30, y: 50}
+  <FeetIKTwistAngleLimits>k__BackingField: {x: -30, y: 15}
+  <HandsIKWallHitDistance>k__BackingField: 0.5
+  <HandsIKWeightSpeed>k__BackingField: 5
+  <HandsIKElbowOffset>k__BackingField: {x: 25.6, y: 38.8, z: -53.5}
+  <HeadIKVerticalAngleLimit>k__BackingField: 0
+  <HeadIKHorizontalAngleLimit>k__BackingField: 0
+  <HeadIKRotationSpeed>k__BackingField: 0
+  <JumpPadForce>k__BackingField: 50
+  <AnimationSpeed>k__BackingField: 1

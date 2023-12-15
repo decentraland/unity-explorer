@@ -1,5 +1,5 @@
 ﻿using Arch.Core;
-using ECS.ComponentsPooling;
+using DCL.Optimization.Pools;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -44,7 +44,14 @@ namespace ECS.SceneLifeCycle.Tests
 
             partitionSettings.SqrDistanceBuckets.Returns(new[] { 16 * 16, 32 * 32, 64 * 64 });
 
-            Entity e = world.Create(new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition(), new[] { ParcelMathHelper.FloorToParcel(Vector3.zero) }, new IpfsTypes.IpfsPath()));
+            Entity e = world.Create(new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition
+            {
+                metadata = new IpfsTypes.SceneMetadata
+                {
+                    scene = new IpfsTypes.SceneMetadataScene
+                        { DecodedParcels = new[] { ParcelMathHelper.FloorToParcel(Vector3.zero) } },
+                },
+            }, new IpfsTypes.IpfsPath()));
 
             system.Update(0);
 
@@ -66,7 +73,14 @@ namespace ECS.SceneLifeCycle.Tests
 
             Entity e = world.Create(
                 new PartitionComponent { Bucket = 10, IsBehind = false },
-                new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition(), new[] { ParcelMathHelper.FloorToParcel(Vector3.zero) }, new IpfsTypes.IpfsPath()));
+                new SceneDefinitionComponent(new IpfsTypes.SceneEntityDefinition
+                {
+                    metadata = new IpfsTypes.SceneMetadata
+                    {
+                        scene = new IpfsTypes.SceneMetadataScene
+                            { DecodedParcels = new[] { ParcelMathHelper.FloorToParcel(Vector3.zero) } },
+                    },
+                }, new IpfsTypes.IpfsPath()));
 
             system.Update(0);
 

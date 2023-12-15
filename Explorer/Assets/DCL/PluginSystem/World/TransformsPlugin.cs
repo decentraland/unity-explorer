@@ -1,6 +1,6 @@
 ﻿using Arch.SystemGroups;
+using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
-using ECS.ComponentsPooling;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using ECS.Unity.Systems;
@@ -8,7 +8,6 @@ using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
 using System.Collections.Generic;
 using UnityEngine;
-using Utility;
 
 namespace DCL.PluginSystem.World
 {
@@ -29,8 +28,7 @@ namespace DCL.PluginSystem.World
 
             sceneRootTransform.SetParent(null);
 
-            Vector3 basePosition = ParcelMathHelper.GetPositionByParcelPosition(sharedDependencies.SceneData.SceneShortInfo.BaseParcel);
-            sceneRootTransform.position = basePosition;
+            sceneRootTransform.position = sharedDependencies.SceneData.Geometry.BaseParcelPosition;
             sceneRootTransform.rotation = Quaternion.identity;
             sceneRootTransform.localScale = Vector3.one;
 

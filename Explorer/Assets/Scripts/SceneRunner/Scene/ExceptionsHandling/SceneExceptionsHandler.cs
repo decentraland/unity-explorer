@@ -1,11 +1,10 @@
 using Arch.SystemGroups;
-using Diagnostics;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
+using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Linq;
 using UnityEngine;
-using Utility.Pool;
-using Utility.ThreadSafePool;
 
 namespace SceneRunner.Scene.ExceptionsHandling
 {
@@ -112,11 +111,16 @@ namespace SceneRunner.Scene.ExceptionsHandling
             ReportHub.LogException(exception, new ReportData(category, sceneShortInfo: sceneShortInfo));
         }
 
-        public void OnJavaScriptException(string message)
+        public void OnJavaScriptException(Exception exception)
         {
+            // Can be already disposed of
+            if (sceneState == null) return;
+
             // For javascript no tolerance
-            // TODO Log a proper exception
             sceneState.State = SceneState.JavaScriptError;
+
+            ReportHub.LogException(exception,
+                new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo));
         }
 
         public static SceneExceptionsHandler Create(ISceneStateProvider sceneState, SceneShortInfo sceneShortInfo)

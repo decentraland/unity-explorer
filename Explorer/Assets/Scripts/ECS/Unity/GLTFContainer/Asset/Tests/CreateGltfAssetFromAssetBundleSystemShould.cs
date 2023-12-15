@@ -1,8 +1,8 @@
 ﻿using Arch.Core;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.TestSuite;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Asset.Systems;
@@ -22,7 +22,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         {
             IConcurrentBudgetProvider budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
             budgetProvider.TrySpendBudget().Returns(true);
-            system = new CreateGltfAssetFromAssetBundleSystem(world, budgetProvider);
+            system = new CreateGltfAssetFromAssetBundleSystem(world, budgetProvider, budgetProvider);
         }
 
         [TearDown]

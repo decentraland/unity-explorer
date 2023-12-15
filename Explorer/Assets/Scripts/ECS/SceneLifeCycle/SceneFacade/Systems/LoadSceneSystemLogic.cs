@@ -1,18 +1,16 @@
-﻿using CommunicationData.URLHelpers;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
+using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
-using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.Common.Systems;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
+using ECS.SceneLifeCycle.SceneDefinition;
 using Ipfs;
 using SceneRunner;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Networking;
 using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -20,32 +18,40 @@ namespace ECS.SceneLifeCycle.Systems
     public class LoadSceneSystemLogic
     {
         private readonly URLDomain assetBundleURL;
+        private readonly IWebRequestController webRequestController;
 
-        public LoadSceneSystemLogic(URLDomain assetBundleURL)
+        public LoadSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL)
         {
             this.assetBundleURL = assetBundleURL;
+            this.webRequestController = webRequestController;
         }
 
         public async UniTask<ISceneFacade> FlowAsync(ISceneFactory sceneFactory, GetSceneFacadeIntention intention, string reportCategory, IPartitionComponent partition, CancellationToken ct)
         {
+            SceneDefinitionComponent definitionComponent = intention.DefinitionComponent;
+            IpfsTypes.IpfsPath ipfsPath = definitionComponent.IpfsPath;
+            IpfsTypes.SceneEntityDefinition definition = definitionComponent.Definition;
+
             // Warning! Obscure Logic!
             // Each scene can override the content base url, so we need to check if the scene definition has a base url
             // and if it does, we use it, otherwise we use the realm's base url
-            URLDomain contentBaseUrl = intention.IpfsPath.BaseUrl.IsEmpty
+            URLDomain contentBaseUrl = ipfsPath.BaseUrl.IsEmpty
                 ? intention.IpfsRealm.ContentBaseUrl
-                : intention.IpfsPath.BaseUrl;
+                : ipfsPath.BaseUrl;
 
-            var hashedContent = new SceneHashedContent(intention.Definition.content, contentBaseUrl);
+            var hashedContent = new SceneHashedContent(definition.content, contentBaseUrl);
 
             // Before a scene can be ever loaded the asset bundle manifest should be retrieved
-            UniTask<SceneAssetBundleManifest> loadAssetBundleManifest = LoadAssetBundleManifestAsync(intention.IpfsPath.EntityId, reportCategory, ct);
+            UniTask<SceneAssetBundleManifest> loadAssetBundleManifest = LoadAssetBundleManifestAsync(ipfsPath.EntityId, reportCategory, ct);
             UniTask<UniTaskVoid> loadSceneMetadata = OverrideSceneMetadataAsync(hashedContent, intention, reportCategory, ct);
             UniTask<ReadOnlyMemory<byte>> loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
 
             (SceneAssetBundleManifest manifest, _, ReadOnlyMemory<byte> mainCrdt) = await UniTask.WhenAll(loadAssetBundleManifest, loadSceneMetadata, loadMainCrdt);
 
             // Create scene data
-            var sceneData = new SceneData(hashedContent, intention.Definition, manifest, IpfsHelper.DecodePointer(intention.Definition.metadata.scene.baseParcel), new StaticSceneMessages(mainCrdt));
+            Vector2Int baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
+            ParcelMathHelper.SceneGeometry sceneGeometry = ParcelMathHelper.CreateSceneGeometry(intention.DefinitionComponent.ParcelsCorners, baseParcel);
+            var sceneData = new SceneData(hashedContent, definitionComponent.Definition, manifest, baseParcel, sceneGeometry, new StaticSceneMessages(mainCrdt));
 
             // Calculate partition immediately
 
@@ -62,40 +68,30 @@ namespace ECS.SceneLifeCycle.Systems
             if (!sceneContent.TryGetContentUrl(NAME, out URLAddress url))
                 return ReadOnlyMemory<byte>.Empty;
 
-            var subIntent = new SubIntention(new CommonLoadingArguments(url));
-
-            return (await subIntent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, InnerFlowAsync, reportCategory, ct)).UnwrapAndRethrow();
-
-            static async UniTask<StreamableLoadingResult<ReadOnlyMemory<byte>>> InnerFlowAsync(SubIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
-            {
-                using UnityWebRequest wr = await UnityWebRequest.Get(intention.CommonArguments.URL).SendWebRequest().WithCancellation(ct);
-                return new StreamableLoadingResult<ReadOnlyMemory<byte>>(wr.downloadHandler.data);
-            }
+            return (await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory)).GetDataCopy();
         }
 
         private async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(string sceneId, string reportCategory, CancellationToken ct)
         {
-            var subIntent = new SubIntention(new CommonLoadingArguments(assetBundleURL.Append(URLPath.FromString($"manifest/{sceneId}{PlatformUtils.GetPlatform()}.json"))));
+            URLAddress url = assetBundleURL.Append(URLPath.FromString($"manifest/{sceneId}{PlatformUtils.GetPlatform()}.json"));
 
-            // Repeat loop for this request only
-            async UniTask<StreamableLoadingResult<string>> InnerFlowAsync(SubIntention subIntention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+            try
             {
-                using UnityWebRequest wr = await UnityWebRequest.Get(subIntention.CommonArguments.URL).SendWebRequest().WithCancellation(ct);
-                return new StreamableLoadingResult<string>(wr.downloadHandler.text);
+                SceneAbDto sceneAbDto = await (await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory))
+                   .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+
+                if (sceneAbDto.ValidateVersion())
+                    return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto);
+
+                ReportHub.LogError(new ReportData(reportCategory, ReportHint.SessionStatic), $"Asset Bundle Version Mismatch for {sceneId}");
+                return SceneAssetBundleManifest.NULL;
             }
-
-            StreamableLoadingResult<string> result = (await subIntent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, InnerFlowAsync, reportCategory, ct)).Denullify();
-
-            if (result.Succeeded)
+            catch
             {
-                // Parse off the main thread
-                await UniTask.SwitchToThreadPool();
-                return new SceneAssetBundleManifest(assetBundleURL, JsonUtility.FromJson<SceneAbDto>(result.Asset));
+                // Don't block the scene if the loading manifest failed, just use NULL
+                ReportHub.LogError(new ReportData(reportCategory, ReportHint.SessionStatic), $"Asset Bundles Manifest is not loaded for scene {sceneId}");
+                return SceneAssetBundleManifest.NULL;
             }
-
-            // Don't block the scene if the loading manifest failed, just use NULL
-            ReportHub.LogError(new ReportData(reportCategory, ReportHint.SessionStatic), $"Asset Bundles Manifest is not loaded for scene {sceneId}");
-            return SceneAssetBundleManifest.NULL;
         }
 
         /// <summary>
@@ -109,23 +105,14 @@ namespace ECS.SceneLifeCycle.Systems
             if (!sceneContent.TryGetContentUrl(NAME, out URLAddress sceneJsonUrl))
                 throw new ArgumentException("scene.json does not exist in the content");
 
-            var subIntent = new SubIntention(new CommonLoadingArguments(sceneJsonUrl));
+            IpfsTypes.SceneMetadata target = intention.DefinitionComponent.Definition.metadata;
 
-            string result = (await subIntent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, InnerFlowAsync, reportCategory, ct)).UnwrapAndRethrow();
+            await (await webRequestController.GetAsync(new CommonArguments(sceneJsonUrl), ct, reportCategory))
+               .OverwriteFromJsonAsync(target, WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
-            await UniTask.SwitchToThreadPool();
+            intention.DefinitionComponent.Definition.id = intention.DefinitionComponent.IpfsPath.EntityId;
 
-            // Parse the JSON
-            JsonUtility.FromJsonOverwrite(result, intention.Definition.metadata);
-            intention.Definition.id = intention.IpfsPath.EntityId;
             return default(UniTaskVoid);
-
-            // Repeat loop for this request only
-            async UniTask<StreamableLoadingResult<string>> InnerFlowAsync(SubIntention subIntention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
-            {
-                using UnityWebRequest wr = await UnityWebRequest.Get(subIntention.CommonArguments.URL).SendWebRequest().WithCancellation(ct);
-                return new StreamableLoadingResult<string>(wr.downloadHandler.text);
-            }
         }
     }
 }

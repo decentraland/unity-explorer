@@ -1,5 +1,5 @@
 using CommunicationData.URLHelpers;
-using Diagnostics;
+using DCL.Diagnostics;
 using Ipfs;
 using JetBrains.Annotations;
 using System;
@@ -15,7 +15,7 @@ namespace SceneRunner.Scene
 
         public StaticSceneMessages StaticSceneMessages { get; }
         public SceneShortInfo SceneShortInfo { get; }
-        public Vector3 BasePosition { get; }
+        public ParcelMathHelper.SceneGeometry Geometry { get; }
         public SceneAssetBundleManifest AssetBundleManifest { get; }
 
         public SceneData(
@@ -23,6 +23,7 @@ namespace SceneRunner.Scene
             IpfsTypes.SceneEntityDefinition sceneDefinition,
             [NotNull] SceneAssetBundleManifest assetBundleManifest,
             Vector2Int baseParcel,
+            ParcelMathHelper.SceneGeometry geometry,
             StaticSceneMessages staticSceneMessages)
         {
             this.sceneContent = sceneContent;
@@ -30,15 +31,15 @@ namespace SceneRunner.Scene
             AssetBundleManifest = assetBundleManifest;
             StaticSceneMessages = staticSceneMessages;
             SceneShortInfo = new SceneShortInfo(baseParcel, sceneDefinition.id);
-            BasePosition = ParcelMathHelper.GetPositionByParcelPosition(SceneShortInfo.BaseParcel);
+            Geometry = geometry;
         }
 
         public bool HasRequiredPermission(string permission)
         {
-            if (sceneDefinition.metadata.scene.requiredPermissions == null)
+            if (sceneDefinition.metadata.requiredPermissions == null)
                 return false;
 
-            foreach (string requiredPermission in sceneDefinition.metadata.scene.requiredPermissions)
+            foreach (string requiredPermission in sceneDefinition.metadata.requiredPermissions)
             {
                 if (requiredPermission == permission)
                     return true;
@@ -82,7 +83,7 @@ namespace SceneRunner.Scene
         {
             if (Uri.TryCreate(url, UriKind.Absolute, out Uri uri))
             {
-                foreach (string allowedMediaHostname in sceneDefinition.metadata.scene.allowedMediaHostnames)
+                foreach (string allowedMediaHostname in sceneDefinition.metadata.allowedMediaHostnames)
                 {
                     if (string.Equals(allowedMediaHostname, uri.Host, StringComparison.CurrentCultureIgnoreCase))
                         return true;

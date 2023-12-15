@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.ResourcesUnloading;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using ECS.Unity.GLTFContainer.Asset.Cache;
@@ -16,10 +17,17 @@ namespace DCL.PluginSystem.World
         private readonly ECSWorldSingletonSharedDependencies globalDeps;
         private readonly GltfContainerAssetsCache assetsCache;
 
-        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps)
+        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner)
         {
             this.globalDeps = globalDeps;
-            assetsCache = new GltfContainerAssetsCache(1000);
+            assetsCache = new GltfContainerAssetsCache();
+
+            cacheCleaner.Register(assetsCache);
+        }
+
+        public void Dispose()
+        {
+            assetsCache.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
@@ -27,12 +35,12 @@ namespace DCL.PluginSystem.World
         {
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);
-            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudgetProvider);
+            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudgetProvider, globalDeps.MemoryBudgetProvider);
             ReportGltfErrorsSystem.InjectToWorld(ref builder, globalDeps.ReportsHandlingSettings);
 
             // GLTF Container
             LoadGltfContainerSystem.InjectToWorld(ref builder);
-            FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, globalDeps.FrameTimeBudgetProvider, sharedDependencies.EntityCollidersSceneCache);
+            FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, globalDeps.FrameTimeBudgetProvider, sharedDependencies.EntityCollidersSceneCache, sharedDependencies.SceneData);
 
             ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache);
             WriteGltfContainerLoadingStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, globalDeps.ComponentPoolsRegistry.GetReferenceTypePool<PBGltfContainerLoadingState>());
@@ -49,12 +57,12 @@ namespace DCL.PluginSystem.World
         {
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);
-            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudgetProvider);
+            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudgetProvider, globalDeps.MemoryBudgetProvider);
             ReportGltfErrorsSystem.InjectToWorld(ref builder, globalDeps.ReportsHandlingSettings);
 
             // GLTF Container
             LoadGltfContainerSystem.InjectToWorld(ref builder);
-            FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, dependencies.SceneRoot, globalDeps.FrameTimeBudgetProvider, NullEntityCollidersSceneCache.INSTANCE);
+            FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, dependencies.SceneRoot, globalDeps.FrameTimeBudgetProvider, NullEntityCollidersSceneCache.INSTANCE, dependencies.SceneData);
 
             ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache, NullEntityCollidersSceneCache.INSTANCE);
 

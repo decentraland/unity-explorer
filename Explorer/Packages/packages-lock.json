@@ -1,5 +1,19 @@
 {
   "dependencies": {
+    "arch.systemgroups.visualiser": {
+      "version": "https://github.com/m3taphysics/Arch.SystemGroups.Visualiser.git?path=/Packages/arch.systemgroups.visualiser",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "1eb735da57fd7e829ccc1d67518aeadcc8816fe6"
+    },
+    "com.arch.systemgroups": {
+      "version": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "3d2186e909b1bccf1d7b3dadbd1d75df6ed77fb3"
+    },
     "com.atteneder.draco": {
       "version": "4.0.2",
       "depth": 0,
@@ -19,7 +33,7 @@
         "com.unity.mathematics": "1.2.6",
         "com.unity.burst": "1.6.6"
       },
-      "hash": "8d18b6ed3ccd923c02116f4a72f7a41c8c7fd0e3"
+      "hash": "76b63cdf60ffbc04c2f2851ffde777496e5ef25e"
     },
     "com.cysharp.unitask": {
       "version": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
@@ -33,7 +47,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "1b462119ed2ca0a100d22cea1e482d28dde41dc8"
+      "hash": "a31ce587c60180d6bfa804507acac7d2ad94f2d1"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
@@ -55,8 +69,18 @@
       },
       "url": "https://packages.unity.com"
     },
+    "com.unity.animation.rigging": {
+      "version": "1.3.0",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.burst": "1.4.1",
+        "com.unity.test-framework": "1.1.24"
+      },
+      "url": "https://packages.unity.com"
+    },
     "com.unity.burst": {
-      "version": "1.8.7",
+      "version": "1.8.4",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -118,7 +142,7 @@
       "source": "builtin",
       "dependencies": {
         "com.unity.ide.visualstudio": "2.0.18",
-        "com.unity.ide.rider": "3.0.24",
+        "com.unity.ide.rider": "3.0.21",
         "com.unity.ide.vscode": "1.2.5",
         "com.unity.editorcoroutines": "1.0.0",
         "com.unity.performance.profile-analyzer": "1.2.2",
@@ -127,7 +151,7 @@
       }
     },
     "com.unity.ide.rider": {
-      "version": "3.0.26",
+      "version": "3.0.27",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -160,6 +184,16 @@
       },
       "url": "https://packages.unity.com"
     },
+    "com.unity.localization": {
+      "version": "1.4.5",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.addressables": "1.21.8",
+        "com.unity.nuget.newtonsoft-json": "3.0.2"
+      },
+      "url": "https://packages.unity.com"
+    },
     "com.unity.mathematics": {
       "version": "1.3.1",
       "depth": 0,
@@ -183,9 +217,23 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
+    "com.unity.nuget.newtonsoft-json": {
+      "version": "3.2.1",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
     "com.unity.performance.profile-analyzer": {
       "version": "1.2.2",
       "depth": 1,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.profiling.core": {
+      "version": "1.0.2",
+      "depth": 0,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
@@ -338,6 +386,13 @@
         "com.unity.modules.jsonserialize": "1.0.0"
       },
       "url": "https://packages.unity.com"
+    },
+    "io.sentry.unity": {
+      "version": "https://github.com/getsentry/unity.git#1.6.0",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "3403952ec61923574ca845654a6cc3dd03255fdb"
     },
     "net.tnrd.nsubstitute": {
       "version": "https://github.com/decentraland/Unity3D-NSubstitute.git",

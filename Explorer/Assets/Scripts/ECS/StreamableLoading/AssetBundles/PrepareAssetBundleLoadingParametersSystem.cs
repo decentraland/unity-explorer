@@ -2,7 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 

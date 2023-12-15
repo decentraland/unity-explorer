@@ -1,9 +1,11 @@
 using CommunicationData.URLHelpers;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
-using UnityEngine.Pool;
-using Utility.Pool;
+
+[assembly: InternalsVisibleTo("DCL.EditMode.Tests")]
 
 namespace Ipfs
 {
@@ -20,25 +22,7 @@ namespace Ipfs
         public class EntityDefinition : EntityDefinitionGeneric<object> { }
 
         [Serializable]
-        public class SceneEntityDefinition : EntityDefinitionGeneric<SceneMetadata>
-        {
-            public static readonly ObjectPool<SceneEntityDefinition> POOL = new (
-                () => new SceneEntityDefinition(),
-                actionOnRelease: s =>
-                {
-                    Clear(s);
-
-                    if (s.metadata != null)
-                    {
-                        s.metadata.scene.allowedMediaHostnames?.Clear();
-                        s.metadata.scene.parcels?.Clear();
-                        s.metadata.scene.requiredPermissions?.Clear();
-                        s.metadata.scene.@base = string.Empty;
-                    }
-                },
-                defaultCapacity: PoolConstants.SCENES_COUNT,
-                maxSize: 1000);
-        }
+        public class SceneEntityDefinition : EntityDefinitionGeneric<SceneMetadata> { }
 
         [Serializable]
         public class EntityDefinitionGeneric<T> : IEquatable<EntityDefinitionGeneric<T>>
@@ -66,16 +50,14 @@ namespace Ipfs
         }
 
         [Serializable]
+        [JsonConverter(typeof(SceneParcelsConverter))]
         public class SceneMetadataScene
         {
-            public List<string> allowedMediaHostnames;
+            [field: NonSerialized]
+            public Vector2Int DecodedBase { get; internal set; }
 
-            public List<string> parcels;
-
-            public List<string> requiredPermissions;
-
-            [SerializeField] internal string @base = string.Empty;
-            public string baseParcel => @base;
+            [field: NonSerialized]
+            public IReadOnlyList<Vector2Int> DecodedParcels { get; internal set; }
         }
 
         [Serializable]
@@ -84,6 +66,37 @@ namespace Ipfs
             public string main;
             public SceneMetadataScene scene;
             public string runtimeVersion;
+            public List<string> allowedMediaHostnames;
+            public List<string> requiredPermissions;
+            public List<SpawnPoint> spawnPoints;
+
+            [Serializable]
+            [JsonConverter(typeof(SpawnPointConverter))]
+            public struct SpawnPoint
+            {
+                public string name;
+
+                public bool @default;
+
+                [field: NonSerialized] public SinglePosition? SP { get; internal set; }
+                [field: NonSerialized] public MultiPosition? MP { get; internal set; }
+
+                [Serializable]
+                public struct SinglePosition
+                {
+                    public float x;
+                    public float y;
+                    public float z;
+                }
+
+                [Serializable]
+                public struct MultiPosition
+                {
+                    public float[] x;
+                    public float[] y;
+                    public float[] z;
+                }
+            }
         }
 
         [Serializable]

@@ -1,11 +1,11 @@
 ﻿using Arch.SystemGroups;
 using DCL.ECSComponents;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
-using ECS.ComponentsPooling;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
 using ECS.Unity.PrimitiveRenderer.Systems;
@@ -34,7 +34,7 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            InstantiatePrimitiveRenderingSystem.InjectToWorld(ref builder, componentPoolsRegistry, capFrameTimeBudgetProvider);
+            InstantiatePrimitiveRenderingSystem.InjectToWorld(ref builder, componentPoolsRegistry, capFrameTimeBudgetProvider, sharedDependencies.SceneData);
             ReleaseOutdatedRenderingSystem.InjectToWorld(ref builder, componentPoolsRegistry);
 
             ResetDirtyFlagSystem<PBMeshRenderer>.InjectToWorld(ref builder);

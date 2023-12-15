@@ -9,16 +9,18 @@ namespace DCL.AvatarRendering.AvatarShape.Components
     public struct AvatarShapeComponent
     {
         public bool IsDirty;
+        public bool IsVisible;
 
-        public string ID;
-        public string Name;
+        public readonly string ID;
+        public readonly string Name;
+
         public Color SkinColor;
         public Color HairColor;
         public BodyShape BodyShape;
 
         public Promise WearablePromise;
 
-        public List<CachedWearable> InstantiatedWearables;
+        public readonly List<CachedWearable> InstantiatedWearables;
 
         public AvatarShapeComponent(string name, string id, BodyShape bodyShape, Promise wearablePromise, Color skinColor,
             Color hairColor)
@@ -31,6 +33,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             InstantiatedWearables = new List<CachedWearable>();
             SkinColor = skinColor;
             HairColor = hairColor;
+            IsVisible = true;
         }
     }
 }

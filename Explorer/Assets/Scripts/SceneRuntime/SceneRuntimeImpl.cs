@@ -1,6 +1,6 @@
 using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
-using Diagnostics;
+using DCL.Diagnostics;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
@@ -17,6 +17,7 @@ namespace SceneRuntime
     public class SceneRuntimeImpl : ISceneRuntime, IJsOperations
     {
         internal readonly V8ScriptEngine engine;
+        private readonly ISceneExceptionsHandler sceneExceptionsHandler;
         private readonly IInstancePoolsProvider instancePoolsProvider;
 
         private readonly SceneModuleLoader moduleLoader;
@@ -26,18 +27,21 @@ namespace SceneRuntime
         private readonly ScriptObject startFunc;
 
         // ResetableSource is an optimization to reduce 11kb of memory allocation per Update (reduces 15kb to 4kb per update)
-        private readonly TaskResolverResetable resetableSource;
+        private readonly JSTaskResolverResetable resetableSource;
 
         private EngineApiWrapper engineApi;
 
         private RuntimeWrapper runtimeWrapper;
 
-        public SceneRuntimeImpl(string sourceCode, string jsInitCode,
+        public SceneRuntimeImpl(
+            ISceneExceptionsHandler sceneExceptionsHandler,
+            string sourceCode, string jsInitCode,
             Dictionary<string, string> jsModules, IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo)
         {
+            this.sceneExceptionsHandler = sceneExceptionsHandler;
             this.instancePoolsProvider = instancePoolsProvider;
-            resetableSource = new TaskResolverResetable();
+            resetableSource = new JSTaskResolverResetable();
             moduleLoader = new SceneModuleLoader();
             engine = V8EngineFactory.Create();
 
@@ -57,18 +61,26 @@ namespace SceneRuntime
 
             engine.Execute(@"
             const __internalScene = require('~scene.js')
+            const __internalOnStart = async function () {
+                try {
+                    await __internalScene.onStart()
+                    __resetableSource.Completed()
+                } catch (e) {
+                    __resetableSource.Reject(e.stack)
+                }
+            }
             const __internalOnUpdate = async function (dt) {
                 try {
                     await __internalScene.onUpdate(dt)
                     __resetableSource.Completed()
                 } catch(e) {
-                    __resetableSource.Reject(e)
+                    __resetableSource.Reject(e.stack)
                 }
             }
         ");
 
             updateFunc = (ScriptObject)engine.Evaluate("__internalOnUpdate");
-            startFunc = (ScriptObject)engine.Evaluate("__internalScene.onStart");
+            startFunc = (ScriptObject)engine.Evaluate("__internalOnStart");
         }
 
         public void Dispose()
@@ -80,12 +92,12 @@ namespace SceneRuntime
 
         public void RegisterEngineApi(IEngineApi api)
         {
-            engine.AddHostObject("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, new RethrowSceneExceptionsHandler()));
+            engine.AddHostObject("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, sceneExceptionsHandler));
         }
 
         public void RegisterRuntime(IRuntime api)
         {
-            engine.AddHostObject("UnityRuntime", runtimeWrapper = new RuntimeWrapper(api, new RethrowSceneExceptionsHandler()));
+            engine.AddHostObject("UnityRuntime", runtimeWrapper = new RuntimeWrapper(api, sceneExceptionsHandler));
         }
 
         public void SetIsDisposing()
@@ -93,8 +105,12 @@ namespace SceneRuntime
             engineApi?.SetIsDisposing();
         }
 
-        public UniTask StartScene() =>
-            startFunc.InvokeAsFunction().ToTask().AsUniTask(); // It must use the current synchronization context
+        public UniTask StartScene()
+        {
+            resetableSource.Reset();
+            startFunc.InvokeAsFunction();
+            return resetableSource.Task;
+        }
 
         public UniTask UpdateScene(float dt)
         {

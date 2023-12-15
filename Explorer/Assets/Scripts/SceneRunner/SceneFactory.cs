@@ -17,6 +17,7 @@ using DCL.Interaction.Utility;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.Prioritization.Components;
 using Ipfs;
+using Microsoft.ClearScript;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -27,6 +28,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
+using Utility;
 using Utility.Multithreading;
 
 namespace SceneRunner
@@ -73,7 +75,8 @@ namespace SceneRunner
                 runtimeVersion = "7",
             };
 
-            var sceneData = new SceneData(new SceneNonHashedContent(baseUrl), sceneDefinition, SceneAssetBundleManifest.NULL, Vector2Int.zero, StaticSceneMessages.EMPTY);
+            var sceneData = new SceneData(new SceneNonHashedContent(baseUrl), sceneDefinition, SceneAssetBundleManifest.NULL, Vector2Int.zero,
+                ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, StaticSceneMessages.EMPTY);
 
             return await CreateSceneAsync(sceneData, partitionProvider, ct);
         }
@@ -97,7 +100,8 @@ namespace SceneRunner
                 metadata = sceneMetadata,
             };
 
-            var sceneData = new SceneData(new SceneNonHashedContent(fullPath), sceneDefinition, SceneAssetBundleManifest.NULL, Vector2Int.zero, StaticSceneMessages.EMPTY);
+            var sceneData = new SceneData(new SceneNonHashedContent(fullPath), sceneDefinition, SceneAssetBundleManifest.NULL,
+                Vector2Int.zero, ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, StaticSceneMessages.EMPTY);
 
             return await CreateSceneAsync(sceneData, partitionProvider, ct);
         }
@@ -123,9 +127,9 @@ namespace SceneRunner
             var exceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider, sceneData.SceneShortInfo);
 
             /* Pass dependencies here if they are needed by the systems */
-            var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, ecsToCrdtWriter, entitiesMap, exceptionsHandler, entityCollidersCache, sceneStateProvider, ecsMutexSync);
+            var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, partitionProvider, ecsToCrdtWriter, entitiesMap, exceptionsHandler, entityCollidersCache, sceneStateProvider, ecsMutexSync);
 
-            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(instanceDependencies, systemGroupThrottler, partitionProvider));
+            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(instanceDependencies, systemGroupThrottler, sceneData));
             ecsWorldFacade.Initialize();
 
             entityCollidersGlobalCache.AddSceneInfo(entityCollidersCache, new SceneEcsExecutor(ecsWorldFacade.EcsWorld, ecsMutexSync));
@@ -140,7 +144,26 @@ namespace SceneRunner
                 sceneData.TryGetMainScriptUrl(out sceneCodeUrl);
             }
 
-            SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(sceneCodeUrl, instancePoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool);
+            SceneRuntimeImpl sceneRuntime;
+
+            try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(sceneCodeUrl, exceptionsHandler, instancePoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
+            catch (ScriptEngineException e)
+            {
+                // ScriptEngineException.ErrorDetails is ignored through the logging process which is vital in the reporting information
+                exceptionsHandler.OnJavaScriptException(new ScriptEngineException(e.ErrorDetails));
+
+                await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
+
+                ecsWorldFacade.Dispose();
+                crdtProtocol.Dispose();
+                outgoingCRDTMessagesProvider.Dispose();
+                instancePoolsProvider.Dispose();
+                crdtMemoryAllocator.Dispose();
+                exceptionsHandler.Dispose();
+                entityCollidersCache.Dispose();
+
+                throw;
+            }
 
             ct.ThrowIfCancellationRequested();
 

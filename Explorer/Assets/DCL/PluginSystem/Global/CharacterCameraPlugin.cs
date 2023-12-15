@@ -62,16 +62,20 @@ namespace DCL.PluginSystem.Global
             world.Create(
                 new CRDTEntity(SpecialEntitiesID.CAMERA_ENTITY),
                 new CameraComponent(cinemachinePreset.Brain.OutputCamera),
+                new CursorComponent(),
+                new CameraFieldOfViewComponent(),
                 exposedCameraData,
                 cinemachinePreset,
                 new CinemachineCameraState(),
                 cameraSamplingData,
-                realmSamplingData);
+                realmSamplingData
+            );
 
             // Register systems
             ControlCinemachineVirtualCameraSystem.InjectToWorld(ref builder);
             ApplyCinemachineCameraInputSystem.InjectToWorld(ref builder);
             PrepareExposedCameraDataSystem.InjectToWorld(ref builder);
+            ChinemachineFieldOfViewSystem.InjectToWorld(ref builder);
         }
     }
 }

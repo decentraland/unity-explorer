@@ -32,7 +32,7 @@ TagManager:
   - 
   - 
   - SDKCustomLayer
-  - 
+  - Minimap
   - 
   - 
   - 
@@ -40,4 +40,16 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Persistent
+    uniqueID: 1391672535
+    locked: 0
+  - name: Fullscreen
+    uniqueID: 1288386503
+    locked: 0
+  - name: Popup
+    uniqueID: 943831229
+    locked: 0
+  - name: Top
+    uniqueID: 4139610399
     locked: 0

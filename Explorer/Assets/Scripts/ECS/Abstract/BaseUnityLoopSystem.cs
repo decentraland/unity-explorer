@@ -1,7 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Metadata;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
 using System;
 using UnityEngine.Profiling;
 

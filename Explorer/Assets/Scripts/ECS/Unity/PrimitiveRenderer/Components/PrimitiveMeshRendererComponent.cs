@@ -1,5 +1,5 @@
 using DCL.ECSComponents;
-using ECS.ComponentsPooling;
+using DCL.Optimization.Pools;
 using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
 using System;
 using UnityEngine;
@@ -12,6 +12,7 @@ namespace ECS.Unity.PrimitiveRenderer.Components
         public IPrimitiveMesh PrimitiveMesh;
         public MeshRenderer MeshRenderer;
         public PBMeshRenderer.MeshOneofCase SDKType;
+        public bool DefaultMaterialIsUsed;
 
         Type IPoolableComponentProvider<IPrimitiveMesh>.PoolableComponentType => PrimitiveMesh.GetType();
 

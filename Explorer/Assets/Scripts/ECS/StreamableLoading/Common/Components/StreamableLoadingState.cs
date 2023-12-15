@@ -1,4 +1,4 @@
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
+using DCL.Optimization.PerformanceBudgeting;
 using JetBrains.Annotations;
 using UnityEngine.Assertions;
 

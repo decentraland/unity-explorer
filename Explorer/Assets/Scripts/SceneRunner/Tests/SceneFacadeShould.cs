@@ -12,6 +12,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
 using ECS.LifeCycle;
 using ECS.Prioritization.Components;
+using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.ECSWorld;
@@ -37,7 +38,7 @@ namespace SceneRunner.Tests
         {
             path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
 
-            sceneRuntimeFactory = new SceneRuntimeFactory();
+            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>();
 
@@ -146,7 +147,7 @@ namespace SceneRunner.Tests
             sceneRuntime.Received().UpdateScene(Arg.Is<float>(dt => EqualWithTolerance(dt, expectedDT, tolerance)));
             sceneRuntime.DidNotReceive().UpdateScene(Arg.Is<float>(dt => dt != 0 && !EqualWithTolerance(dt, expectedDT, tolerance)));
 
-            int callsCount = sceneRuntime.ReceivedCalls().Count() - 1; // -1 stands for StartScene
+            int callsCount = sceneRuntime.ReceivedCalls().Count() - 1; // -1 stands for  StartScene
 
             Assert.AreEqual(expectedCallsCount, callsCount, expectedCallsCountTolerance);
         }

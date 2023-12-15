@@ -1,31 +1,15 @@
-﻿using UnityEngine;
+﻿using DCL.Optimization.PerformanceBudgeting;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public interface IWearableAssetsCache
     {
-        public enum ReleaseResult
-        {
-            /// <summary>
-            ///     Indicates that the asset was successfully returned to the pool
-            /// </summary>
-            ReturnedToPool,
+        int WearablesAssesCount { get; }
 
-            /// <summary>
-            ///     Indicates that the asset was not returned to the pool because the pool is full
-            ///     so the asset should be destroyed.
-            ///     It is the responsibility of the caller to destroy the asset
-            /// </summary>
-            CapacityExceeded,
+        bool TryGet(WearableAsset asset, out CachedWearable instance);
 
-            /// <summary>
-            ///     Indicates the the environment is being disposed so no actions related to the asset should be performed
-            /// </summary>
-            EnvironmentIsDisposing,
-        }
+        void Release(CachedWearable cachedWearable);
 
-        bool TryGet(GameObject asset, out GameObject instance);
-
-        ReleaseResult TryRelease(CachedWearable cachedWearable);
+        void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount);
     }
 }

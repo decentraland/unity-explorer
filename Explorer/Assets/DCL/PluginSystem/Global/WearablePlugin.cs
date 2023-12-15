@@ -9,6 +9,8 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.ResourcesUnloading;
+using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.Cache;
 using Newtonsoft.Json;
@@ -29,18 +31,22 @@ namespace DCL.AvatarRendering.Wearables
         private static readonly URLSubdirectory WEARABLES_EMBEDDED_SUBDIRECTORY = URLSubdirectory.FromString("/Wearables/");
         private readonly URLDomain assetBundleURL;
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IWebRequestController webRequestController;
 
         private readonly IRealmData realmData;
-        private readonly WearableCatalog wearableCatalog;
+        private readonly IWearableCatalog wearableCatalog;
 
         private WearablesDTOList defaultWearablesDTOs;
 
-        public WearablePlugin(IAssetsProvisioner assetsProvisioner, IRealmData realmData, URLDomain assetBundleURL)
+        public WearablePlugin(IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController, IRealmData realmData, URLDomain assetBundleURL, CacheCleaner cacheCleaner)
         {
             wearableCatalog = new WearableCatalog();
             this.assetsProvisioner = assetsProvisioner;
+            this.webRequestController = webRequestController;
             this.realmData = realmData;
             this.assetBundleURL = assetBundleURL;
+
+            cacheCleaner.Register(wearableCatalog);
         }
 
         public void Dispose() { }
@@ -60,9 +66,9 @@ namespace DCL.AvatarRendering.Wearables
             var mutexSync = new MutexSync();
 
             ResolveWearableByPointerSystem.InjectToWorld(ref builder, wearableCatalog, realmData, WEARABLES_EMBEDDED_SUBDIRECTORY);
-            LoadWearablesByParamSystem.InjectToWorld(ref builder, new NoCache<IWearable[], GetWearableByParamIntention>(false, false), realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, wearableCatalog, mutexSync);
-            LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false), mutexSync);
-            LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(true, true), mutexSync, assetBundleURL);
+            LoadWearablesByParamSystem.InjectToWorld(ref builder, webRequestController, new NoCache<IWearable[], GetWearableByParamIntention>(false, false), realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, wearableCatalog, mutexSync);
+            LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false), mutexSync);
+            LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, webRequestController, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(true, true), mutexSync, assetBundleURL);
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, defaultWearablesDTOs, wearableCatalog);
         }
 

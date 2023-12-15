@@ -2,19 +2,18 @@
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
-using Diagnostics.ReportsHandling;
+using DCL.Diagnostics;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using Ipfs;
-using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using Unity.Mathematics;
-using UnityEngine.Networking;
 using Utility.Multithreading;
 
 namespace ECS.SceneLifeCycle.SceneDefinition
@@ -26,13 +25,18 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     [LogCategory(ReportCategory.SCENE_LOADING)]
     public partial class LoadSceneDefinitionListSystem : LoadSystemBase<SceneDefinitions, GetSceneDefinitionList>
     {
+        private readonly IWebRequestController webRequestController;
+
         // cache
         private readonly StringBuilder bodyBuilder = new ();
 
         // There is no cache for the list but a cache per entity that is stored in ECS itself
-        internal LoadSceneDefinitionListSystem(World world, IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache,
-            MutexSync mutexSync)
-            : base(world, cache, mutexSync) { }
+        internal LoadSceneDefinitionListSystem(World world, IWebRequestController webRequestController,
+            IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache, MutexSync mutexSync)
+            : base(world, cache, mutexSync)
+        {
+            this.webRequestController = webRequestController;
+        }
 
         protected override async UniTask<StreamableLoadingResult<SceneDefinitions>> FlowInternalAsync(GetSceneDefinitionList intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
@@ -56,18 +60,10 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             bodyBuilder.Append("]}");
 
-            string text;
+            List<IpfsTypes.SceneEntityDefinition> targetList = await
+                (await webRequestController.PostAsync(intention.CommonArguments, GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct))
+               .OverwriteFromJsonAsync(intention.TargetCollection, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 
-            using (var request = UnityWebRequest.Post(intention.CommonArguments.URL, bodyBuilder.ToString(), "application/json"))
-            {
-                await request.SendWebRequest().WithCancellation(ct);
-                text = request.downloadHandler.text;
-            }
-
-            await UniTask.SwitchToThreadPool();
-
-            List<IpfsTypes.SceneEntityDefinition> targetList = intention.TargetCollection;
-            JsonConvert.PopulateObject(text, targetList);
             return new StreamableLoadingResult<SceneDefinitions>(new SceneDefinitions(targetList));
         }
     }

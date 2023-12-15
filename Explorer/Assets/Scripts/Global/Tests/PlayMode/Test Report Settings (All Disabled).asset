@@ -17,3 +17,5 @@ MonoBehaviour:
   sentryMatrix:
     entries: []
   debounceEnabled: 0
+  isSentryEnabled: 0
+  isDebugLogEnabled: 0

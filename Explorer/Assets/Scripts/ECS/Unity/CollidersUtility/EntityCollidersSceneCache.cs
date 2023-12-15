@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
+using System.Collections.Generic;
 using UnityEngine;
-using Utility.Pool;
-using Utility.ThreadSafePool;
 
 namespace DCL.Interaction.Utility
 {
@@ -31,15 +31,6 @@ namespace DCL.Interaction.Utility
             globalCache.Associate(collider, this, entityInfo);
         }
 
-        public void Associate(IEnumerable<Collider> colliders, ColliderEntityInfo entityInfo)
-        {
-            foreach (Collider collider in colliders)
-            {
-                map[collider] = entityInfo;
-                globalCache.Associate(collider, this, entityInfo);
-            }
-        }
-
         public void Remove(Collider collider)
         {
             if (collider)
@@ -47,12 +38,6 @@ namespace DCL.Interaction.Utility
                 map.Remove(collider);
                 globalCache.RemoveAssociation(collider);
             }
-        }
-
-        public void Remove(IEnumerable<Collider> colliders)
-        {
-            foreach (Collider collider in colliders)
-                Remove(collider);
         }
 
         public static EntityCollidersSceneCache Create(IEntityCollidersGlobalCache globalCache)

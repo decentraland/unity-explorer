@@ -5,7 +5,8 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.Input;
-using DCL.Input.Systems;
+using DCL.Time;
+using DCL.Time.Systems;
 using ECS.Abstract;
 using NSubstitute;
 using NUnit.Framework;
@@ -28,18 +29,18 @@ namespace DCL.CharacterMotion.Tests
             inputDevice = InputSystem.AddDevice<Keyboard>();
 
             ICharacterControllerSettings controllerSettings = Substitute.For<ICharacterControllerSettings>();
-            controllerSettings.HoldJumpTime.Returns(1f);
+            controllerSettings.LongJumpTime.Returns(1f);
 
             playerEntity = world.Create(new PlayerComponent(), controllerSettings, new CharacterRigidTransform { IsGrounded = true });
 
-            updatePhysicsTickSystem = new UpdateInputPhysicsTickSystem(world);
+            updatePhysicsTickSystem = new UpdatePhysicsTickSystem(world, new PhysicsTickProvider());
             updateInputJumpSystem = new UpdateInputJumpSystem(world, dlcInput.Player.Jump);
             updateInputJumpSystem.Initialize();
 
             fixedTick = world.CachePhysicsTick();
         }
 
-        private UpdateInputPhysicsTickSystem updatePhysicsTickSystem;
+        private UpdatePhysicsTickSystem updatePhysicsTickSystem;
         private UpdateInputJumpSystem updateInputJumpSystem;
 
         private World world;
@@ -47,43 +48,6 @@ namespace DCL.CharacterMotion.Tests
 
         private Entity playerEntity;
         private SingleInstanceEntity fixedTick;
-
-        [Test]
-        public async Task PressAndReleaseJump()
-        {
-            Press(inputDevice.spaceKey);
-
-            updateInputJumpSystem.Update(0);
-
-            //Assert
-            Assert.IsTrue(world.Get<JumpInputComponent>(playerEntity).IsChargingJump);
-
-            await UniTask.Yield();
-
-            Release(inputDevice.spaceKey);
-            updateInputJumpSystem.Update(0);
-
-            //Assert
-            Assert.IsFalse(world.Get<JumpInputComponent>(playerEntity).IsChargingJump);
-        }
-
-        [Test]
-        public async Task JumpReleaseAfterHoldTime()
-        {
-            Press(inputDevice.spaceKey);
-
-            updateInputJumpSystem.Update(0);
-
-            //Assert
-            Assert.IsTrue(world.Get<JumpInputComponent>(playerEntity).IsChargingJump);
-
-            await UniTask.Yield();
-
-            updateInputJumpSystem.Update(2);
-
-            //Assert
-            Assert.IsFalse(world.Get<JumpInputComponent>(playerEntity).IsChargingJump);
-        }
 
         [Test]
         public async Task JumpOccursOnCorrectPhysicalFrame()
@@ -107,7 +71,7 @@ namespace DCL.CharacterMotion.Tests
             await UniTask.Yield();
 
             //This simulated another fixed update. On this call, the jump should occur
-            Assert.IsTrue(world.Get<JumpInputComponent>(playerEntity).PhysicalButtonArguments.GetPower(fixedTick.GetPhysicsTickComponent(world).Tick) > 0);
+            Assert.IsTrue(world.Get<JumpInputComponent>(playerEntity).Trigger.IsAvailable(fixedTick.GetPhysicsTickComponent(world).Tick, 0));
         }
     }
 }

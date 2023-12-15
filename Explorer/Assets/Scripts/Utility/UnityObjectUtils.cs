@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿using Cysharp.Threading.Tasks;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using UnityEngine;
 
 namespace Utility
 {
@@ -6,7 +9,8 @@ namespace Utility
     {
         private static bool isQuitting;
 
-        public static bool IsQuitting => Application.isPlaying && isQuitting;
+        // Can't check Application.isPlaying if called from the background thread
+        public static bool IsQuitting => (!PlayerLoopHelper.IsMainThread || Application.isPlaying) && isQuitting;
 
         [RuntimeInitializeOnLoadMethod]
         private static void StartTrackingApplicationStatus()
@@ -45,6 +49,22 @@ namespace Utility
                 Object.DestroyImmediate(@object);
             else
                 Object.Destroy(@object);
+        }
+
+        /// <summary>
+        ///     Gets shared materials instead of materials if called when Application is not playing (from tests)
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void SafeGetMaterials(this Renderer renderer, List<Material> targetList)
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                renderer.GetSharedMaterials(targetList);
+                return;
+            }
+#endif
+            renderer.GetMaterials(targetList);
         }
     }
 }

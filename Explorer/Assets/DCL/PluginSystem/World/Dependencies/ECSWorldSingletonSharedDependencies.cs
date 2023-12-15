@@ -1,9 +1,9 @@
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
-using Diagnostics.ReportsHandling;
-using ECS.ComponentsPooling;
+using DCL.Diagnostics;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 
 namespace DCL.PluginSystem.World.Dependencies
 {
@@ -14,21 +14,26 @@ namespace DCL.PluginSystem.World.Dependencies
         public readonly ISystemGroupAggregate<IPartitionComponent>.IFactory AggregateFactory;
         public readonly ISceneEntityFactory EntityFactory;
         public readonly IConcurrentBudgetProvider LoadingBudgetProvider;
-        public readonly IConcurrentBudgetProvider FrameTimeBudgetProvider;
+        public readonly FrameTimeCapBudgetProvider FrameTimeBudgetProvider;
+        public readonly MemoryBudgetProvider MemoryBudgetProvider;
 
         public ECSWorldSingletonSharedDependencies(IComponentPoolsRegistry componentPoolsRegistry,
             IReportsHandlingSettings reportsHandlingSettings,
             ISceneEntityFactory entityFactory,
             ISystemGroupAggregate<IPartitionComponent>.IFactory aggregateFactory,
             IConcurrentBudgetProvider loadingBudgetProvider,
-            IConcurrentBudgetProvider frameTimeBudgetProvider)
+            FrameTimeCapBudgetProvider frameTimeBudgetProvider,
+            MemoryBudgetProvider memoryBudgetProvider)
         {
             ComponentPoolsRegistry = componentPoolsRegistry;
             ReportsHandlingSettings = reportsHandlingSettings;
+
             EntityFactory = entityFactory;
-            LoadingBudgetProvider = loadingBudgetProvider;
             AggregateFactory = aggregateFactory;
+
+            LoadingBudgetProvider = loadingBudgetProvider;
             FrameTimeBudgetProvider = frameTimeBudgetProvider;
+            MemoryBudgetProvider = memoryBudgetProvider;
         }
     }
 }

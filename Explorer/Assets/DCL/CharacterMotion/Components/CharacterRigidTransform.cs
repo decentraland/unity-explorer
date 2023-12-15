@@ -16,27 +16,56 @@ namespace DCL.CharacterMotion.Components
     {
         public MovementVelocity MoveVelocity;
 
-        /// <summary>
-        ///     Whether the character is grounded
-        /// </summary>
+        // General physics flags
         public bool IsGrounded;
+        public bool IsOnASteepSlope;
+        public float SteepSlopeTime;
+        public float SteepSlopeAngle;
+        public bool IsCollidingWithWall;
 
-        /// <summary>
-        ///     Every velocity that is applied as is
-        /// </summary>
-        public Vector3 NonInterpolatedVelocity;
+        // Buffers used to decide if the character can jump
+        public int LastGroundedFrame;
+        public int LastJumpFrame;
+        public bool JustJumped;
+
+        // Current velocity of the gravity
+        public Vector3 GravityVelocity;
+
+        // This is a modifier to the gravity direction, used by slope falling to ensure a smooth slide
+        public Vector3 GravityDirection;
+
+        // The result gravity when on a slope
+        public Vector3 SlopeGravity;
+
+        // Current Look direction of the character
+        public Vector3 LookDirection = Vector3.forward;
+
+        // Current Normal of the slope
+        public Vector3 CurrentSlopeNormal;
+
+        // This flag is set when the rigidTransform is between 2 slopes
+        public bool IsStuck;
 
         public struct MovementVelocity
         {
-            /// <summary>
-            ///     Set by physics system in FixedUpdate
-            /// </summary>
-            public Vector3 Target;
+            // Current sideways velocity
+            public float XVelocity;
 
-            /// <summary>
-            ///     Interpolated according to acceleration every Update
-            /// </summary>
-            public Vector3 Interpolated;
+            // Current frontal velocity
+            public float ZVelocity;
+
+            // Sideways velocity dampening
+            public float XDamp;
+
+            // Frontal velocity dampening
+            public float ZDamp;
+
+            // Current acceleration weight (0 to 1) to decide which acceleration we have based on a curve
+            public float AccelerationWeight;
+
+            // Current Velocity
+            public Vector3 Velocity;
         }
+
     }
 }

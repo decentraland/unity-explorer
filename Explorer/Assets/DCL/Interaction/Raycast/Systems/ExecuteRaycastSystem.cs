@@ -6,16 +6,16 @@ using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.ResetExtensions;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.Physics;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Interaction.Raycast.Components;
 using DCL.Interaction.Utility;
-using Diagnostics.ReportsHandling;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
-using ECS.ComponentsPooling;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using System;
@@ -23,7 +23,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
-using Utility.Pool;
 using RaycastHit = UnityEngine.RaycastHit;
 
 namespace DCL.Interaction.Raycast.Systems

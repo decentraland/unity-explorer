@@ -23,12 +23,11 @@ namespace DCL.PluginSystem.Global
             builder.World.Create(new InputMapComponent((InputMapComponent.Kind)(~0)));
 
             ApplyInputMapsSystem.InjectToWorld(ref builder, dclInput);
-            UpdateInputPhysicsTickSystem.InjectToWorld(ref builder);
             UpdateInputJumpSystem.InjectToWorld(ref builder, dclInput.Player.Jump);
             UpdateInputMovementSystem.InjectToWorld(ref builder, dclInput);
             UpdateCameraInputSystem.InjectToWorld(ref builder, dclInput);
             DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, dclInput.FreeCamera.DropPlayer);
-            UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, new UIRaycaster(EventSystem.current), new DCLCursor());
+            UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, new UnityEventSystem(EventSystem.current), new DCLCursor());
 
             // UpdateInputButtonSystem<PrimaryKey>.InjectToWorld(ref builder, dclInput.Player.PrimaryKey);
         }

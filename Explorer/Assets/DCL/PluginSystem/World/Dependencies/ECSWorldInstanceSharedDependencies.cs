@@ -2,6 +2,7 @@
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Interaction.Utility;
+using ECS.Prioritization.Components;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ namespace DCL.PluginSystem.World.Dependencies
     public readonly struct ECSWorldInstanceSharedDependencies
     {
         public readonly ISceneData SceneData;
+        public readonly IPartitionComponent ScenePartition;
         public readonly IECSToCRDTWriter EcsToCRDTWriter;
         public readonly Dictionary<CRDTEntity, Entity> EntitiesMap;
         public readonly ISceneExceptionsHandler SceneExceptionsHandler;
@@ -21,17 +23,18 @@ namespace DCL.PluginSystem.World.Dependencies
 
         public ECSWorldInstanceSharedDependencies(
             ISceneData sceneData,
+            IPartitionComponent scenePartition,
             IECSToCRDTWriter ecsToCRDTWriter,
             Dictionary<CRDTEntity, Entity> entitiesMap,
             ISceneExceptionsHandler sceneExceptionsHandler,
             IEntityCollidersSceneCache entityCollidersSceneCache,
-            ISceneStateProvider sceneStateProvider,
-            MutexSync mutexSync)
+            ISceneStateProvider sceneStateProvider, MutexSync mutexSync)
         {
             SceneData = sceneData;
             EcsToCRDTWriter = ecsToCRDTWriter;
             EntitiesMap = entitiesMap;
             MutexSync = mutexSync;
+            ScenePartition = scenePartition;
             SceneStateProvider = sceneStateProvider;
             SceneExceptionsHandler = sceneExceptionsHandler;
             EntityCollidersSceneCache = entityCollidersSceneCache;

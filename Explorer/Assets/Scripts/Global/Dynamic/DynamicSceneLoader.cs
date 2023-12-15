@@ -1,12 +1,12 @@
-﻿using CommunicationData.URLHelpers;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.Web3Authentication;
 using DCL.SkyBox;
 using Diagnostics.ReportsHandling;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using Unity.Mathematics;
 using UnityEngine;
@@ -27,7 +27,7 @@ namespace Global.Dynamic
         [SerializeField] private UIDocument uiToolkitRoot;
         [SerializeField] private UIDocument debugUiRoot;
         [SerializeField] private Vector2Int StartPosition;
-        [SerializeField] private int SceneLoadRadius = 4;
+        [SerializeField] [Obsolete] private int SceneLoadRadius = 4;
 
         // If it's 0, it will load every parcel in the range
         [SerializeField] private List<int2> StaticLoadPositions;
@@ -36,6 +36,7 @@ namespace Global.Dynamic
         [SerializeField] private SkyBoxSceneData skyBoxSceneData;
         [SerializeField] private RealmLauncher realmLauncher;
         [SerializeField] private string[] realms;
+        [SerializeField] private DynamicSettings dynamicSettings;
 
         private StaticContainer staticContainer;
         private DynamicWorldContainer dynamicWorldContainer;
@@ -55,6 +56,7 @@ namespace Global.Dynamic
             {
                 if (dynamicWorldContainer != null)
                 {
+                    dynamicWorldContainer.Dispose();
                     foreach (IDCLGlobalPlugin plugin in dynamicWorldContainer.GlobalPlugins)
                         plugin.Dispose();
                 }
@@ -75,13 +77,18 @@ namespace Global.Dynamic
         {
             try
             {
+                // TODO: create the real web3 authenticator, missing decentralized app
+                var web3Authenticator = new FakeWeb3Authenticator();
+                await web3Authenticator.LoginAsync(ct);
+
                 // First load the common global plugin
                 bool isLoaded;
-                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, ct);
+
+                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, web3Authenticator, ct);
 
                 if (!isLoaded)
                 {
-                    PrintGameIsDead();
+                    GameReports.PrintIsDead();
                     return;
                 }
 
@@ -94,11 +101,13 @@ namespace Global.Dynamic
                     uiToolkitRoot,
                     skyBoxSceneData,
                     StaticLoadPositions,
-                    SceneLoadRadius);
+                    SceneLoadRadius,
+                    dynamicSettings,
+                    web3Authenticator);
 
                 if (!isLoaded)
                 {
-                    PrintGameIsDead();
+                    GameReports.PrintIsDead();
                     return;
                 }
 
@@ -116,7 +125,7 @@ namespace Global.Dynamic
 
                 if (anyFailure)
                 {
-                    PrintGameIsDead();
+                    GameReports.PrintIsDead();
                     return;
                 }
 
@@ -138,15 +147,9 @@ namespace Global.Dynamic
             catch (Exception)
             {
                 // unhandled exception
-                PrintGameIsDead();
+                GameReports.PrintIsDead();
                 throw;
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void PrintGameIsDead()
-        {
-            ReportHub.LogError(ReportCategory.ENGINE, "Initialization Failed! Game is irrecoverably dead!");
         }
 
         private async UniTask ChangeRealmAsync(StaticContainer globalContainer, CancellationToken ct, string selectedRealm)
@@ -159,7 +162,7 @@ namespace Global.Dynamic
             Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(StartPosition);
             characterPos.y = 1f;
 
-            globalContainer.CharacterObject.Controller.Move(characterPos - globalContainer.CharacterObject.Transform.position);
+            globalContainer.CharacterObject.Controller.transform.position = characterPos;
 
             await dynamicWorldContainer.RealmController.SetRealmAsync(globalWorld, URLDomain.FromString(selectedRealm), ct);
         }

@@ -1,0 +1,16 @@
+{
+  "name": "Profiling",
+  "rootNamespace": "",
+  "references": [
+    "GUID:b46779583a009f04ba9f5f31d0e7e6ac"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

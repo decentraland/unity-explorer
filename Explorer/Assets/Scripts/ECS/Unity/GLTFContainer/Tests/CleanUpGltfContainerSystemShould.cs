@@ -10,6 +10,7 @@ using ECS.TestSuite;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
+using ECS.Unity.SceneBoundsChecker;
 using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -36,7 +37,10 @@ namespace ECS.Unity.GLTFContainer.Tests
             var sdkComponent = new PBGltfContainer { IsDirty = true, Src = "2" };
             var c = new GltfContainerComponent();
             c.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention("1", new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY);
-            world.Add(c.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(GltfContainerAsset.Create(new GameObject())));
+            var asset = GltfContainerAsset.Create(new GameObject(), null);
+
+            asset.VisibleMeshesColliders = new List<SDKCollider> { new (), new () };
+            world.Add(c.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
             c.State.Set(LoadingState.Finished);
 
             Entity e = world.Create(sdkComponent, c, new DeleteEntityIntention());
@@ -46,7 +50,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             Assert.That(world.TryGet(e, out GltfContainerComponent component), Is.True);
             Assert.That(component.Promise.Entity, Is.EqualTo(EntityReference.Null));
             cache.Received(1).Dereference("1", Arg.Any<GltfContainerAsset>());
-            collidersSceneCache.Received(1).Remove(Arg.Any<IEnumerable<Collider>>());
+            collidersSceneCache.Received(2).Remove(Arg.Any<Collider>());
         }
     }
 }

@@ -2,16 +2,20 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
+using DCL.Diagnostics;
+using DCL.Gizmos.Plugin;
 using DCL.Interaction.Utility;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
-using Diagnostics;
-using Diagnostics.ReportsHandling;
+using DCL.Profiling;
+using DCL.ResourcesUnloading;
+using DCL.Time;
+using DCL.WebRequests.Analytics;
+using DCL.Web3Authentication;
 using ECS.Prioritization;
-using ECS.Profiling;
-using ECS.StreamableLoading.DeferredLoading.BudgetProvider;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -36,6 +40,8 @@ namespace Global
 
         public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
 
+        public WebRequestsContainer WebRequestsContainer { get; private set; }
+
         public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; }
 
         /// <summary>
@@ -46,6 +52,8 @@ namespace Global
         public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
 
         public IProfilingProvider ProfilingProvider { get; private set; }
+
+        public PhysicsTickProvider PhysicsTickProvider { get; private set; }
 
         public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
 
@@ -61,6 +69,8 @@ namespace Global
         public IPartitionSettings PartitionSettings => partitionSettings.Value;
 
         public IRealmPartitionSettings RealmPartitionSettings => realmPartitionSettings.Value;
+        public StaticSettings StaticSettings { get; private set; }
+        public CacheCleaner CacheCleaner { get; private set; }
 
         public void Dispose()
         {
@@ -73,6 +83,8 @@ namespace Global
 
         public async UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
         {
+            StaticSettings = settings;
+
             (characterObject, reportHandlingSettings, partitionSettings, realmPartitionSettings) =
                 await UniTask.WhenAll(
                     AssetsProvisioner.ProvideInstanceAsync(settings.CharacterObject, new Vector3(0f, settings.StartYPosition, 0f), Quaternion.identity, ct: ct),
@@ -81,8 +93,12 @@ namespace Global
                     AssetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct));
         }
 
-        public static async UniTask<(StaticContainer container, bool success)> CreateAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
+        public static async UniTask<(StaticContainer container, bool success)> CreateAsync(IPluginSettingsContainer settingsContainer,
+            IWeb3Authenticator web3Authenticator,
+            CancellationToken ct)
         {
+            ProfilingCounters.CleanAllCounters();
+
             var componentsContainer = ComponentsContainer.Create();
             var exposedGlobalDataContainer = ExposedGlobalDataContainer.Create();
             var profilingProvider = new ProfilingProvider();
@@ -96,14 +112,19 @@ namespace Global
             if (!result)
                 return (null, false);
 
+            StaticSettings staticSettings = settingsContainer.GetSettings<StaticSettings>();
+
             var sharedDependencies = new ECSWorldSingletonSharedDependencies(
                 componentsContainer.ComponentPoolsRegistry,
                 container.ReportHandlingSettings,
                 new SceneEntityFactory(),
                 new PartitionedWorldsAggregate.Factory(),
-                new ConcurrentLoadingBudgetProvider(50),
-                new FrameTimeCapBudgetProvider(40, profilingProvider)
+                new ConcurrentLoadingBudgetProvider(staticSettings.AssetsLoadingBudget),
+                new FrameTimeCapBudgetProvider(staticSettings.FrameTimeCap, profilingProvider),
+                new MemoryBudgetProvider(new StandaloneSystemMemory(), profilingProvider, staticSettings.MemoryThresholds)
             );
+
+            container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudgetProvider);
 
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
             container.ComponentsContainer = componentsContainer;
@@ -111,25 +132,33 @@ namespace Global
             container.ProfilingProvider = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
+            container.WebRequestsContainer = WebRequestsContainer.Create(web3Authenticator);
+            container.PhysicsTickProvider = new PhysicsTickProvider();
 
-            var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings);
+            var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, container.CacheCleaner);
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
                 new TransformsPlugin(sharedDependencies),
+                new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
-                new PrimitiveCollidersPlugin(sharedDependencies),
-                new TexturesLoadingPlugin(),
+                new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
+                new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
+
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 assetBundlePlugin,
-                new GltfContainerPlugin(sharedDependencies),
+                new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
+#if UNITY_EDITOR
+                new GizmosWorldPlugin(),
+#endif
             };
 
             container.SharedPlugins = new IDCLGlobalPlugin[]
             {
                 assetBundlePlugin,
+                new ResourceUnloadingPlugin(sharedDependencies.MemoryBudgetProvider, container.CacheCleaner),
             };
 
             return (container, true);

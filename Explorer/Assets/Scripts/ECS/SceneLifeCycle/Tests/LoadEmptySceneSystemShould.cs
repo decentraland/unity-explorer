@@ -1,9 +1,13 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
-using ECS.ComponentsPooling;
+using DCL.Optimization.Pools;
+using DCL.Web3Authentication;
+using DCL.WebRequests;
+using DCL.WebRequests.Analytics;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -23,7 +27,8 @@ namespace ECS.SceneLifeCycle.Tests
 {
     public class LoadEmptySceneSystemShould
     {
-        private static readonly string EMPTY_SCENES_MAPPINGS_URL = $"file://{Application.streamingAssetsPath}/EmptyScenes/mappings.json";
+        private static readonly URLAddress EMPTY_SCENES_MAPPINGS_URL =
+            URLAddress.FromString($"file://{Application.streamingAssetsPath}/EmptyScenes/mappings.json");
 
         private LoadEmptySceneSystemLogic loadEmptySceneSystemLogic;
         private IEmptyScenesWorldFactory emptyScenesWorldFactory;
@@ -42,6 +47,7 @@ namespace ECS.SceneLifeCycle.Tests
         public void SetUp()
         {
             loadEmptySceneSystemLogic = new LoadEmptySceneSystemLogic(
+                new WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(), Substitute.For<IWeb3Authenticator>()),
                 emptyScenesWorldFactory = Substitute.For<IEmptyScenesWorldFactory>(),
                 Substitute.For<IComponentPoolsRegistry>(),
                 EMPTY_SCENES_MAPPINGS_URL);
@@ -67,18 +73,7 @@ namespace ECS.SceneLifeCycle.Tests
         {
             IPartitionComponent partition = Substitute.For<IPartitionComponent>();
 
-            var intent = new GetSceneFacadeIntention(Substitute.For<IIpfsRealm>(), default(IpfsTypes.IpfsPath), new IpfsTypes.SceneEntityDefinition
-                {
-                    id = $"empty-parcel-{parcel.x}-{parcel.y}",
-                    metadata = new IpfsTypes.SceneMetadata
-                    {
-                        main = "bin/game.js",
-                        scene = SceneDefinitionComponent.EMPTY_METADATA,
-                    },
-
-                    // content will be filled by the loading system
-                },
-                new[] { parcel }, true);
+            var intent = new GetSceneFacadeIntention(Substitute.For<IIpfsRealm>(), new SceneDefinitionComponent(parcel));
 
             ISceneFacade facade = await loadEmptySceneSystemLogic.FlowAsync(intent, partition, CancellationToken.None);
             Assert.NotNull(facade);
