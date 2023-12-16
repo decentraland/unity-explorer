@@ -27,24 +27,32 @@ namespace DCL.Profiles
 
         public Color ToColor() =>
             new (r, g, b, a);
+
+        public void Reset()
+        {
+            r = 1;
+            g = 1;
+            b = 1;
+            a = 1;
+        }
     }
 
     [Serializable]
     public class EyesJsonDto
     {
-        public AvatarColorJsonDto color;
+        public AvatarColorJsonDto? color;
     }
 
     [Serializable]
     public class HairJsonDto
     {
-        public AvatarColorJsonDto color;
+        public AvatarColorJsonDto? color;
     }
 
     [Serializable]
     public class SkinJsonDto
     {
-        public AvatarColorJsonDto color;
+        public AvatarColorJsonDto? color;
     }
 
     [Serializable]
@@ -57,32 +65,20 @@ namespace DCL.Profiles
     [Serializable]
     public class AvatarJsonDto
     {
-        public string bodyShape;
-        public string[] wearables;
-        public string[] forceRender;
-        public List<EmoteJsonDto> emotes;
-        public AvatarSnapshotJsonDto snapshots;
-        public EyesJsonDto eyes;
-        public HairJsonDto hair;
-        public SkinJsonDto skin;
-
-        public void Reset()
-        {
-            bodyShape = default(string);
-            wearables = default(string[]);
-            forceRender = default(string[]);
-            emotes = default(List<EmoteJsonDto>);
-            snapshots = default(AvatarSnapshotJsonDto);
-            eyes = default(EyesJsonDto);
-            hair = default(HairJsonDto);
-            skin = default(SkinJsonDto);
-        }
+        public string? bodyShape;
+        public List<string>? wearables;
+        public List<string>? forceRender;
+        public List<EmoteJsonDto>? emotes;
+        public AvatarSnapshotJsonDto? snapshots;
+        public EyesJsonDto? eyes;
+        public HairJsonDto? hair;
+        public SkinJsonDto? skin;
 
         public void CopyTo(Avatar avatar)
         {
             const int SHARED_WEARABLES_MAX_URN_PARTS = 6;
 
-            var sharedWearables = new HashSet<string>(wearables.Length);
+            var sharedWearables = new HashSet<string>(wearables.Count);
 
             foreach (string wearable in wearables)
                 sharedWearables.Add(wearable.ShortenURN(SHARED_WEARABLES_MAX_URN_PARTS));
@@ -100,11 +96,26 @@ namespace DCL.Profiles
             avatar.HairColor = hair.color.ToColor();
             avatar.SkinColor = skin.color.ToColor();
         }
+
+        public void Reset()
+        {
+            bodyShape = default(string?);
+            wearables.Clear();
+            forceRender?.Clear();
+            emotes.Clear();
+            snapshots.face256 = default(string);
+            snapshots.body = default(string);
+            eyes.color.Reset();
+            hair.color.Reset();
+            skin.color.Reset();
+        }
     }
 
     [Serializable]
-    public class ProfileJsonDto
+    public class ProfileJsonDto : IDisposable
     {
+        private static readonly ThreadSafeObjectPool<ProfileJsonDto> pool = new (() => new ProfileJsonDto());
+
         public bool hasClaimedName;
         public string description;
         public int tutorialStep;
@@ -113,11 +124,23 @@ namespace DCL.Profiles
         public string email;
         public string ethAddress;
         public int version;
-        public AvatarJsonDto avatar;
-        public string[] blocked;
-        public string[] interests;
+        public AvatarJsonDto? avatar;
+        public List<string>? blocked;
+        public List<string>? interests;
         public string unclaimedName;
         public bool hasConnectedWeb3;
+
+        public static ProfileJsonDto Create()
+        {
+            ProfileJsonDto profile = pool.Get();
+            profile.Reset();
+            return profile;
+        }
+
+        public void Dispose()
+        {
+            pool.Release(this);
+        }
 
         public void CopyTo(Profile profile)
         {
@@ -135,7 +158,7 @@ namespace DCL.Profiles
             profile.Interests = interests != null ? new List<string>(interests) : new List<string>();
         }
 
-        public void Reset()
+        private void Reset()
         {
             hasClaimedName = default(bool);
             description = default(string);
@@ -146,8 +169,8 @@ namespace DCL.Profiles
             ethAddress = default(string);
             version = default(int);
             avatar?.Reset();
-            blocked = default(string[]);
-            interests = default(string[]);
+            blocked?.Clear();
+            interests?.Clear();
             unclaimedName = default(string);
             hasConnectedWeb3 = default(bool);
         }
@@ -159,12 +182,12 @@ namespace DCL.Profiles
         private static readonly ThreadSafeObjectPool<GetProfileJsonRootDto> pool = new (() => new GetProfileJsonRootDto());
 
         public long timestamp;
-        public ProfileJsonDto[] avatars;
+        public List<ProfileJsonDto>? avatars;
 
         public static GetProfileJsonRootDto Create()
         {
             GetProfileJsonRootDto root = pool.Get();
-            root.Reset();
+            root.avatars?.Clear();
             return root;
         }
 
@@ -172,16 +195,11 @@ namespace DCL.Profiles
 
         public void Dispose()
         {
-            pool.Release(this);
-        }
-
-        private void Reset()
-        {
-            timestamp = default(long);
-
             if (avatars != null)
                 foreach (ProfileJsonDto avatar in avatars)
-                    avatar.Reset();
+                    avatar.Dispose();
+
+            pool.Release(this);
         }
     }
 }

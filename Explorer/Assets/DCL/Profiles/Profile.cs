@@ -13,10 +13,10 @@ namespace DCL.Profiles
         public string Email { get; internal set; }
         public int Version { get; internal set; }
         public Avatar Avatar { get; internal set; }
-        public IReadOnlyCollection<string> Blocked { get; internal set; }
-        public IReadOnlyCollection<string> Interests { get; internal set; }
+        public IReadOnlyCollection<string>? Blocked { get; internal set; }
+        public IReadOnlyCollection<string>? Interests { get; internal set; }
 
-        public Profile() { }
+        internal Profile() { }
 
         public Profile(string userId, string name, string unclaimedName, bool hasClaimedName, string description,
             int tutorialStep, string email, int version, Avatar avatar, IReadOnlyCollection<string> blocked,

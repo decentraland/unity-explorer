@@ -95,6 +95,31 @@ namespace DCL.WebRequests
             finally { await SwitchToMainThreadAsync(threadFlags); }
         }
 
+        public static async UniTask<T> CreateFromNewtonsoftJsonAsync<TRequest, T>(this TRequest typedWebRequest,
+            WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
+            CreateExceptionOnParseFail createCustomExceptionOnFailure = null,
+            params JsonConverter[] converters)
+            where TRequest: ITypedWebRequest, IGenericDownloadHandlerRequest
+        {
+            UnityWebRequest webRequest = typedWebRequest.UnityWebRequest;
+            string text = webRequest.downloadHandler.text;
+
+            // Finalize the request immediately
+            webRequest.Dispose();
+
+            await SwitchToThreadAsync(threadFlags);
+
+            try { return JsonConvert.DeserializeObject<T>(text, converters); }
+            catch (Exception e)
+            {
+                if (createCustomExceptionOnFailure != null)
+                    throw createCustomExceptionOnFailure(e, text);
+                else
+                    throw;
+            }
+            finally { await SwitchToMainThreadAsync(threadFlags); }
+        }
+
         /// <summary>
         ///     Get data array from UnityWebRequest.downloadHandler.data without modifying the original array
         ///     and finalize the request
