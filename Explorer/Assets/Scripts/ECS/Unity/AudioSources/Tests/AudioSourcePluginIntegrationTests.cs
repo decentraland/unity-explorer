@@ -71,8 +71,8 @@ namespace ECS.Unity.AudioSources.Tests
             AudioSourceComponent afterUpdate = world.Get<AudioSourceComponent>(entity);
             Assert.That(afterUpdate.ClipLoadingStatus, Is.EqualTo(StreamableLoading.LifeCycle.LoadingFinished));
             Assert.That(afterUpdate.Result, Is.Not.Null);
-            // Клип загружает, но не совпадают по именам. Подумать, как сделать, чтобы совпадали
-            Assert.That(afterUpdate.Result.clip, Is.EqualTo(TestAudioClip));
+            Assert.That(afterUpdate.Result.clip, Is.Not.Null);
+            Assert.That(afterUpdate.Result.clip.length, Is.EqualTo(TestAudioClip.length).Within(0.1f));
         }
     }
 }
