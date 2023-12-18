@@ -29,9 +29,23 @@ namespace DCL.CharacterMotion.Systems
         protected override void Update(float t)
         {
             InterpolateQuery(World, t);
+            TeleportPlayerQuery(World);
         }
 
         [Query]
+        private void TeleportPlayer(in Entity entity, in CharacterController controller, ref CharacterPlatformComponent platformComponent, in PlayerTeleportIntent teleportIntent)
+        {
+            // Teleport the character
+            controller.transform.position = teleportIntent.Position;
+
+            // Reset the current platform so we dont bounce back if we are touching the world plane
+            platformComponent.CurrentPlatform = null;
+
+            World.Remove<PlayerTeleportIntent>(entity);
+        }
+
+        [Query]
+        [None(typeof(PlayerTeleportIntent))]
         private void Interpolate(
             [Data] float dt,
             in ICharacterControllerSettings settings,
@@ -50,19 +64,19 @@ namespace DCL.CharacterMotion.Systems
             Vector3 movementDelta = rigidTransform.MoveVelocity.Velocity * dt;
             Vector3 finalGravity = rigidTransform.IsOnASteepSlope && !rigidTransform.IsStuck ? rigidTransform.SlopeGravity : rigidTransform.GravityVelocity;
             Vector3 gravityDelta = finalGravity * dt;
+            Vector3 platformDelta = rigidTransform.PlatformDelta;
 
             // In order for some systems to work correctly we move the character horizontally and then vertically
-            CollisionFlags horizontalCollisionFlags = characterController.Move(movementDelta);
             Vector3 prevPos = transform.position;
-            CollisionFlags verticalCollisionFlags = characterController.Move(gravityDelta + slopeModifier);
+            CollisionFlags collisionFlags = characterController.Move(movementDelta + gravityDelta + slopeModifier + platformDelta);
             Vector3 deltaMovement = transform.position - prevPos;
 
-            bool hasGroundedFlag = deltaMovement.y <= 0 && (EnumUtils.HasFlag(verticalCollisionFlags, CollisionFlags.Below) || EnumUtils.HasFlag(horizontalCollisionFlags, CollisionFlags.Below));
+            bool hasGroundedFlag = deltaMovement.y <= 0 && EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
 
             if (!Mathf.Approximately(gravityDelta.y, 0f))
                 rigidTransform.IsGrounded = hasGroundedFlag || characterController.isGrounded;
 
-            rigidTransform.IsCollidingWithWall = EnumUtils.HasFlag(horizontalCollisionFlags, CollisionFlags.Sides);
+            rigidTransform.IsCollidingWithWall = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Sides);
 
             // If we are on a platform we save our local position
             PlatformSaveLocalPosition.Execute(ref platformComponent, transform.position);
