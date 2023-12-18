@@ -1,38 +1,62 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: ''
-labels: ''
+title: '[QA] Title'
+labels: 'bug'
 assignees: ''
+
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+### **Explorer Alpha build version:**
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+### **Issue Description:**
+<!-- Short description of the observed issue -->
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+### **Steps to reproduce:**
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+  1.
+  2.
+  3.
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+### **Expected behaviour:**
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
 
-**Additional context**
-Add any other context about the problem here.
+### **Current behaviour:**
+
+
+### **Reproduction rate:**
+- [ ] < 10%
+- [ ]  < = 25%
+- [ ]  50%
+- [ ]  < = 75%
+- [ ]  100%
+
+
+### **Severity:**
+<!-- Cosmetic, Minor, Medium, High, Critical, Blocker -->
+- [ ] Cosmetic
+- [ ] Minor
+- [ ] Medium
+- [ ] High
+- [ ] Critical
+- [ ] Blocker
+
+### **Priority:**
+- [ ] High
+- [ ] Medium
+- [ ] Low
+
+### **Platforms / OS:**
+- [ ] Windows 11
+- [ ] Windows 10
+- [ ] Mac Sonoma
+- [ ] Mac (specify the version on Additional Notes)
+
+
+#### **Evidence:**
+
+#### **Additional Notes:**
+<!-- If the test is made on Mac, specify if the chip is M1 or Intel -->
+
+
