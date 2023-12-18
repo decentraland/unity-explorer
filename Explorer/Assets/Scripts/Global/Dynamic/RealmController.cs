@@ -38,6 +38,7 @@ namespace Global.Dynamic
         private readonly RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm;
         private readonly RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld;
         private readonly TeleportController teleportController;
+        private GlobalWorld globalWorld;
 
         public RealmController(IWebRequestController webRequestController, TeleportController teleportController, RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm, RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld, int sceneLoadRadius,
             IReadOnlyList<int2> staticLoadPositions, RealmData realmData)
@@ -51,16 +52,22 @@ namespace Global.Dynamic
             this.retrieveSceneFromVolatileWorld = retrieveSceneFromVolatileWorld;
         }
 
+        public void SetupWorld(GlobalWorld globalWorld)
+        {
+            this.globalWorld = globalWorld;
+            teleportController.OnWorldLoaded(globalWorld.EcsWorld);
+        }
+
         /// <summary>
         ///     it is an async process so it should be executed before ECS kicks in
         /// </summary>
-        public async UniTask SetRealmAsync(GlobalWorld globalWorld, URLDomain realm, CancellationToken ct)
+        public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
         {
             World world = globalWorld.EcsWorld;
 
             // Show loading screen
 
-            await UnloadCurrentRealmAsync(globalWorld);
+            await UnloadCurrentRealmAsync();
 
             IpfsTypes.ServerAbout result = await (await webRequestController.GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM))
                .OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
@@ -76,7 +83,7 @@ namespace Global.Dynamic
             if (!ComplimentWithStaticPointers(world, realmEntity) && !realmComp.ScenesAreFixed)
                 ComplimentWithVolatilePointers(world, realmEntity);
 
-            teleportController.OnRealmLoaded(realmData.ScenesAreFixed ? retrieveSceneFromFixedRealm : retrieveSceneFromVolatileWorld, globalWorld.EcsWorld);
+            teleportController.OnRealmLoaded(realmData.ScenesAreFixed ? retrieveSceneFromFixedRealm : retrieveSceneFromVolatileWorld);
 
             // Hide loading screen
         }
@@ -98,7 +105,7 @@ namespace Global.Dynamic
             return false;
         }
 
-        public async UniTask UnloadCurrentRealmAsync(GlobalWorld globalWorld)
+        public async UniTask UnloadCurrentRealmAsync()
         {
             World world = globalWorld.EcsWorld;
 
@@ -122,7 +129,7 @@ namespace Global.Dynamic
             GC.Collect();
         }
 
-        public async UniTask DisposeGlobalWorldAsync(GlobalWorld globalWorld)
+        public async UniTask DisposeGlobalWorldAsync()
         {
             World world = globalWorld.EcsWorld;
             FindLoadedScenes(world);
