@@ -9,11 +9,11 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
-using ECS.Unity.AudioSources.Components;
+using ECS.Unity.AudioSources;
 using SceneRunner.Scene;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 
-namespace ECS.Unity.AudioSources.Systems
+namespace DCL.SDKComponents.AudioSources
 {
     /// <summary>
     ///     Places a loading intention for audio clip that can be consumed by other systems in the pipeline.
@@ -54,7 +54,7 @@ namespace ECS.Unity.AudioSources.Systems
                 AudioType = sdkAudioSource.AudioClipUrl.ToAudioType(),
             }, partitionComponent);
 
-            audioSourceComponent.ClipLoadingStatus = StreamableLoading.LifeCycle.LoadingInProgress;
+            audioSourceComponent.ClipLoadingStatus = ECS.StreamableLoading.LifeCycle.LoadingInProgress;
             World.Add(entity, audioSourceComponent);
         }
     }

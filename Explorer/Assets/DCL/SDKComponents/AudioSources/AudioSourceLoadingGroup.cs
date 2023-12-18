@@ -3,7 +3,7 @@ using DCL.Diagnostics;
 using ECS.Groups;
 using ECS.StreamableLoading;
 
-namespace ECS.Unity.AudioSources
+namespace DCL.SDKComponents.AudioSources
 {
     /// <summary>
     ///     AudioSource systems create intentions to load audio clips so they should be executed before

@@ -5,12 +5,11 @@ using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
-using ECS.Unity.AudioSources.Components;
 using ECS.Unity.Transforms.Components;
 using UnityEngine;
 using Utility;
 
-namespace ECS.Unity.AudioSources.Systems
+namespace DCL.SDKComponents.AudioSources
 {
     [UpdateInGroup(typeof(AudioSourceLoadingGroup))]
     [UpdateAfter(typeof(StartAudioClipLoadingSystem))]
@@ -40,7 +39,7 @@ namespace ECS.Unity.AudioSources.Systems
                            || !audioSourceComponent.ClipPromise.Value.TryGetResult(World, out var promiseResult))
                 return;
 
-            audioSourceComponent.ClipLoadingStatus = StreamableLoading.LifeCycle.LoadingFinished;
+            audioSourceComponent.ClipLoadingStatus = ECS.StreamableLoading.LifeCycle.LoadingFinished;
 
             if (audioSourceComponent.Result == null)
                 audioSourceComponent.Result ??= audioSourcesPool.Get();

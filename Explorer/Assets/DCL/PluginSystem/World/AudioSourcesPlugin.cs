@@ -6,10 +6,10 @@ using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.AudioClips;
-using ECS.StreamableLoading.Cache;
-using ECS.Unity.AudioSources.Systems;
 using System.Collections.Generic;
 using UnityEngine;
+using CreateAudioSourceSystem = DCL.SDKComponents.AudioSources.CreateAudioSourceSystem;
+using StartAudioClipLoadingSystem = DCL.SDKComponents.AudioSources.StartAudioClipLoadingSystem;
 
 namespace DCL.PluginSystem.World
 {

@@ -6,14 +6,13 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common;
 using ECS.TestSuite;
-using ECS.Unity.AudioSources.Components;
-using ECS.Unity.AudioSources.Systems;
-using NUnit.Framework;
+using ECS.Unity.AudioSources;
 using NSubstitute;
+using NUnit.Framework;
 using SceneRunner.Scene;
 using UnityEngine;
 
-namespace ECS.Unity.AudioSources.Tests
+namespace DCL.SDKComponents.AudioSources.Tests
 {
     public class StartAudioClipLoadingSystemShould : UnitySystemTestBase<StartAudioClipLoadingSystem>
     {
@@ -65,7 +64,7 @@ namespace ECS.Unity.AudioSources.Tests
             Assert.That(audioSourceComponent.PBAudioSource, Is.EqualTo(pbAudioSource));
             Assert.That(audioSourceComponent.ClipPromise, Is.Not.Null);
             Assert.That(audioSourceComponent.Result, Is.Null);
-            Assert.That(audioSourceComponent.ClipLoadingStatus, Is.EqualTo(StreamableLoading.LifeCycle.LoadingInProgress));
+            Assert.That(audioSourceComponent.ClipLoadingStatus, Is.EqualTo(ECS.StreamableLoading.LifeCycle.LoadingInProgress));
 
             // Assert promise
             Assert.That(audioSourceComponent.ClipPromise!.Value, Is.Not.Null);

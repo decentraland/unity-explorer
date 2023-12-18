@@ -7,15 +7,13 @@ using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.AudioClips.Tests;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
-using ECS.Unity.AudioSources.Components;
-using ECS.Unity.AudioSources.Systems;
 using NSubstitute;
 using NUnit.Framework;
 using System.Threading.Tasks;
-using static ECS.Unity.AudioSources.Tests.AudioSourceTestsUtils;
+using static DCL.SDKComponents.AudioSources.Tests.AudioSourceTestsUtils;
 using static Utility.Tests.TestsCategories;
 
-namespace ECS.Unity.AudioSources.Tests
+namespace DCL.SDKComponents.AudioSources.Tests
 {
     public class AudioSourcePluginIntegrationTests
     {
@@ -57,7 +55,7 @@ namespace ECS.Unity.AudioSources.Tests
 
         [Category(INTEGRATION)]
         [Test]
-        public async Task VV()
+        public async Task ShouldCreateAudioSource_AndDownloadAudioClip_WhenPBAudioSourcePresented()
         {
             startLoadingSystem.Update(0);
 
@@ -71,7 +69,7 @@ namespace ECS.Unity.AudioSources.Tests
 
             // Assert
             AudioSourceComponent afterUpdate = world.Get<AudioSourceComponent>(entity);
-            Assert.That(afterUpdate.ClipLoadingStatus, Is.EqualTo(StreamableLoading.LifeCycle.LoadingFinished));
+            Assert.That(afterUpdate.ClipLoadingStatus, Is.EqualTo(ECS.StreamableLoading.LifeCycle.LoadingFinished));
             Assert.That(afterUpdate.Result, Is.Not.Null);
             Assert.That(afterUpdate.Result.clip, Is.Not.Null);
             Assert.That(afterUpdate.Result.clip.length, Is.EqualTo(TestAudioClip.length).Within(0.1f));

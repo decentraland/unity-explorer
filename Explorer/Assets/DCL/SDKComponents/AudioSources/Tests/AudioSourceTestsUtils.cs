@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace ECS.Unity.AudioSources.Tests
+namespace DCL.SDKComponents.AudioSources.Tests
 {
     public static class AudioSourceTestsUtils
     {

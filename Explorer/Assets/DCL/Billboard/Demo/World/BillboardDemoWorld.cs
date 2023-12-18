@@ -99,15 +99,17 @@ namespace DCL.Billboard.Demo.World
 
         private TransformComponent NewTransform(int offset = 0)
         {
-            var t = GameObject.CreatePrimitive(PrimitiveType.Cube)!.transform!;
+            Transform t = GameObject.CreatePrimitive(PrimitiveType.Cube)!.transform;
+
             t.localScale = cubeSize;
             int row = offset % countInRow;
             int column = offset / countInRow;
-
             t.position = (Vector3.right * row) + (Vector3.forward * column);
             t.position *= spawnStep;
+
             t.gameObject.AddComponent<GizmosForward>();
             DestroyCollider(t);
+
             var component = new TransformComponent(t);
             component.SetTransform(t);
             return component;
@@ -122,14 +124,11 @@ namespace DCL.Billboard.Demo.World
         [SuppressMessage("ReSharper", "BitwiseOperatorOnEnumWithoutFlags")]
         private static PBBillboard RandomBillboard()
         {
-            static bool RandomBool()
-            {
-                return Random.value > 0.5f;
-            }
-
             var billboard = new PBBillboard();
             billboard.Apply(RandomBool(), RandomBool(), RandomBool());
             return billboard;
+
+            static bool RandomBool() => Random.value > 0.5f;
         }
     }
 }

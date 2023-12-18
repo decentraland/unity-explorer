@@ -6,14 +6,12 @@ using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
-using ECS.Unity.AudioSources.Components;
-using ECS.Unity.AudioSources.Systems;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
-using static ECS.Unity.AudioSources.Tests.AudioSourceTestsUtils;
+using static DCL.SDKComponents.AudioSources.Tests.AudioSourceTestsUtils;
 
-namespace ECS.Unity.AudioSources.Tests
+namespace DCL.SDKComponents.AudioSources.Tests
 {
     public class CreateAudioSourceSystemShould : UnitySystemTestBase<CreateAudioSourceSystem>
     {
@@ -31,7 +29,7 @@ namespace ECS.Unity.AudioSources.Tests
             void CreateComponent()
             {
                 component = new AudioSourceComponent(CreatePBAudioSource());
-                component.ClipLoadingStatus = StreamableLoading.LifeCycle.LoadingInProgress;
+                component.ClipLoadingStatus = ECS.StreamableLoading.LifeCycle.LoadingInProgress;
                 component.ClipPromise = AssetPromise<AudioClip, GetAudioClipIntention>.Create(world, new GetAudioClipIntention(), PartitionComponent.TOP_PRIORITY);
             }
 
@@ -70,7 +68,7 @@ namespace ECS.Unity.AudioSources.Tests
 
             // Assert
             AudioSourceComponent afterUpdate = world.Get<AudioSourceComponent>(entity);
-            Assert.That(afterUpdate.ClipLoadingStatus, Is.EqualTo(StreamableLoading.LifeCycle.LoadingInProgress));
+            Assert.That(afterUpdate.ClipLoadingStatus, Is.EqualTo(ECS.StreamableLoading.LifeCycle.LoadingInProgress));
             Assert.That(afterUpdate.Result, Is.Null);
         }
 
@@ -85,7 +83,7 @@ namespace ECS.Unity.AudioSources.Tests
 
             // Assert
             AudioSourceComponent afterUpdate = world.Get<AudioSourceComponent>(entity);
-            Assert.That(afterUpdate.ClipLoadingStatus, Is.EqualTo(StreamableLoading.LifeCycle.LoadingFinished));
+            Assert.That(afterUpdate.ClipLoadingStatus, Is.EqualTo(ECS.StreamableLoading.LifeCycle.LoadingFinished));
             Assert.That(afterUpdate.Result, Is.Not.Null);
             Assert.That(afterUpdate.Result.clip, Is.EqualTo(TestAudioClip));
         }
