@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -13,6 +14,7 @@ namespace DCL.SDKComponents.AudioSources
 {
     [UpdateInGroup(typeof(AudioSourceLoadingGroup))]
     [UpdateAfter(typeof(StartAudioSourceLoadingSystem))]
+    [LogCategory(ReportCategory.AUDIO_SOURCES)]
     public partial class CreateAudioSourceSystem : BaseUnityLoopSystem
     {
         private readonly IConcurrentBudgetProvider frameTimeBudgetProvider;

@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CommunicationData.URLHelpers;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
@@ -19,6 +20,7 @@ namespace DCL.SDKComponents.AudioSources
     ///     Places a loading intention for audio clip that can be consumed by other systems in the pipeline.
     /// </summary>
     [UpdateInGroup(typeof(AudioSourceLoadingGroup))]
+    [LogCategory(ReportCategory.AUDIO_SOURCES)]
     [ThrottlingEnabled]
     public partial class StartAudioSourceLoadingSystem : BaseUnityLoopSystem
     {

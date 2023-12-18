@@ -1,31 +1,40 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle.Components;
+using ECS.StreamableLoading;
+using ECS.StreamableLoading.AudioClips;
+using System;
 using UnityEngine;
 
 namespace DCL.SDKComponents.AudioSources
 {
-    [UpdateInGroup(typeof(AudioSourceLoadingGroup))]
-    [UpdateAfter(typeof(StartAudioSourceLoadingSystem))]
+    [UpdateInGroup(typeof(CleanUpGroup))]
+    [LogCategory(ReportCategory.AUDIO_SOURCES)]
+    [ThrottlingEnabled]
     public partial class CleanUpAudioSourceSystem: BaseUnityLoopSystem
     {
         private readonly IComponentPoolsRegistry poolsRegistry;
+        private readonly AudioClipsCache cache;
 
-        internal CleanUpAudioSourceSystem(World world, IComponentPoolsRegistry poolsRegistry)  : base(world)
+        internal CleanUpAudioSourceSystem(World world,  AudioClipsCache cache,IComponentPoolsRegistry poolsRegistry)  : base(world)
         {
             this.poolsRegistry = poolsRegistry;
+            this.cache = cache;
         }
 
         protected override void Update(float t)
         {
             // TODO: ref/deref clips in cache
             HandleEntityDestructionQuery(World);
-
             HandleComponentRemovalQuery(World);
+
             World.Remove<AudioSourceComponent>(in HandleComponentRemoval_QueryDescription);
         }
 
@@ -45,17 +54,19 @@ namespace DCL.SDKComponents.AudioSources
 
         private void RemoveComponent(ref AudioSourceComponent component)
         {
-            if(component.ClipLoadingStatus == ECS.StreamableLoading.LifeCycle.LoadingInProgress)
+            switch (component.ClipLoadingStatus)
             {
-                component.ClipPromise?.ForgetLoading(World);
-                component.ClipPromise = null;
-
-                return;
+                case LifeCycle.LoadingNotStarted: return;
+                case LifeCycle.LoadingInProgress:
+                    component.ClipPromise?.ForgetLoading(World);
+                    component.ClipPromise = null;
+                    return;
             }
 
             if (component.Result == null) return;
 
-            // TODO: unparent on releasing
+            cache.Dereference(component.ClipPromise!.Value.LoadingIntention, component.Result.clip);
+
             component.Result.clip = null;
             if (poolsRegistry.TryGetPool(typeof(AudioSource), out IComponentPool componentPool))
                 componentPool.Release(component.Result);

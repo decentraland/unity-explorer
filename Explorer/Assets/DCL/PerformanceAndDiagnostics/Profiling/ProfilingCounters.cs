@@ -63,6 +63,9 @@ namespace DCL.Profiling
         public static ProfilerCounterValue<int> AudioClipsInCache =
             new (MEMORY, "AudioClips In Cache", ProfilerMarkerDataUnit.Count);
 
+        public static ProfilerCounterValue<int> ReferencedAudioClips =
+            new (MEMORY, "Referenced AudioClips", ProfilerMarkerDataUnit.Count);
+
         public static void CleanAllCounters()
         {
             ABDataAmount.Value = 0;
@@ -86,6 +89,7 @@ namespace DCL.Profiling
 
             AudioClipsAmount.Value = 0;
             AudioClipsInCache.Value = 0;
+            ReferencedAudioClips.Value = 0;
         }
     }
 }
