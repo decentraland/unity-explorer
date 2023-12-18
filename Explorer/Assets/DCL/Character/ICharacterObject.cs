@@ -6,8 +6,6 @@ namespace DCL.Character
     {
         CharacterController Controller { get; }
 
-        void Move(Vector3 globalPosition);
-
         Transform CameraFocus { get; }
 
         Transform Transform { get; }
