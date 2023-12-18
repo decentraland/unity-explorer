@@ -6,22 +6,26 @@ using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
+using ECS.StreamableLoading;
+using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.Transforms.Components;
 using UnityEngine;
+using UnityEngine.Android;
+using UnityEngine.Assertions;
 using Utility;
 
 namespace DCL.SDKComponents.AudioSources
 {
-    [UpdateInGroup(typeof(AudioSourceLoadingGroup))]
+    [UpdateInGroup(typeof(SDKAudioSourceGroup))]
     [UpdateAfter(typeof(StartAudioSourceLoadingSystem))]
     [LogCategory(ReportCategory.AUDIO_SOURCES)]
-    public partial class CreateAudioSourceSystem : BaseUnityLoopSystem
+    public partial class UpdateAudioSourceSystem : BaseUnityLoopSystem
     {
         private readonly IConcurrentBudgetProvider frameTimeBudgetProvider;
         private readonly IConcurrentBudgetProvider memoryBudgetProvider;
         private readonly IComponentPool<AudioSource> audioSourcesPool;
 
-        internal CreateAudioSourceSystem(World world, IComponentPoolsRegistry poolsRegistry, IConcurrentBudgetProvider frameTimeBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider) : base(world)
+        internal UpdateAudioSourceSystem(World world, IComponentPoolsRegistry poolsRegistry, IConcurrentBudgetProvider frameTimeBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider) : base(world)
         {
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
             this.memoryBudgetProvider = memoryBudgetProvider;
@@ -32,16 +36,28 @@ namespace DCL.SDKComponents.AudioSources
         protected override void Update(float t)
         {
             CreateAudioSourceQuery(World);
+            UpdateAudioSourceQuery(World);
+            // TODO: Handle Volume updates - refer to ECSAudioSourceComponentHandler.cs in unity-renderer and check UpdateAudioSourceVolume() method and its usages
+        }
+
+        [Query]
+        [All(typeof(PBAudioSource), typeof(AudioSourceComponent))]
+        private void UpdateAudioSource(ref PBAudioSource sdkAudioSource, ref AudioSourceComponent audioSourceComponent)
+        {
+            if (!sdkAudioSource.IsDirty || !audioSourceComponent.ClipLoadingFinished) return;
+
+            audioSourceComponent.Result.ApplyPBAudioSource(sdkAudioSource);
+            // TODO: Handle clip url changes - refer to ECSAudioSourceComponentHandler.cs in unity-renderer
         }
 
         [Query]
         private void CreateAudioSource(ref AudioSourceComponent audioSourceComponent, ref TransformComponent entityTransform)
         {
             if (NoBudget() || audioSourceComponent.ClipIsNotLoading || audioSourceComponent.ClipPromise == null
-                           || !audioSourceComponent.ClipPromise.Value.TryGetResult(World, out var promiseResult))
+                || !audioSourceComponent.ClipPromise.Value.TryGetResult(World, out StreamableLoadingResult<AudioClip> promiseResult))
                 return;
 
-            audioSourceComponent.ClipLoadingStatus = ECS.StreamableLoading.LifeCycle.LoadingFinished;
+            audioSourceComponent.ClipLoadingStatus = LifeCycle.LoadingFinished;
 
             if (audioSourceComponent.Result == null)
                 audioSourceComponent.Result ??= audioSourcesPool.Get();
@@ -56,28 +72,6 @@ namespace DCL.SDKComponents.AudioSources
 
             bool NoBudget() =>
                 !frameTimeBudgetProvider.TrySpendBudget() || !memoryBudgetProvider.TrySpendBudget();
-        }
-    }
-
-    internal static class AudioSourceExtensions
-    {
-        internal static AudioSource FromPBAudioSource(this AudioSource audioSource, AudioClip clip, PBAudioSource pbAudioSource)
-        {
-            audioSource.clip = clip;
-
-            audioSource.playOnAwake = false;
-            audioSource.spatialize = true;
-            audioSource.spatialBlend = 1;
-            audioSource.dopplerLevel = 0.1f;
-
-            audioSource.loop = pbAudioSource.Loop;
-            audioSource.pitch = pbAudioSource.Pitch;
-            audioSource.volume = pbAudioSource.Volume;
-
-            if (pbAudioSource.Playing && audioSource.clip != null)
-                audioSource.Play();
-
-            return audioSource;
         }
     }
 }

@@ -10,7 +10,6 @@ using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AudioClips;
-using System;
 using UnityEngine;
 
 namespace DCL.SDKComponents.AudioSources
@@ -31,7 +30,6 @@ namespace DCL.SDKComponents.AudioSources
 
         protected override void Update(float t)
         {
-            // TODO: ref/deref clips in cache
             HandleEntityDestructionQuery(World);
             HandleComponentRemovalQuery(World);
 

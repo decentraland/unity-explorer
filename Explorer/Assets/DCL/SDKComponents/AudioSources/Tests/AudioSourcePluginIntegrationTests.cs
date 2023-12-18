@@ -21,7 +21,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
 
         private StartAudioSourceLoadingSystem startLoadingSystem;
         private LoadAudioClipSystem loadAudioClipSystem;
-        private CreateAudioSourceSystem createAudioSourceSystem;
+        private UpdateAudioSourceSystem updateAudioSourceSystem;
 
         private PBAudioSource pbAudioSource;
         private Entity entity;
@@ -32,11 +32,11 @@ namespace DCL.SDKComponents.AudioSources.Tests
             world = World.Create();
 
             startLoadingSystem = StartAudioClipLoadingSystemShould.CreateSystem(world);
-            createAudioSourceSystem = CreateAudioSourceSystemShould.CreateSystem(world);
+            updateAudioSourceSystem = CreateAudioSourceSystemShould.CreateSystem(world);
             loadAudioClipSystem = LoadAudioClipSystemShould.CreateSystem(world);
 
             startLoadingSystem.Initialize();
-            createAudioSourceSystem.Initialize();
+            updateAudioSourceSystem.Initialize();
             loadAudioClipSystem.Initialize();
 
             pbAudioSource = CreatePBAudioSource(); // Create component
@@ -49,7 +49,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
         public void TearDown()
         {
             startLoadingSystem?.Dispose();
-            createAudioSourceSystem?.Dispose();
+            updateAudioSourceSystem?.Dispose();
             world?.Dispose();
         }
 
@@ -65,7 +65,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
             loadAudioClipSystem.Update(1);
             await UniTask.WaitUntil(() => audioSourceComponent.ClipPromise.Value.TryGetResult(world, out _));
 
-            createAudioSourceSystem.Update(2);
+            updateAudioSourceSystem.Update(2);
 
             // Assert
             AudioSourceComponent afterUpdate = world.Get<AudioSourceComponent>(entity);

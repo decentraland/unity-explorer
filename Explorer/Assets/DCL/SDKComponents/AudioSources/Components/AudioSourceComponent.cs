@@ -27,6 +27,7 @@ namespace DCL.SDKComponents.AudioSources
         Type IPoolableComponentProvider<AudioSource?>.PoolableComponentType => typeof(AudioSource);
 
         public bool ClipIsNotLoading => ClipLoadingStatus != ECS.StreamableLoading.LifeCycle.LoadingInProgress;
+        public bool ClipLoadingFinished => ClipLoadingStatus is ECS.StreamableLoading.LifeCycle.LoadingFinished or ECS.StreamableLoading.LifeCycle.Applied;
 
         public AudioSourceComponent(PBAudioSource pbAudioSource)
         {

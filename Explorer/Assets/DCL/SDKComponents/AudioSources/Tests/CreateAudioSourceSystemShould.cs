@@ -13,7 +13,7 @@ using static DCL.SDKComponents.AudioSources.Tests.AudioSourceTestsUtils;
 
 namespace DCL.SDKComponents.AudioSources.Tests
 {
-    public class CreateAudioSourceSystemShould : UnitySystemTestBase<CreateAudioSourceSystem>
+    public class CreateAudioSourceSystemShould : UnitySystemTestBase<UpdateAudioSourceSystem>
     {
         private AudioSourceComponent component;
         private Entity entity;
@@ -40,7 +40,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
             }
         }
 
-        public static CreateAudioSourceSystem CreateSystem(World world)
+        public static UpdateAudioSourceSystem CreateSystem(World world)
         {
             var poolsRegistry = Substitute.For<IComponentPoolsRegistry>();
             var audioSourcesPool = Substitute.For<IComponentPool<AudioSource>>();
@@ -51,7 +51,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
             var budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
             budgetProvider.TrySpendBudget().Returns(true);
 
-            return new CreateAudioSourceSystem(world, poolsRegistry, budgetProvider, budgetProvider);
+            return new UpdateAudioSourceSystem(world, poolsRegistry, budgetProvider, budgetProvider);
         }
 
         [TearDown]
