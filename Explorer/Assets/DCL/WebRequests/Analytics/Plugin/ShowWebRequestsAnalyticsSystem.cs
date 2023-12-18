@@ -39,9 +39,9 @@ namespace DCL.WebRequests.Analytics
                 var metrics = webRequestsAnalyticsContainer.GetTrackedMetrics();
                 foreach (var metric in metrics)
                 {
-                    bindings.Add(metric.Name, new ElementBinding<ulong>(0));
-                    var formatting = (IRequestMetric)Activator.CreateInstance(metric);
-                    widget.AddMarker(requestType.Name + "-" +  metric.Name, bindings[metric.Name], formatting.GetUnit());
+                    bindings.Add(metric.Key.Name, new ElementBinding<ulong>(0));
+                    var requestMetricUnit = metric.Value().GetUnit();
+                    widget.AddMarker(requestType.Name + "-" +  metric.Key.Name, bindings[metric.Key.Name], requestMetricUnit);
                 }
 
                 ongoingRequests[requestType] = bindings;
