@@ -75,7 +75,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         public void Dereference()
         {
             ReferenceCount--;
-            Assert.IsTrue(ReferenceCount >= 0, "Reference count should never be negative");
+            Assert.IsTrue(ReferenceCount >= 0, $"Reference count should never be negative, but was {ReferenceCount}");
 
             if (ReferenceCount == 0)
                 ProfilingCounters.WearablesAssetsReferencedAmount.Value--;

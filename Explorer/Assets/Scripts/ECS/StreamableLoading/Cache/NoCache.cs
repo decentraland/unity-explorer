@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using UnityEngine.Pool;
@@ -61,6 +62,8 @@ namespace ECS.StreamableLoading.Cache
         public void Add(in TLoadingIntention key, TAsset asset) { }
 
         public void Dereference(in TLoadingIntention key, TAsset asset) { }
+
+        public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount) { }
 
         bool IEqualityComparer<TLoadingIntention>.Equals(TLoadingIntention x, TLoadingIntention y) =>
             EqualityComparer<TLoadingIntention>.Default.Equals(x, y);
