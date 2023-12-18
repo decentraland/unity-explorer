@@ -20,6 +20,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         public readonly IReadOnlyList<ParcelMathHelper.ParcelCorners> ParcelsCorners;
         public readonly IpfsTypes.IpfsPath IpfsPath;
         public readonly bool IsEmpty;
+        public int InternalJobIndex;
 
         public SceneDefinitionComponent(IpfsTypes.SceneEntityDefinition definition, IpfsTypes.IpfsPath ipfsPath)
         {
@@ -28,6 +29,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             IpfsPath = ipfsPath;
             Parcels = definition.metadata.scene.DecodedParcels;
             IsEmpty = false;
+            InternalJobIndex = -1;
         }
 
         /// <summary>
@@ -53,6 +55,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
                 // content will be filled by the loading system
             };
+
+            InternalJobIndex = -1;
         }
     }
 }
