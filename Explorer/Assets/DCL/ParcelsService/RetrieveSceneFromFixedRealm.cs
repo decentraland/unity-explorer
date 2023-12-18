@@ -15,7 +15,7 @@ namespace DCL.ParcelsService
         /// <summary>
         ///     World should be set when the realm is [re-]loaded
         /// </summary>
-        public World World { private get; set; }
+        public World World { get; set; }
 
         public async UniTask<IpfsTypes.SceneEntityDefinition> ByParcelAsync(Vector2Int parcel, CancellationToken ct)
         {
