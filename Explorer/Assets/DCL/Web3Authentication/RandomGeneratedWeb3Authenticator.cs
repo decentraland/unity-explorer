@@ -8,6 +8,11 @@ namespace DCL.Web3Authentication
     {
         public IWeb3Identity? Identity { get; private set; }
 
+        public void Dispose()
+        {
+            Identity = null;
+        }
+
         public async UniTask<IWeb3Identity> LoginAsync(CancellationToken cancellationToken)
         {
             var signer = NethereumAccount.CreateRandom();

@@ -20,6 +20,7 @@ namespace Global.Static
         private ISceneFacade sceneFacade;
 
         private StaticContainer staticContainer;
+        private RandomGeneratedWeb3Authenticator web3Authenticator;
 
         private void Awake()
         {
@@ -29,13 +30,14 @@ namespace Global.Static
         private void OnDestroy()
         {
             staticContainer?.Dispose();
+            web3Authenticator?.Dispose();
         }
 
         public async UniTask InitializationFlowAsync(CancellationToken ct)
         {
             try
             {
-                var web3Authenticator = new RandomGeneratedWeb3Authenticator();
+                web3Authenticator = new RandomGeneratedWeb3Authenticator();
                 await web3Authenticator.LoginAsync(ct);
 
                 SceneSharedContainer sceneSharedContainer;

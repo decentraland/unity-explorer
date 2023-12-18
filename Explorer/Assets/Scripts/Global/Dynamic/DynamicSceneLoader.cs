@@ -36,6 +36,7 @@ namespace Global.Dynamic
         private StaticContainer staticContainer;
         private DynamicWorldContainer dynamicWorldContainer;
         private GlobalWorld globalWorld;
+        private IWeb3Authenticator web3Authenticator;
 
         private void Awake()
         {
@@ -61,6 +62,7 @@ namespace Global.Dynamic
                 await UniTask.SwitchToMainThread();
 
                 staticContainer?.Dispose();
+                web3Authenticator?.Dispose();
             }
 
             realmLauncher.OnRealmSelected = null;
@@ -71,7 +73,7 @@ namespace Global.Dynamic
         {
             try
             {
-                IWeb3Authenticator web3Authenticator = new RandomGeneratedWeb3Authenticator();
+                web3Authenticator = new DappWeb3Authenticator();
                 IWeb3Identity web3Identity = await web3Authenticator.LoginAsync(ct);
 
                 // First load the common global plugin

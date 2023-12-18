@@ -8,11 +8,16 @@ namespace DCL.Web3Authentication
     {
         private readonly string ephemeralPublicAddress;
 
-        public IWeb3Identity Identity { get; private set; }
+        public IWeb3Identity? Identity { get; private set; }
 
         public FakeWeb3Authenticator(string ephemeralPublicAddress)
         {
             this.ephemeralPublicAddress = ephemeralPublicAddress;
+        }
+
+        public void Dispose()
+        {
+            Identity = null;
         }
 
         public async UniTask<IWeb3Identity> LoginAsync(CancellationToken cancellationToken)
