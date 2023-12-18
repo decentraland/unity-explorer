@@ -11,15 +11,14 @@ namespace DCL.Web3Authentication
 {
     public class DappWeb3Authenticator : IWeb3Authenticator
     {
+        // TODO: switch urls depending on current realm / developer mode (?)
         private const string SERVER_URL_DEV = "https://auth-api.decentraland.zone";
         private const string SERVER_URL_PRD = "https://auth-api.decentraland.today";
         private const string SIGN_DAPP_URL_DEV = "https://decentraland.zone/auth/requests/:requestId";
         private const string SIGN_DAPP_URL_PRD = "https://decentraland.org/auth/requests/:requestId";
 
-        // private readonly byte[] receiveBuffer = new byte[8192];
         private readonly Dictionary<string, UniTaskCompletionSource<SocketIOResponse>> pendingMessageTasks = new ();
 
-        // private ClientWebSocket? webSocket;
         private SocketIO? webSocket;
 
         public IWeb3Identity? Identity { get; private set; }
@@ -33,10 +32,6 @@ namespace DCL.Web3Authentication
         public async UniTask<IWeb3Identity> LoginAsync(CancellationToken cancellationToken)
         {
             var uri = new Uri(SERVER_URL_DEV);
-
-            /*webSocket = new ClientWebSocket();
-            await webSocket.ConnectAsync(uri, cancellationToken);
-            ArraySegment<byte> firstMessage = await ReceiveNextMessageAsync(cancellationToken);*/
 
             webSocket = new SocketIO(uri, new SocketIOOptions
             {
@@ -96,9 +91,6 @@ namespace DCL.Web3Authentication
 
             if (webSocket == null) return;
 
-            // await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", cancellationToken);
-            // webSocket.Abort();
-
             await webSocket.DisconnectAsync();
             webSocket.Dispose();
         }
@@ -115,6 +107,7 @@ namespace DCL.Web3Authentication
             MessageResponse message = response.GetValue<MessageResponse>();
 
             if (!pendingMessageTasks.TryGetValue(message.type, out UniTaskCompletionSource<SocketIOResponse>? task)) return;
+
             task.TrySetResult(response);
             pendingMessageTasks.Remove(message.type);
         }
@@ -149,58 +142,6 @@ namespace DCL.Web3Authentication
             return (await task.Task.AttachExternalCancellation(cancellationToken))
                .GetValue<T>();
         }
-
-        /*private async UniTask ProcessNextMessage()
-        {
-            if (webSocket == null) return;
-            if (webSocket.State != WebSocketState.Open) return;
-
-            if (state == WSCommsRoomState.Connecting)
-            {
-                await SendIdentification();
-                state = WSCommsRoomState.Handshake;
-            }
-
-            if (state is WSCommsRoomState.Handshake or WSCommsRoomState.Connected)
-            {
-                var message = await ReceiveNextMessage();
-
-                var packet = WsPacket.Parser.ParseFrom(message.Array, 0, message.Count);
-
-                Debug.Log($"Received: {packet.MessageCase}");
-
-                switch (state)
-                {
-                    case WSCommsRoomState.Handshake:
-                        await HandleHandshake(packet);
-                        break;
-
-                    case WSCommsRoomState.Connected:
-                        await HandleConnectedMessages(packet);
-                        break;
-                    default: break;
-                }
-            }
-        }*/
-
-        /*private async UniTask<ArraySegment<byte>> ReceiveNextMessageAsync(CancellationToken cancellationToken)
-        {
-            if (webSocket == null) return null;
-
-            var offset = 0;
-            var messageFinished = false;
-
-            while (!messageFinished)
-            {
-                ArraySegment<byte> buffer = new ArraySegment<byte>(receiveBuffer, offset, 128);
-                WebSocketReceiveResult? result = await webSocket.ReceiveAsync(buffer, cancellationToken);
-
-                offset += result.Count;
-                messageFinished = result.EndOfMessage;
-            }
-
-            return new ArraySegment<byte>(receiveBuffer, 0, offset);
-        }*/
 
         [Serializable]
         private struct SignatureFromDappResponse
