@@ -13,6 +13,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System.Threading.Tasks;
 using static ECS.Unity.AudioSources.Tests.AudioSourceTestsUtils;
+using static Utility.Tests.TestsCategories;
 
 namespace ECS.Unity.AudioSources.Tests
 {
@@ -54,6 +55,7 @@ namespace ECS.Unity.AudioSources.Tests
             world?.Dispose();
         }
 
+        [Category(INTEGRATION)]
         [Test]
         public async Task VV()
         {

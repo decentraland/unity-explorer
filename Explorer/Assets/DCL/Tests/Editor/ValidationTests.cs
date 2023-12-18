@@ -3,11 +3,13 @@ using System;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+using static Utility.Tests.TestsCategories;
 
 namespace DCL.Tests
 {
     public class ValidationTests
     {
+        [Category(VALIDATION)]
         [Test]
         public void ProjectShouldNotContainEmptyFolders()
         {

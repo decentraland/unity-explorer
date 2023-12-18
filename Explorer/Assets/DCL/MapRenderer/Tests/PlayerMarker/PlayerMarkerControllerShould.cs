@@ -10,7 +10,6 @@ using UnityEngine;
 namespace DCL.MapRenderer.Tests.PlayerMarker
 {
     [TestFixture]
-    [Category("EditModeCI")]
     public class PlayerMarkerControllerShould
     {
         private PlayerMarkerController controller;

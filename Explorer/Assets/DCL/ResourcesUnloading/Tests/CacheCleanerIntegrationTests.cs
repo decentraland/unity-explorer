@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using Unity.PerformanceTesting;
 using UnityEngine;
+using static Utility.Tests.TestsCategories;
 
 namespace DCL.ResourcesUnloading.Tests
 {
@@ -73,7 +74,7 @@ namespace DCL.ResourcesUnloading.Tests
         [TestCase(1)]
         [TestCase(10)]
         [TestCase(100)]
-        public void PerformanceMeasureWithElementsAmount(int cachedElementsAmount)
+        public void CacheCleaningPerformance(int cachedElementsAmount)
         {
             // Arrange
             concurrentBudgetProvider.TrySpendBudget().Returns(true);
@@ -93,6 +94,7 @@ namespace DCL.ResourcesUnloading.Tests
                    .Run();
         }
 
+        [Category(INTEGRATION)]
         [Test]
         public void DisposingShouldProperlyDereferenceDependencyChain()
         {
@@ -118,6 +120,7 @@ namespace DCL.ResourcesUnloading.Tests
             Assert.That(assetBundleData.referencesCount, Is.EqualTo(0));
         }
 
+        [Category(INTEGRATION)]
         [Test]
         public void ShouldCleanCachesWithRespectToReferencing()
         {
