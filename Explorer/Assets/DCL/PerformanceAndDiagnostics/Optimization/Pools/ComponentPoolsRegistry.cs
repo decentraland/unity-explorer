@@ -32,6 +32,11 @@ namespace DCL.Optimization.Pools
             lock (pools) { return pools.TryGetValue(type, out componentPool); }
         }
 
+        public bool TryGetPool<T>(out IComponentPool componentPool)
+        {
+            lock (pools) { return pools.TryGetValue(typeof(T), out componentPool); }
+        }
+
         public IComponentPool<T> GetReferenceTypePool<T>() where T: class
         {
             lock (pools) { return (IComponentPool<T>)pools[typeof(T)]; }

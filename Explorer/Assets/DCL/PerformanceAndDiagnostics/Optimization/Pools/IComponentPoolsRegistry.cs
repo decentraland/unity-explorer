@@ -13,6 +13,8 @@ namespace DCL.Optimization.Pools
     {
         bool TryGetPool(Type type, out IComponentPool componentPool);
 
+        bool TryGetPool<T>(out IComponentPool componentPool);
+
         /// <summary>
         ///     Get the message pool of the reference type. Pool must be registered in advance
         /// </summary>

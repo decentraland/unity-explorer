@@ -12,7 +12,7 @@ using Utility;
 namespace DCL.SDKComponents.AudioSources
 {
     [UpdateInGroup(typeof(AudioSourceLoadingGroup))]
-    [UpdateAfter(typeof(StartAudioClipLoadingSystem))]
+    [UpdateAfter(typeof(StartAudioSourceLoadingSystem))]
     public partial class CreateAudioSourceSystem : BaseUnityLoopSystem
     {
         private readonly IConcurrentBudgetProvider frameTimeBudgetProvider;
@@ -44,9 +44,9 @@ namespace DCL.SDKComponents.AudioSources
             if (audioSourceComponent.Result == null)
                 audioSourceComponent.Result ??= audioSourcesPool.Get();
 
-            AudioSource audioSource = audioSourceComponent.Result.FromPBAudioSource(promiseResult.Asset, audioSourceComponent.PBAudioSource);
+            audioSourceComponent.Result.FromPBAudioSource(promiseResult.Asset, audioSourceComponent.PBAudioSource);
 
-            Transform rendererTransform = audioSource.transform;
+            Transform rendererTransform = audioSourceComponent.Result.transform;
             rendererTransform.SetParent(entityTransform.Transform, false);
             rendererTransform.ResetLocalTRS();
 

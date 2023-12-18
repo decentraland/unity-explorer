@@ -15,7 +15,7 @@ namespace ECS.Unity.Materials.Components
         /// <summary>
         ///     The final material ready for consumption
         /// </summary>
-        public Material Result;
+        public Material? Result;
 
         public Promise? AlbedoTexPromise;
         public Promise? EmissiveTexPromise;

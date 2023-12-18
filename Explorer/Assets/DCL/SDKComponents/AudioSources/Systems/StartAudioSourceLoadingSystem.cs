@@ -20,13 +20,13 @@ namespace DCL.SDKComponents.AudioSources
     /// </summary>
     [UpdateInGroup(typeof(AudioSourceLoadingGroup))]
     [ThrottlingEnabled]
-    public partial class StartAudioClipLoadingSystem : BaseUnityLoopSystem
+    public partial class StartAudioSourceLoadingSystem : BaseUnityLoopSystem
     {
         private readonly ISceneData sceneData;
         private readonly int attemptsCount;
         private readonly IConcurrentBudgetProvider frameTimeBudgetProvider;
 
-        internal StartAudioClipLoadingSystem(World world, ISceneData sceneData, int attemptsCount, IConcurrentBudgetProvider frameTimeBudgetProvider) : base(world)
+        internal StartAudioSourceLoadingSystem(World world, ISceneData sceneData, int attemptsCount, IConcurrentBudgetProvider frameTimeBudgetProvider) : base(world)
         {
             this.sceneData = sceneData;
             this.attemptsCount = attemptsCount;

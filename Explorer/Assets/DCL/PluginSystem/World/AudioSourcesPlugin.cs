@@ -3,13 +3,13 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
+using DCL.SDKComponents.AudioSources;
 using DCL.WebRequests;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.AudioClips;
 using System.Collections.Generic;
 using UnityEngine;
 using CreateAudioSourceSystem = DCL.SDKComponents.AudioSources.CreateAudioSourceSystem;
-using StartAudioClipLoadingSystem = DCL.SDKComponents.AudioSources.StartAudioClipLoadingSystem;
 
 namespace DCL.PluginSystem.World
 {
@@ -38,7 +38,7 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            StartAudioClipLoadingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, 11, frameTimeBudgetProvider);
+            StartAudioSourceLoadingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, 11, frameTimeBudgetProvider);
             LoadAudioClipSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController, sharedDependencies.MutexSync);
             CreateAudioSourceSystem.InjectToWorld(ref builder, componentPoolsRegistry, frameTimeBudgetProvider, memoryBudgetProvider);
         }

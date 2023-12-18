@@ -3,7 +3,6 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiling;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;

@@ -19,7 +19,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
     {
         private World world;
 
-        private StartAudioClipLoadingSystem startLoadingSystem;
+        private StartAudioSourceLoadingSystem startLoadingSystem;
         private LoadAudioClipSystem loadAudioClipSystem;
         private CreateAudioSourceSystem createAudioSourceSystem;
 
@@ -55,7 +55,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
 
         [Category(INTEGRATION)]
         [Test]
-        public async Task ShouldCreateAudioSource_AndDownloadAudioClip_WhenPBAudioSourcePresented()
+        public async Task ShouldCreateAudioSource_WithDownloadedAudioClip_WhenPBAudioSourcePresented()
         {
             startLoadingSystem.Update(0);
 

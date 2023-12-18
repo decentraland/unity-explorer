@@ -25,10 +25,8 @@ namespace DCL.PluginSystem.Global
             this.navmapView = navmapView;
         }
 
-        public async UniTask InitializeAsync(NavmapSettings settings, CancellationToken ct)
-        {
-
-        }
+        public UniTask InitializeAsync(NavmapSettings settings, CancellationToken ct) =>
+            UniTask.CompletedTask;
 
         public void Dispose()
         {

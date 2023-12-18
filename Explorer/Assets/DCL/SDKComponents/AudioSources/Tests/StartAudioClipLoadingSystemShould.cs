@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace DCL.SDKComponents.AudioSources.Tests
 {
-    public class StartAudioClipLoadingSystemShould : UnitySystemTestBase<StartAudioClipLoadingSystem>
+    public class StartAudioClipLoadingSystemShould : UnitySystemTestBase<StartAudioSourceLoadingSystem>
     {
         private const int ATTEMPTS_COUNT = 5;
         private PBAudioSource pbAudioSource;
@@ -28,7 +28,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
             entity = world.Create(pbAudioSource, PartitionComponent.TOP_PRIORITY); // Create entity
         }
 
-        public static StartAudioClipLoadingSystem CreateSystem(World world)
+        public static StartAudioSourceLoadingSystem CreateSystem(World world)
         {
             IConcurrentBudgetProvider concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
             concurrentBudgetProvider.TrySpendBudget().Returns(true);
@@ -42,7 +42,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
                           return true;
                       });
 
-            return new StartAudioClipLoadingSystem(world, sceneData, ATTEMPTS_COUNT, concurrentBudgetProvider);
+            return new StartAudioSourceLoadingSystem(world, sceneData, ATTEMPTS_COUNT, concurrentBudgetProvider);
         }
 
         [TearDown]
