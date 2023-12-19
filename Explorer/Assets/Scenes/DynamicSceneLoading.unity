@@ -289,6 +289,7 @@ MonoBehaviour:
   - https://sdk-test-scenes.decentraland.zone
   - https://peer.decentraland.org
   - https://worlds-content-server.decentraland.org/world/olavra.dcl.eth
+  - http://127.0.0.1:8000
   dynamicSettings:
     <PopupCloserView>k__BackingField:
       m_AssetGUID: dbfb7e67a438449f9a887f820f733868
