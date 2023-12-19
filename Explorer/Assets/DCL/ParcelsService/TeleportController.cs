@@ -1,6 +1,9 @@
 ﻿using Arch.Core;
+using Arch.System;
 using Cysharp.Threading.Tasks;
 using DCL.Character;
+using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
 using Ipfs;
 using System.Collections.Generic;
 using System.Threading;
@@ -9,11 +12,11 @@ using Utility;
 
 namespace DCL.ParcelsService
 {
-    public class TeleportController : ITeleportController
+    public partial class TeleportController : ITeleportController
     {
         private readonly ICharacterObject characterObject;
-
         private IRetrieveScene retrieveScene;
+        private World world;
 
         public TeleportController(ICharacterObject characterObject)
         {
@@ -25,7 +28,12 @@ namespace DCL.ParcelsService
             retrieveScene = null;
         }
 
-        public void OnRealmLoaded(IRetrieveScene retrieveScene, World world)
+        public void OnWorldLoaded(World world)
+        {
+            this.world = world;
+        }
+
+        public void OnRealmLoaded(IRetrieveScene retrieveScene)
         {
             this.retrieveScene = retrieveScene;
             this.retrieveScene.World = world;
@@ -76,12 +84,9 @@ namespace DCL.ParcelsService
             else
                 targetPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel);
 
-            // Prevent conflict with Interpolation System
-            // TODO move this to the system
-
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
-            characterObject.Move(targetPosition);
+            AddTeleportIntentQuery(retrieveScene.World, targetPosition);
         }
 
         private static Vector3 GetOffsetFromSpawnPoint(IpfsTypes.SceneMetadata.SpawnPoint spawnPoint)
@@ -115,7 +120,14 @@ namespace DCL.ParcelsService
         public void TeleportToParcel(Vector2Int parcel)
         {
             Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(parcel);
-            characterObject.Move(characterPos);
+            AddTeleportIntentQuery(world, characterPos);
+        }
+
+        [Query]
+        [All(typeof(PlayerComponent))]
+        private void AddTeleportIntent([Data] Vector3 position, in Entity entity)
+        {
+            world.Add(entity, new PlayerTeleportIntent(position));
         }
     }
 }
