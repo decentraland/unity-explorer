@@ -38,7 +38,7 @@ namespace DCL.Web3Authentication
                 signature = ephemeralSignature,
             });
 
-            Identity = new DecentralandIdentity(ephemeralAccount, expiration, authChain);
+            Identity = new DecentralandIdentity(signer.Address, ephemeralAccount, expiration, authChain);
 
             return Identity;
         }

@@ -74,7 +74,7 @@ namespace DCL.Web3Authentication
                 signature = signature.payload.signature,
             });
 
-            Identity = new DecentralandIdentity(ephemeralAccount, expiration, authChain);
+            Identity = new DecentralandIdentity(signature.payload.signer, ephemeralAccount, expiration, authChain);
 
             await webSocket.DisconnectAsync();
             webSocket.Dispose();

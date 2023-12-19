@@ -114,7 +114,7 @@ namespace Global.Dynamic
                 new TransformComponent { Transform = characterObject.Transform },
                 new PBAvatarShape
                 {
-                    Id = web3Identity.EphemeralAccount.Address,
+                    Id = web3Identity.Address,
                     BodyShape = BodyShape.MALE,
                     Wearables = { WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE) },
                     Name = "Player",

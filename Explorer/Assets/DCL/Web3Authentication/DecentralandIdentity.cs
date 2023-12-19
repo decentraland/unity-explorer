@@ -6,10 +6,12 @@ namespace DCL.Web3Authentication
     {
         private readonly AuthChain authChain;
 
+        public string Address { get; }
         public DateTime Expiration { get; }
         public IWeb3Account EphemeralAccount { get; }
 
         public DecentralandIdentity(
+            string address,
             IWeb3Account ephemeralAccount,
             DateTime expiration,
             AuthChain authChain)
@@ -18,6 +20,7 @@ namespace DCL.Web3Authentication
             AssertEcdsaEphemeral(authChain);
 
             this.authChain = authChain;
+            Address = address;
             EphemeralAccount = ephemeralAccount;
             Expiration = expiration;
         }

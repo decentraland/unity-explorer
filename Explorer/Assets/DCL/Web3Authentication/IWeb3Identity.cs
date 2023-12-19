@@ -4,6 +4,7 @@ namespace DCL.Web3Authentication
 {
     public interface IWeb3Identity
     {
+        string Address { get; }
         DateTime Expiration { get; }
         IWeb3Account EphemeralAccount { get; }
 
