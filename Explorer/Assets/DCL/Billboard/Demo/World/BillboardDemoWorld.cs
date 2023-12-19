@@ -4,6 +4,7 @@ using DCL.Billboard.Demo.CameraData;
 using DCL.Billboard.Extensions;
 using DCL.Billboard.System;
 using DCL.CharacterCamera;
+using DCL.DemoWorlds;
 using DCL.ECSComponents;
 using ECS.Unity.Transforms.Components;
 using System.Diagnostics.CodeAnalysis;
