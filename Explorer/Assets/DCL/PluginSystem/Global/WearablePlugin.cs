@@ -38,15 +38,15 @@ namespace DCL.AvatarRendering.Wearables
 
         private WearablesDTOList defaultWearablesDTOs;
 
-        public WearablePlugin(IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController, IRealmData realmData, URLDomain assetBundleURL, CacheCleaner cacheCleaner)
+        public WearablePlugin(IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController, IRealmData realmData, URLDomain assetBundleURL, CacheCleaner cacheCleaner, IWearableCatalog wearableCatalog)
         {
-            wearableCatalog = new WearableCatalog();
+            this.wearableCatalog = wearableCatalog;
             this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
             this.realmData = realmData;
             this.assetBundleURL = assetBundleURL;
 
-            cacheCleaner.Register(wearableCatalog);
+            cacheCleaner.Register(this.wearableCatalog);
         }
 
         public void Dispose() { }
