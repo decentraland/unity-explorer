@@ -104,6 +104,7 @@ namespace DCL.WebRequests
                 if (commonArguments.CustomDownloadHandler != null)
                     unityWebRequest.downloadHandler = commonArguments.CustomDownloadHandler;
 
+                var exceptionThrown = false;
                 try
                 {
                     analyticsContainer.OnRequestStarted(request);
@@ -115,10 +116,8 @@ namespace DCL.WebRequests
                 }
                 catch (UnityWebRequestException exception)
                 {
+                    exceptionThrown = true;
                     attemptsLeft--;
-
-                    // Make the request no longer usable as all data needed is written into the exception itself
-                    exception.UnityWebRequest.Dispose();
 
                     if (exception.IsIrrecoverableError(attemptsLeft))
                         throw;
@@ -127,7 +126,16 @@ namespace DCL.WebRequests
                     ReportHub.Log(reportCategory, $"Exception occured on loading {typeof(TWebRequest).Name} from {commonArguments.URL.ToString()}.\n"
                                                   + $"Attempt Left: {attemptsLeft}");
                 }
-                finally { analyticsContainer.OnRequestFinished(request); }
+                finally
+                {
+                    analyticsContainer.OnRequestFinished(request);
+
+                    if (exceptionThrown)
+                    {
+                        // Make the request no longer usable as all data needed is written into the exception itself
+                        request.UnityWebRequest.Dispose();
+                    }
+                }
             }
 
             throw new Exception($"{nameof(WebRequestController)}: Unexpected code path!");
