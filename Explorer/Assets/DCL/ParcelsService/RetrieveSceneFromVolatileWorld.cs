@@ -23,7 +23,7 @@ namespace DCL.ParcelsService
 
         private readonly IRealmData realmData;
 
-        public World World { private get; set; }
+        public World World { get; set; }
 
         public RetrieveSceneFromVolatileWorld(IRealmData realmData)
         {

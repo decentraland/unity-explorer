@@ -93,7 +93,7 @@ namespace Global.Dynamic
                 new ProfilePlugin(container.ProfileRepository),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer, placesAPIService),
-                new ExplorePanelPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer, placesAPIService, parcelServiceContainer.TeleportController),
+                new ExplorePanelPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer, placesAPIService, parcelServiceContainer.TeleportController, dynamicSettings.BackpackSettings),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
             };
 
