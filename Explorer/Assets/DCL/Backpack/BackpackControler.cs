@@ -1,3 +1,4 @@
+using DCL.Backpack.BackpackBus;
 using DCL.UI;
 using System.Collections.Generic;
 using System.Threading;
@@ -16,7 +17,9 @@ namespace DCL.Backpack
                 BackpackView view,
                 NftTypeIconSO rarityBackgrounds,
                 NftTypeIconSO categoryIcons,
-                NFTColorsSO rarityColors)
+                NFTColorsSO rarityColors,
+                BackpackCommandBus backpackCommandBus,
+                BackpackEventBus backpackEventBus)
             {
                 this.view = view;
                 rectTransform = view.transform.parent.GetComponent<RectTransform>();

@@ -7,9 +7,9 @@ namespace DCL.PluginSystem.Global
 {
     public class BackpackBusPlugin : IDCLGlobalPluginWithoutSettings
     {
-        public BackpackBusPlugin(IWearableCatalog wearableCatalog)
+        public BackpackBusPlugin(IWearableCatalog wearableCatalog, BackpackCommandBus commandBus, BackpackEventBus eventBus)
         {
-            BackpackBusController busController = new BackpackBusController(wearableCatalog, null, null);
+            BackpackBusController busController = new BackpackBusController(wearableCatalog, eventBus, commandBus);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

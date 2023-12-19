@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack;
+using DCL.Backpack.BackpackBus;
 using DCL.ExplorePanel;
 using DCL.Navmap;
 using DCL.ParcelsService;
@@ -23,6 +24,8 @@ namespace DCL.PluginSystem.Global
         private readonly IPlacesAPIService placesAPIService;
         private readonly ITeleportController teleportController;
         private readonly BackpackSettings backpackSettings;
+        private readonly BackpackCommandBus backpackCommandBus;
+        private readonly BackpackEventBus backpackEventBus;
         private NavmapController navmapController;
 
         public ExplorePanelPlugin(
@@ -31,7 +34,9 @@ namespace DCL.PluginSystem.Global
             MapRendererContainer mapRendererContainer,
             IPlacesAPIService placesAPIService,
             ITeleportController teleportController,
-            BackpackSettings backpackSettings)
+            BackpackSettings backpackSettings,
+            BackpackCommandBus backpackCommandBus,
+            BackpackEventBus backpackEventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -39,6 +44,8 @@ namespace DCL.PluginSystem.Global
             this.placesAPIService = placesAPIService;
             this.teleportController = teleportController;
             this.backpackSettings = backpackSettings;
+            this.backpackCommandBus = backpackCommandBus;
+            this.backpackEventBus = backpackEventBus;
         }
 
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
@@ -50,7 +57,13 @@ namespace DCL.PluginSystem.Global
             await navmapController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
             SettingsController settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
-            BackpackControler backpackController = new BackpackControler(explorePanelView.GetComponentInChildren<BackpackView>(), backpackSettings.RarityBackgroundsMapping, backpackSettings.CategoryIconsMapping, backpackSettings.RarityColorMappings);
+            BackpackControler backpackController = new BackpackControler(
+                explorePanelView.GetComponentInChildren<BackpackView>(),
+                backpackSettings.RarityBackgroundsMapping,
+                backpackSettings.CategoryIconsMapping,
+                backpackSettings.RarityColorMappings,
+                backpackCommandBus,
+                backpackEventBus);
 
             mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackController));
 

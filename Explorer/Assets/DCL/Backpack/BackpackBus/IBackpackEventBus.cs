@@ -7,10 +7,10 @@ namespace DCL.Backpack.BackpackBus
     {
         public event Action<IWearable> EquipEvent;
         public event Action<IWearable> UnEquipEvent;
-        public event Action<IWearable> HideEvent;
+        public event Action<string[]> HideEvent;
 
         public void SendEquip(IWearable equipWearable);
         public void SendUnEquip(IWearable unEquipWearable);
-        public void SendHide(IWearable hideWearable);
+        public void SendHide(string[] hideWearableCategories);
     }
 }

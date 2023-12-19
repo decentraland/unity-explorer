@@ -1,3 +1,4 @@
+using DCL.Backpack.BackpackBus;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,15 +8,21 @@ namespace DCL.Backpack
 {
     public class BackpackSlotsController
     {
+        private readonly BackpackCommandBus backpackCommandBus;
+        private readonly BackpackEventBus backpackEventBus;
         private readonly Dictionary<string, AvatarSlotView> avatarSlots = new Dictionary<string, AvatarSlotView>();
         private AvatarSlotView previousSlot;
 
-        public BackpackSlotsController(AvatarSlotView[] avatarSlotViews)
+        public BackpackSlotsController(AvatarSlotView[] avatarSlotViews, BackpackCommandBus backpackCommandBus, BackpackEventBus backpackEventBus)
         {
+            this.backpackCommandBus = backpackCommandBus;
+            this.backpackEventBus = backpackEventBus;
+
             foreach (var avatarSlotView in avatarSlotViews)
             {
                 avatarSlots.Add(avatarSlotView.Category, avatarSlotView);
                 avatarSlotView.OnSlotButtonPressed += OnSlotButtonPressed;
+                avatarSlotView.UnequipButton.onClick.AddListener(() => backpackCommandBus.SendCommand(new BackpackCommand(BackpackCommandType.UnequipCommand, null, avatarSlotView.Category)));
             }
         }
 

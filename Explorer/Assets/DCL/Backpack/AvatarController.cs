@@ -1,3 +1,4 @@
+using DCL.Backpack.BackpackBus;
 using DCL.UI;
 using UnityEngine;
 
@@ -11,19 +12,25 @@ namespace DCL.Backpack
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NftTypeIconSO categoryIcons;
         private readonly NFTColorsSO rarityColors;
+        private readonly BackpackCommandBus backpackCommandBus;
+        private readonly BackpackEventBus backpackEventBus;
 
         public AvatarController(AvatarView view,
             AvatarSlotView[] slotViews,
             NftTypeIconSO rarityBackgrounds,
             NftTypeIconSO categoryIcons,
-            NFTColorsSO rarityColors)
+            NFTColorsSO rarityColors,
+            BackpackCommandBus backpackCommandBus,
+            BackpackEventBus backpackEventBus)
         {
             this.view = view;
             this.rarityBackgrounds = rarityBackgrounds;
             this.categoryIcons = categoryIcons;
             this.rarityColors = rarityColors;
+            this.backpackCommandBus = backpackCommandBus;
+            this.backpackEventBus = backpackEventBus;
 
-            slotsController = new BackpackSlotsController(slotViews);
+            slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus);
             rectTransform = view.GetComponent<RectTransform>();
         }
 

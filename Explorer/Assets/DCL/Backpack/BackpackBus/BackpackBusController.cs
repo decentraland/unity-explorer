@@ -28,7 +28,7 @@ namespace DCL.Backpack.BackpackBus
                     HandleEquipCommand(command.Id);
                     break;
                 case BackpackCommandType.UnequipCommand:
-                    HandleUnequipCommand(command.Id, command.Category);
+                    HandleUnEquipCommand(command.Id, command.Category);
                     break;
                 case BackpackCommandType.HideCommand:
                     HandleHideCommand();
@@ -44,12 +44,13 @@ namespace DCL.Backpack.BackpackBus
             }
         }
 
-        private void HandleUnequipCommand(string wearableId, string category)
+        private void HandleUnEquipCommand(string wearableId, string category)
         {
             if (!string.IsNullOrEmpty(wearableId))
             {
 
-            }else if (!string.IsNullOrEmpty(category))
+            }
+            if (!string.IsNullOrEmpty(category))
             {
 
             }
