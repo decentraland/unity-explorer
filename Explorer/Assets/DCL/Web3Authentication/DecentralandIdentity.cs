@@ -25,6 +25,11 @@ namespace DCL.Web3Authentication
             Expiration = expiration;
         }
 
+        public void Dispose()
+        {
+            authChain.Dispose();
+        }
+
         public AuthChain Sign(string entityId)
         {
             if (Expiration < DateTime.UtcNow)

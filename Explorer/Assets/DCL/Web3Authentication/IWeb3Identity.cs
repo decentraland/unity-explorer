@@ -2,7 +2,7 @@ using System;
 
 namespace DCL.Web3Authentication
 {
-    public interface IWeb3Identity
+    public interface IWeb3Identity : IDisposable
     {
         string Address { get; }
         DateTime Expiration { get; }
