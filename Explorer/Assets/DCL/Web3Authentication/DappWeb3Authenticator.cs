@@ -5,7 +5,6 @@ using SocketIOClient.Transport;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace DCL.Web3Authentication
@@ -37,7 +36,7 @@ namespace DCL.Web3Authentication
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        /// <exception cref="Web3AuthenticationException"></exception>
+        /// <exception cref="Web3SignatureException"></exception>
         public async UniTask<IWeb3Identity> LoginAsync(CancellationToken cancellationToken)
         {
             try
@@ -60,12 +59,10 @@ namespace DCL.Web3Authentication
                 DappSignatureResponse signature = await WaitForMessageResponseAsync<DappSignatureResponse>("submit-signature-response", cancellationToken);
 
                 if (!signature.payload.ok)
-                    throw new Web3AuthenticationException("The user rejected the signature");
+                    throw new Web3SignatureException($"Signature failed: {authenticationResponse.payload.requestId}");
 
                 AuthChain authChain = CreateAuthChain(signature, ephemeralMessage);
                 Identity = new DecentralandIdentity(signature.payload.signer, ephemeralAccount, expiration, authChain);
-
-                await UniTask.SwitchToMainThread(cancellationToken);
 
                 return Identity;
             }
@@ -73,12 +70,14 @@ namespace DCL.Web3Authentication
             {
                 if (webSocket != null)
                 {
-                    await webSocket.DisconnectAsync();
+                    if (webSocket.Connected)
+                        await webSocket.DisconnectAsync();
+
                     webSocket.Dispose();
                     webSocket = null;
-
-                    await UniTask.SwitchToMainThread(cancellationToken);
                 }
+
+                await UniTask.SwitchToMainThread(cancellationToken);
             }
         }
 
