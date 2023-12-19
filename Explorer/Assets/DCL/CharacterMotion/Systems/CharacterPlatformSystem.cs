@@ -2,12 +2,11 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using CrdtEcsBridge.Physics;
 using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Platforms;
 using DCL.CharacterMotion.Settings;
 using DCL.Diagnostics;
 using ECS.Abstract;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.Systems
@@ -26,12 +25,15 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
+        [None(typeof(PlayerTeleportIntent))]
         private void ResolvePlatformMovement(
             in ICharacterControllerSettings settings,
             ref CharacterPlatformComponent platformComponent,
             ref CharacterRigidTransform rigidTransform,
             ref CharacterController characterController)
         {
+            rigidTransform.PlatformDelta = Vector3.zero;
+
             if (!rigidTransform.IsGrounded)
             {
                 platformComponent.CurrentPlatform = null;
@@ -40,7 +42,7 @@ namespace DCL.CharacterMotion.Systems
 
             Transform transform = characterController.transform;
 
-            CheckPlatform(platformComponent, transform, settings);
+            PlatformRaycast.Execute(platformComponent, characterController.radius, transform, settings);
 
             if (platformComponent.CurrentPlatform == null) return;
 
@@ -49,36 +51,8 @@ namespace DCL.CharacterMotion.Systems
             Vector3 newGroundWorldPos = platformTransform.TransformPoint(platformComponent.LastPosition);
             Vector3 newCharacterForward = platformTransform.TransformDirection(platformComponent.LastRotation);
 
-            Vector3 deltaPosition = newGroundWorldPos - transform.position;
-            characterController.Move(deltaPosition);
+            rigidTransform.PlatformDelta = newGroundWorldPos - transform.position;
             transform.forward = newCharacterForward;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void CheckPlatform(CharacterPlatformComponent platformComponent, Transform transform, ICharacterControllerSettings settings)
-        {
-            float rayDistance = settings.PlatformRaycastLength;
-            float halfDistance = rayDistance * 0.5f;
-
-            var ray = new Ray
-            {
-                origin = transform.position + (Vector3.up * halfDistance),
-                direction = Vector3.down,
-            };
-
-            bool hasHit = Physics.Raycast(ray, out RaycastHit hitInfo, rayDistance, PhysicsLayers.CHARACTER_ONLY_MASK);
-
-            if (hasHit)
-            {
-                if (platformComponent.CurrentPlatform != hitInfo.collider.transform)
-                {
-                    platformComponent.CurrentPlatform = hitInfo.collider.transform;
-                    platformComponent.LastPosition = platformComponent.CurrentPlatform.InverseTransformPoint(transform.position);
-                    platformComponent.LastRotation = platformComponent.CurrentPlatform.InverseTransformDirection(transform.forward);
-                }
-            }
-            else
-                platformComponent.CurrentPlatform = null;
         }
     }
 }

@@ -7,18 +7,23 @@ namespace Global.Dynamic
     public interface IRealmController
     {
         /// <summary>
+        ///     Setup the GlobalWorld
+        /// </summary>
+        void SetupWorld(GlobalWorld world);
+
+        /// <summary>
         ///     Unload the current realm and load the new one
         /// </summary>
-        UniTask SetRealmAsync(GlobalWorld globalWorld, URLDomain realm, CancellationToken ct);
+        UniTask SetRealmAsync(URLDomain realm, CancellationToken ct);
 
         /// <summary>
         ///     Gracefully unload the current realm
         /// </summary>
-        UniTask UnloadCurrentRealmAsync(GlobalWorld globalWorld);
+        UniTask UnloadCurrentRealmAsync();
 
         /// <summary>
         ///     Dispose everything on application quit
         /// </summary>
-        UniTask DisposeGlobalWorldAsync(GlobalWorld globalWorld);
+        UniTask DisposeGlobalWorldAsync();
     }
 }
