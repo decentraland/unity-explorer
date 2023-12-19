@@ -10,8 +10,6 @@ using ECS.StreamableLoading;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.Transforms.Components;
 using UnityEngine;
-using UnityEngine.Android;
-using UnityEngine.Assertions;
 using Utility;
 
 namespace DCL.SDKComponents.AudioSources
