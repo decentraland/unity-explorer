@@ -44,7 +44,7 @@ namespace DCL.Web3Authentication
             {
                 InitializeWebSocket();
 
-                await ConnectToServer();
+                await ConnectToServerAsync();
 
                 var ephemeralAccount = NethereumAccount.CreateRandom();
 
@@ -52,12 +52,12 @@ namespace DCL.Web3Authentication
                 DateTime expiration = DateTime.UtcNow.AddDays(7);
                 string ephemeralMessage = CreateEphemeralMessage(ephemeralAccount, expiration);
 
-                SignatureIdResponse authenticationResponse = await RequestAuthentication(ephemeralMessage, cancellationToken);
+                SignatureIdResponse authenticationResponse = await RequestAuthenticationAsync(ephemeralMessage, cancellationToken);
 
                 await UniTask.SwitchToMainThread(cancellationToken);
 
                 LetUserSignThroughDapp(authenticationResponse.payload.requestId);
-                DappSignatureResponse signature = await WaitForMessageResponse<DappSignatureResponse>("submit-signature-response", cancellationToken);
+                DappSignatureResponse signature = await WaitForMessageResponseAsync<DappSignatureResponse>("submit-signature-response", cancellationToken);
 
                 if (!signature.payload.ok)
                     throw new Web3AuthenticationException("The user rejected the signature");
@@ -92,7 +92,7 @@ namespace DCL.Web3Authentication
             webSocket.Dispose();
         }
 
-        private void InitializeWebSocket()
+        private SocketIO InitializeWebSocket()
         {
             var uri = new Uri(SERVER_URL_DEV);
 
@@ -103,6 +103,8 @@ namespace DCL.Web3Authentication
 
             webSocket.JsonSerializer = new NewtonsoftJsonSerializer();
             webSocket.OnAny(ProcessMessage);
+
+            return webSocket;
         }
 
         private AuthChain CreateAuthChain(DappSignatureResponse signature, string ephemeralMessage)
@@ -129,7 +131,7 @@ namespace DCL.Web3Authentication
         private string CreateEphemeralMessage(IWeb3Account ephemeralAccount, DateTime expiration) =>
             $"Decentraland Login\nEphemeral address: {ephemeralAccount.Address}\nExpiration: {expiration:s}";
 
-        private async Task ConnectToServer() =>
+        private async UniTask ConnectToServerAsync() =>
             await webSocket!.ConnectAsync();
 
         private static void LetUserSignThroughDapp(string requestId) =>
@@ -149,7 +151,7 @@ namespace DCL.Web3Authentication
             pendingMessageTasks.Remove(message.type);
         }
 
-        private async UniTask<SignatureIdResponse> RequestAuthentication(string ephemeralMessage,
+        private async UniTask<SignatureIdResponse> RequestAuthenticationAsync(string ephemeralMessage,
             CancellationToken cancellationToken)
         {
             await webSocket!.EmitAsync("message",
@@ -164,10 +166,10 @@ namespace DCL.Web3Authentication
                     },
                 });
 
-            return await WaitForMessageResponse<SignatureIdResponse>("request-response", cancellationToken);
+            return await WaitForMessageResponseAsync<SignatureIdResponse>("request-response", cancellationToken);
         }
 
-        private async UniTask<T> WaitForMessageResponse<T>(string eventName, CancellationToken cancellationToken)
+        private async UniTask<T> WaitForMessageResponseAsync<T>(string eventName, CancellationToken cancellationToken)
         {
             if (pendingMessageTasks.TryGetValue(eventName, out UniTaskCompletionSource<SocketIOResponse>? task))
                 return (await task.Task.AttachExternalCancellation(cancellationToken))
