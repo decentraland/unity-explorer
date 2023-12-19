@@ -1,5 +1,7 @@
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
+using JetBrains.Annotations;
+using System;
 
 namespace DCL.Backpack.BackpackBus
 {
@@ -14,14 +16,48 @@ namespace DCL.Backpack.BackpackBus
             this.wearableCatalog = wearableCatalog;
             this.backpackEventBus = backpackEventBus;
             this.backpackCommandBus = backpackCommandBus;
+
+            backpackCommandBus.OnMessageReceived += HandleBackpackMessageReceived;
         }
 
-        public void Equip(EquipCommand equipCommand)
+        private void HandleBackpackMessageReceived(BackpackCommand command)
         {
-            if (wearableCatalog.TryGetWearable(equipCommand.Id, out IWearable equipWearable))
+            switch (command.Type)
+            {
+                case BackpackCommandType.EquipCommand:
+                    HandleEquipCommand(command.Id);
+                    break;
+                case BackpackCommandType.UnequipCommand:
+                    HandleUnequipCommand(command.Id, command.Category);
+                    break;
+                case BackpackCommandType.HideCommand:
+                    HandleHideCommand();
+                    break;
+            }
+        }
+
+        private void HandleEquipCommand(string wearableId)
+        {
+            if (wearableCatalog.TryGetWearable(wearableId, out IWearable wearable))
+            {
+                backpackEventBus.SendEquip(wearable);
+            }
+        }
+
+        private void HandleUnequipCommand(string wearableId, string category)
+        {
+            if (!string.IsNullOrEmpty(wearableId))
+            {
+
+            }else if (!string.IsNullOrEmpty(category))
             {
 
             }
+        }
+
+        private void HandleHideCommand()
+        {
+
         }
     }
 }
