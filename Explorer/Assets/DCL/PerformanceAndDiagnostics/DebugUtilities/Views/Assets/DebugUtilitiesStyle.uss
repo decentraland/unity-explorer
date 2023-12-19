@@ -243,3 +243,45 @@ Vector2IntField > VisualElement > .unity-composite-field__field-spacer {
 .debug-hint--error > #Sign {
     background-image: url('project://database/Assets/DCL/DebugUtilities/Views/Assets/error.png');
 }
+
+.unity-scroller {
+    width: 12px;
+}
+
+.unity-slider {
+    width: 12px;
+    min-width: 12px;
+    margin-top: 12px;
+    margin-bottom: 12px;
+}
+
+.unity-scroller__high-button {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+}
+
+.unity-scroller__low-button {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    margin: 0;
+    padding: 0;
+    border-width: 0;
+}
+
+.unity-base-slider__tracker {
+    width: 12px;
+    margin-left: 0;
+    border-width: 0px;
+}
+
+.unity-base-slider__dragger {
+    width: 12px;
+    border-radius: 4px;
+    border-width: 0px;
+    left: 0px;
+ }

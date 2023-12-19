@@ -5,23 +5,46 @@ namespace DCL.WebRequests.Analytics
 {
     public class WebRequestsAnalyticsContainer : IWebRequestsAnalyticsContainer
     {
-        private readonly Dictionary<Type, int> ongoingRequests = new ();
+        private readonly Dictionary<Type, List<IRequestMetric>> requestTypesWithMetrics = new ();
+        private readonly Dictionary<Type, Func<IRequestMetric>> requestMetricTypes = new ();
 
-        public int GetMetric(Type requestType) =>
-            ongoingRequests.TryGetValue(requestType, out int count) ? count : 0;
+        public IReadOnlyList<IRequestMetric> GetMetric(Type requestType) =>
+            requestTypesWithMetrics.GetValueOrDefault(requestType);
 
+        public IDictionary<Type, Func<IRequestMetric>> GetTrackedMetrics() =>
+            requestMetricTypes;
+
+        public WebRequestsAnalyticsContainer AddTrackedMetric<T>() where T: class, IRequestMetric, new()
+        {
+            requestMetricTypes.Add(typeof(T), () => new T());
+            return this;
+        }
         void IWebRequestsAnalyticsContainer.OnRequestStarted<T>(T request)
         {
-            if (ongoingRequests.TryGetValue(typeof(T), out int count))
-                ongoingRequests[typeof(T)] = count + 1;
-            else
-                ongoingRequests.Add(typeof(T), 1);
+            if (!requestTypesWithMetrics.TryGetValue(typeof(T), out List<IRequestMetric> metrics))
+            {
+                metrics = new List<IRequestMetric>();
+
+                foreach ((_, Func<IRequestMetric> ctor) in requestMetricTypes)
+                    metrics.Add(ctor());
+
+                requestTypesWithMetrics.Add(typeof(T), metrics);
+            }
+
+            foreach (var metric in metrics)
+            {
+                metric.OnRequestStarted(request);
+            }
         }
 
         void IWebRequestsAnalyticsContainer.OnRequestFinished<T>(T request)
         {
-            if (ongoingRequests.TryGetValue(typeof(T), out int count))
-                ongoingRequests[typeof(T)] = count - 1;
+            if (!requestTypesWithMetrics.TryGetValue(typeof(T), out List<IRequestMetric> metrics)) return;
+
+            foreach (var metric in metrics)
+            {
+                metric.OnRequestEnded(request);
+            }
         }
     }
 }
