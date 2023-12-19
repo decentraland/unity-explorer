@@ -2,9 +2,9 @@ namespace DCL.Web3Authentication
 {
     public class FakeWeb3Account : IWeb3Account
     {
-        public string Address { get; }
+        public Web3Address Address { get; }
 
-        public FakeWeb3Account(string publicAddress)
+        public FakeWeb3Account(Web3Address publicAddress)
         {
             Address = publicAddress;
         }

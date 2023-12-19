@@ -2,7 +2,7 @@ namespace DCL.Web3Authentication
 {
     public interface IWeb3Account
     {
-        public string Address { get; }
+        public Web3Address Address { get; }
 
         string Sign(string message);
 

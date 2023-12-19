@@ -62,7 +62,7 @@ namespace DCL.Web3Authentication
                     throw new Web3SignatureException($"Signature failed: {authenticationResponse.payload.requestId}");
 
                 AuthChain authChain = CreateAuthChain(signature, ephemeralMessage);
-                Identity = new DecentralandIdentity(signature.payload.signer, ephemeralAccount, expiration, authChain);
+                Identity = new DecentralandIdentity(new Web3Address(signature.payload.signer), ephemeralAccount, expiration, authChain);
 
                 return Identity;
             }

@@ -7,11 +7,12 @@ namespace DCL.Web3Authentication
         private static readonly EthereumMessageSigner signer = new ();
         private readonly EthECKey key;
 
-        public string Address => key.GetPublicAddress();
+        public Web3Address Address { get; }
 
         public NethereumAccount(EthECKey key)
         {
             this.key = key;
+            Address = new Web3Address(key.GetPublicAddress());
         }
 
         public static NethereumAccount CreateRandom() =>

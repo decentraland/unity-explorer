@@ -6,11 +6,11 @@ namespace DCL.Web3Authentication
 {
     public class FakeWeb3Authenticator : IWeb3Authenticator
     {
-        private readonly string customAddress;
+        private readonly Web3Address customAddress;
 
         public IWeb3Identity? Identity { get; private set; }
 
-        public FakeWeb3Authenticator(string customAddress)
+        public FakeWeb3Authenticator(Web3Address customAddress)
         {
             this.customAddress = customAddress;
         }
