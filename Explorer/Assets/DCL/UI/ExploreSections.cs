@@ -4,6 +4,13 @@ namespace DCL.UI
     {
         Navmap,
         Settings,
+        Backpack
+    }
+
+    public enum BackpackSections
+    {
+        Avatar,
+        Emotes
     }
 
     public enum NavmapSections
