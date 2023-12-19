@@ -1,27 +1,32 @@
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using SocketIOClient;
 using SocketIOClient.Newtonsoft.Json;
 using SocketIOClient.Transport;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.Web3Authentication
 {
     public class DappWeb3Authenticator : IWeb3Authenticator
     {
-        // TODO: switch urls depending on current realm / developer mode (?)
         private const string SERVER_URL_DEV = "https://auth-api.decentraland.zone";
         private const string SERVER_URL_PRD = "https://auth-api.decentraland.today";
         private const string SIGN_DAPP_URL_DEV = "https://decentraland.zone/auth/requests/:requestId";
         private const string SIGN_DAPP_URL_PRD = "https://decentraland.org/auth/requests/:requestId";
 
+        private readonly IWebBrowser webBrowser;
         private readonly Dictionary<string, UniTaskCompletionSource<SocketIOResponse>> pendingMessageTasks = new ();
 
         private SocketIO? webSocket;
 
         public IWeb3Identity? Identity { get; private set; }
+
+        public DappWeb3Authenticator(IWebBrowser webBrowser)
+        {
+            this.webBrowser = webBrowser;
+        }
 
         public void Dispose()
         {
@@ -93,7 +98,11 @@ namespace DCL.Web3Authentication
 
         private SocketIO InitializeWebSocket()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             var uri = new Uri(SERVER_URL_DEV);
+#else
+            var uri = new Uri(SERVER_URL_PRD);
+#endif
 
             webSocket = new SocketIO(uri, new SocketIOOptions
             {
@@ -133,10 +142,12 @@ namespace DCL.Web3Authentication
         private async UniTask ConnectToServerAsync() =>
             await webSocket!.ConnectAsync();
 
-        private static void LetUserSignThroughDapp(string requestId) =>
-
-            // TODO: missing dependency inversion for opening browser tab
-            Application.OpenURL(SIGN_DAPP_URL_DEV.Replace(":requestId", requestId));
+        private void LetUserSignThroughDapp(string requestId) =>
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            webBrowser.OpenUrl(SIGN_DAPP_URL_DEV.Replace(":requestId", requestId));
+#else
+            webBrowser.OpenUrl(SIGN_DAPP_URL_PRD.Replace(":requestId", requestId));
+#endif
 
         private void ProcessMessage(string name, SocketIOResponse response)
         {

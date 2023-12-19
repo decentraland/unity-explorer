@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Web3Authentication;
@@ -73,7 +74,7 @@ namespace Global.Dynamic
         {
             try
             {
-                web3Authenticator = new DappWeb3Authenticator();
+                web3Authenticator = new DappWeb3Authenticator(new UnityAppWebBrowser());
                 IWeb3Identity web3Identity = await web3Authenticator.LoginAsync(ct);
 
                 // First load the common global plugin
