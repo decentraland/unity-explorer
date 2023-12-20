@@ -67,6 +67,11 @@ namespace DCL.ECSComponents
         public bool IsDirty { get; set; }
     }
 
+    public partial class PBAudioStream : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
     public static class DirtyMarkerExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

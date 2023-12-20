@@ -13,8 +13,8 @@ using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiling;
 using DCL.ResourcesUnloading;
 using DCL.Time;
-using DCL.WebRequests.Analytics;
 using DCL.Web3Authentication;
+using DCL.WebRequests.Analytics;
 using ECS.Prioritization;
 using System.Collections.Generic;
 using System.Threading;
@@ -144,6 +144,7 @@ namespace Global
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
                 new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
+                new AudioStreamPlugin(),
 
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
