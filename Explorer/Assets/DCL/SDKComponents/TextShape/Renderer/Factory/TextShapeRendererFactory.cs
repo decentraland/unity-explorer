@@ -22,7 +22,7 @@ namespace DCL.SDKComponents.TextShape.Renderer.Factory
             var text = new GameObject($"text component: {HashCode.Combine(parent.GetHashCode(), parent.childCount)}");
             text.transform.SetParent(parent);
             var tmp = text.AddComponent<TextMeshPro>()!;
-            var renderer = new TMPTextShapeRenderer(tmp, tmp.GetComponent<MeshRenderer>()!, new MaterialPropertyBlock(), tmp.GetComponent<RectTransform>()!, fontsStorage);
+            var renderer = new TMPTextShapeRenderer(tmp, fontsStorage);
             renderer.Apply(textShape);
             return renderer;
         }

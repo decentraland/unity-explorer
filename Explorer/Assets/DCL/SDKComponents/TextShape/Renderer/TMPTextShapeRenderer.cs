@@ -1,3 +1,4 @@
+using DCL.DemoWorlds.Extensions;
 using DCL.ECSComponents;
 using DCL.SDKComponents.TextShape.Fonts;
 using ECS.Unity.ColorComponent;
@@ -20,6 +21,14 @@ namespace DCL.SDKComponents.TextShape.Renderer
         private static readonly int ID_UNDERLAY_SOFTNESS = Shader.PropertyToID("_UnderlaySoftness");
         private static readonly int ID_UNDERLAY_OFFSET_Y = Shader.PropertyToID("_UnderlayOffsetY");
         private static readonly int ID_UNDERLAY_OFFSET_X = Shader.PropertyToID("_UnderlayOffsetX");
+
+        public TMPTextShapeRenderer(TMP_Text tmp, IFontsStorage fontsStorage) : this(
+            tmp,
+            tmp.GetComponent<MeshRenderer>().EnsureNotNull(),
+            new MaterialPropertyBlock(),
+            tmp.GetComponent<RectTransform>().EnsureNotNull(),
+            fontsStorage
+        ) { }
 
         public TMPTextShapeRenderer(
             TMP_Text tmpText,
