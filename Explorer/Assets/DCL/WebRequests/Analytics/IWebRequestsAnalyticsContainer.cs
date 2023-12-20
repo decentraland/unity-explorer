@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace DCL.WebRequests.Analytics
 {
@@ -7,7 +8,11 @@ namespace DCL.WebRequests.Analytics
     /// </summary>
     public interface IWebRequestsAnalyticsContainer
     {
-        public int GetMetric(Type requestType);
+        WebRequestsAnalyticsContainer AddTrackedMetric<T>() where T: class, IRequestMetric, new();
+
+        IDictionary<Type, Func<IRequestMetric>> GetTrackedMetrics();
+
+        IReadOnlyList<IRequestMetric> GetMetric(Type requestType);
 
         internal void OnRequestStarted<T>(T request) where T: ITypedWebRequest;
 
