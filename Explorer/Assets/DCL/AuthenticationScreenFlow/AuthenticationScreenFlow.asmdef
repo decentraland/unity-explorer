@@ -1,0 +1,18 @@
+{
+  "name": "AuthenticationScreenFlow",
+  "rootNamespace": "",
+  "references": [
+    "GUID:f51ebe6a0ceec4240a699833d6309b23",
+    "GUID:5ab29fa8ae5769b49ab29e390caca7a4",
+    "GUID:45f6fff651a0a514f8edfdaf9cce45af"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

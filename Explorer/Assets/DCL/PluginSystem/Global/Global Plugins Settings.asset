@@ -22,9 +22,18 @@ MonoBehaviour:
   - rid: 5215741520409264129
   - rid: 1501337502808539138
   - rid: 2152807656697888768
+  - rid: 1095376790733193218
   references:
     version: 2
     RefIds:
+    - rid: 1095376790733193218
+      type: {class: Web3AuthPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <AuthScreenPrefab>k__BackingField:
+          m_AssetGUID: 08d42937d0bc54b48baaa23c8c520175
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 1268264176566403074
       type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -154,6 +163,9 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <FrameTimeCap>k__BackingField: 33
+        <ScenesLoadingBudget>k__BackingField: 100
+        <AssetsLoadingBudget>k__BackingField: 50
     - rid: 6784895265412481026
       type: {class: CharacterCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
