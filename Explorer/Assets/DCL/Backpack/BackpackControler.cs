@@ -1,3 +1,5 @@
+using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.Backpack.BackpackBus;
 using DCL.UI;
 using System.Collections.Generic;
@@ -12,6 +14,7 @@ namespace DCL.Backpack
             private readonly BackpackView view;
             private readonly RectTransform rectTransform;
             private CancellationTokenSource animationCts;
+            private AvatarController avatarController;
 
             public BackpackControler(
                 BackpackView view,
@@ -24,9 +27,11 @@ namespace DCL.Backpack
                 this.view = view;
                 rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
+                avatarController = new AvatarController(view.GetComponentInChildren<AvatarView>(),view.GetComponentsInChildren<AvatarSlotView>(), rarityBackgrounds, categoryIcons, rarityColors, backpackCommandBus, backpackEventBus);
+
                 Dictionary<BackpackSections, ISection> backpackSections = new ()
                 {
-                    { BackpackSections.Avatar, new AvatarController(view.GetComponentInChildren<AvatarView>(),view.GetComponentsInChildren<AvatarSlotView>(), rarityBackgrounds, categoryIcons, rarityColors, backpackCommandBus, backpackEventBus) },
+                    { BackpackSections.Avatar, avatarController },
                     { BackpackSections.Emotes,  new EmotesController(view.GetComponentInChildren<EmotesView>()) },
                 };
                 var sectionSelectorController = new SectionSelectorController<BackpackSections>(backpackSections, BackpackSections.Avatar);
@@ -42,6 +47,9 @@ namespace DCL.Backpack
                         });
                 }
             }
+
+            public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct) =>
+                await avatarController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
             public void Activate()
             {

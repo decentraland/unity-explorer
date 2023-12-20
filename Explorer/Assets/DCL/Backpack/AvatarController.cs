@@ -1,5 +1,8 @@
+using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.Backpack.BackpackBus;
 using DCL.UI;
+using System.Threading;
 using UnityEngine;
 
 namespace DCL.Backpack
@@ -14,6 +17,7 @@ namespace DCL.Backpack
         private readonly NFTColorsSO rarityColors;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackEventBus backpackEventBus;
+        private readonly BackpackGridController backpackGridController;
 
         public AvatarController(AvatarView view,
             AvatarSlotView[] slotViews,
@@ -31,8 +35,12 @@ namespace DCL.Backpack
             this.backpackEventBus = backpackEventBus;
 
             slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus);
+            backpackGridController = new BackpackGridController(view.backpackGridView, backpackCommandBus, backpackEventBus);
             rectTransform = view.GetComponent<RectTransform>();
         }
+
+        public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct) =>
+            await backpackGridController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
         public void Activate() { }
 
