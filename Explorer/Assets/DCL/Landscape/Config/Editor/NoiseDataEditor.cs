@@ -3,6 +3,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEditor;
+using Random = System.Random;
 
 namespace DCL.Landscape.Config.Editor
 {
@@ -21,7 +22,7 @@ namespace DCL.Landscape.Config.Editor
 
             octaveOffsets.Dispose();
             octaveOffsets = new NativeArray<float2>(data.settings.octaves, Allocator.Persistent);
-            float maxPossibleHeight = Noise.CalculateOctaves(0, ref data.settings, ref octaveOffsets);
+            float maxPossibleHeight = Noise.CalculateOctaves(new Random(), ref data.settings, ref octaveOffsets);
 
             var job = new NoiseJob
             {

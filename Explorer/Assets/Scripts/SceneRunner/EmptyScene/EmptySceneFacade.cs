@@ -96,7 +96,8 @@ namespace SceneRunner.EmptyScene
             //environment = CreateGltf(mapping.environment.file);
 
             // Create landscape components
-            environment = args.SharedWorld.Create(new LandscapeParcel(args.BasePosition), new LandscapeParcelInitialization(), args.ParentPartition, partitionPool.Get());
+            // TODO: GET WORLD SEED
+            environment = args.SharedWorld.Create(new LandscapeParcel(args.BasePosition, 0), new LandscapeParcelInitialization(), args.ParentPartition, partitionPool.Get());
 
             return UniTask.CompletedTask;
         }
