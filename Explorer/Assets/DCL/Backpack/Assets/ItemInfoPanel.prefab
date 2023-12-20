@@ -1218,6 +1218,7 @@ GameObject:
   - component: {fileID: 1540264655622709600}
   - component: {fileID: 3293864979209351639}
   - component: {fileID: 4187698545446770879}
+  - component: {fileID: 4687392140680425794}
   m_Layer: 5
   m_Name: ItemInfoPanel
   m_TagString: Untagged
@@ -1285,6 +1286,22 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
+--- !u!114 &4687392140680425794
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7034571882556146322}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e72586a42cf441ff84e93576d0da1d6f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <ItemImage>k__BackingField: {fileID: 6761031925246617703}
+  <Name>k__BackingField: {fileID: 5428682008549936836}
+  <Creator>k__BackingField: {fileID: 3121498563796043484}
+  <Description>k__BackingField: {fileID: 5818285717481497885}
 --- !u!1 &9106849854819600615
 GameObject:
   m_ObjectHideFlags: 0

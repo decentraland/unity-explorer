@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace DCL.Backpack
 {
-    public class BackpackSlotsController
+    public class BackpackSlotsController : IDisposable
     {
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackEventBus backpackEventBus;
@@ -54,6 +54,16 @@ namespace DCL.Backpack
 
             previousSlot = avatarSlot;
             avatarSlot.SelectedBackground.SetActive(true);
+        }
+
+        public void Dispose()
+        {
+            backpackEventBus.EquipEvent -= EquipInSlot;
+            backpackEventBus.UnEquipEvent -= UnEquipInSlot;
+            foreach (var avatarSlotView in avatarSlots.Values)
+            {
+                avatarSlotView.OnSlotButtonPressed -= OnSlotButtonPressed;
+            }
         }
     }
 }

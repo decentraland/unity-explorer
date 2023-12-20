@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack.BackpackBus;
 using DCL.UI;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -9,12 +10,12 @@ using Utility;
 
 namespace DCL.Backpack
     {
-        public class BackpackControler : ISection
+        public class BackpackControler : ISection, IDisposable
         {
             private readonly BackpackView view;
             private readonly RectTransform rectTransform;
             private CancellationTokenSource animationCts;
-            private AvatarController avatarController;
+            private readonly AvatarController avatarController;
 
             public BackpackControler(
                 BackpackView view,
@@ -63,5 +64,11 @@ namespace DCL.Backpack
 
             public RectTransform GetRectTransform() =>
                 rectTransform;
+
+            public void Dispose()
+            {
+                animationCts?.Dispose();
+                avatarController?.Dispose();
+            }
         }
     }

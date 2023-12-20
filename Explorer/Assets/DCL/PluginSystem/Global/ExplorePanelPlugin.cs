@@ -28,6 +28,7 @@ namespace DCL.PluginSystem.Global
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackEventBus backpackEventBus;
         private NavmapController navmapController;
+        private BackpackControler backpackController;
 
         public ExplorePanelPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -57,7 +58,7 @@ namespace DCL.PluginSystem.Global
             navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, teleportController);
             await navmapController.InitialiseAssetsAsync(assetsProvisioner, ct);
             SettingsController settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
-            BackpackControler backpackController = new BackpackControler(
+            backpackController = new BackpackControler(
                 explorePanelView.GetComponentInChildren<BackpackView>(),
                 backpackSettings.RarityBackgroundsMapping,
                 backpackSettings.CategoryIconsMapping,
@@ -81,6 +82,7 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             navmapController.Dispose();
+            backpackController.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }

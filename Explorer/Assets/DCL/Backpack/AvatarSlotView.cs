@@ -31,6 +31,12 @@ namespace DCL.Backpack
         public Button UnequipButton { get; private set; }
 
         [field: SerializeField]
+        public Button OverrideHide { get; private set; }
+
+        [field: SerializeField]
+        public Button NoOverride { get; private set; }
+
+        [field: SerializeField]
         public TMP_Text CategoryText { get; private set; }
 
         public void Start()
@@ -49,12 +55,14 @@ namespace DCL.Backpack
         {
             HoverTootlip.SetActive(true);
             focusedImage.enabled = true;
+            UnequipButton.gameObject.SetActive(true);
             ScaleUpAnimation(focusedImage.transform);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             HoverTootlip.SetActive(false);
+            UnequipButton.gameObject.SetActive(false);
             focusedImage.enabled = false;
         }
 

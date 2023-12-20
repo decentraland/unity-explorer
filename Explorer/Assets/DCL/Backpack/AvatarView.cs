@@ -6,5 +6,8 @@ namespace DCL.Backpack
     {
         [field: SerializeField]
         internal BackpackGridView backpackGridView { get; private set; }
+
+        [field: SerializeField]
+        internal BackpackInfoPanelView backpackInfoPanelView { get; private set; }
     }
 }

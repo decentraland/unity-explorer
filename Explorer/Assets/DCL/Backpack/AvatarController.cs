@@ -2,12 +2,13 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack.BackpackBus;
 using DCL.UI;
+using System;
 using System.Threading;
 using UnityEngine;
 
 namespace DCL.Backpack
 {
-    public class AvatarController : ISection
+    public class AvatarController : ISection, IDisposable
     {
         private readonly RectTransform rectTransform;
         private readonly AvatarView view;
@@ -18,6 +19,7 @@ namespace DCL.Backpack
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackEventBus backpackEventBus;
         private readonly BackpackGridController backpackGridController;
+        private readonly BackpackInfoPanelController backpackInfoPanelController;
 
         public AvatarController(AvatarView view,
             AvatarSlotView[] slotViews,
@@ -36,6 +38,7 @@ namespace DCL.Backpack
 
             slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus);
             backpackGridController = new BackpackGridController(view.backpackGridView, backpackCommandBus, backpackEventBus);
+            backpackInfoPanelController = new BackpackInfoPanelController(view.backpackInfoPanelView);
             rectTransform = view.GetComponent<RectTransform>();
         }
 
@@ -48,5 +51,11 @@ namespace DCL.Backpack
 
         public RectTransform GetRectTransform() =>
             rectTransform;
+
+        public void Dispose()
+        {
+            slotsController?.Dispose();
+            backpackInfoPanelController?.Dispose();
+        }
     }
 }
