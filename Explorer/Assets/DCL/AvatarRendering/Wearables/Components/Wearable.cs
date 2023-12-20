@@ -98,6 +98,18 @@ namespace DCL.AvatarRendering.Wearables.Components
         public bool isFacialFeature() =>
             WearablesConstants.FACIAL_FEATURES.Contains(GetCategory());
 
+        public bool IsEmptyDefaultWearable()
+        {
+            if (WearableAssetResults[BodyShape.MALE].HasValue && WearableAssetResults[BodyShape.MALE].Value.Asset.GameObject != null)
+                return WearableAssetResults[BodyShape.MALE].Value.Asset.GameObject.name.Contains("Empty");
+
+            if (WearableAssetResults[BodyShape.FEMALE].HasValue && WearableAssetResults[BodyShape.FEMALE].Value.Asset.GameObject != null)
+                return WearableAssetResults[BodyShape.FEMALE].Value.Asset.GameObject.name.Contains("Empty");
+
+            return false;
+        }
+
+
         public bool IsCompatibleWithBodyShape(string bodyShape)
         {
             foreach (WearableDTO.WearableMetadataDto.Representation dataRepresentation in WearableDTO.Asset.metadata.data.representations)

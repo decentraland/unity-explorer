@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables
@@ -37,6 +38,7 @@ namespace DCL.AvatarRendering.Wearables
         private readonly IWearableCatalog wearableCatalog;
 
         private WearablesDTOList defaultWearablesDTOs;
+        private GameObject emptyDefaultWearable;
 
         public WearablePlugin(IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController, IRealmData realmData, URLDomain assetBundleURL, CacheCleaner cacheCleaner)
         {
@@ -58,6 +60,9 @@ namespace DCL.AvatarRendering.Wearables
             JsonConvert.PopulateObject(defaultWearableDefinition.Value.text, partialTargetList);
 
             defaultWearablesDTOs = new WearablesDTOList(partialTargetList);
+
+            ProvidedAsset<GameObject> emptyDefaultWearableAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.emptyDefaultWearable, ct);
+            emptyDefaultWearable = emptyDefaultWearableAsset.Value;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
@@ -69,7 +74,7 @@ namespace DCL.AvatarRendering.Wearables
             LoadWearablesByParamSystem.InjectToWorld(ref builder, webRequestController, new NoCache<IWearable[], GetWearableByParamIntention>(false, false), realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, wearableCatalog, mutexSync);
             LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false), mutexSync);
             LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, webRequestController, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(true, true), mutexSync, assetBundleURL);
-            LoadDefaultWearablesSystem.InjectToWorld(ref builder, defaultWearablesDTOs, wearableCatalog);
+            LoadDefaultWearablesSystem.InjectToWorld(ref builder, defaultWearablesDTOs, wearableCatalog, emptyDefaultWearable);
         }
 
         [Serializable]
@@ -77,6 +82,9 @@ namespace DCL.AvatarRendering.Wearables
         {
             [field: SerializeField]
             public AssetReferenceTextAsset defaultWearablesDefinition;
+
+            [field: SerializeField]
+            public AssetReferenceGameObject emptyDefaultWearable;
         }
     }
 }

@@ -12,6 +12,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {
@@ -21,12 +22,14 @@ namespace DCL.AvatarRendering.Wearables.Systems
     {
         private readonly WearablesDTOList defaultWearableDefinition;
         private readonly IWearableCatalog wearableCatalog;
+        private readonly GameObject emptyDefaultWearable;
 
         internal LoadDefaultWearablesSystem(World world,
-            WearablesDTOList defaultWearableDefinition, IWearableCatalog wearableCatalog) : base(world)
+            WearablesDTOList defaultWearableDefinition, IWearableCatalog wearableCatalog, GameObject emptyDefaultWearable) : base(world)
         {
             this.defaultWearableDefinition = defaultWearableDefinition;
             this.wearableCatalog = wearableCatalog;
+            this.emptyDefaultWearable = emptyDefaultWearable;
         }
 
         public override void Initialize()
@@ -41,6 +44,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             for (var i = 0; i < defaultWearableDefinition.Value.Count; i++)
             {
                 WearableDTO dto = defaultWearableDefinition.Value[i];
+                dto.isDefaultWearable = true;
                 IWearable wearable = wearableCatalog.GetOrAddWearableByDTO(dto);
 
                 BodyShape analyzedBodyShape = wearable.IsCompatibleWithBodyShape(BodyShape.MALE) ? BodyShape.MALE : BodyShape.FEMALE;
@@ -57,6 +61,26 @@ namespace DCL.AvatarRendering.Wearables.Systems
             }
 
             World.Create(state);
+
+            // Add empty default wearable
+            var wearableDTO = new WearableDTO
+            {
+                isDefaultWearable = true,
+                metadata = new WearableDTO.WearableMetadataDto
+                {
+                    id = WearablesConstants.EMPTY_DEFAULT_WEARABLE,
+                },
+            };
+
+            IWearable emptyWearable = wearableCatalog.GetOrAddWearableByDTO(wearableDTO);
+            var wearableAsset = new WearableAsset(emptyDefaultWearable, new List<WearableAsset.RendererInfo>(), null);
+            wearableAsset.AddReference();
+
+            emptyWearable.WearableAssetResults[BodyShape.MALE] =
+                new StreamableLoadingResult<WearableAsset>(wearableAsset);
+
+            emptyWearable.WearableAssetResults[BodyShape.FEMALE] =
+                new StreamableLoadingResult<WearableAsset>(wearableAsset);
         }
 
         protected override void Update(float t)

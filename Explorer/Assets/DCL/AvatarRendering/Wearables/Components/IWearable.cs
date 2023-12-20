@@ -35,5 +35,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         WearableDTO.WearableMetadataDto.DataDto GetData();
 
         bool isFacialFeature();
+
+        bool IsEmptyDefaultWearable();
     }
 }

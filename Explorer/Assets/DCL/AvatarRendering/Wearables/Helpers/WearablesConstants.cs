@@ -7,6 +7,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public static class WearablesConstants
     {
+        public const string EMPTY_DEFAULT_WEARABLE = "EMPTY_DEFAULT_WEARABLE";
+
         //Used for hiding algorithm
         public static readonly IList<string> CATEGORIES_PRIORITY = new List<string>
         {
@@ -149,7 +151,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public static string GetDefaultWearable(BodyShape bodyShapeId, string category)
             {
                 if (!DEFAULT_WEARABLES.ContainsKey((bodyShapeId, category)))
-                    return null;
+                    return EMPTY_DEFAULT_WEARABLE;
 
                 return DEFAULT_WEARABLES[(bodyShapeId, category)];
             }

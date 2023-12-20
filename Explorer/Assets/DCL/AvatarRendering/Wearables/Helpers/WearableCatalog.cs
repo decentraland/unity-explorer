@@ -28,8 +28,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         internal IWearable AddWearable(string loadingIntentionPointer, IWearable wearable)
         {
             wearablesCache.Add(loadingIntentionPointer, wearable);
-            cacheKeysDictionary[loadingIntentionPointer] = listedCacheKeys.AddLast((loadingIntentionPointer, MultithreadingUtility.FrameCount));
 
+            if (!wearable.WearableDTO.Asset.isDefaultWearable)
+                cacheKeysDictionary[loadingIntentionPointer] = listedCacheKeys.AddLast((loadingIntentionPointer, MultithreadingUtility.FrameCount));
             return wearable;
         }
 
@@ -44,13 +45,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return false;
         }
 
-        public IWearable GetDefaultWearable(BodyShape bodyShape, string category)
-        {
-            string wearableURN = WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category);
-
-            UpdateListedCachePriority(@for: wearableURN);
-            return wearablesCache[wearableURN];
-        }
+        public IWearable GetDefaultWearable(BodyShape bodyShape, string category) =>
+            wearablesCache[WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category)];
 
         private void UpdateListedCachePriority(string @for)
         {

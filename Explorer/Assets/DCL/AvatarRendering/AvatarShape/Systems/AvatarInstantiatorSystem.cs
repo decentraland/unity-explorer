@@ -126,15 +126,10 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     continue;
                 }
 
-                if (resultWearable.isFacialFeature())
-                {
-                    //TODO: Facial Features. They are textures that should be applied on the body shape, not gameobjects to instantiate.
-                    //We need the asset bundle to have access to the texture
-                }
-                else
-                {
-                    WearableAsset originalAsset = resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape);
+                WearableAsset originalAsset = resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape);
 
+                if (originalAsset.GameObject != null)
+                {
                     CachedWearable instantiatedWearable =
                         wearableAssetsCache.InstantiateWearable(originalAsset, avatarBase.transform);
 
@@ -144,6 +139,18 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
                     if (resultWearable.IsBodyShape())
                         bodyShape = instantiatedWearable;
+                }
+                else
+                {
+                    if (resultWearable.isFacialFeature())
+                    {
+                        //TODO: Facial Features. They are textures that should be applied on the body shape, not gameobjects to instantiate.
+                        //We need the asset bundle to have access to the texture
+                    }
+
+                    //TODO: There are rare cases where the wearable should be a gameobject, but the asset bundle did not bring it
+                    //This happened to me with bafkreiejnil6fhcb6s2pjbuvbwb6s7bo4flz4o4wosjjqrtd4gjuyht45u (aviator style eyewear)
+                    //We should handle it
                 }
             }
 
