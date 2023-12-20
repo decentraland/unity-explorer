@@ -24,7 +24,7 @@ namespace DCL.Tests
             var expectedUpperWearableHide = new HashSet<string> { WearablesConstants.Categories.LOWER_BODY, WearablesConstants.Categories.HANDS, WearablesConstants.Categories.SKIN };
 
             upperMockWearable
-               .When(x => x.GetHidingList(Arg.Any<string>(), Arg.Any<HashSet<string>>()))
+               .When(x => x.GetHidingList(TEST_BODY_SHAPE, Arg.Any<HashSet<string>>()))
                .Do(callInfo =>
                 {
                     HashSet<string> result = callInfo.Arg<HashSet<string>>();
@@ -37,7 +37,7 @@ namespace DCL.Tests
             var expectedSkinWearableHide = new HashSet<string> { WearablesConstants.Categories.LOWER_BODY, WearablesConstants.Categories.HANDS, WearablesConstants.Categories.UPPER_BODY };
 
             upperSkinWearable
-               .When(x => x.GetHidingList(Arg.Any<string>(), Arg.Any<HashSet<string>>()))
+               .When(x => x.GetHidingList(TEST_BODY_SHAPE, Arg.Any<HashSet<string>>()))
                .Do(callInfo =>
                 {
                     HashSet<string> result = callInfo.Arg<HashSet<string>>();

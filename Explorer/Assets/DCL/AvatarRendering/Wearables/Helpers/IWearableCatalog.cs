@@ -30,17 +30,18 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         bool TryGetWearable(string wearableURN, out IWearable wearable);
 
         /// <summary>
-        ///     Retrieves default wearable from the catalog.
-        /// </summary>
-        /// <param name="bodyShape">The body shape.</param>
-        /// <param name="category">The category.</param>
-        /// <returns>An instance of the <see cref="IWearable" /> type.</returns>
-        IWearable GetDefaultWearable(BodyShape bodyShape, string category);
-
-        /// <summary>
         ///     Unloads the wearable from the catalog by a frame time budget provider.
         /// </summary>
         /// <param name="frameTimeBudgetProvider">The frame time budget provider.</param>
         void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider);
+
+        /// <summary>
+        ///     Retrieves default wearable from the catalog.
+        /// </summary>
+        /// <param name="wearable">The wearable that needs the default wearable asset.</param>
+        /// <param name="bodyShape">The body shape.</param>
+        /// <param name="category">The category.</param>
+        /// <returns>An instance of the <see cref="IWearable" /> type.</returns>
+        void SetDefaultWearableAsset(IWearable wearable, in BodyShape bodyShape);
     }
 }

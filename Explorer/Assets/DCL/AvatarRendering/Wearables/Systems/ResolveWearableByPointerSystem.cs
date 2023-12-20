@@ -266,17 +266,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 return;
             }
 
+            //TODO: Add some client warning telling them that their asset cannot be loaded
             ReportHub.Log(GetReportCategory(), $"Request for wearable {wearable.GetHash()} failed, loading default wearable");
-
-            // This section assumes that the default wearables were successfully loaded.
-            // Waiting for the default wearable should be moved to the loading screen
-            if (wearable.IsUnisex())
-            {
-                wearable.WearableAssetResults[BodyShape.MALE] = wearableCatalog.GetDefaultWearable(BodyShape.MALE, wearable.GetCategory()).WearableAssetResults[BodyShape.MALE];
-                wearable.WearableAssetResults[BodyShape.FEMALE] = wearableCatalog.GetDefaultWearable(BodyShape.FEMALE, wearable.GetCategory()).WearableAssetResults[BodyShape.FEMALE];
-            }
-            else
-                wearable.WearableAssetResults[bodyShape] = wearableCatalog.GetDefaultWearable(bodyShape, wearable.GetCategory()).WearableAssetResults[bodyShape];
+            wearableCatalog.SetDefaultWearableAsset(wearable, bodyShape);
         }
 
         private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<AssetBundleData> result, in BodyShape bodyShape)

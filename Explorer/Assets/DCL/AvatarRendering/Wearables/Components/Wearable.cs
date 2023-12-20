@@ -15,6 +15,8 @@ namespace DCL.AvatarRendering.Wearables.Components
         public StreamableLoadingResult<WearableAsset>?[] WearableAssetResults { get; private set; } = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
         public StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }
         public bool IsLoading { get; set; } = true;
+        public bool IsDefaultWearable { get; set; } = false;
+        public bool IsEmptyDefaultWearableAsset { get; set; } = false;
 
         public string GetMainFileHash(BodyShape bodyShape)
         {
@@ -60,9 +62,13 @@ namespace DCL.AvatarRendering.Wearables.Components
         public bool IsUnisex() =>
             WearableDTO.Asset.metadata.data.representations.Length > 1;
 
-        public void GetHidingList(string bodyShapeType, HashSet<string> hideListResult)
+        public void GetHidingList(in BodyShape bodyShape, HashSet<string> hideListResult)
         {
-            WearableDTO.WearableMetadataDto.Representation representation = GetRepresentation(bodyShapeType);
+            //If we dont have a wearable asset, we cant hide anything
+            if (IsEmptyDefaultWearableAsset || WearableAssetResults[bodyShape].Value.Asset.GameObject == null)
+                return;
+
+            WearableDTO.WearableMetadataDto.Representation representation = GetRepresentation(bodyShape);
             WearableDTO.WearableMetadataDto.DataDto data = WearableDTO.Asset.metadata.data;
 
             if (representation?.overrideHides == null || representation.overrideHides.Length == 0)
@@ -83,7 +89,7 @@ namespace DCL.AvatarRendering.Wearables.Components
             if (isOrHidesUpperBody && !removesHandDefault)
                 hideListResult.UnionWith(WearablesConstants.UPPER_BODY_DEFAULT_HIDES);
 
-            string[] replaces = GetReplacesList(bodyShapeType);
+            string[] replaces = GetReplacesList(bodyShape);
 
             if (replaces != null)
                 hideListResult.UnionWith(replaces);
@@ -92,23 +98,12 @@ namespace DCL.AvatarRendering.Wearables.Components
             hideListResult.Remove(data.category);
         }
 
+
         public WearableDTO.WearableMetadataDto.DataDto GetData() =>
             WearableDTO.Asset.metadata.data;
 
-        public bool isFacialFeature() =>
+        public bool IsFacialFeature() =>
             WearablesConstants.FACIAL_FEATURES.Contains(GetCategory());
-
-        public bool IsEmptyDefaultWearable()
-        {
-            if (WearableAssetResults[BodyShape.MALE].HasValue && WearableAssetResults[BodyShape.MALE].Value.Asset.GameObject != null)
-                return WearableAssetResults[BodyShape.MALE].Value.Asset.GameObject.name.Contains("Empty");
-
-            if (WearableAssetResults[BodyShape.FEMALE].HasValue && WearableAssetResults[BodyShape.FEMALE].Value.Asset.GameObject != null)
-                return WearableAssetResults[BodyShape.FEMALE].Value.Asset.GameObject.name.Contains("Empty");
-
-            return false;
-        }
-
 
         public bool IsCompatibleWithBodyShape(string bodyShape)
         {

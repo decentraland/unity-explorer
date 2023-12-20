@@ -7,7 +7,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     public struct WearableDTO
     {
         public string version;
-        public bool isDefaultWearable;
 
         //hash
         public string id;

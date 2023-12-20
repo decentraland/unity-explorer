@@ -1,4 +1,5 @@
-﻿using DCL.AvatarRendering.Wearables.Components;
+﻿using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
@@ -22,13 +23,12 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             { "mouth", WearablesConstants.Categories.MOUTH },
         };
 
-        public static void ComposeHiddenCategoriesOrdered(string bodyShapeId, HashSet<string> forceRender, IWearable[] wearables, int wearableCount, HashSet<string> combinedHidingList)
+        public static void ComposeHiddenCategoriesOrdered(in BodyShape bodyShape, HashSet<string> forceRender, IWearable[] wearables, int wearableCount, HashSet<string> combinedHidingList)
         {
             var wearablesByCategory = new Dictionary<string, IWearable>();
 
             for (var i = 0; i < wearableCount; i++)
-                if (!wearables[i].IsEmptyDefaultWearable())
-                    wearablesByCategory[wearables[i].GetCategory()] = wearables[i];
+                wearablesByCategory[wearables[i].GetCategory()] = wearables[i];
 
             HashSet<string> hidingList = HashSetPool<string>.Get();
 
@@ -40,7 +40,7 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
                 //Also, if the category is not equipped, then we cant do anything
                 if (combinedHidingList.Contains(priorityCategory) || !wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable)) continue;
 
-                wearable.GetHidingList(bodyShapeId, hidingList);
+                wearable.GetHidingList(bodyShape, hidingList);
 
                 foreach (string categoryToHide in hidingList)
                     combinedHidingList.Add(categoryToHide);

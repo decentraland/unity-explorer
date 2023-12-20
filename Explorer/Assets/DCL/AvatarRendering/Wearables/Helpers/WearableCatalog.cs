@@ -29,7 +29,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             wearablesCache.Add(loadingIntentionPointer, wearable);
 
-            if (!wearable.WearableDTO.Asset.isDefaultWearable)
+            if (!wearable.IsDefaultWearable)
                 cacheKeysDictionary[loadingIntentionPointer] = listedCacheKeys.AddLast((loadingIntentionPointer, MultithreadingUtility.FrameCount));
             return wearable;
         }
@@ -44,9 +44,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             return false;
         }
-
-        public IWearable GetDefaultWearable(BodyShape bodyShape, string category) =>
-            wearablesCache[WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category)];
 
         private void UpdateListedCachePriority(string @for)
         {
@@ -70,6 +67,21 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                         cacheKeysDictionary.Remove(node.Value.key);
                         listedCacheKeys.Remove(node);
                     }
+        }
+
+        public void SetDefaultWearableAsset(IWearable wearable, in BodyShape bodyShape)
+        {
+            IWearable defaultWearable = wearablesCache[WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, wearable.GetCategory())];
+
+            if (wearable.IsUnisex())
+            {
+                wearable.WearableAssetResults[BodyShape.MALE] = defaultWearable.WearableAssetResults[BodyShape.MALE];
+                wearable.WearableAssetResults[BodyShape.FEMALE] = defaultWearable.WearableAssetResults[BodyShape.FEMALE];
+            }
+            else
+                wearable.WearableAssetResults[bodyShape] = defaultWearable.WearableAssetResults[bodyShape];
+
+            wearable.IsEmptyDefaultWearableAsset = defaultWearable.IsEmptyDefaultWearableAsset;
         }
 
         private static bool TryUnloadAllWearableAssets(IWearable wearable)

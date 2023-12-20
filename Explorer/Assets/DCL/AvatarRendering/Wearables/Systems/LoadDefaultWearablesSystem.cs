@@ -44,8 +44,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
             for (var i = 0; i < defaultWearableDefinition.Value.Count; i++)
             {
                 WearableDTO dto = defaultWearableDefinition.Value[i];
-                dto.isDefaultWearable = true;
                 IWearable wearable = wearableCatalog.GetOrAddWearableByDTO(dto);
+                wearable.IsDefaultWearable = true;
 
                 BodyShape analyzedBodyShape = wearable.IsCompatibleWithBodyShape(BodyShape.MALE) ? BodyShape.MALE : BodyShape.FEMALE;
                 pointersRequest[analyzedBodyShape].Add(wearable.GetUrn());
@@ -65,7 +65,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
             // Add empty default wearable
             var wearableDTO = new WearableDTO
             {
-                isDefaultWearable = true,
                 metadata = new WearableDTO.WearableMetadataDto
                 {
                     id = WearablesConstants.EMPTY_DEFAULT_WEARABLE,
@@ -73,6 +72,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
             };
 
             IWearable emptyWearable = wearableCatalog.GetOrAddWearableByDTO(wearableDTO);
+            emptyWearable.IsDefaultWearable = true;
+            emptyWearable.IsEmptyDefaultWearableAsset = true;
             var wearableAsset = new WearableAsset(emptyDefaultWearable, new List<WearableAsset.RendererInfo>(), null);
             wearableAsset.AddReference();
 
