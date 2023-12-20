@@ -14,6 +14,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Profiling;
 using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.Landscape.Systems
@@ -24,12 +25,10 @@ namespace DCL.Landscape.Systems
     {
         private readonly LandscapeData landscapeData;
         private readonly LandscapeAssetPoolManager poolManager;
-        private readonly int worldSeed;
         private readonly Transform landscapeParentObject;
 
         private LandscapeParcelInitializerSystem(World world, LandscapeData landscapeData, LandscapeAssetPoolManager poolManager) : base(world)
         {
-            worldSeed = 0;
             this.landscapeData = landscapeData;
             this.poolManager = poolManager;
             landscapeParentObject = new GameObject("Landscape").transform;
@@ -38,10 +37,14 @@ namespace DCL.Landscape.Systems
         protected override void Update(float t)
         {
             // This first query gets all LandscapeParcel and creates a Job which calculates what's going to spawn inside them
+            Profiler.BeginSample("LandscapeParcelInitializerSystem.InitializeLandscapeJobs");
             InitializeLandscapeJobsQuery(World);
+            Profiler.EndSample();
 
             // This second query get's the job result and spawns all the needed objects
+            Profiler.BeginSample("LandscapeParcelInitializerSystem.InitializeLandscapeSubEntities");
             InitializeLandscapeSubEntitiesQuery(World);
+            Profiler.EndSample();
         }
 
         [Query]
@@ -54,7 +57,7 @@ namespace DCL.Landscape.Systems
                 NoiseSettings noiseSettings = landscapeAsset.noiseData.settings;
 
                 var octaveOffsets = new NativeArray<float2>(noiseSettings.octaves, Allocator.Persistent);
-                float maxPossibleHeight = Noise.CalculateOctaves(worldSeed, ref noiseSettings, ref octaveOffsets);
+                float maxPossibleHeight = Noise.CalculateOctaves(landscapeParcel.Random, ref noiseSettings, ref octaveOffsets);
 
                 var parcelNoiseJob = new LandscapeParcelNoiseJob
                 {
@@ -95,7 +98,6 @@ namespace DCL.Landscape.Systems
             // This means that the job ended and our parcel entity does not exist anymore
             if (!World.Has<LandscapeParcel>(landscapeParcelNoiseJob.Parcel))
             {
-                Debug.LogWarning("IT HAPPENED!");
                 DisposeEntityAndJob(in entity, ref landscapeParcelNoiseJob);
                 return;
             }
@@ -117,6 +119,7 @@ namespace DCL.Landscape.Systems
                     // We probably want to setup some thresholds for this instead of bigger than zero
                     if (objHeight > 0)
                     {
+                        Profiler.BeginSample("LandscapeParcelInitializerSystem.InitializeLandscapeSubEntities.SpawnObject");
                         Vector3 subEntityPos = (Vector3.right * i * dist) + (Vector3.forward * j * dist);
                         Vector3 finalPosition = basePos + baseSubPos + subEntityPos;
 
@@ -125,11 +128,12 @@ namespace DCL.Landscape.Systems
                         objTransform.transform.position = finalPosition;
                         landscapeParcelNoiseJob.LandscapeAsset.randomization.ApplyRandomness(objTransform, landscapeParcel.Random, objHeight);
 
-                        // can we avoid this allocation?
+                        // can we avoid this allocation? we need to keep track of them
                         if (!landscapeParcel.Assets.ContainsKey(landscapeParcelNoiseJob.LandscapeAsset.asset))
                             landscapeParcel.Assets.Add(landscapeParcelNoiseJob.LandscapeAsset.asset, new List<Transform>());
 
                         landscapeParcel.Assets[landscapeParcelNoiseJob.LandscapeAsset.asset].Add(objTransform);
+                        Profiler.EndSample();
                     }
                 }
             }

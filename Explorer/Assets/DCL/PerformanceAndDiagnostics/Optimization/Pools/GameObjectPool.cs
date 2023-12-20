@@ -9,7 +9,7 @@ namespace DCL.Optimization.Pools
     {
         private static readonly string DEFAULT_COMPONENT_NAME = $"POOL_OBJECT_{typeof(T).Name}";
 
-        private readonly IExtendedObjectPool<T> gameObjectPool;
+        protected readonly IExtendedObjectPool<T> gameObjectPool;
         private readonly Transform parentContainer;
         private readonly Transform rootContainer;
 

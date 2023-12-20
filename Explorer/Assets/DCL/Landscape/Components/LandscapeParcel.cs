@@ -15,10 +15,10 @@ namespace DCL.Landscape.Components
         public readonly Random Random;
         public readonly Dictionary<Transform, List<Transform>> Assets;
 
-        public LandscapeParcel(Vector3 basePosition)
+        public LandscapeParcel(Vector3 basePosition, int worldSeed)
         {
             Position = basePosition;
-            Random = new Random(Position.GetHashCode());
+            Random = new Random(Position.GetHashCode() + worldSeed);
             Assets = new Dictionary<Transform, List<Transform>>();
         }
     }

@@ -9,10 +9,11 @@ namespace DCL.Landscape
     {
         private readonly Dictionary<Transform, GameObjectPool<Transform>> pools = new ();
 
-        public void Add(Transform asset)
+        public void Add(Transform asset, int prewarmCount)
         {
-            pools[asset] = new FastGameObjectPool(null, () => Object.Instantiate(asset), collectionCheck: false);
-            ;
+            var newPool = new FastGameObjectPool(null, () => Object.Instantiate(asset), collectionCheck: false);
+            newPool.Prewarm(prewarmCount);
+            pools[asset] = newPool;
         }
 
         public Transform Get(Transform prefab) =>

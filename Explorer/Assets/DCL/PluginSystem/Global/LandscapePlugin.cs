@@ -37,7 +37,7 @@ namespace DCL.PluginSystem.Global
         {
             landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
 
-            foreach (LandscapeAsset landscapeAsset in landscapeData.Value.assets) { poolManager.Add(landscapeAsset.asset); }
+            foreach (LandscapeAsset landscapeAsset in landscapeData.Value.assets) { poolManager.Add(landscapeAsset.asset, landscapeAsset.poolPreWarmCount); }
         }
 
         public void Dispose()

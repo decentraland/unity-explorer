@@ -10,10 +10,8 @@ namespace DCL.Landscape.Config
     {
         private const int BIG_VALUE = 100000;
 
-        public static float CalculateOctaves(int baseSeed, ref NoiseSettings settings, ref NativeArray<float2> octaveOffsets)
+        public static float CalculateOctaves(Random random, ref NoiseSettings settings, ref NativeArray<float2> octaveOffsets)
         {
-            // TODO: Extract this random class!
-            var random = new Random(baseSeed + settings.seed);
             float maxPossibleHeight = 0;
             float amplitude = 1;
 
