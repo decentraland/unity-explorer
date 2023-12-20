@@ -43,7 +43,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             // Before a scene can be ever loaded the asset bundle manifest should be retrieved
             UniTask<SceneAssetBundleManifest> loadAssetBundleManifest = LoadAssetBundleManifestAsync(ipfsPath.EntityId, reportCategory, ct);
-            UniTask<UniTaskVoid> loadSceneMetadata = OverrideSceneMetadataAsync(hashedContent, intention, reportCategory, ct);
+            UniTask<UniTaskVoid> loadSceneMetadata = OverrideSceneMetadataAsync(hashedContent, intention, ipfsPath.EntityId, reportCategory, ct);
             UniTask<ReadOnlyMemory<byte>> loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
 
             (SceneAssetBundleManifest manifest, _, ReadOnlyMemory<byte> mainCrdt) = await UniTask.WhenAll(loadAssetBundleManifest, loadSceneMetadata, loadMainCrdt);
@@ -98,12 +98,16 @@ namespace ECS.SceneLifeCycle.Systems
         ///     Loads scene metadata from a separate endpoint to ensure it contains "baseUrl" and overrides the existing metadata
         ///     with new one
         /// </summary>
-        private async UniTask<UniTaskVoid> OverrideSceneMetadataAsync(ISceneContent sceneContent, GetSceneFacadeIntention intention, string reportCategory, CancellationToken ct)
+        private async UniTask<UniTaskVoid> OverrideSceneMetadataAsync(ISceneContent sceneContent, GetSceneFacadeIntention intention, string reportCategory, string sceneID, CancellationToken ct)
         {
             const string NAME = "scene.json";
 
             if (!sceneContent.TryGetContentUrl(NAME, out URLAddress sceneJsonUrl))
-                throw new ArgumentException("scene.json does not exist in the content");
+            {
+                //What happens if we dont have a scene.json file? Will the default one work?
+                ReportHub.LogWarning(new ReportData(reportCategory, ReportHint.SessionStatic), $"scene.json does not exist for scene {sceneID}, no override is possible");
+                return default(UniTaskVoid);
+            }
 
             IpfsTypes.SceneMetadata target = intention.DefinitionComponent.Definition.metadata;
 
