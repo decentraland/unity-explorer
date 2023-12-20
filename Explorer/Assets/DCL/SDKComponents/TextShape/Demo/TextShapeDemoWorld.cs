@@ -16,20 +16,20 @@ namespace DCL.SDKComponents.TextShape.Demo
     {
         private readonly IDemoWorld origin;
 
-        public TextShapeDemoWorld(IFontsStorage fontsStorage, params (PBTextShape textShape, PBVisibilityComponent visibility)[] list) : this(fontsStorage, list.AsReadOnly()) { }
+        public TextShapeDemoWorld(World world, IFontsStorage fontsStorage, params (PBTextShape textShape, PBVisibilityComponent visibility, PBBillboard billboard)[] list) : this(world, fontsStorage, list.AsReadOnly()) { }
 
-        public TextShapeDemoWorld(IFontsStorage fontsStorage, IReadOnlyList<(PBTextShape textShape, PBVisibilityComponent visibility)> list)
+        public TextShapeDemoWorld(World world, IFontsStorage fontsStorage, IReadOnlyList<(PBTextShape textShape, PBVisibilityComponent visibility, PBBillboard billboard)> list)
         {
             origin = new DemoWorld(
-                World.Create(),
-                world =>
+                world,
+                w =>
                 {
-                    foreach ((PBTextShape textShape, PBVisibilityComponent visibility) in list)
-                        world.Create(textShape, visibility, NewTransform());
+                    foreach ((PBTextShape textShape, PBVisibilityComponent visibility, PBBillboard billboard) in list)
+                        w.Create(textShape, visibility, billboard, NewTransform());
                 },
-                world => new InstantiateTextShapeSystem(world, new PoolTextShapeRendererFactory(new ComponentPoolsRegistry(), fontsStorage)),
-                world => new UpdateTextShapeSystem(world),
-                world => new VisibilityTextShapeSystem(world));
+                w => new InstantiateTextShapeSystem(w, new PoolTextShapeRendererFactory(new ComponentPoolsRegistry(), fontsStorage)),
+                w => new UpdateTextShapeSystem(w),
+                w => new VisibilityTextShapeSystem(w));
         }
 
         private static TransformComponent NewTransform() =>

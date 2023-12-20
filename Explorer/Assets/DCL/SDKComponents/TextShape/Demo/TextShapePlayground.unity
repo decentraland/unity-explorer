@@ -190,6 +190,10 @@ MonoBehaviour:
     textAlign: 4
     textWrapping: 1
     textColor: {r: 1, g: 1, b: 1, a: 1}
+  billboardProperties:
+    useX: 0
+    useY: 0
+    useZ: 0
   visible: 1
 --- !u!1 &956698897
 GameObject:

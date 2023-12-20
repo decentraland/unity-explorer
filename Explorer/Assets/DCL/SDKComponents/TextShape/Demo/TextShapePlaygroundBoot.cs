@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Billboard.Demo.Properties;
 using DCL.DemoWorlds;
 using DCL.DemoWorlds.Extensions;
 using DCL.SDKComponents.TextShape.Component;
@@ -13,11 +14,13 @@ namespace DCL.SDKComponents.TextShape.Demo
         [SerializeField]
         private TextShapeProperties textShapeProperties = new ();
         [SerializeField]
+        private BillboardProperties billboardProperties = new ();
+        [SerializeField]
         private bool visible = true;
 
         private void Start()
         {
-            new WarmUpSettingsTextShapeDemoWorld(textShapeProperties, () => visible, fontList.EnsureNotNull())
+            new WarmUpSettingsTextShapeDemoWorld(textShapeProperties, billboardProperties, () => visible, fontList.EnsureNotNull())
                .SetUpAndRunAsync(destroyCancellationToken)
                .Forget();
         }
