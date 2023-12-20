@@ -75,7 +75,6 @@ namespace Global.Dynamic
             try
             {
                 web3Authenticator = new DappWeb3Authenticator(new UnityAppWebBrowser());
-                IWeb3Identity web3Identity = await web3Authenticator.LoginAsync(ct);
 
                 // First load the common global plugin
                 bool isLoaded;
@@ -125,7 +124,7 @@ namespace Global.Dynamic
                 }
 
                 globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory,
-                    dynamicWorldContainer.EmptyScenesWorldFactory, staticContainer.CharacterObject, web3Identity);
+                    dynamicWorldContainer.EmptyScenesWorldFactory, staticContainer.CharacterObject);
 
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
 
