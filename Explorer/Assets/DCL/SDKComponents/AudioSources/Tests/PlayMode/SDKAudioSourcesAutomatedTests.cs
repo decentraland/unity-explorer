@@ -5,8 +5,8 @@ using ECS.Prioritization.Components;
 using Global;
 using UnityEngine.TestTools;
 using System.Collections;
-using UnityEngine.SceneManagement;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using System;
 using System.Threading;
 using UnityEditor;
@@ -16,23 +16,27 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
 {
     public class SDKAudioSourcesAutomatedTests
     {
-        private string testScene = "Assets/Scenes/StaticSceneLoader.unity";
-        private PluginSettingsContainer globalPluginSettingsContainer = AssetDatabase.LoadAssetAtPath<PluginSettingsContainer>(
-            "Assets/DCL/PluginSystem/Global/Global Plugins Settings.asset");
-        private PluginSettingsContainer scenePluginSettingsContainer = AssetDatabase.LoadAssetAtPath<PluginSettingsContainer>(
-            "Assets/DCL/PluginSystem/World/World Plugins Container.asset");
+        private const string TEST_SCENE = "Dance-floor";
 
-        private StaticContainer staticContainer;
+        private readonly CancellationTokenSource tearDownCts = new ();
 
-        private CancellationTokenSource tearDownCts = new ();
+        private readonly PluginSettingsContainer globalPluginSettings =
+            AssetDatabase.LoadAssetAtPath<PluginSettingsContainer>("Assets/DCL/PluginSystem/Global/Global Plugins Settings.asset");
+        private readonly PluginSettingsContainer scenePluginSettings =
+            AssetDatabase.LoadAssetAtPath<PluginSettingsContainer>("Assets/DCL/PluginSystem/World/World Plugins Container.asset");
+
+        private StaticContainer? staticContainer;
+        private ISceneFacade? currentScene;
 
         [UnityTearDown]
-        public void TearDown()
+        public IEnumerator TearDown()
         {
+            yield return currentScene?.DisposeAsync().ToCoroutine();
+
             tearDownCts.Cancel();
             tearDownCts.Dispose();
 
-            staticContainer.Dispose();
+            staticContainer?.Dispose();
         }
 
         [UnityTest]
@@ -44,7 +48,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             Assert.IsTrue(true);
         }
 
-        public async UniTask InitializationFlowAsync(CancellationToken ct)
+        private async UniTask InitializationFlowAsync(CancellationToken ct)
         {
             try
             {
@@ -53,12 +57,12 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
 
                 SceneSharedContainer sceneSharedContainer;
 
-                (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettingsContainer, scenePluginSettingsContainer,
+                (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettings, scenePluginSettings,
                     web3Authenticator, ct);
 
-                var currentScene = await sceneSharedContainer
-                                        .SceneFactory
-                                        .CreateSceneFromStreamableDirectoryAsync("Dance-floor", new PartitionComponent(), ct);
+                currentScene = await sceneSharedContainer
+                                    .SceneFactory
+                                    .CreateSceneFromStreamableDirectoryAsync(TEST_SCENE, new PartitionComponent(), ct);
 
                 await currentScene.StartUpdateLoopAsync(60, ct);
             }
@@ -71,7 +75,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             }
         }
 
-        public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> InstallAsync(
+        private static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> InstallAsync(
             IPluginSettingsContainer globalSettingsContainer,
             IPluginSettingsContainer sceneSettingsContainer,
             IWeb3Authenticator web3Authenticator,
@@ -89,21 +93,6 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
 
             return (staticContainer, sceneSharedContainer);
-        }
-
-        public IEnumerator VVV()
-        {
-            // Load the scene asynchronously
-            AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(testScene, LoadSceneMode.Single);
-
-            // Wait until the scene is loaded
-            while (!asyncLoad.isDone)
-                yield return null;
-
-            yield return new WaitForSeconds(10000);
-
-            // Pass the test if this point is reached
-            Assert.IsTrue(true);
         }
     }
 }
