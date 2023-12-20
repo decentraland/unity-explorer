@@ -119,5 +119,8 @@ namespace DCL.SDKComponents.TextShape.Renderer
                 TextAlignMode.TamBottomRight => TMPro.TextAlignmentOptions.BottomRight,
                 _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, $"Mode {mode} is not supported"),
             };
+
+        public override string ToString() =>
+            $"{nameof(TMPTextShapeRenderer)} on {tmpText.gameObject.name}";
     }
 }
