@@ -20,7 +20,7 @@ namespace DCL.PluginSystem.World
         private readonly FrameTimeCapBudgetProvider frameTimeBudgetProvider;
         private readonly MemoryBudgetProvider memoryBudgetProvider;
 
-        private readonly AudioClipsCache audioClipsCache;
+        internal readonly AudioClipsCache audioClipsCache;
 
         public AudioSourcesPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IWebRequestController webRequestController, CacheCleaner cacheCleaner)
         {

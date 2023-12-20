@@ -1,22 +1,28 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
+using DCL.PluginSystem.World;
 using DCL.Web3Authentication;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AudioClips;
 using Global;
 using UnityEngine.TestTools;
 using System.Collections;
 using NUnit.Framework;
+using SceneRunner;
 using SceneRunner.Scene;
 using System;
+using System.Linq;
 using System.Threading;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
 {
     public class SDKAudioSourcesAutomatedTests
     {
         private const string TEST_SCENE = "Dance-floor";
+        private const int TARGET_FPS = 60;
 
         private readonly CancellationTokenSource tearDownCts = new ();
 
@@ -44,8 +50,23 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
         {
             InitializationFlowAsync(tearDownCts.Token).Forget();
 
-            yield return new WaitForSeconds(1);
-            Assert.IsTrue(true);
+            yield return new WaitUntil(() => staticContainer != null);
+            yield return new WaitUntil(() => currentScene != null);
+
+            // var scene = currentScene as SceneFacade;
+            // yield return new WaitUntil(() => scene.sceneStateProvider.State == SceneState.Running);
+            yield return new WaitForSeconds(15);
+
+            // AudioClipsCache? clipsCache = staticContainer.ECSWorldPlugins.OfType<AudioSourcesPlugin>().FirstOrDefault().audioClipsCache;
+            // yield return new WaitUntil(() => clipsCache.cache.Count > 0);
+            // yield return new WaitUntil(() => clipsCache.OngoingRequests.Count == 0);
+            // Assert.That(clipsCache.cache.Count, Is.EqualTo(1));
+
+            // var audioSources = Object.FindObjectsOfType<AudioSource>();
+            // Assert.That(audioSources, Has.Exactly(1).Count);
+            //
+            // var audioSource = audioSources[0];
+            // Assert.That(audioSource.isPlaying);
         }
 
         private async UniTask InitializationFlowAsync(CancellationToken ct)
@@ -57,19 +78,17 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
 
                 SceneSharedContainer sceneSharedContainer;
 
-                (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettings, scenePluginSettings,
-                    web3Authenticator, ct);
+                (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettings, scenePluginSettings, web3Authenticator, ct);
 
                 currentScene = await sceneSharedContainer
                                     .SceneFactory
                                     .CreateSceneFromStreamableDirectoryAsync(TEST_SCENE, new PartitionComponent(), ct);
 
-                await currentScene.StartUpdateLoopAsync(60, ct);
+                await currentScene.StartUpdateLoopAsync(TARGET_FPS, ct);
             }
             catch (OperationCanceledException) { }
-            catch (Exception)
+            catch (Exception) // unhandled exception
             {
-                // unhandled exception
                 GameReports.PrintIsDead();
                 throw;
             }
@@ -82,8 +101,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             CancellationToken ct)
         {
             // First load the common global plugin
-            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer,
-                web3Authenticator, ct);
+            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer, web3Authenticator, ct);
 
             if (!isLoaded)
                 GameReports.PrintIsDead();
