@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using System;
 using System.Collections;
@@ -18,12 +19,25 @@ namespace DCL.Backpack
             this.backpackCommandBus = backpackCommandBus;
             this.backpackEventBus = backpackEventBus;
 
+            backpackEventBus.EquipEvent += EquipInSlot;
+            backpackEventBus.UnEquipEvent += UnEquipInSlot;
+
             foreach (var avatarSlotView in avatarSlotViews)
             {
                 avatarSlots.Add(avatarSlotView.Category, avatarSlotView);
                 avatarSlotView.OnSlotButtonPressed += OnSlotButtonPressed;
                 avatarSlotView.UnequipButton.onClick.AddListener(() => backpackCommandBus.SendCommand(new BackpackCommand(BackpackCommandType.UnequipCommand, null, avatarSlotView.Category)));
             }
+        }
+
+        private void UnEquipInSlot(IWearable unequippedWearable)
+        {
+
+        }
+
+        private void EquipInSlot(IWearable equippedWearable)
+        {
+            //avatarSlots[equippedWearable.GetCategory()].
         }
 
         private void OnSlotButtonPressed(AvatarSlotView avatarSlot)

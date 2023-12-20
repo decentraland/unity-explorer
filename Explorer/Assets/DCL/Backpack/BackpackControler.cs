@@ -26,7 +26,7 @@ namespace DCL.Backpack
 
                 Dictionary<BackpackSections, ISection> backpackSections = new ()
                 {
-                    { BackpackSections.Avatar, new AvatarController(view.GetComponentInChildren<AvatarView>(),view.GetComponentsInChildren<AvatarSlotView>(), rarityBackgrounds, categoryIcons, rarityColors) },
+                    { BackpackSections.Avatar, new AvatarController(view.GetComponentInChildren<AvatarView>(),view.GetComponentsInChildren<AvatarSlotView>(), rarityBackgrounds, categoryIcons, rarityColors, backpackCommandBus, backpackEventBus) },
                     { BackpackSections.Emotes,  new EmotesController(view.GetComponentInChildren<EmotesView>()) },
                 };
                 var sectionSelectorController = new SectionSelectorController<BackpackSections>(backpackSections, BackpackSections.Avatar);
