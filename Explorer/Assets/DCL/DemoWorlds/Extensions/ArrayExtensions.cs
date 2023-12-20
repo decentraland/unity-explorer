@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.Billboard.Extensions
+namespace DCL.DemoWorlds.Extensions
 {
     public static class ArrayExtensions
     {

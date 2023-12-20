@@ -1,11 +1,11 @@
 using Arch.System;
-using DCL.Billboard.Extensions;
+using DCL.DemoWorlds.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Time = UnityEngine.Time;
 
-namespace DCL.Billboard.Demo.World
+namespace DCL.DemoWorlds
 {
     public class DemoWorld : IDemoWorld
     {
