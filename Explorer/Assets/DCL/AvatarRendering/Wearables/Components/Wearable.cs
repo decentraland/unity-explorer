@@ -16,8 +16,6 @@ namespace DCL.AvatarRendering.Wearables.Components
         public StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }
         public bool IsLoading { get; set; } = true;
         public bool IsDefaultWearable { get; set; } = false;
-        public bool IsEmptyDefaultWearableAsset { get; set; } = false;
-
         public string GetMainFileHash(BodyShape bodyShape)
         {
             var mainFileKey = "";
@@ -64,10 +62,6 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public void GetHidingList(in BodyShape bodyShape, HashSet<string> hideListResult)
         {
-            //If we dont have a wearable asset, we cant hide anything
-            if (IsEmptyDefaultWearableAsset || WearableAssetResults[bodyShape].Value.Asset.GameObject == null)
-                return;
-
             WearableDTO.WearableMetadataDto.Representation representation = GetRepresentation(bodyShape);
             WearableDTO.WearableMetadataDto.DataDto data = WearableDTO.Asset.metadata.data;
 

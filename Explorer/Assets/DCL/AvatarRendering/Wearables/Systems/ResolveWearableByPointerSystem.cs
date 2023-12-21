@@ -268,7 +268,29 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             //TODO: Add some client warning telling them that their asset cannot be loaded
             ReportHub.Log(GetReportCategory(), $"Request for wearable {wearable.GetHash()} failed, loading default wearable");
-            wearableCatalog.SetDefaultWearableAsset(wearable, bodyShape);
+            IWearable defaultWearable = wearableCatalog.GetDefaultWearable(wearable.GetCategory(), bodyShape);
+
+            if (wearable.IsUnisex())
+            {
+                wearable.WearableAssetResults[BodyShape.MALE] = defaultWearable.WearableAssetResults[BodyShape.MALE];
+                wearable.WearableAssetResults[BodyShape.FEMALE] = defaultWearable.WearableAssetResults[BodyShape.FEMALE];
+            }
+            else
+                wearable.WearableAssetResults[bodyShape] = defaultWearable.WearableAssetResults[bodyShape];
+
+            // If the default wearable is empty, we need to remove all the hiding/replacing/removing data
+            if (defaultWearable.WearableDTO.Asset.metadata.id.Equals(WearablesConstants.EMPTY_DEFAULT_WEARABLE))
+            {
+                wearable.WearableDTO.Asset.metadata.data.hides = Array.Empty<string>();
+                wearable.WearableDTO.Asset.metadata.data.replaces = Array.Empty<string>();
+                wearable.WearableDTO.Asset.metadata.data.removesDefaultHiding = Array.Empty<string>();
+
+                for (var i = 0; i < wearable.WearableDTO.Asset.metadata.data.representations.Length; i++)
+                {
+                    wearable.WearableDTO.Asset.metadata.data.representations[i].overrideHides = Array.Empty<string>();
+                    wearable.WearableDTO.Asset.metadata.data.representations[i].overrideReplaces = Array.Empty<string>();
+                }
+            }
         }
 
         private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<AssetBundleData> result, in BodyShape bodyShape)

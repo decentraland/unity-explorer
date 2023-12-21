@@ -31,6 +31,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             if (!wearable.IsDefaultWearable)
                 cacheKeysDictionary[loadingIntentionPointer] = listedCacheKeys.AddLast((loadingIntentionPointer, MultithreadingUtility.FrameCount));
+
             return wearable;
         }
 
@@ -69,20 +70,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     }
         }
 
-        public void SetDefaultWearableAsset(IWearable wearable, in BodyShape bodyShape)
-        {
-            IWearable defaultWearable = wearablesCache[WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, wearable.GetCategory())];
-
-            if (wearable.IsUnisex())
-            {
-                wearable.WearableAssetResults[BodyShape.MALE] = defaultWearable.WearableAssetResults[BodyShape.MALE];
-                wearable.WearableAssetResults[BodyShape.FEMALE] = defaultWearable.WearableAssetResults[BodyShape.FEMALE];
-            }
-            else
-                wearable.WearableAssetResults[bodyShape] = defaultWearable.WearableAssetResults[bodyShape];
-
-            wearable.IsEmptyDefaultWearableAsset = defaultWearable.IsEmptyDefaultWearableAsset;
-        }
+        public IWearable GetDefaultWearable(string category, in BodyShape bodyShape) =>
+            wearablesCache[WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category)];
 
         private static bool TryUnloadAllWearableAssets(IWearable wearable)
         {

@@ -73,7 +73,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             IWearable emptyWearable = wearableCatalog.GetOrAddWearableByDTO(wearableDTO);
             emptyWearable.IsDefaultWearable = true;
-            emptyWearable.IsEmptyDefaultWearableAsset = true;
             var wearableAsset = new WearableAsset(emptyDefaultWearable, new List<WearableAsset.RendererInfo>(), null);
             wearableAsset.AddReference();
 

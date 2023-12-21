@@ -41,10 +41,10 @@ namespace DCL.Profiling
             new (MEMORY, "Wearables Assets In Catalog", ProfilerMarkerDataUnit.Count);
 
         public static ProfilerCounterValue<int> CachedWearablesAmount =
-            new (MEMORY, "Cached Wearables", ProfilerMarkerDataUnit.Count);
+            new (MEMORY, "Instantiated Wearables", ProfilerMarkerDataUnit.Count);
 
         public static ProfilerCounterValue<int> CachedWearablesInCacheAmount =
-            new (MEMORY, "Cached Wearables In Cache", ProfilerMarkerDataUnit.Count);
+            new (MEMORY, "Instantiated Wearables In Cache", ProfilerMarkerDataUnit.Count);
 
         public static ProfilerCounterValue<int> GetWearablesIntentionAmount =
             new (MEMORY, "GetWearables Intentions", ProfilerMarkerDataUnit.Count);

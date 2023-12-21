@@ -9,7 +9,6 @@ namespace DCL.AvatarRendering.Wearables.Components
     {
         bool IsLoading { get; set; }
         bool IsDefaultWearable { get; set; }
-        bool IsEmptyDefaultWearableAsset { get; set; }
 
         /// <summary>
         ///     Might be never resolved if Wearable is loaded from the Embedded Source

@@ -42,6 +42,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         /// <param name="bodyShape">The body shape.</param>
         /// <param name="category">The category.</param>
         /// <returns>An instance of the <see cref="IWearable" /> type.</returns>
-        void SetDefaultWearableAsset(IWearable wearable, in BodyShape bodyShape);
+        IWearable GetDefaultWearable(string category, in BodyShape bodyShape);
     }
 }

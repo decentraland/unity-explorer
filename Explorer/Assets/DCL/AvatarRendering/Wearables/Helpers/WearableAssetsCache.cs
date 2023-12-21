@@ -25,7 +25,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         private readonly Transform parentContainer;
         private readonly SimplePriorityQueue<WearableAsset, long> unloadQueue = new ();
 
-        public int WearablesAssesCount => cache.Count;
+        public int WearablesAssetsCount => cache.Keys.Count;
 
         internal Dictionary<WearableAsset, List<CachedWearable>> cache { get; }
 

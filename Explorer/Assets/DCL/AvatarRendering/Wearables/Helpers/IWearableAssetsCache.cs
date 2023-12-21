@@ -4,7 +4,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public interface IWearableAssetsCache
     {
-        int WearablesAssesCount { get; }
+        int WearablesAssetsCount { get; }
 
         bool TryGet(WearableAsset asset, out CachedWearable instance);
 
