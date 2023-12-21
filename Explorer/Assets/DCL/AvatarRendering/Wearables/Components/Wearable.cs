@@ -15,7 +15,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         public StreamableLoadingResult<WearableAsset>?[] WearableAssetResults { get; private set; } = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
         public StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }
         public bool IsLoading { get; set; } = true;
-        public bool IsDefaultWearable { get; set; } = false;
+
         public string GetMainFileHash(BodyShape bodyShape)
         {
             var mainFileKey = "";
@@ -60,9 +60,9 @@ namespace DCL.AvatarRendering.Wearables.Components
         public bool IsUnisex() =>
             WearableDTO.Asset.metadata.data.representations.Length > 1;
 
-        public void GetHidingList(in BodyShape bodyShape, HashSet<string> hideListResult)
+        public void GetHidingList(string bodyShapeType, HashSet<string> hideListResult)
         {
-            WearableDTO.WearableMetadataDto.Representation representation = GetRepresentation(bodyShape);
+            WearableDTO.WearableMetadataDto.Representation representation = GetRepresentation(bodyShapeType);
             WearableDTO.WearableMetadataDto.DataDto data = WearableDTO.Asset.metadata.data;
 
             if (representation?.overrideHides == null || representation.overrideHides.Length == 0)
@@ -83,7 +83,7 @@ namespace DCL.AvatarRendering.Wearables.Components
             if (isOrHidesUpperBody && !removesHandDefault)
                 hideListResult.UnionWith(WearablesConstants.UPPER_BODY_DEFAULT_HIDES);
 
-            string[] replaces = GetReplacesList(bodyShape);
+            string[] replaces = GetReplacesList(bodyShapeType);
 
             if (replaces != null)
                 hideListResult.UnionWith(replaces);
@@ -91,7 +91,6 @@ namespace DCL.AvatarRendering.Wearables.Components
             // Safeguard so no wearable can hide itself
             hideListResult.Remove(data.category);
         }
-
 
         public WearableDTO.WearableMetadataDto.DataDto GetData() =>
             WearableDTO.Asset.metadata.data;

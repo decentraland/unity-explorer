@@ -8,7 +8,6 @@ namespace DCL.AvatarRendering.Wearables.Components
     public interface IWearable
     {
         bool IsLoading { get; set; }
-        bool IsDefaultWearable { get; set; }
 
         /// <summary>
         ///     Might be never resolved if Wearable is loaded from the Embedded Source
@@ -31,11 +30,10 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         bool IsBodyShape();
 
-        void GetHidingList(in BodyShape bodyShape, HashSet<string> hideListResult);
+        void GetHidingList(string bodyShapeType, HashSet<string> hideListResult);
 
         WearableDTO.WearableMetadataDto.DataDto GetData();
 
         bool IsFacialFeature();
-
     }
 }

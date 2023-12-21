@@ -268,7 +268,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             //TODO: Add some client warning telling them that their asset cannot be loaded
             ReportHub.Log(GetReportCategory(), $"Request for wearable {wearable.GetHash()} failed, loading default wearable");
-            IWearable defaultWearable = wearableCatalog.GetDefaultWearable(wearable.GetCategory(), bodyShape);
+            IWearable defaultWearable = wearableCatalog.GetDefaultWearable(bodyShape, wearable.GetCategory());
 
             if (wearable.IsUnisex())
             {
