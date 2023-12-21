@@ -1,6 +1,6 @@
 using Arch.Core;
 using DCL.DemoWorlds;
-using DCL.DemoWorlds.Extensions;
+using DCL.Utilities.Extensions;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.TextShape.Fonts;

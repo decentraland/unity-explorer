@@ -1,6 +1,6 @@
-using DCL.DemoWorlds.Extensions;
 using DCL.ECSComponents;
 using DCL.SDKComponents.TextShape.Fonts;
+using DCL.Utilities.Extensions;
 using ECS.Unity.ColorComponent;
 using System;
 using TMPro;

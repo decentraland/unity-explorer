@@ -1,9 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Billboard.Demo.Properties;
 using DCL.DemoWorlds;
-using DCL.DemoWorlds.Extensions;
 using DCL.SDKComponents.TextShape.Component;
 using DCL.SDKComponents.TextShape.Fonts.Settings;
+using DCL.Utilities.Extensions;
 using UnityEngine;
 
 namespace DCL.SDKComponents.TextShape.Demo
