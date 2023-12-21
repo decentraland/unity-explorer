@@ -31,7 +31,7 @@ namespace CrdtEcsBridge.Physics
         public static readonly int SDK_CUSTOM_LAYER = LayerMask.NameToLayer("SDKCustomLayer");
 
         public static readonly LayerMask PLAYER_ORIGIN_RAYCAST_MASK = (1 << ON_POINTER_EVENT_LAYER) | (1 << DEFAULT_LAYER);
-        public static readonly LayerMask CHARACTER_ONLY_MASK = (1 << DEFAULT_LAYER) | (1 << FLOOR_LAYER);
+        public static readonly LayerMask CHARACTER_ONLY_MASK = (1 << DEFAULT_LAYER) | (1 << FLOOR_LAYER) | (1 << CHARACTER_ONLY_LAYER);
 
         public static bool LayerMaskHasAnySDKCustomLayer(ColliderLayer layerMask) =>
             (layerMask & ~NON_CUSTOM_LAYERS) != 0;
