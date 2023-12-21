@@ -7,29 +7,22 @@ using DCL.Landscape.Settings;
 using DCL.Landscape.Systems;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
-using ECS.ComponentsPooling;
 using ECS.LifeCycle;
-using ECS.Prioritization;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using Utility;
-using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.Global
 {
     public class LandscapePlugin : IDCLWorldPlugin<LandscapeSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IRealmPartitionSettings realmPartitionSettings;
         private ProvidedAsset<LandscapeData> landscapeData;
         private readonly LandscapeAssetPoolManager poolManager;
 
-        public LandscapePlugin(IAssetsProvisioner assetsProvisioner, IRealmPartitionSettings realmPartitionSettings)
+        public LandscapePlugin(IAssetsProvisioner assetsProvisioner)
         {
             this.assetsProvisioner = assetsProvisioner;
-            this.realmPartitionSettings = realmPartitionSettings;
             poolManager = new LandscapeAssetPoolManager();
         }
 
