@@ -1,6 +1,7 @@
 ﻿using DCL.DebugUtilities.UIBindings;
 using System;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace DCL.DebugUtilities
 {
@@ -11,6 +12,16 @@ namespace DCL.DebugUtilities
     {
         public static DebugWidgetBuilder AddSingleButton(this DebugWidgetBuilder builder, string buttonName, Action onClick) =>
             builder.AddControl(new DebugButtonDef(buttonName, onClick), null);
+
+
+        public static DebugWidgetBuilder AddToggleField(this DebugWidgetBuilder builder,  string toggleName, EventCallback<ChangeEvent<bool>> onToggle, bool initialState)
+        {
+            var label = new DebugConstLabelDef(toggleName);
+            var field = new DebugToggleDef(onToggle, initialState);
+            builder.AddControl(label, field);
+            return builder;
+        }
+
 
         public static DebugWidgetBuilder AddIntFieldWithConfirmation(this DebugWidgetBuilder builder, int defaultValue, string buttonName, Action<int> onClick)
         {
