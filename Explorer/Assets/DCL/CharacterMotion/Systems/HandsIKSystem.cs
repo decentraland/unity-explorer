@@ -21,7 +21,7 @@ namespace DCL.CharacterMotion.Systems
     [UpdateAfter(typeof(InterpolateCharacterSystem))]
     public partial class HandsIKSystem : BaseUnityLoopSystem
     {
-        private bool disableWasToggled;
+        private bool handsIkSystemIsEnabled;
         private readonly ElementBinding<float> wallDistance;
         private readonly ElementBinding<float> ikWeightSpeed;
 
@@ -30,7 +30,7 @@ namespace DCL.CharacterMotion.Systems
         private HandsIKSystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
         {
             debugBuilder.AddWidget("Locomotion: Hands IK")
-                        .AddSingleButton("Toggle Enable", () => disableWasToggled = true)
+                        .AddToggleField("Enabled", (evt) => { handsIkSystemIsEnabled = evt.newValue; }, false)
                         .AddFloatField("Wall Distance", wallDistance = new ElementBinding<float>(0))
                         .AddFloatField("IK Weight Speed", ikWeightSpeed = new ElementBinding<float>(0));
         }
@@ -63,11 +63,7 @@ namespace DCL.CharacterMotion.Systems
             in ICharacterControllerSettings settings
         )
         {
-            if (disableWasToggled)
-            {
-                disableWasToggled = false;
-                handsIKComponent.IsDisabled = !handsIKComponent.IsDisabled;
-            }
+            handsIKComponent.IsDisabled = !handsIkSystemIsEnabled;
 
             // To avoid using the Hands IK during any special state we update this
             bool isEnabled = !handsIKComponent.IsDisabled
