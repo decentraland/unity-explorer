@@ -39,6 +39,10 @@ MonoBehaviour:
     m_Key: PENDING_AUTH_DESC
     m_Metadata:
       m_Items: []
+  - m_Id: 113318898425856
+    m_Key: DECENTRALAND
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

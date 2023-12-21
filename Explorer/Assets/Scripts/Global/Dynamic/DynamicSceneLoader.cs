@@ -128,9 +128,6 @@ namespace Global.Dynamic
 
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
 
-                // TODO: remove this, a proper app authentication flow should be implemented
-                await UniTask.WaitUntil(() => web3Authenticator.Identity != null, cancellationToken: ct);
-
                 realmLauncher.OnRealmSelected += ChangeRealm;
             }
             catch (OperationCanceledException)

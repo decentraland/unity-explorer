@@ -43,7 +43,12 @@ namespace DCL.PluginSystem.Global
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod? authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
             mvcManager.RegisterController(new AuthenticationScreenController(authScreenFactory, web3Authenticator));
 
-            mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand()).Forget();
+            mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand())
+                      .ContinueWith(() =>
+                       {
+                           // TODO: connect next flow screen
+                       })
+                      .Forget();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

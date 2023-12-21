@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Web3Authentication;
 using MVC;
+using System;
 using System.Threading;
 
 namespace DCL.AuthenticationScreenFlow
@@ -10,6 +11,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWeb3Authenticator web3Authenticator;
 
         private CancellationTokenSource? loginCancellationToken;
+        private UniTaskCompletionSource? lifeCycleTask;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
@@ -24,8 +26,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.Dispose();
 
-            loginCancellationToken?.Cancel();
-            loginCancellationToken?.Dispose();
+            CancelLoginProcess();
         }
 
         protected override void OnViewInstantiated()
@@ -33,24 +34,55 @@ namespace DCL.AuthenticationScreenFlow
             base.OnViewInstantiated();
 
             viewInstance.LoginButton.onClick.AddListener(Login);
+            viewInstance.CancelAuthenticationProcess.onClick.AddListener(CancelLoginProcess);
+        }
+
+        protected override void OnBeforeViewShow()
+        {
+            base.OnBeforeViewShow();
+
+            viewInstance.PendingAuthentication.SetActive(false);
+        }
+
+        protected override void OnViewClose()
+        {
+            base.OnViewClose();
+
+            CancelLoginProcess();
         }
 
         protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
-            UniTask.Never(ct);
+            (lifeCycleTask ??= new UniTaskCompletionSource()).Task.AttachExternalCancellation(ct);
 
         private void Login()
         {
             async UniTaskVoid LoginAsync(CancellationToken ct)
             {
-                viewInstance.PendingAuthentication.SetActive(true);
-                await web3Authenticator.LoginAsync(ct);
-                viewInstance.PendingAuthentication.SetActive(false);
+                try
+                {
+                    viewInstance.PendingAuthentication.SetActive(true);
+                    await web3Authenticator.LoginAsync(ct);
+                    lifeCycleTask!.TrySetResult();
+                    lifeCycleTask = null;
+                }
+                finally { viewInstance.PendingAuthentication.SetActive(false); }
             }
 
-            loginCancellationToken?.Cancel();
-            loginCancellationToken?.Dispose();
+            CancelLoginProcess();
             loginCancellationToken = new CancellationTokenSource();
             LoginAsync(loginCancellationToken.Token).Forget();
+        }
+
+        private void CancelLoginProcess()
+        {
+            try
+            {
+                loginCancellationToken?.Cancel();
+                loginCancellationToken?.Dispose();
+            }
+            catch (ObjectDisposedException) { }
+
+            loginCancellationToken = null;
         }
     }
 }
