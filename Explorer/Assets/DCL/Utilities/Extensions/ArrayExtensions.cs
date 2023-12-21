@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.DemoWorlds.Extensions
+namespace DCL.Utilities.Extensions
 {
     public static class ArrayExtensions
     {

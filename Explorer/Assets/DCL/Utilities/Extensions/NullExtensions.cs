@@ -1,6 +1,6 @@
 using System;
 
-namespace DCL.DemoWorlds.Extensions
+namespace DCL.Utilities.Extensions
 {
     public static class NullExtensions
     {

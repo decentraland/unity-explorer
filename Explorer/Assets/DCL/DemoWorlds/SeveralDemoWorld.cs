@@ -1,4 +1,4 @@
-using DCL.DemoWorlds.Extensions;
+using DCL.Utilities.Extensions;
 using System.Collections.Generic;
 
 namespace DCL.DemoWorlds
