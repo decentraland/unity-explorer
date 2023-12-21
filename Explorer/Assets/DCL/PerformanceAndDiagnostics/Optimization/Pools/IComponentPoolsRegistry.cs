@@ -28,6 +28,14 @@ namespace DCL.Optimization.Pools
 
         void AddGameObjectPoolDCL<T>(Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 1024) where T: Component;
 
-        void AddComponentPool<T>(Action<T> onGet = null, Action<T> onRelease = null) where T: class, new();
+        void AddComponentPool<T>(IComponentPool<T> componentPool) where T: class;
+    }
+
+    public static class ComponentPoolsRegistryExtensions
+    {
+        public static void AddComponentPool<T>(this IComponentPoolsRegistry componentPoolsRegistry, Action<T> onGet = null, Action<T> onRelease = null) where T: class, new()
+        {
+            componentPoolsRegistry.AddComponentPool(new ComponentPool<T>(onGet, onRelease));
+        }
     }
 }

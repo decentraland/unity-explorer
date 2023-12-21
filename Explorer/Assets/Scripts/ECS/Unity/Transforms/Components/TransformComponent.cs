@@ -29,6 +29,8 @@ namespace ECS.Unity.Transforms.Components
         public readonly HashSet<EntityReference> Children;
         public EntityReference Parent;
 
+        public TransformComponent(GameObject gameObject) : this(gameObject.transform) { }
+
         public TransformComponent(Transform transform)
         {
             Transform = transform;

@@ -10,5 +10,11 @@ namespace ECS.Unity.ColorComponent
 
         public static Color ToUnityColor(this Color4 color) =>
             new (color.R, color.G, color.B, color.A);
+
+        public static Color3 ToColor3(this Color color) =>
+            new () { B = color.b, G = color.g, R = color.r };
+
+        public static Color4 ToColor4(this Color color) =>
+            new () { B = color.b, G = color.g, R = color.r, A = color.a };
     }
 }
