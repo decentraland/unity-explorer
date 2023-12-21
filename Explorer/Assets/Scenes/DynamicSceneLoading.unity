@@ -313,9 +313,21 @@ MonoBehaviour:
         m_SubObjectType: 
         m_EditorAssetChanged: 0
     <BackpackSettings>k__BackingField:
-      <CategoryIconsMapping>k__BackingField: {fileID: 11400000, guid: 4a2a7b610414b45c1b576946ce094877, type: 2}
-      <RarityBackgroundsMapping>k__BackingField: {fileID: 11400000, guid: 04a7ffcd277754f7c91237894604f522, type: 2}
-      <RarityColorMappings>k__BackingField: {fileID: 11400000, guid: 7491e2fb7fd484d2b8aed984dfc7c6ab, type: 2}
+      <CategoryIconsMapping>k__BackingField:
+        m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_EditorAssetChanged: 0
+      <RarityBackgroundsMapping>k__BackingField:
+        m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_EditorAssetChanged: 0
+      <RarityColorMappings>k__BackingField:
+        m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_EditorAssetChanged: 0
 --- !u!114 &234607244
 MonoBehaviour:
   m_ObjectHideFlags: 0

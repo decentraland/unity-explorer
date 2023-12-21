@@ -9,12 +9,12 @@ namespace DCL.Backpack
     public class BackpackSettings
     {
         [field: SerializeField]
-        public NftTypeIconSO CategoryIconsMapping { get; private set; }
+        public AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; private set; }
 
         [field: SerializeField]
-        public NftTypeIconSO RarityBackgroundsMapping { get; private set; }
+        public AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; private set; }
 
         [field: SerializeField]
-        public NFTColorsSO RarityColorMappings { get; private set; }
+        public AssetReferenceT<NFTColorsSO> RarityColorMappings { get; private set; }
     }
 }
