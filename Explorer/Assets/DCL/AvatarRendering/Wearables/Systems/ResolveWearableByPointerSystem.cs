@@ -279,7 +279,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 wearable.WearableAssetResults[bodyShape] = defaultWearable.WearableAssetResults[bodyShape];
 
             // If the default wearable is empty, we need to remove all the hiding/replacing/removing data
-            if (defaultWearable.WearableDTO.Asset.metadata.id.Equals(WearablesConstants.EMPTY_DEFAULT_WEARABLE))
+            if (defaultWearable.GetUrn().Equals(WearablesConstants.EMPTY_DEFAULT_WEARABLE))
             {
                 wearable.WearableDTO.Asset.metadata.data.hides = Array.Empty<string>();
                 wearable.WearableDTO.Asset.metadata.data.replaces = Array.Empty<string>();
