@@ -1,8 +1,6 @@
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.TextShape.Renderer;
-using System;
-using UnityEngine;
 
 namespace DCL.SDKComponents.TextShape.Component
 {
@@ -30,8 +28,6 @@ namespace DCL.SDKComponents.TextShape.Component
 
         public void Dispose()
         {
-            Debug.LogWarning("Dispose logic is not implemented");
-            //todo
         }
 
         public ITextShapeRenderer PoolableComponent => textShape;
