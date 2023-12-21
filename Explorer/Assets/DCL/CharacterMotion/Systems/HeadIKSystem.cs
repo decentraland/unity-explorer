@@ -41,17 +41,17 @@ namespace DCL.CharacterMotion.Systems
         {
             camera = World.CacheCamera();
             settingsEntity = World.CacheCharacterSettings();
+
+            ICharacterControllerSettings charSettings = settingsEntity.GetCharacterSettings(World);
+            verticalLimit.Value = charSettings.HeadIKVerticalAngleLimit;
+            horizontalLimit.Value = charSettings.HeadIKHorizontalAngleLimit;
+            speed.Value = charSettings.HeadIKRotationSpeed;
         }
 
         protected override void Update(float t)
         {
             UpdateDebugValues();
             UpdateIKQuery(World, t, in camera.GetCameraComponent(World));
-
-            ICharacterControllerSettings charSettings = settingsEntity.GetCharacterSettings(World);
-            verticalLimit.Value = charSettings.HeadIKVerticalAngleLimit;
-            horizontalLimit.Value = charSettings.HeadIKHorizontalAngleLimit;
-            speed.Value = charSettings.HeadIKRotationSpeed;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

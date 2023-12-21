@@ -26,7 +26,7 @@ namespace DCL.CharacterMotion.Systems
         private const float FEET_HEIGHT_CORRECTION = 0.08f;
         private const float FEET_HEIGHT_DISABLE_IK = 0.10f;
 
-        private bool feetIkIsEnabled = false;
+        private bool feetIkIsEnabled = true;
         private readonly ElementBinding<float> ikWeightChangeSpeed;
         private readonly ElementBinding<float> ikPositionChangeSpeed;
         private readonly ElementBinding<float> ikDistance;
@@ -38,7 +38,7 @@ namespace DCL.CharacterMotion.Systems
         private FeetIKSystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
         {
             debugBuilder.AddWidget("Locomotion: Feet IK")
-                        .AddToggleField("Enabled", (evt) => { feetIkIsEnabled = evt.newValue; }, false)
+                        .AddToggleField("Enabled", evt => { feetIkIsEnabled = evt.newValue; }, true)
                         .AddFloatField("IK Change Speed", ikWeightChangeSpeed = new ElementBinding<float>(0))
                         .AddFloatField("IK Position Speed", ikPositionChangeSpeed = new ElementBinding<float>(0))
                         .AddFloatField("IK Distance", ikDistance = new ElementBinding<float>(0))
