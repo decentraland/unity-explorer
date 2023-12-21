@@ -5,9 +5,15 @@ namespace DCL.Backpack.BackpackBus
 {
     public class BackpackEventBus : IBackpackEventBus
     {
+        public event Action<IWearable> SelectEvent;
         public event Action<IWearable> EquipEvent;
         public event Action<IWearable> UnEquipEvent;
         public event Action<string[]> HideEvent;
+
+        public void SendSelect(IWearable equipWearable)
+        {
+            SelectEvent?.Invoke(equipWearable);
+        }
 
         public void SendEquip(IWearable equipWearable)
         {

@@ -1,11 +1,17 @@
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.Backpack
 {
-    public class BackpackItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class BackpackItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
+        public event Action OnSelectItem;
+
+        [field: SerializeField]
+        public string ItemId { get; set; }
+
         [field: SerializeField]
         public GameObject HoverBackground { get; private set; }
 
@@ -31,6 +37,11 @@ namespace DCL.Backpack
         public void OnPointerExit(PointerEventData eventData)
         {
             HoverBackground.SetActive(false);
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            OnSelectItem?.Invoke();
         }
     }
 }

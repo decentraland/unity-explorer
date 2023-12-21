@@ -57,6 +57,12 @@ namespace DCL.AvatarRendering.Wearables.Components
         public string GetCategory() =>
             WearableDTO.Asset.metadata.data.category;
 
+        public string GetDescription() =>
+            WearableDTO.Asset.metadata.description;
+
+        public string GetCreator() =>
+            "";
+
         public bool IsUnisex() =>
             WearableDTO.Asset.metadata.data.representations.Length > 1;
 

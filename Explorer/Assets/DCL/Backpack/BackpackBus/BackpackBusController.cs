@@ -33,6 +33,17 @@ namespace DCL.Backpack.BackpackBus
                 case BackpackCommandType.HideCommand:
                     HandleHideCommand();
                     break;
+                case BackpackCommandType.SelectCommand:
+                    HandleSelectCommand(command.Id);
+                    break;
+            }
+        }
+
+        private void HandleSelectCommand(string wearableId)
+        {
+            if (wearableCatalog.TryGetWearable(wearableId, out IWearable wearable))
+            {
+                backpackEventBus.SendSelect(wearable);
             }
         }
 

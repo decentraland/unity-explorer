@@ -33,10 +33,32 @@ namespace DCL.Backpack
             BackpackItemView backpackItem = (await assetsProvisioner.ProvideInstanceAsync(view.BackpackItem, ct: ct)).Value;
 
             gridItemsPool = new ObjectPool<BackpackItemView>(
-                () => Object.Instantiate(backpackItem, view.gameObject.transform),
+                () => CreateBackpackItem(backpackItem),
                 _ => { },
                 defaultCapacity: 16
             );
+        }
+
+        public void SetGridElements(IWearable[] gridWearables)
+        {
+            for (var i = 0; i < gridWearables.Length; i++)
+            {
+                BackpackItemView backpackItemView = gridItemsPool.Get();
+                backpackItemView.ItemId = gridWearables[i].GetUrn();
+                
+            }
+        }
+
+        private BackpackItemView CreateBackpackItem(BackpackItemView backpackItem)
+        {
+            BackpackItemView backpackItemView = Object.Instantiate(backpackItem, view.gameObject.transform);
+            backpackItem.OnSelectItem += SelectItem;
+            return backpackItemView;
+        }
+
+        private void SelectItem()
+        {
+            commandBus.SendCommand(new BackpackCommand(BackpackCommandType.SelectCommand, "", ""));
         }
 
         private void OnUnequip(IWearable unequippedWearable)

@@ -1073,7 +1073,7 @@ GameObject:
   - component: {fileID: 6976949258744048468}
   - component: {fileID: 5700207190427280376}
   m_Layer: 5
-  m_Name: ItemIcon
+  m_Name: CategoryIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1299,6 +1299,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <ItemImage>k__BackingField: {fileID: 6761031925246617703}
+  <CategoryImage>k__BackingField: {fileID: 5700207190427280376}
   <Name>k__BackingField: {fileID: 5428682008549936836}
   <Creator>k__BackingField: {fileID: 3121498563796043484}
   <Description>k__BackingField: {fileID: 5818285717481497885}

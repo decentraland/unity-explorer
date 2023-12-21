@@ -20,6 +20,7 @@ namespace DCL.Backpack.BackpackBus
     {
         EquipCommand,
         UnequipCommand,
-        HideCommand
+        HideCommand,
+        SelectCommand,
     }
 }

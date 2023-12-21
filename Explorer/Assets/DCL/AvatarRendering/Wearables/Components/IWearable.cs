@@ -24,6 +24,10 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         string GetCategory();
 
+        string GetDescription();
+
+        string GetCreator();
+
         bool IsUnisex();
 
         bool IsCompatibleWithBodyShape(string bodyShape);
