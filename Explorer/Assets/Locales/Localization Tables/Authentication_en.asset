@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: Authentication_en
+  m_EditorClassIdentifier: 
+  m_LocaleId:
+    m_Code: en
+  m_SharedData: {fileID: 11400000, guid: 48b7b423583d84e3d9f2dbeaa25c3aa1, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 679572660224
+    m_Localized: Sign In
+    m_Metadata:
+      m_Items: []
+  - m_Id: 91353005416448
+    m_Localized: Access and start exploring.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 92320304193536
+    m_Localized: Unlock your virtual world.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 97841321074688
+    m_Localized: Cancel
+    m_Metadata:
+      m_Items: []
+  - m_Id: 98660338622464
+    m_Localized: Pending authentication
+    m_Metadata:
+      m_Items: []
+  - m_Id: 99422326218752
+    m_Localized: We opened a new tab in your browser so you can select how to Sign
+      In into Decentraland.
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []

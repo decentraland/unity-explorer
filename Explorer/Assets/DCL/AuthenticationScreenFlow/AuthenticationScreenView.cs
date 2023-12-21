@@ -11,5 +11,8 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: SerializeField]
         public GameObject PendingAuthentication { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button CancelAuthenticationProcess { get; private set; }
     }
 }
