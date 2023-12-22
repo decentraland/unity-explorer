@@ -21,7 +21,7 @@ npm run build-protocol
 - [ ] `AvatarAttach`
 - [ ] `AvatarModifierArea`
 - [ ] `AvatarShape`
-- [ ] `Billboard`
+- [x] `Billboard`
 - [x] `CRDT_MESSAGE_HEADER_LENGTH`
 - [ ] `CameraMode`
 - [ ] `CameraModeArea`
@@ -42,7 +42,7 @@ npm run build-protocol
 - [x] `RaycastResult`
 - [ ] `SYSTEMS_REGULAR_PRIORITY`
 - [ ] `SyncComponents`
-- [ ] `TextShape`
+- [x] `TextShape`
 - [x] `Transform`
 - [ ] `Tween`
 - [ ] `TweenSequence`
