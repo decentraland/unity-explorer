@@ -11,6 +11,9 @@ namespace DCL.Web3Authentication
             this.address = address;
         }
 
+        public override string ToString() =>
+            address;
+
         public override int GetHashCode() =>
             address.GetHashCode();
 
