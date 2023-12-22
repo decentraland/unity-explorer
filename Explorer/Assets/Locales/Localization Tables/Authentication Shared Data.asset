@@ -43,6 +43,18 @@ MonoBehaviour:
     m_Key: DECENTRALAND
     m_Metadata:
       m_Items: []
+  - m_Id: 147993717104640
+    m_Key: LOADING_WORLD_PROGRESS
+    m_Metadata:
+      m_Items: []
+  - m_Id: 155925695422464
+    m_Key: JUMP_INTO_WORLD
+    m_Metadata:
+      m_Items: []
+  - m_Id: 156421285994496
+    m_Key: USE_ANOTHER_ACCOUNT
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

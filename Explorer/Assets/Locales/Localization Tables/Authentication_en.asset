@@ -16,7 +16,8 @@ MonoBehaviour:
     m_Code: en
   m_SharedData: {fileID: 11400000, guid: 48b7b423583d84e3d9f2dbeaa25c3aa1, type: 2}
   m_Metadata:
-    m_Items: []
+    m_Items:
+    - rid: 1095376860581462025
   m_TableData:
   - m_Id: 679572660224
     m_Localized: Sign In
@@ -47,6 +48,23 @@ MonoBehaviour:
     m_Localized: Decentraland
     m_Metadata:
       m_Items: []
+  - m_Id: 147993717104640
+    m_Localized: Updating {progressValue}%
+    m_Metadata:
+      m_Items:
+      - rid: 1095376860581462025
+  - m_Id: 155925695422464
+    m_Localized: jump into decentrland
+    m_Metadata:
+      m_Items: []
+  - m_Id: 156421285994496
+    m_Localized: use another account
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
-    RefIds: []
+    RefIds:
+    - rid: 1095376860581462025
+      type: {class: SmartFormatTag, ns: UnityEngine.Localization.Metadata, asm: Unity.Localization}
+      data:
+        m_Entries: 00e0ef7899860000
