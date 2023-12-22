@@ -61,10 +61,19 @@ MonoBehaviour:
     m_Localized: use another account
     m_Metadata:
       m_Items: []
+  - m_Id: 385401318531072
+    m_Localized: Welcome back {profileName}
+    m_Metadata:
+      m_Items:
+      - rid: 1095376860581462025
+  - m_Id: 385917570244608
+    m_Localized: Are you ready to explore?
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:
     - rid: 1095376860581462025
       type: {class: SmartFormatTag, ns: UnityEngine.Localization.Metadata, asm: Unity.Localization}
       data:
-        m_Entries: 00e0ef7899860000
+        m_Entries: 00e0ef789986000000e0af3c855e0100

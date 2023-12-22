@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Profiles;
 using DCL.Web3Authentication;
 using MVC;
 using System;
@@ -11,6 +12,7 @@ namespace DCL.AuthenticationScreenFlow
     public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView>
     {
         private readonly IWeb3Authenticator web3Authenticator;
+        private readonly IProfileRepository profileRepository;
 
         private CancellationTokenSource? loginCancellationToken;
         private UniTaskCompletionSource? lifeCycleTask;
@@ -18,10 +20,12 @@ namespace DCL.AuthenticationScreenFlow
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
         public AuthenticationScreenController(ViewFactoryMethod viewFactory,
-            IWeb3Authenticator web3Authenticator)
+            IWeb3Authenticator web3Authenticator,
+            IProfileRepository profileRepository)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
+            this.profileRepository = profileRepository;
         }
 
         public override void Dispose()
@@ -66,14 +70,17 @@ namespace DCL.AuthenticationScreenFlow
                 {
                     viewInstance.PendingAuthentication.SetActive(true);
 
-                    await web3Authenticator.LoginAsync(ct);
+                    IWeb3Identity web3Identity = await web3Authenticator.LoginAsync(ct);
 
                     SwitchState(ViewState.Loading);
-                    await WaitUntilWorldIsLoadedAsync(ct);
+
+                    UpdateProgressBar(0.2f);
+                    await FetchProfileAsync(web3Identity, ct);
+                    await UpdateProgressBarUntilWorldIsLoadedAsync(ct);
 
                     SwitchState(ViewState.Finalize);
                 }
-                catch (Exception) { SwitchState(ViewState.Login); }
+                catch (Exception e) { SwitchState(ViewState.Login); }
             }
 
             CancelLoginProcess();
@@ -81,24 +88,36 @@ namespace DCL.AuthenticationScreenFlow
             StartFlowAsync(loginCancellationToken.Token).Forget();
         }
 
-        private async UniTask WaitUntilWorldIsLoadedAsync(CancellationToken ct)
+        private async UniTask FetchProfileAsync(IWeb3Identity web3Identity, CancellationToken ct)
+        {
+            // TODO: get latest profile version from storage if any (?)
+            Profile? profile = await profileRepository.GetAsync(web3Identity.Address, 0, ct);
+            var profileNameLabel = viewInstance.ProfileNameLabel.StringReference["profileName"] as StringVariable;
+            profileNameLabel!.Value = profile?.Name;
+        }
+
+        private async UniTask UpdateProgressBarUntilWorldIsLoadedAsync(CancellationToken ct)
         {
             // TODO: make real implementation
             const float DURATION = 3;
-            float t = 0;
-
-            viewInstance.ProgressBar.normalizedValue = 0f;
+            float startingTime = viewInstance.ProgressBar.value * DURATION;
+            float t = startingTime;
 
             while (t < DURATION)
             {
                 await UniTask.NextFrame(ct);
                 t += Time.deltaTime;
-                viewInstance.ProgressBar.normalizedValue = Mathf.Clamp01(t / DURATION);
-                var progressLabelValue = viewInstance.ProgressLabel.StringReference["progressValue"] as IntVariable;
-                progressLabelValue!.Value = (int)(t / DURATION * 100);
+                UpdateProgressBar(Mathf.Clamp01(t / DURATION));
             }
 
             viewInstance.ProgressBar.normalizedValue = 1f;
+        }
+
+        private void UpdateProgressBar(float value)
+        {
+            viewInstance.ProgressBar.normalizedValue = value;
+            var progressLabelValue = viewInstance.ProgressLabel.StringReference["progressValue"] as IntVariable;
+            progressLabelValue!.Value = (int)(value * 100);
         }
 
         private void RestartLoginProcess()
@@ -119,25 +138,25 @@ namespace DCL.AuthenticationScreenFlow
             {
                 case ViewState.Login:
                     viewInstance.PendingAuthentication.SetActive(false);
-                    viewInstance.LoginButton.gameObject.SetActive(true);
+                    viewInstance.LoginContainer.SetActive(true);
                     viewInstance.ProgressContainer.SetActive(false);
                     viewInstance.FinalizeContainer.SetActive(false);
                     break;
                 case ViewState.LoginInProgress:
                     viewInstance.PendingAuthentication.SetActive(true);
-                    viewInstance.LoginButton.gameObject.SetActive(false);
+                    viewInstance.LoginContainer.SetActive(true);
                     viewInstance.ProgressContainer.SetActive(false);
                     viewInstance.FinalizeContainer.SetActive(false);
                     break;
                 case ViewState.Loading:
                     viewInstance.PendingAuthentication.SetActive(false);
-                    viewInstance.LoginButton.gameObject.SetActive(false);
+                    viewInstance.LoginContainer.SetActive(false);
                     viewInstance.ProgressContainer.SetActive(true);
                     viewInstance.FinalizeContainer.SetActive(false);
                     break;
                 case ViewState.Finalize:
                     viewInstance.PendingAuthentication.SetActive(false);
-                    viewInstance.LoginButton.gameObject.SetActive(false);
+                    viewInstance.LoginContainer.SetActive(false);
                     viewInstance.ProgressContainer.SetActive(false);
                     viewInstance.FinalizeContainer.SetActive(true);
                     break;

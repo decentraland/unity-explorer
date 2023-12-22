@@ -8,6 +8,9 @@ namespace DCL.AuthenticationScreenFlow
     public class AuthenticationScreenView : ViewBase, IView
     {
         [field: SerializeField]
+        public GameObject LoginContainer { get; private set; } = null!;
+
+        [field: SerializeField]
         public Button LoginButton { get; private set; } = null!;
 
         [field: SerializeField]
@@ -33,5 +36,8 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: SerializeField]
         public Button UseAnotherAccountButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public LocalizeStringEvent ProfileNameLabel { get; private set; } = null!;
     }
 }

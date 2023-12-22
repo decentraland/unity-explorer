@@ -26,6 +26,9 @@ namespace DCL.Web3Authentication
                    };
         }
 
+        public override string ToString() =>
+            address;
+
         public bool Equals(string? s)
         {
             if (s == null) return false;

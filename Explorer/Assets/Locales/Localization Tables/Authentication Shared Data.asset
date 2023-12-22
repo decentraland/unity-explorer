@@ -55,6 +55,14 @@ MonoBehaviour:
     m_Key: USE_ANOTHER_ACCOUNT
     m_Metadata:
       m_Items: []
+  - m_Id: 385401318531072
+    m_Key: WELCOME_BACK_USER
+    m_Metadata:
+      m_Items: []
+  - m_Id: 385917570244608
+    m_Key: READY_TO_EXPLORE
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

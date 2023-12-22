@@ -128,6 +128,9 @@ namespace Global.Dynamic
 
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
 
+                // TODO: required for the authentication ui for fetching the profile.. keep it until we have a real initialization flow
+                ChangeRealm("https://peer.decentraland.org");
+
                 realmLauncher.OnRealmSelected += ChangeRealm;
             }
             catch (OperationCanceledException)

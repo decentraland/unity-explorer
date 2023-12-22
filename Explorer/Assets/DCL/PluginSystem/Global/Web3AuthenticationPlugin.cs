@@ -3,7 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AuthenticationScreenFlow;
 using DCL.DebugUtilities;
-using DCL.ExplorePanel;
+using DCL.Profiles;
 using DCL.Web3Authentication;
 using MVC;
 using System.Threading;
@@ -18,6 +18,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly MVCManager mvcManager;
+        private readonly IProfileRepository profileRepository;
 
         private CancellationTokenSource? cancellationTokenSource;
 
@@ -25,12 +26,14 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IWeb3Authenticator web3Authenticator,
             IDebugContainerBuilder debugContainerBuilder,
-            MVCManager mvcManager)
+            MVCManager mvcManager,
+            IProfileRepository profileRepository)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Authenticator = web3Authenticator;
             this.debugContainerBuilder = debugContainerBuilder;
             this.mvcManager = mvcManager;
+            this.profileRepository = profileRepository;
         }
 
         public void Dispose() { }
@@ -41,7 +44,7 @@ namespace DCL.PluginSystem.Global
                                                        .Value.GetComponent<AuthenticationScreenView>();
 
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod? authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
-            mvcManager.RegisterController(new AuthenticationScreenController(authScreenFactory, web3Authenticator));
+            mvcManager.RegisterController(new AuthenticationScreenController(authScreenFactory, web3Authenticator, profileRepository));
 
             mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand()).Forget();
         }
