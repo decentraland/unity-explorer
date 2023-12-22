@@ -203,6 +203,10 @@ DebugToggleElement > .unity-toggle #unity-checkmark {
     -unity-font-style: normal;
 }
 
+.debug-button:hover {
+    background-color: rgba(200, 200, 200, 0.95);
+}
+
 Vector2IntField > VisualElement {
     flex-direction: row;
     flex-grow: 1;
@@ -244,10 +248,6 @@ Vector2IntField > VisualElement > .unity-composite-field__field-spacer {
     background-image: url('project://database/Assets/DCL/DebugUtilities/Views/Assets/error.png');
 }
 
-.unity-scroller {
-    width: 12px;
-}
-
 .unity-slider {
     width: 12px;
     min-width: 12px;
@@ -271,6 +271,11 @@ Vector2IntField > VisualElement > .unity-composite-field__field-spacer {
     margin: 0;
     padding: 0;
     border-width: 0;
+}
+
+.unity-scroller {
+
+    width: 12px;
 }
 
 .unity-base-slider__tracker {
