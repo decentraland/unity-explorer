@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.SkyBox.Rendering;
 using JetBrains.Annotations;
 using System;
 using System.Threading;
