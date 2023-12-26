@@ -5,9 +5,7 @@ using DCL.PluginSystem.Global;
 using DCL.Web3Authentication;
 using DCL.SkyBox;
 using System;
-using System.Collections.Generic;
 using System.Threading;
-using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Utility;
@@ -25,16 +23,11 @@ namespace Global.Dynamic
         [Space]
         [SerializeField] private UIDocument uiToolkitRoot;
         [SerializeField] private UIDocument debugUiRoot;
-        [SerializeField] private Vector2Int StartPosition;
-        [SerializeField] [Obsolete] private int SceneLoadRadius = 4;
-
-        // If it's 0, it will load every parcel in the range
-        [SerializeField] private List<int2> StaticLoadPositions;
 
         [Space]
         [SerializeField] private SkyBoxSceneData skyBoxSceneData;
         [SerializeField] private RealmLauncher realmLauncher;
-        [SerializeField] private string[] realms;
+        [SerializeField] private DynamicSceneLoaderSettings settings;
         [SerializeField] private DynamicSettings dynamicSettings;
 
         private StaticContainer staticContainer;
@@ -44,7 +37,7 @@ namespace Global.Dynamic
 
         private void Awake()
         {
-            realmLauncher.Initialize(realms);
+            realmLauncher.Initialize(settings.Realms);
 
             InitializationFlowAsync(destroyCancellationToken).Forget();
         }
@@ -61,7 +54,7 @@ namespace Global.Dynamic
                 }
 
                 if (globalWorld != null)
-                    await dynamicWorldContainer.RealmController.DisposeGlobalWorldAsync(globalWorld).SuppressCancellationThrow();
+                    await dynamicWorldContainer.RealmController.DisposeGlobalWorldAsync().SuppressCancellationThrow();
 
                 await UniTask.SwitchToMainThread();
 
@@ -99,8 +92,8 @@ namespace Global.Dynamic
                     ct,
                     uiToolkitRoot,
                     skyBoxSceneData,
-                    StaticLoadPositions,
-                    SceneLoadRadius,
+                    settings.StaticLoadPositions,
+                    settings.SceneLoadRadius,
                     dynamicSettings,
                     web3Authenticator);
 
@@ -138,6 +131,8 @@ namespace Global.Dynamic
                 }
 
                 realmLauncher.OnRealmSelected += SetRealm;
+
+                dynamicWorldContainer.RealmController.SetupWorld(globalWorld);
             }
             catch (OperationCanceledException)
             {
@@ -154,16 +149,16 @@ namespace Global.Dynamic
         private async UniTask ChangeRealmAsync(StaticContainer globalContainer, CancellationToken ct, string selectedRealm)
         {
             if (globalWorld != null)
-                await dynamicWorldContainer.RealmController.UnloadCurrentRealmAsync(globalWorld);
+                await dynamicWorldContainer.RealmController.UnloadCurrentRealmAsync();
 
             await UniTask.SwitchToMainThread();
 
-            Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(StartPosition);
+            Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(settings.StartPosition);
             characterPos.y = 1f;
 
             globalContainer.CharacterObject.Controller.transform.position = characterPos;
 
-            await dynamicWorldContainer.RealmController.SetRealmAsync(globalWorld, URLDomain.FromString(selectedRealm), ct);
+            await dynamicWorldContainer.RealmController.SetRealmAsync(URLDomain.FromString(selectedRealm), ct);
         }
     }
 }

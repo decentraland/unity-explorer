@@ -17,6 +17,6 @@ namespace DCL.ParcelsService
         /// <returns>Null if the parcel does not belong to the real scene</returns>
         UniTask<IpfsTypes.SceneEntityDefinition> ByParcelAsync(Vector2Int parcel, CancellationToken ct);
 
-        World World { set; }
+        World World { get; set; }
     }
 }

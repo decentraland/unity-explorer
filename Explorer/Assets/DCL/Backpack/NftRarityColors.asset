@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92898f7e350e243ff9fb3f251fde25b1, type: 3}
+  m_Name: NftRarityColors
+  m_EditorClassIdentifier: 
+  nftColors:
+  - key: rare
+    value: {r: 0.23529412, g: 0.89411765, b: 0.5176471, a: 1}
+  - key: epic
+    value: {r: 0.26274514, g: 0.6907097, b: 1, a: 1}
+  - key: uncommon
+    value: {r: 1, g: 0.5137255, b: 0.38431373, a: 1}
+  - key: legendary
+    value: {r: 0.6891846, g: 0.36320752, b: 1, a: 1}
+  - key: unique
+    value: {r: 1, g: 0.77793264, b: 0.2783019, a: 1}
+  - key: common
+    value: {r: 0.4509804, g: 0.827451, b: 0.827451, a: 1}
+  - key: mythic
+    value: {r: 1, g: 0.29411766, b: 0.92941177, a: 1}
+  - key: land
+    value: {r: 0.08395632, g: 0.07876467, b: 0.09433961, a: 1}
+  - key: name
+    value: {r: 1, g: 0.4949912, b: 0.23113209, a: 1}
+  defaultColor: {r: 0.627451, g: 0.60784316, b: 0.65882355, a: 1}

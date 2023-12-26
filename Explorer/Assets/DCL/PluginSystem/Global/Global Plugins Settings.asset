@@ -22,6 +22,7 @@ MonoBehaviour:
   - rid: 5215741520409264129
   - rid: 1501337502808539138
   - rid: 2152807656697888768
+  - rid: 8147919132522971138
   - rid: 56198586647707649
   references:
     version: 2
@@ -177,3 +178,7 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
     - rid: 6784895267130048513
       type: {class: ProfilingPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+    - rid: 8147919132522971138
+      type: {class: FontsSettings, ns: DCL.SDKComponents.TextShape.Fonts, asm: DCL.Plugins}
+      data:
+        <FontList>k__BackingField: {fileID: 11400000, guid: 353f2294734a94b57b061c9b83eb275d, type: 2}
