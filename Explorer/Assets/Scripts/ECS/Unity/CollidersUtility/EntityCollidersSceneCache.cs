@@ -19,6 +19,7 @@ namespace DCL.Interaction.Utility
         public void Dispose()
         {
             globalCache.RemoveSceneInfo(this);
+            map.Clear();
             POOL.Release(this);
         }
 
