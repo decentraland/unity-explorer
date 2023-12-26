@@ -43,7 +43,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -108,7 +108,3766 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: DclIcnAnimation_0
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 9000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bead0aab4e0da424eac4226b9c31de2c
+      internalID: 873935844
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_1
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 9000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d1cd1e79e821c46289244f81be59326e
+      internalID: 573333660
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_2
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 9000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8adce713d6c144b0390a3cc796632276
+      internalID: -18242973
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_3
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 9000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c6f1647393d774b38b03a6e182e19ade
+      internalID: -1167211827
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_4
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 8750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3afea0f78f9174e608f0b5f017f0ecf3
+      internalID: -1913593754
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_5
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 8750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 543b1f712b8e145d883c8e56723f4b17
+      internalID: 1767712564
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_6
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 8750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 157f5378cb2ea4f339334b7ebd063f47
+      internalID: 1502606461
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_7
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 8750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 81700f4d276754426b7b8dbe9c7dd1d1
+      internalID: -861169363
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_8
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 8750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: acfd1541fafd64d32a8b746bde697357
+      internalID: 2004115010
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_9
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 8500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1391cc79190d6400caab61d9fde11d30
+      internalID: -710810289
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_10
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 8500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f243a3065950944b9afd85ca514e5f4b
+      internalID: 2089004798
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_11
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 8500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bb66e440e82cb4cea876083039def616
+      internalID: 979379032
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_12
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 8500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f9a972e44f5514c6bbbc235f8695b84d
+      internalID: -1112576408
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_13
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 8500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 977991760309141109df4d60ec7d618e
+      internalID: -184690749
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_14
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 8250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8aa9755c664434d278620d277139a3ce
+      internalID: -149181750
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_15
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 8250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e8cd889a235da4d8cad1ba8de68b6ebd
+      internalID: -448815658
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_16
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 8250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d1f451193a565438e8b893ddacf663ad
+      internalID: -2101553498
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_17
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 8250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7c86c769062784f8086b227849f52d15
+      internalID: 419729063
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_18
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 8250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c21da796ee63c476a8d1918c9388cd4a
+      internalID: 856715929
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_19
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 8000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8f3288c67a0e24f60a77eae249c014f4
+      internalID: -1779875613
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_20
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 8000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3701bd2cb3770439e832b2d794ccf7f9
+      internalID: -1398162941
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_21
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 8000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 33bd24c21346b46a9a03bcc5c8bac4b6
+      internalID: -941973097
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_22
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 8000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 236b03ed7b2cf4cee88176a1d5299b7d
+      internalID: 1615929590
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_23
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 8000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d8e6053c3828e4a8e9828be1acd6f28d
+      internalID: -945649850
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_24
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 7750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6b9dbff9c34c843a6a4409c73e2d9054
+      internalID: 2134475631
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_25
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 7750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 91775af77450147098e5789b26ce66be
+      internalID: 396056597
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_26
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 7750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 364e69b04a9354a338598ee64c10a34e
+      internalID: 654480176
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_27
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 7750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e7c91ba2265b44d6b934d51c7cf47775
+      internalID: -1034182236
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_28
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 7750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ff655e0d7e9b849b1b673ad077b9fc6b
+      internalID: 1251533382
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_29
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 7500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0e3008ac59e5e4ab6bc4c26e6e03a5dd
+      internalID: -1989120515
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_30
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 7500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 604032eb32ed44f32914d6b2e89cd26e
+      internalID: 392389841
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_31
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 7500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0f3edfa8981ef430499959354b1fb90d
+      internalID: -779127415
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_32
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 7500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6794001123d224909926b00abb87c998
+      internalID: -1897709254
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_33
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 7500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 19edd0d26c0154efc9f2c22e53f88627
+      internalID: -1636302638
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_34
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 7250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f70d50d94f0f1461fb7d832cd1d6ac61
+      internalID: -390431479
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_35
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 7250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 04b66d0182ca64513a89d562874565bb
+      internalID: -1564464361
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_36
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 7250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5433abbeaa0554722b089daf6f822f2b
+      internalID: 728048271
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_37
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 7250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ba1970043d59b4a979d8c73af160ee6d
+      internalID: 918067968
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_38
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 7250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5b84aba715a7647958b943f4948dcc76
+      internalID: 262084968
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_39
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 7000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ad13b2d9655f147058f41a5f5879aa29
+      internalID: -1791726024
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_40
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 7000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 815049a2f414641f4b07882b8c10ded6
+      internalID: 1068484987
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_41
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 7000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e7aca663ffd554f51a8e9fafd532ac1e
+      internalID: -1691538999
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_42
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 7000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0ddc5e182aca5477c94905c80540014e
+      internalID: 675752526
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_43
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 7000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 05c9d9c6b7ec04f04a42e25572e013fa
+      internalID: -757485208
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_44
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 6750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 25866b0177ef04a2abf3c9b0eed1bc07
+      internalID: -1576136503
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_45
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 6750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a5113ecf6c3ea446fa6241f951938a0e
+      internalID: -578220422
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_46
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 6750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: db731bb58a90a4726b6972b4c054fd2e
+      internalID: -1258478909
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_47
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 6750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6faf8a81e8c084acfaa70e7913bf0d53
+      internalID: -34293598
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_48
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 6750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1e6ed1c484ec046a6be1711285a26168
+      internalID: 1503798707
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_49
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 6500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 92acfdd533ae240408f9761fce478ba8
+      internalID: 1800724730
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_50
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 6500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: defea6c048cab478f857bbee01544950
+      internalID: 813842814
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_51
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 6500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8a901e24b8def45eaa8b4ddd67a3d28c
+      internalID: -1441710497
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_52
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 6500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 531d47d22492844adbcbc27c8dd6ed85
+      internalID: 791370554
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_53
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 6500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 109870101b2114c2f9735c7c56afa877
+      internalID: -1445229678
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_54
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 6250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 505f88431c835448e8cfd9cfc8273fea
+      internalID: -1800627526
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_55
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 6250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 019f649fc222344c081d9115af84febe
+      internalID: -2084416218
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_56
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 6250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 97e463c6ffb7842d68eabaad2ac43e2c
+      internalID: 18344614
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_57
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 6250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 55a0000a3702540d5b1cac75a0d58639
+      internalID: -1607922743
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_58
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 6250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5f0ced5d98c2049ffb0e23e66e98cea4
+      internalID: 1839909405
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_59
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 6000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 634e194f025c3404c98e2ad5c94c6146
+      internalID: 272485710
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_60
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 6000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bfc293f130ee64400863ef877ed27124
+      internalID: 899807995
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_61
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 6000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: adc7f0e82c26c42dfbba76566a8db941
+      internalID: 1265692997
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_62
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 6000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5d79161f65b3a444f90f084a11dce4fd
+      internalID: -701148059
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_63
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 6000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ae1dd613eaae640e0b8d2280899082c7
+      internalID: -1942938396
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_64
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 5750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7fd4bd127d2634f7f939aebef56f75e7
+      internalID: 1857683400
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_65
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 5750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 71251cdb41efd477fb33f229aae01864
+      internalID: -1678443594
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_66
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 5750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e9434b2b167704645844463c65d7ac5e
+      internalID: -129081232
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_67
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 5750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8851e5a97cac04f97882f6b1e3fc206d
+      internalID: -1404124374
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_68
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 5750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1008581f139ab4a49a7fe3edb9b03859
+      internalID: 1496674042
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_69
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 5500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: de0d187ed2d8f40f988b780e3089d5c1
+      internalID: 1355521722
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_70
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 5500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 63c716d0a054d4c78bad817f0f0519f3
+      internalID: -1430677476
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_71
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 5500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: eecb75054628a4c0183c5bbb7f526086
+      internalID: -1628802632
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_72
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 5500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6730070e57883497e939caff860f60ac
+      internalID: -591009483
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_73
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 5500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9a227015322e44a6a98e457f4e53912e
+      internalID: -1808437968
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_74
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 5250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ff167bafdbdc94026ae7f5f170e59782
+      internalID: 909551255
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_75
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 5250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 23ff3fc6ee2ff43b785590fa1baf4c33
+      internalID: -990877370
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_76
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 5250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fc64c6ebbdd8f4d5d8a7fe3a874f2e72
+      internalID: 47885065
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_77
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 5250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 701e44168e97e4dd8a5746d902add173
+      internalID: -2074181101
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_78
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 5250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 674e2ead2f6fd4750a04f05e9fd7e6f2
+      internalID: 1727389429
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_79
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 5000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3d00148b7b3994dc5988aeead13707a2
+      internalID: 260655500
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_80
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 5000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7a0c22b4368ec4c17b1121d0d046e616
+      internalID: -1387403442
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_81
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 5000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 66b92f90fa7244daa9df39b7c67d89a4
+      internalID: -9129401
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_82
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 5000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 28893c210e01545469e65320e8ac4fed
+      internalID: 1212786906
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_83
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 5000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9d101476a380e491182a8ea035fd7307
+      internalID: 2071161945
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_84
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 4750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 94fd7d12cff3344f89a72aac7ea5c74c
+      internalID: -1967113426
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_85
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 4750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ef128d7f6c8664ed7b3625a679327026
+      internalID: 484443196
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_86
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 4750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dff0b5ab2469f452dbd17c6e192240ae
+      internalID: 619489387
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_87
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 4750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4c175cf5d393e4d95bb0abd4bccff47c
+      internalID: -611230773
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_88
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 4750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c5e392eac6f1e44eebf084b1920ec729
+      internalID: 908611151
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_89
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 4500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1c42affebd1034c00b9ee8e07f9b2878
+      internalID: 303791009
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_90
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 4500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ebf66a754c1584b11a3ae02ebb241d64
+      internalID: -192722012
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_91
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 4500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2dab92dc910754815b0beddda7de83d9
+      internalID: 2056444352
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_92
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 4500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 01bb8b75071cf486888533330bcb4d8b
+      internalID: -402160072
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_93
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 4500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: baaec676faa52424eb7a266e7ea35511
+      internalID: -1448423743
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_94
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 4250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 59e429fef764a4d06b06d19c72c2c44b
+      internalID: -1395774841
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_95
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 4250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dabeb80ee7ba8436d83604949de1fcd0
+      internalID: -1401937961
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_96
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 4250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 64c0837c55828435db1d9445ffe237ac
+      internalID: -1051213755
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_97
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 4250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 11ba3b6bad2a74ce29fc37e21a0d3939
+      internalID: -1561449964
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_98
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 4250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 23b2888c9460141cfaba21945d516c02
+      internalID: 103059709
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_99
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 4000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 89eda3f7a5ed84d75b1dd2cc262c8481
+      internalID: 1783173985
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_100
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 4000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4d083704f424a45bcb370183bbf50526
+      internalID: -942035284
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_101
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 4000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5a9f9b9c64d9f43bc851a8bbf50ec752
+      internalID: -1892359468
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_102
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 4000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a5615b9198147474bacab99252f68947
+      internalID: -2587711
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_103
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 4000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 60d22d0e42deb48b596b3f50128f02a5
+      internalID: -327183318
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_104
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 3750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 05a66839931534e0bbc667aeb6b8b647
+      internalID: 261641789
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_105
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 3750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 035327908f90346e885b600057d08272
+      internalID: -529390443
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_106
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 3750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6d3b8cfd97c954e34ac234dfbe162837
+      internalID: 1135109816
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_107
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 3750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bbd17e03587bb49fb8544345880c91a9
+      internalID: -816200339
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_108
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 3750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: afcbb27fe53084fe089faf26f2ee6151
+      internalID: -886038941
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_109
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 3500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ab06cb7b4512f4ac78674209eb67eb30
+      internalID: -185824917
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_110
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 3500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d235a60df345c43688789b3d961928a6
+      internalID: -705788393
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_111
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 3500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d7e87a2dfb07d4dbebae68a1ce0a6fe4
+      internalID: 1418327740
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_112
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 3500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 274c0605a811d4863aa75e51e033c3fc
+      internalID: -917846775
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_113
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 3500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5ba5daf78957e4227862165de8aa2e1f
+      internalID: -1280699036
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_114
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 3250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 161fe5ad4af09420ea0c0aa4163b72bb
+      internalID: -1938701378
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_115
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 3250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2bf0fd9b849854a119981aecba5684ef
+      internalID: 1488322148
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_116
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 3250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1acfe71d1e5ad4669a171db31e520fe8
+      internalID: 1841081488
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_117
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 3250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 83eeb24958c0140f4b6e7487c43a83b8
+      internalID: -1647125531
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_118
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 3250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3b2fced44f02949a29e4e1b1b08b3651
+      internalID: -1441840486
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_119
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 3000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cb437760c82864d378ae3af0136c9a67
+      internalID: 366642794
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_120
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 3000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 342d00a1116314f8fbf4218215c21fd8
+      internalID: -1368401380
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_121
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 3000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1e9594b730649493894df1ce122c05da
+      internalID: -1057982953
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_122
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 3000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bdcd814fdd2bf4825b3d10702f786640
+      internalID: 1200871761
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_123
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 3000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dfa7b8061b09a4b05a881e203ba399d8
+      internalID: 727125178
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_124
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 2750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c562bf8d677d04bc7aca7ec4d47a7b3f
+      internalID: 496125692
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_125
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 2750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 983c03eab6eb243d8833266069fbab1b
+      internalID: -283804128
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_126
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 2750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 076cd00a68ddd477a86aff09093c0315
+      internalID: -884996044
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_127
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 2750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2cd23f7a9b37b418baf155574cbb6555
+      internalID: -1943017480
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_128
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 2750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7809f667002d2470a8b69b0fb9c933ff
+      internalID: -893864310
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_129
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 2500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1c38fc9a8a7244cc6be0d76f391ae848
+      internalID: -2136711752
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_130
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 2500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ce5c5c11c57bc44fcb51d700ca2e9d08
+      internalID: 154229568
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_131
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 2500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0f45e82bae5994c5490d23d50b2b6777
+      internalID: 474623102
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_132
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 2500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 43145f66b5d3b48a38a5c6863309ab3e
+      internalID: -1521868541
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_133
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 2500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 89526b5b95e7f46c3808b5ae7d359ea4
+      internalID: -74347711
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_134
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 2250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a7dc4ca55bba14f2fa2851a3f89c43ff
+      internalID: -1223336981
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_135
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 2250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f4b1bc7a9b4444ba6822daa847c86e20
+      internalID: 419164048
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_136
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 2250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e8ba2bed33b08453db43744f1b193456
+      internalID: -1711454467
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_137
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 2250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9dfcc684d73354cd0808244ff9fd5435
+      internalID: -272409945
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_138
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 2250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5b1dfa7278d654cf4b491b466811ffae
+      internalID: 1632400132
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_139
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 2000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c5692245e1c6c462482a2e17f6230458
+      internalID: -1428199335
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_140
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 2000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: afa38224c53e944d7b7c950958f6c490
+      internalID: -1304146392
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_141
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 2000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b3654b4505d884e3da9c6a0817d6e85e
+      internalID: -1290357625
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_142
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 2000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 07142619bf9124838b93a41a51eea209
+      internalID: 185382686
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_143
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fcc0c7d53cfcd4a0d8634ed3d0f0c1aa
+      internalID: 2086459236
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_144
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 1750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3094d59cf6d1f4e31b0a97a0e166721f
+      internalID: -831985317
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_145
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 1750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: edc9201c06eae45ff95149aa901c9537
+      internalID: -1387961036
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_146
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 1750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ddb14fbfb35d44978b849c239f2353f7
+      internalID: -1440378045
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_147
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 1750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7ef036cc91e924630b8bf066b58eb458
+      internalID: 2139767513
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_148
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 397b154eda10140af94cdaad08b3e82b
+      internalID: 508366249
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_149
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 1500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9165df86cad6e4ec4bea3a8505154551
+      internalID: 1535691325
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_150
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 1500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: faad684a232594f719ce4ccb86e5358b
+      internalID: -1691372300
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_151
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 1500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fa8d04ef4c74342d290905f92bc9fb8a
+      internalID: -1263873945
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_152
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 1500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 05622b3b1ebbb422fb89b1368434a99e
+      internalID: -889862574
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_153
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fe4e420ad871f4518a033b22447ded4e
+      internalID: 137026210
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_154
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 1250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f6d8a346001fa4284b0e0eb7d8d427b2
+      internalID: -67594406
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_155
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 1250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7c1c7900413f54ebbae0de2111ad0126
+      internalID: 1226075225
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_156
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 1250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 34b897339e608463296b8bee9ea5f170
+      internalID: 1971737661
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_157
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 1250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7b6ed776bd2c74ed992b903a80b50393
+      internalID: 2016074045
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_158
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 15eb33415b16c49d59bb31e8056cd6d2
+      internalID: -686556119
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_159
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 1000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3a7c1611036fc46ca96bcb8c75d61d0c
+      internalID: -247980150
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_160
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 1000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: df0bcb8bef0fb44a3af4f50f53e4e6ad
+      internalID: -1932449971
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_161
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 1000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f3c04dfb937ba47db8c269b501aca43c
+      internalID: -360304027
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_162
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 1000
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0f77a54fdc7af4fd7941a08656cc96ef
+      internalID: -634548461
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_163
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a89c75f42450b46bc8b02474669e9fc9
+      internalID: -135770310
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_164
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 998963cc48a044120bd33f9749aa4cc7
+      internalID: 1974253005
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_165
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f80a9c4fc4bcb4cfbbbc69da80182483
+      internalID: -1774040304
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_166
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 262e01401a15949358979466bf684625
+      internalID: -2123066327
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_167
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 750
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a241f2f23446447cab341fc363df0133
+      internalID: -1255722915
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_168
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d5b0de8dba45740db826499ef3980e1f
+      internalID: -1798825262
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_169
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 566837cb420dd4123856640b9da4356c
+      internalID: 1458095875
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_170
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 818ee857d28d44ed4b25aa488aab2a42
+      internalID: -1317053751
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_171
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2f5e8206c8949407d8100696724428c8
+      internalID: 1527655424
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_172
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 500
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 914e768dd78e24e4eb11fbc157bd5995
+      internalID: 910039515
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_173
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c9abc7f5e3b9f4d74b9c035e2a06123e
+      internalID: -1005628892
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_174
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 297863242835545bf98222b7ebda4042
+      internalID: -1483441579
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_175
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 180bca2780bed4b3fadf9f2d4dcf3ac0
+      internalID: -919704254
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_176
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 312fcfb4edc8e4150a53421aa6cea2f0
+      internalID: 1631892699
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_177
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 250
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9481aed51cc4b44e691ff8790e04f63b
+      internalID: 1388812714
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: DclIcnAnimation_178
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 250
+        height: 250
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 653586c3b98df4135a11eeaf8686637e
+      internalID: -1816620100
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     physicsShape: []
     bones: []
@@ -119,7 +3878,186 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      DclIcnAnimation_0: 873935844
+      DclIcnAnimation_1: 573333660
+      DclIcnAnimation_10: 2089004798
+      DclIcnAnimation_100: -942035284
+      DclIcnAnimation_101: -1892359468
+      DclIcnAnimation_102: -2587711
+      DclIcnAnimation_103: -327183318
+      DclIcnAnimation_104: 261641789
+      DclIcnAnimation_105: -529390443
+      DclIcnAnimation_106: 1135109816
+      DclIcnAnimation_107: -816200339
+      DclIcnAnimation_108: -886038941
+      DclIcnAnimation_109: -185824917
+      DclIcnAnimation_11: 979379032
+      DclIcnAnimation_110: -705788393
+      DclIcnAnimation_111: 1418327740
+      DclIcnAnimation_112: -917846775
+      DclIcnAnimation_113: -1280699036
+      DclIcnAnimation_114: -1938701378
+      DclIcnAnimation_115: 1488322148
+      DclIcnAnimation_116: 1841081488
+      DclIcnAnimation_117: -1647125531
+      DclIcnAnimation_118: -1441840486
+      DclIcnAnimation_119: 366642794
+      DclIcnAnimation_12: -1112576408
+      DclIcnAnimation_120: -1368401380
+      DclIcnAnimation_121: -1057982953
+      DclIcnAnimation_122: 1200871761
+      DclIcnAnimation_123: 727125178
+      DclIcnAnimation_124: 496125692
+      DclIcnAnimation_125: -283804128
+      DclIcnAnimation_126: -884996044
+      DclIcnAnimation_127: -1943017480
+      DclIcnAnimation_128: -893864310
+      DclIcnAnimation_129: -2136711752
+      DclIcnAnimation_13: -184690749
+      DclIcnAnimation_130: 154229568
+      DclIcnAnimation_131: 474623102
+      DclIcnAnimation_132: -1521868541
+      DclIcnAnimation_133: -74347711
+      DclIcnAnimation_134: -1223336981
+      DclIcnAnimation_135: 419164048
+      DclIcnAnimation_136: -1711454467
+      DclIcnAnimation_137: -272409945
+      DclIcnAnimation_138: 1632400132
+      DclIcnAnimation_139: -1428199335
+      DclIcnAnimation_14: -149181750
+      DclIcnAnimation_140: -1304146392
+      DclIcnAnimation_141: -1290357625
+      DclIcnAnimation_142: 185382686
+      DclIcnAnimation_143: 2086459236
+      DclIcnAnimation_144: -831985317
+      DclIcnAnimation_145: -1387961036
+      DclIcnAnimation_146: -1440378045
+      DclIcnAnimation_147: 2139767513
+      DclIcnAnimation_148: 508366249
+      DclIcnAnimation_149: 1535691325
+      DclIcnAnimation_15: -448815658
+      DclIcnAnimation_150: -1691372300
+      DclIcnAnimation_151: -1263873945
+      DclIcnAnimation_152: -889862574
+      DclIcnAnimation_153: 137026210
+      DclIcnAnimation_154: -67594406
+      DclIcnAnimation_155: 1226075225
+      DclIcnAnimation_156: 1971737661
+      DclIcnAnimation_157: 2016074045
+      DclIcnAnimation_158: -686556119
+      DclIcnAnimation_159: -247980150
+      DclIcnAnimation_16: -2101553498
+      DclIcnAnimation_160: -1932449971
+      DclIcnAnimation_161: -360304027
+      DclIcnAnimation_162: -634548461
+      DclIcnAnimation_163: -135770310
+      DclIcnAnimation_164: 1974253005
+      DclIcnAnimation_165: -1774040304
+      DclIcnAnimation_166: -2123066327
+      DclIcnAnimation_167: -1255722915
+      DclIcnAnimation_168: -1798825262
+      DclIcnAnimation_169: 1458095875
+      DclIcnAnimation_17: 419729063
+      DclIcnAnimation_170: -1317053751
+      DclIcnAnimation_171: 1527655424
+      DclIcnAnimation_172: 910039515
+      DclIcnAnimation_173: -1005628892
+      DclIcnAnimation_174: -1483441579
+      DclIcnAnimation_175: -919704254
+      DclIcnAnimation_176: 1631892699
+      DclIcnAnimation_177: 1388812714
+      DclIcnAnimation_178: -1816620100
+      DclIcnAnimation_18: 856715929
+      DclIcnAnimation_19: -1779875613
+      DclIcnAnimation_2: -18242973
+      DclIcnAnimation_20: -1398162941
+      DclIcnAnimation_21: -941973097
+      DclIcnAnimation_22: 1615929590
+      DclIcnAnimation_23: -945649850
+      DclIcnAnimation_24: 2134475631
+      DclIcnAnimation_25: 396056597
+      DclIcnAnimation_26: 654480176
+      DclIcnAnimation_27: -1034182236
+      DclIcnAnimation_28: 1251533382
+      DclIcnAnimation_29: -1989120515
+      DclIcnAnimation_3: -1167211827
+      DclIcnAnimation_30: 392389841
+      DclIcnAnimation_31: -779127415
+      DclIcnAnimation_32: -1897709254
+      DclIcnAnimation_33: -1636302638
+      DclIcnAnimation_34: -390431479
+      DclIcnAnimation_35: -1564464361
+      DclIcnAnimation_36: 728048271
+      DclIcnAnimation_37: 918067968
+      DclIcnAnimation_38: 262084968
+      DclIcnAnimation_39: -1791726024
+      DclIcnAnimation_4: -1913593754
+      DclIcnAnimation_40: 1068484987
+      DclIcnAnimation_41: -1691538999
+      DclIcnAnimation_42: 675752526
+      DclIcnAnimation_43: -757485208
+      DclIcnAnimation_44: -1576136503
+      DclIcnAnimation_45: -578220422
+      DclIcnAnimation_46: -1258478909
+      DclIcnAnimation_47: -34293598
+      DclIcnAnimation_48: 1503798707
+      DclIcnAnimation_49: 1800724730
+      DclIcnAnimation_5: 1767712564
+      DclIcnAnimation_50: 813842814
+      DclIcnAnimation_51: -1441710497
+      DclIcnAnimation_52: 791370554
+      DclIcnAnimation_53: -1445229678
+      DclIcnAnimation_54: -1800627526
+      DclIcnAnimation_55: -2084416218
+      DclIcnAnimation_56: 18344614
+      DclIcnAnimation_57: -1607922743
+      DclIcnAnimation_58: 1839909405
+      DclIcnAnimation_59: 272485710
+      DclIcnAnimation_6: 1502606461
+      DclIcnAnimation_60: 899807995
+      DclIcnAnimation_61: 1265692997
+      DclIcnAnimation_62: -701148059
+      DclIcnAnimation_63: -1942938396
+      DclIcnAnimation_64: 1857683400
+      DclIcnAnimation_65: -1678443594
+      DclIcnAnimation_66: -129081232
+      DclIcnAnimation_67: -1404124374
+      DclIcnAnimation_68: 1496674042
+      DclIcnAnimation_69: 1355521722
+      DclIcnAnimation_7: -861169363
+      DclIcnAnimation_70: -1430677476
+      DclIcnAnimation_71: -1628802632
+      DclIcnAnimation_72: -591009483
+      DclIcnAnimation_73: -1808437968
+      DclIcnAnimation_74: 909551255
+      DclIcnAnimation_75: -990877370
+      DclIcnAnimation_76: 47885065
+      DclIcnAnimation_77: -2074181101
+      DclIcnAnimation_78: 1727389429
+      DclIcnAnimation_79: 260655500
+      DclIcnAnimation_8: 2004115010
+      DclIcnAnimation_80: -1387403442
+      DclIcnAnimation_81: -9129401
+      DclIcnAnimation_82: 1212786906
+      DclIcnAnimation_83: 2071161945
+      DclIcnAnimation_84: -1967113426
+      DclIcnAnimation_85: 484443196
+      DclIcnAnimation_86: 619489387
+      DclIcnAnimation_87: -611230773
+      DclIcnAnimation_88: 908611151
+      DclIcnAnimation_89: 303791009
+      DclIcnAnimation_9: -710810289
+      DclIcnAnimation_90: -192722012
+      DclIcnAnimation_91: 2056444352
+      DclIcnAnimation_92: -402160072
+      DclIcnAnimation_93: -1448423743
+      DclIcnAnimation_94: -1395774841
+      DclIcnAnimation_95: -1401937961
+      DclIcnAnimation_96: -1051213755
+      DclIcnAnimation_97: -1561449964
+      DclIcnAnimation_98: 103059709
+      DclIcnAnimation_99: 1783173985
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
