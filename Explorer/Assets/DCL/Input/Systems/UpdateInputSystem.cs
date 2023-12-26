@@ -12,7 +12,7 @@ namespace DCL.Input.Systems
         {
             // We need to execute it on initialize to be independent from the entities with <TQueryComponent> creation order
             World.Query(new QueryDescription().WithAll<TQueryComponent>().WithNone<T>(),
-                (in Entity entity) => World.Add<T>(entity));
+                entity => World.Add<T>(entity));
         }
     }
 }
