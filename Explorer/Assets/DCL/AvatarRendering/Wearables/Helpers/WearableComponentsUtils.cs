@@ -11,7 +11,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         internal static readonly ListObjectPool<string> POINTERS_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
         internal static readonly ArrayPool<IWearable> RESULTS_POOL = ArrayPool<IWearable>.Create(20, 20);
 
-        public static GetWearablesByPointersIntention CreateGetWearablesByPointersIntention(BodyShape bodyShape, IList<string> wearables)
+        public static GetWearablesByPointersIntention CreateGetWearablesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<string> wearables)
         {
             List<string> pointers = POINTERS_POOL.Get();
             pointers.Add(bodyShape);

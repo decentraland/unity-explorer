@@ -34,6 +34,15 @@ namespace DCL.AvatarRendering.Wearables
             throw new NotSupportedException($"Body shape {pbAvatarShape.BodyShape} not supported");
         }
 
+        public static BodyShape FromStringSafe(string bodyShape)
+        {
+            if (bodyShape == FEMALE.Value)
+                return FEMALE;
+
+            // Use male by default
+            return MALE;
+        }
+
         public static readonly BodyShape MALE = new ("urn:decentraland:off-chain:base-avatars:BaseMale", 0);
         public static readonly BodyShape FEMALE = new ("urn:decentraland:off-chain:base-avatars:BaseFemale", 1);
 
