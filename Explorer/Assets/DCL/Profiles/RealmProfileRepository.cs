@@ -17,6 +17,7 @@ namespace DCL.Profiles
         private readonly IRealmData realm;
         private readonly IProfileCache profileCache;
         private readonly URLBuilder urlBuilder = new ();
+        private ProfileJsonRootDtoConverter? profileJsonRootDtoConverter;
 
         public RealmProfileRepository(IWebRequestController webRequestController,
             IRealmData realm,
@@ -50,9 +51,10 @@ namespace DCL.Profiles
             {
                 GenericGetRequest response = await webRequestController.GetAsync(new CommonArguments(url), ct);
 
+                profileJsonRootDtoConverter ??= new ProfileJsonRootDtoConverter();
                 using GetProfileJsonRootDto root = await response.CreateFromNewtonsoftJsonAsync<GenericGetRequest, GetProfileJsonRootDto>(
                     createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, version, text, exception),
-                    converters: new ProfileJsonRootDtoConverter());
+                    converters: profileJsonRootDtoConverter);
 
                 if (root.avatars == null) return null;
                 if (root.avatars.Count == 0) return null;
