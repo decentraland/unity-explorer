@@ -1095,7 +1095,7 @@ MonoBehaviour:
   descriptionContent: {fileID: 4673463797054126884}
   rectTransform: {fileID: 25544740848074249}
   <CategoriesContainer>k__BackingField: {fileID: 2627153927686046327}
-  placeImage: {fileID: 3532656630585342090}
+  placeImage: {fileID: 3544030107733454522}
   closeButton: {fileID: 336449712889304881}
   backButton: {fileID: 846060297463590866}
   jumpInButton: {fileID: 7544780555329989278}
@@ -4173,6 +4173,7 @@ GameObject:
   - component: {fileID: 5639355638059818371}
   - component: {fileID: 8281347120207082334}
   - component: {fileID: 3532656630585342090}
+  - component: {fileID: 3544030107733454522}
   m_Layer: 5
   m_Name: PlaceImage
   m_TagString: Untagged
@@ -4238,6 +4239,20 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &3544030107733454522
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7900764672589405173}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e79e296834574c5d9138852d94c8998, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <LoadingObject>k__BackingField: {fileID: 0}
+  <Image>k__BackingField: {fileID: 3532656630585342090}
 --- !u!1 &8312802546809659174
 GameObject:
   m_ObjectHideFlags: 0

@@ -99,7 +99,9 @@ namespace Global.Dynamic
                     parcelServiceContainer.TeleportController,
                     dynamicSettings.BackpackSettings,
                     backpackCommandBus,
-                    backpackEventBus),
+                    backpackEventBus,
+                    staticContainer.WebRequestsContainer.WebRequestController),
+
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
             };
 

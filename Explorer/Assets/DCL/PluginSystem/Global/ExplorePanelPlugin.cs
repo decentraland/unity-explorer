@@ -8,6 +8,7 @@ using DCL.Navmap;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.Settings;
+using DCL.WebRequests;
 using Global.Dynamic;
 using MVC;
 using System;
@@ -27,6 +28,7 @@ namespace DCL.PluginSystem.Global
         private readonly BackpackSettings backpackSettings;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackEventBus backpackEventBus;
+        private readonly IWebRequestController webRequestController;
         private NavmapController navmapController;
         private BackpackControler backpackController;
 
@@ -38,7 +40,8 @@ namespace DCL.PluginSystem.Global
             ITeleportController teleportController,
             BackpackSettings backpackSettings,
             BackpackCommandBus backpackCommandBus,
-            BackpackEventBus backpackEventBus)
+            BackpackEventBus backpackEventBus,
+            IWebRequestController webRequestController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -48,6 +51,7 @@ namespace DCL.PluginSystem.Global
             this.backpackSettings = backpackSettings;
             this.backpackCommandBus = backpackCommandBus;
             this.backpackEventBus = backpackEventBus;
+            this.webRequestController = webRequestController;
         }
 
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
@@ -55,7 +59,7 @@ namespace DCL.PluginSystem.Global
             ExplorePanelView panelView = (await assetsProvisioner.ProvideMainAssetAsync(settings.ExplorePanelPrefab, ct: ct)).Value.GetComponent<ExplorePanelView>();
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelView, null, out ExplorePanelView explorePanelView);
 
-            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, teleportController);
+            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, teleportController, webRequestController);
             await navmapController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
             (ProvidedAsset<NFTColorsSO> rarityColorMappings, ProvidedAsset<NftTypeIconSO> categoryIconsMapping, ProvidedAsset<NftTypeIconSO> rarityBackgroundsMapping) = await UniTask.WhenAll(
