@@ -35,7 +35,7 @@ namespace DCL.PluginSystem.Global
             var mutexSync = new MutexSync();
 
             LoadProfileSystem.InjectToWorld(ref builder,
-                new NoCache<Profile, GetProfileIntention>(false, false),
+                new ProfileIntentionCache(),
                 mutexSync, profileRepository);
         }
     }

@@ -1,0 +1,57 @@
+using Cysharp.Threading.Tasks;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Profiling;
+using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Common.Components;
+using System.Collections.Generic;
+using Utility.Multithreading;
+using Utility.PriorityQueue;
+
+namespace DCL.Profiles
+{
+    public class ProfileIntentionCache : IStreamableCache<Profile, GetProfileIntention>
+    {
+        private readonly Dictionary<GetProfileIntention, Profile> cache = new ();
+        private readonly SimplePriorityQueue<GetProfileIntention, long> unloadQueue = new ();
+
+        public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<Profile>?>> OngoingRequests { get; }
+            = new Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<Profile>?>>();
+        public IDictionary<string, StreamableLoadingResult<Profile>> IrrecoverableFailures { get; }
+            = new Dictionary<string, StreamableLoadingResult<Profile>>();
+
+        public bool Equals(GetProfileIntention x, GetProfileIntention y) =>
+            x.Equals(y);
+
+        public int GetHashCode(GetProfileIntention obj) =>
+            obj.GetHashCode();
+
+        public void Dispose()
+        {
+            cache.Clear();
+        }
+
+        public bool TryGet(in GetProfileIntention key, out Profile asset) =>
+            cache.TryGetValue(key, out asset);
+
+        public void Add(in GetProfileIntention key, Profile asset)
+        {
+            if (cache.TryAdd(key, asset))
+                unloadQueue.Enqueue(key, MultithreadingUtility.FrameCount);
+
+            ProfilingCounters.ProfileIntentionsInCache.Value = cache.Count;
+        }
+
+        public void Dereference(in GetProfileIntention key, Profile asset) { }
+
+        public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount)
+        {
+            for (var i = 0; frameTimeBudgetProvider.TrySpendBudget()
+                            && i < maxUnloadAmount
+                            && unloadQueue.Count > 0
+                            && unloadQueue.TryDequeue(out GetProfileIntention key); i++)
+                cache.Remove(key);
+
+            ProfilingCounters.ProfileIntentionsInCache.Value = cache.Count;
+        }
+    }
+}
