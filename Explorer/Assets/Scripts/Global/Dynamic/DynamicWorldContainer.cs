@@ -85,7 +85,7 @@ namespace Global.Dynamic
                     staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, staticContainer.SingletonSharedDependencies.MemoryBudgetProvider, realmData, debugBuilder, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer, placesAPIService),
-                new ExplorePanelPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer, placesAPIService, parcelServiceContainer.TeleportController, dynamicSettings.BackpackSettings),
+                new ExplorePanelPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer, placesAPIService, parcelServiceContainer.TeleportController, dynamicSettings.BackpackSettings, staticContainer.WebRequestsContainer.WebRequestController),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
             };
 
