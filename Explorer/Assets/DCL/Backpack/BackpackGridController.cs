@@ -53,8 +53,8 @@ namespace DCL.Backpack
         private BackpackItemView CreateBackpackItem(BackpackItemView backpackItem)
         {
             BackpackItemView backpackItemView = Object.Instantiate(backpackItem, view.gameObject.transform);
-            backpackItem.OnSelectItem += SelectItem;
-            backpackItem.EquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackCommand(BackpackCommandType.EquipCommand, backpackItemView.ItemId, "")));
+            backpackItem.OnSelectItem += ()=>SelectItem(backpackItem.ItemId);
+            backpackItem.EquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackEquipCommand(backpackItemView.ItemId)));
             return backpackItemView;
         }
 
@@ -66,9 +66,9 @@ namespace DCL.Backpack
             usedPoolItems.Clear();
         }
 
-        private void SelectItem()
+        private void SelectItem(string itemId)
         {
-            commandBus.SendCommand(new BackpackCommand(BackpackCommandType.SelectCommand, "", ""));
+            commandBus.SendCommand(new BackpackSelectCommand(itemId));
         }
 
         private void OnUnequip(IWearable unequippedWearable)

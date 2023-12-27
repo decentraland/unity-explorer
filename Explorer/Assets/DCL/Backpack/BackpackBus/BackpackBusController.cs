@@ -5,71 +5,66 @@ using System;
 
 namespace DCL.Backpack.BackpackBus
 {
-    public class BackpackBusController
+    public class BackpackBusController : IDisposable
     {
         private readonly IWearableCatalog wearableCatalog;
         private readonly IBackpackEventBus backpackEventBus;
         private readonly IBackpackCommandBus backpackCommandBus;
+        private readonly IBackpackEquipStatusController backpackEquipStatusController;
 
-        public BackpackBusController(IWearableCatalog wearableCatalog, IBackpackEventBus backpackEventBus, IBackpackCommandBus backpackCommandBus)
+        public BackpackBusController(
+            IWearableCatalog wearableCatalog,
+            IBackpackEventBus backpackEventBus,
+            IBackpackCommandBus backpackCommandBus,
+            IBackpackEquipStatusController backpackEquipStatusController)
         {
             this.wearableCatalog = wearableCatalog;
             this.backpackEventBus = backpackEventBus;
             this.backpackCommandBus = backpackCommandBus;
+            this.backpackEquipStatusController = backpackEquipStatusController;
 
-            backpackCommandBus.OnMessageReceived += HandleBackpackMessageReceived;
+            this.backpackCommandBus.OnEquipMessageReceived += HandleEquipCommand;
+            this.backpackCommandBus.OnUnEquipMessageReceived += HandleUnEquipCommand;
+            this.backpackCommandBus.OnHideMessageReceived += HandleHideCommand;
+            this.backpackCommandBus.OnSelectMessageReceived += HandleSelectCommand;
         }
 
-        private void HandleBackpackMessageReceived(BackpackCommand command)
+        private void HandleSelectCommand(BackpackSelectCommand command)
         {
-            switch (command.Type)
-            {
-                case BackpackCommandType.EquipCommand:
-                    HandleEquipCommand(command.Id);
-                    break;
-                case BackpackCommandType.UnequipCommand:
-                    HandleUnEquipCommand(command.Id, command.Category);
-                    break;
-                case BackpackCommandType.HideCommand:
-                    HandleHideCommand();
-                    break;
-                case BackpackCommandType.SelectCommand:
-                    HandleSelectCommand(command.Id);
-                    break;
-            }
-        }
-
-        private void HandleSelectCommand(string wearableId)
-        {
-            if (wearableCatalog.TryGetWearable(wearableId, out IWearable wearable))
-            {
+            if (wearableCatalog.TryGetWearable(command.Id, out IWearable wearable))
                 backpackEventBus.SendSelect(wearable);
-            }
         }
 
-        private void HandleEquipCommand(string wearableId)
+        private void HandleEquipCommand(BackpackEquipCommand command)
         {
-            if (wearableCatalog.TryGetWearable(wearableId, out IWearable wearable))
-            {
-                backpackEventBus.SendEquip(wearable);
-            }
+            wearableCatalog.TryGetWearable(command.Id, out IWearable wearable);
+
+            if (wearable == null)
+                return;
+
+            if(backpackEquipStatusController.GetEquippedWearableForCategory(wearable.GetCategory()) != null)
+                backpackEventBus.SendUnEquip(backpackEquipStatusController.GetEquippedWearableForCategory(wearable.GetCategory()));
+
+            backpackEventBus.SendEquip(wearable);
         }
 
-        private void HandleUnEquipCommand(string wearableId, string category)
+        private void HandleUnEquipCommand(BackpackUnEquipCommand command)
         {
-            if (!string.IsNullOrEmpty(wearableId))
-            {
-
-            }
-            if (!string.IsNullOrEmpty(category))
-            {
-
-            }
+            if (wearableCatalog.TryGetWearable(command.Id, out IWearable wearable))
+                backpackEventBus.SendUnEquip(wearable);
         }
 
-        private void HandleHideCommand()
+        private void HandleHideCommand(BackpackHideCommand command)
         {
 
+        }
+
+        public void Dispose()
+        {
+            backpackCommandBus.OnEquipMessageReceived -= HandleEquipCommand;
+            backpackCommandBus.OnUnEquipMessageReceived -= HandleUnEquipCommand;
+            backpackCommandBus.OnHideMessageReceived -= HandleHideCommand;
+            backpackCommandBus.OnSelectMessageReceived -= HandleSelectCommand;
         }
     }
 }

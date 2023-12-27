@@ -1,26 +1,44 @@
-using JetBrains.Annotations;
-
 namespace DCL.Backpack.BackpackBus
 {
-    public readonly struct BackpackCommand
+    public readonly struct BackpackEquipCommand
     {
-        public readonly BackpackCommandType Type;
         public readonly string Id;
-        public readonly string Category;
 
-        public BackpackCommand(BackpackCommandType type, string id, string category)
+        public BackpackEquipCommand(string id)
         {
-            Type = type;
             Id = id;
-            Category = category;
         }
     }
 
-    public enum BackpackCommandType
+    public readonly struct BackpackUnEquipCommand
     {
-        EquipCommand,
-        UnequipCommand,
-        HideCommand,
-        SelectCommand,
+        public readonly string Id;
+
+        public BackpackUnEquipCommand(string id)
+        {
+            Id = id;
+        }
+    }
+
+    public readonly struct BackpackSelectCommand
+    {
+        public readonly string Id;
+
+        public BackpackSelectCommand(string id)
+        {
+            Id = id;
+        }
+    }
+
+    public readonly struct BackpackHideCommand
+    {
+        public readonly string Category;
+        public readonly bool? IsHidden;
+
+        public BackpackHideCommand(string category, bool? isHidden)
+        {
+            Category = category;
+            IsHidden = isHidden;
+        }
     }
 }

@@ -26,11 +26,11 @@ namespace DCL.Backpack
             {
                 avatarSlots.Add(avatarSlotView.Category, avatarSlotView);
                 avatarSlotView.OnSlotButtonPressed += OnSlotButtonPressed;
-                avatarSlotView.UnequipButton.onClick.AddListener(() => backpackCommandBus.SendCommand(new BackpackCommand(BackpackCommandType.UnequipCommand, null, avatarSlotView.Category)));
+                avatarSlotView.UnequipButton.onClick.AddListener(() => backpackCommandBus.SendCommand(new BackpackUnEquipCommand(avatarSlotView.Category)));
             }
         }
 
-        private void UnEquipInSlot(IWearable unequippedWearable)
+        private void UnEquipInSlot(IWearable wearable)
         {
 
         }
