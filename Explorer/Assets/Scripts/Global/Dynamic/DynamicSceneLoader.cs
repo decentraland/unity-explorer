@@ -4,9 +4,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Web3Authentication;
 using System;
-using System.Collections.Generic;
 using System.Threading;
-using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Utility;
@@ -24,13 +22,9 @@ namespace Global.Dynamic
         [Space]
         [SerializeField] private UIDocument uiToolkitRoot;
         [SerializeField] private UIDocument debugUiRoot;
-        [SerializeField] private Vector2Int StartPosition;
-        [SerializeField] [Obsolete] private int SceneLoadRadius = 4;
 
-        // If it's 0, it will load every parcel in the range
-        [SerializeField] private List<int2> StaticLoadPositions;
         [SerializeField] private RealmLauncher realmLauncher;
-        [SerializeField] private string[] realms;
+        [SerializeField] private DynamicSceneLoaderSettings settings;
         [SerializeField] private DynamicSettings dynamicSettings;
 
         private StaticContainer staticContainer;
@@ -39,7 +33,7 @@ namespace Global.Dynamic
 
         private void Awake()
         {
-            realmLauncher.Initialize(realms);
+            realmLauncher.Initialize(settings.Realms);
 
             InitializationFlowAsync(destroyCancellationToken).Forget();
         }
@@ -92,8 +86,8 @@ namespace Global.Dynamic
                     scenePluginSettingsContainer,
                     ct,
                     uiToolkitRoot,
-                    StaticLoadPositions,
-                    SceneLoadRadius,
+                    settings.StaticLoadPositions,
+                    settings.SceneLoadRadius,
                     dynamicSettings,
                     web3Authenticator);
 
@@ -150,7 +144,7 @@ namespace Global.Dynamic
 
                 await UniTask.SwitchToMainThread();
 
-                Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(StartPosition);
+                Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(settings.StartPosition);
                 characterPos.y = 1f;
 
                 globalContainer.CharacterObject.Controller.transform.position = characterPos;
