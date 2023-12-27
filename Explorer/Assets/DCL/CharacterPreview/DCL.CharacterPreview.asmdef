@@ -1,0 +1,10 @@
+{
+  "name": "DCL.CharacterPreview",
+  "references": [
+    "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+    "GUID:d0ec51c740809fd4680d3ea27279dca7",
+    "GUID:4794e238ed0f65142a4aea5848b513e5",
+    "GUID:5eabe9a3d4dd19d42a16208ea5411062",
+    "GUID:45f6fff651a0a514f8edfdaf9cce45af"
+  ]
+}

@@ -22,6 +22,14 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public readonly List<CachedWearable> InstantiatedWearables;
 
+        public AvatarShapeComponent(string name, string id) : this()
+        {
+            ID = id;
+            Name = name;
+
+            InstantiatedWearables = new List<CachedWearable>();
+        }
+
         public AvatarShapeComponent(string name, string id, BodyShape bodyShape, Promise wearablePromise, Color skinColor,
             Color hairColor)
         {
