@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.DebugUtilities;
 using DCL.ParcelsService;
@@ -77,6 +78,7 @@ namespace Global.Dynamic
             var wearableCatalog = new WearableCatalog();
             var backpackCommandBus = new BackpackCommandBus();
             var backpackEventBus = new BackpackEventBus();
+            var BackpackEquipStatusController = new BackpackEquipStatusController(backpackEventBus);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -86,7 +88,7 @@ namespace Global.Dynamic
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.CameraSamplingData, exposedGlobalDataContainer.ExposedCameraData),
                 new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, staticContainer.SingletonSharedDependencies.MemoryBudgetProvider, debugBuilder),
                 new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, realmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner, wearableCatalog),
-                new BackpackBusPlugin(wearableCatalog, backpackCommandBus, backpackEventBus),
+                new BackpackBusPlugin(wearableCatalog, backpackCommandBus, backpackEventBus, BackpackEquipStatusController),
                 new AvatarPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, staticContainer.SingletonSharedDependencies.MemoryBudgetProvider, realmData, debugBuilder, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
