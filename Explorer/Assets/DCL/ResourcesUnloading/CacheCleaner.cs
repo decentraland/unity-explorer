@@ -32,6 +32,7 @@ namespace DCL.ResourcesUnloading
         private IWearableAssetsCache wearableAssetsCache;
         private IWearableCatalog wearableCatalog;
         private IProfileCache? profileCache;
+        private IStreamableCache<Profile, GetProfileIntention>? profileIntentionCache;
 
         public CacheCleaner(IConcurrentBudgetProvider fpsCapBudgetProvider)
         {
@@ -50,6 +51,7 @@ namespace DCL.ResourcesUnloading
             gltfContainerAssetsCache.Unload(fpsCapBudgetProvider, GLTF_UNLOAD_CHUNK);
             assetBundleCache.Unload(fpsCapBudgetProvider, AB_UNLOAD_CHUNK);
             profileCache?.Unload(fpsCapBudgetProvider, PROFILE_UNLOAD_CHUNK);
+            profileIntentionCache?.Unload(fpsCapBudgetProvider, PROFILE_UNLOAD_CHUNK);
 
             ClearAvatarsRelatedPools();
         }
@@ -82,12 +84,14 @@ namespace DCL.ResourcesUnloading
         public void Register(IProfileCache profileCache) =>
             this.profileCache = profileCache;
 
+        public void Register(IStreamableCache<Profile, GetProfileIntention> profileIntentionCache) =>
+            this.profileIntentionCache = profileIntentionCache;
+
         public void UpdateProfilingCounters()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             ProfilingCounters.WearablesAssetsInCatalogAmount.Value = ((WearableCatalog)wearableCatalog).WearableAssetsInCatalog;
             ProfilingCounters.WearablesAssetsInCacheAmount.Value = wearableAssetsCache.WearablesAssesCount;
-            ProfilingCounters.ProfilesInCache.Value = profileCache?.Count ?? 0;
 #endif
         }
     }

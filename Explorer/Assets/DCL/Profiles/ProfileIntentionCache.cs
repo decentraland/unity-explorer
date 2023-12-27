@@ -38,7 +38,9 @@ namespace DCL.Profiles
             if (cache.TryAdd(key, asset))
                 unloadQueue.Enqueue(key, MultithreadingUtility.FrameCount);
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             ProfilingCounters.ProfileIntentionsInCache.Value = cache.Count;
+#endif
         }
 
         public void Dereference(in GetProfileIntention key, Profile asset) { }
@@ -51,7 +53,9 @@ namespace DCL.Profiles
                             && unloadQueue.TryDequeue(out GetProfileIntention key); i++)
                 cache.Remove(key);
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             ProfilingCounters.ProfileIntentionsInCache.Value = cache.Count;
+#endif
         }
     }
 }
