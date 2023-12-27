@@ -9,14 +9,14 @@ namespace DCL.Profiles
     {
         public BodyShape BodyShape { get; internal set; }
 
-        internal readonly HashSet<string> sharedWearables = new ();
+        internal readonly HashSet<URN> sharedWearables = new ();
 
-        internal readonly HashSet<string> uniqueWearables = new ();
+        internal readonly HashSet<URN> uniqueWearables = new ();
 
         internal readonly Dictionary<string, Emote> emotes = new ();
 
-        public IReadOnlyCollection<string> SharedWearables => sharedWearables;
-        public IReadOnlyCollection<string> UniqueWearables => uniqueWearables;
+        public IReadOnlyCollection<URN> SharedWearables => sharedWearables;
+        public IReadOnlyCollection<URN> UniqueWearables => uniqueWearables;
 
         public IReadOnlyCollection<string> ForceRender { get; internal set; } = null!;
         public IReadOnlyDictionary<string, Emote> Emotes => emotes;
@@ -28,7 +28,7 @@ namespace DCL.Profiles
 
         internal Avatar() { }
 
-        public Avatar(BodyShape bodyShape, HashSet<string> sharedWearables, Color eyesColor, Color hairColor, Color skinColor)
+        public Avatar(BodyShape bodyShape, HashSet<URN> sharedWearables, Color eyesColor, Color hairColor, Color skinColor)
         {
             BodyShape = bodyShape;
             this.sharedWearables = sharedWearables;

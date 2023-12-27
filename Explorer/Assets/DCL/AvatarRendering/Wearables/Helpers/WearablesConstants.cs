@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Decentraland.Common;
 using System.Collections.Generic;
 using System.Linq;
@@ -146,8 +147,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 { (BodyShape.FEMALE, Categories.FEET), "urn:decentraland:off-chain:base-avatars:bun_shoes" },
             };
 
-            public static HashSet<string> GetDefaultWearablesForBodyShape(string bodyShapeId) =>
-                DEFAULT_WEARABLES.Where(x => x.Key.Item1 == bodyShapeId).Select(x => x.Value).ToHashSet();
+            public static HashSet<URN> GetDefaultWearablesForBodyShape(string bodyShapeId) =>
+                DEFAULT_WEARABLES.Where(x => x.Key.Item1 == bodyShapeId).Select(x => new URN(x.Value)).ToHashSet();
 
             public static string GetDefaultWearable(BodyShape bodyShapeId, string category)
             {

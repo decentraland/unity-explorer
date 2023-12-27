@@ -69,6 +69,8 @@ namespace DCL.Profiles
     [Serializable]
     public struct AvatarJsonDto
     {
+        private static readonly ThreadSafeListPool<URN> wearablePool = new (10, 10);
+
         public string bodyShape;
         public List<string> wearables;
         public List<string> forceRender;
@@ -82,14 +84,19 @@ namespace DCL.Profiles
         {
             const int SHARED_WEARABLES_MAX_URN_PARTS = 6;
 
+            List<URN> wearableUrns = wearablePool.Get();
+
+            foreach (string w in wearables)
+                wearableUrns.Add(w);
+
             avatar.sharedWearables.Clear();
 
-            foreach (string wearable in wearables!)
-                avatar.sharedWearables.Add(wearable.ShortenURN(SHARED_WEARABLES_MAX_URN_PARTS));
+            foreach (URN wearable in wearableUrns)
+                avatar.sharedWearables.Add(wearable.Shorten(SHARED_WEARABLES_MAX_URN_PARTS));
 
             // The wearables urns retrieved in the profile follows https://adr.decentraland.org/adr/ADR-244
             avatar.uniqueWearables.Clear();
-            avatar.uniqueWearables.UnionWith(wearables!);
+            avatar.uniqueWearables.UnionWith(wearableUrns!);
 
             avatar.BodyShape = BodyShape.FromStringSafe(bodyShape);
             emotes.AlignWithDictionary(avatar.emotes, static dto => dto.urn, static dto => dto.ToEmote());
@@ -99,6 +106,8 @@ namespace DCL.Profiles
             avatar.EyesColor = eyes!.color!.ToColor();
             avatar.HairColor = hair!.color!.ToColor();
             avatar.SkinColor = skin!.color!.ToColor();
+
+            wearablePool.Release(wearableUrns);
         }
 
         public void Reset()

@@ -1,4 +1,5 @@
-﻿using DCL.AvatarRendering.Wearables.Components;
+﻿using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Optimization.Pools;
 using System.Buffers;
@@ -16,6 +17,18 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             List<string> pointers = POINTERS_POOL.Get();
             pointers.Add(bodyShape);
             pointers.AddRange(wearables);
+
+            IWearable[] results = RESULTS_POOL.Rent(pointers.Count);
+            return new GetWearablesByPointersIntention(pointers, results, bodyShape);
+        }
+
+        public static GetWearablesByPointersIntention CreateGetWearablesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<URN> wearables)
+        {
+            List<string> pointers = POINTERS_POOL.Get();
+            pointers.Add(bodyShape);
+
+            foreach (URN urn in wearables)
+                pointers.Add(urn);
 
             IWearable[] results = RESULTS_POOL.Rent(pointers.Count);
             return new GetWearablesByPointersIntention(pointers, results, bodyShape);
