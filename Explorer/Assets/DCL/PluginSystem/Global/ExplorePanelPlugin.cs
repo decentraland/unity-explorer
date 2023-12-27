@@ -1,11 +1,13 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Backpack;
 using DCL.ExplorePanel;
 using DCL.Navmap;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.Settings;
+using DCL.WebRequests;
 using Global.Dynamic;
 using MVC;
 using System.Threading;
@@ -21,6 +23,8 @@ namespace DCL.PluginSystem.Global
         private readonly MapRendererContainer mapRendererContainer;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ITeleportController teleportController;
+        private readonly BackpackSettings backpackSettings;
+        private readonly IWebRequestController webRequestController;
         private NavmapController navmapController;
 
         public ExplorePanelPlugin(
@@ -28,13 +32,17 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             MapRendererContainer mapRendererContainer,
             IPlacesAPIService placesAPIService,
-            ITeleportController teleportController)
+            ITeleportController teleportController,
+            BackpackSettings backpackSettings,
+            IWebRequestController webRequestController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.mapRendererContainer = mapRendererContainer;
             this.placesAPIService = placesAPIService;
             this.teleportController = teleportController;
+            this.backpackSettings = backpackSettings;
+            this.webRequestController = webRequestController;
         }
 
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
@@ -42,11 +50,18 @@ namespace DCL.PluginSystem.Global
             ExplorePanelView panelView = (await assetsProvisioner.ProvideMainAssetAsync(settings.ExplorePanelPrefab, ct: ct)).Value.GetComponent<ExplorePanelView>();
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelView, null, out ExplorePanelView explorePanelView);
 
-            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, teleportController);
+            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, teleportController, webRequestController);
             await navmapController.InitialiseAssetsAsync(assetsProvisioner, ct);
-            SettingsController settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
 
-            mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController));
+            (ProvidedAsset<NFTColorsSO> rarityColorMappings, ProvidedAsset<NftTypeIconSO> categoryIconsMapping, ProvidedAsset<NftTypeIconSO> rarityBackgroundsMapping) = await UniTask.WhenAll(
+                assetsProvisioner.ProvideMainAssetAsync(backpackSettings.RarityColorMappings, ct),
+                assetsProvisioner.ProvideMainAssetAsync(backpackSettings.CategoryIconsMapping, ct),
+                assetsProvisioner.ProvideMainAssetAsync(backpackSettings.RarityBackgroundsMapping, ct));
+
+            SettingsController settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
+            BackpackControler backpackController = new BackpackControler(explorePanelView.GetComponentInChildren<BackpackView>(), rarityBackgroundsMapping.Value, categoryIconsMapping.Value, rarityColorMappings.Value);
+
+            mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackController));
 
             mvcManager.RegisterController(new PersistentExplorePanelOpenerController(
                 PersistentExplorePanelOpenerController.CreateLazily(

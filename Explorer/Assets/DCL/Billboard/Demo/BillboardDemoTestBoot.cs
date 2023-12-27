@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Billboard.Demo.World;
+using DCL.DemoWorlds;
 using UnityEngine;
 
 namespace DCL.Billboard.Demo

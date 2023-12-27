@@ -1,3 +1,5 @@
+using DCL.Optimization.PerformanceBudgeting;
+
 namespace DCL.Profiles
 {
     public interface IProfileCache
@@ -5,5 +7,7 @@ namespace DCL.Profiles
         Profile? Get(string id);
 
         void Set(string id, Profile profile);
+
+        void Unload(IConcurrentBudgetProvider concurrentBudgetProvider, int maxAmount);
     }
 }

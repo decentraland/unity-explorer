@@ -1,0 +1,55 @@
+using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
+using DCL.ECSComponents;
+using DCL.Optimization.PerformanceBudgeting;
+using DCL.Profiling;
+using DCL.SDKComponents.TextShape.Component;
+using DCL.SDKComponents.TextShape.Renderer.Factory;
+using ECS.Abstract;
+using ECS.Unity.Groups;
+using ECS.Unity.Transforms.Components;
+
+namespace DCL.SDKComponents.TextShape.System
+{
+    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
+    [ThrottlingEnabled]
+    public partial class InstantiateTextShapeSystem : BaseUnityLoopSystem
+    {
+        private readonly ITextShapeRendererFactory textShapeRendererFactory;
+        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
+
+        public InstantiateTextShapeSystem(World world, ITextShapeRendererFactory textShapeRendererFactory, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider) : base(world)
+        {
+            this.textShapeRendererFactory = textShapeRendererFactory;
+            this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
+        }
+
+        public InstantiateTextShapeSystem(World world, ITextShapeRendererFactory textShapeRendererFactory) : this(
+            world,
+            textShapeRendererFactory,
+            new FrameTimeCapBudgetProvider(
+                33,
+                new ProfilingProvider()
+            )
+        ) { }
+
+        protected override void Update(float t)
+        {
+            InstantiateRemainingQuery(World!);
+        }
+
+        [Query]
+        [None(typeof(TextShapeRendererComponent))]
+        private void InstantiateRemaining(in Entity entity, in TransformComponent transform, in PBTextShape textShape)
+        {
+            if (instantiationFrameTimeBudgetProvider.TrySpendBudget() == false)
+                return;
+
+            var renderer = textShapeRendererFactory.New(transform.Transform);
+            renderer.Apply(textShape);
+            World.Add(entity, new TextShapeRendererComponent(renderer));
+        }
+    }
+}
