@@ -31,6 +31,11 @@ namespace DCL.Profiles
         {
             if (string.IsNullOrEmpty(id)) return null;
 
+            Profile? profileInCache = profileCache.Get(id);
+
+            if (profileInCache?.Version > version)
+                return profileInCache;
+
             IIpfsRealm ipfs = realm.Ipfs;
 
             urlBuilder.Clear();
@@ -52,9 +57,7 @@ namespace DCL.Profiles
                 if (root.avatars == null) return null;
                 if (root.avatars.Count == 0) return null;
 
-                // TODO: probable responsibility issues thus we might not want to affect the cache
-                // but avoids extra allocations in case the profile already exists
-                Profile profile = profileCache.Get(id) ?? new Profile();
+                Profile profile = profileInCache ?? new Profile();
                 root.avatars[0].CopyTo(profile);
                 profileCache.Set(id, profile);
 
