@@ -119,21 +119,17 @@ namespace DCL.Profiles
                 profile.version = jObject["version"]?.Value<int>() ?? 0;
                 profile.unclaimedName = jObject["unclaimedName"]?.Value<string>() ?? "";
                 profile.hasConnectedWeb3 = jObject["hasConnectedWeb3"]?.Value<bool>() ?? false;
-                profile.avatar = DeserializeAvatar(jObject["avatar"], profile.avatar);
+                profile.avatar = DeserializeAvatar(jObject["avatar"]!, profile.avatar);
                 DeserializeArrayToList(jObject["blocked"], ref profile.blocked);
                 DeserializeArrayToList(jObject["interests"], ref profile.interests);
 
                 return profile;
             }
 
-            private AvatarJsonDto DeserializeAvatar(JToken? jObject, AvatarJsonDto? avatar)
+            private AvatarJsonDto DeserializeAvatar(JToken jObject, AvatarJsonDto avatar)
             {
-                avatar ??= new AvatarJsonDto();
-                avatar.eyes ??= new EyesJsonDto();
                 avatar.eyes.color = DeserializeColor(jObject["eyes"]?["color"], new AvatarColorJsonDto());
-                avatar.hair ??= new HairJsonDto();
                 avatar.hair.color = DeserializeColor(jObject["hair"]?["color"], new AvatarColorJsonDto());
-                avatar.skin ??= new SkinJsonDto();
                 avatar.skin.color = DeserializeColor(jObject["skin"]?["color"], new AvatarColorJsonDto());
 
                 avatar.bodyShape = jObject["bodyShape"]?.Value<string>() ?? "";
@@ -141,7 +137,6 @@ namespace DCL.Profiles
                 DeserializeArrayToList(jObject["wearables"], ref avatar.wearables);
                 DeserializeEmoteList(jObject["emotes"], ref avatar.emotes);
 
-                avatar.snapshots ??= new AvatarSnapshotJsonDto();
                 avatar.snapshots.face256 = jObject["snapshots"]?["face256"]?.Value<string>() ?? "";
                 avatar.snapshots.body = jObject["snapshots"]?["body"]?.Value<string>() ?? "";
 
@@ -171,9 +166,9 @@ namespace DCL.Profiles
                 return emote;
             }
 
-            private AvatarColorJsonDto? DeserializeColor(JToken? jObject, AvatarColorJsonDto color)
+            private AvatarColorJsonDto DeserializeColor(JToken? jObject, AvatarColorJsonDto color)
             {
-                if (jObject == null) return null;
+                if (jObject == null) return color;
 
                 color.r = jObject["r"]?.Value<float>() ?? 0;
                 color.g = jObject["g"]?.Value<float>() ?? 0;

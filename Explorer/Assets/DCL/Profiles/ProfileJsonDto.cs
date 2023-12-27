@@ -12,7 +12,7 @@ using Utility;
 namespace DCL.Profiles
 {
     [Serializable]
-    public class EmoteJsonDto
+    public struct EmoteJsonDto
     {
         public int slot;
         public string urn;
@@ -22,7 +22,7 @@ namespace DCL.Profiles
     }
 
     [Serializable]
-    public class AvatarColorJsonDto
+    public struct AvatarColorJsonDto
     {
         public float r;
         public float g;
@@ -42,32 +42,32 @@ namespace DCL.Profiles
     }
 
     [Serializable]
-    public class EyesJsonDto
+    public struct EyesJsonDto
     {
         public AvatarColorJsonDto color;
     }
 
     [Serializable]
-    public class HairJsonDto
+    public struct HairJsonDto
     {
         public AvatarColorJsonDto color;
     }
 
     [Serializable]
-    public class SkinJsonDto
+    public struct SkinJsonDto
     {
         public AvatarColorJsonDto color;
     }
 
     [Serializable]
-    public class AvatarSnapshotJsonDto
+    public struct AvatarSnapshotJsonDto
     {
         public string face256;
         public string body;
     }
 
     [Serializable]
-    public class AvatarJsonDto
+    public struct AvatarJsonDto
     {
         public string bodyShape;
         public List<string> wearables;
@@ -104,9 +104,9 @@ namespace DCL.Profiles
         public void Reset()
         {
             bodyShape = default(string);
-            wearables.Clear();
+            wearables?.Clear();
             forceRender?.Clear();
-            emotes.Clear();
+            emotes?.Clear();
             snapshots.face256 = default(string);
             snapshots.body = default(string);
             eyes.color.Reset();
@@ -194,7 +194,7 @@ namespace DCL.Profiles
             email = default(string);
             ethAddress = default(string);
             version = default(int);
-            avatar?.Reset();
+            avatar.Reset();
             blocked?.Clear();
             interests?.Clear();
             unclaimedName = default(string);
