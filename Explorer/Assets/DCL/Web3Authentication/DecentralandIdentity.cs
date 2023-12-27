@@ -40,8 +40,8 @@ namespace DCL.Web3Authentication
 
             var chain = AuthChain.Create();
 
-            chain.Set(AuthLinkType.SIGNER, authChain.Get((int)AuthLinkType.SIGNER));
-            chain.Set(AuthLinkType.ECDSA_EPHEMERAL, authChain.Get(AuthLinkType.ECDSA_EPHEMERAL));
+            foreach (AuthLink link in authChain)
+                chain.Set(link.type, link);
 
             chain.Set(AuthLinkType.ECDSA_SIGNED_ENTITY, new AuthLink
             {
@@ -70,13 +70,32 @@ namespace DCL.Web3Authentication
 
         private void AssertEcdsaEphemeral(AuthChain authChain)
         {
-            AuthLink ecdsaEphemeral = authChain.Get(AuthLinkType.ECDSA_EPHEMERAL);
+            var ecdsaExists = false;
 
-            if (string.IsNullOrEmpty(ecdsaEphemeral.payload))
-                throw new Web3IdentityException(this, "Invalid auth chain. ECDSA_EPHEMERAL payload is empty");
+            if (authChain.TryGet(AuthLinkType.ECDSA_EPHEMERAL, out AuthLink ecdsaEphemeral))
+            {
+                if (string.IsNullOrEmpty(ecdsaEphemeral.payload))
+                    throw new Web3IdentityException(this, "Invalid auth chain. ECDSA_EPHEMERAL payload is empty");
 
-            if (string.IsNullOrEmpty(ecdsaEphemeral.signature))
-                throw new Web3IdentityException(this, "Invalid auth chain. ECDSA_EPHEMERAL signature is empty");
+                if (string.IsNullOrEmpty(ecdsaEphemeral.signature))
+                    throw new Web3IdentityException(this, "Invalid auth chain. ECDSA_EPHEMERAL signature is empty");
+
+                ecdsaExists = true;
+            }
+
+            if (authChain.TryGet(AuthLinkType.ECDSA_EIP_1654_EPHEMERAL, out AuthLink ecdsaEip1654Ephemeral))
+            {
+                if (string.IsNullOrEmpty(ecdsaEip1654Ephemeral.payload))
+                    throw new Web3IdentityException(this, "Invalid auth chain. ECDSA_EIP_1654_EPHEMERAL payload is empty");
+
+                if (string.IsNullOrEmpty(ecdsaEip1654Ephemeral.signature))
+                    throw new Web3IdentityException(this, "Invalid auth chain. ECDSA_EIP_1654_EPHEMERAL signature is empty");
+
+                ecdsaExists = true;
+            }
+
+            if (!ecdsaExists)
+                throw new Web3IdentityException(this, "Invalid auth chain. ECDSA EPHEMERAL does not exist");
         }
 
         private void AssertEcdsaSignedEntity(AuthChain authChain)

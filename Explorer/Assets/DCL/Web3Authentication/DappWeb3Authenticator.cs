@@ -4,7 +4,6 @@ using SocketIOClient;
 using SocketIOClient.Newtonsoft.Json;
 using SocketIOClient.Transport;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 
 namespace DCL.Web3Authentication
@@ -15,11 +14,12 @@ namespace DCL.Web3Authentication
         private const string SERVER_URL_PRD = "https://auth-api.decentraland.today";
         private const string SIGN_DAPP_URL_DEV = "https://decentraland.zone/auth/requests/:requestId";
         private const string SIGN_DAPP_URL_PRD = "https://decentraland.org/auth/requests/:requestId";
+        private const int TIMEOUT_SECONDS = 30;
 
         private readonly IWebBrowser webBrowser;
-        private readonly Dictionary<string, UniTaskCompletionSource<SocketIOResponse>> pendingMessageTasks = new ();
 
         private SocketIO? webSocket;
+        private UniTaskCompletionSource<DappSignatureResponse>? signatureOutcomeTask;
 
         public IWeb3Identity? Identity { get; private set; }
 
@@ -60,16 +60,13 @@ namespace DCL.Web3Authentication
 
                 await UniTask.SwitchToMainThread(cancellationToken);
 
-                LetUserSignThroughDapp(authenticationResponse.payload.requestId);
-                DappSignatureResponse signature = await WaitForMessageResponseAsync<DappSignatureResponse>("submit-signature-response", cancellationToken);
-
-                if (!signature.payload.ok)
-                    throw new Web3SignatureException($"Signature failed: {authenticationResponse.payload.requestId}");
+                LetUserSignThroughDapp(authenticationResponse.requestId);
+                DappSignatureResponse signature = await WaitForSignatureOutcome(cancellationToken);
 
                 AuthChain authChain = CreateAuthChain(signature, ephemeralMessage);
 
                 // To keep cohesiveness between the platform, convert the user address to lower case
-                Identity = new DecentralandIdentity(new Web3Address(signature.payload.signer.ToLower()),
+                Identity = new DecentralandIdentity(new Web3Address(signature.sender.ToLower()),
                     ephemeralAccount, expiration, authChain);
 
                 return Identity;
@@ -81,7 +78,9 @@ namespace DCL.Web3Authentication
                     if (webSocket.Connected)
                         await webSocket.DisconnectAsync();
 
-                    webSocket.Dispose();
+                    try { webSocket.Dispose(); }
+                    catch (ObjectDisposedException) { }
+
                     webSocket = null;
                 }
 
@@ -113,7 +112,7 @@ namespace DCL.Web3Authentication
             });
 
             webSocket.JsonSerializer = new NewtonsoftJsonSerializer();
-            webSocket.OnAny(ProcessMessage);
+            webSocket.On("outcome", ProcessSignatureOutcomeMessage);
 
             return webSocket;
         }
@@ -125,15 +124,19 @@ namespace DCL.Web3Authentication
             authChain.Set(AuthLinkType.SIGNER, new AuthLink
             {
                 type = AuthLinkType.SIGNER,
-                payload = signature.payload.signer,
+                payload = signature.sender,
                 signature = "",
             });
 
-            authChain.Set(AuthLinkType.ECDSA_EPHEMERAL, new AuthLink
+            AuthLinkType ecdsaType = signature.result.Length == 132
+                ? AuthLinkType.ECDSA_EPHEMERAL
+                : AuthLinkType.ECDSA_EIP_1654_EPHEMERAL;
+
+            authChain.Set(ecdsaType, new AuthLink
             {
-                type = AuthLinkType.ECDSA_EPHEMERAL,
+                type = ecdsaType,
                 payload = ephemeralMessage,
-                signature = signature.payload.signature,
+                signature = signature.result,
             });
 
             return authChain;
@@ -143,7 +146,7 @@ namespace DCL.Web3Authentication
             $"Decentraland Login\nEphemeral address: {ephemeralAccount.Address}\nExpiration: {expiration:s}";
 
         private async UniTask ConnectToServerAsync() =>
-            await webSocket!.ConnectAsync();
+            await webSocket!.ConnectAsync().AsUniTask().Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
         private void LetUserSignThroughDapp(string requestId) =>
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -152,96 +155,60 @@ namespace DCL.Web3Authentication
             webBrowser.OpenUrl(SIGN_DAPP_URL_PRD.Replace(":requestId", requestId));
 #endif
 
-        private void ProcessMessage(string name, SocketIOResponse response)
+        private void ProcessSignatureOutcomeMessage(SocketIOResponse response)
         {
-            if (name != "message") return;
-
-            MessageResponse message = response.GetValue<MessageResponse>();
-
-            if (!pendingMessageTasks.TryGetValue(message.type, out UniTaskCompletionSource<SocketIOResponse>? task)) return;
-
-            task.TrySetResult(response);
-            pendingMessageTasks.Remove(message.type);
+            signatureOutcomeTask?.TrySetResult(response.GetValue<DappSignatureResponse>());
         }
 
         private async UniTask<SignatureIdResponse> RequestAuthenticationAsync(string ephemeralMessage,
             CancellationToken cancellationToken)
         {
-            await webSocket!.EmitAsync("message",
+            UniTaskCompletionSource<SignatureIdResponse> task = new ();
+
+            await webSocket!.EmitAsync("request",
                 cancellationToken,
+                r => task.TrySetResult(r.GetValue<SignatureIdResponse>()),
                 new SignatureRequest
                 {
-                    type = "request",
-                    payload = new SignatureRequest.Payload
-                    {
-                        type = "signature",
-                        data = ephemeralMessage,
-                    },
+                    method = "dcl_personal_sign",
+                    @params = new[] { ephemeralMessage },
                 });
 
-            return await WaitForMessageResponseAsync<SignatureIdResponse>("request-response", cancellationToken);
+            // [{"requestId":"e8ef0e9a-540d-4f6f-a5d4-06908d59485d","expiration":"2023-12-27T21:20:59.734Z","code":89}]
+
+            return await task.Task.Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS))
+                             .AttachExternalCancellation(cancellationToken);
         }
 
-        private async UniTask<T> WaitForMessageResponseAsync<T>(string eventName, CancellationToken cancellationToken)
+        private async UniTask<DappSignatureResponse> WaitForSignatureOutcome(CancellationToken ct)
         {
-            if (pendingMessageTasks.TryGetValue(eventName, out UniTaskCompletionSource<SocketIOResponse>? task))
-                return (await task.Task.AttachExternalCancellation(cancellationToken))
-                   .GetValue<T>();
+            signatureOutcomeTask = new UniTaskCompletionSource<DappSignatureResponse>();
 
-            task = new UniTaskCompletionSource<SocketIOResponse>();
-            pendingMessageTasks[eventName] = task;
-
-            return (await task.Task.AttachExternalCancellation(cancellationToken))
-               .GetValue<T>();
+            return await signatureOutcomeTask.Task.Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS))
+                                             .AttachExternalCancellation(ct);
         }
 
         [Serializable]
         private struct DappSignatureResponse
         {
-            public string type;
-            public Payload payload;
-
-            [Serializable]
-            public struct Payload
-            {
-                public bool ok;
-                public string requestId;
-                public string signature;
-                public string signer;
-            }
+            public string requestId;
+            public string result;
+            public string sender;
         }
 
         [Serializable]
         private struct SignatureRequest
         {
-            public string type;
-            public Payload payload;
-
-            [Serializable]
-            public struct Payload
-            {
-                public string type;
-                public string data;
-            }
+            public string method;
+            public string[] @params;
         }
 
         [Serializable]
         private struct SignatureIdResponse
         {
-            public string type;
-            public Payload payload;
-
-            [Serializable]
-            public struct Payload
-            {
-                public string requestId;
-            }
-        }
-
-        [Serializable]
-        private struct MessageResponse
-        {
-            public string type;
+            public string requestId;
+            public string expiration;
+            public int code;
         }
     }
 }
