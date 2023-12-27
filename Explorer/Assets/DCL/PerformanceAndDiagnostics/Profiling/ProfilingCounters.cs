@@ -56,6 +56,9 @@ namespace DCL.Profiling
         public static ProfilerCounterValue<int> TexturesInCache =
             new (MEMORY, "Textures In Cache", ProfilerMarkerDataUnit.Count);
 
+        public static ProfilerCounterValue<int> ProfilesInCache =
+            new (MEMORY, "Profiles In Cache", ProfilerMarkerDataUnit.Count);
+
         public static void CleanAllCounters()
         {
             ABDataAmount.Value = 0;
@@ -76,6 +79,8 @@ namespace DCL.Profiling
 
             TexturesAmount.Value = 0;
             TexturesInCache.Value = 0;
+
+            ProfilesInCache.Value = 0;
         }
     }
 }

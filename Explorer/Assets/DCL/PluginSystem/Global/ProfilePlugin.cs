@@ -1,8 +1,8 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
+using DCL.ResourcesUnloading;
 using ECS.StreamableLoading.Cache;
-using System;
 using System.Threading;
 using Utility.Multithreading;
 
@@ -11,17 +11,23 @@ namespace DCL.PluginSystem.Global
     public class ProfilePlugin : IDCLGlobalPlugin
     {
         private readonly IProfileRepository profileRepository;
-        private IDCLGlobalPlugin idclGlobalPluginImplementation;
+        private readonly IProfileCache profileCache;
+        private readonly CacheCleaner cacheCleaner;
 
-        public ProfilePlugin(IProfileRepository profileRepository)
+        public ProfilePlugin(IProfileRepository profileRepository, IProfileCache profileCache, CacheCleaner cacheCleaner)
         {
             this.profileRepository = profileRepository;
+            this.profileCache = profileCache;
+            this.cacheCleaner = cacheCleaner;
         }
 
         public void Dispose() { }
 
-        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
-            UniTask.CompletedTask;
+        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
+        {
+            cacheCleaner.Register(profileCache);
+            return UniTask.CompletedTask;
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
