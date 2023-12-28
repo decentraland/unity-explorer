@@ -13,11 +13,12 @@ namespace DCL.Profiles
 {
     public class RealmProfileRepository : IProfileRepository
     {
+        private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileJsonRootDtoConverter() } };
+
         private readonly IWebRequestController webRequestController;
         private readonly IRealmData realm;
         private readonly IProfileCache profileCache;
         private readonly URLBuilder urlBuilder = new ();
-        private ProfileJsonRootDtoConverter? profileJsonRootDtoConverter;
 
         public RealmProfileRepository(IWebRequestController webRequestController,
             IRealmData realm,
@@ -51,10 +52,9 @@ namespace DCL.Profiles
             {
                 GenericGetRequest response = await webRequestController.GetAsync(new CommonArguments(url), ct);
 
-                profileJsonRootDtoConverter ??= new ProfileJsonRootDtoConverter();
                 using GetProfileJsonRootDto root = await response.CreateFromNewtonsoftJsonAsync<GenericGetRequest, GetProfileJsonRootDto>(
                     createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, version, text, exception),
-                    converters: profileJsonRootDtoConverter);
+                    serializerSettings: SERIALIZER_SETTINGS);
 
                 if (root.avatars == null) return null;
                 if (root.avatars.Count == 0) return null;
