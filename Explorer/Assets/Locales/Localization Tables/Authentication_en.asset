@@ -20,15 +20,15 @@ MonoBehaviour:
     - rid: 1095376860581462025
   m_TableData:
   - m_Id: 679572660224
-    m_Localized: Sign In
+    m_Localized: Start
     m_Metadata:
       m_Items: []
   - m_Id: 91353005416448
-    m_Localized: Access and start exploring.
+    m_Localized: shaped by its community of creators & explorers.
     m_Metadata:
       m_Items: []
   - m_Id: 92320304193536
-    m_Localized: Unlock your virtual world.
+    m_Localized: Discover a virtual social world
     m_Metadata:
       m_Items: []
   - m_Id: 97841321074688
@@ -49,16 +49,16 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 147993717104640
-    m_Localized: Updating {progressValue}%
+    m_Localized: Loading {progressValue}%
     m_Metadata:
       m_Items:
       - rid: 1095376860581462025
   - m_Id: 155925695422464
-    m_Localized: jump into decentrland
+    m_Localized: jump into decentraland
     m_Metadata:
       m_Items: []
   - m_Id: 156421285994496
-    m_Localized: use another account
+    m_Localized: use a different account
     m_Metadata:
       m_Items: []
   - m_Id: 385401318531072
@@ -67,7 +67,7 @@ MonoBehaviour:
       m_Items:
       - rid: 1095376860581462025
   - m_Id: 385917570244608
-    m_Localized: Are you ready to explore?
+    m_Localized: Ready to explore?
     m_Metadata:
       m_Items: []
   references:

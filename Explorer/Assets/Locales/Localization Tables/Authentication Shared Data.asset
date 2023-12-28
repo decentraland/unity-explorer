@@ -16,15 +16,15 @@ MonoBehaviour:
   m_TableCollectionNameGuidString: 48b7b423583d84e3d9f2dbeaa25c3aa1
   m_Entries:
   - m_Id: 679572660224
-    m_Key: LOGIN
+    m_Key: START
     m_Metadata:
       m_Items: []
   - m_Id: 91353005416448
-    m_Key: ACCESS_AND_EXPLORE
+    m_Key: SHAPED_BY
     m_Metadata:
       m_Items: []
   - m_Id: 92320304193536
-    m_Key: UNLOCK_VIRTUAL_WORLD
+    m_Key: DISCOVER_VIRTUAL_WORLD
     m_Metadata:
       m_Items: []
   - m_Id: 97841321074688
@@ -44,7 +44,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 147993717104640
-    m_Key: LOADING_WORLD_PROGRESS
+    m_Key: LOADING_PROFILE
     m_Metadata:
       m_Items: []
   - m_Id: 155925695422464
@@ -52,7 +52,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 156421285994496
-    m_Key: USE_ANOTHER_ACCOUNT
+    m_Key: USE_DIFFERENT_ACCOUNT
     m_Metadata:
       m_Items: []
   - m_Id: 385401318531072
