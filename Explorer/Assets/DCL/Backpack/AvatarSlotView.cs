@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.Wearables.Components;
 using DG.Tweening;
 using System;
 using TMPro;
@@ -38,6 +39,9 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public TMP_Text CategoryText { get; private set; }
+
+        [field: SerializeField]
+        public string SlotWearableUrn { get; set; }
 
         public void Start()
         {

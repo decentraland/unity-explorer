@@ -61,7 +61,10 @@ namespace DCL.Backpack
         private void ClearPoolElements()
         {
             foreach (var backpackItemView in usedPoolItems)
+            {
+                backpackItemView.Value.EquippedIcon.SetActive(false);
                 gridItemsPool.Release(backpackItemView.Value);
+            }
 
             usedPoolItems.Clear();
         }
@@ -73,12 +76,14 @@ namespace DCL.Backpack
 
         private void OnUnequip(IWearable unequippedWearable)
         {
-
+            if (usedPoolItems.ContainsKey(unequippedWearable.GetUrn()))
+                usedPoolItems[unequippedWearable.GetUrn()].EquippedIcon.SetActive(false);
         }
 
         private void OnEquip(IWearable equippedWearable)
         {
-
+            if (usedPoolItems.ContainsKey(equippedWearable.GetUrn()))
+                usedPoolItems[equippedWearable.GetUrn()].EquippedIcon.SetActive(true);
         }
 
     }

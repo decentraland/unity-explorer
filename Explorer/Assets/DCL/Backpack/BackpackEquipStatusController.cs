@@ -1,6 +1,7 @@
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using System;
 using System.Collections.Generic;
 
 namespace DCL.Backpack
@@ -23,6 +24,24 @@ namespace DCL.Backpack
 
         public IWearable GetEquippedWearableForCategory(string category) =>
             equippedWearables[category];
+
+        //This will retrieve the list of default hides for the current equipped wearables
+        //Manual hide override will be a separate task
+        //TODO retrieve logic from old renderer
+        public List<string> GetCurrentWearableHides()
+        {
+            List<string> hides = new List<string>();
+
+            foreach (string category in WearablesConstants.CATEGORIES_PRIORITY)
+            {
+                IWearable wearable = equippedWearables[category];
+
+                if (wearable == null)
+                    continue;
+            }
+
+            return hides;
+        }
 
         private void RemoveWearableForCategory(IWearable wearable) =>
             equippedWearables[wearable.GetCategory()] = null;
