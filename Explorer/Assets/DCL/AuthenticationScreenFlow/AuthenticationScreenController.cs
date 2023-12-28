@@ -44,7 +44,7 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.UseAnotherAccountButton.onClick.AddListener(RestartLoginProcess);
             viewInstance.VerificationCodeHintButton.onClick.AddListener(OpenOrCloseVerificationCodeHint);
 
-            web3Authenticator.AddVerificationListener(code =>
+            web3Authenticator.AddVerificationListener((code, expiration) =>
             {
                 viewInstance.VerificationCodeLabel.text = code.ToString();
                 SwitchState(ViewState.LoginInProgress);

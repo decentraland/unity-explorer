@@ -21,7 +21,7 @@ namespace DCL.Web3Authentication
 
         private SocketIO? webSocket;
         private UniTaskCompletionSource<DappSignatureResponse>? signatureOutcomeTask;
-        private Action<int>? verificationCallback;
+        private IWeb3VerifiedAuthenticator.VerificationDelegate? verificationCallback;
 
         public IWeb3Identity? Identity { get; private set; }
 
@@ -55,24 +55,25 @@ namespace DCL.Web3Authentication
                 var ephemeralAccount = NethereumAccount.CreateRandom();
 
                 // 1 week expiration day, just like unity-renderer
-                DateTime ephemeralMessageExpiration = DateTime.UtcNow.AddDays(7);
-                string ephemeralMessage = CreateEphemeralMessage(ephemeralAccount, ephemeralMessageExpiration);
+                DateTime sessionExpiration = DateTime.UtcNow.AddDays(7);
+                string ephemeralMessage = CreateEphemeralMessage(ephemeralAccount, sessionExpiration);
 
                 SignatureIdResponse authenticationResponse = await RequestAuthenticationAsync(ephemeralMessage, cancellationToken);
 
+                var signatureExpiration = DateTime.Parse(authenticationResponse.expiration, null,
+                    DateTimeStyles.RoundtripKind);
+
                 await UniTask.SwitchToMainThread(cancellationToken);
 
-                verificationCallback?.Invoke(authenticationResponse.code);
+                verificationCallback?.Invoke(authenticationResponse.code, signatureExpiration);
 
                 DappSignatureResponse signature = await WaitForUserSignature(authenticationResponse.requestId, cancellationToken);
 
                 AuthChain authChain = CreateAuthChain(signature, ephemeralMessage);
 
-                var expiration = DateTime.Parse(authenticationResponse.expiration, null,
-                    DateTimeStyles.RoundtripKind);
                 // To keep cohesiveness between the platform, convert the user address to lower case
                 Identity = new DecentralandIdentity(new Web3Address(signature.sender.ToLower()),
-                    ephemeralAccount, expiration, authChain);
+                    ephemeralAccount, sessionExpiration, authChain);
 
                 return Identity;
             }
@@ -90,7 +91,7 @@ namespace DCL.Web3Authentication
             await TerminateWebSocket();
         }
 
-        public void AddVerificationListener(Action<int> callback) =>
+        public void AddVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate callback) =>
             verificationCallback = callback;
 
         private SocketIO InitializeWebSocket()
