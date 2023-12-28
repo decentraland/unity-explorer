@@ -9,11 +9,11 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character;
 using DCL.Character.Components;
 using DCL.DebugUtilities;
-using DCL.ECSComponents;
 using DCL.GlobalPartitioning;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
+using DCL.Profiles;
 using DCL.Systems;
 using DCL.Time;
 using DCL.Time.Systems;
@@ -41,6 +41,7 @@ using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
 using Utility.Multithreading;
+using Avatar = DCL.Profiles.Avatar;
 
 namespace Global.Dynamic
 {
@@ -110,15 +111,13 @@ namespace Global.Dynamic
                 new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
                 new PlayerComponent(characterObject.CameraFocus),
                 new TransformComponent { Transform = characterObject.Transform },
-                new PBAvatarShape
-                {
-                    BodyShape = BodyShape.MALE,
-                    Wearables = { WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE) },
-                    Name = "Player",
-                    SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor3(),
-                    HairColor = WearablesConstants.DefaultColors.GetRandomHairColor3(),
-                }
-            );
+                new Profile("fakeOwnUserId", "Player",
+                    new Avatar(
+                        BodyShape.MALE,
+                        WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                        WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                        WearablesConstants.DefaultColors.GetRandomHairColor(),
+                        WearablesConstants.DefaultColors.GetRandomSkinColor())));
 
             IConcurrentBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(staticSettings.ScenesLoadingBudget);
 

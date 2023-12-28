@@ -13,6 +13,8 @@ namespace DCL.Profiles
 {
     public class RealmProfileRepository : IProfileRepository
     {
+        private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new ProfileJsonRootDtoConverter() } };
+
         private readonly IWebRequestController webRequestController;
         private readonly IRealmData realm;
         private readonly IProfileCache profileCache;
@@ -31,6 +33,11 @@ namespace DCL.Profiles
         {
             if (string.IsNullOrEmpty(id)) return null;
 
+            Profile? profileInCache = profileCache.Get(id);
+
+            if (profileInCache?.Version > version)
+                return profileInCache;
+
             IIpfsRealm ipfs = realm.Ipfs;
 
             urlBuilder.Clear();
@@ -47,14 +54,12 @@ namespace DCL.Profiles
 
                 using GetProfileJsonRootDto root = await response.CreateFromNewtonsoftJsonAsync<GenericGetRequest, GetProfileJsonRootDto>(
                     createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, version, text, exception),
-                    converters: new ProfileJsonRootDtoConverter());
+                    serializerSettings: SERIALIZER_SETTINGS);
 
                 if (root.avatars == null) return null;
                 if (root.avatars.Count == 0) return null;
 
-                // TODO: probable responsibility issues thus we might not want to affect the cache
-                // but avoids extra allocations in case the profile already exists
-                Profile profile = profileCache.Get(id) ?? new Profile();
+                Profile profile = profileInCache ?? new Profile();
                 root.avatars[0].CopyTo(profile);
                 profileCache.Set(id, profile);
 
@@ -116,21 +121,17 @@ namespace DCL.Profiles
                 profile.version = jObject["version"]?.Value<int>() ?? 0;
                 profile.unclaimedName = jObject["unclaimedName"]?.Value<string>() ?? "";
                 profile.hasConnectedWeb3 = jObject["hasConnectedWeb3"]?.Value<bool>() ?? false;
-                profile.avatar = DeserializeAvatar(jObject["avatar"], profile.avatar);
+                profile.avatar = DeserializeAvatar(jObject["avatar"]!, profile.avatar);
                 DeserializeArrayToList(jObject["blocked"], ref profile.blocked);
                 DeserializeArrayToList(jObject["interests"], ref profile.interests);
 
                 return profile;
             }
 
-            private AvatarJsonDto DeserializeAvatar(JToken? jObject, AvatarJsonDto? avatar)
+            private AvatarJsonDto DeserializeAvatar(JToken jObject, AvatarJsonDto avatar)
             {
-                avatar ??= new AvatarJsonDto();
-                avatar.eyes ??= new EyesJsonDto();
                 avatar.eyes.color = DeserializeColor(jObject["eyes"]?["color"], new AvatarColorJsonDto());
-                avatar.hair ??= new HairJsonDto();
                 avatar.hair.color = DeserializeColor(jObject["hair"]?["color"], new AvatarColorJsonDto());
-                avatar.skin ??= new SkinJsonDto();
                 avatar.skin.color = DeserializeColor(jObject["skin"]?["color"], new AvatarColorJsonDto());
 
                 avatar.bodyShape = jObject["bodyShape"]?.Value<string>() ?? "";
@@ -138,7 +139,6 @@ namespace DCL.Profiles
                 DeserializeArrayToList(jObject["wearables"], ref avatar.wearables);
                 DeserializeEmoteList(jObject["emotes"], ref avatar.emotes);
 
-                avatar.snapshots ??= new AvatarSnapshotJsonDto();
                 avatar.snapshots.face256 = jObject["snapshots"]?["face256"]?.Value<string>() ?? "";
                 avatar.snapshots.body = jObject["snapshots"]?["body"]?.Value<string>() ?? "";
 
@@ -168,9 +168,9 @@ namespace DCL.Profiles
                 return emote;
             }
 
-            private AvatarColorJsonDto? DeserializeColor(JToken? jObject, AvatarColorJsonDto color)
+            private AvatarColorJsonDto DeserializeColor(JToken? jObject, AvatarColorJsonDto color)
             {
-                if (jObject == null) return null;
+                if (jObject == null) return color;
 
                 color.r = jObject["r"]?.Value<float>() ?? 0;
                 color.g = jObject["g"]?.Value<float>() ?? 0;

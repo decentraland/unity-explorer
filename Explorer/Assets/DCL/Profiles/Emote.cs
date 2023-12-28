@@ -1,9 +1,9 @@
 namespace DCL.Profiles
 {
-    public class Emote
+    public struct Emote
     {
-        public int Slot { get; }
-        public string Urn { get; }
+        public readonly int Slot;
+        public readonly string Urn;
 
         public Emote(int slot, string urn)
         {

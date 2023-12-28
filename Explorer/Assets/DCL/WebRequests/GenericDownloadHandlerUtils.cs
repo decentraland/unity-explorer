@@ -98,7 +98,7 @@ namespace DCL.WebRequests
         public static async UniTask<T> CreateFromNewtonsoftJsonAsync<TRequest, T>(this TRequest typedWebRequest,
             WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
             CreateExceptionOnParseFail createCustomExceptionOnFailure = null,
-            params JsonConverter[] converters)
+            JsonSerializerSettings serializerSettings = null)
             where TRequest: ITypedWebRequest, IGenericDownloadHandlerRequest
         {
             UnityWebRequest webRequest = typedWebRequest.UnityWebRequest;
@@ -109,7 +109,7 @@ namespace DCL.WebRequests
 
             await SwitchToThreadAsync(threadFlags);
 
-            try { return JsonConvert.DeserializeObject<T>(text, converters); }
+            try { return JsonConvert.DeserializeObject<T>(text, serializerSettings); }
             catch (Exception e)
             {
                 if (createCustomExceptionOnFailure != null)

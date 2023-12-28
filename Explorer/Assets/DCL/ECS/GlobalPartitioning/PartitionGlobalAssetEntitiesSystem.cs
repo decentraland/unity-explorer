@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
+using DCL.Profiles;
 using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -60,14 +61,14 @@ namespace DCL.Systems
         }
 
         [Query]
-        [Any(typeof(PBAvatarShape))]
+        [Any(typeof(PBAvatarShape), typeof(Profile))]
         private void ResetDirty(ref PartitionComponent partitionComponent)
         {
             partitionComponent.IsDirty = false;
         }
 
         [Query]
-        [Any(typeof(PBAvatarShape))]
+        [Any(typeof(PBAvatarShape), typeof(Profile))]
         [None(typeof(PartitionComponent))]
         private void PartitionNewEntity([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward, in Entity entity, ref TransformComponent transformComponent)
         {
@@ -78,7 +79,7 @@ namespace DCL.Systems
         }
 
         [Query]
-        [Any(typeof(PBAvatarShape))]
+        [Any(typeof(PBAvatarShape), typeof(Profile))]
         private void RePartitionExistingEntity([Data] Vector3 cameraPosition, [Data] Vector3 cameraForward,
             ref TransformComponent transformComponent, ref PartitionComponent partitionComponent)
         {

@@ -77,6 +77,21 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 04a7ffcd277754f7c91237894604f522
+    m_Address: NftRarityBackgrounds
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+    m_Address: NftRarityColors
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4a2a7b610414b45c1b576946ce094877
+    m_Address: NftCategoryIcons
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 08d42937d0bc54b48baaa23c8c520175
     m_Address: Assets/DCL/AuthenticationScreenFlow/Assets/AuthenticationScreen.prefab
     m_ReadOnly: 0

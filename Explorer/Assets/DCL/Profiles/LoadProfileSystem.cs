@@ -55,7 +55,15 @@ namespace DCL.Profiles
             if (!promise.TryConsume(World, out StreamableLoadingResult<Profile> result)) return;
 
             if (result.Succeeded)
-                World.Add(entity, result.Asset);
+            {
+                result.Asset.IsDirty = true;
+
+                if (World.Has<Profile>(entity))
+                    World.Set(entity, result.Asset);
+                else
+                    World.Add(entity, result.Asset);
+            }
+            else ReportHub.LogException(result.Exception, GetReportCategory());
 
             World.Remove<AssetPromise<Profile, GetProfileIntention>>(entity);
         }
