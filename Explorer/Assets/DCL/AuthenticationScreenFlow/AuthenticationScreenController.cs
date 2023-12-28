@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.Profiles;
 using DCL.Web3Authentication;
 using MVC;
@@ -10,8 +11,11 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView>
     {
+        private const string DISCORD_LINK = "https://decentraland.org/discord/";
+
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly IProfileRepository profileRepository;
+        private readonly IWebBrowser webBrowser;
 
         private CancellationTokenSource? loginCancellationToken;
         private UniTaskCompletionSource? lifeCycleTask;
@@ -20,11 +24,13 @@ namespace DCL.AuthenticationScreenFlow
 
         public AuthenticationScreenController(ViewFactoryMethod viewFactory,
             IWeb3VerifiedAuthenticator web3Authenticator,
-            IProfileRepository profileRepository)
+            IProfileRepository profileRepository,
+            IWebBrowser webBrowser)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
             this.profileRepository = profileRepository;
+            this.webBrowser = webBrowser;
         }
 
         public override void Dispose()
@@ -43,6 +49,7 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.JumpIntoWorldButton.onClick.AddListener(JumpIntoWorld);
             viewInstance.UseAnotherAccountButton.onClick.AddListener(RestartLoginProcess);
             viewInstance.VerificationCodeHintButton.onClick.AddListener(OpenOrCloseVerificationCodeHint);
+            viewInstance.DiscordButton.onClick.AddListener(OpenDiscord);
 
             web3Authenticator.AddVerificationListener((code, expiration) =>
             {
@@ -172,6 +179,9 @@ namespace DCL.AuthenticationScreenFlow
         {
             viewInstance.VerificationCodeHintContainer.SetActive(!viewInstance.VerificationCodeHintContainer.activeSelf);
         }
+
+        private void OpenDiscord() =>
+            webBrowser.OpenUrl(DISCORD_LINK);
 
         private enum ViewState
         {

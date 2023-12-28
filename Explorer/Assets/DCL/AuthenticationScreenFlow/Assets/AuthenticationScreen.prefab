@@ -3632,6 +3632,7 @@ MonoBehaviour:
   <VerificationCodeLabel>k__BackingField: {fileID: 7480875149420460394}
   <VerificationCodeHintButton>k__BackingField: {fileID: 7852304133369695916}
   <VerificationCodeHintContainer>k__BackingField: {fileID: 45180935525606365}
+  <DiscordButton>k__BackingField: {fileID: 1710274344204595558}
 --- !u!1 &5399791853786771784
 GameObject:
   m_ObjectHideFlags: 0

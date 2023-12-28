@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AuthenticationScreenFlow;
+using DCL.Browser;
 using DCL.DebugUtilities;
 using DCL.Profiles;
 using DCL.Web3Authentication;
@@ -19,6 +20,7 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly MVCManager mvcManager;
         private readonly IProfileRepository profileRepository;
+        private readonly IWebBrowser webBrowser;
 
         private CancellationTokenSource? cancellationTokenSource;
 
@@ -27,13 +29,15 @@ namespace DCL.PluginSystem.Global
             IWeb3VerifiedAuthenticator web3Authenticator,
             IDebugContainerBuilder debugContainerBuilder,
             MVCManager mvcManager,
-            IProfileRepository profileRepository)
+            IProfileRepository profileRepository,
+            IWebBrowser webBrowser)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Authenticator = web3Authenticator;
             this.debugContainerBuilder = debugContainerBuilder;
             this.mvcManager = mvcManager;
             this.profileRepository = profileRepository;
+            this.webBrowser = webBrowser;
         }
 
         public void Dispose() { }
@@ -44,7 +48,9 @@ namespace DCL.PluginSystem.Global
                                                        .Value.GetComponent<AuthenticationScreenView>();
 
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod? authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
-            mvcManager.RegisterController(new AuthenticationScreenController(authScreenFactory, web3Authenticator, profileRepository));
+
+            mvcManager.RegisterController(new AuthenticationScreenController(authScreenFactory, web3Authenticator, profileRepository,
+                webBrowser));
 
             mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand()).Forget();
         }

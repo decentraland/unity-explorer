@@ -46,5 +46,8 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: SerializeField]
         public GameObject VerificationCodeHintContainer { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button DiscordButton { get; private set; } = null!;
     }
 }
