@@ -1,4 +1,5 @@
 using MVC;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Localization.Components;
 using UnityEngine.UI;
@@ -14,6 +15,9 @@ namespace DCL.AuthenticationScreenFlow
         public Button LoginButton { get; private set; } = null!;
 
         [field: SerializeField]
+        public GameObject ConnectingToServerContainer { get; private set; } = null!;
+
+        [field: SerializeField]
         public GameObject PendingAuthentication { get; private set; } = null!;
 
         [field: SerializeField]
@@ -21,12 +25,6 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: SerializeField]
         public GameObject ProgressContainer { get; private set; } = null!;
-
-        [field: SerializeField]
-        public Slider ProgressBar { get; private set; } = null!;
-
-        [field: SerializeField]
-        public LocalizeStringEvent ProgressLabel { get; private set; } = null!;
 
         [field: SerializeField]
         public GameObject FinalizeContainer { get; private set; } = null!;
@@ -39,5 +37,14 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: SerializeField]
         public LocalizeStringEvent ProfileNameLabel { get; private set; } = null!;
+
+        [field: SerializeField]
+        public TMP_Text VerificationCodeLabel { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button VerificationCodeHintButton { get; private set; } = null!;
+
+        [field: SerializeField]
+        public GameObject VerificationCodeHintContainer { get; private set; } = null!;
     }
 }

@@ -70,6 +70,24 @@ MonoBehaviour:
     m_Localized: Ready to explore?
     m_Metadata:
       m_Items: []
+  - m_Id: 2611617878499328
+    m_Localized: Secure sign-in step
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2611913090392064
+    m_Localized: "Remember the verification number below. \LYou\u2019ll be prompted
+      to confirm it in your web browser to securely link your sign in. "
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2612271623692288
+    m_Localized: Back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2615618359517184
+    m_Localized: Keep this number private. It ensures that your sign-in is secure
+      and unique to you.
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

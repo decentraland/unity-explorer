@@ -4,14 +4,13 @@ using DCL.Web3Authentication;
 using MVC;
 using System;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 
 namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView>
     {
-        private readonly IWeb3Authenticator web3Authenticator;
+        private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly IProfileRepository profileRepository;
 
         private CancellationTokenSource? loginCancellationToken;
@@ -20,7 +19,7 @@ namespace DCL.AuthenticationScreenFlow
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
         public AuthenticationScreenController(ViewFactoryMethod viewFactory,
-            IWeb3Authenticator web3Authenticator,
+            IWeb3VerifiedAuthenticator web3Authenticator,
             IProfileRepository profileRepository)
             : base(viewFactory)
         {
@@ -43,6 +42,13 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.CancelAuthenticationProcess.onClick.AddListener(CancelLoginProcess);
             viewInstance.JumpIntoWorldButton.onClick.AddListener(JumpIntoWorld);
             viewInstance.UseAnotherAccountButton.onClick.AddListener(RestartLoginProcess);
+            viewInstance.VerificationCodeHintButton.onClick.AddListener(OpenOrCloseVerificationCodeHint);
+
+            web3Authenticator.AddVerificationListener(code =>
+            {
+                viewInstance.VerificationCodeLabel.text = code.ToString();
+                SwitchState(ViewState.LoginInProgress);
+            });
         }
 
         protected override void OnBeforeViewShow()
@@ -68,15 +74,14 @@ namespace DCL.AuthenticationScreenFlow
             {
                 try
                 {
-                    viewInstance.PendingAuthentication.SetActive(true);
+                    viewInstance.ConnectingToServerContainer.SetActive(true);
+                    viewInstance.LoginButton.interactable = false;
 
                     IWeb3Identity web3Identity = await web3Authenticator.LoginAsync(ct);
 
                     SwitchState(ViewState.Loading);
 
-                    UpdateProgressBar(0.2f);
                     await FetchProfileAsync(web3Identity, ct);
-                    await UpdateProgressBarUntilWorldIsLoadedAsync(ct);
 
                     SwitchState(ViewState.Finalize);
                 }
@@ -94,30 +99,6 @@ namespace DCL.AuthenticationScreenFlow
             Profile? profile = await profileRepository.GetAsync(web3Identity.Address, 0, ct);
             var profileNameLabel = viewInstance.ProfileNameLabel.StringReference["profileName"] as StringVariable;
             profileNameLabel!.Value = profile?.Name;
-        }
-
-        private async UniTask UpdateProgressBarUntilWorldIsLoadedAsync(CancellationToken ct)
-        {
-            // TODO: make real implementation
-            const float DURATION = 3;
-            float startingTime = viewInstance.ProgressBar.value * DURATION;
-            float t = startingTime;
-
-            while (t < DURATION)
-            {
-                await UniTask.NextFrame(ct);
-                t += Time.deltaTime;
-                UpdateProgressBar(Mathf.Clamp01(t / DURATION));
-            }
-
-            viewInstance.ProgressBar.normalizedValue = 1f;
-        }
-
-        private void UpdateProgressBar(float value)
-        {
-            viewInstance.ProgressBar.normalizedValue = value;
-            var progressLabelValue = viewInstance.ProgressLabel.StringReference["progressValue"] as IntVariable;
-            progressLabelValue!.Value = (int)(value * 100);
         }
 
         private void RestartLoginProcess()
@@ -141,24 +122,36 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.LoginContainer.SetActive(true);
                     viewInstance.ProgressContainer.SetActive(false);
                     viewInstance.FinalizeContainer.SetActive(false);
+                    viewInstance.ConnectingToServerContainer.SetActive(false);
+                    viewInstance.VerificationCodeHintContainer.SetActive(false);
+                    viewInstance.LoginButton.interactable = true;
                     break;
                 case ViewState.LoginInProgress:
                     viewInstance.PendingAuthentication.SetActive(true);
-                    viewInstance.LoginContainer.SetActive(true);
+                    viewInstance.LoginContainer.SetActive(false);
                     viewInstance.ProgressContainer.SetActive(false);
                     viewInstance.FinalizeContainer.SetActive(false);
+                    viewInstance.ConnectingToServerContainer.SetActive(false);
+                    viewInstance.VerificationCodeHintContainer.SetActive(false);
+                    viewInstance.LoginButton.interactable = false;
                     break;
                 case ViewState.Loading:
                     viewInstance.PendingAuthentication.SetActive(false);
                     viewInstance.LoginContainer.SetActive(false);
                     viewInstance.ProgressContainer.SetActive(true);
                     viewInstance.FinalizeContainer.SetActive(false);
+                    viewInstance.ConnectingToServerContainer.SetActive(false);
+                    viewInstance.VerificationCodeHintContainer.SetActive(false);
+                    viewInstance.LoginButton.interactable = false;
                     break;
                 case ViewState.Finalize:
                     viewInstance.PendingAuthentication.SetActive(false);
                     viewInstance.LoginContainer.SetActive(false);
                     viewInstance.ProgressContainer.SetActive(false);
                     viewInstance.FinalizeContainer.SetActive(true);
+                    viewInstance.ConnectingToServerContainer.SetActive(false);
+                    viewInstance.VerificationCodeHintContainer.SetActive(false);
+                    viewInstance.LoginButton.interactable = false;
                     break;
             }
         }
@@ -173,6 +166,11 @@ namespace DCL.AuthenticationScreenFlow
             catch (ObjectDisposedException) { }
 
             loginCancellationToken = null;
+        }
+
+        private void OpenOrCloseVerificationCodeHint()
+        {
+            viewInstance.VerificationCodeHintContainer.SetActive(!viewInstance.VerificationCodeHintContainer.activeSelf);
         }
 
         private enum ViewState

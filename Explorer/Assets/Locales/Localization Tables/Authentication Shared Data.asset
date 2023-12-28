@@ -63,6 +63,22 @@ MonoBehaviour:
     m_Key: READY_TO_EXPLORE
     m_Metadata:
       m_Items: []
+  - m_Id: 2611617878499328
+    m_Key: VERIFICATION_TITLE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2611913090392064
+    m_Key: VERIFICATION_DESCRIPTION
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2612271623692288
+    m_Key: BACK
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2615618359517184
+    m_Key: VERIFICATION_CODE_HINT
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

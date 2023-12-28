@@ -4,11 +4,12 @@ using SocketIOClient;
 using SocketIOClient.Newtonsoft.Json;
 using SocketIOClient.Transport;
 using System;
+using System.Globalization;
 using System.Threading;
 
 namespace DCL.Web3Authentication
 {
-    public class DappWeb3Authenticator : IWeb3Authenticator
+    public class DappWeb3Authenticator : IWeb3VerifiedAuthenticator
     {
         private const string SERVER_URL_DEV = "https://auth-api.decentraland.zone";
         private const string SERVER_URL_PRD = "https://auth-api.decentraland.today";
@@ -20,6 +21,7 @@ namespace DCL.Web3Authentication
 
         private SocketIO? webSocket;
         private UniTaskCompletionSource<DappSignatureResponse>? signatureOutcomeTask;
+        private Action<int>? verificationCallback;
 
         public IWeb3Identity? Identity { get; private set; }
 
@@ -53,18 +55,21 @@ namespace DCL.Web3Authentication
                 var ephemeralAccount = NethereumAccount.CreateRandom();
 
                 // 1 week expiration day, just like unity-renderer
-                DateTime expiration = DateTime.UtcNow.AddDays(7);
-                string ephemeralMessage = CreateEphemeralMessage(ephemeralAccount, expiration);
+                DateTime ephemeralMessageExpiration = DateTime.UtcNow.AddDays(7);
+                string ephemeralMessage = CreateEphemeralMessage(ephemeralAccount, ephemeralMessageExpiration);
 
                 SignatureIdResponse authenticationResponse = await RequestAuthenticationAsync(ephemeralMessage, cancellationToken);
 
                 await UniTask.SwitchToMainThread(cancellationToken);
 
-                LetUserSignThroughDapp(authenticationResponse.requestId);
-                DappSignatureResponse signature = await WaitForSignatureOutcome(cancellationToken);
+                verificationCallback?.Invoke(authenticationResponse.code);
+
+                DappSignatureResponse signature = await WaitForUserSignature(authenticationResponse.requestId, cancellationToken);
 
                 AuthChain authChain = CreateAuthChain(signature, ephemeralMessage);
 
+                var expiration = DateTime.Parse(authenticationResponse.expiration, null,
+                    DateTimeStyles.RoundtripKind);
                 // To keep cohesiveness between the platform, convert the user address to lower case
                 Identity = new DecentralandIdentity(new Web3Address(signature.sender.ToLower()),
                     ephemeralAccount, expiration, authChain);
@@ -73,17 +78,7 @@ namespace DCL.Web3Authentication
             }
             finally
             {
-                if (webSocket != null)
-                {
-                    if (webSocket.Connected)
-                        await webSocket.DisconnectAsync();
-
-                    try { webSocket.Dispose(); }
-                    catch (ObjectDisposedException) { }
-
-                    webSocket = null;
-                }
-
+                await TerminateWebSocket();
                 await UniTask.SwitchToMainThread(cancellationToken);
             }
         }
@@ -92,11 +87,11 @@ namespace DCL.Web3Authentication
         {
             Identity?.Dispose();
 
-            if (webSocket == null) return;
-
-            await webSocket.DisconnectAsync();
-            webSocket.Dispose();
+            await TerminateWebSocket();
         }
+
+        public void AddVerificationListener(Action<int> callback) =>
+            verificationCallback = callback;
 
         private SocketIO InitializeWebSocket()
         {
@@ -115,6 +110,20 @@ namespace DCL.Web3Authentication
             webSocket.On("outcome", ProcessSignatureOutcomeMessage);
 
             return webSocket;
+        }
+
+        private async UniTask TerminateWebSocket()
+        {
+            if (webSocket != null)
+            {
+                if (webSocket.Connected)
+                    await webSocket.DisconnectAsync();
+
+                try { webSocket.Dispose(); }
+                catch (ObjectDisposedException) { }
+
+                webSocket = null;
+            }
         }
 
         private AuthChain CreateAuthChain(DappSignatureResponse signature, string ephemeralMessage)
@@ -148,13 +157,6 @@ namespace DCL.Web3Authentication
         private async UniTask ConnectToServerAsync() =>
             await webSocket!.ConnectAsync().AsUniTask().Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
-        private void LetUserSignThroughDapp(string requestId) =>
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            webBrowser.OpenUrl(SIGN_DAPP_URL_DEV.Replace(":requestId", requestId));
-#else
-            webBrowser.OpenUrl(SIGN_DAPP_URL_PRD.Replace(":requestId", requestId));
-#endif
-
         private void ProcessSignatureOutcomeMessage(SocketIOResponse response)
         {
             signatureOutcomeTask?.TrySetResult(response.GetValue<DappSignatureResponse>());
@@ -174,18 +176,21 @@ namespace DCL.Web3Authentication
                     @params = new[] { ephemeralMessage },
                 });
 
-            // [{"requestId":"e8ef0e9a-540d-4f6f-a5d4-06908d59485d","expiration":"2023-12-27T21:20:59.734Z","code":89}]
-
             return await task.Task.Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS))
                              .AttachExternalCancellation(cancellationToken);
         }
 
-        private async UniTask<DappSignatureResponse> WaitForSignatureOutcome(CancellationToken ct)
+        private async UniTask<DappSignatureResponse> WaitForUserSignature(string requestId, CancellationToken ct)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            webBrowser.OpenUrl(SIGN_DAPP_URL_DEV.Replace(":requestId", requestId));
+#else
+            webBrowser.OpenUrl(SIGN_DAPP_URL_PRD.Replace(":requestId", requestId));
+#endif
+
             signatureOutcomeTask = new UniTaskCompletionSource<DappSignatureResponse>();
 
-            return await signatureOutcomeTask.Task.Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS))
-                                             .AttachExternalCancellation(ct);
+            return await signatureOutcomeTask.Task.AttachExternalCancellation(ct);
         }
 
         [Serializable]

@@ -55,7 +55,7 @@ namespace Global.Dynamic
             UIDocument rootUIDocument,
             IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius,
             DynamicSettings dynamicSettings,
-            IWeb3Authenticator web3Authenticator)
+            IWeb3VerifiedAuthenticator web3Authenticator)
         {
             var container = new DynamicWorldContainer();
             (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
