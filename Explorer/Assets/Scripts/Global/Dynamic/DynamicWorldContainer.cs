@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
@@ -10,6 +11,7 @@ using DCL.PlacesAPIService;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Web3Authentication;
+using DCL.Profiles;
 using DCL.WebRequests.Analytics;
 using ECS;
 using ECS.Prioritization.Components;
@@ -41,6 +43,8 @@ namespace Global.Dynamic
         public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; }
 
         public IWeb3Authenticator Web3Authenticator { get; private set; }
+
+        public IProfileRepository ProfileRepository { get; private set; }
 
         public void Dispose()
         {
@@ -80,6 +84,10 @@ namespace Global.Dynamic
             var backpackEventBus = new BackpackEventBus();
             var BackpackEquipStatusController = new BackpackEquipStatusController(backpackEventBus);
 
+            IProfileCache profileCache = new DefaultProfileCache();
+            container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData,
+                profileCache);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterObject, debugBuilder),
@@ -91,6 +99,7 @@ namespace Global.Dynamic
                 new BackpackBusPlugin(wearableCatalog, backpackCommandBus, backpackEventBus, BackpackEquipStatusController),
                 new AvatarPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, staticContainer.SingletonSharedDependencies.MemoryBudgetProvider, realmData, debugBuilder, staticContainer.CacheCleaner),
+                new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer, placesAPIService),
                 new ExplorePanelPlugin(
@@ -117,7 +126,8 @@ namespace Global.Dynamic
                 sceneLoadRadius, staticLoadPositions, realmData);
 
             container.GlobalWorldFactory = new GlobalWorldFactory(in staticContainer, staticContainer.RealmPartitionSettings,
-                exposedGlobalDataContainer.CameraSamplingData, realmSamplingData, ASSET_BUNDLES_URL, realmData, globalPlugins);
+                exposedGlobalDataContainer.CameraSamplingData, realmSamplingData, ASSET_BUNDLES_URL, realmData, globalPlugins,
+                debugBuilder);
 
             container.GlobalPlugins = globalPlugins;
             container.EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins);
