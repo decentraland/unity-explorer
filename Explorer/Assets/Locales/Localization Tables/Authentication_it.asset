@@ -29,10 +29,15 @@ MonoBehaviour:
     m_Metadata:
       m_Items:
       - rid: 1095376860581462026
+  - m_Id: 2972650811940864
+    m_Localized: 
+    m_Metadata:
+      m_Items:
+      - rid: 1095376860581462026
   references:
     version: 2
     RefIds:
     - rid: 1095376860581462026
       type: {class: SmartFormatTag, ns: UnityEngine.Localization.Metadata, asm: Unity.Localization}
       data:
-        m_Entries: 00e0ef789986000000e0af3c855e0100
+        m_Entries: 00e0ef789986000000e0af3c855e010000e0af339c8f0a00

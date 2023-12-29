@@ -88,10 +88,15 @@ MonoBehaviour:
       and unique to you.
     m_Metadata:
       m_Items: []
+  - m_Id: 2972650811940864
+    m_Localized: Verification number will expire in {time}
+    m_Metadata:
+      m_Items:
+      - rid: 1095376860581462025
   references:
     version: 2
     RefIds:
     - rid: 1095376860581462025
       type: {class: SmartFormatTag, ns: UnityEngine.Localization.Metadata, asm: Unity.Localization}
       data:
-        m_Entries: 00e0ef789986000000e0af3c855e0100
+        m_Entries: 00e0ef789986000000e0af3c855e010000e0af339c8f0a00

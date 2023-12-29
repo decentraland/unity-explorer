@@ -1,7 +1,11 @@
+using Cysharp.Threading.Tasks;
 using MVC;
+using System;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Localization.Components;
+using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 using UnityEngine.Video;
 
@@ -56,5 +60,19 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: SerializeField]
         public Button DiscordButton { get; private set; } = null!;
+
+        [SerializeField] private LocalizeStringEvent countdownLabel;
+
+        public async UniTaskVoid StartVerificationCountdown(DateTime expiration, CancellationToken ct)
+        {
+            do
+            {
+                var timeParam = countdownLabel.StringReference["time"] as StringVariable;
+                TimeSpan duration = expiration - DateTime.UtcNow;
+                timeParam!.Value = $"{duration.Minutes:D2}:{duration.Seconds:D2}";
+                await UniTask.Delay(1000, cancellationToken: ct);
+            }
+            while (expiration > DateTime.UtcNow);
+        }
     }
 }

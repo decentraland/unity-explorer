@@ -79,6 +79,10 @@ MonoBehaviour:
     m_Key: VERIFICATION_CODE_HINT
     m_Metadata:
       m_Items: []
+  - m_Id: 2972650811940864
+    m_Key: VERIFICATION_COUNTDOWN
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

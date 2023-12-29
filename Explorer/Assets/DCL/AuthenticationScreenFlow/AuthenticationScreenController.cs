@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Web3Authentication;
 using MVC;
@@ -18,6 +19,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWebBrowser webBrowser;
 
         private CancellationTokenSource? loginCancellationToken;
+        private CancellationTokenSource? verificationCountdownCancellationToken;
         private UniTaskCompletionSource? lifeCycleTask;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
@@ -38,6 +40,7 @@ namespace DCL.AuthenticationScreenFlow
             base.Dispose();
 
             CancelLoginProcess();
+            CancelVerificationCountdown();
         }
 
         protected override void OnViewInstantiated()
@@ -54,6 +57,14 @@ namespace DCL.AuthenticationScreenFlow
             web3Authenticator.AddVerificationListener((code, expiration) =>
             {
                 viewInstance.VerificationCodeLabel.text = code.ToString();
+
+                CancelVerificationCountdown();
+                verificationCountdownCancellationToken = new CancellationTokenSource();
+
+                viewInstance.StartVerificationCountdown(expiration,
+                                 verificationCountdownCancellationToken.Token)
+                            .Forget();
+
                 SwitchState(ViewState.LoginInProgress);
             });
         }
@@ -70,6 +81,7 @@ namespace DCL.AuthenticationScreenFlow
             base.OnViewClose();
 
             CancelLoginProcess();
+            CancelVerificationCountdown();
         }
 
         private async UniTaskVoid ShowSplashAndThenSwitchToLogin()
@@ -103,7 +115,11 @@ namespace DCL.AuthenticationScreenFlow
 
                     SwitchState(ViewState.Finalize);
                 }
-                catch (Exception e) { SwitchState(ViewState.Login); }
+                catch (Exception e)
+                {
+                    SwitchState(ViewState.Login);
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                }
             }
 
             CancelLoginProcess();
@@ -207,6 +223,18 @@ namespace DCL.AuthenticationScreenFlow
 
         private void OpenDiscord() =>
             webBrowser.OpenUrl(DISCORD_LINK);
+
+        private void CancelVerificationCountdown()
+        {
+            try
+            {
+                verificationCountdownCancellationToken?.Cancel();
+                verificationCountdownCancellationToken?.Dispose();
+            }
+            catch (ObjectDisposedException) { }
+
+            verificationCountdownCancellationToken = null;
+        }
 
         private enum ViewState
         {
