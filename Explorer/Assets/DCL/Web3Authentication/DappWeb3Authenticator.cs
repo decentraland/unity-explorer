@@ -76,10 +76,8 @@ namespace DCL.Web3Authentication
 
                 verificationCallback?.Invoke(authenticationResponse.code, signatureExpiration);
 
-                DappSignatureResponse signature;
-
-                try { signature = await WaitForUserSignature(authenticationResponse, cancellationToken); }
-                catch (TimeoutException) { throw new SignatureExpiredException(signatureExpiration); }
+                DappSignatureResponse signature = await WaitForUserSignature(authenticationResponse.requestId,
+                    signatureExpiration, cancellationToken);
 
                 AuthChain authChain = CreateAuthChain(signature, ephemeralMessage);
 
@@ -195,15 +193,20 @@ namespace DCL.Web3Authentication
                              .AttachExternalCancellation(cancellationToken);
         }
 
-        private async UniTask<DappSignatureResponse> WaitForUserSignature(DappSignatureResponse signatureResponse, CancellationToken ct)
+        private async UniTask<DappSignatureResponse> WaitForUserSignature(string requestId, DateTime expiration, CancellationToken ct)
         {
-            webBrowser.OpenUrl($"{signatureUrl}/{signatureResponse.requestId}");
+            webBrowser.OpenUrl($"{signatureUrl}/{requestId}");
 
             signatureOutcomeTask = new UniTaskCompletionSource<DappSignatureResponse>();
-            TimeSpan duration = signatureResponse.expiration - DateTime.UtcNow;
 
-            return await signatureOutcomeTask.Task.Timeout(duration)
-                                             .AttachExternalCancellation(ct);
+            TimeSpan duration = expiration - DateTime.UtcNow;
+
+            try
+            {
+                return await signatureOutcomeTask.Task.Timeout(duration)
+                                                 .AttachExternalCancellation(ct);
+            }
+            catch (TimeoutException) { throw new SignatureExpiredException(expiration); }
         }
 
         [Serializable]
