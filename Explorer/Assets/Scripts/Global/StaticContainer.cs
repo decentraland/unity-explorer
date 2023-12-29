@@ -95,7 +95,7 @@ namespace Global
         }
 
         public static async UniTask<(StaticContainer container, bool success)> CreateAsync(IPluginSettingsContainer settingsContainer,
-            IWeb3Authenticator web3Authenticator,
+            IWeb3IdentityProvider web3IdentityProvider,
             CancellationToken ct)
         {
             ProfilingCounters.CleanAllCounters();
@@ -133,7 +133,7 @@ namespace Global
             container.ProfilingProvider = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
-            container.WebRequestsContainer = WebRequestsContainer.Create(web3Authenticator);
+            container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider);
             container.PhysicsTickProvider = new PhysicsTickProvider();
 
             var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, container.CacheCleaner);

@@ -8,7 +8,7 @@ using System.Threading;
 
 namespace DCL.Web3Authentication
 {
-    public class DappWeb3Authenticator : IWeb3Authenticator
+    public class DappWeb3Authenticator : IWeb3Authenticator, IWeb3IdentityProvider
     {
         private const string SERVER_URL_DEV = "https://auth-api.decentraland.zone";
         private const string SERVER_URL_PRD = "https://auth-api.decentraland.today";
@@ -20,6 +20,7 @@ namespace DCL.Web3Authentication
 
         private SocketIO? webSocket;
         private UniTaskCompletionSource<DappSignatureResponse>? signatureOutcomeTask;
+        private UniTaskCompletionSource<IWeb3Identity>? identitySolvedTask;
 
         public IWeb3Identity? Identity { get; private set; }
 
@@ -32,6 +33,12 @@ namespace DCL.Web3Authentication
         {
             webSocket?.Dispose();
             Identity?.Dispose();
+        }
+
+        public async UniTask<IWeb3Identity> GetOwnIdentityAsync(CancellationToken ct)
+        {
+            identitySolvedTask ??= new UniTaskCompletionSource<IWeb3Identity>();
+            return await identitySolvedTask.Task.AttachExternalCancellation(ct);
         }
 
         /// <summary>
@@ -68,6 +75,9 @@ namespace DCL.Web3Authentication
                 // To keep cohesiveness between the platform, convert the user address to lower case
                 Identity = new DecentralandIdentity(new Web3Address(signature.sender.ToLower()),
                     ephemeralAccount, expiration, authChain);
+
+                identitySolvedTask?.TrySetResult(Identity);
+                identitySolvedTask = null;
 
                 return Identity;
             }
@@ -173,8 +183,6 @@ namespace DCL.Web3Authentication
                     method = "dcl_personal_sign",
                     @params = new[] { ephemeralMessage },
                 });
-
-            // [{"requestId":"e8ef0e9a-540d-4f6f-a5d4-06908d59485d","expiration":"2023-12-27T21:20:59.734Z","code":89}]
 
             return await task.Task.Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS))
                              .AttachExternalCancellation(cancellationToken);

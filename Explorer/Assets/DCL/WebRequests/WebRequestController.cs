@@ -19,13 +19,13 @@ namespace DCL.WebRequests
         private static readonly InitializeRequest<GenericPatchArguments, GenericPatchRequest> PATCH_GENERIC = GenericPatchRequest.Initialize;
 
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
-        private readonly IWeb3Authenticator web3Authenticator;
+        private readonly IWeb3IdentityProvider web3IdentityProvider;
 
         public WebRequestController(IWebRequestsAnalyticsContainer analyticsContainer,
-            IWeb3Authenticator web3Authenticator)
+            IWeb3IdentityProvider web3IdentityProvider)
         {
             this.analyticsContainer = analyticsContainer;
-            this.web3Authenticator = web3Authenticator;
+            this.web3IdentityProvider = web3IdentityProvider;
         }
 
         public UniTask<GenericGetRequest> GetAsync(
@@ -154,7 +154,7 @@ namespace DCL.WebRequests
 
         private void SignRequest(WebRequestSignInfo signInfo, UnityWebRequest unityWebRequest)
         {
-            using AuthChain authChain = web3Authenticator.Identity.Sign(signInfo.SignUrl);
+            using AuthChain authChain = web3IdentityProvider.Identity!.Sign(signInfo.SignUrl);
 
             var i = 0;
 

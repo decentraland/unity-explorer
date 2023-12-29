@@ -4,9 +4,17 @@ using System.Threading;
 
 namespace DCL.Web3Authentication
 {
-    public class RandomGeneratedWeb3Authenticator : IWeb3Authenticator
+    public class RandomGeneratedWeb3Authenticator : IWeb3Authenticator, IWeb3IdentityProvider
     {
+        private UniTaskCompletionSource<IWeb3Identity>? identitySolvedTask;
+
         public IWeb3Identity? Identity { get; private set; }
+
+        public async UniTask<IWeb3Identity> GetOwnIdentityAsync(CancellationToken ct)
+        {
+            identitySolvedTask ??= new UniTaskCompletionSource<IWeb3Identity>();
+            return await identitySolvedTask.Task.AttachExternalCancellation(ct);
+        }
 
         public void Dispose()
         {
@@ -39,6 +47,9 @@ namespace DCL.Web3Authentication
             });
 
             Identity = new DecentralandIdentity(signer.Address, ephemeralAccount, expiration, authChain);
+
+            identitySolvedTask?.TrySetResult(Identity);
+            identitySolvedTask = null;
 
             return Identity;
         }

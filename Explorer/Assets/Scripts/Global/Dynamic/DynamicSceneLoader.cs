@@ -31,7 +31,7 @@ namespace Global.Dynamic
         private StaticContainer staticContainer;
         private DynamicWorldContainer dynamicWorldContainer;
         private GlobalWorld globalWorld;
-        private IWeb3Authenticator web3Authenticator;
+        private DappWeb3Authenticator web3Authenticator;
 
         private void Awake()
         {

@@ -19,7 +19,7 @@ namespace Global.Tests
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
 
             return await StaticSceneLauncher.InstallAsync(globalSettingsContainer, sceneSettingsContainer,
-                Substitute.For<IWeb3Authenticator>(), CancellationToken.None);
+                Substitute.For<IWeb3IdentityProvider>(), CancellationToken.None);
         }
     }
 }

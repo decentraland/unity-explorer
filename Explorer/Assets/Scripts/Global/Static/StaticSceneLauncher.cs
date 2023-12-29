@@ -58,12 +58,12 @@ namespace Global.Static
         public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> InstallAsync(
             IPluginSettingsContainer globalSettingsContainer,
             IPluginSettingsContainer sceneSettingsContainer,
-            IWeb3Authenticator web3Authenticator,
+            IWeb3IdentityProvider web3IdentityProvider,
             CancellationToken ct)
         {
             // First load the common global plugin
             (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer,
-                web3Authenticator, ct);
+                web3IdentityProvider, ct);
 
             if (!isLoaded)
                 GameReports.PrintIsDead();
