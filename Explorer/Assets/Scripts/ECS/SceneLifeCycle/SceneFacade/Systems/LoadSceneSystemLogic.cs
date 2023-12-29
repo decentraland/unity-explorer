@@ -57,7 +57,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             await UniTask.SwitchToMainThread();
 
-            return await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);
+            return await sceneFactory.CreateSceneFromSceneDefinition(sceneData, intention.SceneReadinessReport, partition, ct);
         }
 
         private async UniTask<ReadOnlyMemory<byte>> LoadMainCrdtAsync(ISceneContent sceneContent, string reportCategory, CancellationToken ct)
@@ -120,4 +120,3 @@ namespace ECS.SceneLifeCycle.Systems
         }
     }
 }
-

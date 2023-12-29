@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using ECS.Prioritization.Components;
+using JetBrains.Annotations;
 using SceneRunner.Scene;
 using System.Threading;
 using UnityEngine;
@@ -42,9 +43,10 @@ namespace SceneRunner
         ///     Creates a scene from the EntityDefinition
         /// </summary>
         /// <param name="sceneData"></param>
+        /// <param name="sceneReadinessReport"></param>
         /// <param name="partitionProvider"></param>
         /// <param name="ct"></param>
         /// <returns>Scene Facade on the background thread</returns>
-        UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct);
+        UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, [CanBeNull] SceneReadinessReport sceneReadinessReport, IPartitionComponent partitionProvider, CancellationToken ct);
     }
 }
