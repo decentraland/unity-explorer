@@ -13,7 +13,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         /// </summary>
         /// <param name="wearableDto">The wearable DTO</param>
         /// <returns>An instance of the <see cref="IWearable" /> type.</returns>
-        IWearable GetOrAddWearableByDTO(WearableDTO wearableDto);
+        IWearable GetOrAddWearableByDTO(WearableDTO wearableDto, bool addToCache = true);
 
         /// <summary>
         ///     Adds an empty wearable to the catalog.

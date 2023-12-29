@@ -13,23 +13,26 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         internal Dictionary<string, IWearable> wearablesCache { get; } = new ();
 
-        public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto) =>
-            TryGetWearable(wearableDto.metadata.id, out IWearable existingWearable)
+        public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto, bool addToCache = true)
+        {
+            return TryGetWearable(wearableDto.metadata.id, out IWearable existingWearable)
                 ? existingWearable
                 : AddWearable(wearableDto.metadata.id, new Wearable
                 {
                     WearableDTO = new StreamableLoadingResult<WearableDTO>(wearableDto),
-                    IsLoading = false,
+                    IsLoading = false
                 });
+        }
 
         public void AddEmptyWearable(string loadingIntentionPointer) =>
             AddWearable(loadingIntentionPointer, new Wearable());
 
-        internal IWearable AddWearable(string loadingIntentionPointer, IWearable wearable)
+        internal IWearable AddWearable(string loadingIntentionPointer, IWearable wearable, bool addToCache = true)
         {
             wearablesCache.Add(loadingIntentionPointer, wearable);
-            cacheKeysDictionary[loadingIntentionPointer] = listedCacheKeys.AddLast((loadingIntentionPointer, MultithreadingUtility.FrameCount));
-
+            if (addToCache)
+                cacheKeysDictionary[loadingIntentionPointer] =
+                    listedCacheKeys.AddLast((loadingIntentionPointer, MultithreadingUtility.FrameCount));
             return wearable;
         }
 
