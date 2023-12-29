@@ -44,7 +44,7 @@ namespace SceneRunner.EmptyScene
 
                 // Will be cleaned-up by the shared world
                 //args.SharedWorld.Add(grass, new DeleteEntityIntention());
-                args.SharedWorld.Add(environment, new DeleteEntityIntention());
+                //args.SharedWorld.Add(environment, new DeleteEntityIntention());
                 args.SharedWorld.Add(sceneRoot, new DeleteEntityIntention());
             }
 
@@ -97,7 +97,7 @@ namespace SceneRunner.EmptyScene
 
             // Create landscape components
             // TODO: GET WORLD SEED
-            environment = args.SharedWorld.Create(new LandscapeParcel(args.BasePosition, 0), new LandscapeParcelInitialization(), args.ParentPartition, partitionPool.Get());
+            //environment = args.SharedWorld.Create(new LandscapeParcel(args.BasePosition, 0), new LandscapeParcelInitialization(), args.ParentPartition, partitionPool.Get());
 
             return UniTask.CompletedTask;
         }

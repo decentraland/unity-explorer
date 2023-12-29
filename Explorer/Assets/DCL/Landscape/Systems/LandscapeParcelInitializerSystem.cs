@@ -7,6 +7,7 @@ using DCL.Landscape.Components;
 using DCL.Landscape.Config;
 using DCL.Landscape.Jobs;
 using DCL.Landscape.Settings;
+using DCL.MapRenderer.ComponentsFactory;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using System.Collections.Generic;
@@ -15,6 +16,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Profiling;
+using Utility;
 using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.Landscape.Systems
@@ -23,19 +25,37 @@ namespace DCL.Landscape.Systems
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class LandscapeParcelInitializerSystem : BaseUnityLoopSystem
     {
+        private const int MAX_JOB_CONCURRENCY = 600;
+        private const int MAX_OWNED_PARCELS_CREATED_PER_FRAME = 600;
+        private const int PARCEL_SIZE = 16;
+        private const int CHUNK_SIZE = 40;
+        private const float MATERIAL_TILING = 0.025f;
         private readonly LandscapeData landscapeData;
         private readonly LandscapeAssetPoolManager poolManager;
+        private readonly MapRendererTextureContainer textureContainer;
         private readonly Transform landscapeParentObject;
+        private int concurrentJobs;
+        private int parcelsCreated;
+        private readonly MaterialPropertyBlock materialPropertyBlock;
+        private static readonly int BASE_MAP = Shader.PropertyToID("_BaseMap");
+        private static readonly int BASE_MAP_ST = Shader.PropertyToID("_BaseMap_ST");
 
-        private LandscapeParcelInitializerSystem(World world, LandscapeData landscapeData, LandscapeAssetPoolManager poolManager) : base(world)
+        private LandscapeParcelInitializerSystem(World world, LandscapeData landscapeData, LandscapeAssetPoolManager poolManager, MapRendererTextureContainer textureContainer) : base(world)
         {
             this.landscapeData = landscapeData;
             this.poolManager = poolManager;
+            this.textureContainer = textureContainer;
             landscapeParentObject = new GameObject("Landscape").transform;
+            materialPropertyBlock = new MaterialPropertyBlock();
         }
 
         protected override void Update(float t)
         {
+            InitializeMapChunksQuery(World);
+
+            //InitializeOwnedParcelFacadesQuery(World);
+            parcelsCreated = 0;
+
             // This first query gets all LandscapeParcel and creates a Job which calculates what's going to spawn inside them
             Profiler.BeginSample("LandscapeParcelInitializerSystem.InitializeLandscapeJobs");
             InitializeLandscapeJobsQuery(World);
@@ -49,9 +69,72 @@ namespace DCL.Landscape.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
+        [All(typeof(LandscapeParcelInitialization), typeof(SatelliteView))]
+        private void InitializeMapChunks(in Entity entity)
+        {
+            var genesisCityOffset = new Vector3(150 * PARCEL_SIZE, 0, 150 * PARCEL_SIZE);
+            var mapOffset = new Vector3(-2 * PARCEL_SIZE, 0, -(20 * PARCEL_SIZE) + 50 - 1.7f);
+            var quadCenter = new Vector3(320, 0, 320);
+            Vector3 zFightPrevention = Vector3.down * 0.015f;
+
+            for (var x = 0; x < 8; x++)
+            {
+                for (var y = 0; y < 8; y++)
+                {
+                    int posX = x * CHUNK_SIZE * PARCEL_SIZE;
+                    int posZ = y * CHUNK_SIZE * PARCEL_SIZE;
+
+                    Vector3 coord = new Vector3(posX, 0, posZ) - genesisCityOffset + quadCenter + mapOffset + zFightPrevention;
+
+                    Transform groundTile = poolManager.Get(landscapeData.mapChunk);
+                    groundTile.SetParent(landscapeParentObject);
+                    groundTile.transform.position = coord;
+                    groundTile.transform.eulerAngles = new Vector3(90, 0, 0);
+
+                    materialPropertyBlock.SetTexture(BASE_MAP, textureContainer.GetChunk(new Vector2Int(x, 7 - y)));
+                    groundTile.GetComponent<Renderer>().SetPropertyBlock(materialPropertyBlock);
+                    groundTile.name = $"CHUNK {x},{y}";
+                }
+            }
+
+            World.Remove<LandscapeParcelInitialization>(entity);
+        }
+
+        /*private void UpdateMaterialPropertyBlock(Vector3 position)
+        {
+            GetChunkAndLocalTileCoordinates(position, out var coords, out var localTileCoordinates);
+            materialPropertyBlock.SetTexture(BASE_MAP, textureContainer.GetChunk(coords));
+            Vector2 textureOffset = new Vector2(localTileCoordinates.x * 0.025f, localTileCoordinates.y * 0.025f);
+            materialPropertyBlock.SetVector(BASE_MAP_ST, new Vector4(MATERIAL_TILING, MATERIAL_TILING, textureOffset.x, textureOffset.y));
+        }*/
+
+        /*private void GetChunkAndLocalTileCoordinates(Vector3 tileWorldPosition, out Vector2Int chunkCoordinates, out Vector2Int localTileCoordinates)
+        {
+            // Adjust the tile world position by the offset
+            float adjustedX = (tileWorldPosition.x / PARCEL_SIZE) + 150;
+            float adjustedZ = (tileWorldPosition.z / PARCEL_SIZE) + 150;
+
+            // Calculate the chunk coordinates
+            int chunkX = Mathf.FloorToInt(adjustedX / CHUNK_SIZE);
+            int chunkZ = Mathf.FloorToInt(adjustedZ / CHUNK_SIZE);
+
+            // Calculate the local tile coordinates within the chunk
+            int localTileX = Mathf.FloorToInt(adjustedX - (chunkX * CHUNK_SIZE));
+            int localTileZ = Mathf.FloorToInt(adjustedZ - (chunkZ * CHUNK_SIZE));
+
+            // Return the results
+            chunkCoordinates = new Vector2Int(chunkX, 7 - chunkZ);
+            localTileCoordinates = new Vector2Int(localTileX, localTileZ);
+        }*/
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
         [All(typeof(LandscapeParcelInitialization))]
         private void InitializeLandscapeJobs(in Entity entity, in LandscapeParcel landscapeParcel)
         {
+            // This prevents a fatal crash caused by creating too much parallel jobs, it also prevents overloading the CPU too much
+            if (concurrentJobs > MAX_JOB_CONCURRENCY) return;
+
             foreach (LandscapeAsset landscapeAsset in landscapeData.assets)
             {
                 NoiseSettings noiseSettings = landscapeAsset.noiseData.settings;
@@ -84,6 +167,7 @@ namespace DCL.Landscape.Systems
                 parcelNoiseJob.Handle = noiseJob.Schedule(landscapeData.density * landscapeData.density, 32);
 
                 World.Create(parcelNoiseJob);
+                concurrentJobs++;
             }
 
             World.Remove<LandscapeParcelInitialization>(entity);
@@ -94,6 +178,7 @@ namespace DCL.Landscape.Systems
         {
             if (!landscapeParcelNoiseJob.Handle.IsCompleted) return;
             landscapeParcelNoiseJob.Handle.Complete();
+            concurrentJobs--;
 
             // This means that the job ended and our parcel entity does not exist anymore
             if (!World.Has<LandscapeParcel>(landscapeParcelNoiseJob.Parcel))
@@ -105,7 +190,7 @@ namespace DCL.Landscape.Systems
             LandscapeParcel landscapeParcel = World.Get<LandscapeParcel>(landscapeParcelNoiseJob.Parcel);
             float dist = 16f / landscapeData.density;
             Vector3 basePos = landscapeParcel.Position;
-            Vector3 baseSubPos = (Vector3.right * dist / 2) + (Vector3.forward * dist / 2);
+            Vector3 parcelMargin = (Vector3.right * dist / 2) + (Vector3.forward * dist / 2);
 
             for (var i = 0; i < landscapeData.density; i++)
             {
@@ -121,7 +206,7 @@ namespace DCL.Landscape.Systems
                     {
                         Profiler.BeginSample("LandscapeParcelInitializerSystem.InitializeLandscapeSubEntities.SpawnObject");
                         Vector3 subEntityPos = (Vector3.right * i * dist) + (Vector3.forward * j * dist);
-                        Vector3 finalPosition = basePos + baseSubPos + subEntityPos;
+                        Vector3 finalPosition = basePos + parcelMargin + subEntityPos;
 
                         Transform objTransform = poolManager.Get(landscapeParcelNoiseJob.LandscapeAsset.asset);
                         objTransform.SetParent(landscapeParentObject);
@@ -137,6 +222,16 @@ namespace DCL.Landscape.Systems
                     }
                 }
             }
+
+            // TODO: Add to unload list
+            Transform groundTile = poolManager.Get(landscapeData.groundTile);
+            groundTile.SetParent(landscapeParentObject);
+            groundTile.transform.position = basePos + new Vector3(8, 0, 8);
+            groundTile.transform.eulerAngles = new Vector3(0, -180, 0);
+
+            //UpdateMaterialPropertyBlock(basePos);
+            //groundTile.GetComponent<Renderer>().SetPropertyBlock(materialPropertyBlock);
+            groundTile.name = $"Empty {basePos.x / 16:F0},{basePos.z / 16:F0}";
 
             DisposeEntityAndJob(in entity, ref landscapeParcelNoiseJob);
 

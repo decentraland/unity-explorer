@@ -6,6 +6,7 @@ using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.DebugUtilities;
+using DCL.MapRenderer.ComponentsFactory;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
