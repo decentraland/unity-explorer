@@ -10,5 +10,7 @@ namespace DCL.Landscape.Settings
         // 16 = 16*16 = 256 nodes per parcel
         public int density = 16;
         public List<LandscapeAsset> assets;
+        public Transform groundTile;
+        public Transform mapChunk;
     }
 }

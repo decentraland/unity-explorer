@@ -24,13 +24,15 @@ namespace DCL.MapRenderer.ComponentsFactory
         private readonly IAssetsProvisioner assetsProvisioner;
 
         private readonly IWebRequestController webRequestController;
+        private readonly MapRendererTextureContainer textureContainer;
         private readonly MapRendererSettings mapSettings;
 
-        public MapRendererChunkComponentsFactory(IAssetsProvisioner assetsProvisioner, MapRendererSettings settings, IWebRequestController webRequestController)
+        public MapRendererChunkComponentsFactory(IAssetsProvisioner assetsProvisioner, MapRendererSettings settings, IWebRequestController webRequestController, MapRendererTextureContainer textureContainer)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mapSettings = settings;
             this.webRequestController = webRequestController;
+            this.textureContainer = textureContainer;
         }
 
         async UniTask<MapRendererComponents> IMapRendererComponentsFactory.CreateAsync(CancellationToken cancellationToken)
@@ -94,7 +96,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             {
                 SpriteRenderer atlasChunkPrefab = await GetAtlasChunkPrefabAsync(parent, ct);
 
-                var chunk = new SatelliteChunkController(atlasChunkPrefab, webRequestController, chunkLocalPosition, chunkId, parent, MapRendererDrawOrder.SATELLITE_ATLAS);
+                var chunk = new SatelliteChunkController(atlasChunkPrefab, webRequestController, textureContainer, chunkLocalPosition, chunkId, parent, MapRendererDrawOrder.SATELLITE_ATLAS);
                 await chunk.LoadImageAsync(chunkId, PARCELS_INSIDE_CHUNK * coordsUtils.ParcelSize, ct);
 
                 return chunk;

@@ -15,7 +15,5 @@ MonoBehaviour:
   density: 16
   assets:
   - {fileID: 11400000, guid: 7ec3e3a6c5d070242a00ad458969f6d9, type: 2}
-  - {fileID: 11400000, guid: 0176dea30bbb1a24e99f529e374e4c81, type: 2}
-  - {fileID: 11400000, guid: 4040beb28607f7a4ba895a7b0bd80cab, type: 2}
-  - {fileID: 11400000, guid: e80cb8f65ce79754fa831bc75f5fe445, type: 2}
-  - {fileID: 11400000, guid: b08cf778795a2b549b7942c86d93d322, type: 2}
+  groundTile: {fileID: 585727946956803367, guid: 5c1b4141bc08ddc42a5bbbdda2b72b92, type: 3}
+  mapChunk: {fileID: 1448041327893328029, guid: 63b41593f2fa6c04d8772db2b2b61589, type: 3}
