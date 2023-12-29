@@ -25,10 +25,11 @@ namespace ECS.Prioritization
         int MaxLoadingDistanceInParcels { get; }
 
         /// <summary>
-        ///     Bucket from which the scenes start to unload, the distance corresponding to this bucket should be bigger than <see cref="MaxLoadingDistanceInParcels" />
-        ///     so distant parcels will start unloading gradually
+        ///     Tolerance that is added to <see cref="MaxLoadingDistanceInParcels" /> to determine the distance at which scenes start unloading.
+        ///     It should be slightly bigger than 0 to avoid scenes unloading and loading back immediately when the player moves back and forth
+        ///     when the <see cref="MaxLoadingDistanceInParcels" /> is reached
         /// </summary>
-        int UnloadBucket { get; }
+        int UnloadingDistanceToleranceInParcels { get; }
 
         /// <summary>
         ///     The number of closest scenes that can be requested at a time

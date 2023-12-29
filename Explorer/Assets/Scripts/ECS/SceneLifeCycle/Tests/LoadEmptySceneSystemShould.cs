@@ -47,7 +47,7 @@ namespace ECS.SceneLifeCycle.Tests
         public void SetUp()
         {
             loadEmptySceneSystemLogic = new LoadEmptySceneSystemLogic(
-                new WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(), Substitute.For<IWeb3Authenticator>()),
+                new WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(), Substitute.For<IWeb3IdentityProvider>()),
                 emptyScenesWorldFactory = Substitute.For<IEmptyScenesWorldFactory>(),
                 Substitute.For<IComponentPoolsRegistry>(),
                 EMPTY_SCENES_MAPPINGS_URL);

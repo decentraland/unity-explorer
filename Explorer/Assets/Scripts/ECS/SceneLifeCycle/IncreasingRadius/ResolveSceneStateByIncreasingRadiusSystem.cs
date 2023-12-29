@@ -14,6 +14,7 @@ using Realm;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 
@@ -65,7 +66,12 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 ProcessesFixedRealmQuery(World, maxLoadingSqrDistance);
             }
 
-            StartUnloadingQuery(World);
+            float unloadingDistance = (Mathf.Max(1, realmPartitionSettings.UnloadingDistanceToleranceInParcels) + realmPartitionSettings.MaxLoadingDistanceInParcels)
+                                      * ParcelMathHelper.PARCEL_SIZE;
+
+            float unloadingSqrDistance = unloadingDistance * unloadingDistance;
+
+            StartUnloadingQuery(World, unloadingSqrDistance);
         }
 
         [Query]
@@ -145,17 +151,17 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         [Query]
         [All(typeof(SceneDefinitionComponent))]
         [None(typeof(DeleteEntityIntention))]
-        private void StartUnloading(in Entity entity, ref PartitionComponent partitionComponent)
+        private void StartUnloading([Data] float unloadingSqrDistance, in Entity entity, ref PartitionComponent partitionComponent)
         {
-            if (partitionComponent.Bucket < realmPartitionSettings.UnloadBucket) return;
+            if (partitionComponent.RawSqrDistance < unloadingSqrDistance) return;
             World.Add(entity, DeleteEntityIntention.DeferredDeletion);
         }
 
         private struct OrderedData
         {
-            public Entity Entity;
             public PartitionComponent PartitionComponent;
             public SceneDefinitionComponent DefinitionComponent;
+            public Entity Entity;
         }
     }
 }

@@ -9,31 +9,40 @@ using System.Threading;
 
 namespace DCL.Web3Authentication
 {
-    public class DappWeb3Authenticator : IWeb3VerifiedAuthenticator
+    public class DappWeb3Authenticator : IWeb3VerifiedAuthenticator, IWeb3IdentityProvider
     {
-        private const string SERVER_URL_DEV = "https://auth-api.decentraland.zone";
-        private const string SERVER_URL_PRD = "https://auth-api.decentraland.today";
-        private const string SIGN_DAPP_URL_DEV = "https://decentraland.zone/auth/requests/:requestId";
-        private const string SIGN_DAPP_URL_PRD = "https://decentraland.org/auth/requests/:requestId";
         private const int TIMEOUT_SECONDS = 30;
 
         private readonly IWebBrowser webBrowser;
+        private readonly string serverUrl;
+        private readonly string signatureUrl;
 
         private SocketIO? webSocket;
         private UniTaskCompletionSource<DappSignatureResponse>? signatureOutcomeTask;
+        private UniTaskCompletionSource<IWeb3Identity>? identitySolvedTask;
         private IWeb3VerifiedAuthenticator.VerificationDelegate? verificationCallback;
 
         public IWeb3Identity? Identity { get; private set; }
 
-        public DappWeb3Authenticator(IWebBrowser webBrowser)
+        public DappWeb3Authenticator(IWebBrowser webBrowser,
+            string serverUrl,
+            string signatureUrl)
         {
             this.webBrowser = webBrowser;
+            this.serverUrl = serverUrl;
+            this.signatureUrl = signatureUrl;
         }
 
         public void Dispose()
         {
             webSocket?.Dispose();
             Identity?.Dispose();
+        }
+
+        public async UniTask<IWeb3Identity> GetOwnIdentityAsync(CancellationToken ct)
+        {
+            identitySolvedTask ??= new UniTaskCompletionSource<IWeb3Identity>();
+            return await identitySolvedTask.Task.AttachExternalCancellation(ct);
         }
 
         /// <summary>
@@ -67,13 +76,19 @@ namespace DCL.Web3Authentication
 
                 verificationCallback?.Invoke(authenticationResponse.code, signatureExpiration);
 
-                DappSignatureResponse signature = await WaitForUserSignature(authenticationResponse.requestId, cancellationToken);
+                DappSignatureResponse signature;
+
+                try { signature = await WaitForUserSignature(authenticationResponse, cancellationToken); }
+                catch (TimeoutException) { throw new SignatureExpiredException(signatureExpiration); }
 
                 AuthChain authChain = CreateAuthChain(signature, ephemeralMessage);
 
                 // To keep cohesiveness between the platform, convert the user address to lower case
                 Identity = new DecentralandIdentity(new Web3Address(signature.sender.ToLower()),
                     ephemeralAccount, sessionExpiration, authChain);
+
+                identitySolvedTask?.TrySetResult(Identity);
+                identitySolvedTask = null;
 
                 return Identity;
             }
@@ -96,11 +111,7 @@ namespace DCL.Web3Authentication
 
         private SocketIO InitializeWebSocket()
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            var uri = new Uri(SERVER_URL_DEV);
-#else
-            var uri = new Uri(SERVER_URL_PRD);
-#endif
+            var uri = new Uri(serverUrl);
 
             webSocket = new SocketIO(uri, new SocketIOOptions
             {
@@ -158,6 +169,9 @@ namespace DCL.Web3Authentication
         private async UniTask ConnectToServerAsync() =>
             await webSocket!.ConnectAsync().AsUniTask().Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
+        private void LetUserSignThroughDapp(string requestId) =>
+            webBrowser.OpenUrl($"{signatureUrl}/{requestId}");
+
         private void ProcessSignatureOutcomeMessage(SocketIOResponse response)
         {
             signatureOutcomeTask?.TrySetResult(response.GetValue<DappSignatureResponse>());
@@ -181,17 +195,15 @@ namespace DCL.Web3Authentication
                              .AttachExternalCancellation(cancellationToken);
         }
 
-        private async UniTask<DappSignatureResponse> WaitForUserSignature(string requestId, CancellationToken ct)
+        private async UniTask<DappSignatureResponse> WaitForUserSignature(DappSignatureResponse signatureResponse, CancellationToken ct)
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            webBrowser.OpenUrl(SIGN_DAPP_URL_DEV.Replace(":requestId", requestId));
-#else
-            webBrowser.OpenUrl(SIGN_DAPP_URL_PRD.Replace(":requestId", requestId));
-#endif
+            webBrowser.OpenUrl($"{signatureUrl}/{signatureResponse.requestId}");
 
             signatureOutcomeTask = new UniTaskCompletionSource<DappSignatureResponse>();
+            TimeSpan duration = signatureResponse.expiration - DateTime.UtcNow;
 
-            return await signatureOutcomeTask.Task.AttachExternalCancellation(ct);
+            return await signatureOutcomeTask.Task.Timeout(duration)
+                                             .AttachExternalCancellation(ct);
         }
 
         [Serializable]
