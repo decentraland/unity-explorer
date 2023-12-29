@@ -20,7 +20,7 @@ namespace Global.Static
         private ISceneFacade sceneFacade;
 
         private StaticContainer staticContainer;
-        private RandomGeneratedWeb3Authenticator web3Authenticator;
+        private RandomGeneratedWeb3Authenticator? web3Authenticator;
 
         private void Awake()
         {

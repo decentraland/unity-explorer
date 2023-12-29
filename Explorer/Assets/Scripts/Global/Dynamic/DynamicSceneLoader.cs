@@ -68,7 +68,9 @@ namespace Global.Dynamic
         {
             try
             {
-                web3Authenticator = new DappWeb3Authenticator(new UnityAppWebBrowser());
+                web3Authenticator = new DappWeb3Authenticator(new UnityAppWebBrowser(),
+                    settings.AuthWebSocketUrl,
+                    settings.AuthSignatureUrl);
 
                 // First load the common global plugin
                 bool isLoaded;
