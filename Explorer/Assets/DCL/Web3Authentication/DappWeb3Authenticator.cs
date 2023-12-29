@@ -4,6 +4,7 @@ using SocketIOClient;
 using SocketIOClient.Newtonsoft.Json;
 using SocketIOClient.Transport;
 using System;
+using System.Globalization;
 using System.Threading;
 
 namespace DCL.Web3Authentication
@@ -67,10 +68,17 @@ namespace DCL.Web3Authentication
 
                 SignatureIdResponse authenticationResponse = await RequestAuthenticationAsync(ephemeralMessage, cancellationToken);
 
+                var signatureExpiration = DateTime.Parse(authenticationResponse.expiration, null,
+                    DateTimeStyles.RoundtripKind);
+
                 await UniTask.SwitchToMainThread(cancellationToken);
 
                 LetUserSignThroughDapp(authenticationResponse.requestId);
-                DappSignatureResponse signature = await WaitForSignatureOutcome(cancellationToken);
+
+                DappSignatureResponse signature;
+
+                try { signature = await WaitForSignatureOutcome(signatureExpiration, cancellationToken); }
+                catch (TimeoutException) { throw new SignatureExpiredException(signatureExpiration); }
 
                 AuthChain authChain = CreateAuthChain(signature, ephemeralMessage);
 
@@ -182,11 +190,12 @@ namespace DCL.Web3Authentication
                              .AttachExternalCancellation(cancellationToken);
         }
 
-        private async UniTask<DappSignatureResponse> WaitForSignatureOutcome(CancellationToken ct)
+        private async UniTask<DappSignatureResponse> WaitForSignatureOutcome(DateTime expiration, CancellationToken ct)
         {
             signatureOutcomeTask = new UniTaskCompletionSource<DappSignatureResponse>();
+            TimeSpan duration = expiration - DateTime.UtcNow;
 
-            return await signatureOutcomeTask.Task.Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS))
+            return await signatureOutcomeTask.Task.Timeout(duration)
                                              .AttachExternalCancellation(ct);
         }
 
