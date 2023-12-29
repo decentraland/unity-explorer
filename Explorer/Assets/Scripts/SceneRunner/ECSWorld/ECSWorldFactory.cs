@@ -8,6 +8,7 @@ using DCL.CharacterCamera.Systems;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.SceneReadiness;
 using ECS.ComponentsPooling.Systems;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -79,6 +80,9 @@ namespace SceneRunner.ECSWorld
             PartitionAssetEntitiesSystem.InjectToWorld(ref builder, partitionSettings, scenePartition, cameraSamplingData, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>(), sceneRootEntity);
             AssetsDeferredLoadingSystem.InjectToWorld(ref builder, singletonDependencies.LoadingBudgetProvider, singletonDependencies.MemoryBudgetProvider);
             WriteEngineInfoSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
+
+            if (args.SceneReadinessReport != null)
+                GatherGltfAssetsSystem.InjectToWorld(ref builder, args.SceneReadinessReport);
 
             DestroyEntitiesSystem.InjectToWorld(ref builder);
             finalizeWorldSystems.Add(ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry));
