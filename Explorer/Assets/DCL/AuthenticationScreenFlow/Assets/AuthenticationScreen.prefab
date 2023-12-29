@@ -3861,6 +3861,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <canvas>k__BackingField: {fileID: 2814871423585080172}
   <raycaster>k__BackingField: {fileID: 8454101078806804241}
+  <SplashContainer>k__BackingField: {fileID: 7206598428263939562}
+  <SplashVideoPlayer>k__BackingField: {fileID: 2124517727902406794}
   <LoginContainer>k__BackingField: {fileID: 5265511476716053455}
   <LoginButton>k__BackingField: {fileID: 4708745492529117082}
   <ConnectingToServerContainer>k__BackingField: {fileID: 4194859795826974307}
@@ -4855,7 +4857,7 @@ VideoPlayer:
   m_EnabledAudioTracks: 
   m_DirectAudioMutes: 
   m_ControlledAudioTrackCount: 0
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_SkipOnDrop: 1
   m_Looping: 1
   m_WaitForFirstFrame: 0
@@ -4878,7 +4880,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &8017495806592817313
 RectTransform:
   m_ObjectHideFlags: 0

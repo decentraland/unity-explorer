@@ -62,7 +62,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnBeforeViewShow();
 
-            SwitchState(ViewState.Login);
+            ShowSplashAndThenSwitchToLogin().Forget();
         }
 
         protected override void OnViewClose()
@@ -70,6 +70,17 @@ namespace DCL.AuthenticationScreenFlow
             base.OnViewClose();
 
             CancelLoginProcess();
+        }
+
+        private async UniTaskVoid ShowSplashAndThenSwitchToLogin()
+        {
+            SwitchState(ViewState.Splash);
+
+            viewInstance.SplashVideoPlayer.Play();
+
+            await UniTask.WaitUntil(() => viewInstance.SplashVideoPlayer.frame >= (long)(viewInstance.SplashVideoPlayer.frameCount - 1));
+
+            SwitchState(ViewState.Login);
         }
 
         protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
@@ -124,7 +135,18 @@ namespace DCL.AuthenticationScreenFlow
         {
             switch (state)
             {
+                case ViewState.Splash:
+                    viewInstance.SplashContainer.SetActive(true);
+                    viewInstance.PendingAuthentication.SetActive(false);
+                    viewInstance.LoginContainer.SetActive(false);
+                    viewInstance.ProgressContainer.SetActive(false);
+                    viewInstance.FinalizeContainer.SetActive(false);
+                    viewInstance.ConnectingToServerContainer.SetActive(false);
+                    viewInstance.VerificationCodeHintContainer.SetActive(false);
+                    viewInstance.LoginButton.interactable = true;
+                    break;
                 case ViewState.Login:
+                    viewInstance.SplashContainer.SetActive(false);
                     viewInstance.PendingAuthentication.SetActive(false);
                     viewInstance.LoginContainer.SetActive(true);
                     viewInstance.ProgressContainer.SetActive(false);
@@ -134,6 +156,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.LoginButton.interactable = true;
                     break;
                 case ViewState.LoginInProgress:
+                    viewInstance.SplashContainer.SetActive(false);
                     viewInstance.PendingAuthentication.SetActive(true);
                     viewInstance.LoginContainer.SetActive(false);
                     viewInstance.ProgressContainer.SetActive(false);
@@ -143,6 +166,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.LoginButton.interactable = false;
                     break;
                 case ViewState.Loading:
+                    viewInstance.SplashContainer.SetActive(false);
                     viewInstance.PendingAuthentication.SetActive(false);
                     viewInstance.LoginContainer.SetActive(false);
                     viewInstance.ProgressContainer.SetActive(true);
@@ -152,6 +176,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.LoginButton.interactable = false;
                     break;
                 case ViewState.Finalize:
+                    viewInstance.SplashContainer.SetActive(false);
                     viewInstance.PendingAuthentication.SetActive(false);
                     viewInstance.LoginContainer.SetActive(false);
                     viewInstance.ProgressContainer.SetActive(false);
@@ -185,6 +210,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private enum ViewState
         {
+            Splash,
             Login,
             LoginInProgress,
             Loading,

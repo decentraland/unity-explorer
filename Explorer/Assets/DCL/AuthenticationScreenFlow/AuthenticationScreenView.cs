@@ -3,11 +3,18 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Localization.Components;
 using UnityEngine.UI;
+using UnityEngine.Video;
 
 namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenView : ViewBase, IView
     {
+        [field: SerializeField]
+        public GameObject SplashContainer { get; private set; } = null!;
+
+        [field: SerializeField]
+        public VideoPlayer SplashVideoPlayer { get; private set; } = null!;
+
         [field: SerializeField]
         public GameObject LoginContainer { get; private set; } = null!;
 
