@@ -68,7 +68,8 @@ namespace ECS.SceneLifeCycle.Tests
         [Test]
         public void StartUnloading()
         {
-            realmPartitionSettings.UnloadBucket.Returns(3);
+            realmPartitionSettings.UnloadingDistanceToleranceInParcels.Returns(1);
+            realmPartitionSettings.MaxLoadingDistanceInParcels.Returns(1);
 
             for (byte i = 2; i <= 4; i++)
             {
@@ -83,7 +84,7 @@ namespace ECS.SceneLifeCycle.Tests
                             },
                         },
                     },
-                    new IpfsTypes.IpfsPath()), new PartitionComponent { Bucket = i });
+                    new IpfsTypes.IpfsPath()), new PartitionComponent { Bucket = i, RawSqrDistance = (ParcelMathHelper.PARCEL_SIZE * i * ParcelMathHelper.PARCEL_SIZE * i) - 1f });
             }
 
             system.Update(0f);

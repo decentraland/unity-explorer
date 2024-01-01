@@ -773,7 +773,7 @@ RectTransform:
   - {fileID: 6761393586619027270}
   - {fileID: 4310957910290201615}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
+  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -966,6 +966,27 @@ PrefabInstance:
     - target: {fileID: 3653306991017406586, guid: 9867ba933545f402e93531ad149005b2, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8725844542063568782, guid: 9867ba933545f402e93531ad149005b2, type: 3}
+      propertyPath: m_text
+      value: Points of interest are notable locations in Decentraland voted by the
+        community through the <color=#FF2D55><u><b>DAO</b></u></color>
+      objectReference: {fileID: 0}
+    - target: {fileID: 8725844542063568782, guid: 9867ba933545f402e93531ad149005b2, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
+    - target: {fileID: 8725844542063568782, guid: 9867ba933545f402e93531ad149005b2, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 1701868249614554837, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
+    - target: {fileID: 8725844542063568782, guid: 9867ba933545f402e93531ad149005b2, type: 3}
+      propertyPath: m_HorizontalAlignment
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8725844542063568782, guid: 9867ba933545f402e93531ad149005b2, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
