@@ -2,7 +2,7 @@
 using System;
 using UnityEngine.UIElements;
 
-namespace ECS.Unity.SceneUI.Components
+namespace DCL.SDKComponents.SceneUI.Components
 {
     public struct UITextComponent: IPoolableComponentProvider<Label>
     {

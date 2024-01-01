@@ -1,8 +1,8 @@
 ﻿using Arch.SystemGroups;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.SDKComponents.SceneUI.Systems;
 using ECS.LifeCycle;
-using ECS.Unity.SceneUI.Systems;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
 
@@ -25,9 +25,12 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            InstantiateSceneUISystem.InjectToWorld(ref builder, canvas, componentPoolsRegistry);
+            UITextHandlerSystem.InjectToWorld(ref builder, canvas, componentPoolsRegistry);
         }
 
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
+        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies)
+        {
+            UITextHandlerSystem.InjectToWorld(ref builder, canvas, componentPoolsRegistry);
+        }
     }
 }
