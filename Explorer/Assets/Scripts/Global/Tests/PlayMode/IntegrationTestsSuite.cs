@@ -4,6 +4,7 @@ using DCL.Web3Authentication;
 using Global.Static;
 using NSubstitute;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
 
@@ -19,7 +20,7 @@ namespace Global.Tests
         {
             PluginSettingsContainer globalSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(GLOBAL_CONTAINER_ADDRESS);
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
-            UIDocument scenesUIRootCanvas = await Addressables.LoadAssetAsync<UIDocument>(SCENES_UI_ROOT_CANVAS);
+            UIDocument scenesUIRootCanvas = (await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ROOT_CANVAS)).GetComponent<UIDocument>();
 
             return await StaticSceneLauncher.InstallAsync(globalSettingsContainer, sceneSettingsContainer,
                 scenesUIRootCanvas, Substitute.For<IWeb3Authenticator>(), CancellationToken.None);
