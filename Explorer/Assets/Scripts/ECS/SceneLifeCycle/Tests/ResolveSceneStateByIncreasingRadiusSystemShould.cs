@@ -12,6 +12,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
 using Utility;
 
@@ -32,7 +33,7 @@ namespace ECS.SceneLifeCycle.Tests
         }
 
         [Test]
-        public void LimitScenesLoading()
+        public async Task LimitScenesLoading()
         {
             realmPartitionSettings.ScenesRequestBatchSize.Returns(2);
             realmPartitionSettings.MaxLoadingDistanceInParcels.Returns(int.MaxValue);
@@ -52,6 +53,15 @@ namespace ECS.SceneLifeCycle.Tests
                         },
                     },
                     new IpfsTypes.IpfsPath()), new PartitionComponent { Bucket = (byte)i, RawSqrDistance = ParcelMathHelper.SQR_PARCEL_SIZE * i });
+            }
+
+            system.Update(0f);
+
+            // Wait for job to complete
+            while (!system.sortingJobHandle.Value.IsCompleted)
+            {
+                await Task.Yield();
+                system.Update(0f);
             }
 
             system.Update(0f);
