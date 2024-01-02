@@ -1,7 +1,7 @@
 using DCL.ECSComponents;
 using UnityEngine;
 
-namespace ECS.Unity.Utils
+namespace DCL.SDKComponents.SceneUI.Utils
 {
     public static class ProtoConvertUtils
     {

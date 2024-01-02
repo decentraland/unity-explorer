@@ -1,6 +1,6 @@
 ﻿using DCL.ECSComponents;
+using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Unity.ColorComponent;
-using ECS.Unity.Utils;
 using UnityEngine;
 using Font = DCL.ECSComponents.Font;
 

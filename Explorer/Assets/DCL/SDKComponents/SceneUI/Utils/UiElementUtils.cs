@@ -1,6 +1,6 @@
 using UnityEngine.UIElements;
 
-namespace ECS.Unity.Utils
+namespace DCL.SDKComponents.SceneUI.Utils
 {
     public static class UiElementUtils
     {

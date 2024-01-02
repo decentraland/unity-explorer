@@ -6,10 +6,10 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
+using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;
-using ECS.Unity.Utils;
 using UnityEngine.UIElements;
 using Entity = Arch.Core.Entity;
 
