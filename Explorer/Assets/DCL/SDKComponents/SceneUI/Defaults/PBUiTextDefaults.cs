@@ -4,7 +4,7 @@ using ECS.Unity.ColorComponent;
 using UnityEngine;
 using Font = DCL.ECSComponents.Font;
 
-namespace DCL.SDKComponents.SceneUI
+namespace DCL.SDKComponents.SceneUI.Defaults
 {
     public static class PBUiTextDefaults
     {

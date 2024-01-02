@@ -12,6 +12,6 @@ namespace DCL.SDKComponents.SceneUI.Components
         Label IPoolableComponentProvider<Label>.PoolableComponent => Label;
         Type IPoolableComponentProvider<Label>.PoolableComponentType => typeof(Label);
 
-        public void Dispose(){ }
+        public void Dispose() { }
     }
 }

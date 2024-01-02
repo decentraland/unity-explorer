@@ -6,6 +6,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
+using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -85,14 +86,14 @@ namespace DCL.SDKComponents.SceneUI.Systems
             SetupLabel(label, sdkComponent);
         }
 
-        private static void SetupLabel(Label labelToSetup, PBUiText pbModel)
+        private static void SetupLabel(Label labelToSetup, PBUiText model)
         {
             labelToSetup.pickingMode = PickingMode.Ignore;
-            labelToSetup.text = pbModel.Value;
-            labelToSetup.style.color = pbModel.GetColor();
-            labelToSetup.style.fontSize = pbModel.GetFontSize();
-            labelToSetup.style.unityTextAlign = pbModel.GetTextAlign();
-            //labelToSetup.style.unityFont = pbModel.GetFont();
+            labelToSetup.text = model.Value;
+            labelToSetup.style.color = model.GetColor();
+            labelToSetup.style.fontSize = model.GetFontSize();
+            labelToSetup.style.unityTextAlign = model.GetTextAlign();
+            //labelToSetup.style.unityFont = model.GetFont();
         }
 
         private void RemoveLabel(UITextComponent uiTextComponent)

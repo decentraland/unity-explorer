@@ -23,11 +23,13 @@ namespace DCL.PluginSystem.World
             SetupCanvas();
 
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
+            componentPoolsRegistry.AddComponentPool<VisualElement>();
             componentPoolsRegistry.AddComponentPool<Label>();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
+            UITransformHandlerSystem.InjectToWorld(ref builder, canvas, componentPoolsRegistry);
             UITextHandlerSystem.InjectToWorld(ref builder, canvas, componentPoolsRegistry);
 
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<Label, UITextComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
