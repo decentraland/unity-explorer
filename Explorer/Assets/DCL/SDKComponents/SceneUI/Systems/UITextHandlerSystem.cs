@@ -87,6 +87,7 @@ namespace DCL.SDKComponents.SceneUI.Systems
 
         private static void SetupLabel(Label labelToSetup, PBUiText pbModel)
         {
+            labelToSetup.pickingMode = PickingMode.Ignore;
             labelToSetup.text = pbModel.Value;
             labelToSetup.style.color = pbModel.GetColor();
             labelToSetup.style.fontSize = pbModel.GetFontSize();
