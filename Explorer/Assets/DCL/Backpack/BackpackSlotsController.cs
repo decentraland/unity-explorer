@@ -1,19 +1,24 @@
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
+using Utility;
 
 namespace DCL.Backpack
 {
     public class BackpackSlotsController : IDisposable
     {
         private readonly BackpackEventBus backpackEventBus;
+        private readonly NftTypeIconSO rarityBackgrounds;
         private readonly Dictionary<string, AvatarSlotView> avatarSlots = new ();
         private AvatarSlotView previousSlot;
 
-        public BackpackSlotsController(AvatarSlotView[] avatarSlotViews, BackpackCommandBus backpackCommandBus, BackpackEventBus backpackEventBus)
+        public BackpackSlotsController(AvatarSlotView[] avatarSlotViews, BackpackCommandBus backpackCommandBus, BackpackEventBus backpackEventBus, NftTypeIconSO rarityBackgrounds)
         {
             this.backpackEventBus = backpackEventBus;
+            this.rarityBackgrounds = rarityBackgrounds;
 
             this.backpackEventBus.EquipEvent += EquipInSlot;
             this.backpackEventBus.UnEquipEvent += UnEquipInSlot;
@@ -28,12 +33,36 @@ namespace DCL.Backpack
 
         private void UnEquipInSlot(IWearable wearable)
         {
-            avatarSlots[wearable.GetCategory()].SlotWearableUrn = null;
+            if (!avatarSlots.TryGetValue(wearable.GetCategory(), out AvatarSlotView avatarSlotView)) return;
+
+            avatarSlotView.UnequipButton.gameObject.SetActive(false);
+            avatarSlotView.SlotWearableUrn = null;
+            avatarSlotView.SlotWearableThumbnail.gameObject.SetActive(false);
+            avatarSlotView.SlotWearableThumbnail.sprite = null;
+            avatarSlotView.SlotWearableRarityBackground.sprite = null;
         }
 
         private void EquipInSlot(IWearable equippedWearable)
         {
-            avatarSlots[equippedWearable.GetCategory()].SlotWearableUrn = equippedWearable.GetUrn();
+            if (!avatarSlots.TryGetValue(equippedWearable.GetCategory(), out AvatarSlotView avatarSlotView)) return;
+
+            avatarSlotView.SlotWearableUrn = equippedWearable.GetUrn();
+            avatarSlotView.SlotWearableRarityBackground.sprite = rarityBackgrounds.GetTypeImage(equippedWearable.GetRarity());
+            WaitForThumbnail(equippedWearable).Forget();
+        }
+
+        private async UniTaskVoid WaitForThumbnail(IWearable equippedWearable)
+        {
+            //Do while is better than waituntill from a resource point of view?????
+            do
+            {
+                await UniTask.Delay(500);
+            }
+            while (equippedWearable.WearableThumbnail == null);
+
+            Texture2D valueAsset = equippedWearable.WearableThumbnail.Value.Asset;
+            avatarSlots[equippedWearable.GetCategory()].SlotWearableThumbnail.sprite = Sprite.Create(valueAsset, new Rect(0, 0, valueAsset.width, valueAsset.height), VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false);
+            avatarSlots[equippedWearable.GetCategory()].SlotWearableThumbnail.gameObject.SetActive(true);
         }
 
         private void OnSlotButtonPressed(AvatarSlotView avatarSlot)

@@ -4,6 +4,7 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 //Removed all references to EmoteData in WearableItem
 namespace DCL.AvatarRendering.Wearables.Components
@@ -14,7 +15,12 @@ namespace DCL.AvatarRendering.Wearables.Components
         public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
         public StreamableLoadingResult<WearableAsset>?[] WearableAssetResults { get; private set; } = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
         public StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }
+
+        public StreamableLoadingResult<Texture2D>? WearableThumbnail { get; set; }
         public bool IsLoading { get; set; } = true;
+
+        public string GetThumbnail(BodyShape bodyShape) =>
+            WearableDTO.Asset.metadata.thumbnail;
 
         public string GetMainFileHash(BodyShape bodyShape)
         {
@@ -62,6 +68,9 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public string GetCreator() =>
             "";
+
+        public string GetRarity() =>
+            WearableDTO.Asset.metadata.rarity;
 
         public bool IsUnisex() =>
             WearableDTO.Asset.metadata.data.representations.Length > 1;

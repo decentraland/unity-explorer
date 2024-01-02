@@ -146,8 +146,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 {
                     foreach (WearableDTO assetEntity in promiseResult.Asset.Value)
                     {
-                        //TODO: Download Thumbnail
                         wearableCatalog.TryGetWearable(assetEntity.metadata.id, out IWearable component);
+                        var wearableThumbnailComponent = new WearableThumbnailComponent(component);
+
+                        //TODO Which partition should we use?
+                        World.Create(wearableThumbnailComponent, PartitionComponent.TOP_PRIORITY);
                         component.WearableDTO = new StreamableLoadingResult<WearableDTO>(assetEntity);
                         component.IsLoading = false;
                     }

@@ -2201,7 +2201,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6822543606753027690, guid: 9a3416ab3e1b9486ba48f239340e202d, type: 3}
       propertyPath: <Category>k__BackingField
-      value: Handwear
+      value: Hands_wear
       objectReference: {fileID: 0}
     - target: {fileID: 7495390461251039812, guid: 9a3416ab3e1b9486ba48f239340e202d, type: 3}
       propertyPath: m_AnchorMax.y
@@ -4561,7 +4561,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3576930520628333720, guid: 5ed0eaf7428cb4135baf7d2e09a9430a, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 40.55
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3576930520628333720, guid: 5ed0eaf7428cb4135baf7d2e09a9430a, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -5541,7 +5541,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6822543606753027690, guid: 9a3416ab3e1b9486ba48f239340e202d, type: 3}
       propertyPath: <Category>k__BackingField
-      value: Shoes
+      value: Feet
       objectReference: {fileID: 0}
     - target: {fileID: 7495390461251039812, guid: 9a3416ab3e1b9486ba48f239340e202d, type: 3}
       propertyPath: m_AnchorMax.y
@@ -6759,7 +6759,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6822543606753027690, guid: 9a3416ab3e1b9486ba48f239340e202d, type: 3}
       propertyPath: <Category>k__BackingField
-      value: Facial Hair
+      value: Facial_Hair
       objectReference: {fileID: 0}
     - target: {fileID: 7495390461251039812, guid: 9a3416ab3e1b9486ba48f239340e202d, type: 3}
       propertyPath: m_AnchorMax.y

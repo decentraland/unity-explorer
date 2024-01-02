@@ -56,6 +56,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
 
             [Serializable]
+            public struct RepresentationContentsDto
+            {
+                public string key;
+                public string url;
+            }
+
+            [Serializable]
             public class DataDto
             {
                 public Representation[] representations;

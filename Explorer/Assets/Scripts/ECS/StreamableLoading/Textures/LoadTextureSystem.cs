@@ -28,6 +28,7 @@ namespace ECS.StreamableLoading.Textures
 
         protected override async UniTask<StreamableLoadingResult<Texture2D>> FlowInternalAsync(GetTextureIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
+            Debug.Log($"thumbnail intention {intention.CommonArguments.URL}");
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             GetTextureWebRequest request = await webRequestController.GetTextureAsync(
                 intention.CommonArguments,

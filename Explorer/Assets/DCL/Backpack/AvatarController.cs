@@ -36,7 +36,7 @@ namespace DCL.Backpack
             this.backpackCommandBus = backpackCommandBus;
             this.backpackEventBus = backpackEventBus;
 
-            slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus);
+            slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus, rarityBackgrounds);
             backpackGridController = new BackpackGridController(view.backpackGridView, backpackCommandBus, backpackEventBus);
             backpackInfoPanelController = new BackpackInfoPanelController(view.backpackInfoPanelView, backpackEventBus, categoryIcons);
             rectTransform = view.GetComponent<RectTransform>();

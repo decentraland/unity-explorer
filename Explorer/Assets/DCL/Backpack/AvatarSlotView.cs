@@ -43,6 +43,12 @@ namespace DCL.Backpack
         [field: SerializeField]
         public string SlotWearableUrn { get; set; }
 
+        [field: SerializeField]
+        public Image SlotWearableThumbnail { get; set; }
+
+        [field: SerializeField]
+        public Image SlotWearableRarityBackground { get; set; }
+
         public void Start()
         {
             CategoryText.text = Category;
@@ -59,7 +65,7 @@ namespace DCL.Backpack
         {
             HoverTootlip.SetActive(true);
             focusedImage.enabled = true;
-            UnequipButton.gameObject.SetActive(true);
+            UnequipButton.gameObject.SetActive(!string.IsNullOrEmpty(SlotWearableUrn));
             ScaleUpAnimation(focusedImage.transform);
         }
 

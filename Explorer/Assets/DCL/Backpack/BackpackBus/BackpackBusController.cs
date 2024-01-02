@@ -1,7 +1,9 @@
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using JetBrains.Annotations;
 using System;
+using UnityEngine;
 
 namespace DCL.Backpack.BackpackBus
 {
@@ -39,7 +41,7 @@ namespace DCL.Backpack.BackpackBus
         {
             wearableCatalog.TryGetWearable(command.Id, out IWearable wearable);
 
-            if (wearable == null)
+            if (wearable?.GetCategory() == null)
                 return;
 
             if(backpackEquipStatusController.GetEquippedWearableForCategory(wearable.GetCategory()) != null)

@@ -16,6 +16,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Systems
@@ -52,15 +53,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             await UniTask.WaitUntil(isRealmDataReady, cancellationToken: ct);
 
-            WearableDTO.LambdaResponse lambdaResponse =
-                await (await webRequestController.GetAsync(new CommonArguments(BuildURL(intention.UserID, intention.Params), attemptsCount: 1), ct, GetReportCategory()))
-                   .CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+            URLAddress urlAddress = BuildURL(intention.UserID, intention.Params);
+            Debug.Log($"Url {urlAddress.Value}");
 
-            for (var i = 0; i < lambdaResponse.elements.Count; i++)
-            {
-                WearableDTO wearableDto = lambdaResponse.elements[i].entity;
-                intention.Results.Add(wearableCatalog.GetOrAddWearableByDTO(wearableDto));
-            }
+            WearableDTO.LambdaResponse lambdaResponse =
+                await (await webRequestController.GetAsync(new CommonArguments(urlAddress, attemptsCount: 1), ct, GetReportCategory()))
+                   .CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
             return new StreamableLoadingResult<IWearable[]>(intention.Results.ToArray());
         }

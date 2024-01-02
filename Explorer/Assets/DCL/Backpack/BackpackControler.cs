@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
 using DCL.UI;
@@ -25,7 +26,7 @@ namespace DCL.Backpack
             private readonly RectTransform rectTransform;
             private CancellationTokenSource animationCts;
             private readonly AvatarController avatarController;
-            private Profile profile;
+            private AvatarShapeComponent avatarShapeComponent;
 
             public BackpackControler(
                 BackpackView view,
@@ -77,19 +78,23 @@ namespace DCL.Backpack
             //TODO: Temporary solution to test to wait for profile to be loaded, discuss better solution
             private async UniTaskVoid AwaitForProfile(World world, Entity playerEntity)
             {
+                bool canContinue = false;
+
                 do
                 {
                     await UniTask.Delay(1000);
-                    profile = world.Get<Profile>(playerEntity);
+                    world.Query(new QueryDescription().WithAll<Profile, AvatarShapeComponent>(),
+                        (ref AvatarShapeComponent shapeComponent, ref Profile profile) =>
+                        {
+                            if (!shapeComponent.IsDirty && string.Equals(profile.UserId, "0x8e41609eD5e365Ac23C28d9625Bd936EA9C9E22c", StringComparison.CurrentCultureIgnoreCase)) canContinue = true;
+                        });
                 }
-                while (profile == null || profile.Name == "Player");
+                while (!canContinue);
 
-                await UniTask.WaitUntil(() => profile != null && profile.IsDirty == false);
-                foreach (URN avatarSharedWearable in profile.Avatar.SharedWearables)
+                Debug.Log("equipped wearables count " + world.Get<Profile>(playerEntity).Avatar.SharedWearables.Count);
+                foreach (URN avatarSharedWearable in world.Get<Profile>(playerEntity).Avatar.SharedWearables)
                 {
-                    Debug.Log($"shared wearable {avatarSharedWearable.ToString()}");
-
-                    //backpackCommandBus.SendCommand(new BackpackEquipCommand(avatarSharedWearable.ToString()));
+                    backpackCommandBus.SendCommand(new BackpackEquipCommand(avatarSharedWearable.ToString()));
                 }
             }
 
