@@ -12,6 +12,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {
@@ -21,12 +22,15 @@ namespace DCL.AvatarRendering.Wearables.Systems
     {
         private readonly WearablesDTOList defaultWearableDefinition;
         private readonly IWearableCatalog wearableCatalog;
-
+        private readonly GameObject emptyDefaultWearable;
+        
         internal LoadDefaultWearablesSystem(World world,
-            WearablesDTOList defaultWearableDefinition, IWearableCatalog wearableCatalog) : base(world)
+            WearablesDTOList defaultWearableDefinition, GameObject emptyDefaultWearable,
+            IWearableCatalog wearableCatalog) : base(world)
         {
             this.defaultWearableDefinition = defaultWearableDefinition;
             this.wearableCatalog = wearableCatalog;
+            this.emptyDefaultWearable = emptyDefaultWearable;
         }
 
         public override void Initialize()
@@ -41,7 +45,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
             for (var i = 0; i < defaultWearableDefinition.Value.Count; i++)
             {
                 WearableDTO dto = defaultWearableDefinition.Value[i];
-                IWearable wearable = wearableCatalog.GetOrAddWearableByDTO(dto);
+                var wearable = wearableCatalog.GetOrAddWearableByDTO(dto, false);
+                ;
 
                 BodyShape analyzedBodyShape = wearable.IsCompatibleWithBodyShape(BodyShape.MALE) ? BodyShape.MALE : BodyShape.FEMALE;
                 pointersRequest[analyzedBodyShape].Add(wearable.GetUrn());
@@ -55,6 +60,26 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 state.PromisePerBodyShape[bodyShape] = AssetPromise<IWearable[], GetWearablesByPointersIntention>
                    .Create(World, new GetWearablesByPointersIntention(pointers, new IWearable[pointers.Count], bodyShape, AssetSource.EMBEDDED, false), PartitionComponent.TOP_PRIORITY);
             }
+
+
+            // Add empty default wearable
+            var wearableDTO = new WearableDTO
+            {
+                metadata = new WearableDTO.WearableMetadataDto
+                {
+                    id = WearablesConstants.EMPTY_DEFAULT_WEARABLE
+                }
+            };
+
+            var emptyWearable = wearableCatalog.GetOrAddWearableByDTO(wearableDTO, false);
+            var wearableAsset = new WearableAsset(emptyDefaultWearable, new List<WearableAsset.RendererInfo>(), null);
+            wearableAsset.AddReference();
+
+            emptyWearable.WearableAssetResults[BodyShape.MALE] =
+                new StreamableLoadingResult<WearableAsset>(wearableAsset);
+
+            emptyWearable.WearableAssetResults[BodyShape.FEMALE] =
+                new StreamableLoadingResult<WearableAsset>(wearableAsset);
 
             World.Create(state);
         }
