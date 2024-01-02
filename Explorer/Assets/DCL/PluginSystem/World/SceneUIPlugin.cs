@@ -20,6 +20,7 @@ namespace DCL.PluginSystem.World
             ECSWorldSingletonSharedDependencies singletonSharedDependencies)
         {
             this.canvas = canvas;
+            SetupCanvas();
 
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
             componentPoolsRegistry.AddComponentPool<Label>();
@@ -33,5 +34,24 @@ namespace DCL.PluginSystem.World
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
+
+        private void SetupCanvas()
+        {
+            canvas.rootVisualElement.pickingMode = PickingMode.Ignore;
+
+            var style = canvas.rootVisualElement.style;
+            style.width = new Length(100f, LengthUnit.Percent);
+            style.height = new Length(100f, LengthUnit.Percent);
+            style.flexDirection = new StyleEnum<FlexDirection>(FlexDirection.Row);
+            style.flexBasis = new StyleLength(StyleKeyword.Auto);
+            style.flexGrow = 0;
+            style.flexShrink = 1;
+            style.flexWrap = new StyleEnum<Wrap>(Wrap.NoWrap);
+            style.justifyContent = new StyleEnum<Justify>(Justify.FlexStart);
+            style.alignItems = new StyleEnum<Align>(Align.Stretch);
+            style.alignSelf = new StyleEnum<Align>(Align.Auto);
+            style.alignContent = new StyleEnum<Align>(Align.Stretch);
+            style.position = new StyleEnum<Position>(Position.Absolute);
+        }
     }
 }
