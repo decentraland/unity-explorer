@@ -111,7 +111,8 @@ namespace Global.Dynamic
                     dynamicSettings.BackpackSettings,
                     backpackCommandBus,
                     backpackEventBus,
-                    staticContainer.WebRequestsContainer.WebRequestController),
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    container.ProfileRepository),
 
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
             };

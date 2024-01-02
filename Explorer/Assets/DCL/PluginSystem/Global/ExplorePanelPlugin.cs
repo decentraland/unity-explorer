@@ -7,6 +7,7 @@ using DCL.ExplorePanel;
 using DCL.Navmap;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
+using DCL.Profiles;
 using DCL.Settings;
 using DCL.WebRequests;
 using Global.Dynamic;
@@ -29,6 +30,7 @@ namespace DCL.PluginSystem.Global
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackEventBus backpackEventBus;
         private readonly IWebRequestController webRequestController;
+        private readonly IProfileRepository profileRepository;
         private NavmapController navmapController;
         private BackpackControler backpackController;
 
@@ -41,7 +43,8 @@ namespace DCL.PluginSystem.Global
             BackpackSettings backpackSettings,
             BackpackCommandBus backpackCommandBus,
             BackpackEventBus backpackEventBus,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            IProfileRepository profileRepository)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -52,6 +55,7 @@ namespace DCL.PluginSystem.Global
             this.backpackCommandBus = backpackCommandBus;
             this.backpackEventBus = backpackEventBus;
             this.webRequestController = webRequestController;
+            this.profileRepository = profileRepository;
         }
 
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
@@ -68,7 +72,7 @@ namespace DCL.PluginSystem.Global
                 assetsProvisioner.ProvideMainAssetAsync(backpackSettings.RarityBackgroundsMapping, ct));
 
             SettingsController settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
-            backpackController = new BackpackControler(explorePanelView.GetComponentInChildren<BackpackView>(), rarityBackgroundsMapping.Value, categoryIconsMapping.Value, rarityColorMappings.Value, backpackCommandBus, backpackEventBus);
+            backpackController = new BackpackControler(explorePanelView.GetComponentInChildren<BackpackView>(), rarityBackgroundsMapping.Value, categoryIconsMapping.Value, rarityColorMappings.Value, backpackCommandBus, backpackEventBus, profileRepository);
             await backpackController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
             mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackController));
@@ -87,7 +91,11 @@ namespace DCL.PluginSystem.Global
             backpackController.Dispose();
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
+            backpackController.InjectToWorld(ref builder, arguments.PlayerEntity);
+
+        }
 
         public class ExplorePanelSettings : IDCLPluginSettings
         {

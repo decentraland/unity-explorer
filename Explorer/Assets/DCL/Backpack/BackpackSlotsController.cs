@@ -20,7 +20,7 @@ namespace DCL.Backpack
 
             foreach (var avatarSlotView in avatarSlotViews)
             {
-                avatarSlots.Add(avatarSlotView.Category, avatarSlotView);
+                avatarSlots.Add(avatarSlotView.Category.ToLower(), avatarSlotView);
                 avatarSlotView.OnSlotButtonPressed += OnSlotButtonPressed;
                 avatarSlotView.UnequipButton.onClick.AddListener(() => backpackCommandBus.SendCommand(new BackpackUnEquipCommand(avatarSlotView.SlotWearableUrn)));
             }
