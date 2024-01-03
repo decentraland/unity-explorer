@@ -14,8 +14,9 @@ using Realm;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.Collections;
+using Unity.Jobs;
 using UnityEngine;
-using UnityEngine.Pool;
 using Utility;
 
 namespace ECS.SceneLifeCycle.IncreasingRadius
@@ -31,24 +32,31 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
     [UpdateAfter(typeof(CreateEmptyPointersInFixedRealmSystem))]
     public partial class ResolveSceneStateByIncreasingRadiusSystem : BaseUnityLoopSystem
     {
+        private static readonly Comparer COMPARER_INSTANCE = new ();
+
         private static readonly QueryDescription START_SCENES_LOADING = new QueryDescription()
                                                                        .WithAll<SceneDefinitionComponent, PartitionComponent>()
                                                                        .WithNone<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>();
 
         private readonly IRealmPartitionSettings realmPartitionSettings;
 
-        private readonly List<OrderedData> orderedData;
+        internal JobHandle? sortingJobHandle;
+
+        private NativeList<OrderedData> orderedData;
 
         internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings) : base(world)
         {
             this.realmPartitionSettings = realmPartitionSettings;
 
-            orderedData = ListPool<OrderedData>.Get();
+            // Set initial capacity to 1/3 of the total capacity required for all rings
+            orderedData = new NativeList<OrderedData>(
+                ParcelMathJobifiedHelper.GetRingsArraySize(realmPartitionSettings.MaxLoadingDistanceInParcels) / 3,
+                Allocator.Persistent);
         }
 
         public override void Dispose()
         {
-            ListPool<OrderedData>.Release(orderedData);
+            orderedData.Dispose();
         }
 
         protected override void Update(float t)
@@ -103,6 +111,15 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         private void StartScenesLoading(ref RealmComponent realmComponent, float maxLoadingSqrDistance)
         {
+            if (sortingJobHandle is { IsCompleted: true })
+            {
+                sortingJobHandle.Value.Complete();
+                CreatePromisesFromOrderedData(realmComponent.Ipfs);
+            }
+
+            if (sortingJobHandle is { IsCompleted: false }) return;
+
+            // Start new sorting
             // Order the scenes definitions by the CURRENT partition and serve first N of them
 
             orderedData.Clear();
@@ -110,12 +127,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             foreach (ref Chunk chunk in World.Query(in START_SCENES_LOADING))
             {
                 ref Entity entityFirstElement = ref chunk.Entity(0);
-                ref SceneDefinitionComponent sceneDefinitionFirst = ref chunk.GetFirst<SceneDefinitionComponent>();
                 ref PartitionComponent partitionComponentFirst = ref chunk.GetFirst<PartitionComponent>();
 
                 foreach (int entityIndex in chunk)
                 {
-                    ref SceneDefinitionComponent definition = ref Unsafe.Add(ref sceneDefinitionFirst, entityIndex);
                     ref readonly Entity entity = ref Unsafe.Add(ref entityFirstElement, entityIndex);
                     ref PartitionComponent partitionComponent = ref Unsafe.Add(ref partitionComponentFirst, entityIndex);
 
@@ -124,27 +139,37 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     orderedData.Add(new OrderedData
                     {
                         Entity = entity,
-                        PartitionComponent = partitionComponent,
-                        DefinitionComponent = definition,
+                        Data = new DistanceBasedComparer.DataSurrogate(partitionComponent.RawSqrDistance, partitionComponent.IsBehind),
                     });
                 }
             }
 
             // Raw Distance will give more stable results in terms of scenes loading order, especially in cases
             // when a wide range falls into the same bucket
-            orderedData.Sort(static (p1, p2) => DistanceBasedComparer.INSTANCE.Compare(p1.PartitionComponent, p2.PartitionComponent));
+            sortingJobHandle = orderedData.SortJob(COMPARER_INSTANCE).Schedule();
+        }
 
-            IIpfsRealm ipfsRealm = realmComponent.Ipfs;
+        private void CreatePromisesFromOrderedData(IIpfsRealm ipfsRealm)
+        {
+            var promisesCreated = 0;
 
-            // Take first N
-            for (var i = 0; i < orderedData.Count && i < realmPartitionSettings.ScenesRequestBatchSize; i++)
+            for (var i = 0; i < orderedData.Length && promisesCreated < realmPartitionSettings.ScenesRequestBatchSize; i++)
             {
                 OrderedData data = orderedData[i];
 
+                // As sorting is throttled Entity might gone out of scope
+                if (!World.IsAlive(data.Entity))
+                    continue;
+
+                // We can't save component to data as sorting is throttled and components could change
+                Components<SceneDefinitionComponent, PartitionComponent> components = World.Get<SceneDefinitionComponent, PartitionComponent>(data.Entity);
+
                 World.Add(data.Entity,
                     AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                        new GetSceneFacadeIntention(ipfsRealm, data.DefinitionComponent),
-                        data.PartitionComponent));
+                        new GetSceneFacadeIntention(ipfsRealm, components.t0),
+                        components.t1.Value));
+
+                promisesCreated++;
             }
         }
 
@@ -157,11 +182,22 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             World.Add(entity, DeleteEntityIntention.DeferredDeletion);
         }
 
+        /// <summary>
+        ///     It must be a structure to be compatible with Burst SortJob
+        /// </summary>
+        private struct Comparer : IComparer<OrderedData>
+        {
+            public int Compare(OrderedData x, OrderedData y) =>
+                DistanceBasedComparer.Compare(x.Data, y.Data);
+        }
+
         private struct OrderedData
         {
-            public PartitionComponent PartitionComponent;
-            public SceneDefinitionComponent DefinitionComponent;
+            /// <summary>
+            ///     Referencing entity is expensive and at the moment we don't delete scene entities at all
+            /// </summary>
             public Entity Entity;
+            public DistanceBasedComparer.DataSurrogate Data;
         }
     }
 }
