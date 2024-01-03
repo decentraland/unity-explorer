@@ -6,15 +6,15 @@ using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
+using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
-using ECS.Unity.Groups;
 using UnityEngine.UIElements;
 using Entity = Arch.Core.Entity;
 
 namespace DCL.SDKComponents.SceneUI.Systems
 {
-    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
+    [UpdateInGroup(typeof(SceneUIComponentInstantiationGroup))]
     [LogCategory(ReportCategory.SCENE_UI)]
     public partial class UITextInstantiationSystem : BaseUnityLoopSystem
     {

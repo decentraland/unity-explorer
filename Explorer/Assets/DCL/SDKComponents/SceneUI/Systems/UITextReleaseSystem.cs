@@ -5,17 +5,17 @@ using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
-using ECS.Unity.Groups;
 using Arch.System;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
+using DCL.SDKComponents.SceneUI.Groups;
 using ECS.LifeCycle.Components;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
-    [UpdateBefore(typeof(ComponentInstantiationGroup))]
+    [UpdateBefore(typeof(SceneUIComponentInstantiationGroup))]
     [LogCategory(ReportCategory.SCENE_UI)]
     [ThrottlingEnabled]
     public partial class UITextReleaseSystem : BaseUnityLoopSystem

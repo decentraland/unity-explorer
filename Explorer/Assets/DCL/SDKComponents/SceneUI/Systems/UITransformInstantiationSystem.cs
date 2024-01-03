@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
@@ -8,13 +9,14 @@ using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
-using ECS.Unity.Groups;
+using ECS.Groups;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems
 {
-    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [LogCategory(ReportCategory.SCENE_UI)]
+    [ThrottlingEnabled]
     public partial class UITransformInstantiationSystem : BaseUnityLoopSystem
     {
         private readonly UIDocument canvas;
