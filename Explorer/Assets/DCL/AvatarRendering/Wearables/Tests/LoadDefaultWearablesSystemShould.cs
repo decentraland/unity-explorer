@@ -19,14 +19,19 @@ namespace DCL.AvatarRendering.Wearables.Tests
     {
         private readonly string definitionsPath = $"{Application.dataPath}/../TestResources/Wearables/DefaultWearableDefinition.txt";
 
+        private WearableCatalog wearableCatalog;
+        private GameObject emptyDefaultWearable;
         [SetUp]
         public void Setup()
         {
             var partialTargetList = new List<WearableDTO>(64);
             JsonConvert.PopulateObject(File.ReadAllText(definitionsPath), partialTargetList);
+            wearableCatalog = new WearableCatalog();
+            emptyDefaultWearable = new GameObject();
 
-            system = new LoadDefaultWearablesSystem(world, new WearablesDTOList(partialTargetList), new GameObject(),
-                new WearableCatalog());
+            system = new LoadDefaultWearablesSystem(world, new WearablesDTOList(partialTargetList),
+                emptyDefaultWearable,
+                wearableCatalog);
         }
 
         [Test]
@@ -69,6 +74,17 @@ namespace DCL.AvatarRendering.Wearables.Tests
             }
 
             Assert.That(state.ResolvedState, Is.EqualTo(DefaultWearablesComponent.State.Success));
+        }
+
+        [Test]
+        public void LoadEmptyDefaultWearable()
+        {
+            system.Initialize();
+
+            //Look for an empty default wearable
+            var wearable = wearableCatalog.GetDefaultWearable(BodyShape.MALE, WearablesConstants.Categories.TIARA);
+
+            Assert.AreEqual(wearable.WearableAssetResults[BodyShape.MALE].Value.Asset.GameObject, emptyDefaultWearable);
         }
     }
 }
