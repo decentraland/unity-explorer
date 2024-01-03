@@ -18,6 +18,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly IProfileRepository profileRepository;
         private readonly IWebBrowser webBrowser;
+        private readonly IWeb3IdentityCache storedIdentityProvider;
 
         private CancellationTokenSource? loginCancellationToken;
         private CancellationTokenSource? verificationCountdownCancellationToken;
@@ -29,12 +30,14 @@ namespace DCL.AuthenticationScreenFlow
         public AuthenticationScreenController(ViewFactoryMethod viewFactory,
             IWeb3VerifiedAuthenticator web3Authenticator,
             IProfileRepository profileRepository,
-            IWebBrowser webBrowser)
+            IWebBrowser webBrowser,
+            IWeb3IdentityCache storedIdentityProvider)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
             this.profileRepository = profileRepository;
             this.webBrowser = webBrowser;
+            this.storedIdentityProvider = storedIdentityProvider;
         }
 
         public override void Dispose()
@@ -96,7 +99,20 @@ namespace DCL.AuthenticationScreenFlow
 
             await UniTask.WaitUntil(() => viewInstance.SplashVideoPlayer.frame >= (long)(viewInstance.SplashVideoPlayer.frameCount - 1));
 
-            SwitchState(ViewState.Login);
+            IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
+
+            if (storedIdentity != null)
+            {
+                SwitchState(ViewState.Loading);
+
+                CancelLoginProcess();
+                loginCancellationToken = new CancellationTokenSource();
+                await FetchProfileAsync(storedIdentity, loginCancellationToken.Token);
+
+                SwitchState(ViewState.Finalize);
+            }
+            else
+                SwitchState(ViewState.Login);
         }
 
         protected override UniTask WaitForCloseIntent(CancellationToken ct) =>

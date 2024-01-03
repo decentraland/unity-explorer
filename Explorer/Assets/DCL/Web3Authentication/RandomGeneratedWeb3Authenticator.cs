@@ -4,21 +4,10 @@ using System.Threading;
 
 namespace DCL.Web3Authentication
 {
-    public class RandomGeneratedWeb3Authenticator : IWeb3Authenticator, IWeb3IdentityProvider
+    public class RandomGeneratedWeb3Authenticator : IWeb3Authenticator
     {
-        private UniTaskCompletionSource<IWeb3Identity>? identitySolvedTask;
-
-        public IWeb3Identity? Identity { get; private set; }
-
-        public async UniTask<IWeb3Identity> GetOwnIdentityAsync(CancellationToken ct)
-        {
-            identitySolvedTask ??= new UniTaskCompletionSource<IWeb3Identity>();
-            return await identitySolvedTask.Task.AttachExternalCancellation(ct);
-        }
-
         public void Dispose()
         {
-            Identity = null;
         }
 
         public async UniTask<IWeb3Identity> LoginAsync(CancellationToken cancellationToken)
@@ -46,17 +35,12 @@ namespace DCL.Web3Authentication
                 signature = ephemeralSignature,
             });
 
-            Identity = new DecentralandIdentity(signer.Address, ephemeralAccount, expiration, authChain);
-
-            identitySolvedTask?.TrySetResult(Identity);
-            identitySolvedTask = null;
-
-            return Identity;
+            // To keep cohesiveness between the platform, convert the user address to lower case
+            return new DecentralandIdentity(new Web3Address(signer.Address.ToString().ToLower()), ephemeralAccount, expiration, authChain);
         }
 
         public async UniTask LogoutAsync(CancellationToken cancellationToken)
         {
-            Identity = null;
         }
     }
 }

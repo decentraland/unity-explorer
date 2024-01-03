@@ -39,8 +39,6 @@ namespace Global.Dynamic
 
         public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; }
 
-        public IWeb3Authenticator Web3Authenticator { get; private set; }
-
         public IProfileRepository ProfileRepository { get; private set; }
 
         public void Dispose()
@@ -55,7 +53,8 @@ namespace Global.Dynamic
             UIDocument rootUIDocument,
             IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius,
             DynamicSettings dynamicSettings,
-            IWeb3VerifiedAuthenticator web3Authenticator)
+            IWeb3VerifiedAuthenticator web3Authenticator,
+            IWeb3IdentityCache storedIdentityProvider)
         {
             var container = new DynamicWorldContainer();
             (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
@@ -96,7 +95,7 @@ namespace Global.Dynamic
                 new MinimapPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer, placesAPIService),
                 new ExplorePanelPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer, placesAPIService, parcelServiceContainer.TeleportController, dynamicSettings.BackpackSettings, staticContainer.WebRequestsContainer.WebRequestController),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
-                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, mvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData),
+                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, mvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, storedIdentityProvider),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
@@ -114,8 +113,6 @@ namespace Global.Dynamic
 
             container.GlobalPlugins = globalPlugins;
             container.EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins);
-
-            container.Web3Authenticator = web3Authenticator;
 
             return (container, true);
         }
