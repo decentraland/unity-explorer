@@ -22,6 +22,7 @@ namespace DCL.AuthenticationScreenFlow
         private CancellationTokenSource? loginCancellationToken;
         private CancellationTokenSource? verificationCountdownCancellationToken;
         private UniTaskCompletionSource? lifeCycleTask;
+        private StringVariable? profileNameLabel;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
@@ -47,6 +48,8 @@ namespace DCL.AuthenticationScreenFlow
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
+
+            profileNameLabel = (StringVariable)viewInstance.ProfileNameLabel.StringReference["profileName"];
 
             viewInstance.LoginButton.onClick.AddListener(StartFlow);
             viewInstance.CancelAuthenticationProcess.onClick.AddListener(CancelLoginProcess);
@@ -132,7 +135,6 @@ namespace DCL.AuthenticationScreenFlow
         {
             // TODO: get latest profile version from storage if any (?)
             Profile? profile = await profileRepository.GetAsync(web3Identity.Address, 0, ct);
-            var profileNameLabel = viewInstance.ProfileNameLabel.StringReference["profileName"] as StringVariable;
             profileNameLabel!.Value = profile?.Name;
         }
 
