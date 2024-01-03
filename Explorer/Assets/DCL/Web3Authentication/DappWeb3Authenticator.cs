@@ -77,7 +77,7 @@ namespace DCL.Web3Authentication
 
                 DappSignatureResponse signature;
 
-                try { signature = await WaitForSignatureOutcome(signatureExpiration, cancellationToken); }
+                try { signature = await WaitForSignatureOutcomeAsync(signatureExpiration, cancellationToken); }
                 catch (TimeoutException) { throw new SignatureExpiredException(signatureExpiration); }
 
                 AuthChain authChain = CreateAuthChain(signature, ephemeralMessage);
@@ -190,7 +190,7 @@ namespace DCL.Web3Authentication
                              .AttachExternalCancellation(cancellationToken);
         }
 
-        private async UniTask<DappSignatureResponse> WaitForSignatureOutcome(DateTime expiration, CancellationToken ct)
+        private async UniTask<DappSignatureResponse> WaitForSignatureOutcomeAsync(DateTime expiration, CancellationToken ct)
         {
             signatureOutcomeTask = new UniTaskCompletionSource<DappSignatureResponse>();
             TimeSpan duration = expiration - DateTime.UtcNow;
