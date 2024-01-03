@@ -25,7 +25,6 @@ namespace ECS.Unity.Materials.Components
 
         public readonly float Metallic;
         public readonly float Roughness;
-        public readonly float Glossiness;
 
         public readonly float SpecularIntensity;
         public readonly float EmissiveIntensity;
@@ -34,7 +33,7 @@ namespace ECS.Unity.Materials.Components
         internal MaterialData(bool isPbrMaterial, TextureComponent? albedoTexture, TextureComponent? alphaTexture,
             TextureComponent? emissiveTexture, TextureComponent? bumpTexture, float alphaTest, bool castShadows, Color albedoColor,
             Color diffuseColor, Color emissiveColor,
-            Color reflectivityColor, MaterialTransparencyMode transparencyMode, float metallic, float roughness, float glossiness,
+            Color reflectivityColor, MaterialTransparencyMode transparencyMode, float metallic, float roughness,
             float specularIntensity, float emissiveIntensity, float directIntensity)
         {
             IsPbrMaterial = isPbrMaterial;
@@ -51,7 +50,6 @@ namespace ECS.Unity.Materials.Components
             TransparencyMode = transparencyMode;
             Metallic = metallic;
             Roughness = roughness;
-            Glossiness = glossiness;
             SpecularIntensity = specularIntensity;
             EmissiveIntensity = emissiveIntensity;
             DirectIntensity = directIntensity;
@@ -63,7 +61,7 @@ namespace ECS.Unity.Materials.Components
 
             return new MaterialData(false, albedoTexture, null, null, null,
                 alphaTest, castShadows, defaultColor, diffuseColor, defaultColor, defaultColor, MaterialTransparencyMode.Auto,
-                0, 0, 0, 0, 0, 0);
+                0, 0, 0, 0, 0);
         }
 
         internal static MaterialData CreatePBRMaterial(
@@ -79,7 +77,6 @@ namespace ECS.Unity.Materials.Components
             MaterialTransparencyMode transparencyMode,
             float metallic,
             float roughness,
-            float glossiness,
             float specularIntensity,
             float emissiveIntensity,
             float directIntensity)
@@ -88,7 +85,7 @@ namespace ECS.Unity.Materials.Components
 
             return new MaterialData(true, albedoTexture, alphaTexture,
                 emissiveTexture, bumpTexture, alphaTest, castShadows, albedoColor, defaultColor, emissiveColor,
-                reflectivityColor, transparencyMode, metallic, roughness, glossiness,
+                reflectivityColor, transparencyMode, metallic, roughness,
                 specularIntensity, emissiveIntensity, directIntensity);
         }
     }

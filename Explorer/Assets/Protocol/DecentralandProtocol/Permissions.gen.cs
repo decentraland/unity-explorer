@@ -31,18 +31,18 @@ namespace Decentraland.Kernel.Apis {
             "ZWwuYXBpcy5QZXJtaXNzaW9uSXRlbSJZChhIYXNNYW55UGVybWlzc2lvblJl",
             "cXVlc3QSPQoLcGVybWlzc2lvbnMYASADKA4yKC5kZWNlbnRyYWxhbmQua2Vy",
             "bmVsLmFwaXMuUGVybWlzc2lvbkl0ZW0iOAoZSGFzTWFueVBlcm1pc3Npb25S",
-            "ZXNwb25zZRIbChNoYXNfbWFueV9wZXJtaXNzaW9uGAEgAygIKrsBCg5QZXJt",
+            "ZXNwb25zZRIbChNoYXNfbWFueV9wZXJtaXNzaW9uGAEgAygIKtYBCg5QZXJt",
             "aXNzaW9uSXRlbRIoCiRQSV9BTExPV19UT19NT1ZFX1BMQVlFUl9JTlNJREVf",
             "U0NFTkUQABIkCiBQSV9BTExPV19UT19UUklHR0VSX0FWQVRBUl9FTU9URRAB",
             "EhMKD1BJX1VTRV9XRUIzX0FQSRACEhQKEFBJX1VTRV9XRUJTT0NLRVQQAxIQ",
             "CgxQSV9VU0VfRkVUQ0gQBBIcChhQSV9BTExPV19NRURJQV9IT1NUTkFNRVMQ",
-            "BTKGAgoSUGVybWlzc2lvbnNTZXJ2aWNlEm8KDUhhc1Blcm1pc3Npb24SLi5k",
-            "ZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuSGFzUGVybWlzc2lvblJlcXVlc3Qa",
-            "LC5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuUGVybWlzc2lvblJlc3BvbnNl",
-            "IgASfwoSSGFzTWFueVBlcm1pc3Npb25zEjIuZGVjZW50cmFsYW5kLmtlcm5l",
-            "bC5hcGlzLkhhc01hbnlQZXJtaXNzaW9uUmVxdWVzdBozLmRlY2VudHJhbGFu",
-            "ZC5rZXJuZWwuYXBpcy5IYXNNYW55UGVybWlzc2lvblJlc3BvbnNlIgBiBnBy",
-            "b3RvMw=="));
+            "BRIZChVQSV9PUEVOX0VYVEVSTkFMX0xJTksQBjKGAgoSUGVybWlzc2lvbnNT",
+            "ZXJ2aWNlEm8KDUhhc1Blcm1pc3Npb24SLi5kZWNlbnRyYWxhbmQua2VybmVs",
+            "LmFwaXMuSGFzUGVybWlzc2lvblJlcXVlc3QaLC5kZWNlbnRyYWxhbmQua2Vy",
+            "bmVsLmFwaXMuUGVybWlzc2lvblJlc3BvbnNlIgASfwoSSGFzTWFueVBlcm1p",
+            "c3Npb25zEjIuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLkhhc01hbnlQZXJt",
+            "aXNzaW9uUmVxdWVzdBozLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5IYXNN",
+            "YW55UGVybWlzc2lvblJlc3BvbnNlIgBiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Kernel.Apis.PermissionItem), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -63,6 +63,7 @@ namespace Decentraland.Kernel.Apis {
     [pbr::OriginalName("PI_USE_WEBSOCKET")] PiUseWebsocket = 3,
     [pbr::OriginalName("PI_USE_FETCH")] PiUseFetch = 4,
     [pbr::OriginalName("PI_ALLOW_MEDIA_HOSTNAMES")] PiAllowMediaHostnames = 5,
+    [pbr::OriginalName("PI_OPEN_EXTERNAL_LINK")] PiOpenExternalLink = 6,
   }
 
   #endregion
