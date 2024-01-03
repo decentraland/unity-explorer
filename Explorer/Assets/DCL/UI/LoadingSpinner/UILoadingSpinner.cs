@@ -16,12 +16,15 @@ namespace DCL.UI.LoadingSpinner
 
         private Material material;
 
-        private void Start()
+        private void Update()
         {
-            GetMaterial();
+            if (!material)
+                InitializeMaterial();
+
+            UpdateValues();
         }
 
-        private void GetMaterial()
+        private void InitializeMaterial()
         {
             if (img.maskable) { material = img.materialForRendering; }
             else
@@ -31,24 +34,13 @@ namespace DCL.UI.LoadingSpinner
             }
         }
 
-        private void Update()
+        private void UpdateValues()
         {
-            SetValues();
-        }
+            if (!material) return;
 
-        public void SetValues()
-        {
-            if (material)
-            {
-                material.SetColor(COLOR01_SHADER_PROP, color);
-                material.SetFloat(FILL_HEAD_SHADER_PROP, head);
-                material.SetFloat(FILL_TAIL_SHADER_PROP, tail);
-            }
-            else
-            {
-                GetMaterial();
-                SetValues();
-            }
+            material.SetColor(COLOR01_SHADER_PROP, color);
+            material.SetFloat(FILL_HEAD_SHADER_PROP, head);
+            material.SetFloat(FILL_TAIL_SHADER_PROP, tail);
         }
     }
 }
