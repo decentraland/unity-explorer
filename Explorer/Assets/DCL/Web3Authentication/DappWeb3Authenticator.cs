@@ -76,7 +76,7 @@ namespace DCL.Web3Authentication
 
                 verificationCallback?.Invoke(authenticationResponse.code, signatureExpiration);
 
-                DappSignatureResponse signature = await WaitForUserSignature(authenticationResponse.requestId,
+                DappSignatureResponse signature = await WaitForUserSignatureAsync(authenticationResponse.requestId,
                     signatureExpiration, cancellationToken);
 
                 AuthChain authChain = CreateAuthChain(signature, ephemeralMessage);
@@ -193,7 +193,7 @@ namespace DCL.Web3Authentication
                              .AttachExternalCancellation(cancellationToken);
         }
 
-        private async UniTask<DappSignatureResponse> WaitForUserSignature(string requestId, DateTime expiration, CancellationToken ct)
+        private async UniTask<DappSignatureResponse> WaitForUserSignatureAsync(string requestId, DateTime expiration, CancellationToken ct)
         {
             webBrowser.OpenUrl($"{signatureUrl}/{requestId}");
 
