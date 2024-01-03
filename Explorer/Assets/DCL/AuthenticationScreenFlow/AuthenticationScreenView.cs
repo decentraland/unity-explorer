@@ -63,13 +63,15 @@ namespace DCL.AuthenticationScreenFlow
 
         [SerializeField] private LocalizeStringEvent countdownLabel;
 
+        private StringVariable? countdownLabelParameter;
+
         public async UniTaskVoid StartVerificationCountdown(DateTime expiration, CancellationToken ct)
         {
             do
             {
-                var timeParam = countdownLabel.StringReference["time"] as StringVariable;
+                countdownLabelParameter ??= (StringVariable)countdownLabel.StringReference["time"];
                 TimeSpan duration = expiration - DateTime.UtcNow;
-                timeParam!.Value = $"{duration.Minutes:D2}:{duration.Seconds:D2}";
+                countdownLabelParameter.Value = $"{duration.Minutes:D2}:{duration.Seconds:D2}";
                 await UniTask.Delay(1000, cancellationToken: ct);
             }
             while (expiration > DateTime.UtcNow);
