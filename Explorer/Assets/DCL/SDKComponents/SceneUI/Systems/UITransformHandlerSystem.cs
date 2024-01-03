@@ -171,7 +171,7 @@ namespace DCL.SDKComponents.SceneUI.Systems
 
         private void RemoveVisualElement(UITransformComponent uiTransformComponent)
         {
-            if (!poolsRegistry.TryGetPool(uiTransformComponent.Transform.GetType(), out IComponentPool componentPool))
+            if (!poolsRegistry.TryGetPool(typeof(VisualElement), out IComponentPool componentPool))
                 return;
 
             componentPool.Release(uiTransformComponent.Transform);

@@ -3,6 +3,7 @@ using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Systems;
+using DCL.SDKComponents.SceneUI.Utils;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using System.Collections.Generic;
@@ -23,8 +24,8 @@ namespace DCL.PluginSystem.World
             SetupCanvas();
 
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
-            componentPoolsRegistry.AddComponentPool<VisualElement>();
-            componentPoolsRegistry.AddComponentPool<Label>();
+            componentPoolsRegistry.AddComponentPool<VisualElement>(onRelease: UiElementUtils.ReleaseUIElement);
+            componentPoolsRegistry.AddComponentPool<Label>(onRelease: UiElementUtils.ReleaseUIElement);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
@@ -32,6 +33,7 @@ namespace DCL.PluginSystem.World
             UITransformHandlerSystem.InjectToWorld(ref builder, canvas, componentPoolsRegistry);
             UITextHandlerSystem.InjectToWorld(ref builder, canvas, componentPoolsRegistry);
 
+            finalizeWorldSystems.Add(ReleasePoolableComponentSystem<VisualElement, UITransformComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<Label, UITextComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
         }
 

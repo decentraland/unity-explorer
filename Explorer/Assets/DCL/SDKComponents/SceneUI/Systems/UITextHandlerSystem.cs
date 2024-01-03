@@ -98,7 +98,7 @@ namespace DCL.SDKComponents.SceneUI.Systems
 
         private void RemoveLabel(UITextComponent uiTextComponent)
         {
-            if (!poolsRegistry.TryGetPool(uiTextComponent.Label.GetType(), out IComponentPool componentPool))
+            if (!poolsRegistry.TryGetPool(typeof(Label), out IComponentPool componentPool))
                 return;
 
             componentPool.Release(uiTextComponent.Label);

@@ -131,5 +131,10 @@ namespace DCL.SDKComponents.SceneUI.Utils
                     return Align.Auto;
             }
         }
+
+        public static void ReleaseUIElement(VisualElement visualElement)
+        {
+            visualElement.RemoveFromHierarchy();
+        }
     }
 }
