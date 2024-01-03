@@ -36,8 +36,10 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            UITransformHandlerSystem.InjectToWorld(ref builder, canvas, componentPoolsRegistry);
-            UITextHandlerSystem.InjectToWorld(ref builder, canvas, componentPoolsRegistry);
+            UITransformInstantiationSystem.InjectToWorld(ref builder, canvas, componentPoolsRegistry);
+            UITransformReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            UITextInstantiationSystem.InjectToWorld(ref builder, canvas, componentPoolsRegistry);
+            UITextReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
 
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<VisualElement, UITransformComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<Label, UITextComponent>.InjectToWorld(ref builder, componentPoolsRegistry));

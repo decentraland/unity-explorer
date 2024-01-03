@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
@@ -9,7 +8,6 @@ using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
-using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;
 using UnityEngine.UIElements;
 
@@ -17,17 +15,14 @@ namespace DCL.SDKComponents.SceneUI.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [LogCategory(ReportCategory.SCENE_UI)]
-    [ThrottlingEnabled]
-    public partial class UITransformHandlerSystem : BaseUnityLoopSystem
+    public partial class UITransformInstantiationSystem : BaseUnityLoopSystem
     {
         private readonly UIDocument canvas;
-        private readonly IComponentPoolsRegistry poolsRegistry;
         private readonly IComponentPool<VisualElement> transformsPool;
 
-        private UITransformHandlerSystem(World world, UIDocument canvas, IComponentPoolsRegistry poolsRegistry) : base(world)
+        private UITransformInstantiationSystem(World world, UIDocument canvas, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             this.canvas = canvas;
-            this.poolsRegistry = poolsRegistry;
             transformsPool = poolsRegistry.GetReferenceTypePool<VisualElement>();
         }
 
@@ -35,9 +30,6 @@ namespace DCL.SDKComponents.SceneUI.Systems
         {
             InstantiateNonExistingUITransformQuery(World);
             TrySetupExistingUITransformQuery(World);
-            HandleEntityDestructionQuery(World);
-            HandleUITransformRemovalQuery(World);
-            World.Remove<UITransformComponent>(in HandleUITransformRemoval_QueryDescription);
         }
 
         [Query]
@@ -64,16 +56,6 @@ namespace DCL.SDKComponents.SceneUI.Systems
 
             sdkComponent.IsDirty = false;
         }
-
-        [Query]
-        [None(typeof(PBUiTransform), typeof(DeleteEntityIntention))]
-        private void HandleUITransformRemoval(ref UITransformComponent uiTransformComponent) =>
-            RemoveVisualElement(uiTransformComponent);
-
-        [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(ref UITransformComponent uiTransformComponent) =>
-            RemoveVisualElement(uiTransformComponent);
 
         private void InstantiateEmptyVisualElement(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkComponent)
         {
@@ -166,14 +148,6 @@ namespace DCL.SDKComponents.SceneUI.Systems
 
             if (model.PositionLeftUnit != YGUnit.YguUndefined)
                 visualElementToSetup.style.left = new Length(model.PositionLeft, UiElementUtils.GetUnit(model.PositionLeftUnit));
-        }
-
-        private void RemoveVisualElement(UITransformComponent uiTransformComponent)
-        {
-            if (!poolsRegistry.TryGetPool(typeof(VisualElement), out IComponentPool componentPool))
-                return;
-
-            componentPool.Release(uiTransformComponent.Transform);
         }
     }
 }

@@ -1,0 +1,55 @@
+﻿using Arch.Core;
+using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
+using DCL.Diagnostics;
+using DCL.Optimization.Pools;
+using ECS.Abstract;
+using ECS.Groups;
+using ECS.Unity.Groups;
+using Arch.System;
+using DCL.ECSComponents;
+using DCL.SDKComponents.SceneUI.Components;
+using ECS.LifeCycle.Components;
+using UnityEngine.UIElements;
+
+namespace DCL.SDKComponents.SceneUI.Systems
+{
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
+    [UpdateBefore(typeof(ComponentInstantiationGroup))]
+    [LogCategory(ReportCategory.SCENE_UI)]
+    [ThrottlingEnabled]
+    public partial class UITransformReleaseSystem : BaseUnityLoopSystem
+    {
+        private readonly IComponentPoolsRegistry poolsRegistry;
+
+        private UITransformReleaseSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
+        {
+            this.poolsRegistry = poolsRegistry;
+        }
+
+        protected override void Update(float t)
+        {
+            HandleEntityDestructionQuery(World);
+            HandleUITransformRemovalQuery(World);
+            World.Remove<UITransformComponent>(in HandleUITransformRemoval_QueryDescription);
+        }
+
+        [Query]
+        [None(typeof(PBUiTransform), typeof(DeleteEntityIntention))]
+        private void HandleUITransformRemoval(ref UITransformComponent uiTransformComponent) =>
+            RemoveVisualElement(uiTransformComponent);
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void HandleEntityDestruction(ref UITransformComponent uiTransformComponent) =>
+            RemoveVisualElement(uiTransformComponent);
+
+        private void RemoveVisualElement(UITransformComponent uiTransformComponent)
+        {
+            if (!poolsRegistry.TryGetPool(typeof(VisualElement), out IComponentPool componentPool))
+                return;
+
+            componentPool.Release(uiTransformComponent.Transform);
+        }
+    }
+}

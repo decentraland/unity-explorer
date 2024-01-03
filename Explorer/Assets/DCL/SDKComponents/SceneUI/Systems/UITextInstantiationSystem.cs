@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
@@ -9,7 +8,6 @@ using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
-using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;
 using UnityEngine.UIElements;
 using Entity = Arch.Core.Entity;
@@ -18,17 +16,14 @@ namespace DCL.SDKComponents.SceneUI.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [LogCategory(ReportCategory.SCENE_UI)]
-    [ThrottlingEnabled]
-    public partial class UITextHandlerSystem : BaseUnityLoopSystem
+    public partial class UITextInstantiationSystem : BaseUnityLoopSystem
     {
         private readonly UIDocument canvas;
-        private readonly IComponentPoolsRegistry poolsRegistry;
         private readonly IComponentPool<Label> labelsPool;
 
-        private UITextHandlerSystem(World world, UIDocument canvas, IComponentPoolsRegistry poolsRegistry) : base(world)
+        private UITextInstantiationSystem(World world, UIDocument canvas, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             this.canvas = canvas;
-            this.poolsRegistry = poolsRegistry;
             labelsPool = poolsRegistry.GetReferenceTypePool<Label>();
         }
 
@@ -36,9 +31,6 @@ namespace DCL.SDKComponents.SceneUI.Systems
         {
             InstantiateNonExistingUITextQuery(World);
             TrySetupExistingUITextQuery(World);
-            HandleEntityDestructionQuery(World);
-            HandleUITextRemovalQuery(World);
-            World.Remove<UITextComponent>(in HandleUITextRemoval_QueryDescription);
         }
 
         [Query]
@@ -66,16 +58,6 @@ namespace DCL.SDKComponents.SceneUI.Systems
             sdkComponent.IsDirty = false;
         }
 
-        [Query]
-        [None(typeof(PBUiText), typeof(DeleteEntityIntention))]
-        private void HandleUITextRemoval(ref UITextComponent uiTextComponent) =>
-            RemoveLabel(uiTextComponent);
-
-        [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(ref UITextComponent uiTextComponent) =>
-            RemoveLabel(uiTextComponent);
-
         private void InstantiateLabel(ref UITextComponent uiTextComponent, ref PBUiText sdkComponent)
         {
             var label = labelsPool.Get();
@@ -94,14 +76,6 @@ namespace DCL.SDKComponents.SceneUI.Systems
             labelToSetup.style.fontSize = model.GetFontSize();
             labelToSetup.style.unityTextAlign = model.GetTextAlign();
             //labelToSetup.style.unityFont = model.GetFont();
-        }
-
-        private void RemoveLabel(UITextComponent uiTextComponent)
-        {
-            if (!poolsRegistry.TryGetPool(typeof(Label), out IComponentPool componentPool))
-                return;
-
-            componentPool.Release(uiTextComponent.Label);
         }
     }
 }
