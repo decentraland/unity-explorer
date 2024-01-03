@@ -81,10 +81,20 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             system.Initialize();
 
-            //Look for an empty default wearable
-            var wearable = wearableCatalog.GetDefaultWearable(BodyShape.MALE, WearablesConstants.Categories.TIARA);
+            //Look for an empty and a non-empty default wearable
+            var tiaraDefaultWearable =
+                wearableCatalog.GetDefaultWearable(BodyShape.MALE, WearablesConstants.Categories.TIARA);
+            var upperBodyDefaultWearable =
+                wearableCatalog.GetDefaultWearable(BodyShape.MALE, WearablesConstants.Categories.UPPER_BODY);
 
-            Assert.AreEqual(wearable.WearableAssetResults[BodyShape.MALE].Value.Asset.GameObject, emptyDefaultWearable);
+            Assert.AreEqual(tiaraDefaultWearable.WearableAssetResults[BodyShape.MALE].Value.Asset.GameObject,
+                emptyDefaultWearable);
+            Assert.AreEqual(tiaraDefaultWearable.GetUrn(), WearablesConstants.EMPTY_DEFAULT_WEARABLE);
+            //In this test suite we are not loading the default wearables through the LoadAssetBundleSystem.
+            //So, to confirm that the default wearable is not loaded, we check that the asset is null and that the urn is not from the empty default wearable
+            Assert.AreEqual(upperBodyDefaultWearable.WearableAssetResults[BodyShape.MALE], null);
+            Assert.AreNotEqual(upperBodyDefaultWearable.GetUrn(), WearablesConstants.EMPTY_DEFAULT_WEARABLE);
+
         }
     }
 }
