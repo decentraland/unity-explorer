@@ -7,6 +7,7 @@ using MVC;
 using System;
 using System.Threading;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
+using Utility;
 
 namespace DCL.AuthenticationScreenFlow
 {
@@ -206,13 +207,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void CancelLoginProcess()
         {
-            try
-            {
-                loginCancellationToken?.Cancel();
-                loginCancellationToken?.Dispose();
-            }
-            catch (ObjectDisposedException) { }
-
+            loginCancellationToken?.SafeCancelAndDispose();
             loginCancellationToken = null;
         }
 
@@ -226,13 +221,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void CancelVerificationCountdown()
         {
-            try
-            {
-                verificationCountdownCancellationToken?.Cancel();
-                verificationCountdownCancellationToken?.Dispose();
-            }
-            catch (ObjectDisposedException) { }
-
+            verificationCountdownCancellationToken?.SafeCancelAndDispose();
             verificationCountdownCancellationToken = null;
         }
 
