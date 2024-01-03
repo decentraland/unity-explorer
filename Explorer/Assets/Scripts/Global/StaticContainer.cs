@@ -98,6 +98,7 @@ namespace Global
         public static async UniTask<(StaticContainer container, bool success)> CreateAsync(
             IPluginSettingsContainer settingsContainer,
             UIDocument scenesUIDocument,
+            StyleSheet scenesUIStyleSheet,
             IWeb3Authenticator web3Authenticator,
             CancellationToken ct)
         {
@@ -155,7 +156,7 @@ namespace Global
                 assetBundlePlugin,
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
-                new SceneUIPlugin(scenesUIDocument, sharedDependencies),
+                new SceneUIPlugin(scenesUIDocument, scenesUIStyleSheet, sharedDependencies),
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif

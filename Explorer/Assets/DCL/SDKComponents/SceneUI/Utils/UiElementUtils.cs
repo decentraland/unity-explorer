@@ -132,9 +132,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             }
         }
 
-        public static void ReleaseUIElement(VisualElement visualElement)
-        {
+        public static void ReleaseUIElement(VisualElement visualElement) =>
             visualElement.RemoveFromHierarchy();
-        }
     }
 }

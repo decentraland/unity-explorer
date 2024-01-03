@@ -23,6 +23,7 @@ namespace Global.Dynamic
         [SerializeField] private UIDocument uiToolkitRoot;
         [SerializeField] private UIDocument debugUiRoot;
         [SerializeField] private UIDocument scenesUiRoot;
+        [SerializeField] private StyleSheet scenesUiStyleSheet;
 
         [SerializeField] private RealmLauncher realmLauncher;
         [SerializeField] private DynamicSceneLoaderSettings settings;
@@ -72,7 +73,7 @@ namespace Global.Dynamic
                 // First load the common global plugin
                 bool isLoaded;
 
-                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, scenesUiRoot, web3Authenticator, ct);
+                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, scenesUiRoot, scenesUiStyleSheet, web3Authenticator, ct);
 
                 if (!isLoaded)
                 {

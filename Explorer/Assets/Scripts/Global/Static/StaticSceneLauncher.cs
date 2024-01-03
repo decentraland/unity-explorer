@@ -18,6 +18,7 @@ namespace Global.Static
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer;
         [SerializeField] private UIDocument scenesUiRoot;
+        [SerializeField] private StyleSheet scenesUiStyleSheet;
 
         private ISceneFacade sceneFacade;
 
@@ -43,7 +44,7 @@ namespace Global.Static
                 SceneSharedContainer sceneSharedContainer;
 
                 (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettingsContainer, scenePluginSettingsContainer,
-                    scenesUiRoot, web3Authenticator, ct);
+                    scenesUiRoot, scenesUiStyleSheet, web3Authenticator, ct);
                 sceneLauncher.Initialize(sceneSharedContainer, destroyCancellationToken);
             }
             catch (OperationCanceledException) { }
@@ -59,12 +60,13 @@ namespace Global.Static
             IPluginSettingsContainer globalSettingsContainer,
             IPluginSettingsContainer sceneSettingsContainer,
             UIDocument scenesUiRoot,
+            StyleSheet scenesUiStyleSheet,
             IWeb3Authenticator web3Authenticator,
             CancellationToken ct)
         {
             // First load the common global plugin
             (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer,
-                scenesUiRoot, web3Authenticator, ct);
+                scenesUiRoot, scenesUiStyleSheet, web3Authenticator, ct);
 
             if (!isLoaded)
                 GameReports.PrintIsDead();

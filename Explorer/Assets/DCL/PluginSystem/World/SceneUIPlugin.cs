@@ -18,10 +18,13 @@ namespace DCL.PluginSystem.World
 
         public SceneUIPlugin(
             UIDocument canvas,
+            StyleSheet canvasStyleSheet,
             ECSWorldSingletonSharedDependencies singletonSharedDependencies)
         {
             this.canvas = canvas;
-            SetupCanvas();
+            this.canvas.rootVisualElement.styleSheets.Add(canvasStyleSheet);
+            this.canvas.rootVisualElement.AddToClassList("sceneUIMainCanvas");
+            this.canvas.rootVisualElement.pickingMode = PickingMode.Ignore;
 
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
             componentPoolsRegistry.AddComponentPool<VisualElement>(onRelease: UiElementUtils.ReleaseUIElement);
@@ -38,24 +41,5 @@ namespace DCL.PluginSystem.World
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
-
-        private void SetupCanvas()
-        {
-            canvas.rootVisualElement.pickingMode = PickingMode.Ignore;
-
-            var style = canvas.rootVisualElement.style;
-            style.width = new Length(100f, LengthUnit.Percent);
-            style.height = new Length(100f, LengthUnit.Percent);
-            style.flexDirection = new StyleEnum<FlexDirection>(FlexDirection.Row);
-            style.flexBasis = new StyleLength(StyleKeyword.Auto);
-            style.flexGrow = 0;
-            style.flexShrink = 1;
-            style.flexWrap = new StyleEnum<Wrap>(Wrap.NoWrap);
-            style.justifyContent = new StyleEnum<Justify>(Justify.FlexStart);
-            style.alignItems = new StyleEnum<Align>(Align.Stretch);
-            style.alignSelf = new StyleEnum<Align>(Align.Auto);
-            style.alignContent = new StyleEnum<Align>(Align.Stretch);
-            style.position = new StyleEnum<Position>(Position.Absolute);
-        }
     }
 }

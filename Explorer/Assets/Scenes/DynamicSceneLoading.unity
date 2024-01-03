@@ -280,6 +280,7 @@ MonoBehaviour:
   uiToolkitRoot: {fileID: 1901323878}
   debugUiRoot: {fileID: 946305963}
   scenesUiRoot: {fileID: 1863727842}
+  scenesUiStyleSheet: {fileID: 7433441132597879392, guid: 295cf8ad8d171d849863eccaf581c9e7, type: 3}
   realmLauncher: {fileID: 234607244}
   settings: {fileID: 11400000, guid: 2e1d2c350e04ac3428300d032c5ee567, type: 2}
   dynamicSettings:

@@ -1,0 +1,14 @@
+.sceneUIMainCanvas {
+    width: 100%;
+    height: 100%;
+    flex-direction: row;
+    flex-basis: auto;
+    flex-grow: 0;
+    flex-shrink: 1;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: stretch;
+    align-self: auto;
+    align-content: stretch;
+    position: absolute;
+}
