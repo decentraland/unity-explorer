@@ -18,12 +18,10 @@ namespace DCL.SDKComponents.SceneUI.Systems
     [LogCategory(ReportCategory.SCENE_UI)]
     public partial class UITextInstantiationSystem : BaseUnityLoopSystem
     {
-        private readonly UIDocument canvas;
         private readonly IComponentPool<Label> labelsPool;
 
-        private UITextInstantiationSystem(World world, UIDocument canvas, IComponentPoolsRegistry poolsRegistry) : base(world)
+        private UITextInstantiationSystem(World world,IComponentPoolsRegistry poolsRegistry) : base(world)
         {
-            this.canvas = canvas;
             labelsPool = poolsRegistry.GetReferenceTypePool<Label>();
         }
 
@@ -34,43 +32,47 @@ namespace DCL.SDKComponents.SceneUI.Systems
         }
 
         [Query]
-        [All(typeof(PBUiText))]
+        [All(typeof(PBUiText), typeof(PBUiTransform), typeof(UITransformComponent))]
         [None(typeof(UITextComponent))]
-        private void InstantiateNonExistingUIText(in Entity entity, ref PBUiText sdkComponent)
+        private void InstantiateNonExistingUIText(in Entity entity, ref PBUiText sdkComponent, ref UITransformComponent transform)
         {
             var uiTextComponent = new UITextComponent();
-            InstantiateLabel(ref uiTextComponent, ref sdkComponent);
+            InstantiateLabel(ref uiTextComponent, ref sdkComponent, ref transform);
             World.Add(entity, uiTextComponent);
         }
 
         [Query]
-        [All(typeof(PBUiText), typeof(UITextComponent))]
-        private void TrySetupExistingUIText(ref UITextComponent uiTextComponent, ref PBUiText sdkComponent)
+        [All(typeof(PBUiText), typeof(UITransformComponent), typeof(UITextComponent))]
+        private void TrySetupExistingUIText(ref UITextComponent uiTextComponent, ref PBUiText sdkComponent, ref UITransformComponent uiTransformComponent)
         {
             if (!sdkComponent.IsDirty)
                 return;
 
             if (ReferenceEquals(uiTextComponent.Label, null))
-                InstantiateLabel(ref uiTextComponent, ref sdkComponent);
+                InstantiateLabel(ref uiTextComponent, ref sdkComponent, ref uiTransformComponent);
             else
-                SetupLabel(uiTextComponent.Label, sdkComponent);
+                SetupLabel(uiTextComponent.Label, sdkComponent, uiTransformComponent);
 
             sdkComponent.IsDirty = false;
         }
 
-        private void InstantiateLabel(ref UITextComponent uiTextComponent, ref PBUiText sdkComponent)
+        private void InstantiateLabel(ref UITextComponent uiTextComponent, ref PBUiText sdkComponent, ref UITransformComponent uiTransformComponent)
         {
             var label = labelsPool.Get();
             UiElementUtils.SetElementDefaultStyle(label.style);
-            canvas.rootVisualElement.Add(label);
+            uiTransformComponent.Transform.Add(label);
             uiTextComponent.Label = label;
 
-            SetupLabel(label, sdkComponent);
+            SetupLabel(label, sdkComponent, uiTransformComponent);
         }
 
-        private static void SetupLabel(Label labelToSetup, PBUiText model)
+        private static void SetupLabel(Label labelToSetup, PBUiText model, UITransformComponent uiTransformComponent)
         {
             labelToSetup.pickingMode = PickingMode.Ignore;
+
+            if (uiTransformComponent.Transform.style.width.keyword == StyleKeyword.Auto || uiTransformComponent.Transform.style.height.keyword == StyleKeyword.Auto)
+                labelToSetup.style.position = new StyleEnum<Position>(Position.Relative);
+
             labelToSetup.text = model.Value;
             labelToSetup.style.color = model.GetColor();
             labelToSetup.style.fontSize = model.GetFontSize();

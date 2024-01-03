@@ -38,7 +38,7 @@ namespace DCL.PluginSystem.World
         {
             UITransformInstantiationSystem.InjectToWorld(ref builder, canvas, componentPoolsRegistry);
             UITransformReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            UITextInstantiationSystem.InjectToWorld(ref builder, canvas, componentPoolsRegistry);
+            UITextInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UITextReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
 
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<VisualElement, UITransformComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
