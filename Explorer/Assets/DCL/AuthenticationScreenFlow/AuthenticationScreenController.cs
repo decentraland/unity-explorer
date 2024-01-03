@@ -77,7 +77,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnBeforeViewShow();
 
-            ShowSplashAndThenSwitchToLogin().Forget();
+            ShowSplashAndThenSwitchToLoginAsync().Forget();
         }
 
         protected override void OnViewClose()
@@ -88,7 +88,7 @@ namespace DCL.AuthenticationScreenFlow
             CancelVerificationCountdown();
         }
 
-        private async UniTaskVoid ShowSplashAndThenSwitchToLogin()
+        private async UniTaskVoid ShowSplashAndThenSwitchToLoginAsync()
         {
             SwitchState(ViewState.Splash);
 
