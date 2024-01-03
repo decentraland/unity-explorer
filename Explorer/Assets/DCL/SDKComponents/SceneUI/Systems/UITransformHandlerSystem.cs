@@ -90,8 +90,7 @@ namespace DCL.SDKComponents.SceneUI.Systems
             visualElementToSetup.style.overflow = UiElementUtils.GetOverflow(model.Overflow);
 
             // Pointer blocking
-            //visualElementToSetup.pickingMode = model.PointerFilter == PointerFilterMode.PfmBlock ? PickingMode.Position : PickingMode.Ignore;
-            visualElementToSetup.pickingMode = PickingMode.Ignore;
+            visualElementToSetup.pickingMode = model.PointerFilter == PointerFilterMode.PfmBlock ? PickingMode.Position : PickingMode.Ignore;
 
             // Flex
             visualElementToSetup.style.flexDirection = UiElementUtils.GetFlexDirection(model.FlexDirection);
