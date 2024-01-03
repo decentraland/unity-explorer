@@ -5,6 +5,10 @@ namespace DCL.UI.LoadingSpinner
 {
     public class UILoadingSpinner : MonoBehaviour
     {
+        private static readonly int COLOR01_SHADER_PROP = Shader.PropertyToID("_color01");
+        private static readonly int FILL_HEAD_SHADER_PROP = Shader.PropertyToID("_fillHead");
+        private static readonly int FILL_TAIL_SHADER_PROP = Shader.PropertyToID("_fillTail");
+
         public Image img;
         public Color color;
         public float head;
@@ -36,9 +40,9 @@ namespace DCL.UI.LoadingSpinner
         {
             if (material)
             {
-                material.SetColor("_color01", color);
-                material.SetFloat("_fillHead", head);
-                material.SetFloat("_fillTail", tail);
+                material.SetColor(COLOR01_SHADER_PROP, color);
+                material.SetFloat(FILL_HEAD_SHADER_PROP, head);
+                material.SetFloat(FILL_TAIL_SHADER_PROP, tail);
             }
             else
             {
