@@ -37,28 +37,32 @@ namespace Decentraland.Kernel.Apis {
             "IAEoCUgAiAEBQgoKCF9tZXNzYWdlIiUKFk9wZW5FeHRlcm5hbFVybFJlcXVl",
             "c3QSCwoDdXJsGAEgASgJIiMKFE9wZW5OZnREaWFsb2dSZXF1ZXN0EgsKA3Vy",
             "bhgBIAEoCSIXChVVbmJsb2NrUG9pbnRlclJlcXVlc3QiMAoTQ29tbXNBZGFw",
-            "dGVyUmVxdWVzdBIZChFjb25uZWN0aW9uX3N0cmluZxgBIAEoCSIiCg9TdWNj",
-            "ZXNzUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCIWChRUcmlnZ2VyRW1vdGVS",
-            "ZXNwb25zZSIWChRNb3ZlUGxheWVyVG9SZXNwb25zZSIUChJUZWxlcG9ydFRv",
-            "UmVzcG9uc2UyqQYKGFJlc3RyaWN0ZWRBY3Rpb25zU2VydmljZRJvCgxNb3Zl",
-            "UGxheWVyVG8SLS5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuTW92ZVBsYXll",
-            "clRvUmVxdWVzdBouLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5Nb3ZlUGxh",
-            "eWVyVG9SZXNwb25zZSIAEmkKClRlbGVwb3J0VG8SKy5kZWNlbnRyYWxhbmQu",
-            "a2VybmVsLmFwaXMuVGVsZXBvcnRUb1JlcXVlc3QaLC5kZWNlbnRyYWxhbmQu",
-            "a2VybmVsLmFwaXMuVGVsZXBvcnRUb1Jlc3BvbnNlIgASbwoMVHJpZ2dlckVt",
-            "b3RlEi0uZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlRyaWdnZXJFbW90ZVJl",
-            "cXVlc3QaLi5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuVHJpZ2dlckVtb3Rl",
-            "UmVzcG9uc2UiABJoCgtDaGFuZ2VSZWFsbRIsLmRlY2VudHJhbGFuZC5rZXJu",
-            "ZWwuYXBpcy5DaGFuZ2VSZWFsbVJlcXVlc3QaKS5kZWNlbnRyYWxhbmQua2Vy",
-            "bmVsLmFwaXMuU3VjY2Vzc1Jlc3BvbnNlIgAScAoPT3BlbkV4dGVybmFsVXJs",
-            "EjAuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLk9wZW5FeHRlcm5hbFVybFJl",
+            "dGVyUmVxdWVzdBIZChFjb25uZWN0aW9uX3N0cmluZxgBIAEoCSJDChhUcmln",
+            "Z2VyU2NlbmVFbW90ZVJlcXVlc3QSCwoDc3JjGAEgASgJEhEKBGxvb3AYAiAB",
+            "KAhIAIgBAUIHCgVfbG9vcCIiCg9TdWNjZXNzUmVzcG9uc2USDwoHc3VjY2Vz",
+            "cxgBIAEoCCIWChRUcmlnZ2VyRW1vdGVSZXNwb25zZSIWChRNb3ZlUGxheWVy",
+            "VG9SZXNwb25zZSIUChJUZWxlcG9ydFRvUmVzcG9uc2UynwcKGFJlc3RyaWN0",
+            "ZWRBY3Rpb25zU2VydmljZRJvCgxNb3ZlUGxheWVyVG8SLS5kZWNlbnRyYWxh",
+            "bmQua2VybmVsLmFwaXMuTW92ZVBsYXllclRvUmVxdWVzdBouLmRlY2VudHJh",
+            "bGFuZC5rZXJuZWwuYXBpcy5Nb3ZlUGxheWVyVG9SZXNwb25zZSIAEmkKClRl",
+            "bGVwb3J0VG8SKy5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuVGVsZXBvcnRU",
+            "b1JlcXVlc3QaLC5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuVGVsZXBvcnRU",
+            "b1Jlc3BvbnNlIgASbwoMVHJpZ2dlckVtb3RlEi0uZGVjZW50cmFsYW5kLmtl",
+            "cm5lbC5hcGlzLlRyaWdnZXJFbW90ZVJlcXVlc3QaLi5kZWNlbnRyYWxhbmQu",
+            "a2VybmVsLmFwaXMuVHJpZ2dlckVtb3RlUmVzcG9uc2UiABJoCgtDaGFuZ2VS",
+            "ZWFsbRIsLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5DaGFuZ2VSZWFsbVJl",
             "cXVlc3QaKS5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuU3VjY2Vzc1Jlc3Bv",
-            "bnNlIgASbAoNT3Blbk5mdERpYWxvZxIuLmRlY2VudHJhbGFuZC5rZXJuZWwu",
-            "YXBpcy5PcGVuTmZ0RGlhbG9nUmVxdWVzdBopLmRlY2VudHJhbGFuZC5rZXJu",
-            "ZWwuYXBpcy5TdWNjZXNzUmVzcG9uc2UiABJ2ChhTZXRDb21tdW5pY2F0aW9u",
-            "c0FkYXB0ZXISLS5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuQ29tbXNBZGFw",
-            "dGVyUmVxdWVzdBopLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNz",
-            "UmVzcG9uc2UiAGIGcHJvdG8z"));
+            "bnNlIgAScAoPT3BlbkV4dGVybmFsVXJsEjAuZGVjZW50cmFsYW5kLmtlcm5l",
+            "bC5hcGlzLk9wZW5FeHRlcm5hbFVybFJlcXVlc3QaKS5kZWNlbnRyYWxhbmQu",
+            "a2VybmVsLmFwaXMuU3VjY2Vzc1Jlc3BvbnNlIgASbAoNT3Blbk5mdERpYWxv",
+            "ZxIuLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5PcGVuTmZ0RGlhbG9nUmVx",
+            "dWVzdBopLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNzUmVzcG9u",
+            "c2UiABJ2ChhTZXRDb21tdW5pY2F0aW9uc0FkYXB0ZXISLS5kZWNlbnRyYWxh",
+            "bmQua2VybmVsLmFwaXMuQ29tbXNBZGFwdGVyUmVxdWVzdBopLmRlY2VudHJh",
+            "bGFuZC5rZXJuZWwuYXBpcy5TdWNjZXNzUmVzcG9uc2UiABJ0ChFUcmlnZ2Vy",
+            "U2NlbmVFbW90ZRIyLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5UcmlnZ2Vy",
+            "U2NlbmVFbW90ZVJlcXVlc3QaKS5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMu",
+            "U3VjY2Vzc1Jlc3BvbnNlIgBiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
@@ -70,6 +74,7 @@ namespace Decentraland.Kernel.Apis {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.OpenNftDialogRequest), global::Decentraland.Kernel.Apis.OpenNftDialogRequest.Parser, new[]{ "Urn" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.UnblockPointerRequest), global::Decentraland.Kernel.Apis.UnblockPointerRequest.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.CommsAdapterRequest), global::Decentraland.Kernel.Apis.CommsAdapterRequest.Parser, new[]{ "ConnectionString" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TriggerSceneEmoteRequest), global::Decentraland.Kernel.Apis.TriggerSceneEmoteRequest.Parser, new[]{ "Src", "Loop" }, new[]{ "Loop" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.SuccessResponse), global::Decentraland.Kernel.Apis.SuccessResponse.Parser, new[]{ "Success" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TriggerEmoteResponse), global::Decentraland.Kernel.Apis.TriggerEmoteResponse.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.MovePlayerToResponse), global::Decentraland.Kernel.Apis.MovePlayerToResponse.Parser, null, null, null, null, null),
@@ -1668,6 +1673,247 @@ namespace Decentraland.Kernel.Apis {
 
   }
 
+  public sealed partial class TriggerSceneEmoteRequest : pb::IMessage<TriggerSceneEmoteRequest>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<TriggerSceneEmoteRequest> _parser = new pb::MessageParser<TriggerSceneEmoteRequest>(() => new TriggerSceneEmoteRequest());
+    private pb::UnknownFieldSet _unknownFields;
+    private int _hasBits0;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<TriggerSceneEmoteRequest> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Kernel.Apis.RestrictedActionsReflection.Descriptor.MessageTypes[8]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public TriggerSceneEmoteRequest() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public TriggerSceneEmoteRequest(TriggerSceneEmoteRequest other) : this() {
+      _hasBits0 = other._hasBits0;
+      src_ = other.src_;
+      loop_ = other.loop_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public TriggerSceneEmoteRequest Clone() {
+      return new TriggerSceneEmoteRequest(this);
+    }
+
+    /// <summary>Field number for the "src" field.</summary>
+    public const int SrcFieldNumber = 1;
+    private string src_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string Src {
+      get { return src_; }
+      set {
+        src_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "loop" field.</summary>
+    public const int LoopFieldNumber = 2;
+    private bool loop_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Loop {
+      get { if ((_hasBits0 & 1) != 0) { return loop_; } else { return false; } }
+      set {
+        _hasBits0 |= 1;
+        loop_ = value;
+      }
+    }
+    /// <summary>Gets whether the "loop" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasLoop {
+      get { return (_hasBits0 & 1) != 0; }
+    }
+    /// <summary>Clears the value of the "loop" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearLoop() {
+      _hasBits0 &= ~1;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as TriggerSceneEmoteRequest);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(TriggerSceneEmoteRequest other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (Src != other.Src) return false;
+      if (Loop != other.Loop) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (Src.Length != 0) hash ^= Src.GetHashCode();
+      if (HasLoop) hash ^= Loop.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (Src.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(Src);
+      }
+      if (HasLoop) {
+        output.WriteRawTag(16);
+        output.WriteBool(Loop);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (Src.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(Src);
+      }
+      if (HasLoop) {
+        output.WriteRawTag(16);
+        output.WriteBool(Loop);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (Src.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Src);
+      }
+      if (HasLoop) {
+        size += 1 + 1;
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(TriggerSceneEmoteRequest other) {
+      if (other == null) {
+        return;
+      }
+      if (other.Src.Length != 0) {
+        Src = other.Src;
+      }
+      if (other.HasLoop) {
+        Loop = other.Loop;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            Src = input.ReadString();
+            break;
+          }
+          case 16: {
+            Loop = input.ReadBool();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            Src = input.ReadString();
+            break;
+          }
+          case 16: {
+            Loop = input.ReadBool();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
   public sealed partial class SuccessResponse : pb::IMessage<SuccessResponse>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -1682,7 +1928,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Apis.RestrictedActionsReflection.Descriptor.MessageTypes[8]; }
+      get { return global::Decentraland.Kernel.Apis.RestrictedActionsReflection.Descriptor.MessageTypes[9]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1871,7 +2117,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Apis.RestrictedActionsReflection.Descriptor.MessageTypes[9]; }
+      get { return global::Decentraland.Kernel.Apis.RestrictedActionsReflection.Descriptor.MessageTypes[10]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2023,7 +2269,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Apis.RestrictedActionsReflection.Descriptor.MessageTypes[10]; }
+      get { return global::Decentraland.Kernel.Apis.RestrictedActionsReflection.Descriptor.MessageTypes[11]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2175,7 +2421,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Apis.RestrictedActionsReflection.Descriptor.MessageTypes[11]; }
+      get { return global::Decentraland.Kernel.Apis.RestrictedActionsReflection.Descriptor.MessageTypes[12]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
