@@ -1,13 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using Newtonsoft.Json;
-using SocketIO.Serializer.SystemTextJson;
 using SocketIOClient;
 using SocketIOClient.Newtonsoft.Json;
 using SocketIOClient.Transport;
 using System;
 using System.Globalization;
-using System.Text.Json;
 using System.Threading;
 
 namespace DCL.Web3Authentication
