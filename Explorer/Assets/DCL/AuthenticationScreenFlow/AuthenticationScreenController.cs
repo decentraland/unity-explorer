@@ -57,7 +57,7 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.LoginButton.onClick.AddListener(StartFlow);
             viewInstance.CancelAuthenticationProcess.onClick.AddListener(CancelLoginProcess);
             viewInstance.JumpIntoWorldButton.onClick.AddListener(JumpIntoWorld);
-            viewInstance.UseAnotherAccountButton.onClick.AddListener(RestartLoginProcess);
+            viewInstance.UseAnotherAccountButton.onClick.AddListener(ChangeAccount);
             viewInstance.VerificationCodeHintButton.onClick.AddListener(OpenOrCloseVerificationCodeHint);
             viewInstance.DiscordButton.onClick.AddListener(OpenDiscord);
 
@@ -95,7 +95,10 @@ namespace DCL.AuthenticationScreenFlow
         {
             SwitchState(ViewState.Splash);
 
-            viewInstance.SplashVideoPlayer.Play();
+            // videoPlayer.Play() gets stuck the 2nd time
+            viewInstance.SplashVideoPlayer.enabled = false;
+            viewInstance.SplashVideoPlayer.playOnAwake = true;
+            viewInstance.SplashVideoPlayer.enabled = true;
 
             await UniTask.WaitUntil(() => viewInstance.SplashVideoPlayer.frame >= (long)(viewInstance.SplashVideoPlayer.frameCount - 1));
 
@@ -154,10 +157,17 @@ namespace DCL.AuthenticationScreenFlow
             profileNameLabel!.Value = profile?.Name;
         }
 
-        private void RestartLoginProcess()
+        private void ChangeAccount()
         {
+            async UniTaskVoid ChangeAccountAsync(CancellationToken ct)
+            {
+                await web3Authenticator.LogoutAsync(ct);
+                SwitchState(ViewState.Login);
+            }
+
             CancelLoginProcess();
-            SwitchState(ViewState.Login);
+            loginCancellationToken = new CancellationTokenSource();
+            ChangeAccountAsync(loginCancellationToken.Token).Forget();
         }
 
         private void JumpIntoWorld()
