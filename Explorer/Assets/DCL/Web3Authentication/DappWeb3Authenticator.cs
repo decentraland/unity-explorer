@@ -170,7 +170,7 @@ namespace DCL.Web3Authentication
                     SignatureIdResponse signatureIdResponse = r.GetValue<SignatureIdResponse>();
 
                     if (string.IsNullOrEmpty(signatureIdResponse.requestId))
-                        task.TrySetException(new Web3AuthenticationException("Cannot solve auth request id"));
+                        task.TrySetException(new Web3SignatureException("Cannot solve auth request id"));
                     else
                         task.TrySetResult(signatureIdResponse);
                 },
