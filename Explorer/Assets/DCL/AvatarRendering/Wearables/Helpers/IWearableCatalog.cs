@@ -12,14 +12,16 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         ///     Retrieves a wearable by its DTO or adds a new one if it doesn't exist.
         /// </summary>
         /// <param name="wearableDto">The wearable DTO</param>
+        /// <param name="persistent">Prevents the wearable from being unloaded</param>
         /// <returns>An instance of the <see cref="IWearable" /> type.</returns>
-        IWearable GetOrAddWearableByDTO(WearableDTO wearableDto, bool addToCache = true);
+        IWearable GetOrAddWearableByDTO(WearableDTO wearableDto, bool persistent = true);
 
         /// <summary>
         ///     Adds an empty wearable to the catalog.
         /// </summary>
         /// <param name="loadingIntentionPointer">The loading intention pointer.</param>
-        void AddEmptyWearable(string loadingIntentionPointer);
+        /// <param name="persistent">Prevents the wearable from being unloaded</param>
+        void AddEmptyWearable(string loadingIntentionPointer, bool persistent = true);
 
         /// <summary>
         ///     Attempts to retrieve a wearable from the catalog.

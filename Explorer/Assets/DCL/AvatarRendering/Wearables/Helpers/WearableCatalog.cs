@@ -2,6 +2,7 @@
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
+using Google.Type;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
@@ -13,7 +14,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         internal Dictionary<string, IWearable> wearablesCache { get; } = new ();
 
-        public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto, bool addToCache = true)
+        public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto, bool persistent = true)
         {
             return TryGetWearable(wearableDto.metadata.id, out IWearable existingWearable)
                 ? existingWearable
@@ -21,16 +22,18 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 {
                     WearableDTO = new StreamableLoadingResult<WearableDTO>(wearableDto),
                     IsLoading = false
-                });
+                }, persistent);
         }
 
-        public void AddEmptyWearable(string loadingIntentionPointer) =>
-            AddWearable(loadingIntentionPointer, new Wearable());
+        public void AddEmptyWearable(string loadingIntentionPointer, bool persistent = true)
+        {
+            AddWearable(loadingIntentionPointer, new Wearable(), persistent);
+        }
 
-        internal IWearable AddWearable(string loadingIntentionPointer, IWearable wearable, bool addToCache = true)
+        internal IWearable AddWearable(string loadingIntentionPointer, IWearable wearable, bool persistent = true)
         {
             wearablesCache.Add(loadingIntentionPointer, wearable);
-            if (addToCache)
+            if (persistent)
                 cacheKeysDictionary[loadingIntentionPointer] =
                     listedCacheKeys.AddLast((loadingIntentionPointer, MultithreadingUtility.FrameCount));
             return wearable;
