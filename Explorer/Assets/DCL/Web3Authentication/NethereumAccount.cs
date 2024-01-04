@@ -5,7 +5,7 @@ namespace DCL.Web3Authentication
     public class NethereumAccount : IWeb3Account
     {
         private static readonly EthereumMessageSigner signer = new ();
-        private readonly EthECKey key;
+        internal readonly EthECKey key;
 
         public Web3Address Address { get; }
 

@@ -10,7 +10,7 @@ using System.Threading;
 
 namespace DCL.Web3Authentication
 {
-    public class DappWeb3Authenticator : IWeb3VerifiedAuthenticator, IWeb3IdentityProvider
+    public class DappWeb3Authenticator : IWeb3VerifiedAuthenticator
     {
         private const int TIMEOUT_SECONDS = 30;
 
@@ -20,10 +20,7 @@ namespace DCL.Web3Authentication
 
         private SocketIO? webSocket;
         private UniTaskCompletionSource<DappSignatureResponse>? signatureOutcomeTask;
-        private UniTaskCompletionSource<IWeb3Identity>? identitySolvedTask;
         private IWeb3VerifiedAuthenticator.VerificationDelegate? verificationCallback;
-
-        public IWeb3Identity? Identity { get; private set; }
 
         public DappWeb3Authenticator(IWebBrowser webBrowser,
             string serverUrl,
@@ -37,13 +34,6 @@ namespace DCL.Web3Authentication
         public void Dispose()
         {
             webSocket?.Dispose();
-            Identity?.Dispose();
-        }
-
-        public async UniTask<IWeb3Identity> GetOwnIdentityAsync(CancellationToken ct)
-        {
-            identitySolvedTask ??= new UniTaskCompletionSource<IWeb3Identity>();
-            return await identitySolvedTask.Task.AttachExternalCancellation(ct);
         }
 
         /// <summary>
@@ -83,13 +73,8 @@ namespace DCL.Web3Authentication
                 AuthChain authChain = CreateAuthChain(signature, ephemeralMessage);
 
                 // To keep cohesiveness between the platform, convert the user address to lower case
-                Identity = new DecentralandIdentity(new Web3Address(signature.sender.ToLower()),
+                return new DecentralandIdentity(new Web3Address(signature.sender.ToLower()),
                     ephemeralAccount, sessionExpiration, authChain);
-
-                identitySolvedTask?.TrySetResult(Identity);
-                identitySolvedTask = null;
-
-                return Identity;
             }
             finally
             {
@@ -100,8 +85,6 @@ namespace DCL.Web3Authentication
 
         public async UniTask LogoutAsync(CancellationToken cancellationToken)
         {
-            Identity?.Dispose();
-
             await TerminateWebSocket();
         }
 

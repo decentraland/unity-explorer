@@ -10,6 +10,7 @@ using ECS;
 using ECS.Abstract;
 using MVC;
 using System.Threading;
+using Utility;
 
 namespace DCL.AuthenticationScreenFlow
 {
@@ -37,7 +38,8 @@ namespace DCL.AuthenticationScreenFlow
             debugContainerBuilder.AddWidget("Web3 Authentication")
                                  .SetVisibilityBinding(widgetVisibility = new DebugWidgetVisibilityBinding(false))
                                  .AddSingleButton("Login", Login)
-                                 .AddSingleButton("Open Auth UI", OpenAuthenticationFlow);
+                                 .AddSingleButton("Open Auth UI", OpenAuthenticationFlow)
+                                 .AddSingleButton("Logout", Logout);
         }
 
         protected override void Update(float t)
@@ -45,18 +47,23 @@ namespace DCL.AuthenticationScreenFlow
             widgetVisibility.SetVisible(realmData.Configured);
         }
 
+        private void Logout()
+        {
+            cancellationTokenSource?.SafeCancelAndDispose();
+            cancellationTokenSource = new CancellationTokenSource();
+            web3Authenticator.LogoutAsync(cancellationTokenSource.Token).Forget();
+        }
+
         private void Login()
         {
-            cancellationTokenSource?.Cancel();
-            cancellationTokenSource?.Dispose();
+            cancellationTokenSource?.SafeCancelAndDispose();
             cancellationTokenSource = new CancellationTokenSource();
             web3Authenticator.LoginAsync(cancellationTokenSource.Token).Forget();
         }
 
         private void OpenAuthenticationFlow()
         {
-            cancellationTokenSource?.Cancel();
-            cancellationTokenSource?.Dispose();
+            cancellationTokenSource?.SafeCancelAndDispose();
             cancellationTokenSource = new CancellationTokenSource();
             mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand()).Forget();
         }

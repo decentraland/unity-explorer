@@ -24,6 +24,7 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileRepository profileRepository;
         private readonly IWebBrowser webBrowser;
         private readonly IRealmData realmData;
+        private readonly IWeb3IdentityCache storedIdentityProvider;
 
         private CancellationTokenSource? cancellationTokenSource;
 
@@ -34,7 +35,8 @@ namespace DCL.PluginSystem.Global
             MVCManager mvcManager,
             IProfileRepository profileRepository,
             IWebBrowser webBrowser,
-            IRealmData realmData)
+            IRealmData realmData,
+            IWeb3IdentityCache storedIdentityProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Authenticator = web3Authenticator;
@@ -43,6 +45,7 @@ namespace DCL.PluginSystem.Global
             this.profileRepository = profileRepository;
             this.webBrowser = webBrowser;
             this.realmData = realmData;
+            this.storedIdentityProvider = storedIdentityProvider;
         }
 
         public void Dispose() { }
@@ -54,7 +57,7 @@ namespace DCL.PluginSystem.Global
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod? authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
             mvcManager.RegisterController(new AuthenticationScreenController(authScreenFactory, web3Authenticator, profileRepository,
-                webBrowser));
+                webBrowser, storedIdentityProvider));
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

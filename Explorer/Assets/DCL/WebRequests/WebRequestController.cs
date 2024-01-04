@@ -19,10 +19,10 @@ namespace DCL.WebRequests
         private static readonly InitializeRequest<GenericPatchArguments, GenericPatchRequest> PATCH_GENERIC = GenericPatchRequest.Initialize;
 
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
-        private readonly IWeb3IdentityProvider web3IdentityProvider;
+        private readonly IWeb3IdentityCache web3IdentityProvider;
 
         public WebRequestController(IWebRequestsAnalyticsContainer analyticsContainer,
-            IWeb3IdentityProvider web3IdentityProvider)
+            IWeb3IdentityCache web3IdentityProvider)
         {
             this.analyticsContainer = analyticsContainer;
             this.web3IdentityProvider = web3IdentityProvider;

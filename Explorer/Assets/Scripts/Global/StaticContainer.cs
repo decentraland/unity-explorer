@@ -95,7 +95,7 @@ namespace Global
         }
 
         public static async UniTask<(StaticContainer container, bool success)> CreateAsync(IPluginSettingsContainer settingsContainer,
-            IWeb3IdentityProvider web3IdentityProvider,
+            IWeb3IdentityCache web3IdentityProvider,
             CancellationToken ct)
         {
             ProfilingCounters.CleanAllCounters();
