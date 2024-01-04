@@ -12,6 +12,7 @@ namespace DCL.AvatarRendering.Wearables.Components
     [Serializable]
     public class Wearable : IWearable
     {
+        private const string THUMBNAIL_DEFAULT_KEY = "thumbnail.png";
         public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
         public StreamableLoadingResult<WearableAsset>?[] WearableAssetResults { get; private set; } = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
         public StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }
@@ -19,8 +20,22 @@ namespace DCL.AvatarRendering.Wearables.Components
         public StreamableLoadingResult<Texture2D>? WearableThumbnail { get; set; }
         public bool IsLoading { get; set; } = true;
 
-        public string GetThumbnail(BodyShape bodyShape) =>
-            WearableDTO.Asset.metadata.thumbnail;
+        public string GetThumbnail()
+        {
+            string thumbnailHash = WearableDTO.Asset.metadata.thumbnail;
+
+            if (thumbnailHash == THUMBNAIL_DEFAULT_KEY)
+            {
+                for (var i = 0; i < WearableDTO.Asset.content.Length; i++)
+                {
+                    if (WearableDTO.Asset.content[i].file == THUMBNAIL_DEFAULT_KEY)
+                        thumbnailHash = WearableDTO.Asset.content[i].hash;
+                }
+            }
+
+            Debug.Log($"Thumbnail is {thumbnailHash}");
+            return thumbnailHash;
+        }
 
         public string GetMainFileHash(BodyShape bodyShape)
         {

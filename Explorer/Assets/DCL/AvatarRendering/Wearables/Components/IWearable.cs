@@ -32,6 +32,8 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         string GetRarity();
 
+        string GetThumbnail();
+
         bool IsUnisex();
 
         bool IsCompatibleWithBodyShape(string bodyShape);

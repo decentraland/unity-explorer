@@ -52,14 +52,14 @@ namespace DCL.AvatarRendering.Wearables.Systems
         protected override async UniTask<StreamableLoadingResult<IWearable[]>> FlowInternalAsync(GetWearableByParamIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             await UniTask.WaitUntil(isRealmDataReady, cancellationToken: ct);
-
             URLAddress urlAddress = BuildURL(intention.UserID, intention.Params);
-            Debug.Log($"Url {urlAddress.Value}");
+            Debug.Log("Url address: " + urlAddress);
 
             WearableDTO.LambdaResponse lambdaResponse =
                 await (await webRequestController.GetAsync(new CommonArguments(urlAddress, attemptsCount: 1), ct, GetReportCategory()))
                    .CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
+            Debug.Log($"Lambda response {lambdaResponse.elements.Count} elements");
             return new StreamableLoadingResult<IWearable[]>(intention.Results.ToArray());
         }
 

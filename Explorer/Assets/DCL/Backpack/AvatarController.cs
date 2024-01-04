@@ -1,3 +1,5 @@
+using Arch.Core;
+using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack.BackpackBus;
@@ -45,7 +47,19 @@ namespace DCL.Backpack
         public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct) =>
             await backpackGridController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
-        public void Activate() { }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in Entity playerEntity)
+        {
+            backpackGridController.InjectToWorld(ref builder, playerEntity);
+        }
+
+        public void RequestInitialWearablesPage()
+        {
+            backpackGridController.RequestPage(0);
+        }
+
+        public void Activate()
+        {
+        }
 
         public void Deactivate() { }
 

@@ -19,7 +19,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
     [LogCategory(ReportCategory.WEARABLE)]
     public partial class ResolveWearableThumbnailSystem : BaseUnityLoopSystem
     {
-        private const string THUMBNAIL_DEFAULT_KEY = "thumbnail.png";
         private readonly IRealmData realmData;
 
         public ResolveWearableThumbnailSystem(World world, IRealmData realmData) : base(world)
@@ -37,19 +36,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
         [None(typeof(Promise))]
         private void StartWearableThumbnailDownload(in Entity entity, ref WearableThumbnailComponent wearableThumbnailComponent, ref PartitionComponent partitionComponent)
         {
-            string thumbnailHash = wearableThumbnailComponent.Wearable.WearableDTO.Asset.metadata.thumbnail;
-
-            if (thumbnailHash == THUMBNAIL_DEFAULT_KEY)
-            {
-                for (var i = 0; i < wearableThumbnailComponent.Wearable.WearableDTO.Asset.content.Length; i++)
-                {
-                    if (wearableThumbnailComponent.Wearable.WearableDTO.Asset.content[i].file == THUMBNAIL_DEFAULT_KEY)
-                        thumbnailHash = wearableThumbnailComponent.Wearable.WearableDTO.Asset.content[i].hash;
-                }
-            }
-
             URLBuilder urlBuilder = new URLBuilder();
-            urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(new URLPath(thumbnailHash));
+            urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(new URLPath(wearableThumbnailComponent.Wearable.GetThumbnail()));
             Promise promise = Promise.Create(World,
                 new GetTextureIntention
                 {

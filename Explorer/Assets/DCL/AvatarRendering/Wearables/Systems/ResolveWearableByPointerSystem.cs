@@ -149,6 +149,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                         wearableCatalog.TryGetWearable(assetEntity.metadata.id, out IWearable component);
                         var wearableThumbnailComponent = new WearableThumbnailComponent(component);
 
+                        //Handle thumbnails on a ResolutionLevel
                         //TODO Which partition should we use?
                         World.Create(wearableThumbnailComponent, PartitionComponent.TOP_PRIORITY);
                         component.WearableDTO = new StreamableLoadingResult<WearableDTO>(assetEntity);

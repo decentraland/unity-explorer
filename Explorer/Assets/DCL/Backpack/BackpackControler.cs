@@ -7,6 +7,7 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
 using DCL.UI;
+using ECS.StreamableLoading.Common;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -26,7 +27,8 @@ namespace DCL.Backpack
             private readonly RectTransform rectTransform;
             private CancellationTokenSource animationCts;
             private readonly AvatarController avatarController;
-            private AvatarShapeComponent avatarShapeComponent;
+
+            private bool initialLoading = false;
 
             public BackpackControler(
                 BackpackView view,
@@ -71,36 +73,32 @@ namespace DCL.Backpack
             public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in Entity playerEntity)
             {
                 World world = builder.World;
-
+                avatarController.InjectToWorld(ref builder, playerEntity);
                 AwaitForProfile(world, playerEntity).Forget();
             }
 
-            //TODO: Temporary solution to test to wait for profile to be loaded, discuss better solution
+
             private async UniTaskVoid AwaitForProfile(World world, Entity playerEntity)
             {
-                bool canContinue = false;
-
                 do
                 {
                     await UniTask.Delay(1000);
-                    world.Query(new QueryDescription().WithAll<Profile, AvatarShapeComponent>(),
-                        (ref AvatarShapeComponent shapeComponent, ref Profile profile) =>
-                        {
-                            if (!shapeComponent.IsDirty && string.Equals(profile.UserId, "0x8e41609eD5e365Ac23C28d9625Bd936EA9C9E22c", StringComparison.CurrentCultureIgnoreCase)) canContinue = true;
-                        });
                 }
-                while (!canContinue);
+                while (!initialLoading);
 
-                Debug.Log("equipped wearables count " + world.Get<Profile>(playerEntity).Avatar.SharedWearables.Count);
+                world.TryGet(playerEntity, out AvatarShapeComponent avatarShapeComponent);
+
+                if(!avatarShapeComponent.WearablePromise.IsConsumed)
+                    await avatarShapeComponent.WearablePromise.ToUniTaskAsync(world);
+
                 foreach (URN avatarSharedWearable in world.Get<Profile>(playerEntity).Avatar.SharedWearables)
-                {
                     backpackCommandBus.SendCommand(new BackpackEquipCommand(avatarSharedWearable.ToString()));
-                }
             }
 
             public void Activate()
             {
                 view.gameObject.SetActive(true);
+                initialLoading = true;
             }
 
             public void Deactivate()

@@ -1,11 +1,21 @@
+using Arch.Core;
+using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Backpack.BackpackBus;
+using DCL.Profiles;
+using DCL.Web3Authentication;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
+using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
 
 namespace DCL.Backpack
 {
@@ -17,15 +27,25 @@ namespace DCL.Backpack
 
         private IObjectPool<BackpackItemView> gridItemsPool;
         private readonly Dictionary<string, BackpackItemView> usedPoolItems;
+        private World world;
+        private Profile playerProfile;
 
         public BackpackGridController(BackpackGridView view, BackpackCommandBus commandBus, BackpackEventBus eventBus)
         {
             this.view = view;
             this.commandBus = commandBus;
             this.eventBus = eventBus;
+
             usedPoolItems = new ();
             eventBus.EquipEvent += OnEquip;
             eventBus.UnEquipEvent += OnUnequip;
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in Entity playerEntity)
+        {
+            world = builder.World;
+            //not via this, inject IWeb3Auth in constructor
+            playerProfile = world.Get<Profile>(playerEntity);
         }
 
         public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
@@ -56,6 +76,26 @@ namespace DCL.Backpack
             backpackItem.OnSelectItem += ()=>SelectItem(backpackItem.ItemId);
             backpackItem.EquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackEquipCommand(backpackItemView.ItemId)));
             return backpackItemView;
+        }
+
+        public void RequestPage(int pageNumber)
+        {
+            //Reuse params array and review types URLParameter
+            ParamPromise wearablesPromise = ParamPromise.Create(world, new GetWearableByParamIntention(new[] { ("pageNumber", string.Format("{0}", pageNumber)), ("pageSize", "16") }, playerProfile.UserId, new List<IWearable>()), PartitionComponent.TOP_PRIORITY);
+            AwaitWearablesPromise(wearablesPromise).Forget();
+        }
+
+        private async UniTaskVoid AwaitWearablesPromise(ParamPromise wearablesPromise)
+        {
+            AssetPromise<IWearable[],GetWearableByParamIntention> uniTaskAsync = await wearablesPromise.ToUniTaskAsync(world);
+
+            if (!uniTaskAsync.Result.Value.Succeeded)
+                return;
+
+            foreach (IWearable wearable in uniTaskAsync.Result.Value.Asset)
+            {
+                Debug.Log("await wearable promise wearable result " + wearable.GetUrn() + wearable.GetCategory());
+            }
         }
 
         private void ClearPoolElements()
