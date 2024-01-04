@@ -131,6 +131,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        defaultEmptyWearable:
+          m_AssetGUID: 2d002c6a594460f4cb42100b50e7e53a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 6784895264912310272
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -155,6 +160,9 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <FrameTimeCap>k__BackingField: 33
+        <ScenesLoadingBudget>k__BackingField: 100
+        <AssetsLoadingBudget>k__BackingField: 50
     - rid: 6784895265412481026
       type: {class: CharacterCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
