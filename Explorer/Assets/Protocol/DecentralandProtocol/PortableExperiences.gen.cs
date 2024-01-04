@@ -27,30 +27,32 @@ namespace Decentraland.Kernel.Apis {
             "CjNkZWNlbnRyYWxhbmQva2VybmVsL2FwaXMvcG9ydGFibGVfZXhwZXJpZW5j",
             "ZXMucHJvdG8SGGRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcyIaCgtLaWxsUmVx",
             "dWVzdBILCgNwaWQYASABKAkiHgoMS2lsbFJlc3BvbnNlEg4KBnN0YXR1cxgB",
-            "IAEoCCIbCgxTcGF3blJlcXVlc3QSCwoDcGlkGAEgASgJIjAKDVNwYXduUmVz",
-            "cG9uc2USCwoDcGlkGAEgASgJEhIKCnBhcmVudF9jaWQYAiABKAkiGAoJUHhS",
-            "ZXF1ZXN0EgsKA3BpZBgBIAEoCSIlCiNHZXRQb3J0YWJsZUV4cGVyaWVuY2Vz",
-            "TG9hZGVkUmVxdWVzdCJfCiRHZXRQb3J0YWJsZUV4cGVyaWVuY2VzTG9hZGVk",
-            "UmVzcG9uc2USNwoGbG9hZGVkGAEgAygLMicuZGVjZW50cmFsYW5kLmtlcm5l",
-            "bC5hcGlzLlNwYXduUmVzcG9uc2UiDQoLRXhpdFJlcXVlc3QiHgoMRXhpdFJl",
-            "c3BvbnNlEg4KBnN0YXR1cxgBIAEoCDLMAwoaUG9ydGFibGVFeHBlcmllbmNl",
-            "c1NlcnZpY2USWgoFU3Bhd24SJi5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMu",
-            "U3Bhd25SZXF1ZXN0GicuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlNwYXdu",
-            "UmVzcG9uc2UiABJXCgRLaWxsEiUuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlz",
-            "LktpbGxSZXF1ZXN0GiYuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLktpbGxS",
-            "ZXNwb25zZSIAElcKBEV4aXQSJS5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMu",
-            "RXhpdFJlcXVlc3QaJi5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuRXhpdFJl",
-            "c3BvbnNlIgASnwEKHEdldFBvcnRhYmxlRXhwZXJpZW5jZXNMb2FkZWQSPS5k",
-            "ZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuR2V0UG9ydGFibGVFeHBlcmllbmNl",
-            "c0xvYWRlZFJlcXVlc3QaPi5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuR2V0",
-            "UG9ydGFibGVFeHBlcmllbmNlc0xvYWRlZFJlc3BvbnNlIgBiBnByb3RvMw=="));
+            "IAEoCCJCCgxTcGF3blJlcXVlc3QSEAoDcGlkGAEgASgJSACIAQESEAoDZW5z",
+            "GAIgASgJSAGIAQFCBgoEX3BpZEIGCgRfZW5zIlgKDVNwYXduUmVzcG9uc2US",
+            "CwoDcGlkGAEgASgJEhIKCnBhcmVudF9jaWQYAiABKAkSDAoEbmFtZRgDIAEo",
+            "CRIQCgNlbnMYBCABKAlIAIgBAUIGCgRfZW5zIhgKCVB4UmVxdWVzdBILCgNw",
+            "aWQYASABKAkiJQojR2V0UG9ydGFibGVFeHBlcmllbmNlc0xvYWRlZFJlcXVl",
+            "c3QiXwokR2V0UG9ydGFibGVFeHBlcmllbmNlc0xvYWRlZFJlc3BvbnNlEjcK",
+            "BmxvYWRlZBgBIAMoCzInLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TcGF3",
+            "blJlc3BvbnNlIg0KC0V4aXRSZXF1ZXN0Ih4KDEV4aXRSZXNwb25zZRIOCgZz",
+            "dGF0dXMYASABKAgyzAMKGlBvcnRhYmxlRXhwZXJpZW5jZXNTZXJ2aWNlEloK",
+            "BVNwYXduEiYuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlNwYXduUmVxdWVz",
+            "dBonLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TcGF3blJlc3BvbnNlIgAS",
+            "VwoES2lsbBIlLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5LaWxsUmVxdWVz",
+            "dBomLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5LaWxsUmVzcG9uc2UiABJX",
+            "CgRFeGl0EiUuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLkV4aXRSZXF1ZXN0",
+            "GiYuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLkV4aXRSZXNwb25zZSIAEp8B",
+            "ChxHZXRQb3J0YWJsZUV4cGVyaWVuY2VzTG9hZGVkEj0uZGVjZW50cmFsYW5k",
+            "Lmtlcm5lbC5hcGlzLkdldFBvcnRhYmxlRXhwZXJpZW5jZXNMb2FkZWRSZXF1",
+            "ZXN0Gj4uZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLkdldFBvcnRhYmxlRXhw",
+            "ZXJpZW5jZXNMb2FkZWRSZXNwb25zZSIAYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.KillRequest), global::Decentraland.Kernel.Apis.KillRequest.Parser, new[]{ "Pid" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.KillResponse), global::Decentraland.Kernel.Apis.KillResponse.Parser, new[]{ "Status" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.SpawnRequest), global::Decentraland.Kernel.Apis.SpawnRequest.Parser, new[]{ "Pid" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.SpawnResponse), global::Decentraland.Kernel.Apis.SpawnResponse.Parser, new[]{ "Pid", "ParentCid" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.SpawnRequest), global::Decentraland.Kernel.Apis.SpawnRequest.Parser, new[]{ "Pid", "Ens" }, new[]{ "Pid", "Ens" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.SpawnResponse), global::Decentraland.Kernel.Apis.SpawnResponse.Parser, new[]{ "Pid", "ParentCid", "Name", "Ens" }, new[]{ "Ens" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.PxRequest), global::Decentraland.Kernel.Apis.PxRequest.Parser, new[]{ "Pid" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.GetPortableExperiencesLoadedRequest), global::Decentraland.Kernel.Apis.GetPortableExperiencesLoadedRequest.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.GetPortableExperiencesLoadedResponse), global::Decentraland.Kernel.Apis.GetPortableExperiencesLoadedResponse.Parser, new[]{ "Loaded" }, null, null, null, null),
@@ -475,6 +477,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public SpawnRequest(SpawnRequest other) : this() {
       pid_ = other.pid_;
+      ens_ = other.ens_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -486,14 +489,50 @@ namespace Decentraland.Kernel.Apis {
 
     /// <summary>Field number for the "pid" field.</summary>
     public const int PidFieldNumber = 1;
-    private string pid_ = "";
+    private string pid_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public string Pid {
-      get { return pid_; }
+      get { return pid_ ?? ""; }
       set {
         pid_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
       }
+    }
+    /// <summary>Gets whether the "pid" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasPid {
+      get { return pid_ != null; }
+    }
+    /// <summary>Clears the value of the "pid" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearPid() {
+      pid_ = null;
+    }
+
+    /// <summary>Field number for the "ens" field.</summary>
+    public const int EnsFieldNumber = 2;
+    private string ens_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string Ens {
+      get { return ens_ ?? ""; }
+      set {
+        ens_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+    /// <summary>Gets whether the "ens" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasEns {
+      get { return ens_ != null; }
+    }
+    /// <summary>Clears the value of the "ens" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearEns() {
+      ens_ = null;
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -512,6 +551,7 @@ namespace Decentraland.Kernel.Apis {
         return true;
       }
       if (Pid != other.Pid) return false;
+      if (Ens != other.Ens) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -519,7 +559,8 @@ namespace Decentraland.Kernel.Apis {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (Pid.Length != 0) hash ^= Pid.GetHashCode();
+      if (HasPid) hash ^= Pid.GetHashCode();
+      if (HasEns) hash ^= Ens.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -538,9 +579,13 @@ namespace Decentraland.Kernel.Apis {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (Pid.Length != 0) {
+      if (HasPid) {
         output.WriteRawTag(10);
         output.WriteString(Pid);
+      }
+      if (HasEns) {
+        output.WriteRawTag(18);
+        output.WriteString(Ens);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -552,9 +597,13 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (Pid.Length != 0) {
+      if (HasPid) {
         output.WriteRawTag(10);
         output.WriteString(Pid);
+      }
+      if (HasEns) {
+        output.WriteRawTag(18);
+        output.WriteString(Ens);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -566,8 +615,11 @@ namespace Decentraland.Kernel.Apis {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (Pid.Length != 0) {
+      if (HasPid) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Pid);
+      }
+      if (HasEns) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Ens);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -581,8 +633,11 @@ namespace Decentraland.Kernel.Apis {
       if (other == null) {
         return;
       }
-      if (other.Pid.Length != 0) {
+      if (other.HasPid) {
         Pid = other.Pid;
+      }
+      if (other.HasEns) {
+        Ens = other.Ens;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -603,6 +658,10 @@ namespace Decentraland.Kernel.Apis {
             Pid = input.ReadString();
             break;
           }
+          case 18: {
+            Ens = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -620,6 +679,10 @@ namespace Decentraland.Kernel.Apis {
             break;
           case 10: {
             Pid = input.ReadString();
+            break;
+          }
+          case 18: {
+            Ens = input.ReadString();
             break;
           }
         }
@@ -665,6 +728,8 @@ namespace Decentraland.Kernel.Apis {
     public SpawnResponse(SpawnResponse other) : this() {
       pid_ = other.pid_;
       parentCid_ = other.parentCid_;
+      name_ = other.name_;
+      ens_ = other.ens_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -698,6 +763,42 @@ namespace Decentraland.Kernel.Apis {
       }
     }
 
+    /// <summary>Field number for the "name" field.</summary>
+    public const int NameFieldNumber = 3;
+    private string name_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string Name {
+      get { return name_; }
+      set {
+        name_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "ens" field.</summary>
+    public const int EnsFieldNumber = 4;
+    private string ens_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string Ens {
+      get { return ens_ ?? ""; }
+      set {
+        ens_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+    /// <summary>Gets whether the "ens" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasEns {
+      get { return ens_ != null; }
+    }
+    /// <summary>Clears the value of the "ens" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearEns() {
+      ens_ = null;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -715,6 +816,8 @@ namespace Decentraland.Kernel.Apis {
       }
       if (Pid != other.Pid) return false;
       if (ParentCid != other.ParentCid) return false;
+      if (Name != other.Name) return false;
+      if (Ens != other.Ens) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -724,6 +827,8 @@ namespace Decentraland.Kernel.Apis {
       int hash = 1;
       if (Pid.Length != 0) hash ^= Pid.GetHashCode();
       if (ParentCid.Length != 0) hash ^= ParentCid.GetHashCode();
+      if (Name.Length != 0) hash ^= Name.GetHashCode();
+      if (HasEns) hash ^= Ens.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -750,6 +855,14 @@ namespace Decentraland.Kernel.Apis {
         output.WriteRawTag(18);
         output.WriteString(ParentCid);
       }
+      if (Name.Length != 0) {
+        output.WriteRawTag(26);
+        output.WriteString(Name);
+      }
+      if (HasEns) {
+        output.WriteRawTag(34);
+        output.WriteString(Ens);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -768,6 +881,14 @@ namespace Decentraland.Kernel.Apis {
         output.WriteRawTag(18);
         output.WriteString(ParentCid);
       }
+      if (Name.Length != 0) {
+        output.WriteRawTag(26);
+        output.WriteString(Name);
+      }
+      if (HasEns) {
+        output.WriteRawTag(34);
+        output.WriteString(Ens);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -783,6 +904,12 @@ namespace Decentraland.Kernel.Apis {
       }
       if (ParentCid.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(ParentCid);
+      }
+      if (Name.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Name);
+      }
+      if (HasEns) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Ens);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -801,6 +928,12 @@ namespace Decentraland.Kernel.Apis {
       }
       if (other.ParentCid.Length != 0) {
         ParentCid = other.ParentCid;
+      }
+      if (other.Name.Length != 0) {
+        Name = other.Name;
+      }
+      if (other.HasEns) {
+        Ens = other.Ens;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -825,6 +958,14 @@ namespace Decentraland.Kernel.Apis {
             ParentCid = input.ReadString();
             break;
           }
+          case 26: {
+            Name = input.ReadString();
+            break;
+          }
+          case 34: {
+            Ens = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -846,6 +987,14 @@ namespace Decentraland.Kernel.Apis {
           }
           case 18: {
             ParentCid = input.ReadString();
+            break;
+          }
+          case 26: {
+            Name = input.ReadString();
+            break;
+          }
+          case 34: {
+            Ens = input.ReadString();
             break;
           }
         }
