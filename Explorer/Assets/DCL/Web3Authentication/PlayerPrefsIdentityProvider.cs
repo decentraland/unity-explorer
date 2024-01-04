@@ -1,8 +1,8 @@
 using Nethereum.Signer;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using UnityEngine;
 
 namespace DCL.Web3Authentication
@@ -53,17 +53,19 @@ namespace DCL.Web3Authentication
 
         public class DecentralandIdentityWithNethereumAccountJsonSerializer : IWeb3IdentityJsonSerializer
         {
+            private readonly IdentityJsonDto jsonRoot = new ();
+
             public IWeb3Identity? Deserialize(string json)
             {
-                IdentityJsonDto jsonRoot = JsonConvert.DeserializeObject<IdentityJsonDto>(json);
+                jsonRoot.Clear();
+                JsonConvert.PopulateObject(json, jsonRoot);
 
                 if (!jsonRoot.IsValid) return null;
 
                 var authChain = AuthChain.Create();
 
-                if (jsonRoot.ephemeralAuthChain != null)
-                    foreach (AuthLink link in jsonRoot.ephemeralAuthChain)
-                        authChain.Set(link.type, link);
+                foreach (AuthLink link in jsonRoot.ephemeralAuthChain)
+                    authChain.Set(link.type, link);
 
                 return new DecentralandIdentity(new Web3Address(jsonRoot.address),
                     new NethereumAccount(new EthECKey(jsonRoot.key)),
@@ -76,29 +78,35 @@ namespace DCL.Web3Authentication
                 var dclIdentity = (DecentralandIdentity)identity;
                 var account = (NethereumAccount)identity.EphemeralAccount;
 
-                IdentityJsonDto jsonRoot = new ()
-                {
-                    address = identity.Address,
-                    expiration = $"{identity.Expiration:O}",
-                    ephemeralAuthChain = dclIdentity.authChain.ToArray(),
-                    key = account.key.GetPrivateKey(),
-                };
+                jsonRoot.Clear();
+                jsonRoot.address = identity.Address;
+                jsonRoot.expiration = $"{identity.Expiration:O}";
+                jsonRoot.ephemeralAuthChain.AddRange(dclIdentity.authChain);
+                jsonRoot.key = account.key.GetPrivateKey();
 
                 return JsonConvert.SerializeObject(jsonRoot);
             }
         }
 
         [Serializable]
-        private struct IdentityJsonDto
+        private class IdentityJsonDto
         {
-            public string address;
-            public string key;
-            public string expiration;
-            public AuthLink[]? ephemeralAuthChain;
+            public string address = "";
+            public string key = "";
+            public string expiration = "";
+            public List<AuthLink> ephemeralAuthChain = new ();
 
             public bool IsValid => !string.IsNullOrEmpty(address)
                                    && !string.IsNullOrEmpty(key)
                                    && !string.IsNullOrEmpty(expiration);
+
+            public void Clear()
+            {
+                address = "";
+                key = "";
+                expiration = "";
+                ephemeralAuthChain.Clear();
+            }
         }
     }
 }
