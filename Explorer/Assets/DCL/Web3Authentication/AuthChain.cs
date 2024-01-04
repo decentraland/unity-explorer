@@ -1,21 +1,10 @@
 using DCL.Optimization.ThreadSafePool;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 
 namespace DCL.Web3Authentication
 {
-    [Serializable]
-    public struct AuthLink
-    {
-        [JsonConverter(typeof(StringEnumConverter))]
-        public AuthLinkType type;
-        public string payload;
-        public string? signature;
-    }
-
     public class AuthChain : IEnumerable<AuthLink>, IDisposable
     {
         private static readonly ThreadSafeObjectPool<AuthChain> pool = new (() => new AuthChain());

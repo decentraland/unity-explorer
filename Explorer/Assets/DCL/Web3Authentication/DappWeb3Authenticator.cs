@@ -10,7 +10,7 @@ using System.Threading;
 
 namespace DCL.Web3Authentication
 {
-    public class DappWeb3Authenticator : IWeb3VerifiedAuthenticator
+    public partial class DappWeb3Authenticator : IWeb3VerifiedAuthenticator
     {
         private const int TIMEOUT_SECONDS = 30;
 
@@ -205,29 +205,6 @@ namespace DCL.Web3Authentication
                 return signature;
             }
             catch (TimeoutException) { throw new SignatureExpiredException(expiration); }
-        }
-
-        [Serializable]
-        private struct DappSignatureResponse
-        {
-            public string requestId;
-            public string result;
-            public string sender;
-        }
-
-        [Serializable]
-        private struct SignatureRequest
-        {
-            public string method;
-            public string[] @params;
-        }
-
-        [Serializable]
-        private struct SignatureIdResponse
-        {
-            public string requestId;
-            public string? expiration;
-            public int code;
         }
     }
 }
