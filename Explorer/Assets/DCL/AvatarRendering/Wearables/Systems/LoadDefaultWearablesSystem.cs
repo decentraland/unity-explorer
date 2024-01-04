@@ -23,7 +23,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private readonly WearablesDTOList defaultWearableDefinition;
         private readonly IWearableCatalog wearableCatalog;
         private readonly GameObject emptyDefaultWearable;
-        
+
         internal LoadDefaultWearablesSystem(World world,
             WearablesDTOList defaultWearableDefinition, GameObject emptyDefaultWearable,
             IWearableCatalog wearableCatalog) : base(world)
@@ -46,7 +46,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 WearableDTO dto = defaultWearableDefinition.Value[i];
                 var wearable = wearableCatalog.GetOrAddWearableByDTO(dto, false);
-                ;
 
                 BodyShape analyzedBodyShape = wearable.IsCompatibleWithBodyShape(BodyShape.MALE) ? BodyShape.MALE : BodyShape.FEMALE;
                 pointersRequest[analyzedBodyShape].Add(wearable.GetUrn());

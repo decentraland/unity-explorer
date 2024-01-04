@@ -9,7 +9,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     public static class WearablesConstants
     {
         public const string EMPTY_DEFAULT_WEARABLE = "EMPTY_DEFAULT_WEARABLE";
-        
+
         //Used for hiding algorithm
         public static readonly IList<string> CATEGORIES_PRIORITY = new List<string>
         {
@@ -152,11 +152,16 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public static HashSet<URN> GetDefaultWearablesForBodyShape(string bodyShapeId) =>
                 DEFAULT_WEARABLES.Where(x => x.Key.Item1 == bodyShapeId).Select(x => new URN(x.Value)).ToHashSet();
 
-            public static string GetDefaultWearable(BodyShape bodyShapeId, string category)
+            public static string GetDefaultWearable(BodyShape bodyShapeId, string category,
+                out bool hasEmptyDefaultWearableAB)
             {
                 if (!DEFAULT_WEARABLES.ContainsKey((bodyShapeId, category)))
+                {
+                    hasEmptyDefaultWearableAB = true;
                     return EMPTY_DEFAULT_WEARABLE;
+                }
 
+                hasEmptyDefaultWearableAB = false;
                 return DEFAULT_WEARABLES[(bodyShapeId, category)];
             }
         }
