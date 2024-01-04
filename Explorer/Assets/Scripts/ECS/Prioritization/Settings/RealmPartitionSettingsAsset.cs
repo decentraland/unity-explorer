@@ -16,8 +16,8 @@ namespace ECS.Prioritization
         [field: SerializeField]
         public int MaxLoadingDistanceInParcels { get; private set; }
 
-        [field: SerializeField]
-        public int UnloadBucket { get; private set; }
+        [field: SerializeField] [field: Min(1)]
+        public int UnloadingDistanceToleranceInParcels { get; private set; } = 1;
 
         [field: SerializeField]
         public int ScenesRequestBatchSize { get; private set; }

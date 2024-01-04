@@ -26,7 +26,7 @@ namespace DCL.Navmap
         public RectTransform CategoriesContainer { get; private set; }
 
         [field: SerializeField]
-        public Image placeImage;
+        public ImageView placeImage;
 
         [field: SerializeField]
         public Button closeButton;

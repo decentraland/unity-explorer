@@ -1,4 +1,5 @@
-﻿using Unity.Burst;
+﻿using System.Runtime.CompilerServices;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -29,9 +30,15 @@ namespace Utility
             if (rings.Length != maxRadius)
             {
                 rings.Dispose();
-                int d = (maxRadius * 2) + 1;
-                rings = new NativeArray<ParcelInfo>(d * d, Allocator.Persistent);
+                rings = new NativeArray<ParcelInfo>(GetRingsArraySize(maxRadius), Allocator.Persistent);
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GetRingsArraySize(int maxRadius)
+        {
+            int d = (maxRadius * 2) + 1;
+            return d * d;
         }
 
         /// <summary>
