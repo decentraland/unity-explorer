@@ -11,7 +11,7 @@ namespace DCL.Input.Systems
         public override void Initialize()
         {
             // We need to execute it on initialize to be independent from the entities with <TQueryComponent> creation order
-            World.Query(new QueryDescription().WithAll<TQueryComponent>().WithNone<T>(),
+            World.Query(in new QueryDescription().WithAll<TQueryComponent>().WithNone<T>(),
                 entity => World.Add<T>(entity));
         }
     }
