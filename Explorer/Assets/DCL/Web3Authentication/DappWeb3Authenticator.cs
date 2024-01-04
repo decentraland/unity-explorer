@@ -18,7 +18,7 @@ namespace DCL.Web3Authentication
         private readonly string serverUrl;
         private readonly string signatureUrl;
 
-        private SocketIOClient.SocketIO? webSocket;
+        private SocketIO? webSocket;
         private UniTaskCompletionSource<DappSignatureResponse>? signatureOutcomeTask;
         private UniTaskCompletionSource<IWeb3Identity>? identitySolvedTask;
 
@@ -119,11 +119,11 @@ namespace DCL.Web3Authentication
             webSocket.Dispose();
         }
 
-        private SocketIOClient.SocketIO InitializeWebSocket()
+        private SocketIO InitializeWebSocket()
         {
             var uri = new Uri(serverUrl);
 
-            webSocket = new SocketIOClient.SocketIO(uri, new SocketIOOptions
+            webSocket = new SocketIO(uri, new SocketIOOptions
             {
                 Transport = TransportProtocol.WebSocket,
             });
