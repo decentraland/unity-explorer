@@ -27,6 +27,9 @@ namespace DCL.Backpack
         [field: SerializeField]
         public GameObject EquippedIcon { get; private set; }
 
+        [field: SerializeField]
+        public GameObject CategoryImage { get; private set; }
+
         public void OnPointerEnter(PointerEventData eventData)
         {
             HoverBackground.SetActive(true);

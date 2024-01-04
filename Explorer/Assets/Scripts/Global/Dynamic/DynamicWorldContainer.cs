@@ -112,7 +112,8 @@ namespace Global.Dynamic
                     backpackCommandBus,
                     backpackEventBus,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    container.ProfileRepository),
+                    container.ProfileRepository,
+                    web3Authenticator),
 
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
             };

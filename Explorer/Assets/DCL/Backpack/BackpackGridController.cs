@@ -24,17 +24,18 @@ namespace DCL.Backpack
         private readonly BackpackGridView view;
         private readonly BackpackCommandBus commandBus;
         private readonly BackpackEventBus eventBus;
+        private readonly IWeb3Authenticator web3Authenticator;
 
         private IObjectPool<BackpackItemView> gridItemsPool;
         private readonly Dictionary<string, BackpackItemView> usedPoolItems;
         private World world;
-        private Profile playerProfile;
 
-        public BackpackGridController(BackpackGridView view, BackpackCommandBus commandBus, BackpackEventBus eventBus)
+        public BackpackGridController(BackpackGridView view, BackpackCommandBus commandBus, BackpackEventBus eventBus, IWeb3Authenticator web3Authenticator)
         {
             this.view = view;
             this.commandBus = commandBus;
             this.eventBus = eventBus;
+            this.web3Authenticator = web3Authenticator;
 
             usedPoolItems = new ();
             eventBus.EquipEvent += OnEquip;
@@ -44,8 +45,6 @@ namespace DCL.Backpack
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in Entity playerEntity)
         {
             world = builder.World;
-            //not via this, inject IWeb3Auth in constructor
-            playerProfile = world.Get<Profile>(playerEntity);
         }
 
         public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
@@ -81,7 +80,7 @@ namespace DCL.Backpack
         public void RequestPage(int pageNumber)
         {
             //Reuse params array and review types URLParameter
-            ParamPromise wearablesPromise = ParamPromise.Create(world, new GetWearableByParamIntention(new[] { ("pageNumber", string.Format("{0}", pageNumber)), ("pageSize", "16") }, playerProfile.UserId, new List<IWearable>()), PartitionComponent.TOP_PRIORITY);
+            ParamPromise wearablesPromise = ParamPromise.Create(world, new GetWearableByParamIntention(new[] { ("pageNumber", string.Format("{0}", pageNumber)), ("pageSize", "16") }, web3Authenticator.Identity.EphemeralAccount.Address, new List<IWearable>()), PartitionComponent.TOP_PRIORITY);
             AwaitWearablesPromise(wearablesPromise).Forget();
         }
 
@@ -92,10 +91,8 @@ namespace DCL.Backpack
             if (!uniTaskAsync.Result.Value.Succeeded)
                 return;
 
-            foreach (IWearable wearable in uniTaskAsync.Result.Value.Asset)
-            {
-                Debug.Log("await wearable promise wearable result " + wearable.GetUrn() + wearable.GetCategory());
-            }
+            //TODO Temporary, will create the correct flow in next PR
+            SetGridElements(uniTaskAsync.Result.Value.Asset);
         }
 
         private void ClearPoolElements()

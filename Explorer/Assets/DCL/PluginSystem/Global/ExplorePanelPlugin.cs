@@ -9,6 +9,7 @@ using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Settings;
+using DCL.Web3Authentication;
 using DCL.WebRequests;
 using Global.Dynamic;
 using MVC;
@@ -31,6 +32,7 @@ namespace DCL.PluginSystem.Global
         private readonly BackpackEventBus backpackEventBus;
         private readonly IWebRequestController webRequestController;
         private readonly IProfileRepository profileRepository;
+        private readonly IWeb3Authenticator web3Authenticator;
         private NavmapController navmapController;
         private BackpackControler backpackController;
 
@@ -44,7 +46,8 @@ namespace DCL.PluginSystem.Global
             BackpackCommandBus backpackCommandBus,
             BackpackEventBus backpackEventBus,
             IWebRequestController webRequestController,
-            IProfileRepository profileRepository)
+            IProfileRepository profileRepository,
+            IWeb3Authenticator web3Authenticator)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -56,6 +59,7 @@ namespace DCL.PluginSystem.Global
             this.backpackEventBus = backpackEventBus;
             this.webRequestController = webRequestController;
             this.profileRepository = profileRepository;
+            this.web3Authenticator = web3Authenticator;
         }
 
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
@@ -72,7 +76,7 @@ namespace DCL.PluginSystem.Global
                 assetsProvisioner.ProvideMainAssetAsync(backpackSettings.RarityBackgroundsMapping, ct));
 
             SettingsController settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
-            backpackController = new BackpackControler(explorePanelView.GetComponentInChildren<BackpackView>(), rarityBackgroundsMapping.Value, categoryIconsMapping.Value, rarityColorMappings.Value, backpackCommandBus, backpackEventBus, profileRepository);
+            backpackController = new BackpackControler(explorePanelView.GetComponentInChildren<BackpackView>(), rarityBackgroundsMapping.Value, categoryIconsMapping.Value, rarityColorMappings.Value, backpackCommandBus, backpackEventBus, profileRepository, web3Authenticator);
             await backpackController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
             mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackController));

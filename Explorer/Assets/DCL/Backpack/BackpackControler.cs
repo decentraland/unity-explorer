@@ -7,6 +7,7 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
 using DCL.UI;
+using DCL.Web3Authentication;
 using ECS.StreamableLoading.Common;
 using System;
 using System.Collections.Generic;
@@ -24,8 +25,10 @@ namespace DCL.Backpack
             private readonly BackpackView view;
             private readonly BackpackCommandBus backpackCommandBus;
             private readonly IProfileRepository profileRepository;
+            private readonly IWeb3Authenticator web3Authenticator;
             private readonly RectTransform rectTransform;
             private CancellationTokenSource animationCts;
+            private CancellationTokenSource profileLoadingCts;
             private readonly AvatarController avatarController;
 
             private bool initialLoading = false;
@@ -37,14 +40,16 @@ namespace DCL.Backpack
                 NFTColorsSO rarityColors,
                 BackpackCommandBus backpackCommandBus,
                 BackpackEventBus backpackEventBus,
-                IProfileRepository profileRepository)
+                IProfileRepository profileRepository,
+                IWeb3Authenticator web3Authenticator)
             {
                 this.view = view;
                 this.backpackCommandBus = backpackCommandBus;
                 this.profileRepository = profileRepository;
+                this.web3Authenticator = web3Authenticator;
 
                 rectTransform = view.transform.parent.GetComponent<RectTransform>();
-                avatarController = new AvatarController(view.GetComponentInChildren<AvatarView>(),view.GetComponentsInChildren<AvatarSlotView>(), rarityBackgrounds, categoryIcons, rarityColors, backpackCommandBus, backpackEventBus);
+                avatarController = new AvatarController(view.GetComponentInChildren<AvatarView>(),view.GetComponentsInChildren<AvatarSlotView>(), rarityBackgrounds, categoryIcons, rarityColors, backpackCommandBus, backpackEventBus, web3Authenticator);
 
                 Dictionary<BackpackSections, ISection> backpackSections = new ()
                 {
@@ -74,25 +79,28 @@ namespace DCL.Backpack
             {
                 World world = builder.World;
                 avatarController.InjectToWorld(ref builder, playerEntity);
-                AwaitForProfile(world, playerEntity).Forget();
+                profileLoadingCts = new CancellationTokenSource();
+                AwaitForProfile(world, playerEntity, profileLoadingCts).Forget();
             }
 
 
-            private async UniTaskVoid AwaitForProfile(World world, Entity playerEntity)
+            private async UniTaskVoid AwaitForProfile(World world, Entity playerEntity, CancellationTokenSource cts)
             {
                 do
                 {
-                    await UniTask.Delay(1000);
+                    await UniTask.Delay(1000, cancellationToken: cts.Token);
                 }
                 while (!initialLoading);
 
                 world.TryGet(playerEntity, out AvatarShapeComponent avatarShapeComponent);
 
                 if(!avatarShapeComponent.WearablePromise.IsConsumed)
-                    await avatarShapeComponent.WearablePromise.ToUniTaskAsync(world);
+                    await avatarShapeComponent.WearablePromise.ToUniTaskAsync(world, cancellationToken: cts.Token);
 
                 foreach (URN avatarSharedWearable in world.Get<Profile>(playerEntity).Avatar.SharedWearables)
                     backpackCommandBus.SendCommand(new BackpackEquipCommand(avatarSharedWearable.ToString()));
+
+                avatarController.RequestInitialWearablesPage();
             }
 
             public void Activate()
@@ -111,8 +119,9 @@ namespace DCL.Backpack
 
             public void Dispose()
             {
-                animationCts?.Dispose();
                 avatarController?.Dispose();
+                animationCts.SafeCancelAndDispose();
+                profileLoadingCts.SafeCancelAndDispose();
             }
         }
     }

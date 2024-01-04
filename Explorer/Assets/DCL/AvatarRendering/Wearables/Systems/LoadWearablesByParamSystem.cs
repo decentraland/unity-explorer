@@ -53,13 +53,22 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             await UniTask.WaitUntil(isRealmDataReady, cancellationToken: ct);
             URLAddress urlAddress = BuildURL(intention.UserID, intention.Params);
-            Debug.Log("Url address: " + urlAddress);
+            Debug.Log("Lambda response address: " + urlAddress);
 
             WearableDTO.LambdaResponse lambdaResponse =
                 await (await webRequestController.GetAsync(new CommonArguments(urlAddress, attemptsCount: 1), ct, GetReportCategory()))
                    .CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
             Debug.Log($"Lambda response {lambdaResponse.elements.Count} elements");
+            foreach (WearableDTO.LambdaResponseElementDto lambdaResponseElementDto in lambdaResponse.elements)
+            {
+                Debug.Log($"Lambda response element {lambdaResponseElementDto.name} {lambdaResponseElementDto.category} {lambdaResponseElementDto.entity.metadata.rarity}");
+            }
+            for (var i = 0; i < lambdaResponse.elements.Count; i++)
+            {
+                WearableDTO wearableDto = lambdaResponse.elements[i].entity;
+                intention.Results.Add(wearableCatalog.GetOrAddWearableByDTO(wearableDto));
+            }
             return new StreamableLoadingResult<IWearable[]>(intention.Results.ToArray());
         }
 
