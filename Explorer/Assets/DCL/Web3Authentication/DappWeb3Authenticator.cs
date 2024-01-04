@@ -60,8 +60,10 @@ namespace DCL.Web3Authentication
 
                 SignatureIdResponse authenticationResponse = await RequestAuthenticationAsync(ephemeralMessage, cancellationToken);
 
-                var signatureExpiration = DateTime.Parse(authenticationResponse.expiration, null,
-                    DateTimeStyles.RoundtripKind);
+                DateTime signatureExpiration = DateTime.UtcNow.AddMinutes(5);
+
+                if (!string.IsNullOrEmpty(authenticationResponse.expiration))
+                    signatureExpiration = DateTime.Parse(authenticationResponse.expiration, null, DateTimeStyles.RoundtripKind);
 
                 await UniTask.SwitchToMainThread(cancellationToken);
 
@@ -152,9 +154,6 @@ namespace DCL.Web3Authentication
         private async UniTask ConnectToServerAsync() =>
             await webSocket!.ConnectAsync().AsUniTask().Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
 
-        private void LetUserSignThroughDapp(string requestId) =>
-            webBrowser.OpenUrl($"{signatureUrl}/{requestId}");
-
         private void ProcessSignatureOutcomeMessage(SocketIOResponse response)
         {
             signatureOutcomeTask?.TrySetResult(response.GetValue<DappSignatureResponse>());
@@ -165,8 +164,16 @@ namespace DCL.Web3Authentication
         {
             UniTaskCompletionSource<SignatureIdResponse> task = new ();
 
-            await webSocket!.EmitAsync("request",
-                r => task.TrySetResult(r.GetValue<SignatureIdResponse>()),
+            await webSocket!.EmitAsync("request", cancellationToken,
+                r =>
+                {
+                    SignatureIdResponse signatureIdResponse = r.GetValue<SignatureIdResponse>();
+
+                    if (string.IsNullOrEmpty(signatureIdResponse.requestId))
+                        task.TrySetException(new Web3AuthenticationException("Cannot solve auth request id"));
+                    else
+                        task.TrySetResult(signatureIdResponse);
+                },
                 new SignatureRequest
                 {
                     method = "dcl_personal_sign",
@@ -187,8 +194,15 @@ namespace DCL.Web3Authentication
 
             try
             {
-                return await signatureOutcomeTask.Task.Timeout(duration)
-                                                 .AttachExternalCancellation(ct);
+                DappSignatureResponse signature = await signatureOutcomeTask.Task.Timeout(duration).AttachExternalCancellation(ct);
+
+                if (string.IsNullOrEmpty(signature.sender))
+                    throw new Web3SignatureException($"Cannot solve the signer's address from the signature. Request id: {requestId}");
+
+                if (string.IsNullOrEmpty(signature.result))
+                    throw new Web3SignatureException($"Cannot solve the signature. Request id: {requestId}");
+
+                return signature;
             }
             catch (TimeoutException) { throw new SignatureExpiredException(expiration); }
         }
@@ -212,7 +226,7 @@ namespace DCL.Web3Authentication
         private struct SignatureIdResponse
         {
             public string requestId;
-            public string expiration;
+            public string? expiration;
             public int code;
         }
     }
