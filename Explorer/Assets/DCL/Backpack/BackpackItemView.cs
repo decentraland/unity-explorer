@@ -28,7 +28,16 @@ namespace DCL.Backpack
         public GameObject EquippedIcon { get; private set; }
 
         [field: SerializeField]
-        public GameObject CategoryImage { get; private set; }
+        public Image CategoryImage { get; private set; }
+
+        [field: SerializeField]
+        public Image WearableThumbnail { get; private set; }
+
+        [field: SerializeField]
+        public Image RarityBackground { get; private set; }
+
+        [field: SerializeField]
+        public Image FlapBackground { get; private set; }
 
         public void OnPointerEnter(PointerEventData eventData)
         {

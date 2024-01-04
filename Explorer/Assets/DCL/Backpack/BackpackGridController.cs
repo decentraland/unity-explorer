@@ -10,7 +10,9 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 using Object = UnityEngine.Object;
 using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
 
@@ -22,17 +24,30 @@ namespace DCL.Backpack
         private readonly BackpackCommandBus commandBus;
         private readonly BackpackEventBus eventBus;
         private readonly IWeb3Authenticator web3Authenticator;
+        private readonly NftTypeIconSO rarityBackgrounds;
+        private readonly NFTColorsSO rarityColors;
+        private readonly NftTypeIconSO categoryIcons;
 
         private IObjectPool<BackpackItemView> gridItemsPool;
         private readonly Dictionary<string, BackpackItemView> usedPoolItems;
         private World world;
 
-        public BackpackGridController(BackpackGridView view, BackpackCommandBus commandBus, BackpackEventBus eventBus, IWeb3Authenticator web3Authenticator)
+        public BackpackGridController(
+            BackpackGridView view,
+            BackpackCommandBus commandBus,
+            BackpackEventBus eventBus,
+            IWeb3Authenticator web3Authenticator,
+            NftTypeIconSO rarityBackgrounds,
+            NFTColorsSO rarityColors,
+            NftTypeIconSO categoryIcons)
         {
             this.view = view;
             this.commandBus = commandBus;
             this.eventBus = eventBus;
             this.web3Authenticator = web3Authenticator;
+            this.rarityBackgrounds = rarityBackgrounds;
+            this.rarityColors = rarityColors;
+            this.categoryIcons = categoryIcons;
 
             usedPoolItems = new ();
             eventBus.EquipEvent += OnEquip;
@@ -63,6 +78,10 @@ namespace DCL.Backpack
                 BackpackItemView backpackItemView = gridItemsPool.Get();
                 backpackItemView.ItemId = gridWearables[i].GetUrn();
                 usedPoolItems.Add(backpackItemView.ItemId, backpackItemView);
+                backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(gridWearables[i].GetRarity());
+                backpackItemView.FlapBackground.color = rarityColors.GetColor(gridWearables[i].GetRarity());
+                backpackItemView.CategoryImage.sprite = categoryIcons.GetTypeImage(gridWearables[i].GetCategory());
+                WaitForThumbnailAsync(gridWearables[i], backpackItemView).Forget();
             }
         }
 
@@ -77,7 +96,7 @@ namespace DCL.Backpack
         public void RequestPage(int pageNumber)
         {
             //Reuse params array and review types URLParameter once auth pr is merged
-            ParamPromise wearablesPromise = ParamPromise.Create(world, new GetWearableByParamIntention(new[] { ("pageNumber", string.Format("{0}", pageNumber)), ("pageSize", "16") }, web3Authenticator.Identity.EphemeralAccount.Address, new List<IWearable>()), PartitionComponent.TOP_PRIORITY);
+            ParamPromise wearablesPromise = ParamPromise.Create(world, new GetWearableByParamIntention(new[] { ("pageNumber", string.Format("{0}", pageNumber)), ("pageSize", "16") }, "0x8e41609eD5e365Ac23C28d9625Bd936EA9C9E22c"/*web3Authenticator.Identity.EphemeralAccount.Address*/, new List<IWearable>()), PartitionComponent.TOP_PRIORITY);
             AwaitWearablesPromiseAsync(wearablesPromise).Forget();
         }
 
@@ -90,6 +109,18 @@ namespace DCL.Backpack
 
             //TODO Temporary, will create the correct flow in next PR
             SetGridElements(uniTaskAsync.Result.Value.Asset);
+        }
+
+        private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable, BackpackItemView itemView)
+        {
+            do
+            {
+                await UniTask.Delay(500);
+            }
+            while (itemWearable.WearableThumbnail == null);
+
+            Texture2D valueAsset = itemWearable.WearableThumbnail.Value.Asset;
+            itemView.WearableThumbnail.sprite = Sprite.Create(valueAsset, new Rect(0, 0, valueAsset.width, valueAsset.height), VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false);
         }
 
         private void ClearPoolElements()

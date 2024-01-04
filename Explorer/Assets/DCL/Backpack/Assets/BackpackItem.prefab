@@ -900,6 +900,10 @@ MonoBehaviour:
   <EquipButton>k__BackingField: {fileID: 5929508676340867936}
   <InfoButton>k__BackingField: {fileID: 8176514646182836153}
   <EquippedIcon>k__BackingField: {fileID: 493759110962425617}
+  <CategoryImage>k__BackingField: {fileID: 981060080954595276}
+  <WearableThumbnail>k__BackingField: {fileID: 1393358841813331306}
+  <RarityBackground>k__BackingField: {fileID: 2506524606276384560}
+  <FlapBackground>k__BackingField: {fileID: 1526146829364839132}
 --- !u!1 &7257904519296327889
 GameObject:
   m_ObjectHideFlags: 0

@@ -56,11 +56,15 @@ namespace DCL.AvatarRendering.Wearables.Systems
             WearableDTO.LambdaResponse lambdaResponse =
                 await (await webRequestController.GetAsync(new CommonArguments(BuildURL(intention.UserID, intention.Params), attemptsCount: 1), ct, GetReportCategory()))
                    .CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
-            
+
             for (var i = 0; i < lambdaResponse.elements.Count; i++)
             {
                 WearableDTO wearableDto = lambdaResponse.elements[i].entity;
-                intention.Results.Add(wearableCatalog.GetOrAddWearableByDTO(wearableDto));
+                IWearable wearable = wearableCatalog.GetOrAddWearableByDTO(wearableDto);
+                var wearableThumbnailComponent = new WearableThumbnailComponent(wearable);
+
+                World.Create(wearableThumbnailComponent, PartitionComponent.TOP_PRIORITY);
+                intention.Results.Add(wearable);
             }
             return new StreamableLoadingResult<IWearable[]>(intention.Results.ToArray());
         }

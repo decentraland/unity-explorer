@@ -17,12 +17,6 @@ namespace DCL.Backpack
         private readonly RectTransform rectTransform;
         private readonly AvatarView view;
         private readonly BackpackSlotsController slotsController;
-        private readonly NftTypeIconSO rarityBackgrounds;
-        private readonly NftTypeIconSO categoryIcons;
-        private readonly NFTColorsSO rarityColors;
-        private readonly BackpackCommandBus backpackCommandBus;
-        private readonly BackpackEventBus backpackEventBus;
-        private readonly IWeb3Authenticator web3Authenticator;
         private readonly BackpackGridController backpackGridController;
         private readonly BackpackInfoPanelController backpackInfoPanelController;
 
@@ -36,15 +30,9 @@ namespace DCL.Backpack
             IWeb3Authenticator web3Authenticator)
         {
             this.view = view;
-            this.rarityBackgrounds = rarityBackgrounds;
-            this.categoryIcons = categoryIcons;
-            this.rarityColors = rarityColors;
-            this.backpackCommandBus = backpackCommandBus;
-            this.backpackEventBus = backpackEventBus;
-            this.web3Authenticator = web3Authenticator;
 
             slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus, rarityBackgrounds);
-            backpackGridController = new BackpackGridController(view.backpackGridView, backpackCommandBus, backpackEventBus, this.web3Authenticator);
+            backpackGridController = new BackpackGridController(view.backpackGridView, backpackCommandBus, backpackEventBus, web3Authenticator, rarityBackgrounds, rarityColors, categoryIcons);
             backpackInfoPanelController = new BackpackInfoPanelController(view.backpackInfoPanelView, backpackEventBus, categoryIcons);
             rectTransform = view.GetComponent<RectTransform>();
         }

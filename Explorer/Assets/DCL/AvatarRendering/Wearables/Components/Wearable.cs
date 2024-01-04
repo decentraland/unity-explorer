@@ -84,7 +84,7 @@ namespace DCL.AvatarRendering.Wearables.Components
             "";
 
         public string GetRarity() =>
-            WearableDTO.Asset.metadata.rarity;
+            WearableDTO.Asset.metadata.rarity ?? "common";
 
         public bool IsUnisex() =>
             WearableDTO.Asset.metadata.data.representations.Length > 1;
