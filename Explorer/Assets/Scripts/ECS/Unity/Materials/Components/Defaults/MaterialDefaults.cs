@@ -50,9 +50,6 @@ namespace ECS.Unity.Materials.Components.Defaults
         public static float GetRoughness(this PBMaterial self) =>
             self.Pbr?.HasRoughness == true ? self.Pbr.Roughness : Default.ROUGHNESS;
 
-        public static float GetGlossiness(this PBMaterial self) =>
-            self.Pbr?.HasGlossiness == true ? self.Pbr.Glossiness : Default.GLOSSINESS;
-
         public static float GetSpecularIntensity(this PBMaterial self) =>
             self.Pbr?.HasSpecularIntensity == true ? self.Pbr.SpecularIntensity : Default.SPECULAR_INTENSITY;
 

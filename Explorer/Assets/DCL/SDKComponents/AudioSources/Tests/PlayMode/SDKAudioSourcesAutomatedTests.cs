@@ -67,7 +67,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
         {
             try
             {
-                var web3Authenticator = new FakeWeb3Authenticator();
+                var web3Authenticator = new RandomGeneratedWeb3Authenticator();
                 await web3Authenticator.LoginAsync(ct);
 
                 SceneSharedContainer sceneSharedContainer;
