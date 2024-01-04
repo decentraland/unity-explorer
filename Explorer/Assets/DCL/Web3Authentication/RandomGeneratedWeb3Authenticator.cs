@@ -39,8 +39,7 @@ namespace DCL.Web3Authentication
             return new DecentralandIdentity(new Web3Address(signer.Address.ToString().ToLower()), ephemeralAccount, expiration, authChain);
         }
 
-        public async UniTask LogoutAsync(CancellationToken cancellationToken)
-        {
-        }
+        public UniTask LogoutAsync(CancellationToken cancellationToken) =>
+            UniTask.CompletedTask;
     }
 }

@@ -65,7 +65,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private StringVariable? countdownLabelParameter;
 
-        public async UniTaskVoid StartVerificationCountdown(DateTime expiration, CancellationToken ct)
+        public async UniTaskVoid StartVerificationCountdownAsync(DateTime expiration, CancellationToken ct)
         {
             do
             {

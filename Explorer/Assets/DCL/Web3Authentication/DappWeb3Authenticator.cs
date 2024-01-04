@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using Newtonsoft.Json;
 using SocketIOClient;
 using SocketIOClient.Newtonsoft.Json;
 using SocketIOClient.Transport;
@@ -99,7 +100,8 @@ namespace DCL.Web3Authentication
                 Transport = TransportProtocol.WebSocket,
             });
 
-            webSocket.JsonSerializer = new NewtonsoftJsonSerializer();
+            webSocket.JsonSerializer = new NewtonsoftJsonSerializer(new JsonSerializerSettings());
+
             webSocket.On("outcome", ProcessSignatureOutcomeMessage);
 
             return webSocket;
@@ -164,7 +166,6 @@ namespace DCL.Web3Authentication
             UniTaskCompletionSource<SignatureIdResponse> task = new ();
 
             await webSocket!.EmitAsync("request",
-                cancellationToken,
                 r => task.TrySetResult(r.GetValue<SignatureIdResponse>()),
                 new SignatureRequest
                 {

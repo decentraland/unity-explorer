@@ -68,7 +68,7 @@ namespace DCL.AuthenticationScreenFlow
                 CancelVerificationCountdown();
                 verificationCountdownCancellationToken = new CancellationTokenSource();
 
-                viewInstance.StartVerificationCountdown(expiration,
+                viewInstance.StartVerificationCountdownAsync(expiration,
                                  verificationCountdownCancellationToken.Token)
                             .Forget();
 

@@ -8,6 +8,7 @@ using DCL.Profiles;
 using DCL.Web3Authentication;
 using ECS;
 using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -51,8 +52,7 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(Web3AuthPluginSettings settings, CancellationToken ct)
         {
-            AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct))
-                                                       .Value.GetComponent<AuthenticationScreenView>();
+            AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct)).Value;
 
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod? authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
@@ -71,6 +71,12 @@ namespace DCL.PluginSystem.Global
         [field: Header(nameof(Web3AuthenticationPlugin) + "." + nameof(Web3AuthPluginSettings))]
         [field: Space]
         [field: SerializeField]
-        public AssetReferenceGameObject AuthScreenPrefab { get; private set; }
+        public AuthScreenObjectRef AuthScreenPrefab { get; private set; }
+
+        [Serializable]
+        public class AuthScreenObjectRef : ComponentReference<AuthenticationScreenView>
+        {
+            public AuthScreenObjectRef(string guid) : base(guid) { }
+        }
     }
 }
