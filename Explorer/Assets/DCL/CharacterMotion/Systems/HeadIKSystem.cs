@@ -21,7 +21,7 @@ namespace DCL.CharacterMotion.Systems
     [UpdateAfter(typeof(InterpolateCharacterSystem))]
     public partial class HeadIKSystem : BaseUnityLoopSystem
     {
-        private bool disableWasToggled;
+        private bool headIKIsEnabled;
         private SingleInstanceEntity camera;
         private readonly ElementBinding<float> verticalLimit;
         private readonly ElementBinding<float> horizontalLimit;
@@ -31,7 +31,7 @@ namespace DCL.CharacterMotion.Systems
         private HeadIKSystem(World world, IDebugContainerBuilder builder) : base(world)
         {
             builder.AddWidget("Locomotion: Head IK")
-                   .AddSingleButton("Toggle Enable", () => disableWasToggled = true)
+                   .AddToggleField("Enabled", (evt) => { headIKIsEnabled = evt.newValue; }, false)
                    .AddFloatField("Vertical Limit", verticalLimit = new ElementBinding<float>(0))
                    .AddFloatField("Horizontal Limit", horizontalLimit = new ElementBinding<float>(0))
                    .AddFloatField("Rotation Speed", speed = new ElementBinding<float>(0));
@@ -41,20 +41,17 @@ namespace DCL.CharacterMotion.Systems
         {
             camera = World.CacheCamera();
             settingsEntity = World.CacheCharacterSettings();
+
+            ICharacterControllerSettings charSettings = settingsEntity.GetCharacterSettings(World);
+            verticalLimit.Value = charSettings.HeadIKVerticalAngleLimit;
+            horizontalLimit.Value = charSettings.HeadIKHorizontalAngleLimit;
+            speed.Value = charSettings.HeadIKRotationSpeed;
         }
 
         protected override void Update(float t)
         {
             UpdateDebugValues();
             UpdateIKQuery(World, t, in camera.GetCameraComponent(World));
-
-            ICharacterControllerSettings charSettings = settingsEntity.GetCharacterSettings(World);
-            verticalLimit.Value = charSettings.HeadIKVerticalAngleLimit;
-            horizontalLimit.Value = charSettings.HeadIKHorizontalAngleLimit;
-            speed.Value = charSettings.HeadIKRotationSpeed;
-
-            // TODO: Remove this once this system is properly tied up to a look-up system, this flag will just disable it by default
-            disableWasToggled = true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -77,11 +74,7 @@ namespace DCL.CharacterMotion.Systems
             in StunComponent stunComponent
         )
         {
-            if (disableWasToggled)
-            {
-                headIK.IsDisabled = !headIK.IsDisabled;
-                disableWasToggled = false;
-            }
+            headIK.IsDisabled = !this.headIKIsEnabled;
 
             bool isEnabled = !stunComponent.IsStunned
                              && rigidTransform.IsGrounded

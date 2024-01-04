@@ -101,7 +101,6 @@ namespace ECS.Unity.Materials.Tests
                 MaterialTransparencyMode.AlphaBlend,
                 0.3f,
                 0.4f,
-                0.5f,
                 0.6f,
                 0.7f,
                 0

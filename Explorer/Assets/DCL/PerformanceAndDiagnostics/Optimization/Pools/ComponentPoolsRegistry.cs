@@ -10,6 +10,11 @@ namespace DCL.Optimization.Pools
         private readonly Dictionary<Type, IComponentPool> pools;
         private readonly Transform rootContainer;
 
+        public ComponentPoolsRegistry() : this(
+            new Dictionary<Type, IComponentPool>(),
+            new GameObject(nameof(ComponentPoolsRegistry)).transform
+        ) { }
+
         public ComponentPoolsRegistry(Dictionary<Type, IComponentPool> pools, Transform rootContainer)
         {
             this.pools = pools;
@@ -61,7 +66,7 @@ namespace DCL.Optimization.Pools
             }
         }
 
-        public void AddComponentPool<T>(Action<T> onGet = null, Action<T> onRelease = null) where T: class, new()
+        public void AddComponentPool<T>(IComponentPool<T> componentPool) where T: class
         {
             lock (pools)
             {
@@ -71,7 +76,7 @@ namespace DCL.Optimization.Pools
                     return;
                 }
 
-                pools.Add(typeof(T), new ComponentPool<T>(onGet, onRelease));
+                pools.Add(typeof(T), componentPool);
             }
         }
     }

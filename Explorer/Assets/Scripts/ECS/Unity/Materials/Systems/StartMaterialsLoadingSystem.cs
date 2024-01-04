@@ -134,7 +134,6 @@ namespace ECS.Unity.Materials.Systems
                 pbMaterial.GetTransparencyMode(),
                 pbMaterial.GetMetallic(),
                 pbMaterial.GetRoughness(),
-                pbMaterial.GetGlossiness(),
                 pbMaterial.GetSpecularIntensity(),
                 pbMaterial.GetEmissiveIntensity(),
                 pbMaterial.GetDirectIntensity());

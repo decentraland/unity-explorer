@@ -125,6 +125,8 @@
         /// </summary>
         public const string AVATAR = nameof(AVATAR);
 
+        public const string PROFILE = nameof(PROFILE);
+
         /// <summary>
         ///     Wearable related
         /// </summary>

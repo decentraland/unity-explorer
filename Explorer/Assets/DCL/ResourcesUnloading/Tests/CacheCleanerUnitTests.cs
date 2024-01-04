@@ -1,6 +1,7 @@
 ﻿using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.Profiles;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
@@ -24,8 +25,8 @@ namespace DCL.ResourcesUnloading.Tests
         private IStreamableCache<AudioClip,GetAudioClipIntention> audioClipsCache;
         private IStreamableCache<GltfContainerAsset, string> gltfContainerAssetsCache;
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
-
         private IExtendedObjectPool<Material> materialPool;
+        private IProfileCache profileCache;
 
         [SetUp]
         public void SetUp()
@@ -41,6 +42,7 @@ namespace DCL.ResourcesUnloading.Tests
             audioClipsCache = Substitute.For<IStreamableCache<AudioClip, GetAudioClipIntention>>();
             assetBundleCache = Substitute.For<IStreamableCache<AssetBundleData, GetAssetBundleIntention>>();
             gltfContainerAssetsCache = Substitute.For<IStreamableCache<GltfContainerAsset, string>>();
+            profileCache = Substitute.For<IProfileCache>();
 
             cacheCleaner = new CacheCleaner(concurrentBudgetProvider);
 
@@ -51,6 +53,7 @@ namespace DCL.ResourcesUnloading.Tests
             cacheCleaner.Register(assetBundleCache);
             cacheCleaner.Register(wearableAssetsCache);
             cacheCleaner.Register(materialPool);
+            cacheCleaner.Register(profileCache);
         }
 
         [TestCase(true, 1)]
@@ -71,6 +74,7 @@ namespace DCL.ResourcesUnloading.Tests
             gltfContainerAssetsCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
             assetBundleCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
             materialPool.Received(callsAmount).ClearThrottled(Arg.Any<int>());
+            profileCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
         }
     }
 }

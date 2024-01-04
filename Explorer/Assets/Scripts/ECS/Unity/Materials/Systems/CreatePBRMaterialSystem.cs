@@ -60,7 +60,7 @@ namespace ECS.Unity.Materials.Systems
                 materialComponent.Result ??= CreateNewMaterialInstance();
 
                 SetUpColors(materialComponent.Result, materialComponent.Data.AlbedoColor, materialComponent.Data.EmissiveColor, materialComponent.Data.ReflectivityColor, materialComponent.Data.EmissiveIntensity);
-                SetUpProps(materialComponent.Result, materialComponent.Data.Metallic, materialComponent.Data.Roughness, materialComponent.Data.Glossiness, materialComponent.Data.SpecularIntensity, materialComponent.Data.DirectIntensity);
+                SetUpProps(materialComponent.Result, materialComponent.Data.Metallic, materialComponent.Data.Roughness, materialComponent.Data.SpecularIntensity, materialComponent.Data.DirectIntensity);
                 SetUpTransparency(materialComponent.Result, materialComponent.Data.TransparencyMode, materialComponent.Data.AlphaTexture, materialComponent.Data.AlbedoColor, materialComponent.Data.AlphaTest);
 
                 TrySetTexture(materialComponent.Result, ref albedoResult, ShaderUtils.BaseMap);
@@ -88,12 +88,11 @@ namespace ECS.Unity.Materials.Systems
             material.SetColor(ShaderUtils.SpecColor, reflectivity);
         }
 
-        public static void SetUpProps(Material material, float metallic, float roughness, float glossiness,
+        public static void SetUpProps(Material material, float metallic, float roughness,
             float specularIntensity, float directIntensity)
         {
             material.SetFloat(ShaderUtils.Metallic, metallic);
             material.SetFloat(ShaderUtils.Smoothness, 1 - roughness);
-            material.SetFloat(ShaderUtils.EnvironmentReflections, glossiness);
             material.SetFloat(ShaderUtils.SpecularHighlights, specularIntensity * directIntensity);
         }
 

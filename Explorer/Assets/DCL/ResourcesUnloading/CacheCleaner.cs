@@ -2,6 +2,7 @@
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.Profiles;
 using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
@@ -21,6 +22,7 @@ namespace DCL.ResourcesUnloading
         private const int AB_UNLOAD_CHUNK = 1;
         private const int TEXTURE_UNLOAD_CHUNK = 1;
         private const int AUDIO_CLIP_UNLOAD_CHUNK = 100;
+        private const int PROFILE_UNLOAD_CHUNK = 10;
 
         private readonly IConcurrentBudgetProvider fpsCapBudgetProvider;
         private readonly List<IThrottledClearable> avatarPools;
@@ -32,6 +34,8 @@ namespace DCL.ResourcesUnloading
 
         private IWearableAssetsCache wearableAssetsCache;
         private IWearableCatalog wearableCatalog;
+        private IProfileCache? profileCache;
+        private IStreamableCache<Profile, GetProfileIntention>? profileIntentionCache;
 
         public CacheCleaner(IConcurrentBudgetProvider fpsCapBudgetProvider)
         {
@@ -50,6 +54,8 @@ namespace DCL.ResourcesUnloading
             wearableCatalog.Unload(fpsCapBudgetProvider);
             gltfContainerAssetsCache.Unload(fpsCapBudgetProvider, GLTF_UNLOAD_CHUNK);
             assetBundleCache.Unload(fpsCapBudgetProvider, AB_UNLOAD_CHUNK);
+            profileCache?.Unload(fpsCapBudgetProvider, PROFILE_UNLOAD_CHUNK);
+            profileIntentionCache?.Unload(fpsCapBudgetProvider, PROFILE_UNLOAD_CHUNK);
 
             ClearAvatarsRelatedPools();
         }
@@ -81,6 +87,12 @@ namespace DCL.ResourcesUnloading
 
         public void Register<T>(IExtendedObjectPool<T> extendedObjectPool) where T: class =>
             avatarPools.Add(extendedObjectPool);
+
+        public void Register(IProfileCache profileCache) =>
+            this.profileCache = profileCache;
+
+        public void Register(IStreamableCache<Profile, GetProfileIntention> profileIntentionCache) =>
+            this.profileIntentionCache = profileIntentionCache;
 
         public void UpdateProfilingCounters()
         {

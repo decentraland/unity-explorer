@@ -289,7 +289,6 @@ namespace ECS.Unity.Materials.Tests
                     TransparencyMode = MaterialTransparencyMode.MtmAlphaBlend,
                     Metallic = 0.1f,
                     Roughness = 0.2f,
-                    Glossiness = 0.3f,
                     SpecularIntensity = 0.5f,
                     EmissiveIntensity = 0,
                     DirectIntensity = 0.3f,
@@ -326,7 +325,6 @@ namespace ECS.Unity.Materials.Tests
             Assert.AreEqual(expected.GetTransparencyMode(), actual.Data.TransparencyMode);
             Assert.AreEqual(expected.GetMetallic(), actual.Data.Metallic);
             Assert.AreEqual(expected.GetRoughness(), actual.Data.Roughness);
-            Assert.AreEqual(expected.GetGlossiness(), actual.Data.Glossiness);
             Assert.AreEqual(expected.GetSpecularIntensity(), actual.Data.SpecularIntensity);
             Assert.AreEqual(expected.GetEmissiveColor(), actual.Data.EmissiveColor);
             Assert.AreEqual(expected.GetDirectIntensity(), actual.Data.DirectIntensity);

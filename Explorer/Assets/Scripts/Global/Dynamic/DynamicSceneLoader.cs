@@ -4,9 +4,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Web3Authentication;
 using System;
-using System.Collections.Generic;
 using System.Threading;
-using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Utility;
@@ -24,23 +22,18 @@ namespace Global.Dynamic
         [Space]
         [SerializeField] private UIDocument uiToolkitRoot;
         [SerializeField] private UIDocument debugUiRoot;
-        [SerializeField] private Vector2Int StartPosition;
-        [SerializeField] [Obsolete] private int SceneLoadRadius = 4;
 
-        // If it's 0, it will load every parcel in the range
-        [SerializeField] private List<int2> StaticLoadPositions;
         [SerializeField] private RealmLauncher realmLauncher;
-        [SerializeField] private string[] realms;
+        [SerializeField] private DynamicSceneLoaderSettings settings;
         [SerializeField] private DynamicSettings dynamicSettings;
 
         private StaticContainer staticContainer;
         private DynamicWorldContainer dynamicWorldContainer;
-
         private GlobalWorld globalWorld;
 
         private void Awake()
         {
-            realmLauncher.Initialize(realms);
+            realmLauncher.Initialize(settings.Realms);
 
             InitializationFlowAsync(destroyCancellationToken).Forget();
         }
@@ -72,9 +65,8 @@ namespace Global.Dynamic
         {
             try
             {
-                // TODO: create the real web3 authenticator, missing decentralized app
-                var web3Authenticator = new FakeWeb3Authenticator();
-                await web3Authenticator.LoginAsync(ct);
+                IWeb3Authenticator web3Authenticator = new RandomGeneratedWeb3Authenticator();
+                IWeb3Identity web3Identity = await web3Authenticator.LoginAsync(ct);
 
                 // First load the common global plugin
                 bool isLoaded;
@@ -94,8 +86,8 @@ namespace Global.Dynamic
                     scenePluginSettingsContainer,
                     ct,
                     uiToolkitRoot,
-                    StaticLoadPositions,
-                    SceneLoadRadius,
+                    settings.StaticLoadPositions,
+                    settings.SceneLoadRadius,
                     dynamicSettings,
                     web3Authenticator);
 
@@ -123,18 +115,13 @@ namespace Global.Dynamic
                     return;
                 }
 
-                globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory, dynamicWorldContainer.EmptyScenesWorldFactory, staticContainer.CharacterObject);
+                globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory,
+                    dynamicWorldContainer.EmptyScenesWorldFactory, staticContainer.CharacterObject, web3Identity);
 
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
-
-                void SetRealm(string selectedRealm)
-                {
-                    ChangeRealmAsync(staticContainer, destroyCancellationToken, selectedRealm).Forget();
-                }
-
-                realmLauncher.OnRealmSelected += SetRealm;
-
                 dynamicWorldContainer.RealmController.SetupWorld(globalWorld);
+
+                realmLauncher.OnRealmSelected += ChangeRealm;
             }
             catch (OperationCanceledException)
             {
@@ -148,19 +135,24 @@ namespace Global.Dynamic
             }
         }
 
-        private async UniTask ChangeRealmAsync(StaticContainer globalContainer, CancellationToken ct, string selectedRealm)
+        private void ChangeRealm(string selectedRealm)
         {
-            if (globalWorld != null)
-                await dynamicWorldContainer.RealmController.UnloadCurrentRealmAsync();
+            async UniTask ChangeRealmAsync(StaticContainer globalContainer, string selectedRealm, CancellationToken ct)
+            {
+                if (globalWorld != null)
+                    await dynamicWorldContainer.RealmController.UnloadCurrentRealmAsync();
 
-            await UniTask.SwitchToMainThread();
+                await UniTask.SwitchToMainThread();
 
-            Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(StartPosition);
-            characterPos.y = 1f;
+                Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(settings.StartPosition);
+                characterPos.y = 1f;
 
-            globalContainer.CharacterObject.Controller.transform.position = characterPos;
+                globalContainer.CharacterObject.Controller.transform.position = characterPos;
 
-            await dynamicWorldContainer.RealmController.SetRealmAsync(URLDomain.FromString(selectedRealm), ct);
+                await dynamicWorldContainer.RealmController.SetRealmAsync(URLDomain.FromString(selectedRealm), ct);
+            }
+
+            ChangeRealmAsync(staticContainer, selectedRealm, CancellationToken.None).Forget();
         }
     }
 }

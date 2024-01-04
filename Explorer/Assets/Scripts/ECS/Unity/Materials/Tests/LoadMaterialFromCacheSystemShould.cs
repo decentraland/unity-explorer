@@ -97,7 +97,6 @@ namespace ECS.Unity.Materials.Tests
                 MaterialTransparencyMode.AlphaBlend,
                 0,
                 0,
-                1,
                 0,
                 0,
                 0

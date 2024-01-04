@@ -24,8 +24,14 @@ namespace DCL.Optimization.Pools
 
         IComponentPool GetPool(Type type);
 
-        void AddGameObjectPool<T>(Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 1024) where T: Component;
+        void AddComponentPool<T>(IComponentPool<T> componentPool) where T: class;
+    }
 
-        void AddComponentPool<T>(Action<T> onGet = null, Action<T> onRelease = null) where T: class, new();
+    public static class ComponentPoolsRegistryExtensions
+    {
+        public static void AddComponentPool<T>(this IComponentPoolsRegistry componentPoolsRegistry, Action<T> onGet = null, Action<T> onRelease = null) where T: class, new()
+        {
+            componentPoolsRegistry.AddComponentPool(new ComponentPool<T>(onGet, onRelease));
+        }
     }
 }
