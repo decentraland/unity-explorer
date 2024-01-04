@@ -21,7 +21,7 @@ namespace DCL.Web3Authentication
             Identity = null;
         }
 
-        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken cancellationToken)
+        public UniTask<IWeb3Identity> LoginAsync(CancellationToken cancellationToken)
         {
             var signer = NethereumAccount.CreateRandom();
             var ephemeralAccount = NethereumAccount.CreateRandom();
@@ -51,12 +51,13 @@ namespace DCL.Web3Authentication
             identitySolvedTask?.TrySetResult(Identity);
             identitySolvedTask = null;
 
-            return Identity;
+            return UniTask.FromResult(Identity);
         }
 
-        public async UniTask LogoutAsync(CancellationToken cancellationToken)
+        public UniTask LogoutAsync(CancellationToken cancellationToken)
         {
             Identity = null;
+            return UniTask.CompletedTask;
         }
     }
 }

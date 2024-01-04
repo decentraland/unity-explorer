@@ -1,10 +1,13 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using Newtonsoft.Json;
+using SocketIO.Serializer.SystemTextJson;
 using SocketIOClient;
 using SocketIOClient.Newtonsoft.Json;
 using SocketIOClient.Transport;
 using System;
 using System.Globalization;
+using System.Text.Json;
 using System.Threading;
 
 namespace DCL.Web3Authentication
@@ -17,7 +20,7 @@ namespace DCL.Web3Authentication
         private readonly string serverUrl;
         private readonly string signatureUrl;
 
-        private SocketIO? webSocket;
+        private SocketIOClient.SocketIO? webSocket;
         private UniTaskCompletionSource<DappSignatureResponse>? signatureOutcomeTask;
         private UniTaskCompletionSource<IWeb3Identity>? identitySolvedTask;
 
@@ -118,16 +121,17 @@ namespace DCL.Web3Authentication
             webSocket.Dispose();
         }
 
-        private SocketIO InitializeWebSocket()
+        private SocketIOClient.SocketIO InitializeWebSocket()
         {
             var uri = new Uri(serverUrl);
 
-            webSocket = new SocketIO(uri, new SocketIOOptions
+            webSocket = new SocketIOClient.SocketIO(uri, new SocketIOOptions
             {
                 Transport = TransportProtocol.WebSocket,
             });
 
-            webSocket.JsonSerializer = new NewtonsoftJsonSerializer();
+            webSocket.JsonSerializer = new NewtonsoftJsonSerializer(new JsonSerializerSettings());
+
             webSocket.On("outcome", ProcessSignatureOutcomeMessage);
 
             return webSocket;
@@ -178,7 +182,6 @@ namespace DCL.Web3Authentication
             UniTaskCompletionSource<SignatureIdResponse> task = new ();
 
             await webSocket!.EmitAsync("request",
-                cancellationToken,
                 r => task.TrySetResult(r.GetValue<SignatureIdResponse>()),
                 new SignatureRequest
                 {
