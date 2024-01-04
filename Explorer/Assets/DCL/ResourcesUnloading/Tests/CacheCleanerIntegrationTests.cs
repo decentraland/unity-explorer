@@ -146,7 +146,7 @@ namespace DCL.ResourcesUnloading.Tests
             var wearableAsset = new WearableAsset(new GameObject(), new List<WearableAsset.RendererInfo>(10), assetBundleData);
             assetBundleData.AddReference();
             var wearable = new Wearable { WearableAssetResults = { [0] = new StreamableLoadingResult<WearableAsset>(wearableAsset) } };
-            wearableCatalog.AddWearable(hashID, wearable);
+            wearableCatalog.AddWearable(hashID, wearable, true);
 
             var cachedWearable = new CachedWearable(wearableAsset, new GameObject());
             wearableAsset.AddReference();

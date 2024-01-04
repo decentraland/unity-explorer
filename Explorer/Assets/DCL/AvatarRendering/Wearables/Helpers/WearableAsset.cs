@@ -53,7 +53,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             disposed = true;
 
             RENDERER_INFO_POOL.Release(rendererInfos);
-            assetBundleData.Dereference();
+            assetBundleData?.Dereference();
 
             if (ReferenceCount > 0)
                 ProfilingCounters.WearablesAssetsReferencedAmount.Value--;
