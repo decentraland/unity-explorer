@@ -4,11 +4,12 @@ namespace DCL.Web3Authentication
 {
     public class DecentralandIdentity : IWeb3Identity
     {
-        private readonly AuthChain authChain;
+        internal readonly AuthChain authChain;
 
         public Web3Address Address { get; }
         public DateTime Expiration { get; }
         public IWeb3Account EphemeralAccount { get; }
+        public bool IsExpired => Expiration < DateTime.UtcNow;
 
         public DecentralandIdentity(
             Web3Address address,

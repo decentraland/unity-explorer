@@ -9,7 +9,7 @@ namespace DCL.WebRequests.Analytics
 
         public IWebRequestsAnalyticsContainer AnalyticsContainer { get; private set; }
 
-        public static WebRequestsContainer Create(IWeb3IdentityProvider web3IdentityProvider)
+        public static WebRequestsContainer Create(IWeb3IdentityCache web3IdentityProvider)
         {
             var analyticsContainer = new WebRequestsAnalyticsContainer().AddTrackedMetric<ActiveCounter>()
                                                                         .AddTrackedMetric<Total>()

@@ -23,9 +23,18 @@ MonoBehaviour:
   - rid: 1501337502808539138
   - rid: 2152807656697888768
   - rid: 8147919132522971138
+  - rid: 1095376790733193218
   references:
     version: 2
     RefIds:
+    - rid: 1095376790733193218
+      type: {class: Web3AuthPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <AuthScreenPrefab>k__BackingField:
+          m_AssetGUID: 08d42937d0bc54b48baaa23c8c520175
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 1268264176566403074
       type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

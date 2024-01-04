@@ -10,7 +10,7 @@ using System.Threading;
 
 namespace DCL.Web3Authentication
 {
-    public class DappWeb3Authenticator : IWeb3Authenticator, IWeb3IdentityProvider
+    public class DappWeb3Authenticator : IWeb3VerifiedAuthenticator
     {
         private const int TIMEOUT_SECONDS = 30;
 
@@ -20,9 +20,7 @@ namespace DCL.Web3Authentication
 
         private SocketIO? webSocket;
         private UniTaskCompletionSource<DappSignatureResponse>? signatureOutcomeTask;
-        private UniTaskCompletionSource<IWeb3Identity>? identitySolvedTask;
-
-        public IWeb3Identity? Identity { get; private set; }
+        private IWeb3VerifiedAuthenticator.VerificationDelegate? verificationCallback;
 
         public DappWeb3Authenticator(IWebBrowser webBrowser,
             string serverUrl,
@@ -36,13 +34,6 @@ namespace DCL.Web3Authentication
         public void Dispose()
         {
             webSocket?.Dispose();
-            Identity?.Dispose();
-        }
-
-        public async UniTask<IWeb3Identity> GetOwnIdentityAsync(CancellationToken ct)
-        {
-            identitySolvedTask ??= new UniTaskCompletionSource<IWeb3Identity>();
-            return await identitySolvedTask.Task.AttachExternalCancellation(ct);
         }
 
         /// <summary>
@@ -64,8 +55,8 @@ namespace DCL.Web3Authentication
                 var ephemeralAccount = NethereumAccount.CreateRandom();
 
                 // 1 week expiration day, just like unity-renderer
-                DateTime expiration = DateTime.UtcNow.AddDays(7);
-                string ephemeralMessage = CreateEphemeralMessage(ephemeralAccount, expiration);
+                DateTime sessionExpiration = DateTime.UtcNow.AddDays(7);
+                string ephemeralMessage = CreateEphemeralMessage(ephemeralAccount, sessionExpiration);
 
                 SignatureIdResponse authenticationResponse = await RequestAuthenticationAsync(ephemeralMessage, cancellationToken);
 
@@ -74,50 +65,31 @@ namespace DCL.Web3Authentication
 
                 await UniTask.SwitchToMainThread(cancellationToken);
 
-                LetUserSignThroughDapp(authenticationResponse.requestId);
+                verificationCallback?.Invoke(authenticationResponse.code, signatureExpiration);
 
-                DappSignatureResponse signature;
-
-                try { signature = await WaitForSignatureOutcomeAsync(signatureExpiration, cancellationToken); }
-                catch (TimeoutException) { throw new SignatureExpiredException(signatureExpiration); }
+                DappSignatureResponse signature = await WaitForUserSignatureAsync(authenticationResponse.requestId,
+                    signatureExpiration, cancellationToken);
 
                 AuthChain authChain = CreateAuthChain(signature, ephemeralMessage);
 
                 // To keep cohesiveness between the platform, convert the user address to lower case
-                Identity = new DecentralandIdentity(new Web3Address(signature.sender.ToLower()),
-                    ephemeralAccount, expiration, authChain);
-
-                identitySolvedTask?.TrySetResult(Identity);
-                identitySolvedTask = null;
-
-                return Identity;
+                return new DecentralandIdentity(new Web3Address(signature.sender.ToLower()),
+                    ephemeralAccount, sessionExpiration, authChain);
             }
             finally
             {
-                if (webSocket != null)
-                {
-                    if (webSocket.Connected)
-                        await webSocket.DisconnectAsync();
-
-                    try { webSocket.Dispose(); }
-                    catch (ObjectDisposedException) { }
-
-                    webSocket = null;
-                }
-
+                await TerminateWebSocket();
                 await UniTask.SwitchToMainThread(cancellationToken);
             }
         }
 
         public async UniTask LogoutAsync(CancellationToken cancellationToken)
         {
-            Identity?.Dispose();
-
-            if (webSocket == null) return;
-
-            await webSocket.DisconnectAsync();
-            webSocket.Dispose();
+            await TerminateWebSocket();
         }
+
+        public void AddVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate callback) =>
+            verificationCallback = callback;
 
         private SocketIO InitializeWebSocket()
         {
@@ -133,6 +105,20 @@ namespace DCL.Web3Authentication
             webSocket.On("outcome", ProcessSignatureOutcomeMessage);
 
             return webSocket;
+        }
+
+        private async UniTask TerminateWebSocket()
+        {
+            if (webSocket != null)
+            {
+                if (webSocket.Connected)
+                    await webSocket.DisconnectAsync();
+
+                try { webSocket.Dispose(); }
+                catch (ObjectDisposedException) { }
+
+                webSocket = null;
+            }
         }
 
         private AuthChain CreateAuthChain(DappSignatureResponse signature, string ephemeralMessage)
@@ -191,13 +177,20 @@ namespace DCL.Web3Authentication
                              .AttachExternalCancellation(cancellationToken);
         }
 
-        private async UniTask<DappSignatureResponse> WaitForSignatureOutcomeAsync(DateTime expiration, CancellationToken ct)
+        private async UniTask<DappSignatureResponse> WaitForUserSignatureAsync(string requestId, DateTime expiration, CancellationToken ct)
         {
+            webBrowser.OpenUrl($"{signatureUrl}/{requestId}");
+
             signatureOutcomeTask = new UniTaskCompletionSource<DappSignatureResponse>();
+
             TimeSpan duration = expiration - DateTime.UtcNow;
 
-            return await signatureOutcomeTask.Task.Timeout(duration)
-                                             .AttachExternalCancellation(ct);
+            try
+            {
+                return await signatureOutcomeTask.Task.Timeout(duration)
+                                                 .AttachExternalCancellation(ct);
+            }
+            catch (TimeoutException) { throw new SignatureExpiredException(expiration); }
         }
 
         [Serializable]

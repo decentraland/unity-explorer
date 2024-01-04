@@ -1,5 +1,4 @@
 using DCL.Optimization.ThreadSafePool;
-using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
@@ -14,7 +13,7 @@ namespace DCL.Web3Authentication
         [JsonConverter(typeof(StringEnumConverter))]
         public AuthLinkType type;
         public string payload;
-        [CanBeNull] public string signature;
+        public string? signature;
     }
 
     public class AuthChain : IEnumerable<AuthLink>, IDisposable

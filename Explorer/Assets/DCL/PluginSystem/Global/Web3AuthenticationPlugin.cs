@@ -1,42 +1,82 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.AuthenticationScreenFlow;
+using DCL.Browser;
 using DCL.DebugUtilities;
+using DCL.Profiles;
 using DCL.Web3Authentication;
+using ECS;
+using MVC;
+using System;
 using System.Threading;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
-    public class Web3AuthenticationPlugin : IDCLGlobalPlugin
+    public class Web3AuthenticationPlugin : IDCLGlobalPlugin<Web3AuthPluginSettings>
     {
-        private readonly IWeb3Authenticator web3Authenticator;
+        private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly IDebugContainerBuilder debugContainerBuilder;
+        private readonly MVCManager mvcManager;
+        private readonly IProfileRepository profileRepository;
+        private readonly IWebBrowser webBrowser;
+        private readonly IRealmData realmData;
+        private readonly IWeb3IdentityCache storedIdentityProvider;
 
         private CancellationTokenSource? cancellationTokenSource;
 
-        public Web3AuthenticationPlugin(IWeb3Authenticator web3Authenticator,
-            IDebugContainerBuilder debugContainerBuilder)
+        public Web3AuthenticationPlugin(
+            IAssetsProvisioner assetsProvisioner,
+            IWeb3VerifiedAuthenticator web3Authenticator,
+            IDebugContainerBuilder debugContainerBuilder,
+            MVCManager mvcManager,
+            IProfileRepository profileRepository,
+            IWebBrowser webBrowser,
+            IRealmData realmData,
+            IWeb3IdentityCache storedIdentityProvider)
         {
+            this.assetsProvisioner = assetsProvisioner;
             this.web3Authenticator = web3Authenticator;
             this.debugContainerBuilder = debugContainerBuilder;
+            this.mvcManager = mvcManager;
+            this.profileRepository = profileRepository;
+            this.webBrowser = webBrowser;
+            this.realmData = realmData;
+            this.storedIdentityProvider = storedIdentityProvider;
         }
 
         public void Dispose() { }
 
-        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
-            UniTask.CompletedTask;
+        public async UniTask InitializeAsync(Web3AuthPluginSettings settings, CancellationToken ct)
+        {
+            AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct)).Value;
+
+            ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod? authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
+
+            mvcManager.RegisterController(new AuthenticationScreenController(authScreenFactory, web3Authenticator, profileRepository,
+                webBrowser, storedIdentityProvider));
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            debugContainerBuilder.AddWidget("Web3 Authentication")
-                                 .AddSingleButton("Login", Login);
+            LoginFromDebugPanelSystem.InjectToWorld(ref builder, debugContainerBuilder, web3Authenticator, mvcManager, realmData);
         }
+    }
 
-        private void Login()
+    public struct Web3AuthPluginSettings : IDCLPluginSettings
+    {
+        [field: Header(nameof(Web3AuthenticationPlugin) + "." + nameof(Web3AuthPluginSettings))]
+        [field: Space]
+        [field: SerializeField]
+        public AuthScreenObjectRef AuthScreenPrefab { get; private set; }
+
+        [Serializable]
+        public class AuthScreenObjectRef : ComponentReference<AuthenticationScreenView>
         {
-            cancellationTokenSource?.Cancel();
-            cancellationTokenSource?.Dispose();
-            cancellationTokenSource = new CancellationTokenSource();
-            web3Authenticator.LoginAsync(cancellationTokenSource.Token).Forget();
+            public AuthScreenObjectRef(string guid) : base(guid) { }
         }
     }
 }
