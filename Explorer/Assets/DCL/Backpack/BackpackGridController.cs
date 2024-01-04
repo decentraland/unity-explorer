@@ -70,18 +70,20 @@ namespace DCL.Backpack
             );
         }
 
-        public void SetGridElements(IWearable[] gridWearables)
+        private void SetGridElements(IWearable[] gridWearables)
         {
             ClearPoolElements();
             for (var i = 0; i < gridWearables.Length; i++)
             {
                 BackpackItemView backpackItemView = gridItemsPool.Get();
+                usedPoolItems.Add(backpackItemView.ItemId, backpackItemView);
+
                 backpackItemView.OnSelectItem += SelectItem;
                 backpackItemView.ItemId = gridWearables[i].GetUrn();
-                usedPoolItems.Add(backpackItemView.ItemId, backpackItemView);
                 backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(gridWearables[i].GetRarity());
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(gridWearables[i].GetRarity());
                 backpackItemView.CategoryImage.sprite = categoryIcons.GetTypeImage(gridWearables[i].GetCategory());
+
                 WaitForThumbnailAsync(gridWearables[i], backpackItemView).Forget();
             }
         }
@@ -107,7 +109,6 @@ namespace DCL.Backpack
             if (!uniTaskAsync.Result.Value.Succeeded)
                 return;
 
-            //TODO Temporary, will create the correct flow in next PR
             SetGridElements(uniTaskAsync.Result.Value.Asset);
         }
 
