@@ -9,6 +9,7 @@ namespace DCL.Web3Authentication
         public Web3Address Address { get; }
         public DateTime Expiration { get; }
         public IWeb3Account EphemeralAccount { get; }
+        public bool IsExpired => Expiration < DateTime.UtcNow;
 
         public DecentralandIdentity(
             Web3Address address,

@@ -101,7 +101,7 @@ namespace DCL.AuthenticationScreenFlow
 
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
 
-            if (storedIdentity != null)
+            if (storedIdentity is { IsExpired: false })
             {
                 SwitchState(ViewState.Loading);
 
