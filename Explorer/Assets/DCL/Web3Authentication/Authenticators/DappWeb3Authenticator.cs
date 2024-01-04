@@ -83,14 +83,14 @@ namespace DCL.Web3Authentication.Authenticators
             }
             finally
             {
-                await TerminateWebSocket();
+                await TerminateWebSocketAsync();
                 await UniTask.SwitchToMainThread(cancellationToken);
             }
         }
 
         public async UniTask LogoutAsync(CancellationToken cancellationToken)
         {
-            await TerminateWebSocket();
+            await TerminateWebSocketAsync();
         }
 
         public void AddVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate callback) =>
@@ -112,7 +112,7 @@ namespace DCL.Web3Authentication.Authenticators
             return webSocket;
         }
 
-        private async UniTask TerminateWebSocket()
+        private async UniTask TerminateWebSocketAsync()
         {
             if (webSocket != null)
             {
