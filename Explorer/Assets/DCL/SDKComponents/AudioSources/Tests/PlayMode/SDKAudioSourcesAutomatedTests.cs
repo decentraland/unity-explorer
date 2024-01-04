@@ -1,21 +1,15 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
-using DCL.PluginSystem.World;
 using DCL.Web3Authentication;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.AudioClips;
 using Global;
 using UnityEngine.TestTools;
 using System.Collections;
-using NUnit.Framework;
-using SceneRunner;
 using SceneRunner.Scene;
 using System;
-using System.Linq;
 using System.Threading;
 using UnityEditor;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
 {
