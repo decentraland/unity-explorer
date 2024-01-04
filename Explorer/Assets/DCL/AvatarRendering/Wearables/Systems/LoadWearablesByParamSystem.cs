@@ -52,18 +52,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
         protected override async UniTask<StreamableLoadingResult<IWearable[]>> FlowInternalAsync(GetWearableByParamIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             await UniTask.WaitUntil(isRealmDataReady, cancellationToken: ct);
-            URLAddress urlAddress = BuildURL(intention.UserID, intention.Params);
-            Debug.Log("Lambda response address: " + urlAddress);
 
             WearableDTO.LambdaResponse lambdaResponse =
-                await (await webRequestController.GetAsync(new CommonArguments(urlAddress, attemptsCount: 1), ct, GetReportCategory()))
+                await (await webRequestController.GetAsync(new CommonArguments(BuildURL(intention.UserID, intention.Params), attemptsCount: 1), ct, GetReportCategory()))
                    .CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
-
-            Debug.Log($"Lambda response {lambdaResponse.elements.Count} elements");
-            foreach (WearableDTO.LambdaResponseElementDto lambdaResponseElementDto in lambdaResponse.elements)
-            {
-                Debug.Log($"Lambda response element {lambdaResponseElementDto.name} {lambdaResponseElementDto.category} {lambdaResponseElementDto.entity.metadata.rarity}");
-            }
+            
             for (var i = 0; i < lambdaResponse.elements.Count; i++)
             {
                 WearableDTO wearableDto = lambdaResponse.elements[i].entity;

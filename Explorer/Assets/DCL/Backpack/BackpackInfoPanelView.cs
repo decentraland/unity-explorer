@@ -16,9 +16,6 @@ namespace DCL.Backpack
         public TMP_Text Name { get; private set; }
 
         [field: SerializeField]
-        public TMP_Text Creator { get; private set; }
-
-        [field: SerializeField]
         public TMP_Text Description { get; private set; }
     }
 }

@@ -53,7 +53,6 @@ namespace DCL.Backpack
 
         private async UniTaskVoid WaitForThumbnail(IWearable equippedWearable)
         {
-            //Do while is better than waituntill from a resource point of view?????
             do
             {
                 await UniTask.Delay(500);

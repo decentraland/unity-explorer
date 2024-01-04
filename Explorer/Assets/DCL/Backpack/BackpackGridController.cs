@@ -79,7 +79,7 @@ namespace DCL.Backpack
 
         public void RequestPage(int pageNumber)
         {
-            //Reuse params array and review types URLParameter
+            //Reuse params array and review types URLParameter once auth pr is merged
             ParamPromise wearablesPromise = ParamPromise.Create(world, new GetWearableByParamIntention(new[] { ("pageNumber", string.Format("{0}", pageNumber)), ("pageSize", "16") }, web3Authenticator.Identity.EphemeralAccount.Address, new List<IWearable>()), PartitionComponent.TOP_PRIORITY);
             AwaitWearablesPromise(wearablesPromise).Forget();
         }

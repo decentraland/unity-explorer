@@ -33,7 +33,6 @@ namespace DCL.AvatarRendering.Wearables.Components
                 }
             }
 
-            Debug.Log($"Thumbnail is {thumbnailHash}");
             return thumbnailHash;
         }
 

@@ -34,13 +34,11 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            //What mutex sync should we use here?
             LoadGlobalTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, new MutexSync());
         }
 
 #region Interface Ambiguity
         UniTask IDCLPlugin.Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
-            // Don't even try to retrieve empty settings
             UniTask.CompletedTask;
 
         UniTask IDCLPlugin<NoExposedPluginSettings>.InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
