@@ -36,14 +36,14 @@ namespace DCL.SDKComponents.SceneUI.Systems
         [Query]
         [None(typeof(PBUiTransform), typeof(DeleteEntityIntention))]
         private void HandleUITransformRemoval(ref UITransformComponent uiTransformComponent) =>
-            RemoveVisualElement(uiTransformComponent);
+            RemoveVisualElement(ref uiTransformComponent);
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void HandleEntityDestruction(ref UITransformComponent uiTransformComponent) =>
-            RemoveVisualElement(uiTransformComponent);
+            RemoveVisualElement(ref uiTransformComponent);
 
-        private void RemoveVisualElement(UITransformComponent uiTransformComponent)
+        private void RemoveVisualElement(ref UITransformComponent uiTransformComponent)
         {
             if (!poolsRegistry.TryGetPool(typeof(VisualElement), out IComponentPool componentPool))
                 return;

@@ -37,36 +37,37 @@ namespace DCL.SDKComponents.SceneUI.Systems
         private void InstantiateNonExistingUIText(in Entity entity, ref PBUiText sdkComponent, ref UITransformComponent transform)
         {
             var uiTextComponent = new UITextComponent();
-            InstantiateLabel(ref uiTextComponent, ref sdkComponent, ref transform);
+            InstantiateLabel(entity, ref uiTextComponent, ref sdkComponent, ref transform);
             World.Add(entity, uiTextComponent);
         }
 
         [Query]
         [All(typeof(PBUiText), typeof(UITransformComponent), typeof(UITextComponent))]
-        private void TrySetupExistingUIText(ref UITextComponent uiTextComponent, ref PBUiText sdkComponent, ref UITransformComponent uiTransformComponent)
+        private void TrySetupExistingUIText(in Entity entity, ref UITextComponent uiTextComponent, ref PBUiText sdkComponent, ref UITransformComponent uiTransformComponent)
         {
             if (!sdkComponent.IsDirty)
                 return;
 
             if (ReferenceEquals(uiTextComponent.Label, null))
-                InstantiateLabel(ref uiTextComponent, ref sdkComponent, ref uiTransformComponent);
+                InstantiateLabel(entity, ref uiTextComponent, ref sdkComponent, ref uiTransformComponent);
             else
-                SetupLabel(uiTextComponent.Label, sdkComponent, uiTransformComponent);
+                SetupLabel(ref uiTextComponent.Label, ref sdkComponent, ref uiTransformComponent);
 
             sdkComponent.IsDirty = false;
         }
 
-        private void InstantiateLabel(ref UITextComponent uiTextComponent, ref PBUiText sdkComponent, ref UITransformComponent uiTransformComponent)
+        private void InstantiateLabel(in Entity entity, ref UITextComponent uiTextComponent, ref PBUiText sdkComponent, ref UITransformComponent uiTransformComponent)
         {
             var label = labelsPool.Get();
+            label.name = $"UIText (Entity {entity.Id})";
             UiElementUtils.SetElementDefaultStyle(label.style);
             uiTransformComponent.Transform.Add(label);
             uiTextComponent.Label = label;
 
-            SetupLabel(label, sdkComponent, uiTransformComponent);
+            SetupLabel(ref label, ref sdkComponent, ref uiTransformComponent);
         }
 
-        private static void SetupLabel(Label labelToSetup, PBUiText model, UITransformComponent uiTransformComponent)
+        private static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent)
         {
             labelToSetup.pickingMode = PickingMode.Ignore;
 

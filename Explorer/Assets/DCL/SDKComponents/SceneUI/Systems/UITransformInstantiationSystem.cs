@@ -40,35 +40,36 @@ namespace DCL.SDKComponents.SceneUI.Systems
         private void InstantiateNonExistingUITransform(in Entity entity, ref PBUiTransform sdkComponent)
         {
             var uiTransformComponent = new UITransformComponent();
-            InstantiateEmptyVisualElement(ref uiTransformComponent, ref sdkComponent);
+            InstantiateEmptyVisualElement(entity, ref uiTransformComponent, ref sdkComponent);
             World.Add(entity, uiTransformComponent);
         }
 
         [Query]
         [All(typeof(PBUiTransform), typeof(UITransformComponent))]
-        private void TrySetupExistingUITransform(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkComponent)
+        private void TrySetupExistingUITransform(in Entity entity, ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkComponent)
         {
             if (!sdkComponent.IsDirty)
                 return;
 
             if (ReferenceEquals(uiTransformComponent.Transform, null))
-                InstantiateEmptyVisualElement(ref uiTransformComponent, ref sdkComponent);
+                InstantiateEmptyVisualElement(entity, ref uiTransformComponent, ref sdkComponent);
             else
-                SetupVisualElement(uiTransformComponent.Transform, sdkComponent);
+                SetupVisualElement(ref uiTransformComponent.Transform, ref sdkComponent);
 
             sdkComponent.IsDirty = false;
         }
 
-        private void InstantiateEmptyVisualElement(ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkComponent)
+        private void InstantiateEmptyVisualElement(Entity entity, ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkComponent)
         {
             var transform = transformsPool.Get();
+            transform.name = $"UITransform (Entity {entity.Id})";
             canvas.rootVisualElement.Add(transform);
             uiTransformComponent.Transform = transform;
 
-            SetupVisualElement(transform, sdkComponent);
+            SetupVisualElement(ref transform, ref sdkComponent);
         }
 
-        private static void SetupVisualElement(VisualElement visualElementToSetup, PBUiTransform model)
+        private static void SetupVisualElement(ref VisualElement visualElementToSetup, ref PBUiTransform model)
         {
             visualElementToSetup.style.display = UiElementUtils.GetDisplay(model.Display);
             visualElementToSetup.style.overflow = UiElementUtils.GetOverflow(model.Overflow);
