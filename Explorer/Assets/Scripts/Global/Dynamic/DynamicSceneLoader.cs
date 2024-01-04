@@ -4,6 +4,8 @@ using DCL.Browser;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Web3Authentication;
+using DCL.Web3Authentication.Authenticators;
+using DCL.Web3Authentication.Identities;
 using System;
 using System.Threading;
 using UnityEngine;

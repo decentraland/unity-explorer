@@ -1,6 +1,6 @@
 ﻿using Nethereum.Signer;
 
-namespace DCL.Web3Authentication
+namespace DCL.Web3Authentication.Accounts
 {
     public class NethereumAccount : IWeb3Account
     {

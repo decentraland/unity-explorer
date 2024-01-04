@@ -3,7 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace DCL.Web3Authentication
+namespace DCL.Web3Authentication.Chains
 {
     public class AuthChain : IEnumerable<AuthLink>, IDisposable
     {

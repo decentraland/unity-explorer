@@ -9,6 +9,8 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Web3Authentication;
 using DCL.Profiles;
+using DCL.Web3Authentication.Authenticators;
+using DCL.Web3Authentication.Identities;
 using DCL.WebRequests.Analytics;
 using ECS;
 using ECS.Prioritization.Components;

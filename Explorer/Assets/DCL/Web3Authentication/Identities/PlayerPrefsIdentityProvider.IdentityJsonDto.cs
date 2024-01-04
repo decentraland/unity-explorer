@@ -1,7 +1,8 @@
+using DCL.Web3Authentication.Chains;
 using System;
 using System.Collections.Generic;
 
-namespace DCL.Web3Authentication
+namespace DCL.Web3Authentication.Identities
 {
     public partial class PlayerPrefsIdentityProvider
     {

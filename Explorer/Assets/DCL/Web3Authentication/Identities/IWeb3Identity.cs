@@ -1,6 +1,8 @@
+using DCL.Web3Authentication.Accounts;
+using DCL.Web3Authentication.Chains;
 using System;
 
-namespace DCL.Web3Authentication
+namespace DCL.Web3Authentication.Identities
 {
     public interface IWeb3Identity : IDisposable
     {

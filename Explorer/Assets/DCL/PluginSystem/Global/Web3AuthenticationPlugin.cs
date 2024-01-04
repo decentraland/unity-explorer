@@ -6,6 +6,8 @@ using DCL.Browser;
 using DCL.DebugUtilities;
 using DCL.Profiles;
 using DCL.Web3Authentication;
+using DCL.Web3Authentication.Authenticators;
+using DCL.Web3Authentication.Identities;
 using ECS;
 using MVC;
 using System;

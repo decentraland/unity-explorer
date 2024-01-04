@@ -1,9 +1,11 @@
+using DCL.Web3Authentication.Accounts;
+using DCL.Web3Authentication.Chains;
 using Nethereum.Signer;
 using Newtonsoft.Json;
 using System;
 using System.Globalization;
 
-namespace DCL.Web3Authentication
+namespace DCL.Web3Authentication.Identities
 {
     public partial class PlayerPrefsIdentityProvider
     {

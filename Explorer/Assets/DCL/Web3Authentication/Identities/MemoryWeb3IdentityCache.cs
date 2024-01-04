@@ -1,4 +1,4 @@
-namespace DCL.Web3Authentication
+namespace DCL.Web3Authentication.Identities
 {
     public class MemoryWeb3IdentityCache : IWeb3IdentityCache
     {

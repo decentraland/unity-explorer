@@ -1,5 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Web3Authentication.Accounts;
+using DCL.Web3Authentication.Chains;
+using DCL.Web3Authentication.Identities;
 using Newtonsoft.Json;
 using SocketIOClient;
 using SocketIOClient.Newtonsoft.Json;
@@ -8,7 +11,7 @@ using System;
 using System.Globalization;
 using System.Threading;
 
-namespace DCL.Web3Authentication
+namespace DCL.Web3Authentication.Authenticators
 {
     public partial class DappWeb3Authenticator : IWeb3VerifiedAuthenticator
     {

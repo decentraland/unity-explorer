@@ -6,6 +6,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.Web3Authentication;
+using DCL.Web3Authentication.Authenticators;
 using ECS;
 using ECS.Abstract;
 using MVC;

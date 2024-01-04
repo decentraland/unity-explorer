@@ -1,6 +1,6 @@
 using System;
 
-namespace DCL.Web3Authentication
+namespace DCL.Web3Authentication.Identities
 {
     public class Web3IdentityException : Exception
     {

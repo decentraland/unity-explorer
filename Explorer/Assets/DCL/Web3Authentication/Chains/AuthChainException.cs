@@ -1,6 +1,6 @@
 using System;
 
-namespace DCL.Web3Authentication
+namespace DCL.Web3Authentication.Chains
 {
     public class AuthChainException : Exception
     {

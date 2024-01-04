@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
 
-namespace DCL.Web3Authentication
+namespace DCL.Web3Authentication.Chains
 {
     [Serializable]
     public struct AuthLink

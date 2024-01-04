@@ -1,4 +1,4 @@
-namespace DCL.Web3Authentication
+namespace DCL.Web3Authentication.Accounts
 {
     public interface IWeb3Account
     {

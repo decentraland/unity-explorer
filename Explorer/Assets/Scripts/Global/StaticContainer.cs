@@ -16,6 +16,7 @@ using DCL.ResourcesUnloading;
 using DCL.Time;
 using DCL.WebRequests.Analytics;
 using DCL.Web3Authentication;
+using DCL.Web3Authentication.Identities;
 using ECS.Prioritization;
 using System.Collections.Generic;
 using System.Threading;

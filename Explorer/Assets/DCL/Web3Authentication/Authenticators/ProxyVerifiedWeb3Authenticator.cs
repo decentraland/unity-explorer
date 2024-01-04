@@ -1,4 +1,6 @@
-namespace DCL.Web3Authentication
+using DCL.Web3Authentication.Identities;
+
+namespace DCL.Web3Authentication.Authenticators
 {
     public class ProxyVerifiedWeb3Authenticator : ProxyWeb3Authenticator, IWeb3VerifiedAuthenticator
     {

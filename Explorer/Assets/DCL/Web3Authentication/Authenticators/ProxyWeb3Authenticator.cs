@@ -1,8 +1,8 @@
 using Cysharp.Threading.Tasks;
-using System;
+using DCL.Web3Authentication.Identities;
 using System.Threading;
 
-namespace DCL.Web3Authentication
+namespace DCL.Web3Authentication.Authenticators
 {
     public class ProxyWeb3Authenticator : IWeb3Authenticator
     {
