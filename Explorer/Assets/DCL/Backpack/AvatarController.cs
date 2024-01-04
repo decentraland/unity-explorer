@@ -23,6 +23,7 @@ namespace DCL.Backpack
         public AvatarController(AvatarView view,
             AvatarSlotView[] slotViews,
             NftTypeIconSO rarityBackgrounds,
+            NftTypeIconSO rarityInfoPanelBackgrounds,
             NftTypeIconSO categoryIcons,
             NFTColorsSO rarityColors,
             BackpackCommandBus backpackCommandBus,
@@ -33,7 +34,7 @@ namespace DCL.Backpack
 
             slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus, rarityBackgrounds);
             backpackGridController = new BackpackGridController(view.backpackGridView, backpackCommandBus, backpackEventBus, web3Authenticator, rarityBackgrounds, rarityColors, categoryIcons);
-            backpackInfoPanelController = new BackpackInfoPanelController(view.backpackInfoPanelView, backpackEventBus, categoryIcons);
+            backpackInfoPanelController = new BackpackInfoPanelController(view.backpackInfoPanelView, backpackEventBus, categoryIcons, rarityInfoPanelBackgrounds);
             rectTransform = view.GetComponent<RectTransform>();
         }
 

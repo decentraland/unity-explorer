@@ -76,6 +76,7 @@ namespace DCL.Backpack
             for (var i = 0; i < gridWearables.Length; i++)
             {
                 BackpackItemView backpackItemView = gridItemsPool.Get();
+                backpackItemView.OnSelectItem += SelectItem;
                 backpackItemView.ItemId = gridWearables[i].GetUrn();
                 usedPoolItems.Add(backpackItemView.ItemId, backpackItemView);
                 backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(gridWearables[i].GetRarity());
@@ -88,7 +89,6 @@ namespace DCL.Backpack
         private BackpackItemView CreateBackpackItem(BackpackItemView backpackItem)
         {
             BackpackItemView backpackItemView = Object.Instantiate(backpackItem, view.gameObject.transform);
-            backpackItem.OnSelectItem += ()=>SelectItem(backpackItem.ItemId);
             backpackItem.EquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackEquipCommand(backpackItemView.ItemId)));
             return backpackItemView;
         }
@@ -96,7 +96,7 @@ namespace DCL.Backpack
         public void RequestPage(int pageNumber)
         {
             //Reuse params array and review types URLParameter once auth pr is merged
-            ParamPromise wearablesPromise = ParamPromise.Create(world, new GetWearableByParamIntention(new[] { ("pageNumber", string.Format("{0}", pageNumber)), ("pageSize", "16") }, "0x8e41609eD5e365Ac23C28d9625Bd936EA9C9E22c"/*web3Authenticator.Identity.EphemeralAccount.Address*/, new List<IWearable>()), PartitionComponent.TOP_PRIORITY);
+            ParamPromise wearablesPromise = ParamPromise.Create(world, new GetWearableByParamIntention(new[] { ("pageNumber", string.Format("{0}", pageNumber)), ("pageSize", "16") }, web3Authenticator.Identity.EphemeralAccount.Address, new List<IWearable>()), PartitionComponent.TOP_PRIORITY);
             AwaitWearablesPromiseAsync(wearablesPromise).Forget();
         }
 
@@ -127,6 +127,7 @@ namespace DCL.Backpack
         {
             foreach (var backpackItemView in usedPoolItems)
             {
+                backpackItemView.Value.OnSelectItem -= SelectItem;
                 backpackItemView.Value.EquippedIcon.SetActive(false);
                 gridItemsPool.Release(backpackItemView.Value);
             }

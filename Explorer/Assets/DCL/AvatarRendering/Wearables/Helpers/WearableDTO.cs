@@ -31,6 +31,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             //urn
             public string id;
+            public string name;
 
             public I18n[] i18n;
             public string thumbnail;

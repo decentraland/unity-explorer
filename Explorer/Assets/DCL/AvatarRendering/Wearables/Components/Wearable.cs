@@ -74,6 +74,9 @@ namespace DCL.AvatarRendering.Wearables.Components
         public string GetUrn() =>
             WearableDTO.Asset.metadata.id;
 
+        public string GetName() =>
+            WearableDTO.Asset.metadata.name;
+
         public string GetCategory() =>
             WearableDTO.Asset.metadata.data.category;
 

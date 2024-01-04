@@ -24,6 +24,8 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         string GetUrn();
 
+        string GetName();
+
         string GetCategory();
 
         string GetDescription();

@@ -15,6 +15,9 @@ namespace DCL.Backpack
         public AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; private set; }
 
         [field: SerializeField]
+        public AssetReferenceT<NftTypeIconSO> RarityInfoPanelBackgroundsMapping { get; private set; }
+
+        [field: SerializeField]
         public AssetReferenceT<NFTColorsSO> RarityColorMappings { get; private set; }
     }
 }

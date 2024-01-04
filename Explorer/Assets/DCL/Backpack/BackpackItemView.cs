@@ -7,7 +7,7 @@ namespace DCL.Backpack
 {
     public class BackpackItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
-        public event Action OnSelectItem;
+        public event Action<string> OnSelectItem;
 
         [field: SerializeField]
         public string ItemId { get; set; }
@@ -53,7 +53,10 @@ namespace DCL.Backpack
 
         public void OnPointerClick(PointerEventData eventData)
         {
-            OnSelectItem?.Invoke();
+            if (string.IsNullOrEmpty(ItemId))
+                return;
+
+            OnSelectItem?.Invoke(ItemId);
         }
     }
 }

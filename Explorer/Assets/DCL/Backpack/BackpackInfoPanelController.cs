@@ -1,6 +1,9 @@
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using System;
+using UnityEngine;
+using Utility;
 
 namespace DCL.Backpack
 {
@@ -8,22 +11,42 @@ namespace DCL.Backpack
     {
         private readonly BackpackInfoPanelView view;
         private readonly BackpackEventBus backpackEventBus;
-        private NftTypeIconSO categoryIcons;
+        private readonly NftTypeIconSO categoryIcons;
+        private readonly NftTypeIconSO rarityInfoPanelBackgrounds;
 
-        public BackpackInfoPanelController(BackpackInfoPanelView view, BackpackEventBus backpackEventBus, NftTypeIconSO categoryIcons)
+        public BackpackInfoPanelController(
+            BackpackInfoPanelView view,
+            BackpackEventBus backpackEventBus,
+            NftTypeIconSO categoryIcons,
+            NftTypeIconSO rarityInfoPanelBackgrounds)
         {
             this.view = view;
             this.backpackEventBus = backpackEventBus;
             this.categoryIcons = categoryIcons;
+            this.rarityInfoPanelBackgrounds = rarityInfoPanelBackgrounds;
 
             backpackEventBus.SelectEvent += SetPanelContent;
         }
 
         private void SetPanelContent(IWearable wearable)
         {
-            view.Name.text = "";
+            view.Name.text = wearable.GetName();
             view.Description.text = wearable.GetDescription();
             view.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
+            view.RarityBackground.sprite = rarityInfoPanelBackgrounds.GetTypeImage(wearable.GetRarity());
+            WaitForThumbnailAsync(wearable).Forget();
+        }
+
+        private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable)
+        {
+            do
+            {
+                await UniTask.Delay(500);
+            }
+            while (itemWearable.WearableThumbnail == null);
+
+            Texture2D valueAsset = itemWearable.WearableThumbnail.Value.Asset;
+            view.WearableThumbnail.sprite = Sprite.Create(valueAsset, new Rect(0, 0, valueAsset.width, valueAsset.height), VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false);
         }
 
         public void Dispose()

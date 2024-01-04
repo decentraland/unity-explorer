@@ -1221,10 +1221,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e72586a42cf441ff84e93576d0da1d6f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <ItemImage>k__BackingField: {fileID: 6761031925246617703}
+  <WearableThumbnail>k__BackingField: {fileID: 6761031925246617703}
   <CategoryImage>k__BackingField: {fileID: 5700207190427280376}
+  <RarityBackground>k__BackingField: {fileID: 4187698545446770879}
   <Name>k__BackingField: {fileID: 5428682008549936836}
-  <Creator>k__BackingField: {fileID: 3121498563796043484}
   <Description>k__BackingField: {fileID: 5818285717481497885}
 --- !u!1 &9106849854819600615
 GameObject:

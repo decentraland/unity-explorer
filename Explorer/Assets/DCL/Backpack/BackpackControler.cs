@@ -36,6 +36,7 @@ namespace DCL.Backpack
             public BackpackControler(
                 BackpackView view,
                 NftTypeIconSO rarityBackgrounds,
+                NftTypeIconSO rarityInfoPanelBackgrounds,
                 NftTypeIconSO categoryIcons,
                 NFTColorsSO rarityColors,
                 BackpackCommandBus backpackCommandBus,
@@ -49,7 +50,7 @@ namespace DCL.Backpack
                 this.web3Authenticator = web3Authenticator;
 
                 rectTransform = view.transform.parent.GetComponent<RectTransform>();
-                avatarController = new AvatarController(view.GetComponentInChildren<AvatarView>(),view.GetComponentsInChildren<AvatarSlotView>(), rarityBackgrounds, categoryIcons, rarityColors, backpackCommandBus, backpackEventBus, web3Authenticator);
+                avatarController = new AvatarController(view.GetComponentInChildren<AvatarView>(),view.GetComponentsInChildren<AvatarSlotView>(), rarityBackgrounds, rarityInfoPanelBackgrounds, categoryIcons, rarityColors, backpackCommandBus, backpackEventBus, web3Authenticator);
 
                 Dictionary<BackpackSections, ISection> backpackSections = new ()
                 {
