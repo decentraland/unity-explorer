@@ -11,6 +11,8 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using DCL.Optimization.PerformanceBudgeting;
+using NSubstitute;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.Wearables.Tests
@@ -83,18 +85,37 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             //Look for an empty and a non-empty default wearable
             var tiaraDefaultWearable =
-                wearableCatalog.GetDefaultWearable(BodyShape.MALE, WearablesConstants.Categories.TIARA);
+                wearableCatalog.GetDefaultWearable(BodyShape.MALE, WearablesConstants.Categories.TIARA,
+                    out var shouldBeEmpty);
             var upperBodyDefaultWearable =
-                wearableCatalog.GetDefaultWearable(BodyShape.MALE, WearablesConstants.Categories.UPPER_BODY);
+                wearableCatalog.GetDefaultWearable(BodyShape.MALE, WearablesConstants.Categories.UPPER_BODY,
+                    out var shouldntBeEmpty);
 
             Assert.AreEqual(tiaraDefaultWearable.WearableAssetResults[BodyShape.MALE].Value.Asset.GameObject,
                 emptyDefaultWearable);
             Assert.AreEqual(tiaraDefaultWearable.GetUrn(), WearablesConstants.EMPTY_DEFAULT_WEARABLE);
+            Assert.IsTrue(shouldBeEmpty);
             //In this test suite we are not loading the default wearables through the LoadAssetBundleSystem.
             //So, to confirm that the default wearable is not loaded, we check that the asset is null and that the urn is not from the empty default wearable
             Assert.AreEqual(upperBodyDefaultWearable.WearableAssetResults[BodyShape.MALE], null);
             Assert.AreNotEqual(upperBodyDefaultWearable.GetUrn(), WearablesConstants.EMPTY_DEFAULT_WEARABLE);
+            Assert.IsFalse(shouldntBeEmpty);
+        }
 
+        [Test]
+        public void HasUnloadPolicySet()
+        {
+            system.Initialize();
+
+            var defaultWearableCount = wearableCatalog.wearablesCache.Keys.Count;
+            wearableCatalog.AddEmptyWearable("Wearable_To_Be_Unloaded");
+            Assert.AreEqual(wearableCatalog.wearablesCache.Keys.Count, defaultWearableCount + 1);
+
+            var concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+            concurrentBudgetProvider.TrySpendBudget().Returns(true);
+            wearableCatalog.Unload(concurrentBudgetProvider);
+
+            Assert.AreEqual(wearableCatalog.wearablesCache.Keys.Count, defaultWearableCount);
         }
     }
 }

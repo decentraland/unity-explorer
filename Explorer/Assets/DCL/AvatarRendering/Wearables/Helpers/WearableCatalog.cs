@@ -14,7 +14,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         internal Dictionary<string, IWearable> wearablesCache { get; } = new ();
 
-        public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto, bool persistent = true)
+        public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto, bool qualifiedForUnloading = true)
         {
             return TryGetWearable(wearableDto.metadata.id, out IWearable existingWearable)
                 ? existingWearable
@@ -22,18 +22,18 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 {
                     WearableDTO = new StreamableLoadingResult<WearableDTO>(wearableDto),
                     IsLoading = false
-                }, persistent);
+                }, qualifiedForUnloading);
         }
 
-        public void AddEmptyWearable(string loadingIntentionPointer, bool persistent = true)
+        public void AddEmptyWearable(string loadingIntentionPointer, bool qualifiedForUnloading = true)
         {
-            AddWearable(loadingIntentionPointer, new Wearable(), persistent);
+            AddWearable(loadingIntentionPointer, new Wearable(), qualifiedForUnloading);
         }
 
-        internal IWearable AddWearable(string loadingIntentionPointer, IWearable wearable, bool persistent = true)
+        internal IWearable AddWearable(string loadingIntentionPointer, IWearable wearable, bool qualifiedForUnloading)
         {
             wearablesCache.Add(loadingIntentionPointer, wearable);
-            if (persistent)
+            if (qualifiedForUnloading)
                 cacheKeysDictionary[loadingIntentionPointer] =
                     listedCacheKeys.AddLast((loadingIntentionPointer, MultithreadingUtility.FrameCount));
             return wearable;
@@ -50,9 +50,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return false;
         }
 
-        public IWearable GetDefaultWearable(BodyShape bodyShape, string category)
+        public IWearable GetDefaultWearable(BodyShape bodyShape, string category, out bool hasEmptyDefaultWearableAB)
         {
-            string wearableURN = WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category);
+            var wearableURN =
+                WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category,
+                    out hasEmptyDefaultWearableAB);
 
             UpdateListedCachePriority(@for: wearableURN);
             return wearablesCache[wearableURN];
