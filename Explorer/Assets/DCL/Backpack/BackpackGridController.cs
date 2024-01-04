@@ -5,14 +5,11 @@ using DCL.AssetsProvision;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Backpack.BackpackBus;
-using DCL.Profiles;
 using DCL.Web3Authentication;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
@@ -81,10 +78,10 @@ namespace DCL.Backpack
         {
             //Reuse params array and review types URLParameter once auth pr is merged
             ParamPromise wearablesPromise = ParamPromise.Create(world, new GetWearableByParamIntention(new[] { ("pageNumber", string.Format("{0}", pageNumber)), ("pageSize", "16") }, web3Authenticator.Identity.EphemeralAccount.Address, new List<IWearable>()), PartitionComponent.TOP_PRIORITY);
-            AwaitWearablesPromise(wearablesPromise).Forget();
+            AwaitWearablesPromiseAsync(wearablesPromise).Forget();
         }
 
-        private async UniTaskVoid AwaitWearablesPromise(ParamPromise wearablesPromise)
+        private async UniTaskVoid AwaitWearablesPromiseAsync(ParamPromise wearablesPromise)
         {
             AssetPromise<IWearable[],GetWearableByParamIntention> uniTaskAsync = await wearablesPromise.ToUniTaskAsync(world);
 

@@ -48,10 +48,10 @@ namespace DCL.Backpack
 
             avatarSlotView.SlotWearableUrn = equippedWearable.GetUrn();
             avatarSlotView.SlotWearableRarityBackground.sprite = rarityBackgrounds.GetTypeImage(equippedWearable.GetRarity());
-            WaitForThumbnail(equippedWearable).Forget();
+            WaitForThumbnailAsync(equippedWearable).Forget();
         }
 
-        private async UniTaskVoid WaitForThumbnail(IWearable equippedWearable)
+        private async UniTaskVoid WaitForThumbnailAsync(IWearable equippedWearable)
         {
             do
             {

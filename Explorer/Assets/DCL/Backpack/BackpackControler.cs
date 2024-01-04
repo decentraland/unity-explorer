@@ -80,11 +80,11 @@ namespace DCL.Backpack
                 World world = builder.World;
                 avatarController.InjectToWorld(ref builder, playerEntity);
                 profileLoadingCts = new CancellationTokenSource();
-                AwaitForProfile(world, playerEntity, profileLoadingCts).Forget();
+                AwaitForProfileAsync(world, playerEntity, profileLoadingCts).Forget();
             }
 
 
-            private async UniTaskVoid AwaitForProfile(World world, Entity playerEntity, CancellationTokenSource cts)
+            private async UniTaskVoid AwaitForProfileAsync(World world, Entity playerEntity, CancellationTokenSource cts)
             {
                 do
                 {
