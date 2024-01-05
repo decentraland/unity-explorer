@@ -29,20 +29,20 @@ namespace DCL.SDKComponents.SceneUI.Systems
 
         protected override void Update(float t)
         {
-            DoParentingQuery(World);
+            DoUITransformParentingQuery(World);
         }
 
         [Query]
         [All(typeof(PBUiTransform), typeof(UITransformComponent))]
-        private void DoParenting(in Entity entity, ref PBUiTransform sdkTransform, ref UITransformComponent transformComponent)
+        private void DoUITransformParenting(in Entity entity, ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
         {
-            if (!sdkTransform.IsDirty)
+            if (!sdkModel.IsDirty)
                 return;
 
-            if (entitiesMap.TryGetValue(sdkTransform.Parent, out Entity newParentEntity) &&
+            if (entitiesMap.TryGetValue(sdkModel.Parent, out Entity newParentEntity) &&
                 newParentEntity != sceneRoot &&
-                !transformComponent.Transform.Contains(World.Get<UITransformComponent>(newParentEntity).Transform)) // TODO: This check shouldn't be needed!
-                SetNewChild(ref transformComponent, World.Reference(entity), newParentEntity);
+                !uiTransformComponent.Transform.Contains(World.Get<UITransformComponent>(newParentEntity).Transform)) // TODO: This check shouldn't be needed!
+                SetNewChild(ref uiTransformComponent, World.Reference(entity), newParentEntity);
         }
 
         private void SetNewChild(ref UITransformComponent childComponent, EntityReference childEntityReference, Entity parentEntity)

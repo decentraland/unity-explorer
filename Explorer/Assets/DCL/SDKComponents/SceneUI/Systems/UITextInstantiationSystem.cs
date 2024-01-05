@@ -5,7 +5,6 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
-using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
@@ -27,58 +26,34 @@ namespace DCL.SDKComponents.SceneUI.Systems
 
         protected override void Update(float t)
         {
-            InstantiateNonExistingUITextQuery(World);
-            TrySetupExistingUITextQuery(World);
+            InstantiateUITextQuery(World);
+            UpdateUITextQuery(World);
         }
 
         [Query]
         [All(typeof(PBUiText), typeof(PBUiTransform), typeof(UITransformComponent))]
         [None(typeof(UITextComponent))]
-        private void InstantiateNonExistingUIText(in Entity entity, ref PBUiText sdkComponent, ref UITransformComponent transform)
+        private void InstantiateUIText(in Entity entity, ref UITransformComponent uiTransformComponent)
         {
+            var label = labelsPool.Get();
+            label.name = $"UIText (Entity {entity.Id})";
+            label.pickingMode = PickingMode.Ignore;
+            UiElementUtils.SetElementDefaultStyle(label.style);
+            uiTransformComponent.Transform.Add(label);
             var uiTextComponent = new UITextComponent();
-            InstantiateLabel(entity, ref uiTextComponent, ref sdkComponent, ref transform);
+            uiTextComponent.Label = label;
             World.Add(entity, uiTextComponent);
         }
 
         [Query]
         [All(typeof(PBUiText), typeof(UITransformComponent), typeof(UITextComponent))]
-        private void TrySetupExistingUIText(in Entity entity, ref UITextComponent uiTextComponent, ref PBUiText sdkComponent, ref UITransformComponent uiTransformComponent)
+        private void UpdateUIText(ref UITextComponent uiTextComponent, ref PBUiText sdkModel, ref UITransformComponent uiTransformComponent)
         {
-            if (!sdkComponent.IsDirty)
+            if (!sdkModel.IsDirty)
                 return;
 
-            if (ReferenceEquals(uiTextComponent.Label, null))
-                InstantiateLabel(entity, ref uiTextComponent, ref sdkComponent, ref uiTransformComponent);
-            else
-                SetupLabel(ref uiTextComponent.Label, ref sdkComponent, ref uiTransformComponent);
-
-            sdkComponent.IsDirty = false;
-        }
-
-        private void InstantiateLabel(in Entity entity, ref UITextComponent uiTextComponent, ref PBUiText sdkComponent, ref UITransformComponent uiTransformComponent)
-        {
-            var label = labelsPool.Get();
-            label.name = $"UIText (Entity {entity.Id})";
-            UiElementUtils.SetElementDefaultStyle(label.style);
-            uiTransformComponent.Transform.Add(label);
-            uiTextComponent.Label = label;
-
-            SetupLabel(ref label, ref sdkComponent, ref uiTransformComponent);
-        }
-
-        private static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent)
-        {
-            labelToSetup.pickingMode = PickingMode.Ignore;
-
-            if (uiTransformComponent.Transform.style.width.keyword == StyleKeyword.Auto || uiTransformComponent.Transform.style.height.keyword == StyleKeyword.Auto)
-                labelToSetup.style.position = new StyleEnum<Position>(Position.Relative);
-
-            labelToSetup.text = model.Value;
-            labelToSetup.style.color = model.GetColor();
-            labelToSetup.style.fontSize = model.GetFontSize();
-            labelToSetup.style.unityTextAlign = model.GetTextAlign();
-            //labelToSetup.style.unityFont = model.GetFont();
+            UiElementUtils.SetupLabel(ref uiTextComponent.Label, ref sdkModel, ref uiTransformComponent);
+            sdkModel.IsDirty = false;
         }
     }
 }

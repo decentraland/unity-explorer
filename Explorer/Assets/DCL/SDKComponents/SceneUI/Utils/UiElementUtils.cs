@@ -1,10 +1,108 @@
 using UnityEngine.UIElements;
 using DCL.ECSComponents;
+using DCL.SDKComponents.SceneUI.Components;
+using DCL.SDKComponents.SceneUI.Defaults;
 
 namespace DCL.SDKComponents.SceneUI.Utils
 {
     public static class UiElementUtils
     {
+        public static void SetupVisualElement(ref VisualElement visualElementToSetup, ref PBUiTransform model)
+        {
+            visualElementToSetup.style.display = GetDisplay(model.Display);
+            visualElementToSetup.style.overflow = GetOverflow(model.Overflow);
+
+            // Pointer blocking
+            visualElementToSetup.pickingMode = model.PointerFilter == PointerFilterMode.PfmBlock ? PickingMode.Position : PickingMode.Ignore;
+
+            // Flex
+            visualElementToSetup.style.flexDirection = GetFlexDirection(model.FlexDirection);
+            if (model.FlexBasisUnit != YGUnit.YguUndefined)
+                visualElementToSetup.style.flexBasis = model.FlexBasisUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.FlexBasis, GetUnit(model.FlexBasisUnit));
+
+            visualElementToSetup.style.flexGrow = model.FlexGrow;
+            visualElementToSetup.style.flexShrink = model.GetFlexShrink();
+            visualElementToSetup.style.flexWrap = GetWrap(model.GetFlexWrap());
+
+            // Align
+            visualElementToSetup.style.alignContent = GetAlign(model.GetAlignContent());
+            visualElementToSetup.style.alignItems = GetAlign(model.GetAlignItems());
+            visualElementToSetup.style.alignSelf = GetAlign(model.AlignSelf);
+            visualElementToSetup.style.justifyContent = GetJustify(model.JustifyContent);
+
+            // Layout size
+            if (model.HeightUnit != YGUnit.YguUndefined)
+                visualElementToSetup.style.height = model.HeightUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.Height, GetUnit(model.HeightUnit));
+
+            if (model.WidthUnit != YGUnit.YguUndefined)
+                visualElementToSetup.style.width = model.WidthUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.Width, GetUnit(model.WidthUnit));
+
+            if (model.MaxWidthUnit != YGUnit.YguUndefined)
+                visualElementToSetup.style.maxWidth = model.MaxWidthUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.MaxWidth, GetUnit(model.MaxWidthUnit));
+
+            if (model.MaxHeightUnit != YGUnit.YguUndefined)
+                visualElementToSetup.style.maxHeight = model.MaxHeightUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.MaxHeight, GetUnit(model.MaxHeightUnit));
+
+            if (model.MinHeightUnit != YGUnit.YguUndefined)
+                visualElementToSetup.style.minHeight = new Length(model.MinHeight, GetUnit(model.MinHeightUnit));
+
+            if (model.MinWidthUnit != YGUnit.YguUndefined)
+                visualElementToSetup.style.minWidth = new Length(model.MinWidth, GetUnit(model.MinWidthUnit));
+
+            // Paddings
+            if (model.PaddingBottomUnit != YGUnit.YguUndefined)
+                visualElementToSetup.style.paddingBottom = new Length(model.PaddingBottom, GetUnit(model.PaddingBottomUnit));
+
+            if (model.PaddingLeftUnit != YGUnit.YguUndefined)
+                visualElementToSetup.style.paddingLeft = new Length(model.PaddingLeft, GetUnit(model.PaddingLeftUnit));
+
+            if (model.PaddingRightUnit != YGUnit.YguUndefined)
+                visualElementToSetup.style.paddingRight = new Length(model.PaddingRight, GetUnit(model.PaddingRightUnit));
+
+            if (model.PaddingTopUnit != YGUnit.YguUndefined)
+                visualElementToSetup.style.paddingTop = new Length(model.PaddingTop, GetUnit(model.PaddingTopUnit));
+
+            // Margins
+            if (model.MarginLeftUnit != YGUnit.YguUndefined)
+                visualElementToSetup.style.marginLeft = new Length(model.MarginLeft, GetUnit(model.MarginLeftUnit));
+
+            if (model.MarginRightUnit != YGUnit.YguUndefined)
+                visualElementToSetup.style.marginRight = new Length(model.MarginRight, GetUnit(model.MarginRightUnit));
+
+            if (model.MarginBottomUnit != YGUnit.YguUndefined)
+                visualElementToSetup.style.marginBottom = new Length(model.MarginBottom, GetUnit(model.MarginBottomUnit));
+
+            if (model.MarginTopUnit != YGUnit.YguUndefined)
+                visualElementToSetup.style.marginTop = new Length(model.MarginTop, GetUnit(model.MarginTopUnit));
+
+            // Position
+            visualElementToSetup.style.position = GetPosition(model.PositionType);
+
+            if (model.PositionTopUnit != YGUnit.YguUndefined)
+                visualElementToSetup.style.top = new Length(model.PositionTop, GetUnit(model.PositionTopUnit));
+
+            if (model.PositionBottomUnit != YGUnit.YguUndefined)
+                visualElementToSetup.style.bottom = new Length(model.PositionBottom, GetUnit(model.PositionBottomUnit));
+
+            if (model.PositionRightUnit != YGUnit.YguUndefined)
+                visualElementToSetup.style.right = new Length(model.PositionRight, GetUnit(model.PositionRightUnit));
+
+            if (model.PositionLeftUnit != YGUnit.YguUndefined)
+                visualElementToSetup.style.left = new Length(model.PositionLeft, GetUnit(model.PositionLeftUnit));
+        }
+
+        public static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent)
+        {
+            if (uiTransformComponent.Transform.style.width.keyword == StyleKeyword.Auto || uiTransformComponent.Transform.style.height.keyword == StyleKeyword.Auto)
+                labelToSetup.style.position = new StyleEnum<Position>(Position.Relative);
+
+            labelToSetup.text = model.Value;
+            labelToSetup.style.color = model.GetColor();
+            labelToSetup.style.fontSize = model.GetFontSize();
+            labelToSetup.style.unityTextAlign = model.GetTextAlign();
+            //labelToSetup.style.unityFont = model.GetFont();
+        }
+
         public static void SetElementDefaultStyle(IStyle elementStyle)
         {
             elementStyle.right = 0;
@@ -18,7 +116,10 @@ namespace DCL.SDKComponents.SceneUI.Utils
             elementStyle.alignItems = new StyleEnum<Align>(Align.Center);
         }
 
-        public static LengthUnit GetUnit(YGUnit unit)
+        public static void ReleaseUIElement(VisualElement visualElement) =>
+            visualElement.RemoveFromHierarchy();
+
+        private static LengthUnit GetUnit(YGUnit unit)
         {
             switch (unit)
             {
@@ -29,7 +130,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             }
         }
 
-        public static StyleEnum<Overflow> GetOverflow(YGOverflow overflow)
+        private static StyleEnum<Overflow> GetOverflow(YGOverflow overflow)
         {
             switch (overflow)
             {
@@ -40,7 +141,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             }
         }
 
-        public static StyleEnum<DisplayStyle> GetDisplay(YGDisplay display)
+        private static StyleEnum<DisplayStyle> GetDisplay(YGDisplay display)
         {
             switch (display)
             {
@@ -51,7 +152,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             }
         }
 
-        public static StyleEnum<Justify> GetJustify(YGJustify justify)
+        private static StyleEnum<Justify> GetJustify(YGJustify justify)
         {
             switch (justify)
             {
@@ -70,7 +171,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             }
         }
 
-        public static StyleEnum<Wrap> GetWrap(YGWrap wrap)
+        private static StyleEnum<Wrap> GetWrap(YGWrap wrap)
         {
             switch (wrap)
             {
@@ -85,7 +186,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             }
         }
 
-        public static StyleEnum<FlexDirection> GetFlexDirection(YGFlexDirection direction)
+        private static StyleEnum<FlexDirection> GetFlexDirection(YGFlexDirection direction)
         {
             switch (direction)
             {
@@ -102,7 +203,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             }
         }
 
-        public static StyleEnum<Position> GetPosition(YGPositionType positionType)
+        private static StyleEnum<Position> GetPosition(YGPositionType positionType)
         {
             switch (positionType)
             {
@@ -113,7 +214,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             }
         }
 
-        public static StyleEnum<Align> GetAlign(YGAlign align)
+        private static StyleEnum<Align> GetAlign(YGAlign align)
         {
             switch (align)
             {
@@ -131,8 +232,5 @@ namespace DCL.SDKComponents.SceneUI.Utils
                     return Align.Auto;
             }
         }
-
-        public static void ReleaseUIElement(VisualElement visualElement) =>
-            visualElement.RemoveFromHierarchy();
     }
 }

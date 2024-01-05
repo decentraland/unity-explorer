@@ -29,20 +29,18 @@ namespace DCL.SDKComponents.SceneUI.Systems
 
         protected override void Update(float t)
         {
-            DoSortingQuery(World);
+            DoUITransformSortingQuery(World);
         }
 
         [Query]
         [All(typeof(PBUiTransform), typeof(UITransformComponent))]
-        private void DoSorting(ref PBUiTransform sdkTransform, ref UITransformComponent transformComponent)
+        private void DoUITransformSorting(ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
         {
-            if (!sdkTransform.IsDirty)
+            if (!sdkModel.IsDirty)
                 return;
 
-            if (entitiesMap.TryGetValue(sdkTransform.RightOf, out Entity rightOfEntity) && rightOfEntity != sceneRoot)
-                transformComponent.Transform.PlaceInFront(World.Get<UITransformComponent>(rightOfEntity).Transform);
-
-            sdkTransform.IsDirty = false;
+            if (entitiesMap.TryGetValue(sdkModel.RightOf, out Entity rightOfEntity) && rightOfEntity != sceneRoot)
+                uiTransformComponent.Transform.PlaceInFront(World.Get<UITransformComponent>(rightOfEntity).Transform);
         }
     }
 }
