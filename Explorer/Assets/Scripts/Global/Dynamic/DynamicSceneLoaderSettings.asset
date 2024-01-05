@@ -22,5 +22,6 @@ MonoBehaviour:
   - https://peer.decentraland.org
   - https://worlds-content-server.decentraland.org/world/olavra.dcl.eth
   - https://worlds-content-server.decentraland.org/world/yemel.dcl.eth
+  - https://worlds-content-server.decentraland.org/world/MetadyneLabs.dcl.eth
   <AuthWebSocketUrl>k__BackingField: https://auth-api.decentraland.zone
   <AuthSignatureUrl>k__BackingField: https://decentraland.zone/auth/requests
