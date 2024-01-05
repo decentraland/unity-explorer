@@ -8,6 +8,13 @@ using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
+using UITextInstantiationSystem = DCL.SDKComponents.SceneUI.Systems.UIText.UITextInstantiationSystem;
+using UITextReleaseSystem = DCL.SDKComponents.SceneUI.Systems.UIText.UITextReleaseSystem;
+using UITransformInstantiationSystem = DCL.SDKComponents.SceneUI.Systems.UITransform.UITransformInstantiationSystem;
+using UITransformParentingSystem = DCL.SDKComponents.SceneUI.Systems.UITransform.UITransformParentingSystem;
+using UITransformReleaseSystem = DCL.SDKComponents.SceneUI.Systems.UITransform.UITransformReleaseSystem;
+using UITransformSortingSystem = DCL.SDKComponents.SceneUI.Systems.UITransform.UITransformSortingSystem;
+using UITransformUpdateSystem = DCL.SDKComponents.SceneUI.Systems.UITransform.UITransformUpdateSystem;
 
 namespace DCL.PluginSystem.World
 {

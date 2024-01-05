@@ -1,18 +1,18 @@
 ﻿using Arch.Core;
+using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
-using DCL.Optimization.Pools;
-using ECS.Abstract;
-using ECS.Groups;
-using Arch.System;
 using DCL.ECSComponents;
+using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Groups;
+using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle.Components;
 using UnityEngine.UIElements;
 
-namespace DCL.SDKComponents.SceneUI.Systems
+namespace DCL.SDKComponents.SceneUI.Systems.UIText
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateBefore(typeof(SceneUIComponentInstantiationGroup))]

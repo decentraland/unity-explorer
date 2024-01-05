@@ -11,7 +11,7 @@ using ECS.Abstract;
 using UnityEngine.UIElements;
 using Entity = Arch.Core.Entity;
 
-namespace DCL.SDKComponents.SceneUI.Systems
+namespace DCL.SDKComponents.SceneUI.Systems.UIText
 {
     [UpdateInGroup(typeof(SceneUIComponentInstantiationGroup))]
     [LogCategory(ReportCategory.SCENE_UI)]

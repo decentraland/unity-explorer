@@ -10,7 +10,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using UnityEngine.UIElements;
 
-namespace DCL.SDKComponents.SceneUI.Systems
+namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [LogCategory(ReportCategory.SCENE_UI)]

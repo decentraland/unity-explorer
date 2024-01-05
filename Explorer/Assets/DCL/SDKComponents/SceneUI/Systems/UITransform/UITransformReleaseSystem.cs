@@ -1,17 +1,17 @@
 ﻿using Arch.Core;
+using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
-using DCL.Optimization.Pools;
-using ECS.Abstract;
-using ECS.Groups;
-using Arch.System;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
+using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle.Components;
 using UnityEngine.UIElements;
 
-namespace DCL.SDKComponents.SceneUI.Systems
+namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateBefore(typeof(UITransformInstantiationSystem))]

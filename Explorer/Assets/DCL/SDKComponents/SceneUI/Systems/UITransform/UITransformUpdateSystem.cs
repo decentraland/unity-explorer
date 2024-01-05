@@ -5,11 +5,11 @@ using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
+using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.Groups;
-using DCL.SDKComponents.SceneUI.Utils;
 
-namespace DCL.SDKComponents.SceneUI.Systems
+namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateAfter(typeof(UITransformSortingSystem))]
@@ -17,7 +17,7 @@ namespace DCL.SDKComponents.SceneUI.Systems
     [ThrottlingEnabled]
     public partial class UITransformUpdateSystem : BaseUnityLoopSystem
     {
-        public UITransformUpdateSystem(World world) : base(world) { }
+        private UITransformUpdateSystem(World world) : base(world) { }
 
         protected override void Update(float _)
         {

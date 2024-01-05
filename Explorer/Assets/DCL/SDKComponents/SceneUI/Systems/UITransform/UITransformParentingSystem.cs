@@ -10,7 +10,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using System.Collections.Generic;
 
-namespace DCL.SDKComponents.SceneUI.Systems
+namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateAfter(typeof(UITransformInstantiationSystem))]
@@ -21,7 +21,7 @@ namespace DCL.SDKComponents.SceneUI.Systems
         private readonly Entity sceneRoot;
         private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
 
-        public UITransformParentingSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, Entity sceneRoot) : base(world)
+        private UITransformParentingSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, Entity sceneRoot) : base(world)
         {
             this.sceneRoot = sceneRoot;
             this.entitiesMap = entitiesMap;
