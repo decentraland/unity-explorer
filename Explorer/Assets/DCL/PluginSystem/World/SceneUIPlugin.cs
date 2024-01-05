@@ -2,7 +2,6 @@
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.SceneUI.Components;
-using DCL.SDKComponents.SceneUI.Systems;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
