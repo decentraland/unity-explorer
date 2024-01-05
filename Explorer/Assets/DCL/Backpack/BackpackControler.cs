@@ -7,16 +7,13 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
 using DCL.UI;
-using DCL.Web3Authentication;
+using DCL.Web3Authentication.Identities;
 using ECS.StreamableLoading.Common;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<
-    DCL.AvatarRendering.Wearables.Components.IWearable[],
-    DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 
 namespace DCL.Backpack
     {
@@ -24,8 +21,6 @@ namespace DCL.Backpack
         {
             private readonly BackpackView view;
             private readonly BackpackCommandBus backpackCommandBus;
-            private readonly IProfileRepository profileRepository;
-            private readonly IWeb3Authenticator web3Authenticator;
             private readonly RectTransform rectTransform;
             private CancellationTokenSource animationCts;
             private CancellationTokenSource profileLoadingCts;
@@ -41,16 +36,13 @@ namespace DCL.Backpack
                 NFTColorsSO rarityColors,
                 BackpackCommandBus backpackCommandBus,
                 BackpackEventBus backpackEventBus,
-                IProfileRepository profileRepository,
-                IWeb3Authenticator web3Authenticator)
+                IWeb3IdentityCache web3IdentityCache)
             {
                 this.view = view;
                 this.backpackCommandBus = backpackCommandBus;
-                this.profileRepository = profileRepository;
-                this.web3Authenticator = web3Authenticator;
 
                 rectTransform = view.transform.parent.GetComponent<RectTransform>();
-                avatarController = new AvatarController(view.GetComponentInChildren<AvatarView>(),view.GetComponentsInChildren<AvatarSlotView>(), rarityBackgrounds, rarityInfoPanelBackgrounds, categoryIcons, rarityColors, backpackCommandBus, backpackEventBus, web3Authenticator);
+                avatarController = new AvatarController(view.GetComponentInChildren<AvatarView>(),view.GetComponentsInChildren<AvatarSlotView>(), rarityBackgrounds, rarityInfoPanelBackgrounds, categoryIcons, rarityColors, backpackCommandBus, backpackEventBus, web3IdentityCache);
 
                 Dictionary<BackpackSections, ISection> backpackSections = new ()
                 {

@@ -4,8 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack.BackpackBus;
 using DCL.UI;
-using DCL.Web3Authentication;
-using Nethereum.Web3;
+using DCL.Web3Authentication.Identities;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -28,12 +27,12 @@ namespace DCL.Backpack
             NFTColorsSO rarityColors,
             BackpackCommandBus backpackCommandBus,
             BackpackEventBus backpackEventBus,
-            IWeb3Authenticator web3Authenticator)
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.view = view;
 
             slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus, rarityBackgrounds);
-            backpackGridController = new BackpackGridController(view.backpackGridView, backpackCommandBus, backpackEventBus, web3Authenticator, rarityBackgrounds, rarityColors, categoryIcons);
+            backpackGridController = new BackpackGridController(view.backpackGridView, backpackCommandBus, backpackEventBus, web3IdentityCache, rarityBackgrounds, rarityColors, categoryIcons);
             backpackInfoPanelController = new BackpackInfoPanelController(view.backpackInfoPanelView, backpackEventBus, categoryIcons, rarityInfoPanelBackgrounds);
             rectTransform = view.GetComponent<RectTransform>();
         }

@@ -5,7 +5,7 @@ using DCL.AssetsProvision;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Backpack.BackpackBus;
-using DCL.Web3Authentication;
+using DCL.Web3Authentication.Identities;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using System.Collections.Generic;
@@ -23,7 +23,7 @@ namespace DCL.Backpack
         private readonly BackpackGridView view;
         private readonly BackpackCommandBus commandBus;
         private readonly BackpackEventBus eventBus;
-        private readonly IWeb3Authenticator web3Authenticator;
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
@@ -36,7 +36,7 @@ namespace DCL.Backpack
             BackpackGridView view,
             BackpackCommandBus commandBus,
             BackpackEventBus eventBus,
-            IWeb3Authenticator web3Authenticator,
+            IWeb3IdentityCache web3IdentityCache,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons)
@@ -44,7 +44,7 @@ namespace DCL.Backpack
             this.view = view;
             this.commandBus = commandBus;
             this.eventBus = eventBus;
-            this.web3Authenticator = web3Authenticator;
+            this.web3IdentityCache = web3IdentityCache;
             this.rarityBackgrounds = rarityBackgrounds;
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
@@ -76,7 +76,7 @@ namespace DCL.Backpack
             for (var i = 0; i < gridWearables.Length; i++)
             {
                 BackpackItemView backpackItemView = gridItemsPool.Get();
-                usedPoolItems.Add(backpackItemView.ItemId, backpackItemView);
+                usedPoolItems.Add(gridWearables[i].GetUrn(), backpackItemView);
 
                 backpackItemView.OnSelectItem += SelectItem;
                 backpackItemView.ItemId = gridWearables[i].GetUrn();
@@ -98,7 +98,7 @@ namespace DCL.Backpack
         public void RequestPage(int pageNumber)
         {
             //Reuse params array and review types URLParameter once auth pr is merged
-            ParamPromise wearablesPromise = ParamPromise.Create(world, new GetWearableByParamIntention(new[] { ("pageNumber", string.Format("{0}", pageNumber)), ("pageSize", "16") }, web3Authenticator.Identity.EphemeralAccount.Address, new List<IWearable>()), PartitionComponent.TOP_PRIORITY);
+            ParamPromise wearablesPromise = ParamPromise.Create(world, new GetWearableByParamIntention(new[] { ("pageNumber", string.Format("{0}", pageNumber)), ("pageSize", "16") },  web3IdentityCache.Identity!.EphemeralAccount.Address, new List<IWearable>()), PartitionComponent.TOP_PRIORITY);
             AwaitWearablesPromiseAsync(wearablesPromise).Forget();
         }
 
