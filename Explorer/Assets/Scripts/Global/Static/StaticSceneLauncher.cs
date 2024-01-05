@@ -1,6 +1,8 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
 using DCL.Web3Authentication;
+using DCL.Web3Authentication.Authenticators;
+using DCL.Web3Authentication.Identities;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
@@ -23,6 +25,7 @@ namespace Global.Static
         private ISceneFacade sceneFacade;
 
         private StaticContainer staticContainer;
+        private IWeb3Authenticator? web3Authenticator;
 
         private void Awake()
         {
@@ -32,19 +35,23 @@ namespace Global.Static
         private void OnDestroy()
         {
             staticContainer?.Dispose();
+            web3Authenticator?.Dispose();
         }
 
         public async UniTask InitializationFlowAsync(CancellationToken ct)
         {
             try
             {
-                var web3Authenticator = new RandomGeneratedWeb3Authenticator();
+                var identityCache = new MemoryWeb3IdentityCache();
+
+                web3Authenticator = new ProxyWeb3Authenticator(new RandomGeneratedWeb3Authenticator(),
+                    identityCache);
                 await web3Authenticator.LoginAsync(ct);
 
                 SceneSharedContainer sceneSharedContainer;
 
                 (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettingsContainer, scenePluginSettingsContainer,
-                    scenesUiRoot, scenesUiStyleSheet, web3Authenticator, ct);
+                    scenesUiRoot, scenesUiStyleSheet, identityCache, ct);
                 sceneLauncher.Initialize(sceneSharedContainer, destroyCancellationToken);
             }
             catch (OperationCanceledException) { }
@@ -61,12 +68,13 @@ namespace Global.Static
             IPluginSettingsContainer sceneSettingsContainer,
             UIDocument scenesUiRoot,
             StyleSheet scenesUiStyleSheet,
-            IWeb3Authenticator web3Authenticator,
+            IWeb3IdentityCache web3IdentityProvider,
             CancellationToken ct)
         {
             // First load the common global plugin
             (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer,
-                scenesUiRoot, scenesUiStyleSheet, web3Authenticator, ct);
+                scenesUiRoot, scenesUiStyleSheet,
+                web3IdentityProvider, ct);
 
             if (!isLoaded)
                 GameReports.PrintIsDead();

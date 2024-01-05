@@ -268,15 +268,18 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             ReportHub.Log(GetReportCategory(), $"Request for wearable {wearable.GetHash()} failed, loading default wearable");
 
-            // This section assumes that the default wearables were successfully loaded.
-            // Waiting for the default wearable should be moved to the loading screen
+            var defaultWearable = wearableCatalog.GetDefaultWearable(bodyShape, wearable.GetCategory(),
+                out var hasEmptyDefaultWearableAB);
             if (wearable.IsUnisex())
             {
-                wearable.WearableAssetResults[BodyShape.MALE] = wearableCatalog.GetDefaultWearable(BodyShape.MALE, wearable.GetCategory()).WearableAssetResults[BodyShape.MALE];
-                wearable.WearableAssetResults[BodyShape.FEMALE] = wearableCatalog.GetDefaultWearable(BodyShape.FEMALE, wearable.GetCategory()).WearableAssetResults[BodyShape.FEMALE];
+                wearable.WearableAssetResults[BodyShape.MALE] = defaultWearable.WearableAssetResults[BodyShape.MALE];
+                wearable.WearableAssetResults[BodyShape.FEMALE] =
+                    defaultWearable.WearableAssetResults[BodyShape.FEMALE];
             }
             else
-                wearable.WearableAssetResults[bodyShape] = wearableCatalog.GetDefaultWearable(bodyShape, wearable.GetCategory()).WearableAssetResults[bodyShape];
+                wearable.WearableAssetResults[bodyShape] = defaultWearable.WearableAssetResults[bodyShape];
+
+            wearable.WearableDTO.Asset.Sanitize(hasEmptyDefaultWearableAB);
         }
 
         private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<AssetBundleData> result, in BodyShape bodyShape)

@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
 using DCL.Web3Authentication;
+using DCL.Web3Authentication.Identities;
 using Global.Static;
 using NSubstitute;
 using System.Threading;
@@ -25,7 +26,7 @@ namespace Global.Tests
             StyleSheet scenesUIStyleSheet = await Addressables.LoadAssetAsync<StyleSheet>(SCENES_UI_STYLE_SHEET);
 
             return await StaticSceneLauncher.InstallAsync(globalSettingsContainer, sceneSettingsContainer,
-                scenesUIRootCanvas, scenesUIStyleSheet, Substitute.For<IWeb3Authenticator>(), CancellationToken.None);
+                scenesUIRootCanvas, scenesUIStyleSheet, Substitute.For<IWeb3IdentityCache>(), CancellationToken.None);
         }
     }
 }
