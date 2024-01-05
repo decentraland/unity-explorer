@@ -1,0 +1,48 @@
+﻿using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
+using CRDT;
+using DCL.Diagnostics;
+using DCL.ECSComponents;
+using DCL.SDKComponents.SceneUI.Components;
+using ECS.Abstract;
+using ECS.Groups;
+using System.Collections.Generic;
+
+namespace DCL.SDKComponents.SceneUI.Systems
+{
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
+    [UpdateAfter(typeof(UITransformParentingSystem))]
+    [LogCategory(ReportCategory.SCENE_UI)]
+    [ThrottlingEnabled]
+    public partial class UITransformSortingSystem : BaseUnityLoopSystem
+    {
+        private readonly Entity sceneRoot;
+        private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
+
+        public UITransformSortingSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, Entity sceneRoot) : base(world)
+        {
+            this.sceneRoot = sceneRoot;
+            this.entitiesMap = entitiesMap;
+        }
+
+        protected override void Update(float t)
+        {
+            DoSortingQuery(World);
+        }
+
+        [Query]
+        [All(typeof(PBUiTransform), typeof(UITransformComponent))]
+        private void DoSorting(ref PBUiTransform sdkTransform, ref UITransformComponent transformComponent)
+        {
+            if (!sdkTransform.IsDirty)
+                return;
+
+            if (entitiesMap.TryGetValue(sdkTransform.RightOf, out Entity rightOfEntity) && rightOfEntity != sceneRoot)
+                transformComponent.Transform.PlaceInFront(World.Get<UITransformComponent>(rightOfEntity).Transform);
+
+            sdkTransform.IsDirty = false;
+        }
+    }
+}

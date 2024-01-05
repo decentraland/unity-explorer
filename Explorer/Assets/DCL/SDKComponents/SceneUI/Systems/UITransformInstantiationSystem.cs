@@ -55,16 +55,16 @@ namespace DCL.SDKComponents.SceneUI.Systems
                 InstantiateEmptyVisualElement(entity, ref uiTransformComponent, ref sdkComponent);
             else
                 SetupVisualElement(ref uiTransformComponent.Transform, ref sdkComponent);
-
-            sdkComponent.IsDirty = false;
         }
 
         private void InstantiateEmptyVisualElement(Entity entity, ref UITransformComponent uiTransformComponent, ref PBUiTransform sdkComponent)
         {
             var transform = transformsPool.Get();
             transform.name = $"UITransform (Entity {entity.Id})";
+            UiElementUtils.SetElementDefaultStyle(transform.style);
             canvas.rootVisualElement.Add(transform);
             uiTransformComponent.Transform = transform;
+            uiTransformComponent.Parent = EntityReference.Null;
 
             SetupVisualElement(ref transform, ref sdkComponent);
         }

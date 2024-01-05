@@ -7,7 +7,6 @@ namespace DCL.SDKComponents.SceneUI.Components
     public struct UITextComponent: IPoolableComponentProvider<Label>
     {
         public Label Label;
-        public Label PoolableComponent => Label;
 
         Label IPoolableComponentProvider<Label>.PoolableComponent => Label;
         Type IPoolableComponentProvider<Label>.PoolableComponentType => typeof(Label);
