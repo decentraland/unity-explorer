@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.SDKComponents.SceneUI.Utils
 {
-    public static class ProtoConvertUtils
+    public static class Extensions
     {
         public static TextAnchor ToUnityTextAlign(this TextAlignMode align)
         {
