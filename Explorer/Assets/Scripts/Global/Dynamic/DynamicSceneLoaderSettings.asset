@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51b5f8f4ed664a47a7204b6a65d2d742, type: 3}
   m_Name: DynamicSceneLoaderSettings
   m_EditorClassIdentifier: 
-  <StartPosition>k__BackingField: {x: -13, y: -9}
+  <StartPosition>k__BackingField: {x: 0, y: 0}
   <SceneLoadRadius>k__BackingField: 4
   <StaticLoadPositions>k__BackingField: []
   <Realms>k__BackingField:
@@ -22,3 +22,6 @@ MonoBehaviour:
   - https://peer.decentraland.org
   - https://worlds-content-server.decentraland.org/world/olavra.dcl.eth
   - https://worlds-content-server.decentraland.org/world/yemel.dcl.eth
+  - https://worlds-content-server.decentraland.org/world/MetadyneLabs.dcl.eth
+  <AuthWebSocketUrl>k__BackingField: https://auth-api.decentraland.zone
+  <AuthSignatureUrl>k__BackingField: https://decentraland.zone/auth/requests
