@@ -10,6 +10,7 @@ namespace DCL.Web3Authentication.Identities
         DateTime Expiration { get; }
         IWeb3Account EphemeralAccount { get; }
         bool IsExpired { get; }
+        AuthChain AuthChain { get; }
 
         AuthChain Sign(string entityId);
     }

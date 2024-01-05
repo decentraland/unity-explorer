@@ -1,6 +1,6 @@
 using System;
 
-namespace DCL.Web3Authentication.Authenticators
+namespace DCL.Web3Authentication.Signatures
 {
     public partial class DappWeb3Authenticator
     {

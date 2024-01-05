@@ -4,8 +4,8 @@ using DCL.Browser;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Web3Authentication;
-using DCL.Web3Authentication.Authenticators;
 using DCL.Web3Authentication.Identities;
+using DCL.Web3Authentication.Signatures;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -77,7 +77,8 @@ namespace Global.Dynamic
                 web3Authenticator = new ProxyVerifiedWeb3Authenticator(
                     new DappWeb3Authenticator(new UnityAppWebBrowser(),
                         settings.AuthWebSocketUrl,
-                        settings.AuthSignatureUrl),
+                        settings.AuthSignatureUrl,
+                        identityCache),
                     identityCache);
 
                 // First load the common global plugin

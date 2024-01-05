@@ -6,12 +6,11 @@ namespace DCL.Web3Authentication.Identities
 {
     public class DecentralandIdentity : IWeb3Identity
     {
-        internal readonly AuthChain authChain;
-
         public Web3Address Address { get; }
         public DateTime Expiration { get; }
         public IWeb3Account EphemeralAccount { get; }
         public bool IsExpired => Expiration < DateTime.UtcNow;
+        public AuthChain AuthChain { get; }
 
         public DecentralandIdentity(
             Web3Address address,
@@ -22,7 +21,7 @@ namespace DCL.Web3Authentication.Identities
             AssertSigner(authChain);
             AssertEcdsaEphemeral(authChain);
 
-            this.authChain = authChain;
+            AuthChain = authChain;
             Address = address;
             EphemeralAccount = ephemeralAccount;
             Expiration = expiration;
@@ -30,7 +29,7 @@ namespace DCL.Web3Authentication.Identities
 
         public void Dispose()
         {
-            authChain.Dispose();
+            AuthChain.Dispose();
         }
 
         public AuthChain Sign(string entityId)
@@ -43,7 +42,7 @@ namespace DCL.Web3Authentication.Identities
 
             var chain = AuthChain.Create();
 
-            foreach (AuthLink link in authChain)
+            foreach (AuthLink link in AuthChain)
                 chain.Set(link.type, link);
 
             chain.Set(AuthLinkType.ECDSA_SIGNED_ENTITY, new AuthLink

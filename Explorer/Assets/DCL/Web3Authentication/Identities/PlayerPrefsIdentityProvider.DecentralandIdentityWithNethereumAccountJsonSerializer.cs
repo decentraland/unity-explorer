@@ -39,7 +39,7 @@ namespace DCL.Web3Authentication.Identities
                 jsonRoot.Clear();
                 jsonRoot.address = identity.Address;
                 jsonRoot.expiration = $"{identity.Expiration:O}";
-                jsonRoot.ephemeralAuthChain.AddRange(dclIdentity.authChain);
+                jsonRoot.ephemeralAuthChain.AddRange(dclIdentity.AuthChain);
                 jsonRoot.key = account.key.GetPrivateKey();
 
                 return JsonConvert.SerializeObject(jsonRoot);

@@ -9,34 +9,72 @@ using SocketIOClient.Newtonsoft.Json;
 using SocketIOClient.Transport;
 using System;
 using System.Globalization;
+using System.Linq;
 using System.Threading;
 
-namespace DCL.Web3Authentication.Authenticators
+namespace DCL.Web3Authentication.Signatures
 {
-    public partial class DappWeb3Authenticator : IWeb3VerifiedAuthenticator
+    public partial class DappWeb3Authenticator : IWeb3VerifiedAuthenticator, IWeb3VerifiedSigner
     {
         private const int TIMEOUT_SECONDS = 30;
 
         private readonly IWebBrowser webBrowser;
         private readonly string serverUrl;
         private readonly string signatureUrl;
+        private readonly IWeb3IdentityCache identityCache;
 
         private SocketIO? webSocket;
         private UniTaskCompletionSource<DappSignatureResponse>? signatureOutcomeTask;
-        private IWeb3VerifiedAuthenticator.VerificationDelegate? verificationCallback;
+        private IWeb3VerifiedAuthenticator.VerificationDelegate? loginVerificationCallback;
+        private IWeb3VerifiedSigner.VerificationDelegate? signatureVerificationCallback;
 
         public DappWeb3Authenticator(IWebBrowser webBrowser,
             string serverUrl,
-            string signatureUrl)
+            string signatureUrl,
+            IWeb3IdentityCache identityCache)
         {
             this.webBrowser = webBrowser;
             this.serverUrl = serverUrl;
             this.signatureUrl = signatureUrl;
+            this.identityCache = identityCache;
         }
 
         public void Dispose()
         {
-            webSocket?.Dispose();
+            try { webSocket?.Dispose(); }
+            catch (ObjectDisposedException) { }
+        }
+
+        public async UniTask<Web3PersonalSignature> SignAsync(string payload, CancellationToken ct)
+        {
+            try
+            {
+                InitializeWebSocket();
+
+                await ConnectToServerAsync();
+
+                SignatureIdResponse authenticationResponse = await RequestAuthorizedSignatureToServerAsync(payload,
+                    "personal_sign", identityCache.Identity!.AuthChain, ct);
+
+                DateTime signatureExpiration = DateTime.UtcNow.AddMinutes(5);
+
+                if (!string.IsNullOrEmpty(authenticationResponse.expiration))
+                    signatureExpiration = DateTime.Parse(authenticationResponse.expiration, null, DateTimeStyles.RoundtripKind);
+
+                await UniTask.SwitchToMainThread(ct);
+
+                signatureVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration);
+
+                DappSignatureResponse signature = await WaitForUserSignatureAsync(authenticationResponse.requestId,
+                    signatureExpiration, ct);
+
+                return new Web3PersonalSignature(signature.result, new Web3Address(signature.sender));
+            }
+            finally
+            {
+                await DisconnectFromServerAsync();
+                await UniTask.SwitchToMainThread(ct);
+            }
         }
 
         /// <summary>
@@ -61,7 +99,7 @@ namespace DCL.Web3Authentication.Authenticators
                 DateTime sessionExpiration = DateTime.UtcNow.AddDays(7);
                 string ephemeralMessage = CreateEphemeralMessage(ephemeralAccount, sessionExpiration);
 
-                SignatureIdResponse authenticationResponse = await RequestAuthenticationAsync(ephemeralMessage, cancellationToken);
+                SignatureIdResponse authenticationResponse = await RequestSignatureToServerAsync(ephemeralMessage, "dcl_personal_sign", cancellationToken);
 
                 DateTime signatureExpiration = DateTime.UtcNow.AddMinutes(5);
 
@@ -70,7 +108,7 @@ namespace DCL.Web3Authentication.Authenticators
 
                 await UniTask.SwitchToMainThread(cancellationToken);
 
-                verificationCallback?.Invoke(authenticationResponse.code, signatureExpiration);
+                loginVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration);
 
                 DappSignatureResponse signature = await WaitForUserSignatureAsync(authenticationResponse.requestId,
                     signatureExpiration, cancellationToken);
@@ -83,21 +121,26 @@ namespace DCL.Web3Authentication.Authenticators
             }
             finally
             {
-                await TerminateWebSocketAsync();
+                await DisconnectFromServerAsync();
                 await UniTask.SwitchToMainThread(cancellationToken);
             }
         }
 
         public async UniTask LogoutAsync(CancellationToken cancellationToken)
         {
-            await TerminateWebSocketAsync();
+            await DisconnectFromServerAsync();
         }
 
         public void AddVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate callback) =>
-            verificationCallback = callback;
+            loginVerificationCallback = callback;
+
+        public void AddVerificationListener(IWeb3VerifiedSigner.VerificationDelegate callback) =>
+            signatureVerificationCallback = callback;
 
         private SocketIO InitializeWebSocket()
         {
+            if (webSocket != null) return webSocket;
+
             var uri = new Uri(serverUrl);
 
             webSocket = new SocketIO(uri, new SocketIOOptions
@@ -112,18 +155,10 @@ namespace DCL.Web3Authentication.Authenticators
             return webSocket;
         }
 
-        private async UniTask TerminateWebSocketAsync()
+        private async UniTask DisconnectFromServerAsync()
         {
-            if (webSocket != null)
-            {
-                if (webSocket.Connected)
-                    await webSocket.DisconnectAsync();
-
-                try { webSocket.Dispose(); }
-                catch (ObjectDisposedException) { }
-
-                webSocket = null;
-            }
+            if (webSocket is { Connected: true })
+                await webSocket.DisconnectAsync();
         }
 
         private AuthChain CreateAuthChain(DappSignatureResponse signature, string ephemeralMessage)
@@ -162,35 +197,66 @@ namespace DCL.Web3Authentication.Authenticators
             signatureOutcomeTask?.TrySetResult(response.GetValue<DappSignatureResponse>());
         }
 
-        private async UniTask<SignatureIdResponse> RequestAuthenticationAsync(string ephemeralMessage,
-            CancellationToken cancellationToken)
+        private async UniTask<SignatureIdResponse> RequestSignatureToServerAsync(string payload,
+            string method, CancellationToken ct)
         {
             UniTaskCompletionSource<SignatureIdResponse> task = new ();
 
-            await webSocket!.EmitAsync("request", cancellationToken,
+            await webSocket!.EmitAsync("request", ct,
                 r =>
                 {
                     SignatureIdResponse signatureIdResponse = r.GetValue<SignatureIdResponse>();
 
-                    if (string.IsNullOrEmpty(signatureIdResponse.requestId))
+                    if (!string.IsNullOrEmpty(signatureIdResponse.error))
+                        task.TrySetException(new Web3SignatureException(signatureIdResponse.error));
+                    else if (string.IsNullOrEmpty(signatureIdResponse.requestId))
                         task.TrySetException(new Web3SignatureException("Cannot solve auth request id"));
                     else
                         task.TrySetResult(signatureIdResponse);
                 },
                 new SignatureRequest
                 {
-                    method = "dcl_personal_sign",
-                    @params = new[] { ephemeralMessage },
+                    method = method,
+                    @params = new[] { payload },
                 });
 
             return await task.Task.Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS))
-                             .AttachExternalCancellation(cancellationToken);
+                             .AttachExternalCancellation(ct);
+        }
+
+        private async UniTask<SignatureIdResponse> RequestAuthorizedSignatureToServerAsync(string payload,
+            string method, AuthChain authChain, CancellationToken ct)
+        {
+            UniTaskCompletionSource<SignatureIdResponse> task = new ();
+
+            await webSocket!.EmitAsync("request", ct,
+                r =>
+                {
+                    SignatureIdResponse signatureIdResponse = r.GetValue<SignatureIdResponse>();
+
+                    if (!string.IsNullOrEmpty(signatureIdResponse.error))
+                        task.TrySetException(new Web3SignatureException(signatureIdResponse.error));
+                    else if (string.IsNullOrEmpty(signatureIdResponse.requestId))
+                        task.TrySetException(new Web3SignatureException("Cannot solve auth request id"));
+                    else
+                        task.TrySetResult(signatureIdResponse);
+                },
+                new AuthorizedSignatureRequest
+                {
+                    method = method,
+                    @params = new[] { payload },
+                    authChain = authChain.ToArray(),
+                });
+
+            return await task.Task.Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS))
+                             .AttachExternalCancellation(ct);
         }
 
         private async UniTask<DappSignatureResponse> WaitForUserSignatureAsync(string requestId, DateTime expiration, CancellationToken ct)
         {
             webBrowser.OpenUrl($"{signatureUrl}/{requestId}");
 
+            signatureOutcomeTask?.TrySetCanceled(ct);
             signatureOutcomeTask = new UniTaskCompletionSource<DappSignatureResponse>();
 
             TimeSpan duration = expiration - DateTime.UtcNow;

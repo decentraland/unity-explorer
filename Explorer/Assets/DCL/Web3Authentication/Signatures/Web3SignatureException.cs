@@ -1,6 +1,6 @@
 using System;
 
-namespace DCL.Web3Authentication
+namespace DCL.Web3Authentication.Signatures
 {
     public class Web3SignatureException : Exception
     {

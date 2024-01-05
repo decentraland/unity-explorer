@@ -1,6 +1,6 @@
 using System;
 
-namespace DCL.Web3Authentication.Authenticators
+namespace DCL.Web3Authentication.Signatures
 {
     public partial class DappWeb3Authenticator
     {
@@ -10,6 +10,7 @@ namespace DCL.Web3Authentication.Authenticators
             public string requestId;
             public string? expiration;
             public int code;
+            public string? error;
         }
     }
 }

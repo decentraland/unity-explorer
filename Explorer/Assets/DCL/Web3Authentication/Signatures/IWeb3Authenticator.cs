@@ -3,7 +3,7 @@ using DCL.Web3Authentication.Identities;
 using System;
 using System.Threading;
 
-namespace DCL.Web3Authentication.Authenticators
+namespace DCL.Web3Authentication.Signatures
 {
     public interface IWeb3Authenticator : IDisposable
     {
