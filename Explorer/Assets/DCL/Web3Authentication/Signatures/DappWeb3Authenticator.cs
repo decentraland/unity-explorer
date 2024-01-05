@@ -53,7 +53,7 @@ namespace DCL.Web3Authentication.Signatures
 
                 await ConnectToServerAsync();
 
-                SignatureIdResponse authenticationResponse = await RequestAuthorizedSignatureToServerAsync(payload,
+                SignatureIdResponse authenticationResponse = await RequestSignatureToServerAsync(payload,
                     "personal_sign", identityCache.Identity!.AuthChain, ct);
 
                 DateTime signatureExpiration = DateTime.UtcNow.AddMinutes(5);
@@ -200,32 +200,25 @@ namespace DCL.Web3Authentication.Signatures
         private async UniTask<SignatureIdResponse> RequestSignatureToServerAsync(string payload,
             string method, CancellationToken ct)
         {
-            UniTaskCompletionSource<SignatureIdResponse> task = new ();
-
-            await webSocket!.EmitAsync("request", ct,
-                r =>
-                {
-                    SignatureIdResponse signatureIdResponse = r.GetValue<SignatureIdResponse>();
-
-                    if (!string.IsNullOrEmpty(signatureIdResponse.error))
-                        task.TrySetException(new Web3SignatureException(signatureIdResponse.error));
-                    else if (string.IsNullOrEmpty(signatureIdResponse.requestId))
-                        task.TrySetException(new Web3SignatureException("Cannot solve auth request id"));
-                    else
-                        task.TrySetResult(signatureIdResponse);
-                },
-                new SignatureRequest
-                {
-                    method = method,
-                    @params = new[] { payload },
-                });
-
-            return await task.Task.Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS))
-                             .AttachExternalCancellation(ct);
+            return await RequestSignatureToServerAsync(ct, new SignatureRequest
+            {
+                method = method,
+                @params = new[] { payload },
+            });
         }
 
-        private async UniTask<SignatureIdResponse> RequestAuthorizedSignatureToServerAsync(string payload,
+        private async UniTask<SignatureIdResponse> RequestSignatureToServerAsync(string payload,
             string method, AuthChain authChain, CancellationToken ct)
+        {
+            return await RequestSignatureToServerAsync(ct, new AuthorizedSignatureRequest
+            {
+                method = method,
+                @params = new[] { payload },
+                authChain = authChain.ToArray(),
+            });
+        }
+
+        private async UniTask<SignatureIdResponse> RequestSignatureToServerAsync(CancellationToken ct, params object[] payload)
         {
             UniTaskCompletionSource<SignatureIdResponse> task = new ();
 
@@ -240,13 +233,7 @@ namespace DCL.Web3Authentication.Signatures
                         task.TrySetException(new Web3SignatureException("Cannot solve auth request id"));
                     else
                         task.TrySetResult(signatureIdResponse);
-                },
-                new AuthorizedSignatureRequest
-                {
-                    method = method,
-                    @params = new[] { payload },
-                    authChain = authChain.ToArray(),
-                });
+                }, payload);
 
             return await task.Task.Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS))
                              .AttachExternalCancellation(ct);
