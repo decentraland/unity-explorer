@@ -13,9 +13,11 @@ using System.Collections;
 using SceneRunner.Scene;
 using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
 {
@@ -46,8 +48,13 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator VV()
+        [Retry(3)]
+        public IEnumerator ShouldCreateAudioSourcesForSDKDanceFloorScene()
         {
+            LogAssert.Expect(LogType.Error, new Regex(".*Each child in a list should have a unique.*"));
+            LogAssert.Expect(LogType.Exception, new Regex("ArgumentException: Asset Bundle.*not found in the manifest"));
+            LogAssert.Expect(LogType.Exception, new Regex("ArgumentException: Asset Bundle.*not found in the manifest")); // ignore second same exceptions
+
             InitializationFlowAsync(tearDownCts.Token).Forget();
 
             yield return new WaitUntil(() => staticContainer != null);
@@ -56,17 +63,15 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             var scene = currentScene as SceneFacade;
             yield return new WaitUntil(() => scene!.sceneStateProvider.State == SceneState.Running);
 
-            // AudioClipsCache clipsCache = staticContainer.ECSWorldPlugins.OfType<AudioSourcesPlugin>().FirstOrDefault().audioClipsCache;
-            //
-            // yield return new WaitUntil(() => clipsCache.cache.Count > 0);
-            // yield return new WaitUntil(() => clipsCache.OngoingRequests.Count == 0);
-            // Assert.That(clipsCache.cache.Count, Is.EqualTo(1));
+            AudioClipsCache clipsCache = staticContainer.ECSWorldPlugins.OfType<AudioSourcesPlugin>().FirstOrDefault().audioClipsCache;
 
-            // var audioSources = Object.FindObjectsOfType<AudioSource>();
-            // Assert.That(audioSources, Has.Exactly(1).Count);
-            //
-            // var audioSource = audioSources[0];
-            // Assert.That(audioSource.isPlaying);
+            yield return new WaitUntil(() => clipsCache.cache.Count > 0);
+            yield return new WaitUntil(() => clipsCache.OngoingRequests.Count == 0);
+            Assert.That(clipsCache.cache.Count, Is.EqualTo(1));
+
+            var audioSources = Object.FindObjectsOfType<AudioSource>();
+            Assert.That(audioSources.Length, Is.EqualTo(1));
+            Assert.That(audioSources[0].isPlaying);
         }
 
         private async UniTask InitializationFlowAsync(CancellationToken ct)
