@@ -116,7 +116,7 @@ namespace Global.Tests
             // save positions
             var positions = new Dictionary<Entity, Vector3>(256);
 
-            world.Query(in cubes, (in Entity e, ref SDKTransform transform) => { positions[e] = transform.Position; });
+            world.Query(in cubes, (Entity e, ref SDKTransform transform) => { positions[e] = transform.Position; });
 
             QueryDescription textShape = new QueryDescription().WithAll<SDKTransform, PBTextShape, PBBillboard>(); // Billboard
             Assert.AreEqual(1, world.CountEntities(in textShape));
@@ -131,7 +131,7 @@ namespace Global.Tests
             // all positions must change
 
             Assert.AreEqual(256, world.CountEntities(in cubes));
-            world.Query(in cubes, (in Entity e, ref SDKTransform transform) => { Assert.AreNotEqual(positions[e], transform.Position); });
+            world.Query(in cubes, (Entity e, ref SDKTransform transform) => { Assert.AreNotEqual(positions[e], transform.Position); });
         }
     }
 }

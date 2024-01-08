@@ -1,0 +1,96 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: Authentication Shared Data
+  m_EditorClassIdentifier: 
+  m_TableCollectionName: Authentication
+  m_TableCollectionNameGuidString: 48b7b423583d84e3d9f2dbeaa25c3aa1
+  m_Entries:
+  - m_Id: 679572660224
+    m_Key: START
+    m_Metadata:
+      m_Items: []
+  - m_Id: 91353005416448
+    m_Key: SHAPED_BY
+    m_Metadata:
+      m_Items: []
+  - m_Id: 92320304193536
+    m_Key: DISCOVER_VIRTUAL_WORLD
+    m_Metadata:
+      m_Items: []
+  - m_Id: 97841321074688
+    m_Key: CANCEL
+    m_Metadata:
+      m_Items: []
+  - m_Id: 98660338622464
+    m_Key: PENDING_AUTH_TITLE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 99422326218752
+    m_Key: PENDING_AUTH_DESC
+    m_Metadata:
+      m_Items: []
+  - m_Id: 113318898425856
+    m_Key: DECENTRALAND
+    m_Metadata:
+      m_Items: []
+  - m_Id: 147993717104640
+    m_Key: LOADING_PROFILE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 155925695422464
+    m_Key: JUMP_INTO_WORLD
+    m_Metadata:
+      m_Items: []
+  - m_Id: 156421285994496
+    m_Key: USE_DIFFERENT_ACCOUNT
+    m_Metadata:
+      m_Items: []
+  - m_Id: 385401318531072
+    m_Key: WELCOME_BACK_USER
+    m_Metadata:
+      m_Items: []
+  - m_Id: 385917570244608
+    m_Key: READY_TO_EXPLORE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2611617878499328
+    m_Key: VERIFICATION_TITLE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2611913090392064
+    m_Key: VERIFICATION_DESCRIPTION
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2612271623692288
+    m_Key: BACK
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2615618359517184
+    m_Key: VERIFICATION_CODE_HINT
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2972650811940864
+    m_Key: VERIFICATION_COUNTDOWN
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 1095376853721153536
+  references:
+    version: 2
+    RefIds:
+    - rid: 1095376853721153536
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables, asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1703168463646
