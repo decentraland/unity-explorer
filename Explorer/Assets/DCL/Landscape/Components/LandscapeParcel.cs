@@ -34,5 +34,6 @@ namespace DCL.Landscape.Components
         public Vector3 ParcelPosition;
         public Entity Parcel;
         public LandscapeAsset LandscapeAsset;
+        public Transform SelectedAsset;
     }
 }
