@@ -12,7 +12,6 @@ using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.AudioSources;
 using SceneRunner.Scene;
-using UnityEngine;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 
 namespace DCL.SDKComponents.AudioSources
@@ -26,58 +25,30 @@ namespace DCL.SDKComponents.AudioSources
     public partial class StartAudioSourceLoadingSystem : BaseUnityLoopSystem
     {
         private readonly ISceneData sceneData;
-        private readonly int attemptsCount;
         private readonly IConcurrentBudgetProvider frameTimeBudgetProvider;
 
-        internal StartAudioSourceLoadingSystem(World world, ISceneData sceneData, int attemptsCount, IConcurrentBudgetProvider frameTimeBudgetProvider) : base(world)
+        internal StartAudioSourceLoadingSystem(World world, ISceneData sceneData, IConcurrentBudgetProvider frameTimeBudgetProvider) : base(world)
         {
             this.sceneData = sceneData;
-            this.attemptsCount = attemptsCount;
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
-
-            Debug.Log(1);
         }
 
         protected override void Update(float t)
         {
-            Debug.Log(2);
             CreateAudioSourceComponentWithPromiseQuery(World);
-            CreateAudioSourceComponentQuery(World);
-        }
-
-        [Query]
-        private void CreateAudioSourceComponent(in Entity entity, ref PBAudioSource sdkAudioSource)
-        {
-            Debug.Log(3);
-            if (!frameTimeBudgetProvider.TrySpendBudget()) return;
-            if (!sceneData.TryGetContentUrl(sdkAudioSource.AudioClipUrl, out URLAddress audioClipUrl)) return;
-            Debug.Log(4);
-            //
-            // var audioSourceComponent = new AudioSourceComponent(sdkAudioSource);
-            //
-            // audioSourceComponent.ClipPromise = Promise.Create(World, new GetAudioClipIntention
-            // {
-            //     CommonArguments = new CommonLoadingArguments(audioClipUrl, attempts: attemptsCount),
-            //     AudioType = sdkAudioSource.AudioClipUrl.ToAudioType(),
-            // }, partitionComponent);
-            //
-            // audioSourceComponent.ClipLoadingStatus = ECS.StreamableLoading.LifeCycle.LoadingInProgress;
-            // World.Add(entity, audioSourceComponent);
         }
 
         [Query]
         private void CreateAudioSourceComponentWithPromise(in Entity entity, ref PBAudioSource sdkAudioSource, ref PartitionComponent partitionComponent)
         {
-            Debug.Log(33);
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
             if (!sceneData.TryGetContentUrl(sdkAudioSource.AudioClipUrl, out URLAddress audioClipUrl)) return;
-            Debug.Log(44);
 
             var audioSourceComponent = new AudioSourceComponent(sdkAudioSource);
 
             audioSourceComponent.ClipPromise = Promise.Create(World, new GetAudioClipIntention
             {
-                CommonArguments = new CommonLoadingArguments(audioClipUrl, attempts: attemptsCount),
+                CommonArguments = new CommonLoadingArguments(audioClipUrl),
                 AudioType = sdkAudioSource.AudioClipUrl.ToAudioType(),
             }, partitionComponent);
 

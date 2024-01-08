@@ -20,7 +20,7 @@ namespace DCL.PluginSystem.World
         private readonly FrameTimeCapBudgetProvider frameTimeBudgetProvider;
         private readonly MemoryBudgetProvider memoryBudgetProvider;
 
-        internal readonly AudioClipsCache audioClipsCache;
+        private readonly AudioClipsCache audioClipsCache;
 
         public AudioSourcesPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IWebRequestController webRequestController, CacheCleaner cacheCleaner)
         {
@@ -38,8 +38,7 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            Debug.Log(0);
-            StartAudioSourceLoadingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, 11, frameTimeBudgetProvider);
+            StartAudioSourceLoadingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, frameTimeBudgetProvider);
             LoadAudioClipSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController, sharedDependencies.MutexSync);
             UpdateAudioSourceSystem.InjectToWorld(ref builder, componentPoolsRegistry, frameTimeBudgetProvider, memoryBudgetProvider);
             CleanUpAudioSourceSystem.InjectToWorld(ref builder, audioClipsCache, componentPoolsRegistry);

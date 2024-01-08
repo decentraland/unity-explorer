@@ -15,6 +15,7 @@ using static Utility.Tests.TestsCategories;
 
 namespace DCL.SDKComponents.AudioSources.Tests
 {
+    [Category(INTEGRATION)]
     public class AudioSourcePluginIntegrationTests
     {
         private World world;
@@ -53,7 +54,6 @@ namespace DCL.SDKComponents.AudioSources.Tests
             world?.Dispose();
         }
 
-        [Category(INTEGRATION)]
         [Test]
         public async Task ShouldCreateAudioSource_WithDownloadedAudioClip_WhenPBAudioSourcePresented()
         {

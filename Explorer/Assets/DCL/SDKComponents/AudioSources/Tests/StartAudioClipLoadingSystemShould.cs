@@ -16,7 +16,6 @@ namespace DCL.SDKComponents.AudioSources.Tests
 {
     public class StartAudioClipLoadingSystemShould : UnitySystemTestBase<StartAudioSourceLoadingSystem>
     {
-        private const int ATTEMPTS_COUNT = 5;
         private PBAudioSource pbAudioSource;
         private Entity entity;
 
@@ -42,7 +41,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
                           return true;
                       });
 
-            return new StartAudioSourceLoadingSystem(world, sceneData, ATTEMPTS_COUNT, concurrentBudgetProvider);
+            return new StartAudioSourceLoadingSystem(world, sceneData, concurrentBudgetProvider);
         }
 
         [TearDown]
@@ -71,7 +70,6 @@ namespace DCL.SDKComponents.AudioSources.Tests
             AssetPromise<AudioClip, GetAudioClipIntention> promiseValue = audioSourceComponent.ClipPromise.Value;
             Assert.That(world.TryGet(promiseValue.Entity, out GetAudioClipIntention intention), Is.True);
             Assert.That(intention.CommonArguments.URL, Is.EqualTo(pbAudioSource.AudioClipUrl));
-            Assert.That(intention.CommonArguments.Attempts, Is.EqualTo(ATTEMPTS_COUNT));
             Assert.That(intention.AudioType, Is.EqualTo(pbAudioSource.AudioClipUrl.ToAudioType()));
         }
     }

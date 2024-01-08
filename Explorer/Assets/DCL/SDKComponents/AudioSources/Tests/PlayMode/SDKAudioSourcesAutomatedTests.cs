@@ -49,7 +49,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
 
             // var scene = currentScene as SceneFacade;
             // yield return new WaitUntil(() => scene.sceneStateProvider.State == SceneState.Running);
-            yield return new WaitForSeconds(15);
+            yield return new WaitForSeconds(1);
 
             // AudioClipsCache? clipsCache = staticContainer.ECSWorldPlugins.OfType<AudioSourcesPlugin>().FirstOrDefault().audioClipsCache;
             // yield return new WaitUntil(() => clipsCache.cache.Count > 0);
