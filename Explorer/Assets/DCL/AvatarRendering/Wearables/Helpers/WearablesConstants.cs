@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Decentraland.Common;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,6 +8,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public static class WearablesConstants
     {
+        public const string EMPTY_DEFAULT_WEARABLE = "EMPTY_DEFAULT_WEARABLE";
+        
         //Used for hiding algorithm
         public static readonly IList<string> CATEGORIES_PRIORITY = new List<string>
         {
@@ -96,8 +99,14 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     new (1.00f, 0.86f, 0.67f),
                 };
 
-            private static Color GetRandomSkinColor() =>
+            public static Color GetRandomSkinColor() =>
                 DEFAULT_SKIN_COLORS[Random.Range(0, DEFAULT_SKIN_COLORS.Length)];
+
+            public static Color GetRandomHairColor() =>
+                Random.ColorHSV();
+
+            public static Color GetRandomEyesColor() =>
+                Random.ColorHSV();
 
             public static Color3 GetRandomSkinColor3()
             {
@@ -140,14 +149,19 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 { (BodyShape.FEMALE, Categories.FEET), "urn:decentraland:off-chain:base-avatars:bun_shoes" },
             };
 
-            public static string[] GetDefaultWearablesForBodyShape(string bodyShapeId) =>
-                DEFAULT_WEARABLES.Where(x => x.Key.Item1 == bodyShapeId).Select(x => x.Value).ToArray();
+            public static HashSet<URN> GetDefaultWearablesForBodyShape(string bodyShapeId) =>
+                DEFAULT_WEARABLES.Where(x => x.Key.Item1 == bodyShapeId).Select(x => new URN(x.Value)).ToHashSet();
 
-            public static string GetDefaultWearable(BodyShape bodyShapeId, string category)
+            public static string GetDefaultWearable(BodyShape bodyShapeId, string category,
+                out bool hasEmptyDefaultWearableAB)
             {
                 if (!DEFAULT_WEARABLES.ContainsKey((bodyShapeId, category)))
-                    return null;
+                {
+                    hasEmptyDefaultWearableAB = true;
+                    return EMPTY_DEFAULT_WEARABLE;
+                }
 
+                hasEmptyDefaultWearableAB = false;
                 return DEFAULT_WEARABLES[(bodyShapeId, category)];
             }
         }

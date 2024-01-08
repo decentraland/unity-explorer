@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Profiles;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
@@ -43,6 +44,7 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetWearableByParamIntention, IWearable[]>(),
                 CreateQuery<GetWearableAssetBundleManifestIntention, SceneAssetBundleManifest>(),
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
+                CreateQuery<GetProfileIntention, Profile>(),
             };
         }
 

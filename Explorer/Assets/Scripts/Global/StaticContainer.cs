@@ -10,11 +10,13 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.Profiles;
 using DCL.Profiling;
 using DCL.ResourcesUnloading;
 using DCL.Time;
 using DCL.WebRequests.Analytics;
 using DCL.Web3Authentication;
+using DCL.Web3Authentication.Identities;
 using ECS.Prioritization;
 using System.Collections.Generic;
 using System.Threading;
@@ -94,7 +96,7 @@ namespace Global
         }
 
         public static async UniTask<(StaticContainer container, bool success)> CreateAsync(IPluginSettingsContainer settingsContainer,
-            IWeb3Authenticator web3Authenticator,
+            IWeb3IdentityCache web3IdentityProvider,
             CancellationToken ct)
         {
             ProfilingCounters.CleanAllCounters();
@@ -132,7 +134,7 @@ namespace Global
             container.ProfilingProvider = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
-            container.WebRequestsContainer = WebRequestsContainer.Create(web3Authenticator);
+            container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider);
             container.PhysicsTickProvider = new PhysicsTickProvider();
 
             var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, container.CacheCleaner);

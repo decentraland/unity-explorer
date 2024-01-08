@@ -3,19 +3,21 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components;
+using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character;
 using DCL.Character.Components;
-using DCL.ECSComponents;
+using DCL.DebugUtilities;
 using DCL.GlobalPartitioning;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
+using DCL.Profiles;
 using DCL.Systems;
-using DCL.WebRequests;
 using DCL.Time;
 using DCL.Time.Systems;
+using DCL.WebRequests;
 using ECS;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -39,6 +41,7 @@ using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
 using Utility.Multithreading;
+using Avatar = DCL.Profiles.Avatar;
 
 namespace Global.Dynamic
 {
@@ -64,12 +67,15 @@ namespace Global.Dynamic
         private readonly PhysicsTickProvider physicsTickProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IReadOnlyList<IDCLGlobalPlugin> globalPlugins;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IConcurrentBudgetProvider memoryBudgetProvider;
         private readonly StaticSettings staticSettings;
 
-        public GlobalWorldFactory(in StaticContainer staticContainer, IRealmPartitionSettings realmPartitionSettings,
+        public GlobalWorldFactory(in StaticContainer staticContainer,
+            IRealmPartitionSettings realmPartitionSettings,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
-            URLDomain assetBundlesURL, IRealmData realmData, IReadOnlyList<IDCLGlobalPlugin> globalPlugins)
+            URLDomain assetBundlesURL, IRealmData realmData, IReadOnlyList<IDCLGlobalPlugin> globalPlugins,
+            IDebugContainerBuilder debugContainerBuilder)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -81,6 +87,7 @@ namespace Global.Dynamic
             this.realmSamplingData = realmSamplingData;
             this.assetBundlesURL = assetBundlesURL;
             this.globalPlugins = globalPlugins;
+            this.debugContainerBuilder = debugContainerBuilder;
             this.realmData = realmData;
 
             memoryBudgetProvider = staticContainer.SingletonSharedDependencies.MemoryBudgetProvider;
@@ -104,15 +111,13 @@ namespace Global.Dynamic
                 new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
                 new PlayerComponent(characterObject.CameraFocus),
                 new TransformComponent { Transform = characterObject.Transform },
-                new PBAvatarShape
-                {
-                    BodyShape = BodyShape.MALE,
-                    Wearables = { WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE) },
-                    Name = "Player",
-                    SkinColor = WearablesConstants.DefaultColors.GetRandomSkinColor3(),
-                    HairColor = WearablesConstants.DefaultColors.GetRandomHairColor3(),
-                }
-            );
+                new Profile("fakeOwnUserId", "Player",
+                    new Avatar(
+                        BodyShape.MALE,
+                        WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                        WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                        WearablesConstants.DefaultColors.GetRandomHairColor(),
+                        WearablesConstants.DefaultColors.GetRandomSkinColor())));
 
             IConcurrentBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(staticSettings.ScenesLoadingBudget);
 
@@ -156,6 +161,8 @@ namespace Global.Dynamic
 
             UpdatePhysicsTickSystem.InjectToWorld(ref builder, physicsTickProvider);
             UpdateTimeSystem.InjectToWorld(ref builder);
+
+            OwnAvatarLoaderFromDebugMenuSystem.InjectToWorld(ref builder, playerEntity, debugContainerBuilder, realmData);
 
             var pluginArgs = new GlobalPluginArguments(playerEntity);
 

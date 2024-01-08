@@ -110,10 +110,14 @@
         /// </summary>
         public const string AVATAR = nameof(AVATAR);
 
+        public const string PROFILE = nameof(PROFILE);
+
         /// <summary>
         ///     Wearable related
         /// </summary>
         public const string WEARABLE = nameof(WEARABLE);
+
+        public const string AUTHENTICATION = nameof(AUTHENTICATION);
 
         /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
