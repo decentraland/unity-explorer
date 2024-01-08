@@ -18,7 +18,7 @@ namespace DCL.Optimization.PerformanceBudgeting
         private const ulong NO_MEMORY = 0;
 
         private readonly IProfilingProvider profilingProvider;
-        private readonly Dictionary<MemoryUsageStatus, float> memoryThreshold;
+        private readonly IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold;
         private readonly ISystemMemory systemMemory;
 
         // Debug
@@ -27,7 +27,7 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         private ulong actualSystemMemory => systemMemory.TotalSizeInMB;
 
-        public MemoryBudgetProvider(ISystemMemory systemMemory, IProfilingProvider profilingProvider, Dictionary<MemoryUsageStatus, float> memoryThreshold)
+        public MemoryBudgetProvider(ISystemMemory systemMemory, IProfilingProvider profilingProvider, IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold)
         {
             SimulatedMemoryUsage = Normal;
 
