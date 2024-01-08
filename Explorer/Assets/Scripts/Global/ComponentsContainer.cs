@@ -38,7 +38,7 @@ namespace Global
                .Add(SDKComponentBuilder<PBTextShape>.Create(ComponentID.TEXT_SHAPE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBMaterial>.Create(ComponentID.MATERIAL).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBRaycast>.Create(ComponentID.RAYCAST).AsProtobufComponent())
-               .Add(SDKComponentBuilder<PBUiTransform>.Create(ComponentID.UI_TRANSFORM).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBUiTransform>.Create(ComponentID.UI_TRANSFORM).AsProtobufComponent(true))
                .Add(SDKComponentBuilder<PBUiText>.Create(ComponentID.UI_TEXT).AsProtobufComponent())
 
                 // Special logic for pooling/releasing PBRaycastResult
