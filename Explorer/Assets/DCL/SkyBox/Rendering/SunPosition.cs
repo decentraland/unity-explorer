@@ -1,9 +1,7 @@
-﻿using System;
-using Unity.Burst;
+﻿using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
-using UnityEngine;
 
 namespace DCL.SkyBox.Rendering
 {
@@ -123,7 +121,7 @@ namespace DCL.SkyBox.Rendering
                 }
                 else
                 {
-                    result.LightRotation = quaternion.Euler(result.MoonPos);
+                    result.LightRotation = quaternion.Euler(result.MoonPos * DEG2_RAD);
                     result.LightIntensity = 0.1f;
                 }
 
