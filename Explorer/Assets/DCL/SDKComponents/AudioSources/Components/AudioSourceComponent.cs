@@ -6,7 +6,7 @@ using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip,
 
 namespace DCL.SDKComponents.AudioSources
 {
-    public struct AudioSourceComponent : IPoolableComponentProvider<AudioSource?>
+    public struct AudioSourceComponent : IPoolableComponentProvider<AudioSource>
     {
         public readonly PBAudioSource PBAudioSource;
 

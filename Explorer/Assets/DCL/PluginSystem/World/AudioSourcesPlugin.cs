@@ -30,18 +30,27 @@ namespace DCL.PluginSystem.World
             memoryBudgetProvider = sharedDependencies.MemoryBudgetProvider;
 
             componentPoolsRegistry = sharedDependencies.ComponentPoolsRegistry;
-            componentPoolsRegistry.AddGameObjectPool<AudioSource>();
+            componentPoolsRegistry.AddGameObjectPool<AudioSource>(onRelease: OnAudioSourceReleased);
+            cacheCleaner.Register(componentPoolsRegistry.GetReferenceTypePool<AudioSource>());
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
+            return;
+
+            void OnAudioSourceReleased(AudioSource audioSource)
+            {
+                audioClipsCache.Dereference(audioSource.clip);
+                audioSource.clip = null;
+            }
         }
+
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
             StartAudioSourceLoadingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, frameTimeBudgetProvider);
             LoadAudioClipSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController, sharedDependencies.MutexSync);
             UpdateAudioSourceSystem.InjectToWorld(ref builder, componentPoolsRegistry, frameTimeBudgetProvider, memoryBudgetProvider);
-            CleanUpAudioSourceSystem.InjectToWorld(ref builder, audioClipsCache, componentPoolsRegistry);
+            // CleanUpAudioSourceSystem.InjectToWorld(ref builder, audioClipsCache, componentPoolsRegistry);
 
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<AudioSource, AudioSourceComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
         }

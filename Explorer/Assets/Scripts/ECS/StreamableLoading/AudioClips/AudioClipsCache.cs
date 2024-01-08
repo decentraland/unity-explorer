@@ -3,31 +3,29 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiling;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Assertions;
 using Utility;
 
 namespace ECS.StreamableLoading.AudioClips
 {
     public class AudioClipsCache : IStreamableCache<AudioClip, GetAudioClipIntention>
     {
-        internal readonly Dictionary<GetAudioClipIntention, (AudioClip clip, int referenceCount)> cache;
+        private static readonly Comparison<(GetAudioClipIntention intention, AudioClipData clipData)> COMPARE_BY_LAST_USED_FRAME_REVERSED =
+            (pair1, pair2) => pair2.clipData.LastUsedFrame.CompareTo(pair1.clipData.LastUsedFrame);
 
-        public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AudioClip>?>> OngoingRequests { get; }
-        public IDictionary<string, StreamableLoadingResult<AudioClip>> IrrecoverableFailures { get; }
+        internal readonly Dictionary<GetAudioClipIntention, AudioClipData> cache = new ();
+        private readonly Dictionary<AudioClip, GetAudioClipIntention> invertedCache = new ();
+        private readonly List<(GetAudioClipIntention intention, AudioClipData clipData)> listedCache = new ();
 
-        public AudioClipsCache()
-        {
-            cache = new Dictionary<GetAudioClipIntention, (AudioClip clip, int referenceCount)>(this);
-            IrrecoverableFailures = new Dictionary<string, StreamableLoadingResult<AudioClip>>();
-            OngoingRequests = new Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AudioClip>?>>();
-        }
+        public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AudioClip>?>> OngoingRequests { get; } = new Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AudioClip>?>>();
+        public IDictionary<string, StreamableLoadingResult<AudioClip>> IrrecoverableFailures { get; } = new Dictionary<string, StreamableLoadingResult<AudioClip>>();
 
         public void Dispose()
         {
-            foreach ((AudioClip clip, int referenceCount) clip in cache.Values)
-                UnityObjectUtils.SafeDestroy(clip.clip);
+            foreach (AudioClipData? clip in cache.Values)
+                UnityObjectUtils.SafeDestroy(clip.AudioClip);
 
             cache.Clear();
         }
@@ -36,52 +34,57 @@ namespace ECS.StreamableLoading.AudioClips
         {
             if (!cache.ContainsKey(key))
             {
-                cache[key] = (asset, 1);
-                ProfilingCounters.ReferencedAudioClips.Value++;
+                cache[key] = new AudioClipData(asset);
+                invertedCache[asset] = key;
+                listedCache.Add((key, cache[key]));
             }
             else
-            {
-                if (cache[key].referenceCount == 0)
-                    ProfilingCounters.ReferencedAudioClips.Value++;
-
-                cache[key] = (cache[key].clip, cache[key].referenceCount + 1);
-            }
+                cache[key].AddReference();
 
             ProfilingCounters.AudioClipsInCache.Value = cache.Count;
         }
 
         public bool TryGet(in GetAudioClipIntention key, out AudioClip asset)
         {
+            if (cache.TryGetValue(key, out AudioClipData? value))
+            {
+                asset = value.AudioClip;
+                return true;
+            }
+
             asset = null;
-            if (!cache.TryGetValue(key, out (AudioClip clip, int referenceCount) value)) return false;
-
-            asset = value.clip;
-
-            if (cache[key].referenceCount == 0)
-                ProfilingCounters.ReferencedAudioClips.Value++;
-            cache[key] = (value.clip, value.referenceCount + 1);
-
-            return true;
+            return false;
         }
 
         public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount)
         {
-            // TODO: Implement cacheUnload
+            listedCache.Sort(COMPARE_BY_LAST_USED_FRAME_REVERSED);
+
+            for (int i = listedCache.Count - 1; frameTimeBudgetProvider.TrySpendBudget() && i >= 0 && maxUnloadAmount > 0; i--)
+            {
+                (GetAudioClipIntention key, AudioClipData clipData) = listedCache[i];
+                if (!clipData.CanBeDisposed()) continue;
+
+                clipData.Dispose();
+                cache.Remove(key);
+                listedCache.RemoveAt(i);
+
+                maxUnloadAmount--;
+            }
+
             ProfilingCounters.AudioClipsInCache.Value = cache.Count;
+        }
+
+        public void Dereference(AudioClip audioClip)
+        {
+            if (invertedCache.TryGetValue(audioClip, out GetAudioClipIntention key))
+                Dereference(key, audioClip);
         }
 
         public void Dereference(in GetAudioClipIntention key, AudioClip _)
         {
-            if (cache.TryGetValue(key, out (AudioClip clip, int referenceCount) value))
-            {
-                int newReferenceCount = value.referenceCount - 1;
-                Assert.IsFalse(value.referenceCount < 0, "Reference count of AudioClip should never be negative!");
-
-                cache[key] = (value.clip, newReferenceCount);
-
-                if (cache[key].referenceCount == 0)
-                    ProfilingCounters.ReferencedAudioClips.Value--;
-            }
+            if (cache.TryGetValue(key, out AudioClipData? audioClipData))
+                audioClipData.RemoveReference();
         }
 
         public bool Equals(GetAudioClipIntention x, GetAudioClipIntention y) =>
