@@ -1,5 +1,6 @@
 using DCL.WebRequests.Analytics.Metrics;
 using DCL.Web3Authentication;
+using DCL.Web3Authentication.Identities;
 
 namespace DCL.WebRequests.Analytics
 {
@@ -9,7 +10,7 @@ namespace DCL.WebRequests.Analytics
 
         public IWebRequestsAnalyticsContainer AnalyticsContainer { get; private set; }
 
-        public static WebRequestsContainer Create(IWeb3Authenticator web3Authenticator)
+        public static WebRequestsContainer Create(IWeb3IdentityCache web3IdentityProvider)
         {
             var analyticsContainer = new WebRequestsAnalyticsContainer().AddTrackedMetric<ActiveCounter>()
                                                                         .AddTrackedMetric<Total>()
@@ -17,7 +18,7 @@ namespace DCL.WebRequests.Analytics
                                                                         .AddTrackedMetric<BandwidthDown>()
                                                                         .AddTrackedMetric<BandwidthUp>();
 
-            var webRequestController = new WebRequestController(analyticsContainer, web3Authenticator);
+            var webRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider);
             return new WebRequestsContainer { WebRequestController = webRequestController, AnalyticsContainer = analyticsContainer };
         }
     }

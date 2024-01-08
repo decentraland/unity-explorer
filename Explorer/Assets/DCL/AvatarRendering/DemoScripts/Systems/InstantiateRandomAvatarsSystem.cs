@@ -102,7 +102,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         private void DestroyRandomAmountOfAvatars()
         {
             World.Query(in avatarsQuery,
-                (in Entity entity) =>
+                entity =>
                 {
                     if (Random.Range(0, 3) == 0)
                     {

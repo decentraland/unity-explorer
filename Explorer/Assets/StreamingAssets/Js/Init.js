@@ -30,6 +30,17 @@ const console = {
     error: function (...args) { UnityOpsApi.Error("SceneError: " + args.join(' ')) },
 }
 
+// NOTE: MetadyneLabs.dcl.eth introduced a dependency on Cannon.js, this library
+// Attempts to define the "performance" object and fails. This is due to "use strict" being enabled. [https://www.w3schools.com/js/js_strict.asp]
+// Note that in theory, this is invalid code - 
+// strict mode is enabled by default in modules (see code exported from module: https://github.com/schteppe/cannon.js/blob/569730f94a1d9da47967a24fad0323ef7d5b4119/src/world/World.js#L491C22-L491C22)
+// We are unsure if this is part of a broader problem, if for some reason errors are thrown that appear
+// To be related to the usage of "use strict", such as variable is not defined, we should investigate further. 
+// This does not occur on unity-renderer.
+const performance = {
+	now: function() { return Date.now(); }
+}
+
 // timeout handler
 globalThis.setImmediate = (fn) => Promise.resolve().then(fn)
 
