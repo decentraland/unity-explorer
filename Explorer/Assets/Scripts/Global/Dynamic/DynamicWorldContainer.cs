@@ -7,6 +7,7 @@ using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.SkyBox;
 using DCL.Profiles;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -52,6 +53,7 @@ namespace Global.Dynamic
             IPluginSettingsContainer settingsContainer,
             CancellationToken ct,
             UIDocument rootUIDocument,
+            SkyBoxSceneData skyBoxSceneData,
             IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius,
             DynamicSettings dynamicSettings,
             IWeb3VerifiedAuthenticator web3Authenticator,
@@ -97,6 +99,7 @@ namespace Global.Dynamic
                 new ExplorePanelPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer, placesAPIService, parcelServiceContainer.TeleportController, dynamicSettings.BackpackSettings, staticContainer.WebRequestsContainer.WebRequestController),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
                 new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, mvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, storedIdentityProvider),
+                new SkyBoxPlugin(debugBuilder, skyBoxSceneData),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

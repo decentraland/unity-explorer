@@ -41,6 +41,9 @@ namespace DCL.DebugUtilities
         public VisualTreeAsset IntField { get; private set; }
 
         [field: SerializeField]
+        public VisualTreeAsset IntSlider { get; private set; }
+
+        [field: SerializeField]
         public VisualTreeAsset FloatField { get; private set; }
 
         [field: SerializeField]
