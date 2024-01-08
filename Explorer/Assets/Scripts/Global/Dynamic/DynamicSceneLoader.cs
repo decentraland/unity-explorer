@@ -1,8 +1,11 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Web3Authentication;
+using DCL.Web3Authentication.Authenticators;
+using DCL.Web3Authentication.Identities;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -27,9 +30,10 @@ namespace Global.Dynamic
         [SerializeField] private DynamicSceneLoaderSettings settings;
         [SerializeField] private DynamicSettings dynamicSettings;
 
-        private StaticContainer staticContainer;
-        private DynamicWorldContainer dynamicWorldContainer;
-        private GlobalWorld globalWorld;
+        private StaticContainer? staticContainer;
+        private DynamicWorldContainer? dynamicWorldContainer;
+        private GlobalWorld? globalWorld;
+        private IWeb3VerifiedAuthenticator? web3Authenticator;
 
         private void Awake()
         {
@@ -44,17 +48,19 @@ namespace Global.Dynamic
             {
                 if (dynamicWorldContainer != null)
                 {
-                    dynamicWorldContainer.Dispose();
                     foreach (IDCLGlobalPlugin plugin in dynamicWorldContainer.GlobalPlugins)
                         plugin.Dispose();
+
+                    if (globalWorld != null)
+                        await dynamicWorldContainer.RealmController.DisposeGlobalWorldAsync().SuppressCancellationThrow();
                 }
 
-                if (globalWorld != null)
-                    await dynamicWorldContainer.RealmController.DisposeGlobalWorldAsync().SuppressCancellationThrow();
+                dynamicWorldContainer?.Dispose();
 
                 await UniTask.SwitchToMainThread();
 
                 staticContainer?.Dispose();
+                web3Authenticator?.Dispose();
             }
 
             realmLauncher.OnRealmSelected = null;
@@ -65,13 +71,20 @@ namespace Global.Dynamic
         {
             try
             {
-                IWeb3Authenticator web3Authenticator = new RandomGeneratedWeb3Authenticator();
-                IWeb3Identity web3Identity = await web3Authenticator.LoginAsync(ct);
+                var identityCache = new ProxyIdentityCache(new MemoryWeb3IdentityCache(),
+                    new PlayerPrefsIdentityProvider(new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()));
+
+                web3Authenticator = new ProxyVerifiedWeb3Authenticator(
+                    new DappWeb3Authenticator(new UnityAppWebBrowser(),
+                        settings.AuthWebSocketUrl,
+                        settings.AuthSignatureUrl),
+                    identityCache);
 
                 // First load the common global plugin
                 bool isLoaded;
 
-                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, web3Authenticator, ct);
+                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer,
+                    identityCache, ct);
 
                 if (!isLoaded)
                 {
@@ -89,7 +102,8 @@ namespace Global.Dynamic
                     settings.StaticLoadPositions,
                     settings.SceneLoadRadius,
                     dynamicSettings,
-                    web3Authenticator);
+                    web3Authenticator,
+                    identityCache);
 
                 if (!isLoaded)
                 {
@@ -116,7 +130,7 @@ namespace Global.Dynamic
                 }
 
                 globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory,
-                    dynamicWorldContainer.EmptyScenesWorldFactory, staticContainer.CharacterObject, web3Identity);
+                    dynamicWorldContainer.EmptyScenesWorldFactory, staticContainer.CharacterObject);
 
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
                 dynamicWorldContainer.RealmController.SetupWorld(globalWorld);
@@ -137,22 +151,24 @@ namespace Global.Dynamic
 
         private void ChangeRealm(string selectedRealm)
         {
-            async UniTask ChangeRealmAsync(StaticContainer globalContainer, string selectedRealm, CancellationToken ct)
+            async UniTask ChangeRealmAsync(string selectedRealm, CancellationToken ct)
             {
+                IRealmController realmController = dynamicWorldContainer!.RealmController;
+
                 if (globalWorld != null)
-                    await dynamicWorldContainer.RealmController.UnloadCurrentRealmAsync();
+                    await realmController.UnloadCurrentRealmAsync();
 
                 await UniTask.SwitchToMainThread();
 
                 Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(settings.StartPosition);
                 characterPos.y = 1f;
 
-                globalContainer.CharacterObject.Controller.transform.position = characterPos;
+                staticContainer!.CharacterObject.Controller.transform.position = characterPos;
 
-                await dynamicWorldContainer.RealmController.SetRealmAsync(URLDomain.FromString(selectedRealm), ct);
+                await realmController.SetRealmAsync(URLDomain.FromString(selectedRealm), ct);
             }
 
-            ChangeRealmAsync(staticContainer, selectedRealm, CancellationToken.None).Forget();
+            ChangeRealmAsync(selectedRealm, CancellationToken.None).Forget();
         }
     }
 }

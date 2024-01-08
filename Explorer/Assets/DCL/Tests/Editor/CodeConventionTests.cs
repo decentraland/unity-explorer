@@ -12,7 +12,7 @@ namespace DCL.Tests
     [Category("CodeConventions")]
     public class CodeConventionsTests
     {
-        private static readonly string[] EXCLUDED_PATHS = { "/Editor/", "/Tests/", "/EditorTests/", "/Rendering/SkyBox/", "/Ipfs/" };
+        private static readonly string[] EXCLUDED_PATHS = { "/Editor/", "/Tests/", "/EditorTests/", "/Rendering/SkyBox/", "/Ipfs/", "/Plugins/SocketIO" };
 
         private static IEnumerable<string> AllCSharpFiles() =>
             AssetDatabase.FindAssets("t:Script")

@@ -17,7 +17,6 @@ using DCL.Profiles;
 using DCL.Systems;
 using DCL.Time;
 using DCL.Time.Systems;
-using DCL.Web3Authentication;
 using DCL.WebRequests;
 using ECS;
 using ECS.Groups;
@@ -97,8 +96,7 @@ namespace Global.Dynamic
             physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
-        public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory, ICharacterObject characterObject,
-            IWeb3Identity web3Identity)
+        public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory, ICharacterObject characterObject)
         {
             var world = World.Create();
 
@@ -115,7 +113,7 @@ namespace Global.Dynamic
                 new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
                 new PlayerComponent(characterObject.CameraFocus),
                 new TransformComponent { Transform = characterObject.Transform },
-                new Profile(web3Identity.EphemeralAccount.Address, "Player",
+                new Profile("fakeOwnUserId", "Player",
                     new Avatar(
                         BodyShape.MALE,
                         WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
