@@ -53,8 +53,18 @@ namespace DCL.Web3Authentication.Signatures
 
                 await ConnectToServerAsync();
 
-                SignatureIdResponse authenticationResponse = await RequestSignatureToServerAsync(payload,
-                    "personal_sign", identityCache.Identity!.AuthChain, ct);
+                string challenge = identityCache.Identity!.EphemeralAccount.Sign(payload);
+
+                SignatureIdResponse authenticationResponse = await RequestAuthorizedEthMethod(new AuthorizedEthApiRequest
+                {
+                    method = "personal_sign",
+                    @params = new[]
+                    {
+                        challenge,
+                        identityCache.Identity!.EphemeralAccount.Address,
+                    },
+                    authChain = identityCache.Identity!.AuthChain.ToArray(),
+                }, ct);
 
                 DateTime signatureExpiration = DateTime.UtcNow.AddMinutes(5);
 
@@ -65,7 +75,7 @@ namespace DCL.Web3Authentication.Signatures
 
                 signatureVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration);
 
-                DappSignatureResponse signature = await WaitForUserSignatureAsync(authenticationResponse.requestId,
+                DappSignatureResponse signature = await RequestWalletConfirmationAsync(authenticationResponse.requestId,
                     signatureExpiration, ct);
 
                 return new Web3PersonalSignature(signature.result, new Web3Address(signature.sender));
@@ -82,10 +92,10 @@ namespace DCL.Web3Authentication.Signatures
         ///     2. Open a tab to let the user sign through the browser with his custom installed wallet
         ///     3. Use the signature information to generate the identity
         /// </summary>
-        /// <param name="cancellationToken"></param>
+        /// <param name="ct"></param>
         /// <returns></returns>
         /// <exception cref="Web3SignatureException"></exception>
-        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken cancellationToken)
+        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
         {
             try
             {
@@ -99,19 +109,24 @@ namespace DCL.Web3Authentication.Signatures
                 DateTime sessionExpiration = DateTime.UtcNow.AddDays(7);
                 string ephemeralMessage = CreateEphemeralMessage(ephemeralAccount, sessionExpiration);
 
-                SignatureIdResponse authenticationResponse = await RequestSignatureToServerAsync(ephemeralMessage, "dcl_personal_sign", cancellationToken);
+                SignatureIdResponse authenticationResponse = await RequestEthMethod(
+                    new EthApiRequest
+                    {
+                        method = "dcl_personal_sign",
+                        @params = new[] { ephemeralMessage },
+                    }, ct);
 
                 DateTime signatureExpiration = DateTime.UtcNow.AddMinutes(5);
 
                 if (!string.IsNullOrEmpty(authenticationResponse.expiration))
                     signatureExpiration = DateTime.Parse(authenticationResponse.expiration, null, DateTimeStyles.RoundtripKind);
 
-                await UniTask.SwitchToMainThread(cancellationToken);
+                await UniTask.SwitchToMainThread(ct);
 
                 loginVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration);
 
-                DappSignatureResponse signature = await WaitForUserSignatureAsync(authenticationResponse.requestId,
-                    signatureExpiration, cancellationToken);
+                DappSignatureResponse signature = await RequestWalletConfirmationAsync(authenticationResponse.requestId,
+                    signatureExpiration, ct);
 
                 AuthChain authChain = CreateAuthChain(signature, ephemeralMessage);
 
@@ -122,7 +137,8 @@ namespace DCL.Web3Authentication.Signatures
             finally
             {
                 await DisconnectFromServerAsync();
-                await UniTask.SwitchToMainThread(cancellationToken);
+                await UniTask.SwitchToMainThread(ct);
+                await SignAsync("bleh", ct);
             }
         }
 
@@ -197,28 +213,14 @@ namespace DCL.Web3Authentication.Signatures
             signatureOutcomeTask?.TrySetResult(response.GetValue<DappSignatureResponse>());
         }
 
-        private async UniTask<SignatureIdResponse> RequestSignatureToServerAsync(string payload,
-            string method, CancellationToken ct)
-        {
-            return await RequestSignatureToServerAsync(ct, new SignatureRequest
-            {
-                method = method,
-                @params = new[] { payload },
-            });
-        }
+        private async UniTask<SignatureIdResponse> RequestAuthorizedEthMethod(
+            AuthorizedEthApiRequest request,
+            CancellationToken ct) =>
+            await RequestEthMethod(request, ct);
 
-        private async UniTask<SignatureIdResponse> RequestSignatureToServerAsync(string payload,
-            string method, AuthChain authChain, CancellationToken ct)
-        {
-            return await RequestSignatureToServerAsync(ct, new AuthorizedSignatureRequest
-            {
-                method = method,
-                @params = new[] { payload },
-                authChain = authChain.ToArray(),
-            });
-        }
-
-        private async UniTask<SignatureIdResponse> RequestSignatureToServerAsync(CancellationToken ct, params object[] payload)
+        private async UniTask<SignatureIdResponse> RequestEthMethod(
+            EthApiRequest request,
+            CancellationToken ct)
         {
             UniTaskCompletionSource<SignatureIdResponse> task = new ();
 
@@ -233,13 +235,13 @@ namespace DCL.Web3Authentication.Signatures
                         task.TrySetException(new Web3SignatureException("Cannot solve auth request id"));
                     else
                         task.TrySetResult(signatureIdResponse);
-                }, payload);
+                }, request);
 
             return await task.Task.Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS))
                              .AttachExternalCancellation(ct);
         }
 
-        private async UniTask<DappSignatureResponse> WaitForUserSignatureAsync(string requestId, DateTime expiration, CancellationToken ct)
+        private async UniTask<DappSignatureResponse> RequestWalletConfirmationAsync(string requestId, DateTime expiration, CancellationToken ct)
         {
             webBrowser.OpenUrl($"{signatureUrl}/{requestId}");
 

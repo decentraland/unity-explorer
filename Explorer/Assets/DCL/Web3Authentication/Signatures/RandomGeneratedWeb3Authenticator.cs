@@ -13,7 +13,7 @@ namespace DCL.Web3Authentication.Signatures
         {
         }
 
-        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken cancellationToken)
+        public async UniTask<IWeb3Identity> LoginAsync(CancellationToken ct)
         {
             var signer = NethereumAccount.CreateRandom();
             var ephemeralAccount = NethereumAccount.CreateRandom();

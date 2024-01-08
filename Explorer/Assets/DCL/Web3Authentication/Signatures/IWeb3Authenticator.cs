@@ -7,7 +7,7 @@ namespace DCL.Web3Authentication.Signatures
 {
     public interface IWeb3Authenticator : IDisposable
     {
-        UniTask<IWeb3Identity> LoginAsync(CancellationToken cancellationToken);
+        UniTask<IWeb3Identity> LoginAsync(CancellationToken ct);
 
         UniTask LogoutAsync(CancellationToken cancellationToken);
     }

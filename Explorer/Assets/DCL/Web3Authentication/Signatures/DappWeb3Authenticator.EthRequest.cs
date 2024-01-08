@@ -6,17 +6,15 @@ namespace DCL.Web3Authentication.Signatures
     public partial class DappWeb3Authenticator
     {
         [Serializable]
-        private struct SignatureRequest
+        private class EthApiRequest
         {
             public string method;
             public string[] @params;
         }
 
         [Serializable]
-        private struct AuthorizedSignatureRequest
+        private class AuthorizedEthApiRequest : EthApiRequest
         {
-            public string method;
-            public string[] @params;
             public AuthLink[] authChain;
         }
     }
