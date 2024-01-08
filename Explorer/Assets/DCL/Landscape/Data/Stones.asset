@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9f267cd6d7b406a8338323d4c61fe74, type: 3}
+  m_Name: Stones
+  m_EditorClassIdentifier: 
+  assets:
+  - {fileID: 5483867172920926488, guid: 1ef7e3703f961f7428f37b99400577fa, type: 3}
+  randomization:
+    randomRotationX: {x: 0, y: 360}
+    randomRotationY: {x: 0, y: 360}
+    randomRotationZ: {x: 0, y: 360}
+    proportionalScale: 1
+    randomScale: {x: 1, y: 4}
+    randomScaleX: {x: 0, y: 0}
+    randomScaleY: {x: 0, y: 0}
+    randomScaleZ: {x: 0, y: 0}
+    positionOffsetX: {x: -0.5, y: 0.5}
+    positionOffsetY: {x: 0, y: 0}
+    positionOffsetZ: {x: -0.5, y: 0.5}
+  noiseData: {fileID: 11400000, guid: c5dbc7b58f6967b45ac9c61fbd14666e, type: 2}
+  poolPreWarmCount: 5800

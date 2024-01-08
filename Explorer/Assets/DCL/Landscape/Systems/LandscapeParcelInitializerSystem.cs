@@ -204,34 +204,40 @@ namespace DCL.Landscape.Systems
                     // We probably want to setup some thresholds for this instead of bigger than zero
                     if (objHeight > 0)
                     {
+                        // TODO: draw them with BatchRenderer
+
                         Profiler.BeginSample("LandscapeParcelInitializerSystem.InitializeLandscapeSubEntities.SpawnObject");
                         Vector3 subEntityPos = (Vector3.right * i * dist) + (Vector3.forward * j * dist);
                         Vector3 finalPosition = basePos + parcelMargin + subEntityPos;
 
-                        Transform objTransform = poolManager.Get(landscapeParcelNoiseJob.LandscapeAsset.asset);
+                        LandscapeAsset landscapeAsset = landscapeParcelNoiseJob.LandscapeAsset;
+                        int randomIndex = landscapeParcel.Random.Next(0, landscapeAsset.assets.Length - 1);
+                        Transform prefab = landscapeAsset.assets[randomIndex];
+
+                        Transform objTransform = poolManager.Get(prefab);
                         objTransform.SetParent(landscapeParentObject);
                         objTransform.transform.position = finalPosition;
-                        landscapeParcelNoiseJob.LandscapeAsset.randomization.ApplyRandomness(objTransform, landscapeParcel.Random, objHeight);
+                        landscapeAsset.randomization.ApplyRandomness(objTransform, landscapeParcel.Random, objHeight);
 
                         // can we avoid this allocation? we need to keep track of them
-                        if (!landscapeParcel.Assets.ContainsKey(landscapeParcelNoiseJob.LandscapeAsset.asset))
-                            landscapeParcel.Assets.Add(landscapeParcelNoiseJob.LandscapeAsset.asset, new List<Transform>());
+                        if (!landscapeParcel.Assets.ContainsKey(prefab))
+                            landscapeParcel.Assets.Add(prefab, new List<Transform>());
 
-                        landscapeParcel.Assets[landscapeParcelNoiseJob.LandscapeAsset.asset].Add(objTransform);
+                        landscapeParcel.Assets[prefab].Add(objTransform);
                         Profiler.EndSample();
                     }
                 }
             }
 
             // TODO: Add to unload list
-            Transform groundTile = poolManager.Get(landscapeData.groundTile);
+            /*Transform groundTile = poolManager.Get(landscapeData.groundTile);
             groundTile.SetParent(landscapeParentObject);
             groundTile.transform.position = basePos + new Vector3(8, 0, 8);
             groundTile.transform.eulerAngles = new Vector3(0, -180, 0);
 
             //UpdateMaterialPropertyBlock(basePos);
             //groundTile.GetComponent<Renderer>().SetPropertyBlock(materialPropertyBlock);
-            groundTile.name = $"Empty {basePos.x / 16:F0},{basePos.z / 16:F0}";
+            groundTile.name = $"Empty {basePos.x / 16:F0},{basePos.z / 16:F0}";*/
 
             DisposeEntityAndJob(in entity, ref landscapeParcelNoiseJob);
 

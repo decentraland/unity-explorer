@@ -44,7 +44,8 @@ namespace DCL.PluginSystem.Global
             ParseParcels();
 
             foreach (LandscapeAsset landscapeAsset in landscapeData.Value.assets)
-                poolManager.Add(landscapeAsset.asset, landscapeAsset.poolPreWarmCount);
+            foreach (Transform prefab in landscapeAsset.assets)
+                poolManager.Add(prefab, landscapeAsset.poolPreWarmCount / landscapeAsset.assets.Length);
 
             poolManager.Add(landscapeData.Value.groundTile, 35000);
             poolManager.Add(landscapeData.Value.mapChunk, 8 * 8);
