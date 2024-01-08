@@ -20,6 +20,10 @@ namespace DCL.Backpack
 {
     public class BackpackGridController
     {
+        private const string PAGE_NUMBER = "pageNumber";
+        private const string PAGE_SIZE = "pageSize";
+        private const string CURRENT_PAGE_SIZE = "16";
+
         private readonly BackpackGridView view;
         private readonly BackpackCommandBus commandBus;
         private readonly BackpackEventBus eventBus;
@@ -32,6 +36,7 @@ namespace DCL.Backpack
         private readonly Dictionary<string, BackpackItemView> usedPoolItems;
         private World world;
         private CancellationTokenSource cts;
+        private List<(string,string)> requestParameters;
 
         public BackpackGridController(
             BackpackGridView view,
@@ -53,6 +58,7 @@ namespace DCL.Backpack
             usedPoolItems = new ();
             eventBus.EquipEvent += OnEquip;
             eventBus.UnEquipEvent += OnUnequip;
+            requestParameters = new List<(string, string)>();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in Entity playerEntity)
@@ -100,8 +106,13 @@ namespace DCL.Backpack
         {
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
+
+            requestParameters.Clear();
+            requestParameters.Add((PAGE_NUMBER, string.Format("{0}", pageNumber)));
+            requestParameters.Add((PAGE_SIZE, "16"));
+
             //Reuse params array and review types URLParameter once auth pr is merged
-            ParamPromise wearablesPromise = ParamPromise.Create(world, new GetWearableByParamIntention(new[] { ("pageNumber", string.Format("{0}", pageNumber)), ("pageSize", "16") },  "0x8e41609eD5e365Ac23C28d9625Bd936EA9C9E22c"/*web3IdentityCache.Identity!.EphemeralAccount.Address*/, new List<IWearable>()), PartitionComponent.TOP_PRIORITY);
+            ParamPromise wearablesPromise = ParamPromise.Create(world, new GetWearableByParamIntention(requestParameters,  "0x8e41609eD5e365Ac23C28d9625Bd936EA9C9E22c"/*web3IdentityCache.Identity!.EphemeralAccount.Address*/, new List<IWearable>()), PartitionComponent.TOP_PRIORITY);
             AwaitWearablesPromiseAsync(wearablesPromise, cts.Token).Forget();
         }
 

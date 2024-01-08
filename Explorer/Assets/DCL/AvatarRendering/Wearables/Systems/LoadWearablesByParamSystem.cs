@@ -15,6 +15,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
@@ -69,7 +70,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             return new StreamableLoadingResult<IWearable[]>(intention.Results.ToArray());
         }
 
-        private URLAddress BuildURL(string userID, (string paramName, string paramValue)[] urlEncodedParams)
+        private URLAddress BuildURL(string userID, IReadOnlyList<(string, string)> urlEncodedParams)
         {
             urlBuilder.Clear();
 
@@ -77,9 +78,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
                       .AppendSubDirectory(URLSubdirectory.FromString(userID))
                       .AppendSubDirectory(wearablesSubdirectory);
 
-            if (urlEncodedParams.Length > 0)
+            if (urlEncodedParams.Count > 0)
             {
-                for (var i = 0; i < urlEncodedParams.Length; i++)
+                for (var i = 0; i < urlEncodedParams.Count; i++)
                     urlBuilder.AppendParameter(urlEncodedParams[i]);
             }
 
