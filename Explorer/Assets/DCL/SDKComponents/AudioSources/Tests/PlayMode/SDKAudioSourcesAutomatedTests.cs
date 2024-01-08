@@ -1,6 +1,8 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
 using DCL.Web3Authentication;
+using DCL.Web3Authentication.Authenticators;
+using DCL.Web3Authentication.Identities;
 using ECS.Prioritization.Components;
 using Global;
 using UnityEngine.TestTools;
@@ -67,12 +69,14 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
         {
             try
             {
-                var web3Authenticator = new RandomGeneratedWeb3Authenticator();
+                var identityCache = new MemoryWeb3IdentityCache();
+
+                var web3Authenticator = new ProxyWeb3Authenticator(new RandomGeneratedWeb3Authenticator(), identityCache);
                 await web3Authenticator.LoginAsync(ct);
 
                 SceneSharedContainer sceneSharedContainer;
 
-                (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettings, scenePluginSettings, web3Authenticator, ct);
+                (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettings, scenePluginSettings, identityCache, ct);
 
                 currentScene = await sceneSharedContainer
                                     .SceneFactory
@@ -91,11 +95,11 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
         private static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> InstallAsync(
             IPluginSettingsContainer globalSettingsContainer,
             IPluginSettingsContainer sceneSettingsContainer,
-            IWeb3Authenticator web3Authenticator,
+            IWeb3IdentityCache web3IdentityCache,
             CancellationToken ct)
         {
             // First load the common global plugin
-            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer, web3Authenticator, ct);
+            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer, web3IdentityCache, ct);
 
             if (!isLoaded)
                 GameReports.PrintIsDead();

@@ -1,5 +1,7 @@
 ﻿using Arch.Core;
 using DCL.Web3Authentication;
+using DCL.Web3Authentication.Authenticators;
+using DCL.Web3Authentication.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache;
@@ -34,10 +36,10 @@ namespace ECS.StreamableLoading.AudioClips.Tests
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
         protected override LoadAudioClipSystem CreateSystem() =>
-            new (world, cache, new WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(), Substitute.For<IWeb3Authenticator>()), new MutexSync());
+            new (world, cache, new WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(), Substitute.For<IWeb3IdentityCache>()), new MutexSync());
 
         public static LoadAudioClipSystem CreateSystem(World world) =>
-            new (world, Substitute.For<IStreamableCache<AudioClip, GetAudioClipIntention>>(), new WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(), Substitute.For<IWeb3Authenticator>()), new MutexSync());
+            new (world, Substitute.For<IStreamableCache<AudioClip, GetAudioClipIntention>>(), new WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(), Substitute.For<IWeb3IdentityCache>()), new MutexSync());
 
         protected override void AssertSuccess(AudioClip asset)
         {
