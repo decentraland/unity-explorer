@@ -4,6 +4,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
 using DCL.UI;
@@ -36,13 +37,26 @@ namespace DCL.Backpack
                 NFTColorsSO rarityColors,
                 BackpackCommandBus backpackCommandBus,
                 BackpackEventBus backpackEventBus,
-                IWeb3IdentityCache web3IdentityCache)
+                IWeb3IdentityCache web3IdentityCache,
+                IWearableCatalog wearableCatalog)
             {
                 this.view = view;
                 this.backpackCommandBus = backpackCommandBus;
+                var backpackEquipStatusController = new BackpackEquipStatusController(backpackEventBus);
+                BackpackBusController busController = new BackpackBusController(wearableCatalog, backpackEventBus, backpackCommandBus, backpackEquipStatusController);
 
                 rectTransform = view.transform.parent.GetComponent<RectTransform>();
-                avatarController = new AvatarController(view.GetComponentInChildren<AvatarView>(),view.GetComponentsInChildren<AvatarSlotView>(), rarityBackgrounds, rarityInfoPanelBackgrounds, categoryIcons, rarityColors, backpackCommandBus, backpackEventBus, web3IdentityCache);
+                avatarController = new AvatarController(
+                    view.GetComponentInChildren<AvatarView>(),
+                    view.GetComponentsInChildren<AvatarSlotView>(),
+                    rarityBackgrounds,
+                    rarityInfoPanelBackgrounds,
+                    categoryIcons,
+                    rarityColors,
+                    backpackCommandBus,
+                    backpackEventBus,
+                    web3IdentityCache,
+                    backpackEquipStatusController);
 
                 Dictionary<BackpackSections, ISection> backpackSections = new ()
                 {

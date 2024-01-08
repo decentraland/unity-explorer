@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.ExplorePanel;
@@ -32,6 +33,7 @@ namespace DCL.PluginSystem.Global
         private readonly BackpackEventBus backpackEventBus;
         private readonly IWebRequestController webRequestController;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IWearableCatalog wearableCatalog;
         private NavmapController navmapController;
         private BackpackControler backpackController;
 
@@ -45,7 +47,8 @@ namespace DCL.PluginSystem.Global
             BackpackCommandBus backpackCommandBus,
             BackpackEventBus backpackEventBus,
             IWebRequestController webRequestController,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            IWearableCatalog wearableCatalog)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -57,6 +60,7 @@ namespace DCL.PluginSystem.Global
             this.backpackEventBus = backpackEventBus;
             this.webRequestController = webRequestController;
             this.web3IdentityCache = web3IdentityCache;
+            this.wearableCatalog = wearableCatalog;
         }
 
         public async UniTask InitializeAsync(ExplorePanelSettings settings, CancellationToken ct)
@@ -74,7 +78,7 @@ namespace DCL.PluginSystem.Global
                 assetsProvisioner.ProvideMainAssetAsync(backpackSettings.RarityInfoPanelBackgroundsMapping, ct));
 
             SettingsController settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>());
-            backpackController = new BackpackControler(explorePanelView.GetComponentInChildren<BackpackView>(), rarityBackgroundsMapping.Value, rarityInfoPanelBackgroundsMapping.Value, categoryIconsMapping.Value, rarityColorMappings.Value, backpackCommandBus, backpackEventBus, web3IdentityCache);
+            backpackController = new BackpackControler(explorePanelView.GetComponentInChildren<BackpackView>(), rarityBackgroundsMapping.Value, rarityInfoPanelBackgroundsMapping.Value, categoryIconsMapping.Value, rarityColorMappings.Value, backpackCommandBus, backpackEventBus, web3IdentityCache, wearableCatalog);
             await backpackController.InitialiseAssetsAsync(assetsProvisioner, ct);
 
             mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackController));

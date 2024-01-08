@@ -31,12 +31,13 @@ namespace DCL.Backpack
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
+        private readonly IBackpackEquipStatusController backpackEquipStatusController;
+        private readonly List<(string,string)> requestParameters;
 
         private IObjectPool<BackpackItemView> gridItemsPool;
         private readonly Dictionary<string, BackpackItemView> usedPoolItems;
         private World world;
         private CancellationTokenSource cts;
-        private List<(string,string)> requestParameters;
 
         public BackpackGridController(
             BackpackGridView view,
@@ -45,7 +46,8 @@ namespace DCL.Backpack
             IWeb3IdentityCache web3IdentityCache,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
-            NftTypeIconSO categoryIcons)
+            NftTypeIconSO categoryIcons,
+            IBackpackEquipStatusController backpackEquipStatusController)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -54,6 +56,7 @@ namespace DCL.Backpack
             this.rarityBackgrounds = rarityBackgrounds;
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
+            this.backpackEquipStatusController = backpackEquipStatusController;
 
             usedPoolItems = new ();
             eventBus.EquipEvent += OnEquip;
@@ -86,11 +89,21 @@ namespace DCL.Backpack
                 usedPoolItems.Add(gridWearables[i].GetUrn(), backpackItemView);
 
                 backpackItemView.OnSelectItem += SelectItem;
+                backpackItemView.EquipButton.onClick.AddListener(() =>
+                {
+                    commandBus.SendCommand(new BackpackEquipCommand(backpackItemView.ItemId));
+                });
+                backpackItemView.UnEquipButton.onClick.AddListener(() =>
+                {
+                    commandBus.SendCommand(new BackpackUnEquipCommand(backpackItemView.ItemId));
+                });
                 backpackItemView.ItemId = gridWearables[i].GetUrn();
                 backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(gridWearables[i].GetRarity());
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(gridWearables[i].GetRarity());
                 backpackItemView.CategoryImage.sprite = categoryIcons.GetTypeImage(gridWearables[i].GetCategory());
+                backpackItemView.EquippedIcon.SetActive(backpackEquipStatusController.IsWearableEquipped(gridWearables[i]));
 
+                backpackItemView.SetEquipButtonsState();
                 WaitForThumbnailAsync(gridWearables[i], backpackItemView, cts.Token).Forget();
             }
         }
@@ -98,7 +111,6 @@ namespace DCL.Backpack
         private BackpackItemView CreateBackpackItem(BackpackItemView backpackItem)
         {
             BackpackItemView backpackItemView = Object.Instantiate(backpackItem, view.gameObject.transform);
-            backpackItem.EquipButton.onClick.AddListener(() => commandBus.SendCommand(new BackpackEquipCommand(backpackItemView.ItemId)));
             return backpackItemView;
         }
 
@@ -111,7 +123,6 @@ namespace DCL.Backpack
             requestParameters.Add((PAGE_NUMBER, string.Format("{0}", pageNumber)));
             requestParameters.Add((PAGE_SIZE, "16"));
 
-            //Reuse params array and review types URLParameter once auth pr is merged
             ParamPromise wearablesPromise = ParamPromise.Create(world, new GetWearableByParamIntention(requestParameters,  "0x8e41609eD5e365Ac23C28d9625Bd936EA9C9E22c"/*web3IdentityCache.Identity!.EphemeralAccount.Address*/, new List<IWearable>()), PartitionComponent.TOP_PRIORITY);
             AwaitWearablesPromiseAsync(wearablesPromise, cts.Token).Forget();
         }
@@ -141,6 +152,8 @@ namespace DCL.Backpack
         {
             foreach (var backpackItemView in usedPoolItems)
             {
+                backpackItemView.Value.EquipButton.onClick.RemoveAllListeners();
+                backpackItemView.Value.UnEquipButton.onClick.RemoveAllListeners();
                 backpackItemView.Value.OnSelectItem -= SelectItem;
                 backpackItemView.Value.EquippedIcon.SetActive(false);
                 gridItemsPool.Release(backpackItemView.Value);
@@ -156,14 +169,20 @@ namespace DCL.Backpack
 
         private void OnUnequip(IWearable unequippedWearable)
         {
-            if(usedPoolItems.TryGetValue(unequippedWearable.GetUrn(), out BackpackItemView backpackItemView))
+            if (usedPoolItems.TryGetValue(unequippedWearable.GetUrn(), out BackpackItemView backpackItemView))
+            {
                 backpackItemView.EquippedIcon.SetActive(false);
+                backpackItemView.SetEquipButtonsState();
+            }
         }
 
         private void OnEquip(IWearable equippedWearable)
         {
-            if(usedPoolItems.TryGetValue(equippedWearable.GetUrn(), out BackpackItemView backpackItemView))
+            if (usedPoolItems.TryGetValue(equippedWearable.GetUrn(), out BackpackItemView backpackItemView))
+            {
                 backpackItemView.EquippedIcon.SetActive(true);
+                backpackItemView.SetEquipButtonsState();
+            }
         }
 
     }

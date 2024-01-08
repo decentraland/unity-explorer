@@ -600,6 +600,8 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 5608088598935378507}
+  - {fileID: 1660366043433891224}
   - {fileID: 5801096774213738982}
   - {fileID: 6417347532980402235}
   - {fileID: 6649852878769707890}
@@ -618,8 +620,6 @@ RectTransform:
   - {fileID: 3447424575006216351}
   - {fileID: 7934138973036554881}
   - {fileID: 8891725588225632312}
-  - {fileID: 5608088598935378507}
-  - {fileID: 1660366043433891224}
   m_Father: {fileID: 7207106866394599773}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -756,7 +756,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
-  m_StartCorner: 0
+  m_StartCorner: 3
   m_StartAxis: 0
   m_CellSize: {x: 120, y: 120}
   m_Spacing: {x: 30, y: 34}
@@ -4090,7 +4090,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6822543606753027690, guid: 9a3416ab3e1b9486ba48f239340e202d, type: 3}
       propertyPath: <Category>k__BackingField
-      value: Top
+      value: Upper_body
       objectReference: {fileID: 0}
     - target: {fileID: 7495390461251039812, guid: 9a3416ab3e1b9486ba48f239340e202d, type: 3}
       propertyPath: m_AnchorMax.y

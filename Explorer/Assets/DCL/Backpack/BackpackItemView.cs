@@ -22,7 +22,7 @@ namespace DCL.Backpack
         public Button EquipButton { get; private set; }
 
         [field: SerializeField]
-        public Button InfoButton { get; private set; }
+        public Button UnEquipButton { get; private set; }
 
         [field: SerializeField]
         public GameObject EquippedIcon { get; private set; }
@@ -39,11 +39,16 @@ namespace DCL.Backpack
         [field: SerializeField]
         public Image FlapBackground { get; private set; }
 
+        public void SetEquipButtonsState()
+        {
+            EquipButton.gameObject.SetActive(!EquippedIcon.activeSelf);
+            UnEquipButton.gameObject.SetActive(EquippedIcon.activeSelf);
+        }
+
         public void OnPointerEnter(PointerEventData eventData)
         {
             HoverBackground.SetActive(true);
-            EquipButton.gameObject.SetActive(!EquippedIcon.activeSelf);
-            InfoButton.gameObject.SetActive(EquippedIcon.activeSelf);
+            SetEquipButtonsState();
         }
 
         public void OnPointerExit(PointerEventData eventData)

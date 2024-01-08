@@ -25,6 +25,9 @@ namespace DCL.Backpack
         public IWearable GetEquippedWearableForCategory(string category) =>
             equippedWearables[category];
 
+        public bool IsWearableEquipped(IWearable wearable) =>
+            equippedWearables[wearable.GetCategory()] == wearable;
+
         //This will retrieve the list of default hides for the current equipped wearables
         //Manual hide override will be a separate task
         //TODO retrieve logic from old renderer
@@ -53,5 +56,6 @@ namespace DCL.Backpack
     public interface IBackpackEquipStatusController
     {
         IWearable GetEquippedWearableForCategory(string category);
+        bool IsWearableEquipped(IWearable wearable);
     }
 }

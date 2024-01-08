@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
+using Microsoft.ClearScript.Util.Web;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -44,7 +45,15 @@ namespace DCL.Backpack
 
         private void EquipInSlot(IWearable equippedWearable)
         {
-            if (!avatarSlots.TryGetValue(equippedWearable.GetCategory(), out AvatarSlotView avatarSlotView)) return;
+            if (!avatarSlots.TryGetValue(equippedWearable.GetCategory(), out AvatarSlotView avatarSlotView))
+            {
+                Debug.Log($"Category for {equippedWearable.GetCategory()} does not exist");
+                foreach (string avatarSlotsKey in avatarSlots.Keys)
+                {
+                    Debug.Log("Category: " + avatarSlotsKey);
+                }
+                return;
+            }
 
             avatarSlotView.SlotWearableUrn = equippedWearable.GetUrn();
             avatarSlotView.SlotWearableRarityBackground.sprite = rarityBackgrounds.GetTypeImage(equippedWearable.GetRarity());

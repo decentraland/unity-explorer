@@ -27,12 +27,13 @@ namespace DCL.Backpack
             NFTColorsSO rarityColors,
             BackpackCommandBus backpackCommandBus,
             BackpackEventBus backpackEventBus,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            IBackpackEquipStatusController backpackEquipStatusController)
         {
             this.view = view;
 
             slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus, rarityBackgrounds);
-            backpackGridController = new BackpackGridController(view.backpackGridView, backpackCommandBus, backpackEventBus, web3IdentityCache, rarityBackgrounds, rarityColors, categoryIcons);
+            backpackGridController = new BackpackGridController(view.backpackGridView, backpackCommandBus, backpackEventBus, web3IdentityCache, rarityBackgrounds, rarityColors, categoryIcons, backpackEquipStatusController);
             backpackInfoPanelController = new BackpackInfoPanelController(view.backpackInfoPanelView, backpackEventBus, categoryIcons, rarityInfoPanelBackgrounds);
             rectTransform = view.GetComponent<RectTransform>();
         }

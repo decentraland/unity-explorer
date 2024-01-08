@@ -82,8 +82,6 @@ namespace Global.Dynamic
             var wearableCatalog = new WearableCatalog();
             var backpackCommandBus = new BackpackCommandBus();
             var backpackEventBus = new BackpackEventBus();
-            var BackpackEquipStatusController = new BackpackEquipStatusController(backpackEventBus);
-            BackpackBusController busController = new BackpackBusController(wearableCatalog, backpackEventBus, backpackCommandBus, BackpackEquipStatusController);
 
             IProfileCache profileCache = new DefaultProfileCache();
             container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData,
@@ -112,7 +110,8 @@ namespace Global.Dynamic
                     backpackCommandBus,
                     backpackEventBus,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    storedIdentityProvider),
+                    storedIdentityProvider,
+                    wearableCatalog),
 
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
                 new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, mvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, storedIdentityProvider),
