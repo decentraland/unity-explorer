@@ -54,15 +54,12 @@ namespace DCL.Web3Authentication.Signatures
                 await ConnectToServerAsync();
 
                 string challenge = identityCache.Identity!.EphemeralAccount.Sign(payload);
+                Web3Address address = identityCache.Identity!.EphemeralAccount.Address;
 
                 SignatureIdResponse authenticationResponse = await RequestAuthorizedEthMethod(new AuthorizedEthApiRequest
                 {
                     method = "personal_sign",
-                    @params = new[]
-                    {
-                        challenge,
-                        identityCache.Identity!.EphemeralAccount.Address,
-                    },
+                    @params = new[] { challenge, address },
                     authChain = identityCache.Identity!.AuthChain.ToArray(),
                 }, ct);
 
