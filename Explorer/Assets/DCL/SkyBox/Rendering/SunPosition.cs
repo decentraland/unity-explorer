@@ -3,6 +3,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace DCL.SkyBox.Rendering
 {
@@ -117,7 +118,7 @@ namespace DCL.SkyBox.Rendering
 
                 if (sunLoop is > 0.01f and < 0.99f)
                 {
-                    result.LightRotation = quaternion.Euler(result.SunPos);
+                    result.LightRotation = quaternion.Euler(result.SunPos * DEG2_RAD);
                     result.LightIntensity = 1.0f - math.abs((sunPosOffset / 110.0f) - 1.0f);
                 }
                 else
