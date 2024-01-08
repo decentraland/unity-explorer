@@ -173,7 +173,7 @@ float4 sk_frag(sk_v2f IN) : SV_Target
 
     // Get the ray from the camera to the fragment and its length (which is the far point of the ray passing through the atmosphere)
     float3 vEyeRay = normalize(IN.direction);
-    if(vEyeRay.y >= 0.0) // Sky
+    if(vEyeRay.y >= -0.02) // Sky
     {
         float fUp = vEyeRay.y;
         // Calculate the length of the "atmosphere"
