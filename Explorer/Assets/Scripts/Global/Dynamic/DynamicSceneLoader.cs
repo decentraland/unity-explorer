@@ -79,13 +79,7 @@ namespace Global.Dynamic
                         settings.AuthWebSocketUrl,
                         settings.AuthSignatureUrl,
                         identityCache,
-                        new HashSet<string>
-                        {
-                            "personal_sign",
-                            "eth_requestAccounts",
-                            "eth_getBalance",
-                            "wallet_getPermissions",
-                        }),
+                        new HashSet<string>(settings.Web3WhitelistMethods)),
                     identityCache);
 
                 // First load the common global plugin
