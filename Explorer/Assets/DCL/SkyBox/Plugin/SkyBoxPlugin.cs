@@ -5,7 +5,6 @@ using DCL.DebugUtilities;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SkyBox.Rendering;
-using JetBrains.Annotations;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -19,7 +18,7 @@ namespace DCL.SkyBox
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly SkyBoxSceneData sceneData;
 
-        [CanBeNull] private TimeOfDayRenderingModel featureModel;
+        private TimeOfDayRenderingModel? featureModel;
 
         public SkyBoxPlugin(IDebugContainerBuilder debugContainerBuilder, SkyBoxSceneData sceneData)
         {
@@ -50,7 +49,7 @@ namespace DCL.SkyBox
         {
             [field: Header(nameof(SkyBoxPlugin))] [field: Space]
             [field: SerializeField]
-            public UniversalRendererData ForwardRenderer { get; private set; }
+            public UniversalRendererData ForwardRenderer { get; private set; } = null!;
         }
     }
 }
