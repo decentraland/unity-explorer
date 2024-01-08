@@ -1,14 +1,18 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
-using DCL.Web3Authentication;
+using DCL.PluginSystem.World;
 using DCL.Web3Authentication.Authenticators;
 using DCL.Web3Authentication.Identities;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AudioClips;
 using Global;
+using NUnit.Framework;
+using SceneRunner;
 using UnityEngine.TestTools;
 using System.Collections;
 using SceneRunner.Scene;
 using System;
+using System.Linq;
 using System.Threading;
 using UnityEditor;
 using UnityEngine;
@@ -17,7 +21,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
 {
     public class SDKAudioSourcesAutomatedTests
     {
-        private const string TEST_SCENE = "Dance-floor";
+        private const string TEST_SCENE = "Dance-floor1";
         private const int TARGET_FPS = 60;
 
         private readonly CancellationTokenSource tearDownCts = new ();
@@ -49,11 +53,11 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             yield return new WaitUntil(() => staticContainer != null);
             yield return new WaitUntil(() => currentScene != null);
 
-            // var scene = currentScene as SceneFacade;
-            // yield return new WaitUntil(() => scene.sceneStateProvider.State == SceneState.Running);
-            yield return new WaitForSeconds(1);
+            var scene = currentScene as SceneFacade;
+            yield return new WaitUntil(() => scene!.sceneStateProvider.State == SceneState.Running);
 
-            // AudioClipsCache? clipsCache = staticContainer.ECSWorldPlugins.OfType<AudioSourcesPlugin>().FirstOrDefault().audioClipsCache;
+            // AudioClipsCache clipsCache = staticContainer.ECSWorldPlugins.OfType<AudioSourcesPlugin>().FirstOrDefault().audioClipsCache;
+            //
             // yield return new WaitUntil(() => clipsCache.cache.Count > 0);
             // yield return new WaitUntil(() => clipsCache.OngoingRequests.Count == 0);
             // Assert.That(clipsCache.cache.Count, Is.EqualTo(1));

@@ -147,6 +147,7 @@ namespace DCL.ResourcesUnloading.Tests
 
             var audioClipIntention = new GetAudioClipIntention { CommonArguments = new CommonLoadingArguments { URL = new URLAddress(hashID) } };
             audioClipsCache.Add(audioClipIntention, AudioClip.Create(hashID, 1, 1, 2000, false));
+            audioClipsCache.Dereference(audioClipIntention, null);
 
             var assetBundleData = new AssetBundleData(null, null, new GameObject(), Array.Empty<AssetBundleData>());
             assetBundleCache.Add(new GetAssetBundleIntention { Hash = hashID }, assetBundleData);
