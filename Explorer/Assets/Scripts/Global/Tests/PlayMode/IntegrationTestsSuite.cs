@@ -1,7 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
-using DCL.Web3Authentication;
-using DCL.Web3Authentication.Identities;
+using DCL.Web3.Identities;
 using Global.Static;
 using NSubstitute;
 using System.Threading;

@@ -3,10 +3,10 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.Web3Authentication;
-using DCL.Web3Authentication.Identities;
-using DCL.Web3Authentication.Signatures;
+using DCL.Web3.Authenticators;
+using DCL.Web3.Identities;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -78,7 +78,13 @@ namespace Global.Dynamic
                     new DappWeb3Authenticator(new UnityAppWebBrowser(),
                         settings.AuthWebSocketUrl,
                         settings.AuthSignatureUrl,
-                        identityCache),
+                        identityCache,
+                        new HashSet<string>
+                        {
+                            "personal_sign",
+                            "eth_requestAccounts",
+                            "eth_getBalance",
+                        }),
                     identityCache);
 
                 // First load the common global plugin

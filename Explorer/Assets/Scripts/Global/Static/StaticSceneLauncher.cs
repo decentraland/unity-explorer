@@ -1,8 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
-using DCL.Web3Authentication;
-using DCL.Web3Authentication.Identities;
-using DCL.Web3Authentication.Signatures;
+using DCL.Web3.Authenticators;
+using DCL.Web3.Identities;
 using SceneRunner.Scene;
 using System;
 using System.Threading;

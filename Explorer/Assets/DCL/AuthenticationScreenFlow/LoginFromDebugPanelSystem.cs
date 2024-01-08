@@ -5,7 +5,7 @@ using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
-using DCL.Web3Authentication.Signatures;
+using DCL.Web3.Authenticators;
 using ECS;
 using ECS.Abstract;
 using MVC;

@@ -1,8 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Web3Authentication;
-using DCL.Web3Authentication.Chains;
-using DCL.Web3Authentication.Identities;
+using DCL.Web3.Chains;
+using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using System;
 using System.Runtime.CompilerServices;
