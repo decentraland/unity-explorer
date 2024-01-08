@@ -71,6 +71,7 @@ namespace Global.Dynamic
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IConcurrentBudgetProvider memoryBudgetProvider;
         private readonly StaticSettings staticSettings;
+        private readonly StaticContainer staticContainer;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             IRealmPartitionSettings realmPartitionSettings,
@@ -90,6 +91,7 @@ namespace Global.Dynamic
             this.globalPlugins = globalPlugins;
             this.debugContainerBuilder = debugContainerBuilder;
             this.realmData = realmData;
+            this.staticContainer = staticContainer;
 
             memoryBudgetProvider = staticContainer.SingletonSharedDependencies.MemoryBudgetProvider;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
@@ -178,7 +180,11 @@ namespace Global.Dynamic
 
             SystemGroupSnapshot.Instance.Register(GlobalWorld.WORLD_NAME, worldSystems);
 
-            return new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
+            var globalWorld = new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
+
+            staticContainer.GlobalWorld.SetWorld(world);
+
+            return globalWorld;
         }
     }
 }

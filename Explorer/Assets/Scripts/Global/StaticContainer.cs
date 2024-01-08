@@ -10,10 +10,10 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.Profiles;
 using DCL.Profiling;
 using DCL.ResourcesUnloading;
 using DCL.Time;
+using DCL.Utilities;
 using DCL.WebRequests.Analytics;
 using DCL.Web3Authentication;
 using ECS.Prioritization;
@@ -59,6 +59,8 @@ namespace Global
         public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
 
         public IAssetsProvisioner AssetsProvisioner { get; private set; }
+
+        public WorldProxy GlobalWorld = new WorldProxy();
 
         /// <summary>
         ///     Character Object exists in a single instance
@@ -146,7 +148,7 @@ namespace Global
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
                 new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
-
+                new AvatarShapePlugin(container.GlobalWorld),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 assetBundlePlugin,
