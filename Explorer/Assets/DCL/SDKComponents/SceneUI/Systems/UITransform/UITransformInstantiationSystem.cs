@@ -8,6 +8,7 @@ using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
 using ECS.Abstract;
 using ECS.Groups;
+using UnityEngine.Pool;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UITransform
@@ -42,6 +43,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             var transformComponent = new UITransformComponent();
             transformComponent.Transform = newTransform;
             transformComponent.Parent = EntityReference.Null;
+            transformComponent.Children = HashSetPool<EntityReference>.Get();
             World.Add(entity, transformComponent);
         }
     }

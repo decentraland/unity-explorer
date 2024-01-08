@@ -21,6 +21,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private readonly Entity sceneRoot;
         private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
 
+        private List<UITransformComponent> transformList = new ();
+
         private UITransformSortingSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, Entity sceneRoot) : base(world)
         {
             this.sceneRoot = sceneRoot;
@@ -39,8 +41,22 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             if (!sdkModel.IsDirty)
                 return;
 
-            if (entitiesMap.TryGetValue(sdkModel.RightOf, out Entity rightOfEntity) && rightOfEntity != sceneRoot)
-                uiTransformComponent.Transform.PlaceInFront(World.Get<UITransformComponent>(rightOfEntity).Transform);
+            SortUITransform(ref uiTransformComponent);
+
+            if (uiTransformComponent.Parent == EntityReference.Null)
+                return;
+
+            foreach (EntityReference brotherEntity in World.Get<UITransformComponent>(uiTransformComponent.Parent).Children)
+                SortUITransform(ref World.Get<UITransformComponent>(brotherEntity));
+        }
+
+        private void SortUITransform(ref UITransformComponent uiTransform)
+        {
+            if (!entitiesMap.TryGetValue(uiTransform.RightOf, out Entity entityOnLeft) || entityOnLeft == sceneRoot)
+                return;
+
+            var uiTransformOnLeft = World.Get<UITransformComponent>(entityOnLeft);
+            uiTransform.Transform.PlaceInFront(uiTransformOnLeft.Transform);
         }
     }
 }

@@ -40,7 +40,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                 return;
 
             if (entitiesMap.TryGetValue(sdkModel.Parent, out Entity newParentEntity) && newParentEntity != sceneRoot)
+            {
                 SetNewChild(ref uiTransformComponent, World.Reference(entity), newParentEntity);
+                uiTransformComponent.RightOf = sdkModel.RightOf;
+            }
         }
 
         private void SetNewChild(ref UITransformComponent childComponent, EntityReference childEntityReference, Entity parentEntity)
@@ -56,6 +59,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
             UITransformComponent parentComponent = World.Get<UITransformComponent>(parentEntity);
             parentComponent.Transform.Add(childComponent.Transform);
+            parentComponent.Children.Add(childEntityReference);
             childComponent.Parent = World.Reference(parentEntity);
         }
     }
