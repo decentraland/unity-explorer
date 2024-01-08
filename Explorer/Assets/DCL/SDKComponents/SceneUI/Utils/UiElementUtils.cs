@@ -33,62 +33,98 @@ namespace DCL.SDKComponents.SceneUI.Utils
             // Layout size
             if (model.HeightUnit != YGUnit.YguUndefined)
                 visualElementToSetup.style.height = model.HeightUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.Height, GetUnit(model.HeightUnit));
+            else
+                visualElementToSetup.style.height = StyleKeyword.Null;
 
             if (model.WidthUnit != YGUnit.YguUndefined)
                 visualElementToSetup.style.width = model.WidthUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.Width, GetUnit(model.WidthUnit));
+            else
+                visualElementToSetup.style.width = StyleKeyword.Null;
 
             if (model.MaxWidthUnit != YGUnit.YguUndefined)
                 visualElementToSetup.style.maxWidth = model.MaxWidthUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.MaxWidth, GetUnit(model.MaxWidthUnit));
+            else
+                visualElementToSetup.style.maxWidth = StyleKeyword.Null;
 
             if (model.MaxHeightUnit != YGUnit.YguUndefined)
                 visualElementToSetup.style.maxHeight = model.MaxHeightUnit == YGUnit.YguAuto ? new StyleLength(StyleKeyword.Auto) : new Length(model.MaxHeight, GetUnit(model.MaxHeightUnit));
+            else
+                visualElementToSetup.style.maxHeight = StyleKeyword.Null;
 
             if (model.MinHeightUnit != YGUnit.YguUndefined)
                 visualElementToSetup.style.minHeight = new Length(model.MinHeight, GetUnit(model.MinHeightUnit));
+            else
+                visualElementToSetup.style.minHeight = StyleKeyword.Null;
 
             if (model.MinWidthUnit != YGUnit.YguUndefined)
                 visualElementToSetup.style.minWidth = new Length(model.MinWidth, GetUnit(model.MinWidthUnit));
+            else
+                visualElementToSetup.style.minWidth = StyleKeyword.Null;
 
             // Paddings
             if (model.PaddingBottomUnit != YGUnit.YguUndefined)
                 visualElementToSetup.style.paddingBottom = new Length(model.PaddingBottom, GetUnit(model.PaddingBottomUnit));
+            else
+                visualElementToSetup.style.paddingBottom = StyleKeyword.Null;
 
             if (model.PaddingLeftUnit != YGUnit.YguUndefined)
                 visualElementToSetup.style.paddingLeft = new Length(model.PaddingLeft, GetUnit(model.PaddingLeftUnit));
+            else
+                visualElementToSetup.style.paddingLeft = StyleKeyword.Null;
 
             if (model.PaddingRightUnit != YGUnit.YguUndefined)
                 visualElementToSetup.style.paddingRight = new Length(model.PaddingRight, GetUnit(model.PaddingRightUnit));
+            else
+                visualElementToSetup.style.paddingRight = StyleKeyword.Null;
 
             if (model.PaddingTopUnit != YGUnit.YguUndefined)
                 visualElementToSetup.style.paddingTop = new Length(model.PaddingTop, GetUnit(model.PaddingTopUnit));
+            else
+                visualElementToSetup.style.paddingTop = StyleKeyword.Null;
 
             // Margins
             if (model.MarginLeftUnit != YGUnit.YguUndefined)
                 visualElementToSetup.style.marginLeft = new Length(model.MarginLeft, GetUnit(model.MarginLeftUnit));
+            else
+                visualElementToSetup.style.marginLeft = StyleKeyword.Null;
 
             if (model.MarginRightUnit != YGUnit.YguUndefined)
                 visualElementToSetup.style.marginRight = new Length(model.MarginRight, GetUnit(model.MarginRightUnit));
+            else
+                visualElementToSetup.style.marginRight = StyleKeyword.Null;
 
             if (model.MarginBottomUnit != YGUnit.YguUndefined)
                 visualElementToSetup.style.marginBottom = new Length(model.MarginBottom, GetUnit(model.MarginBottomUnit));
+            else
+                visualElementToSetup.style.marginBottom = StyleKeyword.Null;
 
             if (model.MarginTopUnit != YGUnit.YguUndefined)
                 visualElementToSetup.style.marginTop = new Length(model.MarginTop, GetUnit(model.MarginTopUnit));
+            else
+                visualElementToSetup.style.marginTop = StyleKeyword.Null;
 
             // Position
             visualElementToSetup.style.position = GetPosition(model.PositionType);
 
             if (model.PositionTopUnit != YGUnit.YguUndefined)
                 visualElementToSetup.style.top = new Length(model.PositionTop, GetUnit(model.PositionTopUnit));
+            else
+                visualElementToSetup.style.top = StyleKeyword.Null;
 
             if (model.PositionBottomUnit != YGUnit.YguUndefined)
                 visualElementToSetup.style.bottom = new Length(model.PositionBottom, GetUnit(model.PositionBottomUnit));
+            else
+                visualElementToSetup.style.bottom = StyleKeyword.Null;
 
             if (model.PositionRightUnit != YGUnit.YguUndefined)
                 visualElementToSetup.style.right = new Length(model.PositionRight, GetUnit(model.PositionRightUnit));
+            else
+                visualElementToSetup.style.right = StyleKeyword.Null;
 
             if (model.PositionLeftUnit != YGUnit.YguUndefined)
                 visualElementToSetup.style.left = new Length(model.PositionLeft, GetUnit(model.PositionLeftUnit));
+            else
+                visualElementToSetup.style.left = StyleKeyword.Null;
         }
 
         public static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent)
