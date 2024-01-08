@@ -22,6 +22,8 @@ namespace DCL.Web3Authentication.Signatures
         private readonly string serverUrl;
         private readonly string signatureUrl;
         private readonly IWeb3IdentityCache identityCache;
+        private readonly AuthorizedEthApiRequest authorizedEthApiRequest = new ();
+        private readonly EthApiRequest ethApiRequest = new ();
 
         private SocketIO? webSocket;
         private UniTaskCompletionSource<DappSignatureResponse>? signatureOutcomeTask;
@@ -56,12 +58,11 @@ namespace DCL.Web3Authentication.Signatures
                 string challenge = identityCache.Identity!.EphemeralAccount.Sign(payload);
                 Web3Address address = identityCache.Identity!.EphemeralAccount.Address;
 
-                SignatureIdResponse authenticationResponse = await RequestAuthorizedEthMethod(new AuthorizedEthApiRequest
-                {
-                    method = "personal_sign",
-                    @params = new[] { challenge, address },
-                    authChain = identityCache.Identity!.AuthChain.ToArray(),
-                }, ct);
+                authorizedEthApiRequest.method = "personal_sign";
+                authorizedEthApiRequest.@params = new[] { challenge, address };
+                authorizedEthApiRequest.authChain = identityCache.Identity!.AuthChain.ToArray();
+
+                SignatureIdResponse authenticationResponse = await RequestAuthorizedEthMethod(authorizedEthApiRequest, ct);
 
                 DateTime signatureExpiration = DateTime.UtcNow.AddMinutes(5);
 
@@ -106,12 +107,10 @@ namespace DCL.Web3Authentication.Signatures
                 DateTime sessionExpiration = DateTime.UtcNow.AddDays(7);
                 string ephemeralMessage = CreateEphemeralMessage(ephemeralAccount, sessionExpiration);
 
-                SignatureIdResponse authenticationResponse = await RequestEthMethod(
-                    new EthApiRequest
-                    {
-                        method = "dcl_personal_sign",
-                        @params = new[] { ephemeralMessage },
-                    }, ct);
+                ethApiRequest.method = "dcl_personal_sign";
+                ethApiRequest.@params = new[] { ephemeralMessage };
+
+                SignatureIdResponse authenticationResponse = await RequestEthMethod(ethApiRequest, ct);
 
                 DateTime signatureExpiration = DateTime.UtcNow.AddMinutes(5);
 
