@@ -12,6 +12,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
 using Utility;
 
@@ -32,7 +33,7 @@ namespace ECS.SceneLifeCycle.Tests
         }
 
         [Test]
-        public void LimitScenesLoading()
+        public async Task LimitScenesLoading()
         {
             realmPartitionSettings.ScenesRequestBatchSize.Returns(2);
             realmPartitionSettings.MaxLoadingDistanceInParcels.Returns(int.MaxValue);
@@ -56,6 +57,15 @@ namespace ECS.SceneLifeCycle.Tests
 
             system.Update(0f);
 
+            // Wait for job to complete
+            while (!system.sortingJobHandle.Value.IsCompleted)
+            {
+                await Task.Yield();
+                system.Update(0f);
+            }
+
+            system.Update(0f);
+
             // Serve 2
             var entities = new List<Entity>();
             world.GetEntities(new QueryDescription().WithAll<GetSceneFacadeIntention>(), entities);
@@ -68,7 +78,8 @@ namespace ECS.SceneLifeCycle.Tests
         [Test]
         public void StartUnloading()
         {
-            realmPartitionSettings.UnloadBucket.Returns(3);
+            realmPartitionSettings.UnloadingDistanceToleranceInParcels.Returns(1);
+            realmPartitionSettings.MaxLoadingDistanceInParcels.Returns(1);
 
             for (byte i = 2; i <= 4; i++)
             {
@@ -83,7 +94,7 @@ namespace ECS.SceneLifeCycle.Tests
                             },
                         },
                     },
-                    new IpfsTypes.IpfsPath()), new PartitionComponent { Bucket = i });
+                    new IpfsTypes.IpfsPath()), new PartitionComponent { Bucket = i, RawSqrDistance = (ParcelMathHelper.PARCEL_SIZE * i * ParcelMathHelper.PARCEL_SIZE * i) - 1f });
             }
 
             system.Update(0f);

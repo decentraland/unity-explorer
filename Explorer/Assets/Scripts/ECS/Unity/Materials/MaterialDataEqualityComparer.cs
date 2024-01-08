@@ -23,7 +23,6 @@ namespace ECS.Unity.Materials
             && x.TransparencyMode == y.TransparencyMode
             && x.Metallic.Equals(y.Metallic)
             && x.Roughness.Equals(y.Roughness)
-            && x.Glossiness.Equals(y.Glossiness)
             && x.SpecularIntensity.Equals(y.SpecularIntensity)
             && x.EmissiveIntensity.Equals(y.EmissiveIntensity)
             && x.DirectIntensity.Equals(y.DirectIntensity);
@@ -45,7 +44,6 @@ namespace ECS.Unity.Materials
             hashCode.Add((int)obj.TransparencyMode);
             hashCode.Add(obj.Metallic);
             hashCode.Add(obj.Roughness);
-            hashCode.Add(obj.Glossiness);
             hashCode.Add(obj.SpecularIntensity);
             hashCode.Add(obj.EmissiveIntensity);
             hashCode.Add(obj.DirectIntensity);

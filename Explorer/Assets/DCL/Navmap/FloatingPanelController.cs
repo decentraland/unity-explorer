@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.UI;
+using DCL.WebRequests;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
@@ -26,8 +27,9 @@ namespace DCL.Navmap
 
         private readonly Vector2 rectTransformLocalPosition = new Vector3(1702, 480);
         private readonly Vector2 rectTransformLocalPositionOutside = new Vector3(2100, 480);
+        private readonly ImageController placeImageController;
 
-        public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService, ITeleportController teleportController)
+        public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService, ITeleportController teleportController, IWebRequestController webRequestController)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
@@ -36,7 +38,7 @@ namespace DCL.Navmap
             view.closeButton.onClick.RemoveAllListeners();
             view.closeButton.onClick.AddListener(HidePanel);
             view.gameObject.SetActive(false);
-
+            placeImageController = new ImageController(view.placeImage, webRequestController);
             categoriesDictionary = new Dictionary<string, GameObject>();
 
             for (var i = 0; i < view.categories.Length; i++)
@@ -118,6 +120,7 @@ namespace DCL.Navmap
 
         private void SetFloatingPanelInfo(PlacesData.PlaceInfo placeInfo)
         {
+            placeImageController.RequestImage(placeInfo.image);
             view.placeName.text = placeInfo.title;
             view.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
 
@@ -128,6 +131,7 @@ namespace DCL.Navmap
             view.location.text = placeInfo.base_position;
             view.visits.SetText("{0:0}", placeInfo.user_visits);
             view.parcelsCount.SetText("{0:0}", placeInfo.Positions.Length);
+
             SetUpVotes(placeInfo);
 
             if (placeInfo.categories.Length == 0)

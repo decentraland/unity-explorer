@@ -135,6 +135,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 {
                     WearableAsset originalAsset = resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape);
 
+                    if (originalAsset.GameObject == null)
+                    {
+                        ReportHub.LogError(GetReportCategory(),
+                            $"Wearable asset {resultWearable.GetUrn()} has no GameObject! Check the Asset bundle generated.");
+                        continue;
+                    }
+
                     CachedWearable instantiatedWearable =
                         wearableAssetsCache.InstantiateWearable(originalAsset, avatarBase.transform);
 
