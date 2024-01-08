@@ -30,11 +30,20 @@ namespace DCL.Backpack
 
         private void SetPanelContent(IWearable wearable)
         {
+            SetInfoPanelStatus(false);
+            view.WearableThumbnail.gameObject.SetActive(false);
+            view.LoadingSpinner.SetActive(true);
             view.Name.text = wearable.GetName();
             view.Description.text = wearable.GetDescription();
             view.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
             view.RarityBackground.sprite = rarityInfoPanelBackgrounds.GetTypeImage(wearable.GetRarity());
             WaitForThumbnailAsync(wearable).Forget();
+        }
+
+        private void SetInfoPanelStatus(bool isEmpty)
+        {
+            view.EmptyPanel.SetActive(isEmpty);
+            view.FullPanel.SetActive(!isEmpty);
         }
 
         private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable)
@@ -46,6 +55,8 @@ namespace DCL.Backpack
             while (itemWearable.WearableThumbnail == null);
 
             view.WearableThumbnail.sprite = itemWearable.WearableThumbnail.Value.Asset;
+            view.LoadingSpinner.SetActive(false);
+            view.WearableThumbnail.gameObject.SetActive(true);
         }
 
         public void Dispose()

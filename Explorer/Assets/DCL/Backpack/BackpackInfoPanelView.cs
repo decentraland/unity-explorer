@@ -7,10 +7,19 @@ namespace DCL.Backpack
     public class BackpackInfoPanelView : MonoBehaviour
     {
         [field: SerializeField]
+        public GameObject EmptyPanel { get; private set; }
+
+        [field: SerializeField]
+        public GameObject FullPanel { get; private set; }
+
+        [field: SerializeField]
         public Image WearableThumbnail { get; private set; }
 
         [field: SerializeField]
         public Image CategoryImage { get; private set; }
+
+        [field: SerializeField]
+        public GameObject LoadingSpinner { get; private set; }
 
         [field: SerializeField]
         public Image RarityBackground { get; private set; }
