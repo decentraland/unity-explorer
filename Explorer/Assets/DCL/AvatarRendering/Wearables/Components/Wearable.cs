@@ -26,21 +26,25 @@ namespace DCL.AvatarRendering.Wearables.Components
             string thumbnailHash = WearableDTO.Asset.metadata.thumbnail;
 
             if (thumbnailHash == THUMBNAIL_DEFAULT_KEY)
-            {
-                for (var i = 0; i < WearableDTO.Asset.content.Length; i++)
-                {
-                    if (WearableDTO.Asset.content[i].file == THUMBNAIL_DEFAULT_KEY)
-                        thumbnailHash = WearableDTO.Asset.content[i].hash;
-                }
-            }
+                thumbnailHash = GetContentHashByKey(THUMBNAIL_DEFAULT_KEY);
 
             return new URLPath(thumbnailHash);
+        }
+
+        private string GetContentHashByKey(string key)
+        {
+            for (var i = 0; i < WearableDTO.Asset.content.Length; i++)
+            {
+                if (WearableDTO.Asset.content[i].file == key)
+                    return WearableDTO.Asset.content[i].hash;
+            }
+
+            return "";
         }
 
         public string GetMainFileHash(BodyShape bodyShape)
         {
             var mainFileKey = "";
-            var hashToReturn = "";
 
             // The length of arrays is small, so O(N) complexity is fine
             // Avoid iterator allocations with "for" loop
@@ -55,18 +59,7 @@ namespace DCL.AvatarRendering.Wearables.Components
                 }
             }
 
-            for (var i = 0; i < WearableDTO.Asset.content.Length; i++)
-            {
-                WearableDTO.WearableContentDto wearableContentDto = WearableDTO.Asset.content[i];
-
-                if (wearableContentDto.file.Equals(mainFileKey))
-                {
-                    hashToReturn = wearableContentDto.hash;
-                    break;
-                }
-            }
-
-            return hashToReturn;
+            return GetContentHashByKey(mainFileKey);
         }
 
         public string GetHash() =>
