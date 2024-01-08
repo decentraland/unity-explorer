@@ -11,5 +11,13 @@ namespace DCL.Web3.Authenticators
             public string result;
             public string sender;
         }
+
+        [Serializable]
+        private struct MethodResponse<T>
+        {
+            public string requestId;
+            public T result;
+            public string sender;
+        }
     }
 }

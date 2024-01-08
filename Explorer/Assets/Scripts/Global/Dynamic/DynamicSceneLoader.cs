@@ -84,6 +84,7 @@ namespace Global.Dynamic
                             "personal_sign",
                             "eth_requestAccounts",
                             "eth_getBalance",
+                            "wallet_getPermissions",
                         }),
                     identityCache);
 

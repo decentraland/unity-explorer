@@ -76,7 +76,10 @@ namespace DCL.Web3.Authenticators
 
                 signatureVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration);
 
-                return await RequestWalletConfirmationAsync<T>(authenticationResponse.requestId, signatureExpiration, ct);
+                MethodResponse<T> response = await RequestWalletConfirmationAsync<MethodResponse<T>>(authenticationResponse.requestId, signatureExpiration, ct);
+
+                // Strip out the requestId & sender fields. We assume that will not be needed by the client
+                return response.result;
             }
             finally
             {
@@ -110,7 +113,7 @@ namespace DCL.Web3.Authenticators
                 SignatureIdResponse authenticationResponse = await RequestEthMethod(new EthApiRequest
                 {
                     method = "dcl_personal_sign",
-                    @params = new[] { ephemeralMessage },
+                    @params = new object[] { ephemeralMessage },
                 }, ct);
 
                 DateTime signatureExpiration = DateTime.UtcNow.AddMinutes(5);
@@ -122,19 +125,19 @@ namespace DCL.Web3.Authenticators
 
                 loginVerificationCallback?.Invoke(authenticationResponse.code, signatureExpiration);
 
-                LoginResponse signature = await RequestWalletConfirmationAsync<LoginResponse>(authenticationResponse.requestId,
+                LoginResponse response = await RequestWalletConfirmationAsync<LoginResponse>(authenticationResponse.requestId,
                     signatureExpiration, ct);
 
-                if (string.IsNullOrEmpty(signature.sender))
+                if (string.IsNullOrEmpty(response.sender))
                     throw new Web3Exception($"Cannot solve the signer's address from the signature. Request id: {authenticationResponse.requestId}");
 
-                if (string.IsNullOrEmpty(signature.result))
+                if (string.IsNullOrEmpty(response.result))
                     throw new Web3Exception($"Cannot solve the signature. Request id: {authenticationResponse.requestId}");
 
-                AuthChain authChain = CreateAuthChain(signature, ephemeralMessage);
+                AuthChain authChain = CreateAuthChain(response, ephemeralMessage);
 
                 // To keep cohesiveness between the platform, convert the user address to lower case
-                return new DecentralandIdentity(new Web3Address(signature.sender.ToLower()),
+                return new DecentralandIdentity(new Web3Address(response.sender.ToLower()),
                     ephemeralAccount, sessionExpiration, authChain);
             }
             finally
@@ -142,12 +145,6 @@ namespace DCL.Web3.Authenticators
                 await DisconnectFromServerAsync();
                 await UniTask.SwitchToMainThread(ct);
             }
-        }
-
-        [Serializable]
-        private struct PersonalSignResponse
-        {
-            public string result;
         }
 
         public async UniTask LogoutAsync(CancellationToken cancellationToken)
@@ -185,18 +182,20 @@ namespace DCL.Web3.Authenticators
                 await webSocket.DisconnectAsync();
         }
 
-        private AuthChain CreateAuthChain(LoginResponse signature, string ephemeralMessage)
+        private AuthChain CreateAuthChain(LoginResponse response, string ephemeralMessage)
         {
             var authChain = AuthChain.Create();
 
             authChain.Set(AuthLinkType.SIGNER, new AuthLink
             {
                 type = AuthLinkType.SIGNER,
-                payload = signature.sender,
+                payload = response.sender,
                 signature = "",
             });
 
-            AuthLinkType ecdsaType = signature.result.Length == 132
+            string signature = response.result;
+
+            AuthLinkType ecdsaType = signature.Length == 132
                 ? AuthLinkType.ECDSA_EPHEMERAL
                 : AuthLinkType.ECDSA_EIP_1654_EPHEMERAL;
 
@@ -204,7 +203,7 @@ namespace DCL.Web3.Authenticators
             {
                 type = ecdsaType,
                 payload = ephemeralMessage,
-                signature = signature.result,
+                signature = signature,
             });
 
             return authChain;
@@ -255,9 +254,8 @@ namespace DCL.Web3.Authenticators
 
             try
             {
-                SocketIOResponse socketResponse = await signatureOutcomeTask.Task.Timeout(duration).AttachExternalCancellation(ct);
-
-                return socketResponse.GetValue<T>();
+                SocketIOResponse response = await signatureOutcomeTask.Task.Timeout(duration).AttachExternalCancellation(ct);
+                return response.GetValue<T>();
             }
             catch (TimeoutException) { throw new SignatureExpiredException(expiration); }
         }
