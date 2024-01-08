@@ -31,6 +31,7 @@ namespace DCL.Backpack
         private IObjectPool<BackpackItemView> gridItemsPool;
         private readonly Dictionary<string, BackpackItemView> usedPoolItems;
         private World world;
+        private CancellationTokenSource cts;
 
         public BackpackGridController(
             BackpackGridView view,
@@ -61,7 +62,7 @@ namespace DCL.Backpack
 
         public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
         {
-            BackpackItemView backpackItem = (await assetsProvisioner.ProvideInstanceAsync(view.BackpackItem, ct: ct)).Value;
+            BackpackItemView backpackItem = (await assetsProvisioner.ProvideMainAssetAsync(view.BackpackItem, ct: ct)).Value;
 
             gridItemsPool = new ObjectPool<BackpackItemView>(
                 () => CreateBackpackItem(backpackItem),
@@ -84,7 +85,7 @@ namespace DCL.Backpack
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(gridWearables[i].GetRarity());
                 backpackItemView.CategoryImage.sprite = categoryIcons.GetTypeImage(gridWearables[i].GetCategory());
 
-                WaitForThumbnailAsync(gridWearables[i], backpackItemView).Forget();
+                WaitForThumbnailAsync(gridWearables[i], backpackItemView, cts.Token).Forget();
             }
         }
 
@@ -97,14 +98,16 @@ namespace DCL.Backpack
 
         public void RequestPage(int pageNumber)
         {
+            cts.SafeCancelAndDispose();
+            cts = new CancellationTokenSource();
             //Reuse params array and review types URLParameter once auth pr is merged
-            ParamPromise wearablesPromise = ParamPromise.Create(world, new GetWearableByParamIntention(new[] { ("pageNumber", string.Format("{0}", pageNumber)), ("pageSize", "16") },  web3IdentityCache.Identity!.EphemeralAccount.Address, new List<IWearable>()), PartitionComponent.TOP_PRIORITY);
-            AwaitWearablesPromiseAsync(wearablesPromise).Forget();
+            ParamPromise wearablesPromise = ParamPromise.Create(world, new GetWearableByParamIntention(new[] { ("pageNumber", string.Format("{0}", pageNumber)), ("pageSize", "16") },  "0x8e41609eD5e365Ac23C28d9625Bd936EA9C9E22c"/*web3IdentityCache.Identity!.EphemeralAccount.Address*/, new List<IWearable>()), PartitionComponent.TOP_PRIORITY);
+            AwaitWearablesPromiseAsync(wearablesPromise, cts.Token).Forget();
         }
 
-        private async UniTaskVoid AwaitWearablesPromiseAsync(ParamPromise wearablesPromise)
+        private async UniTaskVoid AwaitWearablesPromiseAsync(ParamPromise wearablesPromise, CancellationToken ct)
         {
-            AssetPromise<IWearable[],GetWearableByParamIntention> uniTaskAsync = await wearablesPromise.ToUniTaskAsync(world);
+            AssetPromise<IWearable[],GetWearableByParamIntention> uniTaskAsync = await wearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
 
             if (!uniTaskAsync.Result.Value.Succeeded)
                 return;
@@ -112,11 +115,11 @@ namespace DCL.Backpack
             SetGridElements(uniTaskAsync.Result.Value.Asset);
         }
 
-        private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable, BackpackItemView itemView)
+        private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable, BackpackItemView itemView, CancellationToken ct)
         {
             do
             {
-                await UniTask.Delay(500);
+                await UniTask.Delay(500, cancellationToken: ct);
             }
             while (itemWearable.WearableThumbnail == null);
 
@@ -143,14 +146,14 @@ namespace DCL.Backpack
 
         private void OnUnequip(IWearable unequippedWearable)
         {
-            if (usedPoolItems.ContainsKey(unequippedWearable.GetUrn()))
-                usedPoolItems[unequippedWearable.GetUrn()].EquippedIcon.SetActive(false);
+            if(usedPoolItems.TryGetValue(unequippedWearable.GetUrn(), out BackpackItemView backpackItemView))
+                backpackItemView.EquippedIcon.SetActive(false);
         }
 
         private void OnEquip(IWearable equippedWearable)
         {
-            if (usedPoolItems.ContainsKey(equippedWearable.GetUrn()))
-                usedPoolItems[equippedWearable.GetUrn()].EquippedIcon.SetActive(true);
+            if(usedPoolItems.TryGetValue(equippedWearable.GetUrn(), out BackpackItemView backpackItemView))
+                backpackItemView.EquippedIcon.SetActive(true);
         }
 
     }

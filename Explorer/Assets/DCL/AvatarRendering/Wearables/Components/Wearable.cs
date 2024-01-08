@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
@@ -20,7 +21,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         public StreamableLoadingResult<Texture2D>? WearableThumbnail { get; set; }
         public bool IsLoading { get; set; } = true;
 
-        public string GetThumbnail()
+        public URLPath GetThumbnail()
         {
             string thumbnailHash = WearableDTO.Asset.metadata.thumbnail;
 
@@ -33,7 +34,7 @@ namespace DCL.AvatarRendering.Wearables.Components
                 }
             }
 
-            return thumbnailHash;
+            return new URLPath(thumbnailHash);
         }
 
         public string GetMainFileHash(BodyShape bodyShape)

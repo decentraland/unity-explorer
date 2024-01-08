@@ -42,7 +42,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             wearable.GetUrn().Returns(urn);
             wearable.IsUnisex().Returns(isUnisex);
             wearable.GetCategory().Returns(WearablesConstants.Categories.UPPER_BODY);
-            wearable.GetThumbnail().Returns("bafybeie7lzqakerm4n4x7557g3va4sv7aeoniexlomdgjskuoubo6s3mku");
+            wearable.GetThumbnail().Returns(new URLPath("bafybeie7lzqakerm4n4x7557g3va4sv7aeoniexlomdgjskuoubo6s3mku"));
 
             var assetBundleData
                 = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
@@ -62,7 +62,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             IWearable mockedWearable = CreateMockWearable(unisexTestUrn, false, true);
             wearableCatalog.wearablesCache.Add(mockedWearable.GetUrn(), mockedWearable);
             URLBuilder urlBuilder = new URLBuilder();
-            urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(new URLPath(mockedWearable.GetThumbnail()));
+            urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(mockedWearable.GetThumbnail());
 
             Promise promise = Promise.Create(world,
                 new GetTextureIntention

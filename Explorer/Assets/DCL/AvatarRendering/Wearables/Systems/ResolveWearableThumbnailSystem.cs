@@ -20,10 +20,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
     public partial class ResolveWearableThumbnailSystem : BaseUnityLoopSystem
     {
         private readonly IRealmData realmData;
+        private readonly URLBuilder urlBuilder;
 
         public ResolveWearableThumbnailSystem(World world, IRealmData realmData) : base(world)
         {
             this.realmData = realmData;
+            urlBuilder = new URLBuilder();
         }
 
         protected override void Update(float t)
@@ -36,8 +38,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
         [None(typeof(Promise))]
         private void StartWearableThumbnailDownload(in Entity entity, ref WearableThumbnailComponent wearableThumbnailComponent, ref PartitionComponent partitionComponent)
         {
-            URLBuilder urlBuilder = new URLBuilder();
-            urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(new URLPath(wearableThumbnailComponent.Wearable.GetThumbnail()));
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(wearableThumbnailComponent.Wearable.GetThumbnail());
             Promise promise = Promise.Create(World,
                 new GetTextureIntention
                 {

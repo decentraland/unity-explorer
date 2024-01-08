@@ -1,4 +1,5 @@
-﻿using DCL.AvatarRendering.Wearables.Helpers;
+﻿using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System.Collections.Generic;
@@ -34,7 +35,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         string GetRarity();
 
-        string GetThumbnail();
+        URLPath GetThumbnail();
 
         bool IsUnisex();
 
