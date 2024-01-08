@@ -14,18 +14,18 @@ namespace ECS.StreamableLoading.DeferredLoading
 {
     public abstract class DeferredLoadingSystem : BaseUnityLoopSystem
     {
-        private readonly IConcurrentBudgetProvider concurrentLoadingBudgetProvider;
+        private readonly IReleasablePerformanceBudget releasablePerformanceLoadingBudget;
 
         private readonly List<IntentionData> loadingIntentions;
 
         private readonly QueryDescription[] sameBoatQueries;
-        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
+        private readonly IReleasablePerformanceBudget memoryBudget;
 
-        protected DeferredLoadingSystem(World world, QueryDescription[] sameBoatQueries, IConcurrentBudgetProvider concurrentLoadingBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider) : base(world)
+        protected DeferredLoadingSystem(World world, QueryDescription[] sameBoatQueries, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IReleasablePerformanceBudget memoryBudget) : base(world)
         {
             this.sameBoatQueries = sameBoatQueries;
-            this.concurrentLoadingBudgetProvider = concurrentLoadingBudgetProvider;
-            this.memoryBudgetProvider = memoryBudgetProvider;
+            this.releasablePerformanceLoadingBudget = releasablePerformanceLoadingBudget;
+            this.memoryBudget = memoryBudget;
             loadingIntentions = ListPool<IntentionData>.Get();
         }
 
@@ -78,8 +78,8 @@ namespace ECS.StreamableLoading.DeferredLoading
 
             for (i = 0; i < loadingIntentions.Count; i++)
             {
-                if (!memoryBudgetProvider.TrySpendBudget()) break;
-                if (!concurrentLoadingBudgetProvider.TrySpendBudget(out IAcquiredBudget acquiredBudget)) break;
+                if (!memoryBudget.TrySpendBudget()) break;
+                if (!releasablePerformanceLoadingBudget.TrySpendBudget(out IAcquiredBudget acquiredBudget)) break;
 
                 ref StreamableLoadingState state = ref loadingIntentions[i].StatePointer.Value;
                 state.SetAllowed(acquiredBudget);

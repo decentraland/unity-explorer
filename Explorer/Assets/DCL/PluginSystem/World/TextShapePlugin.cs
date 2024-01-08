@@ -15,23 +15,23 @@ namespace DCL.PluginSystem.World
     public class TextShapePlugin : IDCLWorldPlugin
     {
         private readonly ITextShapeRendererFactory textShapeRendererFactory;
-        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
+        private readonly IReleasablePerformanceBudget instantiationFrameTimeBudget;
 
-        public TextShapePlugin(IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IPluginSettingsContainer settingsContainer) : this(
-            instantiationFrameTimeBudgetProvider,
+        public TextShapePlugin(IReleasablePerformanceBudget instantiationFrameTimeBudget, IComponentPoolsRegistry componentPoolsRegistry, IPluginSettingsContainer settingsContainer) : this(
+            instantiationFrameTimeBudget,
             componentPoolsRegistry,
             settingsContainer.GetSettings<FontsSettings>().AsCached()
         ) { }
 
-        public TextShapePlugin(IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IFontsStorage fontsStorage) : this(
+        public TextShapePlugin(IReleasablePerformanceBudget instantiationFrameTimeBudget, IComponentPoolsRegistry componentPoolsRegistry, IFontsStorage fontsStorage) : this(
             new PoolTextShapeRendererFactory(componentPoolsRegistry, fontsStorage),
-            instantiationFrameTimeBudgetProvider
+            instantiationFrameTimeBudget
         ) { }
 
-        public TextShapePlugin(ITextShapeRendererFactory textShapeRendererFactory, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider)
+        public TextShapePlugin(ITextShapeRendererFactory textShapeRendererFactory, IReleasablePerformanceBudget instantiationFrameTimeBudget)
         {
             this.textShapeRendererFactory = textShapeRendererFactory;
-            this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
+            this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
         }
 
         public void Dispose()
@@ -44,14 +44,14 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            InstantiateTextShapeSystem.InjectToWorld(ref builder, textShapeRendererFactory, instantiationFrameTimeBudgetProvider);
+            InstantiateTextShapeSystem.InjectToWorld(ref builder, textShapeRendererFactory, instantiationFrameTimeBudget);
             UpdateTextShapeSystem.InjectToWorld(ref builder);
             VisibilityTextShapeSystem.InjectToWorld(ref builder);
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies)
         {
-            InstantiateTextShapeSystem.InjectToWorld(ref builder, textShapeRendererFactory, instantiationFrameTimeBudgetProvider);
+            InstantiateTextShapeSystem.InjectToWorld(ref builder, textShapeRendererFactory, instantiationFrameTimeBudget);
             UpdateTextShapeSystem.InjectToWorld(ref builder);
             VisibilityTextShapeSystem.InjectToWorld(ref builder);
         }

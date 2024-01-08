@@ -35,6 +35,6 @@ namespace ECS.StreamableLoading.Cache
         /// <summary>
         ///     Unload assets from the cache to free memory
         /// </summary>
-        void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount);
+        void Unload(IReleasablePerformanceBudget frameTimeBudget, int maxUnloadAmount);
     }
 }

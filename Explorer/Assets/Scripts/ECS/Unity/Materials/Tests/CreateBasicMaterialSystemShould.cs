@@ -28,9 +28,9 @@ namespace ECS.Unity.Materials.Tests
             IObjectPool<Material> pool = Substitute.For<IObjectPool<Material>>();
             pool.Get().Returns(_ => new Material(basicMat));
 
-            IConcurrentBudgetProvider budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
-            budgetProvider.TrySpendBudget().Returns(true);
-            system = new CreateBasicMaterialSystem(world, pool, budgetProvider);
+            IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
+            budget.TrySpendBudget().Returns(true);
+            system = new CreateBasicMaterialSystem(world, pool, budget);
             system.Initialize();
         }
 

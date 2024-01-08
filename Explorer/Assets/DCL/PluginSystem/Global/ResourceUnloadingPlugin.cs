@@ -6,18 +6,18 @@ namespace DCL.PluginSystem.Global
 {
     public class ResourceUnloadingPlugin : IDCLGlobalPluginWithoutSettings
     {
-        private readonly MemoryBudgetProvider memoryBudgetProvider;
+        private readonly MemoryBudget memoryBudget;
         private readonly CacheCleaner cacheCleaner;
 
-        public ResourceUnloadingPlugin(MemoryBudgetProvider memoryBudgetProvider, CacheCleaner cacheCleaner)
+        public ResourceUnloadingPlugin(MemoryBudget memoryBudget, CacheCleaner cacheCleaner)
         {
-            this.memoryBudgetProvider = memoryBudgetProvider;
+            this.memoryBudget = memoryBudget;
             this.cacheCleaner = cacheCleaner;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ReleaseMemorySystem.InjectToWorld(ref builder, cacheCleaner, memoryBudgetProvider);
+            ReleaseMemorySystem.InjectToWorld(ref builder, cacheCleaner, memoryBudget);
         }
     }
 }

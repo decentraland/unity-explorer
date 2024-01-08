@@ -55,11 +55,11 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public void Dereference(in GetAssetBundleIntention key, AssetBundleData asset) { }
 
-        public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount)
+        public void Unload(IReleasablePerformanceBudget frameTimeBudget, int maxUnloadAmount)
         {
             listedCache.Sort(COMPARE_BY_LAST_USED_FRAME_REVERSED);
 
-            for (int i = listedCache.Count - 1; frameTimeBudgetProvider.TrySpendBudget() && i >= 0 && maxUnloadAmount > 0; i--)
+            for (int i = listedCache.Count - 1; frameTimeBudget.TrySpendBudget() && i >= 0 && maxUnloadAmount > 0; i--)
             {
                 (GetAssetBundleIntention key, AssetBundleData abData) = listedCache[i];
                 if (!abData.CanBeDisposed()) continue;

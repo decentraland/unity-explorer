@@ -18,18 +18,18 @@ namespace DCL.SDKComponents.TextShape.System
     public partial class InstantiateTextShapeSystem : BaseUnityLoopSystem
     {
         private readonly ITextShapeRendererFactory textShapeRendererFactory;
-        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
+        private readonly IReleasablePerformanceBudget instantiationFrameTimeBudget;
 
-        public InstantiateTextShapeSystem(World world, ITextShapeRendererFactory textShapeRendererFactory, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider) : base(world)
+        public InstantiateTextShapeSystem(World world, ITextShapeRendererFactory textShapeRendererFactory, IReleasablePerformanceBudget instantiationFrameTimeBudget) : base(world)
         {
             this.textShapeRendererFactory = textShapeRendererFactory;
-            this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
+            this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
         }
 
         public InstantiateTextShapeSystem(World world, ITextShapeRendererFactory textShapeRendererFactory) : this(
             world,
             textShapeRendererFactory,
-            new FrameTimeCapBudgetProvider(
+            new FrameTimeCapBudget(
                 33,
                 new ProfilingProvider()
             )
@@ -44,7 +44,7 @@ namespace DCL.SDKComponents.TextShape.System
         [None(typeof(TextShapeRendererComponent))]
         private void InstantiateRemaining(in Entity entity, in TransformComponent transform, in PBTextShape textShape)
         {
-            if (instantiationFrameTimeBudgetProvider.TrySpendBudget() == false)
+            if (instantiationFrameTimeBudget.TrySpendBudget() == false)
                 return;
 
             var renderer = textShapeRendererFactory.New(transform.Transform);

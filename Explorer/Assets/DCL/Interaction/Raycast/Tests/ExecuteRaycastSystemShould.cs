@@ -28,7 +28,7 @@ namespace DCL.Interaction.Raycast.Tests
     {
         private readonly List<Component> instantiatedTemp = new ();
         private IEntityCollidersSceneCache entityCollidersSceneCache;
-        private IConcurrentBudgetProvider budgetProvider;
+        private IReleasablePerformanceBudget budget;
         private ISceneStateProvider sceneStateProvider;
         private Entity sceneRoot;
         private Dictionary<CRDTEntity, Entity> entitiesMap;
@@ -44,8 +44,8 @@ namespace DCL.Interaction.Raycast.Tests
             sceneRoot = world.Create(new SceneRootComponent());
             AddTransformToEntity(sceneRoot);
 
-            budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
-            budgetProvider.TrySpendBudget().Returns(true);
+            budget = Substitute.For<IReleasablePerformanceBudget>();
+            budget.TrySpendBudget().Returns(true);
 
             IComponentPool<PBRaycastResult> pbRaycastResultPool = Substitute.For<IComponentPool<PBRaycastResult>>();
             pbRaycastResultPool.Get().Returns(_ => new PBRaycastResult().Reset());
@@ -56,7 +56,7 @@ namespace DCL.Interaction.Raycast.Tests
             system = new ExecuteRaycastSystem(
                 world,
                 sceneRoot,
-                budgetProvider,
+                budget,
                 4,
                 raycastHitPool,
                 pbRaycastResultPool,
@@ -196,7 +196,7 @@ namespace DCL.Interaction.Raycast.Tests
         [Test]
         public void DoNothingIfOutOfBudget()
         {
-            budgetProvider.TrySpendBudget().Returns(false);
+            budget.TrySpendBudget().Returns(false);
 
             CreateColliders(ColliderLayer.ClCustom5, ColliderLayer.ClPhysics);
 

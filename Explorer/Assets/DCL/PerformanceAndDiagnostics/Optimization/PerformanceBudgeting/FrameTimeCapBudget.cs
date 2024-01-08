@@ -2,12 +2,12 @@ using DCL.Profiling;
 
 namespace DCL.Optimization.PerformanceBudgeting
 {
-    public class FrameTimeCapBudgetProvider : IConcurrentBudgetProvider
+    public class FrameTimeCapBudget : IPerformanceBudget
     {
         private readonly IProfilingProvider profilingProvider;
         private readonly float totalBudgetAvailable;
 
-        public FrameTimeCapBudgetProvider(float budgetCapInMS, IProfilingProvider profilingProvider)
+        public FrameTimeCapBudget(float budgetCapInMS, IProfilingProvider profilingProvider)
         {
             //FrameTime return CurrentValue in nanoseconds, so we are converting milliseconds to nanoseconds
             totalBudgetAvailable = budgetCapInMS * 1000000;
@@ -16,7 +16,5 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         public bool TrySpendBudget() =>
             profilingProvider.CurrentFrameTimeValueInNS < totalBudgetAvailable;
-
-        public void ReleaseBudget() { }
     }
 }
