@@ -56,8 +56,6 @@ namespace DCL.Web3.Authenticators
 
             try
             {
-                InitializeWebSocket();
-
                 await ConnectToServerAsync();
 
                 SignatureIdResponse authenticationResponse = await RequestEthMethod(new AuthorizedEthApiRequest
@@ -100,8 +98,6 @@ namespace DCL.Web3.Authenticators
         {
             try
             {
-                InitializeWebSocket();
-
                 await ConnectToServerAsync();
 
                 var ephemeralAccount = NethereumAccount.CreateRandom();
@@ -212,8 +208,11 @@ namespace DCL.Web3.Authenticators
         private string CreateEphemeralMessage(IWeb3Account ephemeralAccount, DateTime expiration) =>
             $"Decentraland Login\nEphemeral address: {ephemeralAccount.Address}\nExpiration: {expiration:s}";
 
-        private async UniTask ConnectToServerAsync() =>
-            await webSocket!.ConnectAsync().AsUniTask().Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+        private async UniTask ConnectToServerAsync()
+        {
+            SocketIO webSocket = InitializeWebSocket();
+            await webSocket.ConnectAsync().AsUniTask().Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
+        }
 
         private void ProcessSignatureOutcomeMessage(SocketIOResponse response)
         {
