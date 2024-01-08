@@ -39,9 +39,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             if (!sdkModel.IsDirty)
                 return;
 
-            if (entitiesMap.TryGetValue(sdkModel.Parent, out Entity newParentEntity) &&
-                newParentEntity != sceneRoot &&
-                !uiTransformComponent.Transform.Contains(World.Get<UITransformComponent>(newParentEntity).Transform)) // TODO: This check shouldn't be needed!
+            if (entitiesMap.TryGetValue(sdkModel.Parent, out Entity newParentEntity) && newParentEntity != sceneRoot)
                 SetNewChild(ref uiTransformComponent, World.Reference(entity), newParentEntity);
         }
 
