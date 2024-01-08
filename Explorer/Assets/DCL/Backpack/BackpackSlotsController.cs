@@ -59,8 +59,7 @@ namespace DCL.Backpack
             }
             while (equippedWearable.WearableThumbnail == null);
 
-            Texture2D valueAsset = equippedWearable.WearableThumbnail.Value.Asset;
-            avatarSlots[equippedWearable.GetCategory()].SlotWearableThumbnail.sprite = Sprite.Create(valueAsset, new Rect(0, 0, valueAsset.width, valueAsset.height), VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false);
+            avatarSlots[equippedWearable.GetCategory()].SlotWearableThumbnail.sprite = equippedWearable.WearableThumbnail.Value.Asset;
             avatarSlots[equippedWearable.GetCategory()].SlotWearableThumbnail.gameObject.SetActive(true);
         }
 

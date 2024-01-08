@@ -45,8 +45,7 @@ namespace DCL.Backpack
             }
             while (itemWearable.WearableThumbnail == null);
 
-            Texture2D valueAsset = itemWearable.WearableThumbnail.Value.Asset;
-            view.WearableThumbnail.sprite = Sprite.Create(valueAsset, new Rect(0, 0, valueAsset.width, valueAsset.height), VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false);
+            view.WearableThumbnail.sprite = itemWearable.WearableThumbnail.Value.Asset;
         }
 
         public void Dispose()

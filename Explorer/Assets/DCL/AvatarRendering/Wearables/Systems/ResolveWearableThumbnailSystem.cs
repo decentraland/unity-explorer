@@ -10,6 +10,8 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
+using UnityEngine;
+using Utility;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 
@@ -55,7 +57,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             if (promise.TryConsume(World, out var result))
             {
-                wearableThumbnailComponent.Wearable.WearableThumbnail = result;
+                wearableThumbnailComponent.Wearable.WearableThumbnail =
+                    new StreamableLoadingResult<Sprite>(
+                        Sprite.Create(result.Asset, new Rect(0, 0, result.Asset.width, result.Asset.height), VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false));
                 World.Destroy(entity);
             }
         }

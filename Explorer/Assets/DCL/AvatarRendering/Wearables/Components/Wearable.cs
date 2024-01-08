@@ -18,7 +18,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         public StreamableLoadingResult<WearableAsset>?[] WearableAssetResults { get; private set; } = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
         public StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }
 
-        public StreamableLoadingResult<Texture2D>? WearableThumbnail { get; set; }
+        public StreamableLoadingResult<Sprite>? WearableThumbnail { get; set; }
         public bool IsLoading { get; set; } = true;
 
         public URLPath GetThumbnail()

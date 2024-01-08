@@ -134,8 +134,7 @@ namespace DCL.Backpack
             }
             while (itemWearable.WearableThumbnail == null);
 
-            Texture2D valueAsset = itemWearable.WearableThumbnail.Value.Asset;
-            itemView.WearableThumbnail.sprite = Sprite.Create(valueAsset, new Rect(0, 0, valueAsset.width, valueAsset.height), VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false);
+            itemView.WearableThumbnail.sprite = itemWearable.WearableThumbnail.Value.Asset;
         }
 
         private void ClearPoolElements()
