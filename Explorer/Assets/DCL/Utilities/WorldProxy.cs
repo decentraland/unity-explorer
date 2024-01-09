@@ -11,11 +11,6 @@ namespace DCL.Utilities
             world = newWorld;
         }
 
-        public World GetWorld()
-        {
-            return world;
-        }
-
         public void Add(Entity entity, in object cmp)
         {
             world?.Add(entity, cmp);

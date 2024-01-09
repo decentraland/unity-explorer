@@ -36,10 +36,6 @@ namespace DCL.PluginSystem.World
             AvatarShapeLoaderSystem.InjectToWorld(ref builder, globalWorld);
         }
 
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies)
-        {
-            ResetDirtyFlagSystem<PBAvatarShape>.InjectToWorld(ref builder);
-            AvatarShapeLoaderSystem.InjectToWorld(ref builder, globalWorld);
-        }
+        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
     }
 }

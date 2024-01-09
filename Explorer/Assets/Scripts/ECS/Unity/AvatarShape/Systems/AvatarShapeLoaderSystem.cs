@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
@@ -14,34 +15,40 @@ namespace ECS.Unity.AvatarShape.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [LogCategory(ReportCategory.AVATAR)]
+    [ThrottlingEnabled]
     public partial class AvatarShapeLoaderSystem : BaseUnityLoopSystem
     {
-        private World world;
         private WorldProxy globalWorld;
 
         internal AvatarShapeLoaderSystem(World world, WorldProxy globalWorld) : base(world)
         {
             this.globalWorld = globalWorld;
-            this.world = world;
         }
 
         protected override void Update(float t)
         {
-            InstantiateAvatarShapeQuery(world);
+            InstantiateAvatarShapeQuery(World);
         }
 
         [Query]
         [None(typeof(AvatarShapeComponent))]
         private void InstantiateAvatarShape(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent, ref TransformComponent transformComponent)
         {
-            Entity globalEntity = globalWorld.Create();
-            pbAvatarShape.IsDirty = true;
-            globalWorld.Add(globalEntity, pbAvatarShape);
-            globalWorld.Add(globalEntity, partitionComponent);
-            globalWorld.Add(globalEntity, transformComponent);
+            globalWorld.Add(entity, pbAvatarShape);
+            globalWorld.Add(entity, partitionComponent);
+            globalWorld.Add(entity, transformComponent);
 
-            var satelliteComponent = new AvatarShapeComponent();
-            world.Add(entity, satelliteComponent);
+            World.Add(entity, new AvatarShapeComponent());
+        }
+
+        [Query]
+        [All(typeof(AvatarShapeComponent))]
+        private void UpdateAvatarShape(in Entity entity, ref PBAvatarShape pbAvatarShape)
+        {
+            if (!pbAvatarShape.IsDirty)
+                return;
+
+            globalWorld.Add(entity, pbAvatarShape);
         }
     }
 }
