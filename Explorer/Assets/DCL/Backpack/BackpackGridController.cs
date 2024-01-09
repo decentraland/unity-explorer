@@ -122,7 +122,7 @@ namespace DCL.Backpack
             requestParameters.Add((PAGE_NUMBER, string.Format("{0}", pageNumber)));
             requestParameters.Add((PAGE_SIZE, string.Format("{0}", CURRENT_PAGE_SIZE)));
 
-            ParamPromise wearablesPromise = ParamPromise.Create(world, new GetWearableByParamIntention(requestParameters,  "0x8e41609eD5e365Ac23C28d9625Bd936EA9C9E22c"/*web3IdentityCache.Identity!.EphemeralAccount.Address*/, new List<IWearable>()), PartitionComponent.TOP_PRIORITY);
+            ParamPromise wearablesPromise = ParamPromise.Create(world, new GetWearableByParamIntention(requestParameters,  web3IdentityCache.Identity!.EphemeralAccount.Address, new List<IWearable>()), PartitionComponent.TOP_PRIORITY);
             AwaitWearablesPromiseAsync(wearablesPromise, cts.Token).Forget();
         }
 
