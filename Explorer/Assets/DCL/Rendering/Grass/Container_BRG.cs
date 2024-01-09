@@ -17,14 +17,13 @@ using UnityEngine.Rendering;
     so 7 float4 per mesh.
 
     Do not forget data is stored in SoA
-
 */
 
 
 public unsafe class BRG_Container
 {
     // In GLES mode, BRG raw buffer is a constant buffer (UBO)
-    private bool UseConstantBuffer => BatchRendererGroup.BufferTarget == BatchBufferTarget.ConstantBuffer;
+    //private bool UseConstantBuffer => BatchRendererGroup.BufferTarget == BatchBufferTarget.ConstantBuffer;
     private bool m_castShadows;
 
     private int m_maxInstances; // maximum item in this container
@@ -43,31 +42,28 @@ public unsafe class BRG_Container
     private BatchRendererGroup m_BatchRendererGroup; // BRG object
     private GraphicsBuffer m_GPUPersistentInstanceData; // GPU raw buffer (could be SSBO or UBO)
 
-    private static int instanceCount = 1000 * 1000; // 1,000 by 1,000 blades of grass as a grid
 
-    // matrices
-    private static int objWorld_Offset = 0;
-    private static int objWorld_TypeSize = 3 * 4 * 4; // Matrix 3x4 - 4Byte(32bit) each
-    private static int objWorld_InstanceCount = instanceCount; // 1,000 by 1,000 blades of grass as a grid
-    private static int objWorld_Size = objWorld_TypeSize * objWorld_InstanceCount;
-
-    // inverse matrices
-    private static int worldObj_Offset = objWorld_Size;
-    private static int worldObj_TypeSize = 3 * 4 * 4; // Matrix 3x4 - 4Byte(32bit) each
-    private static int worldObj_InstanceCount = instanceCount; // 1,000 by 1,000 blades of grass as a grid
-    private static int worldObj_Size = worldObj_TypeSize * worldObj_InstanceCount;
-
-    // colors
-    private static int colour_Offset = objWorld_Size + worldObj_Size;
-    private static int colour_TypeSize = 4; // Colour - 4Byte(32bit) each channel 8bit
-    private static int colour_InstanceCount = instanceCount; // 1,000 by 1,000 blades of grass as a grid
-    private static int colour_Size = colour_TypeSize * colour_InstanceCount;
-
-    private static int rawBufferSize = objWorld_Size + worldObj_Size + colour_Size;
+    private int instanceCount_;
+    private const int objWorld_TypeSize = 3 * 4 * 4; // Matrix 3x4 - 4Byte(32bit) each
+    private const int worldObj_TypeSize = 3 * 4 * 4; // inverse matrices - Matrix 3x4 - 4Byte(32bit) each
+    private const int colour_TypeSize = 4 * 4; // Colour - 4Byte(32bit each channel)
+    private const int kGpuItemSize = objWorld_TypeSize + worldObj_TypeSize + colour_TypeSize;  //  GPU item size ( 2 * 4x3 matrices plus 1 color per item )
 
     // Create a BRG object and allocate buffers.
     public bool Init(Mesh mesh, Material mat, int maxInstances, int instanceSize, bool castShadows)
     {
+        instanceCount_ = maxInstances;
+        int objWorld_Offset = 0;
+        int objWorld_Size = objWorld_TypeSize * maxInstances;
+
+        int worldObj_Offset = objWorld_Size;
+        int worldObj_Size = worldObj_TypeSize * maxInstances;
+
+        int colour_Offset = objWorld_Size + worldObj_Size;
+        int colour_Size = colour_TypeSize * maxInstances;
+
+        int rawBufferSize = objWorld_Size + worldObj_Size + colour_Size;
+
         // Create the BRG object, specifying our BRG callback
         m_BatchRendererGroup = new BatchRendererGroup(this.OnPerformCulling, IntPtr.Zero);
         m_GPUPersistentInstanceData = new GraphicsBuffer(GraphicsBuffer.Target.Raw, count: rawBufferSize / 4, 4);
@@ -81,7 +77,7 @@ public unsafe class BRG_Container
         int colorID = Shader.PropertyToID("_BaseColor");
 
         // Create system memory copy of big GPU raw buffer
-        m_sysmemBuffer = new NativeArray<float4>(instanceCount, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+        m_sysmemBuffer = new NativeArray<float4>(maxInstances * 7, Allocator.Persistent, NativeArrayOptions.ClearMemory);
 
         m_batchID = new BatchID();
         batchMetadata[0] = CreateMetadataValue(objectToWorldID, gpuOffset: objWorld_Offset, true);  // matrices
@@ -113,7 +109,7 @@ public unsafe class BRG_Container
     [BurstCompile]
     public bool UploadGpuData(int instanceCount)
     {
-        m_GPUPersistentInstanceData.SetData(m_sysmemBuffer, 0, 0, 1000);
+        m_GPUPersistentInstanceData.SetData(m_sysmemBuffer, 0, 0, m_sysmemBuffer.Length);
         return true;
     }
 
@@ -153,10 +149,7 @@ public unsafe class BRG_Container
     // Helper function to allocate BRG buffers during the BRG callback function
     private static T* Malloc<T>(uint count) where T : unmanaged
     {
-        return (T*)UnsafeUtility.Malloc(
-            UnsafeUtility.SizeOf<T>() * count,
-            UnsafeUtility.AlignOf<T>(),
-            Allocator.TempJob);
+        return (T*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<T>() * count, UnsafeUtility.AlignOf<T>(), Allocator.TempJob);
     }
 
     // Main BRG entry point per frame. In this sample we won't use BatchCullingContext as we don't need culling
@@ -166,61 +159,39 @@ public unsafe class BRG_Container
     {
         if (m_initialized)
         {
-            BatchCullingOutputDrawCommands drawCommands = new BatchCullingOutputDrawCommands();
+            int alignment = UnsafeUtility.AlignOf<long>();
+            BatchCullingOutputDrawCommands* drawCommands = (BatchCullingOutputDrawCommands*)cullingOutput.drawCommands.GetUnsafePtr();
+            drawCommands->drawCommands = (BatchDrawCommand*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<BatchDrawCommand>(), alignment, Allocator.TempJob);
+            drawCommands->drawRanges = (BatchDrawRange*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<BatchDrawRange>(), alignment, Allocator.TempJob);
+            drawCommands->drawCommandPickingInstanceIDs = null;
 
-            drawCommands.drawCommandCount = 1;
+            drawCommands->drawCommandCount = 1; // The number of elements in the BatchCullingOutputDrawCommands.drawCommands array.
+            drawCommands->drawRangeCount = 1;
 
-            // Allocate a single BatchDrawRange. ( all our draw commands will refer to this BatchDrawRange)
-            drawCommands.drawRangeCount = 1;
-            drawCommands.drawRanges = Malloc<BatchDrawRange>(1);
-            drawCommands.drawRanges[0] = new BatchDrawRange
-            {
-                drawCommandsBegin = 0,
-                drawCommandsCount = (uint)1,
-                filterSettings = new BatchFilterSettings
-                {
-                    renderingLayerMask = 1,
-                    layer = 0,
-                    motionMode = MotionVectorGenerationMode.Camera,
-                    shadowCastingMode = m_castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off,
-                    receiveShadows = true,
-                    staticShadowCaster = false,
-                    allDepthSorted = false
-                }
-            };
+            // Configure the single draw command to draw kNumInstances instances
+            // starting from offset 0 in the array, using the batch, material and mesh
+            // IDs registered in the Start() method. It doesn't set any special flags.
+            drawCommands->drawCommands[0].visibleOffset = 0;
+            drawCommands->drawCommands[0].visibleCount = (uint)instanceCount_;
+            drawCommands->drawCommands[0].batchID = m_batchID;
+            drawCommands->drawCommands[0].materialID = m_materialID;
+            drawCommands->drawCommands[0].meshID = m_meshID;
+            drawCommands->drawCommands[0].submeshIndex = 0;
+            drawCommands->drawCommands[0].splitVisibilityMask = 0xff;
+            drawCommands->drawCommands[0].flags = 0;
+            drawCommands->drawCommands[0].sortingPosition = 0;
 
-            if (drawCommands.drawCommandCount > 0)
-            {
-                // as we don't need culling, the visibility int array buffer will always be {0,1,2,3,...} for each draw command
-                // so we just allocate maxInstancePerDrawCommand and fill it
-                drawCommands.visibleInstances = Malloc<int>((uint)instanceCount);
+            drawCommands->drawRanges[0].drawCommandsBegin = 0;
+            drawCommands->drawRanges[0].drawCommandsCount = 1;
+            drawCommands->drawRanges[0].filterSettings = new BatchFilterSettings { renderingLayerMask = 0xffffffff, layer = 0, motionMode = MotionVectorGenerationMode.Camera, shadowCastingMode = ShadowCastingMode.On, receiveShadows = true, staticShadowCaster = false, allDepthSorted = false };
 
-                // As we don't need any frustum culling in our context, we fill the visibility array with {0,1,2,3,...}
-                for (int i = 0; i < instanceCount; i++)
-                    drawCommands.visibleInstances[i] = i;
+            drawCommands->visibleInstances = (int*)UnsafeUtility.Malloc(instanceCount_ * sizeof(int), alignment, Allocator.TempJob);
+            drawCommands->visibleInstanceCount = instanceCount_;
+            for (int i = 0; i < drawCommands->visibleInstanceCount; ++i)
+                drawCommands->visibleInstances[i] = i;
 
-                // Allocate the BatchDrawCommand array (drawCommandCount entries)
-                // In SSBO mode, drawCommandCount will be just 1
-                drawCommands.drawCommands = Malloc<BatchDrawCommand>((uint)instanceCount);
-                int inBatchCount = instanceCount;//left > maxInstancePerDrawCommand ? maxInstancePerDrawCommand : left;
-                drawCommands.drawCommands[0] = new BatchDrawCommand
-                {
-                    visibleOffset = (uint)0,    // all draw command is using the same {0,1,2,3...} visibility int array
-                    visibleCount = (uint)inBatchCount,
-                    //batchID = m_batchIDs[b],
-                    batchID = m_batchID,
-                    materialID = m_materialID,
-                    meshID = m_meshID,
-                    submeshIndex = 0,
-                    splitVisibilityMask = 0xff,
-                    flags = BatchDrawCommandFlags.None,
-                    sortingPosition = 0
-                };
-            }
-
-            cullingOutput.drawCommands[0] = drawCommands;
-            drawCommands.instanceSortingPositions = null;
-            drawCommands.instanceSortingPositionFloatCount = 0;
+            drawCommands->instanceSortingPositions = null; // If BatchDrawCommandFlags.HasSortingPosition is set for one or more draw commands, the instanceSortingPositions array contains explicit float3 world space positions that Unity uses for depth sorting.The culling callback must allocate the memory for the instanceSortingPositions using the UnsafeUtility.Malloc method and the Allocator.TempJob parameter. The memory is released by Unity when the rendering is complete.If the length of the array is 0, set its value to null.
+            drawCommands->instanceSortingPositionFloatCount = 0; // If BatchDrawCommandFlags.HasSortingPosition is set for one or more draw commands, this contains float3 world-space positions that Unity uses for depth sorting.
         }
 
         return new JobHandle();

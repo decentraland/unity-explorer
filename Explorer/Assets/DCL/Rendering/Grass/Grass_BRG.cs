@@ -15,39 +15,27 @@ public unsafe class Grass_BRG : MonoBehaviour
     public Material m_material;
     public bool m_castShadows;
     public float m_motionSpeed = 3.0f;
-    public float m_motionAmplitude = 2.0f;
-    public float m_spacingFactor = 1.0f;
-    public bool m_debrisDebugTest = false;
-    public float m_phaseSpeed1 = 1.0f;
 
-    static readonly ProfilerMarker s_BackgroundGPUSetData = new ProfilerMarker("BRG_Background.GPUSetData");
+    static readonly ProfilerMarker s_GrassGPUSetDataProfileMarker = new ProfilerMarker("BRG_Background.GPUSetData");
     //static readonly ProfilerMarker s_DebrisGPUSetData = new ProfilerMarker("BRG_Debris.GPUSetData");
 
-    public int m_backgroundW = 30;
-    public int m_backgroundH = 100;
     private const int kGpuItemSize = (3 * 2 + 1) * 16;  //  GPU item size ( 2 * 4x3 matrices plus 1 color per item )
 
     private BRG_Container m_brgContainer;
     private JobHandle m_updateJobFence;
 
-    private List<int> m_magnetCells = new List<int>();
-
-    private int m_itemCount;
+    private const int nGridDimension = 100;
+    private const int instanceCount = nGridDimension * nGridDimension; // 1,000 by 1,000 blades of grass as a grid
     private float m_phase = 0.0f;
-    private float m_burstTimer = 0.0f;
+
     private uint m_slicePos;
 
-    // public struct BackgroundItem
-    // {
-    //     public float x;
-    //     public float hInitial;
-    //     public float h;     // scale
-    //     public float phase;
-    //     public int weight;
-    //     public float magnetIntensity;
-    //     public float flashTime;
-    //     public Vector4 color;
-    // };
+    private const int objWorld_TypeSize = 3 * 4 * 4; // Matrix 3x4 - 4Byte(32bit) each
+    private const int worldObj_TypeSize = 3 * 4 * 4; // inverse matrices - Matrix 3x4 - 4Byte(32bit) each
+    private const int colour_TypeSize = 4 * 4; // Colour - 4Byte(32bit each channel)
+
+    private static bool bIsCPUBufferCreated = false;
+    private static bool bIsCPUBufferTransferredToGPU = false;
 
     // Data:
     // Position (float3)
@@ -82,13 +70,12 @@ public unsafe class Grass_BRG : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        m_itemCount = m_backgroundW*m_backgroundH;
         m_brgContainer = new BRG_Container();
-        m_brgContainer.Init(CreateGrassBladeMesh(), m_material, m_itemCount, kGpuItemSize, m_castShadows);
+        m_brgContainer.Init(CreateGrassBladeMesh(), m_material, instanceCount, kGpuItemSize, m_castShadows);
 
         // setup positions & scale of each background elements
-        m_GrassDataArray = new NativeArray<GrassData>(m_itemCount, Allocator.Persistent, NativeArrayOptions.ClearMemory);
-        m_brgContainer.UploadGpuData(m_itemCount);
+        //m_GrassDataArray = new NativeArray<GrassData>(instanceCount, Allocator.Persistent, NativeArrayOptions.ClearMemory);
+        m_brgContainer.UploadGpuData(instanceCount);
     }
 
     [BurstCompile]
@@ -100,22 +87,34 @@ public unsafe class Grass_BRG : MonoBehaviour
 
         public void Execute(int rowIndex)
         {
-            int itemId = rowIndex * 1000;
+            int itemId = rowIndex * nGridDimension;
 
-            for (int x = 0; x < 1000; ++x)
+            float fScale = 0.2f;
+            float z = rowIndex * fScale;
+            for (int x = 0; x < nGridDimension; ++x)
             {
+                int offset = (itemId * 3) + (x * 3);
                 // compute the new current frame matrix
-                _sysmemBuffer[(itemId + x) + 0] = new float4(1, 0, 0, 0);
-                _sysmemBuffer[(itemId + x) + 1] = new float4(1, 0, 0, 0);
-                _sysmemBuffer[(itemId + x) + 2] = new float4(1, x, 0, rowIndex);
+                _sysmemBuffer[offset + 0] = new float4(1, 0, 0, 0);
+                _sysmemBuffer[offset + 1] = new float4(1, 0, 0, 0);
+                _sysmemBuffer[offset + 2] = new float4(1, x * fScale, 0, z);
+            }
 
+            int offset_inverse_matrix = itemId + (3 * instanceCount);
+            for (int x = 0; x < nGridDimension; ++x)
+            {
+                int offset = (itemId * 3) + offset_inverse_matrix + (x * 3);
                 // compute the new inverse matrix (note: shortcut use identity because aligned cubes normals aren't affected by any non uniform scale
-                _sysmemBuffer[(itemId + x) + 3] = new float4(1, 0, 0, 0);
-                _sysmemBuffer[(itemId + x) + 4] = new float4(1, 0, 0, 0);
-                _sysmemBuffer[(itemId + x) + 5] = new float4(1, 0, 0, 0);
+                _sysmemBuffer[offset + 0] = new float4(1, 0, 0, 0);
+                _sysmemBuffer[offset + 1] = new float4(1, 0, 0, 0);
+                _sysmemBuffer[offset + 2] = new float4(1, 0, 0, 0);
+            }
 
+            int offset_colour = itemId + (3 * 2 * instanceCount);
+            for (int x = 0; x < nGridDimension; ++x)
+            {
                 // update colors
-                _sysmemBuffer[(itemId + x) + 6] = new float4(0, 1, 0, 0);
+                _sysmemBuffer[offset_colour + x] = new float4(0, 1, 0, 0);
             }
         }
     }
@@ -132,7 +131,7 @@ public unsafe class Grass_BRG : MonoBehaviour
         {
             _sysmemBuffer = sysmemBuffer,
         };
-        jobFence = myJob.ScheduleParallel(1000, 4, jobFence);      // 4 slices per job
+        jobFence = myJob.ScheduleParallel(nGridDimension, 4, jobFence);      // 4 slices per job
         return jobFence;
     }
 
@@ -141,24 +140,33 @@ public unsafe class Grass_BRG : MonoBehaviour
     {
         float dt = Time.deltaTime;
         m_phase += dt * m_motionSpeed;
-        m_burstTimer -= dt;
+        //m_burstTimer -= dt;
 
-        while (m_phase >= 1.0f)
+        // while (m_phase >= 1.0f)
+        // {
+        //     m_phase -= 1.0f;
+        // }
+
+
+        if (bIsCPUBufferCreated == false)
         {
-            m_phase -= 1.0f;
+            JobHandle jobFence = new JobHandle();
+            m_updateJobFence = UpdateCPUBuffer(m_phase, dt, jobFence);
+            bIsCPUBufferCreated = true;
         }
-
-        JobHandle jobFence = new JobHandle();
     }
 
     private void LateUpdate()
     {
         m_updateJobFence.Complete();
 
-        // upload ground cells
-        // s_BackgroundGPUSetData.Begin();
-        // m_brgContainer.UploadGpuData(m_itemCount);
-        // s_BackgroundGPUSetData.End();
+        if (bIsCPUBufferTransferredToGPU == false)
+        {
+            s_GrassGPUSetDataProfileMarker.Begin();
+            m_brgContainer.UploadGpuData(instanceCount);
+            s_GrassGPUSetDataProfileMarker.End();
+            bIsCPUBufferTransferredToGPU = true;
+        }
     }
 
     private void OnDestroy()
@@ -172,8 +180,9 @@ public unsafe class Grass_BRG : MonoBehaviour
     {
         if (m_mesh == null)
         {
-            float offset_x = 0.5f;
-            float offset_y = 10.0f;
+            float fScale = 0.05f;
+            float offset_x = 1.0f * fScale;
+            float offset_y = 10.0f * fScale;
             Vector3 vertice_0 = new Vector3(offset_x, 0.0f, 0.0f);
             Vector3 vertice_1 = new Vector3(-offset_x, 0.0f, 0.0f);
             Vector3 vertice_2 = new Vector3(offset_x, offset_y, 0.0f);
