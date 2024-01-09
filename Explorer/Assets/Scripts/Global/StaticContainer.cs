@@ -138,6 +138,7 @@ namespace Global
             container.PhysicsTickProvider = new PhysicsTickProvider();
 
             var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, container.CacheCleaner);
+            var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner);
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
@@ -145,7 +146,7 @@ namespace Global
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, settingsContainer),
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
-                new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
+                textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
 
                 new PrimitivesRenderingPlugin(sharedDependencies),
@@ -162,6 +163,7 @@ namespace Global
             {
                 assetBundlePlugin,
                 new ResourceUnloadingPlugin(sharedDependencies.MemoryBudget, container.CacheCleaner),
+                textureResolvePlugin,
             };
 
             return (container, true);

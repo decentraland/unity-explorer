@@ -40,15 +40,15 @@ namespace DCL.AvatarRendering.Wearables
         private WearablesDTOList defaultWearablesDTOs;
         private GameObject defaultEmptyWearableAsset;
 
-        public WearablePlugin(IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController, IRealmData realmData, URLDomain assetBundleURL, CacheCleaner cacheCleaner)
+        public WearablePlugin(IAssetsProvisioner assetsProvisioner, IWebRequestController webRequestController, IRealmData realmData, URLDomain assetBundleURL, CacheCleaner cacheCleaner, IWearableCatalog wearableCatalog)
         {
-            wearableCatalog = new WearableCatalog();
+            this.wearableCatalog = wearableCatalog;
             this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
             this.realmData = realmData;
             this.assetBundleURL = assetBundleURL;
 
-            cacheCleaner.Register(wearableCatalog);
+            cacheCleaner.Register(this.wearableCatalog);
         }
 
         public void Dispose() { }
@@ -77,6 +77,7 @@ namespace DCL.AvatarRendering.Wearables
             LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, webRequestController, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(true, true), mutexSync, assetBundleURL);
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, defaultWearablesDTOs, defaultEmptyWearableAsset,
                 wearableCatalog);
+            ResolveWearableThumbnailSystem.InjectToWorld(ref builder);
         }
 
         [Serializable]

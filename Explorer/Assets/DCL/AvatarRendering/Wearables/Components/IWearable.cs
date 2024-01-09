@@ -1,7 +1,9 @@
-﻿using DCL.AvatarRendering.Wearables.Helpers;
+﻿using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {
@@ -15,6 +17,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
         StreamableLoadingResult<WearableAsset>?[] WearableAssetResults { get; }
         StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }
+        StreamableLoadingResult<Sprite>? WearableThumbnail { get; set; }
 
         string GetMainFileHash(BodyShape bodyShape);
 
@@ -22,7 +25,17 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         string GetUrn();
 
+        string GetName();
+
         string GetCategory();
+
+        string GetDescription();
+
+        string GetCreator();
+
+        string GetRarity();
+
+        URLPath GetThumbnail();
 
         bool IsUnisex();
 

@@ -14,7 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_TableCollectionName: UI Text Localization Table
   m_TableCollectionNameGuidString: fa6d78a0e08f14179b202ccca9720bb9
-  m_Entries: []
+  m_Entries:
+  - m_Id: 23119123067166720
+    m_Key: Backpack
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:
