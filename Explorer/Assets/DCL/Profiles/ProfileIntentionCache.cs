@@ -45,7 +45,7 @@ namespace DCL.Profiles
 
         public void Dereference(in GetProfileIntention key, Profile asset) { }
 
-        public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount)
+        public void Unload(IPerformanceBudget frameTimeBudgetProvider, int maxUnloadAmount)
         {
             for (var i = 0; frameTimeBudgetProvider.TrySpendBudget()
                             && i < maxUnloadAmount

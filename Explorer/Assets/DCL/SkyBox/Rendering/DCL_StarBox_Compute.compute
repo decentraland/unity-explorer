@@ -1,0 +1,187 @@
+﻿#pragma kernel CSMain
+
+// Inputs
+int i_dimensions;
+struct StarParam
+{
+    float XNO; // Catalog number of star
+    float SRA0; // B1950 Right Ascension (radians)
+    float SDEC0; // B1950 Declination (radians)
+    float3 IS; // Spectral type (2 characters)
+    float MAG; // V Magnitude * 100
+    float XRPM; // R.A. proper motion (radians per year)
+    float XDPM; // Dec. proper motion (radians per year)
+};
+StructuredBuffer<StarParam> StarBuffer;
+
+// Outputs
+RWTexture2DArray<float4> o_cubeMap;
+
+#define PI 3.14159f
+
+float3 LatlongToDirectionCoordinate(float2 coord)
+{
+    float theta = coord.y * PI;
+    float phi = (coord.x * 2.f * PI - PI*0.5f);
+
+    float cosTheta = cos(theta);
+    float sinTheta = sqrt(1.0 - min(1.0, cosTheta*cosTheta));
+    float cosPhi = cos(phi);
+    float sinPhi = sin(phi);
+
+    float3 direction = float3(sinTheta*cosPhi, cosTheta, sinTheta*sinPhi);
+    direction.xy *= -1.0;
+    return direction;
+}
+
+// Convert an xyz vector to a uvw Texture2DArray sample as if it were a cubemap
+float3 xyz_to_uvw(float3 xyz)
+{
+    // Find which dimension we're pointing at the most
+    float3 absxyz = abs(xyz);
+    int xMoreY = absxyz.x > absxyz.y;
+    int yMoreZ = absxyz.y > absxyz.z;
+    int zMoreX = absxyz.z > absxyz.x;
+    int xMost = (xMoreY) && (!zMoreX);
+    int yMost = (!xMoreY) && (yMoreZ);
+    int zMost = (zMoreX) && (!yMoreZ);
+
+    // Determine which index belongs to each +- dimension
+    // 0: +X; 1: -X; 2: +Y; 3: -Y; 4: +Z; 5: -Z;
+    float xSideIdx = 0 + (xyz.x < 0);
+    float ySideIdx = 2 + (xyz.y < 0);
+    float zSideIdx = 4 + (xyz.z < 0);
+
+    // Composite it all together to get our side
+    float side = xMost * xSideIdx + yMost * ySideIdx + zMost * zSideIdx;
+
+    // Depending on side, we use different components for UV and project to square
+    float3 useComponents = float3(0, 0, 0);
+    if (xMost) useComponents = xyz.yzx;
+    if (yMost) useComponents = xyz.xzy;
+    if (zMost) useComponents = xyz.xyz;
+    float2 uv = useComponents.xy / useComponents.z;
+
+    // Transform uv from [-1,1] to [0,1]
+    uv = uv * 0.5 + float2(0.5, 0.5);
+
+    return float3(uv, side);
+}        
+
+// Convert an xyz vector to the side it would fall on for a cubemap
+// Can be used in conjuction with xyz_to_uvw_force_side
+float xyz_to_side(float3 xyz)
+{
+    // Find which dimension we're pointing at the most
+    float3 absxyz = abs(xyz);
+    int xMoreY = absxyz.x > absxyz.y;
+    int yMoreZ = absxyz.y > absxyz.z;
+    int zMoreX = absxyz.z > absxyz.x;
+    int xMost = (xMoreY) && (!zMoreX);
+    int yMost = (!xMoreY) && (yMoreZ);
+    int zMost = (zMoreX) && (!yMoreZ);
+
+    // Determine which index belongs to each +- dimension
+    // 0: +X; 1: -X; 2: +Y; 3: -Y; 4: +Z; 5: -Z;
+    float xSideIdx = 0 + (xyz.x < 0);
+    float ySideIdx = 2 + (xyz.y < 0);
+    float zSideIdx = 4 + (xyz.z < 0);
+
+    // Composite it all together to get our side
+    return xMost * xSideIdx + yMost * ySideIdx + zMost * zSideIdx;
+}
+
+// Convert an xyz vector to a uvw Texture2DArray sample as if it were a cubemap
+// Will force it to be on a certain side
+float3 xyz_to_uvw_force_side(float3 xyz, float side)
+{
+    // Depending on side, we use different components for UV and project to square
+    float3 useComponents = float3(0, 0, 0);
+    if (side < 2) useComponents = xyz.yzx;
+    if (side >= 2 && side < 4) useComponents = xyz.xzy;
+    if (side >= 4) useComponents = xyz.xyz;
+    float2 uv = useComponents.xy / useComponents.z;
+
+    // Transform uv from [-1,1] to [0,1]
+    uv = uv * 0.5 + float2(0.5, 0.5);
+
+    return float3(uv, side);
+}
+
+// Convert a uvw Texture2DArray coordinate to the vector that points to it on a cubemap
+float3 uvw_to_xyz(float3 uvw)
+{
+    // Use side to decompose primary dimension and negativity
+    int side = uvw.z;
+    int xMost = side < 2;
+    int yMost = side >= 2 && side < 4;
+    int zMost = side >= 4;
+    int wasNegative = side & 1;
+
+    // Insert a constant plane value for the dominant dimension in here
+    uvw.z = 1;
+
+    // Depending on the side we swizzle components back (NOTE: uvw.z is 1)
+    float3 useComponents = float3(0, 0, 0);
+    if (xMost) useComponents = uvw.zxy;
+    if (yMost) useComponents = uvw.xzy;
+    if (zMost) useComponents = uvw.xyz;
+
+    // Transform components from [0,1] to [-1,1]
+    useComponents = useComponents * 2 - float3(1, 1, 1);
+    useComponents *= 1 - 2 * wasNegative;
+
+    return useComponents;
+}
+
+static float xy_offset[5] = {-0.2, -0.1, 0, 0.1, 0.2};
+//static float xy_alpha[5] = {0.1f, 0.3f, 1.0f, 0.3f, 0.1f};
+static float xy_fade[5][5] = {  {2.0f, 2.0f, 2.0f, 2.0f, 2.0f},
+                                {2.0f, 1.0f, 1.0f, 1.0f, 2.0f},
+                                {2.0f, 1.0f, 0.0f, 1.0f, 2.0f},
+                                {2.0f, 1.0f, 1.0f, 1.0f, 2.0f},
+                                {2.0f, 2.0f, 2.0f, 2.0f, 2.0f}};
+
+[numthreads(64,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    const uint t = id.x;
+    if (t >= 9110)
+    {
+        return;
+    }
+
+    float ra = StarBuffer[id.x].SRA0;
+    float dec = StarBuffer[id.x].SDEC0;
+    float3 starPos;
+    starPos.x = cos(ra) * cos(dec);
+    starPos.y = sin(ra) * cos(dec);
+    starPos.z = sin(dec);
+    starPos = normalize(starPos);
+    float3 starPos_CubeMap = xyz_to_uvw(starPos);
+
+    int loopSize = 40;
+    int loopHalf = loopSize * 0.5f;
+    //[unroll]
+    for (int i = 0; i < loopSize; ++i)
+    {
+        //[unroll]
+        for(int j = 0; j < loopSize; ++j)
+        {
+            uint3 coord_pixel = uint3(  max(0,min(i_dimensions,(starPos_CubeMap.x * i_dimensions) + (i - loopHalf))),
+                                        max(0,min(i_dimensions,(starPos_CubeMap.y * i_dimensions) + (j - loopHalf))),
+                                        starPos_CubeMap.z);
+            float3 coord_uvw = coord_pixel;
+            coord_uvw.x /= i_dimensions;
+            coord_uvw.y /= i_dimensions;
+            float3 coord_xyz = uvw_to_xyz(float3(coord_uvw));
+            coord_xyz = normalize(coord_xyz);
+            half starSample = pow(saturate(abs(dot(starPos, coord_xyz))), 500.0f + (1000 * StarBuffer[id.x].MAG));
+            if (starSample > 0.99f)
+            {
+                float fade = pow(starSample, 800.0f); 
+                o_cubeMap[coord_pixel] += float4(StarBuffer[id.x].IS * fade, 1.0f);
+            }
+        }
+    }
+}

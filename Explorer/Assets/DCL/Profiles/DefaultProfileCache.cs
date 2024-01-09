@@ -18,7 +18,7 @@ namespace DCL.Profiles
             UpdateProfilingCounter();
         }
 
-        public void Unload(IConcurrentBudgetProvider concurrentBudgetProvider, int maxAmount)
+        public void Unload(IPerformanceBudget concurrentBudgetProvider, int maxAmount)
         {
             // TODO: clear unused profiles
 
