@@ -56,6 +56,7 @@ MonoBehaviour:
           <TextField>k__BackingField: {fileID: 9197481963319205126, guid: 9ffae7c4dbb654f4bb5cd3419ceda579, type: 3}
           <LongMarker>k__BackingField: {fileID: 9197481963319205126, guid: 55d7d168269ae5c46a702ea7abff1944, type: 3}
           <IntField>k__BackingField: {fileID: 9197481963319205126, guid: de80afad302843447b618cd6ca98f3ed, type: 3}
+          <IntSlider>k__BackingField: {fileID: 9197481963319205126, guid: ef1076a0aebac6c4c84b891d303e85ec, type: 3}
           <FloatField>k__BackingField: {fileID: 9197481963319205126, guid: 3f2e0e33e167f85488492c41409dc34a, type: 3}
           <Vector2IntField>k__BackingField: {fileID: 9197481963319205126, guid: 9b80a9e15429ecd489572a5de9918603, type: 3}
           <Vector3Field>k__BackingField: {fileID: 9197481963319205126, guid: 6e52ba5e3264bfd43b23db247aa2457a, type: 3}
