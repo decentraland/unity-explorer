@@ -15,12 +15,12 @@ namespace ECS.Unity.Materials.Systems
     [UpdateAfter(typeof(StartMaterialsLoadingSystem))]
     public partial class CreateBasicMaterialSystem : CreateMaterialSystemBase
     {
-        private readonly IConcurrentBudgetProvider frameTimeBudgetProvider;
         private readonly IConcurrentBudgetProvider memoryBudgetProvider;
+        private readonly IPerformanceBudget capFrameBudget;
 
-        internal CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool, IConcurrentBudgetProvider frameTimeBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider) : base(world, materialsPool)
+        internal CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool, IPerformanceBudget capFrameBudget, IConcurrentBudgetProvider memoryBudgetProvider) : base(world, materialsPool)
         {
-            this.frameTimeBudgetProvider = frameTimeBudgetProvider;
+            this.capFrameBudget = capFrameBudget;
             this.memoryBudgetProvider = memoryBudgetProvider;
         }
 
@@ -35,7 +35,7 @@ namespace ECS.Unity.Materials.Systems
             if (materialComponent.Data.IsPbrMaterial)
                 return;
 
-            if (!frameTimeBudgetProvider.TrySpendBudget() || !memoryBudgetProvider.TrySpendBudget())
+            if (!capFrameBudget.TrySpendBudget() || !memoryBudgetProvider.TrySpendBudget())
                 return;
 
             if (materialComponent.Status == StreamableLoading.LifeCycle.LoadingInProgress)

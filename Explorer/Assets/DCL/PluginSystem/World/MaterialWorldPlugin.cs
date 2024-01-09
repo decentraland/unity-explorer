@@ -21,7 +21,7 @@ namespace DCL.PluginSystem.World
         // private const int CACHE_CAPACITY = 512;
         // private readonly IMaterialsCache materialsCache;
 
-        private readonly IConcurrentBudgetProvider capFrameTimeBudgetProvider;
+        private readonly IPerformanceBudget capFrameTimeBudget;
         private readonly IAssetsProvisioner assetsProvisioner;
 
         private IObjectPool<Material> basicMatPool;
@@ -34,8 +34,8 @@ namespace DCL.PluginSystem.World
 
         public MaterialsPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IAssetsProvisioner assetsProvisioner)
         {
-            capFrameTimeBudgetProvider = sharedDependencies.FrameTimeBudgetProvider;
             memoryBudgetProvider = sharedDependencies.MemoryBudgetProvider;
+            capFrameTimeBudget = sharedDependencies.FrameTimeBudget;
             this.assetsProvisioner = assetsProvisioner;
 
             // materialsCache = new MaterialsCappedCache(CACHE_CAPACITY, (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); });
@@ -58,13 +58,13 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            StartMaterialsLoadingSystem.InjectToWorld(ref builder, destroyMaterial, sharedDependencies.SceneData, loadingAttemptsCount, capFrameTimeBudgetProvider);
+            StartMaterialsLoadingSystem.InjectToWorld(ref builder, destroyMaterial, sharedDependencies.SceneData, loadingAttemptsCount, capFrameTimeBudget);
 
             // the idea with cache didn't work out: the CPU pressure is too high and benefits are not clear
             // consider revising when and if needed
             // LoadMaterialFromCacheSystem.InjectToWorld(ref builder, materialsCache);
-            CreateBasicMaterialSystem.InjectToWorld(ref builder, basicMatPool, capFrameTimeBudgetProvider, memoryBudgetProvider);
-            CreatePBRMaterialSystem.InjectToWorld(ref builder, pbrMatPool, capFrameTimeBudgetProvider, memoryBudgetProvider);
+            CreateBasicMaterialSystem.InjectToWorld(ref builder, basicMatPool, capFrameTimeBudget, memoryBudgetProvider);
+            CreatePBRMaterialSystem.InjectToWorld(ref builder, pbrMatPool, capFrameTimeBudget, memoryBudgetProvider);
             ApplyMaterialSystem.InjectToWorld(ref builder, sharedDependencies.SceneData);
             ResetMaterialSystem.InjectToWorld(ref builder, destroyMaterial, sharedDependencies.SceneData);
             CleanUpMaterialsSystem.InjectToWorld(ref builder, destroyMaterial);

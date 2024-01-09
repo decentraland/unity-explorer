@@ -22,7 +22,7 @@ namespace DCL.PluginSystem.World
         private readonly IGlobalInputEvents globalInputEvents;
         private readonly ECSWorldSingletonSharedDependencies sharedDependencies;
 
-        private IConcurrentBudgetProvider raycastBudgetProvider;
+        private IReleasablePerformanceBudget raycastBudget;
         private Settings settings;
 
         public InteractionPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IProfilingProvider profilingProvider, IGlobalInputEvents globalInputEvents)
@@ -37,7 +37,7 @@ namespace DCL.PluginSystem.World
         public UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
             this.settings = settings;
-            raycastBudgetProvider = new FrameTimeSharedBudgetProvider(settings.RaycastFrameBudgetMs, profilingProvider);
+            raycastBudget = new FrameTimeSharedBudget(settings.RaycastFrameBudgetMs, profilingProvider);
             return UniTask.CompletedTask;
         }
 
@@ -46,7 +46,7 @@ namespace DCL.PluginSystem.World
         {
             InitializeRaycastSystem.InjectToWorld(ref builder);
 
-            ExecuteRaycastSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, raycastBudgetProvider, settings.RaycastBucketThreshold,
+            ExecuteRaycastSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, raycastBudget, settings.RaycastBucketThreshold,
                 sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<RaycastHit>(),
                 sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<PBRaycastResult>(),
                 sceneDeps.EntityCollidersSceneCache,

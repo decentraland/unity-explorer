@@ -23,7 +23,7 @@ namespace DCL.ResourcesUnloading.Tests
     {
         private CacheCleaner cacheCleaner;
 
-        private IConcurrentBudgetProvider concurrentBudgetProvider;
+        private IReleasablePerformanceBudget releasablePerformanceBudget;
 
         // Caches
         private WearableCatalog wearableCatalog;
@@ -39,7 +39,7 @@ namespace DCL.ResourcesUnloading.Tests
         [SetUp]
         public void SetUp()
         {
-            concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+            releasablePerformanceBudget = Substitute.For<IReleasablePerformanceBudget>();
 
             texturesCache = new TexturesCache();
             audioClipsCache = new AudioClipsCache();
@@ -48,7 +48,7 @@ namespace DCL.ResourcesUnloading.Tests
             wearableAssetsCache = new WearableAssetsCache(100);
             wearableCatalog = new WearableCatalog();
 
-            cacheCleaner = new CacheCleaner(concurrentBudgetProvider);
+            cacheCleaner = new CacheCleaner(releasablePerformanceBudget);
             cacheCleaner.Register(texturesCache);
             cacheCleaner.Register(audioClipsCache);
             cacheCleaner.Register(gltfContainerAssetsCache);
@@ -67,7 +67,7 @@ namespace DCL.ResourcesUnloading.Tests
             assetBundleCache.Dispose();
             gltfContainerAssetsCache.Dispose();
             wearableAssetsCache.Dispose();
-            wearableCatalog.Unload(concurrentBudgetProvider);
+            wearableCatalog.Unload(releasablePerformanceBudget);
         }
 
         [Performance]
@@ -77,7 +77,7 @@ namespace DCL.ResourcesUnloading.Tests
         public void CacheCleaningPerformance(int cachedElementsAmount)
         {
             // Arrange
-            concurrentBudgetProvider.TrySpendBudget().Returns(true);
+            releasablePerformanceBudget.TrySpendBudget().Returns(true);
 
             for (var i = 0; i < cachedElementsAmount; i++)
                 FillCachesWithElements(hashID: $"test{i}");
@@ -125,7 +125,7 @@ namespace DCL.ResourcesUnloading.Tests
         public void ShouldCleanCachesWithRespectToReferencing()
         {
             // Arrange
-            concurrentBudgetProvider.TrySpendBudget().Returns(true);
+            releasablePerformanceBudget.TrySpendBudget().Returns(true);
             FillCachesWithElements(hashID: "test");
 
             // Act

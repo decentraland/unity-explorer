@@ -28,14 +28,14 @@ namespace ECS.Unity.Materials.Systems
         private readonly DestroyMaterial destroyMaterial;
         private readonly ISceneData sceneData;
         private readonly int attemptsCount;
-        private readonly IConcurrentBudgetProvider capFrameTimeBudgetProvider;
+        private readonly IPerformanceBudget capFrameTimeBudget;
 
-        public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData, int attemptsCount, IConcurrentBudgetProvider capFrameTimeBudgetProvider) : base(world)
+        public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData, int attemptsCount, IPerformanceBudget capFrameTimeBudget) : base(world)
         {
             this.destroyMaterial = destroyMaterial;
             this.sceneData = sceneData;
             this.attemptsCount = attemptsCount;
-            this.capFrameTimeBudgetProvider = capFrameTimeBudgetProvider;
+            this.capFrameTimeBudget = capFrameTimeBudget;
         }
 
         protected override void Update(float t)
@@ -74,7 +74,7 @@ namespace ECS.Unity.Materials.Systems
         [None(typeof(MaterialComponent))]
         private void CreateMaterialComponent(in Entity entity, ref PBMaterial material, ref PartitionComponent partitionComponent)
         {
-            if (!capFrameTimeBudgetProvider.TrySpendBudget())
+            if (!capFrameTimeBudget.TrySpendBudget())
                 return;
 
             var materialComponent = new MaterialComponent(CreateMaterialData(ref material));
