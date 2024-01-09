@@ -122,7 +122,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        private void FinalizeWearableDTO([Data] bool defaultWearablesResolved, in Entity entity, ref AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> promise, ref BodyShape bodyShape)
+        private void FinalizeWearableDTO([Data] bool defaultWearablesResolved, in Entity entity, ref AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> promise, ref BodyShape bodyShape, ref IPartitionComponent partitionComponent)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -146,10 +146,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 {
                     foreach (WearableDTO assetEntity in promiseResult.Asset.Value)
                     {
-                        //TODO: Download Thumbnail
                         wearableCatalog.TryGetWearable(assetEntity.metadata.id, out IWearable component);
+
                         component.WearableDTO = new StreamableLoadingResult<WearableDTO>(assetEntity);
                         component.IsLoading = false;
+
+                        WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, component, World, partitionComponent);
                     }
                 }
 
@@ -243,7 +245,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint, cancellationTokenSource: intention.CancellationTokenSource));
 
             var promise = AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention>.Create(World, wearableDtoByPointersIntention, partitionComponent);
-            World.Create(promise, intention.BodyShape);
+            World.Create(promise, intention.BodyShape, partitionComponent);
         }
 
         private void SetDefaultWearables(bool defaultWearablesLoaded, IWearable wearable, in BodyShape bodyShape)

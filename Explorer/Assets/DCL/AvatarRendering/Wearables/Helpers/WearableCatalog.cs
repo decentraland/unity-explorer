@@ -22,6 +22,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 {
                     WearableDTO = new StreamableLoadingResult<WearableDTO>(wearableDto),
                     IsLoading = false
+
                 }, qualifiedForUnloading);
         }
 
@@ -29,6 +30,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             AddWearable(loadingIntentionPointer, new Wearable(), qualifiedForUnloading);
         }
+
 
         internal IWearable AddWearable(string loadingIntentionPointer, IWearable wearable, bool qualifiedForUnloading)
         {

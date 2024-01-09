@@ -9,7 +9,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     public static class WearablesConstants
     {
         public const string EMPTY_DEFAULT_WEARABLE = "EMPTY_DEFAULT_WEARABLE";
-        
+
         //Used for hiding algorithm
         public static readonly IList<string> CATEGORIES_PRIORITY = new List<string>
         {
