@@ -12,13 +12,13 @@ namespace DCL.Optimization.PerformanceBudgeting
         Full,
     }
 
-    public class MemoryBudgetProvider : IMemoryUsageProvider, IConcurrentBudgetProvider
+    public class MemoryBudget : IMemoryUsageProvider, IPerformanceBudget
     {
         private const ulong BYTES_IN_MEGABYTE = 1024 * 1024;
         private const ulong NO_MEMORY = 0;
 
         private readonly IProfilingProvider profilingProvider;
-        private readonly Dictionary<MemoryUsageStatus, float> memoryThreshold;
+        private readonly IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold;
         private readonly ISystemMemory systemMemory;
 
         // Debug
@@ -27,7 +27,7 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         private ulong actualSystemMemory => systemMemory.TotalSizeInMB;
 
-        public MemoryBudgetProvider(ISystemMemory systemMemory, IProfilingProvider profilingProvider, Dictionary<MemoryUsageStatus, float> memoryThreshold)
+        public MemoryBudget(ISystemMemory systemMemory, IProfilingProvider profilingProvider, IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold)
         {
             SimulatedMemoryUsage = Normal;
 
@@ -57,8 +57,6 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         public bool TrySpendBudget() =>
             GetMemoryUsageStatus() != Full;
-
-        public void ReleaseBudget() { }
 
         private ulong GetTotalSystemMemory() =>
             isReleaseBuild ? actualSystemMemory : GetSimulatedSystemMemory();

@@ -22,7 +22,7 @@ namespace DCL.ResourcesUnloading
         private const int TEXTURE_UNLOAD_CHUNK = 1;
         private const int PROFILE_UNLOAD_CHUNK = 10;
 
-        private readonly IConcurrentBudgetProvider fpsCapBudgetProvider;
+        private readonly IPerformanceBudget fpsCapBudget;
         private readonly List<IThrottledClearable> avatarPools;
 
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
@@ -34,24 +34,24 @@ namespace DCL.ResourcesUnloading
         private IProfileCache? profileCache;
         private IStreamableCache<Profile, GetProfileIntention>? profileIntentionCache;
 
-        public CacheCleaner(IConcurrentBudgetProvider fpsCapBudgetProvider)
+        public CacheCleaner(IPerformanceBudget fpsCapBudget)
         {
-            this.fpsCapBudgetProvider = fpsCapBudgetProvider;
+            this.fpsCapBudget = fpsCapBudget;
 
             avatarPools = new List<IThrottledClearable> { AvatarCustomSkinningComponent.USED_SLOTS_POOL };
         }
 
         public void UnloadCache()
         {
-            if (!fpsCapBudgetProvider.TrySpendBudget()) return;
+            if (!fpsCapBudget.TrySpendBudget()) return;
 
-            texturesCache.Unload(fpsCapBudgetProvider, TEXTURE_UNLOAD_CHUNK);
-            wearableAssetsCache.Unload(fpsCapBudgetProvider, WEARABLES_UNLOAD_CHUNK);
-            wearableCatalog.Unload(fpsCapBudgetProvider);
-            gltfContainerAssetsCache.Unload(fpsCapBudgetProvider, GLTF_UNLOAD_CHUNK);
-            assetBundleCache.Unload(fpsCapBudgetProvider, AB_UNLOAD_CHUNK);
-            profileCache?.Unload(fpsCapBudgetProvider, PROFILE_UNLOAD_CHUNK);
-            profileIntentionCache?.Unload(fpsCapBudgetProvider, PROFILE_UNLOAD_CHUNK);
+            texturesCache.Unload(fpsCapBudget, TEXTURE_UNLOAD_CHUNK);
+            wearableAssetsCache.Unload(fpsCapBudget, WEARABLES_UNLOAD_CHUNK);
+            wearableCatalog.Unload(fpsCapBudget);
+            gltfContainerAssetsCache.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
+            assetBundleCache.Unload(fpsCapBudget, AB_UNLOAD_CHUNK);
+            profileCache?.Unload(fpsCapBudget, PROFILE_UNLOAD_CHUNK);
+            profileIntentionCache?.Unload(fpsCapBudget, PROFILE_UNLOAD_CHUNK);
 
             ClearAvatarsRelatedPools();
         }
@@ -59,7 +59,7 @@ namespace DCL.ResourcesUnloading
         private void ClearAvatarsRelatedPools()
         {
             foreach (IThrottledClearable pool in avatarPools)
-                if (fpsCapBudgetProvider.TrySpendBudget())
+                if (fpsCapBudget.TrySpendBudget())
                     pool.ClearThrottled(POOLS_UNLOAD_CHUNK);
         }
 

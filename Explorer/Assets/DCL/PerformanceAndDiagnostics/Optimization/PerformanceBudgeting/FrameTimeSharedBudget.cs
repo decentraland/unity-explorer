@@ -3,7 +3,7 @@ using Utility.Multithreading;
 
 namespace DCL.Optimization.PerformanceBudgeting
 {
-    public class FrameTimeSharedBudgetProvider : IConcurrentBudgetProvider
+    public class FrameTimeSharedBudget : IReleasablePerformanceBudget
     {
         private readonly float totalBudgetAvailable;
         private readonly IProfilingProvider profilingProvider;
@@ -13,7 +13,7 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         private long currentFrameNumber;
 
-        public FrameTimeSharedBudgetProvider(float totalBudgetAvailableInMiliseconds, IProfilingProvider profilingProvider)
+        public FrameTimeSharedBudget(float totalBudgetAvailableInMiliseconds, IProfilingProvider profilingProvider)
         {
             //FrameTime return CurrentValue in nanoseconds, so we are converting milliseconds to nanoseconds
             totalBudgetAvailable = totalBudgetAvailableInMiliseconds * 1000000;

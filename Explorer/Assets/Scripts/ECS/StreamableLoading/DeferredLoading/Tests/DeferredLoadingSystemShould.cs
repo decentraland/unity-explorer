@@ -13,18 +13,18 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
     public class DeferredLoadingSystemShould : UnitySystemTestBase<AssetsDeferredLoadingSystem>
     {
         private List<Entity> entities;
-        private ConcurrentLoadingBudgetProvider concurrentLoadingBudgetProvider;
-        private IConcurrentBudgetProvider memoryBudgetProviderMock;
+        private ConcurrentLoadingPerformanceBudget concurrentLoadingPerformanceBudget;
+        private IReleasablePerformanceBudget memoryBudgetMock;
 
         [SetUp]
         public void SetUp()
         {
             // We ll create a budget system that only allows 5 concurrent loading requests
-            concurrentLoadingBudgetProvider = new ConcurrentLoadingBudgetProvider(5);
-            memoryBudgetProviderMock = Substitute.For<IConcurrentBudgetProvider>();
-            memoryBudgetProviderMock.TrySpendBudget().Returns(true);
+            concurrentLoadingPerformanceBudget = new ConcurrentLoadingPerformanceBudget(5);
+            memoryBudgetMock = Substitute.For<IReleasablePerformanceBudget>();
+            memoryBudgetMock.TrySpendBudget().Returns(true);
 
-            system = new AssetsDeferredLoadingSystem(world, concurrentLoadingBudgetProvider, memoryBudgetProviderMock);
+            system = new AssetsDeferredLoadingSystem(world, concurrentLoadingPerformanceBudget, memoryBudgetMock);
             entities = new List<Entity>();
         }
 
@@ -115,7 +115,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
 
             // We'll release 3 budget and check that additional 3 intentions are allowed
             for (var i = 0; i < 3; i++)
-                concurrentLoadingBudgetProvider.ReleaseBudget();
+                concurrentLoadingPerformanceBudget.ReleaseBudget();
 
             system.Update(0);
 

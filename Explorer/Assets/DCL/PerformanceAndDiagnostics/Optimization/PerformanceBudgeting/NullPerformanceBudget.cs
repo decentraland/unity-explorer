@@ -1,6 +1,6 @@
 namespace DCL.Optimization.PerformanceBudgeting
 {
-    public class NullBudgetProvider : IConcurrentBudgetProvider
+    public class NullPerformanceBudget : IReleasablePerformanceBudget
     {
         public bool TrySpendBudget() =>
             true;
