@@ -5,12 +5,16 @@ using CRDT.Serializer;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Web3;
+using Newtonsoft.Json;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using UnityEngine.Profiling;
 using Utility.Multithreading;
 
@@ -32,6 +36,7 @@ namespace CrdtEcsBridge.Engine
         private readonly ISystemGroupsUpdateGate systemGroupsUpdateGate;
         private readonly ISceneExceptionsHandler exceptionsHandler;
         private readonly MutexSync mutexSync;
+        private readonly IEthereumApi ethereumApi;
 
         private readonly CustomSampler deserializeBatchSampler;
         private readonly CustomSampler worldSyncBufferSampler;
@@ -40,7 +45,6 @@ namespace CrdtEcsBridge.Engine
         private readonly CustomSampler applyBufferSampler;
 
         private byte[] lastSerializationBuffer;
-
         private bool isDisposing;
 
         public EngineAPIImplementation(
@@ -53,7 +57,8 @@ namespace CrdtEcsBridge.Engine
             IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
             ISystemGroupsUpdateGate systemGroupsUpdateGate,
             ISceneExceptionsHandler exceptionsHandler,
-            MutexSync mutexSync)
+            MutexSync mutexSync,
+            IEthereumApi ethereumApi)
         {
             sharedPoolsProvider = poolsProvider;
             this.instancePoolsProvider = instancePoolsProvider;
@@ -63,6 +68,7 @@ namespace CrdtEcsBridge.Engine
             this.crdtWorldSynchronizer = crdtWorldSynchronizer;
             this.outgoingCrtdMessagesProvider = outgoingCrtdMessagesProvider;
             this.mutexSync = mutexSync;
+            this.ethereumApi = ethereumApi;
             this.systemGroupsUpdateGate = systemGroupsUpdateGate;
             this.exceptionsHandler = exceptionsHandler;
 
@@ -250,6 +256,20 @@ namespace CrdtEcsBridge.Engine
         public void SetIsDisposing()
         {
             isDisposing = true;
+        }
+
+        public async UniTask<SendEthereumMessageResponse> SendEthereumMessageAsync(string method, object[] @params, CancellationToken ct)
+        {
+            object result = await ethereumApi.SendAsync<object>(new EthApiRequest
+            {
+                method = method,
+                @params = @params,
+            }, ct);
+
+            return new SendEthereumMessageResponse
+            {
+                jsonAnyResponse = JsonConvert.SerializeObject(result),
+            };
         }
 
         /// <summary>

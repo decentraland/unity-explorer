@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Cysharp.Threading.Tasks;
+using System;
+using System.Threading;
 
 namespace SceneRuntime.Apis.Modules
 {
@@ -20,5 +22,7 @@ namespace SceneRuntime.Apis.Modules
         ///     Prevents handling messages while the scene runtime is being disposed
         /// </summary>
         void SetIsDisposing();
+
+        UniTask<SendEthereumMessageResponse> SendEthereumMessageAsync(string method, object[] @params, CancellationToken ct);
     }
 }

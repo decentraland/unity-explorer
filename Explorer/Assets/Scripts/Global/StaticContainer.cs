@@ -14,6 +14,7 @@ using DCL.Profiles;
 using DCL.Profiling;
 using DCL.ResourcesUnloading;
 using DCL.Time;
+using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS.Prioritization;
@@ -72,6 +73,7 @@ namespace Global
         public IRealmPartitionSettings RealmPartitionSettings => realmPartitionSettings.Value;
         public StaticSettings StaticSettings { get; private set; }
         public CacheCleaner CacheCleaner { get; private set; }
+        public IEthereumApi EthereumApi { get; private set; }
 
         public void Dispose()
         {
@@ -96,6 +98,7 @@ namespace Global
 
         public static async UniTask<(StaticContainer container, bool success)> CreateAsync(IPluginSettingsContainer settingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
+            IEthereumApi ethereumApi,
             CancellationToken ct)
         {
             ProfilingCounters.CleanAllCounters();
@@ -105,6 +108,9 @@ namespace Global
             var profilingProvider = new ProfilingProvider();
 
             var container = new StaticContainer();
+
+            container.EthereumApi = ethereumApi;
+
             var addressablesProvisioner = new AddressablesProvisioner();
             container.AssetsProvisioner = addressablesProvisioner;
 

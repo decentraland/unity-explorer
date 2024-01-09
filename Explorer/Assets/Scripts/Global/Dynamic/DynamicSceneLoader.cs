@@ -77,19 +77,21 @@ namespace Global.Dynamic
                 var identityCache = new ProxyIdentityCache(new MemoryWeb3IdentityCache(),
                     new PlayerPrefsIdentityProvider(new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()));
 
+                var web3VerifiedAuthenticator = new DappWeb3Authenticator(new UnityAppWebBrowser(),
+                    settings.AuthWebSocketUrl,
+                    settings.AuthSignatureUrl,
+                    identityCache,
+                    new HashSet<string>(settings.Web3WhitelistMethods));
+
                 web3Authenticator = new ProxyVerifiedWeb3Authenticator(
-                    new DappWeb3Authenticator(new UnityAppWebBrowser(),
-                        settings.AuthWebSocketUrl,
-                        settings.AuthSignatureUrl,
-                        identityCache,
-                        new HashSet<string>(settings.Web3WhitelistMethods)),
+                    web3VerifiedAuthenticator,
                     identityCache);
 
                 // First load the common global plugin
                 bool isLoaded;
 
                 (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer,
-                    identityCache, ct);
+                    identityCache, web3VerifiedAuthenticator, ct);
 
                 if (!isLoaded)
                 {

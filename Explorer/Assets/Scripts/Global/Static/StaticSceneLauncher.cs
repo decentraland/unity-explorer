@@ -1,9 +1,12 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Browser;
 using DCL.PluginSystem;
+using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using SceneRunner.Scene;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
@@ -17,6 +20,10 @@ namespace Global.Static
         [SerializeField] private SceneLauncher sceneLauncher;
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer;
+        [SerializeField] private bool useRealAuthentication;
+        [SerializeField] private string authenticationServerUrl;
+        [SerializeField] private string authenticationSignatureUrl;
+        [SerializeField] private string[] ethWhitelistMethods;
 
         private ISceneFacade sceneFacade;
 
@@ -40,14 +47,26 @@ namespace Global.Static
             {
                 var identityCache = new MemoryWeb3IdentityCache();
 
-                web3Authenticator = new ProxyWeb3Authenticator(new RandomGeneratedWeb3Authenticator(),
-                    identityCache);
+                var dappWeb3Authenticator = new DappWeb3Authenticator(new UnityAppWebBrowser(),
+                    authenticationServerUrl, authenticationSignatureUrl,
+                    identityCache,
+                    new HashSet<string>(ethWhitelistMethods));
+
+                IWeb3Authenticator web3Authenticator;
+
+                if (useRealAuthentication)
+                    web3Authenticator = new ProxyWeb3Authenticator(dappWeb3Authenticator,
+                        identityCache);
+                else
+                    web3Authenticator = new ProxyWeb3Authenticator(new RandomGeneratedWeb3Authenticator(),
+                        identityCache);
+
                 await web3Authenticator.LoginAsync(ct);
 
                 SceneSharedContainer sceneSharedContainer;
 
                 (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettingsContainer, scenePluginSettingsContainer,
-                    identityCache, ct);
+                    identityCache, dappWeb3Authenticator, ct);
                 sceneLauncher.Initialize(sceneSharedContainer, destroyCancellationToken);
             }
             catch (OperationCanceledException) { }
@@ -63,11 +82,12 @@ namespace Global.Static
             IPluginSettingsContainer globalSettingsContainer,
             IPluginSettingsContainer sceneSettingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
+            IEthereumApi ethereumApi,
             CancellationToken ct)
         {
             // First load the common global plugin
             (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer,
-                web3IdentityProvider, ct);
+                web3IdentityProvider, ethereumApi, ct);
 
             if (!isLoaded)
                 GameReports.PrintIsDead();
