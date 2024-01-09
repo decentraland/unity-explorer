@@ -15,7 +15,7 @@ namespace ECS.SceneLifeCycle.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new UnloadSceneSystem(world);
+            system = new UnloadSceneSystem(world, new ScenesCache());
         }
 
         [Test]
