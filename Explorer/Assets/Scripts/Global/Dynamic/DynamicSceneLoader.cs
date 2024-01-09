@@ -4,6 +4,7 @@ using DCL.Browser;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Web3Authentication;
+using DCL.SkyBox;
 using DCL.Web3Authentication.Authenticators;
 using DCL.Web3Authentication.Identities;
 using System;
@@ -26,6 +27,8 @@ namespace Global.Dynamic
         [SerializeField] private UIDocument uiToolkitRoot;
         [SerializeField] private UIDocument debugUiRoot;
 
+        [Space]
+        [SerializeField] private SkyBoxSceneData skyBoxSceneData;
         [SerializeField] private RealmLauncher realmLauncher;
         [SerializeField] private DynamicSceneLoaderSettings settings;
         [SerializeField] private DynamicSettings dynamicSettings;
@@ -99,6 +102,7 @@ namespace Global.Dynamic
                     scenePluginSettingsContainer,
                     ct,
                     uiToolkitRoot,
+                    skyBoxSceneData,
                     settings.StaticLoadPositions,
                     settings.SceneLoadRadius,
                     dynamicSettings,
