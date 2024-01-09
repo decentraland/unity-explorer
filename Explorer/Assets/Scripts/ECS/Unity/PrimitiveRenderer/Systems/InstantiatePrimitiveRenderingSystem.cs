@@ -33,16 +33,16 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         };
         private readonly IComponentPool<MeshRenderer> rendererPoolRegistry;
         private readonly IComponentPoolsRegistry poolRegistry;
-        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
+        private readonly IPerformanceBudget instantiationFrameTimeBudget;
         private readonly ISceneData sceneData;
 
         private readonly Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases;
 
         internal InstantiatePrimitiveRenderingSystem(World world, IComponentPoolsRegistry poolsRegistry,
-            IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, ISceneData sceneData, Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases = null) : base(world)
+            IPerformanceBudget instantiationFrameTimeBudget, ISceneData sceneData, Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases = null) : base(world)
         {
             this.setupMeshCases = setupMeshCases ?? SETUP_MESH_LOGIC;
-            this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
+            this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.sceneData = sceneData;
             poolRegistry = poolsRegistry;
 
@@ -63,7 +63,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             if (!setupMeshCases.TryGetValue(sdkComponent.MeshCase, out ISetupMesh setupMesh))
                 return;
 
-            if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
+            if (!instantiationFrameTimeBudget.TrySpendBudget())
                 return;
 
             var meshRendererComponent = new PrimitiveMeshRendererComponent();
@@ -89,7 +89,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
                 return;
             }
 
-            if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
+            if (!instantiationFrameTimeBudget.TrySpendBudget())
                 return;
 
             // The model has changed entirely, so we need to reinstall the renderer

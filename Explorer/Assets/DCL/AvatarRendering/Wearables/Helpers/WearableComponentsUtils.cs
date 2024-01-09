@@ -1,9 +1,16 @@
-﻿using CommunicationData.URLHelpers;
+﻿using Arch.Core;
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Optimization.Pools;
+using ECS;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using System.Buffers;
 using System.Collections.Generic;
+using UnityEngine;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
@@ -11,6 +18,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     {
         internal static readonly ListObjectPool<string> POINTERS_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
         internal static readonly ArrayPool<IWearable> RESULTS_POOL = ArrayPool<IWearable>.Create(20, 20);
+
+        private static readonly URLBuilder URL_BUILDER = new ();
+        private static readonly Sprite DEFAULT_THUMBNAIL = Sprite.Create(Texture2D.grayTexture, new Rect(0, 0, 1, 1), new Vector2());
 
         public static GetWearablesByPointersIntention CreateGetWearablesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<string> wearables)
         {
@@ -32,6 +42,29 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             IWearable[] results = RESULTS_POOL.Rent(pointers.Count);
             return new GetWearablesByPointersIntention(pointers, results, bodyShape);
+        }
+
+        public static void CreateWearableThumbnailPromise(IRealmData realmData, IWearable wearable, World world, IPartitionComponent partitionComponent)
+        {
+            URLPath thumbnailPath = wearable.GetThumbnail();
+
+            if (string.IsNullOrEmpty(thumbnailPath.Value))
+            {
+                wearable.WearableThumbnail = new StreamableLoadingResult<Sprite>(DEFAULT_THUMBNAIL);
+                return;
+            }
+
+            URL_BUILDER.Clear();
+            URL_BUILDER.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(thumbnailPath);
+
+            var promise = Promise.Create(world,
+                new GetTextureIntention
+                {
+                    CommonArguments = new CommonLoadingArguments(URL_BUILDER.Build())
+                },
+                partitionComponent);
+
+            world.Create(wearable, promise, partitionComponent);
         }
     }
 }

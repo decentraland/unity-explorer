@@ -123,12 +123,12 @@ namespace Global
                 container.ReportHandlingSettings,
                 new SceneEntityFactory(),
                 new PartitionedWorldsAggregate.Factory(),
-                new ConcurrentLoadingBudgetProvider(staticSettings.AssetsLoadingBudget),
-                new FrameTimeCapBudgetProvider(staticSettings.FrameTimeCap, profilingProvider),
-                new MemoryBudgetProvider(new StandaloneSystemMemory(), profilingProvider, staticSettings.MemoryThresholds)
+                new ConcurrentLoadingPerformanceBudget(staticSettings.AssetsLoadingBudget),
+                new FrameTimeCapBudget(staticSettings.FrameTimeCap, profilingProvider),
+                new MemoryBudget(new StandaloneSystemMemory(), profilingProvider, staticSettings.MemoryThresholds)
             );
 
-            container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudgetProvider);
+            container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget);
 
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
             container.ComponentsContainer = componentsContainer;
@@ -140,14 +140,15 @@ namespace Global
             container.PhysicsTickProvider = new PhysicsTickProvider();
 
             var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, container.CacheCleaner);
+            var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner);
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
                 new TransformsPlugin(sharedDependencies),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
-                new TextShapePlugin(sharedDependencies.FrameTimeBudgetProvider, componentsContainer.ComponentPoolsRegistry, settingsContainer),
+                new TextShapePlugin(sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, settingsContainer),
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
-                new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
+                textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
                 new AvatarShapePlugin(container.GlobalWorld),
                 new PrimitivesRenderingPlugin(sharedDependencies),
@@ -163,7 +164,8 @@ namespace Global
             container.SharedPlugins = new IDCLGlobalPlugin[]
             {
                 assetBundlePlugin,
-                new ResourceUnloadingPlugin(sharedDependencies.MemoryBudgetProvider, container.CacheCleaner),
+                new ResourceUnloadingPlugin(sharedDependencies.MemoryBudget, container.CacheCleaner),
+                textureResolvePlugin,
             };
 
             return (container, true);

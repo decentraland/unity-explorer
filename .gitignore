@@ -66,3 +66,7 @@ Explorer/Assets/AddressableAssetsData/Windows/*.meta
 Explorer/Assets/AddressableAssetsData/Windows.meta
 Explorer/Assets/AddressableAssetsData/ProfileDataSourceSettings.asset
 Explorer/Assets/AddressableAssetsData/ProfileDataSourceSettings.asset.meta
+
+# OS generated
+.DS_Store
+.DS_Store?

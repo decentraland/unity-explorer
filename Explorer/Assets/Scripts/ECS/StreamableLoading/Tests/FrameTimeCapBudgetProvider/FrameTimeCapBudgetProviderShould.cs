@@ -23,31 +23,31 @@ namespace ECS.StreamableLoading.Tests
             public int timesUpdated;
         }
 
-        private FrameTimeCapBudgetProvider budgetProvider;
+        private FrameTimeCapBudget budget;
         private ProfilingProvider profilingProvider;
 
         [Test]
         public async Task SpendBudget()
         {
-            budgetProvider = new FrameTimeCapBudgetProvider(5f, profilingProvider);
+            budget = new FrameTimeCapBudget(5f, profilingProvider);
 
             //We need to wait one frame for the Profiling Provider start getting samples
             await UniTask.Yield();
 
             // Assert
-            Assert.AreEqual(true, budgetProvider.TrySpendBudget());
+            Assert.AreEqual(true, budget.TrySpendBudget());
 
             //We are blocking the main thread
             for (var i = 0; i < 1_000; i++)
                 GameObject.CreatePrimitive(PrimitiveType.Cube);
 
-            Assert.AreEqual(false, budgetProvider.TrySpendBudget());
+            Assert.AreEqual(false, budget.TrySpendBudget());
         }
 
         [Test]
         public async Task StopSystemWhenBudgetIsBlown()
         {
-            budgetProvider = new FrameTimeCapBudgetProvider(15f, profilingProvider);
+            budget = new FrameTimeCapBudget(15f, profilingProvider);
 
             var world = World.Create();
             Entity e = world.Create(new DummyComponent());
@@ -67,7 +67,7 @@ namespace ECS.StreamableLoading.Tests
 
         private void DummySystem(ref DummyComponent dummyComponent)
         {
-            if (budgetProvider.TrySpendBudget())
+            if (budget.TrySpendBudget())
                 dummyComponent.timesUpdated++;
         }
     }
