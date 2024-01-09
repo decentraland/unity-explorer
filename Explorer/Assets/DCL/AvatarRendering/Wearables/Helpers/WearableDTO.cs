@@ -31,6 +31,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             //urn
             public string id;
+            public string name;
 
             public I18n[] i18n;
             public string thumbnail;
@@ -53,6 +54,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 public string[] contents;
                 public string[] overrideHides;
                 public string[] overrideReplaces;
+            }
+
+            [Serializable]
+            public struct RepresentationContentsDto
+            {
+                public string key;
+                public string url;
             }
 
             [Serializable]

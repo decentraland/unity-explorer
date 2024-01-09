@@ -1,9 +1,11 @@
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 //Removed all references to EmoteData in WearableItem
 namespace DCL.AvatarRendering.Wearables.Components
@@ -11,15 +13,38 @@ namespace DCL.AvatarRendering.Wearables.Components
     [Serializable]
     public class Wearable : IWearable
     {
+        private const string THUMBNAIL_DEFAULT_KEY = "thumbnail.png";
         public StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
         public StreamableLoadingResult<WearableAsset>?[] WearableAssetResults { get; private set; } = new StreamableLoadingResult<WearableAsset>?[BodyShape.COUNT];
         public StreamableLoadingResult<WearableDTO> WearableDTO { get; set; }
+
+        public StreamableLoadingResult<Sprite>? WearableThumbnail { get; set; }
         public bool IsLoading { get; set; } = true;
+
+        public URLPath GetThumbnail()
+        {
+            string thumbnailHash = WearableDTO.Asset.metadata.thumbnail;
+
+            if (thumbnailHash == THUMBNAIL_DEFAULT_KEY)
+                thumbnailHash = GetContentHashByKey(THUMBNAIL_DEFAULT_KEY);
+
+            return new URLPath(thumbnailHash);
+        }
+
+        private string GetContentHashByKey(string key)
+        {
+            for (var i = 0; i < WearableDTO.Asset.content.Length; i++)
+            {
+                if (WearableDTO.Asset.content[i].file == key)
+                    return WearableDTO.Asset.content[i].hash;
+            }
+
+            return "";
+        }
 
         public string GetMainFileHash(BodyShape bodyShape)
         {
             var mainFileKey = "";
-            var hashToReturn = "";
 
             // The length of arrays is small, so O(N) complexity is fine
             // Avoid iterator allocations with "for" loop
@@ -34,18 +59,7 @@ namespace DCL.AvatarRendering.Wearables.Components
                 }
             }
 
-            for (var i = 0; i < WearableDTO.Asset.content.Length; i++)
-            {
-                WearableDTO.WearableContentDto wearableContentDto = WearableDTO.Asset.content[i];
-
-                if (wearableContentDto.file.Equals(mainFileKey))
-                {
-                    hashToReturn = wearableContentDto.hash;
-                    break;
-                }
-            }
-
-            return hashToReturn;
+            return GetContentHashByKey(mainFileKey);
         }
 
         public string GetHash() =>
@@ -54,8 +68,20 @@ namespace DCL.AvatarRendering.Wearables.Components
         public string GetUrn() =>
             WearableDTO.Asset.metadata.id;
 
+        public string GetName() =>
+            WearableDTO.Asset.metadata.name;
+
         public string GetCategory() =>
             WearableDTO.Asset.metadata.data.category;
+
+        public string GetDescription() =>
+            WearableDTO.Asset.metadata.description;
+
+        public string GetCreator() =>
+            "";
+
+        public string GetRarity() =>
+            WearableDTO.Asset.metadata.rarity ?? "common";
 
         public bool IsUnisex() =>
             WearableDTO.Asset.metadata.data.representations.Length > 1;

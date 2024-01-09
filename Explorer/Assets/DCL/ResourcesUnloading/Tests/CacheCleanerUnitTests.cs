@@ -17,7 +17,7 @@ namespace DCL.ResourcesUnloading.Tests
         private CacheCleaner cacheCleaner;
 
         // Mocks
-        private IConcurrentBudgetProvider concurrentBudgetProvider;
+        private IReleasablePerformanceBudget releasablePerformanceBudget;
         private IWearableCatalog wearableCatalog;
         private IWearableAssetsCache wearableAssetsCache;
         private IStreamableCache<Texture2D, GetTextureIntention> texturesCache;
@@ -29,7 +29,7 @@ namespace DCL.ResourcesUnloading.Tests
         [SetUp]
         public void SetUp()
         {
-            concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+            releasablePerformanceBudget = Substitute.For<IReleasablePerformanceBudget>();
 
             materialPool = Substitute.For<IExtendedObjectPool<Material>>();
 
@@ -41,7 +41,7 @@ namespace DCL.ResourcesUnloading.Tests
             gltfContainerAssetsCache = Substitute.For<IStreamableCache<GltfContainerAsset, string>>();
             profileCache = Substitute.For<IProfileCache>();
 
-            cacheCleaner = new CacheCleaner(concurrentBudgetProvider);
+            cacheCleaner = new CacheCleaner(releasablePerformanceBudget);
 
             cacheCleaner.Register(wearableCatalog);
             cacheCleaner.Register(texturesCache);
@@ -57,19 +57,19 @@ namespace DCL.ResourcesUnloading.Tests
         public void ShouldUnloadOnlyWhenHasFrameBudget(bool hasBudget, int callsAmount)
         {
             // Arrange
-            concurrentBudgetProvider.TrySpendBudget().Returns(hasBudget);
+            releasablePerformanceBudget.TrySpendBudget().Returns(hasBudget);
 
             // Act
             cacheCleaner.UnloadCache();
 
             // Assert
-            texturesCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
-            wearableAssetsCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
-            wearableCatalog.Received(callsAmount).Unload(Arg.Any<IConcurrentBudgetProvider>());
-            gltfContainerAssetsCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
-            assetBundleCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
+            texturesCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
+            wearableAssetsCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
+            wearableCatalog.Received(callsAmount).Unload(Arg.Any<IReleasablePerformanceBudget>());
+            gltfContainerAssetsCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
+            assetBundleCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
             materialPool.Received(callsAmount).ClearThrottled(Arg.Any<int>());
-            profileCache.Received(callsAmount).Unload(concurrentBudgetProvider, Arg.Any<int>());
+            profileCache.Received(callsAmount).Unload(releasablePerformanceBudget, Arg.Any<int>());
         }
     }
 }
