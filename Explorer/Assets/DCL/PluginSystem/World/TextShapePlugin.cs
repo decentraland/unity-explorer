@@ -18,22 +18,22 @@ namespace DCL.PluginSystem.World
     public class TextShapePlugin : IDCLWorldPlugin
     {
         private readonly ITextShapeRendererFactory textShapeRendererFactory;
-        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
+        private readonly IPerformanceBudget instantiationFrameTimeBudgetProvider;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
 
-        public TextShapePlugin(IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IPluginSettingsContainer settingsContainer) : this(
+        public TextShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IPluginSettingsContainer settingsContainer) : this(
             instantiationFrameTimeBudgetProvider,
             componentPoolsRegistry,
             settingsContainer.GetSettings<FontsSettings>().AsCached()
         ) { }
 
-        public TextShapePlugin(IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IFontsStorage fontsStorage) : this(
+        public TextShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IFontsStorage fontsStorage) : this(
             new PoolTextShapeRendererFactory(componentPoolsRegistry, fontsStorage),
             instantiationFrameTimeBudgetProvider,
             componentPoolsRegistry
         ) { }
 
-        public TextShapePlugin(ITextShapeRendererFactory textShapeRendererFactory, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry)
+        public TextShapePlugin(ITextShapeRendererFactory textShapeRendererFactory, IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry)
         {
             this.textShapeRendererFactory = textShapeRendererFactory;
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
