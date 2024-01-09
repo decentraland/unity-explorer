@@ -31,7 +31,7 @@ namespace ECS.Unity.Materials.Tests
             IReleasablePerformanceBudget frameTimeBudget = Substitute.For<IReleasablePerformanceBudget>();
             frameTimeBudget.TrySpendBudget().Returns(true);
 
-            system = new CreatePBRMaterialSystem(world, pool, frameTimeBudget, frameTimeBudgetProvider);
+            system = new CreatePBRMaterialSystem(world, pool, frameTimeBudget, frameTimeBudget);
             system.Initialize();
         }
 

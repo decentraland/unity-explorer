@@ -16,8 +16,8 @@ namespace DCL.PluginSystem.World
     {
         private readonly IWebRequestController webRequestController;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
-        private readonly FrameTimeCapBudgetProvider frameTimeBudgetProvider;
-        private readonly MemoryBudgetProvider memoryBudgetProvider;
+        private readonly FrameTimeCapBudget frameTimeBudgetProvider;
+        private readonly MemoryBudget memoryBudgetProvider;
 
         internal readonly AudioClipsCache audioClipsCache;
 
@@ -25,8 +25,8 @@ namespace DCL.PluginSystem.World
         {
             this.webRequestController = webRequestController;
 
-            frameTimeBudgetProvider = sharedDependencies.FrameTimeBudgetProvider;
-            memoryBudgetProvider = sharedDependencies.MemoryBudgetProvider;
+            frameTimeBudgetProvider = sharedDependencies.FrameTimeBudget;
+            memoryBudgetProvider = sharedDependencies.MemoryBudget;
 
             componentPoolsRegistry = sharedDependencies.ComponentPoolsRegistry;
             componentPoolsRegistry.AddGameObjectPool<AudioSource>();

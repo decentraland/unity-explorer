@@ -48,7 +48,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
             poolsRegistry.GetReferenceTypePool<AudioSource>().Returns(audioSourcesPool);
             audioSourcesPool.Get().Returns(new GameObject().AddComponent<AudioSource>());
 
-            var budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+            var budgetProvider = Substitute.For<IPerformanceBudget>();
             budgetProvider.TrySpendBudget().Returns(true);
 
             return new UpdateAudioSourceSystem(world, poolsRegistry, budgetProvider, budgetProvider);

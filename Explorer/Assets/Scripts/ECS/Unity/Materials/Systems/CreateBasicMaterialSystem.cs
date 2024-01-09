@@ -15,10 +15,10 @@ namespace ECS.Unity.Materials.Systems
     [UpdateAfter(typeof(StartMaterialsLoadingSystem))]
     public partial class CreateBasicMaterialSystem : CreateMaterialSystemBase
     {
-        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
+        private readonly IPerformanceBudget memoryBudgetProvider;
         private readonly IPerformanceBudget capFrameBudget;
 
-        internal CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool, IPerformanceBudget capFrameBudget, IConcurrentBudgetProvider memoryBudgetProvider) : base(world, materialsPool)
+        internal CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool, IPerformanceBudget capFrameBudget, IPerformanceBudget memoryBudgetProvider) : base(world, materialsPool)
         {
             this.capFrameBudget = capFrameBudget;
             this.memoryBudgetProvider = memoryBudgetProvider;

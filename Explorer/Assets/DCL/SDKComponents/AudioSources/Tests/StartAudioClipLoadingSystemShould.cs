@@ -29,7 +29,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
 
         public static StartAudioSourceLoadingSystem CreateSystem(World world)
         {
-            IConcurrentBudgetProvider concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+            IPerformanceBudget concurrentBudgetProvider = Substitute.For<IPerformanceBudget>();
             concurrentBudgetProvider.TrySpendBudget().Returns(true);
 
             ISceneData sceneData = Substitute.For<ISceneData>();

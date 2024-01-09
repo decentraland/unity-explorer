@@ -19,11 +19,11 @@ namespace DCL.SDKComponents.AudioSources
     [LogCategory(ReportCategory.AUDIO_SOURCES)]
     public partial class UpdateAudioSourceSystem : BaseUnityLoopSystem
     {
-        private readonly IConcurrentBudgetProvider frameTimeBudgetProvider;
-        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
+        private readonly IPerformanceBudget frameTimeBudgetProvider;
+        private readonly IPerformanceBudget memoryBudgetProvider;
         private readonly IComponentPool<AudioSource> audioSourcesPool;
 
-        internal UpdateAudioSourceSystem(World world, IComponentPoolsRegistry poolsRegistry, IConcurrentBudgetProvider frameTimeBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider) : base(world)
+        internal UpdateAudioSourceSystem(World world, IComponentPoolsRegistry poolsRegistry, IPerformanceBudget frameTimeBudgetProvider, IPerformanceBudget memoryBudgetProvider) : base(world)
         {
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
             this.memoryBudgetProvider = memoryBudgetProvider;

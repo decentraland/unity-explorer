@@ -54,7 +54,7 @@ namespace ECS.StreamableLoading.AudioClips
             return false;
         }
 
-        public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount)
+        public void Unload(IPerformanceBudget frameTimeBudgetProvider, int maxUnloadAmount)
         {
             listedCache.Sort(COMPARE_BY_LAST_USED_FRAME_REVERSED);
 

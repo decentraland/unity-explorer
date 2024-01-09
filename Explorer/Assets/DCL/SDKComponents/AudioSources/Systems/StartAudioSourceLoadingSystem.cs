@@ -25,9 +25,9 @@ namespace DCL.SDKComponents.AudioSources
     public partial class StartAudioSourceLoadingSystem : BaseUnityLoopSystem
     {
         private readonly ISceneData sceneData;
-        private readonly IConcurrentBudgetProvider frameTimeBudgetProvider;
+        private readonly IPerformanceBudget frameTimeBudgetProvider;
 
-        internal StartAudioSourceLoadingSystem(World world, ISceneData sceneData, IConcurrentBudgetProvider frameTimeBudgetProvider) : base(world)
+        internal StartAudioSourceLoadingSystem(World world, ISceneData sceneData, IPerformanceBudget frameTimeBudgetProvider) : base(world)
         {
             this.sceneData = sceneData;
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
