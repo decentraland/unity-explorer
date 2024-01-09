@@ -51,10 +51,10 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
                     { typeof(PlanePrimitive), new ComponentPool<PlanePrimitive>() },
                 }, new GameObject().transform);
 
-            IConcurrentBudgetProvider budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
-            budgetProvider.TrySpendBudget().Returns(true);
+            IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
+            budget.TrySpendBudget().Returns(true);
 
-            system = new InstantiatePrimitiveRenderingSystem(world, poolsRegistry, budgetProvider, Substitute.For<ISceneData>(), setupMeshes);
+            system = new InstantiatePrimitiveRenderingSystem(world, poolsRegistry, budget, Substitute.For<ISceneData>(), setupMeshes);
 
             entity = world.Create();
             AddTransformToEntity(entity);

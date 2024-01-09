@@ -2,12 +2,12 @@ using System;
 
 namespace DCL.Optimization.PerformanceBudgeting
 {
-    public class ConcurrentLoadingBudgetProvider : IConcurrentBudgetProvider
+    public class ConcurrentLoadingPerformanceBudget : IReleasablePerformanceBudget
     {
         private readonly int maxBudget;
         private int currentBudget;
 
-        public ConcurrentLoadingBudgetProvider(int initialBudget)
+        public ConcurrentLoadingPerformanceBudget(int initialBudget)
         {
             maxBudget = initialBudget;
             currentBudget = initialBudget;

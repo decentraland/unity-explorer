@@ -111,7 +111,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             wearableCatalog.AddEmptyWearable("Wearable_To_Be_Unloaded");
             Assert.AreEqual(wearableCatalog.wearablesCache.Keys.Count, defaultWearableCount + 1);
 
-            var concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
+            var concurrentBudgetProvider = Substitute.For<IReleasablePerformanceBudget>();
             concurrentBudgetProvider.TrySpendBudget().Returns(true);
             wearableCatalog.Unload(concurrentBudgetProvider);
 

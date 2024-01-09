@@ -15,8 +15,8 @@ namespace DCL.Profiling.ECS
     public partial class ProfilingSystem : BaseUnityLoopSystem
     {
         private readonly IProfilingProvider profilingProvider;
-        private readonly FrameTimeCapBudgetProvider frameTimeBudget;
-        private readonly MemoryBudgetProvider memoryBudget;
+        private readonly FrameTimeCapBudget frameTimeBudget;
+        private readonly MemoryBudget memoryBudget;
 
         private DebugWidgetVisibilityBinding visibilityBinding;
         private DebugWidgetVisibilityBinding memoryVisibilityBinding;
@@ -28,11 +28,11 @@ namespace DCL.Profiling.ECS
 
         private float lastTimeSinceMetricsUpdate;
 
-        private ProfilingSystem(World world, IProfilingProvider profilingProvider, FrameTimeCapBudgetProvider frameTimeCapBudgetProvider, MemoryBudgetProvider memoryBudgetProvider, IDebugContainerBuilder debugBuilder) : base(world)
+        private ProfilingSystem(World world, IProfilingProvider profilingProvider, FrameTimeCapBudget frameTimeCapBudget, MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder) : base(world)
         {
             this.profilingProvider = profilingProvider;
-            frameTimeBudget = frameTimeCapBudgetProvider;
-            memoryBudget = memoryBudgetProvider;
+            frameTimeBudget = frameTimeCapBudget;
+            this.memoryBudget = memoryBudget;
 
             CreateView();
             return;
@@ -53,9 +53,9 @@ namespace DCL.Profiling.ECS
                             .AddSingleButton("GC.Collect", GC.Collect)
                             .AddCustomMarker("Total Used Memory [MB]:", usedMemory = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Memory Budget Thresholds [MB]:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
-                            .AddSingleButton("Memory NORMAL", () => memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.Normal)
-                            .AddSingleButton("Memory WARNING", () => memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.Warning)
-                            .AddSingleButton("Memory FULL", () => memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.Full);
+                            .AddSingleButton("Memory NORMAL", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.Normal)
+                            .AddSingleButton("Memory WARNING", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.Warning)
+                            .AddSingleButton("Memory FULL", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.Full);
             }
         }
 
