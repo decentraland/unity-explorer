@@ -23,7 +23,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
 {
     public class SDKAudioSourcesAutomatedTests
     {
-        private const string TEST_SCENE = "Dance-floor1";
+        private const string TEST_SCENE = "Dance-floor";
         private const int TARGET_FPS = 60;
 
         private readonly CancellationTokenSource tearDownCts = new ();
@@ -51,10 +51,6 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
         [Retry(3)]
         public IEnumerator ShouldCreateAudioSourcesForSDKDanceFloorScene()
         {
-            LogAssert.Expect(LogType.Error, new Regex(".*Each child in a list should have a unique.*"));
-            LogAssert.Expect(LogType.Exception, new Regex("ArgumentException: Asset Bundle.*not found in the manifest"));
-            LogAssert.Expect(LogType.Exception, new Regex("ArgumentException: Asset Bundle.*not found in the manifest")); // ignore second same exceptions
-
             InitializationFlowAsync(tearDownCts.Token).Forget();
 
             yield return new WaitUntil(() => staticContainer != null);
