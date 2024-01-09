@@ -32,17 +32,20 @@ namespace DCL.SDKComponents.AudioSources.Tests
         {
             world = World.Create();
 
+            // Create systems
             startLoadingSystem = StartAudioClipLoadingSystemShould.CreateSystem(world);
-            updateAudioSourceSystem = CreateAudioSourceSystemShould.CreateSystem(world);
             loadAudioClipSystem = LoadAudioClipSystemShould.CreateSystem(world);
+            updateAudioSourceSystem = CreateAudioSourceSystemShould.CreateSystem(world);
 
             startLoadingSystem.Initialize();
-            updateAudioSourceSystem.Initialize();
             loadAudioClipSystem.Initialize();
+            updateAudioSourceSystem.Initialize();
 
-            pbAudioSource = CreatePBAudioSource(); // Create component
+            // Create component
+            pbAudioSource = CreatePBAudioSource();
 
-            entity = world.Create(pbAudioSource, PartitionComponent.TOP_PRIORITY); // Create entity
+            // Create entity
+            entity = world.Create(pbAudioSource, PartitionComponent.TOP_PRIORITY);
             EcsTestsUtils.AddTransformToEntity(world, entity);
         }
 
@@ -50,7 +53,9 @@ namespace DCL.SDKComponents.AudioSources.Tests
         public void TearDown()
         {
             startLoadingSystem?.Dispose();
+            loadAudioClipSystem?.Dispose();
             updateAudioSourceSystem?.Dispose();
+
             world?.Dispose();
         }
 
