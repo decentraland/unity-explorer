@@ -5632,7 +5632,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6822543606753027690, guid: 9a3416ab3e1b9486ba48f239340e202d, type: 3}
       propertyPath: <Category>k__BackingField
-      value: Tophead
+      value: Top_Head
       objectReference: {fileID: 0}
     - target: {fileID: 7495390461251039812, guid: 9a3416ab3e1b9486ba48f239340e202d, type: 3}
       propertyPath: m_AnchorMax.y

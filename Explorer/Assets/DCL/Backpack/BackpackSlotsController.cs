@@ -46,22 +46,16 @@ namespace DCL.Backpack
         private void EquipInSlot(IWearable equippedWearable)
         {
             if (!avatarSlots.TryGetValue(equippedWearable.GetCategory(), out AvatarSlotView avatarSlotView))
-            {
-                Debug.Log($"Category for {equippedWearable.GetCategory()} does not exist");
-                foreach (string avatarSlotsKey in avatarSlots.Keys)
-                {
-                    Debug.Log("Category: " + avatarSlotsKey);
-                }
                 return;
-            }
 
             avatarSlotView.SlotWearableUrn = equippedWearable.GetUrn();
             avatarSlotView.SlotWearableRarityBackground.sprite = rarityBackgrounds.GetTypeImage(equippedWearable.GetRarity());
-            WaitForThumbnailAsync(equippedWearable).Forget();
+            WaitForThumbnailAsync(equippedWearable, avatarSlotView).Forget();
         }
 
-        private async UniTaskVoid WaitForThumbnailAsync(IWearable equippedWearable)
+        private async UniTaskVoid WaitForThumbnailAsync(IWearable equippedWearable, AvatarSlotView avatarSlotView)
         {
+            avatarSlotView.LoadingView.StartLoadingAnimation(avatarSlotView.NftContainer);
             do
             {
                 await UniTask.Delay(500);
@@ -70,6 +64,7 @@ namespace DCL.Backpack
 
             avatarSlots[equippedWearable.GetCategory()].SlotWearableThumbnail.sprite = equippedWearable.WearableThumbnail.Value.Asset;
             avatarSlots[equippedWearable.GetCategory()].SlotWearableThumbnail.gameObject.SetActive(true);
+            avatarSlotView.LoadingView.FinishLoadingAnimation(avatarSlotView.NftContainer);
         }
 
         private void OnSlotButtonPressed(AvatarSlotView avatarSlot)

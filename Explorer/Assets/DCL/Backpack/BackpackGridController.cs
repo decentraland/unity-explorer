@@ -10,7 +10,6 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
@@ -22,7 +21,7 @@ namespace DCL.Backpack
     {
         private const string PAGE_NUMBER = "pageNumber";
         private const string PAGE_SIZE = "pageSize";
-        private const string CURRENT_PAGE_SIZE = "16";
+        private const int CURRENT_PAGE_SIZE = 16;
 
         private readonly BackpackGridView view;
         private readonly BackpackCommandBus commandBus;
@@ -76,7 +75,7 @@ namespace DCL.Backpack
             gridItemsPool = new ObjectPool<BackpackItemView>(
                 () => CreateBackpackItem(backpackItem),
                 _ => { },
-                defaultCapacity: 16
+                defaultCapacity: CURRENT_PAGE_SIZE
             );
         }
 
@@ -121,7 +120,7 @@ namespace DCL.Backpack
 
             requestParameters.Clear();
             requestParameters.Add((PAGE_NUMBER, string.Format("{0}", pageNumber)));
-            requestParameters.Add((PAGE_SIZE, "16"));
+            requestParameters.Add((PAGE_SIZE, string.Format("{0}", CURRENT_PAGE_SIZE)));
 
             ParamPromise wearablesPromise = ParamPromise.Create(world, new GetWearableByParamIntention(requestParameters,  "0x8e41609eD5e365Ac23C28d9625Bd936EA9C9E22c"/*web3IdentityCache.Identity!.EphemeralAccount.Address*/, new List<IWearable>()), PartitionComponent.TOP_PRIORITY);
             AwaitWearablesPromiseAsync(wearablesPromise, cts.Token).Forget();
@@ -139,6 +138,7 @@ namespace DCL.Backpack
 
         private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable, BackpackItemView itemView, CancellationToken ct)
         {
+            itemView.LoadingView.StartLoadingAnimation(itemView.FullBackpackItem);
             do
             {
                 await UniTask.Delay(500, cancellationToken: ct);
@@ -146,6 +146,7 @@ namespace DCL.Backpack
             while (itemWearable.WearableThumbnail == null);
 
             itemView.WearableThumbnail.sprite = itemWearable.WearableThumbnail.Value.Asset;
+            itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
         }
 
         private void ClearPoolElements()

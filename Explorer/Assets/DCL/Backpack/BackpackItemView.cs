@@ -1,3 +1,4 @@
+using DCL.UI;
 using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -38,6 +39,12 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public Image FlapBackground { get; private set; }
+
+        [field: SerializeField]
+        public LoadingBrightView LoadingView { get; private set; }
+
+        [field: SerializeField]
+        public GameObject FullBackpackItem { get; private set; }
 
         public void SetEquipButtonsState()
         {
