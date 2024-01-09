@@ -16,7 +16,6 @@ namespace ECS.StreamableLoading.AudioClips
             (pair1, pair2) => pair2.clipData.LastUsedFrame.CompareTo(pair1.clipData.LastUsedFrame);
 
         internal readonly Dictionary<GetAudioClipIntention, AudioClipData> cache = new ();
-        private readonly Dictionary<AudioClip, GetAudioClipIntention> invertedCache = new ();
         private readonly List<(GetAudioClipIntention intention, AudioClipData clipData)> listedCache = new ();
 
         public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AudioClip>?>> OngoingRequests { get; } = new Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<AudioClip>?>>();
@@ -35,7 +34,6 @@ namespace ECS.StreamableLoading.AudioClips
             if (!cache.ContainsKey(key))
             {
                 cache[key] = new AudioClipData(asset);
-                invertedCache[asset] = key;
                 listedCache.Add((key, cache[key]));
             }
             else
@@ -73,12 +71,6 @@ namespace ECS.StreamableLoading.AudioClips
             }
 
             ProfilingCounters.AudioClipsInCache.Value = cache.Count;
-        }
-
-        public void Dereference(AudioClip audioClip)
-        {
-            if (invertedCache.TryGetValue(audioClip, out GetAudioClipIntention key))
-                Dereference(key, audioClip);
         }
 
         public void Dereference(in GetAudioClipIntention key, AudioClip _)

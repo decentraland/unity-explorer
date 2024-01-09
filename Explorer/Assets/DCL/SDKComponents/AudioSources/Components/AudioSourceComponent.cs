@@ -6,7 +6,7 @@ using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip,
 
 namespace DCL.SDKComponents.AudioSources
 {
-    public struct AudioSourceComponent : IPoolableComponentProvider<AudioSource>
+    public struct AudioSourceComponent : IDisposable
     {
         public readonly PBAudioSource PBAudioSource;
 
@@ -18,13 +18,9 @@ namespace DCL.SDKComponents.AudioSources
         public ECS.StreamableLoading.LifeCycle ClipLoadingStatus;
 
         /// <summary>
-        ///     The final material ready for consumption
+        ///     The final audio source ready for consumption
         /// </summary>
-        public AudioSource? Result;
-        public AudioSource? PoolableComponent => Result;
-
-        AudioSource? IPoolableComponentProvider<AudioSource>.PoolableComponent => Result;
-        Type IPoolableComponentProvider<AudioSource?>.PoolableComponentType => typeof(AudioSource);
+        public AudioSource Result;
 
         public bool ClipIsNotLoading => ClipLoadingStatus != ECS.StreamableLoading.LifeCycle.LoadingInProgress;
         public bool ClipLoadingFinished => ClipLoadingStatus is ECS.StreamableLoading.LifeCycle.LoadingFinished or ECS.StreamableLoading.LifeCycle.Applied;
@@ -38,6 +34,9 @@ namespace DCL.SDKComponents.AudioSources
             Result = null;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            Result.clip = null;
+        }
     }
 }

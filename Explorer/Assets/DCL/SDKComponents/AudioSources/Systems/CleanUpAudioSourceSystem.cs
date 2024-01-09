@@ -7,6 +7,7 @@ using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AudioClips;
@@ -17,15 +18,13 @@ namespace DCL.SDKComponents.AudioSources
     [UpdateInGroup(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.AUDIO_SOURCES)]
     [ThrottlingEnabled]
-    public partial class CleanUpAudioSourceSystem: BaseUnityLoopSystem
+    public partial class CleanUpAudioSourceSystem: BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private readonly IComponentPoolsRegistry poolsRegistry;
-        private readonly AudioClipsCache cache;
+        private ReleaseOnEntityDestroy releaseOnEntityDestroy;
 
-        internal CleanUpAudioSourceSystem(World world,  AudioClipsCache cache,IComponentPoolsRegistry poolsRegistry)  : base(world)
+        private CleanUpAudioSourceSystem(World world, AudioClipsCache cache,IComponentPoolsRegistry poolsRegistry)  : base(world)
         {
-            this.poolsRegistry = poolsRegistry;
-            this.cache = cache;
+            releaseOnEntityDestroy = new ReleaseOnEntityDestroy(world, cache, poolsRegistry);
         }
 
         protected override void Update(float t)
@@ -40,34 +39,54 @@ namespace DCL.SDKComponents.AudioSources
         [None(typeof(PBAudioSource), typeof(DeleteEntityIntention))]
         private void HandleComponentRemoval(ref AudioSourceComponent component)
         {
-            RemoveComponent(ref component);
+            releaseOnEntityDestroy.Update(ref component);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void HandleEntityDestruction(ref AudioSourceComponent component)
         {
-            RemoveComponent(ref component);
+            releaseOnEntityDestroy.Update(ref component);
         }
 
-        private void RemoveComponent(ref AudioSourceComponent component)
+        public void FinalizeComponents(in Query query)
         {
-            switch (component.ClipLoadingStatus)
+            World.InlineQuery<ReleaseOnEntityDestroy, AudioSourceComponent>(in new QueryDescription().WithAll<AudioSourceComponent>(), ref releaseOnEntityDestroy);
+        }
+
+        private readonly struct ReleaseOnEntityDestroy : IForEach<AudioSourceComponent>
+        {
+            private readonly World world;
+            private readonly IComponentPoolsRegistry poolsRegistry;
+            private readonly AudioClipsCache cache;
+
+            public ReleaseOnEntityDestroy(World world, AudioClipsCache cache,IComponentPoolsRegistry poolsRegistry)
             {
-                case LifeCycle.LoadingNotStarted: return;
-                case LifeCycle.LoadingInProgress:
-                    component.ClipPromise?.ForgetLoading(World);
-                    component.ClipPromise = null;
-                    return;
+                this.world = world;
+                this.cache = cache;
+                this.poolsRegistry = poolsRegistry;
             }
 
-            if (component.Result == null) return;
+            public void Update(ref AudioSourceComponent component)
+            {
+                switch (component.ClipLoadingStatus)
+                {
+                    case LifeCycle.LoadingNotStarted: return;
+                    case LifeCycle.LoadingInProgress:
+                        component.ClipPromise?.ForgetLoading(world);
+                        component.ClipPromise = null;
+                        return;
+                }
 
-            cache.Dereference(component.ClipPromise!.Value.LoadingIntention, component.Result.clip);
+                if (component.Result == null) return;
 
-            component.Result.clip = null;
-            if (poolsRegistry.TryGetPool(typeof(AudioSource), out IComponentPool componentPool))
-                componentPool.Release(component.Result);
+                cache.Dereference(component.ClipPromise!.Value.LoadingIntention, component.Result.clip);
+
+                if (poolsRegistry.TryGetPool(typeof(AudioSource), out IComponentPool componentPool))
+                    componentPool.Release(component.Result);
+
+                component.Dispose();
+            }
         }
     }
 }

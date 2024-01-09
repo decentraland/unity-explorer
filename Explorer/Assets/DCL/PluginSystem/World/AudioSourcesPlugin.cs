@@ -5,7 +5,6 @@ using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
 using DCL.SDKComponents.AudioSources;
 using DCL.WebRequests;
-using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.AudioClips;
 using System.Collections.Generic;
@@ -30,18 +29,11 @@ namespace DCL.PluginSystem.World
             memoryBudgetProvider = sharedDependencies.MemoryBudgetProvider;
 
             componentPoolsRegistry = sharedDependencies.ComponentPoolsRegistry;
-            componentPoolsRegistry.AddGameObjectPool<AudioSource>(onRelease: OnAudioSourceReleased);
+            componentPoolsRegistry.AddGameObjectPool<AudioSource>();
             cacheCleaner.Register(componentPoolsRegistry.GetReferenceTypePool<AudioSource>());
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
-            return;
-
-            void OnAudioSourceReleased(AudioSource audioSource)
-            {
-                audioClipsCache!.Dereference(audioSource.clip);
-                audioSource.clip = null;
-            }
         }
 
 
@@ -50,9 +42,8 @@ namespace DCL.PluginSystem.World
             StartAudioSourceLoadingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, frameTimeBudgetProvider);
             LoadAudioClipSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController, sharedDependencies.MutexSync);
             UpdateAudioSourceSystem.InjectToWorld(ref builder, componentPoolsRegistry, frameTimeBudgetProvider, memoryBudgetProvider);
-            // CleanUpAudioSourceSystem.InjectToWorld(ref builder, audioClipsCache, componentPoolsRegistry);
 
-            finalizeWorldSystems.Add(ReleasePoolableComponentSystem<AudioSource, AudioSourceComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
+            finalizeWorldSystems.Add(CleanUpAudioSourceSystem.InjectToWorld(ref builder, audioClipsCache, componentPoolsRegistry));
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
