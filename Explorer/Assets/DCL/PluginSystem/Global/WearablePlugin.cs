@@ -77,7 +77,7 @@ namespace DCL.AvatarRendering.Wearables
             LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, webRequestController, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(true, true), mutexSync, assetBundleURL);
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, defaultWearablesDTOs, defaultEmptyWearableAsset,
                 wearableCatalog);
-            ResolveWearableThumbnailSystem.InjectToWorld(ref builder, realmData);
+            ResolveWearableThumbnailSystem.InjectToWorld(ref builder);
         }
 
         [Serializable]

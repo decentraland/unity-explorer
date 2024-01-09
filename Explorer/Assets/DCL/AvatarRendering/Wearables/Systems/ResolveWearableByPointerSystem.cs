@@ -122,7 +122,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        private void FinalizeWearableDTO([Data] bool defaultWearablesResolved, in Entity entity, ref AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> promise, ref BodyShape bodyShape)
+        private void FinalizeWearableDTO([Data] bool defaultWearablesResolved, in Entity entity, ref AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> promise, ref BodyShape bodyShape, ref IPartitionComponent partitionComponent)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -147,12 +147,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     foreach (WearableDTO assetEntity in promiseResult.Asset.Value)
                     {
                         wearableCatalog.TryGetWearable(assetEntity.metadata.id, out IWearable component);
-                        var wearableThumbnailComponent = new WearableThumbnailComponent(component);
 
-                        //TODO Handle thumbnails on a ResolutionLevel after character preview outline is merged
-                        World.Create(wearableThumbnailComponent, PartitionComponent.TOP_PRIORITY);
                         component.WearableDTO = new StreamableLoadingResult<WearableDTO>(assetEntity);
                         component.IsLoading = false;
+
+                        WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, component, World, partitionComponent);
                     }
                 }
 
@@ -246,7 +245,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint, cancellationTokenSource: intention.CancellationTokenSource));
 
             var promise = AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention>.Create(World, wearableDtoByPointersIntention, partitionComponent);
-            World.Create(promise, intention.BodyShape);
+            World.Create(promise, intention.BodyShape, partitionComponent);
         }
 
         private void SetDefaultWearables(bool defaultWearablesLoaded, IWearable wearable, in BodyShape bodyShape)
