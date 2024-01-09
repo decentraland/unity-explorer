@@ -45,9 +45,9 @@ namespace DCL.PluginSystem.World
             UITransformInstantiationSystem.InjectToWorld(ref builder, canvas, componentPoolsRegistry);
             UITransformParentingSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, persistentEntities.SceneRoot);
             UITransformSortingSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, persistentEntities.SceneRoot);
-            UITransformUpdateSystem.InjectToWorld(ref builder);
+            UITransformUpdateSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider);
             UITransformReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            UITextInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            UITextInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.SceneStateProvider);
             UITextReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
 
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<VisualElement, UITransformComponent>.InjectToWorld(ref builder, componentPoolsRegistry));

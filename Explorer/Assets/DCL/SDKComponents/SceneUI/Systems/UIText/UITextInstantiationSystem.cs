@@ -19,7 +19,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
     {
         private readonly IComponentPool<Label> labelsPool;
 
-        private UITextInstantiationSystem(World world,IComponentPoolsRegistry poolsRegistry) : base(world)
+        private UITextInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             labelsPool = poolsRegistry.GetReferenceTypePool<Label>();
         }

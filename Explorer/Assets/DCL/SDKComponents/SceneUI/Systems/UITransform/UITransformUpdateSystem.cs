@@ -8,6 +8,8 @@ using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.Groups;
+using SceneRunner.Scene;
+using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 {
@@ -17,11 +19,17 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
     [ThrottlingEnabled]
     public partial class UITransformUpdateSystem : BaseUnityLoopSystem
     {
-        private UITransformUpdateSystem(World world) : base(world) { }
+        private readonly ISceneStateProvider sceneStateProvider;
+
+        private UITransformUpdateSystem(World world, ISceneStateProvider sceneStateProvider) : base(world)
+        {
+            this.sceneStateProvider = sceneStateProvider;
+        }
 
         protected override void Update(float _)
         {
             UpdateUITransformQuery(World);
+            CheckUITransformOutOfSceneQuery(World);
         }
 
         [Query]
@@ -33,6 +41,17 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
             UiElementUtils.SetupVisualElement(ref uiTransformComponent.Transform, ref sdkModel);
             sdkModel.IsDirty = false;
+        }
+
+        [Query]
+        [All(typeof(PBUiTransform), typeof(UITransformComponent))]
+        private void CheckUITransformOutOfScene(ref UITransformComponent uiTransformComponent)
+        {
+            if ((sceneStateProvider.IsCurrent && uiTransformComponent.Transform.style.display == DisplayStyle.Flex) ||
+                (!sceneStateProvider.IsCurrent && uiTransformComponent.Transform.style.display == DisplayStyle.None))
+                return;
+
+            uiTransformComponent.Transform.style.display = !sceneStateProvider.IsCurrent ? DisplayStyle.None : DisplayStyle.Flex;
         }
     }
 }
