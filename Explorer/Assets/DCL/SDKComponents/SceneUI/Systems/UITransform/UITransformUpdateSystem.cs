@@ -19,10 +19,12 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
     [ThrottlingEnabled]
     public partial class UITransformUpdateSystem : BaseUnityLoopSystem
     {
+        private readonly UIDocument canvas;
         private readonly ISceneStateProvider sceneStateProvider;
 
-        private UITransformUpdateSystem(World world, ISceneStateProvider sceneStateProvider) : base(world)
+        private UITransformUpdateSystem(World world, UIDocument canvas, ISceneStateProvider sceneStateProvider) : base(world)
         {
+            this.canvas = canvas;
             this.sceneStateProvider = sceneStateProvider;
         }
 
@@ -47,11 +49,22 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         [All(typeof(PBUiTransform), typeof(UITransformComponent))]
         private void CheckUITransformOutOfScene(ref UITransformComponent uiTransformComponent)
         {
-            if ((sceneStateProvider.IsCurrent && uiTransformComponent.Transform.style.display == DisplayStyle.Flex) ||
-                (!sceneStateProvider.IsCurrent && uiTransformComponent.Transform.style.display == DisplayStyle.None))
+            // Ignore all the child transforms
+            if (uiTransformComponent.Parent != EntityReference.Null)
                 return;
 
-            uiTransformComponent.Transform.style.display = !sceneStateProvider.IsCurrent ? DisplayStyle.None : DisplayStyle.Flex;
+            // Depending on the scene state, we add or remove the root transform from the canvas
+            switch (sceneStateProvider.IsCurrent)
+            {
+                case false when !uiTransformComponent.IsHidden:
+                    canvas.rootVisualElement.Remove(uiTransformComponent.Transform);
+                    uiTransformComponent.IsHidden = true;
+                    break;
+                case true when uiTransformComponent.IsHidden:
+                    canvas.rootVisualElement.Add(uiTransformComponent.Transform);
+                    uiTransformComponent.IsHidden = false;
+                    break;
+            }
         }
     }
 }

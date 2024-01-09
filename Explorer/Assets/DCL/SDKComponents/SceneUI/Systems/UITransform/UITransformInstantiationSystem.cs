@@ -44,6 +44,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             transformComponent.Transform = newTransform;
             transformComponent.Parent = EntityReference.Null;
             transformComponent.Children = HashSetPool<EntityReference>.Get();
+            transformComponent.IsHidden = false;
             World.Add(entity, transformComponent);
         }
     }
