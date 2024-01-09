@@ -12,6 +12,7 @@ using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.AudioSources;
 using SceneRunner.Scene;
+using UnityEngine;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 
 namespace DCL.SDKComponents.AudioSources
@@ -39,6 +40,7 @@ namespace DCL.SDKComponents.AudioSources
         }
 
         [Query]
+        [None(typeof(AudioSourceComponent))]
         private void CreateAudioSourceComponentWithPromise(in Entity entity, ref PBAudioSource sdkAudioSource, ref PartitionComponent partitionComponent)
         {
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
