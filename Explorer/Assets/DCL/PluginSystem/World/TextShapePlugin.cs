@@ -15,20 +15,20 @@ namespace DCL.PluginSystem.World
     public class TextShapePlugin : IDCLWorldPlugin
     {
         private readonly ITextShapeRendererFactory textShapeRendererFactory;
-        private readonly IReleasablePerformanceBudget instantiationFrameTimeBudget;
+        private readonly IPerformanceBudget instantiationFrameTimeBudget;
 
-        public TextShapePlugin(IReleasablePerformanceBudget instantiationFrameTimeBudget, IComponentPoolsRegistry componentPoolsRegistry, IPluginSettingsContainer settingsContainer) : this(
+        public TextShapePlugin(IPerformanceBudget instantiationFrameTimeBudget, IComponentPoolsRegistry componentPoolsRegistry, IPluginSettingsContainer settingsContainer) : this(
             instantiationFrameTimeBudget,
             componentPoolsRegistry,
             settingsContainer.GetSettings<FontsSettings>().AsCached()
         ) { }
 
-        public TextShapePlugin(IReleasablePerformanceBudget instantiationFrameTimeBudget, IComponentPoolsRegistry componentPoolsRegistry, IFontsStorage fontsStorage) : this(
+        public TextShapePlugin(IPerformanceBudget instantiationFrameTimeBudget, IComponentPoolsRegistry componentPoolsRegistry, IFontsStorage fontsStorage) : this(
             new PoolTextShapeRendererFactory(componentPoolsRegistry, fontsStorage),
             instantiationFrameTimeBudget
         ) { }
 
-        public TextShapePlugin(ITextShapeRendererFactory textShapeRendererFactory, IReleasablePerformanceBudget instantiationFrameTimeBudget)
+        public TextShapePlugin(ITextShapeRendererFactory textShapeRendererFactory, IPerformanceBudget instantiationFrameTimeBudget)
         {
             this.textShapeRendererFactory = textShapeRendererFactory;
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;

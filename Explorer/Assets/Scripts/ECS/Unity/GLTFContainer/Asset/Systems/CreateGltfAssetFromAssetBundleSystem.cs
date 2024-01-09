@@ -24,10 +24,10 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     [LogCategory(ReportCategory.GLTF_CONTAINER)]
     public partial class CreateGltfAssetFromAssetBundleSystem : BaseUnityLoopSystem
     {
-        private readonly IReleasablePerformanceBudget instantiationFrameTimeBudget;
-        private readonly IReleasablePerformanceBudget memoryBudget;
+        private readonly IPerformanceBudget instantiationFrameTimeBudget;
+        private readonly IPerformanceBudget memoryBudget;
 
-        internal CreateGltfAssetFromAssetBundleSystem(World world, IReleasablePerformanceBudget instantiationFrameTimeBudget, IReleasablePerformanceBudget memoryBudget) : base(world)
+        internal CreateGltfAssetFromAssetBundleSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.memoryBudget = memoryBudget;

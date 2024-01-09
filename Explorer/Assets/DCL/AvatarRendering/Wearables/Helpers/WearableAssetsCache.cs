@@ -94,7 +94,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
         }
 
-        public void Unload(IReleasablePerformanceBudget frameTimeBudget, int maxUnloadAmount)
+        public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount)
         {
             var unloadedAmount = 0;
 

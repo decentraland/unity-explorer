@@ -32,16 +32,16 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
         private readonly IObjectPool<Material> avatarMaterialPool;
         private readonly IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool;
-        private readonly IReleasablePerformanceBudget instantiationFrameTimeBudget;
+        private readonly IPerformanceBudget instantiationFrameTimeBudget;
 
         private readonly CustomSkinning skinningStrategy;
 
         private readonly TextureArrayContainer textureArrays;
         private readonly FixedComputeBufferHandler vertOutBuffer;
         private readonly IWearableAssetsCache wearableAssetsCache;
-        private readonly IReleasablePerformanceBudget memoryBudget;
+        private readonly IPerformanceBudget memoryBudget;
 
-        public AvatarInstantiatorSystem(World world, IReleasablePerformanceBudget instantiationFrameTimeBudget, IReleasablePerformanceBudget memoryBudget,
+        public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
             IComponentPool<AvatarBase> avatarPoolRegistry, IObjectPool<Material> avatarMaterialPool, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
             TextureArrayContainer textureArrayContainer, IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer) : base(world)
         {

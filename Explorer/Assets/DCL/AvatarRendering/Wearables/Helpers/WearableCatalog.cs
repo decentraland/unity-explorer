@@ -72,7 +72,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
         }
 
-        public void Unload(IReleasablePerformanceBudget frameTimeBudget)
+        public void Unload(IPerformanceBudget frameTimeBudget)
         {
             for (LinkedListNode<(string key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudget.TrySpendBudget() && node != null; node = node.Next)
                 if (wearablesCache.TryGetValue(node.Value.key, out IWearable wearable))

@@ -18,9 +18,9 @@ namespace DCL.SDKComponents.TextShape.System
     public partial class InstantiateTextShapeSystem : BaseUnityLoopSystem
     {
         private readonly ITextShapeRendererFactory textShapeRendererFactory;
-        private readonly IReleasablePerformanceBudget instantiationFrameTimeBudget;
+        private readonly IPerformanceBudget instantiationFrameTimeBudget;
 
-        public InstantiateTextShapeSystem(World world, ITextShapeRendererFactory textShapeRendererFactory, IReleasablePerformanceBudget instantiationFrameTimeBudget) : base(world)
+        public InstantiateTextShapeSystem(World world, ITextShapeRendererFactory textShapeRendererFactory, IPerformanceBudget instantiationFrameTimeBudget) : base(world)
         {
             this.textShapeRendererFactory = textShapeRendererFactory;
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;

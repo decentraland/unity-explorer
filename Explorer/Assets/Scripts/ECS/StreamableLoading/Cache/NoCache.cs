@@ -63,7 +63,7 @@ namespace ECS.StreamableLoading.Cache
 
         public void Dereference(in TLoadingIntention key, TAsset asset) { }
 
-        public void Unload(IReleasablePerformanceBudget frameTimeBudget, int maxUnloadAmount) { }
+        public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount) { }
 
         bool IEqualityComparer<TLoadingIntention>.Equals(TLoadingIntention x, TLoadingIntention y) =>
             EqualityComparer<TLoadingIntention>.Default.Equals(x, y);

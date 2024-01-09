@@ -15,9 +15,9 @@ namespace ECS.Unity.Materials.Systems
     [UpdateAfter(typeof(StartMaterialsLoadingSystem))]
     public partial class CreateBasicMaterialSystem : CreateMaterialSystemBase
     {
-        private readonly IReleasablePerformanceBudget capFrameBudget;
+        private readonly IPerformanceBudget capFrameBudget;
 
-        internal CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool, IReleasablePerformanceBudget capFrameBudget) : base(world, materialsPool)
+        internal CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool, IPerformanceBudget capFrameBudget) : base(world, materialsPool)
         {
             this.capFrameBudget = capFrameBudget;
         }

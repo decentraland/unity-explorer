@@ -33,14 +33,14 @@ namespace DCL.PluginSystem.Global
 
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
-        private readonly IReleasablePerformanceBudget frameTimeCapBudget;
+        private readonly IPerformanceBudget frameTimeCapBudget;
         private readonly IRealmData realmData;
         private readonly TextureArrayContainer textureArrayContainer;
         private readonly IDebugContainerBuilder debugContainerBuilder;
 
         private readonly WearableAssetsCache wearableAssetsCache = new (100);
         private readonly CacheCleaner cacheCleaner;
-        private readonly IReleasablePerformanceBudget memoryBudget;
+        private readonly IPerformanceBudget memoryBudget;
 
         private IComponentPool<Transform> transformPoolRegistry;
 
@@ -49,7 +49,7 @@ namespace DCL.PluginSystem.Global
         private IExtendedObjectPool<ComputeShader> computeShaderPool;
 
         public AvatarPlugin(IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner,
-            IReleasablePerformanceBudget frameTimeCapBudget, IReleasablePerformanceBudget memoryBudget,
+            IPerformanceBudget frameTimeCapBudget, IPerformanceBudget memoryBudget,
             IRealmData realmData, IDebugContainerBuilder debugContainerBuilder, CacheCleaner cacheCleaner)
         {
             this.assetsProvisioner = assetsProvisioner;

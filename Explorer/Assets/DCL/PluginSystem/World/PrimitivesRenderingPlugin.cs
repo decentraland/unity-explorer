@@ -18,7 +18,7 @@ namespace DCL.PluginSystem.World
     public class PrimitivesRenderingPlugin : IDCLWorldPluginWithoutSettings
     {
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
-        private readonly IReleasablePerformanceBudget capFrameTimeBudget;
+        private readonly IPerformanceBudget capFrameTimeBudget;
 
         public PrimitivesRenderingPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies)
         {

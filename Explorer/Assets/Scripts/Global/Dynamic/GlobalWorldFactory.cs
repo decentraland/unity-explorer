@@ -68,7 +68,7 @@ namespace Global.Dynamic
         private readonly IWebRequestController webRequestController;
         private readonly IReadOnlyList<IDCLGlobalPlugin> globalPlugins;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private readonly IReleasablePerformanceBudget memoryBudget;
+        private readonly IPerformanceBudget memoryBudget;
         private readonly StaticSettings staticSettings;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,

@@ -28,9 +28,9 @@ namespace ECS.Unity.Materials.Systems
         private readonly DestroyMaterial destroyMaterial;
         private readonly ISceneData sceneData;
         private readonly int attemptsCount;
-        private readonly IReleasablePerformanceBudget capFrameTimeBudget;
+        private readonly IPerformanceBudget capFrameTimeBudget;
 
-        public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData, int attemptsCount, IReleasablePerformanceBudget capFrameTimeBudget) : base(world)
+        public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData, int attemptsCount, IPerformanceBudget capFrameTimeBudget) : base(world)
         {
             this.destroyMaterial = destroyMaterial;
             this.sceneData = sceneData;

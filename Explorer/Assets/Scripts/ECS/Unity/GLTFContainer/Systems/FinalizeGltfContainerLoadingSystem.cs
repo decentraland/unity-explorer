@@ -24,11 +24,11 @@ namespace ECS.Unity.GLTFContainer.Systems
     public partial class FinalizeGltfContainerLoadingSystem : BaseUnityLoopSystem
     {
         private readonly Entity sceneRoot;
-        private readonly IReleasablePerformanceBudget capBudget;
+        private readonly IPerformanceBudget capBudget;
         private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
         private readonly ISceneData sceneData;
 
-        public FinalizeGltfContainerLoadingSystem(World world, Entity sceneRoot, IReleasablePerformanceBudget capBudget,
+        public FinalizeGltfContainerLoadingSystem(World world, Entity sceneRoot, IPerformanceBudget capBudget,
             IEntityCollidersSceneCache entityCollidersSceneCache, ISceneData sceneData) : base(world)
         {
             this.sceneRoot = sceneRoot;

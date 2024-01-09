@@ -48,7 +48,7 @@ namespace DCL.GlobalPartitioning
             };
         }
 
-        internal GlobalDeferredLoadingSystem(World world, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IReleasablePerformanceBudget memoryBudget)
+        internal GlobalDeferredLoadingSystem(World world, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget)
             : base(world, COMPONENT_HANDLERS, releasablePerformanceLoadingBudget, memoryBudget) { }
     }
 }

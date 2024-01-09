@@ -33,13 +33,13 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         };
         private readonly IComponentPool<MeshRenderer> rendererPoolRegistry;
         private readonly IComponentPoolsRegistry poolRegistry;
-        private readonly IReleasablePerformanceBudget instantiationFrameTimeBudget;
+        private readonly IPerformanceBudget instantiationFrameTimeBudget;
         private readonly ISceneData sceneData;
 
         private readonly Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases;
 
         internal InstantiatePrimitiveRenderingSystem(World world, IComponentPoolsRegistry poolsRegistry,
-            IReleasablePerformanceBudget instantiationFrameTimeBudget, ISceneData sceneData, Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases = null) : base(world)
+            IPerformanceBudget instantiationFrameTimeBudget, ISceneData sceneData, Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases = null) : base(world)
         {
             this.setupMeshCases = setupMeshCases ?? SETUP_MESH_LOGIC;
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;

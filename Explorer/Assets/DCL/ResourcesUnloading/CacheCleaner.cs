@@ -22,7 +22,7 @@ namespace DCL.ResourcesUnloading
         private const int TEXTURE_UNLOAD_CHUNK = 1;
         private const int PROFILE_UNLOAD_CHUNK = 10;
 
-        private readonly IReleasablePerformanceBudget fpsCapBudget;
+        private readonly IPerformanceBudget fpsCapBudget;
         private readonly List<IThrottledClearable> avatarPools;
 
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
@@ -34,7 +34,7 @@ namespace DCL.ResourcesUnloading
         private IProfileCache? profileCache;
         private IStreamableCache<Profile, GetProfileIntention>? profileIntentionCache;
 
-        public CacheCleaner(IReleasablePerformanceBudget fpsCapBudget)
+        public CacheCleaner(IPerformanceBudget fpsCapBudget)
         {
             this.fpsCapBudget = fpsCapBudget;
 

@@ -93,7 +93,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             asset.Root.transform.SetParent(parentContainer);
         }
 
-        public void Unload(IReleasablePerformanceBudget frameTimeBudget, int maxUnloadAmount)
+        public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount)
         {
             var unloadedAmount = 0;
 

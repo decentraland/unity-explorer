@@ -21,7 +21,7 @@ namespace DCL.PluginSystem.World
         // private const int CACHE_CAPACITY = 512;
         // private readonly IMaterialsCache materialsCache;
 
-        private readonly IReleasablePerformanceBudget capFrameTimeBudget;
+        private readonly IPerformanceBudget capFrameTimeBudget;
         private readonly IAssetsProvisioner assetsProvisioner;
 
         private IObjectPool<Material> basicMatPool;

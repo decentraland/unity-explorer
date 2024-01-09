@@ -19,9 +19,9 @@ namespace ECS.StreamableLoading.DeferredLoading
         private readonly List<IntentionData> loadingIntentions;
 
         private readonly QueryDescription[] sameBoatQueries;
-        private readonly IReleasablePerformanceBudget memoryBudget;
+        private readonly IPerformanceBudget memoryBudget;
 
-        protected DeferredLoadingSystem(World world, QueryDescription[] sameBoatQueries, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IReleasablePerformanceBudget memoryBudget) : base(world)
+        protected DeferredLoadingSystem(World world, QueryDescription[] sameBoatQueries, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget) : base(world)
         {
             this.sameBoatQueries = sameBoatQueries;
             this.releasablePerformanceLoadingBudget = releasablePerformanceLoadingBudget;

@@ -44,6 +44,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         ///     Unloads the wearable from the catalog by a frame time budget provider.
         /// </summary>
         /// <param name="frameTimeBudget">The frame time budget provider.</param>
-        void Unload(IReleasablePerformanceBudget frameTimeBudget);
+        void Unload(IPerformanceBudget frameTimeBudget);
     }
 }

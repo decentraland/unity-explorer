@@ -16,10 +16,10 @@ namespace ECS.Unity.Materials.Systems
     [UpdateAfter(typeof(StartMaterialsLoadingSystem))]
     public partial class CreatePBRMaterialSystem : CreateMaterialSystemBase
     {
-        private readonly IReleasablePerformanceBudget capFrameBudget;
+        private readonly IPerformanceBudget capFrameBudget;
 
         internal CreatePBRMaterialSystem(World world, IObjectPool<Material> materialsPool,
-            IReleasablePerformanceBudget capFrameBudget) : base(world, materialsPool)
+            IPerformanceBudget capFrameBudget) : base(world, materialsPool)
         {
             this.capFrameBudget = capFrameBudget;
         }
