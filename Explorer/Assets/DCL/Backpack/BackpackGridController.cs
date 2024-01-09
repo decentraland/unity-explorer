@@ -21,7 +21,9 @@ namespace DCL.Backpack
     {
         private const string PAGE_NUMBER = "pageNumber";
         private const string PAGE_SIZE = "pageSize";
+
         private const int CURRENT_PAGE_SIZE = 16;
+        private static readonly string CURRENT_PAGE_SIZE_STR = CURRENT_PAGE_SIZE.ToString();
 
         private readonly BackpackGridView view;
         private readonly BackpackCommandBus commandBus;
@@ -31,7 +33,9 @@ namespace DCL.Backpack
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
         private readonly IBackpackEquipStatusController backpackEquipStatusController;
-        private readonly List<(string,string)> requestParameters;
+
+        private readonly List<(string, string)> requestParameters;
+        private readonly List<IWearable> results = new (CURRENT_PAGE_SIZE);
 
         private IObjectPool<BackpackItemView> gridItemsPool;
         private readonly Dictionary<string, BackpackItemView> usedPoolItems;
@@ -82,20 +86,15 @@ namespace DCL.Backpack
         private void SetGridElements(IWearable[] gridWearables)
         {
             ClearPoolElements();
+
             for (var i = 0; i < gridWearables.Length; i++)
             {
                 BackpackItemView backpackItemView = gridItemsPool.Get();
                 usedPoolItems.Add(gridWearables[i].GetUrn(), backpackItemView);
 
                 backpackItemView.OnSelectItem += SelectItem;
-                backpackItemView.EquipButton.onClick.AddListener(() =>
-                {
-                    commandBus.SendCommand(new BackpackEquipCommand(backpackItemView.ItemId));
-                });
-                backpackItemView.UnEquipButton.onClick.AddListener(() =>
-                {
-                    commandBus.SendCommand(new BackpackUnEquipCommand(backpackItemView.ItemId));
-                });
+                backpackItemView.EquipButton.onClick.AddListener(() => { commandBus.SendCommand(new BackpackEquipCommand(backpackItemView.ItemId)); });
+                backpackItemView.UnEquipButton.onClick.AddListener(() => { commandBus.SendCommand(new BackpackUnEquipCommand(backpackItemView.ItemId)); });
                 backpackItemView.ItemId = gridWearables[i].GetUrn();
                 backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(gridWearables[i].GetRarity());
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(gridWearables[i].GetRarity());
@@ -119,18 +118,23 @@ namespace DCL.Backpack
             cts = new CancellationTokenSource();
 
             requestParameters.Clear();
-            requestParameters.Add((PAGE_NUMBER, string.Format("{0}", pageNumber)));
-            requestParameters.Add((PAGE_SIZE, string.Format("{0}", CURRENT_PAGE_SIZE)));
+            requestParameters.Add((PAGE_NUMBER, pageNumber.ToString()));
+            requestParameters.Add((PAGE_SIZE, CURRENT_PAGE_SIZE_STR));
 
-            ParamPromise wearablesPromise = ParamPromise.Create(world, new GetWearableByParamIntention(requestParameters,  web3IdentityCache.Identity!.EphemeralAccount.Address, new List<IWearable>()), PartitionComponent.TOP_PRIORITY);
+            results.Clear();
+
+            var wearablesPromise = ParamPromise.Create(world,
+                new GetWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.EphemeralAccount.Address, results),
+                PartitionComponent.TOP_PRIORITY);
+
             AwaitWearablesPromiseAsync(wearablesPromise, cts.Token).Forget();
         }
 
         private async UniTaskVoid AwaitWearablesPromiseAsync(ParamPromise wearablesPromise, CancellationToken ct)
         {
-            AssetPromise<IWearable[],GetWearableByParamIntention> uniTaskAsync = await wearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
+            AssetPromise<IWearable[], GetWearableByParamIntention> uniTaskAsync = await wearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
 
-            if (!uniTaskAsync.Result.Value.Succeeded)
+            if (!uniTaskAsync.Result!.Value.Succeeded)
                 return;
 
             SetGridElements(uniTaskAsync.Result.Value.Asset);
@@ -139,10 +143,8 @@ namespace DCL.Backpack
         private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable, BackpackItemView itemView, CancellationToken ct)
         {
             itemView.LoadingView.StartLoadingAnimation(itemView.FullBackpackItem);
-            do
-            {
-                await UniTask.Delay(500, cancellationToken: ct);
-            }
+
+            do { await UniTask.Delay(500, cancellationToken: ct); }
             while (itemWearable.WearableThumbnail == null);
 
             itemView.WearableThumbnail.sprite = itemWearable.WearableThumbnail.Value.Asset;
@@ -185,6 +187,5 @@ namespace DCL.Backpack
                 backpackItemView.SetEquipButtonsState();
             }
         }
-
     }
 }

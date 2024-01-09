@@ -18,7 +18,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     {
         internal static readonly ListObjectPool<string> POINTERS_POOL = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
         internal static readonly ArrayPool<IWearable> RESULTS_POOL = ArrayPool<IWearable>.Create(20, 20);
-        internal static readonly URLBuilder URL_BUILDER = new URLBuilder();
+
+        private static readonly URLBuilder URL_BUILDER = new ();
+        private static readonly Sprite DEFAULT_THUMBNAIL = Sprite.Create(Texture2D.grayTexture, new Rect(0, 0, 1, 1), new Vector2());
 
         public static GetWearablesByPointersIntention CreateGetWearablesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<string> wearables)
         {
@@ -44,15 +46,16 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public static void CreateWearableThumbnailPromise(IRealmData realmData, IWearable wearable, World world, IPartitionComponent partitionComponent)
         {
-            Debug.Log($"wearable thumbnail {wearable.GetThumbnail()} and {wearable.GetUrn()} and {wearable.GetName()}");
-            if (string.IsNullOrEmpty(wearable.GetThumbnail().Value))
+            URLPath thumbnailPath = wearable.GetThumbnail();
+
+            if (string.IsNullOrEmpty(thumbnailPath.Value))
             {
-                wearable.WearableThumbnail = new StreamableLoadingResult<Sprite>(Sprite.Create(Texture2D.grayTexture, new Rect(0, 0, 1, 1), new Vector2()));
+                wearable.WearableThumbnail = new StreamableLoadingResult<Sprite>(DEFAULT_THUMBNAIL);
                 return;
             }
 
             URL_BUILDER.Clear();
-            URL_BUILDER.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(wearable.GetThumbnail());
+            URL_BUILDER.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(thumbnailPath);
 
             var promise = Promise.Create(world,
                 new GetTextureIntention
