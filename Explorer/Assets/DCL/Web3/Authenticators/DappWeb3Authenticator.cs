@@ -58,7 +58,7 @@ namespace DCL.Web3.Authenticators
             {
                 await ConnectToServerAsync();
 
-                SignatureIdResponse authenticationResponse = await RequestEthMethod(new AuthorizedEthApiRequest
+                SignatureIdResponse authenticationResponse = await RequestEthMethodAsync(new AuthorizedEthApiRequest
                 {
                     method = request.method,
                     @params = request.@params,
@@ -106,7 +106,7 @@ namespace DCL.Web3.Authenticators
                 DateTime sessionExpiration = DateTime.UtcNow.AddDays(7);
                 string ephemeralMessage = CreateEphemeralMessage(ephemeralAccount, sessionExpiration);
 
-                SignatureIdResponse authenticationResponse = await RequestEthMethod(new EthApiRequest
+                SignatureIdResponse authenticationResponse = await RequestEthMethodAsync(new EthApiRequest
                 {
                     method = "dcl_personal_sign",
                     @params = new object[] { ephemeralMessage },
@@ -219,7 +219,7 @@ namespace DCL.Web3.Authenticators
             signatureOutcomeTask?.TrySetResult(response);
         }
 
-        private async UniTask<SignatureIdResponse> RequestEthMethod(
+        private async UniTask<SignatureIdResponse> RequestEthMethodAsync(
             object request,
             CancellationToken ct)
         {
