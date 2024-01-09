@@ -69,7 +69,7 @@ namespace Global.Dynamic
         private readonly IWebRequestController webRequestController;
         private readonly IReadOnlyList<IDCLGlobalPlugin> globalPlugins;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
+        private readonly IPerformanceBudget memoryBudget;
         private readonly StaticSettings staticSettings;
         private readonly IScenesCache scenesCache;
 
@@ -93,7 +93,7 @@ namespace Global.Dynamic
             this.realmData = realmData;
             this.scenesCache = scenesCache;
 
-            memoryBudgetProvider = staticContainer.SingletonSharedDependencies.MemoryBudgetProvider;
+            memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
@@ -122,7 +122,7 @@ namespace Global.Dynamic
                         WearablesConstants.DefaultColors.GetRandomHairColor(),
                         WearablesConstants.DefaultColors.GetRandomSkinColor())));
 
-            IConcurrentBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(staticSettings.ScenesLoadingBudget);
+            IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 
             LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
             LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
@@ -132,7 +132,7 @@ namespace Global.Dynamic
                 new LoadEmptySceneSystemLogic(webRequestController, emptyScenesWorldFactory, componentPoolsRegistry, EMPTY_SCENES_MAPPINGS_URL),
                 sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex);
 
-            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider, memoryBudgetProvider);
+            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget);
 
             CalculateParcelsInRangeSystem.InjectToWorld(ref builder, playerEntity);
             LoadStaticPointersSystem.InjectToWorld(ref builder);

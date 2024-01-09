@@ -28,10 +28,10 @@ namespace ECS.Unity.Materials.Tests
             IObjectPool<Material> pool = Substitute.For<IObjectPool<Material>>();
             pool.Get().Returns(_ => new Material(pbrMat));
 
-            IConcurrentBudgetProvider frameTimeBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
-            frameTimeBudgetProvider.TrySpendBudget().Returns(true);
+            IReleasablePerformanceBudget frameTimeBudget = Substitute.For<IReleasablePerformanceBudget>();
+            frameTimeBudget.TrySpendBudget().Returns(true);
 
-            system = new CreatePBRMaterialSystem(world, pool, frameTimeBudgetProvider);
+            system = new CreatePBRMaterialSystem(world, pool, frameTimeBudget);
             system.Initialize();
         }
 

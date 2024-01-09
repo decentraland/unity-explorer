@@ -18,12 +18,12 @@ namespace DCL.PluginSystem.World
     public class PrimitivesRenderingPlugin : IDCLWorldPluginWithoutSettings
     {
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
-        private readonly IConcurrentBudgetProvider capFrameTimeBudgetProvider;
+        private readonly IPerformanceBudget capFrameTimeBudget;
 
         public PrimitivesRenderingPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies)
         {
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
-            capFrameTimeBudgetProvider = singletonSharedDependencies.FrameTimeBudgetProvider;
+            capFrameTimeBudget = singletonSharedDependencies.FrameTimeBudget;
 
             componentPoolsRegistry.AddComponentPool<BoxPrimitive>();
             componentPoolsRegistry.AddComponentPool<SpherePrimitive>();
@@ -34,7 +34,7 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            InstantiatePrimitiveRenderingSystem.InjectToWorld(ref builder, componentPoolsRegistry, capFrameTimeBudgetProvider, sharedDependencies.SceneData);
+            InstantiatePrimitiveRenderingSystem.InjectToWorld(ref builder, componentPoolsRegistry, capFrameTimeBudget, sharedDependencies.SceneData);
             ReleaseOutdatedRenderingSystem.InjectToWorld(ref builder, componentPoolsRegistry);
 
             ResetDirtyFlagSystem<PBMeshRenderer>.InjectToWorld(ref builder);

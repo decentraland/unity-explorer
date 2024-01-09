@@ -327,6 +327,11 @@ MonoBehaviour:
         m_SubObjectName: 
         m_SubObjectType: 
         m_EditorAssetChanged: 0
+      <RarityInfoPanelBackgroundsMapping>k__BackingField:
+        m_AssetGUID: 66f8f8427a5c4443e95b0d298addd639
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_EditorAssetChanged: 0
       <RarityColorMappings>k__BackingField:
         m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
         m_SubObjectName: 
