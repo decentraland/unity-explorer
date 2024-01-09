@@ -9,7 +9,6 @@ using DCL.Utilities;
 using ECS.Prioritization.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
-using UnityEngine;
 
 namespace ECS.Unity.AvatarShape.Systems
 {
@@ -32,16 +31,14 @@ namespace ECS.Unity.AvatarShape.Systems
         }
 
         [Query]
-        [All(typeof(PBAvatarShape), typeof(TransformComponent))]
         [None(typeof(AvatarShapeComponent))]
-        private void InstantiateAvatarShape(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent)
+        private void InstantiateAvatarShape(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent, ref TransformComponent transformComponent)
         {
-            Debug.Log($"PRAVS - 1 - InstantiateAvatarShape() - avatar name: {pbAvatarShape.Name}; globalWorld: {globalWorld.GetWorld()}");
-
             Entity globalEntity = globalWorld.Create();
             pbAvatarShape.IsDirty = true;
             globalWorld.Add(globalEntity, pbAvatarShape);
             globalWorld.Add(globalEntity, partitionComponent);
+            globalWorld.Add(globalEntity, transformComponent);
 
             var satelliteComponent = new AvatarShapeComponent();
             world.Add(entity, satelliteComponent);
