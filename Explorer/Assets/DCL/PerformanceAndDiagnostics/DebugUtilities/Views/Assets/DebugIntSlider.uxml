@@ -1,0 +1,5 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <DCL.DebugUtilities.Views.DebugIntSliderElement style="align-self: stretch;">
+        <ui:SliderInt picking-mode="Ignore" value="38" high-value="100" inverted="false" show-input-field="true" />
+    </DCL.DebugUtilities.Views.DebugIntSliderElement>
+</ui:UXML>
