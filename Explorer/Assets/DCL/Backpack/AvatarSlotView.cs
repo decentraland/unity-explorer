@@ -1,4 +1,4 @@
-using DCL.AvatarRendering.Wearables.Components;
+using DCL.UI;
 using DG.Tweening;
 using System;
 using TMPro;
@@ -48,6 +48,12 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public Image SlotWearableRarityBackground { get; set; }
+
+        [field: SerializeField]
+        public LoadingBrightView LoadingView { get; private set; }
+
+        [field: SerializeField]
+        public GameObject NftContainer { get; private set; }
 
         public void Start()
         {

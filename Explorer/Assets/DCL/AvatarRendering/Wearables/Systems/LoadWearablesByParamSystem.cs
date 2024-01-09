@@ -62,9 +62,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 WearableDTO wearableDto = lambdaResponse.elements[i].entity;
                 IWearable wearable = wearableCatalog.GetOrAddWearableByDTO(wearableDto);
-                var wearableThumbnailComponent = new WearableThumbnailComponent(wearable);
 
-                World.Create(wearableThumbnailComponent, PartitionComponent.TOP_PRIORITY);
+                WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, wearable, World, partition);
                 intention.Results.Add(wearable);
             }
             return new StreamableLoadingResult<IWearable[]>(intention.Results.ToArray());

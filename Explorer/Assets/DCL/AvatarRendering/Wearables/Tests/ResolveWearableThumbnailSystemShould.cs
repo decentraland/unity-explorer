@@ -33,7 +33,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             wearableCatalog.wearablesCache.Add(mockDefaultWearable.GetUrn(), mockDefaultWearable);
             mockedDefaultAB = new StreamableLoadingResult<WearableAsset>(new WearableAsset(null, null, null));
             realmData = new RealmData(new IpfsRealm(URLDomain.EMPTY));
-            system = new ResolveWearableThumbnailSystem(world, realmData);
+            system = new ResolveWearableThumbnailSystem(world);
         }
 
         private IWearable CreateMockWearable(string urn, bool isUnisex, bool isDefaultWearable)
@@ -72,5 +72,6 @@ namespace DCL.AvatarRendering.Wearables.Tests
               , PartitionComponent.TOP_PRIORITY);
             system.Update(0);
         }
+
     }
 }

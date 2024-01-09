@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using System;
+using System.Threading;
 using UnityEngine;
 using Utility;
 
@@ -13,6 +14,7 @@ namespace DCL.Backpack
         private readonly BackpackEventBus backpackEventBus;
         private readonly NftTypeIconSO categoryIcons;
         private readonly NftTypeIconSO rarityInfoPanelBackgrounds;
+        private CancellationTokenSource cts;
 
         public BackpackInfoPanelController(
             BackpackInfoPanelView view,
@@ -30,6 +32,8 @@ namespace DCL.Backpack
 
         private void SetPanelContent(IWearable wearable)
         {
+            cts.SafeCancelAndDispose();
+            cts = new CancellationTokenSource();
             SetInfoPanelStatus(false);
             view.WearableThumbnail.gameObject.SetActive(false);
             view.LoadingSpinner.SetActive(true);
@@ -37,7 +41,7 @@ namespace DCL.Backpack
             view.Description.text = wearable.GetDescription();
             view.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
             view.RarityBackground.sprite = rarityInfoPanelBackgrounds.GetTypeImage(wearable.GetRarity());
-            WaitForThumbnailAsync(wearable).Forget();
+            WaitForThumbnailAsync(wearable, cts.Token).Forget();
         }
 
         private void SetInfoPanelStatus(bool isEmpty)
@@ -46,11 +50,11 @@ namespace DCL.Backpack
             view.FullPanel.SetActive(!isEmpty);
         }
 
-        private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable)
+        private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable, CancellationToken ct)
         {
             do
             {
-                await UniTask.Delay(500);
+                await UniTask.Delay(500, cancellationToken: ct);
             }
             while (itemWearable.WearableThumbnail == null);
 

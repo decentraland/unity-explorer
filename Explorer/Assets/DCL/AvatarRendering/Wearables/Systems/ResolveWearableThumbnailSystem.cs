@@ -21,43 +21,20 @@ namespace DCL.AvatarRendering.Wearables.Systems
     [LogCategory(ReportCategory.WEARABLE)]
     public partial class ResolveWearableThumbnailSystem : BaseUnityLoopSystem
     {
-        private readonly IRealmData realmData;
-        private readonly URLBuilder urlBuilder;
 
-        public ResolveWearableThumbnailSystem(World world, IRealmData realmData) : base(world)
-        {
-            this.realmData = realmData;
-            urlBuilder = new URLBuilder();
-        }
+        public ResolveWearableThumbnailSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
-            StartWearableThumbnailDownloadQuery(World);
             CompleteWearableThumbnailDownloadQuery(World);
         }
 
         [Query]
-        [None(typeof(Promise))]
-        private void StartWearableThumbnailDownload(in Entity entity, ref WearableThumbnailComponent wearableThumbnailComponent, ref PartitionComponent partitionComponent)
-        {
-            urlBuilder.Clear();
-            urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(wearableThumbnailComponent.Wearable.GetThumbnail());
-            Promise promise = Promise.Create(World,
-                new GetTextureIntention
-                {
-                    CommonArguments = new CommonLoadingArguments(urlBuilder.Build())
-                },
-                partitionComponent);
-
-            World.Add(entity, promise);
-        }
-
-        [Query]
-        private void CompleteWearableThumbnailDownload(in Entity entity, ref WearableThumbnailComponent wearableThumbnailComponent, ref Promise promise)
+        private void CompleteWearableThumbnailDownload(in Entity entity, ref IWearable wearable, ref Promise promise)
         {
             if (promise.TryConsume(World, out var result))
             {
-                wearableThumbnailComponent.Wearable.WearableThumbnail =
+                wearable.WearableThumbnail =
                     new StreamableLoadingResult<Sprite>(
                         Sprite.Create(result.Asset, new Rect(0, 0, result.Asset.width, result.Asset.height), VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false));
                 World.Destroy(entity);

@@ -1,9 +1,6 @@
-using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
-using JetBrains.Annotations;
 using System;
-using UnityEngine;
 
 namespace DCL.Backpack.BackpackBus
 {
@@ -40,12 +37,13 @@ namespace DCL.Backpack.BackpackBus
         private void HandleEquipCommand(BackpackEquipCommand command)
         {
             wearableCatalog.TryGetWearable(command.Id, out IWearable wearable);
+            string category = wearable?.GetCategory();
 
-            if (wearable?.GetCategory() == null)
+            if (category == null)
                 return;
 
-            if(backpackEquipStatusController.GetEquippedWearableForCategory(wearable.GetCategory()) != null)
-                backpackEventBus.SendUnEquip(backpackEquipStatusController.GetEquippedWearableForCategory(wearable.GetCategory()));
+            if (backpackEquipStatusController.GetEquippedWearableForCategory(category) != null)
+                backpackEventBus.SendUnEquip(backpackEquipStatusController.GetEquippedWearableForCategory(category));
 
             backpackEventBus.SendEquip(wearable);
         }
@@ -56,10 +54,7 @@ namespace DCL.Backpack.BackpackBus
                 backpackEventBus.SendUnEquip(wearable);
         }
 
-        private void HandleHideCommand(BackpackHideCommand command)
-        {
-
-        }
+        private void HandleHideCommand(BackpackHideCommand command) { }
 
         public void Dispose()
         {
