@@ -3,9 +3,12 @@ using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.SDKComponents.TextShape.Component;
 using DCL.SDKComponents.TextShape.Fonts;
+using DCL.SDKComponents.TextShape.Renderer;
 using DCL.SDKComponents.TextShape.Renderer.Factory;
 using DCL.SDKComponents.TextShape.System;
+using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using System.Collections.Generic;
 using System.Threading;
@@ -15,23 +18,26 @@ namespace DCL.PluginSystem.World
     public class TextShapePlugin : IDCLWorldPlugin
     {
         private readonly ITextShapeRendererFactory textShapeRendererFactory;
-        private readonly IPerformanceBudget instantiationFrameTimeBudget;
+        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
+        private readonly IComponentPoolsRegistry componentPoolsRegistry;
 
-        public TextShapePlugin(IPerformanceBudget instantiationFrameTimeBudget, IComponentPoolsRegistry componentPoolsRegistry, IPluginSettingsContainer settingsContainer) : this(
-            instantiationFrameTimeBudget,
+        public TextShapePlugin(IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IPluginSettingsContainer settingsContainer) : this(
+            instantiationFrameTimeBudgetProvider,
             componentPoolsRegistry,
             settingsContainer.GetSettings<FontsSettings>().AsCached()
         ) { }
 
-        public TextShapePlugin(IPerformanceBudget instantiationFrameTimeBudget, IComponentPoolsRegistry componentPoolsRegistry, IFontsStorage fontsStorage) : this(
+        public TextShapePlugin(IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IFontsStorage fontsStorage) : this(
             new PoolTextShapeRendererFactory(componentPoolsRegistry, fontsStorage),
-            instantiationFrameTimeBudget
+            instantiationFrameTimeBudgetProvider,
+            componentPoolsRegistry
         ) { }
 
-        public TextShapePlugin(ITextShapeRendererFactory textShapeRendererFactory, IPerformanceBudget instantiationFrameTimeBudget)
+        public TextShapePlugin(ITextShapeRendererFactory textShapeRendererFactory, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry)
         {
             this.textShapeRendererFactory = textShapeRendererFactory;
-            this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
+            this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
+            this.componentPoolsRegistry = componentPoolsRegistry;
         }
 
         public void Dispose()
@@ -44,14 +50,17 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            InstantiateTextShapeSystem.InjectToWorld(ref builder, textShapeRendererFactory, instantiationFrameTimeBudget);
+            InstantiateTextShapeSystem.InjectToWorld(ref builder, textShapeRendererFactory, instantiationFrameTimeBudgetProvider);
             UpdateTextShapeSystem.InjectToWorld(ref builder);
             VisibilityTextShapeSystem.InjectToWorld(ref builder);
+            var releasePoolableComponentSystem = ReleasePoolableComponentSystem<ITextShapeRenderer, TextShapeRendererComponent>
+               .InjectToWorld(ref builder, componentPoolsRegistry);
+            finalizeWorldSystems.Add(releasePoolableComponentSystem);
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies)
         {
-            InstantiateTextShapeSystem.InjectToWorld(ref builder, textShapeRendererFactory, instantiationFrameTimeBudget);
+            InstantiateTextShapeSystem.InjectToWorld(ref builder, textShapeRendererFactory, instantiationFrameTimeBudgetProvider);
             UpdateTextShapeSystem.InjectToWorld(ref builder);
             VisibilityTextShapeSystem.InjectToWorld(ref builder);
         }
