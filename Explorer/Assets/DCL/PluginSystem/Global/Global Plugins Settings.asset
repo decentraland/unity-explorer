@@ -23,10 +23,15 @@ MonoBehaviour:
   - rid: 1501337502808539138
   - rid: 2152807656697888768
   - rid: 8147919132522971138
+  - rid: 56198586647707649
   - rid: 1095376790733193218
   references:
     version: 2
     RefIds:
+    - rid: 56198586647707649
+      type: {class: SkyBoxPlugin/Settings, ns: DCL.SkyBox, asm: DCL.Plugins}
+      data:
+        <ForwardRenderer>k__BackingField: {fileID: 11400000, guid: 4a526cc14a7bff94dbd03fa3c9c29720, type: 2}
     - rid: 1095376790733193218
       type: {class: Web3AuthPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
