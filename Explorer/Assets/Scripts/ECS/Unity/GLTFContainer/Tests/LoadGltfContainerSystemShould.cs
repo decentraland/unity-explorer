@@ -32,9 +32,9 @@ namespace ECS.Unity.GLTFContainer.Tests
         public void SetUp()
         {
             system = new LoadGltfContainerSystem(world);
-            IConcurrentBudgetProvider budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
-            budgetProvider.TrySpendBudget().Returns(true);
-            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budgetProvider, budgetProvider);
+            IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
+            budget.TrySpendBudget().Returns(true);
+            createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
         }
 
         [TearDown]

@@ -1,9 +1,7 @@
 namespace DCL.Optimization.PerformanceBudgeting
 {
-    public interface IConcurrentBudgetProvider
+    public interface IReleasablePerformanceBudget : IPerformanceBudget
     {
-        bool TrySpendBudget();
-
         void ReleaseBudget();
     }
 }
