@@ -26,6 +26,8 @@ namespace Global.Dynamic
         [Space]
         [SerializeField] private UIDocument uiToolkitRoot;
         [SerializeField] private UIDocument debugUiRoot;
+        [SerializeField] private UIDocument scenesUiRoot;
+        [SerializeField] private StyleSheet scenesUiStyleSheet;
 
         [Space]
         [SerializeField] private SkyBoxSceneData skyBoxSceneData;
@@ -86,8 +88,7 @@ namespace Global.Dynamic
                 // First load the common global plugin
                 bool isLoaded;
 
-                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer,
-                    identityCache, ct);
+                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, scenesUiRoot, scenesUiStyleSheet, identityCache, ct);
 
                 if (!isLoaded)
                 {
