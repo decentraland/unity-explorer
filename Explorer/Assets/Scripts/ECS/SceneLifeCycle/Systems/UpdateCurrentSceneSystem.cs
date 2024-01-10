@@ -15,18 +15,32 @@ namespace ECS.SceneLifeCycle.Systems
     public partial class UpdateCurrentSceneSystem : BaseUnityLoopSystem
     {
         private readonly Entity playerEntity;
+        private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
 
-        private Vector2Int lastParcelProcessed = new (int.MinValue, int.MinValue);
+        private Vector2Int lastParcelProcessed;
 
-        internal UpdateCurrentSceneSystem(World world, IScenesCache scenesCache, Entity playerEntity) : base(world)
+        internal UpdateCurrentSceneSystem(World world, IRealmData realmData, IScenesCache scenesCache, Entity playerEntity) : base(world)
         {
+            this.realmData = realmData;
             this.scenesCache = scenesCache;
             this.playerEntity = playerEntity;
+            ResetProcessedParcel();
+        }
+
+        private void ResetProcessedParcel()
+        {
+            lastParcelProcessed = new Vector2Int(int.MinValue, int.MinValue);
         }
 
         protected override void Update(float t)
         {
+            if (!realmData.Configured)
+            {
+                ResetProcessedParcel();
+                return;
+            }
+
             Vector3 playerPos = World.Get<TransformComponent>(playerEntity).Transform.position;
             Vector2Int parcel = ParcelMathHelper.FloorToParcel(playerPos);
 

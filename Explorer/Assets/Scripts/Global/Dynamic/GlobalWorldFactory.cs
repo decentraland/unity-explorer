@@ -167,7 +167,7 @@ namespace Global.Dynamic
 
             OwnAvatarLoaderFromDebugMenuSystem.InjectToWorld(ref builder, playerEntity, debugContainerBuilder, realmData);
 
-            UpdateCurrentSceneSystem.InjectToWorld(ref builder, scenesCache, playerEntity);
+            UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, playerEntity);
 
             var pluginArgs = new GlobalPluginArguments(playerEntity);
 
