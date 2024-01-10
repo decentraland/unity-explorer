@@ -24,7 +24,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.WEARABLE)]
-    public partial class LoadWearablesByParamSystem : LoadSystemBase<IWearable[], GetWearableByParamIntention>
+    public partial class LoadWearablesByParamSystem : LoadSystemBase<WearablesResponse, GetWearableByParamIntention>
     {
         private readonly URLSubdirectory lambdaSubdirectory;
 
@@ -37,7 +37,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         internal IURLBuilder urlBuilder = new URLBuilder();
 
         public LoadWearablesByParamSystem(
-            World world, IWebRequestController webRequestController, IStreamableCache<IWearable[], GetWearableByParamIntention> cache,
+            World world, IWebRequestController webRequestController, IStreamableCache<WearablesResponse, GetWearableByParamIntention> cache,
             IRealmData realmData, URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory,
             IWearableCatalog wearableCatalog, MutexSync mutexSync) : base(world, cache, mutexSync)
         {
@@ -50,7 +50,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             isRealmDataReady = () => realmData.Configured;
         }
 
-        protected override async UniTask<StreamableLoadingResult<IWearable[]>> FlowInternalAsync(GetWearableByParamIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
+        protected override async UniTask<StreamableLoadingResult<WearablesResponse>> FlowInternalAsync(GetWearableByParamIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             await UniTask.WaitUntil(isRealmDataReady, cancellationToken: ct);
 
@@ -65,8 +65,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                 WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, wearable, World, partition);
                 intention.Results.Add(wearable);
+                intention.TotalAmount = lambdaResponse.totalAmount;
             }
-            return new StreamableLoadingResult<IWearable[]>(intention.Results.ToArray());
+
+            return new StreamableLoadingResult<WearablesResponse>(new WearablesResponse(intention.Results.ToArray(), intention.TotalAmount));
         }
 
         private URLAddress BuildURL(string userID, IReadOnlyList<(string, string)> urlEncodedParams)
@@ -86,4 +88,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
             return urlBuilder.Build();
         }
     }
+
+
 }

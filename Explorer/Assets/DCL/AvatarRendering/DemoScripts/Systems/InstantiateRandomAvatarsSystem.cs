@@ -123,12 +123,12 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         {
             int avatarsToInstantiate = Mathf.Clamp(number, 0, MAX_AVATAR_NUMBER - (int)totalAvatarsInstantiated.Value);
             totalAvatarsInstantiated.Value += (uint)avatarsToInstantiate;
-
+            int totalAmount = 0;
             var randomAvatarRequest = new RandomAvatarRequest
             {
                 RandomAvatarsToInstantiate = avatarsToInstantiate,
                 BaseWearablesPromise = ParamPromise.Create(World,
-                    new GetWearableByParamIntention(new[] { ("collectionType", "base-wearable"), ("pageSize", "50") }, "DummyUser", new List<IWearable>()),
+                    new GetWearableByParamIntention(new[] { ("collectionType", "base-wearable"), ("pageSize", "50") }, "DummyUser", new List<IWearable>(), totalAmount),
                     PartitionComponent.TOP_PRIORITY),
             };
 

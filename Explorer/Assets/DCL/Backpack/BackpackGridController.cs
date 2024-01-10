@@ -4,16 +4,18 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Web3Authentication.Identities;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
-using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
+using ParamPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Helpers.WearablesResponse, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearableByParamIntention>;
 
 namespace DCL.Backpack
 {
@@ -36,6 +38,7 @@ namespace DCL.Backpack
 
         private readonly List<(string, string)> requestParameters;
         private readonly List<IWearable> results = new (CURRENT_PAGE_SIZE);
+        private readonly int totalAmount;
 
         private IObjectPool<BackpackItemView> gridItemsPool;
         private readonly Dictionary<string, BackpackItemView> usedPoolItems;
@@ -112,11 +115,22 @@ namespace DCL.Backpack
             return backpackItemView;
         }
 
+        private void RequestTotalNumber()
+        {
+            requestParameters.Clear();
+            requestParameters.Add((PAGE_NUMBER, "0"));
+            requestParameters.Add((PAGE_SIZE, "1"));
+            var wearablesPromise = ParamPromise.Create(world,
+                new GetWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.EphemeralAccount.Address, results, totalAmount),
+                PartitionComponent.TOP_PRIORITY);
+
+            AwaitWearablesPromiseForSizeAsync(wearablesPromise, new CancellationTokenSource().Token).Forget();
+        }
+
         public void RequestPage(int pageNumber)
         {
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
-
             requestParameters.Clear();
             requestParameters.Add((PAGE_NUMBER, pageNumber.ToString()));
             requestParameters.Add((PAGE_SIZE, CURRENT_PAGE_SIZE_STR));
@@ -124,7 +138,7 @@ namespace DCL.Backpack
             results.Clear();
 
             var wearablesPromise = ParamPromise.Create(world,
-                new GetWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.EphemeralAccount.Address, results),
+                new GetWearableByParamIntention(requestParameters, "0x8e41609eD5e365Ac23C28d9625Bd936EA9C9E22c"/*web3IdentityCache.Identity!.EphemeralAccount.Address*/, results, totalAmount),
                 PartitionComponent.TOP_PRIORITY);
 
             AwaitWearablesPromiseAsync(wearablesPromise, cts.Token).Forget();
@@ -132,12 +146,22 @@ namespace DCL.Backpack
 
         private async UniTaskVoid AwaitWearablesPromiseAsync(ParamPromise wearablesPromise, CancellationToken ct)
         {
-            AssetPromise<IWearable[], GetWearableByParamIntention> uniTaskAsync = await wearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
+            AssetPromise<WearablesResponse, GetWearableByParamIntention> uniTaskAsync = await wearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
 
             if (!uniTaskAsync.Result!.Value.Succeeded)
                 return;
 
-            SetGridElements(uniTaskAsync.Result.Value.Asset);
+            SetGridElements(uniTaskAsync.Result.Value.Asset.Wearables);
+        }
+
+        private async UniTaskVoid AwaitWearablesPromiseForSizeAsync(ParamPromise wearablesPromise, CancellationToken ct)
+        {
+            AssetPromise<WearablesResponse, GetWearableByParamIntention> uniTaskAsync = await wearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
+
+            if (!uniTaskAsync.Result!.Value.Succeeded)
+                return;
+
+            Debug.Log($"total is {uniTaskAsync.Result.Value.Asset.TotalAmount}");
         }
 
         private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable, BackpackItemView itemView, CancellationToken ct)
