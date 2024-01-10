@@ -9,7 +9,7 @@ export function startParty() {
 function startMusicStream() {
   const streamEntity = engine.addEntity()
   AudioStream.create(streamEntity, {
-    url: 'https://icecast.ravepartyradio.org/ravepartyradio-192.mp3',
+    url: 'http://ice3.somafm.com/dronezone-128-mp3',
     playing: true,
     volume: 0.8
   })

@@ -146,7 +146,7 @@ namespace Global
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
-                new AudioStreamPlugin(),
+                new AudioStreamPlugin(sharedDependencies),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 assetBundlePlugin,
