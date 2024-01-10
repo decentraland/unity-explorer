@@ -17,9 +17,6 @@ namespace DCL.SDKComponents.AudioSources
         /// </summary>
         public AudioSource Result;
 
-        public bool ClipIsNotLoading => ClipPromise == null;
-        public bool ClipLoadingFinished => ClipPromise != null && Result != null;
-
         public AudioSourceComponent(PBAudioSource pbAudioSource)
         {
             ClipPromise = null;

@@ -6,7 +6,6 @@ using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
-using ECS.StreamableLoading;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.Transforms.Components;
 using UnityEngine;
@@ -42,19 +41,20 @@ namespace DCL.SDKComponents.AudioSources
         [All(typeof(PBAudioSource), typeof(AudioSourceComponent))]
         private void UpdateAudioSource(ref PBAudioSource sdkAudioSource, ref AudioSourceComponent audioSourceComponent)
         {
-            if (!sdkAudioSource.IsDirty || !audioSourceComponent.ClipLoadingFinished) return;
+            if (sdkAudioSource.IsDirty)
+            {
+                audioSourceComponent.Result.ApplyPBAudioSource(sdkAudioSource);
+                sdkAudioSource.IsDirty = false;
+            }
 
-            audioSourceComponent.Result.ApplyPBAudioSource(sdkAudioSource);
-
-            sdkAudioSource.IsDirty = false;
             // TODO: Handle clip url changes - refer to ECSAudioSourceComponentHandler.cs in unity-renderer
         }
 
         [Query]
         private void CreateAudioSource(ref AudioSourceComponent audioSourceComponent, ref TransformComponent entityTransform)
         {
-            if (NoBudget() || audioSourceComponent.ClipIsNotLoading || audioSourceComponent.ClipPromise == null
-                || !audioSourceComponent.ClipPromise.Value.TryGetResult(World, out StreamableLoadingResult<AudioClip> promiseResult))
+            if (NoBudget() || audioSourceComponent.ClipPromise == null
+                || !audioSourceComponent.ClipPromise.Value.TryConsume(World, out StreamableLoadingResult<AudioClip> promiseResult))
                 return;
 
             if (audioSourceComponent.Result == null)

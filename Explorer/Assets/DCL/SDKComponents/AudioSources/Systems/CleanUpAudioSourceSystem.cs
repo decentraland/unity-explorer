@@ -19,11 +19,11 @@ namespace DCL.SDKComponents.AudioSources
     [ThrottlingEnabled]
     public partial class CleanUpAudioSourceSystem: BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private ReleaseOnEntityDestroy releaseOnEntityDestroy;
+        private ReleaseAudioSourceComponent releaseAudioSourceComponent;
 
         private CleanUpAudioSourceSystem(World world, AudioClipsCache cache,IComponentPoolsRegistry poolsRegistry)  : base(world)
         {
-            releaseOnEntityDestroy = new ReleaseOnEntityDestroy(world, cache, poolsRegistry);
+            releaseAudioSourceComponent = new ReleaseAudioSourceComponent(world, cache, poolsRegistry);
         }
 
         protected override void Update(float t)
@@ -38,28 +38,28 @@ namespace DCL.SDKComponents.AudioSources
         [None(typeof(PBAudioSource), typeof(DeleteEntityIntention))]
         private void HandleComponentRemoval(ref AudioSourceComponent component)
         {
-            releaseOnEntityDestroy.Update(ref component);
+            releaseAudioSourceComponent.Update(ref component);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void HandleEntityDestruction(ref AudioSourceComponent component)
         {
-            releaseOnEntityDestroy.Update(ref component);
+            releaseAudioSourceComponent.Update(ref component);
         }
 
         public void FinalizeComponents(in Query query)
         {
-            World.InlineQuery<ReleaseOnEntityDestroy, AudioSourceComponent>(in new QueryDescription().WithAll<AudioSourceComponent>(), ref releaseOnEntityDestroy);
+            World.InlineQuery<ReleaseAudioSourceComponent, AudioSourceComponent>(in new QueryDescription().WithAll<AudioSourceComponent>(), ref releaseAudioSourceComponent);
         }
 
-        private readonly struct ReleaseOnEntityDestroy : IForEach<AudioSourceComponent>
+        private readonly struct ReleaseAudioSourceComponent : IForEach<AudioSourceComponent>
         {
             private readonly World world;
             private readonly IComponentPoolsRegistry poolsRegistry;
             private readonly AudioClipsCache cache;
 
-            public ReleaseOnEntityDestroy(World world, AudioClipsCache cache,IComponentPoolsRegistry poolsRegistry)
+            public ReleaseAudioSourceComponent(World world, AudioClipsCache cache,IComponentPoolsRegistry poolsRegistry)
             {
                 this.world = world;
                 this.cache = cache;

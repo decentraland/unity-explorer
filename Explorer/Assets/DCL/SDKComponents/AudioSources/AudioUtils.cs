@@ -1,21 +1,29 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
-namespace ECS.Unity.AudioSources
+namespace DCL.SDKComponents.AudioSources
 {
     public static class AudioUtils
     {
         public static AudioType ToAudioType(this string url)
         {
-            if (!string.IsNullOrEmpty(url))
-                return url[^3..].ToLower() switch
-                       {
-                           "mp3" => AudioType.MPEG,
-                           "wav" => AudioType.WAV,
-                           "ogg" => AudioType.OGGVORBIS,
-                           _ => AudioType.UNKNOWN,
-                       };
+            if (string.IsNullOrEmpty(url))
+            {
+                Debug.LogError($"Cannot detect AudioType. UrlName doesn't contain file extension!. Setting to {AudioType.UNKNOWN.ToString()}");
+                return AudioType.UNKNOWN;
+            }
 
-            Debug.LogError($"Cannot detect AudioType. UrlName doesn't contain file extension!. Setting to {AudioType.UNKNOWN.ToString()}");
+            var ext = url.AsSpan()[^3..];
+
+            if (ext.Equals("mp3", StringComparison.OrdinalIgnoreCase))
+                return AudioType.MPEG;
+
+            if (ext.Equals("wav", StringComparison.OrdinalIgnoreCase))
+                return AudioType.WAV;
+
+            if (ext.Equals("ogg", StringComparison.OrdinalIgnoreCase))
+                return AudioType.OGGVORBIS;
+
             return AudioType.UNKNOWN;
         }
     }

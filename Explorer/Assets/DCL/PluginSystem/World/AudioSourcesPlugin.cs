@@ -7,6 +7,7 @@ using DCL.SDKComponents.AudioSources;
 using DCL.WebRequests;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.AudioClips;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -29,13 +30,17 @@ namespace DCL.PluginSystem.World
             memoryBudgetProvider = sharedDependencies.MemoryBudget;
 
             componentPoolsRegistry = sharedDependencies.ComponentPoolsRegistry;
-            componentPoolsRegistry.AddGameObjectPool<AudioSource>();
+            componentPoolsRegistry.AddGameObjectPool<AudioSource>(onRelease: OnReturnToPool);
             cacheCleaner.Register(componentPoolsRegistry.GetReferenceTypePool<AudioSource>());
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
         }
 
+        private void OnReturnToPool(AudioSource audioSource)
+        {
+            audioSource.clip = null;
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {

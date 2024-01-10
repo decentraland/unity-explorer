@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using DCL.SDKComponents.AudioSources;
 using DCL.Web3Authentication;
 using DCL.Web3Authentication.Authenticators;
 using DCL.Web3Authentication.Identities;
@@ -7,7 +8,6 @@ using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
-using ECS.Unity.AudioSources;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;

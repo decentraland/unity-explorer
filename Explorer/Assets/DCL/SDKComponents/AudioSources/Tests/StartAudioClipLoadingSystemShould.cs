@@ -6,7 +6,6 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common;
 using ECS.TestSuite;
-using ECS.Unity.AudioSources;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
