@@ -69,7 +69,7 @@ namespace ECS.Unity.Materials.Systems
             }
 
             materialComponent.Data = materialData;
-            StartLoad(ref materialComponent, ref partitionComponent);
+            foreignTextures.StartLoad(ref materialComponent, ref partitionComponent);
         }
 
         [Query]
@@ -81,14 +81,8 @@ namespace ECS.Unity.Materials.Systems
                 return;
 
             var materialComponent = new MaterialComponent(MaterialData.CreateFromPBMaterial(material, sceneData));
-            StartLoad(ref materialComponent, ref partitionComponent);
+            foreignTextures.StartLoad(ref materialComponent, ref partitionComponent);
             World.Add(entity, materialComponent);
-        }
-
-        private void StartLoad(ref MaterialComponent materialComponent, ref PartitionComponent partitionComponent)
-        {
-            foreignTextures.CreateGetTexturePromises(ref materialComponent, ref partitionComponent);
-            materialComponent.Status = MaterialComponent.LifeCycle.LoadingInProgress;
         }
     }
 }
