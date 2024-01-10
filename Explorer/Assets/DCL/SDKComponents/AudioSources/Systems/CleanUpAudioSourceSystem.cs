@@ -56,14 +56,15 @@ namespace DCL.SDKComponents.AudioSources
         private readonly struct ReleaseAudioSourceComponent : IForEach<AudioSourceComponent>
         {
             private readonly World world;
-            private readonly IComponentPoolsRegistry poolsRegistry;
             private readonly AudioClipsCache cache;
+            private readonly IComponentPool componentPool;
 
             public ReleaseAudioSourceComponent(World world, AudioClipsCache cache,IComponentPoolsRegistry poolsRegistry)
             {
                 this.world = world;
                 this.cache = cache;
-                this.poolsRegistry = poolsRegistry;
+
+                poolsRegistry.TryGetPool(typeof(AudioSource), out componentPool);
             }
 
             public void Update(ref AudioSourceComponent component)
@@ -78,9 +79,7 @@ namespace DCL.SDKComponents.AudioSources
                 }
 
                 cache.Dereference(component.ClipPromise!.Value.LoadingIntention, component.Result.clip);
-
-                if (poolsRegistry.TryGetPool(typeof(AudioSource), out IComponentPool componentPool))
-                    componentPool.Release(component.Result);
+                componentPool.Release(component.Result);
 
                 component.Dispose();
             }

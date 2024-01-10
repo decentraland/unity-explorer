@@ -7,9 +7,10 @@ namespace ECS.StreamableLoading.AudioClips
 {
     public struct GetAudioClipIntention : ILoadingIntention, IEquatable<GetAudioClipIntention>
     {
-        public CommonLoadingArguments CommonArguments { get; set; }
-
         public AudioType AudioType;
+        private int? hashCode;
+
+        public CommonLoadingArguments CommonArguments { get; set; }
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
@@ -19,8 +20,14 @@ namespace ECS.StreamableLoading.AudioClips
         public override bool Equals(object? obj) =>
             obj is GetAudioClipIntention other && Equals(other);
 
-        public override int GetHashCode() =>
-            HashCode.Combine(AudioType, CommonArguments.URL);
+        public override int GetHashCode()
+        {
+            if (hashCode != null)
+                return hashCode.Value;
+
+            hashCode = CommonArguments.URL.GetHashCode();
+            return hashCode.Value;
+        }
 
         public override string ToString() =>
             $"Get AudioClip Intention: {CommonArguments.URL}";

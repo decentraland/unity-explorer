@@ -53,8 +53,7 @@ namespace DCL.SDKComponents.AudioSources
         [Query]
         private void CreateAudioSource(ref AudioSourceComponent audioSourceComponent, ref TransformComponent entityTransform)
         {
-            if (NoBudget() || audioSourceComponent.ClipPromise == null
-                || !audioSourceComponent.ClipPromise.Value.TryConsume(World, out StreamableLoadingResult<AudioClip> promiseResult))
+            if (NoBudget() || audioSourceComponent.ClipPromise == null || !audioSourceComponent.ClipPromise.Value.TryConsume(World, out StreamableLoadingResult<AudioClip> promiseResult))
                 return;
 
             if (audioSourceComponent.Result == null)
@@ -62,9 +61,9 @@ namespace DCL.SDKComponents.AudioSources
 
             audioSourceComponent.Result.FromPBAudioSource(promiseResult.Asset, audioSourceComponent.PBAudioSource);
 
-            Transform rendererTransform = audioSourceComponent.Result.transform;
-            rendererTransform.SetParent(entityTransform.Transform, false);
-            rendererTransform.ResetLocalTRS();
+            Transform transform = audioSourceComponent.Result.transform;
+            transform.SetParent(entityTransform.Transform, false);
+            transform.ResetLocalTRS();
 
             return;
 

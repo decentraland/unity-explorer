@@ -33,7 +33,7 @@ namespace ECS.StreamableLoading.AudioClips
                 intention.CommonArguments,
                 new GetAudioClipArguments(intention.AudioType),
                 ct,
-                reportCategory: ReportCategory.AUDIO_SOURCES);
+                reportCategory: GetReportCategory());
 
             return new StreamableLoadingResult<AudioClip>(request.CreateAudioClip());
         }
