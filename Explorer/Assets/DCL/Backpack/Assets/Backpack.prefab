@@ -779,6 +779,7 @@ MonoBehaviour:
     m_SubObjectName: 
     m_SubObjectType: 
     m_EditorAssetChanged: 0
+  <PageSelectorView>k__BackingField: {fileID: 3712294798457460945}
 --- !u!1 &4244055408728331100
 GameObject:
   m_ObjectHideFlags: 0
@@ -4642,6 +4643,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 5955730194940385775, guid: 5ed0eaf7428cb4135baf7d2e09a9430a, type: 3}
   m_PrefabInstance: {fileID: 6145944045108438897}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &3712294798457460945 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7407999143312621472, guid: 5ed0eaf7428cb4135baf7d2e09a9430a, type: 3}
+  m_PrefabInstance: {fileID: 6145944045108438897}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d85e016ca45954eb29221845d00761af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &6376347057874398933
 PrefabInstance:
   m_ObjectHideFlags: 0

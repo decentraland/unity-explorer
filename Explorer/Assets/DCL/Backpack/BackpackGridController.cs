@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using DCL.UI;
 using DCL.Web3Authentication.Identities;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -21,7 +22,7 @@ namespace DCL.Backpack
 {
     public class BackpackGridController
     {
-        private const string PAGE_NUMBER = "pageNumber";
+        private const string PAGE_NUMBER = "pageNum";
         private const string PAGE_SIZE = "pageSize";
 
         private const int CURRENT_PAGE_SIZE = 16;
@@ -35,6 +36,7 @@ namespace DCL.Backpack
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
         private readonly IBackpackEquipStatusController backpackEquipStatusController;
+        private readonly PageSelectorController pageSelectorController;
 
         private readonly List<(string, string)> requestParameters;
         private readonly List<IWearable> results = new (CURRENT_PAGE_SIZE);
@@ -63,10 +65,12 @@ namespace DCL.Backpack
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
             this.backpackEquipStatusController = backpackEquipStatusController;
+            this.pageSelectorController = new PageSelectorController(view.PageSelectorView);
 
             usedPoolItems = new ();
             eventBus.EquipEvent += OnEquip;
             eventBus.UnEquipEvent += OnUnequip;
+            pageSelectorController.OnSetPage += RequestPage;
             requestParameters = new List<(string, string)>();
         }
 
@@ -115,19 +119,19 @@ namespace DCL.Backpack
             return backpackItemView;
         }
 
-        private void RequestTotalNumber()
+        public void RequestTotalNumber()
         {
             requestParameters.Clear();
             requestParameters.Add((PAGE_NUMBER, "0"));
-            requestParameters.Add((PAGE_SIZE, "1"));
+            requestParameters.Add((PAGE_SIZE, "0"));
             var wearablesPromise = ParamPromise.Create(world,
-                new GetWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.EphemeralAccount.Address, results, totalAmount),
+                new GetWearableByParamIntention(requestParameters, "0x8e41609eD5e365Ac23C28d9625Bd936EA9C9E22c"/*web3IdentityCache.Identity!.EphemeralAccount.Address*/, results, totalAmount),
                 PartitionComponent.TOP_PRIORITY);
 
             AwaitWearablesPromiseForSizeAsync(wearablesPromise, new CancellationTokenSource().Token).Forget();
         }
 
-        public void RequestPage(int pageNumber)
+        private void RequestPage(int pageNumber)
         {
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
@@ -161,7 +165,8 @@ namespace DCL.Backpack
             if (!uniTaskAsync.Result!.Value.Succeeded)
                 return;
 
-            Debug.Log($"total is {uniTaskAsync.Result.Value.Asset.TotalAmount}");
+            pageSelectorController.Configure(uniTaskAsync.Result.Value.Asset.TotalAmount, CURRENT_PAGE_SIZE);
+            RequestPage(1);
         }
 
         private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable, BackpackItemView itemView, CancellationToken ct)

@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5955730194940385775}
   - component: {fileID: 8118319714304807438}
   - component: {fileID: 9141326849885828937}
+  - component: {fileID: 7407999143312621472}
   m_Layer: 5
   m_Name: PageSelector
   m_TagString: Untagged
@@ -81,6 +82,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_HorizontalFit: 2
   m_VerticalFit: 0
+--- !u!114 &7407999143312621472
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4213288149590170572}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d85e016ca45954eb29221845d00761af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <NextPage>k__BackingField: {fileID: 804860302255169224}
+  <PreviousPage>k__BackingField: {fileID: 7588964123315412853}
+  <PagesContainer>k__BackingField: {fileID: 3576930520628333720}
+  <PageReference>k__BackingField: {fileID: 0}
 --- !u!1 &5140497791659050409
 GameObject:
   m_ObjectHideFlags: 0
@@ -314,7 +331,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 40.55, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2705436137430404885

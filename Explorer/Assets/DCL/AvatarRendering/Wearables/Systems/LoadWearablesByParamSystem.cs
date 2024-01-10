@@ -54,10 +54,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             await UniTask.WaitUntil(isRealmDataReady, cancellationToken: ct);
 
+            URLAddress urlAddress = BuildURL(intention.UserID, intention.Params);
+
             WearableDTO.LambdaResponse lambdaResponse =
-                await (await webRequestController.GetAsync(new CommonArguments(BuildURL(intention.UserID, intention.Params), attemptsCount: 1), ct, GetReportCategory()))
+                await (await webRequestController.GetAsync(new CommonArguments(urlAddress, attemptsCount: 1), ct, GetReportCategory()))
                    .CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
+            intention.TotalAmount = lambdaResponse.totalAmount;
             for (var i = 0; i < lambdaResponse.elements.Count; i++)
             {
                 WearableDTO wearableDto = lambdaResponse.elements[i].entity;
@@ -65,7 +68,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                 WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, wearable, World, partition);
                 intention.Results.Add(wearable);
-                intention.TotalAmount = lambdaResponse.totalAmount;
             }
 
             return new StreamableLoadingResult<WearablesResponse>(new WearablesResponse(intention.Results.ToArray(), intention.TotalAmount));

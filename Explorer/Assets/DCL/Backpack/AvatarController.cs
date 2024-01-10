@@ -48,7 +48,7 @@ namespace DCL.Backpack
 
         public void RequestInitialWearablesPage()
         {
-            backpackGridController.RequestPage(0);
+            backpackGridController.RequestTotalNumber();
         }
 
         public void Activate()
