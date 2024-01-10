@@ -33,49 +33,20 @@ namespace ECS.Unity.AudioStreams.Systems
         [None(typeof(AudioStreamComponent))]
         private void InstantiateAudioStream(in Entity entity, ref PBAudioStream sdkAudio)
         {
-            AudioStreamComponent component = AddComponentToWorldEntity(entity, sdkAudio);
+            MediaPlayer? mediaPlayer = mediaPlayerPool.Get();
 
-            if (sdkAudio.Url.IsValidUrl())
-                ReplicateAudioValues(sdkAudio, component.MediaPlayer);
+            var component = new AudioStreamComponent(sdkAudio, mediaPlayer);
+            World.Add(entity, component);
         }
 
         [Query]
         private void UpdateAudioStream(ref PBAudioStream sdkComponent, ref AudioStreamComponent component)
         {
-            if (!sdkComponent.IsDirty || !sdkComponent.Url.IsValidUrl()) return;
+            if (!sdkComponent.IsDirty || !sdkComponent.Url.IsValidUrl())
+                return;
 
-            if (sdkComponent.HasPlaying && sdkComponent.Playing != component.MediaPlayer.Control.IsPlaying())
-            {
-                if (sdkComponent.Playing)
-                    component.MediaPlayer.Play();
-                else
-                    component.MediaPlayer.Stop();
-            }
-
-            if (sdkComponent.HasVolume)
-                component.MediaPlayer.AudioVolume = sdkComponent.Volume;
-
+            component.Update(sdkComponent);
             sdkComponent.IsDirty = false;
-        }
-
-        private AudioStreamComponent AddComponentToWorldEntity(Entity entity, PBAudioStream sdkAudio)
-        {
-            MediaPlayer? mediaPlayer = mediaPlayerPool.Get();
-            var component = new AudioStreamComponent(sdkAudio, mediaPlayer);
-            World.Add(entity, component);
-
-            return component;
-        }
-
-        private static void ReplicateAudioValues(PBAudioStream sdkAudio, MediaPlayer mediaPlayer)
-        {
-            mediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, sdkAudio.Url, autoPlay: false);
-
-            if (sdkAudio is { HasPlaying: true, Playing: true })
-                mediaPlayer.Play();
-
-            if (sdkAudio.HasVolume)
-                mediaPlayer.AudioVolume = sdkAudio.Volume;
         }
     }
 }
