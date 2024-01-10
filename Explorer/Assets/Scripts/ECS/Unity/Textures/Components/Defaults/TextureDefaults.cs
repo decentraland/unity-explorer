@@ -10,7 +10,7 @@ namespace ECS.Unity.Textures.Components.Defaults
 {
     public static class TextureDefaults
     {
-        public static TextureComponent? CreateTextureComponent([CanBeNull] this TextureUnion self, ISceneData data)
+        public static TextureComponent? CreateTextureComponent(this TextureUnion? self, ISceneData data)
         {
             if (self == null)
                 return null;
