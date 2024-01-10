@@ -10,6 +10,7 @@ using DCL.UI;
 using DCL.Web3Authentication.Identities;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
@@ -24,6 +25,8 @@ namespace DCL.Backpack
         private const string PAGE_NUMBER = "pageNum";
         private const string PAGE_SIZE = "pageSize";
         private const string CATEGORY = "category";
+        private const string ORDER_BY = "orderBy";
+        private const string ORDER_DIRECTION = "direction";
 
         private const int CURRENT_PAGE_SIZE = 16;
         private static readonly string CURRENT_PAGE_SIZE_STR = CURRENT_PAGE_SIZE.ToString();
@@ -48,6 +51,7 @@ namespace DCL.Backpack
         private World world;
         private CancellationTokenSource cts;
         private string currentCategory = "";
+        private BackpackGridSort currentSort = new (NftOrderByOperation.Date, false);
 
         public BackpackGridController(
             BackpackGridView view,
@@ -57,7 +61,8 @@ namespace DCL.Backpack
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
-            IBackpackEquipStatusController backpackEquipStatusController)
+            IBackpackEquipStatusController backpackEquipStatusController,
+            BackpackSortController backpackSortController)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -73,6 +78,7 @@ namespace DCL.Backpack
             eventBus.EquipEvent += OnEquip;
             eventBus.UnEquipEvent += OnUnequip;
             eventBus.FilterCategoryEvent += OnFilterCategory;
+            backpackSortController.OnSortChanged += OnSortChanged;
             pageSelectorController.OnSetPage += RequestPage;
             requestParameters = new List<(string, string)>();
         }
@@ -122,6 +128,7 @@ namespace DCL.Backpack
                 BackpackItemView backpackItemView = loadingResults[i];
                 usedPoolItems.Remove(i.ToString());
                 usedPoolItems.Add(gridWearables[i].GetUrn(), backpackItemView);
+                backpackItemView.gameObject.transform.SetAsFirstSibling();
                 backpackItemView.OnSelectItem += SelectItem;
                 backpackItemView.EquipButton.onClick.AddListener(() => { commandBus.SendCommand(new BackpackEquipCommand(backpackItemView.ItemId)); });
                 backpackItemView.UnEquipButton.onClick.AddListener(() => { commandBus.SendCommand(new BackpackUnEquipCommand(backpackItemView.ItemId)); });
@@ -162,11 +169,20 @@ namespace DCL.Backpack
 
             if(!string.IsNullOrEmpty(currentCategory))
                 requestParameters.Add((CATEGORY, currentCategory));
+
+            requestParameters.Add((ORDER_BY, currentSort.OrderByOperation.ToString()));
+            requestParameters.Add((ORDER_DIRECTION, currentSort.SortAscending ? "ASC" : "DESC"));
         }
 
         private void OnFilterCategory(string category)
         {
             currentCategory = category;
+            RequestTotalNumber();
+        }
+
+        private void OnSortChanged(BackpackGridSort sort)
+        {
+            currentSort = sort;
             RequestTotalNumber();
         }
 

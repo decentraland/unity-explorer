@@ -43,6 +43,7 @@ namespace DCL.Backpack
                 this.view = view;
                 this.backpackCommandBus = backpackCommandBus;
                 var backpackEquipStatusController = new BackpackEquipStatusController(backpackEventBus);
+                BackpackSortController backpackSortController = new BackpackSortController(view.BackpackSortView);
                 BackpackBusController busController = new BackpackBusController(wearableCatalog, backpackEventBus, backpackCommandBus, backpackEquipStatusController);
 
                 rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -56,7 +57,8 @@ namespace DCL.Backpack
                     backpackCommandBus,
                     backpackEventBus,
                     web3IdentityCache,
-                    backpackEquipStatusController);
+                    backpackEquipStatusController,
+                    backpackSortController);
 
                 Dictionary<BackpackSections, ISection> backpackSections = new ()
                 {

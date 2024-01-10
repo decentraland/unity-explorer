@@ -1,7 +1,5 @@
 using DCL.UI;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Backpack
@@ -10,6 +8,9 @@ namespace DCL.Backpack
     {
         [field: SerializeField]
         public BackpackPanelTabSelectorMapping[] TabSelectorMappedViews { get; private set; }
+
+        [field: SerializeField]
+        public BackpackSortDropdownView BackpackSortView { get; private set; }
     }
 
     [Serializable]
