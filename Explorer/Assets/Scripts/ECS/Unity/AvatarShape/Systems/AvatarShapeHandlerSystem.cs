@@ -11,6 +11,7 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
+using System.Collections.Generic;
 
 namespace ECS.Unity.AvatarShape.Systems
 {
@@ -20,6 +21,7 @@ namespace ECS.Unity.AvatarShape.Systems
     public partial class AvatarShapeHandlerSystem : BaseUnityLoopSystem
     {
         private WorldProxy globalWorld;
+        private Dictionary<Entity, Entity> globalEntitiesMap = new Dictionary<Entity, Entity>();
 
         public AvatarShapeHandlerSystem(World world, WorldProxy globalWorld) : base(world)
         {
@@ -40,8 +42,10 @@ namespace ECS.Unity.AvatarShape.Systems
         private void LoadAvatarShape(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent, ref TransformComponent transformComponent)
         {
             Entity globalWorldEntity = globalWorld.Create(pbAvatarShape, partitionComponent, transformComponent);
-            
+
             World.Add(entity, new AvatarShapeComponent());
+
+            globalEntitiesMap[entity] = globalWorldEntity;
         }
 
         [Query]
@@ -51,9 +55,7 @@ namespace ECS.Unity.AvatarShape.Systems
             if (!pbAvatarShape.IsDirty)
                 return;
 
-            //TODO: Test changing transform from scene...
-
-            globalWorld.Add(entity, pbAvatarShape);
+            globalWorld.Add(globalEntitiesMap[entity], pbAvatarShape);
         }
 
         [Query]
@@ -64,7 +66,7 @@ namespace ECS.Unity.AvatarShape.Systems
             World.Remove<AvatarShapeComponent>(entity);
 
             // If the component is removed at scene-world, the global-world representation should disappear entirely
-            globalWorld.Add(entity, new DeleteEntityIntention());
+            RemoveGlobalEntity(entity);
         }
 
         [Query]
@@ -72,8 +74,13 @@ namespace ECS.Unity.AvatarShape.Systems
         private void HandleEntityDestruction(in Entity entity)
         {
             World.Remove<AvatarShapeComponent>(entity);
+            RemoveGlobalEntity(entity);
+        }
 
-            globalWorld.Add(entity, new DeleteEntityIntention());
+        private void RemoveGlobalEntity(Entity sceneEntity)
+        {
+            globalWorld.Add(globalEntitiesMap[sceneEntity], new DeleteEntityIntention());
+            globalEntitiesMap.Remove(sceneEntity);
         }
     }
 }

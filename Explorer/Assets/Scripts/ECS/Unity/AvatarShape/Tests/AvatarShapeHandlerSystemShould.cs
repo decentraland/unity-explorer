@@ -1,17 +1,11 @@
 using Arch.Core;
-using Arch.Core.Utils;
-using CRDT;
 using DCL.ECSComponents;
 using DCL.Utilities;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
-// using DCL.Optimization.Pools;
 using ECS.Unity.AvatarShape.Systems;
-using ECS.Unity.Transforms.Components;
-using NSubstitute;
 using NUnit.Framework;
-using System;
-using UnityEngine;
+using NSubstitute;
 
 namespace ECS.Unity.AvatarShape.Tests
 {
