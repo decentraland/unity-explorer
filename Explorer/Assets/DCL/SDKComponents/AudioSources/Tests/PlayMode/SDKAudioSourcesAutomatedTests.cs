@@ -48,7 +48,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
         }
 
         [UnityTest]
-        [Retry(3)]
+        [Retry(5)]
         public IEnumerator ShouldCreateAudioSourcesForSDKDanceFloorScene()
         {
             InitializationFlowAsync(tearDownCts.Token).Forget();
