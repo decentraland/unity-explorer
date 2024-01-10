@@ -48,7 +48,10 @@ namespace Global.Static
             {
                 IWeb3IdentityCache identityCache;
 
-                if (useStoredCredentials)
+                if (useStoredCredentials
+
+                    // avoid storing invalid credentials
+                    && useRealAuthentication)
                     identityCache = new ProxyIdentityCache(new MemoryWeb3IdentityCache(),
                         new PlayerPrefsIdentityProvider(new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()));
                 else
