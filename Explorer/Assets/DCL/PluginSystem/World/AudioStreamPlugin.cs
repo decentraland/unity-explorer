@@ -17,16 +17,16 @@ namespace DCL.PluginSystem.World
         public AudioStreamPlugin(ECSWorldSingletonSharedDependencies sharedDependencies)
         {
             componentPoolsRegistry = sharedDependencies.ComponentPoolsRegistry;
-            componentPoolsRegistry.AddGameObjectPool<MediaPlayer>(onRelease: OnRelease); // componentPoolsRegistry.AddGameObjectPool<MediaPlayer>(HandleCreation);
+            componentPoolsRegistry.AddGameObjectPool<MediaPlayer>(onRelease: OnReleaseToPool);
 
             // cacheCleaner.Register(componentPoolsRegistry.GetReferenceTypePool<AudioSource>());
-        }
 
-        private static void OnRelease(MediaPlayer mediaPlayer)
-        {
-            mediaPlayer.Stop();
-            mediaPlayer.CloseMedia();
-            mediaPlayer.Events.RemoveAllListeners();
+            void OnReleaseToPool(MediaPlayer mediaPlayer)
+            {
+                mediaPlayer.Stop();
+                mediaPlayer.CloseMedia();
+                mediaPlayer.Events.RemoveAllListeners();
+            }
         }
 
         // private static MediaPlayer HandleCreation()
@@ -39,7 +39,7 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
-            InstantiateAudioStreamSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            AudioStreamSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<MediaPlayer, AudioStreamComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
         }
 

@@ -14,28 +14,48 @@ namespace ECS.Unity.AudioStreams.Systems
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
 
     // [LogCategory(ReportCategory.AUDIO_SOURCES)]
-    public partial class InstantiateAudioStreamSystem : BaseUnityLoopSystem
+    public partial class AudioStreamSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPool<MediaPlayer> mediaPlayerPool;
 
-        private InstantiateAudioStreamSystem(World world, IComponentPoolsRegistry componentPoolsRegistry) : base(world)
+        private AudioStreamSystem(World world, IComponentPoolsRegistry componentPoolsRegistry) : base(world)
         {
             mediaPlayerPool = componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>();
         }
 
         protected override void Update(float t)
         {
-            InstantiateAudioSourceQuery(World);
+            InstantiateAudioStreamQuery(World);
+            UpdateAudioStreamQuery(World);
         }
 
         [Query]
         [None(typeof(AudioStreamComponent))]
-        private void InstantiateAudioSource(in Entity entity, ref PBAudioStream sdkAudio)
+        private void InstantiateAudioStream(in Entity entity, ref PBAudioStream sdkAudio)
         {
             AudioStreamComponent component = AddComponentToWorldEntity(entity, sdkAudio);
 
             if (sdkAudio.Url.IsValidUrl())
                 ReplicateAudioValues(sdkAudio, component.MediaPlayer);
+        }
+
+        [Query]
+        private void UpdateAudioStream(ref PBAudioStream sdkComponent, ref AudioStreamComponent component)
+        {
+            if (!sdkComponent.IsDirty || !sdkComponent.Url.IsValidUrl()) return;
+
+            if (sdkComponent.HasPlaying && sdkComponent.Playing != component.MediaPlayer.Control.IsPlaying())
+            {
+                if (sdkComponent.Playing)
+                    component.MediaPlayer.Play();
+                else
+                    component.MediaPlayer.Stop();
+            }
+
+            if (sdkComponent.HasVolume)
+                component.MediaPlayer.AudioVolume = sdkComponent.Volume;
+
+            sdkComponent.IsDirty = false;
         }
 
         private AudioStreamComponent AddComponentToWorldEntity(Entity entity, PBAudioStream sdkAudio)
