@@ -69,8 +69,7 @@ namespace ECS.Unity.Materials.Systems
             }
 
             materialComponent.Data = materialData;
-            CreateGetTexturePromises(ref materialComponent, ref partitionComponent);
-            materialComponent.Status = MaterialComponent.LifeCycle.LoadingInProgress;
+            StartLoad(ref materialComponent, ref partitionComponent);
         }
 
         [Query]
@@ -88,20 +87,8 @@ namespace ECS.Unity.Materials.Systems
 
         private void StartLoad(ref MaterialComponent materialComponent, ref PartitionComponent partitionComponent)
         {
-            CreateGetTexturePromises(ref materialComponent, ref partitionComponent);
+            foreignTextures.CreateGetTexturePromises(ref materialComponent, ref partitionComponent);
             materialComponent.Status = MaterialComponent.LifeCycle.LoadingInProgress;
-        }
-
-        private void CreateGetTexturePromises(ref MaterialComponent materialComponent, ref PartitionComponent partitionComponent)
-        {
-            foreignTextures.TryCreateGetTexturePromise(in materialComponent.Data.AlbedoTexture, ref materialComponent.AlbedoTexPromise, ref partitionComponent);
-
-            if (materialComponent.Data.IsPbrMaterial)
-            {
-                foreignTextures.TryCreateGetTexturePromise(in materialComponent.Data.AlphaTexture, ref materialComponent.AlphaTexPromise, ref partitionComponent);
-                foreignTextures.TryCreateGetTexturePromise(in materialComponent.Data.EmissiveTexture, ref materialComponent.EmissiveTexPromise, ref partitionComponent);
-                foreignTextures.TryCreateGetTexturePromise(in materialComponent.Data.BumpTexture, ref materialComponent.BumpTexPromise, ref partitionComponent);
-            }
         }
     }
 }

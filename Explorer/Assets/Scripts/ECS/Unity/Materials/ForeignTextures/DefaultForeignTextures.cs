@@ -12,7 +12,7 @@ namespace ECS.Unity.Materials.ForeignTextures
         private readonly World world;
         private readonly int attemptsCount;
 
-        public DefaultForeignTextures(World world, int attemptsCount)
+        public DefaultForeignTextures(World world, int attemptsCount = 5)
         {
             this.world = world;
             this.attemptsCount = attemptsCount;
