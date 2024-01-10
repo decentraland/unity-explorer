@@ -78,10 +78,14 @@ namespace ECS.Unity.Materials.Systems
                 return;
 
             var materialComponent = new MaterialComponent(CreateMaterialData(ref material));
+            StartLoad(ref materialComponent, ref partitionComponent);
+            World.Add(entity, materialComponent);
+        }
+
+        private void StartLoad(ref MaterialComponent materialComponent, ref PartitionComponent partitionComponent)
+        {
             CreateGetTexturePromises(ref materialComponent, ref partitionComponent);
             materialComponent.Status = MaterialComponent.LifeCycle.LoadingInProgress;
-
-            World.Add(entity, materialComponent);
         }
 
         private void CreateGetTexturePromises(ref MaterialComponent materialComponent, ref PartitionComponent partitionComponent)
