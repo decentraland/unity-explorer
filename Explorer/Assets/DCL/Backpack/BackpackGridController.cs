@@ -85,7 +85,6 @@ namespace DCL.Backpack
 
             gridItemsPool = new ObjectPool<BackpackItemView>(
                 () => CreateBackpackItem(backpackItem),
-                _ => { },
                 defaultCapacity: CURRENT_PAGE_SIZE
             );
         }
@@ -105,8 +104,15 @@ namespace DCL.Backpack
 
         private void SetGridElements(IWearable[] gridWearables)
         {
+            //Disables and sets the empty slots as first children to avoid the grid to be reorganized
             for (int j = gridWearables.Length; j < CURRENT_PAGE_SIZE; j++)
+            {
+                loadingResults[j].gameObject.transform.SetAsFirstSibling();
+                loadingResults[j].LoadingView.gameObject.SetActive(false);
+                loadingResults[j].FullBackpackItem.SetActive(false);
+                usedPoolItems.Remove(j.ToString());
                 gridItemsPool.Release(loadingResults[j]);
+            }
 
             for (var i = 0; i < gridWearables.Length; i++)
             {
@@ -189,7 +195,7 @@ namespace DCL.Backpack
         {
             ct.ThrowIfCancellationRequested();
 
-            do { await UniTask.Delay(500, cancellationToken: ct); }
+            do { await UniTask.Delay(250, cancellationToken: ct); }
             while (itemWearable.WearableThumbnail == null);
 
             itemView.WearableThumbnail.sprite = itemWearable.WearableThumbnail.Value.Asset;
