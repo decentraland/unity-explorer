@@ -1,9 +1,9 @@
 using Arch.Core;
-using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.ECSComponents;
 using DCL.Utilities;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
+using ECS.Unity.AvatarShape.Components;
 using ECS.Unity.AvatarShape.Systems;
 using NUnit.Framework;
 using NSubstitute;
@@ -38,7 +38,7 @@ namespace ECS.Unity.AvatarShape.Tests
 
             system.Update(0);
 
-            Assert.AreEqual(1, world.CountEntities(new QueryDescription().WithAll<PBAvatarShape, AvatarShapeComponent>()));
+            Assert.AreEqual(1, world.CountEntities(new QueryDescription().WithAll<PBAvatarShape, SDKAvatarShapeComponent>()));
             Assert.AreEqual(1, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape>()));
             globalWorld.Query(new QueryDescription().WithAll<PBAvatarShape>(), (ref PBAvatarShape comp) => Assert.AreEqual(pbAvatarShapeComponent.Name, comp.Name));
         }
