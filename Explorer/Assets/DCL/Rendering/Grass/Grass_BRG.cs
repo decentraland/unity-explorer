@@ -100,21 +100,21 @@ public unsafe class Grass_BRG : MonoBehaviour
                 _sysmemBuffer[offset + 2] = new float4(1, x * fScale, 0, z);
             }
 
-            int offset_inverse_matrix = itemId + (3 * instanceCount);
+            int offset_inverse_matrix = (itemId * 3) + (3 * instanceCount);
             for (int x = 0; x < nGridDimension; ++x)
             {
-                int offset = (itemId * 3) + offset_inverse_matrix + (x * 3);
+                int offset = offset_inverse_matrix + (x * 3);
                 // compute the new inverse matrix (note: shortcut use identity because aligned cubes normals aren't affected by any non uniform scale
-                _sysmemBuffer[offset + 0] = new float4(1, 0, 0, 0);
-                _sysmemBuffer[offset + 1] = new float4(1, 0, 0, 0);
-                _sysmemBuffer[offset + 2] = new float4(1, 0, 0, 0);
+                _sysmemBuffer[offset + 0] = new float4(1, 1, 1, 1);
+                _sysmemBuffer[offset + 1] = new float4(1, 1, 1, 1);
+                _sysmemBuffer[offset + 2] = new float4(1, 1, 1, 1);
             }
 
             int offset_colour = itemId + (3 * 2 * instanceCount);
             for (int x = 0; x < nGridDimension; ++x)
             {
                 // update colors
-                _sysmemBuffer[offset_colour + x] = new float4(0, 1, 0, 0);
+                _sysmemBuffer[offset_colour + x] = new float4(1, 1, 1, 0);
             }
         }
     }
