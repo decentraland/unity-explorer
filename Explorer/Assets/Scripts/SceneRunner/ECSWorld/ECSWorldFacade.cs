@@ -1,10 +1,10 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using CRDT;
+using DCL.Diagnostics;
 using ECS.LifeCycle;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.Profiling;
 using SystemGroups.Visualiser;
 
@@ -43,7 +43,7 @@ namespace SceneRunner.ECSWorld
             {
                 // We must be able to finalize world no matter what
                 try { finalizeWorldSystems[i].FinalizeComponents(in finalizeSDKComponentsQuery); }
-                catch (Exception e) { Debug.LogException(e); }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.ECS); }
             }
 
             Profiler.EndSample();

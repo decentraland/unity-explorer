@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.Diagnostics;
+using System;
 using UnityEngine;
 
 namespace DCL.SDKComponents.AudioSources
@@ -9,7 +10,7 @@ namespace DCL.SDKComponents.AudioSources
         {
             if (string.IsNullOrEmpty(url))
             {
-                Debug.LogError($"Cannot detect AudioType. UrlName doesn't contain file extension!. Setting to {AudioType.UNKNOWN.ToString()}");
+                ReportHub.LogError(ReportCategory.AUDIO_SOURCES, $"Cannot detect AudioType. UrlName doesn't contain file extension!. Setting to {AudioType.UNKNOWN.ToString()}");
                 return AudioType.UNKNOWN;
             }
 
