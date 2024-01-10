@@ -52,7 +52,7 @@ namespace ECS.Unity.Materials.Systems
 
             material.IsDirty = false;
 
-            MaterialData materialData = CreateMaterialData(ref material);
+            MaterialData materialData = MaterialData.CreateFromPBMaterial(material, sceneData);
 
             if (MaterialDataEqualityComparer.INSTANCE.Equals(materialComponent.Data, materialData))
                 return;
@@ -77,7 +77,7 @@ namespace ECS.Unity.Materials.Systems
             if (!capFrameTimeBudget.TrySpendBudget())
                 return;
 
-            var materialComponent = new MaterialComponent(CreateMaterialData(ref material));
+            var materialComponent = new MaterialComponent(MaterialData.CreateFromPBMaterial(material, sceneData));
             StartLoad(ref materialComponent, ref partitionComponent);
             World.Add(entity, materialComponent);
         }
@@ -99,54 +99,6 @@ namespace ECS.Unity.Materials.Systems
                 TryCreateGetTexturePromise(in materialComponent.Data.BumpTexture, ref materialComponent.BumpTexPromise, ref partitionComponent);
             }
         }
-
-        private MaterialData CreateMaterialData(ref PBMaterial material)
-        {
-            // TODO Video Textures
-
-            TextureComponent? albedoTexture = (material.Pbr?.Texture ?? material.Unlit?.Texture).CreateTextureComponent(sceneData);
-
-            if (material.Pbr != null)
-            {
-                TextureComponent? alphaTexture = material.Pbr.AlphaTexture.CreateTextureComponent(sceneData);
-                TextureComponent? emissiveTexture = material.Pbr.EmissiveTexture.CreateTextureComponent(sceneData);
-                TextureComponent? bumpTexture = material.Pbr.BumpTexture.CreateTextureComponent(sceneData);
-
-                return CreatePBRMaterialData(material, albedoTexture, alphaTexture, emissiveTexture, bumpTexture);
-            }
-
-            return CreateBasicMaterialData(material, albedoTexture);
-        }
-
-        private static MaterialData CreatePBRMaterialData(
-            in PBMaterial pbMaterial,
-            in TextureComponent? albedoTexture,
-            in TextureComponent? alphaTexture,
-            in TextureComponent? emissiveTexture,
-            in TextureComponent? bumpTexture)
-        {
-            var materialData = MaterialData.CreatePBRMaterial(
-                albedoTexture,
-                alphaTexture,
-                emissiveTexture,
-                bumpTexture,
-                pbMaterial.GetAlphaTest(),
-                pbMaterial.GetCastShadows(),
-                pbMaterial.GetAlbedoColor(),
-                pbMaterial.GetEmissiveColor(),
-                pbMaterial.GetReflectiveColor(),
-                pbMaterial.GetTransparencyMode(),
-                pbMaterial.GetMetallic(),
-                pbMaterial.GetRoughness(),
-                pbMaterial.GetSpecularIntensity(),
-                pbMaterial.GetEmissiveIntensity(),
-                pbMaterial.GetDirectIntensity());
-
-            return materialData;
-        }
-
-        private static MaterialData CreateBasicMaterialData(in PBMaterial pbMaterial, in TextureComponent? albedoTexture) =>
-            MaterialData.CreateBasicMaterial(albedoTexture, pbMaterial.GetAlphaTest(), pbMaterial.GetDiffuseColor(), pbMaterial.GetCastShadows());
 
         private bool TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise? promise, ref PartitionComponent partitionComponent)
         {

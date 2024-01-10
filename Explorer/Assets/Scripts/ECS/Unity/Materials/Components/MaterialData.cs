@@ -1,4 +1,8 @@
-﻿using ECS.Unity.Textures.Components;
+﻿using DCL.ECSComponents;
+using ECS.Unity.Materials.Components.Defaults;
+using ECS.Unity.Textures.Components;
+using ECS.Unity.Textures.Components.Extensions;
+using SceneRunner.Scene;
 using UnityEngine;
 
 namespace ECS.Unity.Materials.Components
@@ -55,6 +59,30 @@ namespace ECS.Unity.Materials.Components
             DirectIntensity = directIntensity;
         }
 
+        internal static MaterialData CreateFromPBMaterial(PBMaterial pbMaterial, ISceneData sceneData)
+        {
+            TextureComponent? albedoTexture = (pbMaterial.Pbr?.Texture ?? pbMaterial.Unlit?.Texture).CreateTextureComponent(sceneData);
+
+            if (pbMaterial.Pbr != null)
+            {
+                TextureComponent? alphaTexture = pbMaterial.Pbr.AlphaTexture.CreateTextureComponent(sceneData);
+                TextureComponent? emissiveTexture = pbMaterial.Pbr.EmissiveTexture.CreateTextureComponent(sceneData);
+                TextureComponent? bumpTexture = pbMaterial.Pbr.BumpTexture.CreateTextureComponent(sceneData);
+
+                return CreatePBRMaterial(pbMaterial, albedoTexture, alphaTexture, emissiveTexture, bumpTexture);
+            }
+
+            return CreateBasicMaterial(pbMaterial, albedoTexture);
+        }
+
+        internal static MaterialData CreateBasicMaterial(PBMaterial pbMaterial, in TextureComponent? albedoTexture) =>
+            CreateBasicMaterial(
+                albedoTexture,
+                pbMaterial.GetAlphaTest(),
+                pbMaterial.GetDiffuseColor(),
+                pbMaterial.GetCastShadows()
+            );
+
         internal static MaterialData CreateBasicMaterial(TextureComponent? albedoTexture, float alphaTest, Color diffuseColor, bool castShadows)
         {
             Color defaultColor = Color.white;
@@ -63,6 +91,30 @@ namespace ECS.Unity.Materials.Components
                 alphaTest, castShadows, defaultColor, diffuseColor, defaultColor, defaultColor, MaterialTransparencyMode.Auto,
                 0, 0, 0, 0, 0);
         }
+
+        internal static MaterialData CreatePBRMaterial(in PBMaterial pbMaterial,
+            in TextureComponent? albedoTexture,
+            in TextureComponent? alphaTexture,
+            in TextureComponent? emissiveTexture,
+            in TextureComponent? bumpTexture
+        ) =>
+            CreatePBRMaterial(
+                albedoTexture,
+                alphaTexture,
+                emissiveTexture,
+                bumpTexture,
+                pbMaterial.GetAlphaTest(),
+                pbMaterial.GetCastShadows(),
+                pbMaterial.GetAlbedoColor(),
+                pbMaterial.GetEmissiveColor(),
+                pbMaterial.GetReflectiveColor(),
+                pbMaterial.GetTransparencyMode(),
+                pbMaterial.GetMetallic(),
+                pbMaterial.GetRoughness(),
+                pbMaterial.GetSpecularIntensity(),
+                pbMaterial.GetEmissiveIntensity(),
+                pbMaterial.GetDirectIntensity()
+            );
 
         internal static MaterialData CreatePBRMaterial(
             TextureComponent? albedoTexture,
