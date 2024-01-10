@@ -1,0 +1,34 @@
+{
+    "name": "UIText.Tests",
+    "rootNamespace": "",
+    "references": [
+        "GUID:27619889b8ba8c24980f49ee34dbb44a",
+        "GUID:0acc523941302664db1f4e527237feb3",
+        "GUID:a3c61f15599a43ae9de508c9c4dd5530",
+        "GUID:7f6c11dd1400cef4f838168f18ce244a",
+        "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
+        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+        "GUID:4794e238ed0f65142a4aea5848b513e5",
+        "GUID:3c7b57a14671040bd8c549056adc04f5",
+        "GUID:275e22790c04e9b47a5085d7b0c4432a"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "NSubstitute.dll",
+        "Arch.dll",
+        "Arch.System.dll",
+        "Google.Protobuf.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
