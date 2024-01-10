@@ -6,12 +6,8 @@ using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Common.Components;
-using ECS.StreamableLoading.Textures;
 using ECS.Unity.Materials.Components;
-using ECS.Unity.Materials.Components.Defaults;
-using ECS.Unity.Textures.Components;
-using ECS.Unity.Textures.Components.Extensions;
+using ECS.Unity.Materials.ForeignTextures;
 using SceneRunner.Scene;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
@@ -27,15 +23,23 @@ namespace ECS.Unity.Materials.Systems
     {
         private readonly DestroyMaterial destroyMaterial;
         private readonly ISceneData sceneData;
-        private readonly int attemptsCount;
         private readonly IPerformanceBudget capFrameTimeBudget;
+        private readonly IForeignTextures foreignTextures;
 
-        public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData, int attemptsCount, IPerformanceBudget capFrameTimeBudget) : base(world)
+        public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData, int attemptsCount, IPerformanceBudget capFrameTimeBudget) : this(
+            world,
+            destroyMaterial,
+            sceneData,
+            capFrameTimeBudget,
+            new DefaultForeignTextures(world, attemptsCount)
+        ) { }
+
+        public StartMaterialsLoadingSystem(World world, DestroyMaterial destroyMaterial, ISceneData sceneData, IPerformanceBudget capFrameTimeBudget, IForeignTextures foreignTextures) : base(world)
         {
             this.destroyMaterial = destroyMaterial;
             this.sceneData = sceneData;
-            this.attemptsCount = attemptsCount;
             this.capFrameTimeBudget = capFrameTimeBudget;
+            this.foreignTextures = foreignTextures;
         }
 
         protected override void Update(float t)
@@ -90,56 +94,14 @@ namespace ECS.Unity.Materials.Systems
 
         private void CreateGetTexturePromises(ref MaterialComponent materialComponent, ref PartitionComponent partitionComponent)
         {
-            TryCreateGetTexturePromise(in materialComponent.Data.AlbedoTexture, ref materialComponent.AlbedoTexPromise, ref partitionComponent);
+            foreignTextures.TryCreateGetTexturePromise(in materialComponent.Data.AlbedoTexture, ref materialComponent.AlbedoTexPromise, ref partitionComponent);
 
             if (materialComponent.Data.IsPbrMaterial)
             {
-                TryCreateGetTexturePromise(in materialComponent.Data.AlphaTexture, ref materialComponent.AlphaTexPromise, ref partitionComponent);
-                TryCreateGetTexturePromise(in materialComponent.Data.EmissiveTexture, ref materialComponent.EmissiveTexPromise, ref partitionComponent);
-                TryCreateGetTexturePromise(in materialComponent.Data.BumpTexture, ref materialComponent.BumpTexPromise, ref partitionComponent);
+                foreignTextures.TryCreateGetTexturePromise(in materialComponent.Data.AlphaTexture, ref materialComponent.AlphaTexPromise, ref partitionComponent);
+                foreignTextures.TryCreateGetTexturePromise(in materialComponent.Data.EmissiveTexture, ref materialComponent.EmissiveTexPromise, ref partitionComponent);
+                foreignTextures.TryCreateGetTexturePromise(in materialComponent.Data.BumpTexture, ref materialComponent.BumpTexPromise, ref partitionComponent);
             }
-        }
-
-        private bool TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise? promise, ref PartitionComponent partitionComponent)
-        {
-            if (textureComponent == null)
-            {
-                // If component is being reuse forget the previous promise
-                ReleaseMaterial.TryAddAbortIntention(World, ref promise);
-                return false;
-            }
-
-            TextureComponent textureComponentValue = textureComponent.Value;
-
-            // If data inside promise has not changed just reuse the same promise
-            // as creating and waiting for a new one can be expensive
-            if (Equals(ref textureComponentValue, ref promise))
-                return false;
-
-            // If component is being reused forget the previous promise
-            ReleaseMaterial.TryAddAbortIntention(World, ref promise);
-
-            promise = Promise.Create(World, new GetTextureIntention
-            {
-                CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
-                WrapMode = textureComponentValue.WrapMode,
-                FilterMode = textureComponentValue.FilterMode,
-            }, partitionComponent);
-
-            return true;
-        }
-
-        private static bool Equals(ref TextureComponent textureComponent, ref Promise? promise)
-        {
-            if (promise == null) return false;
-
-            Promise promiseValue = promise.Value;
-
-            GetTextureIntention intention = promiseValue.LoadingIntention;
-
-            return textureComponent.Src == promiseValue.LoadingIntention.CommonArguments.URL &&
-                   textureComponent.WrapMode == intention.WrapMode &&
-                   textureComponent.FilterMode == intention.FilterMode;
         }
     }
 }
