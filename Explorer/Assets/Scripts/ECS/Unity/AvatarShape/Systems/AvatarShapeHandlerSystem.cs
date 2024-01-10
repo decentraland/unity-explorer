@@ -21,7 +21,7 @@ namespace ECS.Unity.AvatarShape.Systems
     {
         private WorldProxy globalWorld;
 
-        internal AvatarShapeHandlerSystem(World world, WorldProxy globalWorld) : base(world)
+        public AvatarShapeHandlerSystem(World world, WorldProxy globalWorld) : base(world)
         {
             this.globalWorld = globalWorld;
         }
@@ -39,10 +39,8 @@ namespace ECS.Unity.AvatarShape.Systems
         [None(typeof(AvatarShapeComponent))]
         private void LoadAvatarShape(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent, ref TransformComponent transformComponent)
         {
-            globalWorld.Add(entity, pbAvatarShape);
-            globalWorld.Add(entity, partitionComponent);
-            globalWorld.Add(entity, transformComponent);
-
+            Entity globalWorldEntity = globalWorld.Create(pbAvatarShape, partitionComponent, transformComponent);
+            
             World.Add(entity, new AvatarShapeComponent());
         }
 
@@ -52,6 +50,8 @@ namespace ECS.Unity.AvatarShape.Systems
         {
             if (!pbAvatarShape.IsDirty)
                 return;
+
+            //TODO: Test changing transform from scene...
 
             globalWorld.Add(entity, pbAvatarShape);
         }
