@@ -45,6 +45,8 @@ namespace DCL.SDKComponents.AudioSources
             if (!sdkAudioSource.IsDirty || !audioSourceComponent.ClipLoadingFinished) return;
 
             audioSourceComponent.Result.ApplyPBAudioSource(sdkAudioSource);
+
+            sdkAudioSource.IsDirty = false;
             // TODO: Handle clip url changes - refer to ECSAudioSourceComponentHandler.cs in unity-renderer
         }
 
@@ -54,8 +56,6 @@ namespace DCL.SDKComponents.AudioSources
             if (NoBudget() || audioSourceComponent.ClipIsNotLoading || audioSourceComponent.ClipPromise == null
                 || !audioSourceComponent.ClipPromise.Value.TryGetResult(World, out StreamableLoadingResult<AudioClip> promiseResult))
                 return;
-
-            audioSourceComponent.ClipLoadingStatus = LifeCycle.LoadingFinished;
 
             if (audioSourceComponent.Result == null)
                 audioSourceComponent.Result ??= audioSourcesPool.Get();

@@ -23,7 +23,7 @@ namespace ECS.StreamableLoading.AudioClips
 
         public void Dispose()
         {
-            foreach (AudioClipData? clip in cache.Values)
+            foreach (AudioClipData clip in cache.Values)
                 UnityObjectUtils.SafeDestroy(clip.AudioClip);
 
             cache.Clear();
@@ -31,13 +31,13 @@ namespace ECS.StreamableLoading.AudioClips
 
         public void Add(in GetAudioClipIntention key, AudioClip asset)
         {
-            if (!cache.ContainsKey(key))
+            if (cache.TryGetValue(key, out AudioClipData? clipData))
+                clipData.AddReference();
+            else
             {
                 cache[key] = new AudioClipData(asset);
                 listedCache.Add((key, cache[key]));
             }
-            else
-                cache[key].AddReference();
 
             ProfilingCounters.AudioClipsInCache.Value = cache.Count;
         }

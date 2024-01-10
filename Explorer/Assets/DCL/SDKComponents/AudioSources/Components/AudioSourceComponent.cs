@@ -13,24 +13,17 @@ namespace DCL.SDKComponents.AudioSources
         public Promise? ClipPromise;
 
         /// <summary>
-        ///     The current status of the Audio Clip loading
-        /// </summary>
-        public ECS.StreamableLoading.LifeCycle ClipLoadingStatus;
-
-        /// <summary>
         ///     The final audio source ready for consumption
         /// </summary>
         public AudioSource Result;
 
-        public bool ClipIsNotLoading => ClipLoadingStatus != ECS.StreamableLoading.LifeCycle.LoadingInProgress;
-        public bool ClipLoadingFinished => ClipLoadingStatus is ECS.StreamableLoading.LifeCycle.LoadingFinished or ECS.StreamableLoading.LifeCycle.Applied;
+        public bool ClipIsNotLoading => ClipPromise == null;
+        public bool ClipLoadingFinished => ClipPromise != null && Result != null;
 
         public AudioSourceComponent(PBAudioSource pbAudioSource)
         {
             ClipPromise = null;
-
             PBAudioSource = pbAudioSource;
-            ClipLoadingStatus = ECS.StreamableLoading.LifeCycle.LoadingNotStarted;
             Result = null;
         }
 

@@ -6,9 +6,9 @@ namespace DCL.WebRequests.AudioClips
     {
         public readonly AudioType AudioType;
 
-        public GetAudioClipArguments(AudioType AudioType)
+        public GetAudioClipArguments(AudioType audioType)
         {
-            this.AudioType = AudioType;
+            this.AudioType = audioType;
         }
     }
 }

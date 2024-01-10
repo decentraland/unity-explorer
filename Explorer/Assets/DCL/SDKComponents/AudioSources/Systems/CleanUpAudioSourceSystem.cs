@@ -9,7 +9,6 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
-using ECS.StreamableLoading;
 using ECS.StreamableLoading.AudioClips;
 using UnityEngine;
 
@@ -69,16 +68,14 @@ namespace DCL.SDKComponents.AudioSources
 
             public void Update(ref AudioSourceComponent component)
             {
-                switch (component.ClipLoadingStatus)
-                {
-                    case LifeCycle.LoadingNotStarted: return;
-                    case LifeCycle.LoadingInProgress:
-                        component.ClipPromise?.ForgetLoading(world);
-                        component.ClipPromise = null;
-                        return;
-                }
+                if (component.ClipPromise == null) return; // loading not started
 
-                if (component.Result == null) return;
+                if (component.Result == null) // loading in progress
+                {
+                    component.ClipPromise.Value.ForgetLoading(world);
+                    component.ClipPromise = null;
+                    return;
+                }
 
                 cache.Dereference(component.ClipPromise!.Value.LoadingIntention, component.Result.clip);
 

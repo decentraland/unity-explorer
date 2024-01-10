@@ -54,7 +54,6 @@ namespace DCL.SDKComponents.AudioSources
                 AudioType = sdkAudioSource.AudioClipUrl.ToAudioType(),
             }, partitionComponent);
 
-            audioSourceComponent.ClipLoadingStatus = ECS.StreamableLoading.LifeCycle.LoadingInProgress;
             World.Add(entity, audioSourceComponent);
         }
     }

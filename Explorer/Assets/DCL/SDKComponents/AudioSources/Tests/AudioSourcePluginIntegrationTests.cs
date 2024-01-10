@@ -74,7 +74,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
 
             // Assert
             AudioSourceComponent afterUpdate = world.Get<AudioSourceComponent>(entity);
-            Assert.That(afterUpdate.ClipLoadingStatus, Is.EqualTo(ECS.StreamableLoading.LifeCycle.LoadingFinished));
+            Assert.That(afterUpdate.ClipPromise, Is.Not.Null);
             Assert.That(afterUpdate.Result, Is.Not.Null);
             Assert.That(afterUpdate.Result.clip, Is.Not.Null);
             Assert.That(afterUpdate.Result.clip.length, Is.EqualTo(TestAudioClip.length).Within(0.1f));

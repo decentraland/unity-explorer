@@ -63,7 +63,6 @@ namespace DCL.SDKComponents.AudioSources.Tests
             Assert.That(audioSourceComponent.PBAudioSource, Is.EqualTo(pbAudioSource));
             Assert.That(audioSourceComponent.ClipPromise, Is.Not.Null);
             Assert.That(audioSourceComponent.Result, Is.Null);
-            Assert.That(audioSourceComponent.ClipLoadingStatus, Is.EqualTo(ECS.StreamableLoading.LifeCycle.LoadingInProgress));
 
             // Assert promise
             Assert.That(audioSourceComponent.ClipPromise!.Value, Is.Not.Null);

@@ -29,7 +29,6 @@ namespace DCL.SDKComponents.AudioSources.Tests
             void CreateComponent()
             {
                 component = new AudioSourceComponent(CreatePBAudioSource());
-                component.ClipLoadingStatus = ECS.StreamableLoading.LifeCycle.LoadingInProgress;
                 component.ClipPromise = AssetPromise<AudioClip, GetAudioClipIntention>.Create(world, new GetAudioClipIntention(), PartitionComponent.TOP_PRIORITY);
             }
 
@@ -68,7 +67,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
 
             // Assert
             AudioSourceComponent afterUpdate = world.Get<AudioSourceComponent>(entity);
-            Assert.That(afterUpdate.ClipLoadingStatus, Is.EqualTo(ECS.StreamableLoading.LifeCycle.LoadingInProgress));
+            Assert.That(afterUpdate.ClipPromise, Is.Not.Null);
             Assert.That(afterUpdate.Result, Is.Null);
         }
 
@@ -83,7 +82,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
 
             // Assert
             AudioSourceComponent afterUpdate = world.Get<AudioSourceComponent>(entity);
-            Assert.That(afterUpdate.ClipLoadingStatus, Is.EqualTo(ECS.StreamableLoading.LifeCycle.LoadingFinished));
+            Assert.That(afterUpdate.ClipPromise, Is.Not.Null);
             Assert.That(afterUpdate.Result, Is.Not.Null);
             Assert.That(afterUpdate.Result.clip, Is.EqualTo(TestAudioClip));
         }
