@@ -1,14 +1,13 @@
 ﻿using CommunicationData.URLHelpers;
 using Decentraland.Common;
-using JetBrains.Annotations;
 using SceneRunner.Scene;
 using UnityEngine;
 using Texture = Decentraland.Common.Texture;
 using TextureWrapMode = UnityEngine.TextureWrapMode;
 
-namespace ECS.Unity.Textures.Components.Defaults
+namespace ECS.Unity.Textures.Components.Extensions
 {
-    public static class TextureDefaults
+    public static class TextureDefaultsExtension
     {
         public static TextureComponent? CreateTextureComponent(this TextureUnion? self, ISceneData data)
         {
