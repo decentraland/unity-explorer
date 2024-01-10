@@ -30,16 +30,11 @@ namespace DCL.PluginSystem.World
             memoryBudgetProvider = sharedDependencies.MemoryBudget;
 
             componentPoolsRegistry = sharedDependencies.ComponentPoolsRegistry;
-            componentPoolsRegistry.AddGameObjectPool<AudioSource>(onRelease: OnReturnToPool);
+            componentPoolsRegistry.AddGameObjectPool<AudioSource>(onRelease: audioSource => audioSource.clip = null);
             cacheCleaner.Register(componentPoolsRegistry.GetReferenceTypePool<AudioSource>());
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
-        }
-
-        private void OnReturnToPool(AudioSource audioSource)
-        {
-            audioSource.clip = null;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
