@@ -14,14 +14,14 @@ namespace DCL.PluginSystem.World
     public class NftShapePlugin : IDCLWorldPlugin
     {
         private readonly INftShapeRendererFactory nftShapeRendererFactory;
-        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
+        private readonly IPerformanceBudget instantiationFrameTimeBudgetProvider;
 
-        public NftShapePlugin(IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry) : this(
+        public NftShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry) : this(
             new PoolNftShapeRendererFactory(componentPoolsRegistry),
             instantiationFrameTimeBudgetProvider
         ) { }
 
-        public NftShapePlugin(INftShapeRendererFactory nftShapeRendererFactory, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider)
+        public NftShapePlugin(INftShapeRendererFactory nftShapeRendererFactory, IPerformanceBudget instantiationFrameTimeBudgetProvider)
         {
             this.nftShapeRendererFactory = nftShapeRendererFactory;
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;

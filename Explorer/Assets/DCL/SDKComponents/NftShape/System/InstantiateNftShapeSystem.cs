@@ -18,9 +18,9 @@ namespace DCL.SDKComponents.NftShape.System
     public partial class InstantiateNftShapeSystem : BaseUnityLoopSystem
     {
         private readonly INftShapeRendererFactory nftShapeRendererFactory;
-        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
+        private readonly IPerformanceBudget instantiationFrameTimeBudgetProvider;
 
-        public InstantiateNftShapeSystem(World world, INftShapeRendererFactory nftShapeRendererFactory, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider) : base(world)
+        public InstantiateNftShapeSystem(World world, INftShapeRendererFactory nftShapeRendererFactory, IPerformanceBudget instantiationFrameTimeBudgetProvider) : base(world)
         {
             this.nftShapeRendererFactory = nftShapeRendererFactory;
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
@@ -29,7 +29,7 @@ namespace DCL.SDKComponents.NftShape.System
         public InstantiateNftShapeSystem(World world, INftShapeRendererFactory nftShapeRendererFactory) : this(
             world,
             nftShapeRendererFactory,
-            new FrameTimeCapBudgetProvider(
+            new FrameTimeCapBudget(
                 33,
                 new ProfilingProvider()
             )

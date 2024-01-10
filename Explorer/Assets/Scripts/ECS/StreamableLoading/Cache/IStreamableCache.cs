@@ -27,12 +27,6 @@ namespace ECS.StreamableLoading.Cache
         void Add(in TLoadingIntention key, TAsset asset);
 
         /// <summary>
-        ///     Signal the cache that a single usage of asset went out of scope.
-        ///     It is needed for cache with limited capacity based on LRU, reference counting
-        /// </summary>
-        void Dereference(in TLoadingIntention key, TAsset asset);
-
-        /// <summary>
         ///     Unload assets from the cache to free memory
         /// </summary>
         void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount);

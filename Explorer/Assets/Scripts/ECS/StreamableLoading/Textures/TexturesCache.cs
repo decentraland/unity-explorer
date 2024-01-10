@@ -51,8 +51,6 @@ namespace ECS.StreamableLoading.Textures
             return true;
         }
 
-        public void Dereference(in GetTextureIntention key, Texture2D asset) { }
-
         public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount)
         {
             for (var i = 0; frameTimeBudget.TrySpendBudget()
