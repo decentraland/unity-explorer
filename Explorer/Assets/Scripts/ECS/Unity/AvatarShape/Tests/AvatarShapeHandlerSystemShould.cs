@@ -24,16 +24,12 @@ namespace ECS.Unity.AvatarShape.Tests
         [SetUp]
         public void SetUp()
         {
-            // globalWorld = new World();
-            // globalWorld = Substitute.For<World>(666);
             globalWorld = World.Create();
-            // globalWorld.Reserve(new Span<ComponentType>(), 10);
             var worldProxy = new WorldProxy();
             worldProxy.SetWorld(globalWorld);
             system = new AvatarShapeHandlerSystem(world, worldProxy);
 
-            // entity = world.Create(new CRDTEntity(5));
-            entity = world.Create(new CRDTEntity(6), PartitionComponent.TOP_PRIORITY);
+            entity = world.Create(PartitionComponent.TOP_PRIORITY);
             AddTransformToEntity(entity);
         }
 
@@ -42,12 +38,13 @@ namespace ECS.Unity.AvatarShape.Tests
         {
             Assert.AreEqual(0, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape>()));
 
-            world.Add(entity, new PBAvatarShape());
+            PBAvatarShape pbAvatarShapeComponent = new PBAvatarShape() { Name = "cthulhu"};
+            world.Add(entity, pbAvatarShapeComponent);
 
             system.Update(0);
 
             Assert.AreEqual(1, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape>()));
-            // globalWorld.Received(1).Add();
+            world.Query(new QueryDescription().WithAll<PBAvatarShape>(), (ref PBAvatarShape comp) => Assert.AreEqual(pbAvatarShapeComponent, comp));
         }
 
         [Test]
