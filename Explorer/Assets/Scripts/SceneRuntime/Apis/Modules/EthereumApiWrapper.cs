@@ -31,7 +31,7 @@ namespace SceneRuntime.Apis.Modules
         [PublicAPI("Used by StreamingAssets/Js/Modules/EthereumController.js")]
         public object SendAsync(double id, string method, string jsonParams)
         {
-            async UniTask<SendEthereumMessageResponse> SendAndFormatAsync(string method, object[] @params, CancellationToken ct)
+            async UniTask<SendEthereumMessageResponse> SendAndFormatAsync(double id, string method, object[] @params, CancellationToken ct)
             {
                 try
                 {
@@ -43,7 +43,12 @@ namespace SceneRuntime.Apis.Modules
 
                     return new SendEthereumMessageResponse
                     {
-                        jsonAnyResponse = JsonConvert.SerializeObject(result),
+                        jsonAnyResponse = JsonConvert.SerializeObject(new SendEthereumMessageResponse.Payload
+                        {
+                            id = (long)id,
+                            jsonrpc = "2.0",
+                            result = result,
+                        }),
                     };
                 }
                 catch (Exception e)
@@ -52,7 +57,12 @@ namespace SceneRuntime.Apis.Modules
 
                     return new SendEthereumMessageResponse
                     {
-                        jsonAnyResponse = "",
+                        jsonAnyResponse = JsonConvert.SerializeObject(new SendEthereumMessageResponse.Payload
+                        {
+                            id = (long)id,
+                            jsonrpc = "2.0",
+                            result = null,
+                        }),
                     };
                 }
             }
@@ -60,7 +70,7 @@ namespace SceneRuntime.Apis.Modules
             // TODO: support cancellations by id (?)
             sendCancellationToken = sendCancellationToken.SafeRestart();
 
-            return SendAndFormatAsync(method, JsonConvert.DeserializeObject<object[]>(jsonParams), sendCancellationToken.Token)
+            return SendAndFormatAsync(id, method, JsonConvert.DeserializeObject<object[]>(jsonParams), sendCancellationToken.Token)
                   .AsTask()
                   .ToPromise();
         }
