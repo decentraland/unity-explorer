@@ -101,13 +101,12 @@ namespace DCL.Backpack
 
                 world.TryGet(playerEntity, out AvatarShapeComponent avatarShapeComponent);
 
+                avatarController.RequestInitialWearablesPage();
                 if(!avatarShapeComponent.WearablePromise.IsConsumed)
                     await avatarShapeComponent.WearablePromise.ToUniTaskAsync(world, cancellationToken: cts.Token);
 
                 foreach (URN avatarSharedWearable in world.Get<Profile>(playerEntity).Avatar.SharedWearables)
                     backpackCommandBus.SendCommand(new BackpackEquipCommand(avatarSharedWearable.ToString()));
-
-                avatarController.RequestInitialWearablesPage();
             }
 
             public void Activate()

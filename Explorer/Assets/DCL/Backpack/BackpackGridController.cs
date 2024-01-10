@@ -12,7 +12,6 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
@@ -40,6 +39,7 @@ namespace DCL.Backpack
 
         private readonly List<(string, string)> requestParameters;
         private readonly List<IWearable> results = new (CURRENT_PAGE_SIZE);
+        private readonly BackpackItemView[] loadingResults = new BackpackItemView[CURRENT_PAGE_SIZE];
         private readonly int totalAmount;
 
         private IObjectPool<BackpackItemView> gridItemsPool;
@@ -90,15 +90,29 @@ namespace DCL.Backpack
             );
         }
 
-        private void SetGridElements(IWearable[] gridWearables)
+        private void SetGridAsLoading()
         {
             ClearPoolElements();
+            for (int i = 0; i < CURRENT_PAGE_SIZE; i++)
+            {
+                BackpackItemView backpackItemView = gridItemsPool.Get();
+                backpackItemView.LoadingView.StartLoadingAnimation(backpackItemView.FullBackpackItem);
+                backpackItemView.gameObject.transform.SetAsLastSibling();
+                loadingResults[i] = backpackItemView;
+                usedPoolItems.Add(i.ToString(), backpackItemView);
+            }
+        }
+
+        private void SetGridElements(IWearable[] gridWearables)
+        {
+            for (int j = gridWearables.Length; j < CURRENT_PAGE_SIZE; j++)
+                gridItemsPool.Release(loadingResults[j]);
 
             for (var i = 0; i < gridWearables.Length; i++)
             {
-                BackpackItemView backpackItemView = gridItemsPool.Get();
+                BackpackItemView backpackItemView = loadingResults[i];
+                usedPoolItems.Remove(i.ToString());
                 usedPoolItems.Add(gridWearables[i].GetUrn(), backpackItemView);
-
                 backpackItemView.OnSelectItem += SelectItem;
                 backpackItemView.EquipButton.onClick.AddListener(() => { commandBus.SendCommand(new BackpackEquipCommand(backpackItemView.ItemId)); });
                 backpackItemView.UnEquipButton.onClick.AddListener(() => { commandBus.SendCommand(new BackpackUnEquipCommand(backpackItemView.ItemId)); });
@@ -121,6 +135,7 @@ namespace DCL.Backpack
 
         public void RequestTotalNumber()
         {
+            SetGridAsLoading();
             requestParameters.Clear();
             requestParameters.Add((PAGE_NUMBER, "0"));
             requestParameters.Add((PAGE_SIZE, "0"));
@@ -133,6 +148,7 @@ namespace DCL.Backpack
 
         private void RequestPage(int pageNumber)
         {
+            SetGridAsLoading();
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
             requestParameters.Clear();
@@ -171,7 +187,7 @@ namespace DCL.Backpack
 
         private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable, BackpackItemView itemView, CancellationToken ct)
         {
-            itemView.LoadingView.StartLoadingAnimation(itemView.FullBackpackItem);
+            ct.ThrowIfCancellationRequested();
 
             do { await UniTask.Delay(500, cancellationToken: ct); }
             while (itemWearable.WearableThumbnail == null);
@@ -188,8 +204,12 @@ namespace DCL.Backpack
                 backpackItemView.Value.UnEquipButton.onClick.RemoveAllListeners();
                 backpackItemView.Value.OnSelectItem -= SelectItem;
                 backpackItemView.Value.EquippedIcon.SetActive(false);
+                backpackItemView.Value.ItemId = "";
                 gridItemsPool.Release(backpackItemView.Value);
             }
+
+            for(var i = 0; i < loadingResults.Length; i++)
+                loadingResults[i] = null;
 
             usedPoolItems.Clear();
         }
