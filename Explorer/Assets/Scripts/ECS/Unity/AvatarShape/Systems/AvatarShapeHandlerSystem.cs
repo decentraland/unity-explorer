@@ -5,27 +5,28 @@ using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
-using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.Utilities;
+using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
+using ECS.Unity.AvatarShape.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
-using System.Collections.Generic;
 
 namespace ECS.Unity.AvatarShape.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [LogCategory(ReportCategory.AVATAR)]
     [ThrottlingEnabled]
-    public partial class AvatarShapeHandlerSystem : BaseUnityLoopSystem
+    public partial class AvatarShapeHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private WorldProxy globalWorld;
-        private Dictionary<Entity, Entity> globalEntitiesMap = new Dictionary<Entity, Entity>();
+        private ReleaseOnEntityDestroy releaseOnEntityDestroy;
 
         public AvatarShapeHandlerSystem(World world, WorldProxy globalWorld) : base(world)
         {
             this.globalWorld = globalWorld;
+            releaseOnEntityDestroy = new ReleaseOnEntityDestroy(globalWorld);
         }
 
         protected override void Update(float t)
@@ -38,49 +39,58 @@ namespace ECS.Unity.AvatarShape.Systems
         }
 
         [Query]
-        [None(typeof(AvatarShapeComponent))]
+        [None(typeof(SDKAvatarShapeComponent))]
         private void LoadAvatarShape(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent, ref TransformComponent transformComponent)
         {
             Entity globalWorldEntity = globalWorld.Create(pbAvatarShape, partitionComponent, transformComponent);
-
-            World.Add(entity, new AvatarShapeComponent());
-
-            globalEntitiesMap[entity] = globalWorldEntity;
+            World.Add(entity, new SDKAvatarShapeComponent(globalWorldEntity));
         }
 
         [Query]
-        [All(typeof(AvatarShapeComponent))]
-        private void UpdateAvatarShape(in Entity entity, ref PBAvatarShape pbAvatarShape)
+        private void UpdateAvatarShape(ref PBAvatarShape pbAvatarShape, ref SDKAvatarShapeComponent sdkAvatarShapeComponent)
         {
             if (!pbAvatarShape.IsDirty)
                 return;
 
-            globalWorld.Add(globalEntitiesMap[entity], pbAvatarShape);
+            globalWorld.Add(sdkAvatarShapeComponent.globalWorldEntity, pbAvatarShape);
         }
 
         [Query]
-        [All(typeof(AvatarShapeComponent))]
         [None(typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(in Entity entity)
+        private void HandleComponentRemoval(in Entity entity, ref SDKAvatarShapeComponent sdkAvatarShapeComponent)
         {
-            World.Remove<AvatarShapeComponent>(entity);
-
             // If the component is removed at scene-world, the global-world representation should disappear entirely
-            RemoveGlobalEntity(entity);
+            globalWorld.Add(sdkAvatarShapeComponent.globalWorldEntity, new DeleteEntityIntention());
+
+            World.Remove<SDKAvatarShapeComponent>(entity);
         }
 
         [Query]
-        [All(typeof(AvatarShapeComponent), typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(in Entity entity)
+        [All(typeof(DeleteEntityIntention))]
+        private void HandleEntityDestruction(in Entity entity, ref SDKAvatarShapeComponent sdkAvatarShapeComponent)
         {
-            World.Remove<AvatarShapeComponent>(entity);
-            RemoveGlobalEntity(entity);
+            World.Remove<SDKAvatarShapeComponent>(entity);
+            globalWorld.Add(sdkAvatarShapeComponent.globalWorldEntity, new DeleteEntityIntention());
         }
 
-        private void RemoveGlobalEntity(Entity sceneEntity)
+        public void FinalizeComponents(in Query query)
         {
-            globalWorld.Add(globalEntitiesMap[sceneEntity], new DeleteEntityIntention());
-            globalEntitiesMap.Remove(sceneEntity);
+            World.InlineQuery<ReleaseOnEntityDestroy, SDKAvatarShapeComponent>(new QueryDescription().WithAll<SDKAvatarShapeComponent>(), ref releaseOnEntityDestroy);
+        }
+
+        private readonly struct ReleaseOnEntityDestroy : IForEach<SDKAvatarShapeComponent>
+        {
+            private readonly WorldProxy globalWorld;
+
+            public ReleaseOnEntityDestroy(WorldProxy globalWorld)
+            {
+                this.globalWorld = globalWorld;
+            }
+
+            public void Update(ref SDKAvatarShapeComponent provider)
+            {
+                globalWorld.Add(provider.globalWorldEntity, new DeleteEntityIntention());
+            }
         }
     }
 }

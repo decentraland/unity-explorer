@@ -34,9 +34,7 @@ namespace DCL.PluginSystem.World
         {
             ResetDirtyFlagSystem<PBAvatarShape>.InjectToWorld(ref builder);
             var avatarShapeHandlerSystem = AvatarShapeHandlerSystem.InjectToWorld(ref builder, globalWorld);
-
-            // TODO: Should 'IFinalizeWorldSystem' be implemented for this component???
-            // finalizeWorldSystems.Add(avatarShapeHandlerSystem);
+            finalizeWorldSystems.Add(avatarShapeHandlerSystem);
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }

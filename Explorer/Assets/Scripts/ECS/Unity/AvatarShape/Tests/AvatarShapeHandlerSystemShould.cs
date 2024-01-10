@@ -75,5 +75,11 @@ namespace ECS.Unity.AvatarShape.Tests
         {
 
         }
+
+        [Test]
+        public void RemoveEntityFromGlobalWorldOnSceneUnload()
+        {
+
+        }
     }
 }
