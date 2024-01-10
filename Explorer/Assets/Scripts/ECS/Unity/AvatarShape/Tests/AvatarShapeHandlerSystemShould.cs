@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.ECSComponents;
 using DCL.Utilities;
 using ECS.Prioritization.Components;
@@ -32,19 +33,35 @@ namespace ECS.Unity.AvatarShape.Tests
         {
             Assert.AreEqual(0, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape>()));
 
-            PBAvatarShape pbAvatarShapeComponent = new PBAvatarShape() { Name = "cthulhu"};
+            PBAvatarShape pbAvatarShapeComponent = new PBAvatarShape() { Name = "Cthulhu"};
             world.Add(entity, pbAvatarShapeComponent);
 
             system.Update(0);
 
+            Assert.AreEqual(1, world.CountEntities(new QueryDescription().WithAll<PBAvatarShape, AvatarShapeComponent>()));
             Assert.AreEqual(1, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape>()));
-            world.Query(new QueryDescription().WithAll<PBAvatarShape>(), (ref PBAvatarShape comp) => Assert.AreEqual(pbAvatarShapeComponent, comp));
+            globalWorld.Query(new QueryDescription().WithAll<PBAvatarShape>(), (ref PBAvatarShape comp) => Assert.AreEqual(pbAvatarShapeComponent.Name, comp.Name));
         }
 
         [Test]
         public void ForwardSDKAvatarShapeUpdateToGlobalWorldSystems()
         {
+            Assert.AreEqual(0, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape>()));
 
+            // Creation
+            PBAvatarShape pbAvatarShapeComponent = new PBAvatarShape() { Name = "Cthulhu"};
+            world.Add(entity, pbAvatarShapeComponent);
+
+            system.Update(0);
+
+            // Update
+            pbAvatarShapeComponent.Name = "Dagon";
+            world.Add(entity, pbAvatarShapeComponent);
+
+            system.Update(0);
+
+            Assert.AreEqual(1, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape>()));
+            globalWorld.Query(new QueryDescription().WithAll<PBAvatarShape>(), (ref PBAvatarShape comp) => Assert.AreEqual(pbAvatarShapeComponent.Name, comp.Name));
         }
 
         [Test]
