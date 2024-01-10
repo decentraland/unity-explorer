@@ -25,6 +25,8 @@ namespace ECS.Unity.AudioStreams.Components
         public void Dispose()
         {
             MediaPlayer.Stop();
+            MediaPlayer.CloseMedia();
+            MediaPlayer.Events.RemoveAllListeners();
         }
     }
 }

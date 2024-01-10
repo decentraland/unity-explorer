@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
+using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Unity.AudioStreams.Components;
 using ECS.Unity.Groups;
@@ -24,20 +25,37 @@ namespace ECS.Unity.AudioStreams.Systems
 
         protected override void Update(float t)
         {
-            InstantiateAudioSource2Query(World);
+            InstantiateAudioSourceQuery(World);
         }
 
         [Query]
         [None(typeof(AudioStreamComponent))]
-        private void InstantiateAudioSource2(in Entity entity, ref PBAudioStream sdkAudio)
+        private void InstantiateAudioSource(in Entity entity, ref PBAudioStream sdkAudio)
         {
-            var component = new AudioStreamComponent(sdkAudio, mediaPlayerPool.Get());
-            component.MediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, sdkAudio.Url, autoPlay: true);
+            AudioStreamComponent component = AddComponentToWorldEntity(entity, sdkAudio);
+
+            if (sdkAudio.Url.IsValidUrl())
+                ReplicateAudioValues(sdkAudio, component.MediaPlayer);
+        }
+
+        private AudioStreamComponent AddComponentToWorldEntity(Entity entity, PBAudioStream sdkAudio)
+        {
+            MediaPlayer? mediaPlayer = mediaPlayerPool.Get();
+            var component = new AudioStreamComponent(sdkAudio, mediaPlayer);
             World.Add(entity, component);
 
-            // var component = new PrimitiveColliderComponent();
-            // Instantiate(entity, crdtEntity, setupColliderCases[sdkComponent.MeshCase], ref component, ref sdkComponent, ref transform);
-            // World.Add(entity, component);
+            return component;
+        }
+
+        private static void ReplicateAudioValues(PBAudioStream sdkAudio, MediaPlayer mediaPlayer)
+        {
+            mediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, sdkAudio.Url, autoPlay: false);
+
+            if (sdkAudio is { HasPlaying: true, Playing: true })
+                mediaPlayer.Play();
+
+            if (sdkAudio.HasVolume)
+                mediaPlayer.AudioVolume = sdkAudio.Volume;
         }
     }
 }
