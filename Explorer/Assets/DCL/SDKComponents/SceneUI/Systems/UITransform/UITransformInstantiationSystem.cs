@@ -21,7 +21,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private readonly UIDocument canvas;
         private readonly IComponentPool<VisualElement> transformsPool;
 
-        private UITransformInstantiationSystem(World world, UIDocument canvas, IComponentPoolsRegistry poolsRegistry) : base(world)
+        public UITransformInstantiationSystem(World world, UIDocument canvas, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             this.canvas = canvas;
             transformsPool = poolsRegistry.GetReferenceTypePool<VisualElement>();

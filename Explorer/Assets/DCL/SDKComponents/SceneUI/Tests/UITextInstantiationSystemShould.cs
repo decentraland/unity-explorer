@@ -29,7 +29,6 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 }, null);
 
             system = new UITextInstantiationSystem(world, poolsRegistry);
-
             entity = world.Create();
             uiTransformComponent = AddUITransformToEntity(entity);
         }
