@@ -1,11 +1,18 @@
+using DCL.UI;
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.Backpack
 {
-    public class BackpackItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class BackpackItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
+        public event Action<string> OnSelectItem;
+
+        [field: SerializeField]
+        public string ItemId { get; set; }
+
         [field: SerializeField]
         public GameObject HoverBackground { get; private set; }
 
@@ -16,21 +23,52 @@ namespace DCL.Backpack
         public Button EquipButton { get; private set; }
 
         [field: SerializeField]
-        public Button InfoButton { get; private set; }
+        public Button UnEquipButton { get; private set; }
 
         [field: SerializeField]
         public GameObject EquippedIcon { get; private set; }
 
+        [field: SerializeField]
+        public Image CategoryImage { get; private set; }
+
+        [field: SerializeField]
+        public Image WearableThumbnail { get; private set; }
+
+        [field: SerializeField]
+        public Image RarityBackground { get; private set; }
+
+        [field: SerializeField]
+        public Image FlapBackground { get; private set; }
+
+        [field: SerializeField]
+        public LoadingBrightView LoadingView { get; private set; }
+
+        [field: SerializeField]
+        public GameObject FullBackpackItem { get; private set; }
+
+        public void SetEquipButtonsState()
+        {
+            EquipButton.gameObject.SetActive(!EquippedIcon.activeSelf);
+            UnEquipButton.gameObject.SetActive(EquippedIcon.activeSelf);
+        }
+
         public void OnPointerEnter(PointerEventData eventData)
         {
             HoverBackground.SetActive(true);
-            EquipButton.gameObject.SetActive(!EquippedIcon.activeSelf);
-            InfoButton.gameObject.SetActive(EquippedIcon.activeSelf);
+            SetEquipButtonsState();
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             HoverBackground.SetActive(false);
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (string.IsNullOrEmpty(ItemId))
+                return;
+
+            OnSelectItem?.Invoke(ItemId);
         }
     }
 }
