@@ -5,16 +5,13 @@ using CRDT.Serializer;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
-using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Web3;
-using Newtonsoft.Json;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using UnityEngine.Profiling;
 using Utility.Multithreading;
 
@@ -256,20 +253,6 @@ namespace CrdtEcsBridge.Engine
         public void SetIsDisposing()
         {
             isDisposing = true;
-        }
-
-        public async UniTask<SendEthereumMessageResponse> SendEthereumMessageAsync(string method, object[] @params, CancellationToken ct)
-        {
-            object result = await ethereumApi.SendAsync<object>(new EthApiRequest
-            {
-                method = method,
-                @params = @params,
-            }, ct);
-
-            return new SendEthereumMessageResponse
-            {
-                jsonAnyResponse = JsonConvert.SerializeObject(result),
-            };
         }
 
         /// <summary>

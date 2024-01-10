@@ -1,6 +1,7 @@
 using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Web3;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
@@ -30,7 +31,7 @@ namespace SceneRuntime
         private readonly JSTaskResolverResetable resetableSource;
 
         private EngineApiWrapper engineApi;
-
+        private EthereumApiWrapper ethereumApi;
         private RuntimeWrapper runtimeWrapper;
 
         public SceneRuntimeImpl(
@@ -98,6 +99,11 @@ namespace SceneRuntime
         public void RegisterRuntime(IRuntime api)
         {
             engine.AddHostObject("UnityRuntime", runtimeWrapper = new RuntimeWrapper(api, sceneExceptionsHandler));
+        }
+
+        public void RegisterEthereumApi(IEthereumApi ethereumApi)
+        {
+            engine.AddHostObject("UnityEthereumApi", this.ethereumApi = new EthereumApiWrapper(ethereumApi, sceneExceptionsHandler));
         }
 
         public void SetIsDisposing()

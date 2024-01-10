@@ -21,6 +21,7 @@ namespace Global.Static
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer;
         [SerializeField] private bool useRealAuthentication;
+        [SerializeField] private bool useStoredCredentials;
         [SerializeField] private string authenticationServerUrl;
         [SerializeField] private string authenticationSignatureUrl;
         [SerializeField] private string[] ethWhitelistMethods;
@@ -45,7 +46,13 @@ namespace Global.Static
         {
             try
             {
-                var identityCache = new MemoryWeb3IdentityCache();
+                IWeb3IdentityCache identityCache;
+
+                if (useStoredCredentials)
+                    identityCache = new ProxyIdentityCache(new MemoryWeb3IdentityCache(),
+                        new PlayerPrefsIdentityProvider(new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()));
+                else
+                    identityCache = new MemoryWeb3IdentityCache();
 
                 var dappWeb3Authenticator = new DappWeb3Authenticator(new UnityAppWebBrowser(),
                     authenticationServerUrl, authenticationSignatureUrl,
@@ -61,7 +68,13 @@ namespace Global.Static
                     web3Authenticator = new ProxyWeb3Authenticator(new RandomGeneratedWeb3Authenticator(),
                         identityCache);
 
-                await web3Authenticator.LoginAsync(ct);
+                if (useRealAuthentication)
+                {
+                    if (identityCache.Identity is { IsExpired: true })
+                        await web3Authenticator.LoginAsync(ct);
+                }
+                else
+                    await web3Authenticator.LoginAsync(ct);
 
                 SceneSharedContainer sceneSharedContainer;
 

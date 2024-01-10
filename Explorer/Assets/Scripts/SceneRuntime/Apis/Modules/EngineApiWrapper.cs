@@ -1,13 +1,9 @@
 ﻿using CrdtEcsBridge.Engine;
-using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
-using Newtonsoft.Json;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
-using System.Threading;
 using UnityEngine.Profiling;
-using Utility;
 
 namespace SceneRuntime.Apis.Modules
 {
@@ -18,7 +14,6 @@ namespace SceneRuntime.Apis.Modules
         private readonly IInstancePoolsProvider instancePoolsProvider;
         private readonly ISceneExceptionsHandler exceptionsHandler;
 
-        private CancellationTokenSource sendCancellationToken;
         private byte[] lastInput;
 
         public EngineApiWrapper(IEngineApi api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler)
@@ -94,17 +89,6 @@ namespace SceneRuntime.Apis.Modules
                 exceptionsHandler.OnEngineException(e);
                 return ScriptableByteArray.EMPTY;
             }
-        }
-
-        [PublicAPI("Used by StreamingAssets/Js/Modules/EthereumController.js")]
-        public object SendEthereumMessageAsync(int id, string method, string jsonParams)
-        {
-            // TODO: support cancellations by id (?)
-            sendCancellationToken = sendCancellationToken.SafeRestart();
-
-            return api.SendEthereumMessageAsync(method, JsonConvert.DeserializeObject<object[]>(jsonParams), sendCancellationToken.Token)
-                      .AsTask()
-                      .ToPromise();
         }
 
         public void SetIsDisposing()

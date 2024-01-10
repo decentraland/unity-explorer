@@ -189,6 +189,7 @@ namespace SceneRunner
 
             var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData);
             sceneRuntime.RegisterRuntime(runtimeImplementation);
+            sceneRuntime.RegisterEthereumApi(ethereumApi);
 
             return new SceneFacade(
                 sceneRuntime,
