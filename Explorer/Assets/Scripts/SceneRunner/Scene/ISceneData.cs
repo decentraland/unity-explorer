@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
+using UnityEngine;
 using Utility;
 
 namespace SceneRunner.Scene
@@ -50,5 +51,46 @@ namespace SceneRunner.Scene
         bool IsUrlDomainAllowed(string url);
 
         bool IsSdk7();
+
+        class Fake : ISceneData
+        {
+            public SceneShortInfo SceneShortInfo => new (Vector2Int.zero, "Fake");
+            public ParcelMathHelper.SceneGeometry Geometry => new (Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes());
+            public SceneAssetBundleManifest AssetBundleManifest => SceneAssetBundleManifest.NULL;
+            public StaticSceneMessages StaticSceneMessages => StaticSceneMessages.EMPTY;
+
+            public bool HasRequiredPermission(string permission) =>
+                true;
+
+            public bool TryGetMainScriptUrl(out URLAddress result)
+            {
+                result = URLAddress.EMPTY;
+                return false;
+            }
+
+            public bool TryGetContentUrl(string url, out URLAddress result)
+            {
+                result = URLAddress.EMPTY;
+                return false;
+            }
+
+            public bool TryGetHash(string name, out string hash)
+            {
+                hash = string.Empty;
+                return false;
+            }
+
+            public bool TryGetMediaUrl(string url, out URLAddress result)
+            {
+                result = URLAddress.EMPTY;
+                return false;
+            }
+
+            public bool IsUrlDomainAllowed(string url) =>
+                false;
+
+            public bool IsSdk7() =>
+                true;
+        }
     }
 }

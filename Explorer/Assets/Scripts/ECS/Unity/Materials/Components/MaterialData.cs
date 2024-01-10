@@ -59,6 +59,17 @@ namespace ECS.Unity.Materials.Components
             DirectIntensity = directIntensity;
         }
 
+        public static MaterialData CreateFromPBNftShape(PBNftShape pbNftShape, ISceneData sceneData)
+        {
+            var albedoTexture = pbNftShape.CreateTextureComponent(sceneData);
+            return CreateBasicMaterial(
+                albedoTexture,
+                0,
+                Color.white,
+                false
+            );
+        }
+
         internal static MaterialData CreateFromPBMaterial(PBMaterial pbMaterial, ISceneData sceneData)
         {
             TextureComponent? albedoTexture = (pbMaterial.Pbr?.Texture ?? pbMaterial.Unlit?.Texture).CreateTextureComponent(sceneData);
