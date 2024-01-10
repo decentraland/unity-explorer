@@ -36,14 +36,14 @@ namespace DCL.SDKComponents.SceneUI.Tests
         [Test]
         public void InstantiateUIText()
         {
-            //Arrange
+            // Arrange
             var input = new PBUiText();
 
-            //Act
+            // Act
             world.Add(entity, input);
             system.Update(0);
 
-            //Assert
+            // Assert
             ref UITextComponent uiTextComponent = ref world.Get<UITextComponent>(entity);
             Assert.IsNotNull(uiTextComponent.Label);
             Assert.AreEqual($"UIText (Entity {entity.Id})", uiTextComponent.Label.name);
@@ -54,7 +54,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         [Test]
         public void UpdateUIText()
         {
-            //Arrange
+            // Arrange
             var input = new PBUiText();
             world.Add(entity, input);
             system.Update(0);
@@ -62,7 +62,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
             for (var i = 0; i < NUMBER_OF_UPDATES; i++)
             {
-                //Act
+                // Act
                 input.Value = $"Test text {i}";
                 input.Color = new Color4 { R = i, G = 1, B = 1, A = 1 };
                 input.FontSize = i + 1;
@@ -70,7 +70,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 input.IsDirty = true;
                 system.Update(0);
 
-                //Assert
+                // Assert
                 ref UITextComponent uiTextComponent = ref world.Get<UITextComponent>(entity);
                 Assert.AreEqual(input.Value, uiTextComponent.Label.text);
                 Assert.IsTrue(input.GetColor() == uiTextComponent.Label.style.color);

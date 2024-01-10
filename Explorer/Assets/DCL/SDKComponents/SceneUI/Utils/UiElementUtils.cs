@@ -177,7 +177,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             }
         }
 
-        private static StyleEnum<DisplayStyle> GetDisplay(YGDisplay display)
+        public static StyleEnum<DisplayStyle> GetDisplay(YGDisplay display)
         {
             switch (display)
             {

@@ -22,7 +22,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private readonly UIDocument canvas;
         private readonly ISceneStateProvider sceneStateProvider;
 
-        private UITransformUpdateSystem(World world, UIDocument canvas, ISceneStateProvider sceneStateProvider) : base(world)
+        public UITransformUpdateSystem(World world, UIDocument canvas, ISceneStateProvider sceneStateProvider) : base(world)
         {
             this.canvas = canvas;
             this.sceneStateProvider = sceneStateProvider;
