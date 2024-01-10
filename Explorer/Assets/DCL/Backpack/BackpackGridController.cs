@@ -23,6 +23,7 @@ namespace DCL.Backpack
     {
         private const string PAGE_NUMBER = "pageNum";
         private const string PAGE_SIZE = "pageSize";
+        private const string CATEGORY = "category";
 
         private const int CURRENT_PAGE_SIZE = 16;
         private static readonly string CURRENT_PAGE_SIZE_STR = CURRENT_PAGE_SIZE.ToString();
@@ -46,6 +47,7 @@ namespace DCL.Backpack
         private readonly Dictionary<string, BackpackItemView> usedPoolItems;
         private World world;
         private CancellationTokenSource cts;
+        private string currentCategory = "";
 
         public BackpackGridController(
             BackpackGridView view,
@@ -70,6 +72,7 @@ namespace DCL.Backpack
             usedPoolItems = new ();
             eventBus.EquipEvent += OnEquip;
             eventBus.UnEquipEvent += OnUnequip;
+            eventBus.FilterCategoryEvent += OnFilterCategory;
             pageSelectorController.OnSetPage += RequestPage;
             requestParameters = new List<(string, string)>();
         }
@@ -142,9 +145,8 @@ namespace DCL.Backpack
         public void RequestTotalNumber()
         {
             SetGridAsLoading();
-            requestParameters.Clear();
-            requestParameters.Add((PAGE_NUMBER, "0"));
-            requestParameters.Add((PAGE_SIZE, "0"));
+            BuildRequestParameters("0", "0");
+
             var wearablesPromise = ParamPromise.Create(world,
                 new GetWearableByParamIntention(requestParameters, "0x8e41609eD5e365Ac23C28d9625Bd936EA9C9E22c"/*web3IdentityCache.Identity!.EphemeralAccount.Address*/, results, totalAmount),
                 PartitionComponent.TOP_PRIORITY);
@@ -152,15 +154,28 @@ namespace DCL.Backpack
             AwaitWearablesPromiseForSizeAsync(wearablesPromise, new CancellationTokenSource().Token).Forget();
         }
 
+        private void BuildRequestParameters(string pageNumber, string pageSize)
+        {
+            requestParameters.Clear();
+            requestParameters.Add((PAGE_NUMBER, pageNumber));
+            requestParameters.Add((PAGE_SIZE, pageSize));
+
+            if(!string.IsNullOrEmpty(currentCategory))
+                requestParameters.Add((CATEGORY, currentCategory));
+        }
+
+        private void OnFilterCategory(string category)
+        {
+            currentCategory = category;
+            RequestTotalNumber();
+        }
+
         private void RequestPage(int pageNumber)
         {
             SetGridAsLoading();
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
-            requestParameters.Clear();
-            requestParameters.Add((PAGE_NUMBER, pageNumber.ToString()));
-            requestParameters.Add((PAGE_SIZE, CURRENT_PAGE_SIZE_STR));
-
+            BuildRequestParameters(pageNumber.ToString(), CURRENT_PAGE_SIZE_STR);
             results.Clear();
 
             var wearablesPromise = ParamPromise.Create(world,

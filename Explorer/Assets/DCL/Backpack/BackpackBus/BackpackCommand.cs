@@ -41,4 +41,14 @@ namespace DCL.Backpack.BackpackBus
             IsHidden = isHidden;
         }
     }
+
+    public readonly struct BackpackFilterCategoryCommand
+    {
+        public readonly string Category;
+
+        public BackpackFilterCategoryCommand(string category)
+        {
+            Category = category;
+        }
+    }
 }

@@ -26,12 +26,18 @@ namespace DCL.Backpack.BackpackBus
             this.backpackCommandBus.OnUnEquipMessageReceived += HandleUnEquipCommand;
             this.backpackCommandBus.OnHideMessageReceived += HandleHideCommand;
             this.backpackCommandBus.OnSelectMessageReceived += HandleSelectCommand;
+            this.backpackCommandBus.OnFilterCategoryMessageReceived += HandleFilterCategoryCommand;
         }
 
         private void HandleSelectCommand(BackpackSelectCommand command)
         {
             if (wearableCatalog.TryGetWearable(command.Id, out IWearable wearable))
                 backpackEventBus.SendSelect(wearable);
+        }
+
+        private void HandleFilterCategoryCommand(BackpackFilterCategoryCommand command)
+        {
+            backpackEventBus.SendFilterCategory(command.Category);
         }
 
         private void HandleEquipCommand(BackpackEquipCommand command)

@@ -9,10 +9,12 @@ namespace DCL.Backpack.BackpackBus
         public event Action<IWearable> EquipEvent;
         public event Action<IWearable> UnEquipEvent;
         public event Action<string[]> HideEvent;
+        public event Action<string> FilterCategoryEvent;
 
         public void SendSelect(IWearable equipWearable);
         public void SendEquip(IWearable equipWearable);
         public void SendUnEquip(IWearable unEquipWearable);
         public void SendHide(string[] hideWearableCategories);
+        public void SendFilterCategory(string category);
     }
 }

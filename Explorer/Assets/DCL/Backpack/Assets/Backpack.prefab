@@ -727,7 +727,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -40, y: 2}
+  m_AnchoredPosition: {x: -40, y: 24}
   m_SizeDelta: {x: 570, y: 646}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1889771204570624278
@@ -1991,7 +1991,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6822543606753027690, guid: 9a3416ab3e1b9486ba48f239340e202d, type: 3}
       propertyPath: <Category>k__BackingField
-      value: Body
+      value: body_shape
       objectReference: {fileID: 0}
     - target: {fileID: 7495390461251039812, guid: 9a3416ab3e1b9486ba48f239340e202d, type: 3}
       propertyPath: m_AnchorMax.y
@@ -2403,7 +2403,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6822543606753027690, guid: 9a3416ab3e1b9486ba48f239340e202d, type: 3}
       propertyPath: <Category>k__BackingField
-      value: Bottom
+      value: Lower_Body
       objectReference: {fileID: 0}
     - target: {fileID: 7495390461251039812, guid: 9a3416ab3e1b9486ba48f239340e202d, type: 3}
       propertyPath: m_AnchorMax.y
@@ -3675,7 +3675,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6822543606753027690, guid: 9a3416ab3e1b9486ba48f239340e202d, type: 3}
       propertyPath: <Category>k__BackingField
-      value: Earrings
+      value: Earring
       objectReference: {fileID: 0}
     - target: {fileID: 7495390461251039812, guid: 9a3416ab3e1b9486ba48f239340e202d, type: 3}
       propertyPath: m_AnchorMax.y
@@ -4543,7 +4543,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5955730194940385775, guid: 5ed0eaf7428cb4135baf7d2e09a9430a, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 70
+      value: 86
       objectReference: {fileID: 0}
     - target: {fileID: 5955730194940385775, guid: 5ed0eaf7428cb4135baf7d2e09a9430a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

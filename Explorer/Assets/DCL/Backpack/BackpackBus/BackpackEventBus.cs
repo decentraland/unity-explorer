@@ -9,6 +9,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<IWearable> EquipEvent;
         public event Action<IWearable> UnEquipEvent;
         public event Action<string[]> HideEvent;
+        public event Action<string> FilterCategoryEvent;
 
         public void SendSelect(IWearable equipWearable) =>
             SelectEvent?.Invoke(equipWearable);
@@ -21,5 +22,8 @@ namespace DCL.Backpack.BackpackBus
 
         public void SendHide(string[] hideWearableCategories) =>
             HideEvent?.Invoke(hideWearableCategories);
+
+        public void SendFilterCategory(string category) =>
+            FilterCategoryEvent?.Invoke(category);
     }
 }

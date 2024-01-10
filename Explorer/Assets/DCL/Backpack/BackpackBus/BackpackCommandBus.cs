@@ -9,6 +9,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<BackpackUnEquipCommand> OnUnEquipMessageReceived;
         public event Action<BackpackSelectCommand> OnSelectMessageReceived;
         public event Action<BackpackHideCommand> OnHideMessageReceived;
+        public event Action<BackpackFilterCategoryCommand> OnFilterCategoryMessageReceived;
 
         public void SendCommand(BackpackEquipCommand command)
         {
@@ -28,6 +29,11 @@ namespace DCL.Backpack.BackpackBus
         public void SendCommand(BackpackHideCommand command)
         {
             OnHideMessageReceived?.Invoke(command);
+        }
+
+        public void SendCommand(BackpackFilterCategoryCommand command)
+        {
+            OnFilterCategoryMessageReceived?.Invoke(command);
         }
     }
 }
