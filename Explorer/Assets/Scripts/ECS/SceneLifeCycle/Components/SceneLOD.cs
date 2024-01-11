@@ -46,7 +46,7 @@ namespace ECS.SceneLifeCycle.Components
                 lods[0].SetActive(false);
                 lods[0].gameObject.name = "_lod1";
                 lods[1].SetActive(false);
-                lods[0].gameObject.name = "_lod2";
+                lods[1].gameObject.name = "_lod2";
             }
         }
 
