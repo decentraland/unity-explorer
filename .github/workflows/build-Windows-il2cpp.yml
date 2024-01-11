@@ -82,8 +82,7 @@ jobs:
         run: |
           echo "${{ secrets.GPG_PRIVATE_KEY_BASE64 }}" | base64 -d > private.gpg
           gpg --batch --import private.gpg
-          $packagesFile="requiredPackages-desktop.unitypackage.gpg"
-          curl -L "https://renderer-artifacts.decentraland.org/artifacts/$packagesFile" -o requiredPackages.unitypackage.gpg
+          curl -L "https://renderer-artifacts.decentraland.org/artifacts/requiredPackages-desktop.unitypackage.gpg" -o requiredPackages.unitypackage.gpg
           gpg --output requiredPackages.unitypackage --decrypt requiredPackages.unitypackage.gpg
 
       - name: Import Packages into Unity
