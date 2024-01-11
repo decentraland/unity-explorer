@@ -44,7 +44,9 @@ namespace ECS.SceneLifeCycle.Components
                 lods[0] = Object.Instantiate(lod2Prefab, positionByParcelPosition, Quaternion.identity, lodContainer);
                 lods[1] = Object.Instantiate(lod3Prefab, positionByParcelPosition, Quaternion.identity, lodContainer);
                 lods[0].SetActive(false);
+                lods[0].gameObject.name = "_lod1";
                 lods[1].SetActive(false);
+                lods[0].gameObject.name = "_lod2";
             }
         }
 
