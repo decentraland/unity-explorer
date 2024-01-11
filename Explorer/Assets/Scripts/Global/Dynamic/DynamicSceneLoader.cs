@@ -3,13 +3,13 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.Web3Authentication;
 using DCL.SkyBox;
 using DCL.Web3Authentication.Authenticators;
 using DCL.Web3Authentication.Identities;
 using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
 using Utility;
 
@@ -20,14 +20,15 @@ namespace Global.Dynamic
     /// </summary>
     public class DynamicSceneLoader : MonoBehaviour
     {
+        private const string SCENES_UI_ROOT_CANVAS = "ScenesUIRootCanvas";
+        private const string SCENES_UI_STYLE_SHEET = "ScenesUIStyleSheet";
+
         [Header("Settings")]
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer;
         [Space]
         [SerializeField] private UIDocument uiToolkitRoot;
         [SerializeField] private UIDocument debugUiRoot;
-        [SerializeField] private UIDocument scenesUiRoot;
-        [SerializeField] private StyleSheet scenesUiStyleSheet;
 
         [Space]
         [SerializeField] private SkyBoxSceneData skyBoxSceneData;
@@ -39,9 +40,14 @@ namespace Global.Dynamic
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
         private IWeb3VerifiedAuthenticator? web3Authenticator;
+        private UIDocument scenesUIcanvas;
+        private StyleSheet scenesUIStyleSheet;
 
-        private void Awake()
+        private async void Awake()
         {
+            scenesUIcanvas = Instantiate(await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ROOT_CANVAS)).GetComponent<UIDocument>();
+            scenesUIStyleSheet = await Addressables.LoadAssetAsync<StyleSheet>(SCENES_UI_STYLE_SHEET);
+
             realmLauncher.Initialize(settings.Realms);
 
             InitializationFlowAsync(destroyCancellationToken).Forget();
@@ -88,7 +94,7 @@ namespace Global.Dynamic
                 // First load the common global plugin
                 bool isLoaded;
 
-                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, scenesUiRoot, scenesUiStyleSheet, identityCache, ct);
+                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, scenesUIcanvas, scenesUIStyleSheet, identityCache, ct);
 
                 if (!isLoaded)
                 {

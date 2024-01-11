@@ -1,12 +1,12 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
-using DCL.Web3Authentication;
 using DCL.Web3Authentication.Authenticators;
 using DCL.Web3Authentication.Identities;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
 
 namespace Global.Static
@@ -16,19 +16,24 @@ namespace Global.Static
     /// </summary>
     public class StaticSceneLauncher : MonoBehaviour
     {
+        private const string SCENES_UI_ROOT_CANVAS = "ScenesUIRootCanvas";
+        private const string SCENES_UI_STYLE_SHEET = "ScenesUIStyleSheet";
+
         [SerializeField] private SceneLauncher sceneLauncher;
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer;
-        [SerializeField] private UIDocument scenesUiRoot;
-        [SerializeField] private StyleSheet scenesUiStyleSheet;
 
         private ISceneFacade sceneFacade;
-
         private StaticContainer staticContainer;
         private IWeb3Authenticator? web3Authenticator;
+        private UIDocument scenesUIcanvas;
+        private StyleSheet scenesUIStyleSheet;
 
-        private void Awake()
+        private async void Awake()
         {
+            scenesUIcanvas = Instantiate(await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ROOT_CANVAS)).GetComponent<UIDocument>();
+            scenesUIStyleSheet = await Addressables.LoadAssetAsync<StyleSheet>(SCENES_UI_STYLE_SHEET);
+
             InitializationFlowAsync(destroyCancellationToken).Forget();
         }
 
@@ -51,7 +56,7 @@ namespace Global.Static
                 SceneSharedContainer sceneSharedContainer;
 
                 (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettingsContainer, scenePluginSettingsContainer,
-                    scenesUiRoot, scenesUiStyleSheet, identityCache, ct);
+                    scenesUIcanvas, scenesUIStyleSheet, identityCache, ct);
                 sceneLauncher.Initialize(sceneSharedContainer, destroyCancellationToken);
             }
             catch (OperationCanceledException) { }

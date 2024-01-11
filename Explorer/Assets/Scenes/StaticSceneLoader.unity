@@ -179,8 +179,6 @@ MonoBehaviour:
     - sdk6-basic-scene
   globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
-  scenesUiRoot: {fileID: 1254164264}
-  scenesUiStyleSheet: {fileID: 7433441132597879392, guid: 295cf8ad8d171d849863eccaf581c9e7, type: 3}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -436,78 +434,6 @@ MonoBehaviour:
     mipBias: 0
     varianceClampScale: 0.9
     contrastAdaptiveSharpening: 0
---- !u!1001 &1254164263
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 4780495006830554941, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
-      propertyPath: m_RootOrder
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 4780495006830554941, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4780495006830554941, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4780495006830554941, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4780495006830554941, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4780495006830554941, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4780495006830554941, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4780495006830554941, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4780495006830554941, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4780495006830554941, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4780495006830554941, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8765448689815683113, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
-      propertyPath: m_Name
-      value: ScenesUIRootCanvas
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
---- !u!114 &1254164264 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3889322179606995116, guid: e0f5a4ab5d8f74640ae94adb6824bd45, type: 3}
-  m_PrefabInstance: {fileID: 1254164263}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &2137356830
 GameObject:
   m_ObjectHideFlags: 0
