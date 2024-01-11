@@ -40,10 +40,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                 return;
 
             if (entitiesMap.TryGetValue(sdkModel.Parent, out Entity newParentEntity) && newParentEntity != sceneRoot)
-            {
                 SetNewChild(ref uiTransformComponent, World.Reference(entity), newParentEntity);
-                uiTransformComponent.RightOf = sdkModel.RightOf;
-            }
         }
 
         private void SetNewChild(ref UITransformComponent childComponent, EntityReference childEntityReference, Entity parentEntity)

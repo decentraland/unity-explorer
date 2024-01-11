@@ -11,7 +11,6 @@ namespace DCL.SDKComponents.SceneUI.Components
     {
         public VisualElement Transform;
         public EntityReference Parent;
-        public int RightOf;
         public HashSet<EntityReference> Children;
         public bool IsHidden;
 
