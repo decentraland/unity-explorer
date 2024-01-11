@@ -18,12 +18,16 @@ using System.Linq;
 using System.Threading;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 
 namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
 {
     public class SDKAudioSourcesAutomatedTests
     {
+        private const string SCENES_UI_ROOT_CANVAS = "ScenesUIRootCanvas";
+        private const string SCENES_UI_STYLE_SHEET = "ScenesUIStyleSheet";
         private const string TEST_SCENE = "Dance-floor";
         private const int TARGET_FPS = 60;
 
@@ -106,7 +110,13 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             CancellationToken ct)
         {
             // First load the common global plugin
-            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer, web3IdentityCache, ethereumApi, ct);
+            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(
+                globalSettingsContainer,
+                Object.Instantiate(await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ROOT_CANVAS)).GetComponent<UIDocument>(),
+                await Addressables.LoadAssetAsync<StyleSheet>(SCENES_UI_STYLE_SHEET),
+                web3IdentityCache,
+                ethereumApi,
+                ct);
 
             if (!isLoaded)
                 GameReports.PrintIsDead();
