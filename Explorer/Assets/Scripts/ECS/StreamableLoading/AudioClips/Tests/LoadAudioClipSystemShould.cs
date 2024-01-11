@@ -1,8 +1,6 @@
 ﻿using Arch.Core;
 using DCL.SDKComponents.AudioSources;
-using DCL.Web3Authentication;
-using DCL.Web3Authentication.Authenticators;
-using DCL.Web3Authentication.Identities;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache;
