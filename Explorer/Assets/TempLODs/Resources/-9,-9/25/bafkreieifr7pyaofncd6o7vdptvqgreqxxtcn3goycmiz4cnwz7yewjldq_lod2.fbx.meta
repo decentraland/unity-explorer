@@ -1,0 +1,454 @@
+fileFormatVersion: 2
+guid: 3e7bc293b4a52044fa80c0b205f4faff
+ModelImporter:
+  serializedVersion: 22200
+  internalIDToNameTable: []
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: AtlasCristal
+    second: {fileID: 2100000, guid: ece1ccfe627721f479ed2650c49bcd8b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: AtlasLight
+    second: {fileID: 2100000, guid: 2325d6f407c8296498bfdc15680a6a0d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: AtlasMetal
+    second: {fileID: 2100000, guid: cfd87087385cd7a489faf6f40e9d1a58, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: AtlasSolid
+    second: {fileID: 2100000, guid: ce608d64432effb4da95a1f350de4db1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MERGE MATERIAL 138
+    second: {fileID: 2100000, guid: 02af40474e4b2be4998441a1c006f6e7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MERGE MATERIAL 69
+    second: {fileID: 2100000, guid: 4bcb7b758e43ee943a562a8457708d52, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MERGE MATERIAL 76
+    second: {fileID: 2100000, guid: cad5529e2eaa9d840b8f72eb88505b7a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MERGE MATERIAL 84
+    second: {fileID: 2100000, guid: 95e522c2e189d464d96f0fdb6a1d03ab, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MERGE MATERIAL 89
+    second: {fileID: 2100000, guid: 5fcb68327e871c643ab76a7637cc5e59, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MERGE MATERIAL 94
+    second: {fileID: 2100000, guid: e07d49e65e7ccab4593186c43bb6a8b0, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: beam_mat
+    second: {fileID: 2100000, guid: c969afc546a10904fb753c9ab0573ee7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: cloud_mat
+    second: {fileID: 2100000, guid: a2255e95f99cb7b4882dd7f611860ed1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: genesisMetal_MTL
+    second: {fileID: 2100000, guid: 697eec107d056f64a85e1bb5ff2e564f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: portal_spiral_mat
+    second: {fileID: 2100000, guid: 1c621cb5896e7044cb8227bd5f32af9a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: social-media
+    second: {fileID: 2100000, guid: 4e31eed2c017ae24ba360580a440fa88, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: strong_glow
+    second: {fileID: 2100000, guid: cdd191d68fd3bd5448e73d7fb8d72e58, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: ui_glow_mat
+    second: {fileID: 2100000, guid: 8c358237b6aadaa42b4b7c8db9fd1df4, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: waterfall_mat
+    second: {fileID: 2100000, guid: 0643386c81d95c345b32681770d6f3b5, type: 2}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasCristal_albedo
+    second: {fileID: 2800000, guid: 32ce53c7fb6d1bc49822042aa1003582, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasCristal_albedo_0
+    second: {fileID: 2800000, guid: 5e9cfe4e7ee867c4ebdfa96d134b4987, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasCristal_albedo_1
+    second: {fileID: 2800000, guid: 72ff2cb7d34c56a438ea63229e482ae1, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasCristal_albedo_2
+    second: {fileID: 2800000, guid: d9e00c6c036f0e14fa011f44d89ac38c, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasCristal_albedo_3
+    second: {fileID: 2800000, guid: 64a7a66ddf7c9fb4c88615a279746df4, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasCristal_albedo_4
+    second: {fileID: 2800000, guid: 9e41577025a00a541a680ac3b02c5258, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasLight_emissiveTexture
+    second: {fileID: 2800000, guid: 52adcf7ee3fcb9143b6d6da50830e7fa, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasLight_emissiveTexture_0
+    second: {fileID: 2800000, guid: d76e0e7d1975a0b4aa6f64bcc0d742db, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasLight_emissiveTexture_1
+    second: {fileID: 2800000, guid: cd0481694b7e3ce47b35b5cf13182399, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasLight_emissiveTexture_2
+    second: {fileID: 2800000, guid: 14fcebbd09e290a4ca7dfe8aafd0cd9c, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasLight_emissiveTexture_3
+    second: {fileID: 2800000, guid: 9549035a6a9f3344dacc496324d152b0, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasLight_emissiveTexture_4
+    second: {fileID: 2800000, guid: e75cacee1dc58cd4bbeb7f25b0a803cd, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasLight_emissiveTexture_5
+    second: {fileID: 2800000, guid: 5a2a4d51fb0174e40bbe7281219b189b, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasMetal_albedo
+    second: {fileID: 2800000, guid: caa5056618707fd4c8739ac3f7365b43, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasMetal_albedo_0
+    second: {fileID: 2800000, guid: ec38015d861cf1542bb914d27c4566d2, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasMetal_albedo_1
+    second: {fileID: 2800000, guid: fe9667e701f396244b7b9e27cd30a3aa, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasSolid_albedo
+    second: {fileID: 2800000, guid: f144401e530f42741944ba29e2cb1a75, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasSolid_albedo_0
+    second: {fileID: 2800000, guid: 5ca47a5d93aeabb4b8f11ebfb69860c4, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: AtlasSolid_albedo_1
+    second: {fileID: 2800000, guid: ca49b38cad212a3478b467d759a389bf, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Diffuse Map
+    second: {fileID: 2800000, guid: fddb3667ed5358f4c8a483c48ac9a052, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Diffuse Map_0
+    second: {fileID: 2800000, guid: 01d263e680909294ebef7cc0b19f4706, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Diffuse Map_1
+    second: {fileID: 2800000, guid: 4dfb17cfd98078f498d7772676aaf812, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Diffuse Map_2
+    second: {fileID: 2800000, guid: 342bf7ccb70719145a2dc7acad104969, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Diffuse Map_3
+    second: {fileID: 2800000, guid: 30632f1380f49a746ad914cdb7239ac3, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Diffuse Map_4
+    second: {fileID: 2800000, guid: 1354d34382a242047bd2edfb21161de9, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: beam_mat_albedo
+    second: {fileID: 2800000, guid: 81986b89e99998146a78efbf8d5328a0, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: cloud_mat_albedo
+    second: {fileID: 2800000, guid: ffac928dfa3a7f245bd36ce06fce5cf1, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: cloud_mat_albedo_0
+    second: {fileID: 2800000, guid: f9f6419e617db1e4c9764dca805e0c9a, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: cloud_mat_albedo_1
+    second: {fileID: 2800000, guid: 41f24959deef096438bc709a94010a10, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: cloud_mat_albedo_10
+    second: {fileID: 2800000, guid: 49cd423f53b0a9b4abc4fbe5bceb1a36, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: cloud_mat_albedo_11
+    second: {fileID: 2800000, guid: 3422e3f73480fca45b189128df83dff3, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: cloud_mat_albedo_12
+    second: {fileID: 2800000, guid: 188437bf13c6448469d646b37667fb03, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: cloud_mat_albedo_13
+    second: {fileID: 2800000, guid: 0d6fb47dc3444ba4cbb866e67392e64a, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: cloud_mat_albedo_14
+    second: {fileID: 2800000, guid: 7b1e6167aae649745aa5af8eeb3295e3, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: cloud_mat_albedo_15
+    second: {fileID: 2800000, guid: cb46a169e5b2af64f8ace81ac8c9a654, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: cloud_mat_albedo_2
+    second: {fileID: 2800000, guid: b3666f901a8599348ac5193b04641484, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: cloud_mat_albedo_3
+    second: {fileID: 2800000, guid: a22db67e646471541a2c495f554421bc, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: cloud_mat_albedo_4
+    second: {fileID: 2800000, guid: 7b93ef83e2c55e244a764f5379a79d2d, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: cloud_mat_albedo_5
+    second: {fileID: 2800000, guid: b921249f6bad2f341a64037f365f8ee4, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: cloud_mat_albedo_6
+    second: {fileID: 2800000, guid: 890f8d16a49fe6a41b220a3360e88394, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: cloud_mat_albedo_7
+    second: {fileID: 2800000, guid: 2d942277e726cd543a43f0a1e1936d92, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: cloud_mat_albedo_8
+    second: {fileID: 2800000, guid: c56ce6e526278f34a9ab4fbbfac6e48a, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: cloud_mat_albedo_9
+    second: {fileID: 2800000, guid: 660292c1fd506874499164b075254924, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: genesis_MTL_albedo
+    second: {fileID: 2800000, guid: 19c0fbf4628c2204eb43e8cb778ae0e5, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: portal_spiral_mat_albedo
+    second: {fileID: 2800000, guid: c780b5a03fd49ea4586ae9963b4a48ca, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: social-media_albedo
+    second: {fileID: 2800000, guid: 9b67b3730077b2a45993f4487ce23e2e, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: social-media_albedo_0
+    second: {fileID: 2800000, guid: c3ee869f051f3e74f83e234cdb808f56, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: strong_glow_emissiveTexture
+    second: {fileID: 2800000, guid: 1043f721e71fdb743b20c375c67711fc, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: ui_base_mat_albedo
+    second: {fileID: 2800000, guid: fee0f8436411aba41945f7c386962978, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: waterfall_mat_albedo
+    second: {fileID: 2800000, guid: 1676fda5b476e604fae7bd91c1d78a91, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: waterfall_mat_albedo_0
+    second: {fileID: 2800000, guid: 4b3824520669467468827f3ec8dcc97f, type: 3}
+  materials:
+    materialImportMode: 2
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    removeConstantScaleCurves: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 0
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    sortHierarchyByName: 1
+    importPhysicalCameras: 1
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    nodeNameCollisionStrategy: 1
+    fileIdsGeneration: 2
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    keepQuads: 0
+    weldVertices: 1
+    bakeAxisConversion: 0
+    preserveHierarchy: 0
+    skinWeightsMode: 0
+    maxBonesPerVertex: 4
+    minBoneWeight: 0.001
+    optimizeBones: 1
+    meshOptimizationFlags: -1
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVMarginMethod: 1
+    secondaryUVMinLightmapResolution: 40
+    secondaryUVMinObjectScale: 1
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    strictVertexDataChecks: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  referencedClips: []
+  importAnimation: 1
+  humanDescription:
+    serializedVersion: 3
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    globalScale: 1
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  autoGenerateAvatarMappingIfUnspecified: 1
+  animationType: 2
+  humanoidOversampling: 1
+  avatarSetup: 0
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  importBlendShapeDeformPercent: 1
+  remapMaterialsIfMaterialImportModeIsNone: 0
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
