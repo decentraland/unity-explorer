@@ -6,7 +6,6 @@ using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using DCL.Diagnostics;
-using DCL.Web3;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules;
 using System;
@@ -33,7 +32,6 @@ namespace CrdtEcsBridge.Engine
         private readonly ISystemGroupsUpdateGate systemGroupsUpdateGate;
         private readonly ISceneExceptionsHandler exceptionsHandler;
         private readonly MutexSync mutexSync;
-        private readonly IEthereumApi ethereumApi;
 
         private readonly CustomSampler deserializeBatchSampler;
         private readonly CustomSampler worldSyncBufferSampler;
@@ -54,8 +52,7 @@ namespace CrdtEcsBridge.Engine
             IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
             ISystemGroupsUpdateGate systemGroupsUpdateGate,
             ISceneExceptionsHandler exceptionsHandler,
-            MutexSync mutexSync,
-            IEthereumApi ethereumApi)
+            MutexSync mutexSync)
         {
             sharedPoolsProvider = poolsProvider;
             this.instancePoolsProvider = instancePoolsProvider;
@@ -65,7 +62,6 @@ namespace CrdtEcsBridge.Engine
             this.crdtWorldSynchronizer = crdtWorldSynchronizer;
             this.outgoingCrtdMessagesProvider = outgoingCrtdMessagesProvider;
             this.mutexSync = mutexSync;
-            this.ethereumApi = ethereumApi;
             this.systemGroupsUpdateGate = systemGroupsUpdateGate;
             this.exceptionsHandler = exceptionsHandler;
 

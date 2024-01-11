@@ -87,6 +87,7 @@ namespace SceneRuntime
         public void Dispose()
         {
             engineApi?.Dispose();
+            ethereumApi?.Dispose();
             engine.Dispose();
             runtimeWrapper?.Dispose();
         }

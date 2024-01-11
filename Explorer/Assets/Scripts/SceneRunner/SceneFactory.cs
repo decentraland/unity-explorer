@@ -182,8 +182,7 @@ namespace SceneRunner
                 outgoingCRDTMessagesProvider,
                 systemGroupThrottler,
                 exceptionsHandler,
-                ecsMutexSync,
-                ethereumApi);
+                ecsMutexSync);
 
             sceneRuntime.RegisterEngineApi(engineAPI);
 
