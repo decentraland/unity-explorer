@@ -47,10 +47,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
         [None(typeof(PBMeshCollider))]
         private void HandleComponentRemoval(ref PrimitiveColliderComponent component)
         {
-            entityCollidersSceneCache.Remove(component.Collider);
-
-            if (poolsRegistry.TryGetPool(component.ColliderType, out IComponentPool componentPool))
-                componentPool.Release(component.Collider);
+            Release(ref component);
         }
 
         [Query]
@@ -66,14 +63,17 @@ namespace ECS.Unity.PrimitiveColliders.Systems
         {
             if (meshCollider.IsDirty && meshCollider.MeshCase != component.SDKType)
             {
-                entityCollidersSceneCache.Remove(component.Collider);
-
-                if (poolsRegistry.TryGetPool(component.ColliderType, out IComponentPool componentPool))
-                    componentPool.Release(component.Collider);
-
-                // it will be a signal to instantiate a new collider
-                component.Collider = null;
+                Release(ref component);
+                component.Collider = null; // it will be a signal to instantiate a new collider
             }
+        }
+
+        private void Release(ref PrimitiveColliderComponent component)
+        {
+            entityCollidersSceneCache.Remove(component.Collider);
+
+            if (poolsRegistry.TryGetPool(component.ColliderType, out IComponentPool componentPool))
+                componentPool.Release(component.Collider);
         }
     }
 }

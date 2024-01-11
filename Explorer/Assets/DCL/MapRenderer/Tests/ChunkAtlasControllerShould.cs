@@ -13,7 +13,6 @@ using UnityEngine;
 namespace DCL.MapRenderer.Tests
 {
     [TestFixture]
-    [Category("EditModeCI")]
     public class ChunkAtlasControllerShould
     {
         private const int PARCEL_SIZE = 20;
