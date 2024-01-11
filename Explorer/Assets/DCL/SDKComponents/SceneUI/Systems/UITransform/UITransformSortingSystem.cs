@@ -21,8 +21,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private readonly Entity sceneRoot;
         private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
 
-        private List<UITransformComponent> transformList = new ();
-
         private UITransformSortingSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, Entity sceneRoot) : base(world)
         {
             this.sceneRoot = sceneRoot;
