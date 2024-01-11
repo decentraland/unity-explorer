@@ -1,5 +1,7 @@
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.NftShape.Renderer;
+using ECS.Unity.Materials.Components;
+using System;
 
 namespace DCL.SDKComponents.NftShape.Component
 {
@@ -18,6 +20,12 @@ namespace DCL.SDKComponents.NftShape.Component
                 nftShape.Show();
             else
                 nftShape.Hide();
+        }
+
+        public void ApplyMaterial(in MaterialComponent materialComponent)
+        {
+            //DefaultMaterial.Release(primitiveMeshRendererComponent.MeshRenderer.sharedMaterial);
+            throw new NotImplementedException();
         }
 
         public void Dispose()
