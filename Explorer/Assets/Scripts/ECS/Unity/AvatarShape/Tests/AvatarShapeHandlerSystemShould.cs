@@ -13,9 +13,6 @@ namespace ECS.Unity.AvatarShape.Tests
     [TestFixture]
     public class AvatarShapeHandlerSystemShould : UnitySystemTestBase<AvatarShapeHandlerSystem>
     {
-        private Entity entity;
-        private World globalWorld;
-
         [SetUp]
         public void SetUp()
         {
@@ -28,12 +25,17 @@ namespace ECS.Unity.AvatarShape.Tests
             AddTransformToEntity(entity);
         }
 
+        private Entity entity;
+        private World globalWorld;
+
         [Test]
         public void ForwardSDKAvatarShapeInstantiationToGlobalWorldSystems()
         {
             Assert.AreEqual(0, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape>()));
 
-            PBAvatarShape pbAvatarShapeComponent = new PBAvatarShape() { Name = "Cthulhu"};
+            var pbAvatarShapeComponent = new PBAvatarShape
+                { Name = "Cthulhu" };
+
             world.Add(entity, pbAvatarShapeComponent);
 
             system.Update(0);
@@ -47,7 +49,9 @@ namespace ECS.Unity.AvatarShape.Tests
         public void ForwardSDKAvatarShapeUpdateToGlobalWorldSystems()
         {
             // Creation
-            PBAvatarShape pbAvatarShapeComponent = new PBAvatarShape() { Name = "Cthulhu"};
+            var pbAvatarShapeComponent = new PBAvatarShape
+                { Name = "Cthulhu" };
+
             world.Add(entity, pbAvatarShapeComponent);
 
             system.Update(0);
@@ -69,7 +73,9 @@ namespace ECS.Unity.AvatarShape.Tests
         public void RemoveEntityFromGlobalWorldOnComponentRemove()
         {
             // Create
-            PBAvatarShape pbAvatarShapeComponent = new PBAvatarShape() { Name = "Cthulhu"};
+            var pbAvatarShapeComponent = new PBAvatarShape
+                { Name = "Cthulhu" };
+
             world.Add(entity, pbAvatarShapeComponent);
 
             system.Update(0);
@@ -92,7 +98,9 @@ namespace ECS.Unity.AvatarShape.Tests
         public void RemoveEntityFromGlobalWorldOnSceneEntityDestruction()
         {
             // Create
-            PBAvatarShape pbAvatarShapeComponent = new PBAvatarShape() { Name = "Cthulhu"};
+            var pbAvatarShapeComponent = new PBAvatarShape
+                { Name = "Cthulhu" };
+
             world.Add(entity, pbAvatarShapeComponent);
 
             system.Update(0);

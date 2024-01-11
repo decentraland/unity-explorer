@@ -20,7 +20,7 @@ namespace ECS.Unity.AvatarShape.Systems
     [ThrottlingEnabled]
     public partial class AvatarShapeHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private WorldProxy globalWorld;
+        private readonly WorldProxy globalWorld;
         private ReleaseOnEntityDestroy releaseOnEntityDestroy;
 
         public AvatarShapeHandlerSystem(World world, WorldProxy globalWorld) : base(world)
@@ -52,7 +52,7 @@ namespace ECS.Unity.AvatarShape.Systems
             if (!pbAvatarShape.IsDirty)
                 return;
 
-            globalWorld.Add(sdkAvatarShapeComponent.globalWorldEntity, pbAvatarShape);
+            globalWorld.Set(sdkAvatarShapeComponent.globalWorldEntity, pbAvatarShape);
         }
 
         [Query]

@@ -6,33 +6,32 @@ namespace DCL.Utilities
     {
         private World world;
 
-        public World GetWorld()
-        {
-            return world;
-        }
+        public World GetWorld() =>
+            world;
 
         public void SetWorld(World newWorld)
         {
             world = newWorld;
         }
 
-        public void Add(Entity entity, in object cmp)
+        public void Add<T>(Entity entity, in T component)
         {
-            world.Add(entity, cmp);
+            world.Add(entity, component);
         }
 
-        public Entity Create()
+        public void Set<T>(Entity entity, in T component)
         {
-            return world.Create();
+            world.Set(entity, component);
         }
 
-        public Entity Create<T0,T1,T2>(
-            in T0 t0Component = default(T0),
-            in T1 t1Component = default(T1),
-            in T2 t2Component = default(T2))
-        {
-            return world.Create(t0Component, t1Component, t2Component);
-        }
+        public Entity Create() =>
+            world.Create();
+
+        public Entity Create<T0, T1, T2>(
+            in T0 t0Component = default,
+            in T1 t1Component = default,
+            in T2 t2Component = default) =>
+            world.Create(t0Component, t1Component, t2Component);
 
         public void Remove<T>(Entity entity)
         {

@@ -31,6 +31,7 @@ namespace Global
     /// </summary>
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
+        public WorldProxy GlobalWorld = new ();
         private ProvidedInstance<CharacterObject> characterObject;
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
@@ -60,8 +61,6 @@ namespace Global
         public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
 
         public IAssetsProvisioner AssetsProvisioner { get; private set; }
-
-        public WorldProxy GlobalWorld = new WorldProxy();
 
         /// <summary>
         ///     Character Object exists in a single instance

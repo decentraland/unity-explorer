@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using Decentraland.Common;
 using UnityEngine;
 
@@ -8,9 +9,9 @@ namespace ECS.Unity.ColorComponent
         public static Color ToUnityColor(this Color3? color)
         {
             if (color != null)
-                return new (color.R, color.G, color.B);
+                return new Color(color.R, color.G, color.B);
 
-            Debug.LogError("Invalid color provided, using WHITE instead");
+            ReportHub.LogError(ReportCategory.UNSPECIFIED, "Null color provided, using WHITE instead");
 
             return Color.white;
         }
@@ -18,9 +19,9 @@ namespace ECS.Unity.ColorComponent
         public static Color ToUnityColor(this Color4? color)
         {
             if (color != null)
-                return new (color.R, color.G, color.B, color.A);
+                return new Color(color.R, color.G, color.B, color.A);
 
-            Debug.LogError("Invalid color provided, using WHITE instead");
+            ReportHub.LogError(ReportCategory.UNSPECIFIED, "Null color provided, using WHITE instead");
 
             return Color.white;
         }

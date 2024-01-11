@@ -1,7 +1,7 @@
-﻿using DCL.ECSComponents;
+﻿using DCL.Diagnostics;
+using DCL.ECSComponents;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace DCL.AvatarRendering.Wearables
 {
@@ -32,7 +32,7 @@ namespace DCL.AvatarRendering.Wearables
             if (pbAvatarShape.BodyShape == FEMALE.Value)
                 return FEMALE;
 
-            Debug.LogError($"'{pbAvatarShape.BodyShape}' body shape not supported, using MALE instead.");
+            ReportHub.LogError(ReportCategory.AVATAR, $"'{pbAvatarShape.BodyShape}' body shape not supported, using MALE instead.");
 
             return MALE;
         }
