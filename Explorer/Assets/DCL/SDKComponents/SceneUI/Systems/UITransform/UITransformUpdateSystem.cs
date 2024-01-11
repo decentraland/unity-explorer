@@ -21,6 +21,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
     {
         private readonly UIDocument canvas;
         private readonly ISceneStateProvider sceneStateProvider;
+        private bool? lastIsCurrentScene;
 
         public UITransformUpdateSystem(World world, UIDocument canvas, ISceneStateProvider sceneStateProvider) : base(world)
         {
@@ -31,7 +32,12 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         protected override void Update(float _)
         {
             UpdateUITransformQuery(World);
-            CheckUITransformOutOfSceneQuery(World);
+
+            if (lastIsCurrentScene != sceneStateProvider.IsCurrent)
+            {
+                lastIsCurrentScene = sceneStateProvider.IsCurrent;
+                CheckUITransformOutOfSceneQuery(World);
+            }
         }
 
         [Query]
