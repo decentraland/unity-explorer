@@ -28,12 +28,9 @@ namespace DCL.PluginSystem.World
             ECSWorldSingletonSharedDependencies singletonSharedDependencies)
         {
             this.canvas = canvas;
-            if (this.canvas.rootVisualElement != null)
-            {
-                this.canvas.rootVisualElement.styleSheets.Add(canvasStyleSheet);
-                this.canvas.rootVisualElement.AddToClassList("sceneUIMainCanvas");
-                this.canvas.rootVisualElement.pickingMode = PickingMode.Ignore;
-            }
+            this.canvas.rootVisualElement.styleSheets.Add(canvasStyleSheet);
+            this.canvas.rootVisualElement.AddToClassList("sceneUIMainCanvas");
+            this.canvas.rootVisualElement.pickingMode = PickingMode.Ignore;
 
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
             componentPoolsRegistry.AddComponentPool<VisualElement>(onRelease: UiElementUtils.ReleaseUIElement);

@@ -22,7 +22,7 @@ namespace Global.Tests
         {
             PluginSettingsContainer globalSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(GLOBAL_CONTAINER_ADDRESS);
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
-            UIDocument scenesUIRootCanvas = (await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ROOT_CANVAS)).GetComponent<UIDocument>();
+            UIDocument scenesUIRootCanvas = Object.Instantiate(await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ROOT_CANVAS)).GetComponent<UIDocument>();
             StyleSheet scenesUIStyleSheet = await Addressables.LoadAssetAsync<StyleSheet>(SCENES_UI_STYLE_SHEET);
 
             return await StaticSceneLauncher.InstallAsync(globalSettingsContainer, sceneSettingsContainer,
