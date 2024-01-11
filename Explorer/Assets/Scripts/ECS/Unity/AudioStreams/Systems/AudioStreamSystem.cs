@@ -7,6 +7,7 @@ using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Unity.AudioStreams.Components;
 using ECS.Unity.Groups;
+using RenderHeads.Media.AVProVideo;
 
 namespace ECS.Unity.AudioStreams.Systems
 {
@@ -15,16 +16,15 @@ namespace ECS.Unity.AudioStreams.Systems
     // [LogCategory(ReportCategory.AUDIO_SOURCES)]
     public partial class AudioStreamSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPool<MediaPlayer> mediaPlayerPool;
+        private readonly IComponentPoolsRegistry poolsRegistry;
 
         private AudioStreamSystem(World world, IComponentPoolsRegistry componentPoolsRegistry) : base(world)
         {
-            mediaPlayerPool = componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>();
+            poolsRegistry = componentPoolsRegistry;
 
-            // CI Test
             {
-                MediaPlayer? mediaPlayer = mediaPlayerPool.Get();
-                mediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, "http://ice3.somafm.com/dronezone-128-mp3", autoPlay: false);
+                MediaPlayer? mediaPlayer = poolsRegistry.GetReferenceTypePool<MediaPlayer>().Get();
+                mediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, "http://ice3.somafm.com/groovesalad-128-mp3", autoPlay: true);
             }
         }
 
@@ -38,9 +38,7 @@ namespace ECS.Unity.AudioStreams.Systems
         [None(typeof(AudioStreamComponent))]
         private void InstantiateAudioStream(in Entity entity, ref PBAudioStream sdkAudio)
         {
-            MediaPlayer? mediaPlayer = mediaPlayerPool.Get();
-
-            var component = new AudioStreamComponent(sdkAudio, mediaPlayer);
+            var component = new AudioStreamComponent(sdkAudio, poolsRegistry);
             World.Add(entity, component);
         }
 

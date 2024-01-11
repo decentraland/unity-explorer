@@ -8,36 +8,43 @@ namespace ECS.Unity.AudioStreams.Components
 {
     public struct AudioStreamComponent : IPoolableComponentProvider<MediaPlayer>
     {
+        private static IComponentPool<MediaPlayer> mediaPlayerPool;
+
         private string url;
 
-        public MediaPlayer PoolableComponent { get; }
+        private MediaPlayer mediaPlayer { get; }
 
-        MediaPlayer IPoolableComponentProvider<MediaPlayer>.PoolableComponent => PoolableComponent;
+        MediaPlayer IPoolableComponentProvider<MediaPlayer>.PoolableComponent => mediaPlayer;
 
         Type IPoolableComponentProvider<MediaPlayer>.PoolableComponentType => typeof(MediaPlayer);
 
-        public AudioStreamComponent(PBAudioStream sdkComponent, MediaPlayer mediaPlayer)
+        public AudioStreamComponent(PBAudioStream sdkComponent, IComponentPoolsRegistry poolsRegistry)
         {
+            mediaPlayerPool ??= poolsRegistry.GetReferenceTypePool<MediaPlayer>();
+            mediaPlayer = mediaPlayerPool.Get();
+
             url = sdkComponent.Url;
-            PoolableComponent = mediaPlayer;
+            mediaPlayer = mediaPlayer;
 
             if (sdkComponent.HasVolume)
-                PoolableComponent.AudioVolume = sdkComponent.Volume;
+                mediaPlayer.AudioVolume = sdkComponent.Volume;
 
             if (sdkComponent.Url.IsValidUrl())
             {
-                PoolableComponent.OpenMedia(MediaPathType.AbsolutePathOrURL, sdkComponent.Url, autoPlay: false);
+                mediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, sdkComponent.Url, autoPlay: false);
 
                 if (sdkComponent is { HasPlaying: true, Playing: true })
-                    PoolableComponent.Play();
+                    mediaPlayer.Play();
             }
         }
 
         public void Dispose()
         {
-            PoolableComponent.Stop();
-            PoolableComponent.CloseMedia();
-            PoolableComponent.Events.RemoveAllListeners();
+            mediaPlayerPool = null;
+
+            mediaPlayer.Stop();
+            mediaPlayer.CloseMedia();
+            mediaPlayer.Events.RemoveAllListeners();
         }
 
         public void Update(PBAudioStream sdkComponent)
@@ -45,29 +52,29 @@ namespace ECS.Unity.AudioStreams.Components
             if (sdkComponent.Url != url)
                 ChangeStreamUrl(sdkComponent.Url);
 
-            if (sdkComponent.HasPlaying && sdkComponent.Playing != PoolableComponent.Control.IsPlaying())
+            if (sdkComponent.HasPlaying && sdkComponent.Playing != mediaPlayer.Control.IsPlaying())
             {
                 if (sdkComponent.Playing)
-                    PoolableComponent.Play();
+                    mediaPlayer.Play();
                 else
-                    PoolableComponent.Stop();
+                    mediaPlayer.Stop();
             }
 
             if (sdkComponent.HasVolume)
-                PoolableComponent.AudioVolume = sdkComponent.Volume;
+                mediaPlayer.AudioVolume = sdkComponent.Volume;
         }
 
         private void ChangeStreamUrl(string url)
         {
             this.url = url;
 
-            if (PoolableComponent.Control.IsPlaying())
-                PoolableComponent.Stop();
+            if (mediaPlayer.Control.IsPlaying())
+                mediaPlayer.Stop();
 
-            PoolableComponent.CloseMedia();
-            PoolableComponent.Events.RemoveAllListeners();
+            mediaPlayer.CloseMedia();
+            mediaPlayer.Events.RemoveAllListeners();
 
-            PoolableComponent.OpenMedia(MediaPathType.AbsolutePathOrURL, url, autoPlay: false);
+            mediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, url, autoPlay: false);
         }
     }
 }

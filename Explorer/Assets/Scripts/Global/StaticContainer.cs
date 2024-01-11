@@ -153,9 +153,7 @@ namespace Global
                 textureResolvePlugin,
                 assetBundlePlugin,
 
-#if AV_PRO_PRESENT
                 new AudioStreamPlugin(sharedDependencies),
-#endif
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif
