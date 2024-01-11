@@ -25,23 +25,8 @@ namespace ECS.TestSuite
             cachedWorld = null;
         }
 
-        /// <summary>
-        ///     Adds SDKTransform and creates a new GO with the entity Id as name
-        /// </summary>
-        protected TransformComponent AddTransformToEntity(in Entity entity, bool isDirty = false)
-        {
-            var go = new GameObject($"{entity.Id}");
-            Transform t = go.transform;
-
-            t.localPosition = Vector3.zero;
-            t.localRotation = Quaternion.identity;
-            t.localScale = Vector3.one;
-
-            var transformComponent = new TransformComponent(t);
-
-            world.Add(entity, transformComponent, new SDKTransform { IsDirty = isDirty, Position = Vector3.zero, Rotation = Quaternion.identity, Scale = Vector3.one });
-            return transformComponent;
-        }
+        protected TransformComponent AddTransformToEntity(in Entity entity, bool isDirty = false) =>
+            EcsTestsUtils.AddTransformToEntity(world, entity, isDirty);
 
         protected UITransformComponent AddUITransformToEntity(in Entity entity, bool isDirty = false)
         {

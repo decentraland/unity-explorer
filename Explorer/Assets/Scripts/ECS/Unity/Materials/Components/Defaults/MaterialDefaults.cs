@@ -8,13 +8,13 @@ namespace ECS.Unity.Materials.Components.Defaults
     {
         public static float GetAlphaTest(this PBMaterial self)
         {
-            if (self.Pbr != null && self.Pbr.HasAlphaTest)
-                return self.Pbr.HasAlphaTest ? self.Pbr.AlphaTest : 0.5f;
+            if (self.Pbr != null)
+                return self.Pbr.HasAlphaTest ? self.Pbr.AlphaTest : Default.ALPHA_TEST;
 
-            if (self.Unlit != null && self.Unlit.HasAlphaTest)
-                return self.Unlit.HasAlphaTest ? self.Unlit.AlphaTest : 0.5f;
+            if (self.Unlit != null)
+                return self.Unlit.HasAlphaTest ? self.Unlit.AlphaTest : Default.ALPHA_TEST;
 
-            return 0.5f;
+            return Default.ALPHA_TEST;
         }
 
         public static bool GetCastShadows(this PBMaterial self)
@@ -26,62 +26,61 @@ namespace ECS.Unity.Materials.Components.Defaults
             if (self.Unlit != null)
                 return !self.Unlit.HasCastShadows || self.Unlit.CastShadows;
 
-            return true;
+            return Default.CAST_SHADOWS;
         }
 
         public static Color GetDiffuseColor(this PBMaterial self) =>
-            self.Unlit?.DiffuseColor?.ToUnityColor() ?? ColorDefaults.COLOR_WHITE;
+            self.Unlit?.DiffuseColor?.ToUnityColor() ?? Default.DIFFUSE_COLOR;
 
         public static Color GetAlbedoColor(this PBMaterial self) =>
-            self.Pbr?.AlbedoColor?.ToUnityColor() ?? ColorDefaults.COLOR_WHITE;
+            self.Pbr?.AlbedoColor?.ToUnityColor() ?? Default.ALBEDO_COLOR;
 
         public static Color GetEmissiveColor(this PBMaterial self) =>
-            self.Pbr?.EmissiveColor?.ToUnityColor() ?? ColorDefaults.COLOR_BLACK;
+            self.Pbr?.EmissiveColor?.ToUnityColor() ?? Default.EMISSIVE_COLOR;
 
         public static Color GetReflectiveColor(this PBMaterial self) =>
-            self.Pbr?.ReflectivityColor?.ToUnityColor() ?? ColorDefaults.COLOR_WHITE;
+            self.Pbr?.ReflectivityColor?.ToUnityColor() ?? Default.REFLECTIVE_COLOR;
 
         public static MaterialTransparencyMode GetTransparencyMode(this PBMaterial self) =>
-            self.Pbr?.HasTransparencyMode == true ? (MaterialTransparencyMode)self.Pbr.TransparencyMode : MaterialTransparencyMode.Auto;
+            self.Pbr?.HasTransparencyMode == true ? (MaterialTransparencyMode)self.Pbr.TransparencyMode : Default.TRANSPARENCY_MODE;
 
-        public static float GetMetallic(this PBMaterial self)
+        public static float GetMetallic(this PBMaterial self) =>
+            self.Pbr?.HasMetallic == true ? self.Pbr.Metallic : Default.METALLIC;
+
+        public static float GetRoughness(this PBMaterial self) =>
+            self.Pbr?.HasRoughness == true ? self.Pbr.Roughness : Default.ROUGHNESS;
+
+        public static float GetSpecularIntensity(this PBMaterial self) =>
+            self.Pbr?.HasSpecularIntensity == true ? self.Pbr.SpecularIntensity : Default.SPECULAR_INTENSITY;
+
+        public static float GetEmissiveIntensity(this PBMaterial self) =>
+            self.Pbr?.HasEmissiveIntensity == true ? self.Pbr.EmissiveIntensity : Default.EMISSIVE_INTENSITY;
+
+        public static float GetDirectIntensity(this PBMaterial self) =>
+            self.Pbr?.HasDirectIntensity == true ? self.Pbr.DirectIntensity : Default.DIRECT_INTENSITY;
+
+        /// <summary>
+        /// Default constant values for material properties, that rewrite protobuf defaults
+        /// </summary>
+        private static class Default
         {
-            if (self.Pbr != null)
-                return self.Pbr.HasMetallic ? self.Pbr.Metallic : 0.5f;
+            public const float ALPHA_TEST = 0.5f;
+            public const bool CAST_SHADOWS = true;
 
-            return 0.5f;
-        }
+            public static readonly Color ALBEDO_COLOR = ColorDefaults.COLOR_WHITE;
+            public static readonly Color DIFFUSE_COLOR = ColorDefaults.COLOR_WHITE;
+            public static readonly Color EMISSIVE_COLOR = ColorDefaults.COLOR_BLACK;
+            public static readonly Color REFLECTIVE_COLOR = ColorDefaults.COLOR_WHITE;
 
-        public static float GetRoughness(this PBMaterial self)
-        {
-            if (self.Pbr != null)
-                return self.Pbr.HasRoughness ? self.Pbr.Roughness : 0.5f;
+            public const MaterialTransparencyMode TRANSPARENCY_MODE = MaterialTransparencyMode.Auto;
 
-            return 0.5f;
-        }
+            public const float METALLIC = 0.5f;
+            public const float ROUGHNESS = 0.5f;
+            public const float GLOSSINESS = 1f;
 
-        public static float GetSpecularIntensity(this PBMaterial self)
-        {
-            if (self.Pbr != null)
-                return self.Pbr.HasSpecularIntensity ? self.Pbr.SpecularIntensity : 1f;
-
-            return 1f;
-        }
-
-        public static float GetEmissiveIntensity(this PBMaterial self)
-        {
-            if (self.Pbr != null)
-                return self.Pbr.HasEmissiveIntensity ? self.Pbr.EmissiveIntensity : 2f;
-
-            return 2f;
-        }
-
-        public static float GetDirectIntensity(this PBMaterial self)
-        {
-            if (self.Pbr != null)
-                return self.Pbr.HasDirectIntensity ? self.Pbr.DirectIntensity : 1f;
-
-            return 1f;
+            public const float SPECULAR_INTENSITY = 1f;
+            public const float EMISSIVE_INTENSITY = 2f;
+            public const float DIRECT_INTENSITY = 1f;
         }
     }
 }

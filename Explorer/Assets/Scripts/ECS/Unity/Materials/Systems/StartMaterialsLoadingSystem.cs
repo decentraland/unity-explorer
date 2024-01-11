@@ -66,7 +66,7 @@ namespace ECS.Unity.Materials.Systems
 
             materialComponent.Data = materialData;
             CreateGetTexturePromises(ref materialComponent, ref partitionComponent);
-            materialComponent.Status = MaterialComponent.LifeCycle.LoadingInProgress;
+            materialComponent.Status = StreamableLoading.LifeCycle.LoadingInProgress;
         }
 
         [Query]
@@ -79,7 +79,7 @@ namespace ECS.Unity.Materials.Systems
 
             var materialComponent = new MaterialComponent(CreateMaterialData(ref material));
             CreateGetTexturePromises(ref materialComponent, ref partitionComponent);
-            materialComponent.Status = MaterialComponent.LifeCycle.LoadingInProgress;
+            materialComponent.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
             World.Add(entity, materialComponent);
         }

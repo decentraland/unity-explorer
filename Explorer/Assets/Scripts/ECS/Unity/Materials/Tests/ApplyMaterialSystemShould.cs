@@ -29,14 +29,14 @@ namespace ECS.Unity.Materials.Tests
 
             Material mat = DefaultMaterial.New();
 
-            var matComp = new MaterialComponent { Status = MaterialComponent.LifeCycle.LoadingFinished, Result = mat };
+            var matComp = new MaterialComponent { Status = StreamableLoading.LifeCycle.LoadingFinished, Result = mat };
 
             Entity e = world.Create(new PBMaterial(), matComp, new PBMeshRenderer(), new PrimitiveMeshRendererComponent { MeshRenderer = renderer });
 
             system.Update(0);
 
             Assert.That(renderer.sharedMaterial, Is.EqualTo(mat));
-            Assert.That(world.Get<MaterialComponent>(e).Status, Is.EqualTo(MaterialComponent.LifeCycle.MaterialApplied));
+            Assert.That(world.Get<MaterialComponent>(e).Status, Is.EqualTo(StreamableLoading.LifeCycle.Applied));
             Assert.That(renderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.Off));
         }
 
@@ -48,14 +48,14 @@ namespace ECS.Unity.Materials.Tests
 
             Material mat = DefaultMaterial.New();
 
-            var matComp = new MaterialComponent { Status = MaterialComponent.LifeCycle.MaterialApplied, Result = mat };
+            var matComp = new MaterialComponent { Status = StreamableLoading.LifeCycle.Applied, Result = mat };
 
             Entity e = world.Create(new PBMaterial(), matComp, new PBMeshRenderer { IsDirty = true }, new PrimitiveMeshRendererComponent { MeshRenderer = renderer });
 
             system.Update(0);
 
             Assert.That(renderer.sharedMaterial, Is.EqualTo(mat));
-            Assert.That(world.Get<MaterialComponent>(e).Status, Is.EqualTo(MaterialComponent.LifeCycle.MaterialApplied));
+            Assert.That(world.Get<MaterialComponent>(e).Status, Is.EqualTo(StreamableLoading.LifeCycle.Applied));
             Assert.That(renderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.Off));
         }
     }

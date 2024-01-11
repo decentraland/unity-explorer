@@ -61,6 +61,16 @@
         public const string GENERIC_WEB_REQUEST = nameof(GENERIC_WEB_REQUEST);
 
         /// <summary>
+        ///     Texture related web request
+        /// </summary>
+        public const string TEXTURE_WEB_REQUEST = nameof(TEXTURE_WEB_REQUEST);
+
+        /// <summary>
+        ///     Audio clip related web request
+        /// </summary>
+        public const string AUDIO_CLIP_WEB_REQUEST = nameof(AUDIO_CLIP_WEB_REQUEST);
+
+        /// <summary>
         ///     Non-granular Streamable category
         /// </summary>
         public const string STREAMABLE_LOADING = nameof(STREAMABLE_LOADING);
@@ -94,6 +104,11 @@
         ///     Everything related to primitive meshes
         /// </summary>
         public const string PRIMITIVE_MESHES = nameof(PRIMITIVE_MESHES);
+
+        /// <summary>
+        ///     Everything related to Scenes audio source components
+        /// </summary>
+        public const string AUDIO_SOURCES = nameof(AUDIO_SOURCES);
 
         /// <summary>
         ///     Everything related to prioritization

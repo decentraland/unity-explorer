@@ -3,13 +3,15 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.Web3.Authenticators;
+using DCL.Web3.Identities;
 using DCL.SkyBox;
-using DCL.Web3Authentication.Authenticators;
-using DCL.Web3Authentication.Identities;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+
 using UnityEngine.UIElements;
 using Utility;
 
@@ -85,16 +87,20 @@ namespace Global.Dynamic
                 var identityCache = new ProxyIdentityCache(new MemoryWeb3IdentityCache(),
                     new PlayerPrefsIdentityProvider(new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()));
 
+                var web3VerifiedAuthenticator = new DappWeb3Authenticator(new UnityAppWebBrowser(),
+                    settings.AuthWebSocketUrl,
+                    settings.AuthSignatureUrl,
+                    identityCache,
+                    new HashSet<string>(settings.Web3WhitelistMethods));
+
                 web3Authenticator = new ProxyVerifiedWeb3Authenticator(
-                    new DappWeb3Authenticator(new UnityAppWebBrowser(),
-                        settings.AuthWebSocketUrl,
-                        settings.AuthSignatureUrl),
+                    web3VerifiedAuthenticator,
                     identityCache);
 
                 // First load the common global plugin
                 bool isLoaded;
 
-                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, scenesUIcanvas, scenesUIStyleSheet, identityCache, ct);
+                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, scenesUIcanvas, scenesUIStyleSheet, identityCache, web3VerifiedAuthenticator, ct);
 
                 if (!isLoaded)
                 {

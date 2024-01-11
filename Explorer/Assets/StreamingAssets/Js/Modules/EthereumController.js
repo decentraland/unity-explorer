@@ -1,4 +1,4 @@
 module.exports.sendAsync = async function(message) {
-    console.log('JSMODULE: sendAsync')
-    return {};
+    const result = await UnityEthereumApi.SendAsync(message.id, message.method, message.jsonParams)
+    return result;
 }
