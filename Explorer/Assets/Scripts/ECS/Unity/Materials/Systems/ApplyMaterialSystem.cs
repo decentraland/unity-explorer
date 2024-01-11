@@ -39,10 +39,10 @@ namespace ECS.Unity.Materials.Systems
             switch (materialComponent.Status)
             {
                 // If Material is loaded but not applied
-                case MaterialComponent.LifeCycle.LoadingFinished:
+                case StreamableLoading.LifeCycle.LoadingFinished:
                 // If Material was applied once but renderer is dirty
-                case MaterialComponent.LifeCycle.MaterialApplied when pbMeshRenderer.IsDirty:
-                    materialComponent.Status = MaterialComponent.LifeCycle.MaterialApplied;
+                case StreamableLoading.LifeCycle.Applied when pbMeshRenderer.IsDirty:
+                    materialComponent.Status = StreamableLoading.LifeCycle.Applied;
 
                     ReleaseMaterial.TryReleaseDefault(ref meshRendererComponent);
                     ConfigureSceneMaterial.EnableSceneBounds(materialComponent.Result, sceneData.Geometry.CircumscribedPlanes);

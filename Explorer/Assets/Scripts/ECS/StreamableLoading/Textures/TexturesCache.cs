@@ -66,6 +66,8 @@ namespace ECS.StreamableLoading.Textures
             ProfilingCounters.TexturesInCache.Value = cache.Count;
         }
 
+        public void Dereference(in GetTextureIntention key, Texture2D asset) { }
+
         public bool Equals(GetTextureIntention x, GetTextureIntention y) =>
             x.Equals(y);
 

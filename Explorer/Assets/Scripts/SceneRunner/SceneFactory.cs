@@ -66,8 +66,8 @@ namespace SceneRunner
             var sceneDefinition = new IpfsTypes.SceneEntityDefinition();
 
             int lastSlash = jsCodeUrl.LastIndexOf("/", StringComparison.Ordinal);
-            string mainScenePath = jsCodeUrl.Substring(lastSlash + 1);
-            var baseUrl = URLDomain.FromString(jsCodeUrl.Substring(0, lastSlash + 1));
+            string mainScenePath = jsCodeUrl[(lastSlash + 1)..];
+            var baseUrl = URLDomain.FromString(jsCodeUrl[..(lastSlash + 1)]);
 
             sceneDefinition.metadata = new IpfsTypes.SceneMetadata
             {

@@ -9,7 +9,6 @@ using UnityEngine.Pool;
 
 namespace DCL.MapRenderer.Tests.MapCameraController
 {
-    [Category("EditModeCI")]
     [TestFixture]
     public class MapCameraInteractivityControllerShould
     {

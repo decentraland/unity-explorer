@@ -6,10 +6,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
+using static Utility.Tests.TestsCategories;
 
 namespace DCL.Tests
 {
-    [Category("CodeConventions")]
+    [Category(CODE_CONVENTIONS)]
     public class CodeConventionsTests
     {
         private static readonly string[] EXCLUDED_PATHS = { "/Editor/", "/Tests/", "/EditorTests/", "/Rendering/SkyBox/", "/Ipfs/", "/Plugins/SocketIO" };

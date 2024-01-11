@@ -5,20 +5,12 @@ namespace ECS.Unity.Materials.Components
 {
     public struct MaterialComponent
     {
-        public enum LifeCycle : byte
-        {
-            LoadingNotStarted = 0,
-            LoadingInProgress = 1,
-            LoadingFinished = 2,
-            MaterialApplied = 3,
-        }
-
         public MaterialData Data;
 
         /// <summary>
         ///     The current status of the material loading
         /// </summary>
-        public LifeCycle Status;
+        public StreamableLoading.LifeCycle Status;
 
         /// <summary>
         ///     The final material ready for consumption
@@ -38,7 +30,7 @@ namespace ECS.Unity.Materials.Components
             BumpTexPromise = null;
 
             Data = data;
-            Status = LifeCycle.LoadingNotStarted;
+            Status = StreamableLoading.LifeCycle.LoadingNotStarted;
             Result = null;
         }
     }
