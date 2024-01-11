@@ -21,12 +21,10 @@ namespace ECS.Unity.AvatarShape.Systems
     public partial class AvatarShapeHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly WorldProxy globalWorld;
-        private ReleaseOnEntityDestroy releaseOnEntityDestroy;
 
         public AvatarShapeHandlerSystem(World world, WorldProxy globalWorld) : base(world)
         {
             this.globalWorld = globalWorld;
-            releaseOnEntityDestroy = new ReleaseOnEntityDestroy(globalWorld);
         }
 
         protected override void Update(float t)
@@ -75,22 +73,8 @@ namespace ECS.Unity.AvatarShape.Systems
 
         public void FinalizeComponents(in Query query)
         {
-            World.InlineQuery<ReleaseOnEntityDestroy, SDKAvatarShapeComponent>(new QueryDescription().WithAll<SDKAvatarShapeComponent>(), ref releaseOnEntityDestroy);
-        }
-
-        private readonly struct ReleaseOnEntityDestroy : IForEach<SDKAvatarShapeComponent>
-        {
-            private readonly WorldProxy globalWorld;
-
-            public ReleaseOnEntityDestroy(WorldProxy globalWorld)
-            {
-                this.globalWorld = globalWorld;
-            }
-
-            public void Update(ref SDKAvatarShapeComponent provider)
-            {
-                globalWorld.Add(provider.globalWorldEntity, new DeleteEntityIntention());
-            }
+            World.Query(new QueryDescription().WithAll<SDKAvatarShapeComponent>(),
+                (ref SDKAvatarShapeComponent removedComponent) => globalWorld.Add(removedComponent.globalWorldEntity, new DeleteEntityIntention()));
         }
     }
 }
