@@ -40,8 +40,10 @@ namespace ECS.Unity.AvatarShape.Systems
         [None(typeof(SDKAvatarShapeComponent))]
         private void LoadAvatarShape(in Entity entity, ref PBAvatarShape pbAvatarShape, ref PartitionComponent partitionComponent, ref TransformComponent transformComponent)
         {
-            Entity globalWorldEntity = globalWorld.Create(pbAvatarShape, partitionComponent, transformComponent);
-            World.Add(entity, new SDKAvatarShapeComponent(globalWorldEntity));
+            Entity? globalWorldEntity = globalWorld.Create(pbAvatarShape, partitionComponent, transformComponent);
+
+            if (globalWorldEntity.HasValue)
+                World.Add(entity, new SDKAvatarShapeComponent(globalWorldEntity.Value));
         }
 
         [Query]

@@ -4,9 +4,9 @@ namespace DCL.Utilities
 {
     public class WorldProxy
     {
-        private World world;
+        private World? world;
 
-        public World GetWorld() =>
+        public World? GetWorld() =>
             world;
 
         public void SetWorld(World newWorld)
@@ -16,26 +16,26 @@ namespace DCL.Utilities
 
         public void Add<T>(Entity entity, in T component)
         {
-            world.Add(entity, component);
+            world?.Add(entity, component);
         }
 
         public void Set<T>(Entity entity, in T component)
         {
-            world.Set(entity, component);
+            world?.Set(entity, component);
         }
 
-        public Entity Create() =>
-            world.Create();
+        public Entity? Create() =>
+            world?.Create();
 
-        public Entity Create<T0, T1, T2>(
+        public Entity? Create<T0, T1, T2>(
             in T0 t0Component = default,
             in T1 t1Component = default,
             in T2 t2Component = default) =>
-            world.Create(t0Component, t1Component, t2Component);
+            world?.Create(t0Component, t1Component, t2Component);
 
         public void Remove<T>(Entity entity)
         {
-            world.Remove<T>(entity);
+            world?.Remove<T>(entity);
         }
     }
 }
