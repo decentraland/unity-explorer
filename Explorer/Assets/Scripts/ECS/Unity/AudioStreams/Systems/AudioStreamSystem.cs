@@ -7,7 +7,6 @@ using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Unity.AudioStreams.Components;
 using ECS.Unity.Groups;
-using RenderHeads.Media.AVProVideo;
 
 namespace ECS.Unity.AudioStreams.Systems
 {
@@ -21,6 +20,12 @@ namespace ECS.Unity.AudioStreams.Systems
         private AudioStreamSystem(World world, IComponentPoolsRegistry componentPoolsRegistry) : base(world)
         {
             mediaPlayerPool = componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>();
+
+            // CI Test
+            {
+                MediaPlayer? mediaPlayer = mediaPlayerPool.Get();
+                mediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, "http://ice3.somafm.com/dronezone-128-mp3", autoPlay: false);
+            }
         }
 
         protected override void Update(float t)
