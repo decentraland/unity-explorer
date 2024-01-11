@@ -4,7 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack.BackpackBus;
 using DCL.UI;
-using DCL.Web3Authentication.Identities;
+using DCL.Web3.Identities;
 using System;
 using System.Threading;
 using UnityEngine;
