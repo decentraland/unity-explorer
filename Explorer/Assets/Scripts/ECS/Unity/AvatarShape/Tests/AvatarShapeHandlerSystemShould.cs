@@ -1,12 +1,12 @@
 using Arch.Core;
 using DCL.ECSComponents;
 using DCL.Utilities;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using ECS.Unity.AvatarShape.Components;
 using ECS.Unity.AvatarShape.Systems;
 using NUnit.Framework;
-using NSubstitute;
 
 namespace ECS.Unity.AvatarShape.Tests
 {
@@ -46,13 +46,14 @@ namespace ECS.Unity.AvatarShape.Tests
         [Test]
         public void ForwardSDKAvatarShapeUpdateToGlobalWorldSystems()
         {
-            Assert.AreEqual(0, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape>()));
-
             // Creation
             PBAvatarShape pbAvatarShapeComponent = new PBAvatarShape() { Name = "Cthulhu"};
             world.Add(entity, pbAvatarShapeComponent);
 
             system.Update(0);
+
+            Assert.AreEqual(1, world.CountEntities(new QueryDescription().WithAll<PBAvatarShape, SDKAvatarShapeComponent>()));
+            Assert.AreEqual(1, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape>()));
 
             // Update
             pbAvatarShapeComponent.Name = "Dagon";
@@ -67,19 +68,47 @@ namespace ECS.Unity.AvatarShape.Tests
         [Test]
         public void RemoveEntityFromGlobalWorldOnComponentRemove()
         {
+            // Create
+            PBAvatarShape pbAvatarShapeComponent = new PBAvatarShape() { Name = "Cthulhu"};
+            world.Add(entity, pbAvatarShapeComponent);
 
+            system.Update(0);
+
+            Assert.AreEqual(1, world.CountEntities(new QueryDescription().WithAll<PBAvatarShape, SDKAvatarShapeComponent>()));
+            Assert.AreEqual(1, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape>().WithNone<DeleteEntityIntention>()));
+            Assert.AreEqual(0, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape, DeleteEntityIntention>()));
+
+            // Remove
+            world.Remove<PBAvatarShape>(entity);
+
+            system.Update(0);
+
+            Assert.AreEqual(0, world.CountEntities(new QueryDescription().WithAll<PBAvatarShape, SDKAvatarShapeComponent>()));
+            Assert.AreEqual(0, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape>().WithNone<DeleteEntityIntention>()));
+            Assert.AreEqual(1, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape, DeleteEntityIntention>()));
         }
 
         [Test]
         public void RemoveEntityFromGlobalWorldOnSceneEntityDestruction()
         {
+            // Create
+            PBAvatarShape pbAvatarShapeComponent = new PBAvatarShape() { Name = "Cthulhu"};
+            world.Add(entity, pbAvatarShapeComponent);
 
-        }
+            system.Update(0);
 
-        [Test]
-        public void RemoveEntityFromGlobalWorldOnSceneUnload()
-        {
+            Assert.AreEqual(1, world.CountEntities(new QueryDescription().WithAll<PBAvatarShape, SDKAvatarShapeComponent>()));
+            Assert.AreEqual(1, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape>().WithNone<DeleteEntityIntention>()));
+            Assert.AreEqual(0, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape, DeleteEntityIntention>()));
 
+            // Remove
+            world.Add<DeleteEntityIntention>(entity);
+
+            system.Update(0);
+
+            Assert.AreEqual(0, world.CountEntities(new QueryDescription().WithAll<PBAvatarShape, SDKAvatarShapeComponent>()));
+            Assert.AreEqual(0, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape>().WithNone<DeleteEntityIntention>()));
+            Assert.AreEqual(1, globalWorld.CountEntities(new QueryDescription().WithAll<PBAvatarShape, DeleteEntityIntention>()));
         }
     }
 }
