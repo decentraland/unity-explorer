@@ -15,6 +15,7 @@ using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.Web3;
 using ECS.Prioritization.Components;
 using Ipfs;
 using Microsoft.ClearScript;
@@ -39,6 +40,7 @@ namespace SceneRunner
         private readonly IECSWorldFactory ecsWorldFactory;
         private readonly ISceneEntityFactory entityFactory;
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
+        private readonly IEthereumApi ethereumApi;
         private readonly SceneRuntimeFactory sceneRuntimeFactory;
         private readonly ISDKComponentsRegistry sdkComponentsRegistry;
         private readonly ISharedPoolsProvider sharedPoolsProvider;
@@ -50,7 +52,8 @@ namespace SceneRunner
             ICRDTSerializer crdtSerializer,
             ISDKComponentsRegistry sdkComponentsRegistry,
             ISceneEntityFactory entityFactory,
-            IEntityCollidersGlobalCache entityCollidersGlobalCache)
+            IEntityCollidersGlobalCache entityCollidersGlobalCache,
+            IEthereumApi ethereumApi)
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -59,6 +62,7 @@ namespace SceneRunner
             this.sdkComponentsRegistry = sdkComponentsRegistry;
             this.entityFactory = entityFactory;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
+            this.ethereumApi = ethereumApi;
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct)
@@ -184,6 +188,7 @@ namespace SceneRunner
 
             var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData);
             sceneRuntime.RegisterRuntime(runtimeImplementation);
+            sceneRuntime.RegisterEthereumApi(ethereumApi);
 
             return new SceneFacade(
                 sceneRuntime,

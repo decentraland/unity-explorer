@@ -5,6 +5,7 @@ using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Engine;
 using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
+using DCL.Web3;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using NSubstitute;
@@ -39,7 +40,7 @@ namespace SceneRunner.Tests
             componentsRegistry = Substitute.For<ISDKComponentsRegistry>();
 
             sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry,
-                new SceneEntityFactory(), new EntityCollidersGlobalCache());
+                new SceneEntityFactory(), new EntityCollidersGlobalCache(), Substitute.For<IEthereumApi>());
         }
 
         [TearDown]

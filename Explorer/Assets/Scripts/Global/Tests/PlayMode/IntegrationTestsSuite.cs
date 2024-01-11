@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
+using DCL.Web3;
 using DCL.Web3.Identities;
 using Global.Static;
 using NSubstitute;
@@ -19,7 +20,7 @@ namespace Global.Tests
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
 
             return await StaticSceneLauncher.InstallAsync(globalSettingsContainer, sceneSettingsContainer,
-                Substitute.For<IWeb3IdentityCache>(), CancellationToken.None);
+                Substitute.For<IWeb3IdentityCache>(), Substitute.For<IEthereumApi>(), CancellationToken.None);
         }
     }
 }
