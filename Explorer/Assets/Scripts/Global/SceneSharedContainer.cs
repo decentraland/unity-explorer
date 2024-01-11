@@ -35,7 +35,8 @@ namespace Global
                     new CRDTSerializer(),
                     staticContainer.ComponentsContainer.SDKComponentsRegistry,
                     sharedDependencies.EntityFactory,
-                    staticContainer.EntityCollidersGlobalCache
+                    staticContainer.EntityCollidersGlobalCache,
+                    staticContainer.EthereumApi
                 ),
             };
         }

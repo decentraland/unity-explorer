@@ -181,6 +181,15 @@ MonoBehaviour:
     - AudioStream
   globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
+  useRealAuthentication: 0
+  useStoredCredentials: 0
+  authenticationServerUrl: https://auth-api.decentraland.zone
+  authenticationSignatureUrl: https://decentraland.zone/auth/requests
+  ethWhitelistMethods:
+  - eth_getBalance
+  - eth_call
+  - eth_blockNumber
+  - eth_signTypedData_v4
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0

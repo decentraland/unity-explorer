@@ -1,11 +1,13 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.PluginSystem;
 using DCL.PluginSystem.World;
-using DCL.Web3Authentication.Authenticators;
-using DCL.Web3Authentication.Identities;
+using DCL.Web3;
+using DCL.Web3.Authenticators;
+using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
 using Global;
+using NSubstitute;
 using NUnit.Framework;
 using SceneRunner;
 using UnityEngine.TestTools;
@@ -13,7 +15,6 @@ using System.Collections;
 using SceneRunner.Scene;
 using System;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEditor;
 using UnityEngine;
@@ -81,7 +82,8 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
 
                 SceneSharedContainer sceneSharedContainer;
 
-                (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettings, scenePluginSettings, identityCache, ct);
+                (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettings, scenePluginSettings, identityCache,
+                    Substitute.For<IEthereumApi>(), ct);
 
                 currentScene = await sceneSharedContainer
                                     .SceneFactory
@@ -97,14 +99,14 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             }
         }
 
-        private static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> InstallAsync(
-            IPluginSettingsContainer globalSettingsContainer,
+        private static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> InstallAsync(IPluginSettingsContainer globalSettingsContainer,
             IPluginSettingsContainer sceneSettingsContainer,
             IWeb3IdentityCache web3IdentityCache,
+            IEthereumApi ethereumApi,
             CancellationToken ct)
         {
             // First load the common global plugin
-            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer, web3IdentityCache, ct);
+            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer, web3IdentityCache, ethereumApi, ct);
 
             if (!isLoaded)
                 GameReports.PrintIsDead();
