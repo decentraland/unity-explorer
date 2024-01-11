@@ -20,5 +20,7 @@ namespace SceneRunner.Scene
         internal UniTask StartScene();
 
         internal UniTask Tick(float dt);
+
+        bool IsDisposed { get; set; }
     }
 }

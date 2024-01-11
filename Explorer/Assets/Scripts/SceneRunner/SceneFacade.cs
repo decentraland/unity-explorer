@@ -72,6 +72,8 @@ namespace SceneRunner
         UniTask ISceneFacade.Tick(float dt) =>
             runtimeInstance.UpdateScene(dt);
 
+        public bool IsDisposed { get; set; }
+
         public async UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
         {
             AssertIsNotMainThread(nameof(StartUpdateLoopAsync));
@@ -207,5 +209,6 @@ namespace SceneRunner
 
             sceneStateProvider.State = SceneState.Disposed;
         }
+
     }
 }

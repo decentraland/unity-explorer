@@ -150,8 +150,10 @@ namespace Global.Dynamic
             UnloadSceneSystem.InjectToWorld(ref builder);
             ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token);
 
-            ResolveSceneVisualStateSystem.InjectToWorld(ref builder, 1, new Vector2Int[] { new(1, 2), new(2, 5) });
-            UpdateLODLevelSystem.InjectToWorld(ref builder);
+            Vector2Int[] lodsBucketLimits = { new(1, 2), new(2, 5) };
+            ResolveSceneVisualStateSystem.InjectToWorld(ref builder, 1, lodsBucketLimits,
+                componentPoolsRegistry.GetReferenceTypePool<Transform>());
+            UpdateLODLevelSystem.InjectToWorld(ref builder, lodsBucketLimits);
             ResolveLODContentSystem.InjectToWorld(ref builder);            
             
             IComponentPool<PartitionComponent> partitionComponentPool = componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>();

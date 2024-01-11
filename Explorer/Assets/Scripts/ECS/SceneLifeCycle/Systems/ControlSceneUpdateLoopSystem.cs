@@ -44,9 +44,9 @@ namespace ECS.SceneLifeCycle.Systems
         private void StartScene(ISceneFacade scene, ref VisualSceneState visualSceneState,
             ref PartitionComponent partition)
         {
-            if (!visualSceneState.isDirty) return;
+            if (!visualSceneState.IsDirty) return;
 
-            if (!visualSceneState.currentVisualSceneState.Equals(VisualSceneStateEnum.SHOWING_SCENE)) return;
+            if (!visualSceneState.CurrentVisualSceneState.Equals(VisualSceneStateEnum.SHOWING_SCENE)) return;
 
             var fps = realmPartitionSettings.GetSceneUpdateFrequency(in partition);
 
@@ -64,7 +64,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             RunOnThreadPoolAsync().Forget();
 
-            visualSceneState.isDirty = false;
+            visualSceneState.IsDirty = false;
         }
 
         [Query]
@@ -74,7 +74,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (!partition.IsDirty) return;
             if (sceneDefinition.IsEmpty) return; // Never tweak FPS of empty scenes
-            if (!visualSceneState.currentVisualSceneState.Equals(VisualSceneStateEnum.SHOWING_SCENE))
+            if (!visualSceneState.CurrentVisualSceneState.Equals(VisualSceneStateEnum.SHOWING_SCENE))
                 return; // Never tweak FPS if LODS are present
 
             sceneFacade.SetTargetFPS(realmPartitionSettings.GetSceneUpdateFrequency(in partition));

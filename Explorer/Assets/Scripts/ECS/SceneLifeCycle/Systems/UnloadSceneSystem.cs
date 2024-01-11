@@ -7,6 +7,7 @@ using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.StreamableLoading.Common;
+using SceneRunner;
 using SceneRunner.Scene;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -30,22 +31,32 @@ namespace ECS.SceneLifeCycle.Systems
         [All(typeof(UnloadRunningSceneIntention))]
         private void UnloadRunningScene(in Entity entity, ref ISceneFacade sceneFacade)
         {
-            sceneFacade.DisposeAsync().Forget();
+            //TODO: We cannot dispose the scene, at the moment I will set targetFPS to 0
+            if (!sceneFacade.IsDisposed)
+            {
+                sceneFacade.DisposeAsync().Forget();
+                sceneFacade.IsDisposed = true;
+            }
+            //sceneFacade.SetTargetFPS(0);
 
-            World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>,
-                UnloadRunningSceneIntention>(entity);
+            //TODO: We are leaving the scene facade so it can restart the scene until fully unloaded
+            //World.Remove<ISceneFacade, UnloadRunningSceneIntention>(entity);
         }
         
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void UnloadLoadedScene(in Entity entity, ref ISceneFacade sceneFacade, ref SceneLOD sceneLOD)
+        private void UnloadLoadedScene(in Entity entity, ref ISceneFacade sceneFacade, SceneLOD sceneLOD)
         {
-            sceneFacade.DisposeAsync().Forget();
+            if (!sceneFacade.IsDisposed)
+            {
+                sceneFacade.DisposeAsync().Forget();
+                sceneFacade.IsDisposed = true;
+            }
             sceneLOD.Dispose();
 
             // Keep definition so it won't be downloaded again = Cache in ECS itself
-            World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>,
-                UnloadRunningSceneIntention>(entity);
+            World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, VisualSceneState,
+                UnloadRunningSceneIntention, SceneLOD>(entity);
         }
 
         [Query]

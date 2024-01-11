@@ -109,6 +109,8 @@ namespace SceneRunner.EmptyScene
         UniTask ISceneFacade.Tick(float dt) =>
             UniTask.CompletedTask;
 
+        public bool IsDisposed { get; set; }
+
         public static EmptySceneFacade Create(Args args)
         {
             EmptySceneFacade f = POOL.Get();

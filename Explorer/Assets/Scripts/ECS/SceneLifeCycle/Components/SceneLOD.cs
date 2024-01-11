@@ -1,4 +1,5 @@
 ﻿using System;
+using DCL.Optimization.Pools;
 using ECS.SceneLifeCycle.SceneDefinition;
 using UnityEngine;
 using Utility;
@@ -6,26 +7,29 @@ using Object = UnityEngine.Object;
 
 namespace ECS.SceneLifeCycle.Components
 {
-    public struct SceneLOD : IDisposable
+    public struct SceneLOD
     {
         private GameObject currentLOD;
         private readonly Transform lodContainer;
         private readonly SceneDefinitionComponent sceneDefinitionComponent;
 
         private readonly GameObject[] lods;
-        private int currentLODLevel;
+        public int currentLODLevel;
         private readonly Vector2Int[] lodBucketLimits;
+        private readonly IComponentPool<Transform> transformPool;
 
-        public SceneLOD(SceneDefinitionComponent sceneDefinitionComponent, Vector2Int[] lodBucketLimits)
+        public SceneLOD(SceneDefinitionComponent sceneDefinitionComponent, Vector2Int[] lodBucketsLimits,
+            IComponentPool<Transform> transformPool)
         {
             this.sceneDefinitionComponent = sceneDefinitionComponent;
-            this.lodBucketLimits = lodBucketLimits;
-            currentLODLevel = -1;
-            lodContainer =
-                new GameObject(
-                        $"({sceneDefinitionComponent.Parcels[0].x},{sceneDefinitionComponent.Parcels[0].y}) LODS")
-                    .transform;
+            this.transformPool = transformPool;
+            lodBucketLimits = lodBucketsLimits;
+            lodContainer = transformPool.Get();
+            lodContainer.name =
+                $"({sceneDefinitionComponent.Parcels[0].x},{sceneDefinitionComponent.Parcels[0].y}) LODS";
+            lodContainer.position = ParcelMathHelper.GetPositionByParcelPosition(sceneDefinitionComponent.Parcels[0]);
             currentLOD = null;
+            currentLODLevel = -1;
             lods = new GameObject[2];
         }
 
@@ -39,30 +43,39 @@ namespace ECS.SceneLifeCycle.Components
             {
                 var lod3Prefab =
                     Resources.Load<GameObject>($"{parcel}/5/{sceneDefinitionComponent.Definition.id}_lod2");
-                var positionByParcelPosition =
-                    ParcelMathHelper.GetPositionByParcelPosition(sceneDefinitionComponent.Parcels[0]);
-                lods[0] = Object.Instantiate(lod2Prefab, positionByParcelPosition, Quaternion.identity, lodContainer);
-                lods[1] = Object.Instantiate(lod3Prefab, positionByParcelPosition, Quaternion.identity, lodContainer);
-                lods[0].SetActive(false);
-                lods[0].gameObject.name = "_lod1";
-                lods[1].SetActive(false);
-                lods[1].gameObject.name = "_lod2";
+                lods[0] = CreateLOD(lod2Prefab, "_lod2");
+                lods[1] = CreateLOD(lod3Prefab, "_lod3");
             }
+        }
+
+        private GameObject CreateLOD(GameObject lod2Prefab, string name)
+        {
+            var newLOD = Object.Instantiate(lod2Prefab, lodContainer);
+            newLOD.name = name;
+            newLOD.gameObject.SetActive(false);
+            return newLOD;
         }
 
         //DEBUG METHOD. WE SHOULD WORK WITH ABs AND THEIR CACHES. INVESTIGATE DEFERENCE AND WHEN IT SHOULD OCCUR
         public void Dispose()
         {
+            if (lodContainer == null) return; //This was an empty lod all around
             foreach (var lod in lods)
                 Object.Destroy(lod);
-            Object.Destroy(lodContainer.gameObject);
+            transformPool.Release(lodContainer);
+        }
+
+        public void HideLod()
+        {
+            if (lods[0] == null) return; //Lods not loaded, nothing to do
+
+            lods[0].SetActive(false);
+            lods[1].SetActive(false);
         }
 
         public void UpdateLOD(byte partitionBucket)
         {
             if (lods[0] == null) return; //Lods not loaded, nothing to do
-
-            if (!ShouldSwapLOD(partitionBucket)) return;
 
             currentLOD?.gameObject.SetActive(false);
             SetCurrentLODLevel(partitionBucket);
@@ -77,13 +90,6 @@ namespace ECS.SceneLifeCycle.Components
             else if (partitionBucket > lodBucketLimits[1][0])
                 currentLODLevel = 3;
         }
-
-        private bool ShouldSwapLOD(byte partitionBucket)
-        {
-            if (partitionBucket > lodBucketLimits[0][0] && partitionBucket <= lodBucketLimits[0][1] &&
-                currentLODLevel == 2) return false;
-            if (partitionBucket > lodBucketLimits[1][0] && currentLODLevel == 3) return false;
-            return true;
-        }
     }
+    
 }

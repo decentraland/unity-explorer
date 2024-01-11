@@ -4,6 +4,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Metadata;
 using Cysharp.Threading.Tasks;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -24,6 +25,7 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private readonly int bucketSceneLodLimit;
         private readonly Vector2Int[] bucketLodsLimits;
+        private readonly IComponentPool<Transform> transformPool;
 
         /// <summary>
         /// </summary>
@@ -33,11 +35,14 @@ namespace ECS.SceneLifeCycle.Systems
         ///     Array that controls bucket lod handling. X represents inferior limit and exclusive, Y
         ///     represents upper limit and inclusive
         /// </param>
-        public ResolveSceneVisualStateSystem(World world, int bucketSceneLodLimit, Vector2Int[] bucketLodLimits) :
+        /// <param name="transformPool">Transform pool</param>
+        public ResolveSceneVisualStateSystem(World world, int bucketSceneLodLimit, Vector2Int[] bucketLodLimits,
+            IComponentPool<Transform> transformPool) :
             base(world)
         {
             this.bucketSceneLodLimit = bucketSceneLodLimit;
             bucketLodsLimits = bucketLodLimits;
+            this.transformPool = transformPool;
         }
 
         protected override void Update(float t)
@@ -58,48 +63,60 @@ namespace ECS.SceneLifeCycle.Systems
             if (promise.TryConsume(World, out var result) && result.Succeeded)
             {
                 var scene = result.Asset;
-
                 var visualSceneState = new VisualSceneState
                 {
-                    isDirty = true
+                    IsDirty = true
                 };
 
-                visualSceneState.currentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
-
-                if (partition.Bucket <= bucketSceneLodLimit)
-                    visualSceneState.currentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
+                if (sceneDefinitionComponent.IsEmpty)
+                {
+                    visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
+                    //TODO: Empty scene lod. Not completely happy on how Im doing it, but I need it for the removal of the scene
+                    World.Add(entity, scene, visualSceneState, new SceneLOD());
+                }
                 else
-                    visualSceneState.currentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
+                {
+                    if (partition.Bucket <= bucketSceneLodLimit)
+                        visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
+                    else
+                        visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
 
-                //We initialize LODS
-                var sceneLOD = new SceneLOD(sceneDefinitionComponent, bucketLodsLimits);
-                sceneLOD.LoadLod();
+                    //We initialize LODS
+                    var sceneLOD = new SceneLOD(sceneDefinitionComponent, bucketLodsLimits, transformPool);
+                    sceneLOD.LoadLod();
 
-                World.Add(entity, scene, visualSceneState, sceneLOD);
+                    World.Add(entity, scene, visualSceneState, sceneLOD);
+                }
             }
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void UpdateVisualState(in Entity entity, ref VisualSceneState visualSceneState,
-            ref PartitionComponent partition, ref SceneLOD sceneLOD)
+            ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent,
+            ref SceneLOD sceneLOD)
         {
+            if (sceneDefinitionComponent.IsEmpty) return; //We dont update visuals state of empty scenes
             if (!partition.IsDirty) return;
 
-            if (partition.Bucket <= bucketSceneLodLimit &&
-                visualSceneState.currentVisualSceneState.Equals(VisualSceneStateEnum.SHOWING_LOD))
+            if (visualSceneState.CurrentVisualSceneState.Equals(VisualSceneStateEnum.SHOWING_LOD) &&
+                partition.Bucket <= bucketSceneLodLimit)
             {
-                visualSceneState.currentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
-                sceneLOD.Dispose();
+                visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
+                //TODO: What do we do with LODs when we are showing the scene?
+                //sceneLOD.Dispose();
+                sceneLOD.HideLod();
+                visualSceneState.IsDirty = true;
             }
-            else if (partition.Bucket > bucketSceneLodLimit &&
-                     visualSceneState.currentVisualSceneState.Equals(VisualSceneStateEnum.SHOWING_SCENE))
+            else if (visualSceneState.CurrentVisualSceneState.Equals(VisualSceneStateEnum.SHOWING_SCENE) &&
+                     partition.Bucket > bucketSceneLodLimit)
             {
-                visualSceneState.currentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
+                visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
                 World.Add<UnloadRunningSceneIntention>(entity);
+                visualSceneState.IsDirty = true;
             }
 
-            visualSceneState.isDirty = true;
         }
+        
     }
 }
