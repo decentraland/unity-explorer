@@ -44,13 +44,11 @@ namespace DCL.SDKComponents.AudioSources
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
             if (!sceneData.TryGetContentUrl(sdkAudioSource.AudioClipUrl, out URLAddress audioClipUrl)) return;
 
-            var audioSourceComponent = new AudioSourceComponent(sdkAudioSource);
-
-            audioSourceComponent.ClipPromise = Promise.Create(World, new GetAudioClipIntention
+            var audioSourceComponent = new AudioSourceComponent(sdkAudioSource, Promise.Create(World, new GetAudioClipIntention
             {
                 CommonArguments = new CommonLoadingArguments(audioClipUrl),
                 AudioType = sdkAudioSource.AudioClipUrl.ToAudioType(),
-            }, partitionComponent);
+            }, partitionComponent));
 
             World.Add(entity, audioSourceComponent);
         }
