@@ -1,5 +1,4 @@
 ﻿using DCL.ECSComponents;
-using DCL.Optimization.Pools;
 using System;
 using UnityEngine;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
@@ -10,16 +9,16 @@ namespace DCL.SDKComponents.AudioSources
     {
         public readonly PBAudioSource PBAudioSource;
 
-        public Promise? ClipPromise;
+        public Promise ClipPromise;
 
         /// <summary>
         ///     The final audio source ready for consumption
         /// </summary>
         public AudioSource Result;
 
-        public AudioSourceComponent(PBAudioSource pbAudioSource)
+        public AudioSourceComponent(PBAudioSource pbAudioSource, Promise promise)
         {
-            ClipPromise = null;
+            ClipPromise = promise;
             PBAudioSource = pbAudioSource;
             Result = null;
         }
