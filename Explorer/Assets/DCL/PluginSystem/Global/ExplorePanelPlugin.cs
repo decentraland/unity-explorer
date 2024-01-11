@@ -10,7 +10,7 @@ using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Settings;
-using DCL.Web3Authentication.Identities;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using Global.Dynamic;
 using MVC;
