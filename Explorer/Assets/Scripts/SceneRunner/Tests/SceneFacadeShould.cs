@@ -10,6 +10,7 @@ using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
+using DCL.Web3;
 using ECS.LifeCycle;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
@@ -58,7 +59,7 @@ namespace SceneRunner.Tests
             componentsRegistry = Substitute.For<ISDKComponentsRegistry>();
 
             sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry,
-                new SceneEntityFactory(), new EntityCollidersGlobalCache());
+                new SceneEntityFactory(), new EntityCollidersGlobalCache(), Substitute.For<IEthereumApi>());
         }
 
         [OneTimeTearDown]
@@ -143,9 +144,9 @@ namespace SceneRunner.Tests
 
             float tolerance = Mathf.Max(0.02f, expectedDT * 0.1f);
 
-            sceneRuntime.Received().UpdateScene(Arg.Is<float>(dt => Mathf.Approximately(dt, 0)));
-            sceneRuntime.Received().UpdateScene(Arg.Is<float>(dt => EqualWithTolerance(dt, expectedDT, tolerance)));
-            sceneRuntime.DidNotReceive().UpdateScene(Arg.Is<float>(dt => dt != 0 && !EqualWithTolerance(dt, expectedDT, tolerance)));
+            await sceneRuntime.Received().UpdateScene(Arg.Is<float>(dt => Mathf.Approximately(dt, 0)));
+            await sceneRuntime.Received().UpdateScene(Arg.Is<float>(dt => EqualWithTolerance(dt, expectedDT, tolerance)));
+            await sceneRuntime.DidNotReceive().UpdateScene(Arg.Is<float>(dt => dt != 0 && !EqualWithTolerance(dt, expectedDT, tolerance)));
 
             int callsCount = sceneRuntime.ReceivedCalls().Count() - 1; // -1 stands for  StartScene
 

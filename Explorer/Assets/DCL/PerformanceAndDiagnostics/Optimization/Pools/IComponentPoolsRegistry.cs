@@ -13,6 +13,8 @@ namespace DCL.Optimization.Pools
     {
         bool TryGetPool(Type type, out IComponentPool componentPool);
 
+        bool TryGetPool<T>(out IComponentPool componentPool);
+
         /// <summary>
         ///     Get the message pool of the reference type. Pool must be registered in advance
         /// </summary>
@@ -20,13 +22,9 @@ namespace DCL.Optimization.Pools
         /// <returns></returns>
         IComponentPool<T> GetReferenceTypePool<T>() where T: class;
 
-        IComponentPool<T> GetReferenceTypePoolDCL<T>() where T: class;
-
         IComponentPool GetPool(Type type);
 
         void AddGameObjectPool<T>(Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 1024) where T: Component;
-
-        void AddGameObjectPoolDCL<T>(Func<T> creationHandler = null, Action<T> onRelease = null, int maxSize = 1024) where T: Component;
 
         void AddComponentPool<T>(IComponentPool<T> componentPool) where T: class;
     }

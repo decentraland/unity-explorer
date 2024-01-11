@@ -2,7 +2,6 @@
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
-using Google.Type;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
