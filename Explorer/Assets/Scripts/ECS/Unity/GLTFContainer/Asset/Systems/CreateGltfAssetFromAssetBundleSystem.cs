@@ -24,13 +24,13 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     [LogCategory(ReportCategory.GLTF_CONTAINER)]
     public partial class CreateGltfAssetFromAssetBundleSystem : BaseUnityLoopSystem
     {
-        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
-        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
+        private readonly IPerformanceBudget instantiationFrameTimeBudget;
+        private readonly IPerformanceBudget memoryBudget;
 
-        internal CreateGltfAssetFromAssetBundleSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider) : base(world)
+        internal CreateGltfAssetFromAssetBundleSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget) : base(world)
         {
-            this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
-            this.memoryBudgetProvider = memoryBudgetProvider;
+            this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
+            this.memoryBudget = memoryBudget;
         }
 
         protected override void Update(float t)
@@ -45,7 +45,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         [None(typeof(StreamableLoadingResult<GltfContainerAsset>))]
         private void ConvertFromAssetBundle(in Entity entity, ref GetGltfContainerAssetIntention assetIntention, ref StreamableLoadingResult<AssetBundleData> assetBundleResult)
         {
-            if (!instantiationFrameTimeBudgetProvider.TrySpendBudget() || !memoryBudgetProvider.TrySpendBudget())
+            if (!instantiationFrameTimeBudget.TrySpendBudget() || !memoryBudget.TrySpendBudget())
                 return;
 
             if (assetIntention.CancellationTokenSource.IsCancellationRequested)

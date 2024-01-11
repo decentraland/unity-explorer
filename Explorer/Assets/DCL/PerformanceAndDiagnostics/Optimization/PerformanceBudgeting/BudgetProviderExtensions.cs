@@ -2,11 +2,11 @@
 {
     public static class BudgetProviderExtensions
     {
-        public static bool TrySpendBudget(this IConcurrentBudgetProvider budgetProvider, out IAcquiredBudget acquiredBudget)
+        public static bool TrySpendBudget(this IReleasablePerformanceBudget budget, out IAcquiredBudget acquiredBudget)
         {
-            if (budgetProvider.TrySpendBudget())
+            if (budget.TrySpendBudget())
             {
-                acquiredBudget = AcquiredBudget.Create(budgetProvider);
+                acquiredBudget = AcquiredBudget.Create(budget);
                 return true;
             }
 
