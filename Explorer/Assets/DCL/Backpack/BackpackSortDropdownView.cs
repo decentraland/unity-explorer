@@ -26,6 +26,9 @@ namespace DCL.Backpack
         internal Toggle sortNameZa { get; private set; }
 
         [field: SerializeField]
+        internal Toggle collectiblesOnly { get; private set; }
+
+        [field: SerializeField]
         internal Button sortDropdownButton { get; private set; }
 
         [field: SerializeField]

@@ -26,6 +26,7 @@ namespace DCL.Backpack
         private const string PAGE_SIZE = "pageSize";
         private const string CATEGORY = "category";
         private const string ORDER_BY = "orderBy";
+        private const string COLLECTION_TYPE = "collectionType";
         private const string ORDER_DIRECTION = "direction";
 
         private const int CURRENT_PAGE_SIZE = 16;
@@ -50,6 +51,7 @@ namespace DCL.Backpack
         private readonly Dictionary<string, BackpackItemView> usedPoolItems;
         private World world;
         private CancellationTokenSource cts;
+        private bool currentCollectiblesOnly = false;
         private string currentCategory = "";
         private BackpackGridSort currentSort = new (NftOrderByOperation.Date, false);
 
@@ -79,6 +81,7 @@ namespace DCL.Backpack
             eventBus.UnEquipEvent += OnUnequip;
             eventBus.FilterCategoryEvent += OnFilterCategory;
             backpackSortController.OnSortChanged += OnSortChanged;
+            backpackSortController.OnCollectiblesOnlyChanged += OnCollectiblesOnlyChanged;
             pageSelectorController.OnSetPage += RequestPage;
             requestParameters = new List<(string, string)>();
         }
@@ -172,6 +175,9 @@ namespace DCL.Backpack
 
             requestParameters.Add((ORDER_BY, currentSort.OrderByOperation.ToString()));
             requestParameters.Add((ORDER_DIRECTION, currentSort.SortAscending ? "ASC" : "DESC"));
+
+            if(currentCollectiblesOnly)
+                requestParameters.Add((COLLECTION_TYPE, "on-chain"));
         }
 
         private void OnFilterCategory(string category)
@@ -183,6 +189,12 @@ namespace DCL.Backpack
         private void OnSortChanged(BackpackGridSort sort)
         {
             currentSort = sort;
+            RequestTotalNumber();
+        }
+
+        private void OnCollectiblesOnlyChanged(bool collectiblesOnly)
+        {
+            currentCollectiblesOnly = collectiblesOnly;
             RequestTotalNumber();
         }
 

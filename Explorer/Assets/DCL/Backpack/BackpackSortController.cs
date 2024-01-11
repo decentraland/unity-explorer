@@ -5,6 +5,7 @@ namespace DCL.Backpack
     public class BackpackSortController
     {
         public event Action<BackpackGridSort> OnSortChanged;
+        public event Action<bool> OnCollectiblesOnlyChanged;
 
 		private readonly BackpackSortDropdownView view;
         private BackpackGridSort currentSort;
@@ -20,6 +21,12 @@ namespace DCL.Backpack
             view.sortLessRares.onValueChanged.AddListener(OnSortLessRare);
             view.sortNameAz.onValueChanged.AddListener(OnSortNameAz);
             view.sortNameZa.onValueChanged.AddListener(OnSortNameZa);
+            view.collectiblesOnly.onValueChanged.AddListener(OnCollectiblesOnly);
+        }
+
+        private void OnCollectiblesOnly(bool isOn)
+        {
+            OnCollectiblesOnlyChanged?.Invoke(isOn);
         }
 
         private void OnSortNewest(bool isOn)
