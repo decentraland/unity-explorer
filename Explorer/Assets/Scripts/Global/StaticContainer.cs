@@ -149,6 +149,7 @@ namespace Global
                 new VisibilityPlugin(),
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
+                new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 textureResolvePlugin,
                 assetBundlePlugin,
 
