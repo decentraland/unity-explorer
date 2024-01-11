@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.WebRequests.AudioClips;
 using System.Threading;
 
 namespace DCL.WebRequests
@@ -47,7 +48,18 @@ namespace DCL.WebRequests
             CommonArguments commonArguments,
             GetTextureArguments args,
             CancellationToken ct,
-            string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
+            string reportCategory = ReportCategory.TEXTURE_WEB_REQUEST,
+            WebRequestHeadersInfo? headersInfo = null,
+            WebRequestSignInfo? signInfo = null);
+
+        /// <summary>
+        ///     Make a request that is optimized for audio clip
+        /// </summary>
+        UniTask<GetAudioClipWebRequest> GetAudioClipAsync(
+            CommonArguments commonArguments,
+            GetAudioClipArguments args,
+            CancellationToken ct,
+            string reportCategory = ReportCategory.AUDIO_CLIP_WEB_REQUEST,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null);
     }

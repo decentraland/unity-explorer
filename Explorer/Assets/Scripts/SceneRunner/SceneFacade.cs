@@ -29,7 +29,7 @@ namespace SceneRunner
         internal readonly ICRDTMemoryAllocator crdtMemoryAllocator;
         internal readonly ISceneExceptionsHandler sceneExceptionsHandler;
         internal readonly IEntityCollidersSceneCache entityCollidersSceneCache;
-        private readonly ISceneStateProvider sceneStateProvider;
+        internal readonly ISceneStateProvider sceneStateProvider;
 
         private int intervalMS;
 

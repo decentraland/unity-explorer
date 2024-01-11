@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CRDT;
 using CrdtEcsBridge.Components.Transform;
+using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -36,7 +37,7 @@ namespace ECS.Unity.Systems
         [None(typeof(TransformComponent), typeof(DeleteEntityIntention))]
         private void FindDisconnectedTransform(ref CRDTEntity entity)
         {
-            Debug.LogError($"Transform does not exist for the alive entity \"{entity}\"");
+            ReportHub.LogError($"Transform does not exist for the alive entity \"{entity}\"", ReportCategory.ECS);
         }
     }
 }

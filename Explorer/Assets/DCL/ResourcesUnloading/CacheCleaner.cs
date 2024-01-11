@@ -5,6 +5,7 @@ using DCL.Optimization.Pools;
 using DCL.Profiles;
 using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.GLTFContainer.Asset.Components;
@@ -20,6 +21,7 @@ namespace DCL.ResourcesUnloading
         private const int GLTF_UNLOAD_CHUNK = 3;
         private const int AB_UNLOAD_CHUNK = 1;
         private const int TEXTURE_UNLOAD_CHUNK = 1;
+        private const int AUDIO_CLIP_UNLOAD_CHUNK = 100;
         private const int PROFILE_UNLOAD_CHUNK = 10;
 
         private readonly IPerformanceBudget fpsCapBudget;
@@ -28,6 +30,7 @@ namespace DCL.ResourcesUnloading
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
         private IStreamableCache<GltfContainerAsset, string> gltfContainerAssetsCache;
         private IStreamableCache<Texture2D, GetTextureIntention> texturesCache;
+        private IStreamableCache<AudioClip, GetAudioClipIntention> audioClipsCache;
 
         private IWearableAssetsCache wearableAssetsCache;
         private IWearableCatalog wearableCatalog;
@@ -46,6 +49,7 @@ namespace DCL.ResourcesUnloading
             if (!fpsCapBudget.TrySpendBudget()) return;
 
             texturesCache.Unload(fpsCapBudget, TEXTURE_UNLOAD_CHUNK);
+            audioClipsCache.Unload(fpsCapBudget, AUDIO_CLIP_UNLOAD_CHUNK);
             wearableAssetsCache.Unload(fpsCapBudget, WEARABLES_UNLOAD_CHUNK);
             wearableCatalog.Unload(fpsCapBudget);
             gltfContainerAssetsCache.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
@@ -74,6 +78,9 @@ namespace DCL.ResourcesUnloading
 
         public void Register(IStreamableCache<Texture2D, GetTextureIntention> texturesCache) =>
             this.texturesCache = texturesCache;
+
+        public void Register(IStreamableCache<AudioClip, GetAudioClipIntention> audioClipsCache) =>
+            this.audioClipsCache = audioClipsCache;
 
         public void Register(IWearableCatalog catalog) =>
             wearableCatalog = catalog;
