@@ -12,14 +12,16 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         ///     Retrieves a wearable by its DTO or adds a new one if it doesn't exist.
         /// </summary>
         /// <param name="wearableDto">The wearable DTO</param>
+        /// <param name="qualifiedForUnloading">Determines if the wearable should be unloaded when memory is full</param>
         /// <returns>An instance of the <see cref="IWearable" /> type.</returns>
-        IWearable GetOrAddWearableByDTO(WearableDTO wearableDto);
+        IWearable GetOrAddWearableByDTO(WearableDTO wearableDto, bool qualifiedForUnloading = true);
 
         /// <summary>
         ///     Adds an empty wearable to the catalog.
         /// </summary>
         /// <param name="loadingIntentionPointer">The loading intention pointer.</param>
-        void AddEmptyWearable(string loadingIntentionPointer);
+        /// <param name="qualifiedForUnloading">Determines if the wearable should be unloaded when memory is full</param>
+        void AddEmptyWearable(string loadingIntentionPointer, bool qualifiedForUnloading = true);
 
         /// <summary>
         ///     Attempts to retrieve a wearable from the catalog.
@@ -34,13 +36,14 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         /// </summary>
         /// <param name="bodyShape">The body shape.</param>
         /// <param name="category">The category.</param>
+        /// <param name="hasEmptyDefaultWearableAB">Specifies if the default wearable has an empty AB</param>
         /// <returns>An instance of the <see cref="IWearable" /> type.</returns>
-        IWearable GetDefaultWearable(BodyShape bodyShape, string category);
+        IWearable GetDefaultWearable(BodyShape bodyShape, string category, out bool hasEmptyDefaultWearableAB);
 
         /// <summary>
         ///     Unloads the wearable from the catalog by a frame time budget provider.
         /// </summary>
-        /// <param name="frameTimeBudgetProvider">The frame time budget provider.</param>
-        void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider);
+        /// <param name="frameTimeBudget">The frame time budget provider.</param>
+        void Unload(IPerformanceBudget frameTimeBudget);
     }
 }

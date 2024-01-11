@@ -15,11 +15,13 @@ namespace ECS.Unity.Materials.Systems
     [UpdateAfter(typeof(StartMaterialsLoadingSystem))]
     public partial class CreateBasicMaterialSystem : CreateMaterialSystemBase
     {
-        private readonly IConcurrentBudgetProvider capFrameBudgetProvider;
+        private readonly IPerformanceBudget memoryBudgetProvider;
+        private readonly IPerformanceBudget capFrameBudget;
 
-        internal CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool, IConcurrentBudgetProvider capFrameBudgetProvider) : base(world, materialsPool)
+        internal CreateBasicMaterialSystem(World world, IObjectPool<Material> materialsPool, IPerformanceBudget capFrameBudget, IPerformanceBudget memoryBudgetProvider) : base(world, materialsPool)
         {
-            this.capFrameBudgetProvider = capFrameBudgetProvider;
+            this.capFrameBudget = capFrameBudget;
+            this.memoryBudgetProvider = memoryBudgetProvider;
         }
 
         protected override void Update(float t)
@@ -33,10 +35,10 @@ namespace ECS.Unity.Materials.Systems
             if (materialComponent.Data.IsPbrMaterial)
                 return;
 
-            if (!capFrameBudgetProvider.TrySpendBudget())
+            if (!capFrameBudget.TrySpendBudget() || !memoryBudgetProvider.TrySpendBudget())
                 return;
 
-            if (materialComponent.Status == MaterialComponent.LifeCycle.LoadingInProgress)
+            if (materialComponent.Status == StreamableLoading.LifeCycle.LoadingInProgress)
                 ConstructMaterial(ref materialComponent);
         }
 
@@ -47,7 +49,7 @@ namespace ECS.Unity.Materials.Systems
 
             if (TryGetTextureResult(ref materialComponent.AlbedoTexPromise, out StreamableLoadingResult<Texture2D> albedoResult))
             {
-                materialComponent.Status = MaterialComponent.LifeCycle.LoadingFinished;
+                materialComponent.Status = StreamableLoading.LifeCycle.LoadingFinished;
 
                 materialComponent.Result ??= CreateNewMaterialInstance();
 

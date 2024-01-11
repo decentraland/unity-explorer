@@ -35,12 +35,12 @@ namespace ECS.Unity.Materials.Systems
         private void TryGetMaterialFromCache(ref MaterialComponent materialComponent)
         {
             // Operate only with components for which loading is not started
-            if (materialComponent.Status != MaterialComponent.LifeCycle.LoadingNotStarted)
+            if (materialComponent.Status != StreamableLoading.LifeCycle.LoadingNotStarted)
                 return;
 
             if (materialsCache.TryReferenceMaterial(in materialComponent.Data, out Material material))
             {
-                materialComponent.Status = MaterialComponent.LifeCycle.LoadingFinished;
+                materialComponent.Status = StreamableLoading.LifeCycle.LoadingFinished;
                 materialComponent.Result = material;
             }
         }

@@ -122,7 +122,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        private void FinalizeWearableDTO([Data] bool defaultWearablesResolved, in Entity entity, ref AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> promise, ref BodyShape bodyShape)
+        private void FinalizeWearableDTO([Data] bool defaultWearablesResolved, in Entity entity, ref AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> promise, ref BodyShape bodyShape, ref IPartitionComponent partitionComponent)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -146,10 +146,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 {
                     foreach (WearableDTO assetEntity in promiseResult.Asset.Value)
                     {
-                        //TODO: Download Thumbnail
                         wearableCatalog.TryGetWearable(assetEntity.metadata.id, out IWearable component);
+
                         component.WearableDTO = new StreamableLoadingResult<WearableDTO>(assetEntity);
                         component.IsLoading = false;
+
+                        WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, component, World, partitionComponent);
                     }
                 }
 
@@ -243,7 +245,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 new CommonLoadingArguments(realmData.Ipfs.EntitiesActiveEndpoint, cancellationTokenSource: intention.CancellationTokenSource));
 
             var promise = AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention>.Create(World, wearableDtoByPointersIntention, partitionComponent);
-            World.Create(promise, intention.BodyShape);
+            World.Create(promise, intention.BodyShape, partitionComponent);
         }
 
         private void SetDefaultWearables(bool defaultWearablesLoaded, IWearable wearable, in BodyShape bodyShape)
@@ -268,15 +270,18 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             ReportHub.Log(GetReportCategory(), $"Request for wearable {wearable.GetHash()} failed, loading default wearable");
 
-            // This section assumes that the default wearables were successfully loaded.
-            // Waiting for the default wearable should be moved to the loading screen
+            var defaultWearable = wearableCatalog.GetDefaultWearable(bodyShape, wearable.GetCategory(),
+                out var hasEmptyDefaultWearableAB);
             if (wearable.IsUnisex())
             {
-                wearable.WearableAssetResults[BodyShape.MALE] = wearableCatalog.GetDefaultWearable(BodyShape.MALE, wearable.GetCategory()).WearableAssetResults[BodyShape.MALE];
-                wearable.WearableAssetResults[BodyShape.FEMALE] = wearableCatalog.GetDefaultWearable(BodyShape.FEMALE, wearable.GetCategory()).WearableAssetResults[BodyShape.FEMALE];
+                wearable.WearableAssetResults[BodyShape.MALE] = defaultWearable.WearableAssetResults[BodyShape.MALE];
+                wearable.WearableAssetResults[BodyShape.FEMALE] =
+                    defaultWearable.WearableAssetResults[BodyShape.FEMALE];
             }
             else
-                wearable.WearableAssetResults[bodyShape] = wearableCatalog.GetDefaultWearable(bodyShape, wearable.GetCategory()).WearableAssetResults[bodyShape];
+                wearable.WearableAssetResults[bodyShape] = defaultWearable.WearableAssetResults[bodyShape];
+
+            wearable.WearableDTO.Asset.Sanitize(hasEmptyDefaultWearableAB);
         }
 
         private static void SetWearableResult(IWearable wearable, StreamableLoadingResult<AssetBundleData> result, in BodyShape bodyShape)

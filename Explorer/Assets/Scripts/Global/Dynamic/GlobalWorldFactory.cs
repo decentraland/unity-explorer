@@ -17,7 +17,6 @@ using DCL.Profiles;
 using DCL.Systems;
 using DCL.Time;
 using DCL.Time.Systems;
-using DCL.Web3Authentication;
 using DCL.WebRequests;
 using ECS;
 using ECS.Groups;
@@ -69,7 +68,7 @@ namespace Global.Dynamic
         private readonly IWebRequestController webRequestController;
         private readonly IReadOnlyList<IDCLGlobalPlugin> globalPlugins;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
+        private readonly IPerformanceBudget memoryBudget;
         private readonly StaticSettings staticSettings;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
@@ -91,12 +90,11 @@ namespace Global.Dynamic
             this.debugContainerBuilder = debugContainerBuilder;
             this.realmData = realmData;
 
-            memoryBudgetProvider = staticContainer.SingletonSharedDependencies.MemoryBudgetProvider;
+            memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
-        public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory, ICharacterObject characterObject,
-            IWeb3Identity web3Identity)
+        public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory, ICharacterObject characterObject)
         {
             var world = World.Create();
 
@@ -113,7 +111,7 @@ namespace Global.Dynamic
                 new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
                 new PlayerComponent(characterObject.CameraFocus),
                 new TransformComponent { Transform = characterObject.Transform },
-                new Profile(web3Identity.EphemeralAccount.Address, "Player",
+                new Profile("fakeOwnUserId", "Player",
                     new Avatar(
                         BodyShape.MALE,
                         WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
@@ -121,7 +119,7 @@ namespace Global.Dynamic
                         WearablesConstants.DefaultColors.GetRandomHairColor(),
                         WearablesConstants.DefaultColors.GetRandomSkinColor())));
 
-            IConcurrentBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(staticSettings.ScenesLoadingBudget);
+            IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 
             LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
             LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
@@ -131,7 +129,7 @@ namespace Global.Dynamic
                 new LoadEmptySceneSystemLogic(webRequestController, emptyScenesWorldFactory, componentPoolsRegistry, EMPTY_SCENES_MAPPINGS_URL),
                 sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex);
 
-            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider, memoryBudgetProvider);
+            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget);
 
             CalculateParcelsInRangeSystem.InjectToWorld(ref builder, playerEntity);
             LoadStaticPointersSystem.InjectToWorld(ref builder);

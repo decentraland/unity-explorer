@@ -1,0 +1,1546 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Arch.LowLevel</name>
+    </assembly>
+    <members>
+        <member name="T:Arch.LowLevel.Enumerator`1">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Enumerator`1"/> is a basic implementation of the <see cref="T:System.Collections.Generic.IEnumerator`1"/> interface for the <see cref="T:Arch.LowLevel.UnsafeList`1"/>.
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="M:Arch.LowLevel.Enumerator`1.#ctor(`0*,System.Int32)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.Enumerator`1"/>.
+            </summary>
+            <param name="list">The <see cref="T:Arch.LowLevel.UnsafeList`1"/>.</param>
+        </member>
+        <member name="P:Arch.LowLevel.Enumerator`1.Current">
+            <summary>
+                Returns the current item.
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.Enumerator`1.System#Collections#IEnumerator#Current">
+            <summary>
+                Returns the current item.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Enumerator`1.Dispose">
+            <summary>
+                Disposes this enumerator.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Enumerator`1.MoveNext">
+            <summary>
+                Moves to the next item.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.LowLevel.Enumerator`1.Reset">
+            <summary>
+                Resets the enumerator.
+            </summary>
+        </member>
+        <member name="T:Arch.LowLevel.UnsafeEnumerator`1">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Enumerator`1"/> is a basic implementation of the <see cref="T:System.Collections.Generic.IEnumerator`1"/> interface for the <see cref="T:Arch.LowLevel.UnsafeList`1"/>.
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeEnumerator`1.#ctor(`0*,System.Int32)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.Enumerator`1"/>.
+            </summary>
+            <param name="list">The <see cref="T:Arch.LowLevel.UnsafeList`1"/>.</param>
+        </member>
+        <member name="P:Arch.LowLevel.UnsafeEnumerator`1.Current">
+            <summary>
+                Returns the current item.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeEnumerator`1.MoveNext">
+            <summary>
+                Moves to the next item.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeEnumerator`1.Reset">
+            <summary>
+                Resets the enumerator.
+            </summary>
+        </member>
+        <member name="T:Arch.LowLevel.ReverseEnumerator`1">
+            <summary>
+                The <see cref="T:Arch.LowLevel.ReverseEnumerator`1"/> is a basic implementation of the <see cref="T:System.Collections.Generic.IEnumerator`1"/> interface for iterating backwards.
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="M:Arch.LowLevel.ReverseEnumerator`1.#ctor(`0*,System.Int32)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.Enumerator`1"/>.
+            </summary>
+            <param name="list">The <see cref="T:Arch.LowLevel.UnsafeList`1"/>.</param>
+        </member>
+        <member name="P:Arch.LowLevel.ReverseEnumerator`1.Current">
+            <summary>
+                Returns the current item.
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.ReverseEnumerator`1.System#Collections#IEnumerator#Current">
+            <summary>
+                Returns the current item.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.ReverseEnumerator`1.Dispose">
+            <summary>
+                Disposes this enumerator.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.ReverseEnumerator`1.MoveNext">
+            <summary>
+                Moves to the next item.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.LowLevel.ReverseEnumerator`1.Reset">
+            <summary>
+                Resets the enumerator.
+            </summary>
+        </member>
+        <member name="T:Arch.LowLevel.UnsafeReverseEnumerator`1">
+            <summary>
+                The <see cref="T:Arch.LowLevel.UnsafeReverseEnumerator`1"/> is a basic implementation of the <see cref="T:System.Collections.Generic.IEnumerator`1"/> interface for iterating backwards.
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeReverseEnumerator`1.#ctor(`0*,System.Int32)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.Enumerator`1"/>.
+            </summary>
+            <param name="list">The <see cref="T:Arch.LowLevel.UnsafeList`1"/>.</param>
+        </member>
+        <member name="P:Arch.LowLevel.UnsafeReverseEnumerator`1.Current">
+            <summary>
+                Returns the current item.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeReverseEnumerator`1.MoveNext">
+            <summary>
+                Moves to the next item.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeReverseEnumerator`1.Reset">
+            <summary>
+                Resets the enumerator.
+            </summary>
+        </member>
+        <member name="T:Arch.LowLevel.Jagged.MathExtensions">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Jagged.MathExtensions"/>
+                contains several methods for math operations.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.MathExtensions.RoundToPowerOfTwo(System.Int32)">
+            <summary>
+            This method will round down to the nearest power of 2 number. If the supplied number is a power of 2 it will return it.
+            </summary>
+            <param name="num"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Arch.LowLevel.Jagged.Bucket`1">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> struct
+                represents a bucket of the <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/> where items are stored
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="F:Arch.LowLevel.Jagged.Bucket`1.Array">
+            <summary>
+                The items array.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.Bucket`1.#ctor(System.Int32)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/>.
+            </summary>
+            <param name="capacity">The capacity</param>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.Bucket`1.Count">
+            <summary>
+                The amount of items in this <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/>.
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.Bucket`1.IsEmpty">
+            <summary>
+                If this <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> is empty.
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.Bucket`1.Item(System.Int32)">
+            <summary>
+                Returns a reference to an item at the given index.
+            </summary>
+            <param name="i">The index.</param>
+        </member>
+        <member name="T:Arch.LowLevel.Jagged.JaggedArray`1">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/> class,
+                represents a jagged array with <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/>s storing the items.
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="F:Arch.LowLevel.Jagged.JaggedArray`1._bucketSize">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> size in items.
+            </summary>
+        </member>
+        <member name="F:Arch.LowLevel.Jagged.JaggedArray`1._bucketSizeMinusOne">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> size in items - 1.
+            </summary>
+        </member>
+        <member name="F:Arch.LowLevel.Jagged.JaggedArray`1._bucketArray">
+            <summary>
+                The allocated <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/>s.
+            </summary>
+        </member>
+        <member name="F:Arch.LowLevel.Jagged.JaggedArray`1._filler">
+            <summary>
+                The filler, the default value.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.JaggedArray`1.#ctor(System.Int32,System.Int32)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/>.
+            </summary>
+            <param name="bucketSize">The <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> size in bytes.</param>
+            <param name="capacity">The total initial capacity, how many items should fit in.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.JaggedArray`1.#ctor(System.Int32,`0,System.Int32)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/>.
+            </summary>
+            <param name="bucketSize">The <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> size in bytes.</param>
+            <param name="filler">The filler value for all slots, basically a custom default-value.</param>
+            <param name="capacity">The total initial capacity, how many items should fit in.</param>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.JaggedArray`1.Capacity">
+            <summary>
+                The capacity, the total amount of items. 
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.JaggedArray`1.Buckets">
+            <summary>
+                The length, the buckets inside the <see cref="F:Arch.LowLevel.Jagged.JaggedArray`1._bucketArray"/>.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.JaggedArray`1.Add(System.Int32,`0@)">
+            <summary>
+                Adds an item to the <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/>.
+            </summary>
+            <param name="index">The index.</param>
+            <param name="item">The item.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.JaggedArray`1.Remove(System.Int32)">
+            <summary>
+                Removes an item from the <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/>.
+            </summary>
+            <param name="index">The index.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.JaggedArray`1.TryGetValue(System.Int32,`0@)">
+            <summary>
+                Trys to get an item from its index.
+            </summary>
+            <param name="index">The index.</param>
+            <param name="value">The returned value.</param>
+            <returns>True if sucessfull, otherwhise false.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.JaggedArray`1.TryGetValue(System.Int32,System.Boolean@)">
+            <summary>
+                Trys to get an item from its index.
+            </summary>
+            <param name="index">The index.</param>
+            <param name="bool">True if sucessfull, otherwhise false</param>
+            <returns>A reference or null reference to the item.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.JaggedArray`1.ContainsKey(System.Int32)">
+            <summary>
+                Checks if the value at the given index exists.
+            </summary>
+            <param name="index">The index.</param>
+            <returns>True if it does, false if it does not.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.JaggedArray`1.EnsureCapacity(System.Int32)">
+            <summary>
+                Ensures the capacity and increases it if necessary.
+            </summary>
+            <param name="newCapacity">The new capcity.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.JaggedArray`1.TrimExcess">
+            <summary>
+                Trims the last few empty buckets to release memory.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.JaggedArray`1.IndexToSlot(System.Int32,System.Int32@,System.Int32@)">
+            <summary>
+                Converts the passed id to its inner and outer index ( or slot ) inside the <see cref="!:_items"/> array.
+            </summary>
+            <param name="id">The id.</param>
+            <param name="bucketIndex">The outer index.</param>
+            <param name="itemIndex">The inner index.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.JaggedArray`1.GetBucket(System.Int32)">
+            <summary>
+                Returns the <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> from the <see cref="F:Arch.LowLevel.Jagged.JaggedArray`1._bucketArray"/> at the given index.
+            </summary>
+            <param name="index">The index.</param>
+            <returns>The <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> at the given index.</returns>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.JaggedArray`1.Item(System.Int32)">
+            <summary>
+                Returns a reference to an item at the given index.
+            </summary>
+            <param name="i">The index.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.JaggedArray`1.Clear">
+            <summary>
+                Clears this <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/> and sets all values to the <see cref="F:Arch.LowLevel.Jagged.JaggedArray`1._filler"/>.
+            </summary>
+        </member>
+        <member name="T:Arch.LowLevel.Jagged.SparseBucket`1">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Jagged.SparseBucket`1"/> struct
+                represents a bucket of the <see cref="T:Arch.LowLevel.Jagged.SparseJaggedArray`1"/> where items are stored.
+                <remarks>It will not allocate memory upon creation, it stays empty till the first item was added in.</remarks>
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="F:Arch.LowLevel.Jagged.SparseBucket`1.Array">
+            <summary>
+                The items array.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.SparseBucket`1.#ctor(System.Int32,System.Boolean)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/>.
+            </summary>
+            <param name="capacity">The total capacity.</param>
+            <param name="allocate">If it should allocate straight forward.</param>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.SparseBucket`1.Capacity">
+            <summary>
+                The total capacity of this <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/>.
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.SparseBucket`1.Count">
+            <summary>
+                The amount of items in this <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/>.
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.SparseBucket`1.IsEmpty">
+            <summary>
+                If this <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> is empty.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.SparseBucket`1.EnsureCapacity">
+            <summary>
+                Ensures the <see cref="P:Arch.LowLevel.Jagged.SparseBucket`1.Capacity"/> of this <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/>.
+                Basically allocated a new array. 
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.SparseBucket`1.TrimExcess">
+            <summary>
+                Trims the bucket to an empty one. 
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.SparseBucket`1.Item(System.Int32)">
+            <summary>
+                Returns a reference to an item at the given index.
+            </summary>
+            <param name="i">The index.</param>
+        </member>
+        <member name="T:Arch.LowLevel.Jagged.SparseJaggedArray`1">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Jagged.SparseJaggedArray`1"/> class,
+                represents a jagged array with <see cref="T:Arch.LowLevel.Jagged.SparseBucket`1"/>s storing the items.
+                <remarks>Its buckets will stay empty and not allocate memory till a slot in it is being used.</remarks>
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="F:Arch.LowLevel.Jagged.SparseJaggedArray`1._bucketSize">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> size in items.
+            </summary>
+        </member>
+        <member name="F:Arch.LowLevel.Jagged.SparseJaggedArray`1._bucketSizeMinusOne">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> size in items - 1.
+            </summary>
+        </member>
+        <member name="F:Arch.LowLevel.Jagged.SparseJaggedArray`1._bucketArray">
+            <summary>
+                The allocated <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/>s.
+            </summary>
+        </member>
+        <member name="F:Arch.LowLevel.Jagged.SparseJaggedArray`1._filler">
+            <summary>
+                The filler, the default value.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.SparseJaggedArray`1.#ctor(System.Int32,System.Int32)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/>.
+            </summary>
+            <param name="bucketSize">The <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> size in bytes.</param>
+            <param name="capacity">The total initial capacity, how many items should fit in.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.SparseJaggedArray`1.#ctor(System.Int32,`0,System.Int32)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/>.
+            </summary>
+            <param name="bucketSize">The <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> size in bytes.</param>
+            <param name="filler">The filler value for all slots, basically a custom default-value.</param>
+            <param name="capacity">The total initial capacity, how many items should fit in.</param>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.SparseJaggedArray`1.Sparse">
+            <summary>
+                If true, each bucket will stay empty and will not allocate memory until its actually being used. 
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.SparseJaggedArray`1.Capacity">
+            <summary>
+                The capacity, the total amount of items. 
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.SparseJaggedArray`1.Buckets">
+            <summary>
+                The length, the buckets inside the <see cref="F:Arch.LowLevel.Jagged.SparseJaggedArray`1._bucketArray"/>.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.SparseJaggedArray`1.Add(System.Int32,`0@)">
+            <summary>
+                Adds an item to the <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/>.
+            </summary>
+            <param name="index">The index.</param>
+            <param name="item">The item.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.SparseJaggedArray`1.Remove(System.Int32)">
+            <summary>
+                Removes an item from the <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/>.
+            </summary>
+            <param name="index">The index.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.SparseJaggedArray`1.TryGetValue(System.Int32,`0@)">
+            <summary>
+                Trys to get an item from its index.
+            </summary>
+            <param name="index">The index.</param>
+            <param name="value">The returned value.</param>
+            <returns>True if sucessfull, otherwhise false.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.SparseJaggedArray`1.TryGetValue(System.Int32,System.Boolean@)">
+            <summary>
+                Trys to get an item from its index.
+            </summary>
+            <param name="index">The index.</param>
+            <param name="bool">True if sucessfull, otherwhise false</param>
+            <returns>A reference or null reference to the item.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.SparseJaggedArray`1.ContainsKey(System.Int32)">
+            <summary>
+                Checks if the value at the given index exists.
+            </summary>
+            <param name="index">The index.</param>
+            <returns>True if it does, false if it does not.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.SparseJaggedArray`1.EnsureCapacity(System.Int32)">
+            <summary>
+                Ensures the capacity and increases it if necessary.
+            </summary>
+            <param name="newCapacity">The new capcity.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.SparseJaggedArray`1.TrimExcess">
+            <summary>
+                Trims the last few empty buckets to release memory.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.SparseJaggedArray`1.IndexToSlot(System.Int32,System.Int32@,System.Int32@)">
+            <summary>
+                Converts the passed id to its inner and outer index ( or slot ) inside the <see cref="F:Arch.LowLevel.Jagged.SparseJaggedArray`1._bucketArray"/> array.
+            </summary>
+            <param name="id">The id.</param>
+            <param name="bucketIndex">The outer index.</param>
+            <param name="itemIndex">The inner index.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.SparseJaggedArray`1.GetBucket(System.Int32)">
+            <summary>
+                Returns the <see cref="T:Arch.LowLevel.Jagged.SparseBucket`1"/> from the <see cref="F:Arch.LowLevel.Jagged.SparseJaggedArray`1._bucketArray"/> at the given index.
+            </summary>
+            <param name="index">The index.</param>
+            <returns>The <see cref="T:Arch.LowLevel.Jagged.SparseBucket`1"/> at the given index.</returns>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.SparseJaggedArray`1.Item(System.Int32)">
+            <summary>
+                Returns a reference to an item at the given index.
+            </summary>
+            <param name="i">The index.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.SparseJaggedArray`1.Clear">
+            <summary>
+                Clears this <see cref="T:Arch.LowLevel.Jagged.SparseJaggedArray`1"/> and sets all values to the <see cref="F:Arch.LowLevel.Jagged.SparseJaggedArray`1._filler"/>.
+            </summary>
+        </member>
+        <member name="T:Arch.LowLevel.Jagged.UnsafeBucket`1">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> struct
+                represents a bucket of the <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/> where items are stored
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="F:Arch.LowLevel.Jagged.UnsafeBucket`1.Array">
+            <summary>
+                The items array.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeBucket`1.#ctor(System.Int32)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/>.
+            </summary>
+            <param name="capacity">The capacity</param>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.UnsafeBucket`1.Count">
+            <summary>
+                The amount of items in this <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/>.
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.UnsafeBucket`1.IsEmpty">
+            <summary>
+                If this <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> is empty.
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.UnsafeBucket`1.Item(System.Int32)">
+            <summary>
+                Returns a reference to an item at the given index.
+            </summary>
+            <param name="i">The index.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeBucket`1.Dispose">
+            <summary>
+                Disposes this <see cref="T:Arch.LowLevel.Jagged.UnsafeBucket`1"/>. 
+            </summary>
+        </member>
+        <member name="T:Arch.LowLevel.Jagged.UnsafeJaggedArray`1">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Jagged.UnsafeJaggedArray`1"/> class,
+                represents a jagged array with <see cref="T:Arch.LowLevel.Jagged.UnsafeBucket`1"/>s storing the items.
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="F:Arch.LowLevel.Jagged.UnsafeJaggedArray`1._bucketSize">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> size in items.
+            </summary>
+        </member>
+        <member name="F:Arch.LowLevel.Jagged.UnsafeJaggedArray`1._bucketSizeMinusOne">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> size in items - 1.
+            </summary>
+        </member>
+        <member name="F:Arch.LowLevel.Jagged.UnsafeJaggedArray`1._bucketArray">
+            <summary>
+                The allocated <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/>s.
+            </summary>
+        </member>
+        <member name="F:Arch.LowLevel.Jagged.UnsafeJaggedArray`1._filler">
+            <summary>
+                The filler, the default value.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeJaggedArray`1.#ctor(System.Int32,System.Int32)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/>.
+            </summary>
+            <param name="bucketSize">The <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> size in bytes.</param>
+            <param name="capacity">The total initial capacity, how many items should fit in.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeJaggedArray`1.#ctor(System.Int32,`0,System.Int32)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/>.
+            </summary>
+            <param name="bucketSize">The <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> size in bytes.</param>
+            <param name="filler">The filler value for all slots, basically a custom default-value.</param>
+            <param name="capacity">The total initial capacity, how many items should fit in.</param>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.UnsafeJaggedArray`1.Capacity">
+            <summary>
+                The capacity, the total amount of items. 
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.UnsafeJaggedArray`1.Buckets">
+            <summary>
+                The length, the buckets inside the <see cref="F:Arch.LowLevel.Jagged.UnsafeJaggedArray`1._bucketArray"/>.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeJaggedArray`1.Add(System.Int32,`0@)">
+            <summary>
+                Adds an item to the <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/>.
+            </summary>
+            <param name="index">The index.</param>
+            <param name="item">The item.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeJaggedArray`1.Remove(System.Int32)">
+            <summary>
+                Removes an item from the <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/>.
+            </summary>
+            <param name="index">The index.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeJaggedArray`1.TryGetValue(System.Int32,`0@)">
+            <summary>
+                Trys to get an item from its index.
+            </summary>
+            <param name="index">The index.</param>
+            <param name="value">The returned value.</param>
+            <returns>True if sucessfull, otherwhise false.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeJaggedArray`1.TryGetValue(System.Int32,System.Boolean@)">
+            <summary>
+                Trys to get an item from its index.
+            </summary>
+            <param name="index">The index.</param>
+            <param name="bool">True if sucessfull, otherwhise false</param>
+            <returns>A reference or null reference to the item.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeJaggedArray`1.ContainsKey(System.Int32)">
+            <summary>
+                Checks if the value at the given index exists.
+            </summary>
+            <param name="index">The index.</param>
+            <returns>True if it does, false if it does not.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeJaggedArray`1.EnsureCapacity(System.Int32)">
+            <summary>
+                Ensures the capacity and increases it if necessary.
+            </summary>
+            <param name="newCapacity">The new capcity.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeJaggedArray`1.TrimExcess">
+            <summary>
+                Trims the last few empty buckets to release memory.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeJaggedArray`1.IndexToSlot(System.Int32,System.Int32@,System.Int32@)">
+            <summary>
+                Converts the passed id to its inner and outer index ( or slot ) inside the <see cref="!:_items"/> array.
+            </summary>
+            <param name="id">The id.</param>
+            <param name="bucketIndex">The outer index.</param>
+            <param name="itemIndex">The inner index.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeJaggedArray`1.GetBucket(System.Int32)">
+            <summary>
+                Returns the <see cref="T:Arch.LowLevel.Jagged.UnsafeBucket`1"/> from the <see cref="F:Arch.LowLevel.Jagged.UnsafeJaggedArray`1._bucketArray"/> at the given index.
+            </summary>
+            <param name="index">The index.</param>
+            <returns>The <see cref="T:Arch.LowLevel.Jagged.UnsafeBucket`1"/> at the given index.</returns>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.UnsafeJaggedArray`1.Item(System.Int32)">
+            <summary>
+                Returns a reference to an item at the given index.
+            </summary>
+            <param name="i">The index.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeJaggedArray`1.Clear">
+            <summary>
+                Clears this <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/> and sets all values to the <see cref="F:Arch.LowLevel.Jagged.UnsafeJaggedArray`1._filler"/>.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeJaggedArray`1.Dispose">
+            <summary>
+                Disposes this <see cref="T:Arch.LowLevel.Jagged.UnsafeJaggedArray`1"/>.
+            </summary>
+        </member>
+        <member name="T:Arch.LowLevel.Jagged.UnsafeSparseBucket`1">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Jagged.UnsafeSparseBucket`1"/> struct
+                represents a bucket of the <see cref="T:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1"/> where items are stored.
+                <remarks>It will not allocate memory upon creation, it stays empty till the first item was added in.</remarks>
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="F:Arch.LowLevel.Jagged.UnsafeSparseBucket`1.Array">
+            <summary>
+                The items array.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeSparseBucket`1.#ctor(System.Int32,System.Boolean)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/>.
+            </summary>
+            <param name="capacity">The total capacity.</param>
+            <param name="allocate">If it should allocate straight forward.</param>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.UnsafeSparseBucket`1.Capacity">
+            <summary>
+                The total capacity of this <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/>.
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.UnsafeSparseBucket`1.Count">
+            <summary>
+                The amount of items in this <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/>.
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.UnsafeSparseBucket`1.IsEmpty">
+            <summary>
+                If this <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> is empty.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeSparseBucket`1.EnsureCapacity">
+            <summary>
+                Ensures the <see cref="P:Arch.LowLevel.Jagged.UnsafeSparseBucket`1.Capacity"/> of this <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/>.
+                Basically allocated a new array. 
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeSparseBucket`1.TrimExcess">
+            <summary>
+                Trims the bucket to an empty one. 
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.UnsafeSparseBucket`1.Item(System.Int32)">
+            <summary>
+                Returns a reference to an item at the given index.
+            </summary>
+            <param name="i">The index.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeSparseBucket`1.Dispose">
+            <summary>
+                Disposes this <see cref="T:Arch.LowLevel.Jagged.UnsafeSparseBucket`1"/>
+            </summary>
+        </member>
+        <member name="T:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1"/> class,
+                represents a jagged array with <see cref="T:Arch.LowLevel.Jagged.SparseBucket`1"/>s storing the items.
+                <remarks>Its buckets will stay empty and not allocate memory till a slot in it is being used.</remarks>
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="F:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1._bucketSize">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> size in items.
+            </summary>
+        </member>
+        <member name="F:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1._bucketSizeMinusOne">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> size in items - 1.
+            </summary>
+        </member>
+        <member name="F:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1._bucketArray">
+            <summary>
+                The allocated <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/>s.
+            </summary>
+        </member>
+        <member name="F:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1._filler">
+            <summary>
+                The filler, the default value.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1.#ctor(System.Int32,System.Int32)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/>.
+            </summary>
+            <param name="bucketSize">The <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> size in bytes.</param>
+            <param name="capacity">The total initial capacity, how many items should fit in.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1.#ctor(System.Int32,`0,System.Int32)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/>.
+            </summary>
+            <param name="bucketSize">The <see cref="T:Arch.LowLevel.Jagged.Bucket`1"/> size in bytes.</param>
+            <param name="filler">The filler value for all slots, basically a custom default-value.</param>
+            <param name="capacity">The total initial capacity, how many items should fit in.</param>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1.Sparse">
+            <summary>
+                If true, each bucket will stay empty and will not allocate memory until its actually being used. 
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1.Capacity">
+            <summary>
+                The capacity, the total amount of items. 
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1.Buckets">
+            <summary>
+                The length, the buckets inside the <see cref="F:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1._bucketArray"/>.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1.Add(System.Int32,`0@)">
+            <summary>
+                Adds an item to the <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/>.
+            </summary>
+            <param name="index">The index.</param>
+            <param name="item">The item.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1.Remove(System.Int32)">
+            <summary>
+                Removes an item from the <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/>.
+            </summary>
+            <param name="index">The index.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1.TryGetValue(System.Int32,`0@)">
+            <summary>
+                Trys to get an item from its index.
+            </summary>
+            <param name="index">The index.</param>
+            <param name="value">The returned value.</param>
+            <returns>True if sucessfull, otherwhise false.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1.TryGetValue(System.Int32,System.Boolean@)">
+            <summary>
+                Trys to get an item from its index.
+            </summary>
+            <param name="index">The index.</param>
+            <param name="bool">True if sucessfull, otherwhise false</param>
+            <returns>A reference or null reference to the item.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1.ContainsKey(System.Int32)">
+            <summary>
+                Checks if the value at the given index exists.
+            </summary>
+            <param name="index">The index.</param>
+            <returns>True if it does, false if it does not.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1.EnsureCapacity(System.Int32)">
+            <summary>
+                Ensures the capacity and increases it if necessary.
+            </summary>
+            <param name="newCapacity">The new capcity.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1.TrimExcess">
+            <summary>
+                Trims the last few empty buckets to release memory.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1.IndexToSlot(System.Int32,System.Int32@,System.Int32@)">
+            <summary>
+                Converts the passed id to its inner and outer index ( or slot ) inside the <see cref="!:_items"/> array.
+            </summary>
+            <param name="id">The id.</param>
+            <param name="bucketIndex">The outer index.</param>
+            <param name="itemIndex">The inner index.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1.GetBucket(System.Int32)">
+            <summary>
+                Returns the <see cref="T:Arch.LowLevel.Jagged.UnsafeSparseBucket`1"/> from the <see cref="F:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1._bucketArray"/> at the given index.
+            </summary>
+            <param name="index">The index.</param>
+            <returns>The <see cref="T:Arch.LowLevel.Jagged.UnsafeSparseBucket`1"/> at the given index.</returns>
+        </member>
+        <member name="P:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1.Item(System.Int32)">
+            <summary>
+                Returns a reference to an item at the given index.
+            </summary>
+            <param name="i">The index.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1.Clear">
+            <summary>
+                Clears this <see cref="T:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1"/> and sets all values to the <see cref="F:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1._filler"/>.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1.Dispose">
+            <summary>
+                Disposes this <see cref="T:Arch.LowLevel.Jagged.UnsafeSparseJaggedArray`1"/>.
+            </summary>
+        </member>
+        <member name="T:Arch.LowLevel.Handle`1">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Handle`1"/> struct
+                represents a reference to an managed resource.
+                This is used commonly for referencing managed resources from components.
+            </summary>
+            <typeparam name="T">The type of the managed resource.</typeparam>
+        </member>
+        <member name="F:Arch.LowLevel.Handle`1.NULL">
+            <summary>
+                A null <see cref="T:Arch.LowLevel.Handle`1"/> which is invalid and used for camparison.
+            </summary>
+        </member>
+        <member name="F:Arch.LowLevel.Handle`1.Id">
+            <summary>
+                The id, its index inside a <see cref="T:Arch.LowLevel.Resources`1"/> array.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Handle`1.#ctor">
+            <summary>
+                Public default constructor.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Handle`1.#ctor(System.Int32)">
+            <summary>
+                 Initializes a new instance of the <see cref="T:Arch.LowLevel.Handle`1" /> class.
+            </summary>
+            <param name="id"></param>
+        </member>
+        <member name="T:Arch.LowLevel.Resources`1">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Handle`1"/> class,
+                represents an collection of managed resources which can be accesed by a <see cref="T:Arch.LowLevel.Handle`1"/>.
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="F:Arch.LowLevel.Resources`1._array">
+            <summary>
+                The <see cref="T:Arch.LowLevel.Jagged.JaggedArray`1"/> which stores the managed resources on the <see cref="T:Arch.LowLevel.Handle`1"/> index.
+            </summary>
+        </member>
+        <member name="F:Arch.LowLevel.Resources`1._ids">
+            <summary>
+                A list of recycled <see cref="T:Arch.LowLevel.Handle`1"/> ids, used to fill in old gaps.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Resources`1.#ctor(System.Int32)">
+            <summary>
+                Creates an <see cref="T:Arch.LowLevel.Resources`1"/> instance.
+            </summary>
+            <param name="capacity">The capacity of the bucket.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Resources`1.#ctor(System.Int32,System.Int32)">
+            <summary>
+                Creates an <see cref="T:Arch.LowLevel.Resources`1"/> instance.
+            </summary>
+            <param name="size">The size of the generic type in bytes.</param>
+            <param name="capacity">The capcity, how many items of that type should fit into the array.</param>
+        </member>
+        <member name="P:Arch.LowLevel.Resources`1.Count">
+            <summary>
+                The amount of registered <see cref="T:Arch.LowLevel.Handle`1"/>s.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Resources`1.Add(`0@)">
+            <summary>
+                Creates a <see cref="T:Arch.LowLevel.Handle`1"/> for the given resource.
+            </summary>
+            <param name="item">The resource instance.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.LowLevel.Resources`1.IsValid(Arch.LowLevel.Handle{`0}@)">
+            <summary>
+                Checks if the <see cref="T:Arch.LowLevel.Handle`1"/> is valid.
+            </summary>
+            <param name="handle">The <see cref="T:Arch.LowLevel.Handle`1"/>.</param>
+            <returns>True or false.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.Resources`1.Get(Arch.LowLevel.Handle{`0}@)">
+            <summary>
+                Returns a resource for the given <see cref="T:Arch.LowLevel.Handle`1"/>.
+            </summary>
+            <param name="handle">The <see cref="T:Arch.LowLevel.Handle`1"/>.</param>
+            <returns>The resource.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.Resources`1.Remove(Arch.LowLevel.Handle{`0}@)">
+            <summary>
+                Removes a <see cref="T:Arch.LowLevel.Handle`1"/> and its resource.
+            </summary>
+            <param name="handle">The <see cref="T:Arch.LowLevel.Handle`1"/>.</param>
+        </member>
+        <member name="M:Arch.LowLevel.Resources`1.TrimExcess">
+            <summary>
+                Trims the resources and releases unused memory if possible.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.Resources`1.Dispose">
+            <summary>
+                Disposes this <see cref="T:Arch.LowLevel.Resources`1"/> instance.
+            </summary>
+        </member>
+        <member name="T:Arch.LowLevel.UnsafeArray`1">
+            <summary>
+                The <see cref="T:Arch.LowLevel.UnsafeArray`1"/> struct
+                represents an unsafe allocated array of unmanaged items.
+            </summary>
+            <typeparam name="T">The unmanaged generic.</typeparam>
+        </member>
+        <member name="F:Arch.LowLevel.UnsafeArray`1.Empty">
+            <summary>
+                The static empty <see cref="T:Arch.LowLevel.UnsafeArray`1"/>.
+            </summary>
+        </member>
+        <member name="F:Arch.LowLevel.UnsafeArray`1._ptr">
+            <summary>
+                The pointer, pointing towards the first element of this <see cref="T:Arch.LowLevel.UnsafeArray`1"/>.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeArray`1.#ctor(System.Int32)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.UnsafeArray`1"/>.
+                Allocates the array for the passed count of items.
+            </summary>
+            <param name="count">The arrays count or capacity.</param>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeArray`1.#ctor(`0*,System.Int32)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.UnsafeArray`1"/> by a pointer.
+            </summary>
+            <param name="ptr">The pointer.</param>
+            <param name="count">The count.</param>
+        </member>
+        <member name="P:Arch.LowLevel.UnsafeArray`1.Count">
+            <summary>
+                The count of this <see cref="T:Arch.LowLevel.UnsafeArray`1"/> instance, its capacity.
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.UnsafeArray`1.Length">
+            <summary>
+                The count of this <see cref="T:Arch.LowLevel.UnsafeArray`1"/> instance, its capacity.
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.UnsafeArray`1.Item(System.Int32)">
+            <summary>
+                Returns a reference to an item at a given index.
+            </summary>
+            <param name="i">The index.</param>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeArray`1.Dispose">
+            <summary>
+                Disposes this instance of <see cref="T:Arch.LowLevel.UnsafeArray`1"/> and releases its memory.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeArray`1.AsSpan">
+            <summary>
+                Converts this <see cref="T:Arch.LowLevel.UnsafeArray`1"/> instance into a <see cref="T:System.Span`1"/>.
+            </summary>
+            <returns>A new instance of <see cref="T:System.Span`1"/>.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeArray`1.GetEnumerator">
+            <summary>
+                Creates an instance of a <see cref="T:Arch.LowLevel.UnsafeEnumerator`1"/> for ref acessing the array content.
+            </summary>
+            <returns>A new <see cref="T:Arch.LowLevel.UnsafeEnumerator`1"/>.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeArray`1.Equals(Arch.LowLevel.UnsafeArray{`0})">
+            <summary>
+                Checks for equality.
+            </summary>
+            <param name="other">The other <see cref="T:Arch.LowLevel.UnsafeArray"/>.</param>
+            <returns>True if equal, oterwhise false.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeArray`1.Equals(System.Object)">
+            <summary>
+                Checks for equality.
+            </summary>
+            <param name="obj">The other <see cref="T:Arch.LowLevel.UnsafeArray"/>.</param>
+            <returns>True if equal, oterwhise false.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeArray`1.op_Equality(Arch.LowLevel.UnsafeArray{`0},Arch.LowLevel.UnsafeArray{`0})">
+            <summary>
+                Checks for equality.
+            </summary>
+            <param name="left">The first <see cref="T:Arch.LowLevel.UnsafeArray"/>.</param>
+            <param name="right">The second <see cref="T:Arch.LowLevel.UnsafeArray"/>.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeArray`1.op_Inequality(Arch.LowLevel.UnsafeArray{`0},Arch.LowLevel.UnsafeArray{`0})">
+            <summary>
+                Checks for inequality.
+            </summary>
+            <param name="left">The first <see cref="T:Arch.LowLevel.UnsafeArray"/>.</param>
+            <param name="right">The second <see cref="T:Arch.LowLevel.UnsafeArray"/>.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeArray`1.GetHashCode">
+            <summary>
+                Returns the hash of this <see cref="T:Arch.LowLevel.UnsafeArray"/>.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeArray`1.op_Implicit(Arch.LowLevel.UnsafeArray{`0})~System.Void*">
+            <summary>
+                Converts an <see cref="T:Arch.LowLevel.UnsafeArray`1"/> into a void pointer.
+            </summary>
+            <param name="instance">The <see cref="T:Arch.LowLevel.UnsafeArray`1"/> instance.</param>
+            <returns>A void pointer.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeArray`1.op_Implicit(Arch.LowLevel.UnsafeArray{`0})~`0*">
+            <summary>
+                Converts an <see cref="T:Arch.LowLevel.UnsafeArray`1"/> into a generic pointer.
+            </summary>
+            <param name="instance">The <see cref="T:Arch.LowLevel.UnsafeArray`1"/> instance.</param>
+            <returns>A void pointer.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeArray`1.ToString">
+            <summary>
+                Converts this <see cref="T:Arch.LowLevel.UnsafeArray`1"/> to a string.
+            </summary>
+            <returns>The string.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeArray.Empty``1">
+            <summary>
+                Returns an empty <see cref="T:Arch.LowLevel.UnsafeArray`1"/>.
+            </summary>
+            <typeparam name="T">The generic type.</typeparam>
+            <returns>The empty <see cref="T:Arch.LowLevel.UnsafeArray`1"/>.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeArray.Copy``1(Arch.LowLevel.UnsafeArray{``0}@,System.Int32,Arch.LowLevel.UnsafeArray{``0}@,System.Int32,System.Int32)">
+            <summary>
+             Copies the a part of the <see cref="T:Arch.LowLevel.UnsafeArray`1"/> to the another <see cref="T:Arch.LowLevel.UnsafeArray`1"/>.
+            </summary>
+            <param name="source">The source <see cref="T:Arch.LowLevel.UnsafeArray`1"/>.</param>
+            <param name="index">The start index in the source <see cref="T:Arch.LowLevel.UnsafeArray`1"/>.</param>
+            <param name="destination">The destination <see cref="T:Arch.LowLevel.UnsafeArray`1"/>.</param>
+            <param name="destinationIndex">The start index in the destination <see cref="T:Arch.LowLevel.UnsafeArray`1"/>.</param>
+            <param name="length">The length indicating the amount of items being copied.</param>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeArray.Fill``1(Arch.LowLevel.UnsafeArray{``0}@,``0@)">
+            <summary>
+                Fills an <see cref="T:Arch.LowLevel.UnsafeArray`1"/> with a given value.
+            </summary>
+            <param name="source">The <see cref="T:Arch.LowLevel.UnsafeArray`1"/> instance.</param>
+            <param name="value">The value.</param>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeArray.Resize``1(Arch.LowLevel.UnsafeArray{``0}@,System.Int32)">
+            <summary>
+                Resizes an <see cref="T:Arch.LowLevel.UnsafeArray`1"/> to a new <see cref="!:newCapacity"/>.
+            </summary>
+            <param name="source">The <see cref="T:Arch.LowLevel.UnsafeArray`1"/>.</param>
+            <param name="newCapacity">The new capacity.</param>
+            <typeparam name="T">The generic type.</typeparam>
+            <returns>The new resized <see cref="T:Arch.LowLevel.UnsafeArray`1"/>.</returns>
+        </member>
+        <member name="T:Arch.LowLevel.UnsafeArrayDebugView`1">
+            <summary>
+                A debug view for the <see cref="T:Arch.LowLevel.UnsafeArray`1"/>.
+            </summary>
+            <typeparam name="T">The unmanaged type.</typeparam>
+        </member>
+        <member name="T:Arch.LowLevel.UnsafeList`1">
+            <summary>
+                The struct <see cref="T:Arch.LowLevel.UnsafeList`1"/> represents a native unmanaged list.
+                Can easily be stored in unmanaged structs. 
+            </summary>
+            <typeparam name="T">The generic type stored in the list.</typeparam>
+        </member>
+        <member name="F:Arch.LowLevel.UnsafeList`1._array">
+            <summary>
+                The array pointer.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.#ctor(System.Int32)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.UnsafeList`1"/>.
+            </summary>
+            <param name="capacity">The initial capacity that is being allocated.</param>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.#ctor(`0*,System.Int32)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.UnsafeList`1"/> by a pointer.
+            </summary>
+            <param name="ptr">The pointer.</param>
+            <param name="capacity">The initial capacity that is being allocated.</param>
+        </member>
+        <member name="P:Arch.LowLevel.UnsafeList`1.Count">
+            <summary>
+                The amount of items in the list.
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.UnsafeList`1.Capacity">
+            <summary>
+                The total capacity of this list.
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.UnsafeList`1.IsReadOnly">
+            <summary>
+                If its readonly.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.Add(`0)">
+            <summary>
+                Adds an item to the list.
+            </summary>
+            <param name="item">The item.</param>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.Insert(System.Int32,`0)">
+            <summary>
+                Inserts an item at the given index. 
+            </summary>
+            <param name="index">The index.</param>
+            <param name="item">The item instance.</param>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.RemoveAt(System.Int32)">
+            <summary>
+                Removes an item from the list at a given index.
+            </summary>
+            <param name="index">The index.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">Throws when the index is out of range.</exception>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.Remove(`0)">
+            <summary>
+                Removes the item by its value and returns true or false.
+            </summary>
+            <param name="item">The item.</param>
+            <returns>True if the operation was sucessfull, false if it was not.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.IndexOf(`0)">
+            <summary>
+                Checks if the item is containted in this <see cref="T:Arch.LowLevel.UnsafeList`1"/> instance and returns its index.
+            </summary>
+            <param name="item">The item.</param>
+            <returns>Its index.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.Contains(`0)">
+            <summary>
+                Checks if the item is containted in this <see cref="T:Arch.LowLevel.UnsafeList`1"/> instance.
+            </summary>
+            <param name="item">The item.</param>
+            <returns>True if it exists, otherwhise false.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.CopyTo(`0[],System.Int32)">
+            <summary>
+                Copies all items from this <see cref="T:Arch.LowLevel.UnsafeList`1"/> to the specified array.
+            </summary>
+            <param name="array">The array to copy to.</param>
+            <param name="arrayIndex">The index to start with.</param>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.EnsureCapacity(System.Int32)">
+            <summary>
+                Ensures the capacity of this <see cref="T:Arch.LowLevel.UnsafeList`1"/> instance and resizes it accordingly.
+            </summary>
+            <param name="min">The minimum amount of items ensured.</param>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.TrimExcess">
+            <summary>
+                Trims the capacity of this <see cref="T:Arch.LowLevel.UnsafeList`1"/> to release unused memory.
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.UnsafeList`1.System#Collections#Generic#IList{T}#Item(System.Int32)">
+            <summary>
+               Acesses an item at the index of the list. 
+            </summary>
+            <param name="index">The index.</param>
+        </member>
+        <member name="P:Arch.LowLevel.UnsafeList`1.Item(System.Int32)">
+            <summary>
+                Acesses an item at the index of the list. 
+            </summary>
+            <param name="i">The index.</param>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.Clear">
+            <summary>
+                Clears this <see cref="T:Arch.LowLevel.UnsafeList`1"/> instance.
+            </summary>
+            <exception cref="T:System.NotImplementedException"></exception>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.Dispose">
+            <summary>
+                Disposes this instance and releases its memory. 
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.AsSpan">
+            <summary>
+                Converts this <see cref="T:Arch.LowLevel.UnsafeList`1"/> instance into a <see cref="T:System.Span`1"/>.
+            </summary>
+            <returns>A new instance of <see cref="T:System.Span`1"/>.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.GetEnumerator">
+            <summary>
+                Creates an instance of a <see cref="T:Arch.LowLevel.UnsafeEnumerator`1"/> for ref acessing the list content.
+            </summary>
+            <returns>A new <see cref="T:Arch.LowLevel.UnsafeEnumerator`1"/>.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.System#Collections#Generic#IEnumerable{T}#GetEnumerator">
+            <summary>
+                Creates an instance of a <see cref="T:System.Collections.Generic.IEnumerable`1"/>.
+            </summary>
+            <returns>The new <see cref="T:System.Collections.Generic.IEnumerable`1"/>.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.System#Collections#IEnumerable#GetEnumerator">
+            <summary>
+                Creates an instance of a <see cref="T:System.Collections.Generic.IEnumerable`1"/>.
+            </summary>
+            <returns>The new <see cref="T:System.Collections.IEnumerator"/>.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.Equals(Arch.LowLevel.UnsafeList{`0})">
+            <summary>
+                Checks for equality.
+            </summary>
+            <param name="other">The other <see cref="T:Arch.LowLevel.UnsafeList`1"/>.</param>
+            <returns>True or false.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.Equals(System.Object)">
+            <summary>
+                Checks for equality.
+            </summary>
+            <param name="obj">The other <see cref="T:Arch.LowLevel.UnsafeList`1"/>.</param>
+            <returns>True or false.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.op_Equality(Arch.LowLevel.UnsafeList{`0},Arch.LowLevel.UnsafeList{`0})">
+            <summary>
+                Checks for equality.
+            </summary>
+            <param name="left">The first <see cref="T:Arch.LowLevel.UnsafeList`1"/>.</param>
+            <param name="right">The second <see cref="T:Arch.LowLevel.UnsafeList`1"/>.</param>
+            <returns>True or false.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.op_Inequality(Arch.LowLevel.UnsafeList{`0},Arch.LowLevel.UnsafeList{`0})">
+            <summary>
+                Checks for inequality.
+            </summary>
+            <param name="left">The first <see cref="T:Arch.LowLevel.UnsafeList`1"/>.</param>
+            <param name="right">The second <see cref="T:Arch.LowLevel.UnsafeList`1"/>.</param>
+            <returns>True or false.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.GetHashCode">
+            <summary>
+                Returns the hashcode of this <see cref="T:Arch.LowLevel.UnsafeList`1"/>.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeList`1.ToString">
+            <summary>
+                Converts this <see cref="T:Arch.LowLevel.UnsafeList`1"/> to a string.
+            </summary>
+            <returns>The string.</returns>
+        </member>
+        <member name="T:Arch.LowLevel.UnsafeListDebugView`1">
+            <summary>
+                A debug view for the <see cref="T:Arch.LowLevel.UnsafeList`1"/>.
+            </summary>
+            <typeparam name="T">The unmanaged type.</typeparam>
+        </member>
+        <member name="T:Arch.LowLevel.UnsafeQueue`1">
+            <summary>
+                The struct <see cref="T:Arch.LowLevel.UnsafeStack`1"/> represents a native unmanaged queue.
+                Can easily be stored in unmanaged structs. 
+            </summary>
+            <typeparam name="T">The generic type stored in the queue.</typeparam>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeQueue`1.#ctor(System.Int32)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.UnsafeQueue`1"/>.
+            </summary>
+            <param name="capacity">Initial capacity of this queue.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException"></exception>
+        </member>
+        <member name="P:Arch.LowLevel.UnsafeQueue`1.Count">
+            <summary>
+                The amount of items in the queue.
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.UnsafeQueue`1.Capacity">
+            <summary>
+                The total capacity of this queue.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeQueue`1.Enqueue(`0)">
+            <summary>
+                Enqueues a item.
+            </summary>
+            <param name="item">The item</param>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeQueue`1.Dequeue">
+            <summary>
+                Dequeues an item.
+            </summary>
+            <returns>The item</returns>
+            <exception cref="T:System.InvalidOperationException"></exception>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeQueue`1.Peek">
+            <summary>
+                Peeks at an item.
+            </summary>
+            <returns>The item.</returns>
+            <exception cref="T:System.InvalidOperationException"></exception>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeQueue`1.TrimExcess">
+            <summary>
+                Trims this instance and releases memory in this process.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeQueue`1.EnsureCapacity(System.Int32)">
+            <summary>
+                Ensures the capacity of this instance. 
+            </summary>
+            <param name="newCapacity">The new capacity.</param>
+            <exception cref="T:System.ArgumentException"></exception>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeQueue`1.SetCapacity(System.Int32)">
+            <summary>
+                Ensures the capacity of this instance. 
+            </summary>
+            <param name="newCapacity">The new capacity.</param>
+            <exception cref="T:System.ArgumentException"></exception>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeQueue`1.Clear">
+            <summary>
+                Clears this instance.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeQueue`1.Dispose">
+            <summary>
+                Disposes this instance. 
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeQueue`1.AsSpan">
+            <summary>
+                Converts this <see cref="T:Arch.LowLevel.UnsafeQueue`1"/> instance into a <see cref="T:System.Span`1"/>.
+            </summary>
+            <returns>A new instance of <see cref="T:System.Span`1"/>.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeQueue`1.GetEnumerator">
+            <summary>
+                Creates an instance of a <see cref="T:Arch.LowLevel.UnsafeEnumerator`1"/> for ref acessing the list content.
+            </summary>
+            <returns>A new <see cref="T:Arch.LowLevel.UnsafeEnumerator`1"/>.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeQueue`1.System#Collections#Generic#IEnumerable{T}#GetEnumerator">
+            <summary>
+                Creates an instance of a <see cref="T:System.Collections.Generic.IEnumerable`1"/>.
+            </summary>
+            <returns>The new <see cref="T:System.Collections.Generic.IEnumerable`1"/>.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeQueue`1.System#Collections#IEnumerable#GetEnumerator">
+            <summary>
+                Creates an instance of a <see cref="T:System.Collections.Generic.IEnumerable`1"/>.
+            </summary>
+            <returns>The new <see cref="T:System.Collections.IEnumerator"/>.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeQueue`1.ToString">
+            <summary>
+                Converts this <see cref="T:Arch.LowLevel.UnsafeStack`1"/> to a string.
+            </summary>
+            <returns>The string.</returns>
+        </member>
+        <member name="T:Arch.LowLevel.UnsafeQueueDebugView`1">
+            <summary>
+                A debug view for the <see cref="T:Arch.LowLevel.UnsafeQueue`1"/>.
+            </summary>
+            <typeparam name="T">The unmanaged type.</typeparam>
+        </member>
+        <member name="T:Arch.LowLevel.UnsafeStack`1">
+            <summary>
+                The struct <see cref="T:Arch.LowLevel.UnsafeStack`1"/> represents a native unmanaged stack.
+                Can easily be stored in unmanaged structs. 
+            </summary>
+            <typeparam name="T">The generic type stored in the stack.</typeparam>
+        </member>
+        <member name="F:Arch.LowLevel.UnsafeStack`1._stack">
+            <summary>
+                The stack pointer.
+            </summary>
+        </member>
+        <member name="F:Arch.LowLevel.UnsafeStack`1._capacity">
+            <summary>
+                Its capacity.
+            </summary>
+        </member>
+        <member name="F:Arch.LowLevel.UnsafeStack`1._count">
+            <summary>
+                Its count.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeStack`1.#ctor(System.Int32)">
+            <summary>
+                Creates an instance of the <see cref="T:Arch.LowLevel.UnsafeStack`1"/>.
+            </summary>
+            <param name="capacity">The initial capacity that is being allocated.</param>
+        </member>
+        <member name="P:Arch.LowLevel.UnsafeStack`1.Count">
+            <summary>
+                The amount of items in the stack.
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.UnsafeStack`1.Capacity">
+            <summary>
+                The total capacity of this stack.
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.UnsafeStack`1.IsEmpty">
+            <summary>
+                If this stack is empty.
+            </summary>
+        </member>
+        <member name="P:Arch.LowLevel.UnsafeStack`1.IsFull">
+            <summary>
+                If this stack is full. 
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeStack`1.Push(`0)">
+            <summary>
+                Pushes an item to the <see cref="T:Arch.LowLevel.UnsafeStack`1"/>.
+            </summary>
+            <param name="value">The item.</param>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeStack`1.Pop">
+            <summary>
+                Pops the first item of this <see cref="T:Arch.LowLevel.UnsafeStack`1"/> and returns it.
+            </summary>
+            <returns>The item.</returns>
+            <exception cref="T:System.InvalidOperationException">If the stack is empty.</exception>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeStack`1.Peek">
+            <summary>
+                Peeks at the first item of this <see cref="T:Arch.LowLevel.UnsafeStack`1"/> and returns it. 
+            </summary>
+            <returns>The item.</returns>
+            <exception cref="T:System.InvalidOperationException">If the stack is empty.</exception>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeStack`1.EnsureCapacity(System.Int32)">
+            <summary>
+                Ensures the capacity of this <see cref="T:Arch.LowLevel.UnsafeStack`1"/> instance and resizes it accordingly.
+            </summary>
+            <param name="min">The minimum amount of items ensured.</param>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeStack`1.TrimExcess">
+            <summary>
+                Trims the capacity of this <see cref="T:Arch.LowLevel.UnsafeStack`1"/> to release unused memory.
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeStack`1.Clear">
+            <summary>
+                Clears this <see cref="T:Arch.LowLevel.UnsafeList`1"/> instance.
+            </summary>
+            <exception cref="T:System.NotImplementedException"></exception>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeStack`1.Dispose">
+            <summary>
+                Disposes this instance and releases its memory. 
+            </summary>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeStack`1.AsSpan">
+            <summary>
+                Converts this <see cref="T:Arch.LowLevel.UnsafeStack`1"/> instance into a <see cref="T:System.Span`1"/>.
+            </summary>
+            <returns>A new instance of <see cref="T:System.Span`1"/>.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeStack`1.GetEnumerator">
+            <summary>
+                Creates an instance of a <see cref="T:Arch.LowLevel.UnsafeEnumerator`1"/> for ref acessing the list content.
+            </summary>
+            <returns>A new <see cref="T:Arch.LowLevel.UnsafeEnumerator`1"/>.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeStack`1.System#Collections#Generic#IEnumerable{T}#GetEnumerator">
+            <summary>
+                Creates an instance of a <see cref="T:System.Collections.Generic.IEnumerable`1"/>.
+            </summary>
+            <returns>The new <see cref="T:System.Collections.Generic.IEnumerable`1"/>.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeStack`1.System#Collections#IEnumerable#GetEnumerator">
+            <summary>
+                Creates an instance of a <see cref="T:System.Collections.Generic.IEnumerable`1"/>.
+            </summary>
+            <returns>The new <see cref="T:System.Collections.IEnumerator"/>.</returns>
+        </member>
+        <member name="M:Arch.LowLevel.UnsafeStack`1.ToString">
+            <summary>
+                Converts this <see cref="T:Arch.LowLevel.UnsafeStack`1"/> to a string.
+            </summary>
+            <returns>The string.</returns>
+        </member>
+        <member name="T:Arch.LowLevel.UnsafeStackDebugView`1">
+            <summary>
+                A debug view for the <see cref="T:Arch.LowLevel.UnsafeQueue`1"/>.
+            </summary>
+            <typeparam name="T">The unmanaged type.</typeparam>
+        </member>
+    </members>
+</doc>

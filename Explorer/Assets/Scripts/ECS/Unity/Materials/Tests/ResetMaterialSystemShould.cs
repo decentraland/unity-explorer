@@ -30,7 +30,7 @@ namespace ECS.Unity.Materials.Tests
             renderer.shadowCastingMode = ShadowCastingMode.On;
             renderer.sharedMaterial = dm;
 
-            var matComp = new MaterialComponent { Status = MaterialComponent.LifeCycle.MaterialApplied, Result = dm };
+            var matComp = new MaterialComponent { Status = StreamableLoading.LifeCycle.Applied, Result = dm };
             var rendComp = new PrimitiveMeshRendererComponent { MeshRenderer = renderer };
 
             entity = world.Create(matComp, rendComp);

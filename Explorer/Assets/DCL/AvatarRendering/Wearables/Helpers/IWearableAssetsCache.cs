@@ -10,6 +10,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         void Release(CachedWearable cachedWearable);
 
-        void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount);
+        void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount);
     }
 }

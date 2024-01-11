@@ -12,7 +12,7 @@ namespace DCL.Optimization.Tests
         {
             // Arrange
             var initialBudget = 1;
-            var budgetProvider = new ConcurrentLoadingBudgetProvider(initialBudget);
+            var budgetProvider = new ConcurrentLoadingPerformanceBudget(initialBudget);
 
             // Assert
             Assert.AreEqual(true, budgetProvider.TrySpendBudget());
@@ -24,7 +24,7 @@ namespace DCL.Optimization.Tests
         {
             // Arrange
             var initialBudget = 1;
-            var budgetProvider = new ConcurrentLoadingBudgetProvider(initialBudget);
+            var budgetProvider = new ConcurrentLoadingPerformanceBudget(initialBudget);
 
             // Assert
             Assert.AreEqual(true, budgetProvider.TrySpendBudget());
@@ -42,7 +42,7 @@ namespace DCL.Optimization.Tests
         {
             // Arrange
             var initialBudget = 1;
-            var budgetProvider = new ConcurrentLoadingBudgetProvider(initialBudget);
+            var budgetProvider = new ConcurrentLoadingPerformanceBudget(initialBudget);
 
             // Assert
             Assert.AreEqual(true, budgetProvider.TrySpendBudget());

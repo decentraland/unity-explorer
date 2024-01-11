@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Textures;
 using UnityEngine;
 
@@ -13,6 +14,7 @@ namespace ECS.StreamableLoading.DeferredLoading
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     [UpdateAfter(typeof(PrepareAssetBundleLoadingParametersSystem))]
     [UpdateBefore(typeof(LoadTextureSystem))]
+    [UpdateBefore(typeof(LoadAudioClipSystem))]
     [UpdateBefore(typeof(LoadAssetBundleSystem))]
     public partial class AssetsDeferredLoadingSystem : DeferredLoadingSystem
     {
@@ -24,10 +26,11 @@ namespace ECS.StreamableLoading.DeferredLoading
             {
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
                 CreateQuery<GetTextureIntention, Texture2D>(),
+                CreateQuery<GetAudioClipIntention, AudioClip>(),
             };
         }
 
-        internal AssetsDeferredLoadingSystem(World world, IConcurrentBudgetProvider concurrentLoadingBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider)
-            : base(world, COMPONENT_HANDLERS, concurrentLoadingBudgetProvider, memoryBudgetProvider) { }
+        internal AssetsDeferredLoadingSystem(World world, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget)
+            : base(world, COMPONENT_HANDLERS, releasablePerformanceLoadingBudget, memoryBudget) { }
     }
 }

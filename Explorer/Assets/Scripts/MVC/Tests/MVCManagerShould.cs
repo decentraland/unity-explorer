@@ -2,6 +2,7 @@ using MVC.PopupsController.PopupCloser;
 using NSubstitute;
 using NUnit.Framework;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -64,19 +65,19 @@ namespace MVC.Tests
             switch (layer)
             {
                 case CanvasOrdering.SortingLayer.Popup:
-                    popupCloserView.Received().ShowAsync(Arg.Any<CancellationToken>());
+                    await popupCloserView.Received().ShowAsync(Arg.Any<CancellationToken>());
                     windowsStackManager.Received().PushPopup(controller);
                     break;
                 case CanvasOrdering.SortingLayer.Fullscreen:
-                    popupCloserView.DidNotReceive().ShowAsync(Arg.Any<CancellationToken>());
+                    await popupCloserView.DidNotReceive().ShowAsync(Arg.Any<CancellationToken>());
                     windowsStackManager.Received().PushFullscreen(controller);
                     break;
                 case CanvasOrdering.SortingLayer.Overlay:
-                    popupCloserView.DidNotReceive().ShowAsync(Arg.Any<CancellationToken>());
+                    await popupCloserView.DidNotReceive().ShowAsync(Arg.Any<CancellationToken>());
                     windowsStackManager.Received().PushOverlay(controller);
                     break;
                 case CanvasOrdering.SortingLayer.Persistent:
-                    popupCloserView.DidNotReceive().ShowAsync(Arg.Any<CancellationToken>());
+                    await popupCloserView.DidNotReceive().ShowAsync(Arg.Any<CancellationToken>());
                     windowsStackManager.Received().PushPersistent(controller);
                     break;
             }
