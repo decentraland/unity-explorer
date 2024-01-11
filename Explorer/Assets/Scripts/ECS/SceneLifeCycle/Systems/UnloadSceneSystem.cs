@@ -21,18 +21,31 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float t)
         {
+            UnloadRunningSceneQuery(World);
             UnloadLoadedSceneQuery(World);
             AbortLoadingScenesQuery(World);
         }
 
         [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void UnloadLoadedScene(in Entity entity, ref ISceneFacade sceneFacade)
+        [All(typeof(UnloadRunningSceneIntention))]
+        private void UnloadRunningScene(in Entity entity, ref ISceneFacade sceneFacade)
         {
             sceneFacade.DisposeAsync().Forget();
 
+            World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>,
+                UnloadRunningSceneIntention>(entity);
+        }
+        
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void UnloadLoadedScene(in Entity entity, ref ISceneFacade sceneFacade, ref SceneLOD sceneLOD)
+        {
+            sceneFacade.DisposeAsync().Forget();
+            sceneLOD.Dispose();
+
             // Keep definition so it won't be downloaded again = Cache in ECS itself
-            World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, DeleteEntityIntention>(entity);
+            World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>,
+                UnloadRunningSceneIntention>(entity);
         }
 
         [Query]

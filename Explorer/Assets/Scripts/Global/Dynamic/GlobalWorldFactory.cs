@@ -150,6 +150,10 @@ namespace Global.Dynamic
             UnloadSceneSystem.InjectToWorld(ref builder);
             ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token);
 
+            ResolveSceneVisualStateSystem.InjectToWorld(ref builder, 1, new Vector2Int[] { new(1, 2), new(2, 5) });
+            UpdateLODLevelSystem.InjectToWorld(ref builder);
+            ResolveLODContentSystem.InjectToWorld(ref builder);            
+            
             IComponentPool<PartitionComponent> partitionComponentPool = componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>();
             PartitionSceneEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData);
             PartitionGlobalAssetEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData);
