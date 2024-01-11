@@ -9,6 +9,7 @@ using NSubstitute;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
@@ -25,7 +26,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         protected UIDocument canvas;
         protected ISceneStateProvider sceneStateProvider;
 
-        protected async UniTask Initialize()
+        protected async Task Initialize()
         {
             poolsRegistry = new ComponentPoolsRegistry(
                 new Dictionary<Type, IComponentPool>
