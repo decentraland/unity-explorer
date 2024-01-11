@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.MapRenderer.Culling;
@@ -76,12 +77,14 @@ namespace DCL.MapRenderer
                 layers[MapLayer.SatelliteAtlas].SharedActive = true;
                 layers[MapLayer.ParcelsAtlas].SharedActive = false;
             }
-            catch
-                (OperationCanceledException)
+            catch (OperationCanceledException)
             {
                 // just ignore
             }
-            catch (Exception e) { Debug.LogException(e); }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.TEXTURES));
+            }
         }
 
         public IMapCameraController RentCamera(in MapCameraInput cameraInput)
