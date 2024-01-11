@@ -34,6 +34,7 @@ namespace DCL.SDKComponents.AudioSources
         {
             CreateAudioSourceQuery(World);
             UpdateAudioSourceQuery(World);
+
             // TODO: Handle Volume updates - refer to ECSAudioSourceComponentHandler.cs in unity-renderer and check UpdateAudioSourceVolume() method and its usages
         }
 
@@ -41,7 +42,7 @@ namespace DCL.SDKComponents.AudioSources
         [All(typeof(PBAudioSource), typeof(AudioSourceComponent))]
         private void UpdateAudioSource(ref PBAudioSource sdkAudioSource, ref AudioSourceComponent audioSourceComponent)
         {
-            if (sdkAudioSource.IsDirty)
+            if (sdkAudioSource.IsDirty && audioSourceComponent.Result != null)
             {
                 audioSourceComponent.Result.ApplyPBAudioSource(sdkAudioSource);
                 sdkAudioSource.IsDirty = false;
@@ -51,15 +52,20 @@ namespace DCL.SDKComponents.AudioSources
         }
 
         [Query]
-        private void CreateAudioSource(ref AudioSourceComponent audioSourceComponent, ref TransformComponent entityTransform)
+        private void CreateAudioSource(ref PBAudioSource sdkAudioSource, ref AudioSourceComponent audioSourceComponent, ref TransformComponent entityTransform)
         {
-            if (NoBudget() || audioSourceComponent.ClipPromise == null || !audioSourceComponent.ClipPromise.Value.TryConsume(World, out StreamableLoadingResult<AudioClip> promiseResult))
+            if (NoBudget()
+                || audioSourceComponent.ClipPromise.IsConsumed
+                || !audioSourceComponent.ClipPromise.TryConsume(World, out StreamableLoadingResult<AudioClip> promiseResult))
                 return;
 
             if (audioSourceComponent.Result == null)
                 audioSourceComponent.Result ??= audioSourcesPool.Get();
 
             audioSourceComponent.Result.FromPBAudioSource(promiseResult.Asset, audioSourceComponent.PBAudioSource);
+
+            // Reset isDirty as we just applied the PBAudioSource to the AudioSource
+            sdkAudioSource.IsDirty = false;
 
             Transform transform = audioSourceComponent.Result.transform;
             transform.SetParent(entityTransform.Transform, false);
