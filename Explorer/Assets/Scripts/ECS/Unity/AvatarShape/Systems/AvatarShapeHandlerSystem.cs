@@ -12,7 +12,6 @@ using ECS.Prioritization.Components;
 using ECS.Unity.AvatarShape.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
-using System;
 
 namespace ECS.Unity.AvatarShape.Systems
 {
