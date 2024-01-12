@@ -27,7 +27,6 @@ namespace Global.Static
         [SerializeField] private string[] ethWhitelistMethods;
 
         private ISceneFacade sceneFacade;
-
         private StaticContainer staticContainer;
         private IWeb3Authenticator? web3Authenticator;
 
@@ -103,8 +102,7 @@ namespace Global.Static
             CancellationToken ct)
         {
             // First load the common global plugin
-            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer,
-                web3IdentityProvider, ethereumApi, ct);
+            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer, web3IdentityProvider, ethereumApi, ct);
 
             if (!isLoaded)
                 GameReports.PrintIsDead();

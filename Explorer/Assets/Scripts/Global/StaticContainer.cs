@@ -10,7 +10,6 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.Profiles;
 using DCL.Profiling;
 using DCL.ResourcesUnloading;
 using DCL.Time;
@@ -96,7 +95,8 @@ namespace Global
                     AssetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct));
         }
 
-        public static async UniTask<(StaticContainer container, bool success)> CreateAsync(IPluginSettingsContainer settingsContainer,
+        public static async UniTask<(StaticContainer container, bool success)> CreateAsync(
+            IPluginSettingsContainer settingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
             IEthereumApi ethereumApi,
             CancellationToken ct)
@@ -160,6 +160,7 @@ namespace Global
                 assetBundlePlugin,
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
+                new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif
