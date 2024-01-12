@@ -37,11 +37,8 @@ namespace Global.Static
         private UIDocument scenesUIcanvas;
         private StyleSheet scenesUIStyleSheet;
 
-        private async void Awake()
+        private void Awake()
         {
-            scenesUIcanvas = Instantiate(await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ROOT_CANVAS)).GetComponent<UIDocument>();
-            scenesUIStyleSheet = await Addressables.LoadAssetAsync<StyleSheet>(SCENES_UI_STYLE_SHEET);
-
             InitializationFlowAsync(destroyCancellationToken).Forget();
         }
 
@@ -89,6 +86,9 @@ namespace Global.Static
                     await web3Authenticator.LoginAsync(ct);
 
                 SceneSharedContainer sceneSharedContainer;
+
+                scenesUIcanvas = Instantiate(await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ROOT_CANVAS)).GetComponent<UIDocument>();
+                scenesUIStyleSheet = await Addressables.LoadAssetAsync<StyleSheet>(SCENES_UI_STYLE_SHEET);
 
                 (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettingsContainer, scenePluginSettingsContainer,
                     scenesUIcanvas, scenesUIStyleSheet, identityCache, dappWeb3Authenticator, ct);

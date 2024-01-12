@@ -45,11 +45,8 @@ namespace Global.Dynamic
         private UIDocument scenesUIcanvas;
         private StyleSheet scenesUIStyleSheet;
 
-        private async void Awake()
+        private void Awake()
         {
-            scenesUIcanvas = Instantiate(await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ROOT_CANVAS)).GetComponent<UIDocument>();
-            scenesUIStyleSheet = await Addressables.LoadAssetAsync<StyleSheet>(SCENES_UI_STYLE_SHEET);
-
             realmLauncher.Initialize(settings.Realms);
 
             InitializationFlowAsync(destroyCancellationToken).Forget();
@@ -99,6 +96,9 @@ namespace Global.Dynamic
 
                 // First load the common global plugin
                 bool isLoaded;
+
+                scenesUIcanvas = Instantiate(await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ROOT_CANVAS)).GetComponent<UIDocument>();
+                scenesUIStyleSheet = await Addressables.LoadAssetAsync<StyleSheet>(SCENES_UI_STYLE_SHEET);
 
                 (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, scenesUIcanvas, scenesUIStyleSheet, identityCache, web3VerifiedAuthenticator, ct);
 
