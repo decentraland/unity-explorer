@@ -1,0 +1,34 @@
+﻿using Arch.Core;
+using DCL.SDKComponents.SceneUI.Components;
+using DCL.SDKComponents.SceneUI.Systems.UITransform;
+using NUnit.Framework;
+using System.Threading.Tasks;
+
+namespace DCL.SDKComponents.SceneUI.Tests
+{
+    public class UITransformInstantiationSystemShould : UITransformSystemTestBase<UITransformInstantiationSystem>
+    {
+        [SetUp]
+        public async Task SetUp()
+        {
+            await Initialize();
+            system = new UITransformInstantiationSystem(world, canvas, poolsRegistry);
+        }
+
+        [Test]
+        public void InstantiateUITransform()
+        {
+            // Act
+            base.CreateUITransform();
+
+            // Assert
+            UITransformComponent uiTransformComponent = world.Get<UITransformComponent>(entity);
+            Assert.IsNotNull(uiTransformComponent.Transform);
+            Assert.AreEqual($"UITransform (Entity {entity.Id})", uiTransformComponent.Transform.name);
+            Assert.IsTrue(canvas.rootVisualElement.Contains(uiTransformComponent.Transform));
+            Assert.AreEqual(EntityReference.Null, uiTransformComponent.Parent);
+            Assert.AreEqual(0, uiTransformComponent.Children.Count);
+            Assert.IsFalse(uiTransformComponent.IsHidden);
+        }
+    }
+}
