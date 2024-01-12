@@ -187,13 +187,103 @@ public unsafe class BRG_Container
 
             drawCommands->visibleInstances = (int*)UnsafeUtility.Malloc(instanceCount_ * sizeof(int), alignment, Allocator.TempJob);
             drawCommands->visibleInstanceCount = instanceCount_;
-            for (int i = 0; i < drawCommands->visibleInstanceCount; ++i)
-                drawCommands->visibleInstances[i] = i;
-
             drawCommands->instanceSortingPositions = null; // If BatchDrawCommandFlags.HasSortingPosition is set for one or more draw commands, the instanceSortingPositions array contains explicit float3 world space positions that Unity uses for depth sorting.The culling callback must allocate the memory for the instanceSortingPositions using the UnsafeUtility.Malloc method and the Allocator.TempJob parameter. The memory is released by Unity when the rendering is complete.If the length of the array is 0, set its value to null.
             drawCommands->instanceSortingPositionFloatCount = 0; // If BatchDrawCommandFlags.HasSortingPosition is set for one or more draw commands, this contains float3 world-space positions that Unity uses for depth sorting.
+
+            // for (int i = 0; i < drawCommands->visibleInstanceCount; ++i)
+            //     drawCommands->visibleInstances[i] = i;
+
+            // Set capacities
+            NativeList<int> list0 = new (Allocator.TempJob);
+            list0.SetCapacity(10000);
+            NativeList<int> list1 = new (Allocator.TempJob);
+            // NativeList<int> list2 = new (Allocator.TempJob);
+            // NativeList<int> list3 = new (Allocator.TempJob);
+            // NativeList<int> list4 = new (Allocator.TempJob);
+
+            // list1 for LOD0... LODN
+
+            BatchCullJob bcj = new BatchCullJob(cullingContext, m_sysmemBuffer, list0.AsParallelWriter(), list1.AsParallelWriter());
+            JobHandle batchCullJobHandle = bcj.Schedule(instanceCount_, 1000);
+
+            NativeArray<int> visInstArray = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<int>(drawCommands->visibleInstances, instanceCount_, Allocator.None);
+            // visible instance must be sorted
+            MergeVisibleInstanceJob mvij = new MergeVisibleInstanceJob()
+            {
+                _visInstArray = visInstArray
+            };
+            JobHandle mergeJobHandle = mvij.Schedule(batchCullJobHandle);
+
+            return mergeJobHandle;
         }
 
-        return new JobHandle();
+        return default;
+    }
+
+    [BurstCompile]
+    public struct MergeVisibleInstanceJob : IJob
+    {
+        [WriteOnly]
+        public NativeArray<int> _visInstArray;
+
+        public void Execute()
+        {
+            for (int i = 0; i < 10000; ++i)
+            {
+                _visInstArray[i] = i;
+            }
+        }
+    }
+
+    [BurstCompile]
+    public struct BatchCullJob : IJobParallelForBatch
+    {
+        [ReadOnly]
+        public readonly BatchCullingContext cullingContext;
+
+        [ReadOnly]
+        public readonly NativeArray<float4> sysmem;
+
+        [WriteOnly]
+        public NativeList<int>.ParallelWriter List0;
+
+        [WriteOnly]
+        public NativeList<int>.ParallelWriter List1;
+
+        public BatchCullJob(BatchCullingContext cullingContext, NativeArray<float4> sysmem,
+            NativeList<int>.ParallelWriter list0, NativeList<int>.ParallelWriter list1)
+        {
+            this.cullingContext = cullingContext;
+            this.sysmem = sysmem;
+            List0 = list0;
+            List1 = list1;
+        }
+
+        public void Execute(int startIndex, int count)
+        {
+            for (int x = startIndex; x < startIndex + count; ++x)
+            {
+                Vector3 p = sysmem[(x * 3) + 2].yzw;
+                float radius = 0.5f;
+                float distance;
+                bool result = true;
+
+                for (int i = 0; i < 6; i++)
+                {
+                    distance = cullingContext.cullingPlanes[i].GetDistanceToPoint(p);
+
+                    if (distance < -radius)
+                    {
+                        result = false;
+                        break;
+                    }
+                    else if (distance < radius) { result = true; }
+                }
+
+                result = true;
+                if (result == true)
+                    List0.AddNoResize(x);
+            }
+        }
     }
 }
