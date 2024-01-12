@@ -88,9 +88,6 @@ namespace Global.Static
 
                 SceneSharedContainer sceneSharedContainer;
 
-                scenesUIcanvas = Instantiate(await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ROOT_CANVAS)).GetComponent<UIDocument>();
-                scenesUIStyleSheet = await Addressables.LoadAssetAsync<StyleSheet>(SCENES_UI_STYLE_SHEET);
-
                 (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettingsContainer, scenePluginSettingsContainer,
                     scenesUICanvas, scenesUIStyleSheet, identityCache, dappWeb3Authenticator, ct);
 
