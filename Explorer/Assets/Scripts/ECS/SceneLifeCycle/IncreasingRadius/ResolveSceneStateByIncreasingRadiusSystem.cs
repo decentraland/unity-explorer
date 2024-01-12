@@ -14,6 +14,7 @@ using Realm;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using DCL.LOD.Components;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEditor.Build.Content;

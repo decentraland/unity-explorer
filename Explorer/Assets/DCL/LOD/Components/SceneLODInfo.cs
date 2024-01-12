@@ -2,6 +2,7 @@
 using AssetManagement;
 using CommunicationData.URLHelpers;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
@@ -9,7 +10,8 @@ using UnityEngine;
 using Utility;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
         ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
-namespace ECS.SceneLifeCycle.Components
+
+namespace DCL.LOD.Components
 {
     public struct SceneLODInfo
     {

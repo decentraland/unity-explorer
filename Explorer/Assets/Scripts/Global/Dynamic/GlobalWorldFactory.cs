@@ -42,6 +42,7 @@ using UnityEngine;
 using Utility;
 using Utility.Multithreading;
 using Avatar = DCL.Profiles.Avatar;
+using UpdateLODSystem = DCL.LOD.Systems.UpdateLODSystem;
 
 namespace Global.Dynamic
 {

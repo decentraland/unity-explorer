@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.LOD.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;

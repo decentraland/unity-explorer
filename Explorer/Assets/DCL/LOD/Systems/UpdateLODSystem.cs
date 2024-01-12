@@ -1,15 +1,16 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.Diagnostics;
+using DCL.LOD.Components;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using UnityEngine;
 
-namespace ECS.SceneLifeCycle.Systems
+namespace DCL.LOD.Systems
 {
     [UpdateInGroup(typeof(RealmGroup))]
     [UpdateAfter(typeof(UpdateVisualSceneStateSystem))]
