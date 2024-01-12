@@ -5,6 +5,8 @@ using DCL.Character;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using Ipfs;
+using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -54,7 +56,10 @@ namespace DCL.ParcelsService
 
             if (sceneDef != null)
             {
-                targetPosition = ParcelMathHelper.GetPositionByParcelPosition(sceneDef.metadata.scene.DecodedBase);
+                // Override parcel as it's a new target
+                parcel = sceneDef.metadata.scene.DecodedBase;
+
+                targetPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel);
 
                 List<IpfsTypes.SceneMetadata.SpawnPoint> spawnPoints = sceneDef.metadata.spawnPoints;
 
@@ -86,7 +91,16 @@ namespace DCL.ParcelsService
 
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
-            AddTeleportIntentQuery(retrieveScene.World, targetPosition);
+            var readinessCompletion = new SceneReadinessReport(new UniTaskCompletionSource());
+            AddTeleportIntentQuery(retrieveScene.World, new PlayerTeleportIntent(targetPosition, parcel, readinessCompletion));
+
+            // TODO Show loading screen
+
+            // add timeout in case of a trouble
+            await readinessCompletion.CompletionSource.Task.Timeout(TimeSpan.FromSeconds(30));
+
+            // TODO Hide Loading Screen
+            // TODO Handle Timeout and other exception
         }
 
         private static Vector3 GetOffsetFromSpawnPoint(IpfsTypes.SceneMetadata.SpawnPoint spawnPoint)
@@ -120,14 +134,14 @@ namespace DCL.ParcelsService
         public void TeleportToParcel(Vector2Int parcel)
         {
             Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(parcel);
-            AddTeleportIntentQuery(world, characterPos);
+            AddTeleportIntentQuery(world, new PlayerTeleportIntent(characterPos, parcel, null));
         }
 
         [Query]
         [All(typeof(PlayerComponent))]
-        private void AddTeleportIntent([Data] Vector3 position, in Entity entity)
+        private void AddTeleportIntent([Data] PlayerTeleportIntent intent, in Entity entity)
         {
-            world.Add(entity, new PlayerTeleportIntent(position));
+            world.Add(entity, intent);
         }
     }
 }
