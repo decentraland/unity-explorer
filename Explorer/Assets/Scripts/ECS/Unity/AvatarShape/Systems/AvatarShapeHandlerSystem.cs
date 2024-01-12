@@ -12,6 +12,7 @@ using ECS.Prioritization.Components;
 using ECS.Unity.AvatarShape.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
+using System;
 
 namespace ECS.Unity.AvatarShape.Systems
 {
@@ -73,10 +74,15 @@ namespace ECS.Unity.AvatarShape.Systems
             globalWorld.Add(sdkAvatarShapeComponent.globalWorldEntity, new DeleteEntityIntention());
         }
 
+        [Query]
+        public void FinalizeComponents(ref SDKAvatarShapeComponent sdkAvatarShapeComponent)
+        {
+            globalWorld.Add(sdkAvatarShapeComponent.globalWorldEntity, new DeleteEntityIntention());
+        }
+
         public void FinalizeComponents(in Query query)
         {
-            World.Query(new QueryDescription().WithAll<SDKAvatarShapeComponent>(),
-                (ref SDKAvatarShapeComponent removedComponent) => globalWorld.Add(removedComponent.globalWorldEntity, new DeleteEntityIntention()));
+            FinalizeComponentsQuery(World);
         }
     }
 }
