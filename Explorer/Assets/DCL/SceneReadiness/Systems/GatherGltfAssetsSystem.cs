@@ -99,6 +99,9 @@ namespace DCL.SceneReadiness
                 {
                     for (var i = 0; i < reports.Count; i++)
                         reports[i].CompletionSource.TrySetResult();
+
+                    // TODO return reports to the pool as they are no longer needed
+                    reports = null;
                 }
             }
         }
