@@ -1,3 +1,4 @@
+using DCL.UI;
 using UnityEngine;
 
 namespace DCL.Backpack
@@ -9,5 +10,8 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         internal BackpackInfoPanelView backpackInfoPanelView { get; private set; }
+
+        [field: SerializeField]
+        internal SearchBarView backpackSearchBar { get; private set; }
     }
 }

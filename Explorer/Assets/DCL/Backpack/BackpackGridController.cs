@@ -28,6 +28,7 @@ namespace DCL.Backpack
         private const string ORDER_BY = "orderBy";
         private const string COLLECTION_TYPE = "collectionType";
         private const string ORDER_DIRECTION = "direction";
+        private const string SEARCH = "name";
 
         private const int CURRENT_PAGE_SIZE = 16;
         private static readonly string CURRENT_PAGE_SIZE_STR = CURRENT_PAGE_SIZE.ToString();
@@ -53,6 +54,7 @@ namespace DCL.Backpack
         private CancellationTokenSource cts;
         private bool currentCollectiblesOnly = false;
         private string currentCategory = "";
+        private string currentSeach = "";
         private BackpackGridSort currentSort = new (NftOrderByOperation.Date, false);
 
         public BackpackGridController(
@@ -80,6 +82,7 @@ namespace DCL.Backpack
             eventBus.EquipEvent += OnEquip;
             eventBus.UnEquipEvent += OnUnequip;
             eventBus.FilterCategoryEvent += OnFilterCategory;
+            eventBus.SearchEvent += OnSearch;
             backpackSortController.OnSortChanged += OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged += OnCollectiblesOnlyChanged;
             pageSelectorController.OnSetPage += RequestPage;
@@ -178,11 +181,20 @@ namespace DCL.Backpack
 
             if(currentCollectiblesOnly)
                 requestParameters.Add((COLLECTION_TYPE, "on-chain"));
+
+            if (!string.IsNullOrEmpty(currentSeach))
+                requestParameters.Add((SEARCH, currentSeach));
         }
 
         private void OnFilterCategory(string category)
         {
             currentCategory = category;
+            RequestTotalNumber();
+        }
+
+        private void OnSearch(string searchText)
+        {
+            currentSeach = searchText;
             RequestTotalNumber();
         }
 

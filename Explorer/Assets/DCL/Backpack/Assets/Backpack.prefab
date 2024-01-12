@@ -691,6 +691,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <backpackGridView>k__BackingField: {fileID: 8139991021303961204}
   <backpackInfoPanelView>k__BackingField: {fileID: 4264612748387217685}
+  <backpackSearchBar>k__BackingField: {fileID: 95899710284355384}
 --- !u!1 &3155744230264337343
 GameObject:
   m_ObjectHideFlags: 0
@@ -4143,6 +4144,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
+--- !u!114 &95899710284355384 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4581470978530328835, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
+  m_PrefabInstance: {fileID: 4521635825347204667}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22a8baac599fe4236850ead80a895fd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &5762321862630583811 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8158256326675281976, guid: c37bcced312ae48d8b34d3f11d85e4a3, type: 3}
@@ -4670,7 +4682,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3576930520628333720, guid: 5ed0eaf7428cb4135baf7d2e09a9430a, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 40.55
       objectReference: {fileID: 0}
     - target: {fileID: 3576930520628333720, guid: 5ed0eaf7428cb4135baf7d2e09a9430a, type: 3}
       propertyPath: m_AnchoredPosition.y

@@ -51,4 +51,14 @@ namespace DCL.Backpack.BackpackBus
             Category = category;
         }
     }
+
+    public readonly struct BackpackSearchCommand
+    {
+        public readonly string SearchText;
+
+        public BackpackSearchCommand(string searchText)
+        {
+            SearchText = searchText;
+        }
+    }
 }
