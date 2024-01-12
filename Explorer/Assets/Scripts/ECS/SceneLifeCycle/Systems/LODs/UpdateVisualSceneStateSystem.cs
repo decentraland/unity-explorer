@@ -2,10 +2,12 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Metadata;
+using Cysharp.Threading.Tasks;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using NSubstitute.ReturnsExtensions;
@@ -17,82 +19,102 @@ using UnityEngine;
 namespace ECS.SceneLifeCycle.Systems
 {
     [UpdateInGroup(typeof(RealmGroup))]
-    [UpdateAfter(typeof(ResolveSceneStateByRadiusSystem))]
-    [UpdateAfter(typeof(ResolveStaticPointersSystem))]
-    public partial class UpdateLODLevelSystem : BaseUnityLoopSystem
+    [UpdateAfter(typeof(ResolveVisualSceneStateSystem))]
+    public partial class UpdateVisualSceneStateSystem : BaseUnityLoopSystem
     {
-        private readonly Vector2Int[] bucketLodsLimits;
         private readonly IRealmData realmData;
 
-        public UpdateLODLevelSystem(World world, Vector2Int[] bucketLodLimits) : base(world)
+        public UpdateVisualSceneStateSystem(World world, IRealmData realmData) : base(world)
         {
-            bucketLodsLimits = bucketLodLimits;
+            this.realmData = realmData;
         }
 
         protected override void Update(float t)
         {
-            UpdateLODLevelQuery(World);
+            SwapLODToScenePromiseQuery(World);
+            SwapSceneFacadeToLODQuery(World);
+            SwapScenePromiseToLODQuery(World);
         }
 
         [Query]
-        [None(typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>), typeof(ISceneFacade))]
-        private void SwapVisualStateToScene(in Entity entity, ref VisualSceneState visualSceneState, 
+        private void SwapLODToScenePromise(in Entity entity, ref VisualSceneState visualSceneState, 
             ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partition)
         {
             if (!visualSceneState.IsDirty) return;
+
             if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_SCENE)
             {
-                //Clear the currentLOD
-                //sceneLODInfo.currentLOD
-                
+                if (sceneDefinitionComponent.Definition.id.Equals(
+                        "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
+                    Debug.Log("JUANI SWAPPING LOD TO SCENE PROMISE");
+
+                sceneLODInfo.ReleaseCurrentLOD(World);
+
                 //Show Scene
                 World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                        new GetSceneFacadeIntention(realmData.Ipfs, sceneDefinitionComponent),
-                        partition));
-                
+                    new GetSceneFacadeIntention(realmData.Ipfs, sceneDefinitionComponent),
+                    partition));
                 World.Remove<SceneLODInfo>(entity);
             }
             visualSceneState.IsDirty = false;
-        }
-        
-        [Query]
-        [None(typeof(ISceneFacade), typeof(DeleteEntityIntention))]
-        private void AbortLoadingScenes(in Entity entity, ref VisualSceneState visualSceneState, 
-            ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
-        {
-            if (!visualSceneState.IsDirty) return;
+
             
-            if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
-            {
-                promise.ForgetLoading(World);
-                World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>, DeleteEntityIntention>(entity);
-                
-                //Show the currentLOD
-                //sceneLODInfo
-                
-                visualSceneState.IsDirty = false;
-            }
         }
         
-        
         [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void UpdateLODLevel(ref VisualSceneState visualSceneState, ref SceneLOD sceneLOD,
+        [None(typeof(SceneLODInfo))]
+        private void SwapSceneFacadeToLOD(in Entity entity, ref VisualSceneState visualSceneState,
+            ISceneFacade sceneFacade,
             ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (sceneDefinitionComponent.IsEmpty) return; //We dont update LODs of empty scenes
-            if (!visualSceneState.CurrentVisualSceneState.Equals(VisualSceneStateEnum.SHOWING_LOD)) return;
+            if (!visualSceneState.IsDirty) return;
 
-            if (ShouldSwapLOD(partition.Bucket, sceneLOD.currentLODLevel))
-                sceneLOD.UpdateLOD(partition.Bucket);
+            if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
+            {
+                if (sceneDefinitionComponent.Definition.id.Equals(
+                        "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
+                    Debug.Log("JUANI SWAPPING SCENE FACEDE TO LOD");
+                //Create LODInfo
+                var sceneLODInfo = SceneLODInfo.Create(World, ref sceneDefinitionComponent, ref partition);
+
+                //Dispose scene
+                sceneFacade.DisposeAsync().Forget();
+
+                visualSceneState.IsDirty = false;
+
+                World.Add(entity, sceneLODInfo);
+                World.Remove<ISceneFacade>(entity);
+            }
+
+            visualSceneState.IsDirty = false;
         }
 
-        private bool ShouldSwapLOD(byte partitionBucket, int currentLODLevel)
+        [Query]
+        [None(typeof(SceneLODInfo))]
+        private void SwapScenePromiseToLOD(in Entity entity, ref VisualSceneState visualSceneState,
+            AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise, ref PartitionComponent partition,
+            ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (partitionBucket > bucketLodsLimits[0][0] && partitionBucket <= bucketLodsLimits[0][1] &&
-                currentLODLevel == 2) return false;
-            if (partitionBucket > bucketLodsLimits[1][0] && currentLODLevel == 3) return false;
-            return true;
+            if (!visualSceneState.IsDirty) return;
+
+            if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
+            {
+                if (sceneDefinitionComponent.Definition.id.Equals(
+                        "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
+                    Debug.Log("JUANI SWAPPING SCENE PROMISE TO LOD");
+                //Create LODInfo
+                var sceneLODInfo = SceneLODInfo.Create(World, ref sceneDefinitionComponent, ref partition);
+
+                //Dispose Promise
+                promise.ForgetLoading(World);
+
+                visualSceneState.IsDirty = false;
+
+                World.Add(entity, sceneLODInfo);
+                World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
+            }
+
+            visualSceneState.IsDirty = false;
         }
     }
 }

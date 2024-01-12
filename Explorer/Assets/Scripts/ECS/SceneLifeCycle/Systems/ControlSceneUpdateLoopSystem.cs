@@ -8,9 +8,13 @@ using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
 using Realm;
 using SceneRunner.Scene;
 using System.Threading;
+using SceneRunner;
+using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -40,42 +44,50 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void StartScene(ISceneFacade scene, ref VisualSceneState visualSceneState,
+        [None(typeof(DeleteEntityIntention), typeof(ISceneFacade))]
+        private void StartScene(in Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise,
             ref PartitionComponent partition)
         {
-            if (!visualSceneState.IsDirty) return;
+            // Gracefully consume with the possibility of repetitions (in case the scene loading has failed)
+            if (promise.IsConsumed) return;
 
-            if (!visualSceneState.CurrentVisualSceneState.Equals(VisualSceneStateEnum.SHOWING_SCENE)) return;
-
-            var fps = realmPartitionSettings.GetSceneUpdateFrequency(in partition);
-
-            async UniTaskVoid RunOnThreadPoolAsync()
+            if (promise.TryConsume(World, out var result) && result.Succeeded)
             {
-                await UniTask.SwitchToThreadPool();
-                if (destroyCancellationToken.IsCancellationRequested) return;
+                var scene = result.Asset;
 
-                // Provide basic Thread Pool synchronization context
-                SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+                if (scene is SceneFacade &&
+                    ((SceneFacade)scene).SceneData.SceneShortInfo.Name.Equals(
+                        "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
+                    Debug.Log("JUANI IM STARTING THE SCENE");
 
-                // FPS is set by another system
-                await scene.StartUpdateLoopAsync(fps, destroyCancellationToken);
+                var fps = realmPartitionSettings.GetSceneUpdateFrequency(in partition);
+
+                async UniTaskVoid RunOnThreadPoolAsync()
+                {
+                    await UniTask.SwitchToThreadPool();
+                    if (destroyCancellationToken.IsCancellationRequested) return;
+
+                    // Provide basic Thread Pool synchronization context
+                    SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+
+                    // FPS is set by another system
+                    await scene.StartUpdateLoopAsync(fps, destroyCancellationToken);
+                }
+
+                RunOnThreadPoolAsync().Forget();
+
+                // So we know the scene has started
+                World.Add(entity, scene);
             }
-
-            RunOnThreadPoolAsync().Forget();
-
-            visualSceneState.IsDirty = false;
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void ChangeSceneFPS(ref ISceneFacade sceneFacade, ref SceneDefinitionComponent sceneDefinition,
-            ref PartitionComponent partition, ref VisualSceneState visualSceneState)
+            ref PartitionComponent partition)
         {
             if (!partition.IsDirty) return;
             if (sceneDefinition.IsEmpty) return; // Never tweak FPS of empty scenes
-            if (!visualSceneState.CurrentVisualSceneState.Equals(VisualSceneStateEnum.SHOWING_SCENE))
-                return; // Never tweak FPS if LODS are present
 
             sceneFacade.SetTargetFPS(realmPartitionSettings.GetSceneUpdateFrequency(in partition));
         }

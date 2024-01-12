@@ -1,48 +1,82 @@
-﻿using System;
-using Arch.Core;
-using DCL.Optimization.Pools;
+﻿using Arch.Core;
+using AssetManagement;
+using CommunicationData.URLHelpers;
+using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.Common.Components;
 using UnityEngine;
-using UnityEngine.Serialization;
 using Utility;
-using Object = UnityEngine.Object;
-
+using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
+        ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 namespace ECS.SceneLifeCycle.Components
 {
     public struct SceneLODInfo
     {
-        public int currentLODLevel;
-        public AssetPromise<AssetBundleData, GetAssetBundleIntention> currentLODPromise;
-        public GameObject currentLOD;
+        public int CurrentLODLevel;
+        public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
+        public GameObject CurrentLOD;
+        public string SceneHash;
+        public Vector3 ParcelPosition;
 
-        public void RemoveLOD(World world)
+        public void CreateLODPromise(World world, int newLodLevel, PartitionComponent partition)
         {
-            currentLODPromise.ForgetLoading(world);
-            //Derefenrence currentLod stuff
+            if (!CurrentLODPromise.IsConsumed)
+                //If we are loading a lod, lets forget it
+                CurrentLODPromise.ForgetLoading(world);
+
+            CurrentLODLevel = newLodLevel;
+            CurrentLODPromise =
+                Promise.Create(world,
+                    GetAssetBundleIntention.FromHash($"{SceneHash.ToLower()}_lod{CurrentLODLevel}",
+                        permittedSources: AssetSource.EMBEDDED,
+                        customEmbeddedSubDirectory: URLSubdirectory.FromString("lods")),
+                    partition);
+
+            if (SceneHash.Equals("bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
+                Debug.Log($"JUANI CREATING LOD PROMISE {SceneHash.ToLower()}_lod{CurrentLODLevel}");
         }
 
-        public void CreateLODPromise(World world, int newLodLevel)
+        public void ReleaseCurrentLOD(World world)
         {
-            currentLODLevel = newLodLevel;
+            //If its still loading, lets forget it
+            //CurrentLODPromise.ForgetLoading(world);
 
-            //In case we are loading a lod, we forget it
-            currentLODPromise.ForgetLoading(world);
-            //.currentLODPromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>().Create()
+            //If not, dereference it
+            if (CurrentLOD != null)
+                Object.Destroy(CurrentLOD);
         }
 
-        public static SceneLODInfo Create(World world, byte partitionBucket, Vector2Int[] bucketLodsLimits)
+        public void ResolveLODLevel(World world, ref PartitionComponent partitionComponent)
+        {
+            var sceneLODCandidate = 0;
+            if (partitionComponent.Bucket > VisualSceneStateConstants.LODS_BUCKET_LIMITS[0][0] &&
+                partitionComponent.Bucket <= VisualSceneStateConstants.LODS_BUCKET_LIMITS[0][1])
+                sceneLODCandidate = 2;
+            else if (partitionComponent.Bucket > VisualSceneStateConstants.LODS_BUCKET_LIMITS[1][0])
+                sceneLODCandidate = 3;
+
+            if (sceneLODCandidate != CurrentLODLevel)
+            {
+                CreateLODPromise(world, sceneLODCandidate, partitionComponent);
+            }
+        }
+
+        public static SceneLODInfo Create(World world, ref SceneDefinitionComponent sceneDefinitionComponent,
+            ref PartitionComponent partitionComponent)
         {
             SceneLODInfo sceneLODInfo = new SceneLODInfo()
             {
-                currentLODLevel = -1, //Ensure that a lod level will be set
+                CurrentLODLevel = -1 //Ensure that a lod level will be on first resolve
             };
-            LODUtils.ResolveLODLevel(world, ref sceneLODInfo, partitionBucket, bucketLodsLimits);
+            sceneLODInfo.SceneHash = sceneDefinitionComponent.Definition.id;
+            sceneLODInfo.ParcelPosition =
+                ParcelMathHelper.GetPositionByParcelPosition(sceneDefinitionComponent.Parcels[0]);
+            sceneLODInfo.ResolveLODLevel(world, ref partitionComponent);
             return sceneLODInfo;
         }
+
+
     }
     
 }

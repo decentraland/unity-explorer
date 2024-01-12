@@ -139,6 +139,8 @@ namespace Global.Dynamic
             //LoadPointersByRadiusSystem.InjectToWorld(ref builder);
             //ResolveSceneStateByRadiusSystem.InjectToWorld(ref builder);
 
+            
+            
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
@@ -150,11 +152,9 @@ namespace Global.Dynamic
             UnloadSceneSystem.InjectToWorld(ref builder);
             ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token);
 
-            Vector2Int[] lodsBucketLimits = { new(1, 2), new(2, 5) };
-            ResolveSceneVisualStateSystem.InjectToWorld(ref builder, 1, lodsBucketLimits,
-                componentPoolsRegistry.GetReferenceTypePool<Transform>());
-            UpdateLODLevelSystem.InjectToWorld(ref builder, lodsBucketLimits);
-            ResolveLODContentSystem.InjectToWorld(ref builder);            
+            ResolveVisualSceneStateSystem.InjectToWorld(ref builder);
+            UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData);
+            UpdateLODSystem.InjectToWorld(ref builder);            
             
             IComponentPool<PartitionComponent> partitionComponentPool = componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>();
             PartitionSceneEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData);

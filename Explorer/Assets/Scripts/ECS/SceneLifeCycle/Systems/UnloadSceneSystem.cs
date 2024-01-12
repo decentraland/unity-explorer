@@ -9,6 +9,7 @@ using ECS.SceneLifeCycle.Components;
 using ECS.StreamableLoading.Common;
 using SceneRunner;
 using SceneRunner.Scene;
+using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -22,50 +23,44 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float t)
         {
-            UnloadRunningSceneQuery(World);
+            UnloadLODQuery(World);
             UnloadLoadedSceneQuery(World);
             AbortLoadingScenesQuery(World);
-        }
-
-        [Query]
-        [All(typeof(UnloadRunningSceneIntention))]
-        private void UnloadRunningScene(in Entity entity, ref ISceneFacade sceneFacade)
-        {
-            //TODO: We cannot dispose the scene, at the moment I will set targetFPS to 0
-            if (!sceneFacade.IsDisposed)
-            {
-                sceneFacade.DisposeAsync().Forget();
-                sceneFacade.IsDisposed = true;
-            }
-            //sceneFacade.SetTargetFPS(0);
-
-            //TODO: We are leaving the scene facade so it can restart the scene until fully unloaded
-            //World.Remove<ISceneFacade, UnloadRunningSceneIntention>(entity);
         }
         
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void UnloadLoadedScene(in Entity entity, ref ISceneFacade sceneFacade, SceneLOD sceneLOD)
+        private void UnloadLOD(in Entity entity, ref SceneLODInfo sceneLODInfo)
         {
-            if (!sceneFacade.IsDisposed)
-            {
-                sceneFacade.DisposeAsync().Forget();
-                sceneFacade.IsDisposed = true;
-            }
-            sceneLOD.Dispose();
+            if (sceneLODInfo.SceneHash.Equals("bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
+                Debug.Log("JUANI UNLOADING SCENE FROM LODS");
 
+            sceneLODInfo.ReleaseCurrentLOD(World);
+            World.Remove<SceneLODInfo, VisualSceneState, DeleteEntityIntention>(entity);
+        }
+
+        
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void UnloadLoadedScene(in Entity entity, ref ISceneFacade sceneFacade)
+        {
+            if (sceneFacade is SceneFacade &&
+                ((SceneFacade)sceneFacade).SceneData.SceneShortInfo.Name.Equals(
+                    "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
+                Debug.Log("JUANI IM STILL IN UPDATE VISUAL STATE");
+            
             // Keep definition so it won't be downloaded again = Cache in ECS itself
-            World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, VisualSceneState,
-                UnloadRunningSceneIntention, SceneLOD>(entity);
+            sceneFacade.DisposeAsync().Forget();
+            World.Remove<ISceneFacade, VisualSceneState, DeleteEntityIntention>(entity);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        [None(typeof(ISceneFacade))]
         private void AbortLoadingScenes(in Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
         {
             promise.ForgetLoading(World);
-            World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>, DeleteEntityIntention>(entity);
+            World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>, VisualSceneState, DeleteEntityIntention>(
+                entity);
         }
     }
 }

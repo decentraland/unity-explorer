@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Jobs;
+using UnityEditor.Build.Content;
 using UnityEngine;
 using Utility;
 
@@ -35,8 +36,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         private static readonly Comparer COMPARER_INSTANCE = new ();
 
         private static readonly QueryDescription START_SCENES_LOADING = new QueryDescription()
-                                                                       .WithAll<SceneDefinitionComponent, PartitionComponent>()
-                                                                       .WithNone<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>();
+            .WithAll<SceneDefinitionComponent, PartitionComponent, VisualSceneState>()
+            .WithNone<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, SceneLODInfo>();
 
         private readonly IRealmPartitionSettings realmPartitionSettings;
 
@@ -162,12 +163,22 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     continue;
 
                 // We can't save component to data as sorting is throttled and components could change
-                Components<SceneDefinitionComponent, PartitionComponent> components = World.Get<SceneDefinitionComponent, PartitionComponent>(data.Entity);
+                var components
+                    = World.Get<SceneDefinitionComponent, PartitionComponent, VisualSceneState>(data.Entity);
 
-                World.Add(data.Entity,
-                    AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                        new GetSceneFacadeIntention(ipfsRealm, components.t0),
-                        components.t1.Value));
+                if (components.t2.Value.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
+                {
+                    var sceneLODInfo = SceneLODInfo.Create(World, ref components.t0.Value, ref components.t1.Value);
+                    World.Add(data.Entity, sceneLODInfo);
+                }
+                else
+                {
+                    World.Add(data.Entity,
+                        AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
+                            new GetSceneFacadeIntention(ipfsRealm, components.t0),
+                            components.t1.Value));
+                }                
+
 
                 promisesCreated++;
             }

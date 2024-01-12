@@ -23,26 +23,8 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateBefore(typeof(ResolveSceneStateByIncreasingRadiusSystem))]
     public partial class ResolveVisualSceneStateSystem : BaseUnityLoopSystem
     {
-        private readonly int bucketSceneLodLimit;
-        private readonly Vector2Int[] bucketLodsLimits;
-        private readonly IComponentPool<Transform> transformPool;
-
-        /// <summary>
-        /// </summary>
-        /// <param name="world"></param>
-        /// <param name="bucketSceneLodLimit">Bucket until we render a scene</param>
-        /// <param name="bucketLodLimits">
-        ///     Array that controls bucket lod handling. X represents inferior limit and exclusive, Y
-        ///     represents upper limit and inclusive
-        /// </param>
-        /// <param name="transformPool">Transform pool</param>
-        public ResolveVisualSceneStateSystem(World world, int bucketSceneLodLimit, Vector2Int[] bucketLodLimits,
-            IComponentPool<Transform> transformPool) :
-            base(world)
+        public ResolveVisualSceneStateSystem(World world) : base(world)
         {
-            this.bucketSceneLodLimit = bucketSceneLodLimit;
-            bucketLodsLimits = bucketLodLimits;
-            this.transformPool = transformPool;
         }
 
         protected override void Update(float t)
@@ -56,8 +38,10 @@ namespace ECS.SceneLifeCycle.Systems
         private void AddSceneVisualState(in Entity entity, ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
             VisualSceneState visualSceneState = new VisualSceneState();
-            ResolveVisualSceneState(ref visualSceneState, partition);
-            visualSceneState.IsDirty = true;
+            ResolveVisualSceneState(ref visualSceneState, partition, sceneDefinitionComponent);
+            //On creation, the decision to be add a SceneLodInfo or an Scene Promise is done in ResolveSceneStateByIncreasingRadiusSystem. 
+            //So this should not be dirty at this point
+            visualSceneState.IsDirty = false;
             World.Add(entity, visualSceneState);
         }
         
@@ -65,59 +49,35 @@ namespace ECS.SceneLifeCycle.Systems
         [None(typeof(DeleteEntityIntention))]
         private void UpdateVisualState(ref VisualSceneState visualSceneState, ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (sceneDefinitionComponent.IsEmpty) return; //We dont update visuals state of empty scenes
+            if (sceneDefinitionComponent.Definition.id.Equals(
+                    "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
+                Debug.Log("JUANI IM STILL IN UPDATE VISUAL STATE " + partition.Bucket);
             if (!partition.IsDirty) return;
 
-            ResolveVisualSceneState(ref visualSceneState, partition);
+            ResolveVisualSceneState(ref visualSceneState, partition, sceneDefinitionComponent);
         }
 
-        private void ResolveVisualSceneState(ref VisualSceneState visualSceneState, PartitionComponent partition)
+        private void ResolveVisualSceneState(ref VisualSceneState visualSceneState, PartitionComponent partition,
+            SceneDefinitionComponent sceneDefinitionComponent)
         {
-            var candidateState = partition.Bucket <= bucketSceneLodLimit ? VisualSceneStateEnum.SHOWING_SCENE : VisualSceneStateEnum.SHOWING_LOD;
-            visualSceneState.IsDirty = candidateState != visualSceneState.CurrentVisualSceneState;
-            visualSceneState.CurrentVisualSceneState = candidateState;
-        }
-
-        /*[Query]
-        [None(typeof(DeleteEntityIntention), typeof(ISceneFacade), typeof(VisualSceneState))]
-        private void ResolveSceneFacadePromise(in Entity entity,
-            ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise, ref PartitionComponent partition,
-            ref SceneDefinitionComponent sceneDefinitionComponent)
-        {
-            // Gracefully consume with the possibility of repetitions (in case the scene loading has failed)
-            if (promise.IsConsumed) return;
-
-            if (promise.TryConsume(World, out var result) && result.Succeeded)
+            //If the scene is empty, no lods are possible
+            if (sceneDefinitionComponent.IsEmpty)
             {
-                var scene = result.Asset;
-                var visualSceneState = new VisualSceneState
-                {
-                    IsDirty = true
-                };
-
-                if (sceneDefinitionComponent.IsEmpty)
-                {
-                    visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
-                    //TODO: Empty scene lod. Not completely happy on how Im doing it, but I need it for the removal of the scene
-                    World.Add(entity, scene, visualSceneState, new SceneLOD());
-                }
-                else
-                {
-                    if (partition.Bucket <= bucketSceneLodLimit)
-                        visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
-                    else
-                        visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
-
-                    //We initialize LODS
-                    var sceneLOD = new SceneLOD(sceneDefinitionComponent, bucketLodsLimits, transformPool);
-                    sceneLOD.LoadLod();
-
-                    World.Add(entity, scene, visualSceneState, sceneLOD);
-                }
+                visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
+                visualSceneState.IsDirty = false;
             }
-        }*/
+            else
+            {
+                var candidateState = partition.Bucket <= VisualSceneStateConstants.SCENE_BUCKET_LIMIT
+                    ? VisualSceneStateEnum.SHOWING_SCENE
+                    : VisualSceneStateEnum.SHOWING_LOD;
+                visualSceneState.IsDirty = candidateState != visualSceneState.CurrentVisualSceneState;
+                visualSceneState.CurrentVisualSceneState = candidateState;
+                if (sceneDefinitionComponent.Definition.id.Equals(
+                        "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
+                    Debug.Log($"JUANI {visualSceneState.IsDirty} {visualSceneState.CurrentVisualSceneState}");
+            }
+        }
 
- 
-        
     }
 }
