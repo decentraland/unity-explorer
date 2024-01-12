@@ -1,4 +1,4 @@
-﻿using DCL.Web3Authentication;
+﻿using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -30,7 +30,7 @@ namespace ECS.SceneLifeCycle.Tests
 
         protected override LoadSceneDefinitionSystem CreateSystem() =>
             new (world, new WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(),
-                Substitute.For<IWeb3Authenticator>()), cache, new MutexSync());
+                Substitute.For<IWeb3IdentityCache>()), cache, new MutexSync());
 
         protected override void AssertSuccess(IpfsTypes.SceneEntityDefinition asset)
         {

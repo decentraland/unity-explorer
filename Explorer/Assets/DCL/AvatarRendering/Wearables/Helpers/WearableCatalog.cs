@@ -13,23 +13,30 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         internal Dictionary<string, IWearable> wearablesCache { get; } = new ();
 
-        public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto) =>
-            TryGetWearable(wearableDto.metadata.id, out IWearable existingWearable)
+        public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto, bool qualifiedForUnloading = true)
+        {
+            return TryGetWearable(wearableDto.metadata.id, out IWearable existingWearable)
                 ? existingWearable
                 : AddWearable(wearableDto.metadata.id, new Wearable
                 {
                     WearableDTO = new StreamableLoadingResult<WearableDTO>(wearableDto),
-                    IsLoading = false,
-                });
+                    IsLoading = false
 
-        public void AddEmptyWearable(string loadingIntentionPointer) =>
-            AddWearable(loadingIntentionPointer, new Wearable());
+                }, qualifiedForUnloading);
+        }
 
-        internal IWearable AddWearable(string loadingIntentionPointer, IWearable wearable)
+        public void AddEmptyWearable(string loadingIntentionPointer, bool qualifiedForUnloading = true)
+        {
+            AddWearable(loadingIntentionPointer, new Wearable(), qualifiedForUnloading);
+        }
+
+
+        internal IWearable AddWearable(string loadingIntentionPointer, IWearable wearable, bool qualifiedForUnloading)
         {
             wearablesCache.Add(loadingIntentionPointer, wearable);
-            cacheKeysDictionary[loadingIntentionPointer] = listedCacheKeys.AddLast((loadingIntentionPointer, MultithreadingUtility.FrameCount));
-
+            if (qualifiedForUnloading)
+                cacheKeysDictionary[loadingIntentionPointer] =
+                    listedCacheKeys.AddLast((loadingIntentionPointer, MultithreadingUtility.FrameCount));
             return wearable;
         }
 
@@ -44,9 +51,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return false;
         }
 
-        public IWearable GetDefaultWearable(BodyShape bodyShape, string category)
+        public IWearable GetDefaultWearable(BodyShape bodyShape, string category, out bool hasEmptyDefaultWearableAB)
         {
-            string wearableURN = WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category);
+            var wearableURN =
+                WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category,
+                    out hasEmptyDefaultWearableAB);
 
             UpdateListedCachePriority(@for: wearableURN);
             return wearablesCache[wearableURN];
@@ -64,9 +73,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
         }
 
-        public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider)
+        public void Unload(IPerformanceBudget frameTimeBudget)
         {
-            for (LinkedListNode<(string key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudgetProvider.TrySpendBudget() && node != null; node = node.Next)
+            for (LinkedListNode<(string key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudget.TrySpendBudget() && node != null; node = node.Next)
                 if (wearablesCache.TryGetValue(node.Value.key, out IWearable wearable))
                     if (TryUnloadAllWearableAssets(wearable))
                     {

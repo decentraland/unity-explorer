@@ -1,4 +1,16 @@
+using Arch.Core;
+using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack.BackpackBus;
+using DCL.Profiles;
 using DCL.UI;
+using DCL.Web3.Identities;
+using ECS.StreamableLoading.Common;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -6,24 +18,49 @@ using Utility;
 
 namespace DCL.Backpack
     {
-        public class BackpackControler : ISection
+        public class BackpackControler : ISection, IDisposable
         {
             private readonly BackpackView view;
+            private readonly BackpackCommandBus backpackCommandBus;
             private readonly RectTransform rectTransform;
             private CancellationTokenSource animationCts;
+            private CancellationTokenSource profileLoadingCts;
+            private readonly AvatarController avatarController;
+
+            private bool initialLoading = false;
 
             public BackpackControler(
                 BackpackView view,
                 NftTypeIconSO rarityBackgrounds,
+                NftTypeIconSO rarityInfoPanelBackgrounds,
                 NftTypeIconSO categoryIcons,
-                NFTColorsSO rarityColors)
+                NFTColorsSO rarityColors,
+                BackpackCommandBus backpackCommandBus,
+                BackpackEventBus backpackEventBus,
+                IWeb3IdentityCache web3IdentityCache,
+                IWearableCatalog wearableCatalog)
             {
                 this.view = view;
+                this.backpackCommandBus = backpackCommandBus;
+                var backpackEquipStatusController = new BackpackEquipStatusController(backpackEventBus);
+                BackpackBusController busController = new BackpackBusController(wearableCatalog, backpackEventBus, backpackCommandBus, backpackEquipStatusController);
+
                 rectTransform = view.transform.parent.GetComponent<RectTransform>();
+                avatarController = new AvatarController(
+                    view.GetComponentInChildren<AvatarView>(),
+                    view.GetComponentsInChildren<AvatarSlotView>(),
+                    rarityBackgrounds,
+                    rarityInfoPanelBackgrounds,
+                    categoryIcons,
+                    rarityColors,
+                    backpackCommandBus,
+                    backpackEventBus,
+                    web3IdentityCache,
+                    backpackEquipStatusController);
 
                 Dictionary<BackpackSections, ISection> backpackSections = new ()
                 {
-                    { BackpackSections.Avatar, new AvatarController(view.GetComponentInChildren<AvatarView>(),view.GetComponentsInChildren<AvatarSlotView>(), rarityBackgrounds, categoryIcons, rarityColors) },
+                    { BackpackSections.Avatar, avatarController },
                     { BackpackSections.Emotes,  new EmotesController(view.GetComponentInChildren<EmotesView>()) },
                 };
                 var sectionSelectorController = new SectionSelectorController<BackpackSections>(backpackSections, BackpackSections.Avatar);
@@ -40,9 +77,43 @@ namespace DCL.Backpack
                 }
             }
 
+            public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
+            {
+                await avatarController.InitialiseAssetsAsync(assetsProvisioner, ct);
+            }
+
+            public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in Entity playerEntity)
+            {
+                World world = builder.World;
+                avatarController.InjectToWorld(ref builder, playerEntity);
+                profileLoadingCts = new CancellationTokenSource();
+                AwaitForProfileAsync(world, playerEntity, profileLoadingCts).Forget();
+            }
+
+
+            private async UniTaskVoid AwaitForProfileAsync(World world, Entity playerEntity, CancellationTokenSource cts)
+            {
+                do
+                {
+                    await UniTask.Delay(1000, cancellationToken: cts.Token);
+                }
+                while (!initialLoading);
+
+                world.TryGet(playerEntity, out AvatarShapeComponent avatarShapeComponent);
+
+                if(!avatarShapeComponent.WearablePromise.IsConsumed)
+                    await avatarShapeComponent.WearablePromise.ToUniTaskAsync(world, cancellationToken: cts.Token);
+
+                foreach (URN avatarSharedWearable in world.Get<Profile>(playerEntity).Avatar.SharedWearables)
+                    backpackCommandBus.SendCommand(new BackpackEquipCommand(avatarSharedWearable.ToString()));
+
+                avatarController.RequestInitialWearablesPage();
+            }
+
             public void Activate()
             {
                 view.gameObject.SetActive(true);
+                initialLoading = true;
             }
 
             public void Deactivate()
@@ -52,5 +123,12 @@ namespace DCL.Backpack
 
             public RectTransform GetRectTransform() =>
                 rectTransform;
+
+            public void Dispose()
+            {
+                avatarController?.Dispose();
+                animationCts.SafeCancelAndDispose();
+                profileLoadingCts.SafeCancelAndDispose();
+            }
         }
     }

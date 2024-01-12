@@ -15,6 +15,13 @@ namespace DCL.AssetsProvision
             return new ProvidedAsset<T>(asyncOp);
         }
 
+        public async UniTask<ProvidedAsset<T>> ProvideMainAssetAsync<T>(ComponentReference<T> componentReference, CancellationToken ct) where T: Object
+        {
+            AsyncOperationHandle<T> asyncOp = componentReference.LoadAssetAsync();
+            await asyncOp.WithCancellation(ct);
+            return new ProvidedAsset<T>(asyncOp);
+        }
+
         public async UniTask<ProvidedInstance<T>> ProvideInstanceAsync<T>(ComponentReference<T> componentReference, Vector3 position, Quaternion rotation, Transform parent = null, CancellationToken ct = default) where T: Object
         {
             AsyncOperationHandle<T> asyncOp = componentReference.InstantiateAsync(position, rotation, parent);

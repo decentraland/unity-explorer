@@ -32,27 +32,27 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly IComponentPool<AvatarBase> avatarPoolRegistry;
         private readonly IObjectPool<Material> avatarMaterialPool;
         private readonly IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool;
-        private readonly IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider;
+        private readonly IPerformanceBudget instantiationFrameTimeBudget;
 
         private readonly CustomSkinning skinningStrategy;
 
         private readonly TextureArrayContainer textureArrays;
         private readonly FixedComputeBufferHandler vertOutBuffer;
         private readonly IWearableAssetsCache wearableAssetsCache;
-        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
+        private readonly IPerformanceBudget memoryBudget;
 
-        public AvatarInstantiatorSystem(World world, IConcurrentBudgetProvider instantiationFrameTimeBudgetProvider, IConcurrentBudgetProvider memoryBudgetProvider,
+        public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
             IComponentPool<AvatarBase> avatarPoolRegistry, IObjectPool<Material> avatarMaterialPool, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
             TextureArrayContainer textureArrayContainer, IWearableAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer) : base(world)
         {
-            this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
+            this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.avatarPoolRegistry = avatarPoolRegistry;
 
             textureArrays = textureArrayContainer;
             this.wearableAssetsCache = wearableAssetsCache;
             this.skinningStrategy = skinningStrategy;
             this.vertOutBuffer = vertOutBuffer;
-            this.memoryBudgetProvider = memoryBudgetProvider;
+            this.memoryBudget = memoryBudget;
             this.avatarMaterialPool = avatarMaterialPool;
             computeShaderSkinningPool = computeShaderPool;
         }
@@ -135,6 +135,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 {
                     WearableAsset originalAsset = resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape);
 
+                    if (originalAsset.GameObject == null)
+                    {
+                        ReportHub.LogError(GetReportCategory(),
+                            $"Wearable asset {resultWearable.GetUrn()} has no GameObject! Check the Asset bundle generated.");
+                        continue;
+                    }
+
                     CachedWearable instantiatedWearable =
                         wearableAssetsCache.InstantiateWearable(originalAsset, avatarBase.transform);
 
@@ -164,7 +171,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         private bool ReadyToInstantiateNewAvatar(ref AvatarShapeComponent avatarShapeComponent) =>
-            avatarShapeComponent.IsDirty && instantiationFrameTimeBudgetProvider.TrySpendBudget() && memoryBudgetProvider.TrySpendBudget();
+            avatarShapeComponent.IsDirty && instantiationFrameTimeBudget.TrySpendBudget() && memoryBudget.TrySpendBudget();
 
         //We only care to release AvatarShapeComponent with AvatarBase; since this are the ones that got instantiated.
         //The ones that dont have AvatarBase never got instantiated and therefore we have nothing to release
@@ -173,7 +180,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             AvatarBase avatarBase, AvatarCustomSkinningComponent skinningComponent, ref DeleteEntityIntention deleteEntityIntention)
         {
             // Use frame budget for destruction as well
-            if (!instantiationFrameTimeBudgetProvider.TrySpendBudget())
+            if (!instantiationFrameTimeBudget.TrySpendBudget())
             {
                 avatarBase.gameObject.SetActive(false);
                 deleteEntityIntention.DeferDeletion = true;

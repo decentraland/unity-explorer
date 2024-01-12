@@ -51,11 +51,9 @@ namespace ECS.StreamableLoading.Textures
             return true;
         }
 
-        public void Dereference(in GetTextureIntention key, Texture2D asset) { }
-
-        public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount)
+        public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount)
         {
-            for (var i = 0; frameTimeBudgetProvider.TrySpendBudget()
+            for (var i = 0; frameTimeBudget.TrySpendBudget()
                             && i < maxUnloadAmount && unloadQueue.Count > 0
                             && unloadQueue.TryDequeue(out GetTextureIntention key); i++)
             {
@@ -67,6 +65,8 @@ namespace ECS.StreamableLoading.Textures
 
             ProfilingCounters.TexturesInCache.Value = cache.Count;
         }
+
+        public void Dereference(in GetTextureIntention key, Texture2D asset) { }
 
         public bool Equals(GetTextureIntention x, GetTextureIntention y) =>
             x.Equals(y);

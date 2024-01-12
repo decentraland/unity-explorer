@@ -1,5 +1,5 @@
+using DCL.Diagnostics;
 using TMPro;
-using UnityEngine;
 using Font = DCL.ECSComponents.Font;
 
 namespace DCL.SDKComponents.TextShape.Fonts
@@ -19,7 +19,7 @@ namespace DCL.SDKComponents.TextShape.Fonts
 
             public TMP_FontAsset? Font(Font font)
             {
-                Debug.LogWarning("Fake font provided");
+                ReportHub.LogWarning("Fake font provided", ReportCategory.UNSPECIFIED);
                 return staticFont;
             }
         }

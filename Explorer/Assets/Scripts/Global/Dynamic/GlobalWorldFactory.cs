@@ -17,7 +17,6 @@ using DCL.Profiles;
 using DCL.Systems;
 using DCL.Time;
 using DCL.Time.Systems;
-using DCL.Web3Authentication;
 using DCL.WebRequests;
 using ECS;
 using ECS.Groups;
@@ -26,6 +25,7 @@ using ECS.LifeCycle.Systems;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.Prioritization.Systems;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -69,14 +69,15 @@ namespace Global.Dynamic
         private readonly IWebRequestController webRequestController;
         private readonly IReadOnlyList<IDCLGlobalPlugin> globalPlugins;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private readonly IConcurrentBudgetProvider memoryBudgetProvider;
+        private readonly IPerformanceBudget memoryBudget;
         private readonly StaticSettings staticSettings;
+        private readonly IScenesCache scenesCache;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             IRealmPartitionSettings realmPartitionSettings,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
             URLDomain assetBundlesURL, IRealmData realmData, IReadOnlyList<IDCLGlobalPlugin> globalPlugins,
-            IDebugContainerBuilder debugContainerBuilder)
+            IDebugContainerBuilder debugContainerBuilder, IScenesCache scenesCache)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -90,13 +91,13 @@ namespace Global.Dynamic
             this.globalPlugins = globalPlugins;
             this.debugContainerBuilder = debugContainerBuilder;
             this.realmData = realmData;
+            this.scenesCache = scenesCache;
 
-            memoryBudgetProvider = staticContainer.SingletonSharedDependencies.MemoryBudgetProvider;
+            memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
-        public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory, ICharacterObject characterObject,
-            IWeb3Identity web3Identity)
+        public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory, ICharacterObject characterObject)
         {
             var world = World.Create();
 
@@ -113,7 +114,7 @@ namespace Global.Dynamic
                 new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
                 new PlayerComponent(characterObject.CameraFocus),
                 new TransformComponent { Transform = characterObject.Transform },
-                new Profile(web3Identity.EphemeralAccount.Address, "Player",
+                new Profile("fakeOwnUserId", "Player",
                     new Avatar(
                         BodyShape.MALE,
                         WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
@@ -121,7 +122,7 @@ namespace Global.Dynamic
                         WearablesConstants.DefaultColors.GetRandomHairColor(),
                         WearablesConstants.DefaultColors.GetRandomSkinColor())));
 
-            IConcurrentBudgetProvider sceneBudgetProvider = new ConcurrentLoadingBudgetProvider(staticSettings.ScenesLoadingBudget);
+            IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 
             LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
             LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, NoCache<IpfsTypes.SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
@@ -131,7 +132,7 @@ namespace Global.Dynamic
                 new LoadEmptySceneSystemLogic(webRequestController, emptyScenesWorldFactory, componentPoolsRegistry, EMPTY_SCENES_MAPPINGS_URL),
                 sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex);
 
-            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudgetProvider, memoryBudgetProvider);
+            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget);
 
             CalculateParcelsInRangeSystem.InjectToWorld(ref builder, playerEntity);
             LoadStaticPointersSystem.InjectToWorld(ref builder);
@@ -149,8 +150,8 @@ namespace Global.Dynamic
             CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 
             ResolveStaticPointersSystem.InjectToWorld(ref builder);
-            UnloadSceneSystem.InjectToWorld(ref builder);
-            ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token);
+            UnloadSceneSystem.InjectToWorld(ref builder, scenesCache);
+            ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token, scenesCache);
 
             IComponentPool<PartitionComponent> partitionComponentPool = componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>();
             PartitionSceneEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData);
@@ -165,6 +166,8 @@ namespace Global.Dynamic
             UpdateTimeSystem.InjectToWorld(ref builder);
 
             OwnAvatarLoaderFromDebugMenuSystem.InjectToWorld(ref builder, playerEntity, debugContainerBuilder, realmData);
+
+            UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, playerEntity);
 
             var pluginArgs = new GlobalPluginArguments(playerEntity);
 

@@ -23,9 +23,23 @@ MonoBehaviour:
   - rid: 1501337502808539138
   - rid: 2152807656697888768
   - rid: 8147919132522971138
+  - rid: 56198586647707649
+  - rid: 1095376790733193218
   references:
     version: 2
     RefIds:
+    - rid: 56198586647707649
+      type: {class: SkyBoxPlugin/Settings, ns: DCL.SkyBox, asm: DCL.Plugins}
+      data:
+        <ForwardRenderer>k__BackingField: {fileID: 11400000, guid: 4a526cc14a7bff94dbd03fa3c9c29720, type: 2}
+    - rid: 1095376790733193218
+      type: {class: Web3AuthPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <AuthScreenPrefab>k__BackingField:
+          m_AssetGUID: 08d42937d0bc54b48baaa23c8c520175
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 1268264176566403074
       type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -131,6 +145,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        defaultEmptyWearable:
+          m_AssetGUID: 2d002c6a594460f4cb42100b50e7e53a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 6784895264912310272
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -155,6 +174,9 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <FrameTimeCap>k__BackingField: 33
+        <ScenesLoadingBudget>k__BackingField: 100
+        <AssetsLoadingBudget>k__BackingField: 50
     - rid: 6784895265412481026
       type: {class: CharacterCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

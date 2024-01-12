@@ -1,4 +1,4 @@
-﻿using DCL.Web3Authentication;
+﻿using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Common.Components;
@@ -32,7 +32,7 @@ namespace ECS.StreamableLoading.Textures.Tests
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
         protected override LoadTextureSystem CreateSystem() =>
-            new (world, cache, new WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(), Substitute.For<IWeb3Authenticator>()), new MutexSync());
+            new (world, cache, new WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(), Substitute.For<IWeb3IdentityCache>()), new MutexSync());
 
         protected override void AssertSuccess(Texture2D asset)
         {

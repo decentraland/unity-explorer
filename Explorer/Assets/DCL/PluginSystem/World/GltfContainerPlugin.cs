@@ -35,12 +35,12 @@ namespace DCL.PluginSystem.World
         {
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);
-            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudgetProvider, globalDeps.MemoryBudgetProvider);
+            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
             ReportGltfErrorsSystem.InjectToWorld(ref builder, globalDeps.ReportsHandlingSettings);
 
             // GLTF Container
             LoadGltfContainerSystem.InjectToWorld(ref builder);
-            FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, globalDeps.FrameTimeBudgetProvider, sharedDependencies.EntityCollidersSceneCache, sharedDependencies.SceneData);
+            FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, globalDeps.FrameTimeBudget, sharedDependencies.EntityCollidersSceneCache, sharedDependencies.SceneData);
 
             ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache);
             WriteGltfContainerLoadingStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, globalDeps.ComponentPoolsRegistry.GetReferenceTypePool<PBGltfContainerLoadingState>());
@@ -57,12 +57,12 @@ namespace DCL.PluginSystem.World
         {
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);
-            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudgetProvider, globalDeps.MemoryBudgetProvider);
+            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
             ReportGltfErrorsSystem.InjectToWorld(ref builder, globalDeps.ReportsHandlingSettings);
 
             // GLTF Container
             LoadGltfContainerSystem.InjectToWorld(ref builder);
-            FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, dependencies.SceneRoot, globalDeps.FrameTimeBudgetProvider, NullEntityCollidersSceneCache.INSTANCE, dependencies.SceneData);
+            FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, dependencies.SceneRoot, globalDeps.FrameTimeBudget, NullEntityCollidersSceneCache.INSTANCE, dependencies.SceneData);
 
             ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache, NullEntityCollidersSceneCache.INSTANCE);
 

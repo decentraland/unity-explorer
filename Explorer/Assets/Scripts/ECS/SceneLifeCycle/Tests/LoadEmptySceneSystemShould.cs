@@ -5,7 +5,7 @@ using CRDT;
 using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
-using DCL.Web3Authentication;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using ECS.Prioritization.Components;
@@ -47,7 +47,7 @@ namespace ECS.SceneLifeCycle.Tests
         public void SetUp()
         {
             loadEmptySceneSystemLogic = new LoadEmptySceneSystemLogic(
-                new WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(), Substitute.For<IWeb3Authenticator>()),
+                new WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(), Substitute.For<IWeb3IdentityCache>()),
                 emptyScenesWorldFactory = Substitute.For<IEmptyScenesWorldFactory>(),
                 Substitute.For<IComponentPoolsRegistry>(),
                 EMPTY_SCENES_MAPPINGS_URL);

@@ -12,16 +12,16 @@ namespace DCL.PluginSystem.Global
     public class ProfilingPlugin : IDCLGlobalPlugin<ProfilingPlugin.Settings>
     {
         private readonly IProfilingProvider profilingProvider;
-        private readonly FrameTimeCapBudgetProvider frameTimeCapBudgetProvider;
-        private readonly MemoryBudgetProvider memoryBudgetProvider;
+        private readonly FrameTimeCapBudget frameTimeCapBudget;
+        private readonly MemoryBudget memoryBudget;
         private readonly IDebugContainerBuilder debugContainerBuilder;
 
-        public ProfilingPlugin(IProfilingProvider profilingProvider, FrameTimeCapBudgetProvider frameTimeCapBudgetProvider, MemoryBudgetProvider memoryBudgetProvider, IDebugContainerBuilder debugContainerBuilder)
+        public ProfilingPlugin(IProfilingProvider profilingProvider, FrameTimeCapBudget frameTimeCapBudget, MemoryBudget memoryBudget, IDebugContainerBuilder debugContainerBuilder)
         {
             this.profilingProvider = profilingProvider;
-            this.frameTimeCapBudgetProvider = frameTimeCapBudgetProvider;
+            this.frameTimeCapBudget = frameTimeCapBudget;
             this.debugContainerBuilder = debugContainerBuilder;
-            this.memoryBudgetProvider = memoryBudgetProvider;
+            this.memoryBudget = memoryBudget;
         }
 
         public void Dispose() { }
@@ -31,7 +31,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ProfilingSystem.InjectToWorld(ref builder, profilingProvider, frameTimeCapBudgetProvider, memoryBudgetProvider, debugContainerBuilder);
+            ProfilingSystem.InjectToWorld(ref builder, profilingProvider, frameTimeCapBudget, memoryBudget, debugContainerBuilder);
         }
 
         [Serializable]

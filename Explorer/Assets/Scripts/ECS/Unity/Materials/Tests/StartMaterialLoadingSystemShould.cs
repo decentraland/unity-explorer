@@ -38,12 +38,12 @@ namespace ECS.Unity.Materials.Tests
         [SetUp]
         public void SetUp()
         {
-            IConcurrentBudgetProvider concurrentBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
-            concurrentBudgetProvider.TrySpendBudget().Returns(true);
+            IReleasablePerformanceBudget releasablePerformanceBudget = Substitute.For<IReleasablePerformanceBudget>();
+            releasablePerformanceBudget.TrySpendBudget().Returns(true);
 
             system = new StartMaterialsLoadingSystem(world,
                 destroyMaterial = Substitute.For<DestroyMaterial>(),
-                sceneData = Substitute.For<ISceneData>(), ATTEMPTS_COUNT, concurrentBudgetProvider);
+                sceneData = Substitute.For<ISceneData>(), ATTEMPTS_COUNT, releasablePerformanceBudget);
 
             sceneData.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<URLAddress>())
                      .Returns(c =>
@@ -64,7 +64,7 @@ namespace ECS.Unity.Materials.Tests
 
             Assert.IsTrue(world.TryGet(e, out MaterialComponent materialComponent));
 
-            Assert.AreEqual(MaterialComponent.LifeCycle.LoadingInProgress, materialComponent.Status);
+            Assert.AreEqual(StreamableLoading.LifeCycle.LoadingInProgress, materialComponent.Status);
             Assert.IsNull(materialComponent.Result);
 
             Assert.IsTrue(materialComponent.Data.IsPbrMaterial);
@@ -83,7 +83,7 @@ namespace ECS.Unity.Materials.Tests
 
             Assert.IsTrue(world.TryGet(e, out MaterialComponent materialComponent));
 
-            Assert.AreEqual(MaterialComponent.LifeCycle.LoadingInProgress, materialComponent.Status);
+            Assert.AreEqual(StreamableLoading.LifeCycle.LoadingInProgress, materialComponent.Status);
             Assert.IsNull(materialComponent.Result);
 
             Assert.IsFalse(materialComponent.Data.IsPbrMaterial);
@@ -117,7 +117,7 @@ namespace ECS.Unity.Materials.Tests
 
             ref MaterialComponent c = ref world.Get<MaterialComponent>(e);
             c.Result = DefaultMaterial.New();
-            c.Status = MaterialComponent.LifeCycle.LoadingFinished;
+            c.Status = StreamableLoading.LifeCycle.LoadingFinished;
 
             // Second run -> keep material component
 
@@ -149,7 +149,7 @@ namespace ECS.Unity.Materials.Tests
 
             ref MaterialComponent c = ref world.Get<MaterialComponent>(e);
             c.Result = DefaultMaterial.New();
-            c.Status = MaterialComponent.LifeCycle.LoadingFinished;
+            c.Status = StreamableLoading.LifeCycle.LoadingFinished;
 
             MaterialData dataCopy = c.Data;
 
@@ -173,7 +173,7 @@ namespace ECS.Unity.Materials.Tests
             system.Update(0);
 
             MaterialComponent afterUpdate = world.Get<MaterialComponent>(e);
-            Assert.That(afterUpdate.Status, Is.EqualTo(MaterialComponent.LifeCycle.LoadingInProgress));
+            Assert.That(afterUpdate.Status, Is.EqualTo(StreamableLoading.LifeCycle.LoadingInProgress));
 
             AssertTexturePromise(in afterUpdate.AlbedoTexPromise, tex2);
         }
@@ -188,7 +188,7 @@ namespace ECS.Unity.Materials.Tests
             system.Update(0);
 
             MaterialComponent afterUpdate = world.Get<MaterialComponent>(e);
-            Assert.That(afterUpdate.Status, Is.EqualTo(MaterialComponent.LifeCycle.LoadingInProgress));
+            Assert.That(afterUpdate.Status, Is.EqualTo(StreamableLoading.LifeCycle.LoadingInProgress));
 
             AssertTexturePromise(afterUpdate.AlbedoTexPromise, tex1);
             AssertTexturePromise(afterUpdate.AlphaTexPromise, tex3);
@@ -212,7 +212,7 @@ namespace ECS.Unity.Materials.Tests
             world.Set(e, material2);
 
             ref MaterialComponent c = ref world.Get<MaterialComponent>(e);
-            c.Status = MaterialComponent.LifeCycle.LoadingInProgress;
+            c.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
             // Add entity reference
             var texPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention { CommonArguments = new CommonLoadingArguments("URL") }, PartitionComponent.TOP_PRIORITY);
@@ -289,7 +289,6 @@ namespace ECS.Unity.Materials.Tests
                     TransparencyMode = MaterialTransparencyMode.MtmAlphaBlend,
                     Metallic = 0.1f,
                     Roughness = 0.2f,
-                    Glossiness = 0.3f,
                     SpecularIntensity = 0.5f,
                     EmissiveIntensity = 0,
                     DirectIntensity = 0.3f,
@@ -326,7 +325,6 @@ namespace ECS.Unity.Materials.Tests
             Assert.AreEqual(expected.GetTransparencyMode(), actual.Data.TransparencyMode);
             Assert.AreEqual(expected.GetMetallic(), actual.Data.Metallic);
             Assert.AreEqual(expected.GetRoughness(), actual.Data.Roughness);
-            Assert.AreEqual(expected.GetGlossiness(), actual.Data.Glossiness);
             Assert.AreEqual(expected.GetSpecularIntensity(), actual.Data.SpecularIntensity);
             Assert.AreEqual(expected.GetEmissiveColor(), actual.Data.EmissiveColor);
             Assert.AreEqual(expected.GetDirectIntensity(), actual.Data.DirectIntensity);

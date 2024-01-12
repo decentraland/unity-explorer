@@ -1,0 +1,39 @@
+{
+  "ecs7": true,
+  "runtimeVersion": "7",
+  "display": {
+    "title": "Dance-floor",
+    "favicon": "favicon_asset"
+  },
+  "contact": {
+    "name": "decentraland",
+    "email": ""
+  },
+  "owner": "",
+  "scene": {
+    "parcels": [
+      "76,-3"
+    ],
+    "base": "76,-3"
+  },
+  "requiredPermissions": [],
+  "main": "bin/game.js",
+  "tags": [],
+  "spawnPoints": [
+    {
+      "name": "spawn1",
+      "default": true,
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "cameraTarget": {
+        "x": 8,
+        "y": 1,
+        "z": 8
+      }
+    }
+  ],
+  "name": "Dance-floor"
+}

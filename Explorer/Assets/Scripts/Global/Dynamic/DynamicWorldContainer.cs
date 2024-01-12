@@ -1,17 +1,23 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack;
+using DCL.Backpack.BackpackBus;
+using DCL.Browser;
 using DCL.DebugUtilities;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.Web3Authentication;
+using DCL.SkyBox;
 using DCL.Profiles;
+using DCL.Web3.Authenticators;
+using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle;
 using MVC;
 using MVC.PopupsController.PopupCloser;
 using SceneRunner.EmptyScene;
@@ -39,8 +45,6 @@ namespace Global.Dynamic
 
         public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; }
 
-        public IWeb3Authenticator Web3Authenticator { get; private set; }
-
         public IProfileRepository ProfileRepository { get; private set; }
 
         public void Dispose()
@@ -53,9 +57,11 @@ namespace Global.Dynamic
             IPluginSettingsContainer settingsContainer,
             CancellationToken ct,
             UIDocument rootUIDocument,
+            SkyBoxSceneData skyBoxSceneData,
             IReadOnlyList<int2> staticLoadPositions, int sceneLoadRadius,
             DynamicSettings dynamicSettings,
-            IWeb3Authenticator web3Authenticator)
+            IWeb3VerifiedAuthenticator web3Authenticator,
+            IWeb3IdentityCache storedIdentityProvider)
         {
             var container = new DynamicWorldContainer();
             (_, bool result) = await settingsContainer.InitializePluginAsync(container, ct);
@@ -76,6 +82,9 @@ namespace Global.Dynamic
             mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
             MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, dynamicSettings.MapRendererSettings, ct);
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController));
+            var wearableCatalog = new WearableCatalog();
+            var backpackCommandBus = new BackpackCommandBus();
+            var backpackEventBus = new BackpackEventBus();
 
             IProfileCache profileCache = new DefaultProfileCache();
             container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData,
@@ -87,34 +96,48 @@ namespace Global.Dynamic
                 new InputPlugin(dclInput),
                 new GlobalInteractionPlugin(dclInput, rootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.CameraSamplingData, exposedGlobalDataContainer.ExposedCameraData),
-                new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, staticContainer.SingletonSharedDependencies.MemoryBudgetProvider, debugBuilder),
-                new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, realmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner),
+                new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, realmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner, wearableCatalog),
+                new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder),
                 new AvatarPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner,
-                    staticContainer.SingletonSharedDependencies.FrameTimeBudgetProvider, staticContainer.SingletonSharedDependencies.MemoryBudgetProvider, realmData, debugBuilder, staticContainer.CacheCleaner),
+                    staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, realmData, debugBuilder, staticContainer.CacheCleaner),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new MinimapPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer, placesAPIService),
-                new ExplorePanelPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer, placesAPIService, parcelServiceContainer.TeleportController, dynamicSettings.BackpackSettings, staticContainer.WebRequestsContainer.WebRequestController),
+                new ExplorePanelPlugin(
+                    staticContainer.AssetsProvisioner,
+                    mvcManager,
+                    mapRendererContainer,
+                    placesAPIService,
+                    parcelServiceContainer.TeleportController,
+                    dynamicSettings.BackpackSettings,
+                    backpackCommandBus,
+                    backpackEventBus,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    storedIdentityProvider,
+                    wearableCatalog),
+
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
+                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, mvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, storedIdentityProvider),
+                new SkyBoxPlugin(debugBuilder, skyBoxSceneData),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
+
+            IScenesCache scenesCache = new ScenesCache();
 
             container.RealmController = new RealmController(
                 staticContainer.WebRequestsContainer.WebRequestController,
                 parcelServiceContainer.TeleportController,
                 parcelServiceContainer.RetrieveSceneFromFixedRealm,
                 parcelServiceContainer.RetrieveSceneFromVolatileWorld,
-                sceneLoadRadius, staticLoadPositions, realmData);
+                sceneLoadRadius, staticLoadPositions, realmData, scenesCache);
 
             container.GlobalWorldFactory = new GlobalWorldFactory(in staticContainer, staticContainer.RealmPartitionSettings,
                 exposedGlobalDataContainer.CameraSamplingData, realmSamplingData, ASSET_BUNDLES_URL, realmData, globalPlugins,
-                debugBuilder);
+                debugBuilder, scenesCache);
 
             container.GlobalPlugins = globalPlugins;
             container.EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins);
-
-            container.Web3Authenticator = web3Authenticator;
 
             return (container, true);
         }

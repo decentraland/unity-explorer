@@ -1,0 +1,19 @@
+{
+    "name": "SocketIOClient.Newtonsoft.Json",
+    "rootNamespace": "",
+    "references": [
+        "GUID:29f99fa49221a4df7aecb5cd50457e5f"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Newtonsoft.Json.dll",
+        "System.Text.Json.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -34,7 +34,7 @@ namespace ECS.Unity.Materials.Tests
         public void AbortLoadingIntentions()
         {
             ref MaterialComponent component = ref world.Get<MaterialComponent>(e);
-            component.Status = MaterialComponent.LifeCycle.LoadingInProgress;
+            component.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
             CancellationToken ct = component.AlbedoTexPromise.Value.LoadingIntention.CommonArguments.CancellationToken;
 
@@ -48,7 +48,7 @@ namespace ECS.Unity.Materials.Tests
         public void Dereference()
         {
             ref MaterialComponent component = ref world.Get<MaterialComponent>(e);
-            component.Status = MaterialComponent.LifeCycle.LoadingFinished;
+            component.Status = StreamableLoading.LifeCycle.LoadingFinished;
             component.Result = DefaultMaterial.New();
 
             system.Update(0);

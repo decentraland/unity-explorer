@@ -31,6 +31,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             //urn
             public string id;
+            public string name;
 
             public I18n[] i18n;
             public string thumbnail;
@@ -53,6 +54,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 public string[] contents;
                 public string[] overrideHides;
                 public string[] overrideReplaces;
+            }
+
+            [Serializable]
+            public struct RepresentationContentsDto
+            {
+                public string key;
+                public string url;
             }
 
             [Serializable]
@@ -91,6 +99,23 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public string tokenId;
             public string transferredAt;
             public string price;
+        }
+
+        public void Sanitize(bool hasEmptyDefaultWearableAB)
+        {
+            // If the default wearable is empty, we need to remove all the hiding/replacing/removing data
+            if (hasEmptyDefaultWearableAB)
+            {
+                metadata.data.hides = Array.Empty<string>();
+                metadata.data.replaces = Array.Empty<string>();
+                metadata.data.removesDefaultHiding = Array.Empty<string>();
+
+                for (var i = 0; i < metadata.data.representations.Length; i++)
+                {
+                    metadata.data.representations[i].overrideHides = Array.Empty<string>();
+                    metadata.data.representations[i].overrideReplaces = Array.Empty<string>();
+                }
+            }
         }
     }
 }

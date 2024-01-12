@@ -8,6 +8,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Transforms.Components;
 using UnityEngine;
+using Utility;
 
 namespace ECS.Unity.Transforms.Systems
 {
@@ -33,7 +34,8 @@ namespace ECS.Unity.Transforms.Systems
         private void InstantiateTransform(in Entity entity)
         {
             Transform newTransform = transformPool.Get();
-            newTransform.name = "Entity " + entity.Id;
+
+            newTransform.SetDebugName(entity);
             var transformComponent = new TransformComponent(newTransform);
             World.Add(entity, transformComponent);
         }

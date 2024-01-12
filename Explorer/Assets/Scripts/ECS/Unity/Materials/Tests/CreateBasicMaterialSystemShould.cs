@@ -28,9 +28,9 @@ namespace ECS.Unity.Materials.Tests
             IObjectPool<Material> pool = Substitute.For<IObjectPool<Material>>();
             pool.Get().Returns(_ => new Material(basicMat));
 
-            IConcurrentBudgetProvider budgetProvider = Substitute.For<IConcurrentBudgetProvider>();
-            budgetProvider.TrySpendBudget().Returns(true);
-            system = new CreateBasicMaterialSystem(world, pool, budgetProvider);
+            IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
+            budget.TrySpendBudget().Returns(true);
+            system = new CreateBasicMaterialSystem(world, pool, budget, budget);
             system.Initialize();
         }
 
@@ -39,7 +39,7 @@ namespace ECS.Unity.Materials.Tests
         {
             MaterialComponent component = CreateMaterialComponent();
 
-            component.Status = MaterialComponent.LifeCycle.LoadingInProgress;
+            component.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
             CreateAndFinalizeTexturePromise(ref component.AlbedoTexPromise);
 
@@ -48,7 +48,7 @@ namespace ECS.Unity.Materials.Tests
             system.Update(0);
 
             MaterialComponent afterUpdate = world.Get<MaterialComponent>(e);
-            Assert.That(afterUpdate.Status, Is.EqualTo(MaterialComponent.LifeCycle.LoadingFinished));
+            Assert.That(afterUpdate.Status, Is.EqualTo(StreamableLoading.LifeCycle.LoadingFinished));
 
             Assert.That(afterUpdate.Result, Is.Not.Null);
             Assert.That(afterUpdate.Result.shader, Is.EqualTo(basicMat.shader));
@@ -59,7 +59,7 @@ namespace ECS.Unity.Materials.Tests
         {
             MaterialComponent component = CreateMaterialComponent();
 
-            component.Status = MaterialComponent.LifeCycle.LoadingInProgress;
+            component.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
             component.AlbedoTexPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention(), PartitionComponent.TOP_PRIORITY);
 
@@ -68,7 +68,7 @@ namespace ECS.Unity.Materials.Tests
             system.Update(0);
 
             MaterialComponent afterUpdate = world.Get<MaterialComponent>(e);
-            Assert.That(afterUpdate.Status, Is.EqualTo(MaterialComponent.LifeCycle.LoadingInProgress));
+            Assert.That(afterUpdate.Status, Is.EqualTo(StreamableLoading.LifeCycle.LoadingInProgress));
 
             Assert.That(afterUpdate.Result, Is.Null);
         }

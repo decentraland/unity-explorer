@@ -28,10 +28,10 @@ namespace ECS.Unity.Materials.Tests
             IObjectPool<Material> pool = Substitute.For<IObjectPool<Material>>();
             pool.Get().Returns(_ => new Material(pbrMat));
 
-            IConcurrentBudgetProvider frameTimeBudgetProvider = Substitute.For<IConcurrentBudgetProvider>();
-            frameTimeBudgetProvider.TrySpendBudget().Returns(true);
+            IReleasablePerformanceBudget frameTimeBudget = Substitute.For<IReleasablePerformanceBudget>();
+            frameTimeBudget.TrySpendBudget().Returns(true);
 
-            system = new CreatePBRMaterialSystem(world, pool, frameTimeBudgetProvider);
+            system = new CreatePBRMaterialSystem(world, pool, frameTimeBudget, frameTimeBudget);
             system.Initialize();
         }
 
@@ -40,7 +40,7 @@ namespace ECS.Unity.Materials.Tests
         {
             MaterialComponent component = CreateMaterialComponent();
 
-            component.Status = MaterialComponent.LifeCycle.LoadingInProgress;
+            component.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
             CreateAndFinalizeTexturePromise(ref component.AlbedoTexPromise);
             CreateAndFinalizeTexturePromise(ref component.AlphaTexPromise);
@@ -52,7 +52,7 @@ namespace ECS.Unity.Materials.Tests
             system.Update(0);
 
             MaterialComponent afterUpdate = world.Get<MaterialComponent>(e);
-            Assert.That(afterUpdate.Status, Is.EqualTo(MaterialComponent.LifeCycle.LoadingFinished));
+            Assert.That(afterUpdate.Status, Is.EqualTo(StreamableLoading.LifeCycle.LoadingFinished));
 
             Assert.That(afterUpdate.Result, Is.Not.Null);
             Assert.That(afterUpdate.Result.shader, Is.EqualTo(pbrMat.shader));
@@ -63,7 +63,7 @@ namespace ECS.Unity.Materials.Tests
         {
             MaterialComponent component = CreateMaterialComponent();
 
-            component.Status = MaterialComponent.LifeCycle.LoadingInProgress;
+            component.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
             CreateAndFinalizeTexturePromise(ref component.AlbedoTexPromise);
             CreateAndFinalizeTexturePromise(ref component.AlphaTexPromise);
@@ -76,7 +76,7 @@ namespace ECS.Unity.Materials.Tests
             system.Update(0);
 
             MaterialComponent afterUpdate = world.Get<MaterialComponent>(e);
-            Assert.That(afterUpdate.Status, Is.EqualTo(MaterialComponent.LifeCycle.LoadingInProgress));
+            Assert.That(afterUpdate.Status, Is.EqualTo(StreamableLoading.LifeCycle.LoadingInProgress));
 
             Assert.That(afterUpdate.Result, Is.Null);
         }
@@ -101,7 +101,6 @@ namespace ECS.Unity.Materials.Tests
                 MaterialTransparencyMode.AlphaBlend,
                 0.3f,
                 0.4f,
-                0.5f,
                 0.6f,
                 0.7f,
                 0
