@@ -5,6 +5,7 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.SceneLifeCycle.SceneFacade;
 using ECS.StreamableLoading.Common;
 using Ipfs;
 using SceneRunner.Scene;
@@ -45,10 +46,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 if (staticScenePointers.Value.Contains(parcel.ToInt2()))
                 {
-                    World.Add(entity,
-                        AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                            new GetSceneFacadeIntention(realm, definition), partitionComponent));
-
+                    CreateSceneFacadePromise.Execute(World, entity, realm, in definition, partitionComponent);
                     return;
                 }
             }

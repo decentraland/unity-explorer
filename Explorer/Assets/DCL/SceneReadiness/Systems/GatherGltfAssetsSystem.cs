@@ -11,24 +11,25 @@ using UnityEngine.Pool;
 
 namespace DCL.SceneReadiness
 {
-    /// <summary>
-    ///     This system should be instantiated only if SceneReadinessReport is passed to the scene factory
-    /// </summary>
     [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
     public partial class GatherGltfAssetsSystem : BaseUnityLoopSystem
     {
         private const int FRAMES_COUNT = 5;
 
-        private readonly SceneReadinessReport readinessReport;
+        private readonly ISceneReadinessReportQueue readinessReportQueue;
+        private readonly ISceneData sceneData;
 
-        private HashSet<EntityReference> entitiesUnderObservation;
+        private IReadOnlyList<SceneReadinessReport>? reports;
+
+        private HashSet<EntityReference>? entitiesUnderObservation;
 
         private int framesLeft = FRAMES_COUNT;
         private bool concluded;
 
-        internal GatherGltfAssetsSystem(World world, SceneReadinessReport readinessReport) : base(world)
+        internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue, ISceneData sceneData) : base(world)
         {
-            this.readinessReport = readinessReport;
+            this.readinessReportQueue = readinessReportQueue;
+            this.sceneData = sceneData;
         }
 
         public override void Initialize()
@@ -53,19 +54,26 @@ namespace DCL.SceneReadiness
             }
             else if (!concluded)
             {
+                if (reports == null && !readinessReportQueue.TryDequeue(sceneData.Parcels, out reports))
+                {
+                    // if there is no report to dequeue, nothing to do
+                    concluded = true;
+                    return;
+                }
+
                 concluded = true;
 
                 List<EntityReference> toDelete = ListPool<EntityReference>.Get();
 
                 // iterate over entities
 
-                foreach (EntityReference entityRef in entitiesUnderObservation)
+                foreach (EntityReference entityRef in entitiesUnderObservation!)
                 {
                     // if entity has died
                     // or entity no longer contains GltfContainerComponent
                     // continue
                     if (!entityRef.IsAlive(World)
-                        || !World.TryGet<GltfContainerComponent>(entityRef, out GltfContainerComponent gltfContainerComponent))
+                        || !World.TryGet(entityRef, out GltfContainerComponent gltfContainerComponent))
                     {
                         toDelete.Add(entityRef);
                         continue;
@@ -88,7 +96,13 @@ namespace DCL.SceneReadiness
                 ListPool<EntityReference>.Release(toDelete);
 
                 if (concluded)
-                    readinessReport.CompletionSource.TrySetResult();
+                {
+                    for (var i = 0; i < reports.Count; i++)
+                        reports[i].CompletionSource.TrySetResult();
+
+                    // TODO return reports to the pool as they are no longer needed
+                    reports = null;
+                }
             }
         }
 
@@ -97,7 +111,7 @@ namespace DCL.SceneReadiness
         private void GatherEntities(in Entity entity)
         {
             EntityReference entityRef = World.Reference(entity);
-            entitiesUnderObservation.Add(entityRef);
+            entitiesUnderObservation!.Add(entityRef);
         }
     }
 }

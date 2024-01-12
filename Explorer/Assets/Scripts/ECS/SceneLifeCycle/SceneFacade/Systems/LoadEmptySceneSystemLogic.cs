@@ -8,6 +8,7 @@ using ECS.SceneLifeCycle.Components;
 using SceneRunner.EmptyScene;
 using SceneRunner.Scene;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -50,12 +51,12 @@ namespace ECS.SceneLifeCycle.Systems
             sharedWorld?.Dispose();
         }
 
-        internal async UniTask LoadMappingAsync(CancellationToken ct)
+        internal async UniTask LoadMappingAsync(IReadOnlyList<Vector2Int> parcels, CancellationToken ct)
         {
             EmptySceneMappings mappings = await (await webRequestController.GetAsync(new CommonArguments(mappingURL), ct, ReportCategory.SCENE_LOADING))
                .CreateFromJson<EmptySceneMappings>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
-            emptySceneData = new EmptySceneData(mappings.mappings);
+            emptySceneData = new EmptySceneData(mappings.mappings, parcels);
         }
 
         public async UniTask<ISceneFacade> FlowAsync(GetSceneFacadeIntention intent, IPartitionComponent partition, CancellationToken ct)
@@ -64,7 +65,7 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 try
                 {
-                    await LoadMappingAsync(ct);
+                    await LoadMappingAsync(intent.DefinitionComponent.Parcels, ct);
                     await UniTask.SwitchToMainThread();
 
                     if (sharedWorld == null)

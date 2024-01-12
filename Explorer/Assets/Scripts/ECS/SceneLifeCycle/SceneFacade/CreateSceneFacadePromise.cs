@@ -1,0 +1,23 @@
+using Arch.Core;
+using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.Common;
+using Ipfs;
+using SceneRunner.Scene;
+
+namespace ECS.SceneLifeCycle.SceneFacade
+{
+    public static class CreateSceneFacadePromise
+    {
+        public static void Execute(World world, Entity entity, IIpfsRealm ipfsRealm, in SceneDefinitionComponent definitionComponent, IPartitionComponent partitionComponent)
+        {
+            // Entity may or may not contain a report
+            world.TryGet(entity, out SceneReadinessReport sceneReadinessReport);
+
+            world.Add(entity,
+                AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(world,
+                    new GetSceneFacadeIntention(ipfsRealm, definitionComponent, sceneReadinessReport), partitionComponent));
+        }
+    }
+}

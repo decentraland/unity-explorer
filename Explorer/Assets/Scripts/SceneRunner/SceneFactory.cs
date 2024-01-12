@@ -80,9 +80,9 @@ namespace SceneRunner
             };
 
             var sceneData = new SceneData(new SceneNonHashedContent(baseUrl), sceneDefinition, SceneAssetBundleManifest.NULL, Vector2Int.zero,
-                ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, StaticSceneMessages.EMPTY);
+                ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY);
 
-            return await CreateSceneAsync(sceneData, null, partitionProvider, ct);
+            return await CreateSceneAsync(sceneData, partitionProvider, ct);
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromStreamableDirectoryAsync(string directoryName, IPartitionComponent partitionProvider, CancellationToken ct)
@@ -105,15 +105,15 @@ namespace SceneRunner
             };
 
             var sceneData = new SceneData(new SceneNonHashedContent(fullPath), sceneDefinition, SceneAssetBundleManifest.NULL,
-                Vector2Int.zero, ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, StaticSceneMessages.EMPTY);
+                Vector2Int.zero, ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY, Array.Empty<Vector2Int>(), StaticSceneMessages.EMPTY);
 
-            return await CreateSceneAsync(sceneData, null, partitionProvider, ct);
+            return await CreateSceneAsync(sceneData, partitionProvider, ct);
         }
 
         public UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, SceneReadinessReport sceneReadinessReport, IPartitionComponent partitionProvider, CancellationToken ct) =>
-            CreateSceneAsync(sceneData, sceneReadinessReport, partitionProvider, ct);
+            CreateSceneAsync(sceneData, partitionProvider, ct);
 
-        private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, SceneReadinessReport sceneReadinessReport, IPartitionComponent partitionProvider, CancellationToken ct)
+        private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)
         {
             var entitiesMap = new Dictionary<CRDTEntity, Entity>(1000, CRDTEntityComparer.INSTANCE);
 
@@ -133,7 +133,7 @@ namespace SceneRunner
             /* Pass dependencies here if they are needed by the systems */
             var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, partitionProvider, ecsToCrdtWriter, entitiesMap, exceptionsHandler, entityCollidersCache, sceneStateProvider, ecsMutexSync);
 
-            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(instanceDependencies, systemGroupThrottler, sceneData, sceneReadinessReport));
+            ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(instanceDependencies, systemGroupThrottler, sceneData));
             ecsWorldFacade.Initialize();
 
             entityCollidersGlobalCache.AddSceneInfo(entityCollidersCache, new SceneEcsExecutor(ecsWorldFacade.EcsWorld, ecsMutexSync));
