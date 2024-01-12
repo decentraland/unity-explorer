@@ -10,7 +10,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
 using Utility;
 
@@ -21,9 +20,6 @@ namespace Global.Dynamic
     /// </summary>
     public class DynamicSceneLoader : MonoBehaviour
     {
-        private const string SCENES_UI_ROOT_CANVAS = "ScenesUIRootCanvas";
-        private const string SCENES_UI_STYLE_SHEET = "ScenesUIStyleSheet";
-
         [Header("Settings")]
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer;
@@ -77,9 +73,6 @@ namespace Global.Dynamic
         {
             try
             {
-                UIDocument? scenesUICanvas = Instantiate(await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ROOT_CANVAS)).GetComponent<UIDocument>();
-                StyleSheet? scenesUIStyleSheet = await Addressables.LoadAssetAsync<StyleSheet>(SCENES_UI_STYLE_SHEET);
-
                 var identityCache = new ProxyIdentityCache(new MemoryWeb3IdentityCache(),
                     new PlayerPrefsIdentityProvider(new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()));
 
@@ -96,7 +89,7 @@ namespace Global.Dynamic
                 // First load the common global plugin
                 bool isLoaded;
 
-                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, scenesUICanvas, scenesUIStyleSheet, identityCache, web3VerifiedAuthenticator, ct);
+                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, identityCache, web3VerifiedAuthenticator, ct);
 
                 if (!isLoaded)
                 {

@@ -9,8 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
-using UnityEngine.UIElements;
 
 namespace Global.Static
 {
@@ -19,9 +17,6 @@ namespace Global.Static
     /// </summary>
     public class StaticSceneLauncher : MonoBehaviour
     {
-        private const string SCENES_UI_ROOT_CANVAS = "ScenesUIRootCanvas";
-        private const string SCENES_UI_STYLE_SHEET = "ScenesUIStyleSheet";
-
         [SerializeField] private SceneLauncher sceneLauncher;
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer;
@@ -50,9 +45,6 @@ namespace Global.Static
         {
             try
             {
-                UIDocument? scenesUICanvas = Instantiate(await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ROOT_CANVAS)).GetComponent<UIDocument>();
-                StyleSheet? scenesUIStyleSheet = await Addressables.LoadAssetAsync<StyleSheet>(SCENES_UI_STYLE_SHEET);
-
                 IWeb3IdentityCache identityCache;
 
                 if (useStoredCredentials
@@ -88,11 +80,8 @@ namespace Global.Static
 
                 SceneSharedContainer sceneSharedContainer;
 
-                scenesUIcanvas = Instantiate(await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ROOT_CANVAS)).GetComponent<UIDocument>();
-                scenesUIStyleSheet = await Addressables.LoadAssetAsync<StyleSheet>(SCENES_UI_STYLE_SHEET);
-
                 (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettingsContainer, scenePluginSettingsContainer,
-                    scenesUICanvas, scenesUIStyleSheet, identityCache, dappWeb3Authenticator, ct);
+                    identityCache, dappWeb3Authenticator, ct);
 
                 sceneLauncher.Initialize(sceneSharedContainer, destroyCancellationToken);
             }
@@ -108,16 +97,12 @@ namespace Global.Static
         public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> InstallAsync(
             IPluginSettingsContainer globalSettingsContainer,
             IPluginSettingsContainer sceneSettingsContainer,
-            UIDocument scenesUiRoot,
-            StyleSheet scenesUiStyleSheet,
             IWeb3IdentityCache web3IdentityProvider,
             IEthereumApi ethereumApi,
             CancellationToken ct)
         {
             // First load the common global plugin
-            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer,
-                scenesUiRoot, scenesUiStyleSheet,
-                web3IdentityProvider, ethereumApi, ct);
+            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer, web3IdentityProvider, ethereumApi, ct);
 
             if (!isLoaded)
                 GameReports.PrintIsDead();

@@ -10,7 +10,6 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.Profiles;
 using DCL.Profiling;
 using DCL.ResourcesUnloading;
 using DCL.Time;
@@ -21,7 +20,6 @@ using ECS.Prioritization;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace Global
 {
@@ -99,8 +97,6 @@ namespace Global
 
         public static async UniTask<(StaticContainer container, bool success)> CreateAsync(
             IPluginSettingsContainer settingsContainer,
-            UIDocument scenesUIDocument,
-            StyleSheet scenesUIStyleSheet,
             IWeb3IdentityCache web3IdentityProvider,
             IEthereumApi ethereumApi,
             CancellationToken ct)
@@ -164,7 +160,7 @@ namespace Global
                 assetBundlePlugin,
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
-                new SceneUIPlugin(scenesUIDocument, scenesUIStyleSheet, sharedDependencies),
+                new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif

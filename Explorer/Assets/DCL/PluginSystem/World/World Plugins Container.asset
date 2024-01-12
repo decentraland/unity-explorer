@@ -16,6 +16,7 @@ MonoBehaviour:
   - rid: 6784895267130048515
   - rid: 1268264040174714880
   - rid: 7387084847885844480
+  - rid: 4753057106328551424
   references:
     version: 2
     RefIds:
@@ -26,6 +27,19 @@ MonoBehaviour:
         <RaycastFrameBudgetMs>k__BackingField: 3
         <PlayerOriginRaycastMaxDistance>k__BackingField: 200
         <GlobalInputPropagationBucketThreshold>k__BackingField: 3
+    - rid: 4753057106328551424
+      type: {class: SceneUIPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        <Canvas>k__BackingField:
+          m_AssetGUID: e0f5a4ab5d8f74640ae94adb6824bd45
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <StyleSheet>k__BackingField:
+          m_AssetGUID: 295cf8ad8d171d849863eccaf581c9e7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 6784895267130048515
       type: {class: MaterialsPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:

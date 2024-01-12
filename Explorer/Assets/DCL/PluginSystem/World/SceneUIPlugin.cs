@@ -1,11 +1,16 @@
 ﻿using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
+using System;
 using System.Collections.Generic;
+using System.Threading;
+using UnityEngine;
 using UnityEngine.UIElements;
 using UITextInstantiationSystem = DCL.SDKComponents.SceneUI.Systems.UIText.UITextInstantiationSystem;
 using UITextReleaseSystem = DCL.SDKComponents.SceneUI.Systems.UIText.UITextReleaseSystem;
@@ -17,24 +22,29 @@ using UITransformUpdateSystem = DCL.SDKComponents.SceneUI.Systems.UITransform.UI
 
 namespace DCL.PluginSystem.World
 {
-    public class SceneUIPlugin : IDCLWorldPluginWithoutSettings
+    public class SceneUIPlugin : IDCLWorldPlugin<SceneUIPlugin.Settings>
     {
-        private readonly UIDocument canvas;
+        private UIDocument canvas;
+
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly IAssetsProvisioner assetsProvisioner;
 
-        public SceneUIPlugin(
-            UIDocument canvas,
-            StyleSheet canvasStyleSheet,
-            ECSWorldSingletonSharedDependencies singletonSharedDependencies)
+        public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner)
         {
-            this.canvas = canvas;
-            this.canvas.rootVisualElement.styleSheets.Add(canvasStyleSheet);
-            this.canvas.rootVisualElement.AddToClassList("sceneUIMainCanvas");
-            this.canvas.rootVisualElement.pickingMode = PickingMode.Ignore;
-
+            this.assetsProvisioner = assetsProvisioner;
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
             componentPoolsRegistry.AddComponentPool<VisualElement>(onRelease: UiElementUtils.ReleaseUIElement, maxSize: 200);
             componentPoolsRegistry.AddComponentPool<Label>(onRelease: UiElementUtils.ReleaseUIElement, maxSize: 100);
+        }
+
+        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
+        {
+            canvas = (await assetsProvisioner.ProvideInstanceAsync(settings.Canvas, ct: ct)).Value;
+            StyleSheet scenesUIStyleSheet = (await assetsProvisioner.ProvideMainAssetAsync(settings.StyleSheet, ct)).Value;
+
+            canvas.rootVisualElement.styleSheets.Add(scenesUIStyleSheet);
+            canvas.rootVisualElement.AddToClassList("sceneUIMainCanvas");
+            canvas.rootVisualElement.pickingMode = PickingMode.Ignore;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
@@ -52,5 +62,19 @@ namespace DCL.PluginSystem.World
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
+
+        public void Dispose() { }
+
+        [Serializable]
+        public class Settings : IDCLPluginSettings
+        {
+            [field: Header(nameof(SceneUIPlugin) + "." + nameof(Settings))]
+            [field: Space]
+            [field: SerializeField]
+            public UIDocumentRef Canvas { get; private set; } = null!;
+
+            [field: SerializeField]
+            public AssetReferenceStyleSheet StyleSheet { get; private set; } = null!;
+        }
     }
 }
