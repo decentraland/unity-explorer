@@ -128,13 +128,13 @@ namespace DCL.Backpack
                 usedPoolItems.Remove(j.ToString());
                 gridItemsPool.Release(loadingResults[j]);
             }
-
+            Array.Reverse(gridWearables);
             for (var i = 0; i < gridWearables.Length; i++)
             {
                 BackpackItemView backpackItemView = loadingResults[i];
                 usedPoolItems.Remove(i.ToString());
                 usedPoolItems.Add(gridWearables[i].GetUrn(), backpackItemView);
-                backpackItemView.gameObject.transform.SetAsFirstSibling();
+                backpackItemView.gameObject.transform.SetAsLastSibling();
                 backpackItemView.OnSelectItem += SelectItem;
                 backpackItemView.EquipButton.onClick.AddListener(() => { commandBus.SendCommand(new BackpackEquipCommand(backpackItemView.ItemId)); });
                 backpackItemView.UnEquipButton.onClick.AddListener(() => { commandBus.SendCommand(new BackpackUnEquipCommand(backpackItemView.ItemId)); });
