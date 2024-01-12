@@ -11,6 +11,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using UnityEngine;
 using static DCL.SDKComponents.AudioSources.Tests.AudioSourceTestsUtils;
 
@@ -43,17 +44,20 @@ namespace DCL.SDKComponents.AudioSources.Tests
 
         public static UpdateAudioSourceSystem CreateSystem(World world)
         {
-            var poolsRegistry = Substitute.For<IComponentPoolsRegistry>();
-            var audioSourcesPool = Substitute.For<IComponentPool<AudioSource>>();
+            IComponentPoolsRegistry poolsRegistry = Substitute.For<IComponentPoolsRegistry>();
+            IComponentPool<AudioSource> audioSourcesPool = Substitute.For<IComponentPool<AudioSource>>();
 
             poolsRegistry.GetReferenceTypePool<AudioSource>().Returns(audioSourcesPool);
             audioSourcesPool.Get().Returns(new GameObject().AddComponent<AudioSource>());
 
-            var budgetProvider = Substitute.For<IPerformanceBudget>();
+            IPerformanceBudget budgetProvider = Substitute.For<IPerformanceBudget>();
             budgetProvider.TrySpendBudget().Returns(true);
 
-            var cache = Substitute.For<IStreamableCache<AudioClip, GetAudioClipIntention>>();
-            return new UpdateAudioSourceSystem(world, ECSTestUtils.SceneDataSub(), cache, poolsRegistry, budgetProvider, budgetProvider);
+            ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.IsCurrent.Returns(true);
+
+            IStreamableCache<AudioClip, GetAudioClipIntention> cache = Substitute.For<IStreamableCache<AudioClip, GetAudioClipIntention>>();
+            return new UpdateAudioSourceSystem(world, ECSTestUtils.SceneDataSub(), sceneStateProvider, cache, poolsRegistry, budgetProvider, budgetProvider);
         }
 
         [TearDown]
