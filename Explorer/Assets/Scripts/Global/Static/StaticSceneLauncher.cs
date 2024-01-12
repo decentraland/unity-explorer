@@ -34,14 +34,9 @@ namespace Global.Static
         private ISceneFacade sceneFacade;
         private StaticContainer staticContainer;
         private IWeb3Authenticator? web3Authenticator;
-        private UIDocument scenesUIcanvas;
-        private StyleSheet scenesUIStyleSheet;
 
-        private async void Awake()
+        private void Awake()
         {
-            scenesUIcanvas = Instantiate(await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ROOT_CANVAS)).GetComponent<UIDocument>();
-            scenesUIStyleSheet = await Addressables.LoadAssetAsync<StyleSheet>(SCENES_UI_STYLE_SHEET);
-
             InitializationFlowAsync(destroyCancellationToken).Forget();
         }
 
@@ -55,6 +50,9 @@ namespace Global.Static
         {
             try
             {
+                UIDocument? scenesUICanvas = Instantiate(await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ROOT_CANVAS)).GetComponent<UIDocument>();
+                StyleSheet? scenesUIStyleSheet = await Addressables.LoadAssetAsync<StyleSheet>(SCENES_UI_STYLE_SHEET);
+
                 IWeb3IdentityCache identityCache;
 
                 if (useStoredCredentials
@@ -91,7 +89,7 @@ namespace Global.Static
                 SceneSharedContainer sceneSharedContainer;
 
                 (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettingsContainer, scenePluginSettingsContainer,
-                    scenesUIcanvas, scenesUIStyleSheet, identityCache, dappWeb3Authenticator, ct);
+                    scenesUICanvas, scenesUIStyleSheet, identityCache, dappWeb3Authenticator, ct);
 
                 sceneLauncher.Initialize(sceneSharedContainer, destroyCancellationToken);
             }

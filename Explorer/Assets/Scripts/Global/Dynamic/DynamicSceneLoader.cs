@@ -3,15 +3,14 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.SkyBox;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
-using DCL.SkyBox;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-
 using UnityEngine.UIElements;
 using Utility;
 
@@ -42,16 +41,10 @@ namespace Global.Dynamic
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
         private IWeb3VerifiedAuthenticator? web3Authenticator;
-        private UIDocument scenesUIcanvas;
-        private StyleSheet scenesUIStyleSheet;
 
-        private async void Awake()
+        private void Awake()
         {
-            scenesUIcanvas = Instantiate(await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ROOT_CANVAS)).GetComponent<UIDocument>();
-            scenesUIStyleSheet = await Addressables.LoadAssetAsync<StyleSheet>(SCENES_UI_STYLE_SHEET);
-
             realmLauncher.Initialize(settings.Realms);
-
             InitializationFlowAsync(destroyCancellationToken).Forget();
         }
 
@@ -84,6 +77,9 @@ namespace Global.Dynamic
         {
             try
             {
+                UIDocument? scenesUICanvas = Instantiate(await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ROOT_CANVAS)).GetComponent<UIDocument>();
+                StyleSheet? scenesUIStyleSheet = await Addressables.LoadAssetAsync<StyleSheet>(SCENES_UI_STYLE_SHEET);
+
                 var identityCache = new ProxyIdentityCache(new MemoryWeb3IdentityCache(),
                     new PlayerPrefsIdentityProvider(new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()));
 
@@ -100,7 +96,7 @@ namespace Global.Dynamic
                 // First load the common global plugin
                 bool isLoaded;
 
-                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, scenesUIcanvas, scenesUIStyleSheet, identityCache, web3VerifiedAuthenticator, ct);
+                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, scenesUICanvas, scenesUIStyleSheet, identityCache, web3VerifiedAuthenticator, ct);
 
                 if (!isLoaded)
                 {

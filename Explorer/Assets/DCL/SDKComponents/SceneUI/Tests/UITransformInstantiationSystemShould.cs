@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using Cysharp.Threading.Tasks;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Systems.UITransform;
 using NUnit.Framework;
@@ -10,18 +9,15 @@ namespace DCL.SDKComponents.SceneUI.Tests
     public class UITransformInstantiationSystemShould : UITransformSystemTestBase<UITransformInstantiationSystem>
     {
         [SetUp]
-        public async void SetUp()
+        public async Task SetUp()
         {
-            await base.Initialize();
+            await Initialize();
             system = new UITransformInstantiationSystem(world, canvas, poolsRegistry);
         }
 
         [Test]
-        public async Task InstantiateUITransform()
+        public void InstantiateUITransform()
         {
-            // For some reason SetUp is not awaited, probably a Unity's bug
-            await UniTask.WaitUntil(() => system != null);
-
             // Act
             base.CreateUITransform();
 
