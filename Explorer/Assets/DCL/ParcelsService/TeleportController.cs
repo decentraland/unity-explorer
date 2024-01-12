@@ -1,9 +1,9 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Cysharp.Threading.Tasks;
-using DCL.Character;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
+using DCL.SceneReadiness;
 using Ipfs;
 using SceneRunner.Scene;
 using System;
@@ -16,13 +16,13 @@ namespace DCL.ParcelsService
 {
     public partial class TeleportController : ITeleportController
     {
-        private readonly ICharacterObject characterObject;
+        private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private IRetrieveScene retrieveScene;
         private World world;
 
-        public TeleportController(ICharacterObject characterObject)
+        public TeleportController(ISceneReadinessReportQueue sceneReadinessReportQueue)
         {
-            this.characterObject = characterObject;
+            this.sceneReadinessReportQueue = sceneReadinessReportQueue;
         }
 
         public void InvalidateRealm()
@@ -92,6 +92,10 @@ namespace DCL.ParcelsService
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
             var readinessCompletion = new SceneReadinessReport(new UniTaskCompletionSource());
+
+            // Add report to the queue so it will be grabbed by the actual scene
+            sceneReadinessReportQueue.Enqueue(parcel, readinessCompletion);
+
             AddTeleportIntentQuery(retrieveScene.World, new PlayerTeleportIntent(targetPosition, parcel, readinessCompletion));
 
             // TODO Show loading screen

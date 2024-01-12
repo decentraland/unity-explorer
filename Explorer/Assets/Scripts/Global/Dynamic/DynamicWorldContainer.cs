@@ -12,6 +12,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SkyBox;
 using DCL.Profiles;
+using DCL.SceneReadiness;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
@@ -75,8 +76,10 @@ namespace Global.Dynamic
             var dclInput = new DCLInput();
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
             var realmData = new RealmData();
+            IScenesCache scenesCache = new ScenesCache();
+            var sceneReadinessReportQueue = new SceneReadinessReportQueue(scenesCache);
 
-            var parcelServiceContainer = ParcelServiceContainer.Create(realmData, staticContainer.CharacterObject, debugBuilder);
+            var parcelServiceContainer = ParcelServiceContainer.Create(realmData, sceneReadinessReportQueue, debugBuilder);
 
             PopupCloserView popupCloserView = Object.Instantiate((await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
             mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
@@ -87,6 +90,7 @@ namespace Global.Dynamic
             var backpackEventBus = new BackpackEventBus();
 
             IProfileCache profileCache = new DefaultProfileCache();
+
             container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData,
                 profileCache);
 
@@ -122,8 +126,6 @@ namespace Global.Dynamic
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
-
-            IScenesCache scenesCache = new ScenesCache();
 
             container.RealmController = new RealmController(
                 staticContainer.WebRequestsContainer.WebRequestController,

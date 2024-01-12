@@ -7,20 +7,18 @@ namespace SceneRunner.ECSWorld
 {
     public readonly struct ECSWorldFactoryArgs
     {
+        public readonly ISceneData SceneData;
         public readonly ECSWorldInstanceSharedDependencies SharedDependencies;
         public readonly ISystemGroupsUpdateGate SystemGroupsUpdateGate;
-        public readonly ISceneData SceneData;
-        [CanBeNull] public readonly SceneReadinessReport SceneReadinessReport;
 
         public ECSWorldFactoryArgs(
             ECSWorldInstanceSharedDependencies sharedDependencies,
             ISystemGroupsUpdateGate systemGroupsUpdateGate,
-            ISceneData sceneData, [CanBeNull] SceneReadinessReport sceneReadinessReport)
+            ISceneData sceneData)
         {
             SharedDependencies = sharedDependencies;
             SystemGroupsUpdateGate = systemGroupsUpdateGate;
             SceneData = sceneData;
-            SceneReadinessReport = sceneReadinessReport;
         }
     }
 }

@@ -31,6 +31,9 @@ namespace SceneRunner.ECSWorld
         private readonly IExposedCameraData exposedCameraData;
         private readonly IReadOnlyList<IDCLWorldPlugin> plugins;
 
+        // TODO inject
+        private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+
         public ECSWorldFactory(ECSWorldSingletonSharedDependencies sharedDependencies,
             IPartitionSettings partitionSettings, IReadOnlyCameraSamplingData cameraSamplingData,
             IExposedCameraData exposedCameraData,
@@ -81,8 +84,7 @@ namespace SceneRunner.ECSWorld
             AssetsDeferredLoadingSystem.InjectToWorld(ref builder, singletonDependencies.LoadingBudget, singletonDependencies.MemoryBudget);
             WriteEngineInfoSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
 
-            if (args.SceneReadinessReport != null)
-                GatherGltfAssetsSystem.InjectToWorld(ref builder, args.SceneReadinessReport);
+            GatherGltfAssetsSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, args.SceneData);
 
             DestroyEntitiesSystem.InjectToWorld(ref builder);
             finalizeWorldSystems.Add(ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry));
