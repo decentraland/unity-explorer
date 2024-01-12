@@ -8,7 +8,7 @@ namespace DCL.SDKComponents.AudioSources
     public struct AudioSourceComponent : IDisposable
     {
         public readonly PBAudioSource PBAudioSource;
-        public string AudioClipUrl { get; private set; }
+        public string AudioClipUrl;
         public Promise ClipPromise;
 
         /// <summary>
