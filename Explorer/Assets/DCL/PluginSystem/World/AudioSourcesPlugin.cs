@@ -41,7 +41,7 @@ namespace DCL.PluginSystem.World
         {
             StartAudioSourceLoadingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, frameTimeBudgetProvider);
             LoadAudioClipSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController, sharedDependencies.MutexSync);
-            UpdateAudioSourceSystem.InjectToWorld(ref builder, componentPoolsRegistry, frameTimeBudgetProvider, memoryBudgetProvider);
+            UpdateAudioSourceSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, audioClipsCache, componentPoolsRegistry, frameTimeBudgetProvider, memoryBudgetProvider);
 
             finalizeWorldSystems.Add(CleanUpAudioSourceSystem.InjectToWorld(ref builder, audioClipsCache, componentPoolsRegistry));
         }

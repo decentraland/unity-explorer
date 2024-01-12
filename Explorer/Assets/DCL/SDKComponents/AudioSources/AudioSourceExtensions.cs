@@ -5,7 +5,7 @@ namespace DCL.SDKComponents.AudioSources
 {
     public static class AudioSourceExtensions
     {
-        public static void FromPBAudioSource(this AudioSource audioSource, AudioClip clip, PBAudioSource pbAudioSource)
+        public static void FromPBAudioSourceWithClip(this AudioSource audioSource, PBAudioSource pbAudioSource, AudioClip clip)
         {
             audioSource.clip = clip;
 

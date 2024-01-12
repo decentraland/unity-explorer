@@ -8,24 +8,27 @@ namespace DCL.SDKComponents.AudioSources
     public struct AudioSourceComponent : IDisposable
     {
         public readonly PBAudioSource PBAudioSource;
-
+        public string AudioClipUrl { get; private set; }
         public Promise ClipPromise;
 
         /// <summary>
         ///     The final audio source ready for consumption
         /// </summary>
-        public AudioSource Result;
+        public AudioSource AudioSource;
 
         public AudioSourceComponent(PBAudioSource pbAudioSource, Promise promise)
         {
             ClipPromise = promise;
             PBAudioSource = pbAudioSource;
-            Result = null;
+            AudioSource = null;
+
+            AudioClipUrl = pbAudioSource.AudioClipUrl;
         }
 
         public void Dispose()
         {
-            Result.clip = null;
+            if (AudioSource != null)
+                AudioSource.clip = null;
         }
     }
 }

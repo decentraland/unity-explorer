@@ -6,10 +6,15 @@ using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AudioClips;
+using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.Transforms.Components;
+using SceneRunner.Scene;
 using UnityEngine;
 using Utility;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 
 namespace DCL.SDKComponents.AudioSources
 {
@@ -21,11 +26,18 @@ namespace DCL.SDKComponents.AudioSources
         private readonly IPerformanceBudget frameTimeBudgetProvider;
         private readonly IPerformanceBudget memoryBudgetProvider;
         private readonly IComponentPool<AudioSource> audioSourcesPool;
+        private readonly World world;
+        private readonly ISceneData sceneData;
+        private readonly IStreamableCache<AudioClip, GetAudioClipIntention> cache;
 
-        internal UpdateAudioSourceSystem(World world, IComponentPoolsRegistry poolsRegistry, IPerformanceBudget frameTimeBudgetProvider, IPerformanceBudget memoryBudgetProvider) : base(world)
+        internal UpdateAudioSourceSystem(World world, ISceneData sceneData, IStreamableCache<AudioClip, GetAudioClipIntention> cache, IComponentPoolsRegistry poolsRegistry, IPerformanceBudget frameTimeBudgetProvider,
+            IPerformanceBudget memoryBudgetProvider) : base(world)
         {
+            this.world = world;
+            this.sceneData = sceneData;
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
             this.memoryBudgetProvider = memoryBudgetProvider;
+            this.cache = cache;
 
             audioSourcesPool = poolsRegistry.GetReferenceTypePool<AudioSource>();
         }
@@ -40,15 +52,22 @@ namespace DCL.SDKComponents.AudioSources
 
         [Query]
         [All(typeof(PBAudioSource), typeof(AudioSourceComponent))]
-        private void UpdateAudioSource(ref PBAudioSource sdkAudioSource, ref AudioSourceComponent audioSourceComponent)
+        private void UpdateAudioSource(ref PBAudioSource sdkComponent, ref AudioSourceComponent component, ref PartitionComponent partitionComponent)
         {
-            if (sdkAudioSource.IsDirty && audioSourceComponent.Result != null)
+            if (!sdkComponent.IsDirty) return;
+
+            if (component.AudioSource != null)
+                component.AudioSource.ApplyPBAudioSource(sdkComponent);
+
+            if (sdkComponent.AudioClipUrl != component.AudioClipUrl)
             {
-                audioSourceComponent.Result.ApplyPBAudioSource(sdkAudioSource);
-                sdkAudioSource.IsDirty = false;
+                component.CleanUp(world, cache, audioSourcesPool);
+
+                if (AudioUtils.TryCreateAudioClipPromise(world, sceneData, sdkComponent.AudioClipUrl, partitionComponent, out Promise? clipPromise))
+                    component.ClipPromise = clipPromise!.Value;
             }
 
-            // TODO: Handle clip url changes - refer to ECSAudioSourceComponentHandler.cs in unity-renderer
+            sdkComponent.IsDirty = false;
         }
 
         [Query]
@@ -59,15 +78,15 @@ namespace DCL.SDKComponents.AudioSources
                 || !audioSourceComponent.ClipPromise.TryConsume(World, out StreamableLoadingResult<AudioClip> promiseResult))
                 return;
 
-            if (audioSourceComponent.Result == null)
-                audioSourceComponent.Result ??= audioSourcesPool.Get();
+            if (audioSourceComponent.AudioSource == null)
+                audioSourceComponent.AudioSource ??= audioSourcesPool.Get();
 
-            audioSourceComponent.Result.FromPBAudioSource(promiseResult.Asset, audioSourceComponent.PBAudioSource);
+            audioSourceComponent.AudioSource.FromPBAudioSourceWithClip(audioSourceComponent.PBAudioSource, clip: promiseResult.Asset);
 
             // Reset isDirty as we just applied the PBAudioSource to the AudioSource
             sdkAudioSource.IsDirty = false;
 
-            Transform transform = audioSourceComponent.Result.transform;
+            Transform transform = audioSourceComponent.AudioSource.transform;
             transform.SetParent(entityTransform.Transform, false);
             transform.ResetLocalTRS();
 

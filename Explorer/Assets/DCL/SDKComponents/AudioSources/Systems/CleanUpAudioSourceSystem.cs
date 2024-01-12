@@ -69,15 +69,7 @@ namespace DCL.SDKComponents.AudioSources
 
             public void Update(ref AudioSourceComponent component)
             {
-                GetAudioClipIntention clipIntent = component.ClipPromise.LoadingIntention;
-
-                component.ClipPromise.ForgetLoading(world);
-
-                if (component.Result == null) // loading in progress
-                    return;
-
-                cache.Dereference(clipIntent, component.Result.clip);
-                componentPool.Release(component.Result);
+                component.CleanUp(world,cache,componentPool);
                 component.Dispose();
             }
         }
