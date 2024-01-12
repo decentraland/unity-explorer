@@ -31,9 +31,9 @@ namespace DCL.Optimization.Pools
 
     public static class ComponentPoolsRegistryExtensions
     {
-        public static void AddComponentPool<T>(this IComponentPoolsRegistry componentPoolsRegistry, Action<T> onGet = null, Action<T> onRelease = null) where T: class, new()
+        public static void AddComponentPool<T>(this IComponentPoolsRegistry componentPoolsRegistry, Action<T> onGet = null, Action<T> onRelease = null, int maxSize = 10000) where T: class, new()
         {
-            componentPoolsRegistry.AddComponentPool(new ComponentPool<T>(onGet, onRelease));
+            componentPoolsRegistry.AddComponentPool(new ComponentPool<T>(onGet, onRelease, maxSize: maxSize));
         }
     }
 }

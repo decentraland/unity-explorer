@@ -1,0 +1,80 @@
+﻿using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.Optimization.Pools;
+using DCL.PluginSystem.World.Dependencies;
+using DCL.SDKComponents.SceneUI.Components;
+using DCL.SDKComponents.SceneUI.Utils;
+using ECS.ComponentsPooling.Systems;
+using ECS.LifeCycle;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using UnityEngine;
+using UnityEngine.UIElements;
+using UITextInstantiationSystem = DCL.SDKComponents.SceneUI.Systems.UIText.UITextInstantiationSystem;
+using UITextReleaseSystem = DCL.SDKComponents.SceneUI.Systems.UIText.UITextReleaseSystem;
+using UITransformInstantiationSystem = DCL.SDKComponents.SceneUI.Systems.UITransform.UITransformInstantiationSystem;
+using UITransformParentingSystem = DCL.SDKComponents.SceneUI.Systems.UITransform.UITransformParentingSystem;
+using UITransformReleaseSystem = DCL.SDKComponents.SceneUI.Systems.UITransform.UITransformReleaseSystem;
+using UITransformSortingSystem = DCL.SDKComponents.SceneUI.Systems.UITransform.UITransformSortingSystem;
+using UITransformUpdateSystem = DCL.SDKComponents.SceneUI.Systems.UITransform.UITransformUpdateSystem;
+
+namespace DCL.PluginSystem.World
+{
+    public class SceneUIPlugin : IDCLWorldPlugin<SceneUIPlugin.Settings>
+    {
+        private UIDocument canvas;
+
+        private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly IAssetsProvisioner assetsProvisioner;
+
+        public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner)
+        {
+            this.assetsProvisioner = assetsProvisioner;
+            componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
+            componentPoolsRegistry.AddComponentPool<VisualElement>(onRelease: UiElementUtils.ReleaseUIElement, maxSize: 200);
+            componentPoolsRegistry.AddComponentPool<Label>(onRelease: UiElementUtils.ReleaseUIElement, maxSize: 100);
+        }
+
+        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
+        {
+            canvas = (await assetsProvisioner.ProvideInstanceAsync(settings.Canvas, ct: ct)).Value;
+            StyleSheet scenesUIStyleSheet = (await assetsProvisioner.ProvideMainAssetAsync(settings.StyleSheet, ct)).Value;
+
+            canvas.rootVisualElement.styleSheets.Add(scenesUIStyleSheet);
+            canvas.rootVisualElement.AddToClassList("sceneUIMainCanvas");
+            canvas.rootVisualElement.pickingMode = PickingMode.Ignore;
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
+        {
+            UITransformInstantiationSystem.InjectToWorld(ref builder, canvas, componentPoolsRegistry);
+            UITransformParentingSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, persistentEntities.SceneRoot);
+            UITransformSortingSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, persistentEntities.SceneRoot);
+            UITransformUpdateSystem.InjectToWorld(ref builder, canvas, sharedDependencies.SceneStateProvider);
+            UITransformReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            UITextInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            UITextReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+
+            finalizeWorldSystems.Add(ReleasePoolableComponentSystem<VisualElement, UITransformComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
+            finalizeWorldSystems.Add(ReleasePoolableComponentSystem<Label, UITextComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
+        }
+
+        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
+
+        public void Dispose() { }
+
+        [Serializable]
+        public class Settings : IDCLPluginSettings
+        {
+            [field: Header(nameof(SceneUIPlugin) + "." + nameof(Settings))]
+            [field: Space]
+            [field: SerializeField]
+            public UIDocumentRef Canvas { get; private set; } = null!;
+
+            [field: SerializeField]
+            public AssetReferenceStyleSheet StyleSheet { get; private set; } = null!;
+        }
+    }
+}

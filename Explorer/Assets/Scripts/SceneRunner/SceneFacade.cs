@@ -184,6 +184,11 @@ namespace SceneRunner
                 throw new ThreadStateException($"Execution after calling {funcName} must be off the main thread");
         }
 
+        public void SetIsCurrent(bool isCurrent)
+        {
+            sceneStateProvider.IsCurrent = isCurrent;
+        }
+
         public async UniTask DisposeAsync()
         {
             // Because of multithreading Disposing is not synced with the update loop

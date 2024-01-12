@@ -18,6 +18,8 @@ using System.Linq;
 using System.Threading;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 
 namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
@@ -106,7 +108,11 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             CancellationToken ct)
         {
             // First load the common global plugin
-            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer, web3IdentityCache, ethereumApi, ct);
+            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(
+                globalSettingsContainer,
+                web3IdentityCache,
+                ethereumApi,
+                ct);
 
             if (!isLoaded)
                 GameReports.PrintIsDead();
