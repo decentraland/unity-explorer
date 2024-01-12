@@ -51,11 +51,19 @@ namespace CrdtEcsBridge.Components
         ///     A shortcut to create a standard suite for Protobuf components
         /// </summary>
         /// <returns></returns>
-        public static SDKComponentBridge AsProtobufComponent<T>(this SDKComponentBuilder<T> sdkComponentBuilder)
-            where T: class, IMessage<T>, IDirtyMarker, new() =>
-            sdkComponentBuilder.WithProtobufSerializer()
-                               .WithPool(SetAsDirty)
-                               .Build();
+        public static SDKComponentBridge AsProtobufComponent<T>(this SDKComponentBuilder<T> sdkComponentBuilder, bool clearComponent = false)
+            where T: class, IMessage<T>, IDirtyMarker, new()
+        {
+            // We clear "on get" because it's called from the background thread unlike "on release"
+            Action<T> onGet = SetAsDirty;
+
+            if (clearComponent)
+                onGet += ClearProtobufComponent;
+
+            return sdkComponentBuilder.WithProtobufSerializer()
+                                      .WithPool(onGet)
+                                      .Build();
+        }
 
         /// <summary>
         ///     A shortcut to create a standard suite for Protobuf component which is added as result from Renderer

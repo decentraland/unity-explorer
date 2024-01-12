@@ -25,6 +25,7 @@ using ECS.LifeCycle.Systems;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.Prioritization.Systems;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -70,12 +71,14 @@ namespace Global.Dynamic
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IPerformanceBudget memoryBudget;
         private readonly StaticSettings staticSettings;
+        private readonly StaticContainer staticContainer;
+        private readonly IScenesCache scenesCache;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             IRealmPartitionSettings realmPartitionSettings,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
             URLDomain assetBundlesURL, IRealmData realmData, IReadOnlyList<IDCLGlobalPlugin> globalPlugins,
-            IDebugContainerBuilder debugContainerBuilder)
+            IDebugContainerBuilder debugContainerBuilder, IScenesCache scenesCache)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -89,6 +92,8 @@ namespace Global.Dynamic
             this.globalPlugins = globalPlugins;
             this.debugContainerBuilder = debugContainerBuilder;
             this.realmData = realmData;
+            this.staticContainer = staticContainer;
+            this.scenesCache = scenesCache;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
@@ -147,8 +152,8 @@ namespace Global.Dynamic
             CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 
             ResolveStaticPointersSystem.InjectToWorld(ref builder);
-            UnloadSceneSystem.InjectToWorld(ref builder);
-            ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token);
+            UnloadSceneSystem.InjectToWorld(ref builder, scenesCache);
+            ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token, scenesCache);
 
             IComponentPool<PartitionComponent> partitionComponentPool = componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>();
             PartitionSceneEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData);
@@ -164,6 +169,8 @@ namespace Global.Dynamic
 
             OwnAvatarLoaderFromDebugMenuSystem.InjectToWorld(ref builder, playerEntity, debugContainerBuilder, realmData);
 
+            UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, playerEntity);
+
             var pluginArgs = new GlobalPluginArguments(playerEntity);
 
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
@@ -176,7 +183,11 @@ namespace Global.Dynamic
 
             SystemGroupSnapshot.Instance.Register(GlobalWorld.WORLD_NAME, worldSystems);
 
-            return new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
+            var globalWorld = new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
+
+            staticContainer.GlobalWorld.SetWorld(world);
+
+            return globalWorld;
         }
     }
 }

@@ -23,7 +23,7 @@ namespace ECS.SceneLifeCycle.Tests
         public void SetUp()
         {
             realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
-            system = new ControlSceneUpdateLoopSystem(world, realmPartitionSettings, CancellationToken.None);
+            system = new ControlSceneUpdateLoopSystem(world, realmPartitionSettings, CancellationToken.None, Substitute.For<IScenesCache>());
         }
 
         [Test]

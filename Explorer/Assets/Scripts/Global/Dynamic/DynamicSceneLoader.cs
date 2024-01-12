@@ -3,9 +3,9 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.SkyBox;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
-using DCL.SkyBox;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -41,7 +41,6 @@ namespace Global.Dynamic
         private void Awake()
         {
             realmLauncher.Initialize(settings.Realms);
-
             InitializationFlowAsync(destroyCancellationToken).Forget();
         }
 
@@ -90,8 +89,7 @@ namespace Global.Dynamic
                 // First load the common global plugin
                 bool isLoaded;
 
-                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer,
-                    identityCache, web3VerifiedAuthenticator, ct);
+                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, identityCache, web3VerifiedAuthenticator, ct);
 
                 if (!isLoaded)
                 {
