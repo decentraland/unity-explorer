@@ -124,7 +124,7 @@ namespace DCL.Backpack
             results.Clear();
 
             var wearablesPromise = ParamPromise.Create(world,
-                new GetWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.EphemeralAccount.Address, results),
+                new GetWearableByParamIntention(requestParameters, "0x8e41609eD5e365Ac23C28d9625Bd936EA9C9E22c", results),
                 PartitionComponent.TOP_PRIORITY);
 
             AwaitWearablesPromiseAsync(wearablesPromise, cts.Token).Forget();

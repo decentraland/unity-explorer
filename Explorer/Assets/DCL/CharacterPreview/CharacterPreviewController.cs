@@ -28,6 +28,7 @@ namespace DCL.CharacterPreview
             // Create and store AvatarShapeComponent straight-away but don't mark it as dirty so it is not grabbed by the system
             // TODO add meaningful ID and Name
 
+
             characterPreviewEntity = world.Create(
                 new TransformComponent(container.parent),
                 new AvatarShapeComponent("CharacterPreview", "CharacterPreview"));
@@ -35,6 +36,10 @@ namespace DCL.CharacterPreview
 
         public void UpdateAvatar(CharacterPreviewModel model)
         {
+            if (globalWorld == null)
+            {
+                return;
+            }
             ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
 
             avatarShape.SkinColor = model.SkinColor;

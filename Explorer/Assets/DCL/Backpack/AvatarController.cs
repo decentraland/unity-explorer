@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack.BackpackBus;
+using DCL.CharacterPreview;
 using DCL.UI;
 using DCL.Web3Authentication.Identities;
 using System;
@@ -18,6 +19,7 @@ namespace DCL.Backpack
         private readonly BackpackSlotsController slotsController;
         private readonly BackpackGridController backpackGridController;
         private readonly BackpackInfoPanelController backpackInfoPanelController;
+        private readonly BackpackCharacterPreviewController backpackCharacterPreviewController;
 
         public AvatarController(AvatarView view,
             AvatarSlotView[] slotViews,
@@ -35,6 +37,8 @@ namespace DCL.Backpack
             slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus, rarityBackgrounds);
             backpackGridController = new BackpackGridController(view.backpackGridView, backpackCommandBus, backpackEventBus, web3IdentityCache, rarityBackgrounds, rarityColors, categoryIcons, backpackEquipStatusController);
             backpackInfoPanelController = new BackpackInfoPanelController(view.backpackInfoPanelView, backpackEventBus, categoryIcons, rarityInfoPanelBackgrounds);
+            backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.backpackCharacterPreviewView, new CharacterPreviewFactory(), backpackEventBus);
+
             rectTransform = view.GetComponent<RectTransform>();
         }
 
@@ -44,18 +48,22 @@ namespace DCL.Backpack
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in Entity playerEntity)
         {
             backpackGridController.InjectToWorld(ref builder, playerEntity);
+            backpackCharacterPreviewController.InjectToWorld(ref builder, playerEntity);
         }
 
         public void RequestInitialWearablesPage()
         {
             backpackGridController.RequestPage(0);
+            backpackCharacterPreviewController.OnShow();
         }
 
         public void Activate()
         {
         }
 
-        public void Deactivate() { }
+        public void Deactivate()
+        {
+        }
 
         public RectTransform GetRectTransform() =>
             rectTransform;
@@ -64,6 +72,7 @@ namespace DCL.Backpack
         {
             slotsController?.Dispose();
             backpackInfoPanelController?.Dispose();
+            backpackCharacterPreviewController?.Dispose();
         }
     }
 }

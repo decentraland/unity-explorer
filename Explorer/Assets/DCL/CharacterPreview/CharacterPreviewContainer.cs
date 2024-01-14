@@ -13,5 +13,12 @@ namespace DCL.CharacterPreview
 
         [field: SerializeField]
         internal new Camera camera { get; private set; }
+
+        public void Initialize(RenderTexture targetTexture)
+        {
+            camera.targetTexture = targetTexture;
+        }
+
     }
+
 }
