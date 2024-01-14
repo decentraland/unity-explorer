@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
+using DCL.Profiles;
 using UnityEngine;
 
 namespace DCL.CharacterPreview
@@ -13,6 +14,7 @@ namespace DCL.CharacterPreview
         private readonly BackpackEventBus eventBus;
 
         private World world;
+        private Entity playerEntity;
         private CharacterPreviewController previewController;
         private CharacterPreviewModel previewModel;
 
@@ -30,15 +32,14 @@ namespace DCL.CharacterPreview
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in Entity playerEntity)
         {
             world = builder.World;
+            this.playerEntity = playerEntity;
         }
 
 
         public void OnShow()
         {
-            return;
             view.Initialize();
             previewController = previewFactory.Create(world, view.CharacterPreviewContainer);
-            previewController.UpdateAvatar(previewModel);
         }
 
         public void OnHide()
@@ -48,6 +49,7 @@ namespace DCL.CharacterPreview
         private void OnEquipped(IWearable i)
         {
             // Change model
+            previewModel.Wearables.Add(i.GetHash());
             UpdateModel();
         }
 
@@ -55,11 +57,16 @@ namespace DCL.CharacterPreview
         {
 
             // Change model
+            previewModel.Wearables.Remove(i.GetHash());
             UpdateModel();
         }
 
         private void UpdateModel()
         {
+            var avatar = world.Get<Profile>(playerEntity).Avatar;
+            previewModel.BodyShape = avatar.BodyShape;
+            previewModel.HairColor = avatar.HairColor;
+            previewModel.SkinColor = avatar.SkinColor;
             previewController.UpdateAvatar(previewModel);
         }
 
