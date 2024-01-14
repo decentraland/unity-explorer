@@ -16,7 +16,7 @@ namespace DCL.CharacterPreview
 
         public void Initialize(RenderTexture targetTexture)
         {
-            //camera.targetTexture = targetTexture;
+            camera.targetTexture = targetTexture;
         }
 
     }

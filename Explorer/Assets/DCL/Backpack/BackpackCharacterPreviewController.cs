@@ -1,9 +1,10 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
-using UnityEngine;
+using System.Collections.Generic;
 
 namespace DCL.CharacterPreview
 {
@@ -40,6 +41,7 @@ namespace DCL.CharacterPreview
         {
             view.Initialize();
             previewController = previewFactory.Create(world, view.CharacterPreviewContainer);
+            UpdateModel();
         }
 
         public void OnHide()
@@ -49,6 +51,7 @@ namespace DCL.CharacterPreview
         private void OnEquipped(IWearable i)
         {
             // Change model
+            previewModel.Wearables ??= new List<string>();
             previewModel.Wearables.Add(i.GetHash());
             UpdateModel();
         }
@@ -74,7 +77,6 @@ namespace DCL.CharacterPreview
         {
             this.eventBus.EquipEvent -= OnEquipped;
             this.eventBus.UnEquipEvent -= OnUnequipped;
-
         }
     }
 }
