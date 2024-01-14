@@ -16,37 +16,39 @@ namespace DCL.LOD.Components
     public struct SceneLODInfo
     {
         public int CurrentLODLevel;
+        public LODAsset CurrentLOD;
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
-        public GameObject CurrentLOD;
+        
         public string SceneHash;
         public Vector3 ParcelPosition;
+
+        private LODCache lodCache;
 
         public void CreateLODPromise(World world, int newLodLevel, PartitionComponent partition)
         {
             if (!CurrentLODPromise.IsConsumed)
-                //If we are loading a lod, lets forget it
                 CurrentLODPromise.ForgetLoading(world);
-
+            
             CurrentLODLevel = newLodLevel;
-            CurrentLODPromise =
-                Promise.Create(world,
-                    GetAssetBundleIntention.FromHash($"{SceneHash.ToLower()}_lod{CurrentLODLevel}",
-                        permittedSources: AssetSource.EMBEDDED,
-                        customEmbeddedSubDirectory: URLSubdirectory.FromString("lods")),
-                    partition);
 
-            if (SceneHash.Equals("bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
-                Debug.Log($"JUANI CREATING LOD PROMISE {SceneHash.ToLower()}_lod{CurrentLODLevel}");
-        }
+            var newLODKey = SceneHash + "_" + CurrentLODLevel;
+            if (lodCache.TryGet(newLODKey, out var cachedAsset))
+            {
+                lodCache.Dereference(CurrentLOD.LodKey, CurrentLOD);
+                CurrentLOD = cachedAsset;
+            }
+            else
+            {
+                CurrentLODPromise =
+                    Promise.Create(world,
+                        GetAssetBundleIntention.FromHash($"{SceneHash.ToLower()}_lod{CurrentLODLevel}",
+                            permittedSources: AssetSource.EMBEDDED,
+                            customEmbeddedSubDirectory: URLSubdirectory.FromString("lods")),
+                        partition);
 
-        public void ReleaseCurrentLOD(World world)
-        {
-            //If its still loading, lets forget it
-            //CurrentLODPromise.ForgetLoading(world);
-
-            //If not, dereference it
-            if (CurrentLOD != null)
-                Object.Destroy(CurrentLOD);
+                if (SceneHash.Equals("bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
+                    Debug.Log($"JUANI CREATING LOD PROMISE {SceneHash.ToLower()}_lod{CurrentLODLevel}");
+            }
         }
 
         public void ResolveLODLevel(World world, ref PartitionComponent partitionComponent)
@@ -65,20 +67,25 @@ namespace DCL.LOD.Components
         }
 
         public static SceneLODInfo Create(World world, ref SceneDefinitionComponent sceneDefinitionComponent,
-            ref PartitionComponent partitionComponent)
+            ref PartitionComponent partitionComponent, LODCache lodCache)
         {
             SceneLODInfo sceneLODInfo = new SceneLODInfo()
             {
-                CurrentLODLevel = -1 //Ensure that a lod level will be on first resolve
+                CurrentLODLevel = -1, //Ensure that a lod level will be on first resolve
+                SceneHash = sceneDefinitionComponent.Definition.id,
+                ParcelPosition = ParcelMathHelper.GetPositionByParcelPosition(sceneDefinitionComponent.Parcels[0]),
+                lodCache = lodCache
             };
-            sceneLODInfo.SceneHash = sceneDefinitionComponent.Definition.id;
-            sceneLODInfo.ParcelPosition =
-                ParcelMathHelper.GetPositionByParcelPosition(sceneDefinitionComponent.Parcels[0]);
             sceneLODInfo.ResolveLODLevel(world, ref partitionComponent);
             return sceneLODInfo;
         }
 
 
+        public void Dispose(World world)
+        {
+            CurrentLODPromise.ForgetLoading(world);
+            lodCache.Dereference(CurrentLOD.LodKey, CurrentLOD);
+        }
     }
     
 }

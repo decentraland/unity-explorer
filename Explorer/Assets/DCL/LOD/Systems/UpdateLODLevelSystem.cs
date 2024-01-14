@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.LOD.Components;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Systems;
@@ -14,10 +15,13 @@ namespace DCL.LOD.Systems
 {
     [UpdateInGroup(typeof(RealmGroup))]
     [UpdateAfter(typeof(UpdateVisualSceneStateSystem))]
-    public partial class UpdateLODSystem : BaseUnityLoopSystem
+    public partial class UpdateLODLevelSystem : BaseUnityLoopSystem
     {
-        public UpdateLODSystem(World world) : base(world)
+        private readonly LODCache lodCache;
+
+        public UpdateLODLevelSystem(World world, LODCache lodCache) : base(world)
         {
+            this.lodCache = lodCache;
         }
 
         protected override void Update(float t)
@@ -39,21 +43,25 @@ namespace DCL.LOD.Systems
             if (sceneLODInfo.CurrentLODPromise.IsConsumed) return;
             if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
+                //TODO: Fix this ToString() for CurrentLODLevel
+
                 if (sceneLODInfo.SceneHash.Equals("bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
                     Debug.Log("JUANI I FINISHED THE PROMISE WITH RESULT " + result.Succeeded + " " +
                               sceneLODInfo.CurrentLODLevel);
                 if (result.Succeeded)
                 {
-                    sceneLODInfo.ReleaseCurrentLOD(World);
                     if (sceneLODInfo.SceneHash.Equals("bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
                         Debug.Log("JUANI IM ABOUT TO INSTANTIATE THE LOD " + sceneLODInfo.CurrentLODLevel);
-                    sceneLODInfo.CurrentLOD = Object.Instantiate(result.Asset.GameObject, sceneLODInfo.ParcelPosition,
-                        Quaternion.identity);
+
+                    lodCache.Dereference(sceneLODInfo.CurrentLOD.LodKey, sceneLODInfo.CurrentLOD);
+
+                    var newLODKey = sceneLODInfo.SceneHash + "_" + sceneLODInfo.CurrentLODLevel;
+                    sceneLODInfo.CurrentLOD = new LODAsset(newLODKey, Object.Instantiate(result.Asset.GameObject,
+                        sceneLODInfo.ParcelPosition,
+                        Quaternion.identity), result.Asset);
                 }
-                //ReportHub.LogError(GetReportCategory(), $"LOD not found for {sceneLODInfo.SceneHash}");
             }
         }
 
-        
     }
 }

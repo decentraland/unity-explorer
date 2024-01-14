@@ -28,6 +28,8 @@ namespace DCL.ResourcesUnloading
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
         private IStreamableCache<GltfContainerAsset, string> gltfContainerAssetsCache;
         private IStreamableCache<Texture2D, GetTextureIntention> texturesCache;
+        private IStreamableCache<LODAsset, string> lodCache;
+
 
         private IWearableAssetsCache wearableAssetsCache;
         private IWearableCatalog wearableCatalog;
@@ -49,6 +51,7 @@ namespace DCL.ResourcesUnloading
             wearableAssetsCache.Unload(fpsCapBudgetProvider, WEARABLES_UNLOAD_CHUNK);
             wearableCatalog.Unload(fpsCapBudgetProvider);
             gltfContainerAssetsCache.Unload(fpsCapBudgetProvider, GLTF_UNLOAD_CHUNK);
+            lodCache.Unload(fpsCapBudgetProvider, GLTF_UNLOAD_CHUNK);
             assetBundleCache.Unload(fpsCapBudgetProvider, AB_UNLOAD_CHUNK);
             profileCache?.Unload(fpsCapBudgetProvider, PROFILE_UNLOAD_CHUNK);
             profileIntentionCache?.Unload(fpsCapBudgetProvider, PROFILE_UNLOAD_CHUNK);
@@ -61,6 +64,11 @@ namespace DCL.ResourcesUnloading
             foreach (IThrottledClearable pool in avatarPools)
                 if (fpsCapBudgetProvider.TrySpendBudget())
                     pool.ClearThrottled(POOLS_UNLOAD_CHUNK);
+        }
+
+        public void Register(IStreamableCache<LODAsset, string> lodCache)
+        {
+            this.lodCache = lodCache;
         }
 
         public void Register(IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache) =>

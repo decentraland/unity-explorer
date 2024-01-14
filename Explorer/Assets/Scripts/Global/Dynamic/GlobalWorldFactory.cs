@@ -37,12 +37,13 @@ using SceneRunner.EmptyScene;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.LOD.Systems;
+using DCL.ResourcesUnloading;
 using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
 using Utility.Multithreading;
 using Avatar = DCL.Profiles.Avatar;
-using UpdateLODSystem = DCL.LOD.Systems.UpdateLODSystem;
 
 namespace Global.Dynamic
 {
@@ -71,6 +72,7 @@ namespace Global.Dynamic
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IConcurrentBudgetProvider memoryBudgetProvider;
         private readonly StaticSettings staticSettings;
+        private readonly CacheCleaner cacheCleaner;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             IRealmPartitionSettings realmPartitionSettings,
@@ -83,6 +85,7 @@ namespace Global.Dynamic
             partitionSettings = staticContainer.PartitionSettings;
             webRequestController = staticContainer.WebRequestsContainer.WebRequestController;
             staticSettings = staticContainer.StaticSettings;
+            cacheCleaner = staticContainer.CacheCleaner;
             this.realmPartitionSettings = realmPartitionSettings;
             this.cameraSamplingData = cameraSamplingData;
             this.realmSamplingData = realmSamplingData;
@@ -140,13 +143,14 @@ namespace Global.Dynamic
             //LoadPointersByRadiusSystem.InjectToWorld(ref builder);
             //ResolveSceneStateByRadiusSystem.InjectToWorld(ref builder);
 
-            
+            var lodCache = new LODCache();
+            cacheCleaner.Register(lodCache);
             
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();
             StartSplittingByRingsSystem.InjectToWorld(ref builder, realmPartitionSettings, jobsMathHelper);
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
-            ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings);
+            ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings, lodCache);
             CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 
             ResolveStaticPointersSystem.InjectToWorld(ref builder);
@@ -154,8 +158,9 @@ namespace Global.Dynamic
             ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token);
 
             ResolveVisualSceneStateSystem.InjectToWorld(ref builder);
-            UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData);
-            UpdateLODSystem.InjectToWorld(ref builder);            
+            UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, lodCache);
+
+            UpdateLODLevelSystem.InjectToWorld(ref builder, lodCache);            
             
             IComponentPool<PartitionComponent> partitionComponentPool = componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>();
             PartitionSceneEntitiesSystem.InjectToWorld(ref builder, partitionComponentPool, partitionSettings, cameraSamplingData);

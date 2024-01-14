@@ -51,7 +51,9 @@ namespace ECS.StreamableLoading.Textures
             return true;
         }
 
-        public void Dereference(in GetTextureIntention key, Texture2D asset) { }
+        public void Dereference(in GetTextureIntention key, Texture2D asset)
+        {
+        }
 
         public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount)
         {

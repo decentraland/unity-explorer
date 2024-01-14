@@ -53,7 +53,9 @@ namespace ECS.StreamableLoading.AssetBundles
             ProfilingCounters.AssetBundlesInCache.Value = cache.Count;
         }
 
-        public void Dereference(in GetAssetBundleIntention key, AssetBundleData asset) { }
+        public void Dereference(in GetAssetBundleIntention key, AssetBundleData asset)
+        {
+        }
 
         public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount)
         {

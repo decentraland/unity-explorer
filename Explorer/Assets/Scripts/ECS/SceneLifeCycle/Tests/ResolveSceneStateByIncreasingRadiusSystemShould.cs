@@ -27,7 +27,7 @@ namespace ECS.SceneLifeCycle.Tests
         public void SetUp()
         {
             realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
-            system = new ResolveSceneStateByIncreasingRadiusSystem(world, realmPartitionSettings);
+            system = new ResolveSceneStateByIncreasingRadiusSystem(world, realmPartitionSettings, new LODCache());
 
             realmComponent = new RealmComponent(new RealmData(new TestIpfsRealm()));
         }

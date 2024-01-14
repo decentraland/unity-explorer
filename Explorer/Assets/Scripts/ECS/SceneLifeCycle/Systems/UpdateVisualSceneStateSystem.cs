@@ -24,10 +24,12 @@ namespace ECS.SceneLifeCycle.Systems
     public partial class UpdateVisualSceneStateSystem : BaseUnityLoopSystem
     {
         private readonly IRealmData realmData;
+        private readonly LODCache lodCache;
 
-        public UpdateVisualSceneStateSystem(World world, IRealmData realmData) : base(world)
+        public UpdateVisualSceneStateSystem(World world, IRealmData realmData, LODCache lodCache) : base(world)
         {
             this.realmData = realmData;
+            this.lodCache = lodCache;
         }
 
         protected override void Update(float t)
@@ -49,7 +51,7 @@ namespace ECS.SceneLifeCycle.Systems
                         "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
                     Debug.Log("JUANI SWAPPING LOD TO SCENE PROMISE");
 
-                sceneLODInfo.ReleaseCurrentLOD(World);
+                sceneLODInfo.Dispose(World);
 
                 //Show Scene
                 World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
@@ -76,7 +78,7 @@ namespace ECS.SceneLifeCycle.Systems
                         "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
                     Debug.Log("JUANI SWAPPING SCENE FACEDE TO LOD");
                 //Create LODInfo
-                var sceneLODInfo = SceneLODInfo.Create(World, ref sceneDefinitionComponent, ref partition);
+                var sceneLODInfo = SceneLODInfo.Create(World, ref sceneDefinitionComponent, ref partition, lodCache);
 
                 //Dispose scene
                 sceneFacade.DisposeAsync().Forget();
@@ -104,7 +106,7 @@ namespace ECS.SceneLifeCycle.Systems
                         "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
                     Debug.Log("JUANI SWAPPING SCENE PROMISE TO LOD");
                 //Create LODInfo
-                var sceneLODInfo = SceneLODInfo.Create(World, ref sceneDefinitionComponent, ref partition);
+                var sceneLODInfo = SceneLODInfo.Create(World, ref sceneDefinitionComponent, ref partition, lodCache);
 
                 //Dispose Promise
                 promise.ForgetLoading(World);

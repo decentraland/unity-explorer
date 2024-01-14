@@ -1,4 +1,25 @@
 {
-	"name": "LOD",
-	"references":[ "GUID:4794e238ed0f65142a4aea5848b513e5", "GUID:9e314663ce958b746873cb22d57ede55", "GUID:8322ea9340a544c59ddc56d4793eac74", "GUID:286980af24684da6acc1caa413039811", "GUID:1d2c76eb8b48e0b40940e8b31a679ce1", "GUID:fa7b3fdbb04d67549916da7bd2af58ab" ]
+    "name": "LOD",
+    "rootNamespace": "",
+    "references": [
+        "GUID:4794e238ed0f65142a4aea5848b513e5",
+        "GUID:9e314663ce958b746873cb22d57ede55",
+        "GUID:8322ea9340a544c59ddc56d4793eac74",
+        "GUID:286980af24684da6acc1caa413039811",
+        "GUID:1d2c76eb8b48e0b40940e8b31a679ce1",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
+        "GUID:56e8195b069a4dca9c4c4f313c65f526",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:b46779583a009f04ba9f5f31d0e7e6ac"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
