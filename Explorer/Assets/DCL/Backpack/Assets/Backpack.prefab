@@ -86,7 +86,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 2147483648
+    m_Bits: 4294967295
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 8400000, guid: 9f73395774b651a4c9b28ac987c6893a, type: 2}
   m_TargetDisplay: 0
@@ -932,9 +932,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6169155033447096613}
-  - component: {fileID: 502205114416475593}
   - component: {fileID: 3846754165733835080}
-  m_Layer: 5
+  m_Layer: 31
   m_Name: PreviewContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -961,14 +960,6 @@ RectTransform:
   m_AnchoredPosition: {x: -5262, y: 505}
   m_SizeDelta: {x: 230.7732, y: 675.0172}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &502205114416475593
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3180334795903467301}
-  m_CullTransparentMesh: 1
 --- !u!114 &3846754165733835080
 MonoBehaviour:
   m_ObjectHideFlags: 0
