@@ -52,15 +52,14 @@ namespace DCL.CharacterPreview
         {
             // Change model
             previewModel.Wearables ??= new List<string>();
-            previewModel.Wearables.Add(i.GetHash());
+            previewModel.Wearables.Add(i.GetUrn());
             UpdateModel();
         }
 
         private void OnUnequipped(IWearable i)
         {
-
             // Change model
-            previewModel.Wearables.Remove(i.GetHash());
+            previewModel.Wearables.Remove(i.GetUrn());
             UpdateModel();
         }
 
