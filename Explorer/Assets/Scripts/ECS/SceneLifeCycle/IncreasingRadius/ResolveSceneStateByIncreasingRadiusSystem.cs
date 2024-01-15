@@ -46,13 +46,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         private NativeList<OrderedData> orderedData;
 
-        private readonly LODCache lodCache;
-
-        internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings,
-            LODCache lodCache) : base(world)
+        internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings)
+            : base(world)
         {
             this.realmPartitionSettings = realmPartitionSettings;
-            this.lodCache = lodCache;
 
             // Set initial capacity to 1/3 of the total capacity required for all rings
             orderedData = new NativeList<OrderedData>(
@@ -173,9 +170,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
                 if (components.t2.Value.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
                 {
-                    var sceneLODInfo = SceneLODInfo.Create(World, ref components.t0.Value, ref components.t1.Value,
-                        lodCache);
-                    World.Add(data.Entity, sceneLODInfo);
+                    World.Add(data.Entity, new SceneLODInfo
+                    {
+                        IsDirty = true
+                    });
                 }
                 else
                 {

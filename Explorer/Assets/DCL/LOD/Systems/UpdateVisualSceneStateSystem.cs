@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Metadata;
 using Cysharp.Threading.Tasks;
 using DCL.LOD.Components;
+using DCL.LOD.Systems;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -20,16 +21,14 @@ using UnityEngine;
 namespace ECS.SceneLifeCycle.Systems
 {
     [UpdateInGroup(typeof(RealmGroup))]
-    [UpdateAfter(typeof(ResolveVisualSceneStateSystem))]
+    [UpdateAfter(typeof(ResolveSceneLODInfo))]
     public partial class UpdateVisualSceneStateSystem : BaseUnityLoopSystem
     {
         private readonly IRealmData realmData;
-        private readonly LODCache lodCache;
 
-        public UpdateVisualSceneStateSystem(World world, IRealmData realmData, LODCache lodCache) : base(world)
+        public UpdateVisualSceneStateSystem(World world, IRealmData realmData) : base(world)
         {
             this.realmData = realmData;
-            this.lodCache = lodCache;
         }
 
         protected override void Update(float t)
@@ -60,8 +59,6 @@ namespace ECS.SceneLifeCycle.Systems
                 World.Remove<SceneLODInfo>(entity);
             }
             visualSceneState.IsDirty = false;
-
-            
         }
         
         [Query]
@@ -78,7 +75,10 @@ namespace ECS.SceneLifeCycle.Systems
                         "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
                     Debug.Log("JUANI SWAPPING SCENE FACEDE TO LOD");
                 //Create LODInfo
-                var sceneLODInfo = SceneLODInfo.Create(World, ref sceneDefinitionComponent, ref partition, lodCache);
+                var sceneLODInfo = new SceneLODInfo
+                {
+                    IsDirty = true
+                };
 
                 //Dispose scene
                 sceneFacade.DisposeAsync().Forget();
@@ -106,7 +106,10 @@ namespace ECS.SceneLifeCycle.Systems
                         "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
                     Debug.Log("JUANI SWAPPING SCENE PROMISE TO LOD");
                 //Create LODInfo
-                var sceneLODInfo = SceneLODInfo.Create(World, ref sceneDefinitionComponent, ref partition, lodCache);
+                var sceneLODInfo = new SceneLODInfo
+                {
+                    IsDirty = true
+                };
 
                 //Dispose Promise
                 promise.ForgetLoading(World);

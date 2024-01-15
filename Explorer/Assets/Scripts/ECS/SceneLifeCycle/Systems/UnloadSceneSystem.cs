@@ -33,9 +33,6 @@ namespace ECS.SceneLifeCycle.Systems
         [All(typeof(DeleteEntityIntention))]
         private void UnloadLOD(in Entity entity, ref SceneLODInfo sceneLODInfo)
         {
-            if (sceneLODInfo.SceneHash.Equals("bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
-                Debug.Log("JUANI UNLOADING SCENE FROM LODS");
-
             sceneLODInfo.Dispose(World);
             World.Remove<SceneLODInfo, VisualSceneState, DeleteEntityIntention>(entity);
         }
@@ -48,7 +45,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (sceneFacade is SceneFacade &&
                 ((SceneFacade)sceneFacade).SceneData.SceneShortInfo.Name.Equals(
                     "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
-                Debug.Log("JUANI IM STILL IN UPDATE VISUAL STATE");
+                Debug.Log("JUANI IM UNLOADING THE SCENE");
             
             // Keep definition so it won't be downloaded again = Cache in ECS itself
             sceneFacade.DisposeAsync().Forget();

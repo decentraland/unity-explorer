@@ -17,9 +17,9 @@ public struct LODAsset : IDisposable
         LodKey = lodKey;
         Root = root;
         AssetBundleReference = assetBundleReference;
+        root.name = LodKey;
         ProfilingCounters.LODAssetAmount.Value++;
     }
-
 
     public void Dispose()
     {

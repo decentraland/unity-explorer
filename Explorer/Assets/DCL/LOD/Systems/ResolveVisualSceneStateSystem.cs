@@ -2,19 +2,12 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Metadata;
-using Cysharp.Threading.Tasks;
-using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.Common.Components;
-using Realm;
-using SceneRunner.Scene;
 using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -23,8 +16,11 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateBefore(typeof(ResolveSceneStateByIncreasingRadiusSystem))]
     public partial class ResolveVisualSceneStateSystem : BaseUnityLoopSystem
     {
-        public ResolveVisualSceneStateSystem(World world) : base(world)
+        private readonly int sceneLODLimit;
+
+        public ResolveVisualSceneStateSystem(World world, int sceneLODLimit) : base(world)
         {
+            this.sceneLODLimit = sceneLODLimit;
         }
 
         protected override void Update(float t)
@@ -39,9 +35,6 @@ namespace ECS.SceneLifeCycle.Systems
         {
             VisualSceneState visualSceneState = new VisualSceneState();
             ResolveVisualSceneState(ref visualSceneState, partition, sceneDefinitionComponent);
-            //On creation, the decision to be add a SceneLodInfo or an Scene Promise is done in ResolveSceneStateByIncreasingRadiusSystem. 
-            //So this should not be dirty at this point
-            visualSceneState.IsDirty = false;
             World.Add(entity, visualSceneState);
         }
         
@@ -49,12 +42,19 @@ namespace ECS.SceneLifeCycle.Systems
         [None(typeof(DeleteEntityIntention))]
         private void UpdateVisualState(ref VisualSceneState visualSceneState, ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (sceneDefinitionComponent.Definition.id.Equals(
-                    "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
-                Debug.Log("JUANI IM STILL IN UPDATE VISUAL STATE " + partition.Bucket);
-            if (!partition.IsDirty) return;
+            //if (sceneDefinitionComponent.Definition.id.Equals(
+            //        "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
+            //    Debug.Log("JUANI IM STILL IN UPDATE VISUAL STATE " + partition.Bucket);
 
-            ResolveVisualSceneState(ref visualSceneState, partition, sceneDefinitionComponent);
+            // TODO: This avoids checking ti twice when components are added in ResolveVisualSceneStateByIncreasingRadiusSystem
+            if (visualSceneState.IsDirty)
+            {
+                ResolveVisualSceneState(ref visualSceneState, partition, sceneDefinitionComponent);
+                return;
+            }
+
+            if (partition.IsDirty)
+                ResolveVisualSceneState(ref visualSceneState, partition, sceneDefinitionComponent);
         }
 
         private void ResolveVisualSceneState(ref VisualSceneState visualSceneState, PartitionComponent partition,
@@ -68,7 +68,7 @@ namespace ECS.SceneLifeCycle.Systems
             }
             else
             {
-                var candidateState = partition.Bucket <= VisualSceneStateConstants.SCENE_BUCKET_LIMIT
+                var candidateState = partition.Bucket <= sceneLODLimit
                     ? VisualSceneStateEnum.SHOWING_SCENE
                     : VisualSceneStateEnum.SHOWING_LOD;
                 visualSceneState.IsDirty = candidateState != visualSceneState.CurrentVisualSceneState;
@@ -77,6 +77,8 @@ namespace ECS.SceneLifeCycle.Systems
                         "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
                     Debug.Log($"JUANI {visualSceneState.IsDirty} {visualSceneState.CurrentVisualSceneState}");
             }
+
+            visualSceneState.IsDirty = false;
         }
 
     }
