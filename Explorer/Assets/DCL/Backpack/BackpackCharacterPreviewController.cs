@@ -1,6 +1,5 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
-using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
@@ -24,7 +23,7 @@ namespace DCL.CharacterPreview
             this.view = view;
             this.previewFactory = previewFactory;
             this.eventBus = eventBus;
-            this.eventBus.EquipEvent +=  OnEquipped;
+            this.eventBus.EquipEvent += OnEquipped;
             this.eventBus.UnEquipEvent += OnUnequipped;
 
             // Subscribe to the event bus
@@ -36,7 +35,6 @@ namespace DCL.CharacterPreview
             this.playerEntity = playerEntity;
         }
 
-
         public void OnShow()
         {
             view.Initialize();
@@ -44,9 +42,7 @@ namespace DCL.CharacterPreview
             UpdateModel();
         }
 
-        public void OnHide()
-        {
-        }
+        public void OnHide() { }
 
         private void OnEquipped(IWearable i)
         {
@@ -65,7 +61,15 @@ namespace DCL.CharacterPreview
 
         private void UpdateModel()
         {
-            var avatar = world.Get<Profile>(playerEntity).Avatar;
+            Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
+            /*previewModel.Wearables ??= new List<string>();
+            previewModel.Wearables.Clear();
+
+            foreach (URN avatarSharedWearable in world.Get<Profile>(playerEntity).Avatar.SharedWearables)
+            {
+                previewModel.Wearables.Add(avatarSharedWearable);
+            } */
+
             previewModel.BodyShape = avatar.BodyShape;
             previewModel.HairColor = avatar.HairColor;
             previewModel.SkinColor = avatar.SkinColor;
@@ -74,8 +78,8 @@ namespace DCL.CharacterPreview
 
         public void Dispose()
         {
-            this.eventBus.EquipEvent -= OnEquipped;
-            this.eventBus.UnEquipEvent -= OnUnequipped;
+            eventBus.EquipEvent -= OnEquipped;
+            eventBus.UnEquipEvent -= OnUnequipped;
         }
     }
 }
