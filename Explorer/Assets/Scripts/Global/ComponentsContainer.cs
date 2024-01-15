@@ -40,6 +40,7 @@ namespace Global
                .Add(SDKComponentBuilder<PBRaycast>.Create(ComponentID.RAYCAST).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBUiTransform>.Create(ComponentID.UI_TRANSFORM).AsProtobufComponent(true))
                .Add(SDKComponentBuilder<PBUiText>.Create(ComponentID.UI_TEXT).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBUiBackground>.Create(ComponentID.UI_BACKGROUND).AsProtobufComponent())
 
                 // Special logic for pooling/releasing PBRaycastResult
                .Add(SDKComponentBuilder<PBRaycastResult>.Create(ComponentID.RAYCAST_RESULT)
