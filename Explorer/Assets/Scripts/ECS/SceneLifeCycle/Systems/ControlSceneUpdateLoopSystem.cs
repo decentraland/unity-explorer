@@ -55,11 +55,6 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 var scene = result.Asset;
 
-                if (scene is SceneFacade &&
-                    ((SceneFacade)scene).SceneData.SceneShortInfo.Name.Equals(
-                        "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
-                    Debug.Log("JUANI IM STARTING THE SCENE");
-
                 var fps = realmPartitionSettings.GetSceneUpdateFrequency(in partition);
 
                 async UniTaskVoid RunOnThreadPoolAsync()

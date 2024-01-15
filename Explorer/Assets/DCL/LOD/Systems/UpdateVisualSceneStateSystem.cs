@@ -46,39 +46,27 @@ namespace ECS.SceneLifeCycle.Systems
 
             if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_SCENE)
             {
-                if (sceneDefinitionComponent.Definition.id.Equals(
-                        "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
-                    Debug.Log("JUANI SWAPPING LOD TO SCENE PROMISE");
-
                 sceneLODInfo.Dispose(World);
-
+                visualSceneState.IsDirty = false;
                 //Show Scene
                 World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
                     new GetSceneFacadeIntention(realmData.Ipfs, sceneDefinitionComponent),
                     partition));
                 World.Remove<SceneLODInfo>(entity);
             }
-            visualSceneState.IsDirty = false;
         }
         
         [Query]
         [None(typeof(SceneLODInfo))]
         private void SwapSceneFacadeToLOD(in Entity entity, ref VisualSceneState visualSceneState,
-            ISceneFacade sceneFacade,
-            ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent)
+            ISceneFacade sceneFacade)
         {
             if (!visualSceneState.IsDirty) return;
 
             if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
             {
-                if (sceneDefinitionComponent.Definition.id.Equals(
-                        "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
-                    Debug.Log("JUANI SWAPPING SCENE FACEDE TO LOD");
                 //Create LODInfo
-                var sceneLODInfo = new SceneLODInfo
-                {
-                    IsDirty = true
-                };
+                var sceneLODInfo = new SceneLODInfo { IsDirty = true };
 
                 //Dispose scene
                 sceneFacade.DisposeAsync().Forget();
@@ -88,24 +76,17 @@ namespace ECS.SceneLifeCycle.Systems
                 World.Add(entity, sceneLODInfo);
                 World.Remove<ISceneFacade>(entity);
             }
-
-            visualSceneState.IsDirty = false;
         }
 
         [Query]
         [None(typeof(SceneLODInfo))]
         private void SwapScenePromiseToLOD(in Entity entity, ref VisualSceneState visualSceneState,
-            AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise, ref PartitionComponent partition,
-            ref SceneDefinitionComponent sceneDefinitionComponent)
+            AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
         {
             if (!visualSceneState.IsDirty) return;
 
             if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
             {
-                if (sceneDefinitionComponent.Definition.id.Equals(
-                        "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
-                    Debug.Log("JUANI SWAPPING SCENE PROMISE TO LOD");
-                //Create LODInfo
                 var sceneLODInfo = new SceneLODInfo
                 {
                     IsDirty = true
@@ -119,8 +100,6 @@ namespace ECS.SceneLifeCycle.Systems
                 World.Add(entity, sceneLODInfo);
                 World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
             }
-
-            visualSceneState.IsDirty = false;
         }
     }
 }

@@ -42,17 +42,6 @@ namespace ECS.SceneLifeCycle.Systems
         [None(typeof(DeleteEntityIntention))]
         private void UpdateVisualState(ref VisualSceneState visualSceneState, ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            //if (sceneDefinitionComponent.Definition.id.Equals(
-            //        "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
-            //    Debug.Log("JUANI IM STILL IN UPDATE VISUAL STATE " + partition.Bucket);
-
-            // TODO: This avoids checking ti twice when components are added in ResolveVisualSceneStateByIncreasingRadiusSystem
-            if (visualSceneState.IsDirty)
-            {
-                ResolveVisualSceneState(ref visualSceneState, partition, sceneDefinitionComponent);
-                return;
-            }
-
             if (partition.IsDirty)
                 ResolveVisualSceneState(ref visualSceneState, partition, sceneDefinitionComponent);
         }
@@ -64,21 +53,19 @@ namespace ECS.SceneLifeCycle.Systems
             if (sceneDefinitionComponent.IsEmpty)
             {
                 visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
-                visualSceneState.IsDirty = false;
             }
             else
             {
                 var candidateState = partition.Bucket <= sceneLODLimit
                     ? VisualSceneStateEnum.SHOWING_SCENE
                     : VisualSceneStateEnum.SHOWING_LOD;
-                visualSceneState.IsDirty = candidateState != visualSceneState.CurrentVisualSceneState;
-                visualSceneState.CurrentVisualSceneState = candidateState;
-                if (sceneDefinitionComponent.Definition.id.Equals(
-                        "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
-                    Debug.Log($"JUANI {visualSceneState.IsDirty} {visualSceneState.CurrentVisualSceneState}");
+                if (candidateState != visualSceneState.CurrentVisualSceneState)
+                {
+                    visualSceneState.CurrentVisualSceneState = candidateState;
+                    visualSceneState.IsDirty = true;
+                }
             }
 
-            visualSceneState.IsDirty = false;
         }
 
     }

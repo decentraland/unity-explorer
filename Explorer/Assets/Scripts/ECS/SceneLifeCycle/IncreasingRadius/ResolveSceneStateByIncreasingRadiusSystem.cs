@@ -170,10 +170,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
                 if (components.t2.Value.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
                 {
-                    World.Add(data.Entity, new SceneLODInfo
-                    {
-                        IsDirty = true
-                    });
+                    World.Add(data.Entity, new SceneLODInfo { IsDirty = true });
                 }
                 else
                 {
@@ -181,8 +178,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                         AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
                             new GetSceneFacadeIntention(ipfsRealm, components.t0),
                             components.t1.Value));
-                }                
+                }
 
+                components.t2.Value.IsDirty = false;
 
                 promisesCreated++;
             }

@@ -103,10 +103,6 @@ namespace DCL.LOD.Systems
                             permittedSources: AssetSource.EMBEDDED,
                             customEmbeddedSubDirectory: URLSubdirectory.FromString("lods")),
                         partitionComponent);
-
-                if (sceneLODInfo.SceneHash.Equals("bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
-                    Debug.Log(
-                        $"JUANI CREATING LOD PROMISE {newLODKey}");
             }
         }
     }

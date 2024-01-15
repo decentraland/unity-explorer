@@ -6,8 +6,8 @@ namespace ECS.SceneLifeCycle.Components
 {
     public struct VisualSceneState
     {
-        public bool IsDirty;
         public VisualSceneStateEnum CurrentVisualSceneState;
+        public bool IsDirty;
     }
 
     public enum VisualSceneStateEnum

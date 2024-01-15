@@ -42,11 +42,6 @@ namespace ECS.SceneLifeCycle.Systems
         [All(typeof(DeleteEntityIntention))]
         private void UnloadLoadedScene(in Entity entity, ref ISceneFacade sceneFacade)
         {
-            if (sceneFacade is SceneFacade &&
-                ((SceneFacade)sceneFacade).SceneData.SceneShortInfo.Name.Equals(
-                    "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
-                Debug.Log("JUANI IM UNLOADING THE SCENE");
-            
             // Keep definition so it won't be downloaded again = Cache in ECS itself
             sceneFacade.DisposeAsync().Forget();
             World.Remove<ISceneFacade, VisualSceneState, DeleteEntityIntention>(entity);
