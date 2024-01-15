@@ -45,7 +45,12 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                 return;
 
             foreach (EntityReference brotherEntity in World.Get<UITransformComponent>(uiTransformComponent.Parent).Children)
+            {
+                if (!brotherEntity.IsAlive(World))
+                    continue;
+
                 SortUITransform(ref sdkModel, ref World.Get<UITransformComponent>(brotherEntity));
+            }
         }
 
         private void SortUITransform(ref PBUiTransform sdkModel, ref UITransformComponent uiTransform)
