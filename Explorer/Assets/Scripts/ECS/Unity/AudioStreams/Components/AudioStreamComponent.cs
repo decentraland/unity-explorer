@@ -41,8 +41,8 @@ namespace ECS.Unity.AudioStreams.Components
 
         public void Dispose()
         {
+            mediaPlayer.CloseCurrentStream();
             mediaPlayerPool = null;
-            CloseMediaPlayer();
         }
 
         public void UpdateComponentChange(PBAudioStream sdkComponent)
@@ -53,9 +53,9 @@ namespace ECS.Unity.AudioStreams.Components
 
         public void UpdateVolume(PBAudioStream sdkComponent, bool isCurrentScene)
         {
-            if (isCurrentScene && mediaPlayer.AudioVolume == 0f)
+            if (isCurrentScene)
                 mediaPlayer.AudioVolume = sdkComponent.HasVolume ? sdkComponent.Volume : DEFAULT_VOLUME;
-            else if (mediaPlayer.AudioVolume != 0f)
+            else
                 mediaPlayer.AudioVolume = 0f;
         }
 
@@ -77,17 +77,8 @@ namespace ECS.Unity.AudioStreams.Components
             if (url == this.url) return;
 
             this.url = url;
-            CloseMediaPlayer();
+            mediaPlayer.CloseCurrentStream();
             mediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, url, autoPlay: false);
-        }
-
-        private void CloseMediaPlayer()
-        {
-            if (mediaPlayer.Control.IsPlaying())
-                mediaPlayer.Stop();
-
-            mediaPlayer.CloseMedia();
-            mediaPlayer.Events.RemoveAllListeners();
         }
     }
 }
