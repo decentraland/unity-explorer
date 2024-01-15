@@ -8,6 +8,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.NftShape.Component;
 using DCL.SDKComponents.NftShape.Frame;
+using DCL.Utilities.Extensions;
 using Decentraland.Common;
 using ECS.Unity.ColorComponent;
 using ECS.Unity.PrimitiveRenderer.Components;
@@ -31,7 +32,7 @@ namespace DCL.SDKComponents.NftShape.Demo
         [SerializeField]
         private bool visible = true;
         [SerializeField]
-        private NftShapeSettings settings = new ();
+        private NftShapeSettings settings = null!;
 
         private void Start()
         {
@@ -78,7 +79,7 @@ namespace DCL.SDKComponents.NftShape.Demo
             // instantiate.Update(0);
             // materialWorld.SetUpAndRunAsync(destroyCancellationToken).Forget();
 
-            new WarmUpSettingsNftShapeDemoWorld(new FramesPool(settings), nftShapeProperties, billboardProperties, () => visible)
+            new WarmUpSettingsNftShapeDemoWorld(new FramesPool(settings.EnsureNotNull()), nftShapeProperties, billboardProperties, () => visible)
                .SetUpAndRunAsync(destroyCancellationToken)
                .Forget();
         }
