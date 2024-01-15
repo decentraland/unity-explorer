@@ -4,6 +4,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.NftShape.Component;
+using DCL.SDKComponents.NftShape.Frame;
 using DCL.SDKComponents.NftShape.Renderer;
 using DCL.SDKComponents.NftShape.Renderer.Factory;
 using DCL.SDKComponents.NftShape.System;
@@ -20,8 +21,14 @@ namespace DCL.PluginSystem.World
         private readonly IPerformanceBudget instantiationFrameTimeBudgetProvider;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
 
-        public NftShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry) : this(
-            new PoolNftShapeRendererFactory(componentPoolsRegistry),
+        public NftShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IPluginSettingsContainer settingsContainer) : this(
+            new PoolNftShapeRendererFactory(componentPoolsRegistry, new FramesPool(settingsContainer.GetSettings<NftShapePluginSettings>().Settings)),
+            instantiationFrameTimeBudgetProvider,
+            componentPoolsRegistry
+        ) { }
+
+        public NftShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IFramesPool framesPool) : this(
+            new PoolNftShapeRendererFactory(componentPoolsRegistry, framesPool),
             instantiationFrameTimeBudgetProvider,
             componentPoolsRegistry
         ) { }

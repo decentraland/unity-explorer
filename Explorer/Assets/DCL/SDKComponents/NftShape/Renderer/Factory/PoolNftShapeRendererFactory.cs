@@ -1,4 +1,5 @@
 using DCL.Optimization.Pools;
+using DCL.SDKComponents.NftShape.Frame;
 using UnityEngine;
 
 namespace DCL.SDKComponents.NftShape.Renderer.Factory
@@ -12,7 +13,7 @@ namespace DCL.SDKComponents.NftShape.Renderer.Factory
 
         private Transform tempTransform = null!;
 
-        public PoolNftShapeRendererFactory(IComponentPoolsRegistry componentPoolsRegistry) : this(new NftShapeRendererFactory(), componentPoolsRegistry) { }
+        public PoolNftShapeRendererFactory(IComponentPoolsRegistry componentPoolsRegistry, IFramesPool framesPool) : this(new NftShapeRendererFactory(framesPool), componentPoolsRegistry) { }
 
         public PoolNftShapeRendererFactory(INftShapeRendererFactory origin, IComponentPoolsRegistry componentPoolsRegistry)
         {

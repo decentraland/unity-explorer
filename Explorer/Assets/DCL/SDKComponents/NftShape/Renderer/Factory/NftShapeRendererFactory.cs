@@ -1,26 +1,30 @@
 using DCL.ECSComponents;
 using DCL.SDKComponents.NftShape.Component;
+using DCL.SDKComponents.NftShape.Frame;
 using System;
-using TMPro;
 using UnityEngine;
 
 namespace DCL.SDKComponents.NftShape.Renderer.Factory
 {
     public class NftShapeRendererFactory : INftShapeRendererFactory
     {
+        private readonly IFramesPool framesPool;
         private readonly PBNftShape nftShape = Default();
         private readonly Quaternion backward = Quaternion.Euler(0, 180, 0);
 
+        public NftShapeRendererFactory(IFramesPool framesPool)
+        {
+            this.framesPool = framesPool;
+        }
+
         public INftShapeRenderer New(Transform parent)
         {
-            var text = new GameObject($"nft component: {HashCode.Combine(parent.GetHashCode(), parent.childCount)}");
-            text.transform.SetParent(parent);
-            text.transform.localRotation = backward;
-            // var tmp = text.AddComponent<TextMeshPro>()!;
-            // var renderer = new TMPTextShapeRenderer(tmp, fontsStorage);
-            // renderer.Apply(textShape);
-            // return renderer;
-            throw new NotImplementedException();
+            var shape = new GameObject($"nft component: {HashCode.Combine(parent.GetHashCode(), parent.childCount)}");
+            shape.transform.SetParent(parent);
+            // shape.transform.localRotation = backward;
+            var renderer = new NftShapeRenderer(shape.transform, framesPool);
+            renderer.Apply(nftShape);
+            return renderer;
         }
 
         private static PBNftShape Default()

@@ -4,6 +4,7 @@ using DCL.Billboard.Demo.World;
 using DCL.DemoWorlds;
 using DCL.ECSComponents;
 using DCL.SDKComponents.NftShape.Component;
+using DCL.SDKComponents.NftShape.Frame;
 using System;
 using UnityEngine;
 
@@ -20,9 +21,10 @@ namespace DCL.SDKComponents.NftShape.Demo
         private readonly PBVisibilityComponent visibility;
         private readonly PBBillboard billboard;
 
-        public WarmUpSettingsNftShapeDemoWorld(NftShapeProperties nftShapeProperties, BillboardProperties billboardProperties, Func<bool> visible) : this(new PBNftShape(), new PBVisibilityComponent(), new PBBillboard(), nftShapeProperties, billboardProperties, visible) { }
+        public WarmUpSettingsNftShapeDemoWorld(IFramesPool framesPool, NftShapeProperties nftShapeProperties, BillboardProperties billboardProperties, Func<bool> visible) : this(framesPool, new PBNftShape(), new PBVisibilityComponent(), new PBBillboard(), nftShapeProperties, billboardProperties, visible) { }
 
         public WarmUpSettingsNftShapeDemoWorld(
+            IFramesPool framesPool,
             PBNftShape nftShape,
             PBVisibilityComponent visibility,
             PBBillboard billboard,
@@ -50,6 +52,7 @@ namespace DCL.SDKComponents.NftShape.Demo
                 new MaterialsDemoWorld(world),
                 new NftShapeDemoWorld(
                     world,
+                    framesPool,
                     (nftShape, visibility, billboard)
                 )
             );

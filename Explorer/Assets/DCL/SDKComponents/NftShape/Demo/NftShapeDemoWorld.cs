@@ -2,6 +2,7 @@ using Arch.Core;
 using DCL.DemoWorlds;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
+using DCL.SDKComponents.NftShape.Frame;
 using DCL.SDKComponents.NftShape.Renderer.Factory;
 using DCL.SDKComponents.NftShape.System;
 using DCL.Utilities.Extensions;
@@ -15,9 +16,9 @@ namespace DCL.SDKComponents.NftShape.Demo
     {
         private readonly IDemoWorld origin;
 
-        public NftShapeDemoWorld(World world, params (PBNftShape textShape, PBVisibilityComponent visibility, PBBillboard billboard)[] list) : this(world, list.AsReadOnly()) { }
+        public NftShapeDemoWorld(World world, IFramesPool framesPool, params (PBNftShape textShape, PBVisibilityComponent visibility, PBBillboard billboard)[] list) : this(world, framesPool, list.AsReadOnly()) { }
 
-        public NftShapeDemoWorld(World world, IReadOnlyList<(PBNftShape textShape, PBVisibilityComponent visibility, PBBillboard billboard)> list)
+        public NftShapeDemoWorld(World world, IFramesPool framesPool, IReadOnlyList<(PBNftShape textShape, PBVisibilityComponent visibility, PBBillboard billboard)> list)
         {
             origin = new DemoWorld(
                 world,
@@ -26,7 +27,7 @@ namespace DCL.SDKComponents.NftShape.Demo
                     foreach ((PBNftShape nftShape, PBVisibilityComponent visibility, PBBillboard billboard) in list)
                         w.Create(nftShape, visibility, billboard, NewTransform());
                 },
-                w => new InstantiateNftShapeSystem(w, new PoolNftShapeRendererFactory(new ComponentPoolsRegistry())),
+                w => new InstantiateNftShapeSystem(w, new PoolNftShapeRendererFactory(new ComponentPoolsRegistry(), framesPool)),
                 w => new VisibilityNftShapeSystem(w)
             );
         }

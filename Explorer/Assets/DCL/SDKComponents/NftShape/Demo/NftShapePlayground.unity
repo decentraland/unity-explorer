@@ -168,8 +168,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nftShapeProperties:
-    color: {r: 1, g: 1, b: 1, a: 1}
-    style: 22
+    color: {r: 0.3254717, g: 1, b: 0.40011987, a: 1}
+    style: 5
     urn: 
   billboardProperties:
     useX: 0
