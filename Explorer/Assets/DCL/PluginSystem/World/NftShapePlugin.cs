@@ -5,6 +5,7 @@ using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.NftShape.Component;
 using DCL.SDKComponents.NftShape.Frame;
+using DCL.SDKComponents.NftShape.Frames;
 using DCL.SDKComponents.NftShape.Renderer;
 using DCL.SDKComponents.NftShape.Renderer.Factory;
 using DCL.SDKComponents.NftShape.System;

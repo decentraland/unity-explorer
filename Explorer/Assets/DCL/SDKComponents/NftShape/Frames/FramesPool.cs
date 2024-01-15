@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 
-namespace DCL.SDKComponents.NftShape.Frame
+namespace DCL.SDKComponents.NftShape.Frames
 {
     public class FramesPool : IFramesPool
     {

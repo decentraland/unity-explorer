@@ -7,7 +7,7 @@ using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.NftShape.Component;
-using DCL.SDKComponents.NftShape.Frame;
+using DCL.SDKComponents.NftShape.Frames;
 using DCL.Utilities.Extensions;
 using Decentraland.Common;
 using ECS.Unity.ColorComponent;

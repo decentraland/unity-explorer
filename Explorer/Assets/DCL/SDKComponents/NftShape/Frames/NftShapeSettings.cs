@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace DCL.SDKComponents.NftShape.Frame
+namespace DCL.SDKComponents.NftShape.Frames
 {
     [CreateAssetMenu(fileName = "NftShape Settings", menuName = "SDKComponents/NftShape/Settings", order = 0)]
     public class NftShapeSettings : ScriptableObject

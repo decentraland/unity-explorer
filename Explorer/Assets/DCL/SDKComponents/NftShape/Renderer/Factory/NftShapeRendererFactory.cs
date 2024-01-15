@@ -1,6 +1,6 @@
 using DCL.ECSComponents;
 using DCL.SDKComponents.NftShape.Component;
-using DCL.SDKComponents.NftShape.Frame;
+using DCL.SDKComponents.NftShape.Frames;
 using System;
 using UnityEngine;
 
