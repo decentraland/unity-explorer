@@ -38,11 +38,15 @@ namespace DCL.SDKComponents.NftShape.Frame
             }
 
             var prefabs = map.Values.ToList();
-
-            if (prefabs.Count != prefabs.Distinct().Count())
+            var distinct = prefabs.Distinct().ToList();
+            if (prefabs.Count != distinct.Count)
             {
-                throw new Exception($"Duplicated frame prefabs");
+                prefabs.RemoveAll(e => distinct.Remove(e));
+                var duplicated = string.Join(", ", prefabs.Select(e => e.name));
+                throw new Exception($"Duplicated frame prefabs: {duplicated}");
             }
+
+            Debug.Log("NftShapeSettings: OK");
         }
 
         [Serializable]
