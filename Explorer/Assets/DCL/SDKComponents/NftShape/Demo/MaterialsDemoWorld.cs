@@ -18,6 +18,11 @@ namespace DCL.SDKComponents.NftShape.Demo
     {
         private readonly IDemoWorld demoWorld;
 
+        public MaterialsDemoWorld(World world) : this(
+            world,
+            new ProvidedAsset<Material>(new Material(Shader.Find("Standard")!))
+        ) { }
+
         public MaterialsDemoWorld(World world, ProvidedAsset<Material> providedAssetMaterials) : this(
             world,
             new MaterialsPool(providedAssetMaterials),

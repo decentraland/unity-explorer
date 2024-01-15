@@ -47,6 +47,7 @@ namespace DCL.SDKComponents.NftShape.Demo
                     randomCounts: 0,
                     predefinedBillboards: Array.Empty<BillboardMode>()
                 ),
+                new MaterialsDemoWorld(world),
                 new NftShapeDemoWorld(
                     world,
                     (nftShape, visibility, billboard)
