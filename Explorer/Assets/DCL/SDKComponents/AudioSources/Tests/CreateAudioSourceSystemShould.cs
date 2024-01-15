@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
@@ -28,13 +29,12 @@ namespace DCL.SDKComponents.AudioSources.Tests
 
             void CreateComponent()
             {
-                component = new AudioSourceComponent(CreatePBAudioSource());
-                component.ClipPromise = AssetPromise<AudioClip, GetAudioClipIntention>.Create(world, new GetAudioClipIntention(), PartitionComponent.TOP_PRIORITY);
+                component = new AudioSourceComponent(CreatePBAudioSource(), AssetPromise<AudioClip, GetAudioClipIntention>.Create(world, new GetAudioClipIntention(), PartitionComponent.TOP_PRIORITY));
             }
 
             void CreateEntity()
             {
-                entity = world.Create(component);
+                entity = world.Create(component, new PBAudioSource());
                 AddTransformToEntity(entity);
             }
         }
@@ -75,7 +75,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
         public void CreateAudioSourceFromResolvedPromise()
         {
             // Arrange
-            world.Add(component.ClipPromise!.Value.Entity, new StreamableLoadingResult<AudioClip>(TestAudioClip));
+            world.Add(component.ClipPromise.Entity, new StreamableLoadingResult<AudioClip>(TestAudioClip));
 
             // Act
             system.Update(0);

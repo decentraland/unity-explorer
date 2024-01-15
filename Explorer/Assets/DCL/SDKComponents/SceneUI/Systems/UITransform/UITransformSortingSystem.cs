@@ -1,0 +1,60 @@
+﻿using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
+using CRDT;
+using DCL.Diagnostics;
+using DCL.ECSComponents;
+using DCL.SDKComponents.SceneUI.Components;
+using ECS.Abstract;
+using ECS.Groups;
+using System.Collections.Generic;
+
+namespace DCL.SDKComponents.SceneUI.Systems.UITransform
+{
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
+    [UpdateAfter(typeof(UITransformParentingSystem))]
+    [LogCategory(ReportCategory.SCENE_UI)]
+    [ThrottlingEnabled]
+    public partial class UITransformSortingSystem : BaseUnityLoopSystem
+    {
+        private readonly Entity sceneRoot;
+        private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
+
+        private UITransformSortingSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, Entity sceneRoot) : base(world)
+        {
+            this.sceneRoot = sceneRoot;
+            this.entitiesMap = entitiesMap;
+        }
+
+        protected override void Update(float t)
+        {
+            DoUITransformSortingQuery(World);
+        }
+
+        [Query]
+        [All(typeof(PBUiTransform), typeof(UITransformComponent))]
+        private void DoUITransformSorting(ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
+        {
+            if (!sdkModel.IsDirty)
+                return;
+
+            SortUITransform(ref sdkModel, ref uiTransformComponent);
+
+            if (uiTransformComponent.Parent == EntityReference.Null)
+                return;
+
+            foreach (EntityReference brotherEntity in World.Get<UITransformComponent>(uiTransformComponent.Parent).Children)
+                SortUITransform(ref sdkModel, ref World.Get<UITransformComponent>(brotherEntity));
+        }
+
+        private void SortUITransform(ref PBUiTransform sdkModel, ref UITransformComponent uiTransform)
+        {
+            if (!entitiesMap.TryGetValue(sdkModel.RightOf, out Entity entityOnLeft) || entityOnLeft == sceneRoot)
+                return;
+
+            var uiTransformOnLeft = World.Get<UITransformComponent>(entityOnLeft);
+            uiTransform.Transform.PlaceInFront(uiTransformOnLeft.Transform);
+        }
+    }
+}

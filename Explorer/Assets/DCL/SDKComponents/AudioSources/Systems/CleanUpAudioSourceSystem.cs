@@ -17,11 +17,11 @@ namespace DCL.SDKComponents.AudioSources
     [UpdateInGroup(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.AUDIO_SOURCES)]
     [ThrottlingEnabled]
-    public partial class CleanUpAudioSourceSystem: BaseUnityLoopSystem, IFinalizeWorldSystem
+    public partial class CleanUpAudioSourceSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private ReleaseAudioSourceComponent releaseAudioSourceComponent;
 
-        private CleanUpAudioSourceSystem(World world, AudioClipsCache cache,IComponentPoolsRegistry poolsRegistry)  : base(world)
+        private CleanUpAudioSourceSystem(World world, AudioClipsCache cache, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             releaseAudioSourceComponent = new ReleaseAudioSourceComponent(world, cache, poolsRegistry);
         }
@@ -59,7 +59,7 @@ namespace DCL.SDKComponents.AudioSources
             private readonly AudioClipsCache cache;
             private readonly IComponentPool componentPool;
 
-            public ReleaseAudioSourceComponent(World world, AudioClipsCache cache,IComponentPoolsRegistry poolsRegistry)
+            public ReleaseAudioSourceComponent(World world, AudioClipsCache cache, IComponentPoolsRegistry poolsRegistry)
             {
                 this.world = world;
                 this.cache = cache;
@@ -69,18 +69,15 @@ namespace DCL.SDKComponents.AudioSources
 
             public void Update(ref AudioSourceComponent component)
             {
-                if (component.ClipPromise == null) return; // loading not started
+                GetAudioClipIntention clipIntent = component.ClipPromise.LoadingIntention;
+
+                component.ClipPromise.ForgetLoading(world);
 
                 if (component.Result == null) // loading in progress
-                {
-                    component.ClipPromise.Value.ForgetLoading(world);
-                    component.ClipPromise = null;
                     return;
-                }
 
-                cache.Dereference(component.ClipPromise!.Value.LoadingIntention, component.Result.clip);
+                cache.Dereference(clipIntent, component.Result.clip);
                 componentPool.Release(component.Result);
-
                 component.Dispose();
             }
         }

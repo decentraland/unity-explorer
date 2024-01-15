@@ -40,7 +40,6 @@ namespace CrdtEcsBridge.Engine
         private readonly CustomSampler applyBufferSampler;
 
         private byte[] lastSerializationBuffer;
-
         private bool isDisposing;
 
         public EngineAPIImplementation(
