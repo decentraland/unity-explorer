@@ -19,8 +19,7 @@ namespace DCL.SDKComponents.AudioSources
         {
             component.ClipPromise.ForgetLoading(world);
 
-            if (component.AudioSource == null) // loading in progress
-                return;
+            if (component.AudioSource == null) return; // loading in progress
 
             cache.Dereference(component.ClipPromise.LoadingIntention, component.AudioSource.clip);
             componentPool.Release(component.AudioSource);

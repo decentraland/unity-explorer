@@ -58,8 +58,8 @@ namespace DCL.SDKComponents.AudioSources
                 || !audioSourceComponent.ClipPromise.TryConsume(World, out StreamableLoadingResult<AudioClip> promiseResult))
                 return;
 
-            if (audioSourceComponent.AudioSource == null)
-                audioSourceComponent.AudioSource ??= audioSourcesPool.Get();
+            if (!audioSourceComponent.AudioSourceAssigned)
+                audioSourceComponent.SetAudioSource(audioSourcesPool.Get());
 
             audioSourceComponent.AudioSource.FromPBAudioSourceWithClip(audioSourceComponent.PBAudioSource, clip: promiseResult.Asset);
 
@@ -80,11 +80,8 @@ namespace DCL.SDKComponents.AudioSources
         [All(typeof(PBAudioSource), typeof(AudioSourceComponent))]
         private void UpdateAudioSource(ref PBAudioSource sdkComponent, ref AudioSourceComponent component, ref PartitionComponent partitionComponent)
         {
-            if (!sceneStateProvider.IsCurrent)
-            {
-                component.AudioSource.volume = 0;
-                return;
-            }
+            if (component.AudioSourceAssigned)
+                component.AudioSource.volume = sceneStateProvider.IsCurrent ? sdkComponent.GetVolume() : 0;
 
             HandleSDKChanges(sdkComponent, ref component, partitionComponent);
         }
@@ -93,7 +90,7 @@ namespace DCL.SDKComponents.AudioSources
         {
             if (!sdkComponent.IsDirty) return;
 
-            if (component.AudioSource != null)
+            if (component.AudioSourceAssigned)
                 component.AudioSource.ApplyPBAudioSource(sdkComponent);
 
             if (sdkComponent.AudioClipUrl != component.AudioClipUrl)

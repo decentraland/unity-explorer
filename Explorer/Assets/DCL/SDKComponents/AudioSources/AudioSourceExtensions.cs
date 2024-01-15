@@ -36,6 +36,9 @@ namespace DCL.SDKComponents.AudioSources
                 pbAudioSource.HasPlaying && pbAudioSource.Playing != audioSource.isPlaying && audioSource.clip != null;
         }
 
+        public static float GetVolume(this PBAudioSource pbAudioSource) =>
+            pbAudioSource.HasVolume ? pbAudioSource.Volume : Default.VOLUME;
+
         /// <summary>
         ///     Default constant values for audio source properties, that rewrite protobuf defaults
         /// </summary>
