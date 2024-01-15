@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
@@ -48,7 +49,11 @@ namespace DCL.CharacterPreview
         {
             // Change model
             previewModel.Wearables ??= new List<string>();
-            previewModel.Wearables.Add(i.GetUrn());
+
+            if (!previewModel.Wearables.Contains(i.GetUrn()))
+            {
+                previewModel.Wearables.Add(i.GetUrn());
+            }
             UpdateModel();
         }
 
@@ -62,13 +67,15 @@ namespace DCL.CharacterPreview
         private void UpdateModel()
         {
             Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
-            /*previewModel.Wearables ??= new List<string>();
-            previewModel.Wearables.Clear();
+            previewModel.Wearables ??= new List<string>();
 
             foreach (URN avatarSharedWearable in world.Get<Profile>(playerEntity).Avatar.SharedWearables)
             {
-                previewModel.Wearables.Add(avatarSharedWearable);
-            } */
+                if (!previewModel.Wearables.Contains(avatarSharedWearable))
+                {
+                    previewModel.Wearables.Add(avatarSharedWearable);
+                }
+            }
 
             previewModel.BodyShape = avatar.BodyShape;
             previewModel.HairColor = avatar.HairColor;
