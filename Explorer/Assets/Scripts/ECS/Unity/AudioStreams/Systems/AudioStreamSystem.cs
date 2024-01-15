@@ -7,7 +7,7 @@ using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Unity.AudioStreams.Components;
 using ECS.Unity.Groups;
-using RenderHeads.Media.AVProVideo;
+using SceneRunner.Scene;
 
 namespace ECS.Unity.AudioStreams.Systems
 {
@@ -17,15 +17,17 @@ namespace ECS.Unity.AudioStreams.Systems
     public partial class AudioStreamSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPoolsRegistry poolsRegistry;
+        private readonly ISceneStateProvider sceneStateProvider;
 
-        private AudioStreamSystem(World world, IComponentPoolsRegistry componentPoolsRegistry) : base(world)
+        private AudioStreamSystem(World world, IComponentPoolsRegistry componentPoolsRegistry, ISceneStateProvider sceneStateProvider) : base(world)
         {
             poolsRegistry = componentPoolsRegistry;
+            this.sceneStateProvider = sceneStateProvider;
 
-            {
-                MediaPlayer? mediaPlayer = poolsRegistry.GetReferenceTypePool<MediaPlayer>().Get();
-                mediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, "http://ice3.somafm.com/groovesalad-128-mp3", autoPlay: true);
-            }
+            // {
+            //     MediaPlayer? mediaPlayer = poolsRegistry.GetReferenceTypePool<MediaPlayer>().Get();
+            //     mediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, "http://ice3.somafm.com/groovesalad-128-mp3", autoPlay: true);
+            // }
         }
 
         protected override void Update(float t)
@@ -38,17 +40,18 @@ namespace ECS.Unity.AudioStreams.Systems
         [None(typeof(AudioStreamComponent))]
         private void InstantiateAudioStream(in Entity entity, ref PBAudioStream sdkAudio)
         {
-            var component = new AudioStreamComponent(sdkAudio, poolsRegistry);
+            var component = new AudioStreamComponent(sdkAudio, poolsRegistry, sceneStateProvider.IsCurrent);
             World.Add(entity, component);
         }
 
         [Query]
         private void UpdateAudioStream(ref PBAudioStream sdkComponent, ref AudioStreamComponent component)
         {
-            if (!sdkComponent.IsDirty || !sdkComponent.Url.IsValidUrl())
-                return;
+            component.UpdateVolume(sdkComponent, sceneStateProvider.IsCurrent);
 
-            component.Update(sdkComponent);
+            if (!sdkComponent.IsDirty || !sdkComponent.Url.IsValidUrl()) return;
+
+            component.UpdateComponentChange(sdkComponent);
             sdkComponent.IsDirty = false;
         }
     }
