@@ -23,6 +23,28 @@ namespace DCL.SDKComponents.NftShape.Frame
             return defaultFrame.EnsureNotNull("Default frame not set");
         }
 
+        [ContextMenu(nameof(Ensure))]
+        public void Ensure()
+        {
+            var map = FramePrefabs();
+            string[] names = Enum.GetNames(typeof(NftFrameType));
+
+            if (map.Count != names.Length)
+            {
+                var missing = string.Join(", ", names.Except(map.Keys.Select(e => e.ToString())));
+                throw new Exception(
+                    $"Missing frame prefabs for {missing}"
+                );
+            }
+
+            var prefabs = map.Values.ToList();
+
+            if (prefabs.Count != prefabs.Distinct().Count())
+            {
+                throw new Exception($"Duplicated frame prefabs");
+            }
+        }
+
         [Serializable]
         private class Pair
         {
