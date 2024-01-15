@@ -3,6 +3,7 @@ using DCL.DemoWorlds;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.NftShape.Frames;
+using DCL.SDKComponents.NftShape.Frames.Pool;
 using DCL.SDKComponents.NftShape.Renderer.Factory;
 using DCL.SDKComponents.NftShape.System;
 using DCL.Utilities.Extensions;

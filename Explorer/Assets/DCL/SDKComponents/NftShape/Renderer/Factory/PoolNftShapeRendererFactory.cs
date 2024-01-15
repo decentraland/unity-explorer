@@ -1,5 +1,6 @@
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.NftShape.Frames;
+using DCL.SDKComponents.NftShape.Frames.Pool;
 using UnityEngine;
 
 namespace DCL.SDKComponents.NftShape.Renderer.Factory

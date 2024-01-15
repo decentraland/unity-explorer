@@ -1,7 +1,7 @@
 using DCL.ECSComponents;
 using UnityEngine;
 
-namespace DCL.SDKComponents.NftShape.Frames
+namespace DCL.SDKComponents.NftShape.Frames.Pool
 {
     public interface IFramesPool
     {

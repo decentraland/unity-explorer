@@ -1,5 +1,6 @@
 using DCL.PluginSystem;
 using DCL.SDKComponents.NftShape.Frames;
+using DCL.SDKComponents.NftShape.Frames.Pool;
 using System;
 using UnityEngine;
 
