@@ -232,6 +232,19 @@ namespace DCL.Backpack
             if (!uniTaskAsync.Result!.Value.Succeeded)
                 return;
 
+            if (uniTaskAsync.Result.Value.Asset.Wearables.Length == 0)
+            {
+                view.NoSearchResults.SetActive(!string.IsNullOrEmpty(currentSeach));
+                view.NoCategoryResults.SetActive(!string.IsNullOrEmpty(currentCategory));
+                view.RegularResults.SetActive(string.IsNullOrEmpty(currentSeach) && string.IsNullOrEmpty(currentCategory));
+            }
+            else
+            {
+                view.NoSearchResults.SetActive(false);
+                view.NoCategoryResults.SetActive(false);
+                view.RegularResults.SetActive(true);
+            }
+
             SetGridElements(uniTaskAsync.Result.Value.Asset.Wearables);
         }
 
