@@ -12,13 +12,13 @@ namespace DCL.SceneLoadingScreens
     {
         private readonly LocalizedStringDatabase tipsDatabase;
         private readonly LocalizedAssetDatabase imagesDatabase;
-        private readonly StringTable fallbackTipsTable;
+        private readonly string fallbackTipsTable;
         private readonly TimeSpan defaultDuration;
 
         public UnityLocalizationSceneTipsProvider(
             LocalizedStringDatabase tipsDatabase,
             LocalizedAssetDatabase imagesDatabase,
-            StringTable fallbackTipsTable,
+            string fallbackTipsTable,
             TimeSpan defaultDuration)
         {
             this.tipsDatabase = tipsDatabase;
@@ -30,7 +30,7 @@ namespace DCL.SceneLoadingScreens
         public async UniTask<SceneTips> Get(Vector2Int parcelCoord, CancellationToken ct)
         {
             StringTable tipsTable = await tipsDatabase.GetTableAsync($"LoadingSceneTips-{parcelCoord.x},{parcelCoord.y}").Task
-                                    ?? fallbackTipsTable;
+                                    ?? await tipsDatabase.GetTableAsync(fallbackTipsTable).Task;
 
             ct.ThrowIfCancellationRequested();
 

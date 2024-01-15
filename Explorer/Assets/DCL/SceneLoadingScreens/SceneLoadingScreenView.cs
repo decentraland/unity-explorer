@@ -6,7 +6,7 @@ using Random = UnityEngine.Random;
 
 namespace DCL.SceneLoadingScreens
 {
-    public class ScreenLoadingScreenView : ViewBase, IView
+    public class SceneLoadingScreenView : ViewBase, IView
     {
         [field: SerializeField]
         public Slider ProgressBar { get; private set; } = null!;

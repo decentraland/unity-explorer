@@ -1,8 +1,6 @@
 using Cysharp.Threading.Tasks;
-using DCL.SceneReadiness;
 using DCL.Utilities.Extensions;
 using MVC;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -11,22 +9,18 @@ using Utility;
 
 namespace DCL.SceneLoadingScreens
 {
-    public partial class SceneLoadingScreenController : ControllerBase<ScreenLoadingScreenView, SceneLoadingScreenController.Params>
+    public partial class SceneLoadingScreenController : ControllerBase<SceneLoadingScreenView, SceneLoadingScreenController.Params>
     {
         private readonly ISceneTipsProvider sceneTipsProvider;
-        private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
         private int currentTip;
         private SceneTips tips;
         private CancellationTokenSource? tipsRotationCancellationToken;
-        private int finalizedLoadingTasks;
 
         public SceneLoadingScreenController(ViewFactoryMethod viewFactory,
-            ISceneTipsProvider sceneTipsProvider,
-            ISceneReadinessReportQueue sceneReadinessReportQueue) : base(viewFactory)
+            ISceneTipsProvider sceneTipsProvider) : base(viewFactory)
         {
             this.sceneTipsProvider = sceneTipsProvider;
-            this.sceneReadinessReportQueue = sceneReadinessReportQueue;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
@@ -104,19 +98,9 @@ namespace DCL.SceneLoadingScreens
 
         private async UniTask WaitUntilWorldIsLoadedAsync(CancellationToken ct)
         {
-            async UniTask WaitForSceneReadinessAndUpdateProgressBarAsync(SceneReadinessReport report, int totalTasks, CancellationToken ct)
-            {
-                await report.CompletionSource.Task;
-                await UniTask.SwitchToMainThread(ct);
+            await inputData.SceneReadinessReport.CompletionSource.Task;
 
-                finalizedLoadingTasks++;
-                viewInstance.ProgressBar.normalizedValue = finalizedLoadingTasks / (float)totalTasks;
-            }
-
-            finalizedLoadingTasks = 0;
-
-            if (sceneReadinessReportQueue.TryDequeue(new[] { inputData.Coordinate }, out IReadOnlyList<SceneReadinessReport>? reports))
-                await UniTask.WhenAll(reports.Select(report => WaitForSceneReadinessAndUpdateProgressBarAsync(report, reports.Count, ct)));
+            viewInstance.ProgressBar.normalizedValue = 1f;
         }
 
         private void ShowTip(int index)

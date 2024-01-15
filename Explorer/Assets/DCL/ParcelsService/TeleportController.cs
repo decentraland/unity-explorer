@@ -3,8 +3,10 @@ using Arch.System;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
+using DCL.SceneLoadingScreens;
 using DCL.SceneReadiness;
 using Ipfs;
+using MVC;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -17,12 +19,15 @@ namespace DCL.ParcelsService
     public partial class TeleportController : ITeleportController
     {
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        private readonly MVCManager mvcManager;
         private IRetrieveScene retrieveScene;
         private World world;
 
-        public TeleportController(ISceneReadinessReportQueue sceneReadinessReportQueue)
+        public TeleportController(ISceneReadinessReportQueue sceneReadinessReportQueue,
+            MVCManager mvcManager)
         {
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.mvcManager = mvcManager;
         }
 
         public void InvalidateRealm()
@@ -98,7 +103,8 @@ namespace DCL.ParcelsService
 
             AddTeleportIntentQuery(retrieveScene.World, new PlayerTeleportIntent(targetPosition, parcel, readinessCompletion));
 
-            // TODO Show loading screen
+            mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(parcel, readinessCompletion)))
+                      .Forget();
 
             // add timeout in case of a trouble
             await readinessCompletion.CompletionSource.Task.Timeout(TimeSpan.FromSeconds(30));

@@ -30,13 +30,12 @@ namespace SceneRunner.ECSWorld
         private readonly IReadOnlyCameraSamplingData cameraSamplingData;
         private readonly IExposedCameraData exposedCameraData;
         private readonly IReadOnlyList<IDCLWorldPlugin> plugins;
-
-        // TODO inject
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
         public ECSWorldFactory(ECSWorldSingletonSharedDependencies sharedDependencies,
             IPartitionSettings partitionSettings, IReadOnlyCameraSamplingData cameraSamplingData,
             IExposedCameraData exposedCameraData,
+            ISceneReadinessReportQueue sceneReadinessReportQueue,
             IReadOnlyList<IDCLWorldPlugin> plugins)
         {
             this.plugins = plugins;
@@ -44,6 +43,7 @@ namespace SceneRunner.ECSWorld
             this.partitionSettings = partitionSettings;
             this.cameraSamplingData = cameraSamplingData;
             this.exposedCameraData = exposedCameraData;
+            this.sceneReadinessReportQueue = sceneReadinessReportQueue;
         }
 
         public ECSWorldFacade CreateWorld(in ECSWorldFactoryArgs args)

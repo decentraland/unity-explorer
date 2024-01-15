@@ -2,7 +2,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.DebugUtilities;
@@ -12,13 +11,11 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SkyBox;
 using DCL.Profiles;
-using DCL.SceneReadiness;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS;
 using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle;
 using MVC;
 using MVC.PopupsController.PopupCloser;
 using SceneRunner.EmptyScene;
@@ -76,10 +73,8 @@ namespace Global.Dynamic
             var dclInput = new DCLInput();
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
             var realmData = new RealmData();
-            IScenesCache scenesCache = new ScenesCache();
-            var sceneReadinessReportQueue = new SceneReadinessReportQueue(scenesCache);
 
-            var parcelServiceContainer = ParcelServiceContainer.Create(realmData, sceneReadinessReportQueue, debugBuilder);
+            var parcelServiceContainer = ParcelServiceContainer.Create(realmData, staticContainer.SceneReadinessReportQueue, debugBuilder, mvcManager);
 
             PopupCloserView popupCloserView = Object.Instantiate((await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
             mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
@@ -123,6 +118,7 @@ namespace Global.Dynamic
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
                 new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, mvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, storedIdentityProvider),
                 new SkyBoxPlugin(debugBuilder, skyBoxSceneData),
+                new LoadingScreenPlugin(staticContainer.AssetsProvisioner, mvcManager),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
@@ -132,11 +128,11 @@ namespace Global.Dynamic
                 parcelServiceContainer.TeleportController,
                 parcelServiceContainer.RetrieveSceneFromFixedRealm,
                 parcelServiceContainer.RetrieveSceneFromVolatileWorld,
-                sceneLoadRadius, staticLoadPositions, realmData, scenesCache);
+                sceneLoadRadius, staticLoadPositions, realmData, staticContainer.ScenesCache);
 
             container.GlobalWorldFactory = new GlobalWorldFactory(in staticContainer, staticContainer.RealmPartitionSettings,
                 exposedGlobalDataContainer.CameraSamplingData, realmSamplingData, ASSET_BUNDLES_URL, realmData, globalPlugins,
-                debugBuilder, scenesCache);
+                debugBuilder, staticContainer.ScenesCache);
 
             container.GlobalPlugins = globalPlugins;
             container.EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins);

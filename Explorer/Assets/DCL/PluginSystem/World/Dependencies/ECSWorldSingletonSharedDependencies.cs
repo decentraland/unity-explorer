@@ -3,6 +3,7 @@ using CrdtEcsBridge.Components;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.SceneReadiness;
 using ECS.Prioritization.Components;
 
 namespace DCL.PluginSystem.World.Dependencies
