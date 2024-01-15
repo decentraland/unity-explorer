@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,8 +13,5 @@ namespace DCL.UI
 
         [field: SerializeField]
         public Transform PagesContainer { get; private set; }
-
-        [field: SerializeField]
-        public GameObject PageReference { get; private set; }
     }
 }

@@ -29,12 +29,13 @@ namespace DCL.Backpack
             BackpackEventBus backpackEventBus,
             IWeb3IdentityCache web3IdentityCache,
             IBackpackEquipStatusController backpackEquipStatusController,
-            BackpackSortController backpackSortController)
+            BackpackSortController backpackSortController,
+            PageButtonView pageButtonView)
         {
             this.view = view;
             new BackpackSearchController(view.backpackSearchBar, backpackCommandBus, backpackEventBus);
             slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus, rarityBackgrounds);
-            backpackGridController = new BackpackGridController(view.backpackGridView, backpackCommandBus, backpackEventBus, web3IdentityCache, rarityBackgrounds, rarityColors, categoryIcons, backpackEquipStatusController, backpackSortController);
+            backpackGridController = new BackpackGridController(view.backpackGridView, backpackCommandBus, backpackEventBus, web3IdentityCache, rarityBackgrounds, rarityColors, categoryIcons, backpackEquipStatusController, backpackSortController, pageButtonView);
             backpackInfoPanelController = new BackpackInfoPanelController(view.backpackInfoPanelView, backpackEventBus, categoryIcons, rarityInfoPanelBackgrounds);
 
             rectTransform = view.GetComponent<RectTransform>();

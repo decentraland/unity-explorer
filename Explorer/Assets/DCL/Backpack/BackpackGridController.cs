@@ -67,7 +67,8 @@ namespace DCL.Backpack
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
             IBackpackEquipStatusController backpackEquipStatusController,
-            BackpackSortController backpackSortController)
+            BackpackSortController backpackSortController,
+            PageButtonView pageButtonView)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -77,7 +78,7 @@ namespace DCL.Backpack
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
             this.backpackEquipStatusController = backpackEquipStatusController;
-            this.pageSelectorController = new PageSelectorController(view.PageSelectorView);
+            this.pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
 
             usedPoolItems = new ();
             eventBus.EquipEvent += OnEquip;

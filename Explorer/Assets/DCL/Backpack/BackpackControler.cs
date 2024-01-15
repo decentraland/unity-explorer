@@ -38,7 +38,8 @@ namespace DCL.Backpack
                 BackpackCommandBus backpackCommandBus,
                 BackpackEventBus backpackEventBus,
                 IWeb3IdentityCache web3IdentityCache,
-                IWearableCatalog wearableCatalog)
+                IWearableCatalog wearableCatalog,
+                PageButtonView pageButtonView)
             {
                 this.view = view;
                 this.backpackCommandBus = backpackCommandBus;
@@ -58,7 +59,8 @@ namespace DCL.Backpack
                     backpackEventBus,
                     web3IdentityCache,
                     backpackEquipStatusController,
-                    backpackSortController);
+                    backpackSortController,
+                    pageButtonView);
 
                 Dictionary<BackpackSections, ISection> backpackSections = new ()
                 {
