@@ -6,6 +6,7 @@ using DCL.SDKComponents.NftShape.Frame;
 using DCL.SDKComponents.NftShape.Renderer.Factory;
 using DCL.SDKComponents.NftShape.System;
 using DCL.Utilities.Extensions;
+using ECS.Prioritization.Components;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using UnityEngine;
@@ -25,7 +26,7 @@ namespace DCL.SDKComponents.NftShape.Demo
                 w =>
                 {
                     foreach ((PBNftShape nftShape, PBVisibilityComponent visibility, PBBillboard billboard) in list)
-                        w.Create(nftShape, visibility, billboard, NewTransform());
+                        w.Create(nftShape, visibility, billboard, NewTransform(), new PartitionComponent { IsBehind = false, RawSqrDistance = 0 });
                 },
                 w => new InstantiateNftShapeSystem(w, new PoolNftShapeRendererFactory(new ComponentPoolsRegistry(), framesPool)),
                 w => new VisibilityNftShapeSystem(w)
