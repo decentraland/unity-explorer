@@ -35,13 +35,7 @@ namespace DCL.SDKComponents.NftShape.System
         ) : base(world)
         {
             this.nftShapeRendererFactory = nftShapeRendererFactory;
-
-            this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider
-                                                        ?? new FrameTimeCapBudget(
-                                                            33,
-                                                            new ProfilingProvider()
-                                                        );
-
+            this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider ?? new FrameTimeCapBudget();
             this.foreignTextures = foreignTextures ?? new DefaultForeignTextures(world);
             this.sceneData = sceneData ?? new ISceneData.Fake();
         }
