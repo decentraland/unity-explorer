@@ -8,6 +8,11 @@ namespace DCL.Optimization.PerformanceBudgeting
         private readonly ulong totalBudgetAvailable;
         private readonly IProfilingProvider profilingProvider;
 
+        public FrameTimeCapBudget() : this(new ProfilingProvider()) { }
+
+        //33 in [ms]. Table: 33ms ~ 30fps | 16ms ~ 60fps | 11ms ~ 90 fps | 8ms ~ 120fps
+        public FrameTimeCapBudget(IProfilingProvider profilingProvider) : this(33f, profilingProvider) { }
+
         public FrameTimeCapBudget(float budgetCapInMS, IProfilingProvider profilingProvider) : this(
             TimeSpan.FromMilliseconds(budgetCapInMS),
             profilingProvider
