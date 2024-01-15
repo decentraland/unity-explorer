@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.AudioStream.Components;
@@ -12,8 +13,7 @@ using SceneRunner.Scene;
 namespace DCL.SDKComponents.AudioStream.Systems
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
-
-    // [LogCategory(ReportCategory.AUDIO_SOURCES)]
+    [LogCategory(ReportCategory.AUDIO_STREAM)]
     public partial class AudioStreamSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPoolsRegistry poolsRegistry;
@@ -23,11 +23,6 @@ namespace DCL.SDKComponents.AudioStream.Systems
         {
             poolsRegistry = componentPoolsRegistry;
             this.sceneStateProvider = sceneStateProvider;
-
-            // {
-            //     MediaPlayer? mediaPlayer = poolsRegistry.GetReferenceTypePool<MediaPlayer>().Get();
-            //     mediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, "http://ice3.somafm.com/groovesalad-128-mp3", autoPlay: true);
-            // }
         }
 
         protected override void Update(float t)

@@ -163,8 +163,7 @@ namespace Global
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
-
-                // new AudioStreamPlugin(),
+                new AudioStreamPlugin(sharedDependencies, container.CacheCleaner),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
