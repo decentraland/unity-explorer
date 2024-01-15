@@ -18,6 +18,9 @@ namespace DCL.PluginSystem.Global
             public string FallbackTipsTable { get; private set; }
 
             [field: SerializeField]
+            public string FallbackImagesTable { get; private set; }
+
+            [field: SerializeField]
             public float TipDisplayDuration { get; private set; }
 
             [Serializable]

@@ -56,12 +56,11 @@ namespace DCL.SceneLoadingScreens
 
         public void ShowTip(int index)
         {
-            for (var i = 0; i < tips.Count; i++)
-            {
-                TipView view = tips[i];
-                view.gameObject.SetActive(i == index);
-                backgroundImage.sprite = view.Image.sprite;
-            }
+            foreach (TipView? view in tips)
+                view.gameObject.SetActive(false);
+
+            tips[index].gameObject.SetActive(true);
+            backgroundImage.sprite = tips[index].Image.sprite;
         }
     }
 }

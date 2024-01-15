@@ -55,6 +55,7 @@ namespace DCL.SceneLoadingScreens
         {
             base.OnBeforeViewShow();
 
+            viewInstance.ProgressBar.normalizedValue = 1f;
             viewInstance.ClearTips();
         }
 

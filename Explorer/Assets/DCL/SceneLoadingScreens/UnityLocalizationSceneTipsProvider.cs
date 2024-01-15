@@ -13,17 +13,20 @@ namespace DCL.SceneLoadingScreens
         private readonly LocalizedStringDatabase tipsDatabase;
         private readonly LocalizedAssetDatabase imagesDatabase;
         private readonly string fallbackTipsTable;
+        private readonly string fallbackImagesTable;
         private readonly TimeSpan defaultDuration;
 
         public UnityLocalizationSceneTipsProvider(
             LocalizedStringDatabase tipsDatabase,
             LocalizedAssetDatabase imagesDatabase,
             string fallbackTipsTable,
+            string fallbackImagesTable,
             TimeSpan defaultDuration)
         {
             this.tipsDatabase = tipsDatabase;
             this.imagesDatabase = imagesDatabase;
             this.fallbackTipsTable = fallbackTipsTable;
+            this.fallbackImagesTable = fallbackImagesTable;
             this.defaultDuration = defaultDuration;
         }
 
@@ -34,7 +37,9 @@ namespace DCL.SceneLoadingScreens
 
             ct.ThrowIfCancellationRequested();
 
-            AssetTable? imagesTable = await imagesDatabase.GetTableAsync($"LoadingSceneTipImages-{parcelCoord.x},{parcelCoord.y}").Task;
+            AssetTable? imagesTable = await imagesDatabase.GetTableAsync($"LoadingSceneTipImages-{parcelCoord.x},{parcelCoord.y}").Task
+                                      ?? await imagesDatabase.GetTableAsync(fallbackImagesTable).Task;
+
             ct.ThrowIfCancellationRequested();
 
             int tipCount = tipsTable.Count / 2;
