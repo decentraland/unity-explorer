@@ -20,7 +20,7 @@ namespace ECS.Unity.Materials.ForeignTextures
         public static void StartLoad(this IForeignTextures foreignTextures, ref MaterialComponent materialComponent, ref PartitionComponent partitionComponent)
         {
             foreignTextures.CreateGetTexturePromises(ref materialComponent, ref partitionComponent);
-            materialComponent.Status = MaterialComponent.LifeCycle.LoadingInProgress;
+            materialComponent.Status = StreamableLoading.LifeCycle.LoadingInProgress;
         }
     }
 }

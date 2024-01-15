@@ -10,6 +10,7 @@ using ECS.Unity.Materials.Systems;
 using ECS.Unity.SceneBoundsChecker;
 using SceneRunner.Scene;
 using System;
+using ECS.StreamableLoading;
 
 namespace DCL.SDKComponents.NftShape.System
 {
@@ -37,14 +38,14 @@ namespace DCL.SDKComponents.NftShape.System
             switch (materialComponent.Status)
             {
                 // If Material is loaded but not applied
-                case MaterialComponent.LifeCycle.LoadingFinished:
-                    materialComponent.Status = MaterialComponent.LifeCycle.MaterialApplied;
+                case LifeCycle.LoadingFinished:
+                    materialComponent.Status = LifeCycle.Applied;
                     ConfigureSceneMaterial.EnableSceneBounds(materialComponent.Result!, sceneData.Geometry.CircumscribedPlanes);
                     nftShapeRendererComponent.ApplyMaterial(materialComponent);
                     break;
-                case MaterialComponent.LifeCycle.LoadingNotStarted: break;
-                case MaterialComponent.LifeCycle.LoadingInProgress: break;
-                case MaterialComponent.LifeCycle.MaterialApplied: break;
+                case LifeCycle.LoadingNotStarted: break;
+                case LifeCycle.LoadingInProgress: break;
+                case LifeCycle.Applied: break;
                 default: throw new ArgumentOutOfRangeException();
             }
         }

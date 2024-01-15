@@ -11,7 +11,7 @@ using ECS.StreamableLoading.Textures;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.Textures.Components;
-using ECS.Unity.Textures.Components.Defaults;
+using ECS.Unity.Textures.Components.Extensions;
 using SceneRunner.Scene;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
