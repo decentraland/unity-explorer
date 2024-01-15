@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Backpack.BackpackBus;
 using DCL.UI;
+using System;
 using System.Threading;
 using Utility;
 
@@ -13,13 +14,22 @@ namespace DCL.Backpack
 
         private CancellationTokenSource cts;
 
-        public BackpackSearchController(SearchBarView view, IBackpackCommandBus commandBus)
+        public BackpackSearchController(SearchBarView view, IBackpackCommandBus commandBus, IBackpackEventBus backpackEventBus)
         {
             this.view = view;
             this.commandBus = commandBus;
+
+            backpackEventBus.SearchEvent += OnSearchEvent;
+
             view.inputField.onValueChanged.AddListener(OnValueChanged);
             view.clearSearchButton.onClick.AddListener(ClearSearch);
             view.clearSearchButton.gameObject.SetActive(false);
+        }
+
+        private void OnSearchEvent(string searchString)
+        {
+            if(string.IsNullOrEmpty(searchString))
+                ClearSearch();
         }
 
         private void ClearSearch()

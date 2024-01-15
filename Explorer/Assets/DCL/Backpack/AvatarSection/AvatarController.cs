@@ -32,7 +32,7 @@ namespace DCL.Backpack
             BackpackSortController backpackSortController)
         {
             this.view = view;
-            new BackpackSearchController(view.backpackSearchBar, backpackCommandBus);
+            new BackpackSearchController(view.backpackSearchBar, backpackCommandBus, backpackEventBus);
             slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus, rarityBackgrounds);
             backpackGridController = new BackpackGridController(view.backpackGridView, backpackCommandBus, backpackEventBus, web3IdentityCache, rarityBackgrounds, rarityColors, categoryIcons, backpackEquipStatusController, backpackSortController);
             backpackInfoPanelController = new BackpackInfoPanelController(view.backpackInfoPanelView, backpackEventBus, categoryIcons, rarityInfoPanelBackgrounds);

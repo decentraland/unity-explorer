@@ -13,6 +13,7 @@ using ECS.StreamableLoading.Common;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
@@ -106,6 +107,8 @@ namespace DCL.Backpack
 
         private void SetGridAsLoading()
         {
+            cts.SafeCancelAndDispose();
+            cts = new CancellationTokenSource();
             ClearPoolElements();
             for (int i = 0; i < CURRENT_PAGE_SIZE; i++)
             {
@@ -164,7 +167,7 @@ namespace DCL.Backpack
                 new GetWearableByParamIntention(requestParameters, "0x8e41609eD5e365Ac23C28d9625Bd936EA9C9E22c"/*web3IdentityCache.Identity!.EphemeralAccount.Address*/, results, totalAmount),
                 PartitionComponent.TOP_PRIORITY);
 
-            AwaitWearablesPromiseForSizeAsync(wearablesPromise, new CancellationTokenSource().Token).Forget();
+            AwaitWearablesPromiseForSizeAsync(wearablesPromise, cts.Token).Forget();
         }
 
         private void BuildRequestParameters(string pageNumber, string pageSize)
@@ -213,8 +216,6 @@ namespace DCL.Backpack
         private void RequestPage(int pageNumber)
         {
             SetGridAsLoading();
-            cts.SafeCancelAndDispose();
-            cts = new CancellationTokenSource();
             BuildRequestParameters(pageNumber.ToString(), CURRENT_PAGE_SIZE_STR);
             results.Clear();
 
@@ -250,6 +251,7 @@ namespace DCL.Backpack
 
         private async UniTaskVoid AwaitWearablesPromiseForSizeAsync(ParamPromise wearablesPromise, CancellationToken ct)
         {
+            ct.ThrowIfCancellationRequested();
             AssetPromise<WearablesResponse, GetWearableByParamIntention> uniTaskAsync = await wearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
 
             if (!uniTaskAsync.Result!.Value.Succeeded)

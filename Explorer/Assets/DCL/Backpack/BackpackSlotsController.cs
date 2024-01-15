@@ -30,12 +30,22 @@ namespace DCL.Backpack
 
             this.backpackEventBus.EquipEvent += EquipInSlot;
             this.backpackEventBus.UnEquipEvent += UnEquipInSlot;
+            this.backpackEventBus.FilterCategoryEvent += DeselectCategory;
 
             foreach (var avatarSlotView in avatarSlotViews)
             {
                 avatarSlots.Add(avatarSlotView.Category.ToLower(), (avatarSlotView, new CancellationTokenSource()));
                 avatarSlotView.OnSlotButtonPressed += OnSlotButtonPressed;
                 avatarSlotView.UnequipButton.onClick.AddListener(() => backpackCommandBus.SendCommand(new BackpackUnEquipCommand(avatarSlotView.SlotWearableUrn)));
+            }
+        }
+
+        private void DeselectCategory(string filterContent)
+        {
+            if (previousSlot != null && string.IsNullOrEmpty(filterContent))
+            {
+                previousSlot.SelectedBackground.SetActive(false);
+                previousSlot = null;
             }
         }
 

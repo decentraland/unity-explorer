@@ -32,6 +32,9 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleSearchCommand(BackpackSearchCommand command)
         {
+            if(!string.IsNullOrEmpty(command.SearchText))
+                backpackEventBus.SendFilterCategory("");
+
             backpackEventBus.SendSearch(command.SearchText);
         }
 
@@ -43,6 +46,7 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleFilterCategoryCommand(BackpackFilterCategoryCommand command)
         {
+            backpackEventBus.SendSearch("");
             backpackEventBus.SendFilterCategory(command.Category);
         }
 
