@@ -1,4 +1,5 @@
 using UnityEngine;
+using Utility;
 
 namespace DCL.Character
 {
@@ -7,8 +8,10 @@ namespace DCL.Character
     /// </summary>
     public class ExposedPlayerTransform : IExposedPlayerTransform
     {
-        public Vector3 Position { get; set; }
-        public Quaternion Rotation { get; set; }
-        public bool IsDirty { get; set; }
+        public CanBeDirty<Vector3> Position;
+        public CanBeDirty<Quaternion> Rotation;
+
+        CanBeDirty<Vector3> IExposedPlayerTransform.Position => Position;
+        CanBeDirty<Quaternion> IExposedPlayerTransform.Rotation => Rotation;
     }
 }

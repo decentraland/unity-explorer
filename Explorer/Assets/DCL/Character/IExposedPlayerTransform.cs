@@ -1,4 +1,5 @@
 using UnityEngine;
+using Utility;
 
 namespace DCL.Character
 {
@@ -7,13 +8,7 @@ namespace DCL.Character
     /// </summary>
     public interface IExposedPlayerTransform
     {
-        Vector3 Position { get; }
-        Quaternion Rotation { get; }
-
-        /// <summary>
-        ///     Where the transform was changed after movement has been interpolated.
-        ///     It take into consideration the actual player position affected by Physics.
-        /// </summary>
-        bool IsDirty { get; }
+        CanBeDirty<Vector3> Position { get; }
+        CanBeDirty<Quaternion> Rotation { get; }
     }
 }

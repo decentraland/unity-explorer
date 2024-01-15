@@ -33,26 +33,26 @@ namespace Global.Dynamic
     {
         private static readonly URLDomain ASSET_BUNDLES_URL = URLDomain.FromString("https://ab-cdn.decentraland.org/");
 
-        private static MVCManager mvcManager;
+        private MVCManager mvcManager = null!;
 
-        public DebugUtilitiesContainer DebugContainer { get; private set; }
+        public DebugUtilitiesContainer DebugContainer { get; private set; } = null!;
 
-        public IRealmController RealmController { get; private set; }
+        public IRealmController RealmController { get; private set; } = null!;
 
-        public GlobalWorldFactory GlobalWorldFactory { get; private set; }
+        public GlobalWorldFactory GlobalWorldFactory { get; private set; } = null!;
 
-        public EmptyScenesWorldFactory EmptyScenesWorldFactory { get; private set; }
+        public EmptyScenesWorldFactory EmptyScenesWorldFactory { get; private set; } = null!;
 
-        public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; }
+        public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; } = null!;
 
-        public IProfileRepository ProfileRepository { get; private set; }
+        public IProfileRepository ProfileRepository { get; private set; } = null!;
 
         public void Dispose()
         {
             mvcManager.Dispose();
         }
 
-        public static async UniTask<(DynamicWorldContainer container, bool success)> CreateAsync(
+        public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
             StaticContainer staticContainer,
             IPluginSettingsContainer settingsContainer,
             CancellationToken ct,
@@ -76,10 +76,10 @@ namespace Global.Dynamic
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
             var realmData = new RealmData();
 
-            var parcelServiceContainer = ParcelServiceContainer.Create(realmData, staticContainer.CharacterObject, debugBuilder);
+            var parcelServiceContainer = ParcelServiceContainer.Create(realmData, debugBuilder);
 
             PopupCloserView popupCloserView = Object.Instantiate((await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
-            mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
+            container.mvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
             MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, dynamicSettings.MapRendererSettings, ct);
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController));
             var wearableCatalog = new WearableCatalog();
@@ -87,12 +87,13 @@ namespace Global.Dynamic
             var backpackEventBus = new BackpackEventBus();
 
             IProfileCache profileCache = new DefaultProfileCache();
+
             container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData,
                 profileCache);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterObject, debugBuilder),
+                new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput),
                 new GlobalInteractionPlugin(dclInput, rootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.CameraSamplingData, exposedGlobalDataContainer.ExposedCameraData),
@@ -102,10 +103,10 @@ namespace Global.Dynamic
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, realmData, debugBuilder, staticContainer.CacheCleaner),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
-                new MinimapPlugin(staticContainer.AssetsProvisioner, mvcManager, mapRendererContainer, placesAPIService),
+                new MinimapPlugin(staticContainer.AssetsProvisioner, container.mvcManager, mapRendererContainer, placesAPIService),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
-                    mvcManager,
+                    container.mvcManager,
                     mapRendererContainer,
                     placesAPIService,
                     parcelServiceContainer.TeleportController,
@@ -117,8 +118,9 @@ namespace Global.Dynamic
                     wearableCatalog),
 
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
-                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, mvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, storedIdentityProvider),
+                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, container.mvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, storedIdentityProvider),
                 new SkyBoxPlugin(debugBuilder, skyBoxSceneData),
+                staticContainer.CharacterContainer,
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
@@ -132,9 +134,15 @@ namespace Global.Dynamic
                 parcelServiceContainer.RetrieveSceneFromVolatileWorld,
                 sceneLoadRadius, staticLoadPositions, realmData, scenesCache);
 
-            container.GlobalWorldFactory = new GlobalWorldFactory(in staticContainer, staticContainer.RealmPartitionSettings,
-                exposedGlobalDataContainer.CameraSamplingData, realmSamplingData, ASSET_BUNDLES_URL, realmData, globalPlugins,
-                debugBuilder, scenesCache);
+            container.GlobalWorldFactory = new GlobalWorldFactory(
+                in staticContainer,
+                exposedGlobalDataContainer.CameraSamplingData,
+                realmSamplingData,
+                ASSET_BUNDLES_URL,
+                realmData,
+                globalPlugins,
+                debugBuilder,
+                scenesCache);
 
             container.GlobalPlugins = globalPlugins;
             container.EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins);

@@ -14,14 +14,8 @@ namespace DCL.ParcelsService
 {
     public partial class TeleportController : ITeleportController
     {
-        private readonly ICharacterObject characterObject;
         private IRetrieveScene retrieveScene;
         private World world;
-
-        public TeleportController(ICharacterObject characterObject)
-        {
-            this.characterObject = characterObject;
-        }
 
         public void InvalidateRealm()
         {

@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character;
 using DCL.Character.Components;
+using DCL.Character.Plugin;
 using DCL.DebugUtilities;
 using DCL.GlobalPartitioning;
 using DCL.Optimization.PerformanceBudgeting;
@@ -72,19 +73,21 @@ namespace Global.Dynamic
         private readonly IPerformanceBudget memoryBudget;
         private readonly StaticSettings staticSettings;
         private readonly IScenesCache scenesCache;
+        private readonly CharacterContainer characterContainer;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
-            IRealmPartitionSettings realmPartitionSettings,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
-            URLDomain assetBundlesURL, IRealmData realmData, IReadOnlyList<IDCLGlobalPlugin> globalPlugins,
-            IDebugContainerBuilder debugContainerBuilder, IScenesCache scenesCache)
+            URLDomain assetBundlesURL, IRealmData realmData,
+            IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder, IScenesCache scenesCache)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
             partitionSettings = staticContainer.PartitionSettings;
             webRequestController = staticContainer.WebRequestsContainer.WebRequestController;
             staticSettings = staticContainer.StaticSettings;
-            this.realmPartitionSettings = realmPartitionSettings;
+            characterContainer = staticContainer.CharacterContainer;
+            realmPartitionSettings = staticContainer.RealmPartitionSettings;
+
             this.cameraSamplingData = cameraSamplingData;
             this.realmSamplingData = realmSamplingData;
             this.assetBundlesURL = assetBundlesURL;
@@ -97,7 +100,7 @@ namespace Global.Dynamic
             physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
-        public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory, ICharacterObject characterObject)
+        public GlobalWorld Create(ISceneFactory sceneFactory, IEmptyScenesWorldFactory emptyScenesWorldFactory)
         {
             var world = World.Create();
 
@@ -110,17 +113,7 @@ namespace Global.Dynamic
             var builder = new ArchSystemsWorldBuilder<World>(world);
             builder.InjectCustomGroup(new SyncedPostRenderingSystemGroup(mutex, globalSceneStateProvider));
 
-            Entity playerEntity = world.Create(
-                new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY),
-                new PlayerComponent(characterObject.CameraFocus),
-                new TransformComponent { Transform = characterObject.Transform },
-                new Profile("fakeOwnUserId", "Player",
-                    new Avatar(
-                        BodyShape.MALE,
-                        WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
-                        WearablesConstants.DefaultColors.GetRandomEyesColor(),
-                        WearablesConstants.DefaultColors.GetRandomHairColor(),
-                        WearablesConstants.DefaultColors.GetRandomSkinColor())));
+            Entity playerEntity = characterContainer.CreatePlayerEntity(world);
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 

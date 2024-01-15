@@ -13,9 +13,9 @@ namespace DCL.ParcelsService
         public RetrieveSceneFromFixedRealm RetrieveSceneFromFixedRealm { get; private set; }
         public TeleportController TeleportController { get; private set; }
 
-        public static ParcelServiceContainer Create(IRealmData realmData, ICharacterObject characterObject, IDebugContainerBuilder debugContainerBuilder)
+        public static ParcelServiceContainer Create(IRealmData realmData, IDebugContainerBuilder debugContainerBuilder)
         {
-            var teleportController = new TeleportController(characterObject);
+            var teleportController = new TeleportController();
 
             BuildDebugWidget(teleportController, debugContainerBuilder);
 

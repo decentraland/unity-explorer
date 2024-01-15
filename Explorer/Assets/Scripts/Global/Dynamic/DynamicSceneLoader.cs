@@ -32,10 +32,10 @@ namespace Global.Dynamic
         [SerializeField] private RealmLauncher realmLauncher;
         [SerializeField] private DynamicSceneLoaderSettings settings;
         [SerializeField] private DynamicSettings dynamicSettings;
-
-        private StaticContainer? staticContainer;
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
+
+        private StaticContainer? staticContainer;
         private IWeb3VerifiedAuthenticator? web3Authenticator;
 
         private void Awake()
@@ -97,10 +97,10 @@ namespace Global.Dynamic
                     return;
                 }
 
-                var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer);
+                var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!);
 
                 (dynamicWorldContainer, isLoaded) = await DynamicWorldContainer.CreateAsync(
-                    staticContainer,
+                    staticContainer!,
                     scenePluginSettingsContainer,
                     ct,
                     uiToolkitRoot,
@@ -126,7 +126,7 @@ namespace Global.Dynamic
                         anyFailure = true;
                 }
 
-                await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
+                await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
                 await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
 
                 if (anyFailure)
@@ -136,7 +136,7 @@ namespace Global.Dynamic
                 }
 
                 globalWorld = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory,
-                    dynamicWorldContainer.EmptyScenesWorldFactory, staticContainer.CharacterObject);
+                    dynamicWorldContainer.EmptyScenesWorldFactory);
 
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
                 dynamicWorldContainer.RealmController.SetupWorld(globalWorld);
@@ -169,7 +169,7 @@ namespace Global.Dynamic
                 Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(settings.StartPosition);
                 characterPos.y = 1f;
 
-                staticContainer!.CharacterObject.Controller.transform.position = characterPos;
+                staticContainer!.CharacterContainer.CharacterObject.Controller.transform.position = characterPos;
 
                 await realmController.SetRealmAsync(URLDomain.FromString(selectedRealm), ct);
             }
