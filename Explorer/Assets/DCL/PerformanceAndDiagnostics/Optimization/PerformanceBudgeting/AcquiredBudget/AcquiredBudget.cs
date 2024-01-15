@@ -12,7 +12,7 @@ namespace DCL.Optimization.PerformanceBudgeting
         private static readonly IObjectPool<AcquiredBudget> POOL = new ThreadSafeObjectPool<AcquiredBudget>(
             () => new AcquiredBudget(), defaultCapacity: 1000, maxSize: 1_000_000);
 
-        private IConcurrentBudgetProvider provider;
+        private IReleasablePerformanceBudget provider;
         private bool released;
         private bool disposed;
 
@@ -39,10 +39,10 @@ namespace DCL.Optimization.PerformanceBudgeting
             released = true;
         }
 
-        public static IAcquiredBudget Create(IConcurrentBudgetProvider concurrentBudgetProvider)
+        public static IAcquiredBudget Create(IReleasablePerformanceBudget releasablePerformanceBudget)
         {
             AcquiredBudget b = POOL.Get();
-            b.provider = concurrentBudgetProvider;
+            b.provider = releasablePerformanceBudget;
             b.released = false;
             b.disposed = false;
             return b;

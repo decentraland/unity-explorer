@@ -12,24 +12,40 @@ namespace DCL.Backpack
 {
     public class BackpackSlotsController : IDisposable
     {
+        private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackEventBus backpackEventBus;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly Dictionary<string, (AvatarSlotView, CancellationTokenSource)> avatarSlots = new ();
         private AvatarSlotView previousSlot;
 
-        public BackpackSlotsController(AvatarSlotView[] avatarSlotViews, BackpackCommandBus backpackCommandBus, BackpackEventBus backpackEventBus, NftTypeIconSO rarityBackgrounds)
+        public BackpackSlotsController(
+            AvatarSlotView[] avatarSlotViews,
+            BackpackCommandBus backpackCommandBus,
+            BackpackEventBus backpackEventBus,
+            NftTypeIconSO rarityBackgrounds)
         {
+            this.backpackCommandBus = backpackCommandBus;
             this.backpackEventBus = backpackEventBus;
             this.rarityBackgrounds = rarityBackgrounds;
 
             this.backpackEventBus.EquipEvent += EquipInSlot;
             this.backpackEventBus.UnEquipEvent += UnEquipInSlot;
+            this.backpackEventBus.FilterCategoryEvent += DeselectCategory;
 
             foreach (var avatarSlotView in avatarSlotViews)
             {
                 avatarSlots.Add(avatarSlotView.Category.ToLower(), (avatarSlotView, new CancellationTokenSource()));
                 avatarSlotView.OnSlotButtonPressed += OnSlotButtonPressed;
                 avatarSlotView.UnequipButton.onClick.AddListener(() => backpackCommandBus.SendCommand(new BackpackUnEquipCommand(avatarSlotView.SlotWearableUrn)));
+            }
+        }
+
+        private void DeselectCategory(string filterContent)
+        {
+            if (previousSlot != null && string.IsNullOrEmpty(filterContent))
+            {
+                previousSlot.SelectedBackground.SetActive(false);
+                previousSlot = null;
             }
         }
 
@@ -80,11 +96,13 @@ namespace DCL.Backpack
             if (avatarSlot == previousSlot)
             {
                 previousSlot.SelectedBackground.SetActive(false);
+                backpackCommandBus.SendCommand(new BackpackFilterCategoryCommand(""));
                 previousSlot = null;
                 return;
             }
 
             previousSlot = avatarSlot;
+            backpackCommandBus.SendCommand(new BackpackFilterCategoryCommand(avatarSlot.Category));
             avatarSlot.SelectedBackground.SetActive(true);
         }
 

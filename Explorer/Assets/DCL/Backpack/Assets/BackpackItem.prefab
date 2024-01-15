@@ -893,7 +893,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <ItemId>k__BackingField: 
+  <ContainerTransform>k__BackingField: {fileID: 6252267455741274073}
   <HoverBackground>k__BackingField: {fileID: 1986608288359508916}
+  <HoverBackgroundTransform>k__BackingField: {fileID: 4718511162805314438}
   <SelectedBackground>k__BackingField: {fileID: 4233702536937593491}
   <EquipButton>k__BackingField: {fileID: 5929508676340867936}
   <UnEquipButton>k__BackingField: {fileID: 8176514646182836153}

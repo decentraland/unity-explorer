@@ -38,11 +38,13 @@ namespace DCL.Backpack
                 BackpackCommandBus backpackCommandBus,
                 BackpackEventBus backpackEventBus,
                 IWeb3IdentityCache web3IdentityCache,
-                IWearableCatalog wearableCatalog)
+                IWearableCatalog wearableCatalog,
+                PageButtonView pageButtonView)
             {
                 this.view = view;
                 this.backpackCommandBus = backpackCommandBus;
                 var backpackEquipStatusController = new BackpackEquipStatusController(backpackEventBus);
+                BackpackSortController backpackSortController = new BackpackSortController(view.BackpackSortView);
                 BackpackBusController busController = new BackpackBusController(wearableCatalog, backpackEventBus, backpackCommandBus, backpackEquipStatusController);
 
                 rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -56,7 +58,9 @@ namespace DCL.Backpack
                     backpackCommandBus,
                     backpackEventBus,
                     web3IdentityCache,
-                    backpackEquipStatusController);
+                    backpackEquipStatusController,
+                    backpackSortController,
+                    pageButtonView);
 
                 Dictionary<BackpackSections, ISection> backpackSections = new ()
                 {
@@ -101,13 +105,12 @@ namespace DCL.Backpack
 
                 world.TryGet(playerEntity, out AvatarShapeComponent avatarShapeComponent);
 
+                avatarController.RequestInitialWearablesPage();
                 if(!avatarShapeComponent.WearablePromise.IsConsumed)
                     await avatarShapeComponent.WearablePromise.ToUniTaskAsync(world, cancellationToken: cts.Token);
 
                 foreach (URN avatarSharedWearable in world.Get<Profile>(playerEntity).Avatar.SharedWearables)
                     backpackCommandBus.SendCommand(new BackpackEquipCommand(avatarSharedWearable.ToString()));
-
-                avatarController.RequestInitialWearablesPage();
             }
 
             public void Activate()

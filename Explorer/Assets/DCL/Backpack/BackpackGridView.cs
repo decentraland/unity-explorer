@@ -1,4 +1,5 @@
 using DCL.AssetsProvision;
+using DCL.UI;
 using System;
 using UnityEngine;
 
@@ -8,6 +9,18 @@ namespace DCL.Backpack
     {
         [field: SerializeField]
         public BackpackItemRef BackpackItem { get; private set; }
+
+        [field: SerializeField]
+        public PageSelectorView PageSelectorView { get; private set; }
+
+        [field: SerializeField]
+        public GameObject RegularResults { get; private set; }
+
+        [field: SerializeField]
+        public GameObject NoSearchResults { get; private set; }
+
+        [field: SerializeField]
+        public GameObject NoCategoryResults { get; private set; }
 
         [Serializable]
         public class BackpackItemRef : ComponentReference<BackpackItemView>
