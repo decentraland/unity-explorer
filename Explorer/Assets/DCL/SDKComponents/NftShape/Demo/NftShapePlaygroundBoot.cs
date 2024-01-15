@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace DCL.SDKComponents.NftShape.Demo
 {
-    public class TextShapePlaygroundBoot : MonoBehaviour
+    public class NftShapePlaygroundBoot : MonoBehaviour
     {
         [SerializeField]
         private NftShapeProperties nftShapeProperties = new ();
