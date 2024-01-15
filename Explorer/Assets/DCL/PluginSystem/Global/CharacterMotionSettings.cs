@@ -12,6 +12,9 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField]
         internal CharacterControllerSettingsRef controllerSettings { get; private set; }
 
+        [field: SerializeField]
+        internal byte sceneBucketPropagationLimit { get; private set; }
+
         [Serializable]
         public class CharacterControllerSettingsRef : AssetReferenceT<CharacterControllerSettings>
         {
