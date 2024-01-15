@@ -190,27 +190,39 @@ public unsafe class BRG_Container
             drawCommands->instanceSortingPositions = null; // If BatchDrawCommandFlags.HasSortingPosition is set for one or more draw commands, the instanceSortingPositions array contains explicit float3 world space positions that Unity uses for depth sorting.The culling callback must allocate the memory for the instanceSortingPositions using the UnsafeUtility.Malloc method and the Allocator.TempJob parameter. The memory is released by Unity when the rendering is complete.If the length of the array is 0, set its value to null.
             drawCommands->instanceSortingPositionFloatCount = 0; // If BatchDrawCommandFlags.HasSortingPosition is set for one or more draw commands, this contains float3 world-space positions that Unity uses for depth sorting.
 
-            // for (int i = 0; i < drawCommands->visibleInstanceCount; ++i)
-            //     drawCommands->visibleInstances[i] = i;
-
             // Set capacities
             NativeList<int> list0 = new (Allocator.TempJob);
-            list0.SetCapacity(10000);
-            NativeList<int> list1 = new (Allocator.TempJob);
+            list0.SetCapacity(instanceCount_);
+            // NativeList<int> list1 = new (Allocator.TempJob);
+            // list1.SetCapacity(100);
             // NativeList<int> list2 = new (Allocator.TempJob);
+            // list2.SetCapacity(100);
             // NativeList<int> list3 = new (Allocator.TempJob);
+            // list3.SetCapacity(100);
             // NativeList<int> list4 = new (Allocator.TempJob);
+            // list4.SetCapacity(100);
 
-            // list1 for LOD0... LODN
+            BatchCullJob bcj = new BatchCullJob(cullingContext,
+                                                m_sysmemBuffer,
+                                                list0.AsParallelWriter()
+                                                // list1.AsParallelWriter(),
+                                                // list2.AsParallelWriter(),
+                                                // list3.AsParallelWriter(),
+                                                // list4.AsParallelWriter()
+                                                );
+            JobHandle batchCullJobHandle = bcj.Schedule(instanceCount_, 10);
 
-            BatchCullJob bcj = new BatchCullJob(cullingContext, m_sysmemBuffer, list0.AsParallelWriter(), list1.AsParallelWriter());
-            JobHandle batchCullJobHandle = bcj.Schedule(instanceCount_, 1000);
 
-            NativeArray<int> visInstArray = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<int>(drawCommands->visibleInstances, instanceCount_, Allocator.None);
             // visible instance must be sorted
-            MergeVisibleInstanceJob mvij = new MergeVisibleInstanceJob()
+            MergeVisibleInstanceJob mvij = new MergeVisibleInstanceJob( list0
+                                                                        // list1,
+                                                                        // list2,
+                                                                        // list3,
+                                                                        // list4
+                                                                        )
             {
-                _visInstArray = visInstArray
+                _visInstArray = drawCommands->visibleInstances,
+                _instanceCount = instanceCount_,
             };
             JobHandle mergeJobHandle = mvij.Schedule(batchCullJobHandle);
 
@@ -221,68 +233,110 @@ public unsafe class BRG_Container
     }
 
     [BurstCompile]
-    public struct MergeVisibleInstanceJob : IJob
-    {
-        [WriteOnly]
-        public NativeArray<int> _visInstArray;
-
-        public void Execute()
-        {
-            for (int i = 0; i < 10000; ++i)
-            {
-                _visInstArray[i] = i;
-            }
-        }
-    }
-
-    [BurstCompile]
     public struct BatchCullJob : IJobParallelForBatch
     {
         [ReadOnly]
         public readonly BatchCullingContext cullingContext;
-
         [ReadOnly]
         public readonly NativeArray<float4> sysmem;
 
         [WriteOnly]
         public NativeList<int>.ParallelWriter List0;
+        // [WriteOnly]
+        // public NativeList<int>.ParallelWriter List1;
+        // [WriteOnly]
+        // public NativeList<int>.ParallelWriter List2;
+        // [WriteOnly]
+        // public NativeList<int>.ParallelWriter List3;
+        // [WriteOnly]
+        // public NativeList<int>.ParallelWriter List4;
 
-        [WriteOnly]
-        public NativeList<int>.ParallelWriter List1;
-
-        public BatchCullJob(BatchCullingContext cullingContext, NativeArray<float4> sysmem,
-            NativeList<int>.ParallelWriter list0, NativeList<int>.ParallelWriter list1)
+        public BatchCullJob(BatchCullingContext cullingContext,
+                            NativeArray<float4> sysmem,
+                            NativeList<int>.ParallelWriter list0
+                            // NativeList<int>.ParallelWriter list1,
+                            // NativeList<int>.ParallelWriter list2,
+                            // NativeList<int>.ParallelWriter list3,
+                            // NativeList<int>.ParallelWriter list4
+                            )
         {
             this.cullingContext = cullingContext;
             this.sysmem = sysmem;
-            List0 = list0;
-            List1 = list1;
+            this.List0 = list0;
+            // this.List1 = list1;
+            // this.List2 = list2;
+            // this.List3 = list3;
+            // this.List4 = list4;
         }
 
         public void Execute(int startIndex, int count)
         {
             for (int x = startIndex; x < startIndex + count; ++x)
             {
-                Vector3 p = sysmem[(x * 3) + 2].yzw;
-                float radius = 0.5f;
-                float distance;
-                bool result = true;
-
-                for (int i = 0; i < 6; i++)
-                {
-                    distance = cullingContext.cullingPlanes[i].GetDistanceToPoint(p);
-
-                    if (distance < -radius)
-                    {
-                        result = false;
-                        break;
-                    }
-                    else if (distance < radius) { result = true; }
-                }
-
-                result = true;
-                if (result == true)
+                // Vector3 p = sysmem[(x * 3) + 2].yzw;
+                // float radius = 0.5f;
+                // float distance;
+                // bool result = true;
+                //
+                // for (int i = 0; i < 6; i++)
+                // {
+                //     distance = cullingContext.cullingPlanes[i].GetDistanceToPoint(p);
+                //
+                //     if (distance < -radius)
+                //     {
+                //         result = false;
+                //         break;
+                //     }
+                //     else if (distance < radius) { result = true; }
+                // }
+                //
+                // result = true;
+                // if (result == true)
                     List0.AddNoResize(x);
+            }
+        }
+    }
+
+    [BurstCompile]
+    public struct MergeVisibleInstanceJob : IJob
+    {
+        [NativeDisableUnsafePtrRestriction]
+        public int* _visInstArray;
+
+        public int _instanceCount;
+
+        [ReadOnly]
+        public NativeList<int> List0;
+        // [ReadOnly]
+        // public NativeList<int> List1;
+        // [ReadOnly]
+        // public NativeList<int> List2;
+        // [ReadOnly]
+        // public NativeList<int> List3;
+        // [ReadOnly]
+        // public NativeList<int> List4;
+
+        public MergeVisibleInstanceJob( NativeList<int> list0
+                                        // NativeList<int> list1,
+                                        // NativeList<int> list2,
+                                        // NativeList<int> list3,
+                                        // NativeList<int> list4
+                                        )
+        {
+            _visInstArray = null;
+            this.List0 = list0;
+            this._instanceCount = 1;
+
+            // this.List1 = list1;
+            // this.List2 = list2;
+            // this.List3 = list3;
+            // this.List4 = list4;
+        }
+        public void Execute()
+        {
+            for (int i = 0; i < _instanceCount; ++i)
+            {
+                _visInstArray[i] = List0[i];
             }
         }
     }
