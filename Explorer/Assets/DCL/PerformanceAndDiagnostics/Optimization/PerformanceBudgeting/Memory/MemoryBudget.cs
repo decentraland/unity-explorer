@@ -27,6 +27,16 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         private ulong actualSystemMemory => systemMemory.TotalSizeInMB;
 
+        public MemoryBudget(ISystemMemory systemMemory, IProfilingProvider profilingProvider) : this(
+            systemMemory,
+            profilingProvider,
+            new Dictionary<MemoryUsageStatus, float>
+            {
+                { Warning, 0.8f },
+                { Full, 0.95f },
+            }
+        ) { }
+
         public MemoryBudget(ISystemMemory systemMemory, IProfilingProvider profilingProvider, IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold)
         {
             SimulatedMemoryUsage = Normal;
