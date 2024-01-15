@@ -154,82 +154,94 @@ public unsafe class BRG_Container
 
     // Main BRG entry point per frame. In this sample we won't use BatchCullingContext as we don't need culling
     // This callback is responsible to fill cullingOutput with all draw commands we need to render all the items
+    //[BurstCompile]
     [BurstCompile]
     public JobHandle OnPerformCulling(BatchRendererGroup rendererGroup, BatchCullingContext cullingContext, BatchCullingOutput cullingOutput, IntPtr userContext)
     {
         if (m_initialized)
         {
             int alignment = UnsafeUtility.AlignOf<long>();
-            BatchCullingOutputDrawCommands* drawCommands = (BatchCullingOutputDrawCommands*)cullingOutput.drawCommands.GetUnsafePtr();
-            drawCommands->drawCommands = (BatchDrawCommand*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<BatchDrawCommand>(), alignment, Allocator.TempJob);
-            drawCommands->drawRanges = (BatchDrawRange*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<BatchDrawRange>(), alignment, Allocator.TempJob);
-            drawCommands->drawCommandPickingInstanceIDs = null;
+            var drawCommands = (BatchCullingOutputDrawCommands*)cullingOutput.drawCommands.GetUnsafePtr();
+            drawCommands -> drawCommands = (BatchDrawCommand*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<BatchDrawCommand>(), alignment, Allocator.TempJob);
+            drawCommands -> drawRanges = (BatchDrawRange*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<BatchDrawRange>(), alignment, Allocator.TempJob);
+            drawCommands -> drawCommandPickingInstanceIDs = null;
 
-            drawCommands->drawCommandCount = 1; // The number of elements in the BatchCullingOutputDrawCommands.drawCommands array.
-            drawCommands->drawRangeCount = 1;
+            drawCommands -> drawCommandCount = 1; // The number of elements in the BatchCullingOutputDrawCommands.drawCommands array.
+            drawCommands -> drawRangeCount = 1;
 
             // Configure the single draw command to draw kNumInstances instances
             // starting from offset 0 in the array, using the batch, material and mesh
             // IDs registered in the Start() method. It doesn't set any special flags.
-            drawCommands->drawCommands[0].visibleOffset = 0;
-            drawCommands->drawCommands[0].visibleCount = (uint)instanceCount_;
-            drawCommands->drawCommands[0].batchID = m_batchID;
-            drawCommands->drawCommands[0].materialID = m_materialID;
-            drawCommands->drawCommands[0].meshID = m_meshID;
-            drawCommands->drawCommands[0].submeshIndex = 0;
-            drawCommands->drawCommands[0].splitVisibilityMask = 0xff;
-            drawCommands->drawCommands[0].flags = 0;
-            drawCommands->drawCommands[0].sortingPosition = 0;
+            drawCommands -> drawCommands[0].visibleOffset = 0;
+            drawCommands -> drawCommands[0].visibleCount = (uint)instanceCount_;
+            drawCommands -> drawCommands[0].batchID = m_batchID;
+            drawCommands -> drawCommands[0].materialID = m_materialID;
+            drawCommands -> drawCommands[0].meshID = m_meshID;
+            drawCommands -> drawCommands[0].submeshIndex = 0;
+            drawCommands -> drawCommands[0].splitVisibilityMask = 0xff;
+            drawCommands -> drawCommands[0].flags = 0;
+            drawCommands -> drawCommands[0].sortingPosition = 0;
 
-            drawCommands->drawRanges[0].drawCommandsBegin = 0;
-            drawCommands->drawRanges[0].drawCommandsCount = 1;
-            drawCommands->drawRanges[0].filterSettings = new BatchFilterSettings { renderingLayerMask = 0xffffffff, layer = 0, motionMode = MotionVectorGenerationMode.Camera, shadowCastingMode = ShadowCastingMode.On, receiveShadows = true, staticShadowCaster = false, allDepthSorted = false };
+            drawCommands -> drawRanges[0].drawCommandsBegin = 0;
+            drawCommands -> drawRanges[0].drawCommandsCount = 1;
+            drawCommands -> drawRanges[0].filterSettings = new BatchFilterSettings { renderingLayerMask = 0xffffffff, layer = 0, motionMode = MotionVectorGenerationMode.Camera, shadowCastingMode = ShadowCastingMode.On, receiveShadows = true, staticShadowCaster = false, allDepthSorted = false };
 
-            drawCommands->visibleInstances = (int*)UnsafeUtility.Malloc(instanceCount_ * sizeof(int), alignment, Allocator.TempJob);
-            drawCommands->visibleInstanceCount = instanceCount_;
-            drawCommands->instanceSortingPositions = null; // If BatchDrawCommandFlags.HasSortingPosition is set for one or more draw commands, the instanceSortingPositions array contains explicit float3 world space positions that Unity uses for depth sorting.The culling callback must allocate the memory for the instanceSortingPositions using the UnsafeUtility.Malloc method and the Allocator.TempJob parameter. The memory is released by Unity when the rendering is complete.If the length of the array is 0, set its value to null.
-            drawCommands->instanceSortingPositionFloatCount = 0; // If BatchDrawCommandFlags.HasSortingPosition is set for one or more draw commands, this contains float3 world-space positions that Unity uses for depth sorting.
+            drawCommands -> visibleInstances = (int*)UnsafeUtility.Malloc(instanceCount_ * sizeof(int), alignment, Allocator.TempJob);
+            drawCommands -> visibleInstanceCount = instanceCount_;
+            drawCommands -> instanceSortingPositions = null; // If BatchDrawCommandFlags.HasSortingPosition is set for one or more draw commands, the instanceSortingPositions array contains explicit float3 world space positions that Unity uses for depth sorting.The culling callback must allocate the memory for the instanceSortingPositions using the UnsafeUtility.Malloc method and the Allocator.TempJob parameter. The memory is released by Unity when the rendering is complete.If the length of the array is 0, set its value to null.
+            drawCommands -> instanceSortingPositionFloatCount = 0; // If BatchDrawCommandFlags.HasSortingPosition is set for one or more draw commands, this contains float3 world-space positions that Unity uses for depth sorting.
 
             // Set capacities
             NativeList<int> list0 = new (Allocator.TempJob);
             list0.SetCapacity(instanceCount_);
-            // NativeList<int> list1 = new (Allocator.TempJob);
-            // list1.SetCapacity(100);
-            // NativeList<int> list2 = new (Allocator.TempJob);
-            // list2.SetCapacity(100);
-            // NativeList<int> list3 = new (Allocator.TempJob);
-            // list3.SetCapacity(100);
-            // NativeList<int> list4 = new (Allocator.TempJob);
-            // list4.SetCapacity(100);
+            NativeList<int> list1 = new (Allocator.TempJob);
+            list1.SetCapacity(instanceCount_);
+            NativeList<int> list2 = new (Allocator.TempJob);
+            list2.SetCapacity(instanceCount_);
+            NativeList<int> list3 = new (Allocator.TempJob);
+            list3.SetCapacity(instanceCount_);
+            NativeList<int> list4 = new (Allocator.TempJob);
+            list4.SetCapacity(instanceCount_);
 
-            BatchCullJob bcj = new BatchCullJob(cullingContext,
-                                                m_sysmemBuffer,
-                                                list0.AsParallelWriter()
-                                                // list1.AsParallelWriter(),
-                                                // list2.AsParallelWriter(),
-                                                // list3.AsParallelWriter(),
-                                                // list4.AsParallelWriter()
-                                                );
+            var bcj = new BatchCullJob(cullingContext,
+                m_sysmemBuffer,
+                list0.AsParallelWriter(),
+                list1.AsParallelWriter(),
+                list2.AsParallelWriter(),
+                list3.AsParallelWriter(),
+                list4.AsParallelWriter()
+            );
+
             JobHandle batchCullJobHandle = bcj.Schedule(instanceCount_, 10);
 
+            // Convert to NativeArray
+            NativeArray<int> visibleInstanceArray =
+                NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<int>(drawCommands -> visibleInstances, instanceCount_, Allocator.Invalid);
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref visibleInstanceArray, AtomicSafetyHandle.GetTempUnsafePtrSliceHandle());
+#endif
 
             // visible instance must be sorted
-            MergeVisibleInstanceJob mvij = new MergeVisibleInstanceJob( list0
-                                                                        // list1,
-                                                                        // list2,
-                                                                        // list3,
-                                                                        // list4
-                                                                        )
-            {
-                _visInstArray = drawCommands->visibleInstances,
-                _instanceCount = instanceCount_,
-            };
-            JobHandle mergeJobHandle = mvij.Schedule(batchCullJobHandle);
+            var mvij = new MergeVisibleInstanceJob(list0,
+                list1,
+                list2,
+                list3,
+                list4,
+                visibleInstanceArray,
+                instanceCount_
+            );
 
-            return mergeJobHandle;
+            JobHandle mergeJobHandle = mvij.Schedule(batchCullJobHandle);
+            JobHandle Dispose_List0 = list0.Dispose(mergeJobHandle);
+            JobHandle Dispose_List1 = list1.Dispose(Dispose_List0);
+            JobHandle Dispose_List2 = list2.Dispose(Dispose_List1);
+            JobHandle Dispose_List3 = list3.Dispose(Dispose_List2);
+            JobHandle Dispose_List4 = list4.Dispose(Dispose_List3);
+            return Dispose_List4;
         }
 
-        return default;
+        return default(JobHandle);
     }
 
     [BurstCompile]
@@ -242,31 +254,31 @@ public unsafe class BRG_Container
 
         [WriteOnly]
         public NativeList<int>.ParallelWriter List0;
-        // [WriteOnly]
-        // public NativeList<int>.ParallelWriter List1;
-        // [WriteOnly]
-        // public NativeList<int>.ParallelWriter List2;
-        // [WriteOnly]
-        // public NativeList<int>.ParallelWriter List3;
-        // [WriteOnly]
-        // public NativeList<int>.ParallelWriter List4;
+        [WriteOnly]
+        public NativeList<int>.ParallelWriter List1;
+        [WriteOnly]
+        public NativeList<int>.ParallelWriter List2;
+        [WriteOnly]
+        public NativeList<int>.ParallelWriter List3;
+        [WriteOnly]
+        public NativeList<int>.ParallelWriter List4;
 
         public BatchCullJob(BatchCullingContext cullingContext,
-                            NativeArray<float4> sysmem,
-                            NativeList<int>.ParallelWriter list0
-                            // NativeList<int>.ParallelWriter list1,
-                            // NativeList<int>.ParallelWriter list2,
-                            // NativeList<int>.ParallelWriter list3,
-                            // NativeList<int>.ParallelWriter list4
-                            )
+            NativeArray<float4> sysmem,
+            NativeList<int>.ParallelWriter list0,
+            NativeList<int>.ParallelWriter list1,
+            NativeList<int>.ParallelWriter list2,
+            NativeList<int>.ParallelWriter list3,
+            NativeList<int>.ParallelWriter list4
+        )
         {
             this.cullingContext = cullingContext;
             this.sysmem = sysmem;
             this.List0 = list0;
-            // this.List1 = list1;
-            // this.List2 = list2;
-            // this.List3 = list3;
-            // this.List4 = list4;
+            this.List1 = list1;
+            this.List2 = list2;
+            this.List3 = list3;
+            this.List4 = list4;
         }
 
         public void Execute(int startIndex, int count)
@@ -292,7 +304,7 @@ public unsafe class BRG_Container
                 //
                 // result = true;
                 // if (result == true)
-                    List0.AddNoResize(x);
+                List0.AddNoResize(x);
             }
         }
     }
@@ -300,44 +312,45 @@ public unsafe class BRG_Container
     [BurstCompile]
     public struct MergeVisibleInstanceJob : IJob
     {
-        [NativeDisableUnsafePtrRestriction]
-        public int* _visInstArray;
+        [NativeDisableContainerSafetyRestriction]
+        public NativeArray<int> _visInstArray;
 
         public int _instanceCount;
 
         [ReadOnly]
         public NativeList<int> List0;
-        // [ReadOnly]
-        // public NativeList<int> List1;
-        // [ReadOnly]
-        // public NativeList<int> List2;
-        // [ReadOnly]
-        // public NativeList<int> List3;
-        // [ReadOnly]
-        // public NativeList<int> List4;
+        [ReadOnly]
+        public NativeList<int> List1;
+        [ReadOnly]
+        public NativeList<int> List2;
+        [ReadOnly]
+        public NativeList<int> List3;
+        [ReadOnly]
+        public NativeList<int> List4;
 
-        public MergeVisibleInstanceJob( NativeList<int> list0
-                                        // NativeList<int> list1,
-                                        // NativeList<int> list2,
-                                        // NativeList<int> list3,
-                                        // NativeList<int> list4
-                                        )
+        public MergeVisibleInstanceJob(NativeList<int> list0,
+            NativeList<int> list1,
+            NativeList<int> list2,
+            NativeList<int> list3,
+            NativeList<int> list4,
+            NativeArray<int> visInstArray,
+            int instanceCount
+        )
         {
-            _visInstArray = null;
+            _visInstArray = visInstArray;
+            _instanceCount = instanceCount;
             this.List0 = list0;
-            this._instanceCount = 1;
-
-            // this.List1 = list1;
-            // this.List2 = list2;
-            // this.List3 = list3;
-            // this.List4 = list4;
+            this.List1 = list1;
+            this.List2 = list2;
+            this.List3 = list3;
+            this.List4 = list4;
         }
+
         public void Execute()
         {
-            for (int i = 0; i < _instanceCount; ++i)
-            {
-                _visInstArray[i] = List0[i];
-            }
+            //for (var i = 0; i < _instanceCount; ++i) { _visInstArray[i] = List0[i]; }
+            UnsafeUtility.MemCpy(_visInstArray.GetUnsafePtr(), List0.GetUnsafeReadOnlyPtr() + 1,  sizeof(int) * (_instanceCount-1));
+            //_visInstArray.CopyFrom(List0);
         }
     }
 }
