@@ -1,6 +1,5 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
-using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
@@ -8,7 +7,7 @@ using System.Collections.Generic;
 
 namespace DCL.CharacterPreview
 {
-    public class BackpackCharacterPreviewController
+    public class BackpackCharacterPreviewControler
     {
         private readonly BackpackCharacterPreviewView view;
         private readonly ICharacterPreviewFactory previewFactory;
@@ -19,7 +18,7 @@ namespace DCL.CharacterPreview
         private CharacterPreviewController previewController;
         private CharacterPreviewModel previewModel;
 
-        public BackpackCharacterPreviewController(BackpackCharacterPreviewView view, ICharacterPreviewFactory previewFactory, BackpackEventBus eventBus)
+        public BackpackCharacterPreviewControler(BackpackCharacterPreviewView view, ICharacterPreviewFactory previewFactory, BackpackEventBus eventBus)
         {
             this.view = view;
             this.previewFactory = previewFactory;
@@ -34,13 +33,21 @@ namespace DCL.CharacterPreview
         {
             world = builder.World;
             this.playerEntity = playerEntity;
+            InitializePreviewModel();
         }
 
-        public void OnShow()
+        private void InitializePreviewModel()
+        {
+            Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
+            previewModel.BodyShape = avatar.BodyShape;
+            previewModel.HairColor = avatar.HairColor;
+            previewModel.SkinColor = avatar.SkinColor;
+        }
+
+        public void Initialize()
         {
             view.Initialize();
             previewController = previewFactory.Create(world, view.CharacterPreviewContainer);
-            UpdateModel();
         }
 
         public void OnHide() { }
@@ -66,20 +73,6 @@ namespace DCL.CharacterPreview
 
         private void UpdateModel()
         {
-            Avatar avatar = world.Get<Profile>(playerEntity).Avatar;
-            previewModel.Wearables ??= new List<string>();
-
-            foreach (URN avatarSharedWearable in world.Get<Profile>(playerEntity).Avatar.SharedWearables)
-            {
-                if (!previewModel.Wearables.Contains(avatarSharedWearable))
-                {
-                    previewModel.Wearables.Add(avatarSharedWearable);
-                }
-            }
-
-            previewModel.BodyShape = avatar.BodyShape;
-            previewModel.HairColor = avatar.HairColor;
-            previewModel.SkinColor = avatar.SkinColor;
             previewController.UpdateAvatar(previewModel);
         }
 
