@@ -208,6 +208,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: NFTShapeLoader_Blocky
       objectReference: {fileID: 0}
+    - target: {fileID: 8462995621656260544, guid: fd29dbb6c443041429f61480d858f979, type: 3}
+      propertyPath: renderer
+      value: 
+      objectReference: {fileID: 3964221675984070713}
     m_RemovedComponents:
     - {fileID: 4146605912774035673, guid: fd29dbb6c443041429f61480d858f979, type: 3}
     m_RemovedGameObjects: []

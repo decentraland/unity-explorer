@@ -108,6 +108,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: NFTShapeLoader_Diamond_Ornament
       objectReference: {fileID: 0}
+    - target: {fileID: 8462995621656260544, guid: fd29dbb6c443041429f61480d858f979, type: 3}
+      propertyPath: renderer
+      value: 
+      objectReference: {fileID: 4973049366238270409}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:

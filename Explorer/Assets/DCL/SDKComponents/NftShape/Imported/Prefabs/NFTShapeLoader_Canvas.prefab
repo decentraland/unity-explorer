@@ -208,6 +208,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: NFTShapeLoader_Canvas
       objectReference: {fileID: 0}
+    - target: {fileID: 8462995621656260544, guid: fd29dbb6c443041429f61480d858f979, type: 3}
+      propertyPath: renderer
+      value: 
+      objectReference: {fileID: 6378745881596173961}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
