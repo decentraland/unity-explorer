@@ -1,7 +1,11 @@
 using UnityEngine.UIElements;
 using DCL.ECSComponents;
+using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
+using JetBrains.Annotations;
+using UnityEngine;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.SceneUI.Utils
 {
@@ -137,6 +141,15 @@ namespace DCL.SDKComponents.SceneUI.Utils
             labelToSetup.style.fontSize = model.GetFontSize();
             labelToSetup.style.unityTextAlign = model.GetTextAlign();
             //labelToSetup.style.unityFont = model.GetFont();
+        }
+
+        public static void SetupDCLImage(ref DCLImage imageToSetup, ref PBUiBackground model, Texture2D texture = null)
+        {
+            imageToSetup.Color = model.GetColor();
+            imageToSetup.Slices = model.GetBorder();
+            imageToSetup.UVs = model.Uvs.ToDCLUVs();
+            imageToSetup.ScaleMode = model.TextureMode.ToDCLImageScaleMode();
+            imageToSetup.Texture = texture;
         }
 
         public static void SetElementDefaultStyle(IStyle elementStyle)

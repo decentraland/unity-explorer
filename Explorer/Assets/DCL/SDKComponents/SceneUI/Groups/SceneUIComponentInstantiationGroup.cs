@@ -1,6 +1,5 @@
 ﻿using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
-using DCL.SDKComponents.SceneUI.Systems;
 using ECS.Groups;
 using UITransformInstantiationSystem = DCL.SDKComponents.SceneUI.Systems.UITransform.UITransformInstantiationSystem;
 

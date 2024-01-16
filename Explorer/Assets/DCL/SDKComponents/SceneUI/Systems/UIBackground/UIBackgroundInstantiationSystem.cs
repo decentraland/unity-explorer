@@ -3,13 +3,20 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.Optimization.Pools;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
-using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
+using ECS.Unity.Textures.Components;
+using ECS.Unity.Textures.Components.Defaults;
+using SceneRunner.Scene;
+using UnityEngine;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 {
@@ -17,11 +24,17 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
     [LogCategory(ReportCategory.SCENE_UI)]
     public partial class UIBackgroundInstantiationSystem : BaseUnityLoopSystem
     {
-        //private readonly IComponentPool<DCLImage> imagesPool;
+        private const int ATTEMPTS_COUNT = 6;
 
-        private UIBackgroundInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
+        private readonly ISceneData sceneData;
+        private readonly IPerformanceBudget frameTimeBudgetProvider;
+        private readonly IPerformanceBudget memoryBudgetProvider;
+
+        private UIBackgroundInstantiationSystem(World world, ISceneData sceneData, IPerformanceBudget frameTimeBudgetProvider, IPerformanceBudget memoryBudgetProvider) : base(world)
         {
-            //imagesPool = poolsRegistry.GetReferenceTypePool<DCLImage>();
+            this.sceneData = sceneData;
+            this.frameTimeBudgetProvider = frameTimeBudgetProvider;
+            this.memoryBudgetProvider = memoryBudgetProvider;
         }
 
         protected override void Update(float t)
@@ -33,13 +46,16 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         [Query]
         [All(typeof(PBUiBackground), typeof(PBUiTransform), typeof(UITransformComponent))]
         [None(typeof(UIBackgroundComponent))]
-        private void InstantiateUIBackground(in Entity entity, ref UITransformComponent uiTransformComponent)
+        private void InstantiateUIBackground(in Entity entity, ref PBUiBackground sdkModel, ref UITransformComponent uiTransformComponent, ref PartitionComponent partitionComponent)
         {
-            //var image = imagesPool.Get();
             var image = new DCLImage();
             image.Initialize(uiTransformComponent.Transform);
             var uiBackgroundComponent = new UIBackgroundComponent();
             uiBackgroundComponent.Image = image;
+
+            TextureComponent? backgroundTexture = sdkModel.Texture.CreateTextureComponent(sceneData);
+            TryCreateGetTexturePromise(in backgroundTexture, ref uiBackgroundComponent.TexturePromise, ref partitionComponent);
+
             World.Add(entity, uiBackgroundComponent);
         }
 
@@ -47,16 +63,76 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         [All(typeof(PBUiBackground), typeof(UITransformComponent))]
         private void UpdateUIBackground(ref PBUiBackground sdkModel, ref UIBackgroundComponent uiBackgroundComponent)
         {
-            if (!sdkModel.IsDirty)
+            if (!sdkModel.IsDirty || NoBudget())
                 return;
 
-            // TODO: Set image!
-            uiBackgroundComponent.Image.Color = sdkModel.GetColor();
-            uiBackgroundComponent.Image.Slices = sdkModel.GetBorder();
-            uiBackgroundComponent.Image.UVs = sdkModel.Uvs.ToDCLUVs();
-            uiBackgroundComponent.Image.ScaleMode = sdkModel.TextureMode.ToDCLImageScaleMode();
-
-            sdkModel.IsDirty = false;
+            if (uiBackgroundComponent.TexturePromise == null)
+            {
+                // Backgrounds without texture
+                UiElementUtils.SetupDCLImage(ref uiBackgroundComponent.Image, ref sdkModel);
+                sdkModel.IsDirty = false;
+            }
+            else if (!uiBackgroundComponent.TexturePromise.Value.IsConsumed &&
+                     uiBackgroundComponent.TexturePromise.Value.TryConsume(World, out StreamableLoadingResult<Texture2D> promiseResult))
+            {
+                // Backgrounds with texture
+                UiElementUtils.SetupDCLImage(ref uiBackgroundComponent.Image, ref sdkModel, promiseResult.Asset);
+                sdkModel.IsDirty = false;
+            }
         }
+
+        private void TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise? promise, ref PartitionComponent partitionComponent)
+        {
+            if (textureComponent == null)
+            {
+                // If component is being reuse forget the previous promise
+                TryAddAbortIntention(World, ref promise);
+                return;
+            }
+
+            TextureComponent textureComponentValue = textureComponent.Value;
+
+            // If data inside promise has not changed just reuse the same promise
+            // as creating and waiting for a new one can be expensive
+            if (Equals(ref textureComponentValue, ref promise))
+                return;
+
+            // If component is being reused forget the previous promise
+            TryAddAbortIntention(World, ref promise);
+
+            promise = Promise.Create(World, new GetTextureIntention
+            {
+                CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: ATTEMPTS_COUNT),
+                WrapMode = textureComponentValue.WrapMode,
+                FilterMode = textureComponentValue.FilterMode,
+            }, partitionComponent);
+        }
+
+        private static void TryAddAbortIntention(World world, ref Promise? promise)
+        {
+            if (promise == null)
+                return;
+
+            promise.Value.ForgetLoading(world);
+
+            // Nullify the entity reference
+            promise = null;
+        }
+
+        private static bool Equals(ref TextureComponent textureComponent, ref Promise? promise)
+        {
+            if (promise == null)
+                return false;
+
+            Promise promiseValue = promise.Value;
+            GetTextureIntention intention = promiseValue.LoadingIntention;
+
+            return textureComponent.Src == promiseValue.LoadingIntention.CommonArguments.URL &&
+                   textureComponent.WrapMode == intention.WrapMode &&
+                   textureComponent.FilterMode == intention.FilterMode;
+        }
+
+        private bool NoBudget() =>
+            !frameTimeBudgetProvider.TrySpendBudget() || !memoryBudgetProvider.TrySpendBudget();
     }
 }

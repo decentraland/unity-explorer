@@ -1,6 +1,7 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.SceneUI.Components;
@@ -29,6 +30,8 @@ namespace DCL.PluginSystem.World
 
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly FrameTimeCapBudget frameTimeBudgetProvider;
+        private readonly MemoryBudget memoryBudgetProvider;
 
         public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner)
         {
@@ -36,6 +39,9 @@ namespace DCL.PluginSystem.World
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
             componentPoolsRegistry.AddComponentPool<VisualElement>(onRelease: UiElementUtils.ReleaseUIElement, maxSize: 200);
             componentPoolsRegistry.AddComponentPool<Label>(onRelease: UiElementUtils.ReleaseUIElement, maxSize: 100);
+
+            frameTimeBudgetProvider = singletonSharedDependencies.FrameTimeBudget;
+            memoryBudgetProvider = singletonSharedDependencies.MemoryBudget;
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
@@ -57,7 +63,7 @@ namespace DCL.PluginSystem.World
             UITransformReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UITextInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UITextReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            UIBackgroundInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry);
+            UIBackgroundInstantiationSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, frameTimeBudgetProvider, memoryBudgetProvider);
 
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<VisualElement, UITransformComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<Label, UITextComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
