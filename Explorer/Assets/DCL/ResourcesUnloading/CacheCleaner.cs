@@ -57,7 +57,7 @@ namespace DCL.ResourcesUnloading
             assetBundleCache.Unload(fpsCapBudget, AB_UNLOAD_CHUNK);
             profileCache?.Unload(fpsCapBudget, PROFILE_UNLOAD_CHUNK);
             profileIntentionCache?.Unload(fpsCapBudget, PROFILE_UNLOAD_CHUNK);
-            lodCache.Unload(fpsCapBudgetProvider, GLTF_UNLOAD_CHUNK);
+            lodCache.Unload(fpsCapBudget, GLTF_UNLOAD_CHUNK);
 
             ClearAvatarsRelatedPools();
         }

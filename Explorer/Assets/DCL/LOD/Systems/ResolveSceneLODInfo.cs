@@ -19,9 +19,9 @@ namespace DCL.LOD.Systems
     [UpdateAfter(typeof(ResolveSceneStateByIncreasingRadiusSystem))]
     public partial class ResolveSceneLODInfo : BaseUnityLoopSystem
     {
-        private readonly LODCache lodCache;
+        private readonly LODAssetCache lodCache;
 
-        public ResolveSceneLODInfo(World world, LODCache lodCache) : base(world)
+        public ResolveSceneLODInfo(World world, LODAssetCache lodCache) : base(world)
         {
             this.lodCache = lodCache;
         }

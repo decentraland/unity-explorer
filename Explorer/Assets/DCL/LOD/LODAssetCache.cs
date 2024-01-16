@@ -12,7 +12,7 @@ using Utility;
 using Utility.Multithreading;
 using Utility.PriorityQueue;
 
-public class LODCache : IStreamableCache<LODAsset, string>
+public class LODAssetCache : IStreamableCache<LODAsset, string>
 {
     internal readonly Dictionary<string, LODAsset> cache;
     private readonly Transform parentContainer;
@@ -22,7 +22,7 @@ public class LODCache : IStreamableCache<LODAsset, string>
     public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<LODAsset>?>> OngoingRequests { get; }
     public IDictionary<string, StreamableLoadingResult<LODAsset>> IrrecoverableFailures { get; }
 
-    public LODCache()
+    public LODAssetCache()
     {
         parentContainer = new GameObject("POOL_CONTAINER_LodCache").transform;
         parentContainer.gameObject.SetActive(false);
@@ -39,7 +39,9 @@ public class LODCache : IStreamableCache<LODAsset, string>
     {
         if (key != null && cache.TryGetValue(key, out asset))
         {
+            cache.Remove(key);
             ProfilingCounters.LODInstantiatedInCache.Value--;
+            
             asset.Root.SetActive(true);
             asset.Root.transform.SetParent(null);
             return true;
@@ -76,7 +78,7 @@ public class LODCache : IStreamableCache<LODAsset, string>
         asset.Root.transform.SetParent(parentContainer);
     }
 
-    public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider, int maxUnloadAmount)
+    public void Unload(IPerformanceBudget frameTimeBudgetProvider, int maxUnloadAmount)
     {
         var unloadedAmount = 0;
 

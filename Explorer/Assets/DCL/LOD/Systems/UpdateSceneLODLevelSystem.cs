@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.LOD.Components;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -20,16 +21,22 @@ namespace DCL.LOD.Systems
 {
     [UpdateInGroup(typeof(RealmGroup))]
     [UpdateAfter(typeof(ResolveSceneLODInfo))]
-    public partial class UpdateLODLevelSystem : BaseUnityLoopSystem
+    public partial class UpdateSceneLODLevelSystem : BaseUnityLoopSystem
     {
-        private readonly LODCache lodCache;
+        private readonly LODAssetCache lodCache;
 
         private readonly Vector2Int[] lodBucketLimits;
 
-        public UpdateLODLevelSystem(World world, LODCache lodCache, Vector2Int[] lodBucketLimits) : base(world)
+        private readonly IPerformanceBudget frameCapBudget;
+        private readonly IPerformanceBudget memoryBudget;
+
+        public UpdateSceneLODLevelSystem(World world, LODAssetCache lodCache, Vector2Int[] lodBucketLimits,
+            IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget) : base(world)
         {
             this.lodCache = lodCache;
             this.lodBucketLimits = lodBucketLimits;
+            this.frameCapBudget = frameCapBudget;
+            this.memoryBudget = memoryBudget;
         }
 
         protected override void Update(float t)
@@ -55,12 +62,17 @@ namespace DCL.LOD.Systems
         [Query]
         public void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo)
         {
+            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
+            
             if (sceneLODInfo.CurrentLODPromise.IsConsumed) return;
+            
             if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
                 if (result.Succeeded)
                 {
                     lodCache.Dereference(sceneLODInfo.CurrentLOD.LodKey, sceneLODInfo.CurrentLOD);
+
+                    //TODO: Check if we can reuse mesh filter and mesh renderer
                     sceneLODInfo.CurrentLOD = new LODAsset(sceneLODInfo.GetCurrentLodKey(),
                         Object.Instantiate(result.Asset.GameObject, sceneLODInfo.ParcelPosition, Quaternion.identity),
                         result.Asset);

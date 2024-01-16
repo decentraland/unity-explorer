@@ -18,7 +18,7 @@ namespace DCL.LOD.Components
         public int CurrentLODLevel;
         public LODAsset CurrentLOD;
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
-        public LODCache LodCache;
+        public LODAssetCache LodCache;
         
         public string SceneHash;
         public Vector3 ParcelPosition;
@@ -29,6 +29,7 @@ namespace DCL.LOD.Components
         {
             CurrentLODPromise.ForgetLoading(world);
             LodCache.Dereference(CurrentLOD.LodKey, CurrentLOD);
+            CurrentLOD = default;
         }
 
         public string GetCurrentLodKey()

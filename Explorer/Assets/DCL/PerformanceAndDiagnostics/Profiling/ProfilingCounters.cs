@@ -52,10 +52,10 @@ namespace DCL.Profiling
         //LODS
 
         public static ProfilerCounterValue<int> LODAssetAmount =
-            new(MEMORY, "LOD Assets In Cache", ProfilerMarkerDataUnit.Count);
+            new(MEMORY, "LOD Assets", ProfilerMarkerDataUnit.Count);
 
         public static ProfilerCounterValue<int> LODInstantiatedInCache =
-            new(MEMORY, "LOD Instantiated In Cache", ProfilerMarkerDataUnit.Count);
+            new(MEMORY, "LOD Assets In Cache", ProfilerMarkerDataUnit.Count);
         
         // Textures cache
         public static ProfilerCounterValue<int> TexturesAmount =

@@ -87,7 +87,6 @@ namespace Global.Dynamic
             partitionSettings = staticContainer.PartitionSettings;
             webRequestController = staticContainer.WebRequestsContainer.WebRequestController;
             staticSettings = staticContainer.StaticSettings;
-            cacheCleaner = staticContainer.CacheCleaner;
             this.realmPartitionSettings = realmPartitionSettings;
             this.cameraSamplingData = cameraSamplingData;
             this.realmSamplingData = realmSamplingData;

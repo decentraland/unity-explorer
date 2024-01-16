@@ -4,6 +4,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.LOD.Systems;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
@@ -20,15 +21,20 @@ namespace DCL.LOD
         private int sceneLodLimit;
         private Vector2Int[] lodBucketLimits;
 
-        private readonly LODCache lodCache;
+        private readonly LODAssetCache lodCache;
         private IRealmData realmData;
+        private readonly IPerformanceBudget frameCapBudget;
+        private readonly IPerformanceBudget memoryBudget;
 
 
-        public LODPlugin(CacheCleaner cacheCleaner, RealmData realmData)
+        public LODPlugin(CacheCleaner cacheCleaner, RealmData realmData, IPerformanceBudget memoryBudget,
+            IPerformanceBudget frameCapBudget)
         {
-            lodCache = new LODCache();
+            lodCache = new LODAssetCache();
             cacheCleaner.Register(lodCache);
             this.realmData = realmData;
+            this.memoryBudget = memoryBudget;
+            this.frameCapBudget = frameCapBudget;
         }
 
         public UniTask InitializeAsync(LODSettings settings, CancellationToken ct)
@@ -43,7 +49,8 @@ namespace DCL.LOD
             ResolveVisualSceneStateSystem.InjectToWorld(ref builder, sceneLodLimit);
             UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData);
             ResolveSceneLODInfo.InjectToWorld(ref builder, lodCache);
-            UpdateLODLevelSystem.InjectToWorld(ref builder, lodCache, lodBucketLimits);
+            UpdateSceneLODLevelSystem.InjectToWorld(ref builder, lodCache, lodBucketLimits, frameCapBudget,
+                memoryBudget);
         }
 
         public void Dispose()
