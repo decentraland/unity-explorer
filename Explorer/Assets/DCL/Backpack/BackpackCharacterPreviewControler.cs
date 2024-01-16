@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
 using System.Collections.Generic;
+using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.CharacterPreview
 {
