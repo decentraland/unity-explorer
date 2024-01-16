@@ -2,12 +2,15 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.LOD.Components;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.Common;
+using SceneRunner.Scene;
 using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -25,6 +28,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float t)
         {
+            UpdateVisualStateQuery(World);
             AddSceneVisualStateQuery(World);
             UpdateVisualStateQuery(World);
         }
@@ -35,12 +39,16 @@ namespace ECS.SceneLifeCycle.Systems
         {
             VisualSceneState visualSceneState = new VisualSceneState();
             ResolveVisualSceneState(ref visualSceneState, partition, sceneDefinitionComponent);
+            //No need to left it dirty. Is going to get grabbed by ResolveSceneStateByIncreasingRadiusSystem
+            visualSceneState.IsDirty = false;
             World.Add(entity, visualSceneState);
         }
         
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateVisualState(ref VisualSceneState visualSceneState, ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent)
+        [Any(typeof(SceneLODInfo), typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
+        private void UpdateVisualState(ref VisualSceneState visualSceneState, ref PartitionComponent partition,
+            ref SceneDefinitionComponent sceneDefinitionComponent)
         {
             if (partition.IsDirty)
                 ResolveVisualSceneState(ref visualSceneState, partition, sceneDefinitionComponent);

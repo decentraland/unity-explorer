@@ -12,6 +12,7 @@ namespace ECS.SceneLifeCycle.Components
 
     public enum VisualSceneStateEnum
     {
+        UNINITIALIZED,
         SHOWING_SCENE,
         SHOWING_LOD
     }
