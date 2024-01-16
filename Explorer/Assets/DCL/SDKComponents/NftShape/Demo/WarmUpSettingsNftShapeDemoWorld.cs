@@ -4,7 +4,6 @@ using DCL.Billboard.Demo.World;
 using DCL.DemoWorlds;
 using DCL.ECSComponents;
 using DCL.SDKComponents.NftShape.Component;
-using DCL.SDKComponents.NftShape.Frames;
 using DCL.SDKComponents.NftShape.Frames.Pool;
 using System;
 using UnityEngine;
@@ -22,9 +21,12 @@ namespace DCL.SDKComponents.NftShape.Demo
         private readonly PBVisibilityComponent visibility;
         private readonly PBBillboard billboard;
 
-        public WarmUpSettingsNftShapeDemoWorld(IFramesPool framesPool, NftShapeProperties nftShapeProperties, BillboardProperties billboardProperties, Func<bool> visible) : this(framesPool, new PBNftShape(), new PBVisibilityComponent(), new PBBillboard(), nftShapeProperties, billboardProperties, visible) { }
+        public WarmUpSettingsNftShapeDemoWorld(IFramesPool framesPool, NftShapeProperties nftShapeProperties, BillboardProperties billboardProperties, Func<bool> visible) : this(World.Create(), framesPool, nftShapeProperties, billboardProperties, visible) { }
+
+        public WarmUpSettingsNftShapeDemoWorld(World world, IFramesPool framesPool, NftShapeProperties nftShapeProperties, BillboardProperties billboardProperties, Func<bool> visible) : this(world, framesPool, new PBNftShape(), new PBVisibilityComponent(), new PBBillboard(), nftShapeProperties, billboardProperties, visible) { }
 
         public WarmUpSettingsNftShapeDemoWorld(
+            World world,
             IFramesPool framesPool,
             PBNftShape nftShape,
             PBVisibilityComponent visibility,
@@ -40,8 +42,6 @@ namespace DCL.SDKComponents.NftShape.Demo
             this.nftShapeProperties = nftShapeProperties;
             this.billboardProperties = billboardProperties;
             this.visible = visible;
-
-            var world = World.Create();
 
             this.origin = new SeveralDemoWorld(
                 new BillboardDemoWorld(

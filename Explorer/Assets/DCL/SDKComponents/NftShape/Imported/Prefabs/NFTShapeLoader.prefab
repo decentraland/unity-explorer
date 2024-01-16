@@ -295,7 +295,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdba52f6deb448c4bed33d9c931340fd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  renderer: {fileID: 0}
+  renderer: {fileID: 7569545474623459574}
   defaultBlankMaterial: {fileID: 2100000, guid: c95a10e5c65124c1aa82d6fe293b895c, type: 2}
   placeIndex: 0
   loadingStatus: {fileID: 6031248581314555280}

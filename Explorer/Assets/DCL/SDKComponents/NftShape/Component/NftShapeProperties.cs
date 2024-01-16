@@ -2,8 +2,6 @@ using DCL.ECSComponents;
 using ECS.Unity.ColorComponent;
 using System;
 using UnityEngine;
-using UnityEngine.Serialization;
-using Font = DCL.ECSComponents.Font;
 
 namespace DCL.SDKComponents.NftShape.Component
 {
@@ -13,6 +11,14 @@ namespace DCL.SDKComponents.NftShape.Component
         public Color color = Color.white;
         public NftFrameType style = NftFrameType.NftNone;
         public string urn = string.Empty;
+
+        public NftShapeProperties With(NftFrameType frameType) =>
+            new ()
+            {
+                color = this.color,
+                style = frameType,
+                urn = this.urn,
+            };
     }
 
     public static class TextShapePropertiesExtensions
