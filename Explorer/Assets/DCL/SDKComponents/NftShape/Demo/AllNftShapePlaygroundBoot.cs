@@ -18,8 +18,6 @@ namespace DCL.SDKComponents.NftShape.Demo
         [SerializeField]
         private NftShapeProperties nftShapeProperties = new ();
         [SerializeField]
-        private BillboardProperties billboardProperties = new ();
-        [SerializeField]
         private bool visible = true;
         [SerializeField]
         private NftShapeSettings settings = null!;
@@ -35,7 +33,7 @@ namespace DCL.SDKComponents.NftShape.Demo
             new SeveralDemoWorld(
                     AllFrameTypes()
                        .Select(e => nftShapeProperties.With(e))
-                       .Select(e => new WarmUpSettingsNftShapeDemoWorld(world, framesPool, e, billboardProperties, () => visible) as IDemoWorld)
+                       .Select(e => new WarmUpSettingsNftShapeDemoWorld(world, framesPool, e, () => visible) as IDemoWorld)
                        .Append(new GridDemoWorld(world, countInRow, distanceBetween))
                        .ToList()
                 ).SetUpAndRunAsync(destroyCancellationToken)
