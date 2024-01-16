@@ -41,8 +41,8 @@ namespace DCL.Interaction.Raycast.Tests
         [SetUp]
         public void SetUp()
         {
-            sceneRoot = world.Create(new SceneRootComponent());
-            AddTransformToEntity(sceneRoot);
+            ISceneData sceneData = Substitute.For<ISceneData>();
+            sceneData.Geometry.Returns(new ParcelMathHelper.SceneGeometry(UnityEngine.Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes()));
 
             budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
@@ -55,7 +55,7 @@ namespace DCL.Interaction.Raycast.Tests
 
             system = new ExecuteRaycastSystem(
                 world,
-                sceneRoot,
+                sceneData,
                 budget,
                 4,
                 raycastHitPool,

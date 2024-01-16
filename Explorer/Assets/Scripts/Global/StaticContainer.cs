@@ -168,7 +168,7 @@ namespace Global
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
-                container.CharacterContainer,
+                container.CharacterContainer.CreateWorldPlugin(),
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif

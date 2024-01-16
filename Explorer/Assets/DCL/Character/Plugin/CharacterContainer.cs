@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility;
 using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.Character.Plugin
@@ -26,10 +27,10 @@ namespace DCL.Character.Plugin
     ///     Character container is isolated to provide access
     ///     to Character/Player related assets and settings only
     /// </summary>
-    public class CharacterContainer : IDCLGlobalPlugin<CharacterContainer.Settings>, IDCLWorldPluginWithoutSettings
+    public class CharacterContainer : IDCLPlugin<CharacterContainer.Settings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly ExposedPlayerTransform exposedPlayerTransform;
+        private readonly ExposedTransform exposedTransform;
 
         private ProvidedInstance<CharacterObject> characterObject;
         private byte bucketPropagationLimit;
@@ -43,16 +44,28 @@ namespace DCL.Character.Plugin
         {
             this.assetsProvisioner = assetsProvisioner;
 
-            exposedPlayerTransform = new ExposedPlayerTransform();
+            exposedTransform = new ExposedTransform();
         }
-
-        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
-            UniTask.CompletedTask;
 
         public void Dispose()
         {
             characterObject.Dispose();
         }
+
+        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
+        {
+            characterObject = await assetsProvisioner.ProvideInstanceAsync(settings.CharacterObject, new Vector3(0f, settings.StartYPosition, 0f), Quaternion.identity, ct: ct);
+            bucketPropagationLimit = settings.sceneBucketPropagationLimit;
+        }
+
+        public WorldPlugin CreateWorldPlugin() =>
+            new (exposedTransform, bucketPropagationLimit);
+
+        public GlobalPlugin CreateGlobalPlugin() =>
+            new (exposedTransform);
+
+        public UniTask InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
+            UniTask.CompletedTask;
 
         public Entity CreatePlayerEntity(World world) =>
             world.Create(
@@ -67,26 +80,40 @@ namespace DCL.Character.Plugin
                         WearablesConstants.DefaultColors.GetRandomHairColor(),
                         WearablesConstants.DefaultColors.GetRandomSkinColor())));
 
-        // Initialize as a global plug-in
-        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
+        public class GlobalPlugin : IDCLGlobalPluginWithoutSettings
         {
-            characterObject = await assetsProvisioner.ProvideInstanceAsync(settings.CharacterObject, new Vector3(0f, settings.StartYPosition, 0f), Quaternion.identity, ct: ct);
-            bucketPropagationLimit = settings.sceneBucketPropagationLimit;
+            private readonly ExposedTransform exposedTransform;
+
+            public GlobalPlugin(ExposedTransform exposedTransform)
+            {
+                this.exposedTransform = exposedTransform;
+            }
+
+            public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
+            {
+                ExposePlayerTransformSystem.InjectToWorld(ref builder, arguments.PlayerEntity, exposedTransform);
+            }
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
+        public class WorldPlugin : IDCLWorldPluginWithoutSettings
         {
-            // global world
-            ExposePlayerTransformSystem.InjectToWorld(ref builder, arguments.PlayerEntity, exposedPlayerTransform);
-        }
+            private readonly ExposedTransform exposedTransform;
+            private readonly byte bucketPropagationLimit;
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
-        {
-            // scene world
-            WritePlayerTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, exposedPlayerTransform, sharedDependencies.ScenePartition, bucketPropagationLimit);
-        }
+            public WorldPlugin(ExposedTransform exposedTransform, byte bucketPropagationLimit)
+            {
+                this.exposedTransform = exposedTransform;
+                this.bucketPropagationLimit = bucketPropagationLimit;
+            }
 
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
+            public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
+            {
+                WritePlayerTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneData,
+                    exposedTransform, sharedDependencies.ScenePartition, bucketPropagationLimit);
+            }
+
+            public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
+        }
 
         [Serializable]
         public class Settings : IDCLPluginSettings

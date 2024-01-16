@@ -10,20 +10,20 @@ namespace DCL.Character.Components
     /// </summary>
     public readonly struct CharacterTransform : IPoolableComponentProvider<Transform>
     {
-        private readonly Transform transform;
+        public readonly Transform Transform;
 
         public CharacterTransform(Transform transform)
         {
-            this.transform = transform;
+            Transform = transform;
         }
 
-        public Vector3 Position => transform.position;
+        public Vector3 Position => Transform.position;
 
-        public Quaternion Rotation => transform.rotation;
+        public Quaternion Rotation => Transform.rotation;
 
         public void Dispose() { }
 
-        Transform IPoolableComponentProvider<Transform>.PoolableComponent => transform;
+        Transform IPoolableComponentProvider<Transform>.PoolableComponent => Transform;
         Type IPoolableComponentProvider<Transform>.PoolableComponentType => typeof(Transform);
     }
 }

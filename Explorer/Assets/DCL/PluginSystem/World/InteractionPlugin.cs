@@ -18,8 +18,8 @@ namespace DCL.PluginSystem.World
 {
     public class InteractionPlugin : IDCLWorldPlugin<InteractionPlugin.Settings>
     {
-        private readonly IProfilingProvider profilingProvider;
         private readonly IGlobalInputEvents globalInputEvents;
+        private readonly IProfilingProvider profilingProvider;
         private readonly ECSWorldSingletonSharedDependencies sharedDependencies;
 
         private IReleasablePerformanceBudget raycastBudget;
@@ -46,7 +46,7 @@ namespace DCL.PluginSystem.World
         {
             InitializeRaycastSystem.InjectToWorld(ref builder);
 
-            ExecuteRaycastSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, raycastBudget, settings.RaycastBucketThreshold,
+            ExecuteRaycastSystem.InjectToWorld(ref builder, sceneDeps.SceneData, raycastBudget, settings.RaycastBucketThreshold,
                 sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<RaycastHit>(),
                 sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<PBRaycastResult>(),
                 sceneDeps.EntityCollidersSceneCache,
@@ -54,7 +54,7 @@ namespace DCL.PluginSystem.World
                 sceneDeps.EcsToCRDTWriter,
                 sceneDeps.SceneStateProvider);
 
-            WritePointerEventResultsSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot,
+            WritePointerEventResultsSystem.InjectToWorld(ref builder, sceneDeps.SceneData,
                 sceneDeps.EcsToCRDTWriter,
                 sceneDeps.SceneStateProvider,
                 globalInputEvents);

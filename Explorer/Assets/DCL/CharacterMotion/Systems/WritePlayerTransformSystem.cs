@@ -7,6 +7,8 @@ using DCL.Character;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Prioritization.Components;
+using SceneRunner.Scene;
+using Utility;
 
 namespace DCL.CharacterMotion.Systems
 {
@@ -22,15 +24,18 @@ namespace DCL.CharacterMotion.Systems
         private static readonly SDKTransform PLAYER_TRANSFORM_SHARED = new ();
 
         private readonly IECSToCRDTWriter ecsToCrdtWriter;
-        private readonly IExposedPlayerTransform exposedPlayerTransform;
+        private readonly ISceneData sceneData;
+        private readonly IExposedTransform exposedTransform;
         private readonly IPartitionComponent scenePartition;
         private readonly byte bucketThreshold;
 
-        public WritePlayerTransformSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, IExposedPlayerTransform exposedPlayerTransform, IPartitionComponent scenePartition, byte bucketThreshold) : base(world)
+        public WritePlayerTransformSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, ISceneData sceneData, IExposedTransform exposedTransform, IPartitionComponent scenePartition,
+            byte bucketThreshold) : base(world)
         {
             this.ecsToCrdtWriter = ecsToCrdtWriter;
-            this.exposedPlayerTransform = exposedPlayerTransform;
+            this.exposedTransform = exposedTransform;
             this.bucketThreshold = bucketThreshold;
+            this.sceneData = sceneData;
             this.scenePartition = scenePartition;
         }
 
@@ -45,7 +50,7 @@ namespace DCL.CharacterMotion.Systems
             if (scenePartition.Bucket > bucketThreshold)
                 return;
 
-            if (!exposedPlayerTransform.Position.IsDirty && !exposedPlayerTransform.Rotation.IsDirty)
+            if (!exposedTransform.Position.IsDirty && !exposedTransform.Rotation.IsDirty)
                 return;
 
             PutMessage();
@@ -53,8 +58,8 @@ namespace DCL.CharacterMotion.Systems
 
         private void PutMessage()
         {
-            PLAYER_TRANSFORM_SHARED.Position = exposedPlayerTransform.Position.Value;
-            PLAYER_TRANSFORM_SHARED.Rotation = exposedPlayerTransform.Rotation.Value;
+            PLAYER_TRANSFORM_SHARED.Position = ParcelMathHelper.GetSceneRelativePosition(exposedTransform.Position.Value, sceneData.Geometry.BaseParcelPosition);
+            PLAYER_TRANSFORM_SHARED.Rotation = exposedTransform.Rotation.Value;
 
             ecsToCrdtWriter.PutMessage(SpecialEntitiesID.PLAYER_ENTITY, PLAYER_TRANSFORM_SHARED);
         }

@@ -42,12 +42,12 @@ namespace DCL.Interaction.Raycast.Systems
         private readonly IComponentPool<ECSComponents.RaycastHit> raycastHitPool;
         private readonly ISceneStateProvider sceneStateProvider;
 
-        private readonly Entity sceneRoot;
+        private readonly ISceneData sceneData;
 
         private List<OrderedData> orderedData;
 
         internal ExecuteRaycastSystem(World world,
-            Entity sceneRoot,
+            ISceneData sceneData,
             IReleasablePerformanceBudget budget,
             byte raycastBucketThreshold,
             IComponentPool<ECSComponents.RaycastHit> raycastHitPool,
@@ -57,7 +57,7 @@ namespace DCL.Interaction.Raycast.Systems
             IECSToCRDTWriter ecsToCRDTWriter,
             ISceneStateProvider sceneStateProvider) : base(world)
         {
-            this.sceneRoot = sceneRoot;
+            this.sceneData = sceneData;
             this.budget = budget;
             this.raycastBucketThreshold = raycastBucketThreshold;
             this.raycastHitPool = raycastHitPool;
@@ -80,8 +80,7 @@ namespace DCL.Interaction.Raycast.Systems
 
         protected override void Update(float t)
         {
-            Vector3 scenePosition = World.Get<TransformComponent>(sceneRoot).Cached.WorldPosition;
-            BudgetAndExecute(scenePosition);
+            BudgetAndExecute(sceneData.Geometry.BaseParcelPosition);
         }
 
         /// <summary>
@@ -243,8 +242,8 @@ namespace DCL.Interaction.Raycast.Systems
             public PartitionComponent Partition;
             public ManagedTypePointer<RaycastComponent> Component;
             public TransformComponent TransformComponent;
-            public PBRaycast SDKComponent;
             public CRDTEntity CRDTEntity;
+            public PBRaycast SDKComponent;
         }
     }
 }

@@ -120,7 +120,7 @@ namespace Global.Dynamic
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
                 new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, container.mvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, storedIdentityProvider),
                 new SkyBoxPlugin(debugBuilder, skyBoxSceneData),
-                staticContainer.CharacterContainer,
+                staticContainer.CharacterContainer.CreateGlobalPlugin(),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

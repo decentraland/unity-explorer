@@ -5,6 +5,7 @@ using DCL.Character;
 using DCL.Character.Components;
 using DCL.Diagnostics;
 using ECS.Abstract;
+using Utility;
 
 namespace DCL.CharacterMotion.Systems
 {
@@ -18,20 +19,20 @@ namespace DCL.CharacterMotion.Systems
     public partial class ExposePlayerTransformSystem : BaseUnityLoopSystem
     {
         private readonly Entity playerEntity;
-        private readonly ExposedPlayerTransform exposedPlayerTransform;
+        private readonly ExposedTransform exposedTransform;
 
-        internal ExposePlayerTransformSystem(World world, Entity playerEntity, ExposedPlayerTransform exposedPlayerTransform) : base(world)
+        internal ExposePlayerTransformSystem(World world, Entity playerEntity, ExposedTransform exposedTransform) : base(world)
         {
             this.playerEntity = playerEntity;
-            this.exposedPlayerTransform = exposedPlayerTransform;
+            this.exposedTransform = exposedTransform;
         }
 
         protected override void Update(float t)
         {
             CharacterTransform charTransform = World.Get<CharacterTransform>(playerEntity);
 
-            exposedPlayerTransform.Position.Value = charTransform.Position;
-            exposedPlayerTransform.Rotation.Value = charTransform.Rotation;
+            exposedTransform.Position.Value = charTransform.Position;
+            exposedTransform.Rotation.Value = charTransform.Rotation;
         }
     }
 }

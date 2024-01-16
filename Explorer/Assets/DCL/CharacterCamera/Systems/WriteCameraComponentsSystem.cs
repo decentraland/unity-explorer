@@ -40,12 +40,14 @@ namespace DCL.CharacterCamera.Systems
 
         protected override void Update(float t)
         {
-            Vector3 scenePosition = World.Get<TransformComponent>(sceneRootEntity).Cached.WorldPosition;
+            // TODO why sceneRootEntity??
+            //Vector3 scenePosition = World.Get<TransformComponent>(sceneRootEntity).Cached.WorldPosition;
 
             SHARED_CAMERA_MODE.Mode = exposedCameraData.CameraType;
             SHARED_POINTER_LOCK.IsPointerLocked = exposedCameraData.PointerIsLocked;
-            SHARED_TRANSFORM.Position = ParcelMathHelper.GetSceneRelativePosition(exposedCameraData.WorldPosition, scenePosition);
-            SHARED_TRANSFORM.Rotation = exposedCameraData.WorldRotation;
+
+            //SHARED_TRANSFORM.Position = ParcelMathHelper.GetSceneRelativePosition(exposedCameraData.WorldPosition, scenePosition);
+            //SHARED_TRANSFORM.Rotation = exposedCameraData.WorldRotation;
 
             // TODO Access to CRDT LWW components is not synchronized, bi-directional access causes concurrency exceptions
             // TODO Poor performance, should jobified

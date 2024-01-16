@@ -32,16 +32,16 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         private static readonly PBPointerEventsResult SHARED_POINTER_EVENTS_RESULT = new ();
         private static readonly RaycastHit SHARED_RAYCAST_HIT = new RaycastHit().Reset();
 
-        private readonly Entity sceneRoot;
+        private readonly ISceneData sceneData;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IGlobalInputEvents globalInputEvents;
 
-        internal WritePointerEventResultsSystem(World world, Entity sceneRoot, IECSToCRDTWriter ecsToCRDTWriter,
+        internal WritePointerEventResultsSystem(World world, ISceneData sceneData, IECSToCRDTWriter ecsToCRDTWriter,
             ISceneStateProvider sceneStateProvider, IGlobalInputEvents globalInputEvents) : base(world)
         {
-            this.sceneRoot = sceneRoot;
+            this.sceneData = sceneData;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
 
             this.sceneStateProvider = sceneStateProvider;
@@ -50,8 +50,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         protected override void Update(float t)
         {
-            Vector3 scenePosition = World.Get<TransformComponent>(sceneRoot).Cached.WorldPosition;
-            WriteResultsQuery(World, scenePosition);
+            WriteResultsQuery(World, sceneData.Geometry.BaseParcelPosition);
             WriteGlobalEvents();
         }
 

@@ -11,6 +11,8 @@ using NUnit.Framework;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
+using Utility;
 
 namespace DCL.Interaction.PlayerOriginated.Tests
 {
@@ -23,13 +25,13 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         [SetUp]
         public void SetUp()
         {
-            Entity rootEntity = world.Create(new SceneRootComponent());
-            AddTransformToEntity(rootEntity);
+            ISceneData sceneData = Substitute.For<ISceneData>();
+            sceneData.Geometry.Returns(new ParcelMathHelper.SceneGeometry(Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes()));
 
             ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.TickNumber.Returns(123u);
 
-            system = new WritePointerEventResultsSystem(world, rootEntity,
+            system = new WritePointerEventResultsSystem(world, sceneData,
                 writer = Substitute.For<IECSToCRDTWriter>(),
                 sceneStateProvider,
                 globalInputEvents = Substitute.For<IGlobalInputEvents>());
