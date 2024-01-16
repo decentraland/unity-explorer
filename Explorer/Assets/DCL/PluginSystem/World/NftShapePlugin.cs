@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.ResourcesUnloading;
 using DCL.SDKComponents.NftShape.Component;
 using DCL.SDKComponents.NftShape.Frame;
 using DCL.SDKComponents.NftShape.Frames.Pool;
@@ -29,26 +30,29 @@ namespace DCL.PluginSystem.World
         private readonly IWebRequestController webRequestController;
         private readonly IStreamableCache<Texture2D, GetNftShapeIntention> cache = new NftShapeCache();
 
-        public NftShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IPluginSettingsContainer settingsContainer, IWebRequestController webRequestController) : this(
+        public NftShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IPluginSettingsContainer settingsContainer, IWebRequestController webRequestController, CacheCleaner cacheCleaner) : this(
             new PoolNftShapeRendererFactory(componentPoolsRegistry, new FramesPool(settingsContainer.GetSettings<NftShapePluginSettings>().Settings)),
             instantiationFrameTimeBudgetProvider,
             componentPoolsRegistry,
-            webRequestController
+            webRequestController,
+            cacheCleaner
         ) { }
 
-        public NftShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IFramesPool framesPool, IWebRequestController webRequestController) : this(
+        public NftShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IFramesPool framesPool, IWebRequestController webRequestController, CacheCleaner cacheCleaner) : this(
             new PoolNftShapeRendererFactory(componentPoolsRegistry, framesPool),
             instantiationFrameTimeBudgetProvider,
             componentPoolsRegistry,
-            webRequestController
+            webRequestController,
+            cacheCleaner
         ) { }
 
-        public NftShapePlugin(INftShapeRendererFactory nftShapeRendererFactory, IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IWebRequestController webRequestController)
+        public NftShapePlugin(INftShapeRendererFactory nftShapeRendererFactory, IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IWebRequestController webRequestController, CacheCleaner cacheCleaner)
         {
             this.nftShapeRendererFactory = nftShapeRendererFactory;
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.webRequestController = webRequestController;
+            cacheCleaner.Register(cache);
         }
 
         public void Dispose()
