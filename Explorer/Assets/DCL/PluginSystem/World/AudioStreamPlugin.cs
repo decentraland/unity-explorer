@@ -1,7 +1,7 @@
 ﻿using Arch.SystemGroups;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
-using DCL.SDKComponents.AudioStream.Factory;
+using DCL.SDKComponents.AudioStream.Wrapper;
 using ECS.LifeCycle;
 using System.Collections.Generic;
 

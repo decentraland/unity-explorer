@@ -5,7 +5,7 @@ using RenderHeads.Media.AVProVideo;
 using System;
 using System.Runtime.CompilerServices;
 
-namespace DCL.SDKComponents.AudioStream.Components
+namespace DCL.SDKComponents.AudioStream
 {
     public struct AudioStreamComponent : IPoolableComponentProvider<MediaPlayer>
     {

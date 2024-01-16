@@ -8,9 +8,8 @@ using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Unity.Groups;
 using SceneRunner.Scene;
-using DCL.SDKComponents.AudioStream.Components;
 
-namespace DCL.SDKComponents.AudioStream.Systems
+namespace DCL.SDKComponents.AudioStream
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [LogCategory(ReportCategory.AUDIO_STREAM)]

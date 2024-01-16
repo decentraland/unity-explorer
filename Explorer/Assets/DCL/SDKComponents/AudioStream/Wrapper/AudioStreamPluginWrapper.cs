@@ -1,20 +1,14 @@
 ﻿using Arch.SystemGroups;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
-using DCL.SDKComponents.AudioStream.Components;
-using DCL.SDKComponents.AudioStream.Systems;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
+using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 
-#if AV_PRO_PRESENT
-using RenderHeads.Media.AVProVideo;
-#endif
-
-namespace DCL.SDKComponents.AudioStream.Factory
+namespace DCL.SDKComponents.AudioStream.Wrapper
 {
-
     public class AudioStreamPluginWrapper
     {
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
