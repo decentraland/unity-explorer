@@ -477,6 +477,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7378218084941876052}
   - component: {fileID: 8913840404976563499}
+  - component: {fileID: 3477115504154704893}
   m_Layer: 5
   m_Name: NftBreadcrumberSubcategoryFilter
   m_TagString: Untagged
@@ -531,6 +532,29 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &3477115504154704893
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8040266454562927411}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b599c29e9e149198bcfed1291dfe960, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <NavigateButton>k__BackingField: {fileID: 4574877277027624806}
+  <ExitButton>k__BackingField: {fileID: 9077946215664595399}
+  <CategoryName>k__BackingField: {fileID: 7056146438816032565}
+  <Icon>k__BackingField: {fileID: 7834170530783117578}
+  <BackgroundImage>k__BackingField: {fileID: 339297691544193653}
+  <SelectedBackgroundColor>k__BackingField: {r: 1, g: 0.45490196, b: 0.22352941, a: 1}
+  <SelectedFontColor>k__BackingField: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
+  <UnselectedBackgroundColor>k__BackingField: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
+  <UnselectedFontColor>k__BackingField: {r: 0.08627451, g: 0.08235294, b: 0.09411765, a: 1}
+  <SelectedIconColor>k__BackingField: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
+  <UnselectedIconColor>k__BackingField: {r: 0.08627451, g: 0.08235294, b: 0.09411765, a: 1}
 --- !u!1 &9182652196809982120
 GameObject:
   m_ObjectHideFlags: 0
@@ -567,7 +591,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 97.915, y: 0}
+  m_AnchoredPosition: {x: 98.97, y: 0}
   m_SizeDelta: {x: 0, y: 32}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &9100632382229269017
@@ -600,8 +624,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Category
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
+  m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

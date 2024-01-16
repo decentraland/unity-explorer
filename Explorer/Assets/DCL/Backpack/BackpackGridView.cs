@@ -1,4 +1,5 @@
 using DCL.AssetsProvision;
+using DCL.Backpack.Breadcrumb;
 using DCL.UI;
 using System;
 using UnityEngine;
@@ -21,6 +22,9 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public GameObject NoCategoryResults { get; private set; }
+
+        [field: SerializeField]
+        public BackpackBreadCrumbView BreadCrumbView { get; private set; }
 
         [Serializable]
         public class BackpackItemRef : ComponentReference<BackpackItemView>

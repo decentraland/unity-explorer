@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using DCL.Backpack.Breadcrumb;
 using DCL.UI;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
@@ -42,6 +43,7 @@ namespace DCL.Backpack
         private readonly NftTypeIconSO categoryIcons;
         private readonly IBackpackEquipStatusController backpackEquipStatusController;
         private readonly PageSelectorController pageSelectorController;
+        private readonly BackpackBreadCrumbController backpackBreadCrumbController;
 
         private readonly List<(string, string)> requestParameters;
         private readonly List<IWearable> results = new (CURRENT_PAGE_SIZE);
@@ -88,6 +90,8 @@ namespace DCL.Backpack
             backpackSortController.OnCollectiblesOnlyChanged += OnCollectiblesOnlyChanged;
             pageSelectorController.OnSetPage += RequestPage;
             requestParameters = new List<(string, string)>();
+
+            backpackBreadCrumbController = new BackpackBreadCrumbController(view.BreadCrumbView, eventBus, commandBus, categoryIcons);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in Entity playerEntity)

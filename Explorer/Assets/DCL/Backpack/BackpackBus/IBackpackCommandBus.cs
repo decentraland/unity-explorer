@@ -15,6 +15,7 @@ namespace DCL.Backpack.BackpackBus
         void SendCommand(BackpackUnEquipCommand command);
         void SendCommand(BackpackSelectCommand command);
         void SendCommand(BackpackHideCommand command);
+        void SendCommand(BackpackFilterCategoryCommand command);
         void SendCommand(BackpackSearchCommand command);
     }
 }
