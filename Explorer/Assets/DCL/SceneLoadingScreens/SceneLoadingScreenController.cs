@@ -99,9 +99,13 @@ namespace DCL.SceneLoadingScreens
 
         private async UniTask WaitUntilWorldIsLoadedAsync(CancellationToken ct)
         {
-            await inputData.SceneReadinessReport.CompletionSource.Task;
-
-            viewInstance.ProgressBar.normalizedValue = 1f;
+            try
+            {
+                await inputData.SceneReadinessReport.CompletionSource.Task;
+                ct.ThrowIfCancellationRequested();
+                viewInstance.ProgressBar.normalizedValue = 1f;
+            }
+            catch { }
         }
 
         private void ShowTip(int index)

@@ -106,11 +106,16 @@ namespace DCL.ParcelsService
             mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(parcel, readinessCompletion)))
                       .Forget();
 
-            // add timeout in case of a trouble
-            await readinessCompletion.CompletionSource.Task.Timeout(TimeSpan.FromSeconds(30));
-
-            // TODO Hide Loading Screen
-            // TODO Handle Timeout and other exception
+            try
+            {
+                // add timeout in case of a trouble
+                await readinessCompletion.CompletionSource.Task.Timeout(TimeSpan.FromSeconds(30));
+            }
+            catch (TimeoutException e)
+            {
+                // propagate the timeout into the readiness completion so the load screen is able to handle it
+                readinessCompletion.CompletionSource.TrySetException(e);
+            }
         }
 
         private static Vector3 GetOffsetFromSpawnPoint(IpfsTypes.SceneMetadata.SpawnPoint spawnPoint)
