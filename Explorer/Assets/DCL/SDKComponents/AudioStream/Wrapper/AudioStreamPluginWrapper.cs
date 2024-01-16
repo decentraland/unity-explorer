@@ -1,9 +1,11 @@
 ﻿using Arch.SystemGroups;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
-using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
+#if AV_PRO_PRESENT
+using ECS.ComponentsPooling.Systems;
 using RenderHeads.Media.AVProVideo;
+#endif
 using SceneRunner.Scene;
 using System.Collections.Generic;
 
