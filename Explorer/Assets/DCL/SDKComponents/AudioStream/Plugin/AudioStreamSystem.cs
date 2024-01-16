@@ -8,9 +8,7 @@ using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Unity.Groups;
 using SceneRunner.Scene;
-#if AV_PRO_PRESENT
 using DCL.SDKComponents.AudioStream.Components;
-#endif
 
 namespace DCL.SDKComponents.AudioStream.Systems
 {
@@ -29,13 +27,9 @@ namespace DCL.SDKComponents.AudioStream.Systems
 
         protected override void Update(float t)
         {
-#if AV_PRO_PRESENT
             InstantiateAudioStreamQuery(World);
             UpdateAudioStreamQuery(World);
-#endif
         }
-
-#if AV_PRO_PRESENT
 
         [Query]
         [None(typeof(AudioStreamComponent))]
@@ -55,7 +49,5 @@ namespace DCL.SDKComponents.AudioStream.Systems
             component.UpdateComponentChange(sdkComponent);
             sdkComponent.IsDirty = false;
         }
-#endif
-
     }
 }
