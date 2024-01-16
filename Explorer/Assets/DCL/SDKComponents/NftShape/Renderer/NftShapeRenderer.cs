@@ -10,7 +10,7 @@ namespace DCL.SDKComponents.NftShape.Renderer
         private readonly Transform transform;
         private readonly IFramesPool framesPool;
 
-        private GameObject? frame;
+        private AbstractFrame? frame;
 
         public NftShapeRenderer(Transform transform, IFramesPool framesPool)
         {
@@ -32,12 +32,12 @@ namespace DCL.SDKComponents.NftShape.Renderer
 
         public void Hide()
         {
-            if (frame != null) { frame.SetActive(false); }
+            if (frame != null) { frame.gameObject.SetActive(false); }
         }
 
         public void Show()
         {
-            if (frame != null) { frame.SetActive(true); }
+            if (frame != null) { frame.gameObject.SetActive(true); }
         }
     }
 }

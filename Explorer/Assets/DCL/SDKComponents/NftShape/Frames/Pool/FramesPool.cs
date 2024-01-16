@@ -8,22 +8,22 @@ namespace DCL.SDKComponents.NftShape.Frames.Pool
 {
     public class FramesPool : IFramesPool
     {
-        private readonly IReadOnlyDictionary<NftFrameType, GameObject> prefabs;
-        private readonly GameObject defaultPrefab;
-        private readonly Dictionary<NftFrameType, IObjectPool<GameObject>> pools = new ();
-        private readonly Dictionary<GameObject, NftFrameType> types = new ();
+        private readonly IReadOnlyDictionary<NftFrameType, AbstractFrame> prefabs;
+        private readonly AbstractFrame defaultPrefab;
+        private readonly Dictionary<NftFrameType, IObjectPool<AbstractFrame>> pools = new ();
+        private readonly Dictionary<AbstractFrame, NftFrameType> types = new ();
 
         public FramesPool(NftShapeSettings settings) : this(settings.FramePrefabs(), settings.DefaultFrame())
         {
         }
 
-        public FramesPool(IReadOnlyDictionary<NftFrameType, GameObject> prefabs, GameObject defaultPrefab)
+        public FramesPool(IReadOnlyDictionary<NftFrameType, AbstractFrame> prefabs, AbstractFrame defaultPrefab)
         {
             this.prefabs = prefabs;
             this.defaultPrefab = defaultPrefab;
         }
 
-        public GameObject NewFrame(NftFrameType frameType, Transform parent)
+        public AbstractFrame NewFrame(NftFrameType frameType, Transform parent)
         {
             var g = Pool(frameType).Get()!;
             g.transform.SetParent(parent, false);
@@ -31,20 +31,20 @@ namespace DCL.SDKComponents.NftShape.Frames.Pool
             return g;
         }
 
-        public void Release(GameObject frame)
+        public void Release(AbstractFrame frame)
         {
             Pool(types[frame]).Release(frame);
             types.Remove(frame);
         }
 
-        private IObjectPool<GameObject> Pool(NftFrameType frameType)
+        private IObjectPool<AbstractFrame> Pool(NftFrameType frameType)
         {
             if (pools.TryGetValue(frameType, out var pool) == false)
             {
-                pool = pools[frameType] = new ObjectPool<GameObject>(
-                    () => GameObject.Instantiate(Prefab(frameType)),
-                    g => g.SetActive(true),
-                    g => g.SetActive(false),
+                pool = pools[frameType] = new ObjectPool<AbstractFrame>(
+                    () => Object.Instantiate(Prefab(frameType)),
+                    g => g.gameObject.SetActive(true),
+                    g => g.gameObject.SetActive(false),
                     g => UnityObjectUtils.SafeDestroyGameObject(g.transform)
                 );
             }
@@ -52,7 +52,7 @@ namespace DCL.SDKComponents.NftShape.Frames.Pool
             return pool!;
         }
 
-        private GameObject Prefab(NftFrameType frameType) =>
+        private AbstractFrame Prefab(NftFrameType frameType) =>
             prefabs.TryGetValue(frameType, out var prefab)
                 ? prefab!
                 : defaultPrefab;

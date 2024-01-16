@@ -13,14 +13,22 @@ namespace DCL.SDKComponents.NftShape.Frames.Pool
         [SerializeField] private List<Pair> pairs = new ();
         [SerializeField] private GameObject defaultFrame = null!;
 
-        public IReadOnlyDictionary<NftFrameType, GameObject> FramePrefabs()
+        public IReadOnlyDictionary<NftFrameType, AbstractFrame> FramePrefabs()
         {
-            return pairs.ToDictionary(e => e.nftFrameType, e => e.prefab.EnsureNotNull());
+            return pairs.ToDictionary(e => e.nftFrameType, e => FrameFrom(e.prefab.EnsureNotNull()));
         }
 
-        public GameObject DefaultFrame()
+        public AbstractFrame DefaultFrame()
         {
-            return defaultFrame.EnsureNotNull("Default frame not set");
+            return FrameFrom(defaultFrame.EnsureNotNull("Default frame not set"));
+        }
+
+        private AbstractFrame FrameFrom(GameObject gameObject)
+        {
+            if (gameObject.TryGetComponent(out AbstractFrame frame))
+                return frame!;
+
+            throw new Exception("GameObject does not contain AbstractFrame");
         }
 
         [ContextMenu(nameof(Ensure))]

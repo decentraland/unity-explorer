@@ -5,8 +5,8 @@ namespace DCL.SDKComponents.NftShape.Frames.Pool
 {
     public interface IFramesPool
     {
-        GameObject NewFrame(NftFrameType frameType, Transform parent);
+        AbstractFrame NewFrame(NftFrameType frameType, Transform parent);
 
-        void Release(GameObject frame);
+        void Release(AbstractFrame frame);
     }
 }
