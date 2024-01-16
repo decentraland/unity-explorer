@@ -171,12 +171,10 @@ MonoBehaviour:
     color: {r: 0.3254717, g: 1, b: 0.40011987, a: 1}
     style: 13
     urn: 
-  billboardProperties:
-    useX: 0
-    useY: 0
-    useZ: 0
   visible: 1
   settings: {fileID: 11400000, guid: f50de1a2a7dab4e4d952a8071d0273a1, type: 2}
+  countInRow: 5
+  distanceBetween: 2
 --- !u!1 &1287629616
 GameObject:
   m_ObjectHideFlags: 0
