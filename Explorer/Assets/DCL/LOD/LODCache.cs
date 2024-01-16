@@ -88,7 +88,7 @@ public class LODCache : IStreamableCache<LODAsset, string>
             asset.Dispose();
             cache.Remove(key);
         }
-
+        
         ProfilingCounters.LODInstantiatedInCache.Value -= unloadedAmount;
     }
 

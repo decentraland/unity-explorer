@@ -24,10 +24,11 @@ namespace DCL.LOD
         private IRealmData realmData;
 
 
-        public LODPlugin(CacheCleaner cacheCleaner)
+        public LODPlugin(CacheCleaner cacheCleaner, RealmData realmData)
         {
             lodCache = new LODCache();
             cacheCleaner.Register(lodCache);
+            this.realmData = realmData;
         }
 
         public UniTask InitializeAsync(LODSettings settings, CancellationToken ct)

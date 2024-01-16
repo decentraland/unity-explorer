@@ -88,6 +88,9 @@ namespace DCL.Profiling
             CachedWearablesAmount.Value = 0;
             CachedWearablesInCacheAmount.Value = 0;
 
+            LODInstantiatedInCache.Value = 0;
+            LODAssetAmount.Value = 0;
+            
             TexturesAmount.Value = 0;
             TexturesInCache.Value = 0;
 
