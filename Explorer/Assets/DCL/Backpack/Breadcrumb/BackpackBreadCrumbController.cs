@@ -7,14 +7,12 @@ namespace DCL.Backpack.Breadcrumb
     public class BackpackBreadCrumbController
     {
         private readonly BackpackBreadCrumbView view;
-        private readonly IBackpackEventBus eventBus;
         private readonly IBackpackCommandBus commandBus;
         private readonly NftTypeIconSO categoryIcons;
 
         public BackpackBreadCrumbController(BackpackBreadCrumbView view, IBackpackEventBus eventBus, IBackpackCommandBus commandBus, NftTypeIconSO categoryIcons)
         {
             this.view = view;
-            this.eventBus = eventBus;
             this.commandBus = commandBus;
             this.categoryIcons = categoryIcons;
 

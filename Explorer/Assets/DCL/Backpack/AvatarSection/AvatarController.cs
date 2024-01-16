@@ -14,7 +14,6 @@ namespace DCL.Backpack
     public class AvatarController : ISection, IDisposable
     {
         private readonly RectTransform rectTransform;
-        private readonly AvatarView view;
         private readonly BackpackSlotsController slotsController;
         private readonly BackpackGridController backpackGridController;
         private readonly BackpackInfoPanelController backpackInfoPanelController;
@@ -32,7 +31,6 @@ namespace DCL.Backpack
             BackpackSortController backpackSortController,
             PageButtonView pageButtonView)
         {
-            this.view = view;
             new BackpackSearchController(view.backpackSearchBar, backpackCommandBus, backpackEventBus);
             slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus, rarityBackgrounds);
             backpackGridController = new BackpackGridController(view.backpackGridView, backpackCommandBus, backpackEventBus, web3IdentityCache, rarityBackgrounds, rarityColors, categoryIcons, backpackEquipStatusController, backpackSortController, pageButtonView);

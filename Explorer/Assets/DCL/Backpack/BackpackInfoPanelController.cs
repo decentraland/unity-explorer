@@ -3,7 +3,6 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Backpack
@@ -38,7 +37,7 @@ namespace DCL.Backpack
             view.WearableThumbnail.gameObject.SetActive(false);
             view.LoadingSpinner.SetActive(true);
             view.Name.text = wearable.GetName();
-            view.Description.text = wearable.GetDescription();
+            view.Description.text = string.IsNullOrEmpty(wearable.GetDescription()) ? "This wearable does not have a description set." : wearable.GetDescription();
             view.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
             view.RarityBackground.sprite = rarityInfoPanelBackgrounds.GetTypeImage(wearable.GetRarity());
             WaitForThumbnailAsync(wearable, cts.Token).Forget();
