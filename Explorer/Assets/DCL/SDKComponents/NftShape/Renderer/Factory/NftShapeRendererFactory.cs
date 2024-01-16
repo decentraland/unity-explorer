@@ -22,6 +22,7 @@ namespace DCL.SDKComponents.NftShape.Renderer.Factory
         {
             var shape = new GameObject($"nft component: {HashCode.Combine(parent.GetHashCode(), parent.childCount)}");
             shape.transform.SetParent(parent);
+            shape.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
             // shape.transform.localRotation = backward;
             var renderer = new NftShapeRenderer(shape.transform, framesPool);
             renderer.Apply(nftShape);

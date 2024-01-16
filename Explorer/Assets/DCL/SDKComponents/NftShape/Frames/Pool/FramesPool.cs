@@ -27,6 +27,7 @@ namespace DCL.SDKComponents.NftShape.Frames.Pool
         {
             var g = Pool(frameType).Get()!;
             g.transform.SetParent(parent, false);
+            g.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
             types[g] = frameType;
             return g;
         }
