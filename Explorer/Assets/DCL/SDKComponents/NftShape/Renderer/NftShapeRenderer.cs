@@ -1,6 +1,8 @@
 using DCL.ECSComponents;
 using DCL.SDKComponents.NftShape.Frames;
 using DCL.SDKComponents.NftShape.Frames.Pool;
+using DCL.Utilities.Extensions;
+using ECS.Unity.ColorComponent;
 using UnityEngine;
 
 namespace DCL.SDKComponents.NftShape.Renderer
@@ -26,8 +28,18 @@ namespace DCL.SDKComponents.NftShape.Renderer
                 frame = null;
             }
             frame = framesPool.NewFrame(nftShape.Style, transform);
+            frame.Paint(nftShape.Color.ToUnityColor());
+            frame.UpdateStatus(AbstractFrame.Status.Loading);
+        }
 
-            //TODO apply texture
+        public void Apply(Material material)
+        {
+            frame.EnsureNotNull().Place(material);
+        }
+
+        public void NotifyFailed()
+        {
+            frame.EnsureNotNull().UpdateStatus(AbstractFrame.Status.Failed);
         }
 
         public void Hide()
