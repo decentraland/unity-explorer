@@ -8,7 +8,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
 using DCL.UI;
-using DCL.Web3Authentication.Identities;
+using DCL.Web3.Identities;
 using ECS.StreamableLoading.Common;
 using System;
 using System.Collections.Generic;

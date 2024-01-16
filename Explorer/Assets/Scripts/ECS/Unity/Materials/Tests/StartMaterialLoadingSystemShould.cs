@@ -64,7 +64,7 @@ namespace ECS.Unity.Materials.Tests
 
             Assert.IsTrue(world.TryGet(e, out MaterialComponent materialComponent));
 
-            Assert.AreEqual(MaterialComponent.LifeCycle.LoadingInProgress, materialComponent.Status);
+            Assert.AreEqual(StreamableLoading.LifeCycle.LoadingInProgress, materialComponent.Status);
             Assert.IsNull(materialComponent.Result);
 
             Assert.IsTrue(materialComponent.Data.IsPbrMaterial);
@@ -83,7 +83,7 @@ namespace ECS.Unity.Materials.Tests
 
             Assert.IsTrue(world.TryGet(e, out MaterialComponent materialComponent));
 
-            Assert.AreEqual(MaterialComponent.LifeCycle.LoadingInProgress, materialComponent.Status);
+            Assert.AreEqual(StreamableLoading.LifeCycle.LoadingInProgress, materialComponent.Status);
             Assert.IsNull(materialComponent.Result);
 
             Assert.IsFalse(materialComponent.Data.IsPbrMaterial);
@@ -117,7 +117,7 @@ namespace ECS.Unity.Materials.Tests
 
             ref MaterialComponent c = ref world.Get<MaterialComponent>(e);
             c.Result = DefaultMaterial.New();
-            c.Status = MaterialComponent.LifeCycle.LoadingFinished;
+            c.Status = StreamableLoading.LifeCycle.LoadingFinished;
 
             // Second run -> keep material component
 
@@ -149,7 +149,7 @@ namespace ECS.Unity.Materials.Tests
 
             ref MaterialComponent c = ref world.Get<MaterialComponent>(e);
             c.Result = DefaultMaterial.New();
-            c.Status = MaterialComponent.LifeCycle.LoadingFinished;
+            c.Status = StreamableLoading.LifeCycle.LoadingFinished;
 
             MaterialData dataCopy = c.Data;
 
@@ -173,7 +173,7 @@ namespace ECS.Unity.Materials.Tests
             system.Update(0);
 
             MaterialComponent afterUpdate = world.Get<MaterialComponent>(e);
-            Assert.That(afterUpdate.Status, Is.EqualTo(MaterialComponent.LifeCycle.LoadingInProgress));
+            Assert.That(afterUpdate.Status, Is.EqualTo(StreamableLoading.LifeCycle.LoadingInProgress));
 
             AssertTexturePromise(in afterUpdate.AlbedoTexPromise, tex2);
         }
@@ -188,7 +188,7 @@ namespace ECS.Unity.Materials.Tests
             system.Update(0);
 
             MaterialComponent afterUpdate = world.Get<MaterialComponent>(e);
-            Assert.That(afterUpdate.Status, Is.EqualTo(MaterialComponent.LifeCycle.LoadingInProgress));
+            Assert.That(afterUpdate.Status, Is.EqualTo(StreamableLoading.LifeCycle.LoadingInProgress));
 
             AssertTexturePromise(afterUpdate.AlbedoTexPromise, tex1);
             AssertTexturePromise(afterUpdate.AlphaTexPromise, tex3);
@@ -212,7 +212,7 @@ namespace ECS.Unity.Materials.Tests
             world.Set(e, material2);
 
             ref MaterialComponent c = ref world.Get<MaterialComponent>(e);
-            c.Status = MaterialComponent.LifeCycle.LoadingInProgress;
+            c.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
             // Add entity reference
             var texPromise = AssetPromise<Texture2D, GetTextureIntention>.Create(world, new GetTextureIntention { CommonArguments = new CommonLoadingArguments("URL") }, PartitionComponent.TOP_PRIORITY);

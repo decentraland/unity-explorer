@@ -31,7 +31,7 @@ namespace ECS.Unity.Materials.Tests
             IReleasablePerformanceBudget frameTimeBudget = Substitute.For<IReleasablePerformanceBudget>();
             frameTimeBudget.TrySpendBudget().Returns(true);
 
-            system = new CreatePBRMaterialSystem(world, pool, frameTimeBudget);
+            system = new CreatePBRMaterialSystem(world, pool, frameTimeBudget, frameTimeBudget);
             system.Initialize();
         }
 
@@ -40,7 +40,7 @@ namespace ECS.Unity.Materials.Tests
         {
             MaterialComponent component = CreateMaterialComponent();
 
-            component.Status = MaterialComponent.LifeCycle.LoadingInProgress;
+            component.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
             CreateAndFinalizeTexturePromise(ref component.AlbedoTexPromise);
             CreateAndFinalizeTexturePromise(ref component.AlphaTexPromise);
@@ -52,7 +52,7 @@ namespace ECS.Unity.Materials.Tests
             system.Update(0);
 
             MaterialComponent afterUpdate = world.Get<MaterialComponent>(e);
-            Assert.That(afterUpdate.Status, Is.EqualTo(MaterialComponent.LifeCycle.LoadingFinished));
+            Assert.That(afterUpdate.Status, Is.EqualTo(StreamableLoading.LifeCycle.LoadingFinished));
 
             Assert.That(afterUpdate.Result, Is.Not.Null);
             Assert.That(afterUpdate.Result.shader, Is.EqualTo(pbrMat.shader));
@@ -63,7 +63,7 @@ namespace ECS.Unity.Materials.Tests
         {
             MaterialComponent component = CreateMaterialComponent();
 
-            component.Status = MaterialComponent.LifeCycle.LoadingInProgress;
+            component.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
             CreateAndFinalizeTexturePromise(ref component.AlbedoTexPromise);
             CreateAndFinalizeTexturePromise(ref component.AlphaTexPromise);
@@ -76,7 +76,7 @@ namespace ECS.Unity.Materials.Tests
             system.Update(0);
 
             MaterialComponent afterUpdate = world.Get<MaterialComponent>(e);
-            Assert.That(afterUpdate.Status, Is.EqualTo(MaterialComponent.LifeCycle.LoadingInProgress));
+            Assert.That(afterUpdate.Status, Is.EqualTo(StreamableLoading.LifeCycle.LoadingInProgress));
 
             Assert.That(afterUpdate.Result, Is.Null);
         }

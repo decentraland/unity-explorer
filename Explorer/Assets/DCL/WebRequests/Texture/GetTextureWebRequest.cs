@@ -1,6 +1,7 @@
 using DCL.Profiling;
 using UnityEngine;
 using UnityEngine.Networking;
+using Utility;
 
 namespace DCL.WebRequests
 {
@@ -9,10 +10,13 @@ namespace DCL.WebRequests
     /// </summary>
     public readonly struct GetTextureWebRequest : ITypedWebRequest
     {
+        private readonly string url;
+
         public UnityWebRequest UnityWebRequest { get; }
 
-        private GetTextureWebRequest(UnityWebRequest unityWebRequest)
+        private GetTextureWebRequest(UnityWebRequest unityWebRequest, string url)
         {
+            this.url = url;
             UnityWebRequest = unityWebRequest;
         }
 
@@ -30,14 +34,16 @@ namespace DCL.WebRequests
 
             UnityWebRequest.Dispose();
 
+            tex.SetDebugName(url);
             ProfilingCounters.TexturesAmount.Value++;
+
             return tex;
         }
 
         internal static GetTextureWebRequest Initialize(in CommonArguments commonArguments, GetTextureArguments textureArguments)
         {
             UnityWebRequest wr = UnityWebRequestTexture.GetTexture(commonArguments.URL, !textureArguments.IsReadable);
-            return new GetTextureWebRequest(wr);
+            return new GetTextureWebRequest(wr, commonArguments.URL);
         }
     }
 }

@@ -1,17 +1,29 @@
 using DCL.Profiling;
+using System;
 
 namespace DCL.Optimization.PerformanceBudgeting
 {
     public class FrameTimeCapBudget : IPerformanceBudget
     {
+        private readonly ulong totalBudgetAvailable;
         private readonly IProfilingProvider profilingProvider;
-        private readonly float totalBudgetAvailable;
 
-        public FrameTimeCapBudget(float budgetCapInMS, IProfilingProvider profilingProvider)
+        public FrameTimeCapBudget(float budgetCapInMS, IProfilingProvider profilingProvider) : this(
+            TimeSpan.FromMilliseconds(budgetCapInMS),
+            profilingProvider
+        ) { }
+
+        public FrameTimeCapBudget(TimeSpan totalBudgetAvailable, IProfilingProvider profilingProvider) : this(
+            Convert.ToUInt64(
+                totalBudgetAvailable.TotalMilliseconds * 1000000 //converting milliseconds to nanoseconds
+            ),
+            profilingProvider
+        ) { }
+
+        public FrameTimeCapBudget(ulong totalBudgetAvailable, IProfilingProvider profilingProvider)
         {
-            //FrameTime return CurrentValue in nanoseconds, so we are converting milliseconds to nanoseconds
-            totalBudgetAvailable = budgetCapInMS * 1000000;
             this.profilingProvider = profilingProvider;
+            this.totalBudgetAvailable = totalBudgetAvailable;
         }
 
         public bool TrySpendBudget() =>

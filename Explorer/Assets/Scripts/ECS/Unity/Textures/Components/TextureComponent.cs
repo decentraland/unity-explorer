@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace ECS.Unity.Textures.Components
 {
-    public struct TextureComponent : IEquatable<TextureComponent>
+    public readonly struct TextureComponent : IEquatable<TextureComponent>
     {
         public readonly string Src;
         public readonly TextureWrapMode WrapMode;
