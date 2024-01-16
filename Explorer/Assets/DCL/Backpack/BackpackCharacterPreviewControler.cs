@@ -57,10 +57,7 @@ namespace DCL.CharacterPreview
             // Change model
             previewModel.Wearables ??= new List<string>();
 
-            if (!previewModel.Wearables.Contains(i.GetUrn()))
-            {
-                previewModel.Wearables.Add(i.GetUrn());
-            }
+            previewModel.Wearables.Add(i.GetUrn());
             UpdateModel();
         }
 
@@ -80,6 +77,7 @@ namespace DCL.CharacterPreview
         {
             eventBus.EquipEvent -= OnEquipped;
             eventBus.UnEquipEvent -= OnUnequipped;
+            previewController.Dispose();
         }
     }
 }
