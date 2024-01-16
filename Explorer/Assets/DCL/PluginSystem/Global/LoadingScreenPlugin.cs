@@ -36,6 +36,8 @@ namespace DCL.PluginSystem.Global
             var tipsProvider = new UnityLocalizationSceneTipsProvider(LocalizationSettings.StringDatabase, LocalizationSettings.AssetDatabase,
                 settings.FallbackTipsTable, settings.FallbackImagesTable, TimeSpan.FromSeconds(settings.TipDisplayDuration));
 
+            await tipsProvider.Initialize(ct);
+
             mvcManager.RegisterController(new SceneLoadingScreenController(authScreenFactory, tipsProvider));
         }
     }
