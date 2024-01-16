@@ -58,7 +58,6 @@ namespace DCL.CharacterPreview
 
             // Mark it as dirty
             avatarShape.IsDirty = true;
-            avatarShape.IsVisible = true;
         }
 
         public void Dispose()

@@ -15,7 +15,5 @@ namespace DCL.Backpack
         [field: SerializeField]
         internal SearchBarView backpackSearchBar { get; private set; }
 
-        [field: SerializeField]
-        internal BackpackCharacterPreviewView backpackCharacterPreviewView { get; private set; }
     }
 }

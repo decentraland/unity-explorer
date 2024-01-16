@@ -6,6 +6,7 @@ using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using DCL.CharacterPreview;
 using DCL.Profiles;
 using DCL.UI;
 using DCL.Web3Authentication.Identities;
@@ -28,6 +29,8 @@ namespace DCL.Backpack
             private readonly AvatarController avatarController;
 
             private bool initialLoading = false;
+
+            private readonly BackpackCharacterPreviewController backpackCharacterPreviewController;
 
             public BackpackControler(
                 BackpackView view,
@@ -79,6 +82,7 @@ namespace DCL.Backpack
                             sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, tabSelector.Section, animationCts.Token).Forget();
                         });
                 }
+                backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.backpackCharacterPreviewView, new CharacterPreviewFactory(), backpackEventBus);
             }
 
             public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
@@ -90,6 +94,7 @@ namespace DCL.Backpack
             {
                 World world = builder.World;
                 avatarController.InjectToWorld(ref builder, playerEntity);
+                backpackCharacterPreviewController.InjectToWorld(ref builder, playerEntity);
                 profileLoadingCts = new CancellationTokenSource();
                 AwaitForProfileAsync(world, playerEntity, profileLoadingCts).Forget();
             }
@@ -106,6 +111,8 @@ namespace DCL.Backpack
                 world.TryGet(playerEntity, out AvatarShapeComponent avatarShapeComponent);
 
                 avatarController.RequestInitialWearablesPage();
+                backpackCharacterPreviewController.OnShow();
+
                 if(!avatarShapeComponent.WearablePromise.IsConsumed)
                     await avatarShapeComponent.WearablePromise.ToUniTaskAsync(world, cancellationToken: cts.Token);
 
@@ -132,6 +139,7 @@ namespace DCL.Backpack
                 avatarController?.Dispose();
                 animationCts.SafeCancelAndDispose();
                 profileLoadingCts.SafeCancelAndDispose();
+                backpackCharacterPreviewController?.Dispose();
             }
         }
     }

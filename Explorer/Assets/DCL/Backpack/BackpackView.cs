@@ -1,3 +1,4 @@
+using DCL.CharacterPreview;
 using DCL.UI;
 using System;
 using UnityEngine;
@@ -11,6 +12,9 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public BackpackSortDropdownView BackpackSortView { get; private set; }
+
+        [field: SerializeField]
+        internal BackpackCharacterPreviewView backpackCharacterPreviewView { get; private set; }
     }
 
     [Serializable]
