@@ -166,9 +166,10 @@ namespace DCL.SkyBox.Rendering
                 CubemapTextureArray = _CubemapTextureArray;
 
                 if (starBuffer == null || !starBuffer.IsValid())
-                    starBuffer = new ComputeBuffer(9110, Unsafe.SizeOf<StarParam>(), ComputeBufferType.Structured, ComputeBufferMode.Dynamic);
-
-                starBuffer.SetData(starList_ComputeBuffer);
+                {
+                    starBuffer = new ComputeBuffer(9110, Unsafe.SizeOf<StarParam>(), ComputeBufferType.Structured, ComputeBufferMode.Immutable);
+                    starBuffer.SetData(starList_ComputeBuffer);
+                }
             }
 
             // This method is called before executing the render pass.
