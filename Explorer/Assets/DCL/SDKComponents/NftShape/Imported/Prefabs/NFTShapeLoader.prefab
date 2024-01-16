@@ -301,7 +301,7 @@ MonoBehaviour:
   loadingStatus: {fileID: 6031248581314555280}
   failedStatus: {fileID: 7004181466692703064}
   backplateIndexes: 
-  backplateColorPropertyName: _Color
+  backplateColorPropertyName: _BaseColor
 --- !u!1 &7004181466692703064
 GameObject:
   m_ObjectHideFlags: 0

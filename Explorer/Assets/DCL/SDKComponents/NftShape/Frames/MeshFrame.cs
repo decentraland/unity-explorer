@@ -16,7 +16,7 @@ namespace DCL.SDKComponents.NftShape.Frames
 
         [Header("Backplate")]
         [SerializeField] private int[] backplateIndexes = Array.Empty<int>();
-        [SerializeField] private string backplateColorPropertyName = "_Color";
+        [SerializeField] private string backplateColorPropertyName = "_BaseColor";
 
         private int backplateColorPropertyId;
         private MaterialPropertyBlock backplateMaterialPropertyBlock = null!;
