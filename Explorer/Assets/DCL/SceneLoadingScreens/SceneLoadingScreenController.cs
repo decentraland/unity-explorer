@@ -4,6 +4,8 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
+using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.Pool;
 using Utility;
 
@@ -16,6 +18,7 @@ namespace DCL.SceneLoadingScreens
         private int currentTip;
         private SceneTips tips;
         private CancellationTokenSource? tipsRotationCancellationToken;
+        private IntVariable progressLabel;
 
         public SceneLoadingScreenController(ViewFactoryMethod viewFactory,
             ISceneTipsProvider sceneTipsProvider) : base(viewFactory)
@@ -49,13 +52,16 @@ namespace DCL.SceneLoadingScreens
                 tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
                 RotateTipsOverTime(tips.Duration, tipsRotationCancellationToken.Token).Forget();
             });
+
+            progressLabel = (IntVariable)viewInstance.ProgressLabel.StringReference["progressValue"];
         }
 
         protected override void OnBeforeViewShow()
         {
             base.OnBeforeViewShow();
 
-            viewInstance.ProgressBar.normalizedValue = 1f;
+            viewInstance.ProgressBar.normalizedValue = 0f;
+            progressLabel.Value = 0;
             viewInstance.ClearTips();
         }
 
@@ -99,11 +105,39 @@ namespace DCL.SceneLoadingScreens
 
         private async UniTask WaitUntilWorldIsLoadedAsync(CancellationToken ct)
         {
+            async UniTaskVoid UpdateProgressBarAsync(CancellationToken ct)
+            {
+                do
+                {
+                    try
+                    {
+                        int totalAssetsLoaded = await inputData.SceneReadinessReport.AssetLoadedCount.WaitAsync(ct);
+
+                        if (inputData.SceneReadinessReport.TotalAssetsToLoad <= 0)
+                        {
+                            await UniTask.NextFrame(ct);
+                            continue;
+                        }
+
+                        float progress = Mathf.Clamp01(totalAssetsLoaded / (float)inputData.SceneReadinessReport.TotalAssetsToLoad);
+                        viewInstance.ProgressBar.normalizedValue = progress;
+                        progressLabel.Value = (int)(progress * 100);
+                    }
+                    catch (OperationCanceledException) { }
+                }
+                while (viewInstance.ProgressBar.normalizedValue < 1);
+            }
+
+            var progressUpdatingCancellationToken = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            UpdateProgressBarAsync(progressUpdatingCancellationToken.Token).Forget();
+
             try
             {
                 await inputData.SceneReadinessReport.CompletionSource.Task;
+                progressUpdatingCancellationToken.Cancel();
                 ct.ThrowIfCancellationRequested();
                 viewInstance.ProgressBar.normalizedValue = 1f;
+                progressLabel.Value = 100;
             }
             catch { }
         }

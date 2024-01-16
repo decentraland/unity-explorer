@@ -8,10 +8,14 @@ namespace SceneRunner.Scene
     public class SceneReadinessReport
     {
         public UniTaskCompletionSource CompletionSource { get; }
+        public IAsyncReactiveProperty<int> AssetLoadedCount { get; }
+        public int TotalAssetsToLoad { get; set; }
 
-        public SceneReadinessReport(UniTaskCompletionSource completionSource)
+        public SceneReadinessReport(UniTaskCompletionSource completionSource,
+            IAsyncReactiveProperty<int> assetLoadedCount)
         {
             CompletionSource = completionSource;
+            AssetLoadedCount = assetLoadedCount;
         }
     }
 }

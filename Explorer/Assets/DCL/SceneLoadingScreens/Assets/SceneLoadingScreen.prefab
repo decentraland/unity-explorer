@@ -830,6 +830,7 @@ MonoBehaviour:
   <canvas>k__BackingField: {fileID: 2814871423585080172}
   <raycaster>k__BackingField: {fileID: 8454101078806804241}
   <ProgressBar>k__BackingField: {fileID: 1295332637717067447}
+  <ProgressLabel>k__BackingField: {fileID: 6870381831963986328}
   <ShowNextButton>k__BackingField: {fileID: 3867697833987753308}
   <ShowPreviousButton>k__BackingField: {fileID: 6746342827942324036}
   tipsParent: {fileID: 6611786482040210992}

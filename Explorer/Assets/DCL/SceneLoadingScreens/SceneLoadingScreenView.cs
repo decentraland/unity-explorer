@@ -1,6 +1,7 @@
 using MVC;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Localization.Components;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
@@ -10,6 +11,9 @@ namespace DCL.SceneLoadingScreens
     {
         [field: SerializeField]
         public Slider ProgressBar { get; private set; } = null!;
+
+        [field: SerializeField]
+        public LocalizeStringEvent ProgressLabel { get; private set; } = null!;
 
         [field: SerializeField]
         public Button ShowNextButton { get; private set; } = null!;

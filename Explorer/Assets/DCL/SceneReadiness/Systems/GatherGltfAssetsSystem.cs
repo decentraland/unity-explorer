@@ -45,14 +45,12 @@ namespace DCL.SceneReadiness
 
         protected override void Update(float t)
         {
-            if (framesLeft > 0)
-            {
-                // Gather entities
-                GatherEntitiesQuery(World);
+            // Gather entities
+            GatherEntitiesQuery(World);
 
-                framesLeft--;
-            }
-            else if (!concluded)
+            var concluded = false;
+
+            if (!concluded)
             {
                 if (reports == null && !readinessReportQueue.TryDequeue(sceneData.Parcels, out reports))
                 {
@@ -92,6 +90,13 @@ namespace DCL.SceneReadiness
                     toDelete.Add(entityRef);
                 }
 
+                for (var i = 0; i < reports.Count; i++)
+                {
+                    SceneReadinessReport report = reports[i];
+                    report.TotalAssetsToLoad = entitiesUnderObservation.Count;
+                    report.AssetLoadedCount.Value += toDelete.Count;
+                }
+
                 entitiesUnderObservation.ExceptWith(toDelete);
                 ListPool<EntityReference>.Release(toDelete);
 
@@ -104,6 +109,9 @@ namespace DCL.SceneReadiness
                     reports = null;
                 }
             }
+
+            if (framesLeft <= 0)
+                framesLeft = FRAMES_COUNT;
         }
 
         [Query]
