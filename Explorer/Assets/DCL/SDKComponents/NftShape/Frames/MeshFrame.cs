@@ -7,7 +7,7 @@ namespace DCL.SDKComponents.NftShape.Frames
     public class MeshFrame : AbstractFrame
     {
         [SerializeField] private UnityEngine.Renderer renderer = null!;
-        [SerializeField] private Material defaultMaterial = null!;
+        [SerializeField] private Material defaultBlankMaterial = null!;
         [SerializeField] private int placeIndex;
 
         [Header("Status")]
@@ -24,7 +24,7 @@ namespace DCL.SDKComponents.NftShape.Frames
         public void Awake()
         {
             renderer.EnsureNotNull();
-            defaultMaterial.EnsureNotNull();
+            defaultBlankMaterial.EnsureNotNull();
             loadingStatus.EnsureNotNull();
             failedStatus.EnsureNotNull();
             backplateMaterialPropertyBlock = new MaterialPropertyBlock();
@@ -49,7 +49,7 @@ namespace DCL.SDKComponents.NftShape.Frames
 
         public override void UpdateStatus(Status status)
         {
-            HideStatuses();
+            Place(defaultBlankMaterial);
 
             var current = status switch
                           {

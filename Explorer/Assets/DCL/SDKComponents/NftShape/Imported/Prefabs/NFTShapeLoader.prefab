@@ -296,7 +296,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   renderer: {fileID: 0}
-  defaultMaterial: {fileID: 0}
+  defaultBlankMaterial: {fileID: 2100000, guid: c95a10e5c65124c1aa82d6fe293b895c, type: 2}
   placeIndex: 0
   loadingStatus: {fileID: 6031248581314555280}
   failedStatus: {fileID: 7004181466692703064}
