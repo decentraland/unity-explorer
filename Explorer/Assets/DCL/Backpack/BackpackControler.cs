@@ -111,6 +111,8 @@ namespace DCL.Backpack
 
                 foreach (URN avatarSharedWearable in world.Get<Profile>(playerEntity).Avatar.SharedWearables)
                     backpackCommandBus.SendCommand(new BackpackEquipCommand(avatarSharedWearable.ToString()));
+
+                backpackCommandBus.SendCommand(new BackpackEquipCommand(world.Get<Profile>(playerEntity).Avatar.BodyShape.Value));
             }
 
             public void Activate()
