@@ -16,5 +16,6 @@ namespace Global.Dynamic
         [field: SerializeField] public string[] Realms { get; private set; }
         [field: SerializeField] public string AuthWebSocketUrl { get; private set; }
         [field: SerializeField] public string AuthSignatureUrl { get; private set; }
+        [field: SerializeField] public List<string> Web3WhitelistMethods { get; private set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using DCL.ECSComponents;
+﻿using DCL.Diagnostics;
+using DCL.ECSComponents;
 using System;
 using System.Collections.Generic;
 
@@ -31,7 +32,9 @@ namespace DCL.AvatarRendering.Wearables
             if (pbAvatarShape.BodyShape == FEMALE.Value)
                 return FEMALE;
 
-            throw new NotSupportedException($"Body shape {pbAvatarShape.BodyShape} not supported");
+            ReportHub.LogError(ReportCategory.AVATAR, $"'{pbAvatarShape.BodyShape}' body shape not supported, using MALE instead.");
+
+            return MALE;
         }
 
         public static BodyShape FromStringSafe(string bodyShape)

@@ -14,13 +14,13 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
 
         //ValidParams: pageNum, pageSize, includeEntities (bool), rarity, category, name, orderBy, direction,
         //collectionType (base-wearable, on-chain, third-party), thirdPartyCollectionId
-        public (string, string)[] Params;
+        public IReadOnlyList<(string, string)> Params;
         public string UserID;
 
         //Used for pooling
         public List<IWearable> Results;
 
-        public GetWearableByParamIntention((string, string)[] requestParams, string userID, List<IWearable> results)
+        public GetWearableByParamIntention(IReadOnlyList<(string, string)> requestParams, string userID, List<IWearable> results)
         {
             Params = requestParams;
             UserID = userID;

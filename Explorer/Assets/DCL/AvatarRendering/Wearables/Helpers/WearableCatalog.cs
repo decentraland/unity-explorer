@@ -2,7 +2,6 @@
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
-using Google.Type;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
@@ -22,6 +21,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 {
                     WearableDTO = new StreamableLoadingResult<WearableDTO>(wearableDto),
                     IsLoading = false
+
                 }, qualifiedForUnloading);
         }
 
@@ -29,6 +29,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             AddWearable(loadingIntentionPointer, new Wearable(), qualifiedForUnloading);
         }
+
 
         internal IWearable AddWearable(string loadingIntentionPointer, IWearable wearable, bool qualifiedForUnloading)
         {
@@ -72,9 +73,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
         }
 
-        public void Unload(IConcurrentBudgetProvider frameTimeBudgetProvider)
+        public void Unload(IPerformanceBudget frameTimeBudget)
         {
-            for (LinkedListNode<(string key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudgetProvider.TrySpendBudget() && node != null; node = node.Next)
+            for (LinkedListNode<(string key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudget.TrySpendBudget() && node != null; node = node.Next)
                 if (wearablesCache.TryGetValue(node.Value.key, out IWearable wearable))
                     if (TryUnloadAllWearableAssets(wearable))
                     {

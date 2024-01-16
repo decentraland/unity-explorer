@@ -7,6 +7,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using SceneRunner;
 using SceneRunner.Scene;
@@ -20,7 +21,12 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateInGroup(typeof(CleanUpGroup))]
     public partial class UnloadSceneSystem : BaseUnityLoopSystem
     {
-        internal UnloadSceneSystem(World world) : base(world) { }
+        private readonly IScenesCache scenesCache;
+
+        internal UnloadSceneSystem(World world, IScenesCache scenesCache) : base(world)
+        {
+            this.scenesCache = scenesCache;
+        }
 
         protected override void Update(float t)
         {
@@ -40,10 +46,11 @@ namespace ECS.SceneLifeCycle.Systems
         
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void UnloadLoadedScene(in Entity entity, ref ISceneFacade sceneFacade)
+        private void UnloadLoadedScene(in Entity entity, ref SceneDefinitionComponent definitionComponent, ref ISceneFacade sceneFacade)
         {
             // Keep definition so it won't be downloaded again = Cache in ECS itself
             sceneFacade.DisposeAsync().Forget();
+            scenesCache.Remove(definitionComponent.Parcels);
             World.Remove<ISceneFacade, VisualSceneState, DeleteEntityIntention>(entity);
         }
 

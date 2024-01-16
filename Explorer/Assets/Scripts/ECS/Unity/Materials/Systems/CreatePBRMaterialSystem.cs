@@ -16,12 +16,14 @@ namespace ECS.Unity.Materials.Systems
     [UpdateAfter(typeof(StartMaterialsLoadingSystem))]
     public partial class CreatePBRMaterialSystem : CreateMaterialSystemBase
     {
-        private readonly IConcurrentBudgetProvider capFrameBudgetProvider;
+        private readonly IPerformanceBudget memoryBudgetProvider;
+        private readonly IPerformanceBudget capFrameBudget;
 
         internal CreatePBRMaterialSystem(World world, IObjectPool<Material> materialsPool,
-            IConcurrentBudgetProvider capFrameBudgetProvider) : base(world, materialsPool)
+            IPerformanceBudget capFrameBudget, IPerformanceBudget memoryBudgetProvider) : base(world, materialsPool)
         {
-            this.capFrameBudgetProvider = capFrameBudgetProvider;
+            this.capFrameBudget = capFrameBudget;
+            this.memoryBudgetProvider = memoryBudgetProvider;
         }
 
         protected override void Update(float t)
@@ -35,11 +37,11 @@ namespace ECS.Unity.Materials.Systems
             if (!materialComponent.Data.IsPbrMaterial)
                 return;
 
-            if (!capFrameBudgetProvider.TrySpendBudget())
+            if (!capFrameBudget.TrySpendBudget() || !memoryBudgetProvider.TrySpendBudget())
                 return;
 
             // if there are no textures to load we can construct a material right away
-            if (materialComponent.Status == MaterialComponent.LifeCycle.LoadingInProgress)
+            if (materialComponent.Status == StreamableLoading.LifeCycle.LoadingInProgress)
                 ConstructMaterial(ref materialComponent);
         }
 
@@ -53,7 +55,7 @@ namespace ECS.Unity.Materials.Systems
                 && TryGetTextureResult(ref materialComponent.AlphaTexPromise, out StreamableLoadingResult<Texture2D> alphaResult)
                 && TryGetTextureResult(ref materialComponent.BumpTexPromise, out StreamableLoadingResult<Texture2D> bumpResult))
             {
-                materialComponent.Status = MaterialComponent.LifeCycle.LoadingFinished;
+                materialComponent.Status = StreamableLoading.LifeCycle.LoadingFinished;
 
                 materialComponent.Result ??= CreateNewMaterialInstance();
 

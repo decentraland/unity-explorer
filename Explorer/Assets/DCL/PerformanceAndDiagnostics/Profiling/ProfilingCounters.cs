@@ -64,9 +64,17 @@ namespace DCL.Profiling
         public static ProfilerCounterValue<int> TexturesInCache =
             new (MEMORY, "Textures In Cache", ProfilerMarkerDataUnit.Count);
 
-        public static ProfilerCounterValue<int> ProfilesInCache =
-            new (MEMORY, "Profiles In Cache", ProfilerMarkerDataUnit.Count);
+        // AudioClips cache
+        public static ProfilerCounterValue<int> AudioClipsAmount =
+            new (MEMORY, "AudioClips", ProfilerMarkerDataUnit.Count);
 
+        public static ProfilerCounterValue<int> AudioClipsInCache =
+            new (MEMORY, "AudioClips In Cache", ProfilerMarkerDataUnit.Count);
+
+        public static ProfilerCounterValue<int> AudioClipsReferenced =
+            new (MEMORY, "AudioClips Referenced", ProfilerMarkerDataUnit.Count);
+
+        // Profiles
         public static ProfilerCounterValue<int> ProfileIntentionsInCache =
             new (MEMORY, "Profile Intentions In Cache", ProfilerMarkerDataUnit.Count);
 
@@ -94,7 +102,10 @@ namespace DCL.Profiling
             TexturesAmount.Value = 0;
             TexturesInCache.Value = 0;
 
-            ProfilesInCache.Value = 0;
+            AudioClipsAmount.Value = 0;
+            AudioClipsInCache.Value = 0;
+            AudioClipsReferenced.Value = 0;
+
             ProfileIntentionsInCache.Value = 0;
         }
     }

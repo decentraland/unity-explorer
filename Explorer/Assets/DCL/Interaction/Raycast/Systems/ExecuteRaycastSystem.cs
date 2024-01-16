@@ -33,7 +33,7 @@ namespace DCL.Interaction.Raycast.Systems
     {
         private static readonly RaycastHit[] SHARED_RAYCAST_HIT_ARRAY = new RaycastHit[10];
 
-        private readonly IConcurrentBudgetProvider budgetProvider;
+        private readonly IReleasablePerformanceBudget budget;
         private readonly IEntityCollidersSceneCache collidersSceneCache;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
@@ -48,7 +48,7 @@ namespace DCL.Interaction.Raycast.Systems
 
         internal ExecuteRaycastSystem(World world,
             Entity sceneRoot,
-            IConcurrentBudgetProvider budgetProvider,
+            IReleasablePerformanceBudget budget,
             byte raycastBucketThreshold,
             IComponentPool<ECSComponents.RaycastHit> raycastHitPool,
             IComponentPool<PBRaycastResult> raycastComponentPool,
@@ -58,7 +58,7 @@ namespace DCL.Interaction.Raycast.Systems
             ISceneStateProvider sceneStateProvider) : base(world)
         {
             this.sceneRoot = sceneRoot;
-            this.budgetProvider = budgetProvider;
+            this.budget = budget;
             this.raycastBucketThreshold = raycastBucketThreshold;
             this.raycastHitPool = raycastHitPool;
             this.raycastComponentPool = raycastComponentPool;
@@ -102,7 +102,7 @@ namespace DCL.Interaction.Raycast.Systems
             {
                 OrderedData data = orderedData[i];
 
-                if (budgetProvider.TrySpendBudget())
+                if (budget.TrySpendBudget())
                     Raycast(scenePosition, data.CRDTEntity, ref data.Component.Value, data.SDKComponent, in data.TransformComponent);
                 else break;
             }

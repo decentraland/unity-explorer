@@ -16,12 +16,12 @@ namespace ECS.Unity.Materials
             switch (materialComponent.Status)
             {
                 // Dereference the loaded material
-                case MaterialComponent.LifeCycle.LoadingFinished or MaterialComponent.LifeCycle.MaterialApplied when materialComponent.Result:
+                case StreamableLoading.LifeCycle.LoadingFinished or StreamableLoading.LifeCycle.Applied when materialComponent.Result:
                     materialsCache.Dereference(in materialComponent.Data);
                     break;
 
                 // Abort the loading process of the textures
-                case MaterialComponent.LifeCycle.LoadingInProgress:
+                case StreamableLoading.LifeCycle.LoadingInProgress:
                     TryAddAbortIntention(world, ref materialComponent.AlbedoTexPromise);
                     TryAddAbortIntention(world, ref materialComponent.EmissiveTexPromise);
                     TryAddAbortIntention(world, ref materialComponent.AlphaTexPromise);
@@ -29,7 +29,7 @@ namespace ECS.Unity.Materials
                     break;
             }
 
-            materialComponent.Status = MaterialComponent.LifeCycle.LoadingNotStarted;
+            materialComponent.Status = StreamableLoading.LifeCycle.LoadingNotStarted;
         }
 
         public static void TryReleaseDefault(ref PrimitiveMeshRendererComponent primitiveMeshRendererComponent)
@@ -45,12 +45,12 @@ namespace ECS.Unity.Materials
             switch (materialComponent.Status)
             {
                 // Dereference the loaded material
-                case MaterialComponent.LifeCycle.LoadingFinished or MaterialComponent.LifeCycle.MaterialApplied when materialComponent.Result:
+                case StreamableLoading.LifeCycle.LoadingFinished or StreamableLoading.LifeCycle.Applied when materialComponent.Result:
                     destroyMaterial(in materialComponent.Data, materialComponent.Result);
                     break;
 
                 // Abort the loading process of the textures
-                case MaterialComponent.LifeCycle.LoadingInProgress:
+                case StreamableLoading.LifeCycle.LoadingInProgress:
                     TryAddAbortIntention(world, ref materialComponent.AlbedoTexPromise);
                     TryAddAbortIntention(world, ref materialComponent.EmissiveTexPromise);
                     TryAddAbortIntention(world, ref materialComponent.AlphaTexPromise);

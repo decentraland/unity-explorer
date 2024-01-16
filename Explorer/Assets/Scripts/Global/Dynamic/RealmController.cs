@@ -6,6 +6,7 @@ using DCL.Optimization.Pools;
 using DCL.ParcelsService;
 using DCL.WebRequests;
 using ECS;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using Ipfs;
@@ -38,10 +39,11 @@ namespace Global.Dynamic
         private readonly RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm;
         private readonly RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld;
         private readonly TeleportController teleportController;
+        private readonly IScenesCache scenesCache;
         private GlobalWorld globalWorld;
 
         public RealmController(IWebRequestController webRequestController, TeleportController teleportController, RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm, RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld, int sceneLoadRadius,
-            IReadOnlyList<int2> staticLoadPositions, RealmData realmData)
+            IReadOnlyList<int2> staticLoadPositions, RealmData realmData, IScenesCache scenesCache)
         {
             this.webRequestController = webRequestController;
             this.sceneLoadRadius = sceneLoadRadius;
@@ -50,6 +52,7 @@ namespace Global.Dynamic
             this.teleportController = teleportController;
             this.retrieveSceneFromFixedRealm = retrieveSceneFromFixedRealm;
             this.retrieveSceneFromVolatileWorld = retrieveSceneFromVolatileWorld;
+            this.scenesCache = scenesCache;
         }
 
         public void SetupWorld(GlobalWorld globalWorld)
@@ -142,8 +145,11 @@ namespace Global.Dynamic
 
         private void FindLoadedScenes(World world)
         {
-            // Dispose all scenes
             allScenes.Clear();
+            allScenes.AddRange(scenesCache.Scenes);
+
+            // Dispose all scenes
+            scenesCache.Clear();
 
             // find all loaded scenes
             world.Query(in SCENES, (ref ISceneFacade scene) => allScenes.Add(scene));

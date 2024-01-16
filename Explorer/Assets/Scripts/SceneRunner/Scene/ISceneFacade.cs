@@ -17,6 +17,8 @@ namespace SceneRunner.Scene
         /// <param name="fps">Target FPS</param>
         void SetTargetFPS(int fps);
 
+        void SetIsCurrent(bool isCurrent);
+
         internal UniTask StartScene();
 
         internal UniTask Tick(float dt);

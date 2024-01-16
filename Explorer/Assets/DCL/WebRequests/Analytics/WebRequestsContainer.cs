@@ -1,6 +1,5 @@
+using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics.Metrics;
-using DCL.Web3Authentication;
-using DCL.Web3Authentication.Identities;
 
 namespace DCL.WebRequests.Analytics
 {

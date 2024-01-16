@@ -101,6 +101,11 @@ namespace SceneRunner.EmptyScene
             // has no effect
         }
 
+        public void SetIsCurrent(bool isCurrent)
+        {
+            // has no effect
+        }
+
         UniTask ISceneFacade.StartScene() =>
 
             // Should be never called as it corresponds to JS logic

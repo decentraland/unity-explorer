@@ -23,7 +23,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private readonly WearablesDTOList defaultWearableDefinition;
         private readonly IWearableCatalog wearableCatalog;
         private readonly GameObject emptyDefaultWearable;
-        
+
         internal LoadDefaultWearablesSystem(World world,
             WearablesDTOList defaultWearableDefinition, GameObject emptyDefaultWearable,
             IWearableCatalog wearableCatalog) : base(world)

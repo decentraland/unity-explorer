@@ -4,6 +4,11 @@ namespace SceneRunner.Scene
     {
         private SceneEngineStartInfo engineStartInfo;
 
+        /// <summary>
+        ///     <inheritdoc cref="ISceneStateProvider.IsCurrent" />
+        /// </summary>
+        public bool IsCurrent { get; set; }
+
         public SceneState State { get; set; } = SceneState.NotStarted;
 
         public uint TickNumber { get; set; }

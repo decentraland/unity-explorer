@@ -23,7 +23,7 @@ namespace ECS.SceneLifeCycle.Tests
         public void SetUp()
         {
             realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
-            system = new ControlSceneUpdateLoopSystem(world, realmPartitionSettings, CancellationToken.None);
+            system = new ControlSceneUpdateLoopSystem(world, realmPartitionSettings, CancellationToken.None, Substitute.For<IScenesCache>());
         }
 
         [Test]
@@ -61,7 +61,7 @@ namespace ECS.SceneLifeCycle.Tests
             // let the system switch to the thread pool
             await Task.Delay(100);
 
-            scene.Received(1).StartUpdateLoopAsync(15, Arg.Any<CancellationToken>());
+            await scene.Received(1).StartUpdateLoopAsync(15, Arg.Any<CancellationToken>());
             Assert.That(world.Has<ISceneFacade>(e), Is.True);
         }
 

@@ -29,7 +29,7 @@ namespace SceneRunner
         internal readonly ICRDTMemoryAllocator crdtMemoryAllocator;
         internal readonly ISceneExceptionsHandler sceneExceptionsHandler;
         internal readonly IEntityCollidersSceneCache entityCollidersSceneCache;
-        private readonly ISceneStateProvider sceneStateProvider;
+        internal readonly ISceneStateProvider sceneStateProvider;
 
         private int intervalMS;
 
@@ -184,6 +184,11 @@ namespace SceneRunner
         {
             if (PlayerLoopHelper.IsMainThread)
                 throw new ThreadStateException($"Execution after calling {funcName} must be off the main thread");
+        }
+
+        public void SetIsCurrent(bool isCurrent)
+        {
+            sceneStateProvider.IsCurrent = isCurrent;
         }
 
         public async UniTask DisposeAsync()

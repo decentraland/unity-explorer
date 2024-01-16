@@ -29,12 +29,16 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly IRealmPartitionSettings realmPartitionSettings;
         private readonly CancellationToken destroyCancellationToken;
 
+        private readonly IScenesCache scenesCache;
+
         internal ControlSceneUpdateLoopSystem(World world,
             IRealmPartitionSettings realmPartitionSettings,
-            CancellationToken destroyCancellationToken) : base(world)
+            CancellationToken destroyCancellationToken,
+            IScenesCache scenesCache) : base(world)
         {
             this.realmPartitionSettings = realmPartitionSettings;
             this.destroyCancellationToken = destroyCancellationToken;
+            this.scenesCache = scenesCache;
         }
 
         protected override void Update(float t)
@@ -72,6 +76,7 @@ namespace ECS.SceneLifeCycle.Systems
                 RunOnThreadPoolAsync().Forget();
 
                 // So we know the scene has started
+                scenesCache.Add(scene, promise.LoadingIntention.DefinitionComponent.Parcels);
                 World.Add(entity, scene);
             }
         }
