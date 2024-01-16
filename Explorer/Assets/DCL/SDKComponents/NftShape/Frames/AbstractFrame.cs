@@ -12,7 +12,7 @@ namespace DCL.SDKComponents.NftShape.Frames
 
         public abstract void Paint(Color color);
 
-        public abstract void Place(Material picture);
+        public abstract void Place(Texture2D picture);
 
         public abstract void UpdateStatus(Status status);
     }

@@ -28,6 +28,7 @@ namespace DCL.SDKComponents.NftShape.System
 
         protected override void Update(float t)
         {
+            throw new Exception("Obsolete system!");
             TryApplyMaterialQuery(World!);
         }
 
@@ -41,7 +42,7 @@ namespace DCL.SDKComponents.NftShape.System
                 case LifeCycle.LoadingFinished:
                     materialComponent.Status = LifeCycle.Applied;
                     ConfigureSceneMaterial.EnableSceneBounds(materialComponent.Result!, sceneData.Geometry.CircumscribedPlanes);
-                    nftShapeRendererComponent.ApplyMaterial(materialComponent);
+                    //nftShapeRendererComponent.ApplyMaterial(materialComponent);
                     break;
                 case LifeCycle.LoadingNotStarted: break;
                 case LifeCycle.LoadingInProgress: break;

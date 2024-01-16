@@ -32,7 +32,7 @@ namespace DCL.SDKComponents.NftShape.Renderer
             frame.UpdateStatus(AbstractFrame.Status.Loading);
         }
 
-        public void Apply(Material material)
+        public void Apply(Texture2D material)
         {
             frame.EnsureNotNull().Place(material);
         }

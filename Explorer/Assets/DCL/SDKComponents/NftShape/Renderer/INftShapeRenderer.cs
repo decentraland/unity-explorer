@@ -7,7 +7,7 @@ namespace DCL.SDKComponents.NftShape.Renderer
     {
         void Apply(PBNftShape nftShape);
 
-        void Apply(Material material);
+        void Apply(Texture2D texture);
 
         void NotifyFailed();
 

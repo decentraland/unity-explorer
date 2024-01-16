@@ -297,6 +297,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   renderer: {fileID: 7569545474623459574}
   defaultBlankMaterial: {fileID: 2100000, guid: c95a10e5c65124c1aa82d6fe293b895c, type: 2}
+  viewNftShapeMaterial: {fileID: 2100000, guid: df71d095db7004bb58f0b61a847c0ce5, type: 2}
   placeIndex: 0
   loadingStatus: {fileID: 6031248581314555280}
   failedStatus: {fileID: 7004181466692703064}

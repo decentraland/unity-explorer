@@ -8,6 +8,9 @@ namespace DCL.SDKComponents.NftShape.Frames
     {
         [SerializeField] private UnityEngine.Renderer renderer = null!;
         [SerializeField] private Material defaultBlankMaterial = null!;
+        [SerializeField] private Material viewNftShapeMaterial = null!;
+        [SerializeField] private string albedoColorPropertyName = "_BaseMap";
+
         [SerializeField] private int placeIndex;
 
         [Header("Status")]
@@ -18,17 +21,22 @@ namespace DCL.SDKComponents.NftShape.Frames
         [SerializeField] private int[] backplateIndexes = Array.Empty<int>();
         [SerializeField] private string backplateColorPropertyName = "_BaseColor";
 
+        private int albedoColorPropertyId;
         private int backplateColorPropertyId;
         private MaterialPropertyBlock backplateMaterialPropertyBlock = null!;
+        private MaterialPropertyBlock viewNftMaterialPropertyBlock = null!;
 
         public void Awake()
         {
             renderer.EnsureNotNull();
             defaultBlankMaterial.EnsureNotNull();
+            viewNftShapeMaterial.EnsureNotNull();
             loadingStatus.EnsureNotNull();
             failedStatus.EnsureNotNull();
             backplateMaterialPropertyBlock = new MaterialPropertyBlock();
+            viewNftMaterialPropertyBlock = new MaterialPropertyBlock();
             backplateColorPropertyId = Shader.PropertyToID(backplateColorPropertyName);
+            albedoColorPropertyId = Shader.PropertyToID(albedoColorPropertyName);
 
             HideStatuses();
         }
@@ -41,15 +49,18 @@ namespace DCL.SDKComponents.NftShape.Frames
                 renderer.SetPropertyBlock(backplateMaterialPropertyBlock, backplateIndex);
         }
 
-        public override void Place(Material picture)
+        public override void Place(Texture2D picture)
         {
-            renderer.materials![placeIndex] = picture;
+            viewNftMaterialPropertyBlock.SetTexture(albedoColorPropertyId, picture);
+            renderer.materials![placeIndex] = viewNftShapeMaterial;
+            renderer.SetPropertyBlock(viewNftMaterialPropertyBlock, placeIndex);
             HideStatuses();
         }
 
         public override void UpdateStatus(Status status)
         {
-            Place(defaultBlankMaterial);
+            renderer.materials![placeIndex] = defaultBlankMaterial;
+            HideStatuses();
 
             var current = status switch
                           {

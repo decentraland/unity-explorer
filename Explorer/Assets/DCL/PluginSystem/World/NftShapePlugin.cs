@@ -75,8 +75,9 @@ namespace DCL.PluginSystem.World
         private void Inject(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, ISceneData sceneData)
         {
             LoadNftShapeSystem.InjectToWorld(ref builder, cache, webRequestController, new MutexSync());
+            LoadCycleNftShapeSystem.InjectToWorld(ref builder);
             InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, sceneData: sceneData);
-            ApplyMaterialNftShapeSystem.InjectToWorld(ref builder, sceneData);
+            //ApplyMaterialNftShapeSystem.InjectToWorld(ref builder, sceneData); obsolete
             VisibilityNftShapeSystem.InjectToWorld(ref builder);
         }
     }
