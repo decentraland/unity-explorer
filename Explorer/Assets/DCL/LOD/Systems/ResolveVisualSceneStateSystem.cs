@@ -4,6 +4,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
+using DCL.LOD.Systems;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -19,14 +20,17 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateInGroup(typeof(RealmGroup))]
     [UpdateBefore(typeof(ResolveSceneStateByIncreasingRadiusSystem))]
     [UpdateBefore(typeof(UpdateVisualSceneStateSystem))]
-
+    [UpdateBefore(typeof(UpdateSceneLODInfoSystem))]
     public partial class ResolveVisualSceneStateSystem : BaseUnityLoopSystem
     {
         private readonly int sceneLODLimit;
 
+        public static int updater;
+
         public ResolveVisualSceneStateSystem(World world, int sceneLODLimit) : base(world)
         {
             this.sceneLODLimit = sceneLODLimit;
+            updater = 0;
         }
 
         protected override void Update(float t)
@@ -72,7 +76,8 @@ namespace ECS.SceneLifeCycle.Systems
                 if (sceneDefinitionComponent.Definition.id.Equals(
                         "QmTAYbcAGPkmEVM8RoLtJkmWHrUb65h78JA41VmnREzA5g"))
                 {
-                    Debug.Log($"JUANI {partition.Bucket} {visualSceneState.CurrentVisualSceneState} {candidateState}");
+                    updater++;
+                    //Debug.Log($"JUANI UPDATING VISUAL STATE {partition.Bucket} {candidateState} {updater}");
                 }
                 if (candidateState != visualSceneState.CurrentVisualSceneState)
                 {

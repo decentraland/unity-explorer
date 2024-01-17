@@ -91,6 +91,8 @@ namespace Global.Dynamic
             container.ProfileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData,
                 profileCache);
 
+            IScenesCache scenesCache = new ScenesCache();
+            
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterObject, debugBuilder),
@@ -122,12 +124,12 @@ namespace Global.Dynamic
                 new SkyBoxPlugin(debugBuilder, skyBoxSceneData),
                 new LODPlugin(staticContainer.CacheCleaner, realmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
-                    staticContainer.SingletonSharedDependencies.FrameTimeBudget)
+                    staticContainer.SingletonSharedDependencies.FrameTimeBudget,
+                    scenesCache)
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
-            IScenesCache scenesCache = new ScenesCache();
 
             container.RealmController = new RealmController(
                 staticContainer.WebRequestsContainer.WebRequestController,

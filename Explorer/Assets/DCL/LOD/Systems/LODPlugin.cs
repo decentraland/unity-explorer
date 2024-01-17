@@ -10,6 +10,7 @@ using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.ResourcesUnloading;
 using ECS;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Systems;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -22,19 +23,21 @@ namespace DCL.LOD
         private Vector2Int[] lodBucketLimits;
 
         private readonly LODAssetCache lodCache;
+        private readonly IScenesCache scenesCache;
         private IRealmData realmData;
         private readonly IPerformanceBudget frameCapBudget;
         private readonly IPerformanceBudget memoryBudget;
 
 
         public LODPlugin(CacheCleaner cacheCleaner, RealmData realmData, IPerformanceBudget memoryBudget,
-            IPerformanceBudget frameCapBudget)
+            IPerformanceBudget frameCapBudget, IScenesCache scenesCache)
         {
             lodCache = new LODAssetCache();
             cacheCleaner.Register(lodCache);
             this.realmData = realmData;
             this.memoryBudget = memoryBudget;
             this.frameCapBudget = frameCapBudget;
+            this.scenesCache = scenesCache;
         }
 
         public UniTask InitializeAsync(LODSettings settings, CancellationToken ct)
@@ -47,7 +50,7 @@ namespace DCL.LOD
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
             ResolveVisualSceneStateSystem.InjectToWorld(ref builder, sceneLodLimit);
-            UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData);
+            UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache);
             ResolveSceneLODInfo.InjectToWorld(ref builder, lodCache);
             UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodCache, lodBucketLimits, frameCapBudget,
                 memoryBudget);

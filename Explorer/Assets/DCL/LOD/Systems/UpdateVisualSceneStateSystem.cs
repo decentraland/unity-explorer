@@ -25,125 +25,24 @@ namespace ECS.SceneLifeCycle.Systems
     public partial class UpdateVisualSceneStateSystem : BaseUnityLoopSystem
     {
         private readonly IRealmData realmData;
+        private readonly IScenesCache scenesCache;
 
-        public UpdateVisualSceneStateSystem(World world, IRealmData realmData) : base(world)
+        public UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache) : base(world)
         {
             this.realmData = realmData;
+            this.scenesCache = scenesCache;
         }
 
         protected override void Update(float t)
         {
-            RemoveSceneLODInfoQuery(World);
-            AddScenePromiseQuery(World);
-
-            RemoveSceneFacadeQuery(World);
-            RemoveScenePromiseQuery(World);
-            AddSceneLODInfoQuery(World);
-
-            //SwapLODToScenePromiseQuery(World);
-            //SwapSceneFacadeToLODQuery(World);
-            //SwapScenePromiseToLODQuery(World);
+            SwapLODToScenePromiseQuery(World);
+            SwapSceneFacadeToLODQuery(World);
+            SwapScenePromiseToLODQuery(World);
         }
         
-        
-        [Query]
-        //TODO: This should have a none AssetPromise in it, but if I add it, its filtered. Ask Misha
-        private void RemoveSceneLODInfo(in Entity entity, ref VisualSceneState visualSceneState,
-            ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
-        {
-            if (!visualSceneState.IsDirty) return;
-
-            if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_SCENE)
-            {
-                if (sceneDefinitionComponent.Definition.id.Equals("QmTAYbcAGPkmEVM8RoLtJkmWHrUb65h78JA41VmnREzA5g"))
-                    Debug.Log("JUANI REMOVING LOD INFO");
-                
-                sceneLODInfo.Dispose(World);
-
-                World.Remove<SceneLODInfo>(entity);
-            }
-        }
-
         [Query]
         [None(typeof(SceneLODInfo))]
-        //TODO: This should have a none AssetPromise in it, but if I add it, its filtered. Ask Misha
-        private void AddScenePromise(in Entity entity, ref VisualSceneState visualSceneState,
-            ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partition)
-        {
-            if (!visualSceneState.IsDirty) return;
-
-            if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_SCENE)
-            {
-                if (sceneDefinitionComponent.Definition.id.Equals("QmTAYbcAGPkmEVM8RoLtJkmWHrUb65h78JA41VmnREzA5g"))
-                    Debug.Log("JUANI ADING SCENEPROMISE");
-                
-                visualSceneState.IsDirty = false;
-                
-                //Show Scene
-                World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                    new GetSceneFacadeIntention(realmData.Ipfs, sceneDefinitionComponent),
-                    partition));
-            }
-        }
-
-        [Query]
-        private void RemoveSceneFacade(in Entity entity, ref VisualSceneState visualSceneState,
-            ISceneFacade sceneFacade, ref SceneDefinitionComponent sceneDefinitionComponent)
-        {
-            if (!visualSceneState.IsDirty) return;
-
-            if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
-            {
-                if (sceneDefinitionComponent.Definition.id.Equals("QmTAYbcAGPkmEVM8RoLtJkmWHrUb65h78JA41VmnREzA5g"))
-                    Debug.Log("Removing scene facade");
-
-                //Dispose scene
-                sceneFacade.DisposeAsync().Forget();
-                World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
-            }
-        }
-
-        [Query]
-        private void RemoveScenePromise(in Entity entity, ref VisualSceneState visualSceneState,
-            AssetPromise<ISceneFacade, GetSceneFacadeIntention> scenePromise,
-            ref SceneDefinitionComponent sceneDefinitionComponent)
-        {
-            if (!visualSceneState.IsDirty) return;
-
-            if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
-            {
-                if (sceneDefinitionComponent.Definition.id.Equals("QmTAYbcAGPkmEVM8RoLtJkmWHrUb65h78JA41VmnREzA5g"))
-                    Debug.Log("Removing scene promise");
-
-                //Dispose scene
-                scenePromise.ForgetLoading(World);
-                World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
-            }
-        }
-
-        [Query]
-        [None(typeof(SceneFacade))]
-        private void AddSceneLODInfo(in Entity entity, ref VisualSceneState visualSceneState,
-            ref SceneDefinitionComponent sceneDefinitionComponent)
-        {
-            if (!visualSceneState.IsDirty) return;
-
-            if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
-            {
-                if (sceneDefinitionComponent.Definition.id.Equals("QmTAYbcAGPkmEVM8RoLtJkmWHrUb65h78JA41VmnREzA5g"))
-                    Debug.Log($"JUANI ANY CHANGING FROM SCENE FACADE TO LOD {sceneDefinitionComponent.Definition.id}");
-
-                //Create LODInfo
-                var sceneLODInfo = new SceneLODInfo { IsDirty = true };
-                visualSceneState.IsDirty = false;
-                World.Add(entity, sceneLODInfo);
-            }
-        }
-
-
-        /*[Query]
-        //[None(typeof(SceneLODInfo))]
-        private void SwapSceneFacadeToLOD(in Entity entity, ref VisualSceneState visualSceneState,
+        private void SwapSceneFacadeToLOD(Entity entity, ref VisualSceneState visualSceneState,
             ISceneFacade sceneFacade, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
             if (!visualSceneState.IsDirty) return;
@@ -157,7 +56,7 @@ namespace ECS.SceneLifeCycle.Systems
                 var sceneLODInfo = new SceneLODInfo { IsDirty = true };
 
                 //Dispose scene
-                sceneFacade.DisposeAsync().Forget();
+                sceneFacade.DisposeSceneFacade(scenesCache, sceneDefinitionComponent.Parcels);
 
                 visualSceneState.IsDirty = false;
 
@@ -167,8 +66,8 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        //TODO: This should have a none AssetPromise in it, but if I add it, its filtered. Ask Misha
-        private void SwapLODToScenePromise(in Entity entity, ref VisualSceneState visualSceneState,
+        [None(typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
+        private void SwapLODToScenePromise(Entity entity, ref VisualSceneState visualSceneState,
             ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partition)
         {
             if (!visualSceneState.IsDirty) return;
@@ -190,8 +89,8 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        //[None(typeof(SceneLODInfo))]
-        private void SwapScenePromiseToLOD(in Entity entity, ref VisualSceneState visualSceneState,
+        [None(typeof(SceneLODInfo))]
+        private void SwapScenePromiseToLOD(Entity entity, ref VisualSceneState visualSceneState,
             AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
             if (!visualSceneState.IsDirty) return;
@@ -214,6 +113,6 @@ namespace ECS.SceneLifeCycle.Systems
                 World.Add(entity, sceneLODInfo);
                 World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
             }
-        }*/
+        }
     }
 }

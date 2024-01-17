@@ -65,10 +65,9 @@ namespace DCL.LOD.Systems
         [Query]
         public void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo)
         {
-            if (sceneLODInfo.CurrentLODPromise.IsConsumed) return;
-
-            //TODO: Ask Misha. Is this a costly operation? Its appearing on top of the profiler
             if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
+            
+            if (sceneLODInfo.CurrentLODPromise.IsConsumed) return;
             
             if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
@@ -94,10 +93,14 @@ namespace DCL.LOD.Systems
             else if (partitionComponent.Bucket > lodBucketLimits[1][0])
                 sceneLODCandidate = 3;
 
-            if (sceneLODInfo.SceneHash.Equals("QmTAYbcAGPkmEVM8RoLtJkmWHrUb65h78JA41VmnREzA5g"))
-                ReportHub.Log(ReportCategory.UNSPECIFIED,
-                    $"JUANI ANALYZING LOD LEVEL {partitionComponent.Bucket} {sceneLODCandidate}");
+            // if (sceneLODInfo.SceneHash.Equals("QmTAYbcAGPkmEVM8RoLtJkmWHrUb65h78JA41VmnREzA5g"))
+            //    ReportHub.Log(ReportCategory.UNSPECIFIED,
+            //       $"JUANI ANALYZING LOD LEVEL {partitionComponent.Bucket} {partitionComponent.IsDirty} {ResolveVisualSceneStateSystem.updater}");
 
+            if (sceneLODCandidate.Equals(-1))
+            {
+                Debug.Log("JUANI LPMMMM");
+            }
             if (sceneLODCandidate != sceneLODInfo.CurrentLODLevel && sceneLODCandidate != -1)
                 UpdateLODLevel(ref partitionComponent, ref sceneLODInfo, sceneLODCandidate);
         }

@@ -17,7 +17,6 @@ using Utility;
 namespace DCL.LOD.Systems
 {
     [UpdateInGroup(typeof(RealmGroup))]
-    [UpdateAfter(typeof(ResolveSceneStateByIncreasingRadiusSystem))]
     [UpdateAfter(typeof(UpdateVisualSceneStateSystem))]
     public partial class ResolveSceneLODInfo : BaseUnityLoopSystem
     {
