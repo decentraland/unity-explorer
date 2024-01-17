@@ -20,11 +20,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
     [ThrottlingEnabled]
     public partial class UIBackgroundReleaseSystem : BaseUnityLoopSystem
     {
-        private IComponentPool componentPool;
+        private readonly IComponentPool componentPool;
 
         private UIBackgroundReleaseSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
-            poolsRegistry.TryGetPool(typeof(DCLImage), out IComponentPool componentPool);
+            poolsRegistry.TryGetPool(typeof(DCLImage), out componentPool);
         }
 
         protected override void Update(float t)
