@@ -85,7 +85,7 @@ namespace DCL.SceneLoadingScreens
 
         private async UniTask ShowTipsAsync(CancellationToken ct)
         {
-            tips = await sceneTipsProvider.Get(inputData.Coordinate, ct);
+            tips = await sceneTipsProvider.Get(ct);
 
             List<SceneTips.Tip> list = ListPool<SceneTips.Tip>.Get();
 
@@ -111,15 +111,8 @@ namespace DCL.SceneLoadingScreens
                 {
                     try
                     {
-                        int totalAssetsLoaded = await inputData.SceneReadinessReport.AssetLoadedCount.WaitAsync(ct);
-
-                        if (inputData.SceneReadinessReport.TotalAssetsToLoad <= 0)
-                        {
-                            await UniTask.NextFrame(ct);
-                            continue;
-                        }
-
-                        float progress = Mathf.Clamp01(totalAssetsLoaded / (float)inputData.SceneReadinessReport.TotalAssetsToLoad);
+                        float progress = Mathf.Clamp01(await inputData.AsyncLoadProcessReport.ProgressCounter.WaitAsync(ct));
+                        await UniTask.SwitchToMainThread(ct);
                         viewInstance.ProgressBar.normalizedValue = progress;
                         progressLabel!.Value = (int)(progress * 100);
                     }
@@ -133,7 +126,7 @@ namespace DCL.SceneLoadingScreens
 
             try
             {
-                await inputData.SceneReadinessReport.CompletionSource.Task;
+                await inputData.AsyncLoadProcessReport.CompletionSource.Task;
                 progressUpdatingCancellationToken.Cancel();
                 ct.ThrowIfCancellationRequested();
                 viewInstance.ProgressBar.normalizedValue = 1f;

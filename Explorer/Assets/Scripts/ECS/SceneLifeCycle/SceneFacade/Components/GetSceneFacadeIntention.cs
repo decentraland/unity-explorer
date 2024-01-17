@@ -1,8 +1,6 @@
 ﻿using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common.Components;
 using Ipfs;
-using JetBrains.Annotations;
-using SceneRunner.Scene;
 using System;
 using System.Threading;
 
@@ -19,13 +17,11 @@ namespace ECS.SceneLifeCycle.Components
 
         public readonly IIpfsRealm IpfsRealm;
         public readonly SceneDefinitionComponent DefinitionComponent;
-        [CanBeNull] public readonly SceneReadinessReport SceneReadinessReport;
 
-        public GetSceneFacadeIntention(IIpfsRealm ipfsRealm, SceneDefinitionComponent definitionComponent, SceneReadinessReport sceneReadinessReport = null)
+        public GetSceneFacadeIntention(IIpfsRealm ipfsRealm, SceneDefinitionComponent definitionComponent)
         {
             IpfsRealm = ipfsRealm;
             DefinitionComponent = definitionComponent;
-            SceneReadinessReport = sceneReadinessReport;
 
             // URL = EntityId just for identification, it is used by LoadSystemBase, it won't be used as a URL
             CommonArguments = new CommonLoadingArguments(definitionComponent.IpfsPath.EntityId);

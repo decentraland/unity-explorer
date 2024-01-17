@@ -45,7 +45,7 @@ namespace DCL.SceneLoadingScreens
             fallbackTips = await Get(tipsTable, imagesTable, ct);
         }
 
-        public async UniTask<SceneTips> Get(Vector2Int parcelCoord, CancellationToken ct) =>
+        public async UniTask<SceneTips> Get(CancellationToken ct) =>
 
             // TODO: we will need specific scene tips in the future, but its disabled at the moment
             /*StringTable tipsTable = await tipsDatabase.GetTableAsync($"LoadingSceneTips-{parcelCoord.x},{parcelCoord.y}").Task
@@ -86,7 +86,7 @@ namespace DCL.SceneLoadingScreens
                 tips[i] = new SceneTips.Tip(title, body, texture);
             }
 
-            return new SceneTips(defaultDuration, false, tips);
+            return new SceneTips(defaultDuration, true, tips);
         }
     }
 }

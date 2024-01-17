@@ -1,13 +1,11 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Cysharp.Threading.Tasks;
+using DCL.AsyncLoadReporting;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
-using DCL.SceneLoadingScreens;
-using DCL.SceneReadiness;
+using ECS.SceneLifeCycle.Reporting;
 using Ipfs;
-using MVC;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -19,15 +17,22 @@ namespace DCL.ParcelsService
     public partial class TeleportController : ITeleportController
     {
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
-        private readonly MVCManager mvcManager;
-        private IRetrieveScene retrieveScene;
-        private World world;
+        private IRetrieveScene? retrieveScene;
+        private World? world;
 
-        public TeleportController(ISceneReadinessReportQueue sceneReadinessReportQueue,
-            MVCManager mvcManager)
+        public IRetrieveScene SceneProviderStrategy
+        {
+            set => retrieveScene = value;
+        }
+
+        public World World
+        {
+            set => world = value;
+        }
+
+        public TeleportController(ISceneReadinessReportQueue sceneReadinessReportQueue)
         {
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
-            this.mvcManager = mvcManager;
         }
 
         public void InvalidateRealm()
@@ -35,18 +40,7 @@ namespace DCL.ParcelsService
             retrieveScene = null;
         }
 
-        public void OnWorldLoaded(World world)
-        {
-            this.world = world;
-        }
-
-        public void OnRealmLoaded(IRetrieveScene retrieveScene)
-        {
-            this.retrieveScene = retrieveScene;
-            this.retrieveScene.World = world;
-        }
-
-        public async UniTask TeleportToSceneSpawnPointAsync(Vector2Int parcel, CancellationToken ct)
+        public async UniTask TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport? loadReport, CancellationToken ct)
         {
             // If type of retrieval is not set yet
             if (retrieveScene == null)
@@ -98,25 +92,29 @@ namespace DCL.ParcelsService
 
             AddTeleportIntentQuery(retrieveScene.World, new PlayerTeleportIntent(targetPosition, parcel));
 
-            if (sceneDef == null) return;
-
-            var readinessCompletion = new SceneReadinessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<int>(0));
-
-            // Add report to the queue so it will be grabbed by the actual scene
-            sceneReadinessReportQueue.Enqueue(parcel, readinessCompletion);
-
-            mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(parcel, readinessCompletion)))
-                      .Forget();
-
-            try
+            if (sceneDef == null)
             {
-                // add timeout in case of a trouble
-                await readinessCompletion.CompletionSource.Task.Timeout(TimeSpan.FromSeconds(30));
+                // Instant completion for empty parcels
+                if (loadReport != null)
+                {
+                    loadReport.ProgressCounter.Value = 1;
+                    loadReport.CompletionSource.TrySetResult();
+                }
+
+                return;
             }
-            catch (TimeoutException e)
+
+            if (loadReport != null)
             {
-                // propagate the timeout into the readiness completion so the load screen is able to handle it
-                readinessCompletion.CompletionSource.TrySetException(e);
+                // Add report to the queue so it will be grabbed by the actual scene
+                sceneReadinessReportQueue.Enqueue(parcel, loadReport);
+
+                try
+                {
+                    // add timeout in case of a trouble
+                    await loadReport.CompletionSource.Task.Timeout(TimeSpan.FromSeconds(30));
+                }
+                catch (Exception e) { loadReport.CompletionSource.TrySetException(e); }
             }
         }
 
@@ -158,7 +156,7 @@ namespace DCL.ParcelsService
         [All(typeof(PlayerComponent))]
         private void AddTeleportIntent([Data] PlayerTeleportIntent intent, in Entity entity)
         {
-            world.Add(entity, intent);
+            world?.Add(entity, intent);
         }
     }
 }

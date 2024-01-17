@@ -5,9 +5,11 @@ namespace DCL.Utilities.Extensions
 {
     public static class ReadOnlyListExtensions
     {
-        public static void Shuffle<T>(this IReadOnlyList<T> list, IList<T> destination)
+        public static void Shuffle<T>(this IReadOnlyList<T> list, List<T> destination)
         {
             int n = list.Count;
+
+            destination.AddRange(list);
 
             while (n > 1)
             {

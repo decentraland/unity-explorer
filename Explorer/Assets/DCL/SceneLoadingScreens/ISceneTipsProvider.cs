@@ -6,6 +6,8 @@ namespace DCL.SceneLoadingScreens
 {
     public interface ISceneTipsProvider
     {
-        UniTask<SceneTips> Get(Vector2Int parcelCoord, CancellationToken ct);
+        // TODO: in the future we may require the parcel coordinate to provide specific scene tips
+        // UniTask<SceneTips> Get(Vector2Int parcelCoord, CancellationToken ct);
+        UniTask<SceneTips> Get(CancellationToken ct);
     }
 }

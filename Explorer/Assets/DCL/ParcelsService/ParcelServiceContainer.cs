@@ -1,7 +1,10 @@
-﻿using DCL.DebugUtilities;
+﻿using Cysharp.Threading.Tasks;
+using DCL.AsyncLoadReporting;
+using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using DCL.SceneReadiness;
+using DCL.SceneLoadingScreens;
 using ECS;
+using ECS.SceneLifeCycle.Reporting;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -14,12 +17,14 @@ namespace DCL.ParcelsService
         public RetrieveSceneFromFixedRealm RetrieveSceneFromFixedRealm { get; private set; }
         public TeleportController TeleportController { get; private set; }
 
-        public static ParcelServiceContainer Create(IRealmData realmData, ISceneReadinessReportQueue sceneReadinessReportQueue, IDebugContainerBuilder debugContainerBuilder,
+        public static ParcelServiceContainer Create(IRealmData realmData,
+            ISceneReadinessReportQueue sceneReadinessReportQueue,
+            IDebugContainerBuilder debugContainerBuilder,
             MVCManager mvcManager)
         {
-            var teleportController = new TeleportController(sceneReadinessReportQueue, mvcManager);
+            var teleportController = new TeleportController(sceneReadinessReportQueue);
 
-            BuildDebugWidget(teleportController, debugContainerBuilder);
+            BuildDebugWidget(teleportController, mvcManager, debugContainerBuilder);
 
             return new ParcelServiceContainer
             {
@@ -29,7 +34,7 @@ namespace DCL.ParcelsService
             };
         }
 
-        private static void BuildDebugWidget(ITeleportController teleportController, IDebugContainerBuilder debugContainerBuilder)
+        private static void BuildDebugWidget(ITeleportController teleportController, MVCManager mvcManager, IDebugContainerBuilder debugContainerBuilder)
         {
             var binding = new ElementBinding<Vector2Int>(Vector2Int.zero);
 
@@ -37,7 +42,12 @@ namespace DCL.ParcelsService
                                  .AddControl(new DebugVector2IntFieldDef(binding), null)
                                  .AddControl(
                                       new DebugButtonDef("To Parcel", () => teleportController.TeleportToParcel(binding.Value)),
-                                      new DebugButtonDef("To Spawn Point", () => teleportController.TeleportToSceneSpawnPointAsync(binding.Value, CancellationToken.None)));
+                                      new DebugButtonDef("To Spawn Point", () =>
+                                      {
+                                          var loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
+                                          mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport))).Forget();
+                                          teleportController.TeleportToSceneSpawnPointAsync(binding.Value, loadReport, CancellationToken.None);
+                                      }));
         }
     }
 }

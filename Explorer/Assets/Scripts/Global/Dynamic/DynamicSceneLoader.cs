@@ -1,8 +1,10 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AsyncLoadReporting;
 using DCL.Browser;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.SceneLoadingScreens;
 using DCL.SkyBox;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -139,7 +141,7 @@ namespace Global.Dynamic
                     dynamicWorldContainer.EmptyScenesWorldFactory, staticContainer.CharacterObject);
 
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
-                dynamicWorldContainer.RealmController.SetupWorld(globalWorld);
+                dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
 
                 realmLauncher.OnRealmSelected += ChangeRealm;
             }
@@ -166,12 +168,9 @@ namespace Global.Dynamic
 
                 await UniTask.SwitchToMainThread();
 
-                Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(settings.StartPosition);
-                characterPos.y = 1f;
-
-                staticContainer!.CharacterObject.Controller.transform.position = characterPos;
-
-                await realmController.SetRealmAsync(URLDomain.FromString(selectedRealm), ct);
+                var loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
+                dynamicWorldContainer.MvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport))).Forget();
+                await realmController.SetRealmAsync(URLDomain.FromString(selectedRealm), settings.StartPosition, loadReport, ct);
             }
 
             ChangeRealmAsync(selectedRealm, CancellationToken.None).Forget();

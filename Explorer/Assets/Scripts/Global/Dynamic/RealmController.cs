@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using DCL.ParcelsService;
@@ -15,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace Global.Dynamic
 {
@@ -28,19 +30,26 @@ namespace Global.Dynamic
         private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent>();
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
-
         private readonly IpfsTypes.ServerAbout serverAbout = new ();
-
         private readonly IWebRequestController webRequestController;
         private readonly int sceneLoadRadius;
         private readonly IReadOnlyList<int2> staticLoadPositions;
         private readonly RealmData realmData;
-
         private readonly RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm;
         private readonly RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld;
         private readonly TeleportController teleportController;
         private readonly IScenesCache scenesCache;
-        private GlobalWorld globalWorld;
+
+        private GlobalWorld? globalWorld;
+
+        public GlobalWorld GlobalWorld
+        {
+            set
+            {
+                globalWorld = value;
+                teleportController.World = globalWorld.EcsWorld;
+            }
+        }
 
         public RealmController(IWebRequestController webRequestController, TeleportController teleportController, RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm, RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld, int sceneLoadRadius,
             IReadOnlyList<int2> staticLoadPositions, RealmData realmData, IScenesCache scenesCache)
@@ -55,22 +64,17 @@ namespace Global.Dynamic
             this.scenesCache = scenesCache;
         }
 
-        public void SetupWorld(GlobalWorld globalWorld)
-        {
-            this.globalWorld = globalWorld;
-            teleportController.OnWorldLoaded(globalWorld.EcsWorld);
-        }
-
         /// <summary>
         ///     it is an async process so it should be executed before ECS kicks in
         /// </summary>
-        public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
+        public async UniTask SetRealmAsync(URLDomain realm, Vector2Int playerStartPosition, AsyncLoadProcessReport? loadReport, CancellationToken ct)
         {
-            World world = globalWorld.EcsWorld;
-
-            // Show loading screen
+            World world = globalWorld!.EcsWorld;
 
             await UnloadCurrentRealmAsync();
+
+            if (loadReport != null)
+                loadReport.ProgressCounter.Value = 0.1f;
 
             IpfsTypes.ServerAbout result = await (await webRequestController.GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM))
                .OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
@@ -86,9 +90,44 @@ namespace Global.Dynamic
             if (!ComplimentWithStaticPointers(world, realmEntity) && !realmComp.ScenesAreFixed)
                 ComplimentWithVolatilePointers(world, realmEntity);
 
-            teleportController.OnRealmLoaded(realmData.ScenesAreFixed ? retrieveSceneFromFixedRealm : retrieveSceneFromVolatileWorld);
+            IRetrieveScene sceneProviderStrategy = realmData.ScenesAreFixed ? retrieveSceneFromFixedRealm : retrieveSceneFromVolatileWorld;
+            sceneProviderStrategy.World = globalWorld.EcsWorld;
+            teleportController.SceneProviderStrategy = sceneProviderStrategy;
 
-            // Hide loading screen
+            var sceneLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
+
+            if (loadReport != null)
+                PropagateSceneLoadReportToRealmLoadReportAsync(loadReport.ProgressCounter.Value, loadReport, sceneLoadReport, ct).Forget();
+
+            try
+            {
+                await teleportController.TeleportToSceneSpawnPointAsync(playerStartPosition, sceneLoadReport, ct);
+
+                if (loadReport != null)
+                {
+                    loadReport.ProgressCounter.Value = 1f;
+                    loadReport.CompletionSource.TrySetResult();
+                }
+            }
+            catch (Exception e) { loadReport?.CompletionSource.TrySetException(e); }
+        }
+
+        private async UniTaskVoid PropagateSceneLoadReportToRealmLoadReportAsync(
+            float loadOffset,
+            AsyncLoadProcessReport realmLoadReport,
+            AsyncLoadProcessReport sceneLoadReport,
+            CancellationToken ct)
+        {
+            try
+            {
+                while (sceneLoadReport.ProgressCounter.Value < 1f && !ct.IsCancellationRequested)
+                {
+                    float progress = await sceneLoadReport.ProgressCounter.WaitAsync(ct).Timeout(TimeSpan.FromSeconds(30));
+                    realmLoadReport.ProgressCounter.Value = loadOffset + (progress * (1 - loadOffset));
+                }
+            }
+            catch (TimeoutException) { }
+            catch (OperationCanceledException) { }
         }
 
         private void ComplimentWithVolatilePointers(World world, Entity realmEntity)
@@ -110,6 +149,8 @@ namespace Global.Dynamic
 
         public async UniTask UnloadCurrentRealmAsync()
         {
+            if (globalWorld == null) return;
+
             World world = globalWorld.EcsWorld;
 
             FindLoadedScenes(world);
@@ -134,11 +175,14 @@ namespace Global.Dynamic
 
         public async UniTask DisposeGlobalWorldAsync()
         {
-            World world = globalWorld.EcsWorld;
-            FindLoadedScenes(world);
+            if (globalWorld != null)
+            {
+                World world = globalWorld.EcsWorld;
+                FindLoadedScenes(world);
 
-            // Destroy everything without awaiting as it's Application Quit
-            globalWorld.Dispose();
+                // Destroy everything without awaiting as it's Application Quit
+                globalWorld.Dispose();
+            }
 
             await UniTask.WhenAll(allScenes.Select(s => s.DisposeAsync()));
         }

@@ -1,15 +1,17 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.AsyncLoadReporting;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.SceneLifeCycle.Reporting;
 using ECS.Unity.GLTFContainer.Components;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine.Pool;
 
-namespace DCL.SceneReadiness
+namespace ECS.SceneLifeCycle.Systems
 {
     [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
     public partial class GatherGltfAssetsSystem : BaseUnityLoopSystem
@@ -19,12 +21,14 @@ namespace DCL.SceneReadiness
         private readonly ISceneReadinessReportQueue readinessReportQueue;
         private readonly ISceneData sceneData;
 
-        private IReadOnlyList<SceneReadinessReport>? reports;
+        private IReadOnlyList<AsyncLoadProcessReport>? reports;
 
         private HashSet<EntityReference>? entitiesUnderObservation;
 
         private int framesLeft = FRAMES_COUNT;
         private bool concluded;
+        private int assetsResolved;
+        private int totalAssetsToResolve = -1;
 
         internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue, ISceneData sceneData) : base(world)
         {
@@ -47,13 +51,15 @@ namespace DCL.SceneReadiness
         {
             if (framesLeft > 0)
             {
-                // Gather entities
                 GatherEntitiesQuery(World);
 
                 framesLeft--;
             }
             else if (!concluded)
             {
+                if (totalAssetsToResolve == -1)
+                    totalAssetsToResolve = entitiesUnderObservation!.Count;
+
                 if (reports == null && !readinessReportQueue.TryDequeue(sceneData.Parcels, out reports))
                 {
                     // if there is no report to dequeue, nothing to do
@@ -92,11 +98,13 @@ namespace DCL.SceneReadiness
                     toDelete.Add(entityRef);
                 }
 
+                assetsResolved += toDelete.Count;
+                float progress = totalAssetsToResolve != 0 ? assetsResolved / (float)totalAssetsToResolve : 1;
+
                 for (var i = 0; i < reports.Count; i++)
                 {
-                    SceneReadinessReport report = reports[i];
-                    report.TotalAssetsToLoad = entitiesUnderObservation.Count;
-                    report.AssetLoadedCount.Value += toDelete.Count;
+                    AsyncLoadProcessReport report = reports[i];
+                    report.ProgressCounter.Value = progress;
                 }
 
                 entitiesUnderObservation.ExceptWith(toDelete);

@@ -1,3 +1,4 @@
+using DCL.AsyncLoadReporting;
 using SceneRunner.Scene;
 using UnityEngine;
 
@@ -7,13 +8,13 @@ namespace DCL.SceneLoadingScreens
     {
         public struct Params
         {
-            public Vector2Int Coordinate { get; }
-            public SceneReadinessReport SceneReadinessReport { get; }
+            // TODO: in the future we may require the parcel to show specific scene tips
+            // public Vector2Int Coordinate { get; }
+            public AsyncLoadProcessReport AsyncLoadProcessReport { get; }
 
-            public Params(Vector2Int coordinate, SceneReadinessReport sceneReadinessReport)
+            public Params(AsyncLoadProcessReport asyncLoadProcessReport)
             {
-                Coordinate = coordinate;
-                SceneReadinessReport = sceneReadinessReport;
+                AsyncLoadProcessReport = asyncLoadProcessReport;
             }
         }
     }

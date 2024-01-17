@@ -110,7 +110,7 @@ namespace SceneRunner
             return await CreateSceneAsync(sceneData, partitionProvider, ct);
         }
 
-        public UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, SceneReadinessReport sceneReadinessReport, IPartitionComponent partitionProvider, CancellationToken ct) =>
+        public UniTask<ISceneFacade> CreateSceneFromSceneDefinition(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct) =>
             CreateSceneAsync(sceneData, partitionProvider, ct);
 
         private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)

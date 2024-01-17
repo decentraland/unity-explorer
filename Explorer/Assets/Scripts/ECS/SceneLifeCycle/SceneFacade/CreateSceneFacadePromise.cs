@@ -12,12 +12,9 @@ namespace ECS.SceneLifeCycle.SceneFacade
     {
         public static void Execute(World world, Entity entity, IIpfsRealm ipfsRealm, in SceneDefinitionComponent definitionComponent, IPartitionComponent partitionComponent)
         {
-            // Entity may or may not contain a report
-            world.TryGet(entity, out SceneReadinessReport sceneReadinessReport);
-
             world.Add(entity,
                 AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(world,
-                    new GetSceneFacadeIntention(ipfsRealm, definitionComponent, sceneReadinessReport), partitionComponent));
+                    new GetSceneFacadeIntention(ipfsRealm, definitionComponent), partitionComponent));
         }
     }
 }
