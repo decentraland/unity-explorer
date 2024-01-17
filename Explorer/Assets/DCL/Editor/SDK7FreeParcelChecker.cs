@@ -49,11 +49,12 @@ namespace DCL.Editor
 
             var label = new Label
             {
-                text = "<b>Note:</b> : you can also run <code>npm update-parcels</code> on the sdk7 repo root to validate that all scenes have unique parcels.\n It will tell you if there are any overlaps and which scenes & coords",
+                text = "<b>Note:</b> : you can also run <code>npm update-parcels</code> on the sdk7 repo root to validate that all scenes have unique parcels. It will tell you if there are any overlaps and which scenes & coords",
                 enableRichText = true,
                 style =
                 {
-                    backgroundColor = new StyleColor(new Color(0.1f, 0.1f, 0.1f)), // Change the background color
+                    backgroundColor = new StyleColor(new Color(0.1f, 0.1f, 0.1f)),
+                    whiteSpace = WhiteSpace.Normal,
                 },
             };
 
@@ -71,11 +72,11 @@ namespace DCL.Editor
             rootVisualElement.Add(resultLabel);
         }
 
-        [MenuItem("Decentraland/Check SDK Scene Parcel Availability")]
+        [MenuItem("Decentraland/SDK/Check Parcel Availability")]
         public static void ShowExample()
         {
             SDK7FreeParcelChecker wnd = GetWindow<SDK7FreeParcelChecker>();
-            wnd.titleContent = new GUIContent("SDK7 Scene Free Parcel Checker");
+            wnd.titleContent = new GUIContent("Free Parcel Checker");
         }
 
         private static async UniTask FetchDCLWorkspace()
