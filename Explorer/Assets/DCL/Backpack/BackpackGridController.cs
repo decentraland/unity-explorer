@@ -150,6 +150,7 @@ namespace DCL.Backpack
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(gridWearables[i].GetRarity());
                 backpackItemView.CategoryImage.sprite = categoryIcons.GetTypeImage(gridWearables[i].GetCategory());
                 backpackItemView.EquippedIcon.SetActive(backpackEquipStatusController.IsWearableEquipped(gridWearables[i]));
+                backpackItemView.IsEquipped = backpackEquipStatusController.IsWearableEquipped(gridWearables[i]);
 
                 backpackItemView.SetEquipButtonsState();
                 WaitForThumbnailAsync(gridWearables[i], backpackItemView, cts.Token).Forget();
@@ -284,6 +285,7 @@ namespace DCL.Backpack
                 backpackItemView.Value.UnEquipButton.onClick.RemoveAllListeners();
                 backpackItemView.Value.OnSelectItem -= SelectItem;
                 backpackItemView.Value.EquippedIcon.SetActive(false);
+                backpackItemView.Value.IsEquipped = false;
                 backpackItemView.Value.ItemId = "";
                 gridItemsPool.Release(backpackItemView.Value);
             }
@@ -304,6 +306,7 @@ namespace DCL.Backpack
             if (usedPoolItems.TryGetValue(unequippedWearable.GetUrn(), out BackpackItemView backpackItemView))
             {
                 backpackItemView.EquippedIcon.SetActive(false);
+                backpackItemView.IsEquipped = false;
                 backpackItemView.SetEquipButtonsState();
             }
         }

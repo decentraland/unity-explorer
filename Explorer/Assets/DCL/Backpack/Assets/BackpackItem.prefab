@@ -214,7 +214,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0.45490196, b: 0.22352941, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -894,9 +894,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <ItemId>k__BackingField: 
   <ContainerTransform>k__BackingField: {fileID: 6252267455741274073}
-  <HoverBackground>k__BackingField: {fileID: 1986608288359508916}
   <HoverBackgroundTransform>k__BackingField: {fileID: 4718511162805314438}
-  <SelectedBackground>k__BackingField: {fileID: 4233702536937593491}
   <EquipButton>k__BackingField: {fileID: 5929508676340867936}
   <UnEquipButton>k__BackingField: {fileID: 8176514646182836153}
   <EquippedIcon>k__BackingField: {fileID: 493759110962425617}
@@ -906,6 +904,7 @@ MonoBehaviour:
   <FlapBackground>k__BackingField: {fileID: 1526146829364839132}
   <LoadingView>k__BackingField: {fileID: 8252342816705450076}
   <FullBackpackItem>k__BackingField: {fileID: 8241648339715965561}
+  <IsEquipped>k__BackingField: 0
 --- !u!1 &7257904519296327889
 GameObject:
   m_ObjectHideFlags: 0
