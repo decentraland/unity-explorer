@@ -14,6 +14,7 @@ using DCL.WebRequests;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.NftShapes;
+using ECS.StreamableLoading.NftShapes.Urns;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
@@ -75,7 +76,7 @@ namespace DCL.PluginSystem.World
         private void Inject(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, ISceneData sceneData)
         {
             LoadNftShapeSystem.InjectToWorld(ref builder, cache, webRequestController, new MutexSync());
-            LoadCycleNftShapeSystem.InjectToWorld(ref builder);
+            LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedUrnSource());
             InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, sceneData: sceneData);
             //ApplyMaterialNftShapeSystem.InjectToWorld(ref builder, sceneData); obsolete
             VisibilityNftShapeSystem.InjectToWorld(ref builder);

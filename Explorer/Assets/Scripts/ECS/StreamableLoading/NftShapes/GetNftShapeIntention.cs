@@ -1,4 +1,5 @@
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.NftShapes.Urns;
 using System;
 using System.Threading;
 
@@ -12,10 +13,10 @@ namespace ECS.StreamableLoading.NftShapes
 
         public readonly CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
-        public GetNftShapeIntention(string urn, CommonLoadingArguments commonArguments = default)
+        public GetNftShapeIntention(string urn, IUrnSource urnSource)
         {
             this.URN = urn;
-            CommonArguments = commonArguments;
+            CommonArguments = new CommonLoadingArguments(urnSource.UrlOrEmpty(urn));
         }
 
         public bool Equals(GetNftShapeIntention other) =>

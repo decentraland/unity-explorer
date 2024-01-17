@@ -1,6 +1,7 @@
 using Arch.Core;
 using DCL.DemoWorlds;
 using DCL.ECSComponents;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.NftShape.Frames.Pool;
 using DCL.SDKComponents.NftShape.Renderer.Factory;
@@ -10,7 +11,9 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.NftShapes;
+using ECS.StreamableLoading.NftShapes.Urns;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using UnityEngine;
@@ -33,8 +36,9 @@ namespace DCL.SDKComponents.NftShape.Demo
                     foreach ((PBNftShape nftShape, PBVisibilityComponent visibility, PBBillboard billboard) in list)
                         w.Create(nftShape, visibility, billboard, NewTransform(), new PartitionComponent { IsBehind = false, RawSqrDistance = 0 });
                 },
-                w => new LoadNftShapeSystem(w, new NftShapeCache(), new WebRequestController(new WebRequestsAnalyticsContainer(), new MemoryWeb3IdentityCache()), new MutexSync()),
-                w => new LoadCycleNftShapeSystem(w),
+                w => new AssetsDeferredLoadingSystem(w, new NullPerformanceBudget(), new NullPerformanceBudget()),
+                w => new LoadNftShapeSystem(w, new NftShapeCache(), new WebRequestController(new WebRequestsAnalyticsContainer(), new MemoryWeb3IdentityCache()), new MutexSync()).InitializeAndReturnSelf(),
+                w => new LoadCycleNftShapeSystem(w, new BasedUrnSource()),
                 w => new InstantiateNftShapeSystem(w, new PoolNftShapeRendererFactory(new ComponentPoolsRegistry(), framesPool)),
                 w => new VisibilityNftShapeSystem(w)
             );
