@@ -1037,6 +1037,8 @@ MonoBehaviour:
   <NoSearchResults>k__BackingField: {fileID: 2670128207509277336}
   <NoCategoryResults>k__BackingField: {fileID: 4883820917948329291}
   <BreadCrumbView>k__BackingField: {fileID: 6956049020834478445}
+  <EmptyTextCategory>k__BackingField: {fileID: 0}
+  <EmptyTextLink>k__BackingField: {fileID: 0}
 --- !u!1 &4244055408728331100
 GameObject:
   m_ObjectHideFlags: 0
@@ -7594,6 +7596,10 @@ PrefabInstance:
     - target: {fileID: 2416441976408992214, guid: 0bc3c54f016e94fe1a9dd7522a0c05c1, type: 3}
       propertyPath: m_SizeDelta.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4052084681648350477, guid: 0bc3c54f016e94fe1a9dd7522a0c05c1, type: 3}
+      propertyPath: m_Enabled
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4512497473103359262, guid: 0bc3c54f016e94fe1a9dd7522a0c05c1, type: 3}
       propertyPath: m_AnchorMax.y

@@ -59,6 +59,7 @@ namespace DCL.Backpack
             avatarSlotView.Item1.SlotWearableThumbnail.gameObject.SetActive(false);
             avatarSlotView.Item1.SlotWearableThumbnail.sprite = null;
             avatarSlotView.Item1.SlotWearableRarityBackground.sprite = null;
+            avatarSlotView.Item1.EmptyOverlay.SetActive(true);
         }
 
         private void EquipInSlot(IWearable equippedWearable)
@@ -68,6 +69,7 @@ namespace DCL.Backpack
 
             avatarSlotView.Item1.SlotWearableUrn = equippedWearable.GetUrn();
             avatarSlotView.Item1.SlotWearableRarityBackground.sprite = rarityBackgrounds.GetTypeImage(equippedWearable.GetRarity());
+            avatarSlotView.Item1.EmptyOverlay.SetActive(false);
 
             avatarSlotView.Item2.SafeCancelAndDispose();
             avatarSlotView.Item2 = new CancellationTokenSource();

@@ -26,6 +26,9 @@ namespace DCL.Backpack
         public Button SlotButton { get; private set; }
 
         [field: SerializeField]
+        public GameObject EmptyOverlay { get; private set; }
+
+        [field: SerializeField]
         public GameObject HoverTootlip { get; private set; }
 
         [field: SerializeField]
