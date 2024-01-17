@@ -49,7 +49,7 @@ namespace DCL.LOD
             ResolveVisualSceneStateSystem.InjectToWorld(ref builder, sceneLodLimit);
             UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData);
             ResolveSceneLODInfo.InjectToWorld(ref builder, lodCache);
-            UpdateSceneLODLevelSystem.InjectToWorld(ref builder, lodCache, lodBucketLimits, frameCapBudget,
+            UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodCache, lodBucketLimits, frameCapBudget,
                 memoryBudget);
         }
 

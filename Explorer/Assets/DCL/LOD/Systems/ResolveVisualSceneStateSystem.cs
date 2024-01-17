@@ -2,6 +2,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.Diagnostics;
 using DCL.LOD.Components;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -17,6 +18,8 @@ namespace ECS.SceneLifeCycle.Systems
 {
     [UpdateInGroup(typeof(RealmGroup))]
     [UpdateBefore(typeof(ResolveSceneStateByIncreasingRadiusSystem))]
+    [UpdateBefore(typeof(UpdateVisualSceneStateSystem))]
+
     public partial class ResolveVisualSceneStateSystem : BaseUnityLoopSystem
     {
         private readonly int sceneLODLimit;
@@ -39,14 +42,13 @@ namespace ECS.SceneLifeCycle.Systems
         {
             VisualSceneState visualSceneState = new VisualSceneState();
             ResolveVisualSceneState(ref visualSceneState, partition, sceneDefinitionComponent);
-            //No need to left it dirty. Is going to get grabbed by ResolveSceneStateByIncreasingRadiusSystem
+            //We mark it as clean, so it can be grabbed by the ResolveSceneStateByIncreasingRadiusSystem and not the UpdateVisualSceneStateSystem
             visualSceneState.IsDirty = false;
             World.Add(entity, visualSceneState);
         }
         
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        [Any(typeof(SceneLODInfo), typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
         private void UpdateVisualState(ref VisualSceneState visualSceneState, ref PartitionComponent partition,
             ref SceneDefinitionComponent sceneDefinitionComponent)
         {
@@ -67,6 +69,11 @@ namespace ECS.SceneLifeCycle.Systems
                 var candidateState = partition.Bucket <= sceneLODLimit
                     ? VisualSceneStateEnum.SHOWING_SCENE
                     : VisualSceneStateEnum.SHOWING_LOD;
+                if (sceneDefinitionComponent.Definition.id.Equals(
+                        "QmTAYbcAGPkmEVM8RoLtJkmWHrUb65h78JA41VmnREzA5g"))
+                {
+                    Debug.Log($"JUANI {partition.Bucket} {visualSceneState.CurrentVisualSceneState} {candidateState}");
+                }
                 if (candidateState != visualSceneState.CurrentVisualSceneState)
                 {
                     visualSceneState.CurrentVisualSceneState = candidateState;

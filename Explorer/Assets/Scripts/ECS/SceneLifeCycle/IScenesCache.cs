@@ -26,8 +26,9 @@ namespace ECS.SceneLifeCycle
 
         public void Add(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels)
         {
+            //TODO: ASk Misha
             for (var i = 0; i < parcels.Count; i++)
-                scenesByParcels.Add(parcels[i], sceneFacade);
+                scenesByParcels.TryAdd(parcels[i], sceneFacade);
         }
 
         public void Remove(IReadOnlyList<Vector2Int> parcels)

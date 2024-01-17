@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
+using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
@@ -12,7 +13,9 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using SceneRunner.Scene;
 using UnityEngine;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
     ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
@@ -21,7 +24,7 @@ namespace DCL.LOD.Systems
 {
     [UpdateInGroup(typeof(RealmGroup))]
     [UpdateAfter(typeof(ResolveSceneLODInfo))]
-    public partial class UpdateSceneLODLevelSystem : BaseUnityLoopSystem
+    public partial class UpdateSceneLODInfoSystem : BaseUnityLoopSystem
     {
         private readonly LODAssetCache lodCache;
 
@@ -30,7 +33,7 @@ namespace DCL.LOD.Systems
         private readonly IPerformanceBudget frameCapBudget;
         private readonly IPerformanceBudget memoryBudget;
 
-        public UpdateSceneLODLevelSystem(World world, LODAssetCache lodCache, Vector2Int[] lodBucketLimits,
+        public UpdateSceneLODInfoSystem(World world, LODAssetCache lodCache, Vector2Int[] lodBucketLimits,
             IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget) : base(world)
         {
             this.lodCache = lodCache;
@@ -62,9 +65,10 @@ namespace DCL.LOD.Systems
         [Query]
         public void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo)
         {
-            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
-            
             if (sceneLODInfo.CurrentLODPromise.IsConsumed) return;
+
+            //TODO: Ask Misha. Is this a costly operation? Its appearing on top of the profiler
+            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
             
             if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
@@ -83,14 +87,18 @@ namespace DCL.LOD.Systems
 
         private void CheckLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo)
         {
-            var sceneLODCandidate = 0;
+            var sceneLODCandidate = -1;
             if (partitionComponent.Bucket > lodBucketLimits[0][0] &&
                 partitionComponent.Bucket <= lodBucketLimits[0][1])
                 sceneLODCandidate = 2;
             else if (partitionComponent.Bucket > lodBucketLimits[1][0])
                 sceneLODCandidate = 3;
 
-            if (sceneLODCandidate != sceneLODInfo.CurrentLODLevel)
+            if (sceneLODInfo.SceneHash.Equals("QmTAYbcAGPkmEVM8RoLtJkmWHrUb65h78JA41VmnREzA5g"))
+                ReportHub.Log(ReportCategory.UNSPECIFIED,
+                    $"JUANI ANALYZING LOD LEVEL {partitionComponent.Bucket} {sceneLODCandidate}");
+
+            if (sceneLODCandidate != sceneLODInfo.CurrentLODLevel && sceneLODCandidate != -1)
                 UpdateLODLevel(ref partitionComponent, ref sceneLODInfo, sceneLODCandidate);
         }
 
@@ -109,6 +117,12 @@ namespace DCL.LOD.Systems
             }
             else
             {
+                //TODO: TEMP, for some reason genesis plaza asset is crashing in mac
+                if ((Application.platform.Equals(RuntimePlatform.OSXPlayer) ||
+                     Application.platform.Equals(RuntimePlatform.OSXEditor)) &&
+                    sceneLODInfo.SceneHash.Equals("bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
+                    return;
+                
                 sceneLODInfo.CurrentLODPromise =
                     Promise.Create(World,
                         GetAssetBundleIntention.FromHash(newLODKey,

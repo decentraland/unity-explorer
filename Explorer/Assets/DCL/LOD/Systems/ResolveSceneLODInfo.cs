@@ -8,6 +8,7 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using UnityEngine;
@@ -17,6 +18,7 @@ namespace DCL.LOD.Systems
 {
     [UpdateInGroup(typeof(RealmGroup))]
     [UpdateAfter(typeof(ResolveSceneStateByIncreasingRadiusSystem))]
+    [UpdateAfter(typeof(UpdateVisualSceneStateSystem))]
     public partial class ResolveSceneLODInfo : BaseUnityLoopSystem
     {
         private readonly LODAssetCache lodCache;
