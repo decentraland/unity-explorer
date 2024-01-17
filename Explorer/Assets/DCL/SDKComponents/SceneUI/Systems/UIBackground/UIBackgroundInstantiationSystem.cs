@@ -32,7 +32,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         private readonly IPerformanceBudget frameTimeBudgetProvider;
         private readonly IPerformanceBudget memoryBudgetProvider;
 
-        private UIBackgroundInstantiationSystem(
+        public UIBackgroundInstantiationSystem(
             World world,
             IComponentPoolsRegistry poolsRegistry,
             ISceneData sceneData,
