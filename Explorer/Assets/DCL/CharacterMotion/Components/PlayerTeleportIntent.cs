@@ -1,5 +1,4 @@
-﻿using SceneRunner.Scene;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace DCL.CharacterMotion.Components
 {
@@ -8,13 +7,9 @@ namespace DCL.CharacterMotion.Components
         public readonly Vector2Int Parcel;
         public readonly Vector3 Position;
 
-        // no longer needed
-        public readonly SceneReadinessReport? SceneReadyReport;
-
-        public PlayerTeleportIntent(Vector3 position, Vector2Int parcel, SceneReadinessReport? sceneReadyReport)
+        public PlayerTeleportIntent(Vector3 position, Vector2Int parcel)
         {
             Position = position;
-            SceneReadyReport = sceneReadyReport;
             Parcel = parcel;
         }
     }

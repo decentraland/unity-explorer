@@ -46,8 +46,7 @@ namespace DCL.ParcelsService
                 new GetSceneDefinitionList(targetCollection.Value, pointersList.Value, new CommonLoadingArguments(realmIpfs.EntitiesActiveEndpoint)),
                 PartitionComponent.TOP_PRIORITY);
 
-            await promise.ToUniTaskAsync(World, cancellationToken: ct);
-
+            promise = await promise.ToUniTaskAsync(World, cancellationToken: ct);
             SceneDefinitions result = promise.Result.UnwrapAndRethrow();
 
             return result.Value.Count > 0 ? result.Value[0] : null;

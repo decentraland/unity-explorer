@@ -14,7 +14,7 @@ namespace DCL.SceneReadiness
     [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
     public partial class GatherGltfAssetsSystem : BaseUnityLoopSystem
     {
-        private const int FRAMES_COUNT = 5;
+        private const int FRAMES_COUNT = 20;
 
         private readonly ISceneReadinessReportQueue readinessReportQueue;
         private readonly ISceneData sceneData;

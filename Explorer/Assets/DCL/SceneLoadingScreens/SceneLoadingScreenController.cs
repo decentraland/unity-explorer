@@ -18,7 +18,7 @@ namespace DCL.SceneLoadingScreens
         private int currentTip;
         private SceneTips tips;
         private CancellationTokenSource? tipsRotationCancellationToken;
-        private IntVariable progressLabel;
+        private IntVariable? progressLabel;
 
         public SceneLoadingScreenController(ViewFactoryMethod viewFactory,
             ISceneTipsProvider sceneTipsProvider) : base(viewFactory)
@@ -61,7 +61,7 @@ namespace DCL.SceneLoadingScreens
             base.OnBeforeViewShow();
 
             viewInstance.ProgressBar.normalizedValue = 0f;
-            progressLabel.Value = 0;
+            progressLabel!.Value = 0;
             viewInstance.ClearTips();
         }
 
@@ -121,7 +121,7 @@ namespace DCL.SceneLoadingScreens
 
                         float progress = Mathf.Clamp01(totalAssetsLoaded / (float)inputData.SceneReadinessReport.TotalAssetsToLoad);
                         viewInstance.ProgressBar.normalizedValue = progress;
-                        progressLabel.Value = (int)(progress * 100);
+                        progressLabel!.Value = (int)(progress * 100);
                     }
                     catch (OperationCanceledException) { }
                 }
@@ -137,7 +137,7 @@ namespace DCL.SceneLoadingScreens
                 progressUpdatingCancellationToken.Cancel();
                 ct.ThrowIfCancellationRequested();
                 viewInstance.ProgressBar.normalizedValue = 1f;
-                progressLabel.Value = 100;
+                progressLabel!.Value = 100;
             }
             catch { }
         }

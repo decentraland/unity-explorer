@@ -96,12 +96,14 @@ namespace DCL.ParcelsService
 
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
-            var readinessCompletion = new SceneReadinessReport(new UniTaskCompletionSource());
+            AddTeleportIntentQuery(retrieveScene.World, new PlayerTeleportIntent(targetPosition, parcel));
+
+            if (sceneDef == null) return;
+
+            var readinessCompletion = new SceneReadinessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<int>(0));
 
             // Add report to the queue so it will be grabbed by the actual scene
             sceneReadinessReportQueue.Enqueue(parcel, readinessCompletion);
-
-            AddTeleportIntentQuery(retrieveScene.World, new PlayerTeleportIntent(targetPosition, parcel, readinessCompletion));
 
             mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(parcel, readinessCompletion)))
                       .Forget();
@@ -149,7 +151,7 @@ namespace DCL.ParcelsService
         public void TeleportToParcel(Vector2Int parcel)
         {
             Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(parcel);
-            AddTeleportIntentQuery(world, new PlayerTeleportIntent(characterPos, parcel, null));
+            AddTeleportIntentQuery(world, new PlayerTeleportIntent(characterPos, parcel));
         }
 
         [Query]
