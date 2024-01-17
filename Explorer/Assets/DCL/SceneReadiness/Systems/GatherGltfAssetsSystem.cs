@@ -48,9 +48,14 @@ namespace DCL.SceneReadiness
             // Gather entities
             GatherEntitiesQuery(World);
 
-            var concluded = false;
+            if (framesLeft > 0)
+            {
+                // Gather entities
+                GatherEntitiesQuery(World);
 
-            if (!concluded)
+                framesLeft--;
+            }
+            else if (!concluded)
             {
                 if (reports == null && !readinessReportQueue.TryDequeue(sceneData.Parcels, out reports))
                 {
@@ -109,9 +114,6 @@ namespace DCL.SceneReadiness
                     reports = null;
                 }
             }
-
-            if (framesLeft <= 0)
-                framesLeft = FRAMES_COUNT;
         }
 
         [Query]
