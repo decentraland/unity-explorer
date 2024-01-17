@@ -378,11 +378,15 @@ public unsafe class BRG_Container
                 UInt32 nDistMasked = (rawValue & upperBitsMask);
                 UInt32 nDist = (nDistMasked) >> 16;
 
-                for (int nBucketIndex = 0; nBucketIndex < _bucketCount; ++nBucketIndex)
-                {
-                    //if (nDist < _bucketRanges[1])
-                    _bucketSizesAtomic.Add(_nBucketBitShift[nBucketIndex]);
-                }
+                _bucketSizesAtomic.Add(_nBucketBitShift[0]);
+                // for (int nBucketIndex = 0; nBucketIndex < _bucketCount-1; ++nBucketIndex)
+                // {
+                //     if (nDist < _bucketRanges[nBucketIndex + 1])
+                //     {
+                //         _bucketSizesAtomic.Add(_nBucketBitShift[nBucketIndex]);
+                //         break;
+                //     }
+                // }
 
                 _visInstArray[x] = (int)(rawValue & 65535);
             }
