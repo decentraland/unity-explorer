@@ -111,7 +111,7 @@ jobs:
             !Explorer/Library/BuildPlayerData/**
           key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
 
-      - uses: decentraland/unity-builder@0.6
+      - uses: decentraland/unity-builder@feat/required-packages-installation
         id: build
         timeout-minutes: 120
         with:
