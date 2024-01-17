@@ -49,9 +49,6 @@ namespace ECS.SceneLifeCycle.Systems
 
             if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
             {
-                if(sceneDefinitionComponent.Definition.id.Equals("QmTAYbcAGPkmEVM8RoLtJkmWHrUb65h78JA41VmnREzA5g"))
-                    Debug.Log($"JUANI ANY CHANGING FROM SCENE FACADE TO LOD {sceneDefinitionComponent.Definition.id}");
-
                 //Create LODInfo
                 var sceneLODInfo = new SceneLODInfo { IsDirty = true };
 
@@ -74,9 +71,6 @@ namespace ECS.SceneLifeCycle.Systems
 
             if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_SCENE)
             {
-                if(sceneDefinitionComponent.Definition.id.Equals("QmTAYbcAGPkmEVM8RoLtJkmWHrUb65h78JA41VmnREzA5g"))
-                    Debug.Log($"JUANI ANY CHANGING FROM LOD TO SCENE PROMISE");
-
                 sceneLODInfo.Dispose(World);
                 visualSceneState.IsDirty = false;
 
@@ -91,15 +85,12 @@ namespace ECS.SceneLifeCycle.Systems
         [Query]
         [None(typeof(SceneLODInfo))]
         private void SwapScenePromiseToLOD(Entity entity, ref VisualSceneState visualSceneState,
-            AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise, ref SceneDefinitionComponent sceneDefinitionComponent)
+            AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
         {
             if (!visualSceneState.IsDirty) return;
 
             if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
             {
-                if(sceneDefinitionComponent.Definition.id.Equals("QmTAYbcAGPkmEVM8RoLtJkmWHrUb65h78JA41VmnREzA5g"))
-                    Debug.Log($"JUANI ANY CHANGING FROM PROMISE TO LOD {sceneDefinitionComponent.Definition.id}");
-
                 var sceneLODInfo = new SceneLODInfo
                 {
                     IsDirty = true

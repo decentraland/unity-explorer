@@ -25,12 +25,9 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private readonly int sceneLODLimit;
 
-        public static int updater;
-
         public ResolveVisualSceneStateSystem(World world, int sceneLODLimit) : base(world)
         {
             this.sceneLODLimit = sceneLODLimit;
-            updater = 0;
         }
 
         protected override void Update(float t)
@@ -73,12 +70,6 @@ namespace ECS.SceneLifeCycle.Systems
                 var candidateState = partition.Bucket <= sceneLODLimit
                     ? VisualSceneStateEnum.SHOWING_SCENE
                     : VisualSceneStateEnum.SHOWING_LOD;
-                if (sceneDefinitionComponent.Definition.id.Equals(
-                        "QmTAYbcAGPkmEVM8RoLtJkmWHrUb65h78JA41VmnREzA5g"))
-                {
-                    updater++;
-                    //Debug.Log($"JUANI UPDATING VISUAL STATE {partition.Bucket} {candidateState} {updater}");
-                }
                 if (candidateState != visualSceneState.CurrentVisualSceneState)
                 {
                     visualSceneState.CurrentVisualSceneState = candidateState;
