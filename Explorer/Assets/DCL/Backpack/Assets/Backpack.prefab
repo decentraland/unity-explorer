@@ -819,7 +819,7 @@ MonoBehaviour:
   m_text: 'There are no items in this category.
 
     If you want you can find the
-    ideal one for you in the Marketplace.'
+    ideal one for you in the <color=#FF2D55><link="marketplace">Marketplace</link></color>.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
@@ -1500,7 +1500,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_text: You do not have any wearable that meets this category or search criteria.
-    If you want you can find the ideal one for you in the Marketplace.
+    If you want you can find the ideal one for you in the <color=#FF2D55><link="marketplace">Marketplace</link></color>.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
