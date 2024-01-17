@@ -33,7 +33,7 @@ namespace ECS.StreamableLoading.DeferredLoading
             };
         }
 
-        internal AssetsDeferredLoadingSystem(World world, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget)
+        public AssetsDeferredLoadingSystem(World world, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget)
             : base(world, COMPONENT_HANDLERS, releasablePerformanceLoadingBudget, memoryBudget) { }
     }
 }

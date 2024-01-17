@@ -12,6 +12,7 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.DeferredLoading;
+using ECS.StreamableLoading.NftShapes;
 using ECS.StreamableLoading.Textures;
 using Ipfs;
 using SceneRunner.Scene;
@@ -48,10 +49,11 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
                 CreateQuery<GetProfileIntention, Profile>(),
                 CreateQuery<GetTextureIntention, Texture2D>(),
+                CreateQuery<GetNftShapeIntention, Texture2D>(),
             };
         }
 
-        internal GlobalDeferredLoadingSystem(World world, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget)
+        public GlobalDeferredLoadingSystem(World world, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget)
             : base(world, COMPONENT_HANDLERS, releasablePerformanceLoadingBudget, memoryBudget) { }
     }
 }
