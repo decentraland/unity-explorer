@@ -15,6 +15,10 @@ namespace DCL.Tests.Editor
     {
         private static readonly HashSet<string> DEBUG_METHOD_NAMES = new () { "Log", "LogError", "LogWarning", "LogException" };
 
+        private readonly string[] excludedFolders = { "Editor" };
+        private readonly string[] excludedFileNames = { "JsonUtils.cs", "WorldSyncCommandBufferCollectionsPool.cs" };
+        private readonly string[] fileNameExclusionKeywords = { "Test", "Sentry" };
+
         [Category(VALIDATION)]
         [Test]
         public void ProjectShouldNotContainEmptyFolders()
@@ -36,13 +40,22 @@ namespace DCL.Tests.Editor
         public void CheckForDebugUsage()
         {
             string[] allSourceFiles = Directory.GetFiles(Application.dataPath, "*.cs", SearchOption.AllDirectories);
-            var sourceFiles = allSourceFiles.Where(file => !file.Split(Path.DirectorySeparatorChar).Any(part => part.Contains("Test") || part.Contains("Sentry"))).ToList();
+
+            var sourceFiles = allSourceFiles
+                             .Where(file =>
+                              {
+                                  string fileName = Path.GetFileName(file);
+                                  string[] parts = file.Split(Path.DirectorySeparatorChar);
+
+                                  bool isFolderExcluded = excludedFolders.Any(folder => parts.Contains(folder));
+                                  bool isFileNameExcluded = fileNameExclusionKeywords.Any(keyword => fileName.Contains(keyword)) || excludedFileNames.Contains(fileName);
+
+                                  return !isFolderExcluded && !isFileNameExcluded;
+                              })
+                             .ToList();
 
             foreach (string file in sourceFiles)
             {
-                if (Path.GetFileName(file).Equals("JsonUtils.cs")) continue;
-                if (Path.GetFileName(file).Equals("WorldSyncCommandBufferCollectionsPool.cs")) continue;
-
                 string code = File.ReadAllText(file);
                 SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(code);
                 SyntaxNode root = syntaxTree.GetRoot();
