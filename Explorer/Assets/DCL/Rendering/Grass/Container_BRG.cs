@@ -158,199 +158,318 @@ public unsafe class BRG_Container
     [BurstCompile]
     public JobHandle OnPerformCulling(BatchRendererGroup rendererGroup, BatchCullingContext cullingContext, BatchCullingOutput cullingOutput, IntPtr userContext)
     {
-        if (m_initialized)
+        if (m_initialized && instanceCount_ > 0)
         {
+            uint nBucketCount = 1;
             int alignment = UnsafeUtility.AlignOf<long>();
-            var drawCommands = (BatchCullingOutputDrawCommands*)cullingOutput.drawCommands.GetUnsafePtr();
-            drawCommands -> drawCommands = (BatchDrawCommand*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<BatchDrawCommand>(), alignment, Allocator.TempJob);
+            BatchCullingOutputDrawCommands* drawCommands = (BatchCullingOutputDrawCommands*)cullingOutput.drawCommands.GetUnsafePtr();
+            drawCommands -> drawCommands = (BatchDrawCommand*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<BatchDrawCommand>() * nBucketCount, alignment, Allocator.TempJob);
             drawCommands -> drawRanges = (BatchDrawRange*)UnsafeUtility.Malloc(UnsafeUtility.SizeOf<BatchDrawRange>(), alignment, Allocator.TempJob);
-            drawCommands -> drawCommandPickingInstanceIDs = null;
-
-            drawCommands -> drawCommandCount = 1; // The number of elements in the BatchCullingOutputDrawCommands.drawCommands array.
+            drawCommands -> drawCommandCount = (int)nBucketCount; // The number of elements in the BatchCullingOutputDrawCommands.drawCommands array.
             drawCommands -> drawRangeCount = 1;
-
-            // Configure the single draw command to draw kNumInstances instances
-            // starting from offset 0 in the array, using the batch, material and mesh
-            // IDs registered in the Start() method. It doesn't set any special flags.
-            drawCommands -> drawCommands[0].visibleOffset = 0;
-            drawCommands -> drawCommands[0].visibleCount = (uint)instanceCount_;
-            drawCommands -> drawCommands[0].batchID = m_batchID;
-            drawCommands -> drawCommands[0].materialID = m_materialID;
-            drawCommands -> drawCommands[0].meshID = m_meshID;
-            drawCommands -> drawCommands[0].submeshIndex = 0;
-            drawCommands -> drawCommands[0].splitVisibilityMask = 0xff;
-            drawCommands -> drawCommands[0].flags = 0;
-            drawCommands -> drawCommands[0].sortingPosition = 0;
-
-            drawCommands -> drawRanges[0].drawCommandsBegin = 0;
-            drawCommands -> drawRanges[0].drawCommandsCount = 1;
-            drawCommands -> drawRanges[0].filterSettings = new BatchFilterSettings { renderingLayerMask = 0xffffffff, layer = 0, motionMode = MotionVectorGenerationMode.Camera, shadowCastingMode = ShadowCastingMode.On, receiveShadows = true, staticShadowCaster = false, allDepthSorted = false };
-
+            drawCommands -> drawCommandPickingInstanceIDs = null;
             drawCommands -> visibleInstances = (int*)UnsafeUtility.Malloc(instanceCount_ * sizeof(int), alignment, Allocator.TempJob);
             drawCommands -> visibleInstanceCount = instanceCount_;
             drawCommands -> instanceSortingPositions = null; // If BatchDrawCommandFlags.HasSortingPosition is set for one or more draw commands, the instanceSortingPositions array contains explicit float3 world space positions that Unity uses for depth sorting.The culling callback must allocate the memory for the instanceSortingPositions using the UnsafeUtility.Malloc method and the Allocator.TempJob parameter. The memory is released by Unity when the rendering is complete.If the length of the array is 0, set its value to null.
             drawCommands -> instanceSortingPositionFloatCount = 0; // If BatchDrawCommandFlags.HasSortingPosition is set for one or more draw commands, this contains float3 world-space positions that Unity uses for depth sorting.
 
+            drawCommands -> drawRanges[0].drawCommandsBegin = 0;
+            drawCommands -> drawRanges[0].drawCommandsCount = nBucketCount;
+            drawCommands -> drawRanges[0].filterSettings = new BatchFilterSettings { renderingLayerMask = 0xffffffff, layer = 0, motionMode = MotionVectorGenerationMode.Camera, shadowCastingMode = ShadowCastingMode.On, receiveShadows = true, staticShadowCaster = false, allDepthSorted = false };
+
             // Set capacities
-            NativeList<int> list0 = new (Allocator.TempJob);
-            list0.SetCapacity(instanceCount_);
-            NativeList<int> list1 = new (Allocator.TempJob);
-            list1.SetCapacity(instanceCount_);
-            NativeList<int> list2 = new (Allocator.TempJob);
-            list2.SetCapacity(instanceCount_);
-            NativeList<int> list3 = new (Allocator.TempJob);
-            list3.SetCapacity(instanceCount_);
-            NativeList<int> list4 = new (Allocator.TempJob);
-            list4.SetCapacity(instanceCount_);
+            NativeList<UInt32> list = new (Allocator.TempJob);
+            list.Resize(instanceCount_, NativeArrayOptions.UninitializedMemory);
 
-            var bcj = new BatchCullJob(cullingContext,
-                m_sysmemBuffer,
-                list0.AsParallelWriter(),
-                list1.AsParallelWriter(),
-                list2.AsParallelWriter(),
-                list3.AsParallelWriter(),
-                list4.AsParallelWriter()
-            );
+            NativeArray<int> _bucketRanges = new NativeArray<int>((int)nBucketCount, Allocator.TempJob);
 
-            JobHandle batchCullJobHandle = bcj.Schedule(instanceCount_, 10);
+            for (int i = 0; i < nBucketCount; ++i) { _bucketRanges[i] = i * 10; }
+
+            int instanceInverseCount = instanceCount_;
+
+            long* bucketSizes = (long*)UnsafeUtility.Malloc(sizeof(long), alignment, Allocator.TempJob);
+            *bucketSizes = 0;
+            UnsafeAtomicCounter64 bucketSizesAtomic = new UnsafeAtomicCounter64(bucketSizes);
+
+            NativeArray<long> nBucketBitShift = new NativeArray<long>((int)nBucketCount, Allocator.TempJob);
+            for (long i = 0; i < nBucketCount; ++i)
+            {
+                nBucketBitShift[(int)i] = (i * 65535) + 1;
+            }
 
             // Convert to NativeArray
             NativeArray<int> visibleInstanceArray =
                 NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<int>(drawCommands -> visibleInstances, instanceCount_, Allocator.Invalid);
 
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            #if ENABLE_UNITY_COLLECTIONS_CHECKS
             NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref visibleInstanceArray, AtomicSafetyHandle.GetTempUnsafePtrSliceHandle());
-#endif
+            #endif
 
-            // visible instance must be sorted
-            var mvij = new MergeVisibleInstanceJob(list0,
-                list1,
-                list2,
-                list3,
-                list4,
-                visibleInstanceArray,
-                instanceCount_
+            BatchFrustumCullAndDistanceCalcJob BFCDC_Job = new BatchFrustumCullAndDistanceCalcJob(
+                cullingContext,
+                m_sysmemBuffer,
+                list
             );
 
-            JobHandle mergeJobHandle = mvij.Schedule(batchCullJobHandle);
-            JobHandle Dispose_List0 = list0.Dispose(mergeJobHandle);
-            JobHandle Dispose_List1 = list1.Dispose(Dispose_List0);
-            JobHandle Dispose_List2 = list2.Dispose(Dispose_List1);
-            JobHandle Dispose_List3 = list3.Dispose(Dispose_List2);
-            JobHandle Dispose_List4 = list4.Dispose(Dispose_List3);
-            return Dispose_List4;
+            DistanceSortingJob DS_Job = new DistanceSortingJob(list);
+
+            // visible instance must be sorted
+            BatchDistanceRemovalAndBucketJob BDRB_Job = new BatchDistanceRemovalAndBucketJob(
+                list,
+                visibleInstanceArray,
+                nBucketCount,
+                _bucketRanges,
+                instanceInverseCount,
+                bucketSizesAtomic,
+                nBucketBitShift
+            );
+
+            BatchRenderGroupCommitJob BRGC_Job = new BatchRenderGroupCommitJob(
+                drawCommands,
+                m_batchID,
+                m_materialID,
+                m_meshID,
+                nBucketCount,
+                instanceInverseCount,
+                bucketSizes
+            );
+
+            JobHandle batchCullJobHandle = BFCDC_Job.Schedule(instanceCount_, 1000);
+            JobHandle distSortJobHandle = DS_Job.Schedule(batchCullJobHandle);
+            JobHandle BatchDistanceRemovalAndBucketJobHandle = BDRB_Job.Schedule(instanceCount_, 10, distSortJobHandle);
+            JobHandle BatchRenderGroupCommitJobHandle = BRGC_Job.Schedule(1, (int)1, BatchDistanceRemovalAndBucketJobHandle);
+            JobHandle Dispose_List = list.Dispose(BatchRenderGroupCommitJobHandle);
+            JobHandle Dispose_BucketRanges = _bucketRanges.Dispose(Dispose_List);
+            return Dispose_BucketRanges;
         }
 
         return default(JobHandle);
     }
 
     [BurstCompile]
-    public struct BatchCullJob : IJobParallelForBatch
+    public struct BatchFrustumCullAndDistanceCalcJob : IJobParallelForBatch
     {
         [ReadOnly]
         public readonly BatchCullingContext cullingContext;
+
         [ReadOnly]
         public readonly NativeArray<float4> sysmem;
 
         [WriteOnly]
-        public NativeList<int>.ParallelWriter List0;
-        [WriteOnly]
-        public NativeList<int>.ParallelWriter List1;
-        [WriteOnly]
-        public NativeList<int>.ParallelWriter List2;
-        [WriteOnly]
-        public NativeList<int>.ParallelWriter List3;
-        [WriteOnly]
-        public NativeList<int>.ParallelWriter List4;
+        public NativeList<UInt32> List;
 
-        public BatchCullJob(BatchCullingContext cullingContext,
+        public BatchFrustumCullAndDistanceCalcJob(BatchCullingContext cullingContext,
             NativeArray<float4> sysmem,
-            NativeList<int>.ParallelWriter list0,
-            NativeList<int>.ParallelWriter list1,
-            NativeList<int>.ParallelWriter list2,
-            NativeList<int>.ParallelWriter list3,
-            NativeList<int>.ParallelWriter list4
+            NativeList<UInt32> list
         )
         {
             this.cullingContext = cullingContext;
             this.sysmem = sysmem;
-            this.List0 = list0;
-            this.List1 = list1;
-            this.List2 = list2;
-            this.List3 = list3;
-            this.List4 = list4;
+            this.List = list;
+        }
+
+        public void Execute(int startIndex, int count)
+        {
+            float radius = 0.5f;
+            for (int x = startIndex; x < startIndex + count; ++x)
+            {
+                int index = (x * 3) + 2;
+                Vector3 p = sysmem[index].yzw;
+                bool result = true;
+                float distance;
+                for (int i = 0; i < 6; i++)
+                {
+                    distance = cullingContext.cullingPlanes[i].GetDistanceToPoint(p);
+
+                    if (distance < -radius)
+                    {
+                        result = false;
+                        break;
+                    }
+                }
+
+                float fDist = (p - cullingContext.lodParameters.cameraPosition).magnitude;
+                UInt32 intDist = (UInt32)fDist;
+                UInt32 intDist32 = ((UInt32)intDist) << 16;
+                UInt32 newDistIndex = (UInt32)x | intDist32;
+                List[x] = newDistIndex;
+
+                // if (result == true)
+                // {
+                //     float fDist = (p - cullingContext.lodParameters.cameraPosition).magnitude;
+                //     UInt32 intDist = (UInt32)fDist;
+                //     UInt32 intDist32 = ((UInt32)intDist) << 16;
+                //     UInt32 newDistIndex = (UInt32)x | intDist32;
+                //     List[x] = newDistIndex;
+                // }
+                // else
+                // {
+                //     UInt32 newDistIndex = (UInt32)x | (UInt32)65535 << 16;;
+                //     List[x] = newDistIndex;
+                // }
+            }
+        }
+    }
+
+    [BurstCompile]
+    public struct DistanceSortingJob : IJob
+    {
+        public NativeList<UInt32> List;
+
+        public DistanceSortingJob(NativeList<UInt32> list)
+        {
+            this.List = list;
+        }
+
+        public void Execute()
+        {
+            List.Sort();
+        }
+    }
+
+    [BurstCompile]
+    public struct BatchDistanceRemovalAndBucketJob : IJobParallelForBatch
+    {
+        [NativeDisableContainerSafetyRestriction]
+        public NativeArray<int> _visInstArray;
+
+        [ReadOnly]
+        public uint _bucketCount;
+
+        [WriteOnly]
+        public int _instanceInverseCount;
+
+        [ReadOnly]
+        public NativeArray<int> _bucketRanges;
+
+        [ReadOnly]
+        public NativeList<UInt32> List;
+
+        [NativeDisableUnsafePtrRestriction]
+        public UnsafeAtomicCounter64 _bucketSizesAtomic;
+
+        [ReadOnly]
+        public NativeArray<long> _nBucketBitShift;
+
+        public BatchDistanceRemovalAndBucketJob(NativeList<UInt32> list,
+            NativeArray<int> visInstArray,
+            uint bucketCount,
+            NativeArray<int> bucketRanges,
+            int instanceInverseCount,
+            UnsafeAtomicCounter64 bucketSizesAtomic,
+            NativeArray<long> nBucketBitShift
+        )
+        {
+            _visInstArray = visInstArray;
+            this.List = list;
+            _bucketCount = bucketCount;
+            _bucketRanges = bucketRanges;
+            _instanceInverseCount = instanceInverseCount;
+            _bucketSizesAtomic = bucketSizesAtomic;
+            _nBucketBitShift = nBucketBitShift;
         }
 
         public void Execute(int startIndex, int count)
         {
             for (int x = startIndex; x < startIndex + count; ++x)
             {
-                // Vector3 p = sysmem[(x * 3) + 2].yzw;
-                // float radius = 0.5f;
-                // float distance;
-                // bool result = true;
-                //
-                // for (int i = 0; i < 6; i++)
-                // {
-                //     distance = cullingContext.cullingPlanes[i].GetDistanceToPoint(p);
-                //
-                //     if (distance < -radius)
-                //     {
-                //         result = false;
-                //         break;
-                //     }
-                //     else if (distance < radius) { result = true; }
-                // }
-                //
-                // result = true;
-                // if (result == true)
-                List0.AddNoResize(x);
+                UInt32 upperBitsMask = (UInt32)65535 << 16;
+                UInt32 rawValue = List[x];
+                UInt32 nDistMasked = (rawValue & upperBitsMask);
+                UInt32 nDist = (nDistMasked) >> 16;
+
+                for (int nBucketIndex = 0; nBucketIndex < _bucketCount; ++nBucketIndex)
+                {
+                    //if (nDist < _bucketRanges[1])
+                    _bucketSizesAtomic.Add(_nBucketBitShift[nBucketIndex]);
+                }
+
+                _visInstArray[x] = (int)(rawValue & 65535);
             }
         }
     }
 
     [BurstCompile]
-    public struct MergeVisibleInstanceJob : IJob
+    public struct BatchRenderGroupCommitJob : IJobParallelForBatch
     {
-        [NativeDisableContainerSafetyRestriction]
-        public NativeArray<int> _visInstArray;
+        [NativeDisableUnsafePtrRestriction]
+        public BatchCullingOutputDrawCommands* _drawCommands;
 
+        private BatchID _batchID;
+        private BatchMaterialID _materialID;
+        private BatchMeshID _meshID;
+
+        [ReadOnly]
+        public uint _bucketCount;
+
+        [ReadOnly]
         public int _instanceCount;
 
-        [ReadOnly]
-        public NativeList<int> List0;
-        [ReadOnly]
-        public NativeList<int> List1;
-        [ReadOnly]
-        public NativeList<int> List2;
-        [ReadOnly]
-        public NativeList<int> List3;
-        [ReadOnly]
-        public NativeList<int> List4;
+        [NativeDisableUnsafePtrRestriction]
+        public long* _bucketSizes;
 
-        public MergeVisibleInstanceJob(NativeList<int> list0,
-            NativeList<int> list1,
-            NativeList<int> list2,
-            NativeList<int> list3,
-            NativeList<int> list4,
-            NativeArray<int> visInstArray,
-            int instanceCount
+        public BatchRenderGroupCommitJob(BatchCullingOutputDrawCommands* drawCommands,
+            BatchID batchID,
+            BatchMaterialID materialID,
+            BatchMeshID meshID,
+            uint bucketCount,
+            int instanceCount,
+            long* bucketSizes
         )
         {
-            _visInstArray = visInstArray;
+            _drawCommands = drawCommands;
+            _batchID = batchID;
+            _materialID = materialID;
+            _meshID = meshID;
+            _bucketCount = bucketCount;
             _instanceCount = instanceCount;
-            this.List0 = list0;
-            this.List1 = list1;
-            this.List2 = list2;
-            this.List3 = list3;
-            this.List4 = list4;
+            _bucketSizes = bucketSizes;
         }
 
-        public void Execute()
+        public void Execute(int startIndex, int count)
         {
-            //for (var i = 0; i < _instanceCount; ++i) { _visInstArray[i] = List0[i]; }
-            UnsafeUtility.MemCpy(_visInstArray.GetUnsafePtr(), List0.GetUnsafeReadOnlyPtr() + 1,  sizeof(int) * (_instanceCount-1));
-            //_visInstArray.CopyFrom(List0);
+            int nVisibleOffset = 0;
+            int nVisibleCount = _instanceCount;
+
+            long bitmask0 = ((long)65535 << 0);
+            long bitmask1 = ((long)65535 << 16);
+            long bitmask2 = ((long)65535 << 32);
+            long bitmask3 = ((long)65535 << 48);
+            int bucket0 = (int)(((*_bucketSizes) & bitmask0) >> 0);
+            int bucket1 = (int)(((*_bucketSizes) & bitmask1) >> 16);
+            int bucket2 = (int)(((*_bucketSizes) & bitmask2) >> 32);
+            int bucket3 = (int)(((*_bucketSizes) & bitmask3) >> 48);
+
+            if (startIndex == 0)
+            {
+                nVisibleOffset = 0;
+                nVisibleCount = bucket0;
+            }
+            else if (startIndex == 1)
+            {
+                nVisibleOffset = bucket0;
+                nVisibleCount = bucket1;
+            }
+            else if (startIndex == 2)
+            {
+                nVisibleOffset = bucket0 + bucket1;
+                nVisibleCount = bucket2;
+            }
+            else if (startIndex == 3) // we're in the last bucket
+            {
+                nVisibleOffset = bucket0 + bucket1 + bucket2;
+                nVisibleCount = bucket3;
+            }
+
+            _drawCommands -> drawCommands[startIndex].visibleOffset = (uint)nVisibleOffset;
+            _drawCommands -> drawCommands[startIndex].visibleCount = (uint)(nVisibleCount);
+            _drawCommands -> drawCommands[startIndex].batchID = _batchID;
+            _drawCommands -> drawCommands[startIndex].materialID = _materialID;
+            _drawCommands -> drawCommands[startIndex].meshID = _meshID;
+            _drawCommands -> drawCommands[startIndex].submeshIndex = 0;
+            _drawCommands -> drawCommands[startIndex].splitVisibilityMask = 0xff;
+            _drawCommands -> drawCommands[startIndex].flags = 0;
+            _drawCommands -> drawCommands[startIndex].sortingPosition = 0;
         }
     }
 }
