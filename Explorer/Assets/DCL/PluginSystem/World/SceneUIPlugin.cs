@@ -4,6 +4,7 @@ using DCL.AssetsProvision;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Systems.UIBackground;
 using DCL.SDKComponents.SceneUI.Utils;
@@ -39,6 +40,7 @@ namespace DCL.PluginSystem.World
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
             componentPoolsRegistry.AddComponentPool<VisualElement>(onRelease: UiElementUtils.ReleaseUIElement, maxSize: 200);
             componentPoolsRegistry.AddComponentPool<Label>(onRelease: UiElementUtils.ReleaseUIElement, maxSize: 100);
+            componentPoolsRegistry.AddComponentPool<DCLImage>(onRelease: UiElementUtils.ReleaseDCLImage, maxSize: 100);
 
             frameTimeBudgetProvider = singletonSharedDependencies.FrameTimeBudget;
             memoryBudgetProvider = singletonSharedDependencies.MemoryBudget;
@@ -63,10 +65,12 @@ namespace DCL.PluginSystem.World
             UITransformReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UITextInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UITextReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            UIBackgroundInstantiationSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, frameTimeBudgetProvider, memoryBudgetProvider);
+            UIBackgroundInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.SceneData, frameTimeBudgetProvider, memoryBudgetProvider);
+            UIBackgroundReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
 
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<VisualElement, UITransformComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<Label, UITextComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
+            finalizeWorldSystems.Add(ReleasePoolableComponentSystem<DCLImage, UIBackgroundComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }

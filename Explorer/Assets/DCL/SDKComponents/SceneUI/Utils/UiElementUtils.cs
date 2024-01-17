@@ -3,9 +3,7 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
-using JetBrains.Annotations;
 using UnityEngine;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.SceneUI.Utils
 {
@@ -167,6 +165,9 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
         public static void ReleaseUIElement(VisualElement visualElement) =>
             visualElement.RemoveFromHierarchy();
+
+        public static void ReleaseDCLImage(DCLImage image) =>
+            image.Dispose();
 
         private static LengthUnit GetUnit(YGUnit unit)
         {

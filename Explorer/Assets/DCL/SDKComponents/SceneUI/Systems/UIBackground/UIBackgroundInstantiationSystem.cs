@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Groups;
@@ -26,12 +27,19 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
     {
         private const int ATTEMPTS_COUNT = 6;
 
+        private readonly IComponentPool<DCLImage> imagesPool;
         private readonly ISceneData sceneData;
         private readonly IPerformanceBudget frameTimeBudgetProvider;
         private readonly IPerformanceBudget memoryBudgetProvider;
 
-        private UIBackgroundInstantiationSystem(World world, ISceneData sceneData, IPerformanceBudget frameTimeBudgetProvider, IPerformanceBudget memoryBudgetProvider) : base(world)
+        private UIBackgroundInstantiationSystem(
+            World world,
+            IComponentPoolsRegistry poolsRegistry,
+            ISceneData sceneData,
+            IPerformanceBudget frameTimeBudgetProvider,
+            IPerformanceBudget memoryBudgetProvider) : base(world)
         {
+            imagesPool = poolsRegistry.GetReferenceTypePool<DCLImage>();
             this.sceneData = sceneData;
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
             this.memoryBudgetProvider = memoryBudgetProvider;
@@ -48,7 +56,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         [None(typeof(UIBackgroundComponent))]
         private void InstantiateUIBackground(in Entity entity, ref PBUiBackground sdkModel, ref UITransformComponent uiTransformComponent, ref PartitionComponent partitionComponent)
         {
-            var image = new DCLImage();
+            var image = imagesPool.Get();
             image.Initialize(uiTransformComponent.Transform);
             var uiBackgroundComponent = new UIBackgroundComponent();
             uiBackgroundComponent.Image = image;
@@ -63,7 +71,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         [All(typeof(PBUiBackground), typeof(UITransformComponent))]
         private void UpdateUIBackground(ref PBUiBackground sdkModel, ref UIBackgroundComponent uiBackgroundComponent)
         {
-            if (!sdkModel.IsDirty || NoBudget())
+            if (!sdkModel.IsDirty || !frameTimeBudgetProvider.TrySpendBudget() || !memoryBudgetProvider.TrySpendBudget())
                 return;
 
             if (uiBackgroundComponent.TexturePromise == null)
@@ -131,8 +139,5 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                    textureComponent.WrapMode == intention.WrapMode &&
                    textureComponent.FilterMode == intention.FilterMode;
         }
-
-        private bool NoBudget() =>
-            !frameTimeBudgetProvider.TrySpendBudget() || !memoryBudgetProvider.TrySpendBudget();
     }
 }
