@@ -28,6 +28,7 @@ namespace DCL.Backpack.Breadcrumb
         {
             OnExitSearch();
             OnExitFilter();
+            SetAllButtonColor(true);
         }
 
         private void OnExitSearch()
@@ -45,11 +46,13 @@ namespace DCL.Backpack.Breadcrumb
             if (string.IsNullOrEmpty(searchString))
             {
                 view.SearchButton.gameObject.SetActive(false);
+                SetAllButtonColor(true);
             }
             else
             {
                 view.SearchButton.gameObject.SetActive(true);
                 view.SearchButton.CategoryName.text = searchString;
+                SetAllButtonColor(false);
             }
         }
 
@@ -58,13 +61,22 @@ namespace DCL.Backpack.Breadcrumb
             if (string.IsNullOrEmpty(category))
             {
                 view.FilterButton.gameObject.SetActive(false);
+                SetAllButtonColor(true);
             }
             else
             {
                 view.FilterButton.gameObject.SetActive(true);
                 view.FilterButton.Icon.sprite = categoryIcons.GetTypeImage(category.ToLower());
                 view.FilterButton.CategoryName.text = category;
+                SetAllButtonColor(false);
             }
+        }
+
+        private void SetAllButtonColor(bool isSelected)
+        {
+            view.AllButton.BackgroundImage.color = isSelected ? view.AllButton.SelectedBackgroundColor : view.AllButton.UnselectedBackgroundColor;
+            view.AllButton.CategoryName.color = isSelected ? view.AllButton.SelectedFontColor : view.AllButton.UnselectedFontColor;
+            view.AllButton.Icon.color = isSelected ? view.AllButton.SelectedIconColor : view.AllButton.UnselectedIconColor;
         }
     }
 }
