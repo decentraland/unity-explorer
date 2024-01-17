@@ -20,11 +20,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
     [ThrottlingEnabled]
     public partial class UITextReleaseSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPool componentPool;
+        private IComponentPool componentPool;
 
         private UITextReleaseSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
-            poolsRegistry.TryGetPool(typeof(Label), out componentPool);
+            poolsRegistry.TryGetPool(typeof(Label), out IComponentPool componentPool);
         }
 
         protected override void Update(float t)
@@ -44,7 +44,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
         private void HandleEntityDestruction(ref UITextComponent uiTextComponent) =>
             RemoveLabel(uiTextComponent);
 
-        private void RemoveLabel(UITextComponent uiTextComponent) =>
-            componentPool?.Release(uiTextComponent.Label);
+        private void RemoveLabel(UITextComponent uiTextComponent)
+        {
+            if (componentPool != null)
+                componentPool.Release(uiTextComponent.Label);
+        }
     }
 }

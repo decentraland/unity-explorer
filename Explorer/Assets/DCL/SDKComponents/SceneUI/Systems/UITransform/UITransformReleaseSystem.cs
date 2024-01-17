@@ -19,10 +19,12 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
     [ThrottlingEnabled]
     public partial class UITransformReleaseSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPool componentPool;
+        private IComponentPool componentPool;
 
-        private UITransformReleaseSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world) =>
-            poolsRegistry.TryGetPool(typeof(VisualElement), out componentPool);
+        private UITransformReleaseSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
+        {
+            poolsRegistry.TryGetPool(typeof(VisualElement), out IComponentPool componentPool);
+        }
 
         protected override void Update(float t)
         {
@@ -41,7 +43,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private void HandleEntityDestruction(ref UITransformComponent uiTransformComponent) =>
             RemoveVisualElement(ref uiTransformComponent);
 
-        private void RemoveVisualElement(ref UITransformComponent uiTransformComponent) =>
-            componentPool?.Release(uiTransformComponent.Transform);
+        private void RemoveVisualElement(ref UITransformComponent uiTransformComponent)
+        {
+            if (componentPool != null)
+                componentPool.Release(uiTransformComponent.Transform);
+        }
     }
 }

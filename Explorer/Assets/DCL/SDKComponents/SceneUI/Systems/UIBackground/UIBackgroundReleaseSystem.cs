@@ -20,11 +20,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
     [ThrottlingEnabled]
     public partial class UIBackgroundReleaseSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPool componentPool;
+        private IComponentPool componentPool;
 
         private UIBackgroundReleaseSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
-            poolsRegistry.TryGetPool(typeof(DCLImage), out componentPool);
+            poolsRegistry.TryGetPool(typeof(DCLImage), out IComponentPool componentPool);
         }
 
         protected override void Update(float t)
@@ -44,7 +44,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         private void HandleEntityDestruction(ref UIBackgroundComponent uiBackgroundComponent) =>
             RemoveDCLImage(uiBackgroundComponent);
 
-        private void RemoveDCLImage(UIBackgroundComponent uiBackgroundComponent) =>
-            componentPool?.Release(uiBackgroundComponent.Image);
+        private void RemoveDCLImage(UIBackgroundComponent uiBackgroundComponent)
+        {
+            if (componentPool != null)
+                componentPool.Release(uiBackgroundComponent.Image);
+        }
     }
 }
