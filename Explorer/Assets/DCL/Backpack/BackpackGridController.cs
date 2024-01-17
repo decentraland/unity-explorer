@@ -315,7 +315,7 @@ namespace DCL.Backpack
         {
             if (usedPoolItems.TryGetValue(equippedWearable.GetUrn(), out BackpackItemView backpackItemView))
             {
-                backpackItemView.EquippedIcon.SetActive(true);
+                backpackItemView.IsEquipped = true;
                 backpackItemView.SetEquipButtonsState();
             }
         }
