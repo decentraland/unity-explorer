@@ -44,10 +44,10 @@ namespace DCL.Backpack
 
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
-            AwaitAndSendSearch(searchText).Forget();
+            AwaitAndSendSearchAsync(searchText).Forget();
         }
 
-        private async UniTaskVoid AwaitAndSendSearch(string searchText)
+        private async UniTaskVoid AwaitAndSendSearchAsync(string searchText)
         {
             await UniTask.Delay(1000, cancellationToken: cts.Token);
             commandBus.SendCommand(new BackpackSearchCommand(searchText));
