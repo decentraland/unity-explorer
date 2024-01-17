@@ -25,6 +25,7 @@ MonoBehaviour:
   - rid: 8147919132522971138
   - rid: 56198586647707649
   - rid: 1095376790733193218
+  - rid: 3022169693460627458
   references:
     version: 2
     RefIds:
@@ -115,6 +116,14 @@ MonoBehaviour:
       data:
         MinimapPrefab:
           m_AssetGUID: f2ef3a867ab2840cb9bc73b4762922fd
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 3022169693460627458
+      type: {class: LandscapeDebugSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        realmPartitionSettings:
+          m_AssetGUID: 7899019423f09d049a8463a0751037a5
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

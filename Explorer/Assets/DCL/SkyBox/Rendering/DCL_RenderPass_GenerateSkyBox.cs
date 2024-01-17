@@ -165,8 +165,11 @@ namespace DCL.SkyBox.Rendering
                 StarsComputeShader = _StarsComputeShader;
                 CubemapTextureArray = _CubemapTextureArray;
 
-                starBuffer = new ComputeBuffer(9110, Unsafe.SizeOf<StarParam>(), ComputeBufferType.Structured, ComputeBufferMode.Immutable);
-                starBuffer.SetData(starList_ComputeBuffer);
+                if (starBuffer == null || !starBuffer.IsValid())
+                {
+                    starBuffer = new ComputeBuffer(9110, Unsafe.SizeOf<StarParam>(), ComputeBufferType.Structured, ComputeBufferMode.Immutable);
+                    starBuffer.SetData(starList_ComputeBuffer);
+                }
             }
 
             // This method is called before executing the render pass.
@@ -343,6 +346,7 @@ namespace DCL.SkyBox.Rendering
                 m_SkyBoxCubeMap_RTHandle?.Release();
                 m_StarBoxCubeMap_RTHandle?.Release();
                 CubemapTextureArray?.Release();
+                starBuffer?.Release();
             }
 
             private struct StarParam

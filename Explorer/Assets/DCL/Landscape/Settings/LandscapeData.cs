@@ -12,5 +12,7 @@ namespace DCL.Landscape.Settings
         public List<LandscapeAsset> assets;
         public Transform groundTile;
         public Transform mapChunk;
+        public TerrainGenerationData terrainData;
+
     }
 }

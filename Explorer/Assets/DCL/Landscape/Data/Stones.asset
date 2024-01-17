@@ -27,4 +27,4 @@ MonoBehaviour:
     positionOffsetY: {x: 0, y: 0}
     positionOffsetZ: {x: -0.5, y: 0.5}
   noiseData: {fileID: 11400000, guid: c5dbc7b58f6967b45ac9c61fbd14666e, type: 2}
-  poolPreWarmCount: 5800
+  poolPreWarmCount: 0

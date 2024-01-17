@@ -18,3 +18,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 4040beb28607f7a4ba895a7b0bd80cab, type: 2}
   groundTile: {fileID: 585727946956803367, guid: 5c1b4141bc08ddc42a5bbbdda2b72b92, type: 3}
   mapChunk: {fileID: 1448041327893328029, guid: 63b41593f2fa6c04d8772db2b2b61589, type: 3}
+  terrainData: {fileID: 11400000, guid: 409e3f2e0a395134cb4def3ba3747c39, type: 2}

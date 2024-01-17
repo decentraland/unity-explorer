@@ -33,6 +33,7 @@ namespace DCL.Landscape.Systems
         private readonly LandscapeData landscapeData;
         private readonly LandscapeAssetPoolManager poolManager;
         private readonly MapRendererTextureContainer textureContainer;
+        private readonly ITerrainGenerator terrainGenerator;
         private readonly Transform landscapeParentObject;
         private int concurrentJobs;
         private int parcelsCreated;
@@ -40,14 +41,21 @@ namespace DCL.Landscape.Systems
         private static readonly int BASE_MAP = Shader.PropertyToID("_BaseMap");
         private static readonly int BASE_MAP_ST = Shader.PropertyToID("_BaseMap_ST");
 
-        private LandscapeParcelInitializerSystem(World world, LandscapeData landscapeData, LandscapeAssetPoolManager poolManager, MapRendererTextureContainer textureContainer) : base(world)
+        private LandscapeParcelInitializerSystem(World world,
+            LandscapeData landscapeData,
+            LandscapeAssetPoolManager poolManager,
+            MapRendererTextureContainer textureContainer,
+            ITerrainGenerator terrainGenerator) : base(world)
         {
             this.landscapeData = landscapeData;
             this.poolManager = poolManager;
             this.textureContainer = textureContainer;
+            this.terrainGenerator = terrainGenerator;
             landscapeParentObject = new GameObject("Landscape").transform;
             materialPropertyBlock = new MaterialPropertyBlock();
         }
+
+        private bool b;
 
         protected override void Update(float t)
         {
@@ -61,10 +69,20 @@ namespace DCL.Landscape.Systems
             InitializeLandscapeJobsQuery(World);
             Profiler.EndSample();
 
+            if (concurrentJobs > 0)
+                b = false;
+
+            if (concurrentJobs == 0 && !b)
+            {
+                poolManager.Print();
+                b = true;
+            }
+
             // This second query get's the job result and spawns all the needed objects
             Profiler.BeginSample("LandscapeParcelInitializerSystem.InitializeLandscapeSubEntities");
             InitializeLandscapeSubEntitiesQuery(World);
             Profiler.EndSample();
+
         }
 
         [Query]
@@ -99,33 +117,6 @@ namespace DCL.Landscape.Systems
 
             World.Remove<LandscapeParcelInitialization>(entity);
         }
-
-        /*private void UpdateMaterialPropertyBlock(Vector3 position)
-        {
-            GetChunkAndLocalTileCoordinates(position, out var coords, out var localTileCoordinates);
-            materialPropertyBlock.SetTexture(BASE_MAP, textureContainer.GetChunk(coords));
-            Vector2 textureOffset = new Vector2(localTileCoordinates.x * 0.025f, localTileCoordinates.y * 0.025f);
-            materialPropertyBlock.SetVector(BASE_MAP_ST, new Vector4(MATERIAL_TILING, MATERIAL_TILING, textureOffset.x, textureOffset.y));
-        }*/
-
-        /*private void GetChunkAndLocalTileCoordinates(Vector3 tileWorldPosition, out Vector2Int chunkCoordinates, out Vector2Int localTileCoordinates)
-        {
-            // Adjust the tile world position by the offset
-            float adjustedX = (tileWorldPosition.x / PARCEL_SIZE) + 150;
-            float adjustedZ = (tileWorldPosition.z / PARCEL_SIZE) + 150;
-
-            // Calculate the chunk coordinates
-            int chunkX = Mathf.FloorToInt(adjustedX / CHUNK_SIZE);
-            int chunkZ = Mathf.FloorToInt(adjustedZ / CHUNK_SIZE);
-
-            // Calculate the local tile coordinates within the chunk
-            int localTileX = Mathf.FloorToInt(adjustedX - (chunkX * CHUNK_SIZE));
-            int localTileZ = Mathf.FloorToInt(adjustedZ - (chunkZ * CHUNK_SIZE));
-
-            // Return the results
-            chunkCoordinates = new Vector2Int(chunkX, 7 - chunkZ);
-            localTileCoordinates = new Vector2Int(localTileX, localTileZ);
-        }*/
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
@@ -205,7 +196,7 @@ namespace DCL.Landscape.Systems
                     if (objHeight > 0)
                     {
                         // TODO: draw them with BatchRenderer
-
+                        /*
                         Profiler.BeginSample("LandscapeParcelInitializerSystem.InitializeLandscapeSubEntities.SpawnObject");
                         Vector3 subEntityPos = (Vector3.right * i * dist) + (Vector3.forward * j * dist);
                         Vector3 finalPosition = basePos + parcelMargin + subEntityPos;
@@ -225,6 +216,7 @@ namespace DCL.Landscape.Systems
 
                         landscapeParcel.Assets[prefab].Add(objTransform);
                         Profiler.EndSample();
+                        */
                     }
                 }
             }

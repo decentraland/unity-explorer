@@ -1,5 +1,4 @@
-﻿using Arch.Core;
-using DCL.CharacterCamera;
+﻿using DCL.CharacterCamera;
 using ECS.Prioritization.Components;
 using System;
 using Unity.Collections;
