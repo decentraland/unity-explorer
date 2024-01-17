@@ -12,6 +12,7 @@ using DCL.PluginSystem.World.Dependencies;
 using ECS.LifeCycle;
 using System.Collections.Generic;
 using System.Threading;
+using Unity.Collections;
 using UnityEngine;
 using Utility;
 
@@ -25,8 +26,9 @@ namespace DCL.PluginSystem.Global
         private readonly LandscapeAssetPoolManager poolManager;
         private ProvidedAsset<TextAsset> emptyParcelsData;
         private ProvidedAsset<TextAsset> ownedParcelsData;
-        private List<Vector2Int> emptyParcels;
-        private List<Vector2Int> ownedParcels;
+        private NativeArray<Vector2Int> emptyParcels;
+        private NativeHashSet<Vector2Int> ownedParcels;
+        private TerrainGenerator terrainGenerator;
 
         public LandscapePlugin(IAssetsProvisioner assetsProvisioner, MapRendererTextureContainer textureContainer)
         {
@@ -47,20 +49,19 @@ namespace DCL.PluginSystem.Global
             foreach (Transform prefab in landscapeAsset.assets)
                 poolManager.Add(prefab, landscapeAsset.poolPreWarmCount / landscapeAsset.assets.Length);
 
-            poolManager.Add(landscapeData.Value.groundTile, 35000);
             poolManager.Add(landscapeData.Value.mapChunk, 8 * 8);
-        }
 
-        public void Dispose()
-        {
-            landscapeData.Dispose();
+            terrainGenerator = new TerrainGenerator(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels);
+
+            // prepare for the hiccup
+            terrainGenerator.GenerateTerrain();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems) { }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies)
         {
-            LandscapeParcelInitializerSystem.InjectToWorld(ref builder, landscapeData.Value, poolManager, textureContainer);
+            LandscapeParcelInitializerSystem.InjectToWorld(ref builder, landscapeData.Value, poolManager, textureContainer, terrainGenerator);
             LandscapeParcelUnloadSystem.InjectToWorld(ref builder, poolManager);
 
             // Create all empty parcels
@@ -72,25 +73,46 @@ namespace DCL.PluginSystem.Global
 
         private void ParseParcels()
         {
-            emptyParcels = new List<Vector2Int>();
-            ownedParcels = new List<Vector2Int>();
+            string[] ownedParcelsRaw = ownedParcelsData.Value.text.Split('\n');
+            string[] emptyParcelsRaw = emptyParcelsData.Value.text.Split('\n');
 
-            Parse(emptyParcelsData.Value, emptyParcels);
-            Parse(ownedParcelsData.Value, ownedParcels);
+            ownedParcels = new NativeHashSet<Vector2Int>(ownedParcelsRaw.Length, Allocator.Persistent);
+            emptyParcels = new NativeArray<Vector2Int>(emptyParcelsRaw.Length, Allocator.Persistent);
+
+            foreach (string ownedParcel in ownedParcelsRaw)
+            {
+                string[] coordinates = ownedParcel.Trim().Split(',');
+
+                if (TryParse(coordinates, out int x, out int y))
+                    ownedParcels.Add(new Vector2Int(x, y));
+                else
+                    Debug.LogWarning("Invalid line: " + ownedParcel);
+            }
+
+            for (var i = 0; i < emptyParcelsRaw.Length; i++)
+            {
+                string emptyParcel = emptyParcelsRaw[i];
+                string[] coordinates = emptyParcel.Trim().Split(',');
+
+                if (TryParse(coordinates, out int x, out int y))
+                    emptyParcels[i] = new Vector2Int(x, y);
+                else
+                    Debug.LogWarning("Invalid line: " + emptyParcel);
+            }
+
+            bool TryParse(string[] coords, out int x, out int y)
+            {
+                x = 0;
+                y = 0;
+                return coords.Length == 2 && int.TryParse(coords[0], out x) && int.TryParse(coords[1], out y);
+            }
         }
 
-        private static void Parse(TextAsset textAsset, List<Vector2Int> list)
+        public void Dispose()
         {
-            string[] lines = textAsset.text.Split('\n');
-
-            foreach (string line in lines)
-            {
-                string[] coordinates = line.Trim().Split(',');
-
-                if (coordinates.Length == 2 && int.TryParse(coordinates[0], out int x) && int.TryParse(coordinates[1], out int y)) { list.Add(new Vector2Int(x, y)); }
-                else
-                    Debug.LogWarning("Invalid line: " + line);
-            }
+            emptyParcels.Dispose();
+            ownedParcels.Dispose();
+            terrainGenerator?.Dispose();
         }
     }
 }
