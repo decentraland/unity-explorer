@@ -45,9 +45,6 @@ namespace DCL.SceneReadiness
 
         protected override void Update(float t)
         {
-            // Gather entities
-            GatherEntitiesQuery(World);
-
             if (framesLeft > 0)
             {
                 // Gather entities
