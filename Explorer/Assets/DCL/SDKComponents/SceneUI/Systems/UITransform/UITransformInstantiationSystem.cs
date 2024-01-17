@@ -35,7 +35,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         [Query]
         [All(typeof(PBUiTransform))]
         [None(typeof(UITransformComponent))]
-        private void InstantiateUITransform(in Entity entity)
+        private void InstantiateUITransform(in Entity entity, ref PBUiTransform sdkModel)
         {
             VisualElement newTransform = transformsPool.Get();
             newTransform.name = $"UITransform (Entity {entity.Id})";
@@ -45,6 +45,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             transformComponent.Parent = EntityReference.Null;
             transformComponent.Children = HashSetPool<EntityReference>.Get();
             transformComponent.IsHidden = false;
+            transformComponent.RightOf = sdkModel.RightOf;
             World.Add(entity, transformComponent);
         }
     }

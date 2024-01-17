@@ -1,7 +1,7 @@
 ﻿using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using DCL.SDKComponents.SceneUI.Systems.UITransform;
 using ECS.Groups;
-using UITransformInstantiationSystem = DCL.SDKComponents.SceneUI.Systems.UITransform.UITransformInstantiationSystem;
 
 namespace DCL.SDKComponents.SceneUI.Groups
 {
@@ -9,7 +9,7 @@ namespace DCL.SDKComponents.SceneUI.Groups
     ///     Denotes the group that instantiates specific components right after the entity transform is handled
     /// </summary>
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
-    [UpdateAfter(typeof(UITransformInstantiationSystem))]
+    [UpdateAfter(typeof(UITransformUpdateSystem))]
     [ThrottlingEnabled]
     public partial class SceneUIComponentInstantiationGroup { }
 }

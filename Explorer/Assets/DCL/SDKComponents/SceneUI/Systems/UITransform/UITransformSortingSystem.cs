@@ -39,7 +39,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             if (!sdkModel.IsDirty)
                 return;
 
-            SortUITransform(ref sdkModel, ref uiTransformComponent);
+            SortUITransform(ref uiTransformComponent);
 
             if (uiTransformComponent.Parent == EntityReference.Null)
                 return;
@@ -49,13 +49,13 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                 if (!brotherEntity.IsAlive(World))
                     continue;
 
-                SortUITransform(ref sdkModel, ref World.Get<UITransformComponent>(brotherEntity));
+                SortUITransform(ref World.Get<UITransformComponent>(brotherEntity));
             }
         }
 
-        private void SortUITransform(ref PBUiTransform sdkModel, ref UITransformComponent uiTransform)
+        private void SortUITransform(ref UITransformComponent uiTransform)
         {
-            if (!entitiesMap.TryGetValue(sdkModel.RightOf, out Entity entityOnLeft) || entityOnLeft == sceneRoot)
+            if (!entitiesMap.TryGetValue(uiTransform.RightOf, out Entity entityOnLeft) || entityOnLeft == sceneRoot)
                 return;
 
             var uiTransformOnLeft = World.Get<UITransformComponent>(entityOnLeft);

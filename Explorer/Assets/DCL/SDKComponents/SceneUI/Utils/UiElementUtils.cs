@@ -127,10 +127,14 @@ namespace DCL.SDKComponents.SceneUI.Utils
                 visualElementToSetup.style.left = new Length(model.PositionLeft, GetUnit(model.PositionLeftUnit));
             else
                 visualElementToSetup.style.left = StyleKeyword.Null;
+
+            visualElementToSetup.style.backgroundImage = new StyleBackground(StyleKeyword.Null);
+            visualElementToSetup.style.backgroundColor = new StyleColor(StyleKeyword.None);
         }
 
         public static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent)
         {
+            labelToSetup.style.position = new StyleEnum<Position>(Position.Absolute);
             if (uiTransformComponent.Transform.style.width.keyword == StyleKeyword.Auto || uiTransformComponent.Transform.style.height.keyword == StyleKeyword.Auto)
                 labelToSetup.style.position = new StyleEnum<Position>(Position.Relative);
 
