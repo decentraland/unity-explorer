@@ -1,20 +1,21 @@
 {
-  "name": "DCL.Editor",
-  "rootNamespace": "",
-  "references": [
-    "GUID:fc4fd35fb877e904d8cedee73b2256f6",
-    "GUID:d07d357721497c3469c49e00cf077f4d",
-    "GUID:101b8b6ebaf64668909b49c4b7a1420d"
-  ],
-  "includePlatforms": [
-    "Editor"
-  ],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "DCL.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:fc4fd35fb877e904d8cedee73b2256f6",
+        "GUID:d07d357721497c3469c49e00cf077f4d",
+        "GUID:101b8b6ebaf64668909b49c4b7a1420d",
+        "GUID:478a2357cc57436488a56e564b08d223"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
