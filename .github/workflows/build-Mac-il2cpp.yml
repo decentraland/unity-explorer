@@ -5,6 +5,7 @@ on:
   
 env:
   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  GPG_PRIVATE_KEY_BASE64: ${{ secrets.GPG_PRIVATE_KEY_BASE64 }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

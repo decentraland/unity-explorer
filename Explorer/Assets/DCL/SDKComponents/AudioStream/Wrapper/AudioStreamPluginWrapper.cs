@@ -32,13 +32,5 @@ namespace DCL.SDKComponents.AudioStream.Wrapper
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<MediaPlayer, AudioStreamComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
 #endif
         }
-
-        // private static MediaPlayer HandleCreation()
-        // {
-        //     var poolObject = GameObjectPool<MediaPlayer>.HandleCreation();
-        //     poolObject.gameObject.TryAddComponent<AudioSource>();
-        //     poolObject.gameObject.TryAddComponent<AudioOutput>();
-        //     return poolObject;
-        // }
     }
 }
