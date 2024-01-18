@@ -52,11 +52,7 @@ namespace DCL.SDKComponents.NftShape.System
             if (instantiationFrameTimeBudgetProvider.TrySpendBudget() == false)
                 return;
 
-            World.Add(
-                entity,
-                NewNftShapeRendererComponent(transform, nftShape),
-                NewMaterialComponent(nftShape, ref partitionComponent)
-            );
+            World.Add(entity, NewNftShapeRendererComponent(transform, nftShape));
         }
 
         private NftShapeRendererComponent NewNftShapeRendererComponent(in TransformComponent transform, in PBNftShape nftShape)
@@ -64,13 +60,6 @@ namespace DCL.SDKComponents.NftShape.System
             var renderer = nftShapeRendererFactory.New(transform.Transform);
             renderer.Apply(nftShape);
             return new NftShapeRendererComponent(renderer);
-        }
-
-        private MaterialComponent NewMaterialComponent(in PBNftShape nftShape, ref PartitionComponent partitionComponent)
-        {
-            var materialComponent = new MaterialComponent(MaterialData.CreateFromPBNftShape(nftShape, sceneData));
-            foreignTextures.StartLoad(ref materialComponent, ref partitionComponent);
-            return materialComponent;
         }
     }
 }

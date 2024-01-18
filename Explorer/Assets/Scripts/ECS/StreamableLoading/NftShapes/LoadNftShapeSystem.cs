@@ -1,13 +1,17 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
+using DCL.WebRequests.GenericHead;
+using DCL.WebRequests.WebContentSizes;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using System;
 using System.Threading;
 using UnityEngine;
 using Utility.Multithreading;
@@ -19,26 +23,55 @@ namespace ECS.StreamableLoading.NftShapes
     public partial class LoadNftShapeSystem : LoadSystemBase<Texture2D, GetNftShapeIntention>
     {
         private readonly IWebRequestController webRequestController;
+        private readonly IWebContentSizes webContentSizes;
 
-        internal LoadNftShapeSystem(World world, IStreamableCache<Texture2D, GetNftShapeIntention> cache, IWebRequestController webRequestController, MutexSync mutexSync) : base(world, cache, mutexSync)
+        public LoadNftShapeSystem(World world, IStreamableCache<Texture2D, GetNftShapeIntention> cache, IWebRequestController webRequestController, MutexSync mutexSync, IWebContentSizes webContentSizes) : base(world, cache, mutexSync)
         {
             this.webRequestController = webRequestController;
+            this.webContentSizes = webContentSizes;
         }
 
         protected override async UniTask<StreamableLoadingResult<Texture2D>> FlowInternalAsync(GetNftShapeIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            //head request
+            string imageUrl = await ImageUrl(intention.CommonArguments, ct);
+            bool isOkSize = await webContentSizes.IsOkSize(imageUrl, ct);
+
+            if (isOkSize == false)
+                return new StreamableLoadingResult<Texture2D>(new Exception("Image size is too big"));
 
             //texture request
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             GetTextureWebRequest request = await webRequestController.GetTextureAsync(
-                intention.CommonArguments,
+                new CommonLoadingArguments(URLAddress.FromString(imageUrl)),
                 new GetTextureArguments(false),
                 ct,
                 reportCategory: GetReportCategory()
             );
 
             return new StreamableLoadingResult<Texture2D>(request.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear)!);
+        }
+
+        private async UniTask<string> ImageUrl(CommonArguments commonArguments, CancellationToken ct)
+        {
+            var infoRequest = await webRequestController.GetAsync(commonArguments, ct, GetReportCategory());
+            var nft = await infoRequest.CreateFromJson<NftInfoDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
+            infoRequest.UnityWebRequest.Dispose();
+            return nft.ImageUrl();
+        }
+
+        [Serializable]
+        public struct NftInfoDto
+        {
+            public NftDto nft;
+
+            public string ImageUrl() =>
+                nft.image_url;
+        }
+
+        [Serializable]
+        public struct NftDto
+        {
+            public string image_url;
         }
     }
 }

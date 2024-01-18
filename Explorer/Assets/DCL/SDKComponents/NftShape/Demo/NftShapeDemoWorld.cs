@@ -10,6 +10,8 @@ using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
+using DCL.WebRequests.WebContentSizes;
+using DCL.WebRequests.WebContentSizes.Sizes;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.NftShapes;
@@ -37,7 +39,21 @@ namespace DCL.SDKComponents.NftShape.Demo
                         w.Create(nftShape, visibility, billboard, NewTransform(), new PartitionComponent { IsBehind = false, RawSqrDistance = 0 });
                 },
                 w => new AssetsDeferredLoadingSystem(w, new NullPerformanceBudget(), new NullPerformanceBudget()),
-                w => new LoadNftShapeSystem(w, new NftShapeCache(), new WebRequestController(new WebRequestsAnalyticsContainer(), new MemoryWeb3IdentityCache()), new MutexSync()).InitializeAndReturnSelf(),
+                w => new LoadNftShapeSystem(
+                    w,
+                    new NftShapeCache(),
+                    new WebRequestController(
+                        new WebRequestsAnalyticsContainer(),
+                        new MemoryWeb3IdentityCache()
+                    ),
+                    new MutexSync(),
+                    new IWebContentSizes.Default(
+                        new MaxSize
+                        {
+                            maxSizeInBytes = 300 * 1024 * 1024
+                        }
+                    )
+                ).InitializeAndReturnSelf(),
                 w => new LoadCycleNftShapeSystem(w, new BasedUrnSource()),
                 w => new InstantiateNftShapeSystem(w, new PoolNftShapeRendererFactory(new ComponentPoolsRegistry(), framesPool)),
                 w => new VisibilityNftShapeSystem(w)

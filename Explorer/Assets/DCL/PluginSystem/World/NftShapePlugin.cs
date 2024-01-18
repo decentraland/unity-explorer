@@ -11,6 +11,7 @@ using DCL.SDKComponents.NftShape.Renderer;
 using DCL.SDKComponents.NftShape.Renderer.Factory;
 using DCL.SDKComponents.NftShape.System;
 using DCL.WebRequests;
+using DCL.WebRequests.WebContentSizes;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.NftShapes;
@@ -29,6 +30,7 @@ namespace DCL.PluginSystem.World
         private readonly IPerformanceBudget instantiationFrameTimeBudgetProvider;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IWebRequestController webRequestController;
+        private readonly IWebContentSizes webContentSizes;
         private readonly IStreamableCache<Texture2D, GetNftShapeIntention> cache = new NftShapeCache();
 
         public NftShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IPluginSettingsContainer settingsContainer, IWebRequestController webRequestController, CacheCleaner cacheCleaner) : this(
@@ -36,23 +38,28 @@ namespace DCL.PluginSystem.World
             instantiationFrameTimeBudgetProvider,
             componentPoolsRegistry,
             webRequestController,
-            cacheCleaner
+            cacheCleaner,
+            new IWebContentSizes.Default(settingsContainer.GetSettings<NftShapePluginSettings>().MaxSizeOfNftForDownload)
         ) { }
 
-        public NftShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IFramesPool framesPool, IWebRequestController webRequestController, CacheCleaner cacheCleaner) : this(
+        public NftShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IFramesPool framesPool, IWebRequestController webRequestController, CacheCleaner cacheCleaner,
+            IWebContentSizes webContentSizes) : this(
             new PoolNftShapeRendererFactory(componentPoolsRegistry, framesPool),
             instantiationFrameTimeBudgetProvider,
             componentPoolsRegistry,
             webRequestController,
-            cacheCleaner
+            cacheCleaner,
+            webContentSizes
         ) { }
 
-        public NftShapePlugin(INftShapeRendererFactory nftShapeRendererFactory, IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IWebRequestController webRequestController, CacheCleaner cacheCleaner)
+        public NftShapePlugin(INftShapeRendererFactory nftShapeRendererFactory, IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IWebRequestController webRequestController, CacheCleaner cacheCleaner,
+            IWebContentSizes webContentSizes)
         {
             this.nftShapeRendererFactory = nftShapeRendererFactory;
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.webRequestController = webRequestController;
+            this.webContentSizes = webContentSizes;
             cacheCleaner.Register(cache);
         }
 
@@ -75,9 +82,10 @@ namespace DCL.PluginSystem.World
 
         private void Inject(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, ISceneData sceneData)
         {
-            LoadNftShapeSystem.InjectToWorld(ref builder, cache, webRequestController, new MutexSync());
+            LoadNftShapeSystem.InjectToWorld(ref builder, cache, webRequestController, new MutexSync(), webContentSizes);
             LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedUrnSource());
             InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, sceneData: sceneData);
+
             //ApplyMaterialNftShapeSystem.InjectToWorld(ref builder, sceneData); obsolete
             VisibilityNftShapeSystem.InjectToWorld(ref builder);
         }
