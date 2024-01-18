@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   settings:
     invert: 0
-    normalize: 1
-    scale: 91.31
-    octaves: 4
-    persistance: 0.1
+    normalize: 0
+    scale: 137.59
+    octaves: 2
+    persistance: 0.21
     lacunarity: 2.2
     seed: 5
     offset: {x: 0, y: 0}

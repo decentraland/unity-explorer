@@ -8,7 +8,7 @@ namespace DCL.Landscape
     public class TerrainGeneratorTest : MonoBehaviour
     {
         public bool digHoles;
-        public int density = 2;
+        public bool centerTerrain;
         public TerrainGenerationData genData;
         public TextAsset emptyParcelsData;
         public TextAsset ownedParcelsData;
@@ -20,7 +20,7 @@ namespace DCL.Landscape
         {
             ParseParcels();
             var gen = new TerrainGenerator(genData, ref emptyParcels, ref ownedParcels);
-            gen.GenerateTerrain(digHoles, density);
+            gen.GenerateTerrain(digHoles, centerTerrain);
             ownedParcels.Dispose();
             emptyParcels.Dispose();
         }

@@ -21,7 +21,6 @@ namespace DCL.Landscape.Settings
         public List<NoiseData> layerNoise;
 
         [Header("Trees")]
-        public GameObject[] prefabs;
-        public NoiseData treeNoise;
+        public LandscapeAsset[] treeAssets;
     }
 }

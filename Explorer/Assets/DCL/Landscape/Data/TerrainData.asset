@@ -25,10 +25,7 @@ MonoBehaviour:
   layerNoise:
   - {fileID: 0}
   - {fileID: 11400000, guid: 996aca5b4ef949f428e646374ebd7025, type: 2}
-  prefabs:
-  - {fileID: 919132149155446097, guid: 49f6b5c1fa632624bb986c443a29dec7, type: 3}
-  - {fileID: 919132149155446097, guid: 523bb7986eda53d4583c9df016050b32, type: 3}
-  - {fileID: 919132149155446097, guid: 35e3765a2b6217b40aff311113c2d6fd, type: 3}
-  - {fileID: 919132149155446097, guid: c8de0959dc0d7e8478dc9b8a8c0b9016, type: 3}
-  - {fileID: 919132149155446097, guid: 34b3887824e69074a900b751659fa3e6, type: 3}
-  treeNoise: {fileID: 11400000, guid: a38a82b2a2b243b4eab4e678a9ba4850, type: 2}
+  treeAssets:
+  - {fileID: 11400000, guid: e12bb03a902bb2642924c2b436873804, type: 2}
+  - {fileID: 11400000, guid: 9956eed88c3da1140a63203ad3e7e00b, type: 2}
+  - {fileID: 11400000, guid: b2b6204bf7bc3f642ab69b0abfb41215, type: 2}
