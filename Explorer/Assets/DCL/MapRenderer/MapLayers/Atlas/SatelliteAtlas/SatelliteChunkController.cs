@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.MapRenderer.ComponentsFactory;
 using DCL.WebRequests;
 using System.Threading;
 using UnityEngine;
@@ -13,15 +14,18 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
         private readonly SpriteRenderer spriteRenderer;
         private readonly IWebRequestController webRequestController;
+        private readonly MapRendererTextureContainer textureContainer;
 
         private CancellationTokenSource internalCts;
         private CancellationTokenSource linkedCts;
         private int webRequestAttempts;
 
-        public SatelliteChunkController(SpriteRenderer prefab, IWebRequestController webRequestController, Vector3 chunkLocalPosition, Vector2Int coordsCenter, Transform parent,
+        public SatelliteChunkController(SpriteRenderer prefab, IWebRequestController webRequestController, MapRendererTextureContainer textureContainer, Vector3 chunkLocalPosition, Vector2Int coordsCenter,
+            Transform parent,
             int drawOrder)
         {
             this.webRequestController = webRequestController;
+            this.textureContainer = textureContainer;
             internalCts = new CancellationTokenSource();
 
             spriteRenderer = Object.Instantiate(prefab, parent);
@@ -55,6 +59,10 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
             Texture2D texture = (await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(url)), new GetTextureArguments(false), linkedCts.Token))
                .CreateTexture(TextureWrapMode.Clamp);
+
+            texture.name = chunkId.ToString();
+
+            textureContainer.AddChunk(chunkId, texture);
 
             float pixelsPerUnit = texture.width / chunkWorldSize;
 

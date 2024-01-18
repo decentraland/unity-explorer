@@ -3,6 +3,8 @@ using CRDT;
 using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
+using DCL.Landscape.Components;
+using ECS.ComponentsPooling;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using ECS.LifeCycle.Components;
@@ -42,7 +44,7 @@ namespace SceneRunner.EmptyScene
 
                 // Will be cleaned-up by the shared world
                 //args.SharedWorld.Add(grass, new DeleteEntityIntention());
-                args.SharedWorld.Add(environment, new DeleteEntityIntention());
+                //args.SharedWorld.Add(environment, new DeleteEntityIntention());
                 args.SharedWorld.Add(sceneRoot, new DeleteEntityIntention());
             }
 
@@ -91,7 +93,11 @@ namespace SceneRunner.EmptyScene
 
             // Logic transferred from JS, otherwise it creates significant overhead
             //grass = CreateGltf(mapping.grass.file); // for some reason grass is already in environment
-            environment = CreateGltf(mapping.environment.file);
+            //environment = CreateGltf(mapping.environment.file);
+
+            // Create landscape components
+            // TODO: GET WORLD SEED
+            //environment = args.SharedWorld.Create(new LandscapeParcel(args.BasePosition, 0), new LandscapeParcelInitialization(), args.ParentPartition, partitionPool.Get());
 
             return UniTask.CompletedTask;
         }
@@ -126,6 +132,7 @@ namespace SceneRunner.EmptyScene
             // Map is needed for ParentingTransformSystem
             public readonly IDictionary<CRDTEntity, Entity> EntitiesMap;
             public readonly World SharedWorld;
+            public readonly World GlobalWorld;
             public readonly EmptySceneMapping Mapping;
             public readonly IComponentPoolsRegistry ComponentPools;
             public readonly Vector3 BasePosition;
@@ -135,6 +142,7 @@ namespace SceneRunner.EmptyScene
             public Args(
                 IDictionary<CRDTEntity, Entity> entitiesMap,
                 World sharedWorld,
+                World globalWorld,
                 EmptySceneMapping mapping,
                 IComponentPoolsRegistry componentPools,
                 Vector3 basePosition,
@@ -143,6 +151,7 @@ namespace SceneRunner.EmptyScene
             {
                 EntitiesMap = entitiesMap;
                 SharedWorld = sharedWorld;
+                GlobalWorld = globalWorld;
                 Mapping = mapping;
                 ComponentPools = componentPools;
                 BasePosition = basePosition;

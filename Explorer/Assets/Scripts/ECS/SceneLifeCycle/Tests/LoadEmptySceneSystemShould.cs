@@ -72,10 +72,11 @@ namespace ECS.SceneLifeCycle.Tests
         public async Task CreateSceneFacade(Vector2Int parcel)
         {
             IPartitionComponent partition = Substitute.For<IPartitionComponent>();
+            var world = World.Create();
 
             var intent = new GetSceneFacadeIntention(Substitute.For<IIpfsRealm>(), new SceneDefinitionComponent(parcel));
 
-            ISceneFacade facade = await loadEmptySceneSystemLogic.FlowAsync(intent, partition, CancellationToken.None);
+            ISceneFacade facade = await loadEmptySceneSystemLogic.FlowAsync(world, intent, partition, CancellationToken.None);
             Assert.NotNull(facade);
         }
 
@@ -110,8 +111,9 @@ namespace ECS.SceneLifeCycle.Tests
 
             PartitionComponent partition = PartitionComponent.TOP_PRIORITY;
             var world = World.Create();
+            var globalWorld = World.Create();
 
-            var args = new EmptySceneFacade.Args(map, world,
+            var args = new EmptySceneFacade.Args(map, world, globalWorld,
                 new EmptySceneMapping { environment = new IpfsTypes.ContentDefinition { file = "file1" }, grass = new IpfsTypes.ContentDefinition { file = "file2" } },
                 pool, Vector3.one, partition, new MutexSync());
 

@@ -6,6 +6,7 @@ using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.DebugUtilities;
+using DCL.MapRenderer.ComponentsFactory;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
@@ -122,6 +123,7 @@ namespace Global.Dynamic
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
                 new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, web3Authenticator, debugBuilder, mvcManager, container.ProfileRepository, new UnityAppWebBrowser(), realmData, storedIdentityProvider),
                 new SkyBoxPlugin(debugBuilder, skyBoxSceneData),
+                new LandscapeDebugPlugin(staticContainer.AssetsProvisioner, debugBuilder),
                 new LODPlugin(staticContainer.CacheCleaner, realmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
@@ -129,8 +131,7 @@ namespace Global.Dynamic
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
-
-
+            
             container.RealmController = new RealmController(
                 staticContainer.WebRequestsContainer.WebRequestController,
                 parcelServiceContainer.TeleportController,
@@ -150,6 +151,7 @@ namespace Global.Dynamic
 
         public UniTask InitializeAsync(DynamicWorldSettings settings, CancellationToken ct)
         {
+            Debug.Log("Initializing DebugContainer");
             DebugContainer = DebugUtilitiesContainer.Create(settings.DebugViewsCatalog);
             return UniTask.CompletedTask;
         }

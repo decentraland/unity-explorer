@@ -5,6 +5,7 @@ using DCL.Character;
 using DCL.Diagnostics;
 using DCL.Gizmos.Plugin;
 using DCL.Interaction.Utility;
+using DCL.MapRenderer.ComponentsFactory;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -76,6 +77,9 @@ namespace Global
         public CacheCleaner CacheCleaner { get; private set; }
         public IEthereumApi EthereumApi { get; private set; }
 
+        public MapRendererTextureContainer MapRendererTextureContainer { get; private set; }
+
+
         public void Dispose()
         {
             DiagnosticsContainer?.Dispose();
@@ -143,6 +147,7 @@ namespace Global
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
             container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider);
             container.PhysicsTickProvider = new PhysicsTickProvider();
+            container.MapRendererTextureContainer = new MapRendererTextureContainer();
 
             var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, container.CacheCleaner);
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner);
@@ -166,6 +171,7 @@ namespace Global
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif
+                new LandscapePlugin(addressablesProvisioner, container.MapRendererTextureContainer),
             };
 
             container.SharedPlugins = new IDCLGlobalPlugin[]
@@ -177,5 +183,6 @@ namespace Global
 
             return (container, true);
         }
+
     }
 }
