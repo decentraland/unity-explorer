@@ -1,9 +1,9 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Web3Authentication;
-using DCL.Web3Authentication.Chains;
-using DCL.Web3Authentication.Identities;
+using DCL.Web3.Chains;
+using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
+using DCL.WebRequests.AudioClips;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -14,11 +14,13 @@ namespace DCL.WebRequests
 {
     public class WebRequestController : IWebRequestController
     {
-        private static readonly InitializeRequest<GetTextureArguments, GetTextureWebRequest> GET_TEXTURE = GetTextureWebRequest.Initialize;
         private static readonly InitializeRequest<GenericGetArguments, GenericGetRequest> GET_GENERIC = GenericGetRequest.Initialize;
         private static readonly InitializeRequest<GenericPostArguments, GenericPostRequest> POST_GENERIC = GenericPostRequest.Initialize;
         private static readonly InitializeRequest<GenericPutArguments, GenericPutRequest> PUT_GENERIC = GenericPutRequest.Initialize;
         private static readonly InitializeRequest<GenericPatchArguments, GenericPatchRequest> PATCH_GENERIC = GenericPatchRequest.Initialize;
+
+        private static readonly InitializeRequest<GetTextureArguments, GetTextureWebRequest> GET_TEXTURE = GetTextureWebRequest.Initialize;
+        private static readonly InitializeRequest<GetAudioClipArguments, GetAudioClipWebRequest> GET_AUDIO_CLIP = GetAudioClipWebRequest.Initialize;
 
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
         private readonly IWeb3IdentityCache web3IdentityProvider;
@@ -73,6 +75,15 @@ namespace DCL.WebRequests
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
             SendAsync(GET_TEXTURE, commonArguments, args, ct, reportCategory, headersInfo, signInfo);
+
+        public UniTask<GetAudioClipWebRequest> GetAudioClipAsync(
+            CommonArguments commonArguments,
+            GetAudioClipArguments args,
+            CancellationToken ct,
+            string reportCategory = ReportCategory.AUDIO_CLIP_WEB_REQUEST,
+            WebRequestHeadersInfo? headersInfo = null,
+            WebRequestSignInfo? signInfo = null) =>
+            SendAsync(GET_AUDIO_CLIP, commonArguments, args, ct, reportCategory, headersInfo, signInfo);
 
         private async UniTask<TWebRequest> SendAsync<TWebRequest, TWebRequestArgs>(
             InitializeRequest<TWebRequestArgs, TWebRequest> initializeRequest,

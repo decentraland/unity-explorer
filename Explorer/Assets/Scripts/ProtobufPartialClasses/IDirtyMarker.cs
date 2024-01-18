@@ -12,6 +12,11 @@ namespace DCL.ECSComponents
         public bool IsDirty { get; set; }
     }
 
+    public partial class PBAudioSource : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
     public partial class PBVisibilityComponent : IDirtyMarker
     {
         public bool IsDirty { get; set; }
@@ -63,6 +68,16 @@ namespace DCL.ECSComponents
     }
 
     public partial class PBRaycast : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
+    public partial class PBUiTransform : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
+    public partial class PBUiText : IDirtyMarker
     {
         public bool IsDirty { get; set; }
     }

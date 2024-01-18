@@ -6,14 +6,14 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using DCL.Backpack.Breadcrumb;
 using DCL.UI;
-using DCL.Web3Authentication.Identities;
+using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
@@ -43,6 +43,7 @@ namespace DCL.Backpack
         private readonly NftTypeIconSO categoryIcons;
         private readonly IBackpackEquipStatusController backpackEquipStatusController;
         private readonly PageSelectorController pageSelectorController;
+        private readonly BackpackBreadCrumbController backpackBreadCrumbController;
 
         private readonly List<(string, string)> requestParameters;
         private readonly List<IWearable> results = new (CURRENT_PAGE_SIZE);
@@ -89,6 +90,8 @@ namespace DCL.Backpack
             backpackSortController.OnCollectiblesOnlyChanged += OnCollectiblesOnlyChanged;
             pageSelectorController.OnSetPage += RequestPage;
             requestParameters = new List<(string, string)>();
+
+            backpackBreadCrumbController = new BackpackBreadCrumbController(view.BreadCrumbView, eventBus, commandBus, categoryIcons);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in Entity playerEntity)
@@ -147,6 +150,7 @@ namespace DCL.Backpack
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(gridWearables[i].GetRarity());
                 backpackItemView.CategoryImage.sprite = categoryIcons.GetTypeImage(gridWearables[i].GetCategory());
                 backpackItemView.EquippedIcon.SetActive(backpackEquipStatusController.IsWearableEquipped(gridWearables[i]));
+                backpackItemView.IsEquipped = backpackEquipStatusController.IsWearableEquipped(gridWearables[i]);
 
                 backpackItemView.SetEquipButtonsState();
                 WaitForThumbnailAsync(gridWearables[i], backpackItemView, cts.Token).Forget();
@@ -281,6 +285,7 @@ namespace DCL.Backpack
                 backpackItemView.Value.UnEquipButton.onClick.RemoveAllListeners();
                 backpackItemView.Value.OnSelectItem -= SelectItem;
                 backpackItemView.Value.EquippedIcon.SetActive(false);
+                backpackItemView.Value.IsEquipped = false;
                 backpackItemView.Value.ItemId = "";
                 gridItemsPool.Release(backpackItemView.Value);
             }
@@ -301,6 +306,7 @@ namespace DCL.Backpack
             if (usedPoolItems.TryGetValue(unequippedWearable.GetUrn(), out BackpackItemView backpackItemView))
             {
                 backpackItemView.EquippedIcon.SetActive(false);
+                backpackItemView.IsEquipped = false;
                 backpackItemView.SetEquipButtonsState();
             }
         }
@@ -309,7 +315,7 @@ namespace DCL.Backpack
         {
             if (usedPoolItems.TryGetValue(equippedWearable.GetUrn(), out BackpackItemView backpackItemView))
             {
-                backpackItemView.EquippedIcon.SetActive(true);
+                backpackItemView.IsEquipped = true;
                 backpackItemView.SetEquipButtonsState();
             }
         }

@@ -50,19 +50,25 @@ namespace DCL.Backpack
         [field: SerializeField]
         public GameObject FullBackpackItem { get; private set; }
 
+        [field: SerializeField]
+        public bool IsEquipped { get; set; }
+
         private CancellationTokenSource cts;
         private readonly Vector3 hoveredScale = new (1.1f,1.1f,1.1f);
 
         public void SetEquipButtonsState()
         {
-            EquipButton.gameObject.SetActive(!EquippedIcon.activeSelf);
-            UnEquipButton.gameObject.SetActive(EquippedIcon.activeSelf);
+            EquipButton.gameObject.SetActive(!IsEquipped);
+            UnEquipButton.gameObject.SetActive(IsEquipped);
         }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
             AnimateHover();
             SetEquipButtonsState();
+
+            if (IsEquipped)
+                EquippedIcon.gameObject.SetActive(false);
         }
 
         private void AnimateHover()
@@ -87,6 +93,7 @@ namespace DCL.Backpack
         public void OnPointerExit(PointerEventData eventData)
         {
             AnimateExit();
+            EquippedIcon.gameObject.SetActive(IsEquipped);
         }
 
         public void OnPointerClick(PointerEventData eventData)

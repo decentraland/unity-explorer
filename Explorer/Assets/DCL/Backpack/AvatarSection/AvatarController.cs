@@ -5,7 +5,7 @@ using DCL.AssetsProvision;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
 using DCL.UI;
-using DCL.Web3Authentication.Identities;
+using DCL.Web3.Identities;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -15,7 +15,6 @@ namespace DCL.Backpack
     public class AvatarController : ISection, IDisposable
     {
         private readonly RectTransform rectTransform;
-        private readonly AvatarView view;
         private readonly BackpackSlotsController slotsController;
         private readonly BackpackGridController backpackGridController;
         private readonly BackpackInfoPanelController backpackInfoPanelController;
@@ -33,17 +32,19 @@ namespace DCL.Backpack
             BackpackSortController backpackSortController,
             PageButtonView pageButtonView)
         {
-            this.view = view;
             new BackpackSearchController(view.backpackSearchBar, backpackCommandBus, backpackEventBus);
             slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus, rarityBackgrounds);
             backpackGridController = new BackpackGridController(view.backpackGridView, backpackCommandBus, backpackEventBus, web3IdentityCache, rarityBackgrounds, rarityColors, categoryIcons, backpackEquipStatusController, backpackSortController, pageButtonView);
-            backpackInfoPanelController = new BackpackInfoPanelController(view.backpackInfoPanelView, backpackEventBus, categoryIcons, rarityInfoPanelBackgrounds);
+            backpackInfoPanelController = new BackpackInfoPanelController(view.backpackInfoPanelView, backpackEventBus, categoryIcons, rarityInfoPanelBackgrounds, backpackEquipStatusController);
 
             rectTransform = view.GetComponent<RectTransform>();
         }
 
-        public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct) =>
+        public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
+        {
             await backpackGridController.InitialiseAssetsAsync(assetsProvisioner, ct);
+            await backpackInfoPanelController.InitialiseAssetsAsync(assetsProvisioner, ct);
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in Entity playerEntity)
         {

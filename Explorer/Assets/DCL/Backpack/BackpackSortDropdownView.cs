@@ -8,6 +8,9 @@ namespace DCL.Backpack
     public class BackpackSortDropdownView : MonoBehaviour
     {
         [field: SerializeField]
+        public CanvasGroup CanvasGroup { get; private set; }
+
+        [field: SerializeField]
         internal Toggle sortNewest { get; private set; }
 
         [field: SerializeField]
@@ -34,8 +37,6 @@ namespace DCL.Backpack
         [field: SerializeField]
         internal RectTransform sortContent { get; private set; }
 
-        private Tween openCloseTween;
-        private readonly Vector3 startContentPosition = new Vector3(1, 0, 1);
 
         private void Start()
         {
@@ -47,19 +48,14 @@ namespace DCL.Backpack
         {
             if (sortContent.gameObject.activeInHierarchy)
             {
-                openCloseTween?.Kill();
-                sortContent.localScale = Vector3.one;
-                openCloseTween = sortContent.DOScaleY(0, 0.3f)
-                                            .SetEase(Ease.Flash)
-                                            .OnComplete(() => sortContent.gameObject.SetActive(false));
+                CanvasGroup.DOFade(0, 0.2f).SetEase(Ease.InOutQuad).OnComplete(() => sortContent.gameObject.SetActive(false));
             }
             else
             {
-                openCloseTween?.Kill();
                 sortContent.gameObject.SetActive(true);
-                sortContent.localScale = startContentPosition;
-                openCloseTween = sortContent.DOScaleY(1, 0.3f).SetEase(Ease.Flash);
+                CanvasGroup.DOFade(1, 0.2f).SetEase(Ease.InOutQuad);
             }
+
         }
     }
 }

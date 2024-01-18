@@ -41,27 +41,26 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         [None(typeof(PBMeshRenderer), typeof(DeleteEntityIntention))]
         private void HandleComponentRemoval(ref PrimitiveMeshRendererComponent rendererComponent)
         {
-            ReleaseMaterial.TryReleaseDefault(ref rendererComponent);
-
-            if (poolsRegistry.TryGetPool(rendererComponent.PrimitiveMesh.GetType(), out IComponentPool componentPool))
-                componentPool.Release(rendererComponent.PrimitiveMesh);
+            Release(ref rendererComponent);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ValidateRendering(ref PBMeshRenderer meshRenderer,
-            ref PrimitiveMeshRendererComponent rendererComponent)
+        private void ValidateRendering(ref PBMeshRenderer meshRenderer, ref PrimitiveMeshRendererComponent rendererComponent)
         {
             if (meshRenderer.IsDirty && meshRenderer.MeshCase != rendererComponent.SDKType && rendererComponent.PrimitiveMesh != null)
             {
-                ReleaseMaterial.TryReleaseDefault(ref rendererComponent);
-
-                if (poolsRegistry.TryGetPool(rendererComponent.PrimitiveMesh.GetType(), out IComponentPool componentPool))
-                    componentPool.Release(rendererComponent.PrimitiveMesh);
-
-                // it will be a signal to instantiate a new renderer
-                rendererComponent.PrimitiveMesh = null;
+                Release(ref rendererComponent);
+                rendererComponent.PrimitiveMesh = null; // it will be a signal to instantiate a new renderer
             }
+        }
+
+        private void Release(ref PrimitiveMeshRendererComponent rendererComponent)
+        {
+            ReleaseMaterial.TryReleaseDefault(ref rendererComponent);
+
+            if (poolsRegistry.TryGetPool(rendererComponent.PrimitiveMesh.GetType(), out IComponentPool componentPool))
+                componentPool.Release(rendererComponent.PrimitiveMesh);
         }
     }
 }

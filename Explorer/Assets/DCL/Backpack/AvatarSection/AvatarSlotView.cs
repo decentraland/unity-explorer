@@ -14,6 +14,9 @@ namespace DCL.Backpack
         public event Action<AvatarSlotView> OnSlotButtonPressed;
 
         [field: SerializeField]
+        public bool BlockUnEquip { get; private set; }
+
+        [field: SerializeField]
         internal Image focusedImage { get; private set; }
 
         [field: SerializeField]
@@ -21,6 +24,9 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public Button SlotButton { get; private set; }
+
+        [field: SerializeField]
+        public GameObject EmptyOverlay { get; private set; }
 
         [field: SerializeField]
         public GameObject HoverTootlip { get; private set; }
@@ -71,7 +77,7 @@ namespace DCL.Backpack
         {
             HoverTootlip.SetActive(true);
             focusedImage.enabled = true;
-            UnequipButton.gameObject.SetActive(!string.IsNullOrEmpty(SlotWearableUrn));
+            UnequipButton.gameObject.SetActive(!string.IsNullOrEmpty(SlotWearableUrn) && !BlockUnEquip);
             ScaleUpAnimation(focusedImage.transform);
         }
 

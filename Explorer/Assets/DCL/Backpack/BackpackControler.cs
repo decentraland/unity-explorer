@@ -10,7 +10,7 @@ using DCL.CharacterPreview;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
 using DCL.UI;
-using DCL.Web3Authentication.Identities;
+using DCL.Web3.Identities;
 using ECS.StreamableLoading.Common;
 using System;
 using System.Collections.Generic;
@@ -121,6 +121,8 @@ namespace DCL.Backpack
 
                 foreach (URN avatarSharedWearable in world.Get<Profile>(playerEntity).Avatar.SharedWearables)
                     backpackCommandBus.SendCommand(new BackpackEquipCommand(avatarSharedWearable.ToString()));
+
+                backpackCommandBus.SendCommand(new BackpackEquipCommand(world.Get<Profile>(playerEntity).Avatar.BodyShape.Value));
             }
 
             public void Activate()

@@ -406,7 +406,7 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
+    m_NormalColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 0}
     m_HighlightedColor: {r: 0.9254902, g: 0.92156863, b: 0.92941177, a: 1}
     m_PressedColor: {r: 0.8117647, g: 0.8039216, b: 0.83137256, a: 1}
     m_SelectedColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
@@ -628,7 +628,7 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
+    m_NormalColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 0}
     m_HighlightedColor: {r: 0.9254902, g: 0.92156863, b: 0.92941177, a: 1}
     m_PressedColor: {r: 0.8117647, g: 0.8039216, b: 0.83137256, a: 1}
     m_SelectedColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
@@ -1567,6 +1567,7 @@ GameObject:
   - component: {fileID: 3357931873751875645}
   - component: {fileID: 279556671880538210}
   - component: {fileID: 5191172218194811664}
+  - component: {fileID: 6477613599573200161}
   m_Layer: 5
   m_Name: FiltersContent
   m_TagString: Untagged
@@ -1620,7 +1621,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1637,6 +1638,18 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
+--- !u!225 &6477613599573200161
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4231449525815535307}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &4471443630513435678
 GameObject:
   m_ObjectHideFlags: 0
@@ -2045,7 +2058,7 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
+    m_NormalColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 0}
     m_HighlightedColor: {r: 0.9254902, g: 0.92156863, b: 0.92941177, a: 1}
     m_PressedColor: {r: 0.8117647, g: 0.8039216, b: 0.83137256, a: 1}
     m_SelectedColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
@@ -2287,6 +2300,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e6e0c86e39904e7d988c4fcdfed2923a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <CanvasGroup>k__BackingField: {fileID: 6477613599573200161}
   <sortNewest>k__BackingField: {fileID: 5964133028972326592}
   <sortOldest>k__BackingField: {fileID: 7842449937539363204}
   <sortRarest>k__BackingField: {fileID: 3687672318763325900}
@@ -2356,7 +2370,7 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
+    m_NormalColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 0}
     m_HighlightedColor: {r: 0.9254902, g: 0.92156863, b: 0.92941177, a: 1}
     m_PressedColor: {r: 0.8117647, g: 0.8039216, b: 0.83137256, a: 1}
     m_SelectedColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
@@ -2884,7 +2898,7 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
+    m_NormalColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 0}
     m_HighlightedColor: {r: 0.9254902, g: 0.92156863, b: 0.92941177, a: 1}
     m_PressedColor: {r: 0.8117647, g: 0.8039216, b: 0.83137256, a: 1}
     m_SelectedColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
@@ -3360,7 +3374,7 @@ MonoBehaviour:
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
   m_Colors:
-    m_NormalColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
+    m_NormalColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 0}
     m_HighlightedColor: {r: 0.9254902, g: 0.92156863, b: 0.92941177, a: 1}
     m_PressedColor: {r: 0.8117647, g: 0.8039216, b: 0.83137256, a: 1}
     m_SelectedColor: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
