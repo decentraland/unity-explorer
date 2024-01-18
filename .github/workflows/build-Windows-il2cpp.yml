@@ -130,3 +130,9 @@ jobs:
             !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
             !build/**/*_BurstDebugInformation_DoNotShip
           if-no-files-found: error
+          
+      - name: Clean-up Required Packages
+        run: |
+          if [ -f "Explorer/Assets/RequiredPackages/requiredPackages.unitypackage" ]; then
+            rm "Explorer/Assets/RequiredPackages/requiredPackages.unitypackage"
+            echo "requiredPackages.unitypackage deleted successfully."
