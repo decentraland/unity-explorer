@@ -6,6 +6,7 @@ using DCL.SceneLoadingScreens;
 using ECS;
 using ECS.SceneLifeCycle.Reporting;
 using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
 
@@ -46,7 +47,7 @@ namespace DCL.ParcelsService
                                       {
                                           var loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
 
-                                          UniTask.WhenAll(mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport))),
+                                          UniTask.WhenAll(mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, TimeSpan.FromSeconds(30)))),
                                                       teleportController.TeleportToSceneSpawnPointAsync(binding.Value, loadReport, CancellationToken.None))
                                                  .Forget();
                                       }));

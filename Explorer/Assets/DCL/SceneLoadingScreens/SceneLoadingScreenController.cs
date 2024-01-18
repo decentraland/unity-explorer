@@ -77,15 +77,19 @@ namespace DCL.SceneLoadingScreens
             tipsRotationCancellationToken?.SafeCancelAndDispose();
         }
 
-        protected override UniTask WaitForCloseIntent(CancellationToken ct)
+        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            return ShowTipsAsync(ct)
-                  .ContinueWith(() =>
-                   {
-                       tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
-                       RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
-                   })
-                  .ContinueWith(() => UniTask.WhenAll(WaitUntilWorldIsLoadedAsync(0.6f, ct), WaitTimeThresholdAsync(0.4f, ct)));
+            try
+            {
+                await ShowTipsAsync(ct).Timeout(inputData.Timeout);
+
+                tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
+                RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
+
+                await UniTask.WhenAll(WaitUntilWorldIsLoadedAsync(0.6f, ct), WaitTimeThresholdAsync(0.4f, ct))
+                             .Timeout(inputData.Timeout);
+            }
+            catch (TimeoutException) { }
         }
 
         private async UniTask WaitTimeThresholdAsync(float progressProportion, CancellationToken ct)
