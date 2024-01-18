@@ -27,8 +27,8 @@ namespace DCL.CharacterCamera.Systems
             exposedCameraData.CameraType = cameraComponent.Mode.ToSDKCameraType();
             exposedCameraData.PointerIsLocked = cursorComponent.CursorIsLocked;
             Transform transform = cameraComponent.Camera.transform;
-            exposedCameraData.WorldPosition = transform.position;
-            exposedCameraData.WorldRotation = transform.rotation;
+            exposedCameraData.WorldPosition.Value = transform.position;
+            exposedCameraData.WorldRotation.Value = transform.rotation;
         }
     }
 }

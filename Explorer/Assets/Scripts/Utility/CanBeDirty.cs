@@ -8,6 +8,12 @@ namespace Utility
 
         public bool IsDirty { get; private set; }
 
+        public CanBeDirty(T value)
+        {
+            this.value = value;
+            IsDirty = false;
+        }
+
         public T Value
         {
             get => value;
@@ -21,5 +27,8 @@ namespace Utility
                 IsDirty = true;
             }
         }
+
+        public static implicit operator T(CanBeDirty<T> canBeDirty) =>
+            canBeDirty.Value;
     }
 }

@@ -1,6 +1,8 @@
 using DCL.CharacterCamera;
 using System;
 using UnityEngine;
+using Utility;
+using CameraType = DCL.ECSComponents.CameraType;
 
 namespace DCL.Billboard.Demo.CameraData
 {
@@ -8,20 +10,20 @@ namespace DCL.Billboard.Demo.CameraData
     {
         private readonly Transform t;
 
+        public CanBeDirty<Vector3> WorldPosition => new (t.position);
+        public CanBeDirty<Quaternion> WorldRotation => new (t.rotation);
+        public CameraType CameraType { get; }
+        public bool PointerIsLocked { get; }
+
         public FromTransformExposedCameraData() : this((Camera.main ? Camera.main : throw new NullReferenceException("Camera not found"))!) { }
 
-        public FromTransformExposedCameraData(Camera camera) : this(camera.transform, DCL.ECSComponents.CameraType.CtCinematic, false) { }
+        public FromTransformExposedCameraData(Camera camera) : this(camera.transform, CameraType.CtCinematic, false) { }
 
-        public FromTransformExposedCameraData(Transform t, DCL.ECSComponents.CameraType cameraType, bool pointerIsLocked)
+        public FromTransformExposedCameraData(Transform t, CameraType cameraType, bool pointerIsLocked)
         {
             this.t = t;
             CameraType = cameraType;
             PointerIsLocked = pointerIsLocked;
         }
-
-        public Vector3 WorldPosition => t.position;
-        public Quaternion WorldRotation => t.rotation;
-        public DCL.ECSComponents.CameraType CameraType { get; }
-        public bool PointerIsLocked { get; }
     }
 }

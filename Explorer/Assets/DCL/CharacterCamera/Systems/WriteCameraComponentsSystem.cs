@@ -1,11 +1,14 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.Unity.Transforms;
 using ECS.Unity.Transforms.Components;
+using SceneRunner.Scene;
 using UnityEngine;
 using Utility;
 
@@ -17,34 +20,31 @@ namespace DCL.CharacterCamera.Systems
     [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     public partial class WriteCameraComponentsSystem : BaseUnityLoopSystem
     {
-        private static readonly SDKTransform SHARED_TRANSFORM = new ();
         private static readonly PBCameraMode SHARED_CAMERA_MODE = new ();
         private static readonly PBPointerLock SHARED_POINTER_LOCK = new ();
 
         private readonly IECSToCRDTWriter ecsToCrdtWriter;
         private readonly IExposedCameraData exposedCameraData;
-        private readonly Entity sceneRootEntity;
+        private readonly ISceneData sceneData;
 
-        internal WriteCameraComponentsSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, IExposedCameraData exposedCameraData, Entity sceneRootEntity) : base(world)
+        internal WriteCameraComponentsSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, IExposedCameraData exposedCameraData, ISceneData sceneData) : base(world)
         {
             this.ecsToCrdtWriter = ecsToCrdtWriter;
             this.exposedCameraData = exposedCameraData;
-            this.sceneRootEntity = sceneRootEntity;
+            this.sceneData = sceneData;
         }
 
         public override void Initialize()
         {
             // set camera position for a newly created scene
+            ExposedTransformUtils.Put(ecsToCrdtWriter, exposedCameraData, SpecialEntitiesID.CAMERA_ENTITY, sceneData.Geometry.BaseParcelPosition, false);
             Update(0);
         }
 
         protected override void Update(float t)
         {
-            // TODO why sceneRootEntity??
-            //Vector3 scenePosition = World.Get<TransformComponent>(sceneRootEntity).Cached.WorldPosition;
-
-            SHARED_CAMERA_MODE.Mode = exposedCameraData.CameraType;
-            SHARED_POINTER_LOCK.IsPointerLocked = exposedCameraData.PointerIsLocked;
+            //SHARED_CAMERA_MODE.Mode = exposedCameraData.CameraType;
+            //SHARED_POINTER_LOCK.IsPointerLocked = exposedCameraData.PointerIsLocked;
 
             //SHARED_TRANSFORM.Position = ParcelMathHelper.GetSceneRelativePosition(exposedCameraData.WorldPosition, scenePosition);
             //SHARED_TRANSFORM.Rotation = exposedCameraData.WorldRotation;
@@ -55,6 +55,8 @@ namespace DCL.CharacterCamera.Systems
             // ecsToCrdtWriter.PutMessage(SpecialEntitiesID.CAMERA_ENTITY, SHARED_TRANSFORM);
             //ecsToCrdtWriter.PutMessage(SpecialEntitiesID.CAMERA_ENTITY, SHARED_CAMERA_MODE);
             //ecsToCrdtWriter.PutMessage(SpecialEntitiesID.CAMERA_ENTITY, SHARED_POINTER_LOCK);
+
+            ExposedTransformUtils.Put(ecsToCrdtWriter, exposedCameraData, SpecialEntitiesID.CAMERA_ENTITY, sceneData.Geometry.BaseParcelPosition, true);
         }
     }
 }
