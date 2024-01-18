@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using MVC;
 using System;
@@ -63,8 +64,7 @@ namespace DCL.SceneLoadingScreens
         {
             base.OnBeforeViewShow();
 
-            viewInstance.ProgressBar.normalizedValue = 0f;
-            progressLabel!.Value = 0;
+            SetLoadProgress(0);
             viewInstance.ClearTips();
         }
 
@@ -83,7 +83,21 @@ namespace DCL.SceneLoadingScreens
                        tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
                        RotateTipsOverTime(tips.Duration, tipsRotationCancellationToken.Token).Forget();
                    })
-                  .ContinueWith(() => UniTask.WhenAll(WaitUntilWorldIsLoadedAsync(ct), UniTask.Delay(minimumDisplayDuration, cancellationToken: ct)));
+                  .ContinueWith(() => UniTask.WhenAll(WaitUntilWorldIsLoadedAsync(0.6f, ct), WaitTimeThresholdAsync(0.4f, ct)));
+        }
+
+        private async UniTask WaitTimeThresholdAsync(float progressProportion, CancellationToken ct)
+        {
+            float t = 0;
+
+            while (t < 1f && !ct.IsCancellationRequested)
+            {
+                float now = Time.realtimeSinceStartup;
+                await UniTask.NextFrame(ct);
+                float dt = Time.realtimeSinceStartup - now;
+                t += dt / (float)minimumDisplayDuration.TotalSeconds;
+                AddLoadProgress(dt * progressProportion);
+            }
         }
 
         private async UniTask ShowTipsAsync(CancellationToken ct)
@@ -106,37 +120,42 @@ namespace DCL.SceneLoadingScreens
             ListPool<SceneTips.Tip>.Release(list);
         }
 
-        private async UniTask WaitUntilWorldIsLoadedAsync(CancellationToken ct)
+        private async UniTask WaitUntilWorldIsLoadedAsync(float progressProportion, CancellationToken ct)
         {
-            async UniTaskVoid UpdateProgressBarAsync(CancellationToken ct)
+            async UniTask UpdateProgressBarAsync()
             {
+                var prevProgress = 0f;
+
                 do
                 {
-                    try
-                    {
-                        float progress = Mathf.Clamp01(await inputData.AsyncLoadProcessReport.ProgressCounter.WaitAsync(ct));
-                        await UniTask.SwitchToMainThread(ct);
-                        viewInstance.ProgressBar.normalizedValue = progress;
-                        progressLabel!.Value = (int)(progress * 100);
-                    }
-                    catch (OperationCanceledException) { }
+                    float progress = await inputData.AsyncLoadProcessReport.ProgressCounter.WaitAsync(ct);
+                    float delta = progress - prevProgress;
+                    prevProgress = progress;
+                    await UniTask.SwitchToMainThread(ct);
+                    AddLoadProgress(delta * progressProportion);
                 }
-                while (viewInstance.ProgressBar.normalizedValue < 1);
+                while (prevProgress < 1 && !ct.IsCancellationRequested);
             }
-
-            var progressUpdatingCancellationToken = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            UpdateProgressBarAsync(progressUpdatingCancellationToken.Token).Forget();
 
             try
             {
-                await inputData.AsyncLoadProcessReport.CompletionSource.Task;
-                progressUpdatingCancellationToken.Cancel();
+                await UniTask.WhenAny(inputData.AsyncLoadProcessReport.CompletionSource.Task, UpdateProgressBarAsync());
                 ct.ThrowIfCancellationRequested();
-                viewInstance.ProgressBar.normalizedValue = 1f;
-                progressLabel!.Value = 100;
             }
-            catch { }
+            catch (OperationCanceledException) { }
+            catch (TimeoutException) { }
+            catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.SCENE_LOADING)); }
         }
+
+        private void SetLoadProgress(float progress)
+        {
+            progress = Mathf.Clamp01(progress);
+            viewInstance.ProgressBar.normalizedValue = progress;
+            progressLabel!.Value = (int)(progress * 100);
+        }
+
+        private void AddLoadProgress(float progress) =>
+            SetLoadProgress(viewInstance.ProgressBar.normalizedValue + progress);
 
         private void ShowTip(int index)
         {
