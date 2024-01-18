@@ -157,7 +157,7 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
-    - _HeightTransition: 0.241
+    - _HeightTransition: 1
     - _Metallic: 0
     - _Metallic0: 0
     - _Metallic1: 0

@@ -46,8 +46,11 @@ namespace DCL.Landscape.Config
             else
                 transform.localScale = RandomVector(random, randomScaleX, randomScaleY, randomScaleZ);
 
-            transform.localPosition += RandomVector(random, positionOffsetX, positionOffsetY, positionOffsetZ);
+            transform.localPosition += GetRandomizedPositionOffset(random);
         }
+
+        public Vector3 GetRandomizedPositionOffset(Random random) =>
+            RandomVector(random, positionOffsetX, positionOffsetY, positionOffsetZ);
 
         private Vector3 RandomVector(Random random, in Vector2 rangeX, in Vector2 rangeY, in Vector2 rangeZ)
         {

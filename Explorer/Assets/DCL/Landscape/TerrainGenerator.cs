@@ -39,7 +39,7 @@ namespace DCL.Landscape
             this.terrainGenData = terrainGenData;
         }
 
-        public void GenerateTerrain(bool withHoles = true, int f = 3)
+        public void GenerateTerrain(bool withHoles = true, bool centerTerrain = true)
         {
             random = new Random(terrainGenData.seed);
 
@@ -66,7 +66,9 @@ namespace DCL.Landscape
                 rootGo = GameObject.Find("Generated Terrain");
                 if (rootGo != null) Object.DestroyImmediate(rootGo);
                 rootGo = new GameObject("Generated Terrain");
-                rootGo.transform.position = new Vector3(-terrainGenData.terrainSize / 2f, 0, -terrainGenData.terrainSize / 2f);
+
+                if (centerTerrain)
+                    rootGo.transform.position = new Vector3(-terrainGenData.terrainSize / 2f, 0, -terrainGenData.terrainSize / 2f);
 
                 //rootGo.transform.position = new Vector3(-terrainGenData.terrainSize / 2f, 0, -terrainGenData.terrainSize / 2f);
 
@@ -74,7 +76,7 @@ namespace DCL.Landscape
 
                 for (var z = 0; z < terrainGenData.terrainSize; z += terrainGenData.chunkSize)
                 for (var x = 0; x < terrainGenData.terrainSize; x += terrainGenData.chunkSize)
-                    terrainDatas.Add(new Vector2Int(x, z), GenerateTerrainData(x, z, f));
+                    terrainDatas.Add(new Vector2Int(x, z), GenerateTerrainData(x, z));
 
                 if (withHoles)
                     DigHoles(terrainDatas);
@@ -172,7 +174,7 @@ namespace DCL.Landscape
         }
 
         // not completely optimized
-        private TerrainData GenerateTerrainData(int offsetX, int offsetZ, int f)
+        private TerrainData GenerateTerrainData(int offsetX, int offsetZ)
         {
             int resolution = terrainGenData.chunkSize;
             int chunkSize = terrainGenData.chunkSize;
@@ -191,7 +193,7 @@ namespace DCL.Landscape
             SetHeights(offsetX, offsetZ, terrainData);
             SetTextures(offsetX, offsetZ, resolution, terrainData);
 
-            SetTrees(offsetX, offsetZ, chunkSize / f, terrainData);
+            SetTrees(offsetX, offsetZ, chunkSize, terrainData);
 
             return terrainData;
         }
@@ -237,51 +239,141 @@ namespace DCL.Landscape
             }
         }
 
+        private Vector2Int WorldToParcelCoord(Vector3 worldPos)
+        {
+            int parcelX = Mathf.FloorToInt(worldPos.x / 16f);
+            int parcelZ = Mathf.FloorToInt(worldPos.z / 16f);
+            return new Vector2Int(-150 + parcelX, -150 + parcelZ);
+        }
+
+        private Vector3 ParcelToWorld(Vector2Int parcel)
+        {
+            int posX = (parcel.x + 150) * 16;
+            int posZ = (parcel.y + 150) * 16;
+            return new Vector3(posX, 0, posZ);
+        }
+
         private void SetTrees(int offsetX, int offsetZ, int chunkSize, TerrainData terrainData)
         {
-            NoiseData treeNoiseData = terrainGenData.treeNoise;
-            var treeOctaves = new NativeArray<float2>(treeNoiseData.settings.octaves, Allocator.Persistent);
-            Noise.CalculateOctaves(random, ref treeNoiseData.settings, ref treeOctaves);
-
-            var result = new NativeArray<float>(chunkSize * chunkSize, Allocator.TempJob);
-            var offset = new float2(offsetZ, offsetX);
-            var noiseJob = new NoiseJob(ref result, treeOctaves, chunkSize, chunkSize, treeNoiseData.settings, 1, offset, NoiseJobOperation.SET);
-            JobHandle handle = noiseJob.Schedule(chunkSize * chunkSize, 32);
-            handle.Complete(); // not ideal
-
             // this should run in another job, but well, lets do it quick
             var treeInstances = new List<TreeInstance>();
 
-            for (var y = 0; y < chunkSize; y++)
-            for (var x = 0; x < chunkSize; x++)
+            for (var i = 0; i < terrainGenData.treeAssets.Length; i++)
             {
-                int index = x + (y * chunkSize);
-                float value = result[index];
+                LandscapeAsset treeAsset = terrainGenData.treeAssets[i];
+                NoiseData treeNoiseData = treeAsset.noiseData;
 
-                var position = new Vector3((float)x / chunkSize, 0, (float)y / chunkSize);
+                var treeOctaves = new NativeArray<float2>(treeNoiseData.settings.octaves, Allocator.Persistent);
+                Noise.CalculateOctaves(random, ref treeNoiseData.settings, ref treeOctaves);
 
-                bool isInHole = terrainData.IsHole(x, y);
+                int chunkDensity = Mathf.FloorToInt(chunkSize / 16f * treeAsset.density);
 
-                if (value > 0 && !isInHole)
+                var result = new NativeArray<float>(chunkDensity * chunkDensity, Allocator.TempJob);
+                var offset = new float2(offsetZ, offsetX);
+                var noiseJob = new NoiseJob(ref result, treeOctaves, chunkDensity, chunkDensity, treeNoiseData.settings, 1, offset, NoiseJobOperation.SET);
+                JobHandle handle = noiseJob.Schedule(chunkDensity * chunkDensity, 32);
+                handle.Complete(); // TODO: NOT IDEAL!
+                var onlyOne = false;
+
+                // TODO: JOBIFY THIS
+                for (var y = 0; y < chunkDensity; y++)
                 {
-                    var treeInstance = new TreeInstance
-                    {
-                        position = position,
-                        prototypeIndex = random.Next(0, terrainGenData.prefabs.Length),
-                        rotation = Mathf.Lerp(0f, (float)Math.PI * 2, random.Next(0, 100) / 100f),
-                        widthScale = 1f,
-                        heightScale = 1f,
-                        color = Color.white,
-                        lightmapColor = Color.white,
-                    };
+                    if (onlyOne)
+                        break;
 
-                    treeInstances.Add(treeInstance);
+                    for (var x = 0; x < chunkDensity; x++)
+                    {
+                        if (onlyOne)
+                            break;
+
+                        int index = x + (y * chunkDensity);
+                        float value = result[index];
+
+                        Vector3 randomness = treeAsset.randomization.GetRandomizedPositionOffset(random) / chunkDensity;
+                        Vector3 positionWithinTheChunk = new Vector3((float)x / chunkDensity, 0, (float)y / chunkDensity) + randomness;
+                        Vector3 worldPosition = (positionWithinTheChunk * chunkSize) + new Vector3(offsetX, 0, offsetZ);
+                        Vector2Int parcelCoord = WorldToParcelCoord(worldPosition);
+                        Vector3 parcelWorldPos = ParcelToWorld(parcelCoord);
+
+                        if (value > 0 && emptyParcelResult.TryGetValue(parcelCoord, out EmptyParcelData item))
+                        {
+                            Vector2 randomScale = treeAsset.randomization.randomScale;
+                            float scale = Mathf.Lerp(randomScale.x, randomScale.y, random.Next(0, 100) / 100f);
+
+                            float radius = treeAsset.radius * scale;
+
+                            bool u = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.up, 0, radius);
+                            bool ur = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.up + Vector2Int.right, 0, radius);
+                            bool r = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.right, 0, radius);
+                            bool rd = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.right + Vector2Int.down, 0, radius);
+                            bool d = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.down, 0, radius);
+                            bool dl = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.down + Vector2Int.left, 0, radius);
+                            bool l = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.left, 0, radius);
+                            bool lu = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.left + Vector2Int.up, 0, radius);
+
+                            //onlyOne = true;
+
+                            if (!u || !ur || !r || !rd || !d || !dl || !l || !lu)
+                                continue;
+
+                            Vector2 randomRotation = treeAsset.randomization.randomRotationY * Mathf.Deg2Rad;
+                            float rotation = Mathf.Lerp(randomRotation.x, randomRotation.y, random.Next(0, 100) / 100f);
+
+                            var treeInstance = new TreeInstance
+                            {
+                                position = positionWithinTheChunk,
+                                prototypeIndex = i,
+                                rotation = rotation,
+                                widthScale = scale * value,
+                                heightScale = scale * value,
+                                color = Color.white,
+                                lightmapColor = Color.white,
+                            };
+
+                            treeInstances.Add(treeInstance);
+                        }
+                    }
                 }
+
+                treeOctaves.Dispose();
+                result.Dispose();
             }
 
             terrainData.SetTreeInstances(treeInstances.ToArray(), true);
-            treeOctaves.Dispose();
-            result.Dispose();
+        }
+
+        private bool CheckAssetPosition(EmptyParcelData item, Vector2Int currentParcel, Vector3 parcelWorldPos, Vector3 assetPosition, Vector2Int direction,
+            int depth, float radius)
+        {
+            if (GetHeightDirection(item, direction) >= 0)
+            {
+                int nextDepth = depth + 1;
+
+                if (emptyParcelResult.TryGetValue(currentParcel + (direction * nextDepth), out EmptyParcelData parcel))
+                    return CheckAssetPosition(parcel, currentParcel, parcelWorldPos, assetPosition, direction, nextDepth, radius);
+            }
+            else
+            {
+                var v3Dir = new Vector3(direction.x, 0, direction.y);
+                Vector3 posToCheck = parcelWorldPos + (v3Dir * 8f) + (depth * v3Dir * 16);
+                float distance = Vector3.Distance(assetPosition, posToCheck);
+                return distance > radius;
+            }
+
+            return false;
+        }
+
+        private int GetHeightDirection(EmptyParcelData item, Vector2Int dir)
+        {
+            if (dir == Vector2Int.up) return item.upHeight;
+            if (dir == Vector2Int.up + Vector2Int.right) return item.upRigthHeight;
+            if (dir == Vector2Int.right) return item.rightHeight;
+            if (dir == Vector2Int.right + Vector2Int.down) return item.downRightHeight;
+            if (dir == Vector2Int.down) return item.downHeight;
+            if (dir == Vector2Int.down + Vector2Int.left) return item.downLeftHeight;
+            if (dir == Vector2Int.left) return item.leftHeight;
+            if (dir == Vector2Int.left + Vector2Int.up) return item.upLeftHeight;
+            return -1;
         }
 
         private TreePrototype[] GetTreePrototypes()
@@ -289,9 +381,9 @@ namespace DCL.Landscape
             if (treePrototypes != null)
                 return treePrototypes;
 
-            treePrototypes = terrainGenData.prefabs.Select(prefab => new TreePrototype
+            treePrototypes = terrainGenData.treeAssets.Select(t => new TreePrototype
                                             {
-                                                prefab = prefab,
+                                                prefab = t.asset,
                                             })
                                            .ToArray();
 
@@ -484,7 +576,7 @@ namespace DCL.Landscape
             private int SafeGet(Vector2Int pos)
             {
                 if (IsOutOfBounds(pos.x) || IsOutOfBounds(pos.y) || ownedParcels.Contains(pos))
-                    return 0;
+                    return -1;
 
                 return result[pos].minIndex;
             }
