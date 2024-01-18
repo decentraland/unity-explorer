@@ -68,22 +68,24 @@ namespace DCL.SceneLoadingScreens
 
             for (var i = 0; i < tipCount; i++)
             {
-                Texture2D? texture = null;
+                Sprite? sprite = null;
 
                 if (imagesTable != null)
-                    texture = await new LocalizedAsset<Texture2D>
+                {
+                    sprite = await new LocalizedAsset<Sprite>
                         {
                             TableReference = imagesTable.TableCollectionName,
                             TableEntryReference = $"IMAGE-{i}",
                         }.LoadAssetAsync()
                          .Task;
+                }
 
                 ct.ThrowIfCancellationRequested();
 
                 string title = tipsTable.GetEntry($"TITLE-{i}").Value;
                 string body = tipsTable.GetEntry($"BODY-{i}").Value;
 
-                tips[i] = new SceneTips.Tip(title, body, texture);
+                tips[i] = new SceneTips.Tip(title, body, sprite);
             }
 
             return new SceneTips(defaultDuration, true, tips);

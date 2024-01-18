@@ -22,9 +22,9 @@ namespace DCL.SceneLoadingScreens
         {
             public string Title { get; }
             public string Body { get; }
-            public Texture2D? Image { get; }
+            public Sprite? Image { get; }
 
-            public Tip(string title, string body, Texture2D? image)
+            public Tip(string title, string body, Sprite? image)
             {
                 Title = title;
                 Body = body;

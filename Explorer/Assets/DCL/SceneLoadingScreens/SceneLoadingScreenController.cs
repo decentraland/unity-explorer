@@ -47,14 +47,14 @@ namespace DCL.SceneLoadingScreens
             {
                 ShowTip(currentTip + 1);
                 tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
-                RotateTipsOverTime(tips.Duration, tipsRotationCancellationToken.Token).Forget();
+                RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
             });
 
             viewInstance.ShowPreviousButton.onClick.AddListener(() =>
             {
                 ShowTip(currentTip - 1);
                 tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
-                RotateTipsOverTime(tips.Duration, tipsRotationCancellationToken.Token).Forget();
+                RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
             });
 
             progressLabel = (IntVariable)viewInstance.ProgressLabel.StringReference["progressValue"];
@@ -81,7 +81,7 @@ namespace DCL.SceneLoadingScreens
                   .ContinueWith(() =>
                    {
                        tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
-                       RotateTipsOverTime(tips.Duration, tipsRotationCancellationToken.Token).Forget();
+                       RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
                    })
                   .ContinueWith(() => UniTask.WhenAll(WaitUntilWorldIsLoadedAsync(0.6f, ct), WaitTimeThresholdAsync(0.4f, ct)));
         }
@@ -124,19 +124,15 @@ namespace DCL.SceneLoadingScreens
         {
             async UniTask UpdateProgressBarAsync()
             {
-                try
-                {
-                    var prevProgress = 0f;
+                var prevProgress = 0f;
 
-                    await foreach (float progress in inputData.AsyncLoadProcessReport.ProgressCounter.WithCancellation(ct))
-                    {
-                        float delta = progress - prevProgress;
-                        prevProgress = progress;
-                        await UniTask.SwitchToMainThread(ct);
-                        AddLoadProgress(delta * progressProportion);
-                    }
+                await foreach (float progress in inputData.AsyncLoadProcessReport.ProgressCounter.WithCancellation(ct))
+                {
+                    float delta = progress - prevProgress;
+                    prevProgress = progress;
+                    await UniTask.SwitchToMainThread(ct);
+                    AddLoadProgress(delta * progressProportion);
                 }
-                catch (OperationCanceledException) { }
             }
 
             try
@@ -171,7 +167,7 @@ namespace DCL.SceneLoadingScreens
             currentTip = index;
         }
 
-        private async UniTaskVoid RotateTipsOverTime(TimeSpan frequency, CancellationToken ct)
+        private async UniTaskVoid RotateTipsOverTimeAsync(TimeSpan frequency, CancellationToken ct)
         {
             try
             {

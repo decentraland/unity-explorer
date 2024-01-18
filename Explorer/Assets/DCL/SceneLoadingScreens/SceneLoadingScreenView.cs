@@ -49,10 +49,10 @@ namespace DCL.SceneLoadingScreens
             view.TitleLabel.text = tip.Title;
             view.BodyLabel.text = tip.Body;
 
-            Texture2D? texture = tip.Image;
+            Sprite? sprite = tip.Image;
 
-            view.Image.sprite = texture != null
-                ? Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f))
+            view.Image.sprite = sprite != null
+                ? sprite
                 : fallbackSprites[Random.Range(0, fallbackSprites.Length)];
 
             tips.Add(view);
