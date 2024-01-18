@@ -33,7 +33,7 @@ namespace DCL.ResourcesUnloading
         private IStreamableCache<GltfContainerAsset, string> gltfContainerAssetsCache;
         private IStreamableCache<Texture2D, GetTextureIntention> texturesCache;
         private IStreamableCache<AudioClip, GetAudioClipIntention> audioClipsCache;
-        private IStreamableCache<Texture2D, GetNftShapeIntention> nftShapeCache;
+        private IStreamableCache<Texture2D, GetNftShapeIntention> nftShapeCache = new IStreamableCache<Texture2D, GetNftShapeIntention>.Fake();
 
         private IWearableAssetsCache wearableAssetsCache;
         private IWearableCatalog wearableCatalog;

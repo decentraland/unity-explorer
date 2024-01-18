@@ -33,8 +33,8 @@ namespace ECS.StreamableLoading.NftShapes
 
         protected override async UniTask<StreamableLoadingResult<Texture2D>> FlowInternalAsync(GetNftShapeIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            string imageUrl = await ImageUrl(intention.CommonArguments, ct);
-            bool isOkSize = await webContentSizes.IsOkSize(imageUrl, ct);
+            string imageUrl = await ImageUrlAsync(intention.CommonArguments, ct);
+            bool isOkSize = await webContentSizes.IsOkSizeAsync(imageUrl, ct);
 
             if (isOkSize == false)
                 return new StreamableLoadingResult<Texture2D>(new Exception("Image size is too big"));
@@ -51,7 +51,7 @@ namespace ECS.StreamableLoading.NftShapes
             return new StreamableLoadingResult<Texture2D>(request.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear)!);
         }
 
-        private async UniTask<string> ImageUrl(CommonArguments commonArguments, CancellationToken ct)
+        private async UniTask<string> ImageUrlAsync(CommonArguments commonArguments, CancellationToken ct)
         {
             var infoRequest = await webRequestController.GetAsync(commonArguments, ct, GetReportCategory());
             var nft = await infoRequest.CreateFromJson<NftInfoDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);

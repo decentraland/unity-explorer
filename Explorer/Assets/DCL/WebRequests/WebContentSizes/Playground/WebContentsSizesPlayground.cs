@@ -26,7 +26,7 @@ namespace DCL.WebRequests.WebContentSizes.Playground
                 return;
             }
 
-            bool isOk = await webContentSizes.IsOkSize(targetUrl, destroyCancellationToken);
+            bool isOk = await webContentSizes.IsOkSizeAsync(targetUrl, destroyCancellationToken);
             print($"Size for {targetUrl} is ok: {isOk}");
         }
 

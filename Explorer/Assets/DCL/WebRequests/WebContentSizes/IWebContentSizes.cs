@@ -6,7 +6,7 @@ namespace DCL.WebRequests.WebContentSizes
 {
     public interface IWebContentSizes
     {
-        UniTask<bool> IsOkSize(string url, CancellationToken cancellationToken);
+        UniTask<bool> IsOkSizeAsync(string url, CancellationToken cancellationToken);
 
         class Default : IWebContentSizes
         {
@@ -20,8 +20,8 @@ namespace DCL.WebRequests.WebContentSizes
                 );
             }
 
-            public UniTask<bool> IsOkSize(string url, CancellationToken cancellationToken) =>
-                webContentSizes.IsOkSize(url, cancellationToken);
+            public UniTask<bool> IsOkSizeAsync(string url, CancellationToken cancellationToken) =>
+                webContentSizes.IsOkSizeAsync(url, cancellationToken);
         }
     }
 }

@@ -17,14 +17,14 @@ namespace DCL.WebRequests.WebContentSizes
             this.list = list;
         }
 
-        public async UniTask<bool> IsOkSize(string url, CancellationToken cancellationToken)
+        public async UniTask<bool> IsOkSizeAsync(string url, CancellationToken cancellationToken)
         {
             foreach (var webContentSizes in list)
             {
                 if (cancellationToken.IsCancellationRequested)
                     return false;
 
-                if (await webContentSizes.IsOkSize(url, cancellationToken))
+                if (await webContentSizes.IsOkSizeAsync(url, cancellationToken))
                     return true;
             }
 

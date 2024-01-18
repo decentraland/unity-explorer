@@ -28,7 +28,7 @@ namespace DCL.WebRequests.WebContentSizes
             this.reasonLog = reasonLog;
         }
 
-        public async UniTask<bool> IsOkSize(string url, CancellationToken token)
+        public async UniTask<bool> IsOkSizeAsync(string url, CancellationToken token)
         {
             var request = NewRequest(url);
             request.SendWebRequest().WithCancellation(token);

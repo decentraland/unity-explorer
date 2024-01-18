@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Utilities.Extensions;
 using System;
@@ -54,7 +55,7 @@ namespace DCL.SDKComponents.NftShape.Frames.Pool
                 throw new Exception($"Duplicated frame prefabs: {duplicated}");
             }
 
-            Debug.Log("NftShapeSettings: OK");
+            ReportHub.Log(ReportCategory.ASSETS_PROVISION, "NftShapeSettings: OK");
         }
 
         [Serializable]

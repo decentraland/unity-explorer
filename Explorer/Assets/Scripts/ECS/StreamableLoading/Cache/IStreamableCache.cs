@@ -30,5 +30,38 @@ namespace ECS.StreamableLoading.Cache
         ///     Unload assets from the cache to free memory
         /// </summary>
         void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount);
+
+        class Fake : IStreamableCache<TAsset, TLoadingIntention>
+        {
+            public bool Equals(TLoadingIntention x, TLoadingIntention y) =>
+                throw new Exception("I am fake");
+
+            public int GetHashCode(TLoadingIntention obj) =>
+                throw new Exception("I am fake");
+
+            public void Dispose()
+            {
+
+            }
+
+            public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>> OngoingRequests { get; } = new Dictionary<string, UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>>();
+            public IDictionary<string, StreamableLoadingResult<TAsset>> IrrecoverableFailures { get; } = new Dictionary<string, StreamableLoadingResult<TAsset>>();
+
+            public bool TryGet(in TLoadingIntention key, out TAsset asset)
+            {
+                asset = default(TAsset);
+                return false;
+            }
+
+            public void Add(in TLoadingIntention key, TAsset asset)
+            {
+                //ignore
+            }
+
+            public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount)
+            {
+                //ignore
+            }
+        }
     }
 }

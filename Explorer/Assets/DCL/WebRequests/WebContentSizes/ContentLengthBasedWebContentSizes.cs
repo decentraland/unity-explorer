@@ -16,7 +16,7 @@ namespace DCL.WebRequests.WebContentSizes
             this.maxSize = maxSize;
         }
 
-        public async UniTask<bool> IsOkSize(string url, CancellationToken cancellationToken)
+        public async UniTask<bool> IsOkSizeAsync(string url, CancellationToken cancellationToken)
         {
             var request = UnityWebRequest.Head(url)!;
             await request.SendWebRequest()!.WithCancellation(cancellationToken);
