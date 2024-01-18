@@ -17,7 +17,6 @@ using System.Runtime.CompilerServices;
 using DCL.LOD.Components;
 using Unity.Collections;
 using Unity.Jobs;
-using UnityEditor.Build.Content;
 using UnityEngine;
 using Utility;
 

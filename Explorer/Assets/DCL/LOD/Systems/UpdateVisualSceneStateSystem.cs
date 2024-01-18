@@ -1,22 +1,13 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Metadata;
-using Cysharp.Threading.Tasks;
 using DCL.LOD.Components;
-using DCL.LOD.Systems;
 using ECS.Abstract;
-using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
-using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
-using NSubstitute.ReturnsExtensions;
-using Realm;
-using SceneRunner;
 using SceneRunner.Scene;
-using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
 {
