@@ -72,6 +72,7 @@ namespace Global.Dynamic
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IPerformanceBudget memoryBudget;
         private readonly StaticSettings staticSettings;
+        private readonly StaticContainer staticContainer;
         private readonly IScenesCache scenesCache;
         private readonly CharacterContainer characterContainer;
 
@@ -94,6 +95,7 @@ namespace Global.Dynamic
             this.globalPlugins = globalPlugins;
             this.debugContainerBuilder = debugContainerBuilder;
             this.realmData = realmData;
+            this.staticContainer = staticContainer;
             this.scenesCache = scenesCache;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
@@ -174,7 +176,11 @@ namespace Global.Dynamic
 
             SystemGroupSnapshot.Instance.Register(GlobalWorld.WORLD_NAME, worldSystems);
 
-            return new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
+            var globalWorld = new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
+
+            staticContainer.GlobalWorld.SetWorld(world);
+
+            return globalWorld;
         }
     }
 }

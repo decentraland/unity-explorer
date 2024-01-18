@@ -14,6 +14,7 @@ using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiling;
 using DCL.ResourcesUnloading;
 using DCL.Time;
+using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
@@ -32,6 +33,8 @@ namespace Global
     /// </summary>
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
+        public WorldProxy GlobalWorld = new ();
+        private ProvidedInstance<CharacterObject> characterObject;
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings;
@@ -160,7 +163,7 @@ namespace Global
                 new MaterialsPlugin(sharedDependencies, addressablesProvisioner),
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
-
+                new AvatarShapePlugin(container.GlobalWorld),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
