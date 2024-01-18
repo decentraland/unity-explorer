@@ -124,17 +124,19 @@ namespace DCL.SceneLoadingScreens
         {
             async UniTask UpdateProgressBarAsync()
             {
-                var prevProgress = 0f;
-
-                do
+                try
                 {
-                    float progress = await inputData.AsyncLoadProcessReport.ProgressCounter.WaitAsync(ct);
-                    float delta = progress - prevProgress;
-                    prevProgress = progress;
-                    await UniTask.SwitchToMainThread(ct);
-                    AddLoadProgress(delta * progressProportion);
+                    var prevProgress = 0f;
+
+                    await foreach (float progress in inputData.AsyncLoadProcessReport.ProgressCounter.WithCancellation(ct))
+                    {
+                        float delta = progress - prevProgress;
+                        prevProgress = progress;
+                        await UniTask.SwitchToMainThread(ct);
+                        AddLoadProgress(delta * progressProportion);
+                    }
                 }
-                while (prevProgress < 1 && !ct.IsCancellationRequested);
+                catch (OperationCanceledException) { }
             }
 
             try

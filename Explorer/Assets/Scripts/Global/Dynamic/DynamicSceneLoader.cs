@@ -159,21 +159,20 @@ namespace Global.Dynamic
 
         private void ChangeRealm(string selectedRealm)
         {
-            async UniTask ChangeRealmAsync(string selectedRealm, CancellationToken ct)
+            async UniTask ChangeRealmAsync(CancellationToken ct)
             {
                 IRealmController realmController = dynamicWorldContainer!.RealmController;
-
-                if (globalWorld != null)
-                    await realmController.UnloadCurrentRealmAsync();
 
                 await UniTask.SwitchToMainThread();
 
                 var loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
-                dynamicWorldContainer.MvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport))).Forget();
-                await realmController.SetRealmAsync(URLDomain.FromString(selectedRealm), settings.StartPosition, loadReport, ct);
+
+                await UniTask.WhenAll(dynamicWorldContainer.MvcManager.ShowAsync(
+                        SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport))),
+                    realmController.SetRealmAsync(URLDomain.FromString(selectedRealm), settings.StartPosition, loadReport, ct));
             }
 
-            ChangeRealmAsync(selectedRealm, CancellationToken.None).Forget();
+            ChangeRealmAsync(destroyCancellationToken).Forget();
         }
     }
 }

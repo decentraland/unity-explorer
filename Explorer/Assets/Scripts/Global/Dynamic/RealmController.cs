@@ -67,14 +67,13 @@ namespace Global.Dynamic
         /// <summary>
         ///     it is an async process so it should be executed before ECS kicks in
         /// </summary>
-        public async UniTask SetRealmAsync(URLDomain realm, Vector2Int playerStartPosition, AsyncLoadProcessReport? loadReport, CancellationToken ct)
+        public async UniTask SetRealmAsync(URLDomain realm, Vector2Int playerStartPosition, AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
             World world = globalWorld!.EcsWorld;
 
             await UnloadCurrentRealmAsync();
 
-            if (loadReport != null)
-                loadReport.ProgressCounter.Value = 0.1f;
+            loadReport.ProgressCounter.Value = 0.1f;
 
             IpfsTypes.ServerAbout result = await (await webRequestController.GetAsync(new CommonArguments(realm.Append(new URLPath("/about"))), ct, ReportCategory.REALM))
                .OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
@@ -96,38 +95,12 @@ namespace Global.Dynamic
 
             var sceneLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
 
-            if (loadReport != null)
-                PropagateSceneLoadReportToRealmLoadReportAsync(loadReport.ProgressCounter.Value, loadReport, sceneLoadReport, ct).Forget();
-
             try
             {
-                await teleportController.TeleportToSceneSpawnPointAsync(playerStartPosition, sceneLoadReport, ct);
-
-                if (loadReport != null)
-                {
-                    loadReport.ProgressCounter.Value = 1f;
-                    loadReport.CompletionSource.TrySetResult();
-                }
+                await UniTask.WhenAll(sceneLoadReport.PropagateAsync(loadReport, ct, loadReport.ProgressCounter.Value, TimeSpan.FromSeconds(30)),
+                    teleportController.TeleportToSceneSpawnPointAsync(playerStartPosition, sceneLoadReport, ct));
             }
-            catch (Exception e) { loadReport?.CompletionSource.TrySetException(e); }
-        }
-
-        private async UniTaskVoid PropagateSceneLoadReportToRealmLoadReportAsync(
-            float loadOffset,
-            AsyncLoadProcessReport realmLoadReport,
-            AsyncLoadProcessReport sceneLoadReport,
-            CancellationToken ct)
-        {
-            try
-            {
-                while (sceneLoadReport.ProgressCounter.Value < 1f && !ct.IsCancellationRequested)
-                {
-                    float progress = await sceneLoadReport.ProgressCounter.WaitAsync(ct).Timeout(TimeSpan.FromSeconds(30));
-                    realmLoadReport.ProgressCounter.Value = loadOffset + (progress * (1 - loadOffset));
-                }
-            }
-            catch (TimeoutException) { }
-            catch (OperationCanceledException) { }
+            catch (Exception e) { loadReport.CompletionSource.TrySetException(e); }
         }
 
         private void ComplimentWithVolatilePointers(World world, Entity realmEntity)
