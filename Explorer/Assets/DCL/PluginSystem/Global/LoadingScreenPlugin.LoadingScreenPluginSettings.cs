@@ -23,6 +23,9 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField]
             public float TipDisplayDuration { get; private set; }
 
+            [field: SerializeField]
+            public float MinimumScreenDisplayDuration { get; private set; }
+
             [Serializable]
             public class LoadingScreenObjectRef : ComponentReference<SceneLoadingScreenView>
             {

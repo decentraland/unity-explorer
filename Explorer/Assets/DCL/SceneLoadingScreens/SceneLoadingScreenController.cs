@@ -14,6 +14,7 @@ namespace DCL.SceneLoadingScreens
     public partial class SceneLoadingScreenController : ControllerBase<SceneLoadingScreenView, SceneLoadingScreenController.Params>
     {
         private readonly ISceneTipsProvider sceneTipsProvider;
+        private readonly TimeSpan minimumDisplayDuration;
 
         private int currentTip;
         private SceneTips tips;
@@ -21,9 +22,11 @@ namespace DCL.SceneLoadingScreens
         private IntVariable? progressLabel;
 
         public SceneLoadingScreenController(ViewFactoryMethod viewFactory,
-            ISceneTipsProvider sceneTipsProvider) : base(viewFactory)
+            ISceneTipsProvider sceneTipsProvider,
+            TimeSpan minimumDisplayDuration) : base(viewFactory)
         {
             this.sceneTipsProvider = sceneTipsProvider;
+            this.minimumDisplayDuration = minimumDisplayDuration;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
@@ -80,7 +83,7 @@ namespace DCL.SceneLoadingScreens
                        tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
                        RotateTipsOverTime(tips.Duration, tipsRotationCancellationToken.Token).Forget();
                    })
-                  .ContinueWith(() => WaitUntilWorldIsLoadedAsync(ct));
+                  .ContinueWith(() => UniTask.WhenAll(WaitUntilWorldIsLoadedAsync(ct), UniTask.Delay(minimumDisplayDuration, cancellationToken: ct)));
         }
 
         private async UniTask ShowTipsAsync(CancellationToken ct)

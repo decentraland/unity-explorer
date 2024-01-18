@@ -38,7 +38,8 @@ namespace DCL.PluginSystem.Global
 
             await tipsProvider.Initialize(ct);
 
-            mvcManager.RegisterController(new SceneLoadingScreenController(authScreenFactory, tipsProvider));
+            mvcManager.RegisterController(new SceneLoadingScreenController(authScreenFactory, tipsProvider,
+                TimeSpan.FromSeconds(settings.MinimumScreenDisplayDuration)));
         }
     }
 }
