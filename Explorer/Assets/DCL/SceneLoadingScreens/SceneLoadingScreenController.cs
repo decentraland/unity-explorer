@@ -102,7 +102,7 @@ namespace DCL.SceneLoadingScreens
 
         private async UniTask ShowTipsAsync(CancellationToken ct)
         {
-            tips = await sceneTipsProvider.Get(ct);
+            tips = await sceneTipsProvider.GetAsync(ct);
 
             List<SceneTips.Tip> list = ListPool<SceneTips.Tip>.Get();
 

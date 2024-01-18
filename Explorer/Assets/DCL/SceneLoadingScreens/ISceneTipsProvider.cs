@@ -8,6 +8,6 @@ namespace DCL.SceneLoadingScreens
     {
         // TODO: in the future we may require the parcel coordinate to provide specific scene tips
         // UniTask<SceneTips> Get(Vector2Int parcelCoord, CancellationToken ct);
-        UniTask<SceneTips> Get(CancellationToken ct);
+        UniTask<SceneTips> GetAsync(CancellationToken ct);
     }
 }

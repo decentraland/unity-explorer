@@ -45,8 +45,10 @@ namespace DCL.ParcelsService
                                       new DebugButtonDef("To Spawn Point", () =>
                                       {
                                           var loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
-                                          mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport))).Forget();
-                                          teleportController.TeleportToSceneSpawnPointAsync(binding.Value, loadReport, CancellationToken.None);
+
+                                          UniTask.WhenAll(mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport))),
+                                                      teleportController.TeleportToSceneSpawnPointAsync(binding.Value, loadReport, CancellationToken.None))
+                                                 .Forget();
                                       }));
         }
     }

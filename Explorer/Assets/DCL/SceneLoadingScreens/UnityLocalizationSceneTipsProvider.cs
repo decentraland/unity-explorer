@@ -32,7 +32,7 @@ namespace DCL.SceneLoadingScreens
             this.defaultDuration = defaultDuration;
         }
 
-        public async UniTask Initialize(CancellationToken ct)
+        public async UniTask InitializeAsync(CancellationToken ct)
         {
             StringTable tipsTable = await tipsDatabase.GetTableAsync(fallbackTipsTable).Task;
 
@@ -42,10 +42,10 @@ namespace DCL.SceneLoadingScreens
 
             ct.ThrowIfCancellationRequested();
 
-            fallbackTips = await Get(tipsTable, imagesTable, ct);
+            fallbackTips = await GetAsync(tipsTable, imagesTable, ct);
         }
 
-        public async UniTask<SceneTips> Get(CancellationToken ct) =>
+        public async UniTask<SceneTips> GetAsync(CancellationToken ct) =>
 
             // TODO: we will need specific scene tips in the future, but its disabled at the moment
             /*StringTable tipsTable = await tipsDatabase.GetTableAsync($"LoadingSceneTips-{parcelCoord.x},{parcelCoord.y}").Task
@@ -61,7 +61,7 @@ namespace DCL.SceneLoadingScreens
             return await Get(tipsTable, imagesTable, ct);*/
             fallbackTips;
 
-        private async UniTask<SceneTips> Get(StringTable tipsTable, AssetTable? imagesTable, CancellationToken ct)
+        private async UniTask<SceneTips> GetAsync(StringTable tipsTable, AssetTable? imagesTable, CancellationToken ct)
         {
             int tipCount = tipsTable.Count / 2;
             var tips = new SceneTips.Tip[tipCount];
