@@ -1,13 +1,11 @@
 using DCL.AsyncLoadReporting;
+using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Reporting
 {
     public partial interface ISceneReadinessReportQueue
     {
-        void Enqueue(Vector2Int parcel, AsyncLoadProcessReport report);
-
-        bool TryDequeue(IReadOnlyList<Vector2Int> parcels, out IReportList report);
+        public interface IReportList : IReadOnlyList<AsyncLoadProcessReport>, IDisposable { }
     }
 }

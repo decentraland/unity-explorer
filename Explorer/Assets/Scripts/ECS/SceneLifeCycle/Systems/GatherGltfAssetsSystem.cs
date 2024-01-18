@@ -21,7 +21,7 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ISceneReadinessReportQueue readinessReportQueue;
         private readonly ISceneData sceneData;
 
-        private IReadOnlyList<AsyncLoadProcessReport>? reports;
+        private ISceneReadinessReportQueue.IReportList? reports;
 
         private HashSet<EntityReference>? entitiesUnderObservation;
 
@@ -115,8 +115,7 @@ namespace ECS.SceneLifeCycle.Systems
                     for (var i = 0; i < reports.Count; i++)
                         reports[i].CompletionSource.TrySetResult();
 
-                    // TODO return reports to the pool as they are no longer needed
-                    reports = null;
+                    reports.Dispose();
                 }
             }
         }

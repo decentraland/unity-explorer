@@ -9,7 +9,7 @@ namespace ECS.SceneLifeCycle.Reporting
     {
         private static readonly ListObjectPool<AsyncLoadProcessReport> REPORT_POOL = new (listInstanceDefaultCapacity: 1, maxSize: 10);
 
-        private readonly Dictionary<Vector2Int, List<AsyncLoadProcessReport>> queue = new (1);
+        private readonly Dictionary<Vector2Int, PooledLoadReportList> queue = new (1);
 
         private readonly IScenesCache scenesCache;
 
@@ -27,13 +27,13 @@ namespace ECS.SceneLifeCycle.Reporting
                 report.CompletionSource.TrySetResult();
             }
 
-            if (!queue.TryGetValue(parcel, out List<AsyncLoadProcessReport> list))
-                queue[parcel] = list = REPORT_POOL.Get();
+            if (!queue.TryGetValue(parcel, out PooledLoadReportList queuedReport))
+                queue[parcel] = queuedReport = new PooledLoadReportList(REPORT_POOL);
 
-            list.Add(report);
+            queuedReport.reports.Add(report);
         }
 
-        public bool TryDequeue(IReadOnlyList<Vector2Int> parcels, out IReadOnlyList<AsyncLoadProcessReport> report)
+        public bool TryDequeue(IReadOnlyList<Vector2Int> parcels, out ISceneReadinessReportQueue.IReportList report)
         {
             if (queue.Count == 0) // nothing to dequeue
             {
@@ -43,7 +43,7 @@ namespace ECS.SceneLifeCycle.Reporting
 
             for (var i = 0; i < parcels.Count; i++)
             {
-                if (queue.TryGetValue(parcels[i], out List<AsyncLoadProcessReport> list))
+                if (queue.TryGetValue(parcels[i], out PooledLoadReportList list))
                 {
                     report = list;
                     queue.Remove(parcels[i]);
