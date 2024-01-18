@@ -22,7 +22,7 @@ namespace DCL.WebRequests.WebContentSizes
             await request.SendWebRequest()!.WithCancellation(cancellationToken);
 
             if (request.isDone && TryGetLength(request, out ulong length))
-                return length < maxSize.MaxSizeInBytes();
+                return length != 0 && length < maxSize.MaxSizeInBytes();
 
             return false;
         }
