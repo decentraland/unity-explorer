@@ -87,7 +87,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea1848f9a46f9e144b765027c1c39cea, type: 3}
   m_Name: DCLRenderFeatureProceduralSkyBox
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   m_SettingsGenerate:
     SunSize: 0.04
     SunSizeConvergence: 5

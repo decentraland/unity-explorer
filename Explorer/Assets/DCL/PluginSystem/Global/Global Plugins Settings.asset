@@ -26,6 +26,7 @@ MonoBehaviour:
   - rid: 56198586647707649
   - rid: 1095376790733193218
   - rid: 3022169693460627458
+  - rid: 1730793352453160960
   references:
     version: 2
     RefIds:
@@ -111,6 +112,13 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 1730793352453160960
+      type: {class: LODSettings, ns: DCL.LOD, asm: DCL.Plugins}
+      data:
+        <SceneLODLimit>k__BackingField: 1
+        LodBucketLimits:
+        - {x: 1, y: 2}
+        - {x: 2, y: 5}
     - rid: 2152807656697888768
       type: {class: MinimapPlugin/MinimapSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
