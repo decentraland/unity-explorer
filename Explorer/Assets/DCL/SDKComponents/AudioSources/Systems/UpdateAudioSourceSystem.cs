@@ -93,11 +93,11 @@ namespace DCL.SDKComponents.AudioSources
             if (component.AudioSourceAssigned)
                 component.AudioSource.ApplyPBAudioSource(sdkComponent);
 
-            if (sdkComponent.AudioClipUrl != component.AudioClipUrl)
+            if (component.AudioClipUrl != sdkComponent.AudioClipUrl)
             {
                 component.CleanUp(world, cache, audioSourcesPool);
-
                 component.AudioClipUrl = sdkComponent.AudioClipUrl;
+
                 if (AudioUtils.TryCreateAudioClipPromise(world, sceneData, sdkComponent.AudioClipUrl, partitionComponent, out Promise? clipPromise))
                     component.ClipPromise = clipPromise!.Value;
             }

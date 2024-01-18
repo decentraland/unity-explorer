@@ -70,6 +70,8 @@ namespace DCL.SDKComponents.AudioSources
             public void Update(ref AudioSourceComponent component)
             {
                 component.CleanUp(world, cache, componentPool);
+                componentPool.Release(component.AudioSource);
+
                 component.Dispose();
             }
         }

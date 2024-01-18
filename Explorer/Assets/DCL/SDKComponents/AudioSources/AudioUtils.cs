@@ -21,8 +21,10 @@ namespace DCL.SDKComponents.AudioSources
 
             if (component.AudioSource == null) return; // loading in progress
 
+            if (component.AudioSource.isPlaying)
+                component.AudioSource.Stop();
+
             cache.Dereference(component.ClipPromise.LoadingIntention, component.AudioSource.clip);
-            componentPool.Release(component.AudioSource);
         }
 
         public static bool TryCreateAudioClipPromise(World world, ISceneData sceneData, string pbAudioClipUrl, PartitionComponent partitionComponent, out Promise? assetPromise)
@@ -50,7 +52,7 @@ namespace DCL.SDKComponents.AudioSources
                 return AudioType.UNKNOWN;
             }
 
-            var ext = url.AsSpan()[^3..];
+            ReadOnlySpan<char> ext = url.AsSpan()[^3..];
 
             if (ext.Equals("mp3", StringComparison.OrdinalIgnoreCase))
                 return AudioType.MPEG;
