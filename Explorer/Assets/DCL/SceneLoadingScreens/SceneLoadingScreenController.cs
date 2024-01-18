@@ -57,6 +57,8 @@ namespace DCL.SceneLoadingScreens
                 RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
             });
 
+            viewInstance.OnBreadcrumbClicked += ShowTip;
+
             progressLabel = (IntVariable)viewInstance.ProgressLabel.StringReference["progressValue"];
         }
 

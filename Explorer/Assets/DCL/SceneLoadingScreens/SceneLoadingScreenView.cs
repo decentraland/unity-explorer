@@ -1,4 +1,5 @@
 using MVC;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Localization.Components;
@@ -33,14 +34,27 @@ namespace DCL.SceneLoadingScreens
         [SerializeField]
         private Image backgroundImage = null!;
 
+        [SerializeField]
+        private TipBreadcrumb breadcrumbPrefab = null!;
+
+        [SerializeField]
+        private Transform breadcrumbParent = null!;
+
+        public event Action<int>? OnBreadcrumbClicked;
+
         private readonly List<TipView> tips = new ();
+        private readonly List<TipBreadcrumb> tipsBreadcrumbs = new ();
 
         public void ClearTips()
         {
             foreach (TipView tip in tips)
                 Destroy(tip.gameObject);
 
+            foreach (TipBreadcrumb? breadcrumb in tipsBreadcrumbs)
+                Destroy(breadcrumb.gameObject);
+
             tips.Clear();
+            tipsBreadcrumbs.Clear();
         }
 
         public void AddTip(SceneTips.Tip tip)
@@ -55,7 +69,12 @@ namespace DCL.SceneLoadingScreens
                 ? sprite
                 : fallbackSprites[Random.Range(0, fallbackSprites.Length)];
 
+            TipBreadcrumb breadcrumb = Instantiate(breadcrumbPrefab, breadcrumbParent);
+            int breadcrumbIndex = tipsBreadcrumbs.Count;
+            breadcrumb.Button.onClick.AddListener(() => OnBreadcrumbClicked?.Invoke(breadcrumbIndex));
+
             tips.Add(view);
+            tipsBreadcrumbs.Add(breadcrumb);
         }
 
         public void ShowTip(int index)
@@ -65,6 +84,11 @@ namespace DCL.SceneLoadingScreens
 
             tips[index].gameObject.SetActive(true);
             backgroundImage.sprite = tips[index].Image.sprite;
+
+            foreach (TipBreadcrumb? breadcrumb in tipsBreadcrumbs)
+                breadcrumb.Unselect();
+
+            tipsBreadcrumbs[index].Select();
         }
     }
 }
