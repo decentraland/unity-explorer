@@ -7,6 +7,9 @@ namespace DCL.Backpack
     public class BackpackInfoPanelView : MonoBehaviour
     {
         [field: SerializeField]
+        public HideCategoryGridView HideCategoryGridView { get; private set; }
+
+        [field: SerializeField]
         public GameObject EmptyPanel { get; private set; }
 
         [field: SerializeField]

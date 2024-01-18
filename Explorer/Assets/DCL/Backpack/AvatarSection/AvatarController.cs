@@ -34,13 +34,16 @@ namespace DCL.Backpack
             new BackpackSearchController(view.backpackSearchBar, backpackCommandBus, backpackEventBus);
             slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus, rarityBackgrounds);
             backpackGridController = new BackpackGridController(view.backpackGridView, backpackCommandBus, backpackEventBus, web3IdentityCache, rarityBackgrounds, rarityColors, categoryIcons, backpackEquipStatusController, backpackSortController, pageButtonView);
-            backpackInfoPanelController = new BackpackInfoPanelController(view.backpackInfoPanelView, backpackEventBus, categoryIcons, rarityInfoPanelBackgrounds);
+            backpackInfoPanelController = new BackpackInfoPanelController(view.backpackInfoPanelView, backpackEventBus, categoryIcons, rarityInfoPanelBackgrounds, backpackEquipStatusController);
 
             rectTransform = view.GetComponent<RectTransform>();
         }
 
-        public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct) =>
+        public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
+        {
             await backpackGridController.InitialiseAssetsAsync(assetsProvisioner, ct);
+            await backpackInfoPanelController.InitialiseAssetsAsync(assetsProvisioner, ct);
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in Entity playerEntity)
         {
