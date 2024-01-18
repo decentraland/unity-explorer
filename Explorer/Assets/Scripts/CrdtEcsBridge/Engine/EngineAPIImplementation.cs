@@ -21,26 +21,26 @@ namespace CrdtEcsBridge.Engine
     /// </summary>
     public class EngineAPIImplementation : IEngineApi
     {
-        private readonly ISharedPoolsProvider sharedPoolsProvider;
-        private readonly IInstancePoolsProvider instancePoolsProvider;
+        private readonly CustomSampler applyBufferSampler;
+        private readonly ICRDTDeserializer crdtDeserializer;
+        private readonly CustomSampler crdtProcessMessagesSampler;
 
         private readonly ICRDTProtocol crdtProtocol;
-        private readonly ICRDTDeserializer crdtDeserializer;
         private readonly ICRDTSerializer crdtSerializer;
         private readonly ICRDTWorldSynchronizer crdtWorldSynchronizer;
-        private readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
-        private readonly ISystemGroupsUpdateGate systemGroupsUpdateGate;
-        private readonly ISceneExceptionsHandler exceptionsHandler;
-        private readonly MutexSync mutexSync;
 
         private readonly CustomSampler deserializeBatchSampler;
-        private readonly CustomSampler worldSyncBufferSampler;
+        private readonly ISceneExceptionsHandler exceptionsHandler;
+        private readonly IInstancePoolsProvider instancePoolsProvider;
+        private readonly MutexSync mutexSync;
+        private readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
         private readonly CustomSampler outgoingMessagesSampler;
-        private readonly CustomSampler crdtProcessMessagesSampler;
-        private readonly CustomSampler applyBufferSampler;
+        private readonly ISharedPoolsProvider sharedPoolsProvider;
+        private readonly ISystemGroupsUpdateGate systemGroupsUpdateGate;
+        private readonly CustomSampler worldSyncBufferSampler;
+        private bool isDisposing;
 
         private byte[] lastSerializationBuffer;
-        private bool isDisposing;
 
         public EngineAPIImplementation(
             ISharedPoolsProvider poolsProvider,
@@ -136,62 +136,6 @@ namespace CrdtEcsBridge.Engine
             return ArraySegment<byte>.Empty;
         }
 
-        private int SerializeOutgoingCRDTMessages()
-        {
-            try
-            {
-                outgoingMessagesSampler.Begin();
-
-                int payloadLength;
-
-                using (OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock())
-                {
-                    lastSerializationBuffer =
-                        sharedPoolsProvider.GetSerializedStateBytesPool(
-                            payloadLength = outgoingMessagesSyncBlock.PayloadLength);
-
-                    SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, lastSerializationBuffer.AsSpan());
-                }
-
-                outgoingMessagesSampler.End();
-                return payloadLength;
-            }
-            catch (Exception e)
-            {
-                exceptionsHandler.OnEngineException(e, ReportCategory.CRDT);
-                return 0;
-            }
-        }
-
-        // Use mutex to apply command buffer from the background thread instead of synchronizing by the main one
-        private void ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer)
-        {
-            try
-            {
-                using MutexSync.Scope mutex = mutexSync.GetScope();
-
-                applyBufferSampler.Begin();
-
-                // Apply changes to the ECS World on the main thread
-                crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncBuffer);
-                applyBufferSampler.End();
-
-                // Allow system for which throttling is enabled to process once
-                // If the scene is updated more frequently than Unity Loop the gate will be effectively open all the time
-                systemGroupsUpdateGate.Open();
-            }
-            catch (Exception e) { exceptionsHandler.OnEngineException(e, ReportCategory.CRDT_ECS_BRIDGE); }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SerializeOutgoingCRDTMessages(IReadOnlyCollection<ProcessedCRDTMessage> outgoingMessages, Span<byte> span)
-        {
-            if (outgoingMessages.Count == 0) return;
-
-            foreach (ProcessedCRDTMessage processedCRDTMessage in outgoingMessages)
-                crdtSerializer.Serialize(ref span, in processedCRDTMessage);
-        }
-
         public ArraySegment<byte> CrdtGetState()
         {
             if (isDisposing) return Array.Empty<byte>();
@@ -249,6 +193,91 @@ namespace CrdtEcsBridge.Engine
         public void SetIsDisposing()
         {
             isDisposing = true;
+        }
+
+        private int SerializeOutgoingCRDTMessages()
+        {
+            try
+            {
+                outgoingMessagesSampler.Begin();
+
+                int payloadLength;
+
+                using (OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock())
+                {
+                    lastSerializationBuffer =
+                        sharedPoolsProvider.GetSerializedStateBytesPool(
+                            payloadLength = outgoingMessagesSyncBlock.PayloadLength);
+
+                    SerializeOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages, lastSerializationBuffer.AsSpan());
+
+                    SyncOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages);
+                }
+
+                outgoingMessagesSampler.End();
+                return payloadLength;
+            }
+            catch (Exception e)
+            {
+                exceptionsHandler.OnEngineException(e, ReportCategory.CRDT);
+                return 0;
+            }
+        }
+
+        /// <summary>
+        ///     If local messages are not written in the local CRDT, the final state
+        ///     including timestamp is incorrect. Subsequent creation of propagated messages will result in a wrong timestamp
+        /// </summary>
+        private void SyncOutgoingCRDTMessages(IReadOnlyList<ProcessedCRDTMessage> outgoingMessages)
+        {
+            for (var i = 0; i < outgoingMessages.Count; i++)
+            {
+                ProcessedCRDTMessage m = outgoingMessages[i];
+
+                // We are interested in LWW messages only,
+                switch (m.message.Type)
+                {
+                    case CRDTMessageType.DELETE_ENTITY:
+                    case CRDTMessageType.PUT_COMPONENT:
+                        // instead of processing via CRDTProtocol.ProcessMessage
+                        // we can skip part of the logic as we guarantee that the local message is the final valid state (see OutgoingCRDTMessagesProvider.AddLwwMessage)
+                        crdtProtocol.UpdateLWWState(m.message);
+                        break;
+                    default:
+                        // as this data is not kept in CRDTProtocol it must be released immediately
+                        m.message.Data.Dispose();
+                        break;
+                }
+            }
+        }
+
+        // Use mutex to apply command buffer from the background thread instead of synchronizing by the main one
+        private void ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer)
+        {
+            try
+            {
+                using MutexSync.Scope mutex = mutexSync.GetScope();
+
+                applyBufferSampler.Begin();
+
+                // Apply changes to the ECS World on the main thread
+                crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncBuffer);
+                applyBufferSampler.End();
+
+                // Allow system for which throttling is enabled to process once
+                // If the scene is updated more frequently than Unity Loop the gate will be effectively open all the time
+                systemGroupsUpdateGate.Open();
+            }
+            catch (Exception e) { exceptionsHandler.OnEngineException(e, ReportCategory.CRDT_ECS_BRIDGE); }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void SerializeOutgoingCRDTMessages(IReadOnlyCollection<ProcessedCRDTMessage> outgoingMessages, Span<byte> span)
+        {
+            if (outgoingMessages.Count == 0) return;
+
+            foreach (ProcessedCRDTMessage processedCRDTMessage in outgoingMessages)
+                crdtSerializer.Serialize(ref span, in processedCRDTMessage);
         }
 
         /// <summary>

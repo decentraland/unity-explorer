@@ -5,6 +5,7 @@ using DCL.Interaction.PlayerOriginated;
 using DCL.Interaction.PlayerOriginated.Systems;
 using DCL.Interaction.Raycast.Systems;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiling;
 using ECS.LifeCycle;
@@ -21,15 +22,17 @@ namespace DCL.PluginSystem.World
         private readonly IGlobalInputEvents globalInputEvents;
         private readonly IProfilingProvider profilingProvider;
         private readonly ECSWorldSingletonSharedDependencies sharedDependencies;
+        private readonly IComponentPoolsRegistry poolsRegistry;
 
         private IReleasablePerformanceBudget raycastBudget;
         private Settings settings;
 
-        public InteractionPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IProfilingProvider profilingProvider, IGlobalInputEvents globalInputEvents)
+        public InteractionPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IProfilingProvider profilingProvider, IGlobalInputEvents globalInputEvents, IComponentPoolsRegistry poolsRegistry)
         {
             this.sharedDependencies = sharedDependencies;
             this.profilingProvider = profilingProvider;
             this.globalInputEvents = globalInputEvents;
+            this.poolsRegistry = poolsRegistry;
         }
 
         public void Dispose() { }
@@ -57,7 +60,8 @@ namespace DCL.PluginSystem.World
             WritePointerEventResultsSystem.InjectToWorld(ref builder, sceneDeps.SceneData,
                 sceneDeps.EcsToCRDTWriter,
                 sceneDeps.SceneStateProvider,
-                globalInputEvents);
+                globalInputEvents,
+                poolsRegistry.GetReferenceTypePool<RaycastHit>());
         }
 
         public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }

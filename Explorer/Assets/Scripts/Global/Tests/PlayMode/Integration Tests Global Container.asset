@@ -19,6 +19,7 @@ MonoBehaviour:
   - rid: 6784895267130048514
   - rid: 1268264197252972544
   - rid: 8147919284940570626
+  - rid: 4753057251419750402
   references:
     version: 2
     RefIds:
@@ -32,8 +33,8 @@ MonoBehaviour:
             m_SubObjectType: 
             m_EditorAssetChanged: 0
           <InputButtons>k__BackingField: []
-    - rid: 6784895265395441664
-      type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+    - rid: 4753057251419750402
+      type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:
         <CharacterObject>k__BackingField:
           m_AssetGUID: 0eecf14978c1aa74381023946dde5c78
@@ -41,6 +42,10 @@ MonoBehaviour:
           m_SubObjectType: 
           m_EditorAssetChanged: 0
         <StartYPosition>k__BackingField: 1
+        <sceneBucketPropagationLimit>k__BackingField: 3
+    - rid: 6784895265395441664
+      type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
         <ReportHandlingSettings>k__BackingField:
           m_AssetGUID: c9893189605d84349b03f89a01d6abca
           m_SubObjectName: 

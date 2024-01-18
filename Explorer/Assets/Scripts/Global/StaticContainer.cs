@@ -33,8 +33,8 @@ namespace Global
     /// </summary>
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
-        public WorldProxy GlobalWorld = new ();
         private ProvidedInstance<CharacterObject> characterObject;
+        public WorldProxy GlobalWorld = new ();
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings;
@@ -94,7 +94,7 @@ namespace Global
                     AssetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct));
         }
 
-        private static async UniTask<bool> InitializeContainers(StaticContainer target, IPluginSettingsContainer settings, CancellationToken ct)
+        private static async UniTask<bool> InitializeContainersAsync(StaticContainer target, IPluginSettingsContainer settings, CancellationToken ct)
         {
             ((StaticContainer plugin, bool success), (CharacterContainer plugin, bool success)) results = await UniTask.WhenAll(
                 settings.InitializePluginAsync(target, ct),
@@ -124,7 +124,7 @@ namespace Global
             container.AssetsProvisioner = addressablesProvisioner;
             container.CharacterContainer = new CharacterContainer(addressablesProvisioner, exposedGlobalDataContainer.ExposedCameraData);
 
-            bool result = await InitializeContainers(container, settingsContainer, ct);
+            bool result = await InitializeContainersAsync(container, settingsContainer, ct);
 
             if (!result)
                 return (null, false);
@@ -169,7 +169,7 @@ namespace Global
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 assetBundlePlugin,
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
-                new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents),
+                new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry),
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
                 container.CharacterContainer.CreateWorldPlugin(),
 #if UNITY_EDITOR

@@ -139,9 +139,9 @@ namespace DCL.Interaction.Raycast.Systems
             ColliderLayer sdkCollisionMask = sdkComponent.GetCollisionMask();
             int collisionMask = PhysicsLayers.CreateUnityLayerMaskFromSDKMask(sdkCollisionMask);
 
-            using PoolExtensions.Scope<PBRaycastResult> resultScope = raycastComponentPool.AutoScope();
+            // It will be released by the writer
+            PBRaycastResult result = raycastComponentPool.Get();
 
-            PBRaycastResult result = resultScope.Value;
             result.Timestamp = sdkComponent.Timestamp;
             result.Direction.Set(ray.direction);
             result.GlobalOrigin.Set(ray.origin);
@@ -165,7 +165,7 @@ namespace DCL.Interaction.Raycast.Systems
 
             raycastComponent.Executed = !sdkComponent.Continuous;
 
-            ecsToCRDTWriter.PutMessage(crdtEntity, result);
+            ecsToCRDTWriter.PutMessage(result, crdtEntity);
         }
 
         private void SetClosestQualifiedHit(PBRaycastResult raycastResult, Span<RaycastHit> hits, ColliderLayer collisionMask, Vector3 scenePos, Vector3 globalOrigin,

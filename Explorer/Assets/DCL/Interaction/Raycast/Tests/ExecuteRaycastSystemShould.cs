@@ -68,7 +68,7 @@ namespace DCL.Interaction.Raycast.Tests
 
             system.Initialize();
 
-            ecsToCRDTWriter.When(x => x.PutMessage(Arg.Any<CRDTEntity>(), Arg.Any<PBRaycastResult>()))
+            ecsToCRDTWriter.When(x => x.PutMessage(Arg.Any<PBRaycastResult>(), Arg.Any<CRDTEntity>()))
                            .Do(c => raycastResult = c.Arg<PBRaycastResult>());
 
             sceneStateProvider.TickNumber.Returns(5u);
@@ -111,7 +111,7 @@ namespace DCL.Interaction.Raycast.Tests
             // 1 = second element
 
             ecsToCRDTWriter.Received(1)
-                           .PutMessage(new CRDTEntity(25), Arg.Any<PBRaycastResult>());
+                           .PutMessage(Arg.Any<PBRaycastResult>(), new CRDTEntity(25));
 
             Assert.That(raycastResult.TickNumber, Is.EqualTo(5u));
             Assert.That((UnityEngine.Vector3)raycastResult.Direction, Is.EqualTo(UnityEngine.Vector3.forward));
@@ -136,7 +136,7 @@ namespace DCL.Interaction.Raycast.Tests
             Assert.That(world.Get<RaycastComponent>(raycastEntity).Executed, Is.True);
 
             ecsToCRDTWriter.Received(1)
-                           .PutMessage(new CRDTEntity(25), Arg.Any<PBRaycastResult>());
+                           .PutMessage(Arg.Any<PBRaycastResult>(), new CRDTEntity(25));
 
             Assert.That(raycastResult.TickNumber, Is.EqualTo(5u));
             Assert.That((UnityEngine.Vector3)raycastResult.Direction, Is.EqualTo(UnityEngine.Vector3.forward));
@@ -164,7 +164,7 @@ namespace DCL.Interaction.Raycast.Tests
             // 1 = second element
 
             ecsToCRDTWriter.Received(1)
-                           .PutMessage(new CRDTEntity(25), Arg.Any<PBRaycastResult>());
+                           .PutMessage(Arg.Any<PBRaycastResult>(), new CRDTEntity(25));
 
             Assert.That(raycastResult.TickNumber, Is.EqualTo(5u));
             Assert.That((UnityEngine.Vector3)raycastResult.Direction, Is.EqualTo(UnityEngine.Vector3.forward));
@@ -190,7 +190,7 @@ namespace DCL.Interaction.Raycast.Tests
             // 1 = second element
 
             ecsToCRDTWriter.DidNotReceive()
-                           .PutMessage(new CRDTEntity(25), Arg.Any<PBRaycastResult>());
+                           .PutMessage(Arg.Any<PBRaycastResult>(), new CRDTEntity(25));
         }
 
         [Test]
@@ -209,7 +209,7 @@ namespace DCL.Interaction.Raycast.Tests
 
             // 1 = second element
 
-            ecsToCRDTWriter.DidNotReceive().PutMessage(Arg.Any<CRDTEntity>(), Arg.Any<PBRaycastResult>());
+            ecsToCRDTWriter.DidNotReceive().PutMessage(Arg.Any<PBRaycastResult>(), Arg.Any<CRDTEntity>());
         }
 
         [Test]
