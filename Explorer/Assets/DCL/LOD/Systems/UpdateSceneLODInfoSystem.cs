@@ -25,6 +25,7 @@ namespace DCL.LOD.Systems
 {
     [UpdateInGroup(typeof(RealmGroup))]
     [UpdateAfter(typeof(ResolveSceneLODInfo))]
+    [LogCategory(ReportCategory.LOD)]
     public partial class UpdateSceneLODInfoSystem : BaseUnityLoopSystem
     {
         private readonly LODAssetCache lodCache;
@@ -72,26 +73,18 @@ namespace DCL.LOD.Systems
             
             if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
+                var lodKey = sceneLODInfo.GenerateCurrentLodKey();
                 if (result.Succeeded)
                 {
                     lodCache.Dereference(sceneLODInfo.CurrentLOD.LodKey, sceneLODInfo.CurrentLOD);
-                    sceneLODInfo.CurrentLOD = new LODAsset(sceneLODInfo.GenerateCurrentLodKey(),
+                    sceneLODInfo.CurrentLOD = new LODAsset(lodKey,
                         Object.Instantiate(result.Asset.GameObject, sceneLODInfo.ParcelPosition, Quaternion.identity),
                         result.Asset);
                 }
                 else
                 {
-                    if (sceneLODInfo.CurrentLODLevel.Equals(0))
-                    {
-                        lodCache.Dereference(sceneLODInfo.CurrentLOD.LodKey, sceneLODInfo.CurrentLOD);
-                        var lod0 = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                        lod0.transform.position = sceneLODInfo.ParcelPosition;
-                        lod0.transform.rotation = Quaternion.identity;
-                        lod0.name = sceneLODInfo.GenerateCurrentLodKey();
-                        sceneLODInfo.CurrentLOD = new LODAsset(sceneLODInfo.GenerateCurrentLodKey(),
-                            lod0,
-                            result.Asset);
-                    }
+                    ReportHub.LogWarning(GetReportCategory(), $"LOD request for {lodKey} failed");
+                    //TODO: Add a default LOD so we dont have to fail the promise every time
                 }
             }
         }
