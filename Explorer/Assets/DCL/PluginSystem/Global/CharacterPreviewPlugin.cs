@@ -45,8 +45,8 @@ namespace DCL.PluginSystem.Global
         private async UniTask CreateCharacterPreviewPoolAsync(CharacterPreviewSettings settings, CancellationToken ct)
         {
             CharacterPreviewContainer characterPreviewContainer = (await assetsProvisioner.ProvideMainAssetAsync(settings.CharacterPreviewComponentPrefab, ct: ct)).Value.GetComponent<CharacterPreviewContainer>();
-            componentPoolsRegistry.AddGameObjectPoolDCL(() => Object.Instantiate(characterPreviewContainer, Vector3.zero, Quaternion.identity));
-            characterPreviewPoolRegistry = componentPoolsRegistry.GetReferenceTypePoolDCL<CharacterPreviewContainer>();
+            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(characterPreviewContainer, Vector3.zero, Quaternion.identity));
+            characterPreviewPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<CharacterPreviewContainer>();
         }
 
         public class CharacterPreviewSettings : IDCLPluginSettings
