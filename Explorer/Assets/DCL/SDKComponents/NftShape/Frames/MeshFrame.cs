@@ -7,8 +7,8 @@ namespace DCL.SDKComponents.NftShape.Frames
     public class MeshFrame : AbstractFrame
     {
         [SerializeField] private UnityEngine.Renderer renderer = null!;
-        [SerializeField] private Material defaultBlankMaterial = null!;
         [SerializeField] private Material viewNftShapeMaterial = null!;
+        [SerializeField] private Texture2D emptyTexture = null!;
         [SerializeField] private string albedoColorPropertyName = "_BaseMap";
 
         [SerializeField] private int placeIndex;
@@ -29,7 +29,7 @@ namespace DCL.SDKComponents.NftShape.Frames
         public void Awake()
         {
             renderer.EnsureNotNull();
-            defaultBlankMaterial.EnsureNotNull();
+            emptyTexture.EnsureNotNull();
             viewNftShapeMaterial.EnsureNotNull();
             loadingStatus.EnsureNotNull();
             failedStatus.EnsureNotNull();
@@ -38,6 +38,7 @@ namespace DCL.SDKComponents.NftShape.Frames
             backplateColorPropertyId = Shader.PropertyToID(backplateColorPropertyName);
             albedoColorPropertyId = Shader.PropertyToID(albedoColorPropertyName);
 
+            ApplyCanvasMaterial(viewNftShapeMaterial);
             HideStatuses();
         }
 
@@ -52,14 +53,13 @@ namespace DCL.SDKComponents.NftShape.Frames
         public override void Place(Texture2D picture)
         {
             viewNftMaterialPropertyBlock.SetTexture(albedoColorPropertyId, picture);
-            renderer.materials![placeIndex] = viewNftShapeMaterial;
             renderer.SetPropertyBlock(viewNftMaterialPropertyBlock, placeIndex);
             HideStatuses();
         }
 
         public override void UpdateStatus(Status status)
         {
-            renderer.materials![placeIndex] = defaultBlankMaterial;
+            Place(emptyTexture);
             HideStatuses();
 
             var current = status switch
@@ -70,6 +70,13 @@ namespace DCL.SDKComponents.NftShape.Frames
                           };
 
             current.SetActive(true);
+        }
+
+        private void ApplyCanvasMaterial(Material material)
+        {
+            var materials = renderer.materials!;
+            materials[placeIndex] = material;
+            renderer.materials = materials;
         }
 
         private void HideStatuses()

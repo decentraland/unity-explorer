@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028326, g: 0.22571333, b: 0.30692202, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -170,11 +170,7 @@ MonoBehaviour:
   nftShapeProperties:
     color: {r: 0.3254717, g: 1, b: 0.40011987, a: 1}
     style: 13
-    urn: 
-  billboardProperties:
-    useX: 0
-    useY: 0
-    useZ: 0
+    urn: urn:decentraland:ethereum:erc721:0x06012c8cf97bead5deae237070f9587f8e7a266d:1631847
   visible: 1
   settings: {fileID: 11400000, guid: f50de1a2a7dab4e4d952a8071d0273a1, type: 2}
 --- !u!1 &1287629616
