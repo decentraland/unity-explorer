@@ -180,8 +180,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                             components.t1.Value));
                 }
 
-                components.t2.Value.IsDirty = false;
-
                 promisesCreated++;
             }
         }

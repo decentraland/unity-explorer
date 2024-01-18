@@ -53,7 +53,7 @@ namespace ECS.SceneLifeCycle.Systems
                 var sceneLODInfo = new SceneLODInfo { IsDirty = true };
 
                 //Dispose scene
-                sceneFacade.DisposeSceneFacade(scenesCache, sceneDefinitionComponent.Parcels);
+                sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels);
 
                 visualSceneState.IsDirty = false;
 

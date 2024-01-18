@@ -7,7 +7,7 @@ namespace SceneRunner.Scene
 {
     public static class ISceneFacadeExtensions
     {
-        public static void DisposeSceneFacade(this ISceneFacade sceneFacade, IScenesCache scenesCache,
+        public static void DisposeSceneFacadeAndRemoveFromCache(this ISceneFacade sceneFacade, IScenesCache scenesCache,
             IReadOnlyList<Vector2Int> parcels)
         {
             //TODO: Misha, DisposeAsync is callen in many places. Should all of them add the parcels back to the cache?

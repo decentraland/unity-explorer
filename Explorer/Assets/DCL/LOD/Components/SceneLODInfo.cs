@@ -32,7 +32,7 @@ namespace DCL.LOD.Components
             CurrentLOD = default;
         }
 
-        public string GetCurrentLodKey()
+        public string GenerateCurrentLodKey()
         {
             return SceneHash.ToLower() + "_lod" + CurrentLODLevel;
         }

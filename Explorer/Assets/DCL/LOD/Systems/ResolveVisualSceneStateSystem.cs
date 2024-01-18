@@ -65,6 +65,11 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
             }
+            //For SDK6 scenes, we just show lod0
+            else if (!sceneDefinitionComponent.IsSDK7)
+            {
+                visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
+            }
             else
             {
                 var candidateState = partition.Bucket <= sceneLODLimit

@@ -17,6 +17,7 @@ using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using UnityEngine;
+using Utility.Primitives;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
     ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
@@ -74,11 +75,23 @@ namespace DCL.LOD.Systems
                 if (result.Succeeded)
                 {
                     lodCache.Dereference(sceneLODInfo.CurrentLOD.LodKey, sceneLODInfo.CurrentLOD);
-
-                    //TODO: Check if we can reuse mesh filter and mesh renderer
-                    sceneLODInfo.CurrentLOD = new LODAsset(sceneLODInfo.GetCurrentLodKey(),
+                    sceneLODInfo.CurrentLOD = new LODAsset(sceneLODInfo.GenerateCurrentLodKey(),
                         Object.Instantiate(result.Asset.GameObject, sceneLODInfo.ParcelPosition, Quaternion.identity),
                         result.Asset);
+                }
+                else
+                {
+                    if (sceneLODInfo.CurrentLODLevel.Equals(0))
+                    {
+                        lodCache.Dereference(sceneLODInfo.CurrentLOD.LodKey, sceneLODInfo.CurrentLOD);
+                        var lod0 = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                        lod0.transform.position = sceneLODInfo.ParcelPosition;
+                        lod0.transform.rotation = Quaternion.identity;
+                        lod0.name = sceneLODInfo.GenerateCurrentLodKey();
+                        sceneLODInfo.CurrentLOD = new LODAsset(sceneLODInfo.GenerateCurrentLodKey(),
+                            lod0,
+                            result.Asset);
+                    }
                 }
             }
         }
@@ -86,14 +99,17 @@ namespace DCL.LOD.Systems
 
         private void CheckLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo)
         {
-            var sceneLODCandidate = -1;
+            //If we are in an SDK6 scene, this value will be kept.
+            //Therefore, lod0 will be shown
+            var sceneLODCandidate = 0;
+            
             if (partitionComponent.Bucket > lodBucketLimits[0][0] &&
                 partitionComponent.Bucket <= lodBucketLimits[0][1])
                 sceneLODCandidate = 2;
             else if (partitionComponent.Bucket > lodBucketLimits[1][0])
                 sceneLODCandidate = 3;
 
-            if (sceneLODCandidate != sceneLODInfo.CurrentLODLevel && sceneLODCandidate != -1)
+            if (sceneLODCandidate != sceneLODInfo.CurrentLODLevel)
                 UpdateLODLevel(ref partitionComponent, ref sceneLODInfo, sceneLODCandidate);
         }
 
@@ -103,7 +119,7 @@ namespace DCL.LOD.Systems
             sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
 
             sceneLODInfo.CurrentLODLevel = sceneLODCandidate;
-            var newLODKey = sceneLODInfo.GetCurrentLodKey();
+            var newLODKey = sceneLODInfo.GenerateCurrentLodKey();
             if (lodCache.TryGet(newLODKey, out var cachedAsset))
             {
                 //If its cached, no need to make a new promise
@@ -116,7 +132,9 @@ namespace DCL.LOD.Systems
                 if ((Application.platform.Equals(RuntimePlatform.OSXPlayer) ||
                      Application.platform.Equals(RuntimePlatform.OSXEditor)) &&
                     sceneLODInfo.SceneHash.Equals("bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
-                    return;
+                {
+                    sceneLODInfo.SceneHash = "FAIL_THIS_REQUEST_IN_MAC";
+                }
                 
                 sceneLODInfo.CurrentLODPromise =
                     Promise.Create(World,
