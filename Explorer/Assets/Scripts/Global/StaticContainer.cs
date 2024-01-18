@@ -122,7 +122,7 @@ namespace Global
 
             var addressablesProvisioner = new AddressablesProvisioner();
             container.AssetsProvisioner = addressablesProvisioner;
-            container.CharacterContainer = new CharacterContainer(addressablesProvisioner);
+            container.CharacterContainer = new CharacterContainer(addressablesProvisioner, exposedGlobalDataContainer.ExposedCameraData);
 
             bool result = await InitializeContainers(container, settingsContainer, ct);
 

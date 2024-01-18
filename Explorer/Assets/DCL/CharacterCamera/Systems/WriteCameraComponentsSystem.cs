@@ -1,16 +1,13 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
-using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.Prioritization.Components;
 using ECS.Unity.Transforms;
-using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
-using UnityEngine;
-using Utility;
 
 namespace DCL.CharacterCamera.Systems
 {
@@ -26,12 +23,17 @@ namespace DCL.CharacterCamera.Systems
         private readonly IECSToCRDTWriter ecsToCrdtWriter;
         private readonly IExposedCameraData exposedCameraData;
         private readonly ISceneData sceneData;
+        private readonly IPartitionComponent scenePartition;
+        private readonly byte propagationThreshold;
 
-        internal WriteCameraComponentsSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, IExposedCameraData exposedCameraData, ISceneData sceneData) : base(world)
+        internal WriteCameraComponentsSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, IExposedCameraData exposedCameraData, ISceneData sceneData, IPartitionComponent scenePartition,
+            byte propagationThreshold) : base(world)
         {
             this.ecsToCrdtWriter = ecsToCrdtWriter;
             this.exposedCameraData = exposedCameraData;
             this.sceneData = sceneData;
+            this.propagationThreshold = propagationThreshold;
+            this.scenePartition = scenePartition;
         }
 
         public override void Initialize()
@@ -55,6 +57,9 @@ namespace DCL.CharacterCamera.Systems
             // ecsToCrdtWriter.PutMessage(SpecialEntitiesID.CAMERA_ENTITY, SHARED_TRANSFORM);
             //ecsToCrdtWriter.PutMessage(SpecialEntitiesID.CAMERA_ENTITY, SHARED_CAMERA_MODE);
             //ecsToCrdtWriter.PutMessage(SpecialEntitiesID.CAMERA_ENTITY, SHARED_POINTER_LOCK);
+
+            if (scenePartition.Bucket > propagationThreshold)
+                return;
 
             ExposedTransformUtils.Put(ecsToCrdtWriter, exposedCameraData, SpecialEntitiesID.CAMERA_ENTITY, sceneData.Geometry.BaseParcelPosition, true);
         }

@@ -7,6 +7,8 @@ using DCL.AssetsProvision;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
+using DCL.CharacterCamera;
+using DCL.CharacterCamera.Systems;
 using DCL.CharacterMotion.Systems;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -30,22 +32,24 @@ namespace DCL.Character.Plugin
     public class CharacterContainer : IDCLPlugin<CharacterContainer.Settings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IExposedCameraData exposedCameraData;
         private readonly ExposedTransform exposedTransform;
+        private byte bucketPropagationLimit;
 
         private ProvidedInstance<CharacterObject> characterObject;
-        private byte bucketPropagationLimit;
+
+        public CharacterContainer(IAssetsProvisioner assetsProvisioner, IExposedCameraData exposedCameraData)
+        {
+            this.assetsProvisioner = assetsProvisioner;
+            this.exposedCameraData = exposedCameraData;
+
+            exposedTransform = new ExposedTransform();
+        }
 
         /// <summary>
         ///     Character Object exists in a single instance
         /// </summary>
         public ICharacterObject CharacterObject => characterObject.Value;
-
-        public CharacterContainer(IAssetsProvisioner assetsProvisioner)
-        {
-            this.assetsProvisioner = assetsProvisioner;
-
-            exposedTransform = new ExposedTransform();
-        }
 
         public void Dispose()
         {
@@ -59,7 +63,7 @@ namespace DCL.Character.Plugin
         }
 
         public WorldPlugin CreateWorldPlugin() =>
-            new (exposedTransform, bucketPropagationLimit);
+            new (exposedTransform, exposedCameraData, bucketPropagationLimit);
 
         public GlobalPlugin CreateGlobalPlugin() =>
             new (exposedTransform);
@@ -97,19 +101,24 @@ namespace DCL.Character.Plugin
 
         public class WorldPlugin : IDCLWorldPluginWithoutSettings
         {
-            private readonly ExposedTransform exposedTransform;
             private readonly byte bucketPropagationLimit;
+            private readonly IExposedCameraData exposedCameraData;
+            private readonly ExposedTransform exposedTransform;
 
-            public WorldPlugin(ExposedTransform exposedTransform, byte bucketPropagationLimit)
+            public WorldPlugin(ExposedTransform exposedTransform, IExposedCameraData exposedCameraData, byte bucketPropagationLimit)
             {
                 this.exposedTransform = exposedTransform;
                 this.bucketPropagationLimit = bucketPropagationLimit;
+                this.exposedCameraData = exposedCameraData;
             }
 
             public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems)
             {
                 WritePlayerTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneData,
                     exposedTransform, sharedDependencies.ScenePartition, bucketPropagationLimit);
+
+                WriteCameraComponentsSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, exposedCameraData, sharedDependencies.SceneData,
+                    sharedDependencies.ScenePartition, bucketPropagationLimit);
             }
 
             public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
