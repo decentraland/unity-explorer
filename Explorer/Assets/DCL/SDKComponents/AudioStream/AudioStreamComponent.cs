@@ -10,17 +10,18 @@ namespace DCL.SDKComponents.AudioStream
     public struct AudioStreamComponent : IPoolableComponentProvider<MediaPlayer>
     {
         private const float DEFAULT_VOLUME = 1f;
-        private readonly MediaPlayer mediaPlayer;
         private string url;
 
-        MediaPlayer IPoolableComponentProvider<MediaPlayer>.PoolableComponent => mediaPlayer;
+        public MediaPlayer MediaPlayer { get; }
+
+        MediaPlayer IPoolableComponentProvider<MediaPlayer>.PoolableComponent => MediaPlayer;
 
         Type IPoolableComponentProvider<MediaPlayer>.PoolableComponentType => typeof(MediaPlayer);
 
         public AudioStreamComponent(PBAudioStream sdkComponent, MediaPlayer mediaPlayer, bool isCurrentScene)
         {
             url = sdkComponent.Url;
-            this.mediaPlayer = mediaPlayer;
+            this.MediaPlayer = mediaPlayer;
 
             UpdateVolume(sdkComponent, isCurrentScene);
 
@@ -35,7 +36,7 @@ namespace DCL.SDKComponents.AudioStream
 
         public void Dispose()
         {
-            mediaPlayer.CloseCurrentStream();
+            MediaPlayer.CloseCurrentStream();
         }
 
         public void UpdateComponentChange(PBAudioStream sdkComponent)
@@ -47,20 +48,20 @@ namespace DCL.SDKComponents.AudioStream
         public void UpdateVolume(PBAudioStream sdkComponent, bool isCurrentScene)
         {
             if (isCurrentScene)
-                mediaPlayer.AudioVolume = sdkComponent.HasVolume ? sdkComponent.Volume : DEFAULT_VOLUME;
+                MediaPlayer.AudioVolume = sdkComponent.HasVolume ? sdkComponent.Volume : DEFAULT_VOLUME;
             else
-                mediaPlayer.AudioVolume = 0f;
+                MediaPlayer.AudioVolume = 0f;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdatePlayback(PBAudioStream sdkComponent)
         {
-            if (sdkComponent.HasPlaying && sdkComponent.Playing != mediaPlayer.Control.IsPlaying())
+            if (sdkComponent.HasPlaying && sdkComponent.Playing != MediaPlayer.Control.IsPlaying())
             {
                 if (sdkComponent.Playing)
-                    mediaPlayer.Play();
+                    MediaPlayer.Play();
                 else
-                    mediaPlayer.Stop();
+                    MediaPlayer.Stop();
             }
         }
 
@@ -70,8 +71,8 @@ namespace DCL.SDKComponents.AudioStream
             if (this.url == newUrl) return;
 
             this.url = newUrl;
-            mediaPlayer.CloseCurrentStream();
-            mediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, newUrl, autoPlay: false);
+            MediaPlayer.CloseCurrentStream();
+            MediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, newUrl, autoPlay: false);
         }
     }
 }

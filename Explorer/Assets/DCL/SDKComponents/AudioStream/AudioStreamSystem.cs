@@ -6,6 +6,7 @@ using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
@@ -27,6 +28,7 @@ namespace DCL.SDKComponents.AudioStream
 
         protected override void Update(float t)
         {
+            HandleSdkComponentRemovalQuery(World);
             InstantiateAudioStreamQuery(World);
             UpdateAudioStreamQuery(World);
         }
@@ -48,6 +50,14 @@ namespace DCL.SDKComponents.AudioStream
 
             component.UpdateComponentChange(sdkComponent);
             sdkComponent.IsDirty = false;
+        }
+
+        [Query]
+        [None(typeof(PBAudioStream), typeof(DeleteEntityIntention))]
+        private void HandleSdkComponentRemoval(ref AudioStreamComponent component)
+        {
+            component.Dispose();
+            mediaPlayerPool.Release(component.MediaPlayer);
         }
     }
 }
