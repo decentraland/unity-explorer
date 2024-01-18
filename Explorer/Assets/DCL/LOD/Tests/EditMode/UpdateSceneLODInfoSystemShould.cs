@@ -3,6 +3,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.LOD.Components;
 using DCL.LOD.Systems;
 using DCL.Optimization.PerformanceBudgeting;
+using Decentraland.Kernel.Comms.Rfc4;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
@@ -74,41 +75,44 @@ namespace DCL.LOD.Tests
             Assert.AreEqual(expectedLODLevel, world.Get<SceneLODInfo>(entity).CurrentLODLevel);
         }
 
-        /*
+        
         [Test]
         public void ResolveLODPromise()
         {
             //Arrange
-            string gameobjectName = "Cube";
-            GenerateLODPromise(gameobjectName, out var resultGameobject, out var promise);
-            sceneLODInfo.CurrentLODPromise = promise;
+            var promiseGenerated = GenerateLODPromise();
+            sceneLODInfo.CurrentLODPromise = promiseGenerated.Item2;
             sceneLODInfo.CurrentLODLevel = 2;
-
+            var sceneLodInfoEntity = world.Create(sceneLODInfo);
+            
             //Act
             system.Update(0);
 
             //Assert
-            Assert.AreEqual(resultGameobject, world.Get<SceneLODInfo>(promise.Entity).CurrentLOD.Root);
-            Assert.AreEqual(gameobjectName, world.Get<SceneLODInfo>(promise.Entity).CurrentLOD.Root.name);
-            Assert.AreEqual("Cube_lod2", world.Get<SceneLODInfo>(promise.Entity).CurrentLOD.LodKey);
+            var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(sceneLodInfoEntity);
+            Assert.NotNull(sceneLODInfoRetrieved.CurrentLOD.Root);
+            Assert.AreEqual($"{sceneLODInfoRetrieved.SceneHash.ToLower()}_lod2",
+                sceneLODInfoRetrieved.CurrentLOD.LodKey);
+            Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD.AssetBundleReference);
         }
 
         [Test]
         public void UpdateCache()
         {
             //Arrange
-            string gameobjectName = "Cube";
-            GenerateLODPromise(gameobjectName, out var resultGameobject, out var promise);
-            sceneLODInfo.CurrentLODPromise = promise;
+            var promiseGenerated = GenerateLODPromise();
+            sceneLODInfo.CurrentLODPromise = promiseGenerated.Item2;
             sceneLODInfo.CurrentLODLevel = 2;
-
+            world.Create(sceneLODInfo);
             system.Update(0);
 
-            sceneLODInfo = world.Get<SceneLODInfo>(promise.Entity);
-            string newGameObjectName = "Sphere";
-            GenerateLODPromise(newGameObjectName, out var newResultGameobject, out var newPromise);
-            sceneLODInfo.CurrentLODPromise = newPromise;
-            sceneLODInfo.CurrentLODLevel = 3;
+            world.Query(new QueryDescription().WithAll<SceneLODInfo>(),
+                (ref SceneLODInfo sceneLODInfo) =>
+                {
+                    var newPromiseGenerated = GenerateLODPromise();
+                    sceneLODInfo.CurrentLODLevel = 3;
+                    sceneLODInfo.CurrentLODPromise = newPromiseGenerated.Item2;
+                });
 
             //Act
             system.Update(0);
@@ -117,17 +121,19 @@ namespace DCL.LOD.Tests
             Assert.AreEqual(lodAssetCache.cache.Count, 1);
         }
 
-        private void GenerateLODPromise(string gameobjectName, out GameObject resultGameobject, out Promise promise)
+        private (AssetBundleData, Promise) GenerateLODPromise()
         {
-            resultGameobject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            resultGameobject.name = gameobjectName;
-            promise = Promise.Create(world,
+            var promise = Promise.Create(world,
                 GetAssetBundleIntention.FromName("Cube"),
                 new PartitionComponent());
+
+            var fakeAssetBundleData = new AssetBundleData(null, null, GameObject.CreatePrimitive(PrimitiveType.Cube),
+                new AssetBundleData[] { });
+            
             world.Add(promise.Entity,
-                new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(null, null, resultGameobject,
-                    new AssetBundleData[] { })));
+                new StreamableLoadingResult<AssetBundleData>(fakeAssetBundleData));
+            return (fakeAssetBundleData, promise);
         }
-        */
+        
     }
 }
