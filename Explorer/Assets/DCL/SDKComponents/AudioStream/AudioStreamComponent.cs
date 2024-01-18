@@ -10,23 +10,17 @@ namespace DCL.SDKComponents.AudioStream
     public struct AudioStreamComponent : IPoolableComponentProvider<MediaPlayer>
     {
         private const float DEFAULT_VOLUME = 1f;
-        private static IComponentPool<MediaPlayer> mediaPlayerPool;
-
+        private readonly MediaPlayer mediaPlayer;
         private string url;
-
-        private MediaPlayer mediaPlayer { get; }
 
         MediaPlayer IPoolableComponentProvider<MediaPlayer>.PoolableComponent => mediaPlayer;
 
         Type IPoolableComponentProvider<MediaPlayer>.PoolableComponentType => typeof(MediaPlayer);
 
-        public AudioStreamComponent(PBAudioStream sdkComponent, IComponentPoolsRegistry poolsRegistry, bool isCurrentScene)
+        public AudioStreamComponent(PBAudioStream sdkComponent, MediaPlayer mediaPlayer, bool isCurrentScene)
         {
-            mediaPlayerPool ??= poolsRegistry.GetReferenceTypePool<MediaPlayer>();
-            mediaPlayer = mediaPlayerPool.Get();
-
             url = sdkComponent.Url;
-            mediaPlayer = mediaPlayer;
+            this.mediaPlayer = mediaPlayer;
 
             UpdateVolume(sdkComponent, isCurrentScene);
 
@@ -42,7 +36,6 @@ namespace DCL.SDKComponents.AudioStream
         public void Dispose()
         {
             mediaPlayer.CloseCurrentStream();
-            mediaPlayerPool = null;
         }
 
         public void UpdateComponentChange(PBAudioStream sdkComponent)
@@ -72,13 +65,13 @@ namespace DCL.SDKComponents.AudioStream
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateStreamUrl(string url)
+        private void UpdateStreamUrl(string newUrl)
         {
-            if (url == this.url) return;
+            if (this.url == newUrl) return;
 
-            this.url = url;
+            this.url = newUrl;
             mediaPlayer.CloseCurrentStream();
-            mediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, url, autoPlay: false);
+            mediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, newUrl, autoPlay: false);
         }
     }
 }

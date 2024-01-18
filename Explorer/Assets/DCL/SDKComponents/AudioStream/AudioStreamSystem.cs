@@ -7,6 +7,7 @@ using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Unity.Groups;
+using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
 
 namespace DCL.SDKComponents.AudioStream
@@ -15,13 +16,13 @@ namespace DCL.SDKComponents.AudioStream
     [LogCategory(ReportCategory.AUDIO_STREAM)]
     public partial class AudioStreamSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPoolsRegistry poolsRegistry;
         private readonly ISceneStateProvider sceneStateProvider;
+        private readonly IComponentPool<MediaPlayer> mediaPlayerPool;
 
         private AudioStreamSystem(World world, IComponentPoolsRegistry componentPoolsRegistry, ISceneStateProvider sceneStateProvider) : base(world)
         {
-            poolsRegistry = componentPoolsRegistry;
             this.sceneStateProvider = sceneStateProvider;
+            mediaPlayerPool = componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>();
         }
 
         protected override void Update(float t)
@@ -34,7 +35,7 @@ namespace DCL.SDKComponents.AudioStream
         [None(typeof(AudioStreamComponent))]
         private void InstantiateAudioStream(in Entity entity, ref PBAudioStream sdkAudio)
         {
-            var component = new AudioStreamComponent(sdkAudio, poolsRegistry, sceneStateProvider.IsCurrent);
+            var component = new AudioStreamComponent(sdkAudio, mediaPlayerPool.Get(), sceneStateProvider.IsCurrent);
             World.Add(entity, component);
         }
 

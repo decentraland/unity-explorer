@@ -133,6 +133,7 @@ jobs:
           
       - name: Clean-up Required Packages
         run: |
-          if [ -f "Explorer/Assets/RequiredPackages/requiredPackages.unitypackage" ]; then
-            rm "Explorer/Assets/RequiredPackages/requiredPackages.unitypackage"
-            echo "requiredPackages.unitypackage deleted successfully."
+          if (Test-Path "Explorer/Assets/RequiredPackages/requiredPackages.unitypackage") {
+            Remove-Item "Explorer/Assets/RequiredPackages/requiredPackages.unitypackage"
+            Write-Host "requiredPackages.unitypackage deleted successfully."
+          }
