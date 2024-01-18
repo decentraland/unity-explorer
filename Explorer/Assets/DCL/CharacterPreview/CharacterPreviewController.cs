@@ -38,7 +38,7 @@ namespace DCL.CharacterPreview
             // TODO add meaningful ID and Name
 
             characterPreviewEntity = world.Create(
-                new TransformComponent(container.avatarParent),
+                new TransformComponent(container.avatarParent.gameObject),
                 new AvatarShapeComponent("CharacterPreview", "CharacterPreview"));
 
             characterPreviewInputEventBus.OnDraggingEvent += OnDrag;
@@ -139,15 +139,15 @@ namespace DCL.CharacterPreview
 
         public void Hide()
         {
-            ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
-            if (!avatarShape.WearablePromise.IsConsumed)
-                avatarShape.WearablePromise.ForgetLoading(globalWorld);
-            characterPreviewContainer.gameObject.SetActive(false);
+            //ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
+            //if (!avatarShape.WearablePromise.IsConsumed)
+             //   avatarShape.WearablePromise.ForgetLoading(globalWorld);
+             if(characterPreviewContainer != null) characterPreviewContainer.gameObject.SetActive(false);
         }
 
         public void Show()
         {
-            characterPreviewContainer.gameObject.SetActive(true);
+            if(characterPreviewContainer != null) characterPreviewContainer.gameObject.SetActive(true);
         }
 
         public void Dispose()
