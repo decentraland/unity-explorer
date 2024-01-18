@@ -6,13 +6,17 @@ namespace Utility
     {
         private T value;
 
-        public bool IsDirty { get; private set; }
-
         public CanBeDirty(T value)
         {
             this.value = value;
             IsDirty = false;
         }
+
+        /// <summary>
+        ///     Is Dirty is supposed to be preserved during the whole frame
+        ///     and gets reset when the same value is set again
+        /// </summary>
+        public bool IsDirty { get; private set; }
 
         public T Value
         {
@@ -21,7 +25,10 @@ namespace Utility
             set
             {
                 if (value.Equals(this.value))
+                {
+                    IsDirty = false;
                     return;
+                }
 
                 this.value = value;
                 IsDirty = true;
