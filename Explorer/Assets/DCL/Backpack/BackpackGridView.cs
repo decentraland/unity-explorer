@@ -25,7 +25,7 @@ namespace DCL.Backpack
         public GameObject NoCategoryResults { get; private set; }
 
         [field: SerializeField]
-        public BackpackBreadCrumbView BreadCrumbView { get; }
+        public BackpackBreadCrumbView BreadCrumbView { get; private set; }
 
         [field: SerializeField]
         public TMP_Text EmptyTextCategory { get; private set; }

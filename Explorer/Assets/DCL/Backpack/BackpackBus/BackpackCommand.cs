@@ -1,3 +1,5 @@
+using DCL.CharacterPreview;
+
 namespace DCL.Backpack.BackpackBus
 {
     public readonly struct BackpackEquipCommand
@@ -45,10 +47,12 @@ namespace DCL.Backpack.BackpackBus
     public readonly struct BackpackFilterCategoryCommand
     {
         public readonly string Category;
+        public readonly AvatarSlotCategoryEnum CategoryEnum;
 
-        public BackpackFilterCategoryCommand(string category)
+        public BackpackFilterCategoryCommand(string category, AvatarSlotCategoryEnum categoryEnum = AvatarSlotCategoryEnum.Body)
         {
             Category = category;
+            CategoryEnum = categoryEnum;
         }
     }
 

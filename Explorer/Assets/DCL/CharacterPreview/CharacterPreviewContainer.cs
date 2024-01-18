@@ -13,11 +13,13 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal Transform cameraTarget { get; private set; }
         [field: SerializeField] internal Transform rotationTarget { get; private set; }
 
+        //These could be just Vector3 elements as for now we are not using the rotation
         [field: SerializeField] internal Transform defaultPositionTransform { get; private set; }
         [field: SerializeField] internal Transform topPositionTransform { get; private set; }
         [field: SerializeField] internal Transform bottomPositionTransform { get; private set; }
         [field: SerializeField] internal Transform shoesPositionTransform { get; private set; }
         [field: SerializeField] internal Transform headPositionTransform { get; private set; }
+
         [field: SerializeField] internal LayerMask layer { get; private set; }
 
         public void Initialize(RenderTexture targetTexture)
@@ -30,7 +32,6 @@ namespace DCL.CharacterPreview
             //Set correct height for the object, reset position of targets and rotation
             //Magic values should be serialized fields
         }
-
     }
 
 }

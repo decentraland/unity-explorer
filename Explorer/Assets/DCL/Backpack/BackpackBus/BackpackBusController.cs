@@ -47,7 +47,7 @@ namespace DCL.Backpack.BackpackBus
         private void HandleFilterCategoryCommand(BackpackFilterCategoryCommand command)
         {
             backpackEventBus.SendSearch("");
-            backpackEventBus.SendFilterCategory(command.Category);
+            backpackEventBus.SendFilterCategory(command.Category, command.CategoryEnum);
         }
 
         private void HandleEquipCommand(BackpackEquipCommand command)

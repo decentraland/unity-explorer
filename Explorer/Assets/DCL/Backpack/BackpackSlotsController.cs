@@ -104,7 +104,7 @@ namespace DCL.Backpack
             }
 
             previousSlot = avatarSlot;
-            backpackCommandBus.SendCommand(new BackpackFilterCategoryCommand(avatarSlot.Category));
+            backpackCommandBus.SendCommand(new BackpackFilterCategoryCommand(avatarSlot.Category, avatarSlot.CategoryEnum));
             avatarSlot.SelectedBackground.SetActive(true);
         }
 

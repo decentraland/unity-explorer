@@ -14,7 +14,7 @@ namespace DCL.CharacterPreview
         {
             var container = (CharacterPreviewContainer)poolsRegistry.GetPool(typeof(CharacterPreviewContainer)).Rent();
             container.Initialize(targetTexture);
-            return new CharacterPreviewController(world, container, inputEventBus);
+            return new CharacterPreviewController(world, container, inputEventBus, poolsRegistry);
         }
     }
     /// <summary>--

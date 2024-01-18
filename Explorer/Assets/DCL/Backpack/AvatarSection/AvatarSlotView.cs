@@ -1,3 +1,4 @@
+using DCL.CharacterPreview;
 using DCL.UI;
 using DG.Tweening;
 using System;
@@ -60,6 +61,9 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public GameObject NftContainer { get; private set; }
+
+        [field: SerializeField]
+        public AvatarSlotCategoryEnum CategoryEnum;
 
         public void Start()
         {

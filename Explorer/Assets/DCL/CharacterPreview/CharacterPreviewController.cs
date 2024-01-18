@@ -3,6 +3,7 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
@@ -19,12 +20,14 @@ namespace DCL.CharacterPreview
         private readonly Entity characterPreviewEntity;
         private readonly CharacterPreviewContainer characterPreviewContainer;
         private readonly CharacterPreviewInputEventBus characterPreviewInputEventBus;
+        private readonly IComponentPoolsRegistry poolsRegistry;
 
-        public CharacterPreviewController(World world, CharacterPreviewContainer container, CharacterPreviewInputEventBus inputEventBus)
+        public CharacterPreviewController(World world, CharacterPreviewContainer container, CharacterPreviewInputEventBus inputEventBus, IComponentPoolsRegistry poolsRegistry)
         {
             globalWorld = world;
             characterPreviewContainer = container;
             characterPreviewInputEventBus = inputEventBus;
+            this.poolsRegistry = poolsRegistry;
 
             // See the logic of AvatarInstantiatorSystem
             // We should provide the following components:
@@ -40,6 +43,7 @@ namespace DCL.CharacterPreview
 
             characterPreviewInputEventBus.OnDraggingEvent += OnDrag;
             characterPreviewInputEventBus.OnScrollEvent += OnScroll;
+            characterPreviewInputEventBus.OnChangePreviewFocusEvent += OnChangePreviewCategory;
         }
 
         public void UpdateAvatar(CharacterPreviewModel model)
@@ -68,18 +72,43 @@ namespace DCL.CharacterPreview
             avatarShape.IsDirty = true;
         }
 
+        private void OnChangePreviewCategory(AvatarSlotCategoryEnum categoryEnum)
+        {
+            switch (categoryEnum)
+            {
+                case AvatarSlotCategoryEnum.Top:
+                    characterPreviewContainer.cameraTarget.position = characterPreviewContainer.topPositionTransform.position;
+                    break;
+                case AvatarSlotCategoryEnum.Bottom:
+                    characterPreviewContainer.cameraTarget.position = characterPreviewContainer.bottomPositionTransform.position;
+                    break;
+                case AvatarSlotCategoryEnum.Shoes:
+                    characterPreviewContainer.cameraTarget.position = characterPreviewContainer.shoesPositionTransform.position;
+                    break;
+                case AvatarSlotCategoryEnum.Head:
+                    characterPreviewContainer.cameraTarget.position = characterPreviewContainer.headPositionTransform.position;
+                    break;
+                case AvatarSlotCategoryEnum.Body:
+                    characterPreviewContainer.cameraTarget.position = characterPreviewContainer.defaultPositionTransform.position;
+                    break;
+                default: throw new ArgumentOutOfRangeException(nameof(categoryEnum), categoryEnum, null);
+            }
+        }
+
+
         private void OnScroll(PointerEventData pointerEventData)
         {
-               var transform1 = characterPreviewContainer.cameraTarget.transform;
-               //this should be in a system probably?
+            //All these magic numbers will disappear :)
+            var transform1 = characterPreviewContainer.cameraTarget.transform;
                var position = transform1.position;
                position.z -= pointerEventData.scrollDelta.y * Time.deltaTime * 4;
                if (position.z < -7) position.z = -7;
                transform1.position = position;
         }
 
-        public void OnDrag(PointerEventData pointerEventData)
+        private void OnDrag(PointerEventData pointerEventData)
         {
+            //All these magic numbers will disappear :)
             switch (pointerEventData.button)
             {
                 case PointerEventData.InputButton.Right:
@@ -110,16 +139,25 @@ namespace DCL.CharacterPreview
 
         public void Hide()
         {
+            ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
+            if (!avatarShape.WearablePromise.IsConsumed)
+                avatarShape.WearablePromise.ForgetLoading(globalWorld);
+            characterPreviewContainer.gameObject.SetActive(false);
+        }
 
+        public void Show()
+        {
+            characterPreviewContainer.gameObject.SetActive(true);
         }
 
         public void Dispose()
         {
             // Add DeleteEntityIntention to release resources of the instantiated avatar
             globalWorld.Add(characterPreviewEntity, new DeleteEntityIntention());
+            poolsRegistry.GetPool(typeof(CharacterPreviewContainer)).Release(characterPreviewContainer);
             characterPreviewInputEventBus.OnDraggingEvent -= OnDrag;
             characterPreviewInputEventBus.OnScrollEvent -= OnScroll;
-
+            characterPreviewInputEventBus.OnChangePreviewFocusEvent -= OnChangePreviewCategory;
         }
     }
 }

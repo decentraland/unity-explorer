@@ -129,11 +129,13 @@ namespace DCL.Backpack
             {
                 view.gameObject.SetActive(true);
                 initialLoading = true;
+                backpackCharacterPreviewControler.OnShow();
             }
 
             public void Deactivate()
             {
                 view.gameObject.SetActive(false);
+                backpackCharacterPreviewControler.OnHide();
             }
 
             public RectTransform GetRectTransform() =>

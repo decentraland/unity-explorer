@@ -1,9 +1,7 @@
 ﻿using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
-using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.Optimization.Pools;
 using DCL.Profiles;
@@ -36,6 +34,7 @@ namespace DCL.CharacterPreview
             this.backpackEventBus = backpackEventBus;
             this.backpackEventBus.EquipEvent += OnEquipped;
             this.backpackEventBus.UnEquipEvent += OnUnequipped;
+            this.backpackEventBus.FilterCategoryByEnumEvent += OnChangeCategory;
             this.poolsRegistry = poolsRegistry;
             this.inputEventBus = inputEventBus;
         }
@@ -74,9 +73,19 @@ namespace DCL.CharacterPreview
             inputEventBus.OnDrag(pointerEventData);
         }
 
+        private void OnChangeCategory(AvatarSlotCategoryEnum categoryEnum)
+        {
+            inputEventBus.OnChangeCategoryFocus(categoryEnum);
+        }
+
+        public void OnShow()
+        {
+            previewController.Show();
+        }
+
         public void OnHide()
         {
-
+            previewController.Hide();
         }
 
         private void OnEquipped(IWearable i)
