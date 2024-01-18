@@ -25,6 +25,7 @@ MonoBehaviour:
   - rid: 8147919132522971138
   - rid: 56198586647707649
   - rid: 1095376790733193218
+  - rid: 5121844442657456130
   references:
     version: 2
     RefIds:
@@ -115,6 +116,14 @@ MonoBehaviour:
       data:
         MinimapPrefab:
           m_AssetGUID: f2ef3a867ab2840cb9bc73b4762922fd
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 5121844442657456130
+      type: {class: CharacterPreviewPlugin/CharacterPreviewSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        CharacterPreviewComponentPrefab:
+          m_AssetGUID: 23318cb20f4dbe9429dd8be585ef75d6
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

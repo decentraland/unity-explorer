@@ -3,6 +3,7 @@ using System;
 
 namespace DCL.Backpack.BackpackBus
 {
+
     public class BackpackEventBus : IBackpackEventBus
     {
         public event Action<IWearable> SelectEvent;

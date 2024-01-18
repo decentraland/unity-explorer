@@ -7,6 +7,7 @@ using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
+using DCL.Optimization.Pools;
 using DCL.Profiles;
 using DCL.UI;
 using DCL.Web3Authentication.Identities;
@@ -42,7 +43,9 @@ namespace DCL.Backpack
                 BackpackEventBus backpackEventBus,
                 IWeb3IdentityCache web3IdentityCache,
                 IWearableCatalog wearableCatalog,
-                PageButtonView pageButtonView)
+                PageButtonView pageButtonView,
+                IComponentPoolsRegistry poolsRegistry,
+                CharacterPreviewInputEventBus inputEventBus)
             {
                 this.view = view;
                 this.backpackCommandBus = backpackCommandBus;
@@ -82,7 +85,7 @@ namespace DCL.Backpack
                             sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, tabSelector.Section, animationCts.Token).Forget();
                         });
                 }
-                backpackCharacterPreviewControler = new BackpackCharacterPreviewControler(view.backpackCharacterPreviewView, new CharacterPreviewFactory(), backpackEventBus);
+                backpackCharacterPreviewControler = new BackpackCharacterPreviewControler(view.backpackCharacterPreviewView, new CharacterPreviewFactory(), backpackEventBus, poolsRegistry, inputEventBus);
             }
 
             public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct)
