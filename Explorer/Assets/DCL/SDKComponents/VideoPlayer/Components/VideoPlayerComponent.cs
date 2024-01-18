@@ -1,14 +1,32 @@
 ﻿using DCL.ECSComponents;
+using DCL.Optimization.Pools;
+using RenderHeads.Media.AVProVideo;
+using System;
 
 namespace DCL.SDKComponents.VideoPlayer
 {
-    public struct VideoPlayerComponent
+    public struct VideoPlayerComponent: IPoolableComponentProvider<MediaPlayer>
     {
-        private readonly PBVideoPlayer sdkVideo;
+        private readonly PBVideoPlayer sdkComponent;
+        private readonly MediaPlayer mediaPlayer;
 
-        public VideoPlayerComponent(PBVideoPlayer sdkVideo)
+        MediaPlayer IPoolableComponentProvider<MediaPlayer>.PoolableComponent => mediaPlayer;
+        Type IPoolableComponentProvider<MediaPlayer>.PoolableComponentType => typeof(MediaPlayer);
+
+        public VideoPlayerComponent(PBVideoPlayer sdkComponent, MediaPlayer mediaPlayer)
         {
-            this.sdkVideo = sdkVideo;
+            this.sdkComponent = sdkComponent;
+            this.mediaPlayer = mediaPlayer;
+
+            mediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, sdkComponent.Src, autoPlay: true); // TODO: change auto-play to 'false'
+
+            if (sdkComponent is { HasPlaying: true, Playing: true })
+                mediaPlayer.Play();
+        }
+
+        public void Dispose()
+        {
+            mediaPlayer.CloseMedia();
         }
     }
 }
