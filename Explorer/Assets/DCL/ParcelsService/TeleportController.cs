@@ -62,7 +62,7 @@ namespace DCL.ParcelsService
 
                 List<IpfsTypes.SceneMetadata.SpawnPoint> spawnPoints = sceneDef.metadata.spawnPoints;
 
-                if (spawnPoints.Count > 0)
+                if (spawnPoints is { Count: > 0 })
                 {
                     // TODO transfer obscure logic of how to pick the desired spawn point from the array
                     // For now just pick default/first
