@@ -156,6 +156,9 @@ namespace Global
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
                 new AvatarShapePlugin(container.GlobalWorld),
+
+                // new AvatarAttachPlugin(CharacterObject.Transform),
+                new AvatarAttachPlugin(),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
