@@ -19,7 +19,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
     {
         private readonly IComponentPool<TextField> textFieldsPool;
 
-        private UIInputInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
+        public UIInputInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             textFieldsPool = poolsRegistry.GetReferenceTypePool<TextField>();
         }

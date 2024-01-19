@@ -163,7 +163,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             placeHolderToSetup.SetReadOnly(isReadonly);
             textFieldToSetup.isReadOnly = isReadonly;
             textFieldToSetup.style.fontSize = model.GetFontSize();
-            textFieldToSetup.style.unityTextAlign = model.GetTextAlign().ToUnityTextAlign();
+            textFieldToSetup.style.unityTextAlign = model.GetTextAlign();
             textFieldToSetup.SetValueWithoutNotify(model.HasValue ? model.Value : string.Empty);
             placeHolderToSetup.Refresh();
         }
