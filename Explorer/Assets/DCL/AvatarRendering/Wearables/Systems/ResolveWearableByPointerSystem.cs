@@ -109,9 +109,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             if (successfulDtos == wearablesByPointersIntention.Pointers.Count)
             {
-                //Calculate only visible wearables and generate AB promise only for them
-                //successfulResults increased for wearables that shouldn't be visible
-
                 IWearable[] calculateVisibleWearables = CalculateVisibleWearables(resolvedWereables.ToArray(), wearablesByPointersIntention.BodyShape, wearablesByPointersIntention.ForceRender);
 
                 successfulResults += (wearablesByPointersIntention.Pointers.Count - calculateVisibleWearables.Length);
