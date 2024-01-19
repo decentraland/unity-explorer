@@ -1,11 +1,15 @@
 ﻿using DCL.ECSComponents;
+using Decentraland.Common;
 using ECS.Unity.ColorComponent;
 using UnityEngine;
 
 namespace ECS.Unity.Materials.Components.Defaults
 {
-    public static class MaterialDefaults
+    public static class PBMaterialExtensions
     {
+        public static bool IsVideoTexture(this PBMaterial self) =>
+            self.Pbr?.Texture.TexCase == TextureUnion.TexOneofCase.VideoTexture || self.Unlit?.Texture.TexCase == TextureUnion.TexOneofCase.VideoTexture;
+
         public static float GetAlphaTest(this PBMaterial self)
         {
             if (self.Pbr != null)

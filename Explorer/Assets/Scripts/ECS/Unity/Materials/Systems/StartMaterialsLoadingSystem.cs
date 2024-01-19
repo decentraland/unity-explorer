@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
-using Decentraland.Common;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
@@ -17,7 +16,6 @@ using SceneRunner.Scene;
 using UnityEngine;
 using Entity = Arch.Core.Entity;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
-using Texture = Decentraland.Common.Texture;
 
 namespace ECS.Unity.Materials.Systems
 {
@@ -81,12 +79,6 @@ namespace ECS.Unity.Materials.Systems
             if (!capFrameTimeBudget.TrySpendBudget())
                 return;
 
-            if (material.Pbr?.Texture.TexCase == TextureUnion.TexOneofCase.VideoTexture || material.Unlit?.Texture.TexCase == TextureUnion.TexOneofCase.VideoTexture)
-            {
-                // TODO remove this hack
-                return;
-            }
-
             var materialComponent = new MaterialComponent(CreateMaterialData(ref material));
             CreateGetTexturePromises(ref materialComponent, ref partitionComponent);
             materialComponent.Status = StreamableLoading.LifeCycle.LoadingInProgress;
@@ -94,33 +86,17 @@ namespace ECS.Unity.Materials.Systems
             World.Add(entity, materialComponent);
         }
 
-        private void CreateGetTexturePromises(ref MaterialComponent materialComponent, ref PartitionComponent partitionComponent)
-        {
-            TryCreateGetTexturePromise(in materialComponent.Data.AlbedoTexture, ref materialComponent.AlbedoTexPromise, ref partitionComponent);
-
-            if (materialComponent.Data.IsPbrMaterial)
-            {
-                TryCreateGetTexturePromise(in materialComponent.Data.AlphaTexture, ref materialComponent.AlphaTexPromise, ref partitionComponent);
-                TryCreateGetTexturePromise(in materialComponent.Data.EmissiveTexture, ref materialComponent.EmissiveTexPromise, ref partitionComponent);
-                TryCreateGetTexturePromise(in materialComponent.Data.BumpTexture, ref materialComponent.BumpTexPromise, ref partitionComponent);
-            }
-        }
-
         private MaterialData CreateMaterialData(ref PBMaterial material)
         {
-            // TODO Video Textures
-            TextureComponent? albedoTexture = (material.Pbr?.Texture ?? material.Unlit?.Texture).CreateTextureComponent(sceneData);
+            if (material.Unlit != null)
+                return CreateBasicMaterialData(material, albedoTexture: material.Unlit.Texture.CreateTextureComponent(sceneData));
 
-            if (material.Pbr != null)
-            {
-                TextureComponent? alphaTexture = material.Pbr.AlphaTexture.CreateTextureComponent(sceneData);
-                TextureComponent? emissiveTexture = material.Pbr.EmissiveTexture.CreateTextureComponent(sceneData);
-                TextureComponent? bumpTexture = material.Pbr.BumpTexture.CreateTextureComponent(sceneData);
+            TextureComponent? albedoTexture = material.Pbr.Texture.CreateTextureComponent(sceneData);
+            TextureComponent? alphaTexture = material.Pbr.AlphaTexture.CreateTextureComponent(sceneData);
+            TextureComponent? emissiveTexture = material.Pbr.EmissiveTexture.CreateTextureComponent(sceneData);
+            TextureComponent? bumpTexture = material.Pbr.BumpTexture.CreateTextureComponent(sceneData);
 
-                return CreatePBRMaterialData(material, albedoTexture, alphaTexture, emissiveTexture, bumpTexture);
-            }
-
-            return CreateBasicMaterialData(material, albedoTexture);
+            return CreatePBRMaterialData(material, albedoTexture, alphaTexture, emissiveTexture, bumpTexture);
         }
 
         private static MaterialData CreatePBRMaterialData(
@@ -150,6 +126,18 @@ namespace ECS.Unity.Materials.Systems
             return materialData;
         }
 
+        private void CreateGetTexturePromises(ref MaterialComponent materialComponent, ref PartitionComponent partitionComponent)
+        {
+            TryCreateGetTexturePromise(in materialComponent.Data.AlbedoTexture, ref materialComponent.AlbedoTexPromise, ref partitionComponent);
+
+            if (materialComponent.Data.IsPbrMaterial)
+            {
+                TryCreateGetTexturePromise(in materialComponent.Data.AlphaTexture, ref materialComponent.AlphaTexPromise, ref partitionComponent);
+                TryCreateGetTexturePromise(in materialComponent.Data.EmissiveTexture, ref materialComponent.EmissiveTexPromise, ref partitionComponent);
+                TryCreateGetTexturePromise(in materialComponent.Data.BumpTexture, ref materialComponent.BumpTexPromise, ref partitionComponent);
+            }
+        }
+
         private static MaterialData CreateBasicMaterialData(in PBMaterial pbMaterial, in TextureComponent? albedoTexture) =>
             MaterialData.CreateBasicMaterial(albedoTexture, pbMaterial.GetAlphaTest(), pbMaterial.GetDiffuseColor(), pbMaterial.GetCastShadows());
 
@@ -177,6 +165,7 @@ namespace ECS.Unity.Materials.Systems
                 CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
                 WrapMode = textureComponentValue.WrapMode,
                 FilterMode = textureComponentValue.FilterMode,
+                IsVideoTexture = textureComponentValue.IsVideoTexture,
             }, partitionComponent);
 
             return true;
@@ -192,7 +181,8 @@ namespace ECS.Unity.Materials.Systems
 
             return textureComponent.Src == promiseValue.LoadingIntention.CommonArguments.URL &&
                    textureComponent.WrapMode == intention.WrapMode &&
-                   textureComponent.FilterMode == intention.FilterMode;
+                   textureComponent.FilterMode == intention.FilterMode &&
+                   textureComponent.IsVideoTexture == intention.IsVideoTexture;
         }
     }
 }

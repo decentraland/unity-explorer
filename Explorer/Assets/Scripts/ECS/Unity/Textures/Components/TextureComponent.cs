@@ -8,23 +8,23 @@ namespace ECS.Unity.Textures.Components
         public readonly string Src;
         public readonly TextureWrapMode WrapMode;
         public readonly FilterMode FilterMode;
-        public readonly bool VideoTexture;
+        public readonly bool IsVideoTexture;
 
-        public TextureComponent(string src, TextureWrapMode wrapMode, FilterMode filterMode, bool videoTexture = false)
+        public TextureComponent(string src, TextureWrapMode wrapMode, FilterMode filterMode, bool isVideoTexture = false)
         {
             Src = src;
             WrapMode = wrapMode;
             FilterMode = filterMode;
-            VideoTexture = videoTexture;
+            IsVideoTexture = isVideoTexture;
         }
 
         public bool Equals(TextureComponent other) =>
-            Src == other.Src && WrapMode == other.WrapMode && FilterMode == other.FilterMode && VideoTexture == other.VideoTexture;
+            Src == other.Src && WrapMode == other.WrapMode && FilterMode == other.FilterMode && IsVideoTexture == other.IsVideoTexture;
 
         public override bool Equals(object obj) =>
             obj is TextureComponent other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(Src, (int)WrapMode, (int)FilterMode, VideoTexture);
+            HashCode.Combine(Src, (int)WrapMode, (int)FilterMode, IsVideoTexture);
     }
 }

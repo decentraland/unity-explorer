@@ -50,7 +50,6 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
         [None(typeof(VideoPlayerComponent))]
         private void InstantiateVideoStream(in Entity entity, ref PBVideoPlayer sdkVideo, ref PBMaterial sdkMaterial, ref PrimitiveMeshRendererComponent meshRenderer)
         {
-            // meshRenderer.MeshRenderer.sharedMaterial = videoMat;
             MediaPlayer? mediaPlayer = mediaPlayerPool.Get();
 
             if (videoMat == null)
@@ -65,15 +64,17 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
         }
 
         [Query]
-        private void UpdateVideoStreamTexture(ref VideoPlayerComponent mediaPlayer)
+        private void UpdateVideoStreamTexture(ref VideoPlayerComponent mediaPlayer, ref PrimitiveMeshRendererComponent meshRenderer)
         {
             Texture avText = mediaPlayer.mediaPlayer.TextureProducer.GetTexture();
             if (avText == null) return;
 
+            meshRenderer.MeshRenderer.sharedMaterial = videoMat;
+
             if (videoTexture.HasEqualResolution(to: avText))
                 UpdateVideoTexture(avText);
             else
-                ResizeVideoTexture(avText);
+                ResizeVideoTexture(avText); // will be updated on the next frame/update-loop
         }
 
         private void UpdateVideoTexture(Texture avText)

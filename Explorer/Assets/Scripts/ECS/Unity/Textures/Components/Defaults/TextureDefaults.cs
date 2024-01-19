@@ -8,7 +8,7 @@ using TextureWrapMode = UnityEngine.TextureWrapMode;
 
 namespace ECS.Unity.Textures.Components.Defaults
 {
-    public static class TextureDefaults
+    public static class TextureDefaultsExtensions
     {
         public static TextureComponent? CreateTextureComponent([CanBeNull] this TextureUnion self, ISceneData data)
         {
@@ -28,8 +28,7 @@ namespace ECS.Unity.Textures.Components.Defaults
                 case TextureUnion.TexOneofCase.AvatarTexture:
                     return self.AvatarTexture.TryGetTextureUrl(out url);
                 case TextureUnion.TexOneofCase.VideoTexture:
-                    // Not implemented - just ignore to not break the loop
-                    url = URLAddress.EMPTY;
+                    url = URLAddress.EMPTY; // just ignore to not break the loop
                     return false;
                 case TextureUnion.TexOneofCase.Texture:
                 default:

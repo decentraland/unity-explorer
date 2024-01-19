@@ -12,11 +12,13 @@ namespace ECS.StreamableLoading.Textures
         public bool IsReadable;
         public TextureWrapMode WrapMode;
         public FilterMode FilterMode;
+        public bool IsVideoTexture;
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
         public bool Equals(GetTextureIntention other) =>
-            IsReadable == other.IsReadable && WrapMode == other.WrapMode && FilterMode == other.FilterMode && CommonArguments.URL == other.CommonArguments.URL;
+            IsReadable == other.IsReadable && WrapMode == other.WrapMode && FilterMode == other.FilterMode && CommonArguments.URL == other.CommonArguments.URL
+            && IsVideoTexture == other.IsVideoTexture;
 
         public override bool Equals(object obj) =>
             obj is GetTextureIntention other && Equals(other);

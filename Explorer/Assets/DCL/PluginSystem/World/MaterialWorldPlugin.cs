@@ -60,8 +60,7 @@ namespace DCL.PluginSystem.World
         {
             StartMaterialsLoadingSystem.InjectToWorld(ref builder, destroyMaterial, sharedDependencies.SceneData, loadingAttemptsCount, capFrameTimeBudget);
 
-            // the idea with cache didn't work out: the CPU pressure is too high and benefits are not clear
-            // consider revising when and if needed
+            // the idea with cache didn't work out: the CPU pressure is too high and benefits are not clear. Consider revising it when and if needed
             // LoadMaterialFromCacheSystem.InjectToWorld(ref builder, materialsCache);
             CreateBasicMaterialSystem.InjectToWorld(ref builder, basicMatPool, capFrameTimeBudget, memoryBudgetProvider);
             CreatePBRMaterialSystem.InjectToWorld(ref builder, pbrMatPool, capFrameTimeBudget, memoryBudgetProvider);
