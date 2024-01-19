@@ -21,7 +21,7 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ISceneReadinessReportQueue readinessReportQueue;
         private readonly ISceneData sceneData;
 
-        private ISceneReadinessReportQueue.IReportList? reports;
+        private PooledLoadReportList? reports;
 
         private HashSet<EntityReference>? entitiesUnderObservation;
 
@@ -101,9 +101,9 @@ namespace ECS.SceneLifeCycle.Systems
                 assetsResolved += toDelete.Count;
                 float progress = totalAssetsToResolve != 0 ? assetsResolved / (float)totalAssetsToResolve : 1;
 
-                for (var i = 0; i < reports.Count; i++)
+                for (var i = 0; i < reports!.Value.Count; i++)
                 {
-                    AsyncLoadProcessReport report = reports[i];
+                    AsyncLoadProcessReport report = reports.Value[i];
                     report.ProgressCounter.Value = progress;
                 }
 
@@ -112,10 +112,11 @@ namespace ECS.SceneLifeCycle.Systems
 
                 if (concluded)
                 {
-                    for (var i = 0; i < reports.Count; i++)
-                        reports[i].CompletionSource.TrySetResult();
+                    for (var i = 0; i < reports.Value.Count; i++)
+                        reports.Value[i].CompletionSource.TrySetResult();
 
-                    reports.Dispose();
+                    reports.Value.Dispose();
+                    reports = null;
                 }
             }
         }

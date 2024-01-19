@@ -33,7 +33,7 @@ namespace ECS.SceneLifeCycle.Reporting
             queuedReport.reports.Add(report);
         }
 
-        public bool TryDequeue(IReadOnlyList<Vector2Int> parcels, out ISceneReadinessReportQueue.IReportList report)
+        public bool TryDequeue(IReadOnlyList<Vector2Int> parcels, out PooledLoadReportList? report)
         {
             if (queue.Count == 0) // nothing to dequeue
             {

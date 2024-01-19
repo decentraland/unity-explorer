@@ -1,18 +1,15 @@
 using DCL.AsyncLoadReporting;
 using DCL.Optimization.Pools;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
 namespace ECS.SceneLifeCycle.Reporting
 {
-    public class PooledLoadReportList : ISceneReadinessReportQueue.IReportList
+    public readonly struct PooledLoadReportList : IDisposable
     {
         private readonly ListObjectPool<AsyncLoadProcessReport> pool;
         internal readonly List<AsyncLoadProcessReport> reports;
-
-        public int Count => reports.Count;
-
-        public AsyncLoadProcessReport this[int index] => reports[index];
 
         public PooledLoadReportList(ListObjectPool<AsyncLoadProcessReport> pool)
         {
@@ -20,15 +17,13 @@ namespace ECS.SceneLifeCycle.Reporting
             reports = pool.Get();
         }
 
+        public int Count => reports.Count;
+
+        public AsyncLoadProcessReport this[int index] => reports[index];
+
         public void Dispose()
         {
             pool.Release(reports);
         }
-
-        public IEnumerator<AsyncLoadProcessReport> GetEnumerator() =>
-            reports.GetEnumerator();
-
-        IEnumerator IEnumerable.GetEnumerator() =>
-            GetEnumerator();
     }
 }
