@@ -124,7 +124,7 @@ namespace MVC.Tests
                 AddModule(Module = Substitute.For<IMVCControllerModule>());
             }
 
-            protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
+            protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
                 CompletionSource.Task;
         }
     }

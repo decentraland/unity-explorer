@@ -51,7 +51,7 @@ namespace MVC
 
             public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
-            protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
+            protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
                 viewInstance.CloseButton.OnClickAsync(ct);
 
             protected override void OnBeforeViewShow()
