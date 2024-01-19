@@ -34,10 +34,10 @@ namespace ECS.StreamableLoading.Cache
         class Fake : IStreamableCache<TAsset, TLoadingIntention>
         {
             public bool Equals(TLoadingIntention x, TLoadingIntention y) =>
-                throw new Exception("I am fake");
+                throw new Exception("I am fake, try replace me with a real implementation");
 
             public int GetHashCode(TLoadingIntention obj) =>
-                throw new Exception("I am fake");
+                throw new Exception("I am fake, try replace me with a real implementation");
 
             public void Dispose()
             {
