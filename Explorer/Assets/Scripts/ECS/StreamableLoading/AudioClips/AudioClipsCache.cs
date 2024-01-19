@@ -10,7 +10,7 @@ using Utility;
 
 namespace ECS.StreamableLoading.AudioClips
 {
-    public class AudioClipsCache : IStreamableCache<AudioClip, GetAudioClipIntention>
+    public class AudioClipsCache : IDereferencableCache<AudioClip, GetAudioClipIntention>
     {
         private static readonly Comparison<(GetAudioClipIntention intention, AudioClipData clipData)> COMPARE_BY_LAST_USED_FRAME_REVERSED =
             (pair1, pair2) => pair2.clipData.LastUsedFrame.CompareTo(pair1.clipData.LastUsedFrame);
