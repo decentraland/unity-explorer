@@ -61,7 +61,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
             // Assert component
             Assert.That(audioSourceComponent.PBAudioSource, Is.EqualTo(pbAudioSource));
             Assert.That(audioSourceComponent.ClipPromise, Is.Not.Null);
-            Assert.That(audioSourceComponent.Result, Is.Null);
+            Assert.That(audioSourceComponent.AudioSource, Is.Null);
 
             // Assert promise
             Assert.That(audioSourceComponent.ClipPromise, Is.Not.EqualTo(AssetPromise<AudioClip, GetAudioClipIntention>.NULL));
