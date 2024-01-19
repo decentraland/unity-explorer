@@ -17,11 +17,13 @@ using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
+using Object = UnityEngine.Object;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.IWearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 
 namespace DCL.AvatarRendering.AvatarShape.Tests
@@ -62,7 +64,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             var promise = Promise.Create(world,
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(BodyShape.MALE, new List<string>
-                    { "skin", "hair" }),
+                    { "skin", "hair" }, Array.Empty<string>()),
                 new PartitionComponent());
 
             world.Add(promise.Entity, new StreamableLoadingResult<IWearable[]>(new[]
@@ -145,7 +147,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             // Act
             var newPromise = Promise.Create(world,
-                WearableComponentsUtils.CreateGetWearablesByPointersIntention(BodyShape.MALE, new List<string>()),
+                WearableComponentsUtils.CreateGetWearablesByPointersIntention(BodyShape.MALE, new List<string>(), Array.Empty<string>()),
                 new PartitionComponent());
 
             world.Add(newPromise.Entity, new StreamableLoadingResult<IWearable[]>(new[] { GetMockWearable("body_shape", WearablesConstants.Categories.BODY_SHAPE) }));

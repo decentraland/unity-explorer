@@ -5,8 +5,8 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Diagnostics;
 using ECS;
 using ECS.Abstract;
@@ -79,6 +79,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             List<string> missingPointers = WearableComponentsUtils.POINTERS_POOL.Get();
             var successfulResults = 0;
+            var successfulDtos = 0;
 
             for (var index = 0; index < wearablesByPointersIntention.Pointers.Count; index++)
             {
@@ -91,21 +92,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     continue;
                 }
 
-                if (wearable.IsLoading) continue;
-
-                if (CreateAssetBundlePromiseIfRequired(wearable, wearablesByPointersIntention, partitionComponent)) continue;
-
-                if (wearable.WearableAssetResults[wearablesByPointersIntention.BodyShape] is { Succeeded: true })
+                if (wearable.WearableDTO.Succeeded)
                 {
-                    successfulResults++;
-
-                    if (wearablesByPointersIntention.Results[index] == null)
-                    {
-                        // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
-                        wearable.WearableAssetResults[wearablesByPointersIntention.BodyShape].Value.Asset.AddReference();
-                        wearablesByPointersIntention.Results[index] = wearable;
-                    }
+                    successfulDtos++;
                 }
+
             }
 
             if (missingPointers.Count > 0)
@@ -114,11 +105,48 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 return;
             }
 
+            if (successfulDtos == wearablesByPointersIntention.Pointers.Count)
+            {
+                //Calculate only visible wearables and generate AB promise only for them
+                //successfulResults increased for wearables that shouldn't be visible
+
+                IWearable[] calculateVisibleWearables = CalculateVisibleWearables(wearablesByPointersIntention.Results, wearablesByPointersIntention.BodyShape, wearablesByPointersIntention.ForceRender);
+
+                successfulResults += (wearablesByPointersIntention.Pointers.Count - calculateVisibleWearables.Length);
+
+                for (int i = 0; i < calculateVisibleWearables.Length; i++)
+                {
+                    if (calculateVisibleWearables[i].IsLoading) continue;
+                    if (CreateAssetBundlePromiseIfRequired(calculateVisibleWearables[i], wearablesByPointersIntention, partitionComponent)) continue;
+                    if (calculateVisibleWearables[i].WearableAssetResults[wearablesByPointersIntention.BodyShape] is { Succeeded: true })
+                    {
+                        successfulResults++;
+
+                        if (wearablesByPointersIntention.Results[i] == null)
+                        {
+                            // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
+                            calculateVisibleWearables[i].WearableAssetResults[wearablesByPointersIntention.BodyShape].Value.Asset.AddReference();
+                            wearablesByPointersIntention.Results[i] = calculateVisibleWearables[i];
+                        }
+                    }
+                }
+            }
+
             // If there are no missing pointers, we release the list
             WearableComponentsUtils.POINTERS_POOL.Release(missingPointers);
 
             if (successfulResults == wearablesByPointersIntention.Pointers.Count)
                 World.Add(entity, new StreamableLoadingResult<IWearable[]>(wearablesByPointersIntention.Results));
+
+        }
+
+        private IWearable[] CalculateVisibleWearables(IWearable[] results, BodyShape bodyShape, IReadOnlyCollection<string> forceRender)
+        {
+            List<IWearable> visibleWearables = new List<IWearable>();
+
+            WearableComponentsUtils.ExtractVisibleWearables(bodyShape, null, results, results.Length, visibleWearables);
+
+            return visibleWearables.ToArray();
         }
 
         [Query]

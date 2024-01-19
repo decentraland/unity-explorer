@@ -12,6 +12,7 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
     {
         public readonly List<string> Pointers;
         public readonly IWearable[] Results;
+        public readonly IReadOnlyCollection<string> ForceRender;
 
         public readonly AssetSource PermittedSources;
         public readonly BodyShape BodyShape;
@@ -19,12 +20,13 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
 
         public CancellationTokenSource CancellationTokenSource { get; }
 
-        internal GetWearablesByPointersIntention(List<string> pointers, IWearable[] result, BodyShape bodyShape, AssetSource permittedSources = AssetSource.ALL,
+        internal GetWearablesByPointersIntention(List<string> pointers, IWearable[] result, BodyShape bodyShape, IReadOnlyCollection<string> forceRender, AssetSource permittedSources = AssetSource.ALL,
             bool fallbackToDefaultWearables = true)
         {
             Pointers = pointers;
             Results = result;
             BodyShape = bodyShape;
+            ForceRender = forceRender;
             FallbackToDefaultWearables = fallbackToDefaultWearables;
             PermittedSources = permittedSources;
             CancellationTokenSource = new CancellationTokenSource();
