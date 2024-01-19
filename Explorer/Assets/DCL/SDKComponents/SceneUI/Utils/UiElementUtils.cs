@@ -154,6 +154,20 @@ namespace DCL.SDKComponents.SceneUI.Utils
             imageToSetup.Texture = texture;
         }
 
+        public static void SetupTextField(ref TextField textFieldToSetup, ref TextFieldPlaceholder placeHolderToSetup, ref PBUiInput model)
+        {
+            bool isReadonly = !model.IsInteractive();
+            placeHolderToSetup.SetPlaceholder(model.Placeholder);
+            placeHolderToSetup.SetPlaceholderColor(model.GetPlaceholderColor());
+            placeHolderToSetup.SetNormalColor(model.GetColor());
+            placeHolderToSetup.SetReadOnly(isReadonly);
+            textFieldToSetup.isReadOnly = isReadonly;
+            textFieldToSetup.style.fontSize = model.GetFontSize();
+            textFieldToSetup.style.unityTextAlign = model.GetTextAlign().ToUnityTextAlign();
+            textFieldToSetup.SetValueWithoutNotify(model.HasValue ? model.Value : string.Empty);
+            placeHolderToSetup.Refresh();
+        }
+
         public static void SetElementDefaultStyle(IStyle elementStyle)
         {
             elementStyle.right = 0;
