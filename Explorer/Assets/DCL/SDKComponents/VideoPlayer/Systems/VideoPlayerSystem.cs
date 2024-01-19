@@ -33,8 +33,11 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
         private VideoPlayerSystem(World world, IComponentPool<MediaPlayer> mediaPlayerPool) : base(world)
         {
             this.mediaPlayerPool = mediaPlayerPool;
+
+            videoTexture = new Texture2D(1, 1, TextureFormat.BGRA32, false, false);
+
             videoMat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
-            videoTexture = new Texture2D(426, 240, TextureFormat.BGRA32, false, false);
+            videoMat.mainTexture = videoTexture;
         }
 
         protected override void Update(float t)
@@ -51,7 +54,10 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
             MediaPlayer? mediaPlayer = mediaPlayerPool.Get();
 
             if (videoMat == null)
+            {
                 videoMat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
+                videoMat.mainTexture = videoTexture;
+            }
 
             // var videoMaterialComponent = new VideoMaterialComponent();
             var component = new VideoPlayerComponent(sdkVideo, mediaPlayer);
@@ -61,48 +67,27 @@ namespace DCL.SDKComponents.VideoPlayer.Systems
         [Query]
         private void UpdateVideoStreamTexture(ref VideoPlayerComponent mediaPlayer)
         {
-            if (mediaPlayer.mediaPlayer.TextureProducer != null)
-            {
-                Texture avText = mediaPlayer.mediaPlayer.TextureProducer.GetTexture();
-                UpdateVideoTexture(avText, mediaPlayer.mediaPlayer);
-            }
+            Texture avText = mediaPlayer.mediaPlayer.TextureProducer.GetTexture();
+            if (avText == null) return;
+
+            if (videoTexture.HasEqualResolution(to: avText))
+                UpdateVideoTexture(avText);
+            else
+                ResizeVideoTexture(avText);
         }
 
-        public void UpdateVideoTexture(Texture avProTexture, MediaPlayer avProMediaPlayer)
+        private void UpdateVideoTexture(Texture avText)
         {
-            if (avProTexture && HasEqualResolution(avProTexture))
-            {
-                avProTexture = avProMediaPlayer.TextureProducer.GetTexture(0);
-                Graphics.CopyTexture(avProTexture, videoTexture);
+            Graphics.CopyTexture(avText, videoTexture);
 
+            if (videoMat.mainTexture == null)
                 videoMat.mainTexture = videoTexture;
-            }
-            else if (avProTexture && !HasEqualResolution(avProTexture))
-            {
-                ResizeVideoTexture(avProMediaPlayer, avProTexture);
-            }
         }
 
-        private bool HasEqualResolution(Texture avProTexture)
+        private void ResizeVideoTexture(Texture avTexture)
         {
-            return avProTexture.width == videoTexture.width && avProTexture.height == videoTexture.height;
-        }
-
-        private bool isResizing;
-        public async UniTask ResizeVideoTexture(MediaPlayer avProMediaPlayer, Texture avText)
-        {
-            if (isResizing) return;
-            avText = null;
-            isResizing = true;
-            while (videoTexture == null || avText == null)
-            {
-                avText = avProMediaPlayer.TextureProducer.GetTexture(0);
-                await UniTask.Yield();
-            }
-            videoTexture.Reinitialize(avText.width, avText.height);
+            videoTexture.Reinitialize(avTexture.width, avTexture.height);
             videoTexture.Apply();
-
-            isResizing = false;
         }
     }
 }
