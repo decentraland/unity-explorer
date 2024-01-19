@@ -68,7 +68,7 @@ namespace Ipfs
             public string runtimeVersion;
             public List<string> allowedMediaHostnames;
             public List<string> requiredPermissions;
-            public List<SpawnPoint> spawnPoints;
+            public List<SpawnPoint>? spawnPoints;
 
             [Serializable]
             [JsonConverter(typeof(SpawnPointConverter))]

@@ -89,7 +89,7 @@ namespace MVC
             for (var i = 0; i < modules?.Count; i++)
                 modules[i].OnViewShow();
 
-            await WaitForCloseIntent(ct);
+            await WaitForCloseIntentAsync(ct);
         }
 
         async UniTask IController.HideViewAsync(CancellationToken ct)
@@ -144,7 +144,7 @@ namespace MVC
 
         protected virtual void OnViewClose() { }
 
-        protected abstract UniTask WaitForCloseIntent(CancellationToken ct);
+        protected abstract UniTask WaitForCloseIntentAsync(CancellationToken ct);
 
         public virtual void Dispose() { }
     }
