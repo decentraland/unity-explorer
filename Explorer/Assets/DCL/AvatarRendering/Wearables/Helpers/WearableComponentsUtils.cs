@@ -74,7 +74,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             for (var i = 0; i < wearableCount; i++)
             {
-                wearablesByCategory.Add(wearables[i].GetCategory(), wearables[i]);
+                wearablesByCategory[wearables[i].GetCategory()] = wearables[i];
             }
 
             HashSet<string> hidingList = HashSetPool<string>.Get();

@@ -78,6 +78,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 return; // Wait for default wearables to be resolved
 
             List<string> missingPointers = WearableComponentsUtils.POINTERS_POOL.Get();
+            List<IWearable> resolvedWereables = new List<IWearable>();
             var successfulResults = 0;
             var successfulDtos = 0;
 
@@ -95,6 +96,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 if (wearable.WearableDTO.Succeeded)
                 {
                     successfulDtos++;
+                    resolvedWereables.Add(wearable);
                 }
 
             }
@@ -110,7 +112,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 //Calculate only visible wearables and generate AB promise only for them
                 //successfulResults increased for wearables that shouldn't be visible
 
-                IWearable[] calculateVisibleWearables = CalculateVisibleWearables(wearablesByPointersIntention.Results, wearablesByPointersIntention.BodyShape, wearablesByPointersIntention.ForceRender);
+                IWearable[] calculateVisibleWearables = CalculateVisibleWearables(resolvedWereables.ToArray(), wearablesByPointersIntention.BodyShape, wearablesByPointersIntention.ForceRender);
 
                 successfulResults += (wearablesByPointersIntention.Pointers.Count - calculateVisibleWearables.Length);
 
