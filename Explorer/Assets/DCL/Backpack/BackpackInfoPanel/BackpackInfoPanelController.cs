@@ -2,9 +2,11 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
+using Google.Type;
 using System;
 using System.Threading;
 using Utility;
+using Color = UnityEngine.Color;
 
 namespace DCL.Backpack
 {
@@ -14,6 +16,7 @@ namespace DCL.Backpack
         private readonly BackpackEventBus backpackEventBus;
         private readonly NftTypeIconSO categoryIcons;
         private readonly NftTypeIconSO rarityInfoPanelBackgrounds;
+        private readonly NFTColorsSO rarityColors;
         private readonly HideCategoriesController hideCategoriesController;
         private CancellationTokenSource cts;
 
@@ -22,12 +25,14 @@ namespace DCL.Backpack
             BackpackEventBus backpackEventBus,
             NftTypeIconSO categoryIcons,
             NftTypeIconSO rarityInfoPanelBackgrounds,
+            NFTColorsSO rarityColors,
             IBackpackEquipStatusController backpackEquipStatusController)
         {
             this.view = view;
             this.backpackEventBus = backpackEventBus;
             this.categoryIcons = categoryIcons;
             this.rarityInfoPanelBackgrounds = rarityInfoPanelBackgrounds;
+            this.rarityColors = rarityColors;
 
             hideCategoriesController = new HideCategoriesController(
                 view.HideCategoryGridView,
@@ -54,6 +59,8 @@ namespace DCL.Backpack
             view.Description.text = string.IsNullOrEmpty(wearable.GetDescription()) ? "This wearable does not have a description set." : wearable.GetDescription();
             view.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
             view.RarityBackground.sprite = rarityInfoPanelBackgrounds.GetTypeImage(wearable.GetRarity());
+            view.RarityBackgroundPanel.color = rarityColors.GetColor(wearable.GetRarity());
+            view.RarityName.text = wearable.GetRarity();
             WaitForThumbnailAsync(wearable, cts.Token).Forget();
         }
 

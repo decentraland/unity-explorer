@@ -19,6 +19,12 @@ namespace DCL.Backpack
         public Image WearableThumbnail { get; private set; }
 
         [field: SerializeField]
+        public Image RarityBackgroundPanel { get; private set; }
+
+        [field: SerializeField]
+        public TMP_Text RarityName { get; private set; }
+
+        [field: SerializeField]
         public Image CategoryImage { get; private set; }
 
         [field: SerializeField]
