@@ -109,8 +109,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             HashSet<string> wearablesToHide = HashSetPool<string>.Get();
             HashSet<string> usedCategories = HashSetPool<string>.Get();
 
-            AvatarWearableHide.ComposeHiddenCategoriesOrdered(avatarShapeComponent.BodyShape, null, wearablesResult.Asset,
-                intention.Pointers.Count, wearablesToHide);
+            //AvatarWearableHide.ComposeHiddenCategoriesOrdered(avatarShapeComponent.BodyShape, null, wearablesResult.Asset,
+            //    intention.Pointers.Count, wearablesToHide);
 
             GameObject bodyShape = null;
 
@@ -119,12 +119,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             for (var i = 0; i < intention.Pointers.Count; i++)
             {
                 IWearable resultWearable = wearablesResult.Asset[i];
-
-                if (wearablesToHide.Contains(resultWearable.GetCategory()))
-                {
-                    resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape).Dereference();
+                if(resultWearable == null)
                     continue;
-                }
 
                 if (resultWearable.isFacialFeature())
                 {
