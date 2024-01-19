@@ -24,8 +24,8 @@ namespace DCL.CharacterCamera.Systems
         [Query]
         private void Prepare(ref CameraComponent cameraComponent, ref ExposedCameraData exposedCameraData, in CursorComponent cursorComponent)
         {
-            exposedCameraData.CameraType = cameraComponent.Mode.ToSDKCameraType();
-            exposedCameraData.PointerIsLocked = cursorComponent.CursorIsLocked;
+            exposedCameraData.CameraType.Value = cameraComponent.Mode.ToSDKCameraType();
+            exposedCameraData.PointerIsLocked.Value = cursorComponent.CursorIsLocked;
             Transform transform = cameraComponent.Camera.transform;
             exposedCameraData.WorldPosition.Value = transform.position;
             exposedCameraData.WorldRotation.Value = transform.rotation;

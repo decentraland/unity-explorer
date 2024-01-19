@@ -1,15 +1,26 @@
 using System;
+using System.Collections.Generic;
 
 namespace Utility
 {
-    public struct CanBeDirty<T> where T: struct, IEquatable<T>
+    public static class CanBeDirty
+    {
+        public static CanBeDirty<T> FromEnum<T>(T defaultValue = default) where T: unmanaged, Enum =>
+            new (defaultValue, EnumUtils.GetEqualityComparer<T>());
+    }
+
+    public struct CanBeDirty<T> where T: struct
     {
         private T value;
 
-        public CanBeDirty(T value)
+        private IEqualityComparer<T> equalityComparer;
+
+        public CanBeDirty(T value, IEqualityComparer<T> equalityComparer = null)
         {
             this.value = value;
             IsDirty = false;
+
+            this.equalityComparer = equalityComparer ?? EqualityComparer<T>.Default;
         }
 
         /// <summary>
@@ -24,7 +35,9 @@ namespace Utility
 
             set
             {
-                if (value.Equals(this.value))
+                equalityComparer ??= EqualityComparer<T>.Default;
+
+                if (equalityComparer.Equals(this.value, value))
                 {
                     IsDirty = false;
                     return;

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 using CameraType = DCL.ECSComponents.CameraType;
@@ -6,13 +7,17 @@ namespace DCL.CharacterCamera
 {
     public class ExposedCameraData : IExposedCameraData
     {
-        public CanBeDirty<Vector3> WorldPosition;
-        public CanBeDirty<Quaternion> WorldRotation;
+        private static readonly IEqualityComparer<Quaternion> EQUALITY_COMPARER_WITH_ERROR =
+            QuaternionUtils.CreateEqualityComparer(QuaternionUtils.DEFAULT_ERROR * 100);
 
-        public CameraType CameraType { get; set; }
-        public bool PointerIsLocked { get; set; }
+        public CanBeDirty<Vector3> WorldPosition;
+        public CanBeDirty<Quaternion> WorldRotation = new (Quaternion.identity, EQUALITY_COMPARER_WITH_ERROR);
+        public CanBeDirty<bool> PointerIsLocked;
+        public CanBeDirty<CameraType> CameraType = CanBeDirty.FromEnum<CameraType>();
 
         CanBeDirty<Vector3> IExposedCameraData.WorldPosition => WorldPosition;
         CanBeDirty<Quaternion> IExposedCameraData.WorldRotation => WorldRotation;
+        CanBeDirty<CameraType> IExposedCameraData.CameraType => CameraType;
+        CanBeDirty<bool> IExposedCameraData.PointerIsLocked => PointerIsLocked;
     }
 }
