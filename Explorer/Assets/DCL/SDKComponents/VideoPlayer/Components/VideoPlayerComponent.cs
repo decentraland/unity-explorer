@@ -5,10 +5,15 @@ using System;
 
 namespace DCL.SDKComponents.VideoPlayer
 {
+    public struct VideoMaterialComponent
+    {
+
+    }
+
     public struct VideoPlayerComponent: IPoolableComponentProvider<MediaPlayer>
     {
         private readonly PBVideoPlayer sdkComponent;
-        private readonly MediaPlayer mediaPlayer;
+        public readonly MediaPlayer mediaPlayer;
 
         MediaPlayer IPoolableComponentProvider<MediaPlayer>.PoolableComponent => mediaPlayer;
         Type IPoolableComponentProvider<MediaPlayer>.PoolableComponentType => typeof(MediaPlayer);

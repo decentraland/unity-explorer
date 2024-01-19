@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
+using Decentraland.Common;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
@@ -13,7 +14,10 @@ using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Defaults;
 using SceneRunner.Scene;
+using UnityEngine;
+using Entity = Arch.Core.Entity;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using Texture = Decentraland.Common.Texture;
 
 namespace ECS.Unity.Materials.Systems
 {
@@ -77,6 +81,12 @@ namespace ECS.Unity.Materials.Systems
             if (!capFrameTimeBudget.TrySpendBudget())
                 return;
 
+            if (material.Pbr?.Texture.TexCase == TextureUnion.TexOneofCase.VideoTexture || material.Unlit?.Texture.TexCase == TextureUnion.TexOneofCase.VideoTexture)
+            {
+                // TODO remove this hack
+                return;
+            }
+
             var materialComponent = new MaterialComponent(CreateMaterialData(ref material));
             CreateGetTexturePromises(ref materialComponent, ref partitionComponent);
             materialComponent.Status = StreamableLoading.LifeCycle.LoadingInProgress;
@@ -99,7 +109,6 @@ namespace ECS.Unity.Materials.Systems
         private MaterialData CreateMaterialData(ref PBMaterial material)
         {
             // TODO Video Textures
-
             TextureComponent? albedoTexture = (material.Pbr?.Texture ?? material.Unlit?.Texture).CreateTextureComponent(sceneData);
 
             if (material.Pbr != null)
