@@ -38,6 +38,9 @@ namespace DCL.Backpack
         public Button UnequipButton { get; private set; }
 
         [field: SerializeField]
+        public GameObject OverrideHideContainer { get; private set; }
+
+        [field: SerializeField]
         public Button OverrideHide { get; private set; }
 
         [field: SerializeField]

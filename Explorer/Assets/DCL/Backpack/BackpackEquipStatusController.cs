@@ -46,10 +46,10 @@ namespace DCL.Backpack
             return hides;
         }
 
-        private void RemoveWearableForCategory(IWearable wearable) =>
+        private void RemoveWearableForCategory(IWearable wearable, IReadOnlyCollection<string> readOnlyCollection) =>
             equippedWearables[wearable.GetCategory()] = null;
 
-        private void SetWearableForCategory(IWearable wearable) =>
+        private void SetWearableForCategory(IWearable wearable, IReadOnlyCollection<string> readOnlyCollection) =>
             equippedWearables[wearable.GetCategory()] = wearable;
     }
 

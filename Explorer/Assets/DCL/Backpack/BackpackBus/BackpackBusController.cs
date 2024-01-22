@@ -59,15 +59,15 @@ namespace DCL.Backpack.BackpackBus
                 return;
 
             if (backpackEquipStatusController.GetEquippedWearableForCategory(category) != null)
-                backpackEventBus.SendUnEquip(backpackEquipStatusController.GetEquippedWearableForCategory(category));
+                backpackEventBus.SendUnEquip(backpackEquipStatusController.GetEquippedWearableForCategory(category), command.AvatarForceRender);
 
-            backpackEventBus.SendEquip(wearable);
+            backpackEventBus.SendEquip(wearable, command.AvatarForceRender);
         }
 
         private void HandleUnEquipCommand(BackpackUnEquipCommand command)
         {
             if (wearableCatalog.TryGetWearable(command.Id, out IWearable wearable))
-                backpackEventBus.SendUnEquip(wearable);
+                backpackEventBus.SendUnEquip(wearable, command.AvatarForceRender);
         }
 
         private void HandleHideCommand(BackpackHideCommand command) { }

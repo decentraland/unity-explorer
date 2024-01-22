@@ -22,11 +22,11 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             { "mouth", WearablesConstants.Categories.MOUTH },
         };
 
-        public static void ComposeHiddenCategoriesOrdered(string bodyShapeId, HashSet<string> forceRender, IWearable[] wearables, int wearableCount, HashSet<string> combinedHidingList)
+        public static void ComposeHiddenCategoriesOrdered(string bodyShapeId, HashSet<string> forceRender, List<IWearable> wearables, HashSet<string> combinedHidingList)
         {
             var wearablesByCategory = new Dictionary<string, IWearable>();
 
-            for (var i = 0; i < wearableCount; i++)
+            for (var i = 0; i < wearables.Count; i++)
                 wearablesByCategory[wearables[i].GetCategory()] = wearables[i];
 
             HashSet<string> hidingList = HashSetPool<string>.Get();

@@ -1,22 +1,28 @@
+using System.Collections.Generic;
+
 namespace DCL.Backpack.BackpackBus
 {
     public readonly struct BackpackEquipCommand
     {
         public readonly string Id;
+        public readonly IReadOnlyCollection<string> AvatarForceRender;
 
-        public BackpackEquipCommand(string id)
+        public BackpackEquipCommand(string id, IReadOnlyCollection<string> avatarForceRender)
         {
             Id = id;
+            AvatarForceRender = avatarForceRender;
         }
     }
 
     public readonly struct BackpackUnEquipCommand
     {
         public readonly string Id;
+        public readonly IReadOnlyCollection<string> AvatarForceRender;
 
-        public BackpackUnEquipCommand(string id)
+        public BackpackUnEquipCommand(string id, IReadOnlyCollection<string> avatarForceRender)
         {
             Id = id;
+            AvatarForceRender = avatarForceRender;
         }
     }
 

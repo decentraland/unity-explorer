@@ -546,6 +546,7 @@ MonoBehaviour:
   <HoverTootlip>k__BackingField: {fileID: 1939663090140278769}
   <SelectedBackground>k__BackingField: {fileID: 1565898462633254641}
   <UnequipButton>k__BackingField: {fileID: 974693733676106512}
+  <OverrideHideContainer>k__BackingField: {fileID: 390093675035885393}
   <OverrideHide>k__BackingField: {fileID: 7015445653465098593}
   <NoOverride>k__BackingField: {fileID: 5111178573828489163}
   <CategoryText>k__BackingField: {fileID: 3491566857406547017}
