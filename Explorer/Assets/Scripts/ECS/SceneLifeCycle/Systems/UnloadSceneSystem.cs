@@ -39,9 +39,6 @@ namespace ECS.SceneLifeCycle.Systems
         [All(typeof(DeleteEntityIntention))]
         private void UnloadLOD(in Entity entity, ref SceneLODInfo sceneLODInfo)
         {
-            if (sceneLODInfo.LodCache == null)
-                Debug.Log("JUANI HERE IS THE NULL REFERENCE ERROR");
-            
             sceneLODInfo.Dispose(World);
             World.Remove<SceneLODInfo, VisualSceneState, DeleteEntityIntention>(entity);
         }
