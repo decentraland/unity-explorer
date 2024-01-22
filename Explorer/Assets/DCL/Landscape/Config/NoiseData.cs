@@ -1,10 +1,11 @@
 ﻿using System;
 using UnityEngine;
+using Random = Unity.Mathematics.Random;
 
 namespace DCL.Landscape.Config
 {
     [CreateAssetMenu(menuName = "Landscape/Noise Data", fileName = "NoiseData", order = 1)]
-    public class NoiseData : ScriptableObject
+    public class NoiseData : ScriptableObject, INoiseDataFactory
     {
         public NoiseSettings settings = new ()
         {
@@ -12,6 +13,10 @@ namespace DCL.Landscape.Config
             octaves = 1,
             persistance = 0.3f,
         };
+
+        public virtual INoiseGenerator GetGenerator(uint baseSeed) =>
+            new NoiseGenerator(this, baseSeed);
+
     }
 
     [Serializable]

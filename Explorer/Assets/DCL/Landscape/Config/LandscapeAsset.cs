@@ -17,7 +17,7 @@ namespace DCL.Landscape.Config
         /// </summary>
         public float density;
         public ObjectRandomization randomization;
-        public NoiseData noiseData;
 
+        public NoiseData noiseData;
     }
 }

@@ -9,17 +9,21 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4648edfba40f493bb8942c8dba9d656d, type: 3}
-  m_Name: BirchNoise
+  m_Script: {fileID: 11500000, guid: c0488ab1caa9420ab61e97ee71c3d310, type: 3}
+  m_Name: FlowerNoise
   m_EditorClassIdentifier: 
   settings:
-    invert: 0
+    invert: 1
     normalize: 1
-    scale: 15.05
-    octaves: 4
-    persistance: 0.555
-    lacunarity: 27.59
-    seed: 57
+    scale: 150
+    octaves: 6
+    persistance: 1
+    lacunarity: 2.82
+    seed: 1
     offset: {x: 0, y: 0}
-    cutoff: 0.9
-    noiseType: 1
+    cutoff: 0.6
+    noiseType: 2
+  add: []
+  multiply: []
+  subtract:
+  - {fileID: 11400000, guid: 996aca5b4ef949f428e646374ebd7025, type: 2}
