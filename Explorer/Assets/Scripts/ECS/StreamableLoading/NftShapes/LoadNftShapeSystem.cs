@@ -42,7 +42,7 @@ namespace ECS.StreamableLoading.NftShapes
             //texture request
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             GetTextureWebRequest request = await webRequestController.GetTextureAsync(
-                new CommonLoadingArguments(URLAddress.FromString(imageUrl)),
+                new CommonLoadingArguments(URLAddress.FromString(imageUrl), attempts: 1),
                 new GetTextureArguments(false),
                 ct,
                 reportCategory: GetReportCategory()
