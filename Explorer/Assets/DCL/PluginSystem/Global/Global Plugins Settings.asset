@@ -26,6 +26,7 @@ MonoBehaviour:
   - rid: 56198586647707649
   - rid: 1095376790733193218
   - rid: 8593314843508867075
+  - rid: 4107643854440628226
   references:
     version: 2
     RefIds:
@@ -119,6 +120,18 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 4107643854440628226
+      type: {class: LoadingScreenPlugin/LoadingScreenPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <LoadingScreenPrefab>k__BackingField:
+          m_AssetGUID: 605506dac7ec04ed09953980478e93d4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <FallbackTipsTable>k__BackingField: SceneLoadingDefaultTips
+        <FallbackImagesTable>k__BackingField: SceneLoadingDefaultImages
+        <TipDisplayDuration>k__BackingField: 30
+        <MinimumScreenDisplayDuration>k__BackingField: 3
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

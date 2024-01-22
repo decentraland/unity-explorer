@@ -119,7 +119,7 @@ namespace DCL.AuthenticationScreenFlow
                 SwitchState(ViewState.Login);
         }
 
-        protected override UniTask WaitForCloseIntent(CancellationToken ct) =>
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             (lifeCycleTask ??= new UniTaskCompletionSource()).Task.AttachExternalCancellation(ct);
 
         private void StartFlow()
