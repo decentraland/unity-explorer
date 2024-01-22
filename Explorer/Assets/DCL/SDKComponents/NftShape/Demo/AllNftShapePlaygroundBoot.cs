@@ -1,11 +1,11 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.Billboard.Demo.Properties;
+using DCL.AssetsProvision;
 using DCL.DemoWorlds;
 using DCL.ECSComponents;
 using DCL.SDKComponents.NftShape.Component;
+using DCL.SDKComponents.NftShape.Frames.FramePrefabs;
 using DCL.SDKComponents.NftShape.Frames.Pool;
-using DCL.Utilities.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,8 +27,21 @@ namespace DCL.SDKComponents.NftShape.Demo
 
         private void Start()
         {
+            LaunchAsync().Forget();
+        }
+
+        private async UniTask LaunchAsync()
+        {
             var world = World.Create();
-            var framesPool = new FramesPool(settings.EnsureNotNull());
+
+            var framesPrefabs = new AssetProvisionerFramePrefabs(new AddressablesProvisioner());
+            var framesPool = new FramesPool(framesPrefabs);
+
+            await framesPrefabs.Initialize(
+                settings.FramePrefabs(),
+                settings.DefaultFrame(),
+                destroyCancellationToken
+            );
 
             new SeveralDemoWorld(
                     AllFrameTypes()

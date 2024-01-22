@@ -1,8 +1,9 @@
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.DemoWorlds;
 using DCL.SDKComponents.NftShape.Component;
+using DCL.SDKComponents.NftShape.Frames.FramePrefabs;
 using DCL.SDKComponents.NftShape.Frames.Pool;
-using DCL.Utilities.Extensions;
 using UnityEngine;
 
 namespace DCL.SDKComponents.NftShape.Demo
@@ -18,9 +19,21 @@ namespace DCL.SDKComponents.NftShape.Demo
 
         private void Start()
         {
-            new WarmUpSettingsNftShapeDemoWorld(new FramesPool(settings.EnsureNotNull()), nftShapeProperties, () => visible)
-               .SetUpAndRunAsync(destroyCancellationToken)
-               .Forget();
+            LaunchAsync().Forget();
+        }
+
+        private async UniTask LaunchAsync()
+        {
+            var framesPrefabs = new AssetProvisionerFramePrefabs(new AddressablesProvisioner());
+            var world = new WarmUpSettingsNftShapeDemoWorld(new FramesPool(framesPrefabs), nftShapeProperties, () => visible);
+
+            await framesPrefabs.Initialize(
+                settings.FramePrefabs(),
+                settings.DefaultFrame(),
+                destroyCancellationToken
+            );
+
+            await world.SetUpAndRunAsync(destroyCancellationToken);
         }
     }
 }

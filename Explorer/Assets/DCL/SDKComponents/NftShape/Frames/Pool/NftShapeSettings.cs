@@ -1,3 +1,4 @@
+using DCL.AssetsProvision;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Utilities.Extensions;
@@ -12,24 +13,16 @@ namespace DCL.SDKComponents.NftShape.Frames.Pool
     public class NftShapeSettings : ScriptableObject
     {
         [SerializeField] private List<Pair> pairs = new ();
-        [SerializeField] private GameObject defaultFrame = null!;
+        [SerializeField] private FrameRef defaultFrame = null!;
 
-        public IReadOnlyDictionary<NftFrameType, AbstractFrame> FramePrefabs()
+        public IReadOnlyDictionary<NftFrameType, FrameRef> FramePrefabs()
         {
-            return pairs.ToDictionary(e => e.nftFrameType, e => FrameFrom(e.prefab.EnsureNotNull()));
+            return pairs.ToDictionary(e => e.nftFrameType, e => e.prefab.EnsureNotNull());
         }
 
-        public AbstractFrame DefaultFrame()
+        public FrameRef DefaultFrame()
         {
-            return FrameFrom(defaultFrame.EnsureNotNull("Default frame not set"));
-        }
-
-        private AbstractFrame FrameFrom(GameObject gameObject)
-        {
-            if (gameObject.TryGetComponent(out AbstractFrame frame))
-                return frame!;
-
-            throw new Exception("GameObject does not contain AbstractFrame");
+            return defaultFrame;
         }
 
         [ContextMenu(nameof(Ensure))]
@@ -51,7 +44,7 @@ namespace DCL.SDKComponents.NftShape.Frames.Pool
             if (prefabs.Count != distinct.Count)
             {
                 prefabs.RemoveAll(e => distinct.Remove(e));
-                var duplicated = string.Join(", ", prefabs.Select(e => e.name));
+                var duplicated = string.Join(", ", prefabs.Select(e => e.AssetGUID));
                 throw new Exception($"Duplicated frame prefabs: {duplicated}");
             }
 
@@ -62,7 +55,13 @@ namespace DCL.SDKComponents.NftShape.Frames.Pool
         private class Pair
         {
             public NftFrameType nftFrameType;
-            public GameObject prefab = null!;
+            public FrameRef prefab = null!;
+        }
+
+        [Serializable]
+        public class FrameRef : ComponentReference<AbstractFrame>
+        {
+            public FrameRef(string guid) : base(guid) { }
         }
     }
 }
