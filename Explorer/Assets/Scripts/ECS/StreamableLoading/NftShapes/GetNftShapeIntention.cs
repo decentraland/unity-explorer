@@ -22,7 +22,7 @@ namespace ECS.StreamableLoading.NftShapes
         public bool Equals(GetNftShapeIntention other) =>
             URN == other.URN
             && CommonArguments.Equals(other.CommonArguments)
-            && CancellationTokenSource.Equals(other.CancellationTokenSource);
+            && this.AreUrlEquals(other);
 
         public override bool Equals(object? obj) =>
             obj is GetNftShapeIntention other && Equals(other);
