@@ -11,11 +11,10 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.Serialization;
 using Debug = UnityEngine.Debug;
 using JobHandle = Unity.Jobs.JobHandle;
 using Object = UnityEngine.Object;
-using Random = System.Random;
+using Random = Unity.Mathematics.Random;
 
 namespace DCL.Landscape
 {
@@ -23,7 +22,6 @@ namespace DCL.Landscape
     {
         private readonly TerrainGenerationData terrainGenData;
         private GameObject rootGo;
-        private Random random;
         private Dictionary<NoiseData, NativeArray<float2>> octaves = new ();
         private List<Terrain> terrains;
         private TreePrototype[] treePrototypes;
@@ -31,6 +29,7 @@ namespace DCL.Landscape
         private NativeArray<Vector2Int> emptyParcels;
         private NativeHashSet<Vector2Int> ownedParcels;
         private int maxHeightIndex;
+        private Random random;
 
         public TerrainGenerator(TerrainGenerationData terrainGenData, ref NativeArray<Vector2Int> emptyParcels, ref NativeHashSet<Vector2Int> ownedParcels)
         {
@@ -41,7 +40,7 @@ namespace DCL.Landscape
 
         public void GenerateTerrain(bool withHoles = true, bool centerTerrain = true)
         {
-            random = new Random(terrainGenData.seed);
+            random = new Random((uint)terrainGenData.seed);
 
             if (octaves != null)
                 foreach (KeyValuePair<NoiseData, NativeArray<float2>> keyValuePair in octaves) { keyValuePair.Value.Dispose(); }
@@ -188,14 +187,45 @@ namespace DCL.Landscape
 
                 //enableHolesTextureCompression = true,
                 treePrototypes = GetTreePrototypes(),
+                detailPrototypes = GetDetailPrototypes(),
             };
 
             SetHeights(offsetX, offsetZ, terrainData);
             SetTextures(offsetX, offsetZ, resolution, terrainData);
 
             SetTrees(offsetX, offsetZ, chunkSize, terrainData);
+            SetDetails(offsetX, offsetZ, chunkSize, terrainData);
 
             return terrainData;
+        }
+
+        private DetailPrototype[] GetDetailPrototypes()
+        {
+            return terrainGenData.detailAssets.Select(a =>
+            {
+                var detailPrototype = new DetailPrototype();
+                detailPrototype.prototype = a.asset;
+                detailPrototype.density = a.radius;
+                return detailPrototype;
+            }).ToArray();
+        }
+
+        private void SetDetails(int offsetX, int offsetZ, int chunkSize, TerrainData terrainData)
+        {
+            terrainData.SetDetailScatterMode(terrainGenData.detailScatterMode);
+
+            for (int i = 0; i < terrainGenData.detailAssets.Length; i++)
+            {
+                var detailLayer = terrainData.GetDetailLayer(0, 0, terrainData.detailWidth, terrainData.detailHeight, i);
+
+                for (var y = 0; y < detailLayer.GetLength(1); y++)
+                {
+                    for (var x = 0; x < detailLayer.GetLength(0); x++)
+                    {
+                        detailLayer[y, x] = 1;
+                    }
+                }
+            }
         }
 
         private void SetHeights(int offsetX, int offsetZ, TerrainData terrainData)
@@ -239,28 +269,13 @@ namespace DCL.Landscape
             }
         }
 
-        private Vector2Int WorldToParcelCoord(Vector3 worldPos)
-        {
-            int parcelX = Mathf.FloorToInt(worldPos.x / 16f);
-            int parcelZ = Mathf.FloorToInt(worldPos.z / 16f);
-            return new Vector2Int(-150 + parcelX, -150 + parcelZ);
-        }
-
-        private Vector3 ParcelToWorld(Vector2Int parcel)
-        {
-            int posX = (parcel.x + 150) * 16;
-            int posZ = (parcel.y + 150) * 16;
-            return new Vector3(posX, 0, posZ);
-        }
-
         private void SetTrees(int offsetX, int offsetZ, int chunkSize, TerrainData terrainData)
         {
-            // this should run in another job, but well, lets do it quick
-            var treeInstances = new List<TreeInstance>();
+            var treeInstances = new NativeList<TreeInstance>(5000, Allocator.Persistent);
 
-            for (var i = 0; i < terrainGenData.treeAssets.Length; i++)
+            for (var treeAssetIndex = 0; treeAssetIndex < terrainGenData.treeAssets.Length; treeAssetIndex++)
             {
-                LandscapeAsset treeAsset = terrainGenData.treeAssets[i];
+                LandscapeAsset treeAsset = terrainGenData.treeAssets[treeAssetIndex];
                 NoiseData treeNoiseData = treeAsset.noiseData;
 
                 var treeOctaves = new NativeArray<float2>(treeNoiseData.settings.octaves, Allocator.Persistent);
@@ -272,108 +287,183 @@ namespace DCL.Landscape
                 var offset = new float2(offsetZ, offsetX);
                 var noiseJob = new NoiseJob(ref result, treeOctaves, chunkDensity, chunkDensity, treeNoiseData.settings, 1, offset, NoiseJobOperation.SET);
                 JobHandle handle = noiseJob.Schedule(chunkDensity * chunkDensity, 32);
-                handle.Complete(); // TODO: NOT IDEAL!
-                var onlyOne = false;
 
-                // TODO: JOBIFY THIS
-                for (var y = 0; y < chunkDensity; y++)
-                {
-                    if (onlyOne)
-                        break;
+                // TODO: NOT IDEAL!
+                handle.Complete();
 
-                    for (var x = 0; x < chunkDensity; x++)
-                    {
-                        if (onlyOne)
-                            break;
+                var treeInstancesJob = new GenerateTreeInstancesJob(
+                    in result,
+                    ref treeInstances,
+                    in emptyParcelResult,
+                    in treeAsset.randomization,
+                    treeAsset.radius,
+                    treeAssetIndex,
+                    offsetX,
+                    offsetZ,
+                    chunkSize,
+                    chunkDensity,
+                    ref random);
 
-                        int index = x + (y * chunkDensity);
-                        float value = result[index];
+                var h = treeInstancesJob.Schedule();
 
-                        Vector3 randomness = treeAsset.randomization.GetRandomizedPositionOffset(random) / chunkDensity;
-                        Vector3 positionWithinTheChunk = new Vector3((float)x / chunkDensity, 0, (float)y / chunkDensity) + randomness;
-                        Vector3 worldPosition = (positionWithinTheChunk * chunkSize) + new Vector3(offsetX, 0, offsetZ);
-                        Vector2Int parcelCoord = WorldToParcelCoord(worldPosition);
-                        Vector3 parcelWorldPos = ParcelToWorld(parcelCoord);
-
-                        if (value > 0 && emptyParcelResult.TryGetValue(parcelCoord, out EmptyParcelData item))
-                        {
-                            Vector2 randomScale = treeAsset.randomization.randomScale;
-                            float scale = Mathf.Lerp(randomScale.x, randomScale.y, random.Next(0, 100) / 100f);
-
-                            float radius = treeAsset.radius * scale;
-
-                            bool u = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.up, 0, radius);
-                            bool ur = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.up + Vector2Int.right, 0, radius);
-                            bool r = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.right, 0, radius);
-                            bool rd = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.right + Vector2Int.down, 0, radius);
-                            bool d = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.down, 0, radius);
-                            bool dl = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.down + Vector2Int.left, 0, radius);
-                            bool l = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.left, 0, radius);
-                            bool lu = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.left + Vector2Int.up, 0, radius);
-
-                            //onlyOne = true;
-
-                            if (!u || !ur || !r || !rd || !d || !dl || !l || !lu)
-                                continue;
-
-                            Vector2 randomRotation = treeAsset.randomization.randomRotationY * Mathf.Deg2Rad;
-                            float rotation = Mathf.Lerp(randomRotation.x, randomRotation.y, random.Next(0, 100) / 100f);
-
-                            var treeInstance = new TreeInstance
-                            {
-                                position = positionWithinTheChunk,
-                                prototypeIndex = i,
-                                rotation = rotation,
-                                widthScale = scale * value,
-                                heightScale = scale * value,
-                                color = Color.white,
-                                lightmapColor = Color.white,
-                            };
-
-                            treeInstances.Add(treeInstance);
-                        }
-                    }
-                }
+                // TODO: NOT IDEAL!
+                h.Complete();
 
                 treeOctaves.Dispose();
                 result.Dispose();
             }
 
-            terrainData.SetTreeInstances(treeInstances.ToArray(), true);
+            // We do a horrible array copy because that's what the terrain API expects, it is what it is
+            var array = new TreeInstance[treeInstances.Length];
+            for (var i = 0; i < treeInstances.Length; i++)
+                array[i] = treeInstances[i];
+
+            terrainData.SetTreeInstances(array, true);
+            treeInstances.Dispose();
         }
 
-        private bool CheckAssetPosition(EmptyParcelData item, Vector2Int currentParcel, Vector3 parcelWorldPos, Vector3 assetPosition, Vector2Int direction,
-            int depth, float radius)
+        [BurstCompile]
+        private struct GenerateTreeInstancesJob : IJob
         {
-            if (GetHeightDirection(item, direction) >= 0)
+            [ReadOnly] private NativeArray<float> treeNoise;
+            private NativeList<TreeInstance> treeInstances;
+            [ReadOnly] private NativeHashMap<Vector2Int, EmptyParcelData> emptyParcelResult;
+            private ObjectRandomization treeRandomization;
+            private readonly float treeRadius;
+            private readonly int treeIndex;
+            private readonly int offsetX;
+            private readonly int offsetZ;
+            private readonly int chunkSize;
+            private readonly int chunkDensity;
+            private Random random;
+
+            public GenerateTreeInstancesJob(
+                in NativeArray<float> treeNoise,
+                ref NativeList<TreeInstance> treeInstances,
+                in NativeHashMap<Vector2Int, EmptyParcelData> emptyParcelResult,
+                in ObjectRandomization treeRandomization,
+                float treeRadius,
+                int treeIndex,
+                int offsetX,
+                int offsetZ,
+                int chunkSize,
+                int chunkDensity,
+                ref Random random)
             {
-                int nextDepth = depth + 1;
-
-                if (emptyParcelResult.TryGetValue(currentParcel + (direction * nextDepth), out EmptyParcelData parcel))
-                    return CheckAssetPosition(parcel, currentParcel, parcelWorldPos, assetPosition, direction, nextDepth, radius);
+                this.treeNoise = treeNoise;
+                this.treeInstances = treeInstances;
+                this.emptyParcelResult = emptyParcelResult;
+                this.treeRandomization = treeRandomization;
+                this.treeRadius = treeRadius;
+                this.treeIndex = treeIndex;
+                this.offsetX = offsetX;
+                this.offsetZ = offsetZ;
+                this.chunkSize = chunkSize;
+                this.chunkDensity = chunkDensity;
+                this.random = random;
             }
-            else
+
+            public void Execute()
             {
-                var v3Dir = new Vector3(direction.x, 0, direction.y);
-                Vector3 posToCheck = parcelWorldPos + (v3Dir * 8f) + (depth * v3Dir * 16);
-                float distance = Vector3.Distance(assetPosition, posToCheck);
-                return distance > radius;
+                for (int y = 0; y < chunkDensity; y++)
+                {
+                    for (int x = 0; x < chunkDensity; x++)
+                    {
+
+                        int index = x + (y * chunkDensity);
+                        float value = treeNoise[index];
+
+                        Vector3 randomness = treeRandomization.GetRandomizedPositionOffset(ref random) / chunkDensity;
+                        Vector3 positionWithinTheChunk = new Vector3((float)x / chunkDensity, 0, (float)y / chunkDensity) + randomness;
+                        Vector3 worldPosition = (positionWithinTheChunk * chunkSize) + new Vector3(offsetX, 0, offsetZ);
+                        Vector2Int parcelCoord = WorldToParcelCoord(worldPosition);
+                        Vector3 parcelWorldPos = ParcelToWorld(parcelCoord);
+
+                        if (!(value > 0) || !emptyParcelResult.TryGetValue(parcelCoord, out EmptyParcelData item)) continue;
+
+                        Vector2 randomScale = treeRandomization.randomScale;
+                        float scale = Mathf.Lerp(randomScale.x, randomScale.y, random.NextInt(0, 100) / 100f);
+
+                        float radius = treeRadius * scale;
+
+                        bool u = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.up, 0, radius);
+                        bool ur = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.up + Vector2Int.right, 0, radius);
+                        bool r = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.right, 0, radius);
+                        bool rd = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.right + Vector2Int.down, 0, radius);
+                        bool d = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.down, 0, radius);
+                        bool dl = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.down + Vector2Int.left, 0, radius);
+                        bool l = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.left, 0, radius);
+                        bool lu = CheckAssetPosition(item, parcelCoord, parcelWorldPos, worldPosition, Vector2Int.left + Vector2Int.up, 0, radius);
+
+                        if (!u || !ur || !r || !rd || !d || !dl || !l || !lu)
+                            continue;
+
+                        Vector2 randomRotation = treeRandomization.randomRotationY * Mathf.Deg2Rad;
+                        float rotation = Mathf.Lerp(randomRotation.x, randomRotation.y, random.NextInt(0, 100) / 100f);
+
+                        var treeInstance = new TreeInstance
+                        {
+                            position = positionWithinTheChunk,
+                            prototypeIndex = treeIndex,
+                            rotation = rotation,
+                            widthScale = scale * value,
+                            heightScale = scale * value,
+                            color = Color.white,
+                            lightmapColor = Color.white,
+                        };
+
+                        treeInstances.Add(treeInstance);
+                    }
+                }
             }
 
-            return false;
-        }
+            private Vector2Int WorldToParcelCoord(Vector3 worldPos)
+            {
+                int parcelX = Mathf.FloorToInt(worldPos.x / 16f);
+                int parcelZ = Mathf.FloorToInt(worldPos.z / 16f);
+                return new Vector2Int(-150 + parcelX, -150 + parcelZ);
+            }
 
-        private int GetHeightDirection(EmptyParcelData item, Vector2Int dir)
-        {
-            if (dir == Vector2Int.up) return item.upHeight;
-            if (dir == Vector2Int.up + Vector2Int.right) return item.upRigthHeight;
-            if (dir == Vector2Int.right) return item.rightHeight;
-            if (dir == Vector2Int.right + Vector2Int.down) return item.downRightHeight;
-            if (dir == Vector2Int.down) return item.downHeight;
-            if (dir == Vector2Int.down + Vector2Int.left) return item.downLeftHeight;
-            if (dir == Vector2Int.left) return item.leftHeight;
-            if (dir == Vector2Int.left + Vector2Int.up) return item.upLeftHeight;
-            return -1;
+            private Vector3 ParcelToWorld(Vector2Int parcel)
+            {
+                int posX = (parcel.x + 150) * 16;
+                int posZ = (parcel.y + 150) * 16;
+                return new Vector3(posX, 0, posZ);
+            }
+
+            private bool CheckAssetPosition(EmptyParcelData item, Vector2Int currentParcel, Vector3 parcelWorldPos, Vector3 assetPosition, Vector2Int direction,
+                int depth, float radius)
+            {
+                if (GetHeightDirection(item, direction) >= 0)
+                {
+                    int nextDepth = depth + 1;
+
+                    if (emptyParcelResult.TryGetValue(currentParcel + (direction * nextDepth), out EmptyParcelData parcel))
+                        return CheckAssetPosition(parcel, currentParcel, parcelWorldPos, assetPosition, direction, nextDepth, radius);
+                }
+                else
+                {
+                    var v3Dir = new Vector3(direction.x, 0, direction.y);
+                    Vector3 posToCheck = parcelWorldPos + (v3Dir * 8f) + (depth * v3Dir * 16);
+                    float distance = Vector3.Distance(assetPosition, posToCheck);
+                    return distance > radius;
+                }
+
+                return false;
+            }
+
+            private int GetHeightDirection(EmptyParcelData item, Vector2Int dir)
+            {
+                if (dir == Vector2Int.up) return item.upHeight;
+                if (dir == Vector2Int.up + Vector2Int.right) return item.upRigthHeight;
+                if (dir == Vector2Int.right) return item.rightHeight;
+                if (dir == Vector2Int.right + Vector2Int.down) return item.downRightHeight;
+                if (dir == Vector2Int.down) return item.downHeight;
+                if (dir == Vector2Int.down + Vector2Int.left) return item.downLeftHeight;
+                if (dir == Vector2Int.left) return item.leftHeight;
+                if (dir == Vector2Int.left + Vector2Int.up) return item.upLeftHeight;
+                return -1;
+            }
         }
 
         private TreePrototype[] GetTreePrototypes()

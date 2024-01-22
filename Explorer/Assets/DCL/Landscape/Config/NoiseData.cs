@@ -1,6 +1,5 @@
 ﻿using System;
 using UnityEngine;
-using Random = System.Random;
 
 namespace DCL.Landscape.Config
 {
@@ -37,30 +36,30 @@ namespace DCL.Landscape.Config
         public Vector2 positionOffsetY;
         public Vector2 positionOffsetZ;
 
-        public void ApplyRandomness(Transform transform, Random random, float objHeight)
+        public void ApplyRandomness(Transform transform, ref Unity.Mathematics.Random random, float objHeight)
         {
-            transform.eulerAngles = RandomVector(random, randomRotationX, randomRotationY, randomRotationZ);
+            transform.eulerAngles = RandomVector(ref random, randomRotationX, randomRotationY, randomRotationZ);
 
             if (proportionalScale)
-                transform.localScale = Vector3.one * RandomRange(random, in randomScale) * objHeight;
+                transform.localScale = Vector3.one * RandomRange(ref random, in randomScale) * objHeight;
             else
-                transform.localScale = RandomVector(random, randomScaleX, randomScaleY, randomScaleZ);
+                transform.localScale = RandomVector(ref random, randomScaleX, randomScaleY, randomScaleZ);
 
-            transform.localPosition += GetRandomizedPositionOffset(random);
+            transform.localPosition += GetRandomizedPositionOffset(ref random);
         }
 
-        public Vector3 GetRandomizedPositionOffset(Random random) =>
-            RandomVector(random, positionOffsetX, positionOffsetY, positionOffsetZ);
+        public Vector3 GetRandomizedPositionOffset(ref Unity.Mathematics.Random random) =>
+            RandomVector(ref random, positionOffsetX, positionOffsetY, positionOffsetZ);
 
-        private Vector3 RandomVector(Random random, in Vector2 rangeX, in Vector2 rangeY, in Vector2 rangeZ)
+        private Vector3 RandomVector(ref Unity.Mathematics.Random random, in Vector2 rangeX, in Vector2 rangeY, in Vector2 rangeZ)
         {
-            float randX = RandomRange(random, in rangeX);
-            float randY = RandomRange(random, in rangeY);
-            float randZ = RandomRange(random, in rangeZ);
+            float randX = RandomRange(ref random, in rangeX);
+            float randY = RandomRange(ref random, in rangeY);
+            float randZ = RandomRange(ref random, in rangeZ);
             return new Vector3(randX, randY, randZ);
         }
 
-        private float RandomRange(Random rand, in Vector2 range) =>
-            (float)((rand.NextDouble() * (range.y - range.x)) + range.x);
+        private float RandomRange(ref Unity.Mathematics.Random random, in Vector2 range) =>
+            (random.NextFloat() * (range.y - range.x)) + range.x;
     }
 }

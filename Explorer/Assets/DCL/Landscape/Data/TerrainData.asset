@@ -17,7 +17,7 @@ MonoBehaviour:
   chunkSize: 1024
   terrainScale: 15
   heightScaleNerf: 0.5
-  seed: 0
+  seed: 97
   terrainMaterial: {fileID: 2100000, guid: 01f1076962f95af4aa8276dd6e16f6d6, type: 2}
   terrainLayers:
   - {fileID: 8574412962073106934, guid: dc4e1ba31adc87647bf8f733af6ab483, type: 2}

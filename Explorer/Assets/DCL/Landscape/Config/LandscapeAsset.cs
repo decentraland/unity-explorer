@@ -18,6 +18,6 @@ namespace DCL.Landscape.Config
         public float density;
         public ObjectRandomization randomization;
         public NoiseData noiseData;
-        public int poolPreWarmCount;
+
     }
 }

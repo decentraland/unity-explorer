@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Bush
   m_EditorClassIdentifier: 
   asset: {fileID: 919132149155446097, guid: 35e3765a2b6217b40aff311113c2d6fd, type: 3}
-  radius: 5
+  radius: 7
   density: 5
   randomization:
     randomRotationX: {x: -5, y: 5}

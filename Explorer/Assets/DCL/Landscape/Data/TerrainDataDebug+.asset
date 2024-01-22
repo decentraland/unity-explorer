@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: TerrainDataDebug+
   m_EditorClassIdentifier: 
   ownedParcels: {fileID: 4900000, guid: a160048636f0c6a43b91e491836f503b, type: 3}
-  terrainSize: 256
+  terrainSize: 1024
   chunkSize: 256
   terrainScale: 10
   heightScaleNerf: 0.5
-  seed: 53
+  seed: 134
   terrainMaterial: {fileID: 2100000, guid: 01f1076962f95af4aa8276dd6e16f6d6, type: 2}
   terrainLayers:
   - {fileID: 8574412962073106934, guid: dc4e1ba31adc87647bf8f733af6ab483, type: 2}
@@ -27,3 +27,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 996aca5b4ef949f428e646374ebd7025, type: 2}
   treeAssets:
   - {fileID: 11400000, guid: e12bb03a902bb2642924c2b436873804, type: 2}
+  - {fileID: 11400000, guid: 9956eed88c3da1140a63203ad3e7e00b, type: 2}
+  - {fileID: 11400000, guid: b2b6204bf7bc3f642ab69b0abfb41215, type: 2}
+  detailScatterMode: 0
+  detailAssets: []

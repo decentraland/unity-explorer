@@ -15,9 +15,9 @@ MonoBehaviour:
   settings:
     invert: 0
     normalize: 1
-    scale: 60
+    scale: 22.4
     octaves: 3
-    persistance: 0.617
+    persistance: 0.186
     lacunarity: 40.34
     seed: 0
     offset: {x: 0, y: 0}

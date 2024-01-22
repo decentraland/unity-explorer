@@ -22,5 +22,9 @@ namespace DCL.Landscape.Settings
 
         [Header("Trees")]
         public LandscapeAsset[] treeAssets;
+
+        [Header("Detail")]
+        public DetailScatterMode detailScatterMode;
+        public LandscapeAsset[] detailAssets;
     }
 }
