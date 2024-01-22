@@ -55,12 +55,6 @@ namespace ECS.StreamableLoading.Common.Systems
             cancellationTokenSource = new CancellationTokenSource();
         }
 
-        public LoadSystemBase<TAsset, TIntention> InitializeAndReturnSelf()
-        {
-            Initialize();
-            return this;
-        }
-
         public override void Dispose()
         {
             cancellationTokenSource.Cancel();
