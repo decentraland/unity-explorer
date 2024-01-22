@@ -18,6 +18,8 @@ using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS.Prioritization;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -75,6 +77,8 @@ namespace Global
         public StaticSettings StaticSettings { get; private set; }
         public CacheCleaner CacheCleaner { get; private set; }
         public IEthereumApi EthereumApi { get; private set; }
+        public IScenesCache ScenesCache { get; private set; }
+        public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; }
 
         public void Dispose()
         {
@@ -112,6 +116,8 @@ namespace Global
             var container = new StaticContainer();
 
             container.EthereumApi = ethereumApi;
+            container.ScenesCache = new ScenesCache();
+            container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
 
             var addressablesProvisioner = new AddressablesProvisioner();
             container.AssetsProvisioner = addressablesProvisioner;
