@@ -23,6 +23,7 @@ namespace DCL.LOD.Components
         public string SceneHash;
         public Vector3 ParcelPosition;
         public bool IsDirty;
+        public ParcelMathHelper.SceneCircumscribedPlanes SceneCircumscribedPlanes;
 
 
         public void Dispose(World world)

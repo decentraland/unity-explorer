@@ -11,10 +11,12 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.SceneBoundsChecker;
 using SceneRunner.Scene;
 using UnityEngine;
 using Utility.Primitives;
@@ -34,6 +36,8 @@ namespace DCL.LOD.Systems
 
         private readonly IPerformanceBudget frameCapBudget;
         private readonly IPerformanceBudget memoryBudget;
+        
+
 
         public UpdateSceneLODInfoSystem(World world, LODAssetCache lodCache, Vector2Int[] lodBucketLimits,
             IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget) : base(world)
@@ -65,7 +69,8 @@ namespace DCL.LOD.Systems
         }
         
         [Query]
-        public void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo)
+        public void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo,
+            ref SceneDefinitionComponent sceneDefinitionComponent)
         {
             if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
             
@@ -77,9 +82,11 @@ namespace DCL.LOD.Systems
                 if (result.Succeeded)
                 {
                     lodCache.Dereference(sceneLODInfo.CurrentLOD.LodKey, sceneLODInfo.CurrentLOD);
-                    sceneLODInfo.CurrentLOD = new LODAsset(lodKey,
-                        Object.Instantiate(result.Asset.GameObject, sceneLODInfo.ParcelPosition, Quaternion.identity),
-                        result.Asset);
+                    var instantiatedLOD = Object.Instantiate(result.Asset.GameObject, sceneLODInfo.ParcelPosition,
+                        Quaternion.identity);
+                    ConfigureSceneMaterial.EnableSceneBounds(in instantiatedLOD,
+                        in sceneLODInfo.SceneCircumscribedPlanes);
+                    sceneLODInfo.CurrentLOD = new LODAsset(lodKey, instantiatedLOD, result.Asset);
                 }
                 else
                 {
