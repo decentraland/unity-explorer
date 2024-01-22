@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4648edfba40f493bb8942c8dba9d656d, type: 3}
-  m_Name: BirchNoise
+  m_Name: StoneNoise03
   m_EditorClassIdentifier: 
   settings:
     invert: 0
     normalize: 1
-    scale: 15.05
-    octaves: 4
-    persistance: 0.555
-    lacunarity: 27.59
-    seed: 57
-    offset: {x: 0, y: 0}
-    cutoff: 0.9
+    scale: 50
+    octaves: 3
+    persistance: 0.852
+    lacunarity: 100.8
+    seed: 422
+    offset: {x: 18.59, y: 0}
+    cutoff: 0.7
     noiseType: 1

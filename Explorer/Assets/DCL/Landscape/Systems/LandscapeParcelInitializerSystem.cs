@@ -66,7 +66,7 @@ namespace DCL.Landscape.Systems
 
             // This first query gets all LandscapeParcel and creates a Job which calculates what's going to spawn inside them
             Profiler.BeginSample("LandscapeParcelInitializerSystem.InitializeLandscapeJobs");
-            InitializeLandscapeJobsQuery(World);
+            //InitializeLandscapeJobsQuery(World);
             Profiler.EndSample();
 
             if (concurrentJobs > 0)
@@ -80,7 +80,7 @@ namespace DCL.Landscape.Systems
 
             // This second query get's the job result and spawns all the needed objects
             Profiler.BeginSample("LandscapeParcelInitializerSystem.InitializeLandscapeSubEntities");
-            InitializeLandscapeSubEntitiesQuery(World);
+            //InitializeLandscapeSubEntitiesQuery(World);
             Profiler.EndSample();
 
         }
@@ -118,7 +118,7 @@ namespace DCL.Landscape.Systems
             World.Remove<LandscapeParcelInitialization>(entity);
         }
 
-        [Query]
+        /*[Query]
         [None(typeof(DeleteEntityIntention))]
         [All(typeof(LandscapeParcelInitialization))]
         private void InitializeLandscapeJobs(in Entity entity, in LandscapeParcel landscapeParcel)
@@ -131,7 +131,7 @@ namespace DCL.Landscape.Systems
                 NoiseSettings noiseSettings = landscapeAsset.noiseData.settings;
 
                 var octaveOffsets = new NativeArray<float2>(noiseSettings.octaves, Allocator.Persistent);
-                float maxPossibleHeight = Noise.CalculateOctaves(landscapeParcel.Random, ref noiseSettings, ref octaveOffsets);
+                float maxPossibleHeight = Noise.CalculateOctaves(ref landscapeParcel.Random, ref noiseSettings, ref octaveOffsets);
 
                 var parcelNoiseJob = new LandscapeParcelNoiseJob
                 {
@@ -162,9 +162,9 @@ namespace DCL.Landscape.Systems
             }
 
             World.Remove<LandscapeParcelInitialization>(entity);
-        }
+        }*/
 
-        [Query]
+        /*[Query]
         private void InitializeLandscapeSubEntities(in Entity entity, ref LandscapeParcelNoiseJob landscapeParcelNoiseJob)
         {
             if (!landscapeParcelNoiseJob.Handle.IsCompleted) return;
@@ -196,7 +196,7 @@ namespace DCL.Landscape.Systems
                     if (objHeight > 0)
                     {
                         // TODO: draw them with BatchRenderer
-                        /*
+
                         Profiler.BeginSample("LandscapeParcelInitializerSystem.InitializeLandscapeSubEntities.SpawnObject");
                         Vector3 subEntityPos = (Vector3.right * i * dist) + (Vector3.forward * j * dist);
                         Vector3 finalPosition = basePos + parcelMargin + subEntityPos;
@@ -216,20 +216,20 @@ namespace DCL.Landscape.Systems
 
                         landscapeParcel.Assets[prefab].Add(objTransform);
                         Profiler.EndSample();
-                        */
+
                     }
                 }
             }
 
             // TODO: Add to unload list
-            /*Transform groundTile = poolManager.Get(landscapeData.groundTile);
+            Transform groundTile = poolManager.Get(landscapeData.groundTile);
             groundTile.SetParent(landscapeParentObject);
             groundTile.transform.position = basePos + new Vector3(8, 0, 8);
             groundTile.transform.eulerAngles = new Vector3(0, -180, 0);
 
             //UpdateMaterialPropertyBlock(basePos);
             //groundTile.GetComponent<Renderer>().SetPropertyBlock(materialPropertyBlock);
-            groundTile.name = $"Empty {basePos.x / 16:F0},{basePos.z / 16:F0}";*/
+            groundTile.name = $"Empty {basePos.x / 16:F0},{basePos.z / 16:F0}";
 
             DisposeEntityAndJob(in entity, ref landscapeParcelNoiseJob);
 
@@ -239,6 +239,6 @@ namespace DCL.Landscape.Systems
                 landscapeParcelNoiseJob.OctaveOffsets.Dispose();
                 World.Destroy(entity);
             }
-        }
+        }*/
     }
 }

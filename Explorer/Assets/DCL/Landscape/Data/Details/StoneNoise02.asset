@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4648edfba40f493bb8942c8dba9d656d, type: 3}
-  m_Name: StoneNoise
+  m_Name: StoneNoise02
   m_EditorClassIdentifier: 
   settings:
     invert: 0
     normalize: 1
-    scale: 12.1
+    scale: 50
     octaves: 3
     persistance: 0.852
     lacunarity: 100.8
-    seed: 151
+    seed: 311
     offset: {x: 18.59, y: 0}
-    cutoff: 0.34
+    cutoff: 0.7
     noiseType: 1

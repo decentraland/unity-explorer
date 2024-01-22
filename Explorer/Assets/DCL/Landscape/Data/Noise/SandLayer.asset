@@ -19,7 +19,7 @@ MonoBehaviour:
     octaves: 2
     persistance: 0.21
     lacunarity: 2.2
-    seed: 5
+    seed: 26
     offset: {x: 0, y: 0}
     cutoff: 0
     noiseType: 1
