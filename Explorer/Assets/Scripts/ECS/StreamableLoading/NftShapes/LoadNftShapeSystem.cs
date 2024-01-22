@@ -5,12 +5,12 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
-using DCL.WebRequests.GenericHead;
 using DCL.WebRequests.WebContentSizes;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using ECS.StreamableLoading.NftShapes.DTOs;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -56,21 +56,6 @@ namespace ECS.StreamableLoading.NftShapes
             var infoRequest = await webRequestController.GetAsync(commonArguments, ct, GetReportCategory());
             var nft = await infoRequest.CreateFromJson<NftInfoDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
             return nft.ImageUrl();
-        }
-
-        [Serializable]
-        public struct NftInfoDto
-        {
-            public NftDto nft;
-
-            public string ImageUrl() =>
-                nft.image_url;
-        }
-
-        [Serializable]
-        public struct NftDto
-        {
-            public string image_url;
         }
     }
 }
