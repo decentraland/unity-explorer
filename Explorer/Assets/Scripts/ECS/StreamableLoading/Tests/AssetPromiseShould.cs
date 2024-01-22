@@ -89,7 +89,7 @@ namespace ECS.StreamableLoading.Tests
             public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
             public bool Equals(Intent other) =>
-                CommonArguments.URL == other.CommonArguments.URL;
+                this.AreUrlEquals(other);
         }
 
         public class Asset { }
