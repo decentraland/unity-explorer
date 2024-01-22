@@ -4,7 +4,7 @@ namespace ECS.StreamableLoading.NftShapes.Urns
 {
     public interface IUrnSource
     {
-        URLAddress UrlOrEmpty(string urn);
+        URLAddress UrlOrEmpty(URN urn);
 
         class Fake : IUrnSource
         {
@@ -19,7 +19,7 @@ namespace ECS.StreamableLoading.NftShapes.Urns
                 this.url = url;
             }
 
-            public URLAddress UrlOrEmpty(string urn) =>
+            public URLAddress UrlOrEmpty(URN urn) =>
                 url;
         }
     }
