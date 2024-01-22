@@ -44,14 +44,10 @@ namespace DCL.SDKComponents.NftShape.System
         {
             if (nftLoadingComponent.TryGetResult(World!, out var result))
             {
-                nftLoadingComponent.Finish();
-
                 if (result.Succeeded)
                     nftShapeRendererComponent.PoolableComponent.Apply(result.Asset);
                 else
                     nftShapeRendererComponent.PoolableComponent.NotifyFailed();
-
-                nftLoadingComponent.Applied();
             }
         }
     }
