@@ -41,8 +41,9 @@ namespace DCL.LOD.Systems
 
             sceneLODInfo.CurrentLODLevel = -1;
             sceneLODInfo.SceneHash = sceneDefinitionComponent.Definition.id;
-            sceneLODInfo.ParcelPosition =
-                ParcelMathHelper.GetPositionByParcelPosition(sceneDefinitionComponent.Parcels[0]);
+            sceneLODInfo.ParcelPosition
+                = ParcelMathHelper.GetPositionByParcelPosition(sceneDefinitionComponent.Definition.metadata.scene
+                    .DecodedBase);
             sceneLODInfo.LodCache = lodCache;
         }
     }
