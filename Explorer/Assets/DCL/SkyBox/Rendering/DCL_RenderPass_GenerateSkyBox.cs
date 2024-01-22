@@ -174,7 +174,7 @@ namespace DCL.SkyBox.Rendering
                 StarsComputeShader = _StarsComputeShader;
                 CubemapTextureArray = _CubemapTextureArray;
 
-                if (bComputeStarMap = true)
+                if (bComputeStarMap == true)
                 {
                     if (starBuffer == null || !starBuffer.IsValid())
                     {
