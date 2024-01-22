@@ -12,6 +12,7 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
+using SceneRunner;
 using SceneRunner.Scene;
 using UnityEngine;
 
@@ -43,13 +44,13 @@ namespace ECS.SceneLifeCycle.Systems
         {
             VisualSceneState visualSceneState = new VisualSceneState();
             ResolveVisualSceneState(ref visualSceneState, partition, sceneDefinitionComponent);
-            //We mark it as clean, so it can be grabbed by the ResolveSceneStateByIncreasingRadiusSystem and not the UpdateVisualSceneStateSystem
             visualSceneState.IsDirty = false;
             World.Add(entity, visualSceneState);
         }
         
         [Query]
         [None(typeof(DeleteEntityIntention))]
+        [Any(typeof(SceneLODInfo), typeof(SceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
         private void UpdateVisualState(ref VisualSceneState visualSceneState, ref PartitionComponent partition,
             ref SceneDefinitionComponent sceneDefinitionComponent)
         {

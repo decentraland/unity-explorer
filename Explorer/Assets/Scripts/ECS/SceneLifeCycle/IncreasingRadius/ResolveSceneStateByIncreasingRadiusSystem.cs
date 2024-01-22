@@ -82,6 +82,34 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             float unloadingSqrDistance = unloadingDistance * unloadingDistance;
 
             StartUnloadingQuery(World, unloadingSqrDistance);
+
+            FindingCulpritQuery(World);
+        }
+
+        [Query]
+        private void FindingCulprit(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent,
+            ref PartitionComponent partitionComponent,
+            ref VisualSceneState visualSceneState,
+            ref DeleteEntityIntention deleteEntityIntention)
+        {
+            if (sceneDefinitionComponent.Definition.id.Equals(
+                    "bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
+            {
+                Debug.Log("JUANI THIS HAS A LINGERING DELETEENTITY INTETION " + sceneDefinitionComponent.Definition.id);
+
+                if (World.Has<SceneLODInfo>(entity))
+                    Debug.Log("JUANI THIS HAS A LINGERING DELETEENTITY INTETION A " +
+                              sceneDefinitionComponent.Definition.id);
+
+                if (World.Has<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity))
+                    Debug.Log("JUANI THIS HAS A LINGERING DELETEENTITY INTETION B " +
+                              sceneDefinitionComponent.Definition.id);
+
+                if (World.Has<ISceneFacade>(entity))
+                    Debug.Log("JUANI THIS HAS A LINGERING DELETEENTITY INTETION C " +
+                              sceneDefinitionComponent.Definition.id);
+            }
+
         }
 
         [Query]
@@ -186,6 +214,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         [Query]
         [All(typeof(SceneDefinitionComponent))]
         [None(typeof(DeleteEntityIntention))]
+        //TODO: Ask Misha, this solves the problem of the lingering DeleteEntityIntention. But why wasnt there before?
+        [Any(typeof(SceneLODInfo), typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
         private void StartUnloading([Data] float unloadingSqrDistance, in Entity entity, ref PartitionComponent partitionComponent)
         {
             if (partitionComponent.RawSqrDistance < unloadingSqrDistance) return;

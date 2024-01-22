@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.LOD.Components;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -32,7 +33,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
         
         [Query]
-        [None(typeof(SceneLODInfo))]
+        [None(typeof(SceneLODInfo), typeof(DeleteEntityIntention))]
         private void SwapSceneFacadeToLOD(Entity entity, ref VisualSceneState visualSceneState,
             ISceneFacade sceneFacade, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
@@ -54,7 +55,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        [None(typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
+        [None(typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>), typeof(DeleteEntityIntention))]
         private void SwapLODToScenePromise(Entity entity, ref VisualSceneState visualSceneState,
             ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partition)
         {
@@ -74,7 +75,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        [None(typeof(SceneLODInfo))]
+        [None(typeof(SceneLODInfo), typeof(DeleteEntityIntention))]
         private void SwapScenePromiseToLOD(Entity entity, ref VisualSceneState visualSceneState,
             AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
         {
