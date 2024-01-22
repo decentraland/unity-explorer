@@ -6,7 +6,6 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.NftShape.Component;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading;
 using ECS.StreamableLoading.NftShapes;
 using ECS.StreamableLoading.NftShapes.Urns;
 using ECS.Unity.Groups;
@@ -43,9 +42,7 @@ namespace DCL.SDKComponents.NftShape.System
         [Query]
         public void FinishAndApply(ref NftLoadingComponent nftLoadingComponent, in NftShapeRendererComponent nftShapeRendererComponent)
         {
-            if (nftLoadingComponent.readOnlyStatus == LifeCycle.LoadingInProgress
-                && nftLoadingComponent.promise.TryGetResult(World!, out var result)
-               )
+            if (nftLoadingComponent.TryGetResult(World!, out var result))
             {
                 nftLoadingComponent.Finish();
 
