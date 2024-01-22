@@ -55,7 +55,6 @@ namespace ECS.StreamableLoading.NftShapes
         {
             var infoRequest = await webRequestController.GetAsync(commonArguments, ct, GetReportCategory());
             var nft = await infoRequest.CreateFromJson<NftInfoDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
-            infoRequest.UnityWebRequest.Dispose();
             return nft.ImageUrl();
         }
 
