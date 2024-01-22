@@ -98,9 +98,9 @@ namespace DCL.LOD.Systems
             
             if (partitionComponent.Bucket > lodBucketLimits[0][0] &&
                 partitionComponent.Bucket <= lodBucketLimits[0][1])
-                sceneLODCandidate = 2;
+                sceneLODCandidate = 1;
             else if (partitionComponent.Bucket > lodBucketLimits[1][0])
-                sceneLODCandidate = 3;
+                sceneLODCandidate = 2;
 
             if (sceneLODCandidate != sceneLODInfo.CurrentLODLevel)
                 UpdateLODLevel(ref partitionComponent, ref sceneLODInfo, sceneLODCandidate);

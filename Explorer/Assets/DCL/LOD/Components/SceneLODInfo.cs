@@ -34,7 +34,7 @@ namespace DCL.LOD.Components
 
         public string GenerateCurrentLodKey()
         {
-            return SceneHash.ToLower() + "_lod" + CurrentLODLevel;
+            return SceneHash.ToLower() + "_" + CurrentLODLevel;
         }
     }
     
