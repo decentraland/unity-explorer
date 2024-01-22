@@ -1,7 +1,6 @@
-using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.NftShape.Renderer;
-using UnityEngine;
+using System;
 
 namespace DCL.SDKComponents.NftShape.Component
 {
@@ -27,5 +26,7 @@ namespace DCL.SDKComponents.NftShape.Component
         }
 
         public INftShapeRenderer PoolableComponent => nftShape;
+
+        public Type PoolableComponentType => typeof(INftShapeRenderer);
     }
 }
