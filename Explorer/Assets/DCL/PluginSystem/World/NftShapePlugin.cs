@@ -85,8 +85,6 @@ namespace DCL.PluginSystem.World
             LoadNftShapeSystem.InjectToWorld(ref builder, cache, webRequestController, new MutexSync(), webContentSizes);
             LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedUrnSource());
             InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, sceneData: sceneData);
-
-            //ApplyMaterialNftShapeSystem.InjectToWorld(ref builder, sceneData); obsolete
             VisibilityNftShapeSystem.InjectToWorld(ref builder);
         }
     }
