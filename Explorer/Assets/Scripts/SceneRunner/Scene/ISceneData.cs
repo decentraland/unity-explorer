@@ -58,6 +58,7 @@ namespace SceneRunner.Scene
         class Fake : ISceneData
         {
             public SceneShortInfo SceneShortInfo => new (Vector2Int.zero, "Fake");
+            public IReadOnlyList<Vector2Int> Parcels { get; } = new List<Vector2Int>();
             public ParcelMathHelper.SceneGeometry Geometry => new (Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes());
             public SceneAssetBundleManifest AssetBundleManifest => SceneAssetBundleManifest.NULL;
             public StaticSceneMessages StaticSceneMessages => StaticSceneMessages.EMPTY;
