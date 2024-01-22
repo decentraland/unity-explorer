@@ -44,12 +44,12 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
             // Assert
             ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
-            Assert.AreEqual($"UIInput (Entity {entity.Id})", uiInputComponent.TextField.name);
-            Assert.IsTrue(uiInputComponent.TextField.ClassListContains("dcl-input"));
-            Assert.AreEqual(PickingMode.Position, uiInputComponent.TextField.pickingMode);
-            Assert.IsTrue(uiTransformComponent.Transform.Contains(uiInputComponent.TextField));
-            Assert.IsNotNull(uiInputComponent.TextField);
-            Assert.IsNotNull(uiInputComponent.Placeholder);
+            Assert.AreEqual($"UIInput (Entity {entity.Id})", uiInputComponent.Input.TextField.name);
+            Assert.IsTrue(uiInputComponent.Input.TextField.ClassListContains("dcl-input"));
+            Assert.AreEqual(PickingMode.Position, uiInputComponent.Input.TextField.pickingMode);
+            Assert.IsTrue(uiTransformComponent.Transform.Contains(uiInputComponent.Input.TextField));
+            Assert.IsNotNull(uiInputComponent.Input.TextField);
+            Assert.IsNotNull(uiInputComponent.Input.Placeholder);
         }
 
         [Test]
@@ -73,9 +73,9 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
                 // Assert
                 ref UIInputComponent uiInputComponent = ref world.Get<UIInputComponent>(entity);
-                Assert.AreEqual(input.Value, uiInputComponent.TextField.value);
-                Assert.IsTrue(input.GetFontSize() == uiInputComponent.TextField.style.fontSize);
-                Assert.IsTrue(input.GetTextAlign() == uiInputComponent.TextField.style.unityTextAlign);
+                Assert.AreEqual(input.Value, uiInputComponent.Input.TextField.value);
+                Assert.IsTrue(input.GetFontSize() == uiInputComponent.Input.TextField.style.fontSize);
+                Assert.IsTrue(input.GetTextAlign() == uiInputComponent.Input.TextField.style.unityTextAlign);
             }
         }
     }

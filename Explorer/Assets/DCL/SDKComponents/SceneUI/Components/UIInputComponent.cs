@@ -1,21 +1,19 @@
 ﻿using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Classes;
 using System;
-using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Components
 {
-    public struct UIInputComponent: IPoolableComponentProvider<TextField>
+    public struct UIInputComponent: IPoolableComponentProvider<DCLInputText>
     {
-        public TextField TextField;
-        public TextFieldPlaceholder Placeholder;
+        public DCLInputText Input;
 
-        TextField IPoolableComponentProvider<TextField>.PoolableComponent => TextField;
-        Type IPoolableComponentProvider<TextField>.PoolableComponentType => typeof(TextField);
+        DCLInputText IPoolableComponentProvider<DCLInputText>.PoolableComponent => Input;
+        Type IPoolableComponentProvider<DCLInputText>.PoolableComponentType => typeof(DCLInputText);
 
         public void Dispose()
         {
-            Placeholder.Dispose();
+            Input.Dispose();
         }
     }
 }

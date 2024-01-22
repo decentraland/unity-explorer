@@ -9,7 +9,6 @@ using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
-using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIInput
 {
@@ -17,11 +16,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
     [LogCategory(ReportCategory.SCENE_UI)]
     public partial class UIInputInstantiationSystem : BaseUnityLoopSystem
     {
-        private readonly IComponentPool<TextField> textFieldsPool;
+        private readonly IComponentPool<DCLInputText> inputTextsPool;
 
         public UIInputInstantiationSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
-            textFieldsPool = poolsRegistry.GetReferenceTypePool<TextField>();
+            inputTextsPool = poolsRegistry.GetReferenceTypePool<DCLInputText>();
         }
 
         protected override void Update(float t)
@@ -35,14 +34,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         [None(typeof(UIInputComponent))]
         private void InstantiateUIInput(in Entity entity, ref UITransformComponent uiTransformComponent)
         {
-            var textField = textFieldsPool.Get();
-            textField.name = $"UIInput (Entity {entity.Id})";
-            textField.AddToClassList("dcl-input");
-            textField.pickingMode = PickingMode.Position;
-            uiTransformComponent.Transform.Add(textField);
+            var inputText = inputTextsPool.Get();
+            inputText.Initialize($"UIInput (Entity {entity.Id})", "dcl-input");
+            uiTransformComponent.Transform.Add(inputText.TextField);
             var uiInputComponent = new UIInputComponent();
-            uiInputComponent.TextField = textField;
-            uiInputComponent.Placeholder = new TextFieldPlaceholder(textField);
+            uiInputComponent.Input = inputText;
             World.Add(entity, uiInputComponent);
         }
 
@@ -52,7 +48,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
             if (!sdkModel.IsDirty)
                 return;
 
-            UiElementUtils.SetupTextField(ref uiInputComponent.TextField, ref uiInputComponent.Placeholder, ref sdkModel);
+            UiElementUtils.SetupDCLInputText(ref uiInputComponent.Input, ref sdkModel);
             sdkModel.IsDirty = false;
         }
     }

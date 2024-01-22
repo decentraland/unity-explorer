@@ -154,18 +154,18 @@ namespace DCL.SDKComponents.SceneUI.Utils
             imageToSetup.Texture = texture;
         }
 
-        public static void SetupTextField(ref TextField textFieldToSetup, ref TextFieldPlaceholder placeHolderToSetup, ref PBUiInput model)
+        public static void SetupDCLInputText(ref DCLInputText inputToSetup, ref PBUiInput model)
         {
             bool isReadonly = !model.IsInteractive();
-            placeHolderToSetup.SetPlaceholder(model.Placeholder);
-            placeHolderToSetup.SetPlaceholderColor(model.GetPlaceholderColor());
-            placeHolderToSetup.SetNormalColor(model.GetColor());
-            placeHolderToSetup.SetReadOnly(isReadonly);
-            textFieldToSetup.isReadOnly = isReadonly;
-            textFieldToSetup.style.fontSize = model.GetFontSize();
-            textFieldToSetup.style.unityTextAlign = model.GetTextAlign();
-            textFieldToSetup.SetValueWithoutNotify(model.HasValue ? model.Value : string.Empty);
-            placeHolderToSetup.Refresh();
+            inputToSetup.Placeholder.SetPlaceholder(model.Placeholder);
+            inputToSetup.Placeholder.SetPlaceholderColor(model.GetPlaceholderColor());
+            inputToSetup.Placeholder.SetNormalColor(model.GetColor());
+            inputToSetup.Placeholder.SetReadOnly(isReadonly);
+            inputToSetup.TextField.isReadOnly = isReadonly;
+            inputToSetup.TextField.style.fontSize = model.GetFontSize();
+            inputToSetup.TextField.style.unityTextAlign = model.GetTextAlign();
+            inputToSetup.TextField.SetValueWithoutNotify(model.HasValue ? model.Value : string.Empty);
+            inputToSetup.Placeholder.Refresh();
         }
 
         public static void SetElementDefaultStyle(IStyle elementStyle)
@@ -186,6 +186,12 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
         public static void ReleaseDCLImage(DCLImage image) =>
             image.Dispose();
+
+        public static void ReleaseDCLInput(DCLInputText inputText)
+        {
+            inputText.Dispose();
+            ReleaseUIElement(inputText.TextField);
+        }
 
         private static LengthUnit GetUnit(YGUnit unit)
         {

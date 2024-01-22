@@ -47,7 +47,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         private void RemoveTextField(UIInputComponent uiInputComponent)
         {
             if (componentPool != null)
-                componentPool.Release(uiInputComponent.TextField);
+                componentPool.Release(uiInputComponent.Input.TextField);
         }
     }
 }

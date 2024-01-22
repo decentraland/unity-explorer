@@ -6,8 +6,7 @@ namespace DCL.SDKComponents.SceneUI.Classes
 {
     public class TextFieldPlaceholder : IDisposable
     {
-        private readonly TextField textField;
-
+        private TextField textField;
         private string placeholder;
         private Color placeholderColor;
         private Color normalColor;
@@ -15,15 +14,13 @@ namespace DCL.SDKComponents.SceneUI.Classes
         private bool isFocused;
         private bool isReadonly;
 
-        public TextFieldPlaceholder(TextField textField)
+        public void SetupTextField(TextField textFieldToSetup)
         {
-            this.textField = textField;
-
+            textField = textFieldToSetup;
             textField.RegisterCallback<FocusInEvent>(OnFocusIn);
             textField.RegisterCallback<FocusOutEvent>(OnFocusOut);
             // To support changing the value from code
             textField.RegisterValueChangedCallback(OnValueChanged);
-
             OnFocusOut(null);
         }
 
@@ -68,17 +65,28 @@ namespace DCL.SDKComponents.SceneUI.Classes
                 SetPlaceholderStyle();
         }
 
-        private void SetNormalStyle() =>
+        private void SetNormalStyle()
+        {
+            if (textField == null)
+                return;
+
             textField.style.color = normalColor;
+        }
 
         private void SetPlaceholderStyle()
         {
+            if (textField == null)
+                return;
+
             textField.style.color = placeholderColor;
             textField.SetValueWithoutNotify(placeholder);
         }
 
         private void OnFocusIn(FocusInEvent _)
         {
+            if (textField == null)
+                return;
+
             if (isReadonly)
                 return;
 
@@ -93,6 +101,9 @@ namespace DCL.SDKComponents.SceneUI.Classes
 
         private void OnFocusOut(FocusOutEvent _)
         {
+            if (textField == null)
+                return;
+
             if (isReadonly)
                 return;
 
@@ -121,6 +132,9 @@ namespace DCL.SDKComponents.SceneUI.Classes
 
         public void Dispose()
         {
+            if (textField == null)
+                return;
+
             textField.UnregisterCallback<FocusInEvent>(OnFocusIn);
             textField.UnregisterCallback<FocusOutEvent>(OnFocusOut);
             textField.UnregisterValueChangedCallback(OnValueChanged);
