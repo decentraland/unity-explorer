@@ -45,7 +45,12 @@ namespace DCL.SDKComponents.NftShape.Frames.Pool
                 pool = pools[frameType] = new ObjectPool<AbstractFrame>(
                     () => Object.Instantiate(Prefab(frameType)),
                     g => g.gameObject.SetActive(true),
-                    g => g.gameObject.SetActive(false),
+                    g =>
+                    {
+                        // ReSharper disable once AssignNullToNotNullAttribute
+                        g.transform.SetParent(null);
+                        g.gameObject.SetActive(false);
+                    },
                     g => UnityObjectUtils.SafeDestroyGameObject(g.transform)
                 );
             }
