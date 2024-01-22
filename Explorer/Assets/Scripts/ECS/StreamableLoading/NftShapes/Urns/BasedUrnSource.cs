@@ -1,7 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using System;
-using System.Linq;
 
 namespace ECS.StreamableLoading.NftShapes.Urns
 {
