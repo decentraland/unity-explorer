@@ -65,7 +65,7 @@ namespace DCL.PluginSystem.World
 
         public void Dispose()
         {
-            //ignore
+            cache.Dispose();
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
