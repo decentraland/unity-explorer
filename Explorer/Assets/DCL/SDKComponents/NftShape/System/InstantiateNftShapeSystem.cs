@@ -4,14 +4,12 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Profiling;
 using DCL.SDKComponents.NftShape.Component;
 using DCL.SDKComponents.NftShape.Renderer.Factory;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Materials.Components;
-using ECS.Unity.Materials.ForeignTextures;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 
@@ -24,19 +22,16 @@ namespace DCL.SDKComponents.NftShape.System
         private readonly INftShapeRendererFactory nftShapeRendererFactory;
         private readonly IPerformanceBudget instantiationFrameTimeBudgetProvider;
         private readonly ISceneData sceneData;
-        private readonly IForeignTextures foreignTextures;
 
         public InstantiateNftShapeSystem(
             World world,
             INftShapeRendererFactory nftShapeRendererFactory,
             IPerformanceBudget? instantiationFrameTimeBudgetProvider = null,
-            IForeignTextures? foreignTextures = null,
             ISceneData? sceneData = null
         ) : base(world)
         {
             this.nftShapeRendererFactory = nftShapeRendererFactory;
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider ?? new FrameTimeCapBudget();
-            this.foreignTextures = foreignTextures ?? new DefaultForeignTextures(world);
             this.sceneData = sceneData ?? new ISceneData.Fake();
         }
 
