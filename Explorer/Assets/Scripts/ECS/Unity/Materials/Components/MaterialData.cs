@@ -1,8 +1,6 @@
 ﻿using DCL.ECSComponents;
 using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.Textures.Components;
-using ECS.Unity.Textures.Components.Extensions;
-using SceneRunner.Scene;
 using UnityEngine;
 
 namespace ECS.Unity.Materials.Components
@@ -58,41 +56,6 @@ namespace ECS.Unity.Materials.Components
             EmissiveIntensity = emissiveIntensity;
             DirectIntensity = directIntensity;
         }
-
-        public static MaterialData CreateFromPBNftShape(PBNftShape pbNftShape, ISceneData sceneData)
-        {
-            var albedoTexture = pbNftShape.CreateTextureComponent(sceneData);
-            return CreateBasicMaterial(
-                albedoTexture,
-                0,
-                Color.white,
-                false
-            );
-        }
-
-        internal static MaterialData CreateFromPBMaterial(PBMaterial pbMaterial, ISceneData sceneData)
-        {
-            TextureComponent? albedoTexture = (pbMaterial.Pbr?.Texture ?? pbMaterial.Unlit?.Texture).CreateTextureComponent(sceneData);
-
-            if (pbMaterial.Pbr != null)
-            {
-                TextureComponent? alphaTexture = pbMaterial.Pbr.AlphaTexture.CreateTextureComponent(sceneData);
-                TextureComponent? emissiveTexture = pbMaterial.Pbr.EmissiveTexture.CreateTextureComponent(sceneData);
-                TextureComponent? bumpTexture = pbMaterial.Pbr.BumpTexture.CreateTextureComponent(sceneData);
-
-                return CreatePBRMaterial(pbMaterial, albedoTexture, alphaTexture, emissiveTexture, bumpTexture);
-            }
-
-            return CreateBasicMaterial(pbMaterial, albedoTexture);
-        }
-
-        internal static MaterialData CreateBasicMaterial(PBMaterial pbMaterial, in TextureComponent? albedoTexture) =>
-            CreateBasicMaterial(
-                albedoTexture,
-                pbMaterial.GetAlphaTest(),
-                pbMaterial.GetDiffuseColor(),
-                pbMaterial.GetCastShadows()
-            );
 
         internal static MaterialData CreateBasicMaterial(TextureComponent? albedoTexture, float alphaTest, Color diffuseColor, bool castShadows)
         {
