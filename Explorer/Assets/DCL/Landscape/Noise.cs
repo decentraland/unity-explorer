@@ -10,21 +10,31 @@ namespace DCL.Landscape.Config
     {
         private const int BIG_VALUE = 100000;
 
-        public static float CalculateOctaves(Random random, ref NoiseSettings settings, ref NativeArray<float2> octaveOffsets)
+        private static float CalculateOctaves(Func<float> nextRandom, ref NoiseSettings settings, ref NativeArray<float2> octaveOffsets)
         {
             float maxPossibleHeight = 0;
             float amplitude = 1;
 
             for (var i = 0; i < settings.octaves; i++)
             {
-                float offsetX = random.Next(-BIG_VALUE, BIG_VALUE) + settings.offset.x;
-                float offsetY = random.Next(-BIG_VALUE, BIG_VALUE) - settings.offset.y;
+                float offsetX = nextRandom() + settings.offset.x;
+                float offsetY = nextRandom() - settings.offset.y;
                 octaveOffsets[i] = new float2(offsetX, offsetY);
                 maxPossibleHeight += amplitude;
                 amplitude *= settings.persistance;
             }
 
             return maxPossibleHeight;
+        }
+
+        public static float CalculateOctaves(Random random, ref NoiseSettings settings, ref NativeArray<float2> octaveOffsets)
+        {
+            return CalculateOctaves(() => random.Next(-BIG_VALUE, BIG_VALUE), ref settings, ref octaveOffsets);
+        }
+
+        public static float CalculateOctaves(Unity.Mathematics.Random random, ref NoiseSettings settings, ref NativeArray<float2> octaveOffsets)
+        {
+            return CalculateOctaves(() => random.NextFloat(-BIG_VALUE, BIG_VALUE), ref settings, ref octaveOffsets);
         }
     }
 
