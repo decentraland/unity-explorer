@@ -52,7 +52,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         }
 
         [Query]
-        [All(typeof(PBUiBackground), typeof(PBUiTransform), typeof(UITransformComponent))]
         [None(typeof(UIBackgroundComponent))]
         private void InstantiateUIBackground(in Entity entity, ref PBUiBackground sdkModel, ref UITransformComponent uiTransformComponent, ref PartitionComponent partitionComponent)
         {

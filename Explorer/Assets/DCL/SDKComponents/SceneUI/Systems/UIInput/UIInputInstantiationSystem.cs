@@ -31,7 +31,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         }
 
         [Query]
-        [All(typeof(PBUiInput), typeof(PBUiTransform), typeof(UITransformComponent))]
+        [All(typeof(PBUiInput), typeof(UITransformComponent))]
         [None(typeof(UIInputComponent))]
         private void InstantiateUIInput(in Entity entity, ref UITransformComponent uiTransformComponent)
         {
@@ -47,7 +47,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIInput
         }
 
         [Query]
-        [All(typeof(PBUiInput), typeof(UIInputComponent))]
         private void UpdateUIInput(ref UIInputComponent uiInputComponent, ref PBUiInput sdkModel)
         {
             if (!sdkModel.IsDirty)

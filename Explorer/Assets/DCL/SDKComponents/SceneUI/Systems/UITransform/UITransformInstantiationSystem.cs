@@ -33,7 +33,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         }
 
         [Query]
-        [All(typeof(PBUiTransform))]
         [None(typeof(UITransformComponent))]
         private void InstantiateUITransform(in Entity entity, ref PBUiTransform sdkModel)
         {
