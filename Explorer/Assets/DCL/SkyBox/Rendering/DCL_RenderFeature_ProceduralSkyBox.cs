@@ -49,8 +49,14 @@ namespace DCL.SkyBox.Rendering
         private RTHandle m_StarBoxCubeMap_RTHandle;
         private RTHandle m_CubemapTextureArray_RTHandle;
 
+        public Cubemap m_SpaceCubemap;
+        private RTHandle m_SpaceCubemap_RTHandle;
+
+        private bool bComputeStarMap = false;
+
         public DCL_RenderFeature_ProceduralSkyBox()
         {
+            bComputeStarMap = false;
             m_SettingsGenerate = new ProceduralSkyBoxSettings_Generate();
             m_SettingsDraw = new ProceduralSkyBoxSettings_Draw();
             RenderingModel = new TimeOfDayRenderingModel();
@@ -58,6 +64,8 @@ namespace DCL.SkyBox.Rendering
 
         public override void Create()
         {
+            bComputeStarMap = false;
+            if (bComputeStarMap == true)
             {
                 // Create is called on Unity's validate
                 if (m_Current_Compute_Shader_Asset)
@@ -75,14 +83,14 @@ namespace DCL.SkyBox.Rendering
             // Create the Generate Pass...
             if (m_GeneratePass == null)
             {
-                m_GeneratePass = new DCL_RenderPass_GenerateSkyBox(RenderingModel);
+                m_GeneratePass = new DCL_RenderPass_GenerateSkyBox(RenderingModel, bComputeStarMap);
                 m_GeneratePass.renderPassEvent = RenderPassEvent.BeforeRendering; // Configures where the render pass should be injected.
             }
 
             // Create the Draw Pass...
             if (m_DrawPass == null)
             {
-                m_DrawPass = new DCL_RenderPass_DrawSkyBox(RenderingModel);
+                m_DrawPass = new DCL_RenderPass_DrawSkyBox(RenderingModel, bComputeStarMap);
                 m_DrawPass.renderPassEvent = RenderPassEvent.AfterRenderingOpaques; // Configures where the render pass should be injected.
             }
 
@@ -101,10 +109,13 @@ namespace DCL.SkyBox.Rendering
                 return;
             }
 
-            if (!GetMaterial_StarBox_Generate())
+            if (bComputeStarMap == true)
             {
-                ReportHub.LogError(m_ReportData, $"{GetType().Name}.AddRenderPasses(): Missing material. {name} render pass will not be added. Check for missing reference in the renderer resources.");
-                return;
+                if (!GetMaterial_StarBox_Generate())
+                {
+                    ReportHub.LogError(m_ReportData, $"{GetType().Name}.AddRenderPasses(): Missing material. {name} render pass will not be added. Check for missing reference in the renderer resources.");
+                    return;
+                }
             }
 
             if (!GetMaterial_Draw())
@@ -121,6 +132,7 @@ namespace DCL.SkyBox.Rendering
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
         {
             // StarBox Array(x6) Rendertarget
+            if (bComputeStarMap == true)
             {
                 var desc = new RenderTextureDescriptor();
                 desc.autoGenerateMips = false;
@@ -175,6 +187,7 @@ namespace DCL.SkyBox.Rendering
             }
 
             // StarBox Cubemap Rendertarget
+            if (bComputeStarMap == true)
             {
                 var desc = new RenderTextureDescriptor();
                 desc.autoGenerateMips = false;
@@ -200,11 +213,39 @@ namespace DCL.SkyBox.Rendering
                 RenderingUtils.ReAllocateIfNeeded(ref m_CubemapTextureArray_RTHandle, desc, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_CubemapTextureArray");
             }
 
-            if (StarsComputeShader == null)
-                StarsComputeShader = Instantiate(m_SettingsGenerate.starsComputeShader);
+            // Space Cubemap Rendertarget
+            {
+                var desc = new RenderTextureDescriptor();
+                desc.autoGenerateMips = false;
+                desc.bindMS = false;
+                desc.colorFormat = RenderTextureFormat.ARGB32;
+                desc.depthBufferBits = 0;
+                desc.depthStencilFormat = GraphicsFormat.None;
+                desc.dimension = TextureDimension.Cube;
+                desc.enableRandomWrite = false;
+                desc.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
+                desc.height = nDimensions_SkyBox_Cubemap;
+                desc.memoryless = RenderTextureMemoryless.None;
+                desc.mipCount = 0;
+                desc.msaaSamples = 1;
+                desc.shadowSamplingMode = ShadowSamplingMode.None;
+                desc.sRGB = false;
+                desc.stencilFormat = GraphicsFormat.None;
+                desc.useDynamicScale = false;
+                desc.useMipMap = false;
+                desc.volumeDepth = 0;
+                desc.vrUsage = VRTextureUsage.None;
+                desc.width = nDimensions_SkyBox_Cubemap;
+
+                RenderingUtils.ReAllocateIfNeeded(ref m_SpaceCubemap_RTHandle, desc, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_SpaceCubeMapTex");
+            }
+
+            if (bComputeStarMap == true)
+                if (StarsComputeShader == null)
+                    StarsComputeShader = Instantiate(m_SettingsGenerate.starsComputeShader);
 
             m_GeneratePass.Setup(m_SettingsGenerate, m_Material_SkyBox_Generate, m_Material_StarBox_Generate, m_SkyBoxCubeMap_RTHandle, m_StarBoxCubeMap_RTHandle, StarsComputeShader, m_CubemapTextureArray_RTHandle);
-            m_DrawPass.Setup(m_SettingsDraw, m_Material_Draw, renderer.cameraColorTargetHandle, renderer.cameraDepthTargetHandle, m_SkyBoxCubeMap_RTHandle, m_StarBoxCubeMap_RTHandle);
+            m_DrawPass.Setup(m_SettingsDraw, m_Material_Draw, renderer.cameraColorTargetHandle, renderer.cameraDepthTargetHandle, m_SkyBoxCubeMap_RTHandle, m_StarBoxCubeMap_RTHandle, m_SpaceCubemap);
         }
 
         private void SetupStarsComputeShader(ComputeShader computeShader)
@@ -215,18 +256,31 @@ namespace DCL.SkyBox.Rendering
 
         protected override void Dispose(bool disposing)
         {
-            if (m_Current_Compute_Shader_Asset)
-                ComputeShaderHotReload.Unsubscribe(m_Current_Compute_Shader_Asset, SetupStarsComputeShader);
+            if (bComputeStarMap == true)
+                if (m_Current_Compute_Shader_Asset)
+                    ComputeShaderHotReload.Unsubscribe(m_Current_Compute_Shader_Asset, SetupStarsComputeShader);
 
-            m_StarBoxCubeMap_RTHandle?.Release();
+
             m_SkyBoxCubeMap_RTHandle?.Release();
-            m_CubemapTextureArray_RTHandle?.Release();
+
+            if (bComputeStarMap == true)
+            {
+                m_StarBoxCubeMap_RTHandle?.Release();
+                m_CubemapTextureArray_RTHandle?.Release();
+            }
+
             m_GeneratePass?.Dispose();
             m_DrawPass?.Dispose();
 
-            CoreUtils.Destroy(StarsComputeShader);
+
             CoreUtils.Destroy(m_Material_SkyBox_Generate);
-            CoreUtils.Destroy(m_Material_StarBox_Generate);
+
+            if (bComputeStarMap == true)
+            {
+                CoreUtils.Destroy(m_Material_StarBox_Generate);
+                CoreUtils.Destroy(StarsComputeShader);
+            }
+
             CoreUtils.Destroy(m_Material_Draw);
         }
 
@@ -254,20 +308,23 @@ namespace DCL.SkyBox.Rendering
 
         private bool GetMaterial_StarBox_Generate()
         {
-            if (m_Material_StarBox_Generate != null) { return true; }
-
-            if (m_ShaderStarBoxGenerate == null)
+            if (bComputeStarMap == true)
             {
-                m_ShaderStarBoxGenerate = Shader.Find(k_ShaderName_StarBox_Generate);
+                if (m_Material_StarBox_Generate != null) { return true; }
 
                 if (m_ShaderStarBoxGenerate == null)
                 {
-                    ReportHub.LogError(m_ReportData, "m_ShaderStarBoxGenerate not found.");
-                    return false;
-                }
-            }
+                    m_ShaderStarBoxGenerate = Shader.Find(k_ShaderName_StarBox_Generate);
 
-            m_Material_StarBox_Generate = CoreUtils.CreateEngineMaterial(m_ShaderStarBoxGenerate);
+                    if (m_ShaderStarBoxGenerate == null)
+                    {
+                        ReportHub.LogError(m_ReportData, "m_ShaderStarBoxGenerate not found.");
+                        return false;
+                    }
+                }
+
+                m_Material_StarBox_Generate = CoreUtils.CreateEngineMaterial(m_ShaderStarBoxGenerate);
+            }
 
             return m_Material_StarBox_Generate != null;
         }

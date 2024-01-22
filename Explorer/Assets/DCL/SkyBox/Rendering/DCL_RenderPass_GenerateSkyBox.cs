@@ -92,61 +92,69 @@ namespace DCL.SkyBox.Rendering
 
             private Transform directionalLight;
 
-            internal DCL_RenderPass_GenerateSkyBox(TimeOfDayRenderingModel timeOfDayRenderingModel)
+            private bool bComputeStarMap = false;
+
+            internal DCL_RenderPass_GenerateSkyBox(TimeOfDayRenderingModel timeOfDayRenderingModel, bool _bComputeStarMap)
             {
+                bComputeStarMap = _bComputeStarMap;
+                bComputeStarMap = false;
                 this.timeOfDayRenderingModel = timeOfDayRenderingModel;
-                var asset = Resources.Load("BSC5") as TextAsset;
 
-                if (asset != null)
+                if (bComputeStarMap == true)
                 {
-                    var starlist = BSC5.Parse(asset.bytes);
+                    var asset = Resources.Load("BSC5") as TextAsset;
 
-                    starList_ComputeBuffer = new StarParam[starlist.Entries.Length];
-
-                    for (var i = 0; i < starlist.Entries.Length; ++i)
+                    if (asset != null)
                     {
-                        starList_ComputeBuffer[i].XNO = starlist.Entries[i].XNO;
-                        starList_ComputeBuffer[i].SRA0 = (float)starlist.Entries[i].SRA0;
-                        starList_ComputeBuffer[i].SDEC0 = (float)starlist.Entries[i].SDEC0;
+                        var starlist = BSC5.Parse(asset.bytes);
 
-                        switch (starlist.Entries[i].IS[0])
+                        starList_ComputeBuffer = new StarParam[starlist.Entries.Length];
+
+                        for (var i = 0; i < starlist.Entries.Length; ++i)
                         {
-                            case 'O':
-                                starList_ComputeBuffer[i].IS = new Vector3(0.59f, 0.67f, 0.97f);
-                                break;
-                            case 'B':
-                                starList_ComputeBuffer[i].IS = new Vector3(0.63f, 0.73f, 0.96f);
-                                break;
-                            case 'A':
-                                starList_ComputeBuffer[i].IS = new Vector3(0.76f, 0.82f, 0.97f);
-                                break;
-                            case 'F':
-                                starList_ComputeBuffer[i].IS = new Vector3(0.94f, 0.93f, 0.95f);
-                                break;
-                            case 'G':
-                                starList_ComputeBuffer[i].IS = new Vector3(0.95f, 0.92f, 0.89f);
-                                break;
-                            case 'K':
-                                starList_ComputeBuffer[i].IS = new Vector3(0.95f, 0.79f, 0.61f);
-                                break;
-                            case 'M':
-                                starList_ComputeBuffer[i].IS = new Vector3(0.97f, 0.78f, 0.42f);
-                                break;
-                            default:
-                                starList_ComputeBuffer[i].IS = new Vector3(1.0f, 0.0f, 0.0f);
-                                break;
-                        }
+                            starList_ComputeBuffer[i].XNO = starlist.Entries[i].XNO;
+                            starList_ComputeBuffer[i].SRA0 = (float)starlist.Entries[i].SRA0;
+                            starList_ComputeBuffer[i].SDEC0 = (float)starlist.Entries[i].SDEC0;
 
-                        var fStarIntensity = 1.0f;
-                        fStarIntensity = starlist.Entries[i].MAG * 100;
-                        fStarIntensity = Mathf.Abs(fStarIntensity);
-                        fStarIntensity = Mathf.Min(fStarIntensity, 128000.0f);
-                        fStarIntensity = fStarIntensity / 128000.0f;
-                        fStarIntensity = Mathf.Min(1.0f, fStarIntensity);
-                        fStarIntensity = Mathf.Max(0.0f, fStarIntensity);
-                        starList_ComputeBuffer[i].MAG = fStarIntensity;
-                        starList_ComputeBuffer[i].XRPM = starlist.Entries[i].XRPM;
-                        starList_ComputeBuffer[i].XDPM = starlist.Entries[i].XDPM;
+                            switch (starlist.Entries[i].IS[0])
+                            {
+                                case 'O':
+                                    starList_ComputeBuffer[i].IS = new Vector3(0.59f, 0.67f, 0.97f);
+                                    break;
+                                case 'B':
+                                    starList_ComputeBuffer[i].IS = new Vector3(0.63f, 0.73f, 0.96f);
+                                    break;
+                                case 'A':
+                                    starList_ComputeBuffer[i].IS = new Vector3(0.76f, 0.82f, 0.97f);
+                                    break;
+                                case 'F':
+                                    starList_ComputeBuffer[i].IS = new Vector3(0.94f, 0.93f, 0.95f);
+                                    break;
+                                case 'G':
+                                    starList_ComputeBuffer[i].IS = new Vector3(0.95f, 0.92f, 0.89f);
+                                    break;
+                                case 'K':
+                                    starList_ComputeBuffer[i].IS = new Vector3(0.95f, 0.79f, 0.61f);
+                                    break;
+                                case 'M':
+                                    starList_ComputeBuffer[i].IS = new Vector3(0.97f, 0.78f, 0.42f);
+                                    break;
+                                default:
+                                    starList_ComputeBuffer[i].IS = new Vector3(1.0f, 0.0f, 0.0f);
+                                    break;
+                            }
+
+                            var fStarIntensity = 1.0f;
+                            fStarIntensity = starlist.Entries[i].MAG * 100;
+                            fStarIntensity = Mathf.Abs(fStarIntensity);
+                            fStarIntensity = Mathf.Min(fStarIntensity, 128000.0f);
+                            fStarIntensity = fStarIntensity / 128000.0f;
+                            fStarIntensity = Mathf.Min(1.0f, fStarIntensity);
+                            fStarIntensity = Mathf.Max(0.0f, fStarIntensity);
+                            starList_ComputeBuffer[i].MAG = fStarIntensity;
+                            starList_ComputeBuffer[i].XRPM = starlist.Entries[i].XRPM;
+                            starList_ComputeBuffer[i].XDPM = starlist.Entries[i].XDPM;
+                        }
                     }
                 }
             }
@@ -157,6 +165,7 @@ namespace DCL.SkyBox.Rendering
             internal void Setup(ProceduralSkyBoxSettings_Generate _featureSettings, Material _skyboxMaterial, Material _starboxMaterial, RTHandle _SkyBoxRTHandle, RTHandle _StarBoxRTHandle,
                 ComputeShader _StarsComputeShader, RTHandle _CubemapTextureArray)
             {
+                bComputeStarMap = false;
                 m_Material_SkyBox_Generate = _skyboxMaterial;
                 m_Material_StarBox_Generate = _starboxMaterial;
                 m_Settings_Generate = _featureSettings;
@@ -165,10 +174,13 @@ namespace DCL.SkyBox.Rendering
                 StarsComputeShader = _StarsComputeShader;
                 CubemapTextureArray = _CubemapTextureArray;
 
-                if (starBuffer == null || !starBuffer.IsValid())
+                if (bComputeStarMap = true)
                 {
-                    starBuffer = new ComputeBuffer(9110, Unsafe.SizeOf<StarParam>(), ComputeBufferType.Structured, ComputeBufferMode.Immutable);
-                    starBuffer.SetData(starList_ComputeBuffer);
+                    if (starBuffer == null || !starBuffer.IsValid())
+                    {
+                        starBuffer = new ComputeBuffer(9110, Unsafe.SizeOf<StarParam>(), ComputeBufferType.Structured, ComputeBufferMode.Immutable);
+                        starBuffer.SetData(starList_ComputeBuffer);
+                    }
                 }
             }
 
@@ -225,7 +237,8 @@ namespace DCL.SkyBox.Rendering
             {
                 // Configure targets and clear color
                 ConfigureTarget(m_SkyBoxCubeMap_RTHandle);
-                ConfigureTarget(m_StarBoxCubeMap_RTHandle);
+                // if (bComputeStarMap == true)
+                //     ConfigureTarget(m_StarBoxCubeMap_RTHandle);
             }
 
             // Here you can implement the rendering logic.
@@ -240,63 +253,67 @@ namespace DCL.SkyBox.Rendering
                     return;
                 }
 
-                if (m_Material_StarBox_Generate == null)
+                bComputeStarMap = false;
+                if (bComputeStarMap == true)
                 {
-                    ReportHub.LogError(m_ReportData, $"{GetType().Name}.Execute(): Missing material. DCL_RenderPass_GenerateSkyBox pass will not execute. Check for missing reference in the renderer resources.");
-                    return;
+                    if (m_Material_StarBox_Generate == null)
+                    {
+                        ReportHub.LogError(m_ReportData, $"{GetType().Name}.Execute(): Missing material. DCL_RenderPass_GenerateSkyBox pass will not execute. Check for missing reference in the renderer resources.");
+                        return;
+                    }
+
+                    CommandBuffer cmdStarBox = CommandBufferPool.Get();
+
+                    using (new ProfilingScope(cmdStarBox, new ProfilingSampler(profilerStarBoxTag)))
+                    {
+                        var kernelName = "CSMain";
+                        int kernelIndex = StarsComputeShader.FindKernel(kernelName);
+                        StarsComputeShader.GetKernelThreadGroupSizes(kernelIndex, out uint xGroupSize, out uint yGroupSize, out uint zGroupSize);
+                        cmdStarBox.SetComputeTextureParam(StarsComputeShader, kernelIndex, "o_cubeMap", CubemapTextureArray);
+                        cmdStarBox.SetComputeIntParam(StarsComputeShader, "i_dimensions", nDimensions);
+                        cmdStarBox.SetComputeBufferParam(StarsComputeShader, kernelIndex, "StarBuffer", starBuffer);
+                        cmdStarBox.DispatchCompute(StarsComputeShader, kernelIndex, 9110 / (int)xGroupSize, (int)yGroupSize, (int)zGroupSize);
+                    }
+
+                    context.ExecuteCommandBuffer(cmdStarBox);
+                    cmdStarBox.Clear();
+                    CommandBufferPool.Release(cmdStarBox);
+
+                    CommandBuffer cmdStarBoxCopy = CommandBufferPool.Get();
+
+                    using (new ProfilingScope(cmdStarBoxCopy, new ProfilingSampler(profilerStarBoxTag)))
+                    {
+                        cmdStarBoxCopy.SetGlobalTexture("_CubemapTextureArray", CubemapTextureArray);
+                        CoreUtils.SetRenderTarget(cmdStarBoxCopy, buffer: m_StarBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.PositiveX, depthSlice: 0);
+                        CoreUtils.DrawFullScreen(cmdStarBoxCopy, m_Material_StarBox_Generate, properties: null);
+
+                        //cmd.SetGlobalVector(s_ParamsID, new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
+                        CoreUtils.SetRenderTarget(cmdStarBoxCopy, buffer: m_StarBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.NegativeX, depthSlice: 0);
+                        CoreUtils.DrawFullScreen(cmdStarBoxCopy, m_Material_StarBox_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Left);
+
+                        //cmd.SetGlobalVector(s_ParamsID, new Vector4(2.0f, 0.0f, 0.0f, 0.0f));
+                        CoreUtils.SetRenderTarget(cmdStarBoxCopy, buffer: m_StarBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.PositiveY, depthSlice: 0);
+                        CoreUtils.DrawFullScreen(cmdStarBoxCopy, m_Material_StarBox_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Up);
+
+                        //cmd.SetGlobalVector(s_ParamsID, new Vector4(3.0f, 0.0f, 0.0f, 0.0f));
+                        CoreUtils.SetRenderTarget(cmdStarBoxCopy, buffer: m_StarBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.NegativeY, depthSlice: 0);
+                        CoreUtils.DrawFullScreen(cmdStarBoxCopy, m_Material_StarBox_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Down);
+
+                        //cmd.SetGlobalVector(s_ParamsID, new Vector4(4.0f, 0.0f, 0.0f, 0.0f));
+                        CoreUtils.SetRenderTarget(cmdStarBoxCopy, buffer: m_StarBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.PositiveZ, depthSlice: 0);
+                        CoreUtils.DrawFullScreen(cmdStarBoxCopy, m_Material_StarBox_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Front);
+
+                        //cmd.SetGlobalVector(s_ParamsID, new Vector4(5.0f, 0.0f, 0.0f, 0.0f));
+                        CoreUtils.SetRenderTarget(cmdStarBoxCopy, buffer: m_StarBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.NegativeZ, depthSlice: 0);
+                        CoreUtils.DrawFullScreen(cmdStarBoxCopy, m_Material_StarBox_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Back);
+
+                        CoreUtils.SetRenderTarget(cmdStarBoxCopy, CubemapTextureArray);
+                        CoreUtils.ClearRenderTarget(cmdStarBoxCopy, ClearFlag.Color, Color.clear);
+                    }
+
+                    context.ExecuteCommandBuffer(cmdStarBoxCopy);
+                    CommandBufferPool.Release(cmdStarBoxCopy);
                 }
-
-                CommandBuffer cmdStarBox = CommandBufferPool.Get();
-
-                using (new ProfilingScope(cmdStarBox, new ProfilingSampler(profilerStarBoxTag)))
-                {
-                    var kernelName = "CSMain";
-                    int kernelIndex = StarsComputeShader.FindKernel(kernelName);
-                    StarsComputeShader.GetKernelThreadGroupSizes(kernelIndex, out uint xGroupSize, out uint yGroupSize, out uint zGroupSize);
-                    cmdStarBox.SetComputeTextureParam(StarsComputeShader, kernelIndex, "o_cubeMap", CubemapTextureArray);
-                    cmdStarBox.SetComputeIntParam(StarsComputeShader, "i_dimensions", nDimensions);
-                    cmdStarBox.SetComputeBufferParam(StarsComputeShader, kernelIndex, "StarBuffer", starBuffer);
-                    cmdStarBox.DispatchCompute(StarsComputeShader, kernelIndex, 9110 / (int)xGroupSize, (int)yGroupSize, (int)zGroupSize);
-                }
-
-                context.ExecuteCommandBuffer(cmdStarBox);
-                cmdStarBox.Clear();
-                CommandBufferPool.Release(cmdStarBox);
-
-                CommandBuffer cmdStarBoxCopy = CommandBufferPool.Get();
-
-                using (new ProfilingScope(cmdStarBoxCopy, new ProfilingSampler(profilerStarBoxTag)))
-                {
-                    cmdStarBoxCopy.SetGlobalTexture("_CubemapTextureArray", CubemapTextureArray);
-                    CoreUtils.SetRenderTarget(cmdStarBoxCopy, buffer: m_StarBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.PositiveX, depthSlice: 0);
-                    CoreUtils.DrawFullScreen(cmdStarBoxCopy, m_Material_StarBox_Generate, properties: null);
-
-                    //cmd.SetGlobalVector(s_ParamsID, new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
-                    CoreUtils.SetRenderTarget(cmdStarBoxCopy, buffer: m_StarBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.NegativeX, depthSlice: 0);
-                    CoreUtils.DrawFullScreen(cmdStarBoxCopy, m_Material_StarBox_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Left);
-
-                    //cmd.SetGlobalVector(s_ParamsID, new Vector4(2.0f, 0.0f, 0.0f, 0.0f));
-                    CoreUtils.SetRenderTarget(cmdStarBoxCopy, buffer: m_StarBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.PositiveY, depthSlice: 0);
-                    CoreUtils.DrawFullScreen(cmdStarBoxCopy, m_Material_StarBox_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Up);
-
-                    //cmd.SetGlobalVector(s_ParamsID, new Vector4(3.0f, 0.0f, 0.0f, 0.0f));
-                    CoreUtils.SetRenderTarget(cmdStarBoxCopy, buffer: m_StarBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.NegativeY, depthSlice: 0);
-                    CoreUtils.DrawFullScreen(cmdStarBoxCopy, m_Material_StarBox_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Down);
-
-                    //cmd.SetGlobalVector(s_ParamsID, new Vector4(4.0f, 0.0f, 0.0f, 0.0f));
-                    CoreUtils.SetRenderTarget(cmdStarBoxCopy, buffer: m_StarBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.PositiveZ, depthSlice: 0);
-                    CoreUtils.DrawFullScreen(cmdStarBoxCopy, m_Material_StarBox_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Front);
-
-                    //cmd.SetGlobalVector(s_ParamsID, new Vector4(5.0f, 0.0f, 0.0f, 0.0f));
-                    CoreUtils.SetRenderTarget(cmdStarBoxCopy, buffer: m_StarBoxCubeMap_RTHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.NegativeZ, depthSlice: 0);
-                    CoreUtils.DrawFullScreen(cmdStarBoxCopy, m_Material_StarBox_Generate, properties: null, (int)ShaderPasses.CubeMapFace_Back);
-
-                    CoreUtils.SetRenderTarget(cmdStarBoxCopy, CubemapTextureArray);
-                    CoreUtils.ClearRenderTarget(cmdStarBoxCopy, ClearFlag.Color, Color.clear);
-                }
-
-                context.ExecuteCommandBuffer(cmdStarBoxCopy);
-                CommandBufferPool.Release(cmdStarBoxCopy);
 
                 CommandBuffer cmdSkyBox = CommandBufferPool.Get();
 
@@ -344,9 +361,13 @@ namespace DCL.SkyBox.Rendering
             public void Dispose()
             {
                 m_SkyBoxCubeMap_RTHandle?.Release();
-                m_StarBoxCubeMap_RTHandle?.Release();
-                CubemapTextureArray?.Release();
-                starBuffer?.Release();
+
+                if (bComputeStarMap == true)
+                {
+                    m_StarBoxCubeMap_RTHandle?.Release();
+                    CubemapTextureArray?.Release();
+                    starBuffer?.Release();
+                }
             }
 
             private struct StarParam
