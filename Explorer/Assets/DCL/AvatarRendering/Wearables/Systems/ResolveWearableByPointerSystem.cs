@@ -109,23 +109,28 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             if (successfulDtos == wearablesByPointersIntention.Pointers.Count)
             {
-                IWearable[] calculateVisibleWearables = CalculateVisibleWearables(resolvedWereables.ToArray(), wearablesByPointersIntention.BodyShape, wearablesByPointersIntention.ForceRender);
+                ref HideWearablesResolution hideWearablesResolution = ref wearablesByPointersIntention.HideWearablesResolution;
 
-                successfulResults += (wearablesByPointersIntention.Pointers.Count - calculateVisibleWearables.Length);
+                if(hideWearablesResolution.VisibleWearables == null)
+                    CalculateVisibleWearables(resolvedWereables.ToArray(), wearablesByPointersIntention.BodyShape, ref hideWearablesResolution);
 
-                for (int i = 0; i < calculateVisibleWearables.Length; i++)
+                successfulResults += (wearablesByPointersIntention.Pointers.Count - hideWearablesResolution.VisibleWearables!.Count);
+
+                for (int i = 0; i < hideWearablesResolution.VisibleWearables!.Count; i++)
                 {
-                    if (calculateVisibleWearables[i].IsLoading) continue;
-                    if (CreateAssetBundlePromiseIfRequired(calculateVisibleWearables[i], wearablesByPointersIntention, partitionComponent)) continue;
-                    if (calculateVisibleWearables[i].WearableAssetResults[wearablesByPointersIntention.BodyShape] is { Succeeded: true })
+                    IWearable visibleWearable = hideWearablesResolution.VisibleWearables[i];
+
+                    if (visibleWearable.IsLoading) continue;
+                    if (CreateAssetBundlePromiseIfRequired(visibleWearable, wearablesByPointersIntention, partitionComponent)) continue;
+                    if (visibleWearable.WearableAssetResults[wearablesByPointersIntention.BodyShape] is { Succeeded: true })
                     {
                         successfulResults++;
 
                         if (wearablesByPointersIntention.Results[i] == null)
                         {
                             // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
-                            calculateVisibleWearables[i].WearableAssetResults[wearablesByPointersIntention.BodyShape].Value.Asset.AddReference();
-                            wearablesByPointersIntention.Results[i] = calculateVisibleWearables[i];
+                            visibleWearable.WearableAssetResults[wearablesByPointersIntention.BodyShape].Value.Asset.AddReference();
+                            wearablesByPointersIntention.Results[i] = visibleWearable;
                         }
                     }
                 }
@@ -139,11 +144,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         }
 
-        private IWearable[] CalculateVisibleWearables(IWearable[] results, BodyShape bodyShape, IReadOnlyCollection<string> forceRender)
+        private IWearable[] CalculateVisibleWearables(IWearable[] results, BodyShape bodyShape, ref HideWearablesResolution hideWearablesResolution)
         {
             List<IWearable> visibleWearables = new List<IWearable>();
 
-            WearableComponentsUtils.ExtractVisibleWearables(bodyShape, null, results, results.Length, visibleWearables);
+            WearableComponentsUtils.ExtractVisibleWearables(bodyShape, results, results.Length, visibleWearables, ref hideWearablesResolution);
 
             return visibleWearables.ToArray();
         }
