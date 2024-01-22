@@ -127,7 +127,17 @@ namespace DCL.LOD.Systems
                     sceneLODInfo.SceneHash.Equals("bafkreieifr7pyaofncd6o7vdptvqgreqxxtcn3goycmiz4cnwz7yewjldq"))
                 {
                     sceneLODInfo.SceneHash = "FAIL_THIS_REQUEST_IN_MAC";
+                    newLODKey = sceneLODInfo.GenerateCurrentLodKey();
                 }
+
+                //TODO: TEMP, infinite floor sceene
+                if (sceneLODInfo.SceneHash.Equals("bafkreictb7lsedstowe2twuqjk7nn3hvqs3s2jqhc2bduwmein73xxelbu"))
+                {
+                    sceneLODInfo.SceneHash = "FAIL_THIS_INFINTIE_FLOOR_REQUEST";
+                    newLODKey = sceneLODInfo.GenerateCurrentLodKey();
+                }
+                
+                
                 
                 sceneLODInfo.CurrentLODPromise =
                     Promise.Create(World,
