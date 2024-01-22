@@ -11,6 +11,7 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -57,7 +58,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 List<string> pointers = pointersRequest[bodyShape];
 
                 state.PromisePerBodyShape[bodyShape] = AssetPromise<IWearable[], GetWearablesByPointersIntention>
-                   .Create(World, new GetWearablesByPointersIntention(pointers, new IWearable[pointers.Count], bodyShape, AssetSource.EMBEDDED, false), PartitionComponent.TOP_PRIORITY);
+                   .Create(World, new GetWearablesByPointersIntention(pointers, new IWearable[pointers.Count], bodyShape, Array.Empty<string>(),AssetSource.EMBEDDED, false), PartitionComponent.TOP_PRIORITY);
             }
 
 

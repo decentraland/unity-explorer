@@ -10,6 +10,7 @@ using DCL.Profiles;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.Unity.ColorComponent;
+using System;
 using Entity = Arch.Core.Entity;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<
     DCL.AvatarRendering.Wearables.Components.IWearable[],
@@ -91,12 +92,12 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private Promise CreateWearablePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition) =>
             Promise.Create(World,
-                WearableComponentsUtils.CreateGetWearablesByPointersIntention(pbAvatarShape, pbAvatarShape.Wearables),
+                WearableComponentsUtils.CreateGetWearablesByPointersIntention(pbAvatarShape, pbAvatarShape.Wearables, Array.Empty<string>()),
                 partition);
 
         private Promise CreateWearablePromise(Profile profile, PartitionComponent partition) =>
             Promise.Create(World,
-                WearableComponentsUtils.CreateGetWearablesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.SharedWearables),
+                WearableComponentsUtils.CreateGetWearablesByPointersIntention(profile.Avatar.BodyShape, profile.Avatar.SharedWearables, profile.Avatar.ForceRender),
                 partition);
     }
 }

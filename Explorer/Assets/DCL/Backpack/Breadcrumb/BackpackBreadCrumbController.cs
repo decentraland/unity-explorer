@@ -74,6 +74,7 @@ namespace DCL.Backpack.Breadcrumb
 
         private void SetAllButtonColor(bool isSelected)
         {
+            view.AllButtonArrow.SetActive(!isSelected);
             view.AllButton.BackgroundImage.color = isSelected ? view.AllButton.SelectedBackgroundColor : view.AllButton.UnselectedBackgroundColor;
             view.AllButton.CategoryName.color = isSelected ? view.AllButton.SelectedFontColor : view.AllButton.UnselectedFontColor;
             view.AllButton.Icon.color = isSelected ? view.AllButton.SelectedIconColor : view.AllButton.UnselectedIconColor;

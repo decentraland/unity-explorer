@@ -35,7 +35,7 @@ namespace DCL.Backpack
             new BackpackSearchController(view.backpackSearchBar, backpackCommandBus, backpackEventBus);
             slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus, rarityBackgrounds);
             backpackGridController = new BackpackGridController(view.backpackGridView, backpackCommandBus, backpackEventBus, web3IdentityCache, rarityBackgrounds, rarityColors, categoryIcons, backpackEquipStatusController, backpackSortController, pageButtonView);
-            backpackInfoPanelController = new BackpackInfoPanelController(view.backpackInfoPanelView, backpackEventBus, categoryIcons, rarityInfoPanelBackgrounds, backpackEquipStatusController);
+            backpackInfoPanelController = new BackpackInfoPanelController(view.backpackInfoPanelView, backpackEventBus, categoryIcons, rarityInfoPanelBackgrounds, rarityColors, backpackEquipStatusController);
 
             rectTransform = view.GetComponent<RectTransform>();
         }

@@ -1,6 +1,7 @@
 using AssetManagement;
 using DCL.Profiling;
 using ECS.StreamableLoading.Common.Components;
+using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -8,6 +9,19 @@ using static DCL.AvatarRendering.Wearables.Helpers.WearableComponentsUtils;
 
 namespace DCL.AvatarRendering.Wearables.Components.Intentions
 {
+
+    public struct HideWearablesResolution
+    {
+        public readonly IReadOnlyCollection<string> ForceRender;
+        [CanBeNull] public List<IWearable> VisibleWearables;
+
+        public HideWearablesResolution(IReadOnlyCollection<string> forceRender)
+        {
+            ForceRender = forceRender;
+            VisibleWearables = null;
+        }
+    }
+
     public struct GetWearablesByPointersIntention : IAssetIntention, IDisposable, IEquatable<GetWearablesByPointersIntention>
     {
         public readonly List<string> Pointers;
@@ -17,14 +31,16 @@ namespace DCL.AvatarRendering.Wearables.Components.Intentions
         public readonly BodyShape BodyShape;
         public readonly bool FallbackToDefaultWearables;
 
+        public HideWearablesResolution HideWearablesResolution;
         public CancellationTokenSource CancellationTokenSource { get; }
 
-        internal GetWearablesByPointersIntention(List<string> pointers, IWearable[] result, BodyShape bodyShape, AssetSource permittedSources = AssetSource.ALL,
+        internal GetWearablesByPointersIntention(List<string> pointers, IWearable[] result, BodyShape bodyShape, IReadOnlyCollection<string> forceRender, AssetSource permittedSources = AssetSource.ALL,
             bool fallbackToDefaultWearables = true)
         {
             Pointers = pointers;
             Results = result;
             BodyShape = bodyShape;
+            HideWearablesResolution = new HideWearablesResolution(forceRender);
             FallbackToDefaultWearables = fallbackToDefaultWearables;
             PermittedSources = permittedSources;
             CancellationTokenSource = new CancellationTokenSource();

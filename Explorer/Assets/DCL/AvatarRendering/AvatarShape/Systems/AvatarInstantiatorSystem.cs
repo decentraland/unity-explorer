@@ -109,8 +109,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             HashSet<string> wearablesToHide = HashSetPool<string>.Get();
             HashSet<string> usedCategories = HashSetPool<string>.Get();
 
-            AvatarWearableHide.ComposeHiddenCategoriesOrdered(avatarShapeComponent.BodyShape, null, wearablesResult.Asset,
-                intention.Pointers.Count, wearablesToHide);
+            //AvatarWearableHide.ComposeHiddenCategoriesOrdered(avatarShapeComponent.BodyShape, null, wearablesResult.Asset,
+            //    intention.Pointers.Count, wearablesToHide);
 
             GameObject bodyShape = null;
 
@@ -118,14 +118,13 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             // because it was pooled
             for (var i = 0; i < intention.Pointers.Count; i++)
             {
+                HashSet<string> hiddenCategories = HashSetPool<string>.Get();
                 IWearable resultWearable = wearablesResult.Asset[i];
-
-                if (wearablesToHide.Contains(resultWearable.GetCategory()))
-                {
-                    resultWearable.GetOriginalAsset(avatarShapeComponent.BodyShape).Dereference();
+                if(resultWearable == null)
                     continue;
-                }
 
+                resultWearable.GetHidingList(avatarShapeComponent.BodyShape, hiddenCategories);
+                foreach (string hiddenCategory in hiddenCategories) { wearablesToHide.Add(hiddenCategory); }
                 if (resultWearable.isFacialFeature())
                 {
                     //TODO: Facial Features. They are textures that should be applied on the body shape, not gameobjects to instantiate.
@@ -151,6 +150,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
                     if (resultWearable.IsBodyShape())
                         bodyShape = instantiatedWearable;
+
+                    HashSetPool<string>.Release(hiddenCategories);
                 }
             }
 
