@@ -13,12 +13,15 @@ namespace DCL.SceneLoadingScreens
             // public Vector2Int Coordinate { get; }
             public AsyncLoadProcessReport AsyncLoadProcessReport { get; }
             public TimeSpan Timeout { get; }
+            public TimeSpan FadeDuration { get; }
 
             public Params(AsyncLoadProcessReport asyncLoadProcessReport,
-                TimeSpan timeout)
+                TimeSpan timeout,
+                TimeSpan fadeDuration)
             {
                 AsyncLoadProcessReport = asyncLoadProcessReport;
                 Timeout = timeout;
+                FadeDuration = fadeDuration;
             }
         }
     }

@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
+using DG.Tweening;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -20,6 +21,7 @@ namespace DCL.SceneLoadingScreens
         private int currentTip;
         private SceneTips tips;
         private CancellationTokenSource? tipsRotationCancellationToken;
+        private CancellationTokenSource? fadeInCancellationToken;
         private IntVariable? progressLabel;
 
         public SceneLoadingScreenController(ViewFactoryMethod viewFactory,
@@ -37,6 +39,7 @@ namespace DCL.SceneLoadingScreens
             base.Dispose();
 
             tipsRotationCancellationToken?.SafeCancelAndDispose();
+            fadeInCancellationToken?.SafeCancelAndDispose();
         }
 
         protected override void OnViewInstantiated()
@@ -70,6 +73,15 @@ namespace DCL.SceneLoadingScreens
             viewInstance.ClearTips();
         }
 
+        protected override void OnViewShow()
+        {
+            base.OnViewShow();
+
+            viewInstance.RootCanvasGroup.alpha = 0f;
+            fadeInCancellationToken = fadeInCancellationToken.SafeRestart();
+            FadeInAsync(fadeInCancellationToken.Token).Forget();
+        }
+
         protected override void OnViewClose()
         {
             base.OnViewClose();
@@ -90,6 +102,20 @@ namespace DCL.SceneLoadingScreens
                              .Timeout(inputData.Timeout);
             }
             catch (TimeoutException) { }
+
+            await FadeOutAsync(ct);
+        }
+
+        private async UniTask FadeInAsync(CancellationToken ct)
+        {
+            await viewInstance.RootCanvasGroup.DOFade(1f, (float)inputData.FadeDuration.TotalSeconds).AsyncWaitForCompletion();
+            ct.ThrowIfCancellationRequested();
+        }
+
+        private async UniTask FadeOutAsync(CancellationToken ct)
+        {
+            await viewInstance.RootCanvasGroup.DOFade(0f, (float)inputData.FadeDuration.TotalSeconds).AsyncWaitForCompletion();
+            ct.ThrowIfCancellationRequested();
         }
 
         private async UniTask WaitTimeThresholdAsync(float progressProportion, CancellationToken ct)

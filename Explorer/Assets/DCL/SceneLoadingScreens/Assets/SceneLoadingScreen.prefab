@@ -786,6 +786,7 @@ GameObject:
   - component: {fileID: 8169330921431457158}
   - component: {fileID: 8454101078806804241}
   - component: {fileID: 1242405793850228617}
+  - component: {fileID: 8917684428663623926}
   m_Layer: 0
   m_Name: SceneLoadingScreen
   m_TagString: Untagged
@@ -893,6 +894,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <canvas>k__BackingField: {fileID: 2814871423585080172}
   <raycaster>k__BackingField: {fileID: 8454101078806804241}
+  <RootCanvasGroup>k__BackingField: {fileID: 8917684428663623926}
   <ProgressBar>k__BackingField: {fileID: 1295332637717067447}
   <ProgressLabel>k__BackingField: {fileID: 6870381831963986328}
   <ShowNextButton>k__BackingField: {fileID: 3867697833987753308}
@@ -910,6 +912,18 @@ MonoBehaviour:
   backgroundImage: {fileID: 8773633707120184609}
   breadcrumbPrefab: {fileID: 2727173850900605172, guid: 888d117b70e6142cab40978c1e26d4d9, type: 3}
   breadcrumbParent: {fileID: 7125623147794855959}
+--- !u!225 &8917684428663623926
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5357728835287357475}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &5399791853786771784
 GameObject:
   m_ObjectHideFlags: 0

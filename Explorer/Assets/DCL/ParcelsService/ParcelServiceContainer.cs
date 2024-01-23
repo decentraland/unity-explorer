@@ -47,8 +47,11 @@ namespace DCL.ParcelsService
                                       {
                                           var loadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
 
-                                          UniTask.WhenAll(mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, TimeSpan.FromSeconds(30)))),
-                                                      teleportController.TeleportToSceneSpawnPointAsync(binding.Value, loadReport, CancellationToken.None))
+                                          UniTask.WhenAll(mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(1)))),
+
+                                                      // Wait for loading screen fade-in =(
+                                                      UniTask.Delay(1000)
+                                                             .ContinueWith(() => teleportController.TeleportToSceneSpawnPointAsync(binding.Value, loadReport, CancellationToken.None)))
                                                  .Forget();
                                       }));
         }

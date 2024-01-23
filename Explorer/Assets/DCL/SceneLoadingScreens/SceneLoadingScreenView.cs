@@ -11,6 +11,9 @@ namespace DCL.SceneLoadingScreens
     public class SceneLoadingScreenView : ViewBase, IView
     {
         [field: SerializeField]
+        public CanvasGroup RootCanvasGroup { get; private set; } = null!;
+
+        [field: SerializeField]
         public Slider ProgressBar { get; private set; } = null!;
 
         [field: SerializeField]
