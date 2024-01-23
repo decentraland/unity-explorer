@@ -1,4 +1,5 @@
 using DCL.AvatarRendering.Wearables.Components;
+using Mono.Collections.Generic;
 using System;
 using System.Collections.Generic;
 
@@ -7,23 +8,23 @@ namespace DCL.Backpack.BackpackBus
     public class BackpackEventBus : IBackpackEventBus
     {
         public event Action<IWearable> SelectEvent;
-        public event Action<IWearable, IReadOnlyCollection<string>> EquipEvent;
-        public event Action<IWearable, IReadOnlyCollection<string>> UnEquipEvent;
-        public event Action<string[]> HideEvent;
+        public event Action<IWearable> EquipEvent;
+        public event Action<IWearable> UnEquipEvent;
+        public event Action<IReadOnlyCollection<string>> ForceRenderEvent;
         public event Action<string> FilterCategoryEvent;
         public event Action<string> SearchEvent;
 
         public void SendSelect(IWearable equipWearable) =>
             SelectEvent?.Invoke(equipWearable);
 
-        public void SendEquip(IWearable equipWearable, IReadOnlyCollection<string> forceRender) =>
-            EquipEvent?.Invoke(equipWearable, forceRender);
+        public void SendEquip(IWearable equipWearable) =>
+            EquipEvent?.Invoke(equipWearable);
 
-        public void SendUnEquip(IWearable unEquipWearable, IReadOnlyCollection<string> forceRender) =>
-            UnEquipEvent?.Invoke(unEquipWearable, forceRender);
+        public void SendUnEquip(IWearable unEquipWearable) =>
+            UnEquipEvent?.Invoke(unEquipWearable);
 
-        public void SendHide(string[] hideWearableCategories) =>
-            HideEvent?.Invoke(hideWearableCategories);
+        public void SendForceRender(IReadOnlyCollection<string> forceRender) =>
+            ForceRenderEvent?.Invoke(forceRender);
 
         public void SendFilterCategory(string category) =>
             FilterCategoryEvent?.Invoke(category);

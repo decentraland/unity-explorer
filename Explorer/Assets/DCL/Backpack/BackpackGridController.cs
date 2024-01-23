@@ -14,6 +14,7 @@ using ECS.StreamableLoading.Common;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
@@ -49,7 +50,7 @@ namespace DCL.Backpack
         private readonly List<IWearable> results = new (CURRENT_PAGE_SIZE);
         private readonly BackpackItemView[] loadingResults = new BackpackItemView[CURRENT_PAGE_SIZE];
 
-        private HashSet<string> forceRender = new HashSet<string>(15);
+        private readonly HashSet<string> forceRender = new (15);
         private readonly int totalAmount;
 
         private IObjectPool<BackpackItemView> gridItemsPool;
@@ -88,12 +89,22 @@ namespace DCL.Backpack
             eventBus.UnEquipEvent += OnUnequip;
             eventBus.FilterCategoryEvent += OnFilterCategory;
             eventBus.SearchEvent += OnSearch;
+            eventBus.ForceRenderEvent += OnForceRender;
             backpackSortController.OnSortChanged += OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged += OnCollectiblesOnlyChanged;
             pageSelectorController.OnSetPage += RequestPage;
             requestParameters = new List<(string, string)>();
 
             backpackBreadCrumbController = new BackpackBreadCrumbController(view.BreadCrumbView, eventBus, commandBus, categoryIcons);
+        }
+
+        private void OnForceRender(IReadOnlyCollection<string> forceRenders)
+        {
+            forceRender.Clear();
+            foreach (string render in forceRenders)
+            {
+                forceRender.Add(render);
+            }
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in Entity playerEntity)
@@ -145,8 +156,8 @@ namespace DCL.Backpack
                 usedPoolItems.Add(gridWearables[i].GetUrn(), backpackItemView);
                 backpackItemView.gameObject.transform.SetAsLastSibling();
                 backpackItemView.OnSelectItem += SelectItem;
-                backpackItemView.EquipButton.onClick.AddListener(() => { commandBus.SendCommand(new BackpackEquipCommand(backpackItemView.ItemId, forceRender)); });
-                backpackItemView.UnEquipButton.onClick.AddListener(() => { commandBus.SendCommand(new BackpackUnEquipCommand(backpackItemView.ItemId, forceRender)); });
+                backpackItemView.EquipButton.onClick.AddListener(() => SendEquip(backpackItemView));
+                backpackItemView.UnEquipButton.onClick.AddListener(() => SendUnequip(backpackItemView));
                 backpackItemView.ItemId = gridWearables[i].GetUrn();
                 backpackItemView.RarityBackground.sprite = rarityBackgrounds.GetTypeImage(gridWearables[i].GetRarity());
                 backpackItemView.FlapBackground.color = rarityColors.GetColor(gridWearables[i].GetRarity());
@@ -157,6 +168,16 @@ namespace DCL.Backpack
                 backpackItemView.SetEquipButtonsState();
                 WaitForThumbnailAsync(gridWearables[i], backpackItemView, cts.Token).Forget();
             }
+        }
+
+        private void SendUnequip(BackpackItemView backpackItemView)
+        {
+            commandBus.SendCommand(new BackpackUnEquipCommand(backpackItemView.ItemId));
+        }
+
+        private void SendEquip(BackpackItemView backpackItemView)
+        {
+            commandBus.SendCommand(new BackpackEquipCommand(backpackItemView.ItemId));
         }
 
         private BackpackItemView CreateBackpackItem(BackpackItemView backpackItem)
@@ -303,12 +324,8 @@ namespace DCL.Backpack
             commandBus.SendCommand(new BackpackSelectCommand(itemId));
         }
 
-        private void OnUnequip(IWearable unequippedWearable, IReadOnlyCollection<string> forceRenders)
+        private void OnUnequip(IWearable unequippedWearable)
         {
-            forceRender.Clear();
-            foreach (string forceRenderCategory in forceRenders)
-                forceRender.Add(forceRenderCategory);
-
             if (usedPoolItems.TryGetValue(unequippedWearable.GetUrn(), out BackpackItemView backpackItemView))
             {
                 backpackItemView.EquippedIcon.SetActive(false);
@@ -317,12 +334,8 @@ namespace DCL.Backpack
             }
         }
 
-        private void OnEquip(IWearable equippedWearable, IReadOnlyCollection<string> forceRenders)
+        private void OnEquip(IWearable equippedWearable)
         {
-            forceRender.Clear();
-            foreach (string forceRenderCategory in forceRenders)
-                forceRender.Add(forceRenderCategory);
-
             if (usedPoolItems.TryGetValue(equippedWearable.GetUrn(), out BackpackItemView backpackItemView))
             {
                 backpackItemView.IsEquipped = true;

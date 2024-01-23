@@ -24,6 +24,7 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
 
         public static void ComposeHiddenCategoriesOrdered(string bodyShapeId, HashSet<string> forceRender, List<IWearable> wearables, HashSet<string> combinedHidingList)
         {
+            combinedHidingList.Clear();
             var wearablesByCategory = new Dictionary<string, IWearable>();
 
             for (var i = 0; i < wearables.Count; i++)

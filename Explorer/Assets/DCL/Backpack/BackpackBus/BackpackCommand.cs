@@ -1,28 +1,26 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace DCL.Backpack.BackpackBus
 {
     public readonly struct BackpackEquipCommand
     {
         public readonly string Id;
-        public readonly IReadOnlyCollection<string> AvatarForceRender;
 
-        public BackpackEquipCommand(string id, IReadOnlyCollection<string> avatarForceRender)
+        public BackpackEquipCommand(string id)
         {
             Id = id;
-            AvatarForceRender = avatarForceRender;
         }
     }
 
     public readonly struct BackpackUnEquipCommand
     {
         public readonly string Id;
-        public readonly IReadOnlyCollection<string> AvatarForceRender;
 
-        public BackpackUnEquipCommand(string id, IReadOnlyCollection<string> avatarForceRender)
+        public BackpackUnEquipCommand(string id)
         {
             Id = id;
-            AvatarForceRender = avatarForceRender;
         }
     }
 
@@ -38,13 +36,11 @@ namespace DCL.Backpack.BackpackBus
 
     public readonly struct BackpackHideCommand
     {
-        public readonly string Category;
-        public readonly bool? IsHidden;
+        public readonly IReadOnlyCollection<string> ForceRender;
 
-        public BackpackHideCommand(string category, bool? isHidden)
+        public BackpackHideCommand(IReadOnlyCollection<string> forceRender)
         {
-            Category = category;
-            IsHidden = isHidden;
+            ForceRender = new ReadOnlyCollection<string>(forceRender.ToList());
         }
     }
 
