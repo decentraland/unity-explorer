@@ -1,14 +1,17 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using CRDT;
 using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiling;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -21,19 +24,16 @@ namespace ECS.StreamableLoading.Textures
     public partial class LoadTextureSystem : LoadSystemBase<Texture2D, GetTextureIntention>
     {
         private readonly IWebRequestController webRequestController;
+        private readonly IReadOnlyDictionary<CRDTEntity, Entity>? entitiesMap;
 
-        internal LoadTextureSystem(World world, IStreamableCache<Texture2D, GetTextureIntention> cache, IWebRequestController webRequestController, MutexSync mutexSync) : base(world, cache, mutexSync)
+        internal LoadTextureSystem(World world, IStreamableCache<Texture2D, GetTextureIntention> cache, IWebRequestController webRequestController, MutexSync mutexSync, IReadOnlyDictionary<CRDTEntity, Entity>? entitiesMap = null) : base(world, cache, mutexSync)
         {
             this.webRequestController = webRequestController;
+            this.entitiesMap = entitiesMap;
         }
 
         protected override async UniTask<StreamableLoadingResult<Texture2D>> FlowInternalAsync(GetTextureIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            if (intention.IsVideoTexture)
-            {
-               return new StreamableLoadingResult<Texture2D>(CreateVideoTexture(intention.WrapMode, intention.FilterMode));
-            }
-
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             GetTextureWebRequest request = await webRequestController.GetTextureAsync(
                 intention.CommonArguments,

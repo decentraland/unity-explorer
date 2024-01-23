@@ -105,8 +105,8 @@ namespace ECS.Unity.Materials.Systems
             in TextureComponent? alphaTexture,
             in TextureComponent? emissiveTexture,
             in TextureComponent? bumpTexture)
-        {
-            var materialData = MaterialData.CreatePBRMaterial(
+            =>
+            MaterialData.CreatePBRMaterial(
                 albedoTexture,
                 alphaTexture,
                 emissiveTexture,
@@ -122,9 +122,6 @@ namespace ECS.Unity.Materials.Systems
                 pbMaterial.GetSpecularIntensity(),
                 pbMaterial.GetEmissiveIntensity(),
                 pbMaterial.GetDirectIntensity());
-
-            return materialData;
-        }
 
         private void CreateGetTexturePromises(ref MaterialComponent materialComponent, ref PartitionComponent partitionComponent)
         {
@@ -150,6 +147,9 @@ namespace ECS.Unity.Materials.Systems
                 return false;
             }
 
+            if (textureComponent.Value.IsVideoTexture)
+                return false;
+
             TextureComponent textureComponentValue = textureComponent.Value;
 
             // If data inside promise has not changed just reuse the same promise
@@ -166,6 +166,7 @@ namespace ECS.Unity.Materials.Systems
                 WrapMode = textureComponentValue.WrapMode,
                 FilterMode = textureComponentValue.FilterMode,
                 IsVideoTexture = textureComponentValue.IsVideoTexture,
+                VideoPlayerEntity = textureComponentValue.VideoPlayerEntity
             }, partitionComponent);
 
             return true;

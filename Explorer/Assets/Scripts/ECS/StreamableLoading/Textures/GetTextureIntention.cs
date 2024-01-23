@@ -13,20 +13,23 @@ namespace ECS.StreamableLoading.Textures
         public TextureWrapMode WrapMode;
         public FilterMode FilterMode;
         public bool IsVideoTexture;
+        public int VideoPlayerEntity;
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
         public bool Equals(GetTextureIntention other) =>
             IsReadable == other.IsReadable && WrapMode == other.WrapMode && FilterMode == other.FilterMode && CommonArguments.URL == other.CommonArguments.URL
-            && IsVideoTexture == other.IsVideoTexture;
+            && IsVideoTexture == other.IsVideoTexture && VideoPlayerEntity == other.VideoPlayerEntity;
 
         public override bool Equals(object obj) =>
             obj is GetTextureIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(IsReadable, (int)WrapMode, (int)FilterMode, CommonArguments.URL);
+            HashCode.Combine(IsReadable, (int)WrapMode, (int)FilterMode, CommonArguments.URL, IsVideoTexture, VideoPlayerEntity);
 
         public override string ToString() =>
-            $"Get Texture: {CommonArguments.URL}";
+            IsVideoTexture
+                ? $"Get Texture: for video player {VideoPlayerEntity}"
+                : $"Get Texture: {CommonArguments.URL}";
     }
 }

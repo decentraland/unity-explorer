@@ -17,10 +17,8 @@ namespace ECS.Unity.Textures.Components.Defaults
 
             if (self.IsVideoTexture())
             {
-                var textureComponent = new TextureComponent(URLAddress.EMPTY, self.GetWrapMode(), self.GetFilterMode(), self.IsVideoTexture());
-
-                if (textureComponent.IsVideoTexture)
-                    return textureComponent;
+                var textureComponent = new TextureComponent(URLAddress.EMPTY, self.GetWrapMode(), self.GetFilterMode(), self.IsVideoTexture(), self.GetVideoTextureId());
+                return textureComponent;
             }
 
             return self.TryGetTextureUrl(data, out URLAddress url)
@@ -43,12 +41,12 @@ namespace ECS.Unity.Textures.Components.Defaults
             }
         }
 
-        public static long GetVideoTextureId(this TextureUnion self)
+        public static int GetVideoTextureId(this TextureUnion self)
         {
             switch (self.TexCase)
             {
                 case TextureUnion.TexOneofCase.VideoTexture:
-                    return self.VideoTexture.VideoPlayerEntity;
+                    return (int) self.VideoTexture.VideoPlayerEntity;
                 default:
                     return 0;
             }

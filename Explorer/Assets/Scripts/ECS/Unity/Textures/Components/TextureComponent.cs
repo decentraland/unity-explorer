@@ -9,13 +9,15 @@ namespace ECS.Unity.Textures.Components
         public readonly TextureWrapMode WrapMode;
         public readonly FilterMode FilterMode;
         public readonly bool IsVideoTexture;
+        public readonly int VideoPlayerEntity;
 
-        public TextureComponent(string src, TextureWrapMode wrapMode, FilterMode filterMode, bool isVideoTexture = false)
+        public TextureComponent(string src, TextureWrapMode wrapMode, FilterMode filterMode, bool isVideoTexture = false, int videoPlayerEntity = 0)
         {
             Src = src;
             WrapMode = wrapMode;
             FilterMode = filterMode;
             IsVideoTexture = isVideoTexture;
+            VideoPlayerEntity = videoPlayerEntity;
         }
 
         public bool Equals(TextureComponent other) =>
