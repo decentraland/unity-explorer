@@ -37,7 +37,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
             var framesPrefabs = new AssetProvisionerFramePrefabs(new AddressablesProvisioner());
             var framesPool = new FramesPool(framesPrefabs);
 
-            await framesPrefabs.Initialize(
+            await framesPrefabs.InitializeAsync(
                 settings.FramePrefabs(),
                 settings.DefaultFrame(),
                 destroyCancellationToken

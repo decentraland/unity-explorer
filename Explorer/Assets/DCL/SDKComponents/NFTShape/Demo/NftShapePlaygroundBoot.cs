@@ -27,7 +27,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
             var framesPrefabs = new AssetProvisionerFramePrefabs(new AddressablesProvisioner());
             var world = new WarmUpSettingsNftShapeDemoWorld(new FramesPool(framesPrefabs), nftShapeProperties, () => visible);
 
-            await framesPrefabs.Initialize(
+            await framesPrefabs.InitializeAsync(
                 settings.FramePrefabs(),
                 settings.DefaultFrame(),
                 destroyCancellationToken

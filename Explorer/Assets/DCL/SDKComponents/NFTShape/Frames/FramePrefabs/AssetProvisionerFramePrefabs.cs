@@ -30,7 +30,7 @@ namespace DCL.SDKComponents.NFTShape.Frames.FramePrefabs
                 : defaultPrefab;
         }
 
-        public UniTask Initialize(
+        public UniTask InitializeAsync(
             IReadOnlyDictionary<NftFrameType, NFTShapeSettings.FrameRef> refs,
             NFTShapeSettings.FrameRef defaultRef,
             CancellationToken ct

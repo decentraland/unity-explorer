@@ -108,7 +108,7 @@ namespace DCL.PluginSystem.World
         {
             lazyMaxSize.Initialize(settings.MaxSizeOfNftForDownload);
 
-            return framePrefabs.Initialize(
+            return framePrefabs.InitializeAsync(
                 settings.Settings.FramePrefabs(),
                 settings.Settings.DefaultFrame(),
                 ct
