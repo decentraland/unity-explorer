@@ -11,6 +11,7 @@ using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.Textures.Components;
@@ -49,43 +50,56 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         {
             InstantiateUIBackgroundQuery(World);
             UpdateUIBackgroundQuery(World);
+            LoadUIBackgroundTextureQuery(World);
         }
 
         [Query]
+        [All(typeof(PBUiBackground))]
         [None(typeof(UIBackgroundComponent))]
-        private void InstantiateUIBackground(in Entity entity, ref PBUiBackground sdkModel, ref UITransformComponent uiTransformComponent, ref PartitionComponent partitionComponent)
+        private void InstantiateUIBackground(in Entity entity, ref UITransformComponent uiTransformComponent)
         {
             var image = imagesPool.Get();
             image.Initialize(uiTransformComponent.Transform);
             var uiBackgroundComponent = new UIBackgroundComponent();
             uiBackgroundComponent.Image = image;
-
-            TextureComponent? backgroundTexture = sdkModel.Texture.CreateTextureComponent(sceneData);
-            TryCreateGetTexturePromise(in backgroundTexture, ref uiBackgroundComponent.TexturePromise, ref partitionComponent);
-
+            uiBackgroundComponent.Status = LifeCycle.LoadingNotStarted;
             World.Add(entity, uiBackgroundComponent);
         }
 
         [Query]
-        [All(typeof(PBUiBackground), typeof(UITransformComponent))]
-        private void UpdateUIBackground(ref PBUiBackground sdkModel, ref UIBackgroundComponent uiBackgroundComponent)
+        private void UpdateUIBackground(ref PBUiBackground sdkModel, ref UIBackgroundComponent uiBackgroundComponent, ref PartitionComponent partitionComponent)
         {
-            if (!sdkModel.IsDirty || !frameTimeBudgetProvider.TrySpendBudget() || !memoryBudgetProvider.TrySpendBudget())
+            if (!sdkModel.IsDirty)
                 return;
+
+            // Create texture promise if needed
+            TextureComponent? backgroundTexture = sdkModel.Texture.CreateTextureComponent(sceneData);
+            TryCreateGetTexturePromise(in backgroundTexture, ref uiBackgroundComponent.TexturePromise, ref partitionComponent);
+            uiBackgroundComponent.Status = LifeCycle.LoadingInProgress;
 
             if (uiBackgroundComponent.TexturePromise == null)
             {
                 // Backgrounds without texture
                 UiElementUtils.SetupDCLImage(ref uiBackgroundComponent.Image, ref sdkModel);
-                sdkModel.IsDirty = false;
+                uiBackgroundComponent.Status = LifeCycle.LoadingFinished;
             }
-            else if (!uiBackgroundComponent.TexturePromise.Value.IsConsumed &&
-                     uiBackgroundComponent.TexturePromise.Value.TryConsume(World, out StreamableLoadingResult<Texture2D> promiseResult))
-            {
-                // Backgrounds with texture
-                UiElementUtils.SetupDCLImage(ref uiBackgroundComponent.Image, ref sdkModel, promiseResult.Asset);
-                sdkModel.IsDirty = false;
-            }
+
+            sdkModel.IsDirty = false;
+        }
+
+        [Query]
+        private void LoadUIBackgroundTexture(ref PBUiBackground sdkModel, ref UIBackgroundComponent uiBackgroundComponent)
+        {
+            if (uiBackgroundComponent.Status != LifeCycle.LoadingInProgress ||
+                uiBackgroundComponent.TexturePromise == null ||
+                !frameTimeBudgetProvider.TrySpendBudget() ||
+                !memoryBudgetProvider.TrySpendBudget() ||
+                !uiBackgroundComponent.TexturePromise.Value.TryConsume(World, out StreamableLoadingResult<Texture2D> promiseResult))
+                return;
+
+            // Backgrounds with texture
+            UiElementUtils.SetupDCLImage(ref uiBackgroundComponent.Image, ref sdkModel, promiseResult.Asset);
+            uiBackgroundComponent.Status = LifeCycle.LoadingFinished;
         }
 
         private void TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise? promise, ref PartitionComponent partitionComponent)

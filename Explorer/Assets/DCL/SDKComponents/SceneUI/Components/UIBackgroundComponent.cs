@@ -9,6 +9,7 @@ namespace DCL.SDKComponents.SceneUI.Components
     {
         public DCLImage Image;
         public Promise? TexturePromise;
+        public ECS.StreamableLoading.LifeCycle Status;
 
         DCLImage IPoolableComponentProvider<DCLImage>.PoolableComponent => Image;
         Type IPoolableComponentProvider<DCLImage>.PoolableComponentType => typeof(DCLImage);

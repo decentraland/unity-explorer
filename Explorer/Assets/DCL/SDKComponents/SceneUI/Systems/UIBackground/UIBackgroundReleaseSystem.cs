@@ -46,6 +46,12 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 
         private void RemoveDCLImage(UIBackgroundComponent uiBackgroundComponent)
         {
+            if (uiBackgroundComponent.TexturePromise != null)
+            {
+                uiBackgroundComponent.TexturePromise.Value.ForgetLoading(World);
+                uiBackgroundComponent.TexturePromise = null;
+            }
+
             if (componentPool != null)
                 componentPool.Release(uiBackgroundComponent.Image);
         }
